@@ -37,6 +37,15 @@ on:
         description: "GitHub runner label. Use a self-hosted Linux runner for real full builds."
         required: true
         default: "ubuntu-22.04"
+      build_pc_uefi:
+        description: "Also build experimental x86_64 PC UEFI disk image when x86_64_virt is selected"
+        required: true
+        default: false
+        type: boolean
+      pc_disk_size:
+        description: "Experimental PC UEFI raw disk size"
+        required: true
+        default: "32G"
 
 permissions:
   contents: read
@@ -54,6 +63,7 @@ jobs:
     env:
       OHOS_ROOT: ${{ github.workspace }}/openharmony
       PACKAGE_OUT: ${{ github.workspace }}/qemu-packages
+      PC_IMAGE_OUT: ${{ github.workspace }}/pc-images
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     steps:
@@ -79,13 +89,16 @@ jobs:
             ccache \
             curl \
             default-jdk \
+            dosfstools \
             flex \
             gcc-arm-linux-gnueabi \
             gcc-arm-none-eabi \
             genext2fs \
+            gdisk \
             git \
             git-lfs \
             gnupg \
+            grub-efi-amd64-bin \
             libboost-all-dev \
             libglib2.0-dev \
             liblz4-tool \
@@ -95,10 +108,14 @@ jobs:
             mtd-utils \
             mtools \
             openssl \
+            ovmf \
+            parted \
             pkg-config \
             python3 \
             python3-pip \
             python3-setuptools \
+            qemu-system-x86 \
+            qemu-utils \
             repo \
             ruby \
             scons \
@@ -203,6 +220,20 @@ jobs:
           done
           find "${PACKAGE_OUT}" -maxdepth 2 -type f \( -name '*.tar.gz' -o -name '*.zip' \) -print
 
+      - name: Build experimental PC UEFI disk image
+        if: ${{ inputs.build_pc_uefi && (inputs.product == 'all' || inputs.product == 'x86_64_virt') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${PC_IMAGE_OUT}"
+          sudo modprobe loop || true
+          "${GITHUB_WORKSPACE}/scripts/make_pc_uefi_disk.sh" \
+            --source-root "${OHOS_ROOT}" \
+            --product x86_64_virt \
+            --output "${PC_IMAGE_OUT}/openharmony-pc-x86_64.img" \
+            --disk-size "${{ inputs.pc_disk_size }}"
+          find "${PC_IMAGE_OUT}" -maxdepth 1 -type f -print
+
       - name: Show ccache stats
         if: always()
         shell: bash
@@ -215,5 +246,8 @@ jobs:
           path: |
             ${{ env.PACKAGE_OUT }}/*.tar.gz
             ${{ env.PACKAGE_OUT }}/*.zip
+            ${{ env.PC_IMAGE_OUT }}/*.qcow2
+            ${{ env.PC_IMAGE_OUT }}/*.manifest.json
+            ${{ env.PC_IMAGE_OUT }}/*.qemu-smoke.log
           if-no-files-found: error
           retention-days: ${{ fromJSON(inputs.upload_retention_days) }}
