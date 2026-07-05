@@ -189,7 +189,13 @@ find_ohos_linker() {
   local native="$1"
   local suffix
   local candidate
-  for suffix in "" ".cmd" ".exe"; do
+  local suffixes
+  if [ "${HOST_PLATFORM}" = "windows" ]; then
+    suffixes=(".cmd" ".bat" ".exe" "")
+  else
+    suffixes=("" ".cmd" ".bat" ".exe")
+  fi
+  for suffix in "${suffixes[@]}"; do
     candidate="${native}/llvm/bin/${OHOS_RUST_TARGET}-clang${suffix}"
     if [ -f "${candidate}" ]; then
       printf '%s\n' "${candidate}"
