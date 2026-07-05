@@ -29,6 +29,12 @@ and HDC.
 
 ## Local Use
 
+Network install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash
+```
+
 Install QEMU and extract one of the packages from `artifacts/`, then run the
 matching launcher in the package:
 
@@ -40,4 +46,4 @@ HDC is forwarded through host TCP port `5555` when the guest is running.
 
 ## License
 
-MIT License. See `LICENSE.md`.
+[MIT](./LICENSE)
