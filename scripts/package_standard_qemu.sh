@@ -174,6 +174,94 @@ export OHOS_IMG="${IMG}"
 exec "${HERE}/launch/qemu_run.sh"
 EOF
   cp "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command"
+  if [ "${PRODUCT}" = "x86_64_virt" ]; then
+    cat > "${LAUNCH_OUT}/windows.ps1" <<'EOF'
+$ErrorActionPreference = "Stop"
+
+$Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Img = Join-Path $Root "images"
+
+function Resolve-Qemu {
+  if ($env:QEMU_SYSTEM_X86_64) {
+    return $env:QEMU_SYSTEM_X86_64
+  }
+  $cmd = Get-Command "qemu-system-x86_64.exe" -ErrorAction SilentlyContinue
+  if ($cmd) {
+    return $cmd.Source
+  }
+  $defaultPath = "C:\Program Files\qemu\qemu-system-x86_64.exe"
+  if (Test-Path $defaultPath) {
+    return $defaultPath
+  }
+  throw "qemu-system-x86_64.exe not found. Install QEMU for Windows or set QEMU_SYSTEM_X86_64."
+}
+
+$Qemu = Resolve-Qemu
+
+$AccelArgs = @("-accel", "tcg,thread=multi")
+try {
+  $AccelHelp = & $Qemu -accel help 2>&1 | Out-String
+  if ($AccelHelp -match "whpx") {
+    $AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
+    Write-Host "WHPX acceleration enabled."
+  } else {
+    Write-Host "WHPX not available, using TCG software emulation."
+  }
+} catch {
+  Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
+}
+
+$DisplayType = if ($env:QEMU_DISPLAY) { $env:QEMU_DISPLAY } else { "sdl" }
+switch ($DisplayType) {
+  "none" {
+    $DisplayArgs = @("-display", "none", "-serial", "mon:stdio")
+  }
+  "vnc" {
+    $DisplayArgs = @("-device", "virtio-gpu-pci,xres=800,yres=500", "-vnc", ":21", "-serial", "stdio")
+    Write-Host "Display: VNC on 127.0.0.1:5921"
+  }
+  "gtk" {
+    $DisplayArgs = @("-device", "virtio-gpu-pci", "-display", "gtk,gl=off", "-serial", "stdio")
+  }
+  default {
+    $DisplayArgs = @("-device", "virtio-gpu-pci", "-display", "sdl,gl=off", "-serial", "stdio")
+  }
+}
+
+$KernelBootArgs = "console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
+
+$ArgsList = @(
+  "-machine", "q35",
+  $AccelArgs,
+  "-cpu", "max",
+  "-smp", "4",
+  "-m", "4096",
+  "-kernel", (Join-Path $Img "bzImage"),
+  "-initrd", (Join-Path $Img "ramdisk.img"),
+  $DisplayArgs,
+  "-device", "virtio-mouse-pci",
+  "-device", "virtio-keyboard-pci",
+  "-netdev", "user,id=net0,hostfwd=tcp::5555-:5555",
+  "-device", "virtio-net-pci,netdev=net0",
+  "-drive", ("if=none,file={0},format=raw,id=updater" -f (Join-Path $Img "updater.img")),
+  "-device", "virtio-blk-pci,drive=updater,serial=updater",
+  "-drive", ("if=none,file={0},format=raw,id=system" -f (Join-Path $Img "system.img")),
+  "-device", "virtio-blk-pci,drive=system,serial=system",
+  "-drive", ("if=none,file={0},format=raw,id=vendor" -f (Join-Path $Img "vendor.img")),
+  "-device", "virtio-blk-pci,drive=vendor,serial=vendor",
+  "-drive", ("if=none,file={0},format=raw,id=sys_prod" -f (Join-Path $Img "sys_prod.img")),
+  "-device", "virtio-blk-pci,drive=sys_prod,serial=sys_prod",
+  "-drive", ("if=none,file={0},format=raw,id=chip_prod" -f (Join-Path $Img "chip_prod.img")),
+  "-device", "virtio-blk-pci,drive=chip_prod,serial=chip_prod",
+  "-drive", ("if=none,file={0},format=raw,id=userdata" -f (Join-Path $Img "userdata.img")),
+  "-device", "virtio-blk-pci,drive=userdata,serial=userdata",
+  "-append", $KernelBootArgs
+)
+
+& $Qemu @ArgsList
+exit $LASTEXITCODE
+EOF
+  fi
 elif [ "${PRODUCT}" = "qemu-arm64-linux-min" ]; then
   cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
 #!/usr/bin/env bash
