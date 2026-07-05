@@ -198,6 +198,56 @@ find_ohos_linker() {
   done
 }
 
+create_hdc_runner_wrapper() {
+  local wrapper_dir="${WORK}/hdc-wrapper"
+  local real_hdc_posix="${HDC}"
+  local real_hdc_host
+  real_hdc_host="$(command_path_for_host "${HDC}")"
+  mkdir -p "${wrapper_dir}"
+
+  cat >"${wrapper_dir}/hdc" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+REAL_HDC="${real_hdc_posix}"
+TARGET="127.0.0.1:5555"
+
+if [ "\${1:-}" = "list" ] && [ "\${2:-}" = "targets" ]; then
+  "\${REAL_HDC}" tconn "\${TARGET}" >/dev/null 2>&1 || true
+  if "\${REAL_HDC}" list targets 2>/dev/null | grep -q "\${TARGET}"; then
+    "\${REAL_HDC}" list targets | grep "\${TARGET}"
+  else
+    printf '%s\n' "\${TARGET}"
+  fi
+  exit 0
+fi
+
+exec "\${REAL_HDC}" -t "\${TARGET}" "\$@"
+EOF
+  chmod +x "${wrapper_dir}/hdc"
+
+  cat >"${wrapper_dir}/hdc.cmd" <<EOF
+@echo off
+set "REAL_HDC=${real_hdc_host}"
+set "TARGET=127.0.0.1:5555"
+
+if /I "%~1"=="list" if /I "%~2"=="targets" (
+  "%REAL_HDC%" tconn %TARGET% >nul 2>nul
+  "%REAL_HDC%" list targets | findstr /C:"%TARGET%" >nul 2>nul
+  if errorlevel 1 (
+    echo %TARGET%
+  ) else (
+    "%REAL_HDC%" list targets | findstr /C:"%TARGET%"
+  )
+  exit /b 0
+)
+
+"%REAL_HDC%" -t %TARGET% %*
+exit /b %ERRORLEVEL%
+EOF
+
+  printf '%s\n' "${wrapper_dir}"
+}
+
 prepare_windows_launcher() {
   local launcher="${PACKAGE_DIR}/launch/windows.ps1"
   local ci_launcher="${PACKAGE_DIR}/launch/windows-ci.ps1"
@@ -328,7 +378,9 @@ fi
 RUNNER_ENV="$(cargo_target_env_var "${OHOS_RUST_TARGET}" RUNNER)"
 LINKER_ENV="$(cargo_target_env_var "${OHOS_RUST_TARGET}" LINKER)"
 LINKER_FOR_CARGO="$(command_path_for_host "${OHOS_LINKER}")"
+HDC_WRAPPER_DIR="$(create_hdc_runner_wrapper)"
 env \
+  "PATH=${HDC_WRAPPER_DIR}:${PATH}" \
   "${RUNNER_ENV}=ohos-test-runner" \
   "${LINKER_ENV}=${LINKER_FOR_CARGO}" \
   RUST_LOG=debug \
