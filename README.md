@@ -40,6 +40,4 @@ HDC is forwarded through host TCP port `5555` when the guest is running.
 
 ## License
 
-The repository license has not been selected yet. See `LICENSE.md`; the final
-license must be confirmed by the repository owner before reuse or
-redistribution.
+MIT License. See `LICENSE.md`.
