@@ -8,12 +8,14 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "artifacts/*.tar.gz"
+      - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
       - "scripts/package_standard_qemu.sh"
   pull_request:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "artifacts/*.tar.gz"
+      - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
       - "scripts/package_standard_qemu.sh"
 
@@ -28,7 +30,7 @@ jobs:
   smoke:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:

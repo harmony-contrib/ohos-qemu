@@ -198,17 +198,29 @@ function Resolve-Qemu {
 
 $Qemu = Resolve-Qemu
 
+$RequestedAccel = if ($env:QEMU_ACCEL) { $env:QEMU_ACCEL.ToLowerInvariant() } else { "auto" }
 $AccelArgs = @("-accel", "tcg,thread=multi")
-try {
-  $AccelHelp = & $Qemu -accel help 2>&1 | Out-String
-  if ($AccelHelp -match "whpx") {
-    $AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
-    Write-Host "WHPX acceleration enabled."
-  } else {
-    Write-Host "WHPX not available, using TCG software emulation."
+switch ($RequestedAccel) {
+  "tcg" {
+    Write-Host "TCG software emulation forced by QEMU_ACCEL."
   }
-} catch {
-  Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
+  "whpx" {
+    $AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
+    Write-Host "WHPX acceleration forced by QEMU_ACCEL."
+  }
+  default {
+    try {
+      $AccelHelp = & $Qemu -accel help 2>&1 | Out-String
+      if ($AccelHelp -match "whpx") {
+        $AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
+        Write-Host "WHPX acceleration enabled."
+      } else {
+        Write-Host "WHPX not available, using TCG software emulation."
+      }
+    } catch {
+      Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
+    }
+  }
 }
 
 $DisplayType = if ($env:QEMU_DISPLAY) { $env:QEMU_DISPLAY } else { "sdl" }

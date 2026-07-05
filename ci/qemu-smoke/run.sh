@@ -66,10 +66,12 @@ normalize_host_path() {
 case "${GUEST_ARCH}" in
   aarch64)
     RUST_TARGET="aarch64-unknown-linux-musl"
+    OHOS_RUST_TARGET="aarch64-unknown-linux-ohos"
     BIN_NAME="hello-aarch64"
     ;;
   x86_64)
     RUST_TARGET="x86_64-unknown-linux-musl"
+    OHOS_RUST_TARGET="x86_64-unknown-linux-ohos"
     BIN_NAME="hello-x86_64"
     ;;
   *)
@@ -145,6 +147,73 @@ if [ -z "${HDC}" ] || [ ! -x "${HDC}" ]; then
   exit 1
 fi
 echo "Using hdc: ${HDC}"
+export PATH="$(dirname "${HDC}"):${PATH}"
+
+command_path_for_host() {
+  local path="$1"
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "${path}" 2>/dev/null || printf '%s\n' "${path}"
+  else
+    printf '%s\n' "${path}"
+  fi
+}
+
+cargo_target_env_var() {
+  local target="$1"
+  local suffix="$2"
+  local upper
+  upper="$(printf '%s' "${target}" | tr '[:lower:]-' '[:upper:]_')"
+  printf 'CARGO_TARGET_%s_%s\n' "${upper}" "${suffix}"
+}
+
+find_ohos_sdk_native() {
+  local candidate
+  for candidate in \
+    "${OHOS_SDK_NATIVE:-}" \
+    "${OHOS_NDK_HOME:-}/native" \
+    "${OHOS_BASE_SDK_HOME:-}/native" \
+    "${OHOS_SDK_HOME:-}/native"
+  do
+    if [ -z "${candidate}" ] || [ "${candidate}" = "/native" ]; then
+      continue
+    fi
+    candidate="$(normalize_host_path "${candidate}")"
+    if [ -d "${candidate}" ]; then
+      printf '%s\n' "${candidate}"
+      return
+    fi
+  done
+}
+
+find_ohos_linker() {
+  local native="$1"
+  local suffix
+  local candidate
+  for suffix in "" ".cmd" ".exe"; do
+    candidate="${native}/llvm/bin/${OHOS_RUST_TARGET}-clang${suffix}"
+    if [ -f "${candidate}" ]; then
+      printf '%s\n' "${candidate}"
+      return
+    fi
+  done
+}
+
+prepare_windows_launcher() {
+  local launcher="${PACKAGE_DIR}/launch/windows.ps1"
+  local ci_launcher="${PACKAGE_DIR}/launch/windows-ci.ps1"
+  if [ ! -f "${launcher}" ]; then
+    echo "Windows launcher not found: ${launcher}" >&2
+    exit 1
+  fi
+  cp "${launcher}" "${ci_launcher}"
+  sed -i \
+    's/\$AccelArgs = @("-accel", "whpx,kernel-irqchip=off")/\$AccelArgs = @("-accel", "tcg,thread=multi")/' \
+    "${ci_launcher}"
+  sed -i \
+    's/Write-Host "WHPX acceleration enabled."/Write-Host "WHPX disabled for CI, using TCG software emulation."/' \
+    "${ci_launcher}"
+  printf '%s\n' "${ci_launcher}"
+}
 
 cleanup() {
   if [ -n "${QEMU_PID:-}" ] && kill -0 "${QEMU_PID}" >/dev/null 2>&1; then
@@ -166,7 +235,8 @@ case "${HOST_PLATFORM}" in
     QEMU_DISPLAY=none ./launch/macos.command >"${LOG}" 2>&1 &
     ;;
   windows)
-    QEMU_DISPLAY=none powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./launch/windows.ps1 >"${LOG}" 2>&1 &
+    WINDOWS_LAUNCHER="$(prepare_windows_launcher)"
+    QEMU_DISPLAY=none QEMU_ACCEL=tcg powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${WINDOWS_LAUNCHER}" >"${LOG}" 2>&1 &
     ;;
   *)
     echo "unsupported host platform: ${HOST_PLATFORM}" >&2
@@ -224,6 +294,49 @@ echo "::group::Transfer and execute Rust binary"
 "${HDC}" -t 127.0.0.1:5555 file send "${WORK}/${BIN_NAME}" "/data/local/tmp/${BIN_NAME}"
 "${HDC}" -t 127.0.0.1:5555 shell "chmod 755 /data/local/tmp/${BIN_NAME}"
 "${HDC}" -t 127.0.0.1:5555 shell "uname -a; id; /data/local/tmp/${BIN_NAME} from-ci"
+echo "::endgroup::"
+
+echo "::group::Run ohos-test-runner Cargo smoke"
+OHOS_SDK_NATIVE_DIR="$(find_ohos_sdk_native)"
+if [ -z "${OHOS_SDK_NATIVE_DIR}" ]; then
+  echo "OHOS SDK native directory not found. Ensure setup-ohos-sdk installed the native component." >&2
+  exit 1
+fi
+OHOS_LINKER="$(find_ohos_linker "${OHOS_SDK_NATIVE_DIR}")"
+if [ -z "${OHOS_LINKER}" ]; then
+  echo "OpenHarmony clang linker not found for ${OHOS_RUST_TARGET} under ${OHOS_SDK_NATIVE_DIR}/llvm/bin" >&2
+  find "${OHOS_SDK_NATIVE_DIR}/llvm/bin" -maxdepth 1 -name '*unknown-linux-ohos-clang*' -print 2>/dev/null || true
+  exit 1
+fi
+echo "OpenHarmony SDK native: ${OHOS_SDK_NATIVE_DIR}"
+echo "OpenHarmony Rust target: ${OHOS_RUST_TARGET}"
+echo "OpenHarmony linker: ${OHOS_LINKER}"
+
+rustup target add "${OHOS_RUST_TARGET}"
+CARGO_INSTALL_ROOT_POSIX="${WORK}/cargo-install"
+mkdir -p "${CARGO_INSTALL_ROOT_POSIX}"
+export CARGO_INSTALL_ROOT="$(command_path_for_host "${CARGO_INSTALL_ROOT_POSIX}")"
+export PATH="${CARGO_INSTALL_ROOT_POSIX}/bin:${PATH}"
+if ! command -v ohos-test-runner >/dev/null 2>&1; then
+  cargo install \
+    --locked \
+    --git https://github.com/openharmony-rs/ohos-test-runner.git \
+    --rev 4ad3e3e14845522a87bb4c4b4957d34323662183 \
+    ohos-test-runner
+fi
+
+RUNNER_ENV="$(cargo_target_env_var "${OHOS_RUST_TARGET}" RUNNER)"
+LINKER_ENV="$(cargo_target_env_var "${OHOS_RUST_TARGET}" LINKER)"
+LINKER_FOR_CARGO="$(command_path_for_host "${OHOS_LINKER}")"
+env \
+  "${RUNNER_ENV}=ohos-test-runner" \
+  "${LINKER_ENV}=${LINKER_FOR_CARGO}" \
+  RUST_LOG=debug \
+  cargo test \
+    --manifest-path "${ROOT}/ci/ohos-test-runner-smoke/Cargo.toml" \
+    --target "${OHOS_RUST_TARGET}" \
+    -- \
+    --nocapture
 echo "::endgroup::"
 
 echo "::group::QEMU log tail"
