@@ -54,6 +54,15 @@ if [ -z "${PACKAGE}" ] || [ -z "${GUEST_ARCH}" ] || [ -z "${HOST_PLATFORM}" ]; t
   exit 2
 fi
 
+normalize_host_path() {
+  local path="$1"
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -u "${path}" 2>/dev/null || printf '%s\n' "${path}"
+  else
+    printf '%s\n' "${path}"
+  fi
+}
+
 case "${GUEST_ARCH}" in
   aarch64)
     RUST_TARGET="aarch64-unknown-linux-musl"
@@ -70,10 +79,13 @@ case "${GUEST_ARCH}" in
 esac
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-WORK="${RUNNER_TEMP:-${ROOT}/.tmp}/ohos-qemu-smoke-${HOST_PLATFORM}-${GUEST_ARCH}"
+PACKAGE="$(normalize_host_path "${PACKAGE}")"
+TEMP_ROOT="$(normalize_host_path "${RUNNER_TEMP:-${ROOT}/.tmp}")"
+WORK="${TEMP_ROOT}/ohos-qemu-smoke-${HOST_PLATFORM}-${GUEST_ARCH}"
 EXTRACT="${WORK}/extract"
 LOG="${WORK}/qemu.log"
 mkdir -p "${WORK}" "${EXTRACT}"
+echo "work dir: ${WORK}"
 
 echo "::group::Extract package"
 case "${PACKAGE}" in
@@ -116,6 +128,7 @@ find_hdc() {
   fi
   local sdk_root="${OHOS_BASE_SDK_HOME:-${OHOS_SDK_HOME:-}}"
   if [ -n "${sdk_root}" ]; then
+    sdk_root="$(normalize_host_path "${sdk_root}")"
     find "${sdk_root}" -path '*/toolchains/hdc*' -type f -perm -111 2>/dev/null | head -n 1
     return
   fi
@@ -167,21 +180,32 @@ echo "::endgroup::"
 echo "::group::Wait for HDC"
 "${HDC}" kill || true
 "${HDC}" start || true
+HDC_TCONN_LOG="${WORK}/hdc-tconn.log"
+WAIT_ATTEMPTS="${QEMU_HDC_WAIT_ATTEMPTS:-240}"
 connected=0
-for attempt in $(seq 1 90); do
-  if "${HDC}" tconn 127.0.0.1:5555 >/tmp/hdc-tconn.log 2>&1; then
-    cat /tmp/hdc-tconn.log
+for attempt in $(seq 1 "${WAIT_ATTEMPTS}"); do
+  if "${HDC}" tconn 127.0.0.1:5555 >"${HDC_TCONN_LOG}" 2>&1; then
+    cat "${HDC_TCONN_LOG}"
     if "${HDC}" list targets | grep -q '127.0.0.1:5555'; then
       connected=1
       break
     fi
   else
-    cat /tmp/hdc-tconn.log || true
+    cat "${HDC_TCONN_LOG}" || true
   fi
   if ! kill -0 "${QEMU_PID}" >/dev/null 2>&1; then
     echo "QEMU exited before HDC became available" >&2
     tail -n 200 "${LOG}" || true
     exit 1
+  fi
+  if [ $((attempt % 20)) -eq 0 ]; then
+    echo "still waiting for HDC after ${attempt}/${WAIT_ATTEMPTS} attempts"
+    if (echo >/dev/tcp/127.0.0.1/5555) >/dev/null 2>&1; then
+      echo "tcp port 127.0.0.1:5555 is open"
+    else
+      echo "tcp port 127.0.0.1:5555 is not open yet"
+    fi
+    tail -n 80 "${LOG}" || true
   fi
   sleep 3
 done
