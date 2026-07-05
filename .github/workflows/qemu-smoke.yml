@@ -1,0 +1,114 @@
+name: QEMU Smoke Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/qemu-smoke.yml"
+      - "artifacts/*.tar.gz"
+      - "ci/qemu-smoke/**"
+      - "scripts/package_standard_qemu.sh"
+  pull_request:
+    paths:
+      - ".github/workflows/qemu-smoke.yml"
+      - "artifacts/*.tar.gz"
+      - "ci/qemu-smoke/**"
+      - "scripts/package_standard_qemu.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qemu-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64 QEMU
+            runner: ubuntu-22.04
+            host_platform: linux
+            guest_arch: x86_64
+            package: artifacts/openharmony-qemu-x86_64-x86_64_virt.tar.gz
+            sdk_version: "6.1"
+            sdk_components: "native;toolchains"
+          - name: macOS arm64 QEMU
+            runner: macos-14
+            host_platform: macos
+            guest_arch: aarch64
+            package: artifacts/openharmony-qemu-arm64-arm64_virt.tar.gz
+            sdk_version: "6.1"
+            sdk_components: "native;toolchains"
+          - name: Windows x64 QEMU
+            runner: windows-2022
+            host_platform: windows
+            guest_arch: x86_64
+            package: artifacts/openharmony-qemu-x86_64-x86_64_virt.tar.gz
+            sdk_version: "6.1"
+            sdk_components: "native;toolchains"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Pull QEMU package from Git LFS
+        shell: bash
+        run: |
+          set -euo pipefail
+          git lfs install
+          git lfs pull --include="${{ matrix.package }}"
+          ls -lh "${{ matrix.package }}"
+
+      - name: Setup OpenHarmony SDK
+        uses: openharmony-rs/setup-ohos-sdk@v1.0.0
+        with:
+          version: ${{ matrix.sdk_version }}
+          components: ${{ matrix.sdk_components }}
+          cache: true
+          mirror: true
+
+      - name: Install QEMU on Linux
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            file \
+            qemu-system-x86 \
+            unzip
+
+      - name: Install QEMU on macOS
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew update
+          brew install qemu
+
+      - name: Install QEMU on Windows
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          choco install qemu -y --no-progress
+          "C:\Program Files\qemu" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Run QEMU smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ci/qemu-smoke/run.sh
+          ci/qemu-smoke/run.sh \
+            --package "${{ matrix.package }}" \
+            --guest-arch "${{ matrix.guest_arch }}" \
+            --host-platform "${{ matrix.host_platform }}"
