@@ -189,19 +189,54 @@ find_ohos_linker() {
   local native="$1"
   local suffix
   local candidate
-  local suffixes
   if [ "${HOST_PLATFORM}" = "windows" ]; then
-    suffixes=(".cmd" ".bat" ".exe" "")
+    for suffix in ".cmd" ".bat" ".exe"; do
+      candidate="${native}/llvm/bin/${OHOS_RUST_TARGET}-clang${suffix}"
+      if [ -f "${candidate}" ]; then
+        printf '%s\n' "${candidate}"
+        return
+      fi
+    done
+    create_windows_ohos_linker_wrapper "${native}"
+    return
   else
-    suffixes=("" ".cmd" ".bat" ".exe")
+    for suffix in "" ".cmd" ".bat" ".exe"; do
+      candidate="${native}/llvm/bin/${OHOS_RUST_TARGET}-clang${suffix}"
+      if [ -f "${candidate}" ]; then
+        printf '%s\n' "${candidate}"
+        return
+      fi
+    done
   fi
-  for suffix in "${suffixes[@]}"; do
-    candidate="${native}/llvm/bin/${OHOS_RUST_TARGET}-clang${suffix}"
-    if [ -f "${candidate}" ]; then
-      printf '%s\n' "${candidate}"
-      return
-    fi
-  done
+}
+
+create_windows_ohos_linker_wrapper() {
+  local native="$1"
+  local wrapper_dir="${WORK}/linker-wrapper"
+  local wrapper="${wrapper_dir}/${OHOS_RUST_TARGET}-clang.cmd"
+  local clang="${native}/llvm/bin/clang.exe"
+  local sysroot="${native}/sysroot"
+  local clang_host
+  local sysroot_host
+
+  if [ ! -f "${clang}" ]; then
+    echo "Windows clang.exe not found under ${native}/llvm/bin" >&2
+    return 1
+  fi
+  if [ ! -d "${sysroot}" ]; then
+    echo "OpenHarmony sysroot not found under ${native}" >&2
+    return 1
+  fi
+
+  clang_host="$(command_path_for_host "${clang}")"
+  sysroot_host="$(command_path_for_host "${sysroot}")"
+  mkdir -p "${wrapper_dir}"
+  cat >"${wrapper}" <<EOF
+@echo off
+"${clang_host}" --target=${OHOS_RUST_TARGET} --sysroot="${sysroot_host}" -fuse-ld=lld %*
+exit /b %ERRORLEVEL%
+EOF
+  printf '%s\n' "${wrapper}"
 }
 
 create_hdc_runner_wrapper() {
