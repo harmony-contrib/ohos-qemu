@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "artifacts/*.tar.gz"
+      - "artifacts/*.tar.gz.part-*"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
       - "scripts/package_standard_qemu.sh"
@@ -15,6 +16,7 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "artifacts/*.tar.gz"
+      - "artifacts/*.tar.gz.part-*"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
       - "scripts/package_standard_qemu.sh"
@@ -49,6 +51,13 @@ jobs:
             package: artifacts/openharmony-qemu-arm64-arm64_virt.tar.gz
             sdk_version: "6.1"
             sdk_components: "native;toolchains"
+          - name: macOS armv7a QEMU
+            runner: macos-14
+            host_platform: macos
+            guest_arch: armv7a
+            package: artifacts/openharmony-qemu-armv7a-armv7a_virt.tar.gz
+            sdk_version: "6.1"
+            sdk_components: "toolchains"
           - name: Windows x64 QEMU
             runner: windows-2022
             host_platform: windows
@@ -68,7 +77,18 @@ jobs:
         run: |
           set -euo pipefail
           git lfs install
-          git lfs pull --include="${{ matrix.package }}"
+          git lfs pull --include="${{ matrix.package }},${{ matrix.package }}.part-*"
+          if [ ! -f "${{ matrix.package }}" ]; then
+            parts=()
+            while IFS= read -r part; do
+              parts+=("${part}")
+            done < <(find "$(dirname "${{ matrix.package }}")" -maxdepth 1 -type f -name "$(basename "${{ matrix.package }}").part-*" | sort)
+            if [ "${#parts[@]}" -eq 0 ]; then
+              echo "package not found and no split parts found: ${{ matrix.package }}" >&2
+              exit 1
+            fi
+            cat "${parts[@]}" > "${{ matrix.package }}"
+          fi
           ls -lh "${{ matrix.package }}"
 
       - name: Setup OpenHarmony SDK

@@ -244,6 +244,23 @@ install_developer_policy() {
   debugfs -w -R "write ${policy} /etc/selinux/targeted/policy/developer_policy" "${image}" >/dev/null
 }
 
+ensure_standard_system_root() {
+  local image="$1"
+
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot update standard system root" >&2
+    exit 1
+  fi
+
+  debugfs -w -R "mkdir /data" "${image}" >/dev/null 2>&1 || true
+
+  local log_stat
+  log_stat="$(debugfs -R "stat /log" "${image}" 2>&1 || true)"
+  if printf '%s\n' "${log_stat}" | grep -q "File not found"; then
+    debugfs -w -R "symlink /log /data/log" "${image}" >/dev/null
+  fi
+}
+
 case "${PRODUCT}" in
   armv7a_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
@@ -330,6 +347,7 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   done
   install_developer_policy "${IMAGES_OUT}/system.img" "${SOURCE_ROOT}" "${PRODUCT}"
   inject_standard_qemu_params "${IMAGES_OUT}/system.img"
+  ensure_standard_system_root "${IMAGES_OUT}/system.img"
   seed_standard_userdata_dirs "${IMAGES_OUT}/userdata.img"
 fi
 
@@ -368,9 +386,15 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   fi
   cp "${OFFICIAL_QEMU_RUN}" "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|init=/init|init=/bin/init|g' "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|-display none -monitor none|-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none|g' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|(-display none[[:space:]]*)$|-device virtio-gpu-pci,xres=800,yres=500 \1|g' "${LAUNCH_OUT}/qemu_run.sh"
+  if [ "${PRODUCT}" = "armv7a_virt" ]; then
+    sed_in_place_extended 's|(ohos\.required_mount\.data=/dev/block/[^ @]+@/data@ext4@[^"]*@wait),reservedsize=|\1,required,reservedsize=|g' "${LAUNCH_OUT}/qemu_run.sh"
+  fi
+  if ! grep -q -- "-device virtio-gpu" "${LAUNCH_OUT}/qemu_run.sh"; then
+    sed_in_place_extended 's|-display none -monitor none|-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none|g' "${LAUNCH_OUT}/qemu_run.sh"
+    sed_in_place_extended 's|(-display none[[:space:]]*)$|-device virtio-gpu-pci,xres=800,yres=500 \1|g' "${LAUNCH_OUT}/qemu_run.sh"
+  fi
   chmod +x "${LAUNCH_OUT}/qemu_run.sh"
   cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -447,7 +471,7 @@ switch ($DisplayType) {
   }
 }
 
-$KernelBootArgs = "console=ttyS0,115200 sn=0023456789 init=/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
+$KernelBootArgs = "console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
 
 $ArgsList = @(
   "-machine", "q35",

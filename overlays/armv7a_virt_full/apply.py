@@ -33,6 +33,26 @@ def replace_all(content: str, replacements: list[tuple[str, str]]) -> str:
     return content
 
 
+def set_config_bool(content: str, option: str) -> str:
+    disabled = f"# {option} is not set"
+    enabled = f"{option}=y"
+    if disabled in content:
+        return content.replace(disabled, enabled)
+    if enabled not in content:
+        return content + f"\n{enabled}"
+    return content
+
+
+def set_config_value(content: str, option: str, value: str) -> str:
+    prefix = f"{option}="
+    lines = content.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith(prefix):
+            lines[index] = f"{option}={value}"
+            return "\n".join(lines) + "\n"
+    return content + f"\n{option}={value}"
+
+
 def copy_owned_tree(src: Path, dst: Path) -> None:
     marker = dst / MARKER
     if dst.exists():
@@ -117,6 +137,118 @@ def ensure_hardware_group(root: Path) -> None:
     if 'if (target_cpu != "arm") {' in content:
         return
     die(f"expected hardware group not found in {path}")
+
+
+def ensure_armv7a_kernel_config(root: Path) -> None:
+    # QEMU virt has no DSA switch hardware. The arm64/riscv64 virt full
+    # defconfigs already keep DSA disabled; armv7a must do the same because the
+    # current linux-6.6 tree lacks net/dsa/conduit.h while CONFIG_NET_DSA=m.
+    #
+    # The standard-system init path also expects the same runtime kernel
+    # features present in the maintained arm64/x86_64 full QEMU configs:
+    # pids/cpuacct cgroups, namespaces, SELinux LSM, and ext4 security xattrs.
+    for relative in (
+        "device/qemu/common/virt_full/kernel/arm_virt_defconfig",
+        "device/qemu/common/virt_full/kernel/configs/arm_virt_defconfig",
+    ):
+        path = root / relative
+        content = read_text(path)
+        replacements = [
+            ("CONFIG_NET_DSA=m", "# CONFIG_NET_DSA is not set"),
+            ("CONFIG_NET_DSA_TAG_NONE=m", "# CONFIG_NET_DSA_TAG_NONE is not set"),
+            ("CONFIG_NET_DSA_TAG_BRCM_COMMON=m", "# CONFIG_NET_DSA_TAG_BRCM_COMMON is not set"),
+            ("CONFIG_NET_DSA_TAG_BRCM=m", "# CONFIG_NET_DSA_TAG_BRCM is not set"),
+            ("CONFIG_NET_DSA_TAG_BRCM_LEGACY=m", "# CONFIG_NET_DSA_TAG_BRCM_LEGACY is not set"),
+            ("CONFIG_NET_DSA_TAG_BRCM_PREPEND=m", "# CONFIG_NET_DSA_TAG_BRCM_PREPEND is not set"),
+            ("CONFIG_NET_DSA_BCM_SF2=m", "# CONFIG_NET_DSA_BCM_SF2 is not set"),
+        ]
+        new_content = replace_all(content, replacements)
+        for option in (
+            "CONFIG_CGROUP_CPUACCT",
+            "CONFIG_CGROUP_HUGETLB",
+            "CONFIG_CGROUP_PIDS",
+            "CONFIG_PSI",
+            "CONFIG_NAMESPACES",
+            "CONFIG_UTS_NS",
+            "CONFIG_IPC_NS",
+            "CONFIG_USER_NS",
+            "CONFIG_PID_NS",
+            "CONFIG_NET_NS",
+            "CONFIG_EXT4_FS_POSIX_ACL",
+            "CONFIG_EXT4_FS_SECURITY",
+            "CONFIG_VIRTIO_BALLOON",
+        ):
+            new_content = set_config_bool(new_content, option)
+        new_content = set_config_bool(new_content, "CONFIG_DEFAULT_SECURITY_SELINUX")
+        new_content = set_config_value(
+            new_content,
+            "CONFIG_LSM",
+            '"selinux,lockdown,yama,loadpin,safesetid,integrity"',
+        )
+        if new_content != content:
+            write_text(path, new_content)
+
+
+def ensure_armv7a_libvpx_config(root: Path) -> None:
+    build_gn = root / "third_party/libvpx/BUILD.gn"
+    build_sh = root / "third_party/libvpx/build.sh"
+
+    content = read_text(build_gn)
+    old = """  if (is_vpx_x86_64) {
+    outputs += [
+      "$code_dir/vp8_rtcd.h",
+      "$code_dir/vp9_rtcd.h",
+      "$code_dir/vpx_dsp_rtcd.h",
+      "$code_dir/vpx_scale_rtcd.h",
+    ]
+  }
+"""
+    new = """  if (is_vpx_x86_64) {
+    outputs += [
+      "$code_dir/vp8_rtcd.h",
+      "$code_dir/vp9_rtcd.h",
+      "$code_dir/vpx_dsp_rtcd.h",
+      "$code_dir/vpx_scale_rtcd.h",
+    ]
+  } else if (is_vpx_arm) {
+    outputs += [ "$code_dir/vpx_scale_rtcd.h" ]
+  }
+"""
+    if old in content:
+        write_text(build_gn, content.replace(old, new))
+    elif new not in content:
+        die(f"expected libvpx outputs block not found in {build_gn}")
+
+    content = read_text(build_sh)
+    marker = """if [ "$CPU" == "x86_64" ]; then
+"""
+    insert = """if [ "$CPU" == "arm" ]; then
+  cat > rtcd_config.mk <<'EOF'
+CONFIG_RUNTIME_CPU_DETECT=no
+CONFIG_VP8_DECODER=yes
+CONFIG_VP8_ENCODER=no
+CONFIG_VP9=yes
+CONFIG_VP9_DECODER=yes
+CONFIG_VP9_ENCODER=no
+CONFIG_VP9_HIGHBITDEPTH=yes
+CONFIG_SPATIAL_RESAMPLING=yes
+CONFIG_POSTPROC=no
+CONFIG_MULTITHREAD=yes
+CONFIG_WEBM_IO=no
+CONFIG_LIBYUV=no
+EOF
+
+  perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
+      --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl > vpx_scale_rtcd.h
+  cp vpx_scale_rtcd.h "$OUTPUT_DIR/"
+  rm -f rtcd_config.mk vpx_scale_rtcd.h
+fi
+
+"""
+    if insert not in content:
+        if marker not in content:
+            die(f"expected libvpx x86_64 block marker not found in {build_sh}")
+        write_text(build_sh, content.replace(marker, insert + marker))
 
 
 def ensure_whitelist(root: Path) -> None:
@@ -288,13 +420,13 @@ sn=0023456789 \
 ip=dhcp \
 loglevel=4 \
 console=ttyAMA0,115200 \
-init=/init ohos.boot.hardware=virt \
+init=/bin/init ohos.boot.hardware=virt \
 root=/dev/ram0 rw \
 ohos.required_mount.system=/dev/block/vde@/usr@ext4@ro,barrier=1@wait,required \
 ohos.required_mount.vendor=/dev/block/vdd@/vendor@ext4@ro,barrier=1@wait,required \
 ohos.required_mount.sys_prod=/dev/block/vdc@/sys_prod@ext4@rw,barrier=1@wait,required \
 ohos.required_mount.chip_prod=/dev/block/vdb@/chip_prod@ext4@rw,barrier=1@wait,required \
-ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600\""
+ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,required,reservedsize=104857600\""
 
 echo "=== QEMU Command ===" >&2
 echo "$QEMU_CMD" >&2
@@ -314,6 +446,8 @@ def main() -> None:
     create_product(root)
     ensure_device_gni(root)
     ensure_hardware_group(root)
+    ensure_armv7a_kernel_config(root)
+    ensure_armv7a_libvpx_config(root)
     ensure_whitelist(root)
     print("armv7a_virt full overlay applied")
 

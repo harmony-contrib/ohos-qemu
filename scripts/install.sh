@@ -10,6 +10,7 @@ PLATFORM="${OHOS_QEMU_PLATFORM:-auto}"
 ARCH="${OHOS_QEMU_ARCH:-auto}"
 FORCE=0
 KEEP_ARCHIVE=0
+PACKAGE_PARTS=()
 
 usage() {
   cat <<'USAGE'
@@ -21,7 +22,7 @@ Network installer for OpenHarmony QEMU image packages.
 Options:
   --prefix DIR       Install directory. Default: $HOME/.ohos-qemu
   --platform NAME    Host platform: auto, linux, macos, windows
-  --arch ARCH        Guest/package architecture: auto, arm64, aarch64, x86_64
+  --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64
   --repo URL         GitHub repository URL. Default: https://github.com/harmony-contrib/ohos-qemu
   --ref REF          Git ref to download from. Default: main
   --download-base-url URL
@@ -144,6 +145,15 @@ download_file() {
   fi
 }
 
+artifact_url() {
+  local name="$1"
+  if [ -n "${DOWNLOAD_BASE_URL}" ]; then
+    printf '%s\n' "${DOWNLOAD_BASE_URL%/}/${name}"
+  else
+    printf '%s\n' "${REPO_URL%/}/raw/${GIT_REF}/artifacts/${name}"
+  fi
+}
+
 sha256_file() {
   local file="$1"
   if command -v sha256sum >/dev/null 2>&1; then
@@ -177,7 +187,10 @@ case "${ARCH}" in
   aarch64)
     ARCH="arm64"
     ;;
-  arm64|x86_64)
+  armv7)
+    ARCH="armv7a"
+    ;;
+  arm64|armv7a|x86_64)
     ;;
   *)
     echo "unsupported --arch: ${ARCH}" >&2
@@ -190,6 +203,19 @@ case "${ARCH}" in
     PACKAGE="openharmony-qemu-arm64-arm64_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-arm64-arm64_virt"
     EXPECTED_SHA256="e327603801c01b1042cb887fa998e0e89a7e30151de589be8071f905bdf925ce"
+    ;;
+  armv7a)
+    PACKAGE="openharmony-qemu-armv7a-armv7a_virt.tar.gz"
+    PACKAGE_DIR="openharmony-qemu-armv7a-armv7a_virt"
+    EXPECTED_SHA256="98dda34c8120948605d36d3f2d546086a2c8e2370e24aa8f06f95d6eaac3ce25"
+    PACKAGE_PARTS=(
+      "${PACKAGE}.part-00"
+      "${PACKAGE}.part-01"
+      "${PACKAGE}.part-02"
+      "${PACKAGE}.part-03"
+      "${PACKAGE}.part-04"
+      "${PACKAGE}.part-05"
+    )
     ;;
   x86_64)
     PACKAGE="openharmony-qemu-x86_64-x86_64_virt.tar.gz"
@@ -210,11 +236,7 @@ case "${PLATFORM}" in
     ;;
 esac
 
-if [ -n "${DOWNLOAD_BASE_URL}" ]; then
-  RAW_URL="${DOWNLOAD_BASE_URL%/}/${PACKAGE}"
-else
-  RAW_URL="${REPO_URL%/}/raw/${GIT_REF}/artifacts/${PACKAGE}"
-fi
+RAW_URL="$(artifact_url "${PACKAGE}")"
 INSTALL_DIR="${PREFIX}/${PACKAGE_DIR}"
 ARCHIVE_DIR="${PREFIX}/downloads"
 ARCHIVE_PATH="${ARCHIVE_DIR}/${PACKAGE}"
@@ -237,11 +259,26 @@ if [ -e "${INSTALL_DIR}" ] && [ "${FORCE}" != "1" ]; then
 fi
 
 mkdir -p "${PREFIX}" "${ARCHIVE_DIR}"
-tmp_archive="${ARCHIVE_PATH}.tmp.$$"
-trap 'rm -f "${tmp_archive}"' EXIT
+tmp_prefix="${ARCHIVE_PATH}.tmp.$$"
+tmp_archive="${tmp_prefix}"
+trap 'rm -f "${tmp_prefix}" "${tmp_prefix}".part-*' EXIT
 
-echo "downloading: ${RAW_URL}"
-download_file "${RAW_URL}" "${tmp_archive}"
+if [ "${#PACKAGE_PARTS[@]}" -gt 0 ]; then
+  : > "${tmp_archive}"
+  part_index=0
+  for part in "${PACKAGE_PARTS[@]}"; do
+    part_tmp="${tmp_prefix}.part-${part_index}"
+    part_url="$(artifact_url "${part}")"
+    echo "downloading: ${part_url}"
+    download_file "${part_url}" "${part_tmp}"
+    cat "${part_tmp}" >> "${tmp_archive}"
+    rm -f "${part_tmp}"
+    part_index=$((part_index + 1))
+  done
+else
+  echo "downloading: ${RAW_URL}"
+  download_file "${RAW_URL}" "${tmp_archive}"
+fi
 
 ACTUAL_SHA256="$(sha256_file "${tmp_archive}")"
 if [ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]; then

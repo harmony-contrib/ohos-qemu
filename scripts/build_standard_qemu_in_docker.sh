@@ -186,6 +186,9 @@ install_deps() {
     libc6-dev-i386 \
     libelf-dev \
     libfl-dev \
+    libgmp-dev \
+    libmpc-dev \
+    libmpfr-dev \
     libncurses5 \
     libncurses5-dev \
     libncursesw5-dev \
@@ -475,13 +478,21 @@ download_prebuilts() {
 
 build_product() {
   local product="$1"
+  local kernel_obj="${product}"
+  local kernel_image="Image"
+  if [ "${product}" = "armv7a_virt" ]; then
+    kernel_obj="arm_virt"
+    kernel_image="zImage"
+  elif [ "${product}" = "x86_64_virt" ]; then
+    kernel_image="bzImage"
+  fi
   cd "${OHOS_ROOT}"
   export CCACHE_DIR="${CACHE_ROOT}/ccache"
   ccache -M 100G >/dev/null 2>&1 || true
   if [ "${CLEAN_KERNEL_OBJ}" = "1" ]; then
     rm -rf "${OHOS_ROOT}/out/KERNEL_OBJ"
-    rm -rf "${OHOS_ROOT}/out/kernel/OBJ/${product}"
-    rm -f "${OHOS_ROOT}/out/${product}/packages/phone/images/Image"
+    rm -rf "${OHOS_ROOT}/out/kernel/OBJ/${kernel_obj}"
+    rm -f "${OHOS_ROOT}/out/${product}/packages/phone/images/${kernel_image}"
   fi
 
   local build_args=(
