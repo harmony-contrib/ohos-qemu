@@ -1,2 +1,3 @@
 .tmp/
 ci/ohos-test-runner-smoke/target/
+__pycache__/

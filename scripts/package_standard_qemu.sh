@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
+export LANG=C
 
 usage() {
   cat <<'USAGE'
@@ -7,6 +9,7 @@ Usage:
   package_standard_qemu.sh --source-root ROOT --product PRODUCT --output-dir DIR
 
 Products:
+  armv7a_virt
   x86_64_virt
   arm64_virt
   qemu-arm64-linux-min
@@ -51,7 +54,205 @@ if [ -z "${SOURCE_ROOT}" ] || [ -z "${PRODUCT}" ] || [ -z "${OUTPUT_DIR}" ]; the
   exit 2
 fi
 
+sed_in_place_extended() {
+  local expr="$1"
+  local file="$2"
+  if sed --version >/dev/null 2>&1; then
+    sed -i -E "${expr}" "${file}"
+  else
+    sed -i '' -E "${expr}" "${file}"
+  fi
+}
+
+seed_standard_userdata_dirs() {
+  local image="$1"
+  if [ "${SEED_USERDATA_DIRS:-1}" != "1" ]; then
+    return
+  fi
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot seed standard userdata directories" >&2
+    exit 1
+  fi
+
+  local dirs=(
+    /service
+    /service/el0
+    /service/el0/public
+    /service/el1
+    /service/el1/public
+    /service/el1/public/startup
+    /service/el1/public/storage_daemon
+    /service/el1/public/storage_daemon/radar
+    /service/el1/startup
+    /service/el2
+    /service/el2/public
+    /service/hnp
+    /storage
+    /storage/el1
+    /storage/el1/base
+    /storage/el1/bundle
+    /storage/el1/database
+    /storage/el1/files
+    /storage/el2
+    /storage/el2/base
+    /storage/el2/cloud
+    /storage/el2/database
+    /storage/el2/distributedfiles
+    /storage/el2/group
+    /storage/el2/log
+    /storage/el2/media
+    /storage/el2/share
+    /storage/el2/files
+    /storage/el3
+    /storage/el3/base
+    /storage/el3/database
+    /storage/el3/files
+    /storage/el3/group
+    /storage/el4
+    /storage/el4/base
+    /storage/el4/database
+    /storage/el4/files
+    /storage/el4/group
+    /storage/el5
+    /storage/el5/base
+    /storage/el5/database
+    /storage/el5/files
+    /storage/el5/group
+    /app
+    /app/el1
+    /app/el1/bundle
+    /app/el1/bundle/public
+    /app/el2
+    /app/el2/100
+    /app/el2/100/base
+    /app/el2/100/database
+    /app/el2/100/log
+    /chipset
+    /chipset/el1
+    /chipset/el1/public
+    /data
+    /hdcd
+    /local
+    /log
+    /log/audiodump
+    /log/bbox
+    /log/crash
+    /log/faultlog
+    /log/hiaudit
+    /log/hilog
+    /log/hiperflog
+    /log/hitrace
+    /log/hiview
+    /log/hiview/unified_collection
+    /log/hiview/unified_collection/trace
+    /log/hiview/unified_collection/trace/telemetry
+    /log/hiview/unified_collection/trace/telemetry/share
+    /log/reliability
+    /log/reliability/bbox
+    /log/reliability/bbox/panic_log
+    /log/reliability/resource_leak
+    /log/sanitizer
+    /log/startup
+    /nfc
+    /system
+    /update
+    /updater
+    /vendor
+    /vendor/log
+  )
+
+  local dir
+  for dir in "${dirs[@]}"; do
+    debugfs -w -R "mkdir ${dir}" "${image}" >/dev/null 2>&1 || true
+  done
+}
+
+replace_or_append_param() {
+  local file="$1"
+  local key="$2"
+  local line="$3"
+
+  if grep -q -E "^[[:space:]]*${key}[[:space:]]*=" "${file}"; then
+    sed_in_place_extended "s|^[[:space:]]*${key}[[:space:]]*=.*$|${line}|" "${file}"
+  else
+    printf '%s\n' "${line}" >> "${file}"
+  fi
+}
+
+inject_standard_qemu_params() {
+  local image="$1"
+  if [ "${INJECT_QEMU_RUNTIME_PARAMS:-1}" != "1" ]; then
+    return
+  fi
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot inject QEMU runtime params" >&2
+    exit 1
+  fi
+
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir}"' RETURN
+
+  local ohos_para="${tmpdir}/ohos.para"
+  local hdc_para="${tmpdir}/hdc.para"
+  debugfs -R "cat /etc/param/ohos.para" "${image}" > "${ohos_para}" 2>/dev/null || : > "${ohos_para}"
+  debugfs -R "cat /etc/param/hdc.para" "${image}" > "${hdc_para}" 2>/dev/null || : > "${hdc_para}"
+
+  if [ "${INJECT_DEVELOPER_MODE_PARAM:-0}" = "1" ]; then
+    replace_or_append_param "${ohos_para}" "const.security.developermode.state" "const.security.developermode.state=true"
+  fi
+  replace_or_append_param "${hdc_para}" "persist.hdc.mode.usb" 'persist.hdc.mode.usb = "disable"'
+  replace_or_append_param "${hdc_para}" "persist.hdc.mode.tcp" 'persist.hdc.mode.tcp = "enable"'
+  replace_or_append_param "${hdc_para}" "persist.hdc.mode.uart" 'persist.hdc.mode.uart = "disable"'
+  replace_or_append_param "${hdc_para}" "persist.hdc.mode" 'persist.hdc.mode = "tcp"'
+  replace_or_append_param "${hdc_para}" "persist.hdc.port" 'persist.hdc.port = "5555"'
+
+  debugfs -w -R "rm /etc/param/ohos.para" "${image}" >/dev/null 2>&1 || true
+  debugfs -w -R "write ${ohos_para} /etc/param/ohos.para" "${image}" >/dev/null
+  debugfs -w -R "rm /etc/param/hdc.para" "${image}" >/dev/null 2>&1 || true
+  debugfs -w -R "write ${hdc_para} /etc/param/hdc.para" "${image}" >/dev/null
+  rm -rf "${tmpdir}"
+  trap - RETURN
+}
+
+install_developer_policy() {
+  local image="$1"
+  local source_root="$2"
+  local product="$3"
+
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot install developer SELinux policy" >&2
+    exit 1
+  fi
+
+  local stat_output
+  stat_output="$(debugfs -R "stat /etc/selinux/targeted/policy/developer_policy" "${image}" 2>&1 || true)"
+  if ! printf '%s\n' "${stat_output}" | grep -q "File not found"; then
+    return
+  fi
+
+  local policy="${source_root}/out/${product}/obj/base/security/selinux_adapter/developer/policy.31"
+  if [ ! -f "${policy}" ]; then
+    policy="${source_root}/out/${product}/obj/base/security/selinux_adapter/developer/developer_policy"
+  fi
+  if [ ! -f "${policy}" ]; then
+    echo "missing developer SELinux policy for ${product}" >&2
+    echo "expected: ${source_root}/out/${product}/obj/base/security/selinux_adapter/developer/policy.31" >&2
+    exit 1
+  fi
+
+  debugfs -w -R "write ${policy} /etc/selinux/targeted/policy/developer_policy" "${image}" >/dev/null
+}
+
 case "${PRODUCT}" in
+  armv7a_virt)
+    IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
+    GUEST_ARCH="armv7a"
+    KERNEL_FILE="zImage"
+    QEMU_BIN_UNIX="qemu-system-arm"
+    QEMU_BIN_WIN="qemu-system-arm.exe"
+    OFFICIAL_QEMU_RUN="${SOURCE_ROOT}/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh"
+    ;;
   x86_64_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/x86_64_virt/packages/phone/images"
     GUEST_ARCH="x86_64"
@@ -102,7 +303,7 @@ for file in "${COMMON_IMAGES[@]}"; do
   fi
 done
 
-if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ]; then
+if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
   for file in "${FULL_ONLY_IMAGES[@]}"; do
     if [ ! -f "${IMAGE_DIR}/${file}" ]; then
       echo "missing required full image: ${IMAGE_DIR}/${file}" >&2
@@ -123,10 +324,13 @@ for file in "${COMMON_IMAGES[@]}"; do
   cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"
 done
 
-if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ]; then
+if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
   for file in "${FULL_ONLY_IMAGES[@]}"; do
     cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"
   done
+  install_developer_policy "${IMAGES_OUT}/system.img" "${SOURCE_ROOT}" "${PRODUCT}"
+  inject_standard_qemu_params "${IMAGES_OUT}/system.img"
+  seed_standard_userdata_dirs "${IMAGES_OUT}/userdata.img"
 fi
 
 cat > "${PACKAGE_DIR}/manifest.json" <<EOF
@@ -157,13 +361,16 @@ The default display is VNC on port 5921. Connect a VNC client to
 where supported by the guest.
 EOF
 
-if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ]; then
+if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
   if [ ! -f "${OFFICIAL_QEMU_RUN}" ]; then
     echo "missing official qemu_run.sh: ${OFFICIAL_QEMU_RUN}" >&2
     exit 1
   fi
   cp "${OFFICIAL_QEMU_RUN}" "${LAUNCH_OUT}/qemu_run.sh"
-  sed -i -E 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|-display none -monitor none|-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none|g' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|(-display none[[:space:]]*)$|-device virtio-gpu-pci,xres=800,yres=500 \1|g' "${LAUNCH_OUT}/qemu_run.sh"
   chmod +x "${LAUNCH_OUT}/qemu_run.sh"
   cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -226,7 +433,7 @@ switch ($RequestedAccel) {
 $DisplayType = if ($env:QEMU_DISPLAY) { $env:QEMU_DISPLAY } else { "sdl" }
 switch ($DisplayType) {
   "none" {
-    $DisplayArgs = @("-display", "none", "-serial", "mon:stdio")
+    $DisplayArgs = @("-device", "virtio-gpu-pci,xres=800,yres=500", "-display", "none", "-serial", "mon:stdio")
   }
   "vnc" {
     $DisplayArgs = @("-device", "virtio-gpu-pci,xres=800,yres=500", "-vnc", ":21", "-serial", "stdio")
@@ -240,7 +447,7 @@ switch ($DisplayType) {
   }
 }
 
-$KernelBootArgs = "console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
+$KernelBootArgs = "console=ttyS0,115200 sn=0023456789 init=/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
 
 $ArgsList = @(
   "-machine", "q35",
@@ -296,7 +503,7 @@ exec qemu-system-aarch64 \
   -device virtio-blk-device,drive=system \
   -drive if=none,file="${IMG}/updater.img",format=raw,id=updater,index=0 \
   -device virtio-blk-device,drive=updater \
-  -append "console=ttyAMA0 init=/bin/init hardware=qemu.arm.linux root=/dev/ram0 rw sn=0023456789 ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required"
+  -append "console=ttyAMA0 init=/init hardware=qemu.arm.linux root=/dev/ram0 rw sn=0023456789 ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required"
 EOF
   cp "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command"
 fi

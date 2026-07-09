@@ -10,9 +10,9 @@ on:
         type: choice
         options:
           - all
+          - armv7a_virt
           - x86_64_virt
           - arm64_virt
-          - qemu-arm64-linux-min
       manifest_url:
         description: "OpenHarmony manifest repository"
         required: true
@@ -58,6 +58,9 @@ jobs:
   build:
     name: Build and package ${{ inputs.product }}
     runs-on: ${{ inputs.runner }}
+    container:
+      image: ubuntu:22.04
+      options: --user root
     timeout-minutes: 720
 
     env:
@@ -65,24 +68,38 @@ jobs:
       PACKAGE_OUT: ${{ github.workspace }}/qemu-packages
       PC_IMAGE_OUT: ${{ github.workspace }}/pc-images
       CCACHE_DIR: ${{ github.workspace }}/.ccache
+      DEBIAN_FRONTEND: noninteractive
 
     steps:
+      - name: Install checkout dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates \
+            git \
+            git-lfs
+
       - name: Checkout packaging repository
         uses: actions/checkout@v4
 
-      - name: Free runner disk space
+      - name: Show container disk space
         shell: bash
         run: |
           set -euo pipefail
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          . /etc/os-release
+          test "${ID}" = "ubuntu"
+          test "${VERSION_ID}" = "22.04"
+          test -f /.dockerenv
           df -h
 
-      - name: Install host dependencies
+      - name: Install build dependencies
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          apt-get update
+          apt-get install -y --no-install-recommends \
             autoconf \
             bison \
             build-essential \
@@ -116,7 +133,6 @@ jobs:
             python3-setuptools \
             qemu-system-x86 \
             qemu-utils \
-            repo \
             ruby \
             scons \
             unzip \
@@ -124,6 +140,13 @@ jobs:
             xz-utils \
             zip \
             zlib1g-dev
+
+      - name: Install repo tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://gitee.com/oschina/repo/raw/fork_flow/repo-py3 -o /usr/local/bin/repo
+          chmod +x /usr/local/bin/repo
 
       - name: Configure ccache
         shell: bash
@@ -149,9 +172,9 @@ jobs:
           set -euo pipefail
           case "${{ inputs.product }}" in
             all)
-              products="qemu-arm64-linux-min x86_64_virt arm64_virt"
+              products="armv7a_virt x86_64_virt arm64_virt"
               ;;
-            x86_64_virt|arm64_virt|qemu-arm64-linux-min)
+            armv7a_virt|x86_64_virt|arm64_virt)
               products="${{ inputs.product }}"
               ;;
             *)
@@ -190,6 +213,15 @@ jobs:
           cd "${OHOS_ROOT}"
           ./build/prebuilts_download.sh
 
+      - name: Apply armv7a full overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ " ${{ steps.products.outputs.list }} " == *" armv7a_virt "* ]]; then
+            bash "${GITHUB_WORKSPACE}/overlays/armv7a_virt_full/apply.sh" \
+              --source-root "${OHOS_ROOT}"
+          fi
+
       - name: Build selected products
         shell: bash
         run: |
@@ -225,14 +257,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "${PC_IMAGE_OUT}"
-          sudo modprobe loop || true
-          "${GITHUB_WORKSPACE}/scripts/make_pc_uefi_disk.sh" \
-            --source-root "${OHOS_ROOT}" \
-            --product x86_64_virt \
-            --output "${PC_IMAGE_OUT}/openharmony-pc-x86_64.img" \
-            --disk-size "${{ inputs.pc_disk_size }}"
-          find "${PC_IMAGE_OUT}" -maxdepth 1 -type f -print
+          echo "build_pc_uefi is not supported in the Docker Ubuntu 22.04 build job." >&2
+          echo "Run scripts/make_pc_uefi_disk.sh in a privileged Linux environment instead." >&2
+          exit 1
 
       - name: Show ccache stats
         if: always()

@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  build_standard_qemu_in_docker.sh [arm64_virt] [x86_64_virt]
+  build_standard_qemu_in_docker.sh [armv7a_virt] [arm64_virt] [x86_64_virt]
 
 Default products:
   arm64_virt x86_64_virt
@@ -34,11 +34,27 @@ Environment:
   SKIP_REPO_SYNC      Reuse existing checkout without repo sync, default: 0
   SKIP_PREBUILTS      Reuse existing prebuilts, default: 0
   SKIP_GIT_LFS        Skip git lfs pull, default: 0
-  GIT_LFS_PATHS       Space-separated paths to fetch with Git LFS, default: foundation/arkui/ace_engine
+  GIT_LFS_PATHS       Space-separated paths to fetch with Git LFS, default:
+                       applications/standard/hap base/web/webview
+                       foundation/arkui/ace_engine
+  QEMU_FIX_ACCESS_TOKENID_ABI
+                       Backport access_tokenid ABI used by current userspace, default: 1
+  QEMU_FIX_SYSTEM_COMPAT_SYMLINKS
+                       Map ramdisk /system to /usr/system, add
+                       /bin/init -> /system/bin/init, and add
+                       /chipset -> /vendor for QEMU, default: 1
+  ARMV7A_FULL_OVERLAY Apply experimental armv7a_virt full overlay, default: 1
 
-This script intentionally does not patch the OpenHarmony source tree. It builds
-the official master full QEMU products and delegates launch command details to
-vendor/ohemu qemu_run.sh through the packager.
+Build environment:
+  This script is intended to run inside a Docker container based on
+  ubuntu:22.04. It refuses other environments before touching the OpenHarmony
+  checkout.
+
+This script keeps OpenHarmony changes narrow and repeatable: full QEMU products
+keep SELinux, seccomp, screen, and critical-service behavior enabled by default.
+The default source-side changes are limited to the QEMU rootfs /system
+compatibility path and the access_tokenid kernel ABI that current OpenHarmony
+userspace expects from the QEMU kernels.
 USAGE
 }
 
@@ -49,6 +65,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
+ARMV7A_OVERLAY="${SCRIPT_DIR}/../overlays/armv7a_virt_full/apply.sh"
 
 if [ ! -x "${PACKAGER}" ]; then
   echo "missing executable packager: ${PACKAGER}" >&2
@@ -82,7 +99,10 @@ SKIP_APT="${SKIP_APT:-0}"
 SKIP_REPO_SYNC="${SKIP_REPO_SYNC:-0}"
 SKIP_PREBUILTS="${SKIP_PREBUILTS:-0}"
 SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
-GIT_LFS_PATHS="${GIT_LFS_PATHS:-foundation/arkui/ace_engine}"
+GIT_LFS_PATHS="${GIT_LFS_PATHS:-applications/standard/hap base/web/webview foundation/arkui/ace_engine}"
+QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI:-${QEMU_FIX_ACCESS_TOKENID_SPM:-1}}"
+QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS:-1}"
+ARMV7A_FULL_OVERLAY="${ARMV7A_FULL_OVERLAY:-1}"
 PRODUCTS=("$@")
 
 if [ "${#PRODUCTS[@]}" -eq 0 ]; then
@@ -91,7 +111,7 @@ fi
 
 for product in "${PRODUCTS[@]}"; do
   case "${product}" in
-    arm64_virt|x86_64_virt) ;;
+    armv7a_virt|arm64_virt|x86_64_virt) ;;
     *)
       echo "unsupported product for this no-patch build script: ${product}" >&2
       exit 2
@@ -99,10 +119,28 @@ for product in "${PRODUCTS[@]}"; do
   esac
 done
 
-if [ "$(uname -s)" != "Linux" ]; then
-  echo "this script must run inside a Linux container or host" >&2
-  exit 1
-fi
+require_docker_ubuntu_2204() {
+  if [ "$(uname -s)" != "Linux" ]; then
+    echo "this script must run inside Docker on Ubuntu 22.04" >&2
+    exit 1
+  fi
+  if [ ! -r /etc/os-release ]; then
+    echo "missing /etc/os-release; expected Docker image ubuntu:22.04" >&2
+    exit 1
+  fi
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  if [ "${ID:-}" != "ubuntu" ] || [ "${VERSION_ID:-}" != "22.04" ]; then
+    echo "unsupported build OS: ${PRETTY_NAME:-unknown}; expected ubuntu:22.04" >&2
+    exit 1
+  fi
+  if [ ! -f /.dockerenv ] && ! grep -qaE '/(docker|containerd|kubepods)(/|$)' /proc/1/cgroup 2>/dev/null; then
+    echo "this build must run inside Docker, not directly on the host" >&2
+    exit 1
+  fi
+}
+
+require_docker_ubuntu_2204
 
 install_deps() {
   if [ "${SKIP_APT}" = "1" ]; then
@@ -166,7 +204,6 @@ install_deps() {
     python3-pip \
     python3-setuptools \
     python3-venv \
-    repo \
     rsync \
     ruby \
     scons \
@@ -175,6 +212,14 @@ install_deps() {
     wget \
     zip \
     zlib1g-dev
+
+  command -v git >/dev/null
+  command -v ssh >/dev/null
+  if [ ! -f /usr/include/FlexLexer.h ]; then
+    echo "missing /usr/include/FlexLexer.h; install libfl-dev in the Docker image" >&2
+    exit 1
+  fi
+
   git lfs install --system >/dev/null 2>&1 || true
 }
 
@@ -356,14 +401,12 @@ sync_git_lfs_objects() {
   echo "sync Git LFS objects: ${GIT_LFS_PATHS}"
   local path
   for path in ${GIT_LFS_PATHS}; do
-    if [ ! -d "${OHOS_ROOT}/${path}/.git" ]; then
+    if [ ! -e "${OHOS_ROOT}/${path}/.git" ]; then
       echo "skip git lfs path without git metadata: ${path}"
       continue
     fi
-    if git -C "${OHOS_ROOT}/${path}" lfs ls-files 2>/dev/null | grep -q .; then
-      echo "git lfs pull: ${path}"
-      git -C "${OHOS_ROOT}/${path}" lfs pull
-    fi
+    echo "git lfs pull: ${path}"
+    git -C "${OHOS_ROOT}/${path}" lfs pull
   done
 }
 
@@ -437,6 +480,8 @@ build_product() {
   ccache -M 100G >/dev/null 2>&1 || true
   if [ "${CLEAN_KERNEL_OBJ}" = "1" ]; then
     rm -rf "${OHOS_ROOT}/out/KERNEL_OBJ"
+    rm -rf "${OHOS_ROOT}/out/kernel/OBJ/${product}"
+    rm -f "${OHOS_ROOT}/out/${product}/packages/phone/images/Image"
   fi
 
   local build_args=(
@@ -458,11 +503,534 @@ build_product() {
 
 package_product() {
   local product="$1"
+  validate_prebuilt_haps "${product}"
   bash "${PACKAGER}" \
     --source-root "${OHOS_ROOT}" \
     --product "${product}" \
     --output-dir "${PACKAGE_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/package_${product}.log"
+}
+
+validate_prebuilt_haps() {
+  local product="$1"
+  local image_dir="${OHOS_ROOT}/out/${product}/packages/phone/images"
+  local system_app_dir="${OHOS_ROOT}/out/${product}/packages/phone/system/app"
+  local pointer_list="${CACHE_ROOT}/logs/lfs_pointer_haps_${product}.txt"
+
+  if [ ! -d "${system_app_dir}" ]; then
+    return
+  fi
+
+  : > "${pointer_list}"
+  while IFS= read -r -d '' hap; do
+    if head -c 64 "${hap}" | grep -q 'version https://git-lfs.github.com/spec'; then
+      printf '%s\n' "${hap}" >> "${pointer_list}"
+    fi
+  done < <(find "${system_app_dir}" -type f -name '*.hap' -print0)
+
+  if [ -s "${pointer_list}" ]; then
+    echo "Git LFS pointer HAPs found in ${system_app_dir}; run git lfs pull for applications/standard/hap and rebuild ${product}." >&2
+    cat "${pointer_list}" >&2
+    exit 1
+  fi
+
+  if [ -d "${image_dir}" ]; then
+    find "${image_dir}" -maxdepth 1 -type f -name '*.img' -size 0 -print -quit | grep -q . && {
+      echo "empty image artifact found under ${image_dir}" >&2
+      exit 1
+    }
+  fi
+}
+
+product_list_contains() {
+  local expected="$1"
+  local product
+  for product in "${PRODUCTS[@]}"; do
+    if [ "${product}" = "${expected}" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+apply_armv7a_full_overlay() {
+  if ! product_list_contains armv7a_virt; then
+    return
+  fi
+  if [ "${ARMV7A_FULL_OVERLAY}" != "1" ]; then
+    echo "armv7a_virt selected but ARMV7A_FULL_OVERLAY=${ARMV7A_FULL_OVERLAY}; skip overlay"
+    return
+  fi
+  if [ ! -f "${ARMV7A_OVERLAY}" ]; then
+    echo "missing armv7a overlay: ${ARMV7A_OVERLAY}" >&2
+    exit 1
+  fi
+  bash "${ARMV7A_OVERLAY}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_armv7a_virt_full_overlay.log"
+}
+
+configure_qemu_product_features() {
+  if [ "${QEMU_FIX_ACCESS_TOKENID_ABI}" != "1" ] && [ "${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}" != "1" ]; then
+    return
+  fi
+
+  cd "${OHOS_ROOT}"
+  QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI}" \
+    QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}" \
+    python3 - <<'PY'
+import os
+from pathlib import Path
+
+fix_access_tokenid_abi = os.environ.get("QEMU_FIX_ACCESS_TOKENID_ABI") == "1"
+fix_system_compat_symlinks = os.environ.get("QEMU_FIX_SYSTEM_COMPAT_SYMLINKS") == "1"
+
+if fix_system_compat_symlinks:
+    path = Path("build/ohos/images/build_image.py")
+    if path.exists():
+        text = path.read_text()
+        original = text
+        text = text.replace("os.symlink('/usr', _system_path)", "os.symlink('/usr/system', _system_path)")
+        text = text.replace("os.makedirs(_system_path, exist_ok=True)", "os.symlink('/usr/system', _system_path)")
+        if "def _prepare_system_seccomp_compat(" not in text:
+            marker = '''def _prepare_updater(updater_path: str, target_cpu: str):
+'''
+            helper = '''def _prepare_system_seccomp_compat(system_path: str, target_cpu: str):
+    if target_cpu not in ('arm64', 'x86_64', 'riscv64'):
+        return
+    _lib64_seccomp = os.path.join(system_path, 'lib64', 'seccomp')
+    _lib_seccomp = os.path.join(system_path, 'lib', 'seccomp')
+    if not os.path.isdir(_lib64_seccomp) or os.path.lexists(_lib_seccomp):
+        return
+    os.makedirs(os.path.dirname(_lib_seccomp), exist_ok=True)
+    os.symlink('../lib64/seccomp', _lib_seccomp)
+
+
+'''
+            text = text.replace(marker, helper + marker, 1)
+        text = text.replace(
+            "    if args.image_name == 'system':\n        _prepare_root(args.input_path, args.target_cpu)\n",
+            "    if args.image_name == 'system':\n        _prepare_root(args.input_path, args.target_cpu)\n        _prepare_system_seccomp_compat(args.input_path, args.target_cpu)\n",
+            1,
+        )
+        old = '''def _prepare_ramdisk(ramdisk_path: str):
+    _dir_list = ['bin', 'dev', 'etc', 'lib', 'proc', 'sys', 'system', 'usr', 'mnt', 'storage']
+    for _dir_name in _dir_list:
+        _path = os.path.join(ramdisk_path, _dir_name)
+        if os.path.exists(_path):
+            continue
+        os.makedirs(_path, exist_ok=True)
+    if not os.path.exists(os.path.join(ramdisk_path, 'init')):
+        os.symlink('bin/init_early', os.path.join(ramdisk_path, 'init'))
+'''
+        new = '''def _prepare_ramdisk(ramdisk_path: str):
+    _dir_list = ['bin', 'dev', 'etc', 'lib', 'proc', 'sys', 'system', 'usr', 'mnt', 'storage']
+    for _dir_name in _dir_list:
+        _path = os.path.join(ramdisk_path, _dir_name)
+        if os.path.exists(_path):
+            continue
+        os.makedirs(_path, exist_ok=True)
+    _system_path = os.path.join(ramdisk_path, 'system')
+    if os.path.lexists(_system_path):
+        if not os.path.islink(_system_path) or os.readlink(_system_path) != '/usr/system':
+            if os.path.isdir(_system_path) and not os.path.islink(_system_path):
+                os.rmdir(_system_path)
+            else:
+                os.unlink(_system_path)
+    if not os.path.lexists(_system_path):
+        os.symlink('/usr/system', _system_path)
+    _chipset_path = os.path.join(ramdisk_path, 'chipset')
+    if not os.path.exists(_chipset_path):
+        os.symlink('/vendor', _chipset_path)
+    _bin_init_path = os.path.join(ramdisk_path, 'bin', 'init')
+    if os.path.lexists(_bin_init_path):
+        if not os.path.islink(_bin_init_path) or os.readlink(_bin_init_path) != '/system/bin/init':
+            if os.path.isdir(_bin_init_path) and not os.path.islink(_bin_init_path):
+                os.rmdir(_bin_init_path)
+            else:
+                os.unlink(_bin_init_path)
+    if not os.path.lexists(_bin_init_path):
+        os.symlink('/system/bin/init', _bin_init_path)
+    if not os.path.exists(os.path.join(ramdisk_path, 'init')):
+        os.symlink('bin/init_early', os.path.join(ramdisk_path, 'init'))
+'''
+        if old in text:
+            text = text.replace(old, new, 1)
+        elif "_bin_init_path = os.path.join(ramdisk_path, 'bin', 'init')" not in text:
+            marker = """    _chipset_path = os.path.join(ramdisk_path, 'chipset')
+    if not os.path.exists(_chipset_path):
+        os.symlink('/vendor', _chipset_path)
+"""
+            insert = marker + """    _bin_init_path = os.path.join(ramdisk_path, 'bin', 'init')
+    if os.path.lexists(_bin_init_path):
+        if not os.path.islink(_bin_init_path) or os.readlink(_bin_init_path) != '/system/bin/init':
+            if os.path.isdir(_bin_init_path) and not os.path.islink(_bin_init_path):
+                os.rmdir(_bin_init_path)
+            else:
+                os.unlink(_bin_init_path)
+    if not os.path.lexists(_bin_init_path):
+        os.symlink('/system/bin/init', _bin_init_path)
+"""
+            text = text.replace(marker, insert, 1)
+        if text != original:
+            path.write_text(text)
+            print(f"configured {path}: map QEMU /system to /usr/system and add QEMU init/chipset symlinks")
+
+if fix_access_tokenid_abi:
+    for version in ["5.10", "6.6"]:
+        header = Path(f"kernel/linux/linux-{version}/drivers/accesstokenid/access_tokenid.h")
+        source = Path(f"kernel/linux/linux-{version}/drivers/accesstokenid/access_tokenid.c")
+        if not header.exists() or not source.exists():
+            continue
+
+        text = header.read_text()
+        original = text
+        old = '''enum {
+\tGET_TOKEN_ID = 1,
+\tSET_TOKEN_ID,
+\tGET_FTOKEN_ID,
+\tSET_FTOKEN_ID,
+\tADD_PERMISSIONS,
+\tREMOVE_PERMISSIONS,
+\tGET_PERMISSION,
+\tSET_PERMISSION,
+\tACCESS_TOKENID_MAX_NR
+};
+'''
+        new = '''enum {
+\tGET_TOKEN_ID = 1,
+\tSET_TOKEN_ID,
+\tGET_FTOKEN_ID,
+\tSET_FTOKEN_ID,
+\tADD_PERMISSIONS,
+\tREMOVE_PERMISSIONS,
+\tGET_PERMISSION,
+\tSET_PERMISSION,
+\tGET_CLOSEST_HAP_TOKENID,
+\tGET_FAMILY_TOKENIDS,
+\tGET_ALL_PERMISSIONS = 11,
+\tSET_USERID,
+\tGET_USERID,
+\tADD_SPM_ENTRIES = 16,
+\tSET_SPM_ENTRIES,
+\tGET_SPM_ENTRY,
+\tREMOVE_SPM_ENTRY,
+\tSET_REFCNT_UID,
+\tGET_REFCNT_UID,
+\tSET_REFCNT_TOKENID,
+\tGET_REFCNT_TOKENID,
+\tCLEAR_REFCNT_SPAWNID,
+\tGET_SPM_VERSION,
+\tSET_HAP_PTOKENID = 0x1A,
+\tACCESS_TOKENID_MAX_NR
+};
+'''
+        if old in text:
+            text = text.replace(old, new, 1)
+        if "\tSET_USERID," not in text:
+            text = text.replace(
+                "\tGET_ALL_PERMISSIONS = 11,\n\tADD_SPM_ENTRIES = 16,\n",
+                "\tGET_CLOSEST_HAP_TOKENID,\n\tGET_FAMILY_TOKENIDS,\n\tGET_ALL_PERMISSIONS = 11,\n\tSET_USERID,\n\tGET_USERID,\n\tADD_SPM_ENTRIES = 16,\n",
+                1,
+            )
+        if "\tSET_HAP_PTOKENID = 0x1A," not in text:
+            text = text.replace(
+                "\tGET_SPM_VERSION,\n\tACCESS_TOKENID_MAX_NR\n",
+                "\tGET_SPM_VERSION,\n\tSET_HAP_PTOKENID = 0x1A,\n\tACCESS_TOKENID_MAX_NR\n",
+                1,
+            )
+        if "ioctl_get_all_perm_data" not in text:
+            marker = '''typedef struct {
+\tuint32_t token;
+\tuint32_t perm[MAX_PERM_GROUP_NUM];
+} ioctl_add_perm_data;
+'''
+            replacement = marker + '''
+typedef struct {
+\tuint32_t token;
+\tuint32_t perm[MAX_PERM_GROUP_NUM];
+} ioctl_get_all_perm_data;
+
+typedef struct {
+\tuint32_t uid;
+\tuint64_t refcnt;
+} ioctl_spm_uid_ref;
+
+typedef struct {
+\tuint32_t tokenid;
+\tuint64_t refcnt;
+} ioctl_spm_tokenid_ref;
+'''
+            if marker in text:
+                text = text.replace(marker, replacement, 1)
+        if "ACCESS_TOKENID_GET_ALL_PERMISSIONS" not in text:
+            marker = '''#define\tACCESS_TOKENID_SET_PERMISSION \\
+\t_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, ioctl_set_get_perm_data)
+'''
+            replacement = marker + '''#define\tACCESS_TOKENID_GET_ALL_PERMISSIONS \\
+\t_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, GET_ALL_PERMISSIONS, ioctl_get_all_perm_data)
+#define\tACCESS_TOKENID_GET_SPM_VERSION \\
+\t_IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_SPM_VERSION, uint32_t)
+'''
+            if marker in text:
+                text = text.replace(marker, replacement, 1)
+        if text != original:
+            header.write_text(text)
+            print(f"configured {header}: extend access_tokenid ioctl command numbers for SPM")
+
+        text = source.read_text()
+        original = text
+        if "int access_tokenid_get_all_permissions(" not in text:
+            marker = "typedef int (*access_token_id_func)(struct file *file, void __user *arg);"
+            helper_funcs = '''
+int access_tokenid_get_all_permissions(struct file *file, void __user *uarg)
+{
+\tioctl_get_all_perm_data get_all_perm_data;
+\tstruct token_perm_node *target_node = NULL;
+\tstruct token_perm_node *parent_node = NULL;
+
+\tif (copy_from_user(&get_all_perm_data, uarg, sizeof(get_all_perm_data)))
+\t\treturn -EFAULT;
+
+\tread_lock(&token_rwlock);
+\tfind_node_by_token(g_token_perm_root, get_all_perm_data.token, &target_node, &parent_node);
+\tif (target_node != NULL)
+\t\tmemcpy(get_all_perm_data.perm, target_node->perm_data.perm, sizeof(get_all_perm_data.perm));
+\telse
+\t\tmemset(get_all_perm_data.perm, 0, sizeof(get_all_perm_data.perm));
+\tread_unlock(&token_rwlock);
+
+\treturn copy_to_user(uarg, &get_all_perm_data, sizeof(get_all_perm_data)) ? -EFAULT : 0;
+}
+
+int access_tokenid_spm_success(struct file *file, void __user *uarg)
+{
+\treturn 0;
+}
+
+int access_tokenid_get_spm_refcnt_uid(struct file *file, void __user *uarg)
+{
+\tioctl_spm_uid_ref ref = {0};
+
+\tif (copy_from_user(&ref, uarg, sizeof(ref)))
+\t\treturn -EFAULT;
+\tref.refcnt = 0;
+\treturn copy_to_user(uarg, &ref, sizeof(ref)) ? -EFAULT : 0;
+}
+
+int access_tokenid_get_spm_refcnt_tokenid(struct file *file, void __user *uarg)
+{
+\tioctl_spm_tokenid_ref ref = {0};
+
+\tif (copy_from_user(&ref, uarg, sizeof(ref)))
+\t\treturn -EFAULT;
+\tref.refcnt = 0;
+\treturn copy_to_user(uarg, &ref, sizeof(ref)) ? -EFAULT : 0;
+}
+
+int access_tokenid_get_spm_version(struct file *file, void __user *uarg)
+{
+\tuint32_t version = 1;
+
+\treturn copy_to_user(uarg, &version, sizeof(version)) ? -EFAULT : 0;
+}
+
+int access_tokenid_set_userid(struct file *file, void __user *uarg)
+{
+\tuint32_t user_id = 0;
+
+\tif (copy_from_user(&user_id, uarg, sizeof(user_id)))
+\t\treturn -EFAULT;
+\tcurrent->user_id = user_id;
+\treturn 0;
+}
+
+int access_tokenid_get_userid(struct file *file, void __user *uarg)
+{
+\treturn copy_to_user(uarg, &current->user_id, sizeof(current->user_id)) ? -EFAULT : 0;
+}
+
+int access_tokenid_set_hap_ptokenid(struct file *file, void __user *uarg)
+{
+\tuint64_t tokenid = 0;
+
+\tif (copy_from_user(&tokenid, uarg, sizeof(tokenid)))
+\t\treturn -EFAULT;
+\tcurrent->ftoken = tokenid;
+\treturn 0;
+}
+'''
+            if marker in text:
+                text = text.replace(marker, helper_funcs + "\n" + marker, 1)
+        if "int access_tokenid_set_userid(" not in text:
+            marker = "typedef int (*access_token_id_func)(struct file *file, void __user *arg);"
+            helper_funcs = '''
+int access_tokenid_set_userid(struct file *file, void __user *uarg)
+{
+\tuint32_t user_id = 0;
+
+\tif (copy_from_user(&user_id, uarg, sizeof(user_id)))
+\t\treturn -EFAULT;
+\tcurrent->user_id = user_id;
+\treturn 0;
+}
+
+int access_tokenid_get_userid(struct file *file, void __user *uarg)
+{
+\treturn copy_to_user(uarg, &current->user_id, sizeof(current->user_id)) ? -EFAULT : 0;
+}
+
+int access_tokenid_set_hap_ptokenid(struct file *file, void __user *uarg)
+{
+\tuint64_t tokenid = 0;
+
+\tif (copy_from_user(&tokenid, uarg, sizeof(tokenid)))
+\t\treturn -EFAULT;
+\tcurrent->ftoken = tokenid;
+\treturn 0;
+}
+'''
+            if marker in text:
+                text = text.replace(marker, helper_funcs + "\n" + marker, 1)
+        old = '''static access_token_id_func g_func_array[ACCESS_TOKENID_MAX_NR] = {
+\tNULL, /* reserved */
+\taccess_tokenid_get_tokenid,
+\taccess_tokenid_set_tokenid,
+\taccess_tokenid_get_ftokenid,
+\taccess_tokenid_set_ftokenid,
+\taccess_tokenid_add_permission,
+\taccess_tokenid_remove_permission,
+\taccess_tokenid_get_permission,
+\taccess_tokenid_set_permission,
+};
+'''
+        new = '''static access_token_id_func g_func_array[ACCESS_TOKENID_MAX_NR] = {
+\t[GET_TOKEN_ID] = access_tokenid_get_tokenid,
+\t[SET_TOKEN_ID] = access_tokenid_set_tokenid,
+\t[GET_FTOKEN_ID] = access_tokenid_get_ftokenid,
+\t[SET_FTOKEN_ID] = access_tokenid_set_ftokenid,
+\t[ADD_PERMISSIONS] = access_tokenid_add_permission,
+\t[REMOVE_PERMISSIONS] = access_tokenid_remove_permission,
+\t[GET_PERMISSION] = access_tokenid_get_permission,
+\t[SET_PERMISSION] = access_tokenid_set_permission,
+\t[GET_ALL_PERMISSIONS] = access_tokenid_get_all_permissions,
+\t[SET_USERID] = access_tokenid_set_userid,
+\t[GET_USERID] = access_tokenid_get_userid,
+\t[ADD_SPM_ENTRIES] = access_tokenid_spm_success,
+\t[SET_SPM_ENTRIES] = access_tokenid_spm_success,
+\t[GET_SPM_ENTRY] = access_tokenid_spm_success,
+\t[REMOVE_SPM_ENTRY] = access_tokenid_spm_success,
+\t[SET_REFCNT_UID] = access_tokenid_spm_success,
+\t[GET_REFCNT_UID] = access_tokenid_get_spm_refcnt_uid,
+\t[SET_REFCNT_TOKENID] = access_tokenid_spm_success,
+\t[GET_REFCNT_TOKENID] = access_tokenid_get_spm_refcnt_tokenid,
+\t[CLEAR_REFCNT_SPAWNID] = access_tokenid_spm_success,
+\t[GET_SPM_VERSION] = access_tokenid_get_spm_version,
+\t[SET_HAP_PTOKENID] = access_tokenid_set_hap_ptokenid,
+};
+'''
+        if old in text:
+            text = text.replace(old, new, 1)
+        if "\t[SET_USERID] = access_tokenid_set_userid," not in text:
+            text = text.replace(
+                "\t[GET_ALL_PERMISSIONS] = access_tokenid_get_all_permissions,\n\t[ADD_SPM_ENTRIES] = access_tokenid_spm_success,\n",
+                "\t[GET_ALL_PERMISSIONS] = access_tokenid_get_all_permissions,\n\t[SET_USERID] = access_tokenid_set_userid,\n\t[GET_USERID] = access_tokenid_get_userid,\n\t[ADD_SPM_ENTRIES] = access_tokenid_spm_success,\n",
+                1,
+            )
+        if "\t[SET_HAP_PTOKENID] = access_tokenid_set_hap_ptokenid," not in text:
+            text = text.replace(
+                "\t[GET_SPM_VERSION] = access_tokenid_get_spm_version,\n};\n",
+                "\t[GET_SPM_VERSION] = access_tokenid_get_spm_version,\n\t[SET_HAP_PTOKENID] = access_tokenid_set_hap_ptokenid,\n};\n",
+                1,
+            )
+        if text != original:
+            source.write_text(text)
+            print(f"configured {source}: add access_tokenid userspace ABI compatibility for QEMU")
+
+        sched = Path(f"kernel/linux/linux-{version}/include/linux/sched.h")
+        fork = Path(f"kernel/linux/linux-{version}/kernel/fork.c")
+        if sched.exists():
+            text = sched.read_text()
+            original = text
+            old = '''#ifdef CONFIG_ACCESS_TOKENID
+\tu64\t\t\t\ttoken;
+\tu64\t\t\t\tftoken;
+#endif
+'''
+            new = '''#ifdef CONFIG_ACCESS_TOKENID
+\tu64\t\t\t\ttoken;
+\tu64\t\t\t\tftoken;
+\tu32\t\t\t\tuser_id;
+#endif
+'''
+            if old in text:
+                text = text.replace(old, new, 1)
+            if text != original:
+                sched.write_text(text)
+                print(f"configured {sched}: add access_tokenid user_id task field")
+        if fork.exists():
+            text = fork.read_text()
+            original = text
+            old = '''#ifdef CONFIG_ACCESS_TOKENID
+\ttsk->token = orig->token;
+\ttsk->ftoken = 0;
+#endif
+'''
+            new = '''#ifdef CONFIG_ACCESS_TOKENID
+\ttsk->token = orig->token;
+\ttsk->ftoken = 0;
+\ttsk->user_id = orig->user_id;
+#endif
+'''
+            if old in text:
+                text = text.replace(old, new, 1)
+            if text != original:
+                fork.write_text(text)
+                print(f"configured {fork}: inherit access_tokenid user_id on fork")
+
+PY
+}
+
+ensure_flexlexer_header() {
+  local src="/usr/include/FlexLexer.h"
+  local dst="${OHOS_ROOT}/base/update/updater/services/script/script_interpreter/FlexLexer.h"
+
+  if [ -f "${dst}" ]; then
+    return
+  fi
+  if [ ! -f "${src}" ]; then
+    echo "missing ${src}; install libfl-dev in the Docker image" >&2
+    exit 1
+  fi
+  if [ ! -d "$(dirname "${dst}")" ]; then
+    echo "missing updater script include dir: $(dirname "${dst}")" >&2
+    exit 1
+  fi
+  if [ ! -f "${dst}" ] || ! cmp -s "${src}" "${dst}"; then
+    cp "${src}" "${dst}"
+    echo "configured ${dst}: copied Docker FlexLexer.h for updater yacc build"
+  fi
+}
+
+clean_corrupt_hvigor_state() {
+  cd "${OHOS_ROOT}"
+  python3 - <<'PY'
+from pathlib import Path
+import shutil
+
+removed = []
+for dep_map in Path(".").rglob(".hvigor/dependencyMap/oh-package.json5"):
+    try:
+        if dep_map.stat().st_size != 0:
+            continue
+    except FileNotFoundError:
+        continue
+    hvigor_dir = dep_map.parents[1]
+    shutil.rmtree(hvigor_dir, ignore_errors=True)
+    removed.append(str(hvigor_dir))
+
+for path in removed:
+    print(f"removed corrupt hvigor state: {path}")
+PY
 }
 
 main() {
@@ -480,8 +1048,11 @@ main() {
   echo "build only load: ${BUILD_ONLY_LOAD}"
   echo "skip git lfs: ${SKIP_GIT_LFS}"
   echo "git lfs paths: ${GIT_LFS_PATHS}"
+  echo "qemu fix access_tokenid abi: ${QEMU_FIX_ACCESS_TOKENID_ABI}"
+  echo "qemu fix system compat symlinks: ${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}"
+  echo "armv7a full overlay: ${ARMV7A_FULL_OVERLAY}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source patches: none"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI}"
 
   raise_nofile_limit
   install_deps
@@ -492,6 +1063,10 @@ main() {
   sync_git_lfs_objects
   download_prebuilts
   ensure_python_modules
+  apply_armv7a_full_overlay
+  configure_qemu_product_features
+  ensure_flexlexer_header
+  clean_corrupt_hvigor_state
 
   local product
   for product in "${PRODUCTS[@]}"; do

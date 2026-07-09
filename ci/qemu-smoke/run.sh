@@ -9,6 +9,7 @@ Usage:
   run.sh --package PACKAGE --guest-arch ARCH --host-platform PLATFORM
 
 ARCH:
+  armv7a
   aarch64
   x86_64
 
@@ -64,6 +65,11 @@ normalize_host_path() {
 }
 
 case "${GUEST_ARCH}" in
+  armv7a|armv7)
+    RUST_TARGET="armv7-unknown-linux-musleabi"
+    OHOS_RUST_TARGET="armv7-unknown-linux-ohos"
+    BIN_NAME="hello-armv7a"
+    ;;
   aarch64)
     RUST_TARGET="aarch64-unknown-linux-musl"
     OHOS_RUST_TARGET="aarch64-unknown-linux-ohos"
@@ -378,6 +384,46 @@ if [ "${connected}" != "1" ]; then
   exit 1
 fi
 "${HDC}" list targets -v
+echo "::endgroup::"
+
+echo "::group::Wait for AccountMgr foreground user"
+ACCOUNT_READY_ATTEMPTS="${QEMU_ACCOUNT_WAIT_ATTEMPTS:-120}"
+ACCOUNT_READY_LOG="${WORK}/account-ready.log"
+account_ready=0
+for attempt in $(seq 1 "${ACCOUNT_READY_ATTEMPTS}"); do
+  "${HDC}" -t 127.0.0.1:5555 shell '
+    echo "bootevent.account.ready=$(param get bootevent.account.ready)"
+    hidumper -s AccountMgr -a "-os_account_infos"
+    bm dump -a | head -30
+  ' >"${ACCOUNT_READY_LOG}" 2>&1 || true
+  if grep -q 'bootevent.account.ready=true' "${ACCOUNT_READY_LOG}" &&
+     grep -q 'ID: 100' "${ACCOUNT_READY_LOG}" &&
+     grep -q 'isForeground: 1' "${ACCOUNT_READY_LOG}"; then
+    account_ready=1
+    cat "${ACCOUNT_READY_LOG}"
+    break
+  fi
+  if ! kill -0 "${QEMU_PID}" >/dev/null 2>&1; then
+    echo "QEMU exited before AccountMgr became ready" >&2
+    cat "${ACCOUNT_READY_LOG}" || true
+    tail -n 200 "${LOG}" || true
+    exit 1
+  fi
+  if [ $((attempt % 20)) -eq 0 ]; then
+    echo "still waiting for AccountMgr foreground user after ${attempt}/${ACCOUNT_READY_ATTEMPTS} attempts"
+    cat "${ACCOUNT_READY_LOG}" || true
+    tail -n 80 "${LOG}" || true
+  fi
+  sleep 3
+done
+
+if [ "${account_ready}" != "1" ]; then
+  echo "AccountMgr did not initialize a foreground user in time" >&2
+  cat "${ACCOUNT_READY_LOG}" || true
+  "${HDC}" -t 127.0.0.1:5555 shell 'hilog -x | grep -iE "AccountMgr|AbilityManager|StartUser|SwitchToUser|highest priority|account.ready|Foreground" | tail -240' || true
+  tail -n 240 "${LOG}" || true
+  exit 1
+fi
 echo "::endgroup::"
 
 echo "::group::Transfer and execute Rust binary"

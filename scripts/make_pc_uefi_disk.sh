@@ -237,7 +237,7 @@ set timeout=3
 set default=0
 
 menuentry "OpenHarmony x86_64 PC experimental" {
-    linux /EFI/openharmony/bzImage console=ttyS0,115200 console=tty0 sn=0023456789 init=/bin/init hardware=pc root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=pc ohos.required_mount.updater=/dev/block/vda2@/updater@ext4@ro,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vda3@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vda4@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.system=/dev/block/vda5@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vda6@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.data=/dev/block/vda7@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600
+    linux /EFI/openharmony/bzImage console=ttyS0,115200 console=tty0 sn=0023456789 init=/init hardware=pc root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=pc ohos.required_mount.updater=/dev/block/vda2@/updater@ext4@ro,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vda3@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vda4@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.system=/dev/block/vda5@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vda6@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.data=/dev/block/vda7@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600
     initrd /EFI/openharmony/ramdisk.img
 }
 EOF
