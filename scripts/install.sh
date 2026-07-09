@@ -10,7 +10,6 @@ PLATFORM="${OHOS_QEMU_PLATFORM:-auto}"
 ARCH="${OHOS_QEMU_ARCH:-auto}"
 FORCE=0
 KEEP_ARCHIVE=0
-PACKAGE_PARTS=()
 
 usage() {
   cat <<'USAGE'
@@ -208,14 +207,6 @@ case "${ARCH}" in
     PACKAGE="openharmony-qemu-armv7a-armv7a_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-armv7a-armv7a_virt"
     EXPECTED_SHA256="98dda34c8120948605d36d3f2d546086a2c8e2370e24aa8f06f95d6eaac3ce25"
-    PACKAGE_PARTS=(
-      "${PACKAGE}.part-00"
-      "${PACKAGE}.part-01"
-      "${PACKAGE}.part-02"
-      "${PACKAGE}.part-03"
-      "${PACKAGE}.part-04"
-      "${PACKAGE}.part-05"
-    )
     ;;
   x86_64)
     PACKAGE="openharmony-qemu-x86_64-x86_64_virt.tar.gz"
@@ -259,26 +250,11 @@ if [ -e "${INSTALL_DIR}" ] && [ "${FORCE}" != "1" ]; then
 fi
 
 mkdir -p "${PREFIX}" "${ARCHIVE_DIR}"
-tmp_prefix="${ARCHIVE_PATH}.tmp.$$"
-tmp_archive="${tmp_prefix}"
-trap 'rm -f "${tmp_prefix}" "${tmp_prefix}".part-*' EXIT
+tmp_archive="${ARCHIVE_PATH}.tmp.$$"
+trap 'rm -f "${tmp_archive}"' EXIT
 
-if [ "${#PACKAGE_PARTS[@]}" -gt 0 ]; then
-  : > "${tmp_archive}"
-  part_index=0
-  for part in "${PACKAGE_PARTS[@]}"; do
-    part_tmp="${tmp_prefix}.part-${part_index}"
-    part_url="$(artifact_url "${part}")"
-    echo "downloading: ${part_url}"
-    download_file "${part_url}" "${part_tmp}"
-    cat "${part_tmp}" >> "${tmp_archive}"
-    rm -f "${part_tmp}"
-    part_index=$((part_index + 1))
-  done
-else
-  echo "downloading: ${RAW_URL}"
-  download_file "${RAW_URL}" "${tmp_archive}"
-fi
+echo "downloading: ${RAW_URL}"
+download_file "${RAW_URL}" "${tmp_archive}"
 
 ACTUAL_SHA256="$(sha256_file "${tmp_archive}")"
 if [ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]; then

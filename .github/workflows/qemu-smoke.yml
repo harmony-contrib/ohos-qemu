@@ -8,7 +8,6 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "artifacts/*.tar.gz"
-      - "artifacts/*.tar.gz.part-*"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
       - "scripts/package_standard_qemu.sh"
@@ -16,7 +15,6 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "artifacts/*.tar.gz"
-      - "artifacts/*.tar.gz.part-*"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
       - "scripts/package_standard_qemu.sh"
@@ -81,18 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           git lfs install
-          git lfs pull --include="${{ matrix.package }},${{ matrix.package }}.part-*"
-          if [ ! -f "${{ matrix.package }}" ]; then
-            parts=()
-            while IFS= read -r part; do
-              parts+=("${part}")
-            done < <(find "$(dirname "${{ matrix.package }}")" -maxdepth 1 -type f -name "$(basename "${{ matrix.package }}").part-*" | sort)
-            if [ "${#parts[@]}" -eq 0 ]; then
-              echo "package not found and no split parts found: ${{ matrix.package }}" >&2
-              exit 1
-            fi
-            cat "${parts[@]}" > "${{ matrix.package }}"
-          fi
+          git lfs pull --include="${{ matrix.package }}"
           ls -lh "${{ matrix.package }}"
 
       - name: Setup OpenHarmony SDK
