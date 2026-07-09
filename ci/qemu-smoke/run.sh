@@ -6,7 +6,7 @@ export LANG=C
 usage() {
   cat <<'USAGE'
 Usage:
-  run.sh --package PACKAGE --guest-arch ARCH --host-platform PLATFORM
+  run.sh --package PACKAGE --guest-arch ARCH --host-platform PLATFORM [--run-ohos-runner true|false]
 
 ARCH:
   armv7a
@@ -23,6 +23,7 @@ USAGE
 PACKAGE=
 GUEST_ARCH=
 HOST_PLATFORM=
+RUN_OHOS_RUNNER=true
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -36,6 +37,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --host-platform)
       HOST_PLATFORM="${2:-}"
+      shift 2
+      ;;
+    --run-ohos-runner)
+      RUN_OHOS_RUNNER="${2:-}"
       shift 2
       ;;
     -h|--help)
@@ -54,6 +59,15 @@ if [ -z "${PACKAGE}" ] || [ -z "${GUEST_ARCH}" ] || [ -z "${HOST_PLATFORM}" ]; t
   usage >&2
   exit 2
 fi
+
+case "${RUN_OHOS_RUNNER}" in
+  true|false)
+    ;;
+  *)
+    echo "unsupported --run-ohos-runner: ${RUN_OHOS_RUNNER}" >&2
+    exit 2
+    ;;
+esac
 
 normalize_host_path() {
   local path="$1"
@@ -432,6 +446,16 @@ echo "::group::Transfer and execute Rust binary"
 "${HDC}" -t 127.0.0.1:5555 shell "chmod 755 /data/local/tmp/${BIN_NAME}"
 "${HDC}" -t 127.0.0.1:5555 shell "uname -a; id; /data/local/tmp/${BIN_NAME} from-ci"
 echo "::endgroup::"
+
+if [ "${RUN_OHOS_RUNNER}" != "true" ]; then
+  echo "::group::Skip ohos-test-runner Cargo smoke"
+  echo "ohos-test-runner smoke disabled for ${GUEST_ARCH}; binary execution was verified."
+  echo "::endgroup::"
+  echo "::group::QEMU log tail"
+  tail -n 160 "${LOG}" || true
+  echo "::endgroup::"
+  exit 0
+fi
 
 echo "::group::Run ohos-test-runner Cargo smoke"
 OHOS_SDK_NATIVE_DIR="$(find_ohos_sdk_native)"
