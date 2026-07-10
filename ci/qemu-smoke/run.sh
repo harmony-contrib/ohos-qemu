@@ -12,6 +12,7 @@ OPTIONS:
   --phase PHASE                   all, prepare, start, wait-hdc, wait-account,
                                   run-binary, run-ohos-runner, diagnostics, cleanup
   --require-account true|false    Require foreground user 100, default: true
+  --require-kvm true|false        Require Linux x86_64 KVM acceleration, default: false
   --run-ohos-runner true|false    Run the OpenHarmony Rust test runner, default: true
   --account-wait-attempts N       Account readiness attempts at 3 seconds each,
                                   default: 300
@@ -33,6 +34,7 @@ GUEST_ARCH=
 HOST_PLATFORM=
 RUN_OHOS_RUNNER=true
 REQUIRE_ACCOUNT=true
+REQUIRE_KVM=false
 PHASE=all
 ACCOUNT_WAIT_ATTEMPTS=300
 
@@ -56,6 +58,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --require-account)
       REQUIRE_ACCOUNT="${2:-}"
+      shift 2
+      ;;
+    --require-kvm)
+      REQUIRE_KVM="${2:-}"
       shift 2
       ;;
     --phase)
@@ -83,7 +89,7 @@ if [ -z "${PACKAGE}" ] || [ -z "${GUEST_ARCH}" ] || [ -z "${HOST_PLATFORM}" ]; t
   exit 2
 fi
 
-for bool_value in "${RUN_OHOS_RUNNER}" "${REQUIRE_ACCOUNT}"; do
+for bool_value in "${RUN_OHOS_RUNNER}" "${REQUIRE_ACCOUNT}" "${REQUIRE_KVM}"; do
   case "${bool_value}" in
     true|false)
       ;;
@@ -102,6 +108,11 @@ case "${PHASE}" in
     exit 2
     ;;
 esac
+
+if [ "${REQUIRE_KVM}" = "true" ] && { [ "${HOST_PLATFORM}" != "linux" ] || [ "${GUEST_ARCH}" != "x86_64" ]; }; then
+  echo "--require-kvm is only supported for a Linux host with an x86_64 guest" >&2
+  exit 2
+fi
 
 case "${ACCOUNT_WAIT_ATTEMPTS}" in
   ''|*[!0-9]*)
@@ -402,8 +413,60 @@ qemu_is_alive() {
   read_qemu_pid >/dev/null 2>&1 && kill -0 "${QEMU_PID}" >/dev/null 2>&1
 }
 
+qemu_uses_kvm() {
+  local fd
+  local target
+  read_qemu_pid >/dev/null 2>&1 || return 1
+  for fd in "/proc/${QEMU_PID}/fd/"*; do
+    [ -e "${fd}" ] || continue
+    target="$(readlink "${fd}" 2>/dev/null || true)"
+    if [ "${target}" = "/dev/kvm" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+require_linux_kvm() {
+  if [ "${REQUIRE_KVM}" != "true" ]; then
+    return 0
+  fi
+  if [ ! -c /dev/kvm ] || [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then
+    echo "Linux x86_64 smoke requires readable and writable /dev/kvm; refusing TCG fallback." >&2
+    return 1
+  fi
+  if ! qemu-system-x86_64 -accel help 2>&1 | grep -qw kvm; then
+    echo "qemu-system-x86_64 does not provide the KVM accelerator." >&2
+    return 1
+  fi
+}
+
+guest_fatal_detected() {
+  [ -f "${LOG}" ] && grep -aiEq \
+    'Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash' \
+    "${LOG}"
+}
+
+assert_guest_healthy() {
+  local context="$1"
+  if ! qemu_is_alive; then
+    echo "QEMU exited ${context}" >&2
+    tail -n 200 "${LOG}" || true
+    return 1
+  fi
+  if guest_fatal_detected; then
+    echo "OpenHarmony guest failed ${context}; QEMU is still running but the guest is not usable." >&2
+    grep -ainE \
+      'Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash' \
+      "${LOG}" | tail -n 20 >&2 || true
+    tail -n 200 "${LOG}" >&2 || true
+    return 1
+  fi
+}
+
 start_qemu() {
   load_package_dir
+  require_linux_kvm
   : >"${LOG}"
   rm -f "${PID_FILE}"
   cd "${PACKAGE_DIR}"
@@ -432,6 +495,20 @@ start_qemu() {
     tail -n 200 "${LOG}" || true
     return 1
   fi
+  if [ "${REQUIRE_KVM}" = "true" ]; then
+    local attempt
+    for attempt in $(seq 1 20); do
+      if qemu_uses_kvm; then
+        echo "KVM acceleration verified from QEMU file descriptors."
+        return 0
+      fi
+      assert_guest_healthy "while verifying KVM acceleration" || return 1
+      sleep 0.5
+    done
+    echo "QEMU did not open /dev/kvm; refusing an implicit TCG fallback." >&2
+    tail -n 200 "${LOG}" || true
+    return 1
+  fi
 }
 
 wait_for_hdc() {
@@ -454,11 +531,7 @@ wait_for_hdc() {
     else
       cat "${hdc_tconn_log}" || true
     fi
-    if ! qemu_is_alive; then
-      echo "QEMU exited before HDC became available" >&2
-      tail -n 200 "${LOG}" || true
-      return 1
-    fi
+    assert_guest_healthy "before HDC became available" || return 1
     if [ $((attempt % 20)) -eq 0 ]; then
       echo "still waiting for HDC after ${attempt}/${wait_attempts} attempts"
       if (echo >/dev/tcp/127.0.0.1/5555) >/dev/null 2>&1; then
@@ -488,6 +561,7 @@ wait_for_account() {
 
   ensure_hdc
   read_qemu_pid
+  assert_guest_healthy "before waiting for AccountMgr" || return 1
   local account_history_log="${WORK}/account-ready.log"
   local account_last_log="${WORK}/account-last.log"
   local param_ready=0
@@ -523,10 +597,8 @@ wait_for_account() {
       cat "${account_last_log}"
       return 0
     fi
-    if ! qemu_is_alive; then
-      echo "QEMU exited before AccountMgr became ready" >&2
+    if ! assert_guest_healthy "before AccountMgr became ready"; then
       cat "${account_last_log}" || true
-      tail -n 200 "${LOG}" || true
       return 1
     fi
     if [ $((attempt % 20)) -eq 0 ]; then
@@ -549,6 +621,7 @@ wait_for_account() {
 
 run_binary() {
   ensure_hdc
+  assert_guest_healthy "before Rust binary verification" || return 1
   if [ ! -f "${WORK}/${BIN_NAME}" ]; then
     echo "Rust smoke executable not found: ${WORK}/${BIN_NAME}" >&2
     return 1
@@ -566,6 +639,7 @@ run_ohos_runner() {
   fi
 
   ensure_hdc
+  assert_guest_healthy "before ohos-test-runner verification" || return 1
   local ohos_sdk_native_dir
   local ohos_linker
   local cargo_install_root_posix
@@ -626,11 +700,17 @@ collect_diagnostics() {
     printf 'host_platform=%s\n' "${HOST_PLATFORM}"
     printf 'guest_arch=%s\n' "${GUEST_ARCH}"
     printf 'require_account=%s\n' "${REQUIRE_ACCOUNT}"
+    printf 'require_kvm=%s\n' "${REQUIRE_KVM}"
     printf 'run_ohos_runner=%s\n' "${RUN_OHOS_RUNNER}"
     if read_qemu_pid >/dev/null 2>&1; then
       printf 'qemu_pid=%s\n' "${QEMU_PID}"
       if qemu_is_alive; then
         echo 'qemu_alive=true'
+        if qemu_uses_kvm; then
+          echo 'qemu_acceleration=kvm'
+        else
+          echo 'qemu_acceleration=not-kvm-or-unavailable'
+        fi
       else
         echo 'qemu_alive=false'
       fi
@@ -641,6 +721,11 @@ collect_diagnostics() {
 
   if [ -f "${LOG}" ]; then
     tail -n 400 "${LOG}" >"${DIAGNOSTICS_DIR}/qemu-tail.log" 2>&1 || true
+    if guest_fatal_detected; then
+      grep -ainE \
+        'Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash' \
+        "${LOG}" >"${DIAGNOSTICS_DIR}/guest-fatal.log" 2>&1 || true
+    fi
   fi
   for log_file in hdc-tconn.log account-ready.log account-last.log; do
     if [ -f "${WORK}/${log_file}" ]; then
