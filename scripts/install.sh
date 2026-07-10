@@ -201,7 +201,7 @@ case "${ARCH}" in
   arm64)
     PACKAGE="openharmony-qemu-arm64-arm64_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-arm64-arm64_virt"
-    EXPECTED_SHA256="e327603801c01b1042cb887fa998e0e89a7e30151de589be8071f905bdf925ce"
+    EXPECTED_SHA256="86c1d6ce17ea42b8732d2aa64a3081da7e704e084ba0c70923b72cc8a4cdfbd9"
     ;;
   armv7a)
     PACKAGE="openharmony-qemu-armv7a-armv7a_virt.tar.gz"
@@ -211,7 +211,7 @@ case "${ARCH}" in
   x86_64)
     PACKAGE="openharmony-qemu-x86_64-x86_64_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-x86_64-x86_64_virt"
-    EXPECTED_SHA256="7face629b19aaa1dcc39737c1b05360fae63eebee73589dcc25f4bcb3ea632c0"
+    EXPECTED_SHA256="a1173c39b4bd9ae3e46de176867b501af51eff605466811b86d8370caeccd7ca"
     ;;
 esac
 
