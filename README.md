@@ -57,5 +57,4 @@ hdc list targets
 
 ## License
 
-Repository scripts and documentation are available under the [MIT License](LICENSE).
-Bundled OpenHarmony and QEMU components retain their upstream licenses.
+[MIT](./LICENSE)
