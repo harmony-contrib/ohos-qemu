@@ -31,6 +31,13 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
+    env:
+      QEMU_SMOKE_PACKAGE: ${{ matrix.package }}
+      QEMU_SMOKE_GUEST_ARCH: ${{ matrix.guest_arch }}
+      QEMU_SMOKE_HOST_PLATFORM: ${{ matrix.host_platform }}
+      QEMU_SMOKE_REQUIRE_ACCOUNT: ${{ matrix.require_account }}
+      QEMU_SMOKE_RUN_OHOS_RUNNER: ${{ matrix.run_ohos_runner }}
+      QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS: ${{ matrix.account_wait_attempts }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,6 +49,8 @@ jobs:
             package: artifacts/openharmony-qemu-x86_64-x86_64_virt.tar.gz
             sdk_version: "6.1"
             sdk_components: "native;toolchains"
+            require_account: "true"
+            account_wait_attempts: "300"
             run_ohos_runner: "true"
           - name: macOS arm64 QEMU
             runner: macos-14
@@ -50,6 +59,8 @@ jobs:
             package: artifacts/openharmony-qemu-arm64-arm64_virt.tar.gz
             sdk_version: "6.1"
             sdk_components: "native;toolchains"
+            require_account: "true"
+            account_wait_attempts: "240"
             run_ohos_runner: "true"
           - name: macOS armv7a QEMU
             runner: macos-14
@@ -58,6 +69,8 @@ jobs:
             package: artifacts/openharmony-qemu-armv7a-armv7a_virt.tar.gz
             sdk_version: "6.1"
             sdk_components: "native;toolchains"
+            require_account: "false"
+            account_wait_attempts: "1"
             run_ohos_runner: "false"
           - name: Windows x64 QEMU
             runner: windows-2022
@@ -66,6 +79,8 @@ jobs:
             package: artifacts/openharmony-qemu-x86_64-x86_64_virt.tar.gz
             sdk_version: "6.1"
             sdk_components: "native;toolchains"
+            require_account: "true"
+            account_wait_attempts: "300"
             run_ohos_runner: "true"
 
     steps:
@@ -116,13 +131,49 @@ jobs:
           choco install qemu -y --no-progress
           "C:\Program Files\qemu" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      - name: Run QEMU smoke test
+      - name: Prepare QEMU smoke workspace
         shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x ci/qemu-smoke/run.sh
-          ci/qemu-smoke/run.sh \
-            --package "${{ matrix.package }}" \
-            --guest-arch "${{ matrix.guest_arch }}" \
-            --host-platform "${{ matrix.host_platform }}" \
-            --run-ohos-runner "${{ matrix.run_ohos_runner }}"
+        run: bash ci/qemu-smoke/phase.sh prepare
+
+      - name: Start QEMU
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh start
+
+      - name: Wait for HDC
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh wait-hdc
+
+      - name: Wait for AccountMgr foreground user
+        if: ${{ matrix.require_account == 'true' }}
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh wait-account
+
+      - name: Transfer and execute Rust binary
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh run-binary
+
+      - name: Run ohos-test-runner Cargo smoke
+        if: ${{ matrix.run_ohos_runner == 'true' }}
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh run-ohos-runner
+
+      - name: Collect QEMU diagnostics
+        if: ${{ always() }}
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh diagnostics
+
+      - name: Stop QEMU
+        if: ${{ always() }}
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh cleanup
+
+      - name: Upload QEMU diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-diagnostics-${{ matrix.host_platform }}-${{ matrix.guest_arch }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/ohos-qemu-smoke-${{ matrix.host_platform }}-${{ matrix.guest_arch }}/qemu.log
+            ${{ runner.temp }}/ohos-qemu-smoke-${{ matrix.host_platform }}-${{ matrix.guest_arch }}/diagnostics/**
