@@ -16,4 +16,5 @@ exec bash "${SCRIPT_DIR}/run.sh" \
   --require-kvm "${QEMU_SMOKE_REQUIRE_KVM:-false}" \
   --run-ohos-runner "${QEMU_SMOKE_RUN_OHOS_RUNNER:?QEMU_SMOKE_RUN_OHOS_RUNNER is required}" \
   --account-wait-attempts "${QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS:?QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS is required}" \
+  --minimum-guest-uptime "${QEMU_SMOKE_MINIMUM_GUEST_UPTIME:-0}" \
   --phase "$1"

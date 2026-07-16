@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Ruby-based Ark compiler generators inherit the process locale. Ubuntu's
+# empty/POSIX locale makes Ruby treat UTF-8 source as US-ASCII.
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
 usage() {
   cat <<'USAGE'
 Usage:
@@ -17,11 +22,15 @@ Environment:
   OHOS_BRANCH         Manifest branch/tag, default: master
   MANIFEST_URL        Manifest repo, default: https://github.com/openharmony/manifest.git
   MANIFEST_GROUPS     Repo groups, default includes standard/full system groups
-  REPO_URL            Repo tool mirror, default: https://gitee.com/oschina/repo.git
+  REPO_URL            Repo tool mirror, default:
+                       https://github.com/GerritCodeReview/git-repo.git
+  REPO_LAUNCHER_URL   Repo launcher, default:
+                       https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo
   REPO_JOBS           repo sync jobs, default: 8
   REPO_CHECKOUT_JOBS  repo checkout jobs, default: 1
   REPO_SYNC_RETRIES   repo sync retry attempts, default: 3
   BUILD_JOBS          build jobs, default: nproc
+  CCACHE_MAXSIZE      ccache size limit, default: 100G
   GIT_USER_NAME       Global git user.name, default: richerfu
   GIT_USER_EMAIL      Global git user.email, default: southorange0929@foxmail.com
   NPM_REGISTRY        npm registry, default: https://repo.huaweicloud.com/repository/npm/
@@ -36,7 +45,8 @@ Environment:
   SKIP_GIT_LFS        Skip git lfs pull, default: 0
   GIT_LFS_PATHS       Space-separated paths to fetch with Git LFS, default:
                        applications/standard/hap base/web/webview
-                       foundation/arkui/ace_engine
+                       foundation/arkui/ace_engine third_party/icu
+                       third_party/libphonenumber
   QEMU_FIX_ACCESS_TOKENID_ABI
                        Backport access_tokenid ABI used by current userspace, default: 1
   QEMU_FIX_SYSTEM_COMPAT_SYMLINKS
@@ -79,7 +89,8 @@ CONTAINER_HOME="${CONTAINER_HOME:-${CACHE_ROOT}/home}"
 OHOS_BRANCH="${OHOS_BRANCH:-master}"
 MANIFEST_URL="${MANIFEST_URL:-https://github.com/openharmony/manifest.git}"
 MANIFEST_GROUPS="${MANIFEST_GROUPS:-default,ohos:mini,ohos:small,ohos:standard,ohos:system,ohos:chipset}"
-REPO_URL="${REPO_URL:-https://gitee.com/oschina/repo.git}"
+REPO_URL="${REPO_URL:-https://github.com/GerritCodeReview/git-repo.git}"
+REPO_LAUNCHER_URL="${REPO_LAUNCHER_URL:-https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo}"
 REPO_NO_BUNDLE="${REPO_NO_BUNDLE:-1}"
 REPO_NO_TAGS="${REPO_NO_TAGS:-0}"
 REPO_FORCE_SYNC="${REPO_FORCE_SYNC:-1}"
@@ -87,6 +98,7 @@ REPO_JOBS="${REPO_JOBS:-8}"
 REPO_CHECKOUT_JOBS="${REPO_CHECKOUT_JOBS:-1}"
 REPO_SYNC_RETRIES="${REPO_SYNC_RETRIES:-3}"
 BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
+CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-100G}"
 GIT_USER_NAME="${GIT_USER_NAME:-richerfu}"
 GIT_USER_EMAIL="${GIT_USER_EMAIL:-southorange0929@foxmail.com}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://repo.huaweicloud.com/repository/npm/}"
@@ -99,7 +111,7 @@ SKIP_APT="${SKIP_APT:-0}"
 SKIP_REPO_SYNC="${SKIP_REPO_SYNC:-0}"
 SKIP_PREBUILTS="${SKIP_PREBUILTS:-0}"
 SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
-GIT_LFS_PATHS="${GIT_LFS_PATHS:-applications/standard/hap base/web/webview foundation/arkui/ace_engine}"
+GIT_LFS_PATHS="${GIT_LFS_PATHS:-applications/standard/hap base/web/webview foundation/arkui/ace_engine third_party/icu third_party/libphonenumber}"
 QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI:-${QEMU_FIX_ACCESS_TOKENID_SPM:-1}}"
 QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS:-1}"
 ARMV7A_FULL_OVERLAY="${ARMV7A_FULL_OVERLAY:-1}"
@@ -258,6 +270,9 @@ PY
 ensure_python_modules() {
   ensure_python_module python3 typing_extensions "typing_extensions>=4.12.2"
   ensure_python_module python3 json5 json5
+  ensure_python_module python3 yaml PyYAML
+  ensure_python_module python3 mesonbuild "meson>=1.1,<2"
+  ensure_python_module python3 mako "mako>=0.8"
 
   local python_bin
   for python_bin in \
@@ -266,6 +281,8 @@ ensure_python_modules() {
     if [ -x "${python_bin}" ]; then
       ensure_python_module "${python_bin}" typing_extensions "typing_extensions>=4.12.2"
       ensure_python_module "${python_bin}" json5 json5
+      ensure_python_module "${python_bin}" yaml PyYAML
+      ensure_python_module "${python_bin}" mako "mako>=0.8"
     fi
   done
 }
@@ -282,6 +299,7 @@ raise_nofile_limit() {
 configure_user_tools() {
   mkdir -p "${CONTAINER_HOME}" "${CACHE_ROOT}/npm-cache" "${CACHE_ROOT}/logs"
   export HOME="${CONTAINER_HOME}"
+  export PATH="${CONTAINER_HOME}/.local/bin:${PATH}"
   export npm_config_cache="${CACHE_ROOT}/npm-cache"
   export NPM_CONFIG_CACHE="${CACHE_ROOT}/npm-cache"
   export NPM_CONFIG_REGISTRY="${NPM_REGISTRY}"
@@ -319,6 +337,39 @@ configure_user_tools() {
   git config --global checkout.workers 1
   git config --global index.threads 1
   git config --global http.version HTTP/1.1
+
+  # compile_app.py launches ohpm with a minimal environment, so Node falls
+  # back to the passwd home instead of CONTAINER_HOME. Keep both paths on the
+  # persistent cache without changing OpenHarmony sources.
+  local passwd_home
+  passwd_home="$(getent passwd "$(id -u)" | cut -d: -f6)"
+  local persistent_ohpm="${CONTAINER_HOME}/.ohpm"
+  local passwd_ohpm="${passwd_home}/.ohpm"
+  mkdir -p "${persistent_ohpm}"
+  if [ "${passwd_ohpm}" != "${persistent_ohpm}" ]; then
+    if [ -d "${passwd_ohpm}" ] && [ ! -L "${passwd_ohpm}" ]; then
+      if [ -d "${passwd_ohpm}/cache" ]; then
+        mkdir -p "${persistent_ohpm}/cache"
+        cp -an "${passwd_ohpm}/cache/." "${persistent_ohpm}/cache/"
+      fi
+      if [ -f "${passwd_ohpm}/.ohpmrc" ] && [ ! -e "${persistent_ohpm}/.ohpmrc" ]; then
+        cp -p "${passwd_ohpm}/.ohpmrc" "${persistent_ohpm}/.ohpmrc"
+      fi
+      rm -rf "${passwd_ohpm}"
+    fi
+    ln -sfn "${persistent_ohpm}" "${passwd_ohpm}"
+  fi
+}
+
+ensure_host_tools() {
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "install missing host tool: uv"
+    python3 -m pip install --user \
+      --trusted-host repo.huaweicloud.com \
+      -i https://repo.huaweicloud.com/repository/pypi/simple \
+      uv
+  fi
+  command -v uv >/dev/null
 }
 
 ensure_repo_tool() {
@@ -329,7 +380,7 @@ ensure_repo_tool() {
     echo "repo command not found; install repo or rerun as root without SKIP_APT=1" >&2
     exit 1
   fi
-  curl -fsSL https://gitee.com/oschina/repo/raw/fork_flow/repo-py3 -o /usr/local/bin/repo
+  curl -fsSL "${REPO_LAUNCHER_URL}" -o /usr/local/bin/repo
   chmod +x /usr/local/bin/repo
 }
 
@@ -446,6 +497,94 @@ clean_js_prebuilts_state() {
   remove_under_cache_root "${CONTAINER_HOME}/.npm/_cacache/jsframework"
 }
 
+ETS12_PREBUILTS_CONFIG_BACKUP=""
+ETS12_SEPARATE_NPM_INSTALL=0
+
+restore_ets12_prebuilts_config() {
+  if [ -z "${ETS12_PREBUILTS_CONFIG_BACKUP}" ]; then
+    return
+  fi
+  local config="${OHOS_ROOT}/build/prebuilts_config.json"
+  if [ -f "${ETS12_PREBUILTS_CONFIG_BACKUP}" ]; then
+    cp -p "${ETS12_PREBUILTS_CONFIG_BACKUP}" "${config}"
+    rm -f "${ETS12_PREBUILTS_CONFIG_BACKUP}"
+  fi
+  ETS12_PREBUILTS_CONFIG_BACKUP=""
+}
+
+prepare_ets12_separate_npm_install() {
+  if [ "${SKIP_PREBUILTS}" = "1" ]; then
+    return
+  fi
+
+  local config="${OHOS_ROOT}/build/prebuilts_config.json"
+  local package_json="${OHOS_ROOT}/developtools/ace_ets2bundle/ets1.2/package.json"
+  if [ ! -f "${config}" ] || [ ! -f "${package_json}" ]; then
+    return
+  fi
+
+  ETS12_PREBUILTS_CONFIG_BACKUP="$(mktemp "${CACHE_ROOT}/prebuilts_config.ets12.XXXXXX.json")"
+  cp -p "${config}" "${ETS12_PREBUILTS_CONFIG_BACKUP}"
+  if ! python3 - "${config}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+target = "${code_dir}/developtools/ace_ets2bundle/ets1.2"
+data = json.loads(path.read_text())
+removed = 0
+
+def remove_target(value):
+    global removed
+    if isinstance(value, dict):
+        for child in value.values():
+            remove_target(child)
+    elif isinstance(value, list):
+        before = len(value)
+        value[:] = [item for item in value if item != target]
+        removed += before - len(value)
+        for child in value:
+            remove_target(child)
+
+remove_target(data)
+if removed != 1:
+    raise SystemExit(f"expected one ets1.2 npm entry, removed {removed}")
+path.write_text(json.dumps(data, ensure_ascii=False, indent=4) + "\n")
+PY
+  then
+    restore_ets12_prebuilts_config
+    return 1
+  fi
+
+  ETS12_SEPARATE_NPM_INSTALL=1
+  echo "install ets1.2 separately to avoid npm 6 local-package staging collision"
+}
+
+install_ets12_node_modules() {
+  if [ "${ETS12_SEPARATE_NPM_INSTALL}" != "1" ]; then
+    return
+  fi
+
+  local root="${OHOS_ROOT}/developtools/ace_ets2bundle/ets1.2"
+  local npm_tool="${OHOS_ROOT}/prebuilts/build-tools/common/nodejs/current/bin/npm"
+  if [ ! -x "${npm_tool}" ]; then
+    echo "missing OpenHarmony npm tool: ${npm_tool}" >&2
+    exit 1
+  fi
+
+  remove_under_ohos_root "${root}/node_modules"
+  (
+    cd "${root}"
+    PATH="$(dirname "${npm_tool}"):${PATH}" \
+      "${npm_tool}" install \
+      --registry "${NPM_REGISTRY}" \
+      --cache "${CONTAINER_HOME}/.npm/_cacache/ets1.2" \
+      --package-lock=false \
+      --unsafe-perm
+  ) 2>&1 | tee "${CACHE_ROOT}/logs/npm_install_ets12.log"
+}
+
 download_prebuilts() {
   cd "${OHOS_ROOT}"
   if [ "${SKIP_PREBUILTS}" = "1" ]; then
@@ -476,6 +615,59 @@ download_prebuilts() {
   return "${rc}"
 }
 
+repair_ets12_node_modules() {
+  local root="${OHOS_ROOT}/developtools/ace_ets2bundle/ets1.2"
+  local npm_tool=(
+    "${OHOS_ROOT}/prebuilts/build-tools/common/nodejs/current/bin/npm"
+  )
+  if [ ! -d "${root}/node_modules" ]; then
+    return
+  fi
+  if [ ! -x "${npm_tool[0]}" ]; then
+    echo "missing OpenHarmony npm tool: ${npm_tool[0]}" >&2
+    exit 1
+  fi
+
+  # npm 6 resolves nested file: dependencies relative to the top-level
+  # node_modules symlink. Repair those generated links at their physical
+  # package locations so TypeScript project references resolve normally.
+  local package
+  local dependency
+  for package in common compat interop libarkts; do
+    mkdir -p "${root}/${package}/node_modules/@koalaui"
+  done
+  for dependency in build-common compat; do
+    ln -sfn "../../../${dependency}" \
+      "${root}/common/node_modules/@koalaui/${dependency}"
+  done
+  ln -sfn "../../../build-common" \
+    "${root}/compat/node_modules/@koalaui/build-common"
+  for dependency in build-common common compat; do
+    ln -sfn "../../../${dependency}" \
+      "${root}/interop/node_modules/@koalaui/${dependency}"
+  done
+  for dependency in build-common common compat interop; do
+    ln -sfn "../../../${dependency}" \
+      "${root}/libarkts/node_modules/@koalaui/${dependency}"
+  done
+  if [ -d "${root}/interop/node_modules/@types/node" ]; then
+    mkdir -p "${root}/node_modules/@types"
+    ln -sfn "../../interop/node_modules/@types/node" \
+      "${root}/node_modules/@types/node"
+  fi
+
+  if [ ! -x "${root}/node_modules/.bin/arktscgen" ]; then
+    echo "restore ets1.2 npm executable links"
+    (
+      cd "${root}"
+      "${npm_tool[@]}" rebuild \
+        --registry "${NPM_REGISTRY}" \
+        --cache "${CACHE_ROOT}/npm-cache" \
+        --unsafe-perm
+    )
+  fi
+}
+
 build_product() {
   local product="$1"
   local kernel_obj="${product}"
@@ -488,7 +680,7 @@ build_product() {
   fi
   cd "${OHOS_ROOT}"
   export CCACHE_DIR="${CACHE_ROOT}/ccache"
-  ccache -M 100G >/dev/null 2>&1 || true
+  ccache -M "${CCACHE_MAXSIZE}" >/dev/null 2>&1 || true
   if [ "${CLEAN_KERNEL_OBJ}" = "1" ]; then
     rm -rf "${OHOS_ROOT}/out/KERNEL_OBJ"
     rm -rf "${OHOS_ROOT}/out/kernel/OBJ/${kernel_obj}"
@@ -1044,6 +1236,120 @@ for path in removed:
 PY
 }
 
+ensure_hvigor_sdkmanager_common() {
+  local version="2.26.3"
+  local registry="https://repo.harmonyos.com/npm/"
+  local node_bin="${OHOS_ROOT}/prebuilts/build-tools/common/nodejs/current/bin"
+  local npm="${node_bin}/npm"
+  local target="${OHOS_ROOT}/prebuilts/tool/command-line-tools/6.x/hvigor/hvigor-ohos-plugin/node_modules/@ohos/sdkmanager-common"
+  if [ ! -x "${npm}" ] || [ ! -d "$(dirname "${target}")" ]; then
+    return
+  fi
+
+  local installed=""
+  if [ -f "${target}/package.json" ]; then
+    installed="$(python3 - "${target}/package.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    print(json.load(stream).get("version", ""))
+PY
+)"
+  fi
+  if [ "${installed}" = "${version}" ]; then
+    return
+  fi
+
+  local workdir archive
+  workdir="$(mktemp -d "${CACHE_ROOT}/sdkmanager-common.XXXXXX")"
+  archive="$({
+    cd "${workdir}"
+    PATH="${node_bin}:${PATH}" "${npm}" pack \
+      "@ohos/sdkmanager-common@${version}" \
+      --registry "${registry}" \
+      --cache "${CACHE_ROOT}/npm-cache" \
+      --silent
+  } | tail -n 1)"
+  tar -xzf "${workdir}/${archive}" -C "${workdir}"
+  rm -rf "${target}"
+  mv "${workdir}/package" "${target}"
+  rm -rf "${workdir}"
+  echo "updated Hvigor sdkmanager-common: ${installed:-missing} -> ${version}"
+}
+
+ensure_ohos_sdk_ets_loader_modules() {
+  local sdk_root="${OHOS_ROOT}/prebuilts/ohos-sdk/linux"
+  local node_bin="${OHOS_ROOT}/prebuilts/build-tools/common/nodejs/current/bin"
+  local npm="${node_bin}/npm"
+  if [ ! -x "${npm}" ] || [ ! -d "${sdk_root}" ]; then
+    return
+  fi
+
+  local bundled_modules_source=""
+  local candidate
+  for candidate in \
+    "${sdk_root}/23/ets/build-tools/ets-loader/node_modules" \
+    "${OHOS_ROOT}/developtools/ace_ets2bundle/compiler/node_modules"; do
+    if [ -f "${candidate}/typescript/package.json" ] && \
+      [ -f "${candidate}/arkguard/package.json" ]; then
+      bundled_modules_source="${candidate}"
+      break
+    fi
+  done
+
+  local loader
+  while IFS= read -r loader; do
+    if [ ! -f "${loader}/node_modules/json5/package.json" ]; then
+      echo "install SDK ets-loader modules: ${loader}"
+      (
+        cd "${loader}"
+        PATH="${node_bin}:${PATH}" "${npm}" ci \
+          --registry "${NPM_REGISTRY}" \
+          --cache "${CACHE_ROOT}/npm-cache" \
+          --ignore-scripts \
+          --unsafe-perm
+      )
+    fi
+
+    local module
+    for module in typescript arkguard declgen hypium @ohos/hypium; do
+      if [ -f "${loader}/node_modules/${module}/package.json" ]; then
+        continue
+      fi
+      if [ -z "${bundled_modules_source}" ] || \
+        [ ! -f "${bundled_modules_source}/${module}/package.json" ]; then
+        echo "missing OpenHarmony ${module} prebuilt for SDK ets-loader" >&2
+        return 1
+      fi
+
+      local module_parent="${loader}/node_modules/${module%/*}"
+      local module_name="${module##*/}"
+      local module_tmp="${module_parent}/.${module_name}.tmp.$$"
+      if [ "${module_parent}" = "${loader}/node_modules/${module}" ]; then
+        module_parent="${loader}/node_modules"
+        module_tmp="${module_parent}/.${module_name}.tmp.$$"
+      fi
+      echo "install SDK ets-loader ${module} from: ${bundled_modules_source}"
+      mkdir -p "${module_parent}"
+      rm -rf "${module_tmp}"
+      cp -a "${bundled_modules_source}/${module}" "${module_tmp}"
+      rm -rf "${loader}/node_modules/${module}"
+      mv "${module_tmp}" "${loader}/node_modules/${module}"
+    done
+
+    test -f "${loader}/node_modules/json5/package.json"
+    test -f "${loader}/node_modules/typescript/package.json"
+    test -f "${loader}/node_modules/arkguard/package.json"
+  done < <(
+    find "${sdk_root}" -mindepth 5 -maxdepth 5 -type f \
+      -path '*/ets/build-tools/ets-loader/package-lock.json' \
+      -print \
+      | sed 's#/package-lock.json$##' \
+      | sort
+  )
+}
+
 main() {
   echo "cache root: ${CACHE_ROOT}"
   echo "home: ${CONTAINER_HOME}"
@@ -1054,6 +1360,7 @@ main() {
   echo "repo jobs: network=${REPO_JOBS} checkout=${REPO_CHECKOUT_JOBS}"
   echo "npm registry: ${NPM_REGISTRY}"
   echo "skip repo sync: ${SKIP_REPO_SYNC}"
+  echo "ccache max size: ${CCACHE_MAXSIZE}"
   echo "skip prebuilts: ${SKIP_PREBUILTS}"
   echo "no prebuilt sdk: ${NO_PREBUILT_SDK}"
   echo "build only load: ${BUILD_ONLY_LOAD}"
@@ -1069,11 +1376,20 @@ main() {
   install_deps
   ensure_python_modules
   configure_user_tools
+  ensure_host_tools
   ensure_repo_tool
   prepare_checkout
   sync_git_lfs_objects
+  prepare_ets12_separate_npm_install
+  trap restore_ets12_prebuilts_config EXIT
   download_prebuilts
+  restore_ets12_prebuilts_config
+  trap - EXIT
+  install_ets12_node_modules
+  repair_ets12_node_modules
   ensure_python_modules
+  ensure_hvigor_sdkmanager_common
+  ensure_ohos_sdk_ets_loader_modules
   apply_armv7a_full_overlay
   configure_qemu_product_features
   ensure_flexlexer_header

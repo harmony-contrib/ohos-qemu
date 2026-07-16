@@ -39,6 +39,7 @@ jobs:
       QEMU_SMOKE_REQUIRE_KVM: ${{ matrix.require_kvm }}
       QEMU_SMOKE_RUN_OHOS_RUNNER: ${{ matrix.run_ohos_runner }}
       QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS: ${{ matrix.account_wait_attempts }}
+      QEMU_SMOKE_MINIMUM_GUEST_UPTIME: ${{ matrix.minimum_guest_uptime }}
     strategy:
       fail-fast: false
       matrix:
@@ -54,6 +55,7 @@ jobs:
             require_kvm: "true"
             account_wait_attempts: "300"
             run_ohos_runner: "true"
+            minimum_guest_uptime: "0"
           - name: macOS arm64 QEMU
             runner: macos-14
             host_platform: macos
@@ -65,6 +67,7 @@ jobs:
             require_kvm: "false"
             account_wait_attempts: "240"
             run_ohos_runner: "true"
+            minimum_guest_uptime: "0"
           - name: macOS armv7a QEMU
             runner: macos-14
             host_platform: macos
@@ -76,6 +79,7 @@ jobs:
             require_kvm: "false"
             account_wait_attempts: "1"
             run_ohos_runner: "false"
+            minimum_guest_uptime: "270"
           - name: Windows x64 QEMU
             runner: windows-2022
             host_platform: windows
@@ -87,6 +91,7 @@ jobs:
             require_kvm: "false"
             account_wait_attempts: "300"
             run_ohos_runner: "true"
+            minimum_guest_uptime: "0"
 
     steps:
       - name: Checkout
@@ -180,6 +185,11 @@ jobs:
         if: ${{ matrix.run_ohos_runner == 'true' }}
         shell: bash
         run: bash ci/qemu-smoke/phase.sh run-ohos-runner
+
+      - name: Verify delayed guest stability
+        if: ${{ matrix.minimum_guest_uptime != '0' }}
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh wait-stable
 
       - name: Collect QEMU diagnostics
         if: ${{ always() }}

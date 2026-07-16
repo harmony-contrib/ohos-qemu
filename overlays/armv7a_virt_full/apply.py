@@ -18,6 +18,8 @@ def read_text(path: Path) -> str:
 
 def write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() and path.read_text(encoding="utf-8") == content:
+        return
     path.write_text(content, encoding="utf-8")
 
 
@@ -122,10 +124,11 @@ def ensure_hardware_group(root: Path) -> None:
     "//third_party/alsa-lib:libasound",
   ]
 
-  # The virtio GPU prebuilt directory currently only contains arm64 and x86_64
-  # Mesa/GL userspace libraries. Keep armv7a on the standard system stack, but
-  # avoid depending on a GPU prebuilt that has no 32-bit ARM payload.
-  if (target_cpu != "arm") {
+  # The checked-in GPU binaries only cover arm64 and x86_64. Build Mesa's
+  # kms_swrast driver from source for the armv7a QEMU product.
+  if (target_cpu == "arm") {
+    deps += [ "//third_party/mesa3d/ohos:mesa3d_all_libs" ]
+  } else {
     deps += [ "//device/qemu/common/virt_full/hardware/gpu:virtio" ]
   }
 }
@@ -134,9 +137,458 @@ def ensure_hardware_group(root: Path) -> None:
         content = content.replace(old, new, 1)
         write_text(path, content)
         return
-    if 'if (target_cpu != "arm") {' in content:
+    previous = '''  # The virtio GPU prebuilt directory currently only contains arm64 and x86_64
+  # Mesa/GL userspace libraries. armv7a uses RenderService's supported CPU
+  # rendering path, so do not install foreign-architecture GPU binaries.
+  if (target_cpu != "arm") {
+    deps += [ "//device/qemu/common/virt_full/hardware/gpu:virtio" ]
+  }
+'''
+    replacement = '''  # The checked-in GPU binaries only cover arm64 and x86_64. Build Mesa's
+  # kms_swrast driver from source for the armv7a QEMU product.
+  if (target_cpu == "arm") {
+    deps += [ "//third_party/mesa3d/ohos:mesa3d_all_libs" ]
+  } else {
+    deps += [ "//device/qemu/common/virt_full/hardware/gpu:virtio" ]
+  }
+'''
+    if previous in content:
+        write_text(path, content.replace(previous, replacement, 1))
+        return
+    if 'deps += [ "//third_party/mesa3d/ohos:mesa3d_all_libs" ]' in content:
         return
     die(f"expected hardware group not found in {path}")
+
+
+def restore_display_device_upstream(root: Path) -> None:
+    path = root / (
+        "device/qemu/common/virt_full/hardware/display/src/display_device/"
+        "hdi_device_interface.cpp"
+    )
+    content = read_text(path)
+    upstream = '''    if (!drmDevice) {
+        DISPLAY_LOGE("can not create drm device");
+    }
+    ret = drmDevice->Init();
+'''
+    previous_experiment = '''    if (!drmDevice) {
+        DISPLAY_LOGE("can not create drm device");
+        return devices;
+    }
+    ret = drmDevice->Init();
+'''
+    if previous_experiment in content:
+        write_text(path, content.replace(previous_experiment, upstream, 1))
+    elif upstream not in content:
+        die(f"expected upstream DRM device block not found in {path}")
+
+
+def ensure_power_dialog_upstream_config(root: Path) -> None:
+    path = root / "base/powermgr/power_manager/power_dialog/build-profile.json5"
+    content = read_text(path)
+    previous = '"compileSdkVersion": 26'
+    current = '"compileSdkVersion": "26.0.0"'
+    if previous in content:
+        write_text(path, content.replace(previous, current, 1))
+    elif current not in content:
+        die(f"expected OpenHarmony power dialog SDK configuration not found in {path}")
+
+    path = root / "base/powermgr/power_manager/power_dialog/hvigor/hvigor-config.json5"
+    content = read_text(path)
+    hvigor_6 = '''{
+  "hvigorVersion": "6.0.0",
+  "dependencies": {
+    "@ohos/hvigor-ohos-plugin": "6.0.0"
+  }
+}'''
+    model_6 = '''{
+  "modelVersion": "6.0.0",
+  "dependencies": {
+  }
+}'''
+    hvigor_4 = '''{
+  "hvigorVersion": "4.0.9",
+  "dependencies": {
+    "@ohos/hvigor-ohos-plugin": "4.0.9"
+  }
+}'''
+    if hvigor_4 in content:
+        write_text(path, content.replace(hvigor_4, model_6, 1))
+    elif hvigor_6 in content:
+        write_text(path, content.replace(hvigor_6, model_6, 1))
+    elif model_6 not in content:
+        die(f"expected power dialog Hvigor configuration not found in {path}")
+
+
+def ensure_armv7a_mesa(root: Path) -> None:
+    path = root / "third_party/mesa3d/ohos/BUILD.gn"
+    content = read_text(path)
+    new_vars = '''if (product_name == "armv7a_virt") {
+  mesa3d_egl_name = "libEGL.so.1.0.0"
+  mesa3d_egl_symlinks = [ "libEGL_impl.so" ]
+  mesa3d_gles1_symlinks = [ "libGLESv1_impl.so" ]
+  mesa3d_gles2_symlinks = [
+    "libGLESv2_impl.so",
+    "libGLESv3_impl.so",
+  ]
+  mesa3d_gallium_name = "kms_swrast_dri.so"
+  mesa3d_gallium_symlinks = [ "swrast_dri.so" ]
+  mesa3d_optional_lib_items = [
+    [
+      "libglapi.so.0.0.0",
+      [
+        "libglapi.so",
+        "libglapi.so.0",
+      ],
+    ],
+  ]
+  mesa3d_subsystem_name = "device_armv7a_virt"
+  mesa3d_part_name = "qemu_virt_full_armv7a"
+} else {
+  mesa3d_egl_name = "libEGL.so.1.0.0"
+  mesa3d_egl_symlinks = [
+    "libEGL.so",
+    "libEGL.so.1",
+    "libEGL_impl.so",
+  ]
+  mesa3d_gles1_symlinks = [
+    "libGLESv1_CM.so",
+    "libGLESv1_CM.so.1",
+    "libGLESv1_impl.so",
+  ]
+  mesa3d_gles2_symlinks = [
+    "libGLESv2.so",
+    "libGLESv2.so.2",
+    "libGLESv3.so",
+    "libGLESv2_impl.so",
+    "libGLESv3_impl.so",
+  ]
+  mesa3d_gallium_name = "libgallium_dri.so"
+  mesa3d_gallium_symlinks = [ "panfrost_dri.so" ]
+  mesa3d_optional_lib_items = [
+    [
+      "libglapi.so.0.0.0",
+      [
+        "libglapi.so",
+        "libglapi.so.0",
+      ],
+    ],
+  ]
+  mesa3d_subsystem_name = "rockchip_products"
+  mesa3d_part_name = "rockchip_products"
+}
+'''
+    vars_start_marker = 'mesa3d_libs_dir = "$root_build_dir/packages/phone/mesa3d"\n'
+    vars_end_marker = "\nmesa3d_all_lib_items = ["
+    vars_start = content.find(vars_start_marker)
+    vars_end = content.find(vars_end_marker, vars_start + len(vars_start_marker))
+    if vars_start < 0 or vars_end < 0:
+        die(f"expected Mesa library configuration markers not found in {path}")
+    vars_start += len(vars_start_marker)
+    content = content[:vars_start] + "\n" + new_vars + content[vars_end:]
+
+    new_items = '''mesa3d_all_lib_items = [
+  [
+    mesa3d_egl_name,
+    mesa3d_egl_symlinks,
+  ],
+  [
+    "libgbm.so.1.0.0",
+    [
+      "libgbm.so",
+      "libgbm.so.1",
+    ],
+  ],
+] + mesa3d_optional_lib_items + [
+  [
+    "libGLESv1_CM.so.1.1.0",
+    mesa3d_gles1_symlinks,
+  ],
+  [
+    "libGLESv2.so.2.0.0",
+    mesa3d_gles2_symlinks,
+  ],
+  [
+    mesa3d_gallium_name,
+    mesa3d_gallium_symlinks,
+  ],
+]
+'''
+    items_start = content.find("mesa3d_all_lib_items = [")
+    items_end = content.find('\naction("mesa3d_build") {', items_start)
+    if items_start < 0 or items_end < 0:
+        die(f"expected Mesa library list boundaries not found in {path}")
+    content = content[:items_start] + new_items + content[items_end + 1:]
+
+    build_targets = '''action("mesa3d_build") {
+  script = "build_mesa3d.py"
+  deps = [ "//third_party/expat:expat" ]
+  if (product_name != "armv7a_virt") {
+    deps += [ "//foundation/graphic/graphic_2d:libsurface" ]
+  }
+  if (product_name == "armv7a_virt") {
+    script = "//device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py"
+    deps += [ "//third_party/libdrm:libdrm" ]
+    external_deps = [
+      "graphic_surface:surface",
+      "hilog:libhilog",
+    ]
+  }
+  outputs = []
+  foreach(item, mesa3d_all_lib_items) {
+    outputs += [ "$mesa3d_libs_dir/${item[0]}" ]
+  }
+  args = [ rebase_path(root_build_dir) ]
+}
+
+mesa3d_all_lib_deps = []
+
+foreach(item, mesa3d_all_lib_items) {
+  name = item[0]
+  ohos_prebuilt_shared_library(name) {
+    source = "$mesa3d_libs_dir/$name"
+    deps = [ ":mesa3d_build" ]
+    if (item[1] != []) {
+      symlink_target_name = item[1]
+    }
+    install_enable = true
+    install_images = [ system_base_dir ]
+    subsystem_name = mesa3d_subsystem_name
+    part_name = mesa3d_part_name
+    if (product_name == "armv7a_virt") {
+      module_install_dir = "lib"
+    }
+  }
+  mesa3d_all_lib_deps += [ ":$name" ]
+}
+
+group("mesa3d_all_libs") {
+  deps = mesa3d_all_lib_deps
+}
+'''
+    action_start = content.find('action("mesa3d_build") {')
+    group_start = content.find('group("mesa3d_all_libs") {', action_start)
+    group_end = content.find("\n}", group_start)
+    if action_start < 0 or group_start < 0 or group_end < 0:
+        die(f"expected Mesa build target boundaries not found in {path}")
+    group_end += len("\n}")
+    content = content[:action_start] + build_targets + content[group_end:]
+    write_text(path, content)
+
+    # The QEMU Mesa baseline is extracted from OpenHarmony's GitHub history by
+    # the armv7a builder. Remove earlier Mesa 25 KMS experiments from reused
+    # checkouts so the active master tree remains unchanged.
+    options_path = root / "third_party/mesa3d/meson_options.txt"
+    content = read_text(options_path)
+    option = '''option(
+  'ohos-kms-drm',
+  type : 'boolean',
+  value : false,
+  description : 'Keep DRM/KMS enabled for OpenHarmony virtual devices',
+)
+
+'''
+    if option in content:
+        write_text(options_path, content.replace(option, "", 1))
+
+    meson_path = root / "third_party/mesa3d/meson.build"
+    content = read_text(meson_path)
+    modified = '''if with_platform_ohos
+  pre_args += '-DVK_USE_PLATFORM_OHOS=1'
+  if not get_option('ohos-kms-drm')
+    system_has_kms_drm = false
+  endif
+endif
+'''
+    upstream = '''if with_platform_ohos
+  pre_args += '-DVK_USE_PLATFORM_OHOS=1'
+  system_has_kms_drm = false
+endif
+'''
+    if modified in content:
+        write_text(meson_path, content.replace(modified, upstream, 1))
+
+    egl_meson_path = root / "third_party/mesa3d/src/egl/meson.build"
+    content = read_text(egl_meson_path)
+    modified = '''  if with_gbm and not with_platform_android and \
+      (not with_platform_ohos or get_option('ohos-kms-drm'))
+    files_egl += files('drivers/dri2/platform_drm.c')
+    link_for_egl += libgbm
+    incs_for_egl += [inc_gbm, include_directories('../gbm/main')]
+    deps_for_egl += dep_libdrm
+  endif
+'''
+    upstream = '''  if with_gbm and not with_platform_android and not with_platform_ohos
+    files_egl += files('drivers/dri2/platform_drm.c')
+    link_for_egl += libgbm
+    incs_for_egl += [inc_gbm, include_directories('../gbm/main')]
+    deps_for_egl += dep_libdrm
+  endif
+'''
+    if modified in content:
+        content = content.replace(modified, upstream, 1)
+    modified = '''  if with_platform_ohos
+    deps_for_egl += [dependency('libsurface')]
+    files_egl += files('drivers/dri2/platform_ohos.c')
+    if get_option('ohos-kms-drm')
+      c_args_for_egl += '-DOHOS_KMS_SWRAST'
+    endif
+  endif
+'''
+    upstream = '''  if with_platform_ohos
+    deps_for_egl += [dependency('libsurface')]
+    files_egl += files('drivers/dri2/platform_ohos.c')
+  endif
+'''
+    if modified in content:
+        content = content.replace(modified, upstream, 1)
+    write_text(egl_meson_path, content)
+
+    ohos_platform_path = root / (
+        "third_party/mesa3d/src/egl/drivers/dri2/platform_ohos.c"
+    )
+    content = read_text(ohos_platform_path)
+    content = content.replace('#include "loader.h"\n', "", 1)
+    modified = '''static bool
+load_zink_kopper(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+
+#ifdef OHOS_KMS_SWRAST
+   dri2_dpy->fd_render_gpu = loader_open_device("/dev/dri/card0");
+   if (dri2_dpy->fd_render_gpu < 0)
+      return false;
+   dri2_dpy->fd_display_gpu = dri2_dpy->fd_render_gpu;
+   dri2_dpy->driver_name = strdup("kms_swrast");
+#else
+   dri2_dpy->fd_render_gpu = -1;
+   dri2_dpy->fd_display_gpu = -1;
+   dri2_dpy->driver_name = strdup("zink");
+#endif
+   if (!dri2_dpy->driver_name)
+      return false;
+
+   if (!dri2_load_driver(disp)) {
+      free(dri2_dpy->driver_name);
+      dri2_dpy->driver_name = NULL;
+      return false;
+   }
+
+   dri2_dpy->loader_extensions = image_loader_extensions;
+
+   return true;
+}
+'''
+    upstream = '''static bool
+load_zink_kopper(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+
+   dri2_dpy->fd_render_gpu = -1;
+   dri2_dpy->fd_display_gpu = -1;
+   dri2_dpy->driver_name = strdup("zink");
+   if (!dri2_dpy->driver_name)
+      return false;
+
+   if (!dri2_load_driver(disp)) {
+      free(dri2_dpy->driver_name);
+      dri2_dpy->driver_name = NULL;
+      return false;
+   }
+
+   dri2_dpy->loader_extensions = image_loader_extensions;
+
+   return true;
+}
+'''
+    if modified in content:
+        content = content.replace(modified, upstream, 1)
+    modified = '''static const __DRIextension *image_loader_extensions[] = {
+   &image_lookup_extension.base,
+   &kopper_loader_extension.base,
+   &swrast_loader_extension.base,
+   &dri2_loader_extension.base,
+#ifdef OHOS_KMS_SWRAST
+   &use_invalidate.base,
+#endif
+   NULL,
+};
+'''
+    upstream = '''static const __DRIextension *image_loader_extensions[] = {
+   &image_lookup_extension.base,
+   &kopper_loader_extension.base,
+   &swrast_loader_extension.base,
+   &dri2_loader_extension.base,
+   NULL,
+};
+'''
+    if modified in content:
+        content = content.replace(modified, upstream, 1)
+    modified = '''EGLBoolean
+dri2_initialize_ohos(_EGLDisplay *disp)
+{
+   const char *err;
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+'''
+    upstream = '''EGLBoolean
+dri2_initialize_ohos(_EGLDisplay *disp)
+{
+   const char *err;
+   struct dri2_egl_display *dri2_dpy = dri2_display_create(disp);
+   if (!dri2_dpy)
+      return EGL_FALSE;
+'''
+    if modified in content:
+        content = content.replace(modified, upstream, 1)
+    modified = '''cleanup:
+   return _eglError(EGL_NOT_INITIALIZED, err);
+}
+'''
+    upstream = '''cleanup:
+   dri2_display_destroy(disp);
+   return _eglError(EGL_NOT_INITIALIZED, err);
+}
+'''
+    if modified in content:
+        content = content.replace(modified, upstream, 1)
+    write_text(ohos_platform_path, content)
+
+    dri_symbols_path = root / "third_party/mesa3d/src/gallium/targets/dri/dri.sym.in"
+    content = read_text(dri_symbols_path)
+    content = content.replace(
+        "                __emutls_v._mesa_glapi_tls_Context;\n",
+        "",
+    )
+    content = content.replace(
+        "                __emutls_v._mesa_glapi_tls_Dispatch;\n",
+        "",
+    )
+    write_text(dri_symbols_path, content)
+
+
+def restore_musl_dlopen_cleanup(root: Path) -> None:
+    path = root / "third_party/musl/ldso/linux/dynlink.c"
+    content = read_text(path)
+    upstream = '''\t\t\tif (p->parents) {
+\t\t\t\tfree(p->parents);
+\t\t\t}
+\t\t\tfree_reloc_can_search_dso(p);
+\t\t}
+\t\tfor (p=orig_tail->next; p; p=next) {
+\t\t\tnext = p->next;
+\t\t\tfree(p);
+'''
+    previous_experiment = '''\t\t\tfree_reloc_can_search_dso(p);
+\t\t}
+\t\tfor (p=orig_tail->next; p; p=next) {
+\t\t\tnext = p->next;
+\t\t\tfree(p->parents);
+\t\t\tfree(p);
+'''
+    if previous_experiment in content:
+        write_text(path, content.replace(previous_experiment, upstream, 1))
+    elif upstream not in content:
+        die(f"expected musl dlopen cleanup block not found in {path}")
 
 
 def ensure_armv7a_kernel_config(root: Path) -> None:
@@ -146,7 +598,8 @@ def ensure_armv7a_kernel_config(root: Path) -> None:
     #
     # The standard-system init path also expects the same runtime kernel
     # features present in the maintained arm64/x86_64 full QEMU configs:
-    # pids/cpuacct cgroups, namespaces, SELinux LSM, and ext4 security xattrs.
+    # pids/cpuacct cgroups, namespaces, SELinux LSM, ext4 security xattrs, and
+    # the DRM/input drivers used by QEMU's MMIO virtio devices.
     for relative in (
         "device/qemu/common/virt_full/kernel/arm_virt_defconfig",
         "device/qemu/common/virt_full/kernel/configs/arm_virt_defconfig",
@@ -176,7 +629,16 @@ def ensure_armv7a_kernel_config(root: Path) -> None:
             "CONFIG_NET_NS",
             "CONFIG_EXT4_FS_POSIX_ACL",
             "CONFIG_EXT4_FS_SECURITY",
+            "CONFIG_DRM",
+            "CONFIG_DRM_KMS_HELPER",
+            "CONFIG_DRM_FBDEV_EMULATION",
+            "CONFIG_DRM_GEM_SHMEM_HELPER",
+            "CONFIG_DRM_VIRTIO_GPU",
+            "CONFIG_FB",
+            "CONFIG_SYNC_FILE",
             "CONFIG_VIRTIO_BALLOON",
+            "CONFIG_VIRTIO_INPUT",
+            "CONFIG_VIRTIO_MMIO",
         ):
             new_content = set_config_bool(new_content, option)
         new_content = set_config_bool(new_content, "CONFIG_DEFAULT_SECURITY_SELINUX")
@@ -239,13 +701,27 @@ CONFIG_LIBYUV=no
 EOF
 
   perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
-      --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl > vpx_scale_rtcd.h
-  cp vpx_scale_rtcd.h "$OUTPUT_DIR/"
-  rm -f rtcd_config.mk vpx_scale_rtcd.h
+      --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl \\
+      > "$OUTPUT_DIR/vpx_scale_rtcd.h"
+  rm -f rtcd_config.mk
 fi
 
 """
-    if insert not in content:
+    previous_insert = insert.replace(
+        '''  perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
+      --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl \\
+      > "$OUTPUT_DIR/vpx_scale_rtcd.h"
+  rm -f rtcd_config.mk
+''',
+        '''  perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
+      --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl > vpx_scale_rtcd.h
+  cp vpx_scale_rtcd.h "$OUTPUT_DIR/"
+  rm -f rtcd_config.mk vpx_scale_rtcd.h
+''',
+    )
+    if previous_insert in content:
+        write_text(build_sh, content.replace(previous_insert, insert, 1))
+    elif insert not in content:
         if marker not in content:
             die(f"expected libvpx x86_64 block marker not found in {build_sh}")
         write_text(build_sh, content.replace(marker, insert + marker))
@@ -283,6 +759,12 @@ board_toolchain_type = "clang"
 board_fpu = "neon-vfpv4"
 ''',
     )
+    mesa_builder = dst / "build_armv7a_mesa.py"
+    shutil.copy2(
+        Path(__file__).with_name("build_armv7a_mesa.py"),
+        mesa_builder,
+    )
+    mesa_builder.chmod(0o755)
 
     bundle = load_json(dst / "bundle.json")
     bundle["name"] = "@ohos/qemu_armv7a_linux_full_device"
@@ -383,7 +865,7 @@ NET_ARGS=(
 
 case "${DISPLAY_TYPE}" in
     none)
-        DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none -chardev stdio,id=serial0,signal=off -serial chardev:serial0"
+        DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none -serial file:/dev/fd/1"
         ;;
     vnc)
         DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -vnc :21"
@@ -396,10 +878,10 @@ case "${DISPLAY_TYPE}" in
 esac
 
 QEMU_CMD="qemu-system-arm ${ACCEL_ARGS} \
--M virt \
+-M virt,highmem=off \
 -cpu cortex-a7 \
 -smp 4 \
--m 4096 \
+-m 3072 \
 -kernel ${OHOS_IMG}/zImage \
 -initrd ${OHOS_IMG}/ramdisk.img \
 ${DISPLAY_ARGS} \
@@ -446,6 +928,10 @@ def main() -> None:
     create_product(root)
     ensure_device_gni(root)
     ensure_hardware_group(root)
+    restore_display_device_upstream(root)
+    ensure_power_dialog_upstream_config(root)
+    ensure_armv7a_mesa(root)
+    restore_musl_dlopen_cleanup(root)
     ensure_armv7a_kernel_config(root)
     ensure_armv7a_libvpx_config(root)
     ensure_whitelist(root)

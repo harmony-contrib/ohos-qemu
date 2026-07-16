@@ -265,6 +265,7 @@ case "${PRODUCT}" in
   armv7a_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
     GUEST_ARCH="armv7a"
+    DISPLAY_DEFAULT="none"
     KERNEL_FILE="zImage"
     QEMU_BIN_UNIX="qemu-system-arm"
     QEMU_BIN_WIN="qemu-system-arm.exe"
@@ -273,6 +274,7 @@ case "${PRODUCT}" in
   x86_64_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/x86_64_virt/packages/phone/images"
     GUEST_ARCH="x86_64"
+    DISPLAY_DEFAULT="sdl"
     KERNEL_FILE="bzImage"
     QEMU_BIN_UNIX="qemu-system-x86_64"
     QEMU_BIN_WIN="qemu-system-x86_64.exe"
@@ -281,6 +283,7 @@ case "${PRODUCT}" in
   arm64_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/arm64_virt/packages/phone/images"
     GUEST_ARCH="arm64"
+    DISPLAY_DEFAULT="sdl"
     KERNEL_FILE="Image"
     QEMU_BIN_UNIX="qemu-system-aarch64"
     QEMU_BIN_WIN="qemu-system-aarch64.exe"
@@ -289,6 +292,7 @@ case "${PRODUCT}" in
   qemu-arm64-linux-min)
     IMAGE_DIR="${SOURCE_ROOT}/out/qemu-arm-linux/packages/phone/images"
     GUEST_ARCH="arm64"
+    DISPLAY_DEFAULT="none"
     KERNEL_FILE="Image"
     QEMU_BIN_UNIX="qemu-system-aarch64"
     QEMU_BIN_WIN="qemu-system-aarch64.exe"
@@ -358,7 +362,7 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   "kernel": "${KERNEL_FILE}",
   "qemu_unix": "${QEMU_BIN_UNIX}",
   "qemu_windows": "${QEMU_BIN_WIN}",
-  "display_default": "vnc",
+  "display_default": "${DISPLAY_DEFAULT}",
   "network_default": "user"
 }
 EOF
@@ -374,9 +378,10 @@ Install QEMU on the host first, then run one of:
 - macOS: \`launch/macos.command\`
 - Windows PowerShell: \`launch/windows.ps1\`
 
-The default display is VNC on port 5921. Connect a VNC client to
-\`127.0.0.1:5921\` after launch. HDC/debug forwarding uses host TCP port 5555
-where supported by the guest.
+Set \`QEMU_DISPLAY=vnc\` to expose a VNC display on \`127.0.0.1:5921\`, or
+\`QEMU_DISPLAY=none\` for headless execution. HDC/debug forwarding uses host
+TCP port 5555 where supported by the guest. Set \`QEMU_HDC_HOST_PORT\` before
+launch when that host port is already in use.
 EOF
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
@@ -386,14 +391,13 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   fi
   cp "${OFFICIAL_QEMU_RUN}" "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|^(DISPLAY_TYPE=.*)$|\1\
+HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${LAUNCH_OUT}/qemu_run.sh"
+  sed_in_place_extended 's|hostfwd=tcp::5555-:5555|hostfwd=tcp::${HDC_HOST_PORT}-:5555|g' "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|init=/init|init=/bin/init|g' "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${LAUNCH_OUT}/qemu_run.sh"
   if [ "${PRODUCT}" = "armv7a_virt" ]; then
     sed_in_place_extended 's|(ohos\.required_mount\.data=/dev/block/[^ @]+@/data@ext4@[^"]*@wait),reservedsize=|\1,required,reservedsize=|g' "${LAUNCH_OUT}/qemu_run.sh"
-  fi
-  if ! grep -q -- "-device virtio-gpu" "${LAUNCH_OUT}/qemu_run.sh"; then
-    sed_in_place_extended 's|-display none -monitor none|-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none|g' "${LAUNCH_OUT}/qemu_run.sh"
-    sed_in_place_extended 's|(-display none[[:space:]]*)$|-device virtio-gpu-pci,xres=800,yres=500 \1|g' "${LAUNCH_OUT}/qemu_run.sh"
   fi
   chmod +x "${LAUNCH_OUT}/qemu_run.sh"
   cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
@@ -411,6 +415,7 @@ $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $Img = Join-Path $Root "images"
+$HdcHostPort = if ($env:QEMU_HDC_HOST_PORT) { $env:QEMU_HDC_HOST_PORT } else { "5555" }
 
 function Resolve-Qemu {
   if ($env:QEMU_SYSTEM_X86_64) {
@@ -484,7 +489,7 @@ $ArgsList = @(
   $DisplayArgs,
   "-device", "virtio-mouse-pci",
   "-device", "virtio-keyboard-pci",
-  "-netdev", "user,id=net0,hostfwd=tcp::5555-:5555",
+  "-netdev", "user,id=net0,hostfwd=tcp::${HdcHostPort}-:5555",
   "-device", "virtio-net-pci,netdev=net0",
   "-drive", ("if=none,file={0},format=raw,id=updater" -f (Join-Path $Img "updater.img")),
   "-device", "virtio-blk-pci,drive=updater,serial=updater",
@@ -554,9 +559,6 @@ chmod +x "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command"
 (
   cd "${OUTPUT_DIR}"
   tar -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
-  if command -v zip >/dev/null 2>&1; then
-    zip -qr "${PACKAGE_NAME}.zip" "${PACKAGE_NAME}"
-  fi
 )
 
 echo "${PACKAGE_DIR}"

@@ -10,12 +10,15 @@ Usage:
 
 OPTIONS:
   --phase PHASE                   all, prepare, start, wait-hdc, wait-account,
-                                  run-binary, run-ohos-runner, diagnostics, cleanup
+                                  run-binary, run-ohos-runner, wait-stable,
+                                  diagnostics, cleanup
   --require-account true|false    Require foreground user 100, default: true
   --require-kvm true|false        Require Linux x86_64 KVM acceleration, default: false
   --run-ohos-runner true|false    Run the OpenHarmony Rust test runner, default: true
   --account-wait-attempts N       Account readiness attempts at 3 seconds each,
                                   default: 300
+  --minimum-guest-uptime N        Keep the guest alive until this many guest
+                                  seconds have elapsed, default: 0
 
 ARCH:
   armv7a
@@ -37,6 +40,9 @@ REQUIRE_ACCOUNT=true
 REQUIRE_KVM=false
 PHASE=all
 ACCOUNT_WAIT_ATTEMPTS=300
+MINIMUM_GUEST_UPTIME=0
+GUEST_FATAL_PATTERN='Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash|(composer_host|render_service).*exit with signal[[:space:]]*:[[:space:]]*11'
+HDC_HOST_PORT="${QEMU_SMOKE_HDC_HOST_PORT:-5555}"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -72,6 +78,10 @@ while [ "$#" -gt 0 ]; do
       ACCOUNT_WAIT_ATTEMPTS="${2:-}"
       shift 2
       ;;
+    --minimum-guest-uptime)
+      MINIMUM_GUEST_UPTIME="${2:-}"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -101,7 +111,7 @@ for bool_value in "${RUN_OHOS_RUNNER}" "${REQUIRE_ACCOUNT}" "${REQUIRE_KVM}"; do
 done
 
 case "${PHASE}" in
-  all|prepare|start|wait-hdc|wait-account|run-binary|run-ohos-runner|diagnostics|cleanup)
+  all|prepare|start|wait-hdc|wait-account|run-binary|run-ohos-runner|wait-stable|diagnostics|cleanup)
     ;;
   *)
     echo "unsupported --phase: ${PHASE}" >&2
@@ -125,6 +135,25 @@ if [ "${ACCOUNT_WAIT_ATTEMPTS}" -lt 1 ]; then
   exit 2
 fi
 
+case "${MINIMUM_GUEST_UPTIME}" in
+  ''|*[!0-9]*)
+    echo "--minimum-guest-uptime must be a non-negative integer" >&2
+    exit 2
+    ;;
+esac
+
+case "${HDC_HOST_PORT}" in
+  ''|*[!0-9]*)
+    echo "QEMU_SMOKE_HDC_HOST_PORT must be an integer from 1 to 65535" >&2
+    exit 2
+    ;;
+esac
+if [ "${HDC_HOST_PORT}" -lt 1 ] || [ "${HDC_HOST_PORT}" -gt 65535 ]; then
+  echo "QEMU_SMOKE_HDC_HOST_PORT must be an integer from 1 to 65535" >&2
+  exit 2
+fi
+HDC_TARGET="127.0.0.1:${HDC_HOST_PORT}"
+
 normalize_host_path() {
   local path="$1"
   if command -v cygpath >/dev/null 2>&1; then
@@ -136,9 +165,11 @@ normalize_host_path() {
 
 case "${GUEST_ARCH}" in
   armv7a|armv7)
-    RUST_TARGET="armv7-unknown-linux-musleabi"
+    # Validate the OpenHarmony ABI. The OHOS libc happens to use a musl
+    # loader, but this must not use Rust's generic Linux musleabi target.
+    RUST_TARGET="armv7-unknown-linux-ohos"
     OHOS_RUST_TARGET="armv7-unknown-linux-ohos"
-    BIN_NAME="hello-armv7a"
+    BIN_NAME="hello-armv7a-ohos"
     ;;
   aarch64)
     RUST_TARGET="aarch64-unknown-linux-musl"
@@ -225,14 +256,38 @@ prepare_workspace() {
 
   echo "::group::Build Rust smoke executable"
   rustup target add "${RUST_TARGET}"
-  rustc \
-    --target "${RUST_TARGET}" \
-    -C linker=rust-lld \
-    -C target-feature=+crt-static \
-    -C panic=abort \
-    -O \
-    "${ROOT}/ci/qemu-smoke/hello.rs" \
-    -o "${WORK}/${BIN_NAME}"
+  if [[ "${RUST_TARGET}" == *-unknown-linux-ohos ]]; then
+    local ohos_sdk_native_dir
+    local ohos_linker
+    ohos_sdk_native_dir="$(find_ohos_sdk_native)"
+    if [ -z "${ohos_sdk_native_dir}" ]; then
+      echo "OHOS SDK native directory not found. Ensure setup-ohos-sdk installed the native component." >&2
+      return 1
+    fi
+    ohos_linker="$(find_ohos_linker "${ohos_sdk_native_dir}")"
+    if [ -z "${ohos_linker}" ]; then
+      echo "OpenHarmony clang linker not found for ${RUST_TARGET} under ${ohos_sdk_native_dir}/llvm/bin" >&2
+      return 1
+    fi
+    echo "OpenHarmony Rust target: ${RUST_TARGET}"
+    echo "OpenHarmony linker: ${ohos_linker}"
+    rustc \
+      --target "${RUST_TARGET}" \
+      -C linker="$(command_path_for_host "${ohos_linker}")" \
+      -C panic=abort \
+      -O \
+      "${ROOT}/ci/qemu-smoke/hello.rs" \
+      -o "${WORK}/${BIN_NAME}"
+  else
+    rustc \
+      --target "${RUST_TARGET}" \
+      -C linker=rust-lld \
+      -C target-feature=+crt-static \
+      -C panic=abort \
+      -O \
+      "${ROOT}/ci/qemu-smoke/hello.rs" \
+      -o "${WORK}/${BIN_NAME}"
+  fi
   file "${WORK}/${BIN_NAME}" || true
   ensure_hdc
   echo "::endgroup::"
@@ -339,7 +394,7 @@ create_hdc_runner_wrapper() {
 #!/usr/bin/env bash
 set -euo pipefail
 REAL_HDC="${real_hdc_posix}"
-TARGET="127.0.0.1:5555"
+TARGET="${HDC_TARGET}"
 
 if [ "\${1:-}" = "list" ] && [ "\${2:-}" = "targets" ]; then
   "\${REAL_HDC}" tconn "\${TARGET}" >/dev/null 2>&1 || true
@@ -358,7 +413,7 @@ EOF
   cat >"${wrapper_dir}/hdc.cmd" <<EOF
 @echo off
 set "REAL_HDC=${real_hdc_host}"
-set "TARGET=127.0.0.1:5555"
+set "TARGET=${HDC_TARGET}"
 
 if /I "%~1"=="list" if /I "%~2"=="targets" (
   "%REAL_HDC%" tconn %TARGET% >nul 2>nul
@@ -442,9 +497,7 @@ require_linux_kvm() {
 }
 
 guest_fatal_detected() {
-  [ -f "${LOG}" ] && grep -aiEq \
-    'Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash' \
-    "${LOG}"
+  [ -f "${LOG}" ] && grep -aiEq "${GUEST_FATAL_PATTERN}" "${LOG}"
 }
 
 assert_guest_healthy() {
@@ -456,9 +509,7 @@ assert_guest_healthy() {
   fi
   if guest_fatal_detected; then
     echo "OpenHarmony guest failed ${context}; QEMU is still running but the guest is not usable." >&2
-    grep -ainE \
-      'Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash' \
-      "${LOG}" | tail -n 20 >&2 || true
+    grep -ainE "${GUEST_FATAL_PATTERN}" "${LOG}" | tail -n 20 >&2 || true
     tail -n 200 "${LOG}" >&2 || true
     return 1
   fi
@@ -472,14 +523,19 @@ start_qemu() {
   cd "${PACKAGE_DIR}"
   case "${HOST_PLATFORM}" in
     linux)
-      nohup env QEMU_DISPLAY=none ./launch/linux.sh >"${LOG}" 2>&1 </dev/null &
+      nohup env QEMU_DISPLAY=none QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
+        ./launch/linux.sh >"${LOG}" 2>&1 </dev/null &
       ;;
     macos)
-      nohup env QEMU_DISPLAY=none ./launch/macos.command >"${LOG}" 2>&1 </dev/null &
+      nohup env QEMU_DISPLAY=none QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
+        ./launch/macos.command >"${LOG}" 2>&1 </dev/null &
       ;;
     windows)
       WINDOWS_LAUNCHER="$(prepare_windows_launcher)"
-      nohup env QEMU_DISPLAY=none QEMU_ACCEL=tcg powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${WINDOWS_LAUNCHER}" >"${LOG}" 2>&1 </dev/null &
+      nohup env QEMU_DISPLAY=none QEMU_ACCEL=tcg \
+        QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
+        powershell.exe -NoProfile -ExecutionPolicy Bypass \
+        -File "${WINDOWS_LAUNCHER}" >"${LOG}" 2>&1 </dev/null &
       ;;
     *)
       echo "unsupported host platform: ${HOST_PLATFORM}" >&2
@@ -514,7 +570,8 @@ start_qemu() {
 wait_for_hdc() {
   ensure_hdc
   read_qemu_pid
-  "${HDC}" kill || true
+  # The HDC server is shared by every local emulator. Restarting it here can
+  # disconnect unrelated devices and race a newly booting QEMU guest.
   "${HDC}" start || true
   local hdc_tconn_log="${WORK}/hdc-tconn.log"
   local wait_attempts="${QEMU_HDC_WAIT_ATTEMPTS:-240}"
@@ -522,9 +579,9 @@ wait_for_hdc() {
   local attempt
 
   for attempt in $(seq 1 "${wait_attempts}"); do
-    if "${HDC}" tconn 127.0.0.1:5555 >"${hdc_tconn_log}" 2>&1; then
+    if "${HDC}" tconn "${HDC_TARGET}" >"${hdc_tconn_log}" 2>&1; then
       cat "${hdc_tconn_log}"
-      if "${HDC}" list targets | grep -q '127.0.0.1:5555'; then
+      if "${HDC}" list targets | grep -Fq "${HDC_TARGET}"; then
         connected=1
         break
       fi
@@ -534,10 +591,10 @@ wait_for_hdc() {
     assert_guest_healthy "before HDC became available" || return 1
     if [ $((attempt % 20)) -eq 0 ]; then
       echo "still waiting for HDC after ${attempt}/${wait_attempts} attempts"
-      if (echo >/dev/tcp/127.0.0.1/5555) >/dev/null 2>&1; then
-        echo "tcp port 127.0.0.1:5555 is open"
+      if (echo >"/dev/tcp/127.0.0.1/${HDC_HOST_PORT}") >/dev/null 2>&1; then
+        echo "tcp port ${HDC_TARGET} is open"
       else
-        echo "tcp port 127.0.0.1:5555 is not open yet"
+        echo "tcp port ${HDC_TARGET} is not open yet"
       fi
       tail -n 80 "${LOG}" || true
     fi
@@ -571,7 +628,7 @@ wait_for_account() {
   : >"${account_history_log}"
 
   for attempt in $(seq 1 "${ACCOUNT_WAIT_ATTEMPTS}"); do
-    "${HDC}" -t 127.0.0.1:5555 shell '
+    "${HDC}" -t "${HDC_TARGET}" shell '
       echo "bootevent.account.ready=$(param get bootevent.account.ready)"
       hidumper -s AccountMgr -a "-os_account_infos"
     ' >"${account_last_log}" 2>&1 || true
@@ -614,7 +671,7 @@ wait_for_account() {
 
   echo "AccountMgr readiness timed out: param_ready=${param_ready} user_100=${user_present} foreground=${foreground}" >&2
   cat "${account_last_log}" || true
-  "${HDC}" -t 127.0.0.1:5555 shell 'bm dump -a | head -80; hilog -x | grep -iE "AccountMgr|AbilityManager|StartUser|SwitchToUser|account.ready|Foreground" | tail -240' || true
+  "${HDC}" -t "${HDC_TARGET}" shell 'bm dump -a | head -80; hilog -x | grep -iE "AccountMgr|AbilityManager|StartUser|SwitchToUser|account.ready|Foreground" | tail -240' || true
   tail -n 240 "${LOG}" || true
   return 1
 }
@@ -626,10 +683,10 @@ run_binary() {
     echo "Rust smoke executable not found: ${WORK}/${BIN_NAME}" >&2
     return 1
   fi
-  "${HDC}" -t 127.0.0.1:5555 shell 'mkdir -p /data/local/tmp'
-  "${HDC}" -t 127.0.0.1:5555 file send "${WORK}/${BIN_NAME}" "/data/local/tmp/${BIN_NAME}"
-  "${HDC}" -t 127.0.0.1:5555 shell "chmod 755 /data/local/tmp/${BIN_NAME}"
-  "${HDC}" -t 127.0.0.1:5555 shell "uname -a; id; /data/local/tmp/${BIN_NAME} from-ci"
+  "${HDC}" -t "${HDC_TARGET}" shell 'mkdir -p /data/local/tmp'
+  "${HDC}" -t "${HDC_TARGET}" file send "${WORK}/${BIN_NAME}" "/data/local/tmp/${BIN_NAME}"
+  "${HDC}" -t "${HDC_TARGET}" shell "chmod 755 /data/local/tmp/${BIN_NAME}"
+  "${HDC}" -t "${HDC_TARGET}" shell "uname -a; id; /data/local/tmp/${BIN_NAME} from-ci"
 }
 
 run_ohos_runner() {
@@ -692,6 +749,57 @@ run_ohos_runner() {
       --nocapture
 }
 
+wait_for_guest_stability() {
+  if [ "${MINIMUM_GUEST_UPTIME}" -eq 0 ]; then
+    echo "Delayed guest stability check disabled."
+    return 0
+  fi
+
+  ensure_hdc
+  read_qemu_pid
+  local max_attempts="${QEMU_STABILITY_WAIT_ATTEMPTS:-720}"
+  local failed_reads=0
+  local uptime_output
+  local uptime_seconds
+  local attempt
+
+  echo "Waiting for guest uptime ${MINIMUM_GUEST_UPTIME}s to cover delayed critical-service failures."
+  for attempt in $(seq 1 "${max_attempts}"); do
+    assert_guest_healthy "during the delayed stability check" || return 1
+    uptime_output="$("${HDC}" -t "${HDC_TARGET}" shell 'cat /proc/uptime' 2>&1 || true)"
+    uptime_seconds="$(printf '%s\n' "${uptime_output}" | tr -d '\r' | awk '
+      $1 ~ /^[0-9]+([.][0-9]+)?$/ {
+        split($1, fields, ".")
+        print fields[1]
+        exit
+      }
+    ')"
+
+    if [ -n "${uptime_seconds}" ]; then
+      failed_reads=0
+      if [ "${uptime_seconds}" -ge "${MINIMUM_GUEST_UPTIME}" ]; then
+        assert_guest_healthy "at guest uptime ${uptime_seconds}s" || return 1
+        echo "Guest remained healthy through uptime ${uptime_seconds}s."
+        return 0
+      fi
+      if [ $((attempt % 12)) -eq 0 ]; then
+        echo "guest uptime: ${uptime_seconds}/${MINIMUM_GUEST_UPTIME}s"
+      fi
+    else
+      failed_reads=$((failed_reads + 1))
+      echo "Unable to read guest uptime (${failed_reads}/5): ${uptime_output}" >&2
+      if [ "${failed_reads}" -ge 5 ]; then
+        echo "HDC became unavailable during the delayed stability check." >&2
+        return 1
+      fi
+    fi
+    sleep 5
+  done
+
+  echo "Guest did not reach uptime ${MINIMUM_GUEST_UPTIME}s after ${max_attempts} checks." >&2
+  return 1
+}
+
 collect_diagnostics() {
   mkdir -p "${DIAGNOSTICS_DIR}"
   {
@@ -702,6 +810,8 @@ collect_diagnostics() {
     printf 'require_account=%s\n' "${REQUIRE_ACCOUNT}"
     printf 'require_kvm=%s\n' "${REQUIRE_KVM}"
     printf 'run_ohos_runner=%s\n' "${RUN_OHOS_RUNNER}"
+    printf 'minimum_guest_uptime=%s\n' "${MINIMUM_GUEST_UPTIME}"
+    printf 'hdc_target=%s\n' "${HDC_TARGET}"
     if read_qemu_pid >/dev/null 2>&1; then
       printf 'qemu_pid=%s\n' "${QEMU_PID}"
       if qemu_is_alive; then
@@ -722,8 +832,7 @@ collect_diagnostics() {
   if [ -f "${LOG}" ]; then
     tail -n 400 "${LOG}" >"${DIAGNOSTICS_DIR}/qemu-tail.log" 2>&1 || true
     if guest_fatal_detected; then
-      grep -ainE \
-        'Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash' \
+      grep -ainE "${GUEST_FATAL_PATTERN}" \
         "${LOG}" >"${DIAGNOSTICS_DIR}/guest-fatal.log" 2>&1 || true
     fi
   fi
@@ -736,7 +845,7 @@ collect_diagnostics() {
   if ensure_hdc >"${DIAGNOSTICS_DIR}/hdc-discovery.log" 2>&1; then
     {
       "${HDC}" list targets -v || true
-      "${HDC}" -t 127.0.0.1:5555 shell '
+      "${HDC}" -t "${HDC_TARGET}" shell '
         echo "bootevent.account.ready=$(param get bootevent.account.ready)"
         hidumper -s AccountMgr -a "-os_account_infos"
         bm dump -a | head -80
@@ -781,6 +890,7 @@ run_all() {
   wait_for_account
   run_binary
   run_ohos_runner
+  wait_for_guest_stability
 }
 
 case "${PHASE}" in
@@ -804,6 +914,9 @@ case "${PHASE}" in
     ;;
   run-ohos-runner)
     run_ohos_runner
+    ;;
+  wait-stable)
+    wait_for_guest_stability
     ;;
   diagnostics)
     collect_diagnostics
