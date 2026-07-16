@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
+PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
 TEST_ROOT="$(mktemp -d)"
 FAKE_BIN="${TEST_ROOT}/bin"
 WORK="${TEST_ROOT}/ohos-qemu-smoke-linux-x86_64"
@@ -18,7 +19,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-bash -n "${RUN_SCRIPT}" "${PHASE_SCRIPT}"
+bash -n "${RUN_SCRIPT}" "${PHASE_SCRIPT}" "${PACKAGE_SCRIPT}"
 
 mkdir -p "${FAKE_BIN}" "${WORK}"
 cat >"${FAKE_BIN}/hdc" <<'EOF'
@@ -74,6 +75,80 @@ if grep -Eq 'musleabi|target-feature=\+crt-static' "${RUSTC_ARGS}"; then
   echo "armv7a prepare used a generic Linux/musl target" >&2
   exit 1
 fi
+
+FAKE_SOURCE="${TEST_ROOT}/package-source"
+FAKE_OUTPUT="${TEST_ROOT}/package-output"
+FAKE_IMAGES="${FAKE_SOURCE}/out/arm64_virt/packages/phone/images"
+FAKE_VENDOR="${FAKE_SOURCE}/vendor/ohemu/qemu_arm64_linux_full"
+FAKE_QEMU_ARGS="${TEST_ROOT}/qemu-args.txt"
+mkdir -p "${FAKE_IMAGES}" "${FAKE_VENDOR}" "${FAKE_OUTPUT}"
+for image in Image ramdisk.img system.img vendor.img userdata.img updater.img \
+  sys_prod.img chip_prod.img; do
+  : >"${FAKE_IMAGES}/${image}"
+done
+cat >"${FAKE_VENDOR}/qemu_run.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+OHOS_IMG="out/arm64_virt/packages/phone/images"
+DISPLAY_TYPE="${QEMU_DISPLAY:-none}"
+ACCEL_SUPPORT=$(qemu-system-aarch64 -accel help 2>&1 | grep "Accelerators supported" || true)
+if [ "$(uname)" = "Darwin" ] && echo "${ACCEL_SUPPORT}" | grep -qw hvf; then
+  ACCEL_ARGS="-accel hvf"
+else
+  ACCEL_ARGS="-accel tcg"
+fi
+qemu-system-aarch64 ${ACCEL_ARGS} \
+  -netdev user,id=net0,hostfwd=tcp::5555-:5555 \
+  -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4"
+EOF
+cat >"${FAKE_BIN}/debugfs" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "${FAKE_BIN}/debugfs"
+
+PATH="${FAKE_BIN}:${PATH}" \
+SEED_USERDATA_DIRS=0 \
+INJECT_QEMU_RUNTIME_PARAMS=0 \
+  bash "${PACKAGE_SCRIPT}" \
+    --source-root "${FAKE_SOURCE}" \
+    --product arm64_virt \
+    --output-dir "${FAKE_OUTPUT}" \
+    >/dev/null
+
+PACKAGED_LAUNCHER="${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/launch/qemu_run.sh"
+grep -Fq 'ACCEL_SUPPORT=$(qemu-system-aarch64 -accel help 2>&1 || true)' \
+  "${PACKAGED_LAUNCHER}"
+if grep -Fq '| grep "Accelerators supported"' "${PACKAGED_LAUNCHER}"; then
+  echo "packaged launcher still filters out multiline accelerator names" >&2
+  exit 1
+fi
+
+cat >"${FAKE_BIN}/uname" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' Darwin
+EOF
+cat >"${FAKE_BIN}/qemu-system-aarch64" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "\${1:-}" = "-accel" ] && [ "\${2:-}" = "help" ]; then
+  printf '%b\n' "\${FAKE_QEMU_ACCELS}"
+  exit 0
+fi
+printf '%s\n' "\$*" >"${FAKE_QEMU_ARGS}"
+EOF
+chmod +x "${FAKE_BIN}/uname" "${FAKE_BIN}/qemu-system-aarch64"
+
+for accel_output in \
+  'Accelerators supported in QEMU binary:\nhvf\ntcg' \
+  'Accelerators supported: hvf tcg'; do
+  : >"${FAKE_QEMU_ARGS}"
+  PATH="${FAKE_BIN}:${PATH}" \
+  FAKE_QEMU_ACCELS="${accel_output}" \
+  QEMU_DISPLAY=none \
+    bash "${PACKAGED_LAUNCHER}" >/dev/null 2>&1
+  grep -Fq -- '-accel hvf' "${FAKE_QEMU_ARGS}"
+done
 
 sleep 60 &
 QEMU_PID=$!

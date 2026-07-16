@@ -390,6 +390,11 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     exit 1
   fi
   cp "${OFFICIAL_QEMU_RUN}" "${LAUNCH_OUT}/qemu_run.sh"
+  # Some QEMU builds print accelerator names on lines following the heading.
+  # Older upstream launchers grep only the heading and therefore miss hvf/kvm.
+  # Normalize those launchers while preserving compatibility with QEMU builds
+  # that print the accelerator list on one line.
+  sed_in_place_extended 's@[[:space:]]*\|[[:space:]]*grep[[:space:]]+"Accelerators supported"@@g' "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${LAUNCH_OUT}/qemu_run.sh"
   sed_in_place_extended 's|^(DISPLAY_TYPE=.*)$|\1\
 HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${LAUNCH_OUT}/qemu_run.sh"

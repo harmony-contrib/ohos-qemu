@@ -849,7 +849,7 @@ set -euo pipefail
 OHOS_IMG="${OHOS_IMG:-out/armv7a_virt/packages/phone/images}"
 DISPLAY_TYPE="${QEMU_DISPLAY:-none}"
 
-ACCEL_SUPPORT=$(qemu-system-arm -accel help 2>&1 | grep "Accelerators supported" || true)
+ACCEL_SUPPORT=$(qemu-system-arm -accel help 2>&1 || true)
 if [ -e /dev/kvm ] && [ -r /dev/kvm ] && echo "$ACCEL_SUPPORT" | grep -q "kvm"; then
     ACCEL_ARGS="-accel kvm"
     echo "KVM acceleration enabled." >&2
