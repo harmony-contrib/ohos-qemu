@@ -43,6 +43,7 @@ ACCOUNT_WAIT_ATTEMPTS=300
 MINIMUM_GUEST_UPTIME=0
 GUEST_FATAL_PATTERN='Kernel panic - not syncing|critical service crashed|ExecReboot panic|sysrq: Trigger a crash|(composer_host|render_service).*exit with signal[[:space:]]*:[[:space:]]*11'
 HDC_HOST_PORT="${QEMU_SMOKE_HDC_HOST_PORT:-5555}"
+SMOKE_ACCEL="${QEMU_SMOKE_ACCEL:-auto}"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -154,6 +155,15 @@ if [ "${HDC_HOST_PORT}" -lt 1 ] || [ "${HDC_HOST_PORT}" -gt 65535 ]; then
 fi
 HDC_TARGET="127.0.0.1:${HDC_HOST_PORT}"
 
+case "${SMOKE_ACCEL}" in
+  auto|hvf|kvm|tcg)
+    ;;
+  *)
+    echo "QEMU_SMOKE_ACCEL must be auto, hvf, kvm, or tcg" >&2
+    exit 2
+    ;;
+esac
+
 normalize_host_path() {
   local path="$1"
   if command -v cygpath >/dev/null 2>&1; then
@@ -232,6 +242,45 @@ ensure_hdc() {
   fi
   echo "Using hdc: ${HDC}"
   export PATH="$(dirname "${HDC}"):${PATH}"
+}
+
+hdc_target_is_connected() {
+  local targets
+  targets="$("${HDC}" list targets -v 2>/dev/null || true)"
+  printf '%s\n' "${targets}" | awk -v target="${HDC_TARGET}" '
+    $1 == target {
+      for (field = 2; field <= NF; field++) {
+        if ($field == "Connected") found = 1
+      }
+    }
+    END { exit found ? 0 : 1 }
+  '
+}
+
+connect_hdc_target() {
+  local log_file="${1:-${WORK}/hdc-tconn.log}"
+  "${HDC}" tconn "${HDC_TARGET}" >"${log_file}" 2>&1 || true
+  hdc_target_is_connected
+}
+
+require_hdc_target() {
+  local context="$1"
+  local attempts="${2:-20}"
+  local attempt
+  local log_file="${WORK}/hdc-tconn.log"
+
+  for attempt in $(seq 1 "${attempts}"); do
+    if connect_hdc_target "${log_file}"; then
+      return 0
+    fi
+    assert_guest_healthy "${context}" || return 1
+    sleep 3
+  done
+
+  echo "HDC target ${HDC_TARGET} remained offline ${context}." >&2
+  cat "${log_file}" >&2 2>/dev/null || true
+  "${HDC}" list targets -v >&2 || true
+  return 1
 }
 
 prepare_workspace() {
@@ -398,11 +447,10 @@ TARGET="${HDC_TARGET}"
 
 if [ "\${1:-}" = "list" ] && [ "\${2:-}" = "targets" ]; then
   "\${REAL_HDC}" tconn "\${TARGET}" >/dev/null 2>&1 || true
-  if "\${REAL_HDC}" list targets 2>/dev/null | grep -q "\${TARGET}"; then
-    "\${REAL_HDC}" list targets | grep "\${TARGET}"
-  else
-    printf '%s\n' "\${TARGET}"
-  fi
+  "\${REAL_HDC}" list targets -v 2>/dev/null \
+    | grep -F "\${TARGET}" \
+    | grep -E '(^|[[:space:]])Connected([[:space:]]|$)' \
+    || true
   exit 0
 fi
 
@@ -417,12 +465,7 @@ set "TARGET=${HDC_TARGET}"
 
 if /I "%~1"=="list" if /I "%~2"=="targets" (
   "%REAL_HDC%" tconn %TARGET% >nul 2>nul
-  "%REAL_HDC%" list targets | findstr /C:"%TARGET%" >nul 2>nul
-  if errorlevel 1 (
-    echo %TARGET%
-  ) else (
-    "%REAL_HDC%" list targets | findstr /C:"%TARGET%"
-  )
+  "%REAL_HDC%" list targets -v 2>nul | findstr /C:"%TARGET%" | findstr /C:"Connected"
   exit /b 0
 )
 
@@ -523,16 +566,18 @@ start_qemu() {
   cd "${PACKAGE_DIR}"
   case "${HOST_PLATFORM}" in
     linux)
-      nohup env QEMU_DISPLAY=none QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
+      nohup env QEMU_DISPLAY=none QEMU_ACCEL="${SMOKE_ACCEL}" \
+        QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
         ./launch/linux.sh >"${LOG}" 2>&1 </dev/null &
       ;;
     macos)
-      nohup env QEMU_DISPLAY=none QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
+      nohup env QEMU_DISPLAY=none QEMU_ACCEL="${SMOKE_ACCEL}" \
+        QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
         ./launch/macos.command >"${LOG}" 2>&1 </dev/null &
       ;;
     windows)
       WINDOWS_LAUNCHER="$(prepare_windows_launcher)"
-      nohup env QEMU_DISPLAY=none QEMU_ACCEL=tcg \
+      nohup env QEMU_DISPLAY=none QEMU_ACCEL="${SMOKE_ACCEL}" \
         QEMU_HDC_HOST_PORT="${HDC_HOST_PORT}" \
         powershell.exe -NoProfile -ExecutionPolicy Bypass \
         -File "${WINDOWS_LAUNCHER}" >"${LOG}" 2>&1 </dev/null &
@@ -579,12 +624,10 @@ wait_for_hdc() {
   local attempt
 
   for attempt in $(seq 1 "${wait_attempts}"); do
-    if "${HDC}" tconn "${HDC_TARGET}" >"${hdc_tconn_log}" 2>&1; then
+    if connect_hdc_target "${hdc_tconn_log}"; then
       cat "${hdc_tconn_log}"
-      if "${HDC}" list targets | grep -Fq "${HDC_TARGET}"; then
-        connected=1
-        break
-      fi
+      connected=1
+      break
     else
       cat "${hdc_tconn_log}" || true
     fi
@@ -624,30 +667,38 @@ wait_for_account() {
   local param_ready=0
   local user_present=0
   local foreground=0
+  local transport_ready=0
   local attempt
   : >"${account_history_log}"
 
   for attempt in $(seq 1 "${ACCOUNT_WAIT_ATTEMPTS}"); do
-    "${HDC}" -t "${HDC_TARGET}" shell '
-      echo "bootevent.account.ready=$(param get bootevent.account.ready)"
-      hidumper -s AccountMgr -a "-os_account_infos"
-    ' >"${account_last_log}" 2>&1 || true
+    transport_ready=0
+    if connect_hdc_target; then
+      if "${HDC}" -t "${HDC_TARGET}" shell '
+        echo "bootevent.account.ready=$(param get bootevent.account.ready)"
+        hidumper -s AccountMgr -a "-os_account_infos"
+      ' >"${account_last_log}" 2>&1; then
+        transport_ready=1
+      fi
+    else
+      printf 'HDC target %s is offline; reconnecting.\n' "${HDC_TARGET}" >"${account_last_log}"
+    fi
 
-    if [ "${param_ready}" = "0" ] && grep -Eq 'bootevent\.account\.ready=(true|"true")' "${account_last_log}"; then
+    if [ "${transport_ready}" = "1" ] && [ "${param_ready}" = "0" ] && grep -Eq 'bootevent\.account\.ready=(true|"true")' "${account_last_log}"; then
       param_ready=1
       echo "AccountMgr parameter service is ready at attempt ${attempt}."
     fi
-    if [ "${user_present}" = "0" ] && grep -Eq 'ID:[[:space:]]*100([^0-9]|$)' "${account_last_log}"; then
+    if [ "${transport_ready}" = "1" ] && [ "${user_present}" = "0" ] && grep -Eq 'ID:[[:space:]]*100([^0-9]|$)' "${account_last_log}"; then
       user_present=1
       echo "AccountMgr user 100 exists at attempt ${attempt}."
     fi
-    if [ "${foreground}" = "0" ] && grep -Eq 'isForeground:[[:space:]]*(1|true)([^[:alnum:]]|$)' "${account_last_log}"; then
+    if [ "${transport_ready}" = "1" ] && [ "${foreground}" = "0" ] && grep -Eq 'isForeground:[[:space:]]*(1|true)([^[:alnum:]]|$)' "${account_last_log}"; then
       foreground=1
       echo "AccountMgr user 100 is foreground at attempt ${attempt}."
     fi
 
-    printf 'attempt=%s/%s param_ready=%s user_100=%s foreground=%s\n' \
-      "${attempt}" "${ACCOUNT_WAIT_ATTEMPTS}" "${param_ready}" "${user_present}" "${foreground}" \
+    printf 'attempt=%s/%s transport=%s param_ready=%s user_100=%s foreground=%s\n' \
+      "${attempt}" "${ACCOUNT_WAIT_ATTEMPTS}" "${transport_ready}" "${param_ready}" "${user_present}" "${foreground}" \
       >>"${account_history_log}"
 
     if [ "${param_ready}" = "1" ] && [ "${user_present}" = "1" ] && [ "${foreground}" = "1" ]; then
@@ -659,7 +710,7 @@ wait_for_account() {
       return 1
     fi
     if [ $((attempt % 20)) -eq 0 ]; then
-      echo "AccountMgr state after ${attempt}/${ACCOUNT_WAIT_ATTEMPTS}: param_ready=${param_ready} user_100=${user_present} foreground=${foreground}"
+      echo "AccountMgr state after ${attempt}/${ACCOUNT_WAIT_ATTEMPTS}: transport=${transport_ready} param_ready=${param_ready} user_100=${user_present} foreground=${foreground}"
       {
         printf '\n===== attempt %s =====\n' "${attempt}"
         cat "${account_last_log}"
@@ -679,6 +730,7 @@ wait_for_account() {
 run_binary() {
   ensure_hdc
   assert_guest_healthy "before Rust binary verification" || return 1
+  require_hdc_target "before Rust binary verification" || return 1
   if [ ! -f "${WORK}/${BIN_NAME}" ]; then
     echo "Rust smoke executable not found: ${WORK}/${BIN_NAME}" >&2
     return 1
@@ -697,6 +749,7 @@ run_ohos_runner() {
 
   ensure_hdc
   assert_guest_healthy "before ohos-test-runner verification" || return 1
+  require_hdc_target "before ohos-test-runner verification" || return 1
   local ohos_sdk_native_dir
   local ohos_linker
   local cargo_install_root_posix
@@ -766,7 +819,11 @@ wait_for_guest_stability() {
   echo "Waiting for guest uptime ${MINIMUM_GUEST_UPTIME}s to cover delayed critical-service failures."
   for attempt in $(seq 1 "${max_attempts}"); do
     assert_guest_healthy "during the delayed stability check" || return 1
-    uptime_output="$("${HDC}" -t "${HDC_TARGET}" shell 'cat /proc/uptime' 2>&1 || true)"
+    if connect_hdc_target; then
+      uptime_output="$("${HDC}" -t "${HDC_TARGET}" shell 'cat /proc/uptime' 2>&1 || true)"
+    else
+      uptime_output="HDC target ${HDC_TARGET} is offline"
+    fi
     uptime_seconds="$(printf '%s\n' "${uptime_output}" | tr -d '\r' | awk '
       $1 ~ /^[0-9]+([.][0-9]+)?$/ {
         split($1, fields, ".")
@@ -812,6 +869,7 @@ collect_diagnostics() {
     printf 'run_ohos_runner=%s\n' "${RUN_OHOS_RUNNER}"
     printf 'minimum_guest_uptime=%s\n' "${MINIMUM_GUEST_UPTIME}"
     printf 'hdc_target=%s\n' "${HDC_TARGET}"
+    printf 'qemu_accel=%s\n' "${SMOKE_ACCEL}"
     if read_qemu_pid >/dev/null 2>&1; then
       printf 'qemu_pid=%s\n' "${QEMU_PID}"
       if qemu_is_alive; then

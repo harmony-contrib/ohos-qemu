@@ -7,6 +7,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   package_standard_qemu.sh --source-root ROOT --product PRODUCT --output-dir DIR
+  package_standard_qemu.sh --rewrite-arm64-launcher FILE
 
 Products:
   armv7a_virt
@@ -22,6 +23,7 @@ USAGE
 SOURCE_ROOT=
 PRODUCT=
 OUTPUT_DIR=
+REWRITE_ARM64_LAUNCHER=
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -37,6 +39,10 @@ while [ "$#" -gt 0 ]; do
       OUTPUT_DIR="${2:-}"
       shift 2
       ;;
+    --rewrite-arm64-launcher)
+      REWRITE_ARM64_LAUNCHER="${2:-}"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -49,7 +55,8 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -z "${SOURCE_ROOT}" ] || [ -z "${PRODUCT}" ] || [ -z "${OUTPUT_DIR}" ]; then
+if [ -z "${REWRITE_ARM64_LAUNCHER}" ] && \
+   { [ -z "${SOURCE_ROOT}" ] || [ -z "${PRODUCT}" ] || [ -z "${OUTPUT_DIR}" ]; }; then
   usage >&2
   exit 2
 fi
@@ -63,6 +70,150 @@ sed_in_place_extended() {
     sed -i '' -E "${expr}" "${file}"
   fi
 }
+
+replace_arm64_acceleration_block() {
+  local file="$1"
+  local replacement
+  local output
+  replacement="$(mktemp)"
+  output="$(mktemp)"
+
+  cat >"${replacement}" <<'EOF'
+# Select an accelerator. QEMU's help output only reports compiled-in
+# accelerators, so auto mode also probes whether HVF is usable by this host.
+ACCEL_SUPPORT=$(qemu-system-aarch64 -accel help 2>&1 || true)
+ACCEL_MODE="${QEMU_ACCEL:-auto}"
+
+probe_hvf() {
+    local probe_pid
+    (
+        ulimit -c 0
+        exec qemu-system-aarch64 \
+            -accel hvf \
+            -M virt \
+            -cpu cortex-a57 \
+            -S \
+            -display none \
+            -nodefaults \
+            -no-user-config \
+            -monitor none \
+            -serial none
+    ) </dev/null >/dev/null 2>&1 &
+    probe_pid=$!
+    sleep "${QEMU_ACCEL_PROBE_SECONDS:-1}"
+    if kill -0 "${probe_pid}" >/dev/null 2>&1; then
+        kill "${probe_pid}" >/dev/null 2>&1 || true
+        wait "${probe_pid}" 2>/dev/null || true
+        return 0
+    fi
+    wait "${probe_pid}" 2>/dev/null || true
+    return 1
+}
+
+case "${ACCEL_MODE}" in
+    auto)
+        if [ "$(uname)" = "Darwin" ]; then
+            if echo "${ACCEL_SUPPORT}" | grep -qw hvf && probe_hvf; then
+                ACCEL_ARGS="-accel hvf"
+                echo "macOS Hypervisor acceleration enabled." >&2
+            else
+                ACCEL_ARGS="-accel tcg"
+                echo "HVF is unavailable on this host, using TCG software emulation." >&2
+            fi
+        elif [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ] && \
+             echo "${ACCEL_SUPPORT}" | grep -qw kvm; then
+            ACCEL_ARGS="-accel kvm"
+            echo "KVM acceleration enabled." >&2
+        else
+            ACCEL_ARGS="-accel tcg"
+            echo "Hardware acceleration not available, using TCG software emulation." >&2
+        fi
+        ;;
+    hvf)
+        if [ "$(uname)" != "Darwin" ] || ! echo "${ACCEL_SUPPORT}" | grep -qw hvf; then
+            echo "QEMU_ACCEL=hvf requested, but HVF is not available." >&2
+            exit 1
+        fi
+        ACCEL_ARGS="-accel hvf"
+        echo "HVF acceleration explicitly requested." >&2
+        ;;
+    kvm)
+        if [ ! -e /dev/kvm ] || [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ] || \
+           ! echo "${ACCEL_SUPPORT}" | grep -qw kvm; then
+            echo "QEMU_ACCEL=kvm requested, but usable KVM is not available." >&2
+            exit 1
+        fi
+        ACCEL_ARGS="-accel kvm"
+        echo "KVM acceleration explicitly requested." >&2
+        ;;
+    tcg)
+        ACCEL_ARGS="-accel tcg"
+        echo "TCG software emulation explicitly requested." >&2
+        ;;
+    *)
+        echo "Unsupported QEMU_ACCEL=${ACCEL_MODE}; expected auto, hvf, kvm, or tcg." >&2
+        exit 2
+        ;;
+esac
+
+EOF
+
+  if ! awk -v replacement="${replacement}" '
+    BEGIN { skipping = 0; replaced = 0 }
+    !skipping && /^# Check hardware acceleration availability/ {
+      while ((getline line < replacement) > 0) print line
+      close(replacement)
+      skipping = 1
+      replaced = 1
+      next
+    }
+    skipping && /^NET_ARGS=\(/ { skipping = 0 }
+    !skipping { print }
+    END {
+      if (!replaced || skipping) exit 42
+    }
+  ' "${file}" >"${output}"; then
+    rm -f "${replacement}" "${output}"
+    echo "unable to replace ARM64 accelerator block in ${file}" >&2
+    exit 1
+  fi
+
+  mv "${output}" "${file}"
+  rm -f "${replacement}"
+}
+
+normalize_common_qemu_launcher() {
+  local file="$1"
+  sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${file}"
+  if ! grep -q '^HDC_HOST_PORT=' "${file}"; then
+    sed_in_place_extended 's|^(DISPLAY_TYPE=.*)$|\1\
+HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
+  fi
+  sed_in_place_extended 's|hostfwd=tcp::5555-:5555|hostfwd=tcp::${HDC_HOST_PORT}-:5555|g' "${file}"
+  sed_in_place_extended 's|init=/init|init=/bin/init|g' "${file}"
+  sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${file}"
+}
+
+if [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
+  if [ -n "${SOURCE_ROOT}" ] || [ -n "${PRODUCT}" ] || [ -n "${OUTPUT_DIR}" ]; then
+    echo "--rewrite-arm64-launcher cannot be combined with package options" >&2
+    exit 2
+  fi
+  if [ ! -f "${REWRITE_ARM64_LAUNCHER}" ]; then
+    echo "ARM64 launcher not found: ${REWRITE_ARM64_LAUNCHER}" >&2
+    exit 1
+  fi
+  sed_in_place_extended 's@[[:space:]]*\|[[:space:]]*grep[[:space:]]+"Accelerators supported"@@g' "${REWRITE_ARM64_LAUNCHER}"
+  if grep -q '^# Check hardware acceleration availability' "${REWRITE_ARM64_LAUNCHER}"; then
+    replace_arm64_acceleration_block "${REWRITE_ARM64_LAUNCHER}"
+  elif ! grep -q '^ACCEL_MODE="${QEMU_ACCEL:-auto}"' "${REWRITE_ARM64_LAUNCHER}"; then
+    echo "ARM64 launcher has no recognized accelerator block: ${REWRITE_ARM64_LAUNCHER}" >&2
+    exit 1
+  fi
+  normalize_common_qemu_launcher "${REWRITE_ARM64_LAUNCHER}"
+  chmod +x "${REWRITE_ARM64_LAUNCHER}"
+  exit 0
+fi
 
 seed_standard_userdata_dirs() {
   local image="$1"
@@ -381,7 +532,9 @@ Install QEMU on the host first, then run one of:
 Set \`QEMU_DISPLAY=vnc\` to expose a VNC display on \`127.0.0.1:5921\`, or
 \`QEMU_DISPLAY=none\` for headless execution. HDC/debug forwarding uses host
 TCP port 5555 where supported by the guest. Set \`QEMU_HDC_HOST_PORT\` before
-launch when that host port is already in use.
+launch when that host port is already in use. ARM64 packages accept
+\`QEMU_ACCEL=auto|hvf|kvm|tcg\`; the default \`auto\` mode probes HVF before
+using it and falls back to TCG when nested virtualization is unavailable.
 EOF
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
@@ -395,12 +548,10 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   # Normalize those launchers while preserving compatibility with QEMU builds
   # that print the accelerator list on one line.
   sed_in_place_extended 's@[[:space:]]*\|[[:space:]]*grep[[:space:]]+"Accelerators supported"@@g' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|^(DISPLAY_TYPE=.*)$|\1\
-HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|hostfwd=tcp::5555-:5555|hostfwd=tcp::${HDC_HOST_PORT}-:5555|g' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|init=/init|init=/bin/init|g' "${LAUNCH_OUT}/qemu_run.sh"
-  sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${LAUNCH_OUT}/qemu_run.sh"
+  if [ "${PRODUCT}" = "arm64_virt" ]; then
+    replace_arm64_acceleration_block "${LAUNCH_OUT}/qemu_run.sh"
+  fi
+  normalize_common_qemu_launcher "${LAUNCH_OUT}/qemu_run.sh"
   if [ "${PRODUCT}" = "armv7a_virt" ]; then
     sed_in_place_extended 's|(ohos\.required_mount\.data=/dev/block/[^ @]+@/data@ext4@[^"]*@wait),reservedsize=|\1,required,reservedsize=|g' "${LAUNCH_OUT}/qemu_run.sh"
   fi

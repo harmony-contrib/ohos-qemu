@@ -40,6 +40,7 @@ jobs:
       QEMU_SMOKE_RUN_OHOS_RUNNER: ${{ matrix.run_ohos_runner }}
       QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS: ${{ matrix.account_wait_attempts }}
       QEMU_SMOKE_MINIMUM_GUEST_UPTIME: ${{ matrix.minimum_guest_uptime }}
+      QEMU_SMOKE_ACCEL: ${{ matrix.accel }}
     strategy:
       fail-fast: false
       matrix:
@@ -56,6 +57,7 @@ jobs:
             account_wait_attempts: "300"
             run_ohos_runner: "true"
             minimum_guest_uptime: "0"
+            accel: "auto"
           - name: macOS arm64 QEMU
             runner: macos-14
             host_platform: macos
@@ -68,6 +70,8 @@ jobs:
             account_wait_attempts: "240"
             run_ohos_runner: "true"
             minimum_guest_uptime: "0"
+            # GitHub-hosted Apple Silicon runners do not support nested HVF.
+            accel: "tcg"
           - name: macOS armv7a QEMU
             runner: macos-14
             host_platform: macos
@@ -80,6 +84,7 @@ jobs:
             account_wait_attempts: "1"
             run_ohos_runner: "false"
             minimum_guest_uptime: "270"
+            accel: "auto"
           - name: Windows x64 QEMU
             runner: windows-2022
             host_platform: windows
@@ -92,6 +97,7 @@ jobs:
             account_wait_attempts: "300"
             run_ohos_runner: "true"
             minimum_guest_uptime: "0"
+            accel: "tcg"
 
     steps:
       - name: Checkout

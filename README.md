@@ -45,6 +45,10 @@ Stop QEMU with `Ctrl+C`. Use `QEMU_DISPLAY=none` on Unix or
 `$env:QEMU_DISPLAY="none"` in PowerShell for headless mode. Set the value to
 `vnc` to connect a VNC client to `127.0.0.1:5921`.
 
+The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
+and falls back to TCG when necessary. Set `QEMU_ACCEL=hvf` or
+`QEMU_ACCEL=tcg` to force either mode.
+
 ## HDC
 
 The launchers forward guest HDC to host TCP port `5555`. With `hdc` from the

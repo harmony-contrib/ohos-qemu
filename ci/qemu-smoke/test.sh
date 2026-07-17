@@ -81,6 +81,7 @@ FAKE_OUTPUT="${TEST_ROOT}/package-output"
 FAKE_IMAGES="${FAKE_SOURCE}/out/arm64_virt/packages/phone/images"
 FAKE_VENDOR="${FAKE_SOURCE}/vendor/ohemu/qemu_arm64_linux_full"
 FAKE_QEMU_ARGS="${TEST_ROOT}/qemu-args.txt"
+FAKE_QEMU_PROBES="${TEST_ROOT}/qemu-probes.txt"
 mkdir -p "${FAKE_IMAGES}" "${FAKE_VENDOR}" "${FAKE_OUTPUT}"
 for image in Image ramdisk.img system.img vendor.img userdata.img updater.img \
   sys_prod.img chip_prod.img; do
@@ -91,14 +92,18 @@ cat >"${FAKE_VENDOR}/qemu_run.sh" <<'EOF'
 set -euo pipefail
 OHOS_IMG="out/arm64_virt/packages/phone/images"
 DISPLAY_TYPE="${QEMU_DISPLAY:-none}"
+# Check hardware acceleration availability
 ACCEL_SUPPORT=$(qemu-system-aarch64 -accel help 2>&1 | grep "Accelerators supported" || true)
 if [ "$(uname)" = "Darwin" ] && echo "${ACCEL_SUPPORT}" | grep -qw hvf; then
   ACCEL_ARGS="-accel hvf"
 else
   ACCEL_ARGS="-accel tcg"
 fi
+NET_ARGS=(
+  -netdev user,id=net0,hostfwd=tcp::5555-:5555
+)
 qemu-system-aarch64 ${ACCEL_ARGS} \
-  -netdev user,id=net0,hostfwd=tcp::5555-:5555 \
+  "${NET_ARGS[@]}" \
   -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4"
 EOF
 cat >"${FAKE_BIN}/debugfs" <<'EOF'
@@ -123,6 +128,8 @@ if grep -Fq '| grep "Accelerators supported"' "${PACKAGED_LAUNCHER}"; then
   echo "packaged launcher still filters out multiline accelerator names" >&2
   exit 1
 fi
+grep -Fq 'HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"' "${PACKAGED_LAUNCHER}"
+grep -Fq 'hostfwd=tcp::${HDC_HOST_PORT}-:5555' "${PACKAGED_LAUNCHER}"
 
 cat >"${FAKE_BIN}/uname" <<'EOF'
 #!/usr/bin/env bash
@@ -135,6 +142,13 @@ if [ "\${1:-}" = "-accel" ] && [ "\${2:-}" = "help" ]; then
   printf '%b\n' "\${FAKE_QEMU_ACCELS}"
   exit 0
 fi
+if printf '%s\n' "\$*" | grep -Fq -- '-S -display none -nodefaults'; then
+  printf '%s\n' "\$*" >>"${FAKE_QEMU_PROBES}"
+  if [ "\${FAKE_HVF_PROBE:-usable}" = "fail" ]; then
+    exit 1
+  fi
+  exec sleep 60
+fi
 printf '%s\n' "\$*" >"${FAKE_QEMU_ARGS}"
 EOF
 chmod +x "${FAKE_BIN}/uname" "${FAKE_BIN}/qemu-system-aarch64"
@@ -143,12 +157,38 @@ for accel_output in \
   'Accelerators supported in QEMU binary:\nhvf\ntcg' \
   'Accelerators supported: hvf tcg'; do
   : >"${FAKE_QEMU_ARGS}"
+  : >"${FAKE_QEMU_PROBES}"
   PATH="${FAKE_BIN}:${PATH}" \
   FAKE_QEMU_ACCELS="${accel_output}" \
+  FAKE_HVF_PROBE=usable \
+  QEMU_ACCEL_PROBE_SECONDS=0.1 \
   QEMU_DISPLAY=none \
     bash "${PACKAGED_LAUNCHER}" >/dev/null 2>&1
   grep -Fq -- '-accel hvf' "${FAKE_QEMU_ARGS}"
+  grep -Fq -- '-accel hvf -M virt -cpu cortex-a57' "${FAKE_QEMU_PROBES}"
 done
+
+: >"${FAKE_QEMU_ARGS}"
+PATH="${FAKE_BIN}:${PATH}" \
+FAKE_QEMU_ACCELS='Accelerators supported in QEMU binary:\nhvf\ntcg' \
+FAKE_HVF_PROBE=fail \
+QEMU_ACCEL_PROBE_SECONDS=0.1 \
+QEMU_DISPLAY=none \
+  bash "${PACKAGED_LAUNCHER}" >/dev/null 2>&1
+grep -Fq -- '-accel tcg' "${FAKE_QEMU_ARGS}"
+
+: >"${FAKE_QEMU_ARGS}"
+: >"${FAKE_QEMU_PROBES}"
+PATH="${FAKE_BIN}:${PATH}" \
+FAKE_QEMU_ACCELS='Accelerators supported in QEMU binary:\nhvf\ntcg' \
+QEMU_ACCEL=tcg \
+QEMU_DISPLAY=none \
+  bash "${PACKAGED_LAUNCHER}" >/dev/null 2>&1
+grep -Fq -- '-accel tcg' "${FAKE_QEMU_ARGS}"
+if [ -s "${FAKE_QEMU_PROBES}" ]; then
+  echo "explicit TCG unexpectedly probed HVF" >&2
+  exit 1
+fi
 
 sleep 60 &
 QEMU_PID=$!
@@ -201,16 +241,85 @@ fi
 printf '%s\n' "${composer_output}" | grep -q 'OpenHarmony guest failed before waiting for AccountMgr'
 
 HDC_ARGS="${TEST_ROOT}/hdc-args.txt"
-cat >"${FAKE_BIN}/hdc" <<EOF
+HDC_STATE="${TEST_ROOT}/hdc-state.txt"
+cat >"${FAKE_BIN}/hdc" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "\$*" >>"${HDC_ARGS}"
-printf '%s\n' '300.25 120.00'
+set -euo pipefail
+printf '%s\n' "$*" >>"${FAKE_HDC_ARGS}"
+case "${1:-}" in
+  tconn)
+    count="$(cat "${FAKE_HDC_STATE}")"
+    printf '%s\n' "$((count + 1))" >"${FAKE_HDC_STATE}"
+    ;;
+  list)
+    if [ "$(cat "${FAKE_HDC_STATE}")" -ge 2 ]; then
+      printf '%s\n' "${FAKE_HDC_TARGET} TCP Connected localhost"
+    else
+      printf '%s\n' "${FAKE_HDC_TARGET} TCP Offline localhost"
+    fi
+    ;;
+  -t)
+    if [ "$(cat "${FAKE_HDC_STATE}")" -lt 2 ]; then
+      echo '[Fail][E001005] Device not found or connected' >&2
+      exit 1
+    fi
+    cat <<'ACCOUNT'
+bootevent.account.ready=true
+ID: 100
+isForeground: 1
+ACCOUNT
+    ;;
+esac
 EOF
 chmod +x "${FAKE_BIN}/hdc"
 : >"${WORK}/qemu.log"
 : >"${HDC_ARGS}"
+printf '%s\n' 0 >"${HDC_STATE}"
+
+account_output="$(
+  RUNNER_TEMP="${TEST_ROOT}" \
+  QEMU_SMOKE_HDC_HOST_PORT=6554 \
+  FAKE_HDC_ARGS="${HDC_ARGS}" \
+  FAKE_HDC_STATE="${HDC_STATE}" \
+  FAKE_HDC_TARGET=127.0.0.1:6554 \
+  PATH="${FAKE_BIN}:${PATH}" \
+    bash "${RUN_SCRIPT}" \
+      --package unused.tar.gz \
+      --guest-arch x86_64 \
+      --host-platform linux \
+      --require-account true \
+      --require-kvm false \
+      --run-ohos-runner false \
+      --account-wait-attempts 3 \
+      --phase wait-account
+)"
+printf '%s\n' "${account_output}" | grep -q 'AccountMgr user 100 is foreground at attempt 2'
+grep -q 'attempt=1/3 transport=0' "${WORK}/account-ready.log"
+grep -q 'attempt=2/3 transport=1' "${WORK}/account-ready.log"
+[ "$(grep -c '^tconn 127.0.0.1:6554$' "${HDC_ARGS}")" -ge 2 ]
+
+cat >"${FAKE_BIN}/hdc" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" >>"${FAKE_HDC_ARGS}"
+case "${1:-}" in
+  tconn)
+    exit 0
+    ;;
+  list)
+    printf '%s\n' "${FAKE_HDC_TARGET} TCP Connected localhost"
+    ;;
+  -t)
+    printf '%s\n' '300.25 120.00'
+    ;;
+esac
+EOF
+chmod +x "${FAKE_BIN}/hdc"
+: >"${HDC_ARGS}"
 
 RUNNER_TEMP="${TEST_ROOT}" QEMU_SMOKE_HDC_HOST_PORT=6554 \
+  FAKE_HDC_ARGS="${HDC_ARGS}" \
+  FAKE_HDC_TARGET=127.0.0.1:6554 \
   PATH="${FAKE_BIN}:${PATH}" \
   bash "${RUN_SCRIPT}" \
     --package unused.tar.gz \
