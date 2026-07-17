@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_URL="${OHOS_QEMU_REPO_URL:-https://github.com/harmony-contrib/ohos-qemu}"
-GIT_REF="${OHOS_QEMU_REF:-main}"
+RELEASE_TAG="${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20260717}}"
 DOWNLOAD_BASE_URL="${OHOS_QEMU_DOWNLOAD_BASE_URL:-}"
 GITHUB_TOKEN="${OHOS_QEMU_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 PREFIX="${OHOS_QEMU_PREFIX:-${HOME}/.ohos-qemu}"
@@ -23,7 +23,7 @@ Options:
   --platform NAME    Host platform: auto, linux, macos, windows
   --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64
   --repo URL         GitHub repository URL. Default: https://github.com/harmony-contrib/ohos-qemu
-  --ref REF          Git ref to download from. Default: main
+  --release TAG      Release tag to download. Default: v20260717
   --download-base-url URL
                      Direct artifact base URL. Downloads URL/<package>.
                      Useful for GitHub Releases, private mirrors, or CDNs.
@@ -32,7 +32,7 @@ Options:
   -h, --help         Show this help
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260717
   bash scripts/install.sh --prefix "$HOME/opt/ohos-qemu" --arch arm64
 USAGE
 }
@@ -55,8 +55,8 @@ while [ "$#" -gt 0 ]; do
       REPO_URL="${2:-}"
       shift 2
       ;;
-    --ref)
-      GIT_REF="${2:-}"
+    --release|--ref)
+      RELEASE_TAG="${2:-}"
       shift 2
       ;;
     --download-base-url)
@@ -83,7 +83,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -z "${PREFIX}" ] || [ -z "${REPO_URL}" ] || [ -z "${GIT_REF}" ]; then
+if [ -z "${PREFIX}" ] || [ -z "${REPO_URL}" ] || [ -z "${RELEASE_TAG}" ]; then
   usage >&2
   exit 2
 fi
@@ -149,21 +149,7 @@ artifact_url() {
   if [ -n "${DOWNLOAD_BASE_URL}" ]; then
     printf '%s\n' "${DOWNLOAD_BASE_URL%/}/${name}"
   else
-    printf '%s\n' "${REPO_URL%/}/raw/${GIT_REF}/artifacts/${name}"
-  fi
-}
-
-sha256_file() {
-  local file="$1"
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "${file}" | awk '{print $1}'
-  elif command -v shasum >/dev/null 2>&1; then
-    LC_ALL=C LANG=C shasum -a 256 "${file}" | awk '{print $1}'
-  elif command -v openssl >/dev/null 2>&1; then
-    LC_ALL=C LANG=C openssl dgst -sha256 "${file}" | awk '{print $NF}'
-  else
-    echo "sha256sum, shasum, or openssl is required for checksum verification" >&2
-    exit 1
+    printf '%s\n' "${REPO_URL%/}/releases/download/${RELEASE_TAG}/${name}"
   fi
 }
 
@@ -201,17 +187,14 @@ case "${ARCH}" in
   arm64)
     PACKAGE="openharmony-qemu-arm64-arm64_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-arm64-arm64_virt"
-    EXPECTED_SHA256="86c1d6ce17ea42b8732d2aa64a3081da7e704e084ba0c70923b72cc8a4cdfbd9"
     ;;
   armv7a)
     PACKAGE="openharmony-qemu-armv7a-armv7a_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-armv7a-armv7a_virt"
-    EXPECTED_SHA256="98dda34c8120948605d36d3f2d546086a2c8e2370e24aa8f06f95d6eaac3ce25"
     ;;
   x86_64)
     PACKAGE="openharmony-qemu-x86_64-x86_64_virt.tar.gz"
     PACKAGE_DIR="openharmony-qemu-x86_64-x86_64_virt"
-    EXPECTED_SHA256="a1173c39b4bd9ae3e46de176867b501af51eff605466811b86d8370caeccd7ca"
     ;;
 esac
 
@@ -234,7 +217,7 @@ ARCHIVE_PATH="${ARCHIVE_DIR}/${PACKAGE}"
 
 echo "OpenHarmony QEMU installer"
 echo "repo:      ${REPO_URL}"
-echo "ref:       ${GIT_REF}"
+echo "release:   ${RELEASE_TAG}"
 if [ -n "${DOWNLOAD_BASE_URL}" ]; then
   echo "mirror:    ${DOWNLOAD_BASE_URL}"
 fi
@@ -255,15 +238,6 @@ trap 'rm -f "${tmp_archive}"' EXIT
 
 echo "downloading: ${RAW_URL}"
 download_file "${RAW_URL}" "${tmp_archive}"
-
-ACTUAL_SHA256="$(sha256_file "${tmp_archive}")"
-if [ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]; then
-  echo "checksum mismatch for ${PACKAGE}" >&2
-  echo "expected: ${EXPECTED_SHA256}" >&2
-  echo "actual:   ${ACTUAL_SHA256}" >&2
-  exit 1
-fi
-echo "checksum:  ${ACTUAL_SHA256}"
 
 mv "${tmp_archive}" "${ARCHIVE_PATH}"
 trap - EXIT

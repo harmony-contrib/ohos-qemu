@@ -5,7 +5,7 @@ Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 ## Requirements
 
 - QEMU installed and available in `PATH`.
-- Bash, `curl` or `wget`, `tar`, and a SHA-256 tool.
+- Bash, `curl` or `wget`, and `tar`.
 - Windows installation must be run from Git Bash, MSYS2, or Cygwin.
 - Linux x86_64 should provide readable and writable `/dev/kvm`. TCG is too slow
   for a reliable standard-system boot.
@@ -13,10 +13,10 @@ Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260717
 ```
 
-The installer verifies the archive checksum and installs the package under
+The installer downloads the selected Release and installs the package under
 `~/.ohos-qemu`. It selects `arm64` on Apple Silicon and `x86_64` on x64 hosts.
 Set `OHOS_QEMU_ARCH` to `arm64`, `armv7a`, or `x86_64` before installation to
 override the detected guest architecture.

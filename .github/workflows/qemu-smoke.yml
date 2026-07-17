@@ -2,21 +2,26 @@ name: QEMU Smoke Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "QEMU image Release tag"
+        required: true
+        default: "v20260717"
   push:
     branches:
       - main
     paths:
       - ".github/workflows/qemu-smoke.yml"
-      - "artifacts/*.tar.gz"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
+      - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
   pull_request:
     paths:
       - ".github/workflows/qemu-smoke.yml"
-      - "artifacts/*.tar.gz"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
+      - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
 
 permissions:
@@ -41,6 +46,7 @@ jobs:
       QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS: ${{ matrix.account_wait_attempts }}
       QEMU_SMOKE_MINIMUM_GUEST_UPTIME: ${{ matrix.minimum_guest_uptime }}
       QEMU_SMOKE_ACCEL: ${{ matrix.accel }}
+      QEMU_RELEASE_TAG: ${{ inputs.release_tag || 'v20260717' }}
     strategy:
       fail-fast: false
       matrix:
@@ -110,13 +116,21 @@ jobs:
         shell: bash
         run: bash ci/qemu-smoke/test.sh
 
-      - name: Pull QEMU package from Git LFS
+      - name: Download QEMU package from Release
         shell: bash
         run: |
           set -euo pipefail
-          git lfs install
-          git lfs pull --include="${{ matrix.package }}"
-          ls -lh "${{ matrix.package }}"
+          package="${{ matrix.package }}"
+          asset="$(basename "${package}")"
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${QEMU_RELEASE_TAG}/${asset}"
+
+          mkdir -p "$(dirname "${package}")"
+          curl --fail --location \
+            --retry 5 --retry-delay 2 --retry-all-errors \
+            --output "${package}" "${url}"
+
+          gzip -t "${package}"
+          ls -lh "${package}"
 
       - name: Setup OpenHarmony SDK
         uses: openharmony-rs/setup-ohos-sdk@v1.0.0
