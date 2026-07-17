@@ -46,6 +46,7 @@ jobs:
       QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS: ${{ matrix.account_wait_attempts }}
       QEMU_SMOKE_MINIMUM_GUEST_UPTIME: ${{ matrix.minimum_guest_uptime }}
       QEMU_SMOKE_ACCEL: ${{ matrix.accel }}
+      # Release assets avoid repository-wide Git LFS bandwidth limits.
       QEMU_RELEASE_TAG: ${{ inputs.release_tag || 'v20260717' }}
     strategy:
       fail-fast: false
