@@ -192,6 +192,16 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   sed_in_place_extended 's|hostfwd=tcp::5555-:5555|hostfwd=tcp::${HDC_HOST_PORT}-:5555|g' "${file}"
   sed_in_place_extended 's|init=/init|init=/bin/init|g' "${file}"
   sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${file}"
+  # OpenHarmony's composer service still needs a display device when the host
+  # frontend is disabled. Without virtio-gpu, headless boots lose
+  # composer_host/render_service and the critical foundation process exits.
+  sed_in_place_extended \
+    's|DISPLAY_ARGS="-display none|DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none|' \
+    "${file}"
+  sed_in_place_extended \
+    's|^([[:space:]]*)-display none$|\1-device virtio-gpu-pci,xres=800,yres=500\
+\1-display none|' \
+    "${file}"
 }
 
 if [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
@@ -318,6 +328,37 @@ seed_standard_userdata_dirs() {
   done
 }
 
+install_standard_tun_compat() {
+  local image="$1"
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot install standard TUN compatibility path" >&2
+    exit 1
+  fi
+
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir}"' RETURN
+  local init_config="${tmpdir}/qemu-vpn-tun.cfg"
+  cat >"${init_config}" <<'EOF'
+{
+  "jobs": [
+    {
+      "name": "init",
+      "cmds": [
+        "mkdir /dev/net 0755 root root",
+        "symlink /dev/tun /dev/net/tun"
+      ]
+    }
+  ]
+}
+EOF
+
+  debugfs -w -R "rm /etc/init/qemu-vpn-tun.cfg" "${image}" >/dev/null 2>&1 || true
+  debugfs -w -R "write ${init_config} /etc/init/qemu-vpn-tun.cfg" "${image}" >/dev/null
+  rm -rf "${tmpdir}"
+  trap - RETURN
+}
+
 replace_or_append_param() {
   local file="$1"
   local key="$2"
@@ -412,6 +453,163 @@ ensure_standard_system_root() {
   fi
 }
 
+kernel_config_for_product() {
+  local source_root="$1"
+  local product="$2"
+  local kernel_obj
+  case "${product}" in
+    armv7a_virt)
+      kernel_obj="arm_virt"
+      ;;
+    arm64_virt)
+      kernel_obj="arm64_virt"
+      ;;
+    x86_64_virt)
+      kernel_obj="x86_64_virt"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  printf '%s\n' "${source_root}/out/kernel/OBJ/${kernel_obj}/.config"
+}
+
+require_kernel_config_bool() {
+  local config="$1"
+  local option="$2"
+  if ! grep -qx "${option}=y" "${config}"; then
+    echo "standard VPN requires ${option}=y in final kernel config: ${config}" >&2
+    exit 1
+  fi
+}
+
+image_has_path() {
+  local image="$1"
+  local path="$2"
+  debugfs -R "stat ${path}" "${image}" 2>&1 \
+    | grep -qE '(^|[[:space:]])Inode:[[:space:]]*[0-9]+'
+}
+
+require_image_path() {
+  local image="$1"
+  local description="$2"
+  shift 2
+  local path
+  for path in "$@"; do
+    if image_has_path "${image}" "${path}"; then
+      printf 'standard VPN artifact: %s -> %s\n' "${description}" "${path}"
+      return
+    fi
+  done
+  echo "standard VPN artifact is missing from ${image}: ${description}" >&2
+  printf 'checked path: %s\n' "$@" >&2
+  exit 1
+}
+
+require_image_file_contains() {
+  local image="$1"
+  local description="$2"
+  local needle="$3"
+  shift 3
+  local path
+  local content
+  for path in "$@"; do
+    content="$(debugfs -R "cat ${path}" "${image}" 2>/dev/null || true)"
+    if printf '%s\n' "${content}" | grep -Fq "${needle}"; then
+      printf 'standard VPN artifact: %s -> %s\n' "${description}" "${path}"
+      return
+    fi
+  done
+  echo "standard VPN metadata is missing from ${image}: ${description}" >&2
+  printf 'checked path: %s\n' "$@" >&2
+  exit 1
+}
+
+verify_standard_vpn_capability() {
+  local source_root="$1"
+  local product="$2"
+  local system_image="$3"
+
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot verify standard VPN system artifacts" >&2
+    exit 1
+  fi
+
+  local kernel_config
+  kernel_config="$(kernel_config_for_product "${source_root}" "${product}")"
+  if [ ! -f "${kernel_config}" ]; then
+    echo "final kernel config not found for standard VPN verification: ${kernel_config}" >&2
+    exit 1
+  fi
+  local option
+  for option in \
+    CONFIG_NAMESPACES \
+    CONFIG_NET \
+    CONFIG_UNIX \
+    CONFIG_INET \
+    CONFIG_NET_NS \
+    CONFIG_NETDEVICES \
+    CONFIG_TUN \
+    CONFIG_IP_ADVANCED_ROUTER \
+    CONFIG_IP_MULTIPLE_TABLES \
+    CONFIG_IPV6 \
+    CONFIG_IPV6_MULTIPLE_TABLES \
+    CONFIG_SYSTEM_DATA_VERIFICATION \
+    CONFIG_FS_VERITY \
+    CONFIG_FS_VERITY_BUILTIN_SIGNATURES
+  do
+    require_kernel_config_bool "${kernel_config}" "${option}"
+  done
+
+  require_image_file_contains "${system_image}" "VPN manager System Ability 1155 profile" \
+    "1155" \
+    /system/profile/netmanager.json \
+    /profile/netmanager.json \
+    /system/profile/1155.xml \
+    /profile/1155.xml
+  require_image_path "${system_image}" "VPN manager service library" \
+    /system/lib64/libnet_vpn_manager.z.so \
+    /system/lib/libnet_vpn_manager.z.so \
+    /lib64/libnet_vpn_manager.z.so \
+    /lib/libnet_vpn_manager.z.so \
+    /system/lib64/libnet_vpn_manager.so \
+    /system/lib/libnet_vpn_manager.so
+  require_image_path "${system_image}" "VpnExtension runtime module" \
+    /system/lib64/module/net/libvpnextension.z.so \
+    /system/lib/module/net/libvpnextension.z.so \
+    /lib64/module/net/libvpnextension.z.so \
+    /lib/module/net/libvpnextension.z.so \
+    /system/lib64/module/net/libvpnextension.so \
+    /system/lib/module/net/libvpnextension.so
+  require_image_path "${system_image}" "VPN manager init configuration" \
+    /system/etc/init/vpnmanager.cfg \
+    /etc/init/vpnmanager.cfg
+  require_image_file_contains "${system_image}" "standard /dev/net/tun compatibility path" \
+    "/dev/net/tun" \
+    /system/etc/init/qemu-vpn-tun.cfg \
+    /etc/init/qemu-vpn-tun.cfg
+  require_image_path "${system_image}" "system VPN authorization dialog" \
+    /system/app/VpnDialog \
+    /app/VpnDialog
+  require_image_path "${system_image}" "SettingsData authorization provider" \
+    /system/app/com.ohos.settingsdata \
+    /app/com.ohos.settingsdata \
+    /system/app/SettingsData \
+    /app/SettingsData
+  require_image_file_contains "${system_image}" "VpnDialog preinstall entry" \
+    "/system/app/VpnDialog" \
+    /system/etc/app/install_list.json \
+    /etc/app/install_list.json
+  require_image_file_contains "${system_image}" "VpnDialog privileged-extension capability" \
+    "com.ohos.vpndialog" \
+    /system/etc/app/install_list_capability.json \
+    /etc/app/install_list_capability.json
+
+  STANDARD_VPN_VERIFIED=true
+  VPN_AUTHORIZATION_MODE=system_dialog
+  echo "standard VPN capability verified for ${product}"
+}
+
 case "${PRODUCT}" in
   armv7a_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
@@ -488,6 +686,8 @@ PACKAGE_NAME="openharmony-qemu-${GUEST_ARCH}-${PRODUCT}"
 PACKAGE_DIR="${OUTPUT_DIR}/${PACKAGE_NAME}"
 IMAGES_OUT="${PACKAGE_DIR}/images"
 LAUNCH_OUT="${PACKAGE_DIR}/launch"
+STANDARD_VPN_VERIFIED=false
+VPN_AUTHORIZATION_MODE=unverified
 
 rm -rf "${PACKAGE_DIR}"
 mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}"
@@ -504,6 +704,11 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   inject_standard_qemu_params "${IMAGES_OUT}/system.img"
   ensure_standard_system_root "${IMAGES_OUT}/system.img"
   seed_standard_userdata_dirs "${IMAGES_OUT}/userdata.img"
+  install_standard_tun_compat "${IMAGES_OUT}/system.img"
+  verify_standard_vpn_capability \
+    "${SOURCE_ROOT}" \
+    "${PRODUCT}" \
+    "${IMAGES_OUT}/system.img"
 fi
 
 cat > "${PACKAGE_DIR}/manifest.json" <<EOF
@@ -514,7 +719,11 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   "qemu_unix": "${QEMU_BIN_UNIX}",
   "qemu_windows": "${QEMU_BIN_WIN}",
   "display_default": "${DISPLAY_DEFAULT}",
-  "network_default": "user"
+  "network_default": "user",
+  "capabilities": {
+    "standard_vpn": ${STANDARD_VPN_VERIFIED},
+    "vpn_authorization": "${VPN_AUTHORIZATION_MODE}"
+  }
 }
 EOF
 
@@ -536,6 +745,18 @@ launch when that host port is already in use. ARM64 packages accept
 \`QEMU_ACCEL=auto|hvf|kvm|tcg\`; the default \`auto\` mode probes HVF before
 using it and falls back to TCG when nested virtualization is unavailable.
 EOF
+
+if [ "${STANDARD_VPN_VERIFIED}" = "true" ]; then
+  cat >> "${PACKAGE_DIR}/README.md" <<'EOF'
+
+## Standard VPN
+
+This image includes OpenHarmony's standard VpnExtension service, guest TUN
+support, SettingsData, and the system VPN authorization dialog. No VPN
+application is pre-authorized; the first request must be approved in the
+guest's system dialog.
+EOF
+fi
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
   if [ ! -f "${OFFICIAL_QEMU_RUN}" ]; then

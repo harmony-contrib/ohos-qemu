@@ -656,7 +656,7 @@ def ensure_armv7a_libvpx_config(root: Path) -> None:
     build_sh = root / "third_party/libvpx/build.sh"
 
     content = read_text(build_gn)
-    old = """  if (is_vpx_x86_64) {
+    original_outputs = """  if (is_vpx_x86_64) {
     outputs += [
       "$code_dir/vp8_rtcd.h",
       "$code_dir/vp9_rtcd.h",
@@ -665,7 +665,7 @@ def ensure_armv7a_libvpx_config(root: Path) -> None:
     ]
   }
 """
-    new = """  if (is_vpx_x86_64) {
+    armv7_outputs = """  if (is_vpx_x86_64) {
     outputs += [
       "$code_dir/vp8_rtcd.h",
       "$code_dir/vp9_rtcd.h",
@@ -676,15 +676,28 @@ def ensure_armv7a_libvpx_config(root: Path) -> None:
     outputs += [ "$code_dir/vpx_scale_rtcd.h" ]
   }
 """
-    if old in content:
-        write_text(build_gn, content.replace(old, new))
-    elif new not in content:
+    all_arm_outputs = """  if (is_vpx_x86_64) {
+    outputs += [
+      "$code_dir/vp8_rtcd.h",
+      "$code_dir/vp9_rtcd.h",
+      "$code_dir/vpx_dsp_rtcd.h",
+      "$code_dir/vpx_scale_rtcd.h",
+    ]
+  } else if (is_vpx_arm64 || is_vpx_arm) {
+    outputs += [ "$code_dir/vpx_scale_rtcd.h" ]
+  }
+"""
+    if original_outputs in content:
+        write_text(build_gn, content.replace(original_outputs, all_arm_outputs))
+    elif armv7_outputs in content:
+        write_text(build_gn, content.replace(armv7_outputs, all_arm_outputs))
+    elif all_arm_outputs not in content:
         die(f"expected libvpx outputs block not found in {build_gn}")
 
     content = read_text(build_sh)
     marker = """if [ "$CPU" == "x86_64" ]; then
 """
-    insert = """if [ "$CPU" == "arm" ]; then
+    insert = """if [ "$CPU" == "arm" ] || [ "$CPU" == "arm64" ]; then
   cat > rtcd_config.mk <<'EOF'
 CONFIG_RUNTIME_CPU_DETECT=no
 CONFIG_VP8_DECODER=yes
@@ -700,20 +713,47 @@ CONFIG_WEBM_IO=no
 CONFIG_LIBYUV=no
 EOF
 
-  perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
+  RTCD_ARCH="armv7"
+  if [ "$CPU" == "arm64" ]; then
+    RTCD_ARCH="armv8"
+  fi
+  perl build/make/rtcd.pl --arch="$RTCD_ARCH" --sym=vpx_scale_rtcd \\
       --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl \\
       > "$OUTPUT_DIR/vpx_scale_rtcd.h"
   rm -f rtcd_config.mk
 fi
 
 """
-    previous_insert = insert.replace(
+    armv7_insert = insert.replace(
+        '''if [ "$CPU" == "arm" ] || [ "$CPU" == "arm64" ]; then
+''',
+        '''if [ "$CPU" == "arm" ]; then
+''',
+    ).replace(
+        '''  RTCD_ARCH="armv7"
+  if [ "$CPU" == "arm64" ]; then
+    RTCD_ARCH="armv8"
+  fi
+  perl build/make/rtcd.pl --arch="$RTCD_ARCH" --sym=vpx_scale_rtcd \\
+''',
         '''  perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
+''',
+    )
+    previous_insert = insert.replace(
+        '''  RTCD_ARCH="armv7"
+  if [ "$CPU" == "arm64" ]; then
+    RTCD_ARCH="armv8"
+  fi
+  perl build/make/rtcd.pl --arch="$RTCD_ARCH" --sym=vpx_scale_rtcd \\
       --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl \\
       > "$OUTPUT_DIR/vpx_scale_rtcd.h"
   rm -f rtcd_config.mk
 ''',
-        '''  perl build/make/rtcd.pl --arch=armv7 --sym=vpx_scale_rtcd \\
+        '''  RTCD_ARCH="armv7"
+  if [ "$CPU" == "arm64" ]; then
+    RTCD_ARCH="armv8"
+  fi
+  perl build/make/rtcd.pl --arch="$RTCD_ARCH" --sym=vpx_scale_rtcd \\
       --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl > vpx_scale_rtcd.h
   cp vpx_scale_rtcd.h "$OUTPUT_DIR/"
   rm -f rtcd_config.mk vpx_scale_rtcd.h
@@ -721,6 +761,8 @@ fi
     )
     if previous_insert in content:
         write_text(build_sh, content.replace(previous_insert, insert, 1))
+    elif armv7_insert in content:
+        write_text(build_sh, content.replace(armv7_insert, insert, 1))
     elif insert not in content:
         if marker not in content:
             die(f"expected libvpx x86_64 block marker not found in {build_sh}")

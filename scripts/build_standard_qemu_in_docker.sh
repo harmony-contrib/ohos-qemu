@@ -30,7 +30,9 @@ Environment:
   REPO_CHECKOUT_JOBS  repo checkout jobs, default: 1
   REPO_SYNC_RETRIES   repo sync retry attempts, default: 3
   BUILD_JOBS          build jobs, default: nproc
+  KERNEL_BUILD_JOBS   nested kernel make jobs, default: BUILD_JOBS
   CCACHE_MAXSIZE      ccache size limit, default: 100G
+  CCACHE_DIR          ccache directory, default: $CACHE_ROOT/ccache
   GIT_USER_NAME       Global git user.name, default: richerfu
   GIT_USER_EMAIL      Global git user.email, default: southorange0929@foxmail.com
   NPM_REGISTRY        npm registry, default: https://repo.huaweicloud.com/repository/npm/
@@ -43,6 +45,8 @@ Environment:
   SKIP_REPO_SYNC      Reuse existing checkout without repo sync, default: 0
   SKIP_PREBUILTS      Reuse existing prebuilts, default: 0
   SKIP_GIT_LFS        Skip git lfs pull, default: 0
+  ALLOW_NON_DOCKER    Allow an isolated Ubuntu 22.04 VM instead of Docker,
+                      default: 0
   GIT_LFS_PATHS       Space-separated paths to fetch with Git LFS, default:
                        applications/standard/hap base/web/webview
                        foundation/arkui/ace_engine third_party/icu
@@ -53,7 +57,34 @@ Environment:
                        Map ramdisk /system to /usr/system, add
                        /bin/init -> /system/bin/init, and add
                        /chipset -> /vendor for QEMU, default: 1
+  QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION
+                       Avoid libselinux/VERSION shadowing libc++ <version>
+                       when the checkout is mounted from a case-insensitive
+                       host filesystem, default: 1
+  QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN
+                       Keep XMP Endian.h out of public system-header lookup
+                       and suppress private path-case diagnostics on a
+                       case-insensitive host filesystem, default: 1
+  QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK
+                       Restore uniquely named iptables match/target sources
+                       and combined headers when upstream case-distinct files
+                       alias each other on a case-insensitive host filesystem,
+                       default: 1
+  QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY
+                       Copy ArkGuard node_modules launchers as regular files
+                       when staging across shared filesystems, default: 1
+  QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR
+                       Serialize Arkoala npm install/code generation because
+                       it writes node_modules in the shared source tree,
+                       default: 1
+  QEMU_FIX_VIRTIOFS_KERNEL_COPY
+                       Copy the kernel worktree without dereferencing the
+                       repo-tool .git symlink on shared filesystems,
+                       default: 1
   ARMV7A_FULL_OVERLAY Apply experimental armv7a_virt full overlay, default: 1
+  STANDARD_VPN_OVERLAY
+                       Enable and validate the standard VpnExtension stack,
+                       default: 1
 
 Build environment:
   This script is intended to run inside a Docker container based on
@@ -76,6 +107,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
 ARMV7A_OVERLAY="${SCRIPT_DIR}/../overlays/armv7a_virt_full/apply.sh"
+VPN_OVERLAY="${SCRIPT_DIR}/../overlays/standard_qemu_vpn/apply.sh"
 
 if [ ! -x "${PACKAGER}" ]; then
   echo "missing executable packager: ${PACKAGER}" >&2
@@ -98,7 +130,9 @@ REPO_JOBS="${REPO_JOBS:-8}"
 REPO_CHECKOUT_JOBS="${REPO_CHECKOUT_JOBS:-1}"
 REPO_SYNC_RETRIES="${REPO_SYNC_RETRIES:-3}"
 BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
+KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS:-${BUILD_JOBS}}"
 CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-100G}"
+CCACHE_DIR="${CCACHE_DIR:-${CACHE_ROOT}/ccache}"
 GIT_USER_NAME="${GIT_USER_NAME:-richerfu}"
 GIT_USER_EMAIL="${GIT_USER_EMAIL:-southorange0929@foxmail.com}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://repo.huaweicloud.com/repository/npm/}"
@@ -111,10 +145,18 @@ SKIP_APT="${SKIP_APT:-0}"
 SKIP_REPO_SYNC="${SKIP_REPO_SYNC:-0}"
 SKIP_PREBUILTS="${SKIP_PREBUILTS:-0}"
 SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
+ALLOW_NON_DOCKER="${ALLOW_NON_DOCKER:-0}"
 GIT_LFS_PATHS="${GIT_LFS_PATHS:-applications/standard/hap base/web/webview foundation/arkui/ace_engine third_party/icu third_party/libphonenumber}"
 QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI:-${QEMU_FIX_ACCESS_TOKENID_SPM:-1}}"
 QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS:-1}"
+QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION="${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION:-1}"
+QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN="${QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN:-1}"
+QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK="${QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK:-1}"
+QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY="${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY:-1}"
+QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR="${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR:-1}"
+QEMU_FIX_VIRTIOFS_KERNEL_COPY="${QEMU_FIX_VIRTIOFS_KERNEL_COPY:-1}"
 ARMV7A_FULL_OVERLAY="${ARMV7A_FULL_OVERLAY:-1}"
+STANDARD_VPN_OVERLAY="${STANDARD_VPN_OVERLAY:-1}"
 PRODUCTS=("$@")
 
 if [ "${#PRODUCTS[@]}" -eq 0 ]; then
@@ -146,9 +188,15 @@ require_docker_ubuntu_2204() {
     echo "unsupported build OS: ${PRETTY_NAME:-unknown}; expected ubuntu:22.04" >&2
     exit 1
   fi
-  if [ ! -f /.dockerenv ] && ! grep -qaE '/(docker|containerd|kubepods)(/|$)' /proc/1/cgroup 2>/dev/null; then
+  if [ ! -f /.dockerenv ] &&
+     ! grep -qaE '/(docker|containerd|kubepods)(/|$)' /proc/1/cgroup 2>/dev/null &&
+     [ "${ALLOW_NON_DOCKER}" != "1" ]; then
     echo "this build must run inside Docker, not directly on the host" >&2
     exit 1
+  fi
+  if [ ! -f /.dockerenv ] &&
+     ! grep -qaE '/(docker|containerd|kubepods)(/|$)' /proc/1/cgroup 2>/dev/null; then
+    echo "running in an explicitly allowed isolated Ubuntu 22.04 VM"
   fi
 }
 
@@ -255,11 +303,17 @@ PY
   fi
 
   echo "install missing python module for ${python_bin}: ${package}"
+  local pip_scope_args=()
+  if [ "$(id -u)" != "0" ]; then
+    pip_scope_args+=(--user)
+  fi
   if ! "${python_bin}" -m pip install \
+    "${pip_scope_args[@]}" \
     --trusted-host repo.huaweicloud.com \
     -i https://repo.huaweicloud.com/repository/pypi/simple \
     "${package}"; then
     "${python_bin}" -m pip install \
+      "${pip_scope_args[@]}" \
       --break-system-packages \
       --trusted-host repo.huaweicloud.com \
       -i https://repo.huaweicloud.com/repository/pypi/simple \
@@ -385,7 +439,7 @@ ensure_repo_tool() {
 }
 
 prepare_checkout() {
-  mkdir -p "${CACHE_ROOT}" "${OHOS_ROOT}" "${PACKAGE_ROOT}" "${CACHE_ROOT}/logs" "${CACHE_ROOT}/ccache"
+  mkdir -p "${CACHE_ROOT}" "${OHOS_ROOT}" "${PACKAGE_ROOT}" "${CACHE_ROOT}/logs" "${CCACHE_DIR}"
   cd "${OHOS_ROOT}"
   if [ "${SKIP_REPO_SYNC}" = "1" ] && [ -d .repo ]; then
     echo "skip repo init/sync; reusing existing checkout at ${OHOS_ROOT}"
@@ -462,6 +516,43 @@ sync_git_lfs_objects() {
     echo "git lfs pull: ${path}"
     git -C "${OHOS_ROOT}/${path}" lfs pull
   done
+}
+
+verify_git_lfs_objects() {
+  if ! git lfs version >/dev/null 2>&1; then
+    echo "git-lfs not found; cannot verify cached LFS objects" >&2
+    exit 1
+  fi
+
+  local path
+  local relative_path
+  local object_path
+  local first_line
+  local missing=0
+  for path in ${GIT_LFS_PATHS}; do
+    if [ ! -e "${OHOS_ROOT}/${path}/.git" ]; then
+      continue
+    fi
+    while IFS= read -r relative_path; do
+      [ -n "${relative_path}" ] || continue
+      object_path="${OHOS_ROOT}/${path}/${relative_path}"
+      if [ ! -f "${object_path}" ]; then
+        echo "missing Git LFS worktree file: ${path}/${relative_path}" >&2
+        missing=1
+        continue
+      fi
+      IFS= read -r first_line < "${object_path}" || true
+      if [ "${first_line}" = "version https://git-lfs.github.com/spec/v1" ]; then
+        echo "unresolved Git LFS pointer: ${path}/${relative_path}" >&2
+        missing=1
+      fi
+    done < <(git -C "${OHOS_ROOT}/${path}" lfs ls-files --name-only)
+  done
+
+  if [ "${missing}" -ne 0 ]; then
+    echo "cached checkout has unresolved Git LFS objects; rerun without SKIP_GIT_LFS=1" >&2
+    exit 1
+  fi
 }
 
 remove_under_ohos_root() {
@@ -615,6 +706,34 @@ download_prebuilts() {
   return "${rc}"
 }
 
+configure_ohos_node_path() {
+  local node_root="${OHOS_ROOT}/prebuilts/build-tools/common/nodejs"
+  local node_bin=""
+  local candidate
+  for candidate in \
+    "${node_root}"/node-v18*-linux-x64/bin \
+    "${node_root}/current/bin"; do
+    if [ -x "${candidate}/node" ] && [ -x "${candidate}/npm" ]; then
+      node_bin="${candidate}"
+      break
+    fi
+  done
+  if [ -z "${node_bin}" ]; then
+    echo "missing OpenHarmony Node.js 18 prebuilt under ${node_root}" >&2
+    exit 1
+  fi
+
+  export PATH="${node_bin}:${PATH}"
+  hash -r
+  local node_major
+  node_major="$(node -p 'Number(process.versions.node.split(".")[0])')"
+  if [ "${node_major}" -lt 18 ]; then
+    echo "OpenHarmony build requires Node.js 18+, found $(node --version)" >&2
+    exit 1
+  fi
+  echo "OpenHarmony build Node.js: $(node --version) from $(command -v node)"
+}
+
 repair_ets12_node_modules() {
   local root="${OHOS_ROOT}/developtools/ace_ets2bundle/ets1.2"
   local npm_tool=(
@@ -679,8 +798,31 @@ build_product() {
     kernel_image="bzImage"
   fi
   cd "${OHOS_ROOT}"
-  export CCACHE_DIR="${CACHE_ROOT}/ccache"
+  export CCACHE_DIR
+  export OHOS_KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS}"
   ccache -M "${CCACHE_MAXSIZE}" >/dev/null 2>&1 || true
+
+  # Recent hb versions persist list-valued arguments in out/hb_args and append
+  # the next invocation's values. Without clearing the generated default here,
+  # sequential product builds can execute Ninja with multiple conflicting -j
+  # values (for example, "-j2 -j8").
+  python3 - "${OHOS_ROOT}/out/hb_args/buildargs.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if path.is_file():
+    data = json.loads(path.read_text(encoding="utf-8"))
+    ninja_args = data.get("ninja_args")
+    if isinstance(ninja_args, dict) and ninja_args.get("argDefault"):
+        ninja_args["argDefault"] = []
+        path.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+PY
+
   if [ "${CLEAN_KERNEL_OBJ}" = "1" ]; then
     rm -rf "${OHOS_ROOT}/out/KERNEL_OBJ"
     rm -rf "${OHOS_ROOT}/out/kernel/OBJ/${kernel_obj}"
@@ -691,7 +833,7 @@ build_product() {
     ./build.sh
     --product-name "${product}"
     --ccache
-    --jobs "${BUILD_JOBS}"
+    "--ninja-args=-j${BUILD_JOBS}"
     --load-test-config=false
     --deps-guard=false
   )
@@ -743,6 +885,8 @@ validate_prebuilt_haps() {
       exit 1
     }
   fi
+
+  return 0
 }
 
 product_list_contains() {
@@ -770,6 +914,390 @@ apply_armv7a_full_overlay() {
   fi
   bash "${ARMV7A_OVERLAY}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_armv7a_virt_full_overlay.log"
+}
+
+apply_standard_vpn_overlay() {
+  if [ "${STANDARD_VPN_OVERLAY}" != "1" ]; then
+    echo "STANDARD_VPN_OVERLAY=${STANDARD_VPN_OVERLAY}; skip standard VPN configuration"
+    return
+  fi
+  if [ ! -f "${VPN_OVERLAY}" ]; then
+    echo "missing standard VPN overlay: ${VPN_OVERLAY}" >&2
+    exit 1
+  fi
+
+  local vpn_args=()
+  local product
+  for product in "${PRODUCTS[@]}"; do
+    vpn_args+=(--product "${product}")
+  done
+  bash "${VPN_OVERLAY}" \
+    --source-root "${OHOS_ROOT}" \
+    "${vpn_args[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_standard_qemu_vpn_overlay.log"
+}
+
+fix_case_insensitive_selinux_version_header() {
+  if [ "${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION}" != "1" ]; then
+    return
+  fi
+
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+selinux_root = source_root / "third_party/selinux/libselinux"
+version_file = selinux_root / "VERSION"
+lowercase_alias = selinux_root / "version"
+compat_version_file = selinux_root / "LIBSELINUX_VERSION"
+build_file = source_root / "third_party/selinux/BUILD.gn"
+make_file = selinux_root / "src/Makefile"
+
+entry_names = {entry.name for entry in selinux_root.iterdir()}
+has_version_file = "VERSION" in entry_names
+has_compat_version_file = "LIBSELINUX_VERSION" in entry_names
+case_insensitive_alias = has_version_file and lowercase_alias.exists()
+already_configured = has_compat_version_file
+if not case_insensitive_alias and not already_configured:
+    print("libselinux VERSION does not alias lowercase <version>; no compatibility fix needed")
+    raise SystemExit(0)
+
+quote_only_config = '''config("third_party_selinux_config") {
+  include_dirs = [ "$LIBSELINUX_ROOT_DIR/include" ]
+  cflags = [
+    "-iquote" + rebase_path("$LIBSELINUX_ROOT_DIR", root_build_dir),
+  ]
+}
+'''
+original_config = '''config("third_party_selinux_config") {
+  include_dirs = [
+    "$LIBSELINUX_ROOT_DIR/include",
+    "$LIBSELINUX_ROOT_DIR",
+  ]
+}
+'''
+text = build_file.read_text()
+if original_config in text:
+    build_file.write_text(text.replace(original_config, quote_only_config, 1))
+elif quote_only_config not in text:
+    raise SystemExit(f"unexpected third_party_selinux_config layout in {build_file}")
+
+if has_compat_version_file:
+    if has_version_file and version_file.read_bytes() != compat_version_file.read_bytes():
+        raise SystemExit(f"conflicting libselinux version files: {version_file} and {compat_version_file}")
+    if not has_version_file:
+        compat_version_file.rename(version_file)
+    else:
+        compat_version_file.unlink()
+
+make_text = make_file.read_text()
+updated_make_text = make_text.replace("../LIBSELINUX_VERSION", "../VERSION")
+if updated_make_text != make_text:
+    make_file.write_text(updated_make_text)
+elif "../VERSION" not in make_text:
+    raise SystemExit(f"unexpected libselinux VERSION reference layout in {make_file}")
+
+if "VERSION" in {entry.name for entry in selinux_root.iterdir()}:
+    print(
+        "configured case-insensitive libselinux compatibility: "
+        f"quote-only private headers in {build_file}; preserved {version_file}"
+    )
+else:
+    raise SystemExit(f"missing libselinux version file: {version_file}")
+PY
+}
+
+fix_case_insensitive_xmp_endian_header() {
+  if [ "${QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN}" != "1" ]; then
+    return
+  fi
+
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+xmp_root = source_root / "third_party/xmp_toolkit_sdk"
+source_dir = xmp_root / "source"
+endian_header = source_dir / "Endian.h"
+lowercase_alias = source_dir / "endian.h"
+build_file = xmp_root / "BUILD.gn"
+warning_flag = '"-Wno-nonportable-include-path"'
+
+entry_names = {entry.name for entry in source_dir.iterdir()}
+case_insensitive_alias = "Endian.h" in entry_names and lowercase_alias.exists()
+text = build_file.read_text()
+public_original = ''']
+
+config("xmpsdk_public_config") {
+  include_dirs = _xmpsdk_include_dirs
+'''
+public_intermediate = ''']
+
+config("xmpsdk_public_config") {
+  include_dirs = _xmpsdk_include_dirs
+  include_dirs -= [ "source" ]
+'''
+public_duplicate = ''']
+
+config("xmpsdk_public_config") {
+  include_dirs = _xmpsdk_include_dirs
+  include_dirs -= [ "source" ]
+  include_dirs -= [ "source" ]
+'''
+public_replacement = ''']
+
+_xmpsdk_public_include_dirs = _xmpsdk_include_dirs
+_xmpsdk_public_include_dirs -= [ "source" ]
+
+config("xmpsdk_public_config") {
+  include_dirs = _xmpsdk_public_include_dirs
+'''
+already_configured = warning_flag in text and public_replacement in text
+if not case_insensitive_alias and not already_configured:
+    print("XMP Endian.h does not alias endian.h; no compatibility fix needed")
+    raise SystemExit(0)
+
+if public_duplicate in text:
+    text = text.replace(public_duplicate, public_replacement, 1)
+elif public_intermediate in text:
+    text = text.replace(public_intermediate, public_replacement, 1)
+elif public_original in text:
+    text = text.replace(public_original, public_replacement, 1)
+elif public_replacement not in text:
+    raise SystemExit(f"unexpected xmpsdk_public_config layout in {build_file}")
+
+original = '''    "-Wno-tautological-overlap-compare",
+    "-Wno-int-to-void-pointer-cast",
+  ]
+}
+'''
+replacement = '''    "-Wno-tautological-overlap-compare",
+    "-Wno-int-to-void-pointer-cast",
+    "-Wno-nonportable-include-path",
+  ]
+}
+'''
+if original in text:
+    text = text.replace(original, replacement, 1)
+elif replacement not in text:
+    raise SystemExit(f"unexpected xmpsdk_config cflags_cc layout in {build_file}")
+build_file.write_text(text)
+
+if not endian_header.exists():
+    raise SystemExit(f"missing XMP endian header: {endian_header}")
+print(
+    "configured case-insensitive XMP compatibility: "
+    f"removed source/ from public include lookup and suppressed "
+    f"private path-case diagnostics in {build_file}"
+)
+PY
+}
+
+fix_case_insensitive_iptables_variants() {
+  if [ "${QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK}" != "1" ]; then
+    return
+  fi
+
+  python3 "${SCRIPT_DIR}/fix_case_insensitive_iptables.py" \
+    --source-root "${OHOS_ROOT}"
+}
+
+fix_case_insensitive_kernel_netfilter() {
+  if [ "${QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK}" != "1" ]; then
+    return
+  fi
+
+  python3 "${SCRIPT_DIR}/fix_case_insensitive_kernel_netfilter.py" \
+    --source-root "${OHOS_ROOT}"
+}
+
+fix_virtiofs_node_symlink_copy() {
+  if [ "${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY}" != "1" ]; then
+    return
+  fi
+
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+import re
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+scripts = [
+    source_root / "arkcompiler/ets_frontend/arkguard/compile_arkguard.py",
+    source_root / "arkcompiler/ets_frontend/ets2panda/driver/build_system/build_build_system.py",
+]
+pattern = re.compile(
+    r"shutil\.copytree\(source_path,\s*dest_path,\s*"
+    r"dirs_exist_ok=True,\s*symlinks=True\)"
+)
+replacement = (
+    "shutil.copytree(source_path, dest_path, "
+    "dirs_exist_ok=True, symlinks=False)"
+)
+for script in scripts:
+    text = script.read_text()
+    original_text = text
+    restore_marker = "Restore symlinks without copying unsupported VirtioFS metadata."
+    updated, count = pattern.subn(replacement, text, count=1)
+    if count:
+        text = updated
+    elif replacement not in text and not (
+            script.name == "build_build_system.py" and restore_marker in text):
+        raise SystemExit(f"unexpected copytree layout in {script}")
+    if script.name == "build_build_system.py":
+        restore_block = '''shutil.copytree(source_path, dest_path, dirs_exist_ok=True, symlinks=False)
+            # Restore symlinks without copying unsupported VirtioFS metadata.
+            for source_dir, dirnames, filenames in os.walk(
+                    source_path, topdown=False):
+                for name in dirnames + filenames:
+                    source_entry = os.path.join(source_dir, name)
+                    if not os.path.islink(source_entry):
+                        continue
+                    relative_entry = os.path.relpath(source_entry, source_path)
+                    dest_entry = os.path.join(dest_path, relative_entry)
+                    if os.path.lexists(dest_entry):
+                        if os.path.isdir(dest_entry) and not os.path.islink(
+                                dest_entry):
+                            shutil.rmtree(dest_entry)
+                        else:
+                            os.unlink(dest_entry)
+                    os.symlink(os.readlink(source_entry), dest_entry)'''
+        if restore_marker not in text:
+            if replacement not in text:
+                raise SystemExit(f"missing copytree call in {script}")
+            text = text.replace(replacement, restore_block, 1)
+    if text != original_text:
+        script.write_text(text)
+    print(f"configured shared-filesystem Node launcher copy in {script}")
+PY
+}
+
+serialize_shared_arkoala_generator() {
+  if [ "${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR}" != "1" ]; then
+    return
+  fi
+
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+script = source_root / (
+    "foundation/arkui/ace_engine/frameworks/bridge/arkts_frontend/"
+    "arkoala_generator/gn/command/generation.py"
+)
+text = script.read_text()
+original_text = text
+if "import fcntl\n" not in text:
+    import_marker = "import argparse\n"
+    if import_marker not in text:
+        raise SystemExit(f"unexpected import layout in {script}")
+    text = text.replace(import_marker, import_marker + "import fcntl\n", 1)
+
+lock_marker = "Waiting for shared Arkoala generator lock:"
+if lock_marker not in text:
+    original = '''    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.join(script_dir, "../../")
+'''
+    replacement = '''    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.join(script_dir, "../../")
+
+    lock_path = os.environ.get(
+        "OHOS_ARKOALA_GENERATOR_LOCK",
+        "/tmp/openharmony-arkoala-generator.lock",
+    )
+    print(f"Waiting for shared Arkoala generator lock: {lock_path}")
+    generator_lock = open(lock_path, "w", encoding="utf-8")
+    fcntl.flock(generator_lock, fcntl.LOCK_EX)
+    print(f"Acquired shared Arkoala generator lock: {lock_path}")
+'''
+    if original not in text:
+        raise SystemExit(f"unexpected main layout in {script}")
+    text = text.replace(original, replacement, 1)
+
+if text != original_text:
+    script.write_text(text)
+print(f"serialized shared-source Arkoala generation in {script}")
+PY
+}
+
+fix_virtiofs_kernel_source_copy() {
+  if [ "${QEMU_FIX_VIRTIOFS_KERNEL_COPY}" != "1" ]; then
+    return
+  fi
+
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+script = source_root / "device/qemu/common/virt_full/kernel/build_kernel.sh"
+text = script.read_text()
+original_text = text
+original = '''    rm -rf ${KERNEL_BUILD_ROOT}
+    mkdir -p ${OHOS_SOURCE_ROOT}/out/kernel/OBJ
+    cp -rL ${KERNEL_SOURCE_DIR}  ${KERNEL_BUILD_ROOT}
+'''
+replacement = '''    rm -rf "${KERNEL_BUILD_ROOT}"
+    mkdir -p "${KERNEL_BUILD_ROOT}"
+    tar --exclude='./.git' --exclude='.git' \\
+        -C "${KERNEL_SOURCE_DIR}" -chf - . \\
+        | tar -C "${KERNEL_BUILD_ROOT}" -xf -
+'''
+if original in text:
+    text = text.replace(original, replacement, 1)
+elif replacement not in text:
+    raise SystemExit(f"unexpected kernel copy layout in {script}")
+old_jobs = "    make ${MAKE_OPTIONS} -j$(nproc)\n"
+new_jobs = '    make ${MAKE_OPTIONS} -j"${OHOS_KERNEL_BUILD_JOBS:-$(nproc)}"\n'
+if old_jobs in text:
+    text = text.replace(old_jobs, new_jobs, 1)
+elif new_jobs not in text:
+    raise SystemExit(f"unexpected kernel jobs layout in {script}")
+reuse_marker = "reuse complete external kernel outputs:"
+if reuse_marker not in text:
+    main_marker = """##main
+# Always refresh the kernel copy."""
+    reuse_block = """##main
+if [ "${OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE:-0}" = "1" ]; then
+    FINAL_KERNEL_IMAGE="${OHOS_IMAGES_DIR}/$(basename "${KERNEL_OUT_IMAGE}")"
+    COMPLETE_KERNEL_OUTPUTS=1
+    for OUTPUT in \\
+        "${FINAL_KERNEL_IMAGE}" \\
+        "${KERNEL_MODULES_OUT}/rtw89_core.ko" \\
+        "${KERNEL_MODULES_OUT}/rtw89_pci.ko" \\
+        "${KERNEL_MODULES_OUT}/rtw89_8852a.ko" \\
+        "${KERNEL_MODULES_OUT}/rtw89_8852ae.ko" \\
+        "${KERNEL_MODULES_OUT}/mt7601u.ko" \\
+        "${KERNEL_MODULES_OUT}/mac80211_hwsim.ko" \\
+        "${KERNEL_MODULES_OUT}/virt_wifi.ko" \\
+        "${KERNEL_MODULES_OUT}/libarc4.ko" \\
+        "${KERNEL_MODULES_OUT}/mac80211.ko" \\
+        "${KERNEL_MODULES_OUT}/cfg80211.ko" \\
+        "${KERNEL_MODULES_OUT}/iwlwifi.ko" \\
+        "${KERNEL_MODULES_OUT}/iwlmvm.ko"; do
+        if [ ! -s "${OUTPUT}" ]; then
+            COMPLETE_KERNEL_OUTPUTS=0
+            break
+        fi
+    done
+    if [ "${COMPLETE_KERNEL_OUTPUTS}" = "1" ]; then
+        echo "reuse complete external kernel outputs: ${FINAL_KERNEL_IMAGE}"
+        popd
+        exit 0
+    fi
+fi
+
+# Always refresh the kernel copy."""
+    if main_marker not in text:
+        raise SystemExit(f"unexpected kernel main layout in {script}")
+    text = text.replace(main_marker, reuse_block, 1)
+if text != original_text:
+    script.write_text(text)
+print(f"configured shared-filesystem kernel worktree copy in {script}")
+PY
 }
 
 configure_qemu_product_features() {
@@ -1221,15 +1749,19 @@ from pathlib import Path
 import shutil
 
 removed = []
-for dep_map in Path(".").rglob(".hvigor/dependencyMap/oh-package.json5"):
-    try:
-        if dep_map.stat().st_size != 0:
-            continue
-    except FileNotFoundError:
+excluded_roots = {".repo", "out", "prebuilts"}
+for source_root in Path(".").iterdir():
+    if not source_root.is_dir() or source_root.name in excluded_roots:
         continue
-    hvigor_dir = dep_map.parents[1]
-    shutil.rmtree(hvigor_dir, ignore_errors=True)
-    removed.append(str(hvigor_dir))
+    for dep_map in source_root.rglob(".hvigor/dependencyMap/oh-package.json5"):
+        try:
+            if dep_map.stat().st_size != 0:
+                continue
+        except FileNotFoundError:
+            continue
+        hvigor_dir = dep_map.parents[1]
+        shutil.rmtree(hvigor_dir, ignore_errors=True)
+        removed.append(str(hvigor_dir))
 
 for path in removed:
     print(f"removed corrupt hvigor state: {path}")
@@ -1360,7 +1892,10 @@ main() {
   echo "repo jobs: network=${REPO_JOBS} checkout=${REPO_CHECKOUT_JOBS}"
   echo "npm registry: ${NPM_REGISTRY}"
   echo "skip repo sync: ${SKIP_REPO_SYNC}"
+  echo "allow non-Docker Ubuntu VM: ${ALLOW_NON_DOCKER}"
   echo "ccache max size: ${CCACHE_MAXSIZE}"
+  echo "ccache dir: ${CCACHE_DIR}"
+  echo "kernel build jobs: ${KERNEL_BUILD_JOBS}"
   echo "skip prebuilts: ${SKIP_PREBUILTS}"
   echo "no prebuilt sdk: ${NO_PREBUILT_SDK}"
   echo "build only load: ${BUILD_ONLY_LOAD}"
@@ -1368,9 +1903,16 @@ main() {
   echo "git lfs paths: ${GIT_LFS_PATHS}"
   echo "qemu fix access_tokenid abi: ${QEMU_FIX_ACCESS_TOKENID_ABI}"
   echo "qemu fix system compat symlinks: ${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}"
+  echo "qemu fix case-insensitive selinux VERSION: ${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION}"
+  echo "qemu fix case-insensitive XMP Endian.h: ${QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN}"
+  echo "qemu fix case-insensitive iptables variants: ${QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK}"
+  echo "qemu fix VirtioFS node symlink copy: ${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY}"
+  echo "qemu serialize shared Arkoala generator: ${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR}"
+  echo "qemu fix VirtioFS kernel worktree copy: ${QEMU_FIX_VIRTIOFS_KERNEL_COPY}"
   echo "armv7a full overlay: ${ARMV7A_FULL_OVERLAY}"
+  echo "standard VPN overlay: ${STANDARD_VPN_OVERLAY}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI}"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} standard_vpn=${STANDARD_VPN_OVERLAY}"
 
   raise_nofile_limit
   install_deps
@@ -1380,17 +1922,27 @@ main() {
   ensure_repo_tool
   prepare_checkout
   sync_git_lfs_objects
+  verify_git_lfs_objects
   prepare_ets12_separate_npm_install
   trap restore_ets12_prebuilts_config EXIT
   download_prebuilts
   restore_ets12_prebuilts_config
   trap - EXIT
+  configure_ohos_node_path
   install_ets12_node_modules
   repair_ets12_node_modules
   ensure_python_modules
   ensure_hvigor_sdkmanager_common
   ensure_ohos_sdk_ets_loader_modules
   apply_armv7a_full_overlay
+  apply_standard_vpn_overlay
+  fix_case_insensitive_selinux_version_header
+  fix_case_insensitive_xmp_endian_header
+  fix_case_insensitive_iptables_variants
+  fix_case_insensitive_kernel_netfilter
+  fix_virtiofs_node_symlink_copy
+  serialize_shared_arkoala_generator
+  fix_virtiofs_kernel_source_copy
   configure_qemu_product_features
   ensure_flexlexer_header
   clean_corrupt_hvigor_state

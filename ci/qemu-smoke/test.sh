@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
 PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
+bash "${SCRIPT_DIR}/../standard-vpn/test.sh"
 TEST_ROOT="$(mktemp -d)"
 FAKE_BIN="${TEST_ROOT}/bin"
 WORK="${TEST_ROOT}/ohos-qemu-smoke-linux-x86_64"
@@ -79,19 +80,41 @@ fi
 FAKE_SOURCE="${TEST_ROOT}/package-source"
 FAKE_OUTPUT="${TEST_ROOT}/package-output"
 FAKE_IMAGES="${FAKE_SOURCE}/out/arm64_virt/packages/phone/images"
+FAKE_KERNEL_OBJ="${FAKE_SOURCE}/out/kernel/OBJ/arm64_virt"
 FAKE_VENDOR="${FAKE_SOURCE}/vendor/ohemu/qemu_arm64_linux_full"
 FAKE_QEMU_ARGS="${TEST_ROOT}/qemu-args.txt"
 FAKE_QEMU_PROBES="${TEST_ROOT}/qemu-probes.txt"
-mkdir -p "${FAKE_IMAGES}" "${FAKE_VENDOR}" "${FAKE_OUTPUT}"
+mkdir -p "${FAKE_IMAGES}" "${FAKE_KERNEL_OBJ}" "${FAKE_VENDOR}" "${FAKE_OUTPUT}"
 for image in Image ramdisk.img system.img vendor.img userdata.img updater.img \
   sys_prod.img chip_prod.img; do
   : >"${FAKE_IMAGES}/${image}"
 done
+cat >"${FAKE_KERNEL_OBJ}/.config" <<'EOF'
+CONFIG_NET=y
+CONFIG_NAMESPACES=y
+CONFIG_UNIX=y
+CONFIG_INET=y
+CONFIG_NET_NS=y
+CONFIG_NETDEVICES=y
+CONFIG_TUN=y
+CONFIG_IP_ADVANCED_ROUTER=y
+CONFIG_IP_MULTIPLE_TABLES=y
+CONFIG_IPV6=y
+CONFIG_IPV6_MULTIPLE_TABLES=y
+CONFIG_SYSTEM_DATA_VERIFICATION=y
+CONFIG_FS_VERITY=y
+CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y
+EOF
 cat >"${FAKE_VENDOR}/qemu_run.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 OHOS_IMG="out/arm64_virt/packages/phone/images"
 DISPLAY_TYPE="${QEMU_DISPLAY:-none}"
+case "${DISPLAY_TYPE}" in
+  none)
+    DISPLAY_ARGS="-display none -monitor none"
+    ;;
+esac
 # Check hardware acceleration availability
 ACCEL_SUPPORT=$(qemu-system-aarch64 -accel help 2>&1 | grep "Accelerators supported" || true)
 if [ "$(uname)" = "Darwin" ] && echo "${ACCEL_SUPPORT}" | grep -qw hvf; then
@@ -103,11 +126,38 @@ NET_ARGS=(
   -netdev user,id=net0,hostfwd=tcp::5555-:5555
 )
 qemu-system-aarch64 ${ACCEL_ARGS} \
+  ${DISPLAY_ARGS} \
   "${NET_ARGS[@]}" \
   -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4"
 EOF
 cat >"${FAKE_BIN}/debugfs" <<'EOF'
 #!/usr/bin/env bash
+set -euo pipefail
+command=
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "-R" ]; then
+    command="${2:-}"
+    break
+  fi
+  shift
+done
+case "${command}" in
+  "cat /system/profile/netmanager.json"|"cat /profile/netmanager.json"|"cat /system/profile/1155.xml"|"cat /profile/1155.xml")
+    printf '%s\n' '{"name":1155,"libpath":"libnet_vpn_manager.z.so"}'
+    ;;
+  "cat /system/etc/app/install_list.json"|"cat /etc/app/install_list.json")
+    printf '%s\n' '{"app_dir":"/system/app/VpnDialog","removable":false}'
+    ;;
+  "cat /system/etc/app/install_list_capability.json"|"cat /etc/app/install_list_capability.json")
+    printf '%s\n' '{"bundleName":"com.ohos.vpndialog","allowAppUsePrivilegeExtension":true}'
+    ;;
+  "cat /system/etc/init/qemu-vpn-tun.cfg"|"cat /etc/init/qemu-vpn-tun.cfg")
+    printf '%s\n' '{"cmds":["symlink /dev/tun /dev/net/tun"]}'
+    ;;
+  stat*)
+    printf '%s\n' 'Inode: 1'
+    ;;
+esac
 exit 0
 EOF
 chmod +x "${FAKE_BIN}/debugfs"
@@ -130,6 +180,15 @@ if grep -Fq '| grep "Accelerators supported"' "${PACKAGED_LAUNCHER}"; then
 fi
 grep -Fq 'HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"' "${PACKAGED_LAUNCHER}"
 grep -Fq 'hostfwd=tcp::${HDC_HOST_PORT}-:5555' "${PACKAGED_LAUNCHER}"
+grep -Fq \
+  'DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none' \
+  "${PACKAGED_LAUNCHER}"
+grep -Fq '"standard_vpn": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"vpn_authorization": "system_dialog"' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq 'application is pre-authorized' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/README.md"
 
 cat >"${FAKE_BIN}/uname" <<'EOF'
 #!/usr/bin/env bash

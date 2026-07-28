@@ -14,6 +14,8 @@ on:
       - ".github/workflows/qemu-smoke.yml"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
+      - "ci/standard-vpn/**"
+      - "overlays/standard_qemu_vpn/**"
       - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
   pull_request:
@@ -21,6 +23,8 @@ on:
       - ".github/workflows/qemu-smoke.yml"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/qemu-smoke/**"
+      - "ci/standard-vpn/**"
+      - "overlays/standard_qemu_vpn/**"
       - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
 

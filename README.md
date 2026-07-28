@@ -59,6 +59,27 @@ hdc tconn 127.0.0.1:5555
 hdc list targets
 ```
 
+## Standard VPN capability
+
+The full `armv7a_virt`, `arm64_virt`, and `x86_64_virt` packages are built with
+OpenHarmony's standard VpnExtension stack:
+
+- built-in guest TUN plus IPv4/IPv6 policy routing;
+- fs-verity verification for installed HAPs;
+- VPN manager System Ability and VpnExtension runtime;
+- SettingsData and the system `VpnDialog`.
+
+No application is pre-authorized. The first VPN request must show the system
+authorization dialog, and the user's decision is stored in the guest
+`userdata.img`.
+
+The build applies
+[`overlays/standard_qemu_vpn`](./overlays/standard_qemu_vpn) before compiling.
+Packaging then checks the final kernel configuration and `system.img`; a
+package is marked with `"standard_vpn": true` only after those checks pass.
+The guest VPN uses `/dev/tun` inside OpenHarmony and does not require a host
+TAP device when the default QEMU user-mode network is used.
+
 ## License
 
 [MIT](./LICENSE)

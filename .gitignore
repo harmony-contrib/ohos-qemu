@@ -1,3 +1,4 @@
 .tmp/
 ci/ohos-test-runner-smoke/target/
 __pycache__/
+.DS_Store

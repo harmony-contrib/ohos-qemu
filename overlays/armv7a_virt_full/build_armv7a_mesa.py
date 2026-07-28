@@ -247,11 +247,21 @@ def main() -> None:
         f"--prefix={install_dir}",
     ]
     coredata = build_dir / "meson-private/coredata.dat"
-    if build_dir.exists() and not coredata.is_file():
+    build_root_stamp = build_dir / ".ohos-qemu-build-root"
+    expected_build_root = f"{root}\n"
+    cached_build_root = (
+        build_root_stamp.read_text(encoding="utf-8")
+        if build_root_stamp.is_file()
+        else ""
+    )
+    if build_dir.exists() and (
+        not coredata.is_file() or cached_build_root != expected_build_root
+    ):
         shutil.rmtree(build_dir)
     if coredata.is_file():
         setup.append("--reconfigure")
     subprocess.run(setup, check=True, cwd=source_dir, env=env)
+    build_root_stamp.write_text(expected_build_root, encoding="utf-8")
 
     jobs = min(int(os.environ.get("BUILD_JOBS", multiprocessing.cpu_count())), 16)
     subprocess.run(["ninja", "-C", str(build_dir), f"-j{jobs}"], check=True, env=env)

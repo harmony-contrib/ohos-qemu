@@ -222,6 +222,18 @@ jobs:
               --source-root "${OHOS_ROOT}"
           fi
 
+      - name: Configure standard VPN capability
+        shell: bash
+        run: |
+          set -euo pipefail
+          vpn_args=()
+          for product in ${{ steps.products.outputs.list }}; do
+            vpn_args+=(--product "${product}")
+          done
+          bash "${GITHUB_WORKSPACE}/overlays/standard_qemu_vpn/apply.sh" \
+            --source-root "${OHOS_ROOT}" \
+            "${vpn_args[@]}"
+
       - name: Build selected products
         shell: bash
         run: |

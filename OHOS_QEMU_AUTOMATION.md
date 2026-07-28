@@ -198,8 +198,10 @@ hardware enablement beyond QEMU virtio devices.
 
 - Full OpenHarmony checkout is large. Do not clone the GitHub organization repo
   by repo manually; use `manifest` and `repo` groups.
-- QEMU network mode may require `sudo`, bridge setup, `tun/tap`, and
-  `/etc/qemu/bridge.conf`; keep network optional in CI.
+- Optional QEMU bridge networking may require `sudo`, a host TAP device, and
+  `/etc/qemu/bridge.conf`. OpenHarmony's standard VPN capability instead uses
+  `/dev/tun` inside the guest and works with the default QEMU user-mode
+  network.
 - Official QEMU docs mention QEMU 5.1+ for tested `virt` targets, while the
   top-level QEMU install guide references QEMU 6.2.0.
 - Some runners assume Linux host commands such as `modprobe`, `ip`, `ifconfig`,
