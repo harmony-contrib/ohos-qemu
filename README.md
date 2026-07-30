@@ -65,9 +65,18 @@ The full `armv7a_virt`, `arm64_virt`, and `x86_64_virt` packages are built with
 OpenHarmony's standard VpnExtension stack:
 
 - built-in guest TUN plus IPv4/IPv6 policy routing;
-- fs-verity verification for installed HAPs;
+- fs-verity in the guest kernel and writable F2FS `userdata.img`, including
+  OpenHarmony's `FS_IOC_ENABLE_CODE_SIGN` path for signed HAP installation;
+- native `asm-x86` UAPI headers in the x86_64 musl sysroot, plus
+  target-architecture `statx`, `add_key`, and `keyctl` selection in the
+  code-sign services;
+- deterministic HCK JIT-hook fallback when the optional JIT-memory hook is
+  absent, preventing x86_64 appspawn from rejecting valid `mprotect` calls;
 - VPN manager System Ability and VpnExtension runtime;
-- SettingsData and the system `VpnDialog`.
+- SettingsData and the system `VpnDialog`, signed with a currently valid
+  OpenHarmony system profile containing the dialog's required ACLs.
+- QEMU RD/developer-device boot mode, so normal DevEco debug HAPs can be
+  installed without manually changing guest authorization state.
 
 No application is pre-authorized. The first VPN request must show the system
 authorization dialog, and the user's decision is stored in the guest
@@ -75,7 +84,8 @@ authorization dialog, and the user's decision is stored in the guest
 
 The build applies
 [`overlays/standard_qemu_vpn`](./overlays/standard_qemu_vpn) before compiling.
-Packaging then checks the final kernel configuration and `system.img`; a
+Packaging then checks the final kernel configuration, the F2FS verity feature
+of `userdata.img`, and the exact signed `VpnDialog.hap` inside `system.img`; a
 package is marked with `"standard_vpn": true` only after those checks pass.
 The guest VPN uses `/dev/tun` inside OpenHarmony and does not require a host
 TAP device when the default QEMU user-mode network is used.

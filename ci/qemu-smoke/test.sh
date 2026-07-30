@@ -84,6 +84,7 @@ FAKE_KERNEL_OBJ="${FAKE_SOURCE}/out/kernel/OBJ/arm64_virt"
 FAKE_VENDOR="${FAKE_SOURCE}/vendor/ohemu/qemu_arm64_linux_full"
 FAKE_QEMU_ARGS="${TEST_ROOT}/qemu-args.txt"
 FAKE_QEMU_PROBES="${TEST_ROOT}/qemu-probes.txt"
+FAKE_VPN_HAP="${TEST_ROOT}/VpnDialog.hap"
 mkdir -p "${FAKE_IMAGES}" "${FAKE_KERNEL_OBJ}" "${FAKE_VENDOR}" "${FAKE_OUTPUT}"
 for image in Image ramdisk.img system.img vendor.img userdata.img updater.img \
   sys_prod.img chip_prod.img; do
@@ -104,6 +105,22 @@ CONFIG_IPV6_MULTIPLE_TABLES=y
 CONFIG_SYSTEM_DATA_VERIFICATION=y
 CONFIG_FS_VERITY=y
 CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y
+CONFIG_SECURITY_CODE_SIGN=y
+CONFIG_HCK=y
+CONFIG_HCK_VENDOR_HOOKS=y
+CONFIG_CRYPTO_ECC=y
+CONFIG_CRYPTO_ECDSA=y
+CONFIG_CRYPTO_SHA256=y
+CONFIG_ARCH_USES_HIGH_VMA_FLAGS=y
+CONFIG_SECURITY_XPM=y
+CONFIG_DSMM_DEVELOPER_ENABLE=y
+CONFIG_FS_ENCRYPTION=y
+CONFIG_F2FS_FS=y
+CONFIG_F2FS_FS_XATTR=y
+CONFIG_F2FS_FS_POSIX_ACL=y
+CONFIG_F2FS_FS_SECURITY=y
+CONFIG_QUOTA=y
+CONFIG_QUOTACTL=y
 EOF
 cat >"${FAKE_VENDOR}/qemu_run.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -128,8 +145,18 @@ NET_ARGS=(
 qemu-system-aarch64 ${ACCEL_ARGS} \
   ${DISPLAY_ARGS} \
   "${NET_ARGS[@]}" \
-  -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4"
+  -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4 ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
 EOF
+python3 - \
+  "${SCRIPT_DIR}/../../overlays/standard_qemu_vpn/assets/vpndialog.p7b.b64" \
+  "${FAKE_VPN_HAP}" <<'PY'
+import base64
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1]).read_text(encoding="ascii")
+Path(sys.argv[2]).write_bytes(base64.b64decode(source))
+PY
 cat >"${FAKE_BIN}/debugfs" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -142,6 +169,9 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 case "${command}" in
+  "cat /system/etc/param/ohos.para"|"cat /etc/param/ohos.para")
+    printf '%s\n' 'const.security.developermode.state=true'
+    ;;
   "cat /system/profile/netmanager.json"|"cat /profile/netmanager.json"|"cat /system/profile/1155.xml"|"cat /profile/1155.xml")
     printf '%s\n' '{"name":1155,"libpath":"libnet_vpn_manager.z.so"}'
     ;;
@@ -154,15 +184,29 @@ case "${command}" in
   "cat /system/etc/init/qemu-vpn-tun.cfg"|"cat /etc/init/qemu-vpn-tun.cfg")
     printf '%s\n' '{"cmds":["symlink /dev/tun /dev/net/tun"]}'
     ;;
+  "dump /system/app/VpnDialog/VpnDialog.hap "*)
+    output="${command#dump /system/app/VpnDialog/VpnDialog.hap }"
+    cp "${FAKE_VPN_HAP}" "${output}"
+    ;;
   stat*)
     printf '%s\n' 'Inode: 1'
     ;;
 esac
 exit 0
 EOF
-chmod +x "${FAKE_BIN}/debugfs"
+cat >"${FAKE_BIN}/od" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+case "$*" in
+  *"-j 1024 -N 4"*) printf '%s\n' ' f2f52010' ;;
+  *"-j 3204 -N 4"*) printf '%s\n' ' 00000400' ;;
+  *) exit 2 ;;
+esac
+EOF
+chmod +x "${FAKE_BIN}/debugfs" "${FAKE_BIN}/od"
 
 PATH="${FAKE_BIN}:${PATH}" \
+FAKE_VPN_HAP="${FAKE_VPN_HAP}" \
 SEED_USERDATA_DIRS=0 \
 INJECT_QEMU_RUNTIME_PARAMS=0 \
   bash "${PACKAGE_SCRIPT}" \
@@ -180,14 +224,29 @@ if grep -Fq '| grep "Accelerators supported"' "${PACKAGED_LAUNCHER}"; then
 fi
 grep -Fq 'HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"' "${PACKAGED_LAUNCHER}"
 grep -Fq 'hostfwd=tcp::${HDC_HOST_PORT}-:5555' "${PACKAGED_LAUNCHER}"
+grep -Fq 'oemmode=rd' "${PACKAGED_LAUNCHER}"
+grep -Fq 'buildvariant=eng' "${PACKAGED_LAUNCHER}"
+grep -Fq 'developer_mode=1' "${PACKAGED_LAUNCHER}"
+grep -Fq '@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600' \
+  "${PACKAGED_LAUNCHER}"
 grep -Fq \
   'DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none' \
   "${PACKAGED_LAUNCHER}"
 grep -Fq '"standard_vpn": true' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"userdata_fs_verity": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"userdata_filesystem": "f2fs"' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"userdata_code_sign_ioctl": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"developer_device": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"vpn_authorization": "system_dialog"' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
-grep -Fq 'application is pre-authorized' \
+grep -Fq 'No VPN application is' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/README.md"
+grep -Fq 'pre-authorized' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/README.md"
 
 cat >"${FAKE_BIN}/uname" <<'EOF'

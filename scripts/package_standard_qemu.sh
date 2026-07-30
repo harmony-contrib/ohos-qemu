@@ -3,6 +3,9 @@ set -euo pipefail
 export LC_ALL=C
 export LANG=C
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+HAP_PROFILE_VERIFIER="${SCRIPT_DIR}/verify_hap_profile.py"
+
 usage() {
   cat <<'USAGE'
 Usage:
@@ -192,6 +195,18 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   sed_in_place_extended 's|hostfwd=tcp::5555-:5555|hostfwd=tcp::${HDC_HOST_PORT}-:5555|g' "${file}"
   sed_in_place_extended 's|init=/init|init=/bin/init|g' "${file}"
   sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${file}"
+  # Do not consume the trailing backslash that escapes the closing quote in
+  # the ARM launchers' QEMU_CMD string.
+  sed_in_place_extended 's|(ohos\.required_mount\.data=/dev/block/[^ @]+@/data)@ext4@[^ @"]+@wait[^ "\\]*|\1@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600|g' "${file}"
+  if ! grep -q 'oemmode=rd' "${file}"; then
+    sed_in_place_extended 's|-append \\"[[:space:]]*|-append \\"oemmode=rd |' "${file}"
+    sed_in_place_extended 's|-append "[[:space:]]*|-append "oemmode=rd |' "${file}"
+  fi
+  if ! grep -q 'developer_mode=1' "${file}"; then
+    sed_in_place_extended \
+      's|oemmode=rd|oemmode=rd buildvariant=eng developer_mode=1|' \
+      "${file}"
+  fi
   # OpenHarmony's composer service still needs a display device when the host
   # frontend is disabled. Without virtio-gpu, headless boots lose
   # composer_host/render_service and the critical foundation process exits.
@@ -228,6 +243,11 @@ fi
 seed_standard_userdata_dirs() {
   local image="$1"
   if [ "${SEED_USERDATA_DIRS:-1}" != "1" ]; then
+    return
+  fi
+  # F2FS userdata is populated by the first-boot services. debugfs only
+  # understands ext filesystems and must not be used to mutate this image.
+  if [ "$(od -An -tx4 -j 1024 -N 4 "${image}" | tr -d '[:space:]')" = "f2f52010" ]; then
     return
   fi
   if ! command -v debugfs >/dev/null 2>&1; then
@@ -390,7 +410,7 @@ inject_standard_qemu_params() {
   debugfs -R "cat /etc/param/ohos.para" "${image}" > "${ohos_para}" 2>/dev/null || : > "${ohos_para}"
   debugfs -R "cat /etc/param/hdc.para" "${image}" > "${hdc_para}" 2>/dev/null || : > "${hdc_para}"
 
-  if [ "${INJECT_DEVELOPER_MODE_PARAM:-0}" = "1" ]; then
+  if [ "${INJECT_DEVELOPER_MODE_PARAM:-1}" = "1" ]; then
     replace_or_append_param "${ohos_para}" "const.security.developermode.state" "const.security.developermode.state=true"
   fi
   replace_or_append_param "${hdc_para}" "persist.hdc.mode.usb" 'persist.hdc.mode.usb = "disable"'
@@ -483,6 +503,65 @@ require_kernel_config_bool() {
   fi
 }
 
+require_x86_64_uapi_syscalls() {
+  local source_root="$1"
+  local include_root="${source_root}/out/x86_64_virt/obj/third_party/musl/usr/include/x86_64-linux-ohos/asm"
+  local dispatch_header="${include_root}/unistd.h"
+  local syscall_header="${include_root}/unistd_64.h"
+  local key_enable="${source_root}/out/x86_64_virt/packages/phone/system/bin/key_enable"
+  local objdump="${source_root}/prebuilts/clang/ohos/linux-x86_64/llvm/bin/llvm-objdump"
+
+  if [ ! -f "${dispatch_header}" ] || \
+     ! grep -Fq '#include <asm/unistd_64.h>' "${dispatch_header}"; then
+    echo "x86_64 musl sysroot is not using the native asm-x86 dispatcher: ${dispatch_header}" >&2
+    exit 1
+  fi
+  if [ ! -f "${syscall_header}" ] || \
+     ! grep -Eq '^#define[[:space:]]+__NR_statx[[:space:]]+332$' "${syscall_header}"; then
+    echo "x86_64 musl sysroot has an invalid statx syscall number: ${syscall_header}" >&2
+    exit 1
+  fi
+  for definition in \
+    '__NR_add_key[[:space:]]+248' \
+    '__NR_keyctl[[:space:]]+250'
+  do
+    if ! grep -Eq "^#define[[:space:]]+${definition}$" "${syscall_header}"; then
+      echo "x86_64 musl sysroot has an invalid keyring syscall number: ${syscall_header}" >&2
+      exit 1
+    fi
+  done
+
+  if [ ! -x "${objdump}" ]; then
+    objdump="$(command -v llvm-objdump || true)"
+  fi
+  if [ -z "${objdump}" ] || [ ! -x "${objdump}" ]; then
+    echo "llvm-objdump not found; cannot verify x86_64 key_enable ABI" >&2
+    exit 1
+  fi
+  if [ ! -f "${key_enable}" ]; then
+    echo "x86_64 key_enable binary is missing: ${key_enable}" >&2
+    exit 1
+  fi
+
+  local key_enable_disassembly
+  key_enable_disassembly="$("${objdump}" -d "${key_enable}")"
+  for syscall_number in 248 250; do
+    if ! grep -Eq \
+      "movl[[:space:]]+\\\$${syscall_number},[[:space:]]+%edi" \
+      <<<"${key_enable_disassembly}"; then
+      echo "x86_64 key_enable does not use syscall ${syscall_number}: ${key_enable}" >&2
+      exit 1
+    fi
+  done
+  if grep -Eq \
+    'movl[[:space:]]+\$(217|219),[[:space:]]+%edi' \
+    <<<"${key_enable_disassembly}"; then
+    echo "x86_64 key_enable retained arm64 keyring syscalls: ${key_enable}" >&2
+    exit 1
+  fi
+  echo "standard VPN userspace ABI: x86_64 statx/add_key/keyctl -> 332/248/250"
+}
+
 image_has_path() {
   local image="$1"
   local path="$2"
@@ -525,10 +604,85 @@ require_image_file_contains() {
   exit 1
 }
 
+require_f2fs_verity() {
+  local image="$1"
+  local description="$2"
+  local magic
+  magic="$(od -An -tx4 -j 1024 -N 4 "${image}" | tr -d '[:space:]')"
+  if [ "${magic}" != "f2f52010" ]; then
+    echo "${description} is not an F2FS image: ${image}" >&2
+    exit 1
+  fi
+
+  # f2fs_super_block starts at byte 1024. Its little-endian feature field is
+  # at offset 2180, and F2FS_FEATURE_VERITY is bit 0x0400.
+  local feature_hex
+  feature_hex="$(od -An -tx4 -j 3204 -N 4 "${image}" | tr -d '[:space:]')"
+  if [ -z "${feature_hex}" ] || (( (16#${feature_hex} & 16#0400) == 0 )); then
+    echo "${description} is missing F2FS verity feature: ${image}" >&2
+    echo "F2FS feature bits: ${feature_hex:-unavailable}" >&2
+    exit 1
+  fi
+  printf 'standard VPN filesystem feature: %s -> f2fs+verity\n' \
+    "${description}"
+}
+
+require_vpn_dialog_hap() {
+  local image="$1"
+  if [ ! -x "${HAP_PROFILE_VERIFIER}" ]; then
+    echo "HAP profile verifier is missing: ${HAP_PROFILE_VERIFIER}" >&2
+    exit 1
+  fi
+
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "${tmpdir}"' RETURN
+  local extracted="${tmpdir}/VpnDialog.hap"
+  local path
+  for path in \
+    /system/app/VpnDialog/VpnDialog.hap \
+    /app/VpnDialog/VpnDialog.hap
+  do
+    if ! image_has_path "${image}" "${path}"; then
+      continue
+    fi
+    rm -f "${extracted}"
+    if ! debugfs -R "dump ${path} ${extracted}" "${image}" >/dev/null 2>&1; then
+      continue
+    fi
+    if [ ! -s "${extracted}" ]; then
+      continue
+    fi
+    if python3 "${HAP_PROFILE_VERIFIER}" \
+      "${extracted}" \
+      --bundle-name com.ohos.vpndialog \
+      --app-feature hos_system_app \
+      --allowed-acl ohos.permission.MANAGE_SECURE_SETTINGS \
+      --allowed-acl ohos.permission.GET_BUNDLE_INFO_PRIVILEGED \
+      --allowed-acl ohos.permission.SYSTEM_FLOAT_WINDOW \
+      --allowed-acl ohos.permission.GET_BUNDLE_RESOURCES \
+      --allowed-acl ohos.permission.GET_RUNNING_INFO \
+      --min-valid-seconds "${VPN_DIALOG_PROFILE_MIN_VALID_SECONDS:-31536000}"
+    then
+      printf 'standard VPN artifact: system VPN authorization HAP -> %s\n' \
+        "${path}"
+      rm -rf "${tmpdir}"
+      trap - RETURN
+      return
+    fi
+  done
+
+  rm -rf "${tmpdir}"
+  trap - RETURN
+  echo "a non-empty, currently signed VpnDialog.hap is missing from ${image}" >&2
+  exit 1
+}
+
 verify_standard_vpn_capability() {
   local source_root="$1"
   local product="$2"
   local system_image="$3"
+  local userdata_image="$4"
 
   if ! command -v debugfs >/dev/null 2>&1; then
     echo "debugfs not found; cannot verify standard VPN system artifacts" >&2
@@ -556,11 +710,41 @@ verify_standard_vpn_capability() {
     CONFIG_IPV6_MULTIPLE_TABLES \
     CONFIG_SYSTEM_DATA_VERIFICATION \
     CONFIG_FS_VERITY \
-    CONFIG_FS_VERITY_BUILTIN_SIGNATURES
+    CONFIG_FS_VERITY_BUILTIN_SIGNATURES \
+    CONFIG_SECURITY_CODE_SIGN \
+    CONFIG_HCK \
+    CONFIG_HCK_VENDOR_HOOKS \
+    CONFIG_CRYPTO_ECC \
+    CONFIG_CRYPTO_ECDSA \
+    CONFIG_CRYPTO_SHA256 \
+    CONFIG_FS_ENCRYPTION \
+    CONFIG_F2FS_FS \
+    CONFIG_F2FS_FS_XATTR \
+    CONFIG_F2FS_FS_POSIX_ACL \
+    CONFIG_F2FS_FS_SECURITY \
+    CONFIG_QUOTA \
+    CONFIG_QUOTACTL
   do
     require_kernel_config_bool "${kernel_config}" "${option}"
   done
+  if [ "${product}" != "armv7a_virt" ]; then
+    require_kernel_config_bool \
+      "${kernel_config}" CONFIG_ARCH_USES_HIGH_VMA_FLAGS
+    require_kernel_config_bool "${kernel_config}" CONFIG_SECURITY_XPM
+    require_kernel_config_bool \
+      "${kernel_config}" CONFIG_DSMM_DEVELOPER_ENABLE
+  fi
+  if [ "${product}" = "x86_64_virt" ]; then
+    require_x86_64_uapi_syscalls "${source_root}"
+  fi
 
+  require_f2fs_verity \
+    "${userdata_image}" \
+    "writable userdata code-sign support"
+  require_image_file_contains "${system_image}" "QEMU developer mode parameter" \
+    "const.security.developermode.state=true" \
+    /system/etc/param/ohos.para \
+    /etc/param/ohos.para
   require_image_file_contains "${system_image}" "VPN manager System Ability 1155 profile" \
     "1155" \
     /system/profile/netmanager.json \
@@ -588,9 +772,7 @@ verify_standard_vpn_capability() {
     "/dev/net/tun" \
     /system/etc/init/qemu-vpn-tun.cfg \
     /etc/init/qemu-vpn-tun.cfg
-  require_image_path "${system_image}" "system VPN authorization dialog" \
-    /system/app/VpnDialog \
-    /app/VpnDialog
+  require_vpn_dialog_hap "${system_image}"
   require_image_path "${system_image}" "SettingsData authorization provider" \
     /system/app/com.ohos.settingsdata \
     /app/com.ohos.settingsdata \
@@ -708,7 +890,8 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   verify_standard_vpn_capability \
     "${SOURCE_ROOT}" \
     "${PRODUCT}" \
-    "${IMAGES_OUT}/system.img"
+    "${IMAGES_OUT}/system.img" \
+    "${IMAGES_OUT}/userdata.img"
 fi
 
 cat > "${PACKAGE_DIR}/manifest.json" <<EOF
@@ -722,6 +905,10 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   "network_default": "user",
   "capabilities": {
     "standard_vpn": ${STANDARD_VPN_VERIFIED},
+    "userdata_fs_verity": ${STANDARD_VPN_VERIFIED},
+    "userdata_filesystem": "f2fs",
+    "userdata_code_sign_ioctl": ${STANDARD_VPN_VERIFIED},
+    "developer_device": ${STANDARD_VPN_VERIFIED},
     "vpn_authorization": "${VPN_AUTHORIZATION_MODE}"
   }
 }
@@ -752,9 +939,10 @@ if [ "${STANDARD_VPN_VERIFIED}" = "true" ]; then
 ## Standard VPN
 
 This image includes OpenHarmony's standard VpnExtension service, guest TUN
-support, SettingsData, and the system VPN authorization dialog. No VPN
-application is pre-authorized; the first request must be approved in the
-guest's system dialog.
+support, F2FS verity/code-sign-capable writable userdata, SettingsData, and
+the signed system VPN authorization dialog. No VPN application is
+pre-authorized; the first request must be approved in the guest's system
+dialog.
 EOF
 fi
 
@@ -773,8 +961,13 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     replace_arm64_acceleration_block "${LAUNCH_OUT}/qemu_run.sh"
   fi
   normalize_common_qemu_launcher "${LAUNCH_OUT}/qemu_run.sh"
-  if [ "${PRODUCT}" = "armv7a_virt" ]; then
-    sed_in_place_extended 's|(ohos\.required_mount\.data=/dev/block/[^ @]+@/data@ext4@[^"]*@wait),reservedsize=|\1,required,reservedsize=|g' "${LAUNCH_OUT}/qemu_run.sh"
+  if ! bash -n "${LAUNCH_OUT}/qemu_run.sh"; then
+    echo "packaged launcher has invalid shell syntax: ${LAUNCH_OUT}/qemu_run.sh" >&2
+    exit 1
+  fi
+  if ! grep -Eq 'ohos\.required_mount\.data=/dev/block/[^ @]+@/data@f2fs@' "${LAUNCH_OUT}/qemu_run.sh"; then
+    echo "packaged launcher does not mount userdata as F2FS: ${LAUNCH_OUT}/qemu_run.sh" >&2
+    exit 1
   fi
   chmod +x "${LAUNCH_OUT}/qemu_run.sh"
   cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
@@ -853,7 +1046,7 @@ switch ($DisplayType) {
   }
 }
 
-$KernelBootArgs = "console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
+$KernelBootArgs = "oemmode=rd buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600"
 
 $ArgsList = @(
   "-machine", "q35",
