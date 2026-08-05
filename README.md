@@ -41,14 +41,49 @@ Windows x86_64, from PowerShell:
 powershell.exe -ExecutionPolicy Bypass -File "$HOME\.ohos-qemu\openharmony-qemu-x86_64-x86_64_virt\launch\windows.ps1"
 ```
 
-Stop QEMU with `Ctrl+C`. Use `QEMU_DISPLAY=none` on Unix or
-`$env:QEMU_DISPLAY="none"` in PowerShell for headless mode. Set the value to
-`vnc` to connect a VNC client to `127.0.0.1:5921`.
+Stop QEMU with `Ctrl+C`.
+
+### Launch options
+
+CLI flags override environment variables, which override package defaults:
+
+```bash
+# Resolution / resources (guest GPU + QEMU -m/-smp)
+./launch/linux.sh -r 1280x720 -m 8G -s 8
+
+# Headless / VNC
+./launch/linux.sh --headless
+./launch/linux.sh --display vnc --vnc-display 21   # TCP 5921
+
+# HDC port when 5555 is busy
+./launch/linux.sh --hdc-port 5556
+# or: ./launch/linux.sh -c 127.0.0.1:5556
+
+# Acceleration and extra QEMU args
+./launch/linux.sh --accel tcg -- -serial mon:stdio
+```
+
+| Option | Env | Default |
+| --- | --- | --- |
+| `-r, --resolution WxH` | `QEMU_XRES` / `QEMU_YRES` | `800x500` |
+| `--width` / `--height` | `QEMU_XRES` / `QEMU_YRES` | same |
+| `-m, --memory SIZE` | `QEMU_MEMORY` | `4096` (armv7a: `3072`) |
+| `-s, --smp N` | `QEMU_SMP` | `4` |
+| `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `none`) |
+| `-c, --connect` / `--hdc-port` | `QEMU_HDC_HOST_PORT` | `5555` |
+| `--vnc-display N` | `QEMU_VNC_DISPLAY` | `21` (TCP 5921) |
+| `--serial-port PORT` | `QEMU_SERIAL_PORT` | unset |
+| `-a, --accel` | `QEMU_ACCEL` | `auto` (`hvf`/`kvm`/`tcg`/`whpx`) |
+| `-q, --qemu PATH` | `QEMU_BIN` | product `qemu-system-*` |
+| `-- ...` | `QEMU_EXTRA_ARGS` | empty |
+
+On Windows PowerShell the same knobs are available as parameters
+(`-Resolution`, `-Memory`, `-Smp`, `-Display`, `-Headless`, …) or via the
+environment variables above.
 
 The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
 and falls back to TCG when necessary. Set `QEMU_ACCEL=hvf` or
 `QEMU_ACCEL=tcg` to force either mode.
-
 ## HDC
 
 The launchers forward guest HDC to host TCP port `5555`. With `hdc` from the

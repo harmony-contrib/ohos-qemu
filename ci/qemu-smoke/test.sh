@@ -143,6 +143,8 @@ NET_ARGS=(
   -netdev user,id=net0,hostfwd=tcp::5555-:5555
 )
 qemu-system-aarch64 ${ACCEL_ARGS} \
+  -smp 4 \
+  -m 4096 \
   ${DISPLAY_ARGS} \
   "${NET_ARGS[@]}" \
   -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4 ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
@@ -216,7 +218,7 @@ INJECT_QEMU_RUNTIME_PARAMS=0 \
     >/dev/null
 
 PACKAGED_LAUNCHER="${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/launch/qemu_run.sh"
-grep -Fq 'ACCEL_SUPPORT=$(qemu-system-aarch64 -accel help 2>&1 || true)' \
+grep -Eq 'ACCEL_SUPPORT=\$\(\$\{QEMU_BIN\} -accel help 2>&1 \|\| true\)' \
   "${PACKAGED_LAUNCHER}"
 if grep -Fq '| grep "Accelerators supported"' "${PACKAGED_LAUNCHER}"; then
   echo "packaged launcher still filters out multiline accelerator names" >&2
@@ -229,9 +231,23 @@ grep -Fq 'buildvariant=eng' "${PACKAGED_LAUNCHER}"
 grep -Fq 'developer_mode=1' "${PACKAGED_LAUNCHER}"
 grep -Fq '@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600' \
   "${PACKAGED_LAUNCHER}"
-grep -Fq \
-  'DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none' \
-  "${PACKAGED_LAUNCHER}"
+grep -Fq 'QEMU_XRES="${QEMU_XRES:-800}"' "${PACKAGED_LAUNCHER}"
+grep -Fq 'QEMU_YRES="${QEMU_YRES:-500}"' "${PACKAGED_LAUNCHER}"
+grep -Fq 'QEMU_SMP="${QEMU_SMP:-' "${PACKAGED_LAUNCHER}"
+grep -Fq 'QEMU_MEMORY="${QEMU_MEMORY:-' "${PACKAGED_LAUNCHER}"
+grep -Eq 'xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\}' "${PACKAGED_LAUNCHER}"
+grep -Fq -- '-smp ${QEMU_SMP}' "${PACKAGED_LAUNCHER}"
+grep -Fq -- '-m ${QEMU_MEMORY}' "${PACKAGED_LAUNCHER}"
+WRAPPER="${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/launch/linux.sh"
+grep -Fq -- '--resolution' "${WRAPPER}"
+grep -Fq -- '--width' "${WRAPPER}"
+grep -Fq -- '--height' "${WRAPPER}"
+grep -Fq -- '--headless' "${WRAPPER}"
+grep -Fq -- '--vnc-display' "${WRAPPER}"
+grep -Fq -- '--serial-port' "${WRAPPER}"
+grep -Fq -- 'QEMU_EXTRA_ARGS' "${WRAPPER}"
+grep -Fq -- 'QEMU_SERIAL_PORT' "${WRAPPER}"
+bash -n "${WRAPPER}"
 grep -Fq '"standard_vpn": true' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"userdata_fs_verity": true' \
