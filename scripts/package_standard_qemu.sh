@@ -11,6 +11,7 @@ usage() {
 Usage:
   package_standard_qemu.sh --source-root ROOT --product PRODUCT --output-dir DIR
   package_standard_qemu.sh --rewrite-arm64-launcher FILE
+  package_standard_qemu.sh --rewrite-package DIR
 
 Products:
   armv7a_virt
@@ -20,6 +21,9 @@ Products:
 
 This packages already-built OpenHarmony standard-system QEMU images and
 generates Linux, macOS, and Windows launchers where applicable.
+
+--rewrite-package rewrites launch scripts inside an existing package directory
+without re-copying guest images (useful when only launchers changed).
 USAGE
 }
 
@@ -27,6 +31,7 @@ SOURCE_ROOT=
 PRODUCT=
 OUTPUT_DIR=
 REWRITE_ARM64_LAUNCHER=
+REWRITE_PACKAGE=
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -46,6 +51,10 @@ while [ "$#" -gt 0 ]; do
       REWRITE_ARM64_LAUNCHER="${2:-}"
       shift 2
       ;;
+    --rewrite-package)
+      REWRITE_PACKAGE="${2:-}"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -58,12 +67,11 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -z "${REWRITE_ARM64_LAUNCHER}" ] && \
+if [ -z "${REWRITE_ARM64_LAUNCHER}" ] && [ -z "${REWRITE_PACKAGE}" ] && \
    { [ -z "${SOURCE_ROOT}" ] || [ -z "${PRODUCT}" ] || [ -z "${OUTPUT_DIR}" ]; }; then
   usage >&2
   exit 2
 fi
-
 sed_in_place_extended() {
   local expr="$1"
   local file="$2"
@@ -185,8 +193,153 @@ EOF
   rm -f "${replacement}"
 }
 
+# Product-specific QEMU resource defaults used when packaging launchers.
+launcher_defaults_for_product() {
+  local product="$1"
+  case "${product}" in
+    armv7a_virt)
+      LAUNCHER_DEFAULT_SMP=4
+      LAUNCHER_DEFAULT_MEMORY=3072
+      LAUNCHER_DEFAULT_DISPLAY=none
+      LAUNCHER_QEMU_UNIX=qemu-system-arm
+      LAUNCHER_QEMU_WIN=qemu-system-arm.exe
+      ;;
+    x86_64_virt)
+      LAUNCHER_DEFAULT_SMP=4
+      LAUNCHER_DEFAULT_MEMORY=4096
+      LAUNCHER_DEFAULT_DISPLAY=sdl
+      LAUNCHER_QEMU_UNIX=qemu-system-x86_64
+      LAUNCHER_QEMU_WIN=qemu-system-x86_64.exe
+      ;;
+    arm64_virt)
+      LAUNCHER_DEFAULT_SMP=4
+      LAUNCHER_DEFAULT_MEMORY=4096
+      LAUNCHER_DEFAULT_DISPLAY=sdl
+      LAUNCHER_QEMU_UNIX=qemu-system-aarch64
+      LAUNCHER_QEMU_WIN=qemu-system-aarch64.exe
+      ;;
+    qemu-arm64-linux-min)
+      LAUNCHER_DEFAULT_SMP=4
+      LAUNCHER_DEFAULT_MEMORY=1024
+      LAUNCHER_DEFAULT_DISPLAY=none
+      LAUNCHER_QEMU_UNIX=qemu-system-aarch64
+      LAUNCHER_QEMU_WIN=qemu-system-aarch64.exe
+      ;;
+    *)
+      LAUNCHER_DEFAULT_SMP=4
+      LAUNCHER_DEFAULT_MEMORY=4096
+      LAUNCHER_DEFAULT_DISPLAY=sdl
+      LAUNCHER_QEMU_UNIX=qemu-system-x86_64
+      LAUNCHER_QEMU_WIN=qemu-system-x86_64.exe
+      ;;
+  esac
+}
+
+inject_launcher_resource_defaults() {
+  local file="$1"
+  local default_smp="$2"
+  local default_mem="$3"
+  local default_qemu_bin="$4"
+  local block
+  local tmp
+
+  # Upgrade previously-normalized launchers that already have resolution vars.
+  if grep -q '^QEMU_XRES=' "${file}"; then
+    if ! grep -q '^QEMU_SERIAL_PORT=' "${file}"; then
+      sed_in_place_extended \
+        's|^(QEMU_VNC_DISPLAY=.*)$|\1\
+QEMU_SERIAL_PORT="${QEMU_SERIAL_PORT:-}"|' \
+        "${file}"
+    fi
+    if ! grep -q '^QEMU_ACCEL=' "${file}"; then
+      sed_in_place_extended \
+        's|^(QEMU_BIN=.*)$|\1\
+QEMU_ACCEL="${QEMU_ACCEL:-auto}"|' \
+        "${file}" || \
+      sed_in_place_extended \
+        's|^(QEMU_EXTRA_ARGS=.*)$|\1\
+QEMU_ACCEL="${QEMU_ACCEL:-auto}"|' \
+        "${file}"
+    fi
+    return 0
+  fi
+
+  block="$(mktemp)"
+  cat >"${block}" <<EOF
+# Launch resources (CLI wrappers export these; env overrides defaults).
+QEMU_XRES="\${QEMU_XRES:-800}"
+QEMU_YRES="\${QEMU_YRES:-500}"
+QEMU_SMP="\${QEMU_SMP:-${default_smp}}"
+QEMU_MEMORY="\${QEMU_MEMORY:-${default_mem}}"
+QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-21}"
+QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
+QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
+QEMU_BIN="\${QEMU_BIN:-${default_qemu_bin}}"
+QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
+EOF
+
+  tmp="$(mktemp)"
+  if grep -q '^HDC_HOST_PORT=' "${file}"; then
+    awk -v block="${block}" '
+      { print }
+      /^HDC_HOST_PORT=/ && !done {
+        while ((getline line < block) > 0) print line
+        close(block)
+        done = 1
+      }
+      END { if (!done) exit 42 }
+    ' "${file}" >"${tmp}" || {
+      # Fall back: prepend after shebang / first non-comment assignment area.
+      cat "${file}" >"${tmp}"
+      cat "${block}" >>"${tmp}"
+    }
+  elif grep -q '^DISPLAY_TYPE=' "${file}"; then
+    awk -v block="${block}" '
+      { print }
+      /^DISPLAY_TYPE=/ && !done {
+        while ((getline line < block) > 0) print line
+        close(block)
+        done = 1
+      }
+      END { if (!done) exit 42 }
+    ' "${file}" >"${tmp}" || {
+      cat "${file}" >"${tmp}"
+      cat "${block}" >>"${tmp}"
+    }
+  else
+    # Insert after the first OHOS_IMG assignment, else at top after shebang.
+    if grep -q '^OHOS_IMG=' "${file}"; then
+      awk -v block="${block}" '
+        { print }
+        /^OHOS_IMG=/ && !done {
+          while ((getline line < block) > 0) print line
+          close(block)
+          done = 1
+        }
+      ' "${file}" >"${tmp}"
+    else
+      {
+        if head -n1 "${file}" | grep -q '^#!'; then
+          head -n1 "${file}"
+          cat "${block}"
+          tail -n +2 "${file}"
+        else
+          cat "${block}"
+          cat "${file}"
+        fi
+      } >"${tmp}"
+    fi
+  fi
+  mv "${tmp}" "${file}"
+  rm -f "${block}"
+}
+
 normalize_common_qemu_launcher() {
   local file="$1"
+  local default_smp="${2:-4}"
+  local default_mem="${3:-4096}"
+  local default_qemu_bin="${4:-qemu-system-x86_64}"
+
   sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${file}"
   if ! grep -q '^HDC_HOST_PORT=' "${file}"; then
     sed_in_place_extended 's|^(DISPLAY_TYPE=.*)$|\1\
@@ -207,17 +360,984 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
       's|oemmode=rd|oemmode=rd buildvariant=eng developer_mode=1|' \
       "${file}"
   fi
+
   # OpenHarmony's composer service still needs a display device when the host
   # frontend is disabled. Without virtio-gpu, headless boots lose
   # composer_host/render_service and the critical foundation process exits.
   sed_in_place_extended \
-    's|DISPLAY_ARGS="-display none|DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none|' \
+    's|DISPLAY_ARGS="-display none|DISPLAY_ARGS="-device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES} -display none|' \
+    "${file}"
+  # Only inject virtio-gpu before a bare "-display none" line when the previous
+  # non-empty line is not already a virtio-gpu device (avoids duplicates).
+  local tmp_display
+  tmp_display="$(mktemp)"
+  awk '
+    {
+      line = $0
+      if (line ~ /^[[:space:]]*-display none$/ && prev !~ /virtio-gpu/) {
+        match(line, /^([[:space:]]*)/)
+        print substr(line, RSTART, RLENGTH) "-device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}"
+      }
+      print line
+      if (line ~ /[^[:space:]]/) prev = line
+    }
+  ' "${file}" >"${tmp_display}"
+  mv "${tmp_display}" "${file}"
+
+  inject_launcher_resource_defaults \
+    "${file}" "${default_smp}" "${default_mem}" "${default_qemu_bin}"
+
+  # Guest GPU resolution: replace hard-coded xres/yres, then bare virtio-gpu-pci
+  # (only when not already followed by ,xres=...).
+  sed_in_place_extended \
+    's/xres=[0-9]+,yres=[0-9]+/xres=${QEMU_XRES},yres=${QEMU_YRES}/g' \
     "${file}"
   sed_in_place_extended \
-    's|^([[:space:]]*)-display none$|\1-device virtio-gpu-pci,xres=800,yres=500\
-\1-display none|' \
+    's/virtio-gpu-pci(["[:space:]])/virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}\1/g' \
     "${file}"
+  sed_in_place_extended \
+    's/virtio-gpu-pci$/virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}/g' \
+    "${file}"
+  # Collapse accidental double xres/yres annotations and duplicate device lines.
+  sed_in_place_extended \
+    's/virtio-gpu-pci,xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\},xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\}/virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}/g' \
+    "${file}"
+  local tmp_dedupe
+  tmp_dedupe="$(mktemp)"
+  awk '
+    {
+      if ($0 ~ /virtio-gpu-pci/ && $0 == prev) next
+      print
+      prev = $0
+    }
+  ' "${file}" >"${tmp_dedupe}"
+  mv "${tmp_dedupe}" "${file}"
+
+  # CPU / memory.
+  sed_in_place_extended 's/-smp [0-9]+/-smp ${QEMU_SMP}/g' "${file}"
+  sed_in_place_extended 's/-m [0-9]+[MmGg]?/-m ${QEMU_MEMORY}/g' "${file}"
+
+  # VNC display number (default 21 -> TCP 5921).
+  sed_in_place_extended 's/-vnc :[0-9]+/-vnc :${QEMU_VNC_DISPLAY}/g' "${file}"
+  sed_in_place_extended \
+    's/VNC on port 5921/VNC on port $((5900 + QEMU_VNC_DISPLAY))/g' \
+    "${file}" || true
+  sed_in_place_extended \
+    's/VNC on 127\.0\.0\.1:5921/VNC on 127.0.0.1:$((5900 + QEMU_VNC_DISPLAY))/g' \
+    "${file}" || true
+
+  # Prefer QEMU_BIN for the main system emulator binary, but do not rewrite the
+  # default assignment QEMU_BIN="${QEMU_BIN:-qemu-system-...}".
+  if [ -n "${default_qemu_bin}" ]; then
+    local tmp_bin
+    tmp_bin="$(mktemp)"
+    awk -v bin="${default_qemu_bin}" '
+      /^QEMU_BIN=/ { print; next }
+      {
+        gsub(bin, "${QEMU_BIN}")
+        print
+      }
+    ' "${file}" >"${tmp_bin}"
+    mv "${tmp_bin}" "${file}"
+  fi
+
+  # Make QEMU_ACCEL actually work on launchers that only auto-probed KVM.
+  ensure_qemu_accel_env_support "${file}" "${default_qemu_bin}"
+
+  # Optional telnet serial when QEMU_SERIAL_PORT is set.
+  ensure_qemu_serial_port_support "${file}"
+
+  # Auto headless when no host display is available (Linux SSH, CI).
+  ensure_auto_headless_support "${file}"
+
+  # Append optional extra QEMU arguments at the invocation site.
+  # Do not treat the QEMU_EXTRA_ARGS= assignment line as already wired.
+  if ! grep -Eq 'eval "\$QEMU_CMD \$\{QEMU_EXTRA_ARGS\}"|eval "\$\{QEMU_CMD\} \$\{QEMU_EXTRA_ARGS\}"|\\$\{QEMU_EXTRA_ARGS\}[[:space:]]*$' "${file}" && \
+     ! grep -Eq '[[:space:]]\$\{QEMU_EXTRA_ARGS\}[[:space:]]*$' "${file}"; then
+    if grep -q 'eval "$QEMU_CMD"' "${file}"; then
+      sed_in_place_extended \
+        's|eval "\$QEMU_CMD"|eval "\$QEMU_CMD \${QEMU_EXTRA_ARGS}"|g' \
+        "${file}"
+    elif grep -q 'eval "${QEMU_CMD}"' "${file}"; then
+      sed_in_place_extended \
+        's|eval "\$\{QEMU_CMD\}"|eval "\$\{QEMU_CMD\} \${QEMU_EXTRA_ARGS}"|g' \
+        "${file}"
+    fi
+    # x86-style multi-line exec ending in -append "...".
+    if grep -qE 'exec (\$\{QEMU_BIN\}|"\$\{QEMU_BIN\}"|qemu-system-)' "${file}" && \
+       ! grep -Eq '[[:space:]]\$\{QEMU_EXTRA_ARGS\}[[:space:]]*$' "${file}"; then
+      if grep -q -- '-append ' "${file}"; then
+        sed_in_place_extended \
+          's|(-append "[^"]*")$|\1 \\\
+    \${QEMU_EXTRA_ARGS}|' \
+          "${file}" || true
+      fi
+    fi
+  fi
 }
+
+ensure_qemu_accel_env_support() {
+  local file="$1"
+  local default_qemu_bin="${2:-qemu-system-x86_64}"
+
+  # Already has explicit QEMU_ACCEL case handling (arm64 full launcher).
+  if grep -q 'ACCEL_MODE="${QEMU_ACCEL' "${file}" || \
+     grep -q 'case "${ACCEL_MODE}"' "${file}"; then
+    return 0
+  fi
+
+  # x86_64 launcher: MACHINE=q35,accel=kvm style.
+  if grep -q 'MACHINE="q35,accel=kvm"' "${file}" || \
+     grep -q "MACHINE='q35,accel=kvm'" "${file}"; then
+    local tmp
+    tmp="$(mktemp)"
+    awk '
+      BEGIN { skipping = 0; replaced = 0 }
+      !skipping && /if \[ -e \/dev\/kvm \] && \[ -r \/dev\/kvm \]; then/ {
+        print "# Acceleration (QEMU_ACCEL=auto|kvm|tcg)."
+        print "ACCEL_MODE=\"${QEMU_ACCEL:-auto}\""
+        print "case \"${ACCEL_MODE}\" in"
+        print "  kvm)"
+        print "    if [ ! -e /dev/kvm ] || [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then"
+        print "      echo \"QEMU_ACCEL=kvm requested, but usable KVM is not available.\" >&2"
+        print "      exit 1"
+        print "    fi"
+        print "    MACHINE=\"q35,accel=kvm\""
+        print "    ACCEL_ARGS=\"\""
+        print "    echo \"KVM acceleration explicitly requested.\" >&2"
+        print "    ;;"
+        print "  tcg)"
+        print "    MACHINE=\"q35\""
+        print "    ACCEL_ARGS=\"-accel tcg,thread=multi\""
+        print "    echo \"TCG software emulation explicitly requested.\" >&2"
+        print "    ;;"
+        print "  auto|*)"
+        print "    if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then"
+        print "      MACHINE=\"q35,accel=kvm\""
+        print "      ACCEL_ARGS=\"\""
+        print "      echo \"KVM acceleration enabled.\" >&2"
+        print "    else"
+        print "      MACHINE=\"q35\""
+        print "      ACCEL_ARGS=\"-accel tcg,thread=multi\""
+        print "      echo \"Hardware acceleration not available, using TCG software emulation.\" >&2"
+        print "    fi"
+        print "    ;;"
+        print "esac"
+        skipping = 1
+        replaced = 1
+        next
+      }
+      skipping && /^fi$/ {
+        skipping = 0
+        next
+      }
+      !skipping { print }
+      END { if (!replaced || skipping) exit 42 }
+    ' "${file}" >"${tmp}" || {
+      rm -f "${tmp}"
+      return 0
+    }
+    mv "${tmp}" "${file}"
+    return 0
+  fi
+
+  # armv7a-style ACCEL_ARGS only block.
+  if grep -q 'ACCEL_ARGS="-accel kvm"' "${file}" || \
+     grep -q 'ACCEL_ARGS="-accel tcg' "${file}"; then
+    if grep -q 'ACCEL_SUPPORT=' "${file}"; then
+      local tmp
+      tmp="$(mktemp)"
+      awk '
+        BEGIN { skipping = 0; replaced = 0 }
+        !skipping && /^ACCEL_SUPPORT=/ {
+          print
+          print "ACCEL_MODE=\"${QEMU_ACCEL:-auto}\""
+          print "case \"${ACCEL_MODE}\" in"
+          print "  kvm)"
+          print "    if [ ! -e /dev/kvm ] || [ ! -r /dev/kvm ] || \\"
+          print "       ! echo \"${ACCEL_SUPPORT}\" | grep -qw kvm; then"
+          print "      echo \"QEMU_ACCEL=kvm requested, but usable KVM is not available.\" >&2"
+          print "      exit 1"
+          print "    fi"
+          print "    ACCEL_ARGS=\"-accel kvm\""
+          print "    echo \"KVM acceleration explicitly requested.\" >&2"
+          print "    ;;"
+          print "  tcg)"
+          print "    ACCEL_ARGS=\"-accel tcg,thread=multi\""
+          print "    echo \"TCG software emulation explicitly requested.\" >&2"
+          print "    ;;"
+          print "  auto|*)"
+          print "    if [ -e /dev/kvm ] && [ -r /dev/kvm ] && \\"
+          print "       echo \"${ACCEL_SUPPORT}\" | grep -qw kvm; then"
+          print "      ACCEL_ARGS=\"-accel kvm\""
+          print "      echo \"KVM acceleration enabled.\" >&2"
+          print "    else"
+          print "      ACCEL_ARGS=\"-accel tcg,thread=multi\""
+          print "      echo \"Hardware acceleration not available, using TCG software emulation.\" >&2"
+          print "    fi"
+          print "    ;;"
+          print "esac"
+          skipping = 1
+          replaced = 1
+          next
+        }
+        skipping && /^NET_ARGS=\(/ {
+          skipping = 0
+          print
+          next
+        }
+        skipping && /^case "\$\{DISPLAY_TYPE\}"/ {
+          skipping = 0
+          print
+          next
+        }
+        !skipping { print }
+        END { if (!replaced) exit 42 }
+      ' "${file}" >"${tmp}" || {
+        rm -f "${tmp}"
+        return 0
+      }
+      mv "${tmp}" "${file}"
+    fi
+  fi
+}
+
+ensure_qemu_serial_port_support() {
+  local file="$1"
+  if grep -q 'QEMU_SERIAL_PORT applied' "${file}"; then
+    return 0
+  fi
+  # Prepend telnet serial onto QEMU_EXTRA_ARGS so both string- and array-style
+  # launchers pick it up without rewriting DISPLAY_ARGS.
+  local tmp
+  tmp="$(mktemp)"
+  awk '
+    BEGIN { done = 0 }
+    {
+      print
+      if (!done && /^QEMU_EXTRA_ARGS=/) {
+        print "# Optional telnet serial console (QEMU_SERIAL_PORT / --serial-port)."
+        print "if [ -n \"${QEMU_SERIAL_PORT:-}\" ]; then"
+        print "  QEMU_EXTRA_ARGS=\"-serial telnet:127.0.0.1:${QEMU_SERIAL_PORT},server,nowait ${QEMU_EXTRA_ARGS}\""
+        print "  echo \"Serial telnet console: 127.0.0.1:${QEMU_SERIAL_PORT} (QEMU_SERIAL_PORT applied)\" >&2"
+        print "fi"
+        done = 1
+      }
+    }
+  ' "${file}" >"${tmp}"
+  mv "${tmp}" "${file}"
+}
+
+ensure_auto_headless_support() {
+  local file="$1"
+  if grep -q 'Auto-selected headless display' "${file}"; then
+    return 0
+  fi
+  if ! grep -q 'DISPLAY_TYPE=' "${file}"; then
+    return 0
+  fi
+  local tmp
+  tmp="$(mktemp)"
+  awk '
+    BEGIN { done = 0 }
+    {
+      print
+      if (!done && /^DISPLAY_TYPE=/) {
+        print "# Auto headless when the host has no graphical display (e.g. SSH/CI)."
+        print "if [ \"${DISPLAY_TYPE}\" != \"none\" ] && [ \"${DISPLAY_TYPE}\" != \"vnc\" ] && \\"
+        print "   [ -z \"${DISPLAY:-}\" ] && [ -z \"${WAYLAND_DISPLAY:-}\" ] && \\"
+        print "   [ \"$(uname -s)\" = \"Linux\" ]; then"
+        print "  echo \"No DISPLAY/WAYLAND_DISPLAY; Auto-selected headless display (none).\" >&2"
+        print "  DISPLAY_TYPE=\"none\""
+        print "fi"
+        done = 1
+      }
+    }
+  ' "${file}" >"${tmp}"
+  mv "${tmp}" "${file}"
+}
+
+write_unix_cli_wrapper() {
+  local dest="$1"
+  local default_smp="$2"
+  local default_mem="$3"
+  local default_display="$4"
+  local default_qemu_bin="$5"
+
+  cat >"${dest}" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+HERE="\$(cd "\$(dirname "\$0")/.." && pwd)"
+export OHOS_IMG="\${HERE}/images"
+
+DEFAULT_SMP="${default_smp}"
+DEFAULT_MEMORY="${default_mem}"
+DEFAULT_DISPLAY="${default_display}"
+DEFAULT_QEMU_BIN="${default_qemu_bin}"
+DEFAULT_XRES=800
+DEFAULT_YRES=500
+DEFAULT_HDC_PORT=5555
+DEFAULT_VNC_DISPLAY=21
+
+usage() {
+  cat <<USAGE
+Usage: \$(basename "\$0") [OPTIONS] [-- QEMU_EXTRA_ARGS...]
+
+Launch the packaged OpenHarmony QEMU image.
+
+Options:
+  -r, --resolution WxH   Guest GPU resolution (default: \${DEFAULT_XRES}x\${DEFAULT_YRES})
+      --width N          Guest GPU width (alternative to --resolution)
+      --height N         Guest GPU height (alternative to --resolution)
+  -m, --memory SIZE      RAM size for QEMU -m (default: \${DEFAULT_MEMORY}; accepts 4096, 4096M, 4G)
+  -s, --smp N            Virtual CPUs (default: \${DEFAULT_SMP})
+  -d, --display TYPE     none|vnc|sdl|gtk|cocoa|auto (default: \${DEFAULT_DISPLAY})
+      --headless         Alias for --display none
+  -c, --connect HOST:PORT  HDC forward address (default: 127.0.0.1:\${DEFAULT_HDC_PORT})
+      --hdc-port PORT    HDC host TCP port (default: \${DEFAULT_HDC_PORT})
+      --vnc-display N    VNC display number (default: \${DEFAULT_VNC_DISPLAY} => TCP \$((5900 + DEFAULT_VNC_DISPLAY)))
+      --serial-port PORT Expose guest serial on telnet 127.0.0.1:PORT
+  -a, --accel MODE       auto|hvf|kvm|tcg|whpx (default: auto)
+  -q, --qemu PATH        Path to the qemu-system-* binary (default: \${DEFAULT_QEMU_BIN})
+  -h, --help             Show this help
+
+CLI flags override environment variables, which override the defaults above.
+Supported environment variables:
+  QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY
+  QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
+  QEMU_ACCEL QEMU_BIN QEMU_EXTRA_ARGS
+USAGE
+}
+
+while [ "\$#" -gt 0 ]; do
+  case "\$1" in
+    -r|--resolution)
+      res="\${2:-}"
+      [ -n "\${res}" ] || { echo "missing value for \$1" >&2; exit 2; }
+      case "\${res}" in
+        *x*)
+          export QEMU_XRES="\${res%x*}"
+          export QEMU_YRES="\${res#*x}"
+          ;;
+        *)
+          echo "resolution must be WxH, got: \${res}" >&2
+          exit 2
+          ;;
+      esac
+      shift 2
+      ;;
+    --width)
+      export QEMU_XRES="\${2:?missing width}"
+      shift 2
+      ;;
+    --height)
+      export QEMU_YRES="\${2:?missing height}"
+      shift 2
+      ;;
+    -m|--memory)
+      export QEMU_MEMORY="\${2:?missing memory value}"
+      shift 2
+      ;;
+    -s|--smp)
+      export QEMU_SMP="\${2:?missing smp value}"
+      shift 2
+      ;;
+    -d|--display)
+      export QEMU_DISPLAY="\${2:?missing display type}"
+      shift 2
+      ;;
+    --headless)
+      export QEMU_DISPLAY=none
+      shift
+      ;;
+    -c|--connect)
+      key="\${2:?missing connect key}"
+      case "\${key}" in
+        *:*)
+          export QEMU_HDC_HOST_PORT="\${key##*:}"
+          ;;
+        *)
+          echo "connect key must be host:port, got: \${key}" >&2
+          exit 2
+          ;;
+      esac
+      shift 2
+      ;;
+    --hdc-port)
+      export QEMU_HDC_HOST_PORT="\${2:?missing hdc port}"
+      shift 2
+      ;;
+    --vnc-display)
+      export QEMU_VNC_DISPLAY="\${2:?missing vnc display}"
+      shift 2
+      ;;
+    --serial-port)
+      export QEMU_SERIAL_PORT="\${2:?missing serial port}"
+      shift 2
+      ;;
+    -a|--accel)
+      export QEMU_ACCEL="\${2:?missing accel mode}"
+      shift 2
+      ;;
+    -q|--qemu)
+      export QEMU_BIN="\${2:?missing qemu path}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      if [ "\$#" -gt 0 ]; then
+        export QEMU_EXTRA_ARGS="\${*}\${QEMU_EXTRA_ARGS:+ \${QEMU_EXTRA_ARGS}}"
+      fi
+      break
+      ;;
+    -*)
+      echo "unknown option: \$1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      echo "unexpected argument: \$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+# Apply defaults only when unset so environment variables still work.
+export QEMU_XRES="\${QEMU_XRES:-\${DEFAULT_XRES}}"
+export QEMU_YRES="\${QEMU_YRES:-\${DEFAULT_YRES}}"
+export QEMU_SMP="\${QEMU_SMP:-\${DEFAULT_SMP}}"
+export QEMU_MEMORY="\${QEMU_MEMORY:-\${DEFAULT_MEMORY}}"
+export QEMU_DISPLAY="\${QEMU_DISPLAY:-\${DEFAULT_DISPLAY}}"
+export QEMU_HDC_HOST_PORT="\${QEMU_HDC_HOST_PORT:-\${DEFAULT_HDC_PORT}}"
+export QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-\${DEFAULT_VNC_DISPLAY}}"
+export QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
+export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
+export QEMU_BIN="\${QEMU_BIN:-\${DEFAULT_QEMU_BIN}}"
+export QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
+
+case "\${QEMU_XRES}" in
+  ''|*[!0-9]*) echo "invalid width: \${QEMU_XRES}" >&2; exit 2 ;;
+esac
+case "\${QEMU_YRES}" in
+  ''|*[!0-9]*) echo "invalid height: \${QEMU_YRES}" >&2; exit 2 ;;
+esac
+case "\${QEMU_SMP}" in
+  ''|*[!0-9]*) echo "invalid smp: \${QEMU_SMP}" >&2; exit 2 ;;
+esac
+
+exec "\${HERE}/launch/qemu_run.sh"
+EOF
+  chmod +x "${dest}"
+}
+
+write_windows_ps1() {
+  local dest="$1"
+  local product="$2"
+  local default_smp="$3"
+  local default_mem="$4"
+  local default_display="$5"
+
+  if [ "${product}" != "x86_64_virt" ]; then
+    cat >"${dest}" <<EOF
+Write-Error "Windows launcher is not enabled for ${product} yet. Use x86_64_virt for Windows x86_64."
+exit 1
+EOF
+    return
+  fi
+
+  cat >"${dest}" <<EOF
+param(
+  [Alias("r")][string]\$Resolution,
+  [int]\$Width,
+  [int]\$Height,
+  [Alias("m")][string]\$Memory,
+  [Alias("s")][int]\$Smp,
+  [Alias("d")][string]\$Display,
+  [switch]\$Headless,
+  [Alias("c")][string]\$Connect,
+  [int]\$HdcPort,
+  [int]\$VncDisplay,
+  [int]\$SerialPort,
+  [Alias("a")][string]\$Accel,
+  [Alias("q")][string]\$QemuPath,
+  [Parameter(ValueFromRemainingArguments = \$true)][string[]]\$ExtraArgs
+)
+
+\$ErrorActionPreference = "Stop"
+
+\$Root = Split-Path -Parent (Split-Path -Parent \$MyInvocation.MyCommand.Path)
+\$Img = Join-Path \$Root "images"
+
+\$DefaultSmp = ${default_smp}
+\$DefaultMemory = "${default_mem}"
+\$DefaultDisplay = "${default_display}"
+\$DefaultXres = 800
+\$DefaultYres = 500
+\$DefaultHdcPort = 5555
+\$DefaultVncDisplay = 21
+
+if (\$Headless) {
+  \$Display = "none"
+}
+
+if (\$Resolution) {
+  if (\$Resolution -notmatch '^(\\d+)x(\\d+)\$') {
+    throw "Resolution must be WxH, got: \$Resolution"
+  }
+  \$env:QEMU_XRES = \$Matches[1]
+  \$env:QEMU_YRES = \$Matches[2]
+}
+if (\$PSBoundParameters.ContainsKey("Width")) { \$env:QEMU_XRES = "\$Width" }
+if (\$PSBoundParameters.ContainsKey("Height")) { \$env:QEMU_YRES = "\$Height" }
+
+if (\$Memory) { \$env:QEMU_MEMORY = \$Memory }
+if (\$PSBoundParameters.ContainsKey("Smp")) { \$env:QEMU_SMP = "\$Smp" }
+if (\$Display) { \$env:QEMU_DISPLAY = \$Display }
+if (\$Connect) {
+  if (\$Connect -notmatch '^[^:]+:(\\d+)\$') {
+    throw "Connect must be host:port, got: \$Connect"
+  }
+  \$env:QEMU_HDC_HOST_PORT = \$Matches[1]
+}
+if (\$PSBoundParameters.ContainsKey("HdcPort")) { \$env:QEMU_HDC_HOST_PORT = "\$HdcPort" }
+if (\$PSBoundParameters.ContainsKey("VncDisplay")) { \$env:QEMU_VNC_DISPLAY = "\$VncDisplay" }
+if (\$PSBoundParameters.ContainsKey("SerialPort")) { \$env:QEMU_SERIAL_PORT = "\$SerialPort" }
+if (\$Accel) { \$env:QEMU_ACCEL = \$Accel }
+if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
+
+\$Xres = if (\$env:QEMU_XRES) { \$env:QEMU_XRES } else { "\$DefaultXres" }
+\$Yres = if (\$env:QEMU_YRES) { \$env:QEMU_YRES } else { "\$DefaultYres" }
+\$SmpValue = if (\$env:QEMU_SMP) { \$env:QEMU_SMP } else { "\$DefaultSmp" }
+\$MemoryValue = if (\$env:QEMU_MEMORY) { \$env:QEMU_MEMORY } else { "\$DefaultMemory" }
+\$HdcHostPort = if (\$env:QEMU_HDC_HOST_PORT) { \$env:QEMU_HDC_HOST_PORT } else { "\$DefaultHdcPort" }
+\$VncDisplayValue = if (\$env:QEMU_VNC_DISPLAY) { \$env:QEMU_VNC_DISPLAY } else { "\$DefaultVncDisplay" }
+\$GpuDevice = "virtio-gpu-pci,xres=\$Xres,yres=\$Yres"
+
+function Resolve-Qemu {
+  if (\$env:QEMU_BIN) { return \$env:QEMU_BIN }
+  if (\$env:QEMU_SYSTEM_X86_64) { return \$env:QEMU_SYSTEM_X86_64 }
+  \$cmd = Get-Command "qemu-system-x86_64.exe" -ErrorAction SilentlyContinue
+  if (\$cmd) { return \$cmd.Source }
+  \$defaultPath = "C:\\Program Files\\qemu\\qemu-system-x86_64.exe"
+  if (Test-Path \$defaultPath) { return \$defaultPath }
+  throw "qemu-system-x86_64.exe not found. Install QEMU for Windows or set QEMU_BIN / QEMU_SYSTEM_X86_64."
+}
+
+\$Qemu = Resolve-Qemu
+
+\$RequestedAccel = if (\$env:QEMU_ACCEL) { \$env:QEMU_ACCEL.ToLowerInvariant() } else { "auto" }
+\$AccelArgs = @("-accel", "tcg,thread=multi")
+switch (\$RequestedAccel) {
+  "tcg" { Write-Host "TCG software emulation forced by QEMU_ACCEL." }
+  "whpx" {
+    \$AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
+    Write-Host "WHPX acceleration forced by QEMU_ACCEL."
+  }
+  default {
+    try {
+      \$AccelHelp = & \$Qemu -accel help 2>&1 | Out-String
+      if (\$AccelHelp -match "whpx") {
+        \$AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
+        Write-Host "WHPX acceleration enabled."
+      } else {
+        Write-Host "WHPX not available, using TCG software emulation."
+      }
+    } catch {
+      Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
+    }
+  }
+}
+
+\$DisplayType = if (\$env:QEMU_DISPLAY) { \$env:QEMU_DISPLAY } else { "\$DefaultDisplay" }
+switch (\$DisplayType) {
+  "none" {
+    \$DisplayArgs = @("-device", \$GpuDevice, "-display", "none", "-serial", "mon:stdio")
+  }
+  "vnc" {
+    \$DisplayArgs = @("-device", \$GpuDevice, "-vnc", ":\${VncDisplayValue}", "-serial", "stdio")
+    \$VncTcp = 5900 + [int]\$VncDisplayValue
+    Write-Host "Display: VNC on 127.0.0.1:\$VncTcp"
+  }
+  "gtk" {
+    \$DisplayArgs = @("-device", \$GpuDevice, "-display", "gtk,gl=off", "-serial", "stdio")
+  }
+  default {
+    \$DisplayArgs = @("-device", \$GpuDevice, "-display", "sdl,gl=off", "-serial", "stdio")
+  }
+}
+
+\$KernelBootArgs = "oemmode=rd buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600"
+
+\$ArgsList = @(
+  "-machine", "q35",
+  \$AccelArgs,
+  "-cpu", "max",
+  "-smp", "\$SmpValue",
+  "-m", "\$MemoryValue",
+  "-kernel", (Join-Path \$Img "bzImage"),
+  "-initrd", (Join-Path \$Img "ramdisk.img"),
+  \$DisplayArgs,
+  "-device", "virtio-mouse-pci",
+  "-device", "virtio-keyboard-pci",
+  "-netdev", "user,id=net0,hostfwd=tcp::\${HdcHostPort}-:5555",
+  "-device", "virtio-net-pci,netdev=net0",
+  "-drive", ("if=none,file={0},format=raw,id=updater" -f (Join-Path \$Img "updater.img")),
+  "-device", "virtio-blk-pci,drive=updater,serial=updater",
+  "-drive", ("if=none,file={0},format=raw,id=system" -f (Join-Path \$Img "system.img")),
+  "-device", "virtio-blk-pci,drive=system,serial=system",
+  "-drive", ("if=none,file={0},format=raw,id=vendor" -f (Join-Path \$Img "vendor.img")),
+  "-device", "virtio-blk-pci,drive=vendor,serial=vendor",
+  "-drive", ("if=none,file={0},format=raw,id=sys_prod" -f (Join-Path \$Img "sys_prod.img")),
+  "-device", "virtio-blk-pci,drive=sys_prod,serial=sys_prod",
+  "-drive", ("if=none,file={0},format=raw,id=chip_prod" -f (Join-Path \$Img "chip_prod.img")),
+  "-device", "virtio-blk-pci,drive=chip_prod,serial=chip_prod",
+  "-drive", ("if=none,file={0},format=raw,id=userdata" -f (Join-Path \$Img "userdata.img")),
+  "-device", "virtio-blk-pci,drive=userdata,serial=userdata",
+  "-append", \$KernelBootArgs
+)
+
+if (\$env:QEMU_SERIAL_PORT) {
+  \$ArgsList += @("-serial", "telnet:127.0.0.1:\$(\$env:QEMU_SERIAL_PORT),server,nowait")
+  Write-Host "Serial telnet console: 127.0.0.1:\$(\$env:QEMU_SERIAL_PORT)"
+}
+if (\$env:QEMU_EXTRA_ARGS) {
+  \$ArgsList += (\$env:QEMU_EXTRA_ARGS -split '\\s+' | Where-Object { \$_ })
+}
+if (\$ExtraArgs) {
+  \$ArgsList += \$ExtraArgs
+}
+
+& \$Qemu @ArgsList
+exit \$LASTEXITCODE
+EOF
+}
+
+write_package_launcher_readme() {
+  local package_dir="$1"
+  local package_name="$2"
+  local product="$3"
+  local standard_vpn="${4:-false}"
+  local default_smp="$5"
+  local default_mem="$6"
+  local default_display="$7"
+
+  cat >"${package_dir}/README.md" <<EOF
+# ${package_name}
+
+This package contains an OpenHarmony standard-system QEMU image.
+
+Install QEMU on the host first, then run one of:
+
+- Linux: \`launch/linux.sh\`
+- macOS: \`launch/macos.command\`
+- Windows PowerShell: \`launch/windows.ps1\`
+
+## Launch options
+
+CLI flags override environment variables, which override package defaults.
+
+| Option | Env | Default |
+| --- | --- | --- |
+| \`-r, --resolution WxH\` | \`QEMU_XRES\` / \`QEMU_YRES\` | \`800x500\` |
+| \`--width\` / \`--height\` | \`QEMU_XRES\` / \`QEMU_YRES\` | same as above |
+| \`-m, --memory SIZE\` | \`QEMU_MEMORY\` | \`${default_mem}\` |
+| \`-s, --smp N\` | \`QEMU_SMP\` | \`${default_smp}\` |
+| \`-d, --display TYPE\` / \`--headless\` | \`QEMU_DISPLAY\` | \`${default_display}\` |
+| \`-c, --connect host:port\` / \`--hdc-port\` | \`QEMU_HDC_HOST_PORT\` | \`5555\` |
+| \`--vnc-display N\` | \`QEMU_VNC_DISPLAY\` | \`21\` (TCP 5921) |
+| \`--serial-port PORT\` | \`QEMU_SERIAL_PORT\` | unset |
+| \`-a, --accel MODE\` | \`QEMU_ACCEL\` | \`auto\` |
+| \`-q, --qemu PATH\` | \`QEMU_BIN\` | product QEMU binary |
+| \`-- ...\` | \`QEMU_EXTRA_ARGS\` | empty |
+
+Examples:
+
+\`\`\`bash
+./launch/linux.sh -r 1280x720 -m 8G -s 8
+./launch/linux.sh --width 1080 --height 1920 --display cocoa
+./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
+QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
+\`\`\`
+
+\`QEMU_DISPLAY=vnc\` exposes VNC on \`127.0.0.1:\$((5900 + QEMU_VNC_DISPLAY))\`.
+\`QEMU_DISPLAY=none\` is recommended for CI/headless hosts. On Linux hosts without
+\`DISPLAY\`/\`WAYLAND_DISPLAY\`, graphical modes auto-fallback to headless.
+\`QEMU_ACCEL=auto|hvf|kvm|tcg\` (and \`whpx\` on Windows) selects acceleration;
+\`auto\` probes host support and falls back to TCG when needed.
+EOF
+
+  if [ "${standard_vpn}" = "true" ]; then
+    cat >>"${package_dir}/README.md" <<'EOF'
+
+## Standard VPN
+
+This image includes OpenHarmony's standard VpnExtension service, guest TUN
+support, F2FS verity/code-sign-capable writable userdata, SettingsData, and
+the signed system VPN authorization dialog. No VPN application is
+pre-authorized; the first request must be approved in the guest's system
+dialog.
+EOF
+  fi
+}
+
+write_full_product_launchers() {
+  local launch_out="$1"
+  local product="$2"
+  local package_dir="$3"
+  local package_name="$4"
+  local standard_vpn="${5:-false}"
+  local official_qemu_run="${6:-}"
+
+  launcher_defaults_for_product "${product}"
+
+  mkdir -p "${launch_out}"
+
+  if [ "${product}" = "x86_64_virt" ] || [ "${product}" = "arm64_virt" ] || \
+     [ "${product}" = "armv7a_virt" ]; then
+    if [ -n "${official_qemu_run}" ]; then
+      if [ ! -f "${official_qemu_run}" ]; then
+        echo "missing official qemu_run.sh: ${official_qemu_run}" >&2
+        exit 1
+      fi
+      cp "${official_qemu_run}" "${launch_out}/qemu_run.sh"
+    fi
+    if [ ! -f "${launch_out}/qemu_run.sh" ]; then
+      echo "qemu_run.sh not found in ${launch_out}" >&2
+      exit 1
+    fi
+    sed_in_place_extended 's@[[:space:]]*\|[[:space:]]*grep[[:space:]]+"Accelerators supported"@@g' \
+      "${launch_out}/qemu_run.sh"
+    if [ "${product}" = "arm64_virt" ]; then
+      if grep -q '^# Check hardware acceleration availability' "${launch_out}/qemu_run.sh"; then
+        replace_arm64_acceleration_block "${launch_out}/qemu_run.sh"
+      fi
+    fi
+    normalize_common_qemu_launcher \
+      "${launch_out}/qemu_run.sh" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_QEMU_UNIX}"
+    if ! bash -n "${launch_out}/qemu_run.sh"; then
+      echo "packaged launcher has invalid shell syntax: ${launch_out}/qemu_run.sh" >&2
+      exit 1
+    fi
+    if ! grep -Eq 'ohos\.required_mount\.data=/dev/block/[^ @]+@/data@f2fs@' \
+      "${launch_out}/qemu_run.sh"; then
+      echo "packaged launcher does not mount userdata as F2FS: ${launch_out}/qemu_run.sh" >&2
+      exit 1
+    fi
+    chmod +x "${launch_out}/qemu_run.sh"
+
+    write_unix_cli_wrapper \
+      "${launch_out}/linux.sh" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_DEFAULT_DISPLAY}" \
+      "${LAUNCHER_QEMU_UNIX}"
+    cp "${launch_out}/linux.sh" "${launch_out}/macos.command"
+    chmod +x "${launch_out}/macos.command"
+
+    write_windows_ps1 \
+      "${launch_out}/windows.ps1" \
+      "${product}" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_DEFAULT_DISPLAY}"
+  elif [ "${product}" = "qemu-arm64-linux-min" ]; then
+    write_unix_cli_wrapper \
+      "${launch_out}/linux.sh" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_DEFAULT_DISPLAY}" \
+      "${LAUNCHER_QEMU_UNIX}"
+    # Minimal product embeds the QEMU command in linux.sh historically; keep a
+    # dedicated qemu_run.sh that honors the same env surface.
+    cat >"${launch_out}/qemu_run.sh" <<'MIN_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+OHOS_IMG="${OHOS_IMG:-.}"
+QEMU_XRES="${QEMU_XRES:-800}"
+QEMU_YRES="${QEMU_YRES:-500}"
+QEMU_SMP="${QEMU_SMP:-4}"
+QEMU_MEMORY="${QEMU_MEMORY:-1024}"
+QEMU_BIN="${QEMU_BIN:-qemu-system-aarch64}"
+QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS:-}"
+exec "${QEMU_BIN}" \
+  -M virt \
+  -smp "${QEMU_SMP}" \
+  -m "${QEMU_MEMORY}" \
+  -nographic \
+  -cpu cortex-a57 \
+  -kernel "${OHOS_IMG}/Image" \
+  -initrd "${OHOS_IMG}/ramdisk.img" \
+  -drive if=none,file="${OHOS_IMG}/userdata.img",format=raw,id=userdata,index=3 \
+  -device virtio-blk-device,drive=userdata \
+  -drive if=none,file="${OHOS_IMG}/vendor.img",format=raw,id=vendor,index=2 \
+  -device virtio-blk-device,drive=vendor \
+  -drive if=none,file="${OHOS_IMG}/system.img",format=raw,id=system,index=1 \
+  -device virtio-blk-device,drive=system \
+  -drive if=none,file="${OHOS_IMG}/updater.img",format=raw,id=updater,index=0 \
+  -device virtio-blk-device,drive=updater \
+  -append "console=ttyAMA0 init=/init hardware=qemu.arm.linux root=/dev/ram0 rw sn=0023456789 ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required" \
+  ${QEMU_EXTRA_ARGS}
+MIN_EOF
+    chmod +x "${launch_out}/qemu_run.sh"
+    cp "${launch_out}/linux.sh" "${launch_out}/macos.command"
+    chmod +x "${launch_out}/macos.command"
+    write_windows_ps1 \
+      "${launch_out}/windows.ps1" \
+      "${product}" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_DEFAULT_DISPLAY}"
+  fi
+
+  cat >"${launch_out}/windows.cmd" <<'EOF'
+@echo off
+powershell -ExecutionPolicy Bypass -File "%~dp0windows.ps1" %*
+EOF
+
+  if [ ! -f "${launch_out}/windows.ps1" ]; then
+    write_windows_ps1 \
+      "${launch_out}/windows.ps1" \
+      "${product}" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_DEFAULT_DISPLAY}"
+  fi
+
+  write_package_launcher_readme \
+    "${package_dir}" \
+    "${package_name}" \
+    "${product}" \
+    "${standard_vpn}" \
+    "${LAUNCHER_DEFAULT_SMP}" \
+    "${LAUNCHER_DEFAULT_MEMORY}" \
+    "${LAUNCHER_DEFAULT_DISPLAY}"
+}
+
+refresh_package_checksums() {
+  local package_dir="$1"
+  (
+    cd "${package_dir}"
+    find images launch -type f -print0 2>/dev/null | sort -z | xargs -0 shasum -a 256 > SHA256SUMS
+  )
+}
+
+json_string_field() {
+  local file="$1"
+  local key="$2"
+  # Prefer python for robust JSON parsing; fall back to sed.
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2],""))' \
+      "${file}" "${key}"
+  else
+    sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" "${file}" | head -n1
+  fi
+}
+
+json_bool_field() {
+  local file="$1"
+  local key="$2"
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys
+d=json.load(open(sys.argv[1]))
+# support top-level or capabilities.*
+if sys.argv[2] in d:
+  print("true" if d[sys.argv[2]] else "false")
+else:
+  cap=d.get("capabilities",{})
+  print("true" if cap.get(sys.argv[2]) else "false")
+' "${file}" "${key}"
+  else
+    if grep -q "\"${key}\"[[:space:]]*:[[:space:]]*true" "${file}"; then
+      echo true
+    else
+      echo false
+    fi
+  fi
+}
+
+rewrite_package_launchers() {
+  local package_dir="$1"
+  local manifest="${package_dir}/manifest.json"
+  local launch_out="${package_dir}/launch"
+  local product
+  local package_name
+  local standard_vpn
+
+  if [ ! -d "${package_dir}" ]; then
+    echo "package directory not found: ${package_dir}" >&2
+    exit 1
+  fi
+  if [ ! -f "${manifest}" ]; then
+    echo "manifest.json not found in ${package_dir}" >&2
+    exit 1
+  fi
+  if [ ! -f "${launch_out}/qemu_run.sh" ] && [ ! -f "${launch_out}/linux.sh" ]; then
+    echo "no launch scripts found in ${launch_out}" >&2
+    exit 1
+  fi
+
+  product="$(json_string_field "${manifest}" product)"
+  if [ -z "${product}" ]; then
+    echo "unable to read product from ${manifest}" >&2
+    exit 1
+  fi
+  package_name="$(basename "${package_dir}")"
+  standard_vpn="$(json_bool_field "${manifest}" standard_vpn)"
+
+  write_full_product_launchers \
+    "${launch_out}" \
+    "${product}" \
+    "${package_dir}" \
+    "${package_name}" \
+    "${standard_vpn}" \
+    ""
+
+  # Refresh launcher metadata in manifest.json when python is available.
+  if command -v python3 >/dev/null 2>&1; then
+    launcher_defaults_for_product "${product}"
+    python3 - "${manifest}" \
+      "${LAUNCHER_DEFAULT_SMP}" \
+      "${LAUNCHER_DEFAULT_MEMORY}" \
+      "${LAUNCHER_DEFAULT_DISPLAY}" <<'PY'
+import json, sys
+path, smp, mem, display = sys.argv[1:5]
+with open(path, encoding="utf-8") as fh:
+    data = json.load(fh)
+data["display_default"] = display
+data["launcher"] = {
+    "resolution_default": "800x500",
+    "smp_default": int(smp),
+    "memory_default": mem,
+    "cli": True,
+}
+with open(path, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+PY
+  fi
+
+  refresh_package_checksums "${package_dir}"
+  echo "rewrote launchers in ${package_dir}"
+}
+
+if [ -n "${REWRITE_PACKAGE}" ]; then
+  if [ -n "${SOURCE_ROOT}" ] || [ -n "${PRODUCT}" ] || [ -n "${OUTPUT_DIR}" ] || \
+     [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
+    echo "--rewrite-package cannot be combined with other package options" >&2
+    exit 2
+  fi
+  rewrite_package_launchers "${REWRITE_PACKAGE}"
+  exit 0
+fi
 
 if [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
   if [ -n "${SOURCE_ROOT}" ] || [ -n "${PRODUCT}" ] || [ -n "${OUTPUT_DIR}" ]; then
@@ -235,7 +1355,8 @@ if [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
     echo "ARM64 launcher has no recognized accelerator block: ${REWRITE_ARM64_LAUNCHER}" >&2
     exit 1
   fi
-  normalize_common_qemu_launcher "${REWRITE_ARM64_LAUNCHER}"
+  normalize_common_qemu_launcher \
+    "${REWRITE_ARM64_LAUNCHER}" 4 4096 qemu-system-aarch64
   chmod +x "${REWRITE_ARM64_LAUNCHER}"
   exit 0
 fi
@@ -894,6 +2015,7 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${IMAGES_OUT}/userdata.img"
 fi
 
+launcher_defaults_for_product "${PRODUCT}"
 cat > "${PACKAGE_DIR}/manifest.json" <<EOF
 {
   "product": "${PRODUCT}",
@@ -903,6 +2025,12 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   "qemu_windows": "${QEMU_BIN_WIN}",
   "display_default": "${DISPLAY_DEFAULT}",
   "network_default": "user",
+  "launcher": {
+    "resolution_default": "800x500",
+    "smp_default": ${LAUNCHER_DEFAULT_SMP},
+    "memory_default": "${LAUNCHER_DEFAULT_MEMORY}",
+    "cli": true
+  },
   "capabilities": {
     "standard_vpn": ${STANDARD_VPN_VERIFIED},
     "userdata_fs_verity": ${STANDARD_VPN_VERIFIED},
@@ -914,217 +2042,21 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
 }
 EOF
 
-cat > "${PACKAGE_DIR}/README.md" <<EOF
-# ${PACKAGE_NAME}
+OFFICIAL_FOR_LAUNCH="${OFFICIAL_QEMU_RUN:-}"
+write_full_product_launchers \
+  "${LAUNCH_OUT}" \
+  "${PRODUCT}" \
+  "${PACKAGE_DIR}" \
+  "${PACKAGE_NAME}" \
+  "${STANDARD_VPN_VERIFIED}" \
+  "${OFFICIAL_FOR_LAUNCH}"
 
-This package contains an OpenHarmony standard-system QEMU image.
-
-Install QEMU on the host first, then run one of:
-
-- Linux: \`launch/linux.sh\`
-- macOS: \`launch/macos.command\`
-- Windows PowerShell: \`launch/windows.ps1\`
-
-Set \`QEMU_DISPLAY=vnc\` to expose a VNC display on \`127.0.0.1:5921\`, or
-\`QEMU_DISPLAY=none\` for headless execution. HDC/debug forwarding uses host
-TCP port 5555 where supported by the guest. Set \`QEMU_HDC_HOST_PORT\` before
-launch when that host port is already in use. ARM64 packages accept
-\`QEMU_ACCEL=auto|hvf|kvm|tcg\`; the default \`auto\` mode probes HVF before
-using it and falls back to TCG when nested virtualization is unavailable.
-EOF
-
-if [ "${STANDARD_VPN_VERIFIED}" = "true" ]; then
-  cat >> "${PACKAGE_DIR}/README.md" <<'EOF'
-
-## Standard VPN
-
-This image includes OpenHarmony's standard VpnExtension service, guest TUN
-support, F2FS verity/code-sign-capable writable userdata, SettingsData, and
-the signed system VPN authorization dialog. No VPN application is
-pre-authorized; the first request must be approved in the guest's system
-dialog.
-EOF
-fi
-
-if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
-  if [ ! -f "${OFFICIAL_QEMU_RUN}" ]; then
-    echo "missing official qemu_run.sh: ${OFFICIAL_QEMU_RUN}" >&2
-    exit 1
-  fi
-  cp "${OFFICIAL_QEMU_RUN}" "${LAUNCH_OUT}/qemu_run.sh"
-  # Some QEMU builds print accelerator names on lines following the heading.
-  # Older upstream launchers grep only the heading and therefore miss hvf/kvm.
-  # Normalize those launchers while preserving compatibility with QEMU builds
-  # that print the accelerator list on one line.
-  sed_in_place_extended 's@[[:space:]]*\|[[:space:]]*grep[[:space:]]+"Accelerators supported"@@g' "${LAUNCH_OUT}/qemu_run.sh"
-  if [ "${PRODUCT}" = "arm64_virt" ]; then
-    replace_arm64_acceleration_block "${LAUNCH_OUT}/qemu_run.sh"
-  fi
-  normalize_common_qemu_launcher "${LAUNCH_OUT}/qemu_run.sh"
-  if ! bash -n "${LAUNCH_OUT}/qemu_run.sh"; then
-    echo "packaged launcher has invalid shell syntax: ${LAUNCH_OUT}/qemu_run.sh" >&2
-    exit 1
-  fi
-  if ! grep -Eq 'ohos\.required_mount\.data=/dev/block/[^ @]+@/data@f2fs@' "${LAUNCH_OUT}/qemu_run.sh"; then
-    echo "packaged launcher does not mount userdata as F2FS: ${LAUNCH_OUT}/qemu_run.sh" >&2
-    exit 1
-  fi
+chmod +x "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command" 2>/dev/null || true
+if [ -f "${LAUNCH_OUT}/qemu_run.sh" ]; then
   chmod +x "${LAUNCH_OUT}/qemu_run.sh"
-  cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-HERE="$(cd "$(dirname "$0")/.." && pwd)"
-IMG="${HERE}/images"
-export OHOS_IMG="${IMG}"
-exec "${HERE}/launch/qemu_run.sh"
-EOF
-  cp "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command"
-  if [ "${PRODUCT}" = "x86_64_virt" ]; then
-    cat > "${LAUNCH_OUT}/windows.ps1" <<'EOF'
-$ErrorActionPreference = "Stop"
-
-$Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$Img = Join-Path $Root "images"
-$HdcHostPort = if ($env:QEMU_HDC_HOST_PORT) { $env:QEMU_HDC_HOST_PORT } else { "5555" }
-
-function Resolve-Qemu {
-  if ($env:QEMU_SYSTEM_X86_64) {
-    return $env:QEMU_SYSTEM_X86_64
-  }
-  $cmd = Get-Command "qemu-system-x86_64.exe" -ErrorAction SilentlyContinue
-  if ($cmd) {
-    return $cmd.Source
-  }
-  $defaultPath = "C:\Program Files\qemu\qemu-system-x86_64.exe"
-  if (Test-Path $defaultPath) {
-    return $defaultPath
-  }
-  throw "qemu-system-x86_64.exe not found. Install QEMU for Windows or set QEMU_SYSTEM_X86_64."
-}
-
-$Qemu = Resolve-Qemu
-
-$RequestedAccel = if ($env:QEMU_ACCEL) { $env:QEMU_ACCEL.ToLowerInvariant() } else { "auto" }
-$AccelArgs = @("-accel", "tcg,thread=multi")
-switch ($RequestedAccel) {
-  "tcg" {
-    Write-Host "TCG software emulation forced by QEMU_ACCEL."
-  }
-  "whpx" {
-    $AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
-    Write-Host "WHPX acceleration forced by QEMU_ACCEL."
-  }
-  default {
-    try {
-      $AccelHelp = & $Qemu -accel help 2>&1 | Out-String
-      if ($AccelHelp -match "whpx") {
-        $AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
-        Write-Host "WHPX acceleration enabled."
-      } else {
-        Write-Host "WHPX not available, using TCG software emulation."
-      }
-    } catch {
-      Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
-    }
-  }
-}
-
-$DisplayType = if ($env:QEMU_DISPLAY) { $env:QEMU_DISPLAY } else { "sdl" }
-switch ($DisplayType) {
-  "none" {
-    $DisplayArgs = @("-device", "virtio-gpu-pci,xres=800,yres=500", "-display", "none", "-serial", "mon:stdio")
-  }
-  "vnc" {
-    $DisplayArgs = @("-device", "virtio-gpu-pci,xres=800,yres=500", "-vnc", ":21", "-serial", "stdio")
-    Write-Host "Display: VNC on 127.0.0.1:5921"
-  }
-  "gtk" {
-    $DisplayArgs = @("-device", "virtio-gpu-pci", "-display", "gtk,gl=off", "-serial", "stdio")
-  }
-  default {
-    $DisplayArgs = @("-device", "virtio-gpu-pci", "-display", "sdl,gl=off", "-serial", "stdio")
-  }
-}
-
-$KernelBootArgs = "oemmode=rd buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600"
-
-$ArgsList = @(
-  "-machine", "q35",
-  $AccelArgs,
-  "-cpu", "max",
-  "-smp", "4",
-  "-m", "4096",
-  "-kernel", (Join-Path $Img "bzImage"),
-  "-initrd", (Join-Path $Img "ramdisk.img"),
-  $DisplayArgs,
-  "-device", "virtio-mouse-pci",
-  "-device", "virtio-keyboard-pci",
-  "-netdev", "user,id=net0,hostfwd=tcp::${HdcHostPort}-:5555",
-  "-device", "virtio-net-pci,netdev=net0",
-  "-drive", ("if=none,file={0},format=raw,id=updater" -f (Join-Path $Img "updater.img")),
-  "-device", "virtio-blk-pci,drive=updater,serial=updater",
-  "-drive", ("if=none,file={0},format=raw,id=system" -f (Join-Path $Img "system.img")),
-  "-device", "virtio-blk-pci,drive=system,serial=system",
-  "-drive", ("if=none,file={0},format=raw,id=vendor" -f (Join-Path $Img "vendor.img")),
-  "-device", "virtio-blk-pci,drive=vendor,serial=vendor",
-  "-drive", ("if=none,file={0},format=raw,id=sys_prod" -f (Join-Path $Img "sys_prod.img")),
-  "-device", "virtio-blk-pci,drive=sys_prod,serial=sys_prod",
-  "-drive", ("if=none,file={0},format=raw,id=chip_prod" -f (Join-Path $Img "chip_prod.img")),
-  "-device", "virtio-blk-pci,drive=chip_prod,serial=chip_prod",
-  "-drive", ("if=none,file={0},format=raw,id=userdata" -f (Join-Path $Img "userdata.img")),
-  "-device", "virtio-blk-pci,drive=userdata,serial=userdata",
-  "-append", $KernelBootArgs
-)
-
-& $Qemu @ArgsList
-exit $LASTEXITCODE
-EOF
-  fi
-elif [ "${PRODUCT}" = "qemu-arm64-linux-min" ]; then
-  cat > "${LAUNCH_OUT}/linux.sh" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-HERE="$(cd "$(dirname "$0")/.." && pwd)"
-IMG="${HERE}/images"
-exec qemu-system-aarch64 \
-  -M virt \
-  -smp 4 \
-  -m 1024 \
-  -nographic \
-  -cpu cortex-a57 \
-  -kernel "${IMG}/Image" \
-  -initrd "${IMG}/ramdisk.img" \
-  -drive if=none,file="${IMG}/userdata.img",format=raw,id=userdata,index=3 \
-  -device virtio-blk-device,drive=userdata \
-  -drive if=none,file="${IMG}/vendor.img",format=raw,id=vendor,index=2 \
-  -device virtio-blk-device,drive=vendor \
-  -drive if=none,file="${IMG}/system.img",format=raw,id=system,index=1 \
-  -device virtio-blk-device,drive=system \
-  -drive if=none,file="${IMG}/updater.img",format=raw,id=updater,index=0 \
-  -device virtio-blk-device,drive=updater \
-  -append "console=ttyAMA0 init=/init hardware=qemu.arm.linux root=/dev/ram0 rw sn=0023456789 ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required"
-EOF
-  cp "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command"
 fi
 
-cat > "${LAUNCH_OUT}/windows.cmd" <<'EOF'
-@echo off
-powershell -ExecutionPolicy Bypass -File "%~dp0windows.ps1"
-EOF
-
-if [ ! -f "${LAUNCH_OUT}/windows.ps1" ]; then
-  cat > "${LAUNCH_OUT}/windows.ps1" <<EOF
-Write-Error "Windows launcher is not enabled for ${PRODUCT} yet. Use x86_64_virt for Windows x86_64."
-exit 1
-EOF
-fi
-
-chmod +x "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command"
-
-(
-  cd "${PACKAGE_DIR}"
-  find images launch -type f -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS
-)
+refresh_package_checksums "${PACKAGE_DIR}"
 
 (
   cd "${OUTPUT_DIR}"
