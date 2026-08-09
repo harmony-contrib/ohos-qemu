@@ -143,6 +143,7 @@ NET_ARGS=(
   -netdev user,id=net0,hostfwd=tcp::5555-:5555
 )
 qemu-system-aarch64 ${ACCEL_ARGS} \
+  -cpu cortex-a57 \
   -smp 4 \
   -m 4096 \
   ${DISPLAY_ARGS} \
@@ -235,7 +236,9 @@ grep -Fq 'QEMU_XRES="${QEMU_XRES:-800}"' "${PACKAGED_LAUNCHER}"
 grep -Fq 'QEMU_YRES="${QEMU_YRES:-500}"' "${PACKAGED_LAUNCHER}"
 grep -Fq 'QEMU_SMP="${QEMU_SMP:-' "${PACKAGED_LAUNCHER}"
 grep -Fq 'QEMU_MEMORY="${QEMU_MEMORY:-' "${PACKAGED_LAUNCHER}"
+grep -Fq 'QEMU_CPU="${QEMU_CPU:-cortex-a57}"' "${PACKAGED_LAUNCHER}"
 grep -Eq 'xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\}' "${PACKAGED_LAUNCHER}"
+grep -Fq -- '-cpu ${QEMU_CPU}' "${PACKAGED_LAUNCHER}"
 grep -Fq -- '-smp ${QEMU_SMP}' "${PACKAGED_LAUNCHER}"
 grep -Fq -- '-m ${QEMU_MEMORY}' "${PACKAGED_LAUNCHER}"
 WRAPPER="${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/launch/linux.sh"
@@ -245,9 +248,15 @@ grep -Fq -- '--height' "${WRAPPER}"
 grep -Fq -- '--headless' "${WRAPPER}"
 grep -Fq -- '--vnc-display' "${WRAPPER}"
 grep -Fq -- '--serial-port' "${WRAPPER}"
+grep -Fq -- '--cpu' "${WRAPPER}"
 grep -Fq -- 'QEMU_EXTRA_ARGS' "${WRAPPER}"
+grep -Fq -- 'QEMU_CPU' "${WRAPPER}"
 grep -Fq -- 'QEMU_SERIAL_PORT' "${WRAPPER}"
 bash -n "${WRAPPER}"
+grep -Fq -- '| `--cpu MODEL` | `QEMU_CPU` | `cortex-a57` |' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/README.md"
+grep -Fq '[string]\$Cpu,' "${PACKAGE_SCRIPT}"
+grep -Fq '"-cpu", "\$CpuValue",' "${PACKAGE_SCRIPT}"
 grep -Fq '"standard_vpn": true' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"userdata_fs_verity": true' \
@@ -257,6 +266,8 @@ grep -Fq '"userdata_filesystem": "f2fs"' \
 grep -Fq '"userdata_code_sign_ioctl": true' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"developer_device": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"cpu_default": "cortex-a57"' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"vpn_authorization": "system_dialog"' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
@@ -323,6 +334,15 @@ if [ -s "${FAKE_QEMU_PROBES}" ]; then
   echo "explicit TCG unexpectedly probed HVF" >&2
   exit 1
 fi
+
+: >"${FAKE_QEMU_ARGS}"
+PATH="${FAKE_BIN}:${PATH}" \
+FAKE_QEMU_ACCELS='Accelerators supported in QEMU binary:\nhvf\ntcg' \
+QEMU_ACCEL=tcg \
+QEMU_CPU=cortex-a72 \
+QEMU_DISPLAY=none \
+  bash "${PACKAGED_LAUNCHER}" >/dev/null 2>&1
+grep -Fq -- '-cpu cortex-a72' "${FAKE_QEMU_ARGS}"
 
 sleep 60 &
 QEMU_PID=$!
