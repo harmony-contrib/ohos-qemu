@@ -13,6 +13,7 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "ci/ohos-test-runner-smoke/**"
+      - "ci/install/**"
       - "ci/qemu-smoke/**"
       - "ci/standard-vpn/**"
       - "overlays/standard_qemu_vpn/**"
@@ -22,6 +23,7 @@ on:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "ci/ohos-test-runner-smoke/**"
+      - "ci/install/**"
       - "ci/qemu-smoke/**"
       - "ci/standard-vpn/**"
       - "overlays/standard_qemu_vpn/**"
@@ -119,7 +121,9 @@ jobs:
       - name: Test QEMU smoke scripts
         if: ${{ runner.os == 'Linux' }}
         shell: bash
-        run: bash ci/qemu-smoke/test.sh
+        run: |
+          bash ci/install/test.sh
+          bash ci/qemu-smoke/test.sh
 
       - name: Download QEMU package from Release
         shell: bash

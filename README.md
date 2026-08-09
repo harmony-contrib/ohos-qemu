@@ -21,6 +21,22 @@ The installer downloads the selected Release and installs the package under
 Set `OHOS_QEMU_ARCH` to `arm64`, `armv7a`, or `x86_64` before installation to
 override the detected guest architecture.
 
+The installer defaults to `phone`. Select the device type explicitly when
+needed:
+
+```bash
+bash scripts/install.sh --release RELEASE_TAG --device-type phone
+bash scripts/install.sh --release RELEASE_TAG --device-type 2in1
+```
+
+`OHOS_QEMU_DEVICE_TYPE=phone` and `OHOS_QEMU_DEVICE_TYPE=2in1` provide the same
+selection through the environment. CLI options override environment values.
+For `phone`, the installer first tries the current `-phone.tar.gz` asset and
+falls back to the legacy archive without a device-type suffix when necessary.
+It fails only when neither phone asset exists. A `2in1` selection requires the
+`-2in1.tar.gz` asset. The installed directory matches the selected archive, for
+example `openharmony-qemu-arm64-arm64_virt-2in1`.
+
 ## Run
 
 Linux x86_64:
