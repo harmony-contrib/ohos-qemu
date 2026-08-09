@@ -169,14 +169,14 @@ def main() -> int:
 
     repo_root = args.source_root / "third_party/iptables"
     extensions = repo_root / "extensions"
-    aliased_pairs = [
+    collapsed_pairs = [
         (lower, upper)
         for lower, upper in HEADER_PAIRS
-        if (repo_root / lower).exists()
-        and (repo_root / upper).exists()
-        and os.path.samefile(repo_root / lower, repo_root / upper)
+        if not (repo_root / lower).exists()
+        or not (repo_root / upper).exists()
+        or os.path.samefile(repo_root / lower, repo_root / upper)
     ]
-    if not aliased_pairs:
+    if not collapsed_pairs:
         print("iptables case variants are distinct; no compatibility fix needed")
         return 0
 
@@ -187,23 +187,28 @@ def main() -> int:
     for lower, upper in HEADER_PAIRS:
         lower_path = repo_root / lower
         upper_path = repo_root / upper
-        if not lower_path.exists() or not upper_path.exists():
-            raise RuntimeError(f"missing iptables header pair: {lower}, {upper}")
-        if not os.path.samefile(lower_path, upper_path):
+        if (lower, upper) not in collapsed_pairs:
             continue
-        lower_path.write_bytes(
-            combined_header(
-                git_blob(repo_root, lower),
-                git_blob(repo_root, upper),
-                lower,
+        lower_blob = git_blob(repo_root, lower)
+        upper_blob = git_blob(repo_root, upper)
+        lower_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # A checkout copied from a case-insensitive host into a Linux volume
+        # can contain only one member of the pair. Recreate both names from
+        # Git first. They remain independent on a case-sensitive volume; on
+        # macOS both paths still alias and need the combined-header fallback.
+        lower_path.write_bytes(lower_blob)
+        upper_path.write_bytes(upper_blob)
+        if os.path.samefile(lower_path, upper_path):
+            lower_path.write_bytes(
+                combined_header(lower_blob, upper_blob, lower)
             )
-        )
 
     patch_build_file(extensions / "BUILD.gn")
     print(
         "configured case-insensitive iptables compatibility: "
         f"{len(SOURCE_RENAMES)} uniquely named sources and "
-        f"{len(aliased_pairs)} combined headers"
+        f"{len(collapsed_pairs)} restored/collapsed header pairs"
     )
     return 0
 

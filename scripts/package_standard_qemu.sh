@@ -19,11 +19,24 @@ Products:
   arm64_virt
   qemu-arm64-linux-min
 
+Optional:
+  --device-type TYPE   Force const.product.devicetype / const.build.characteristics
+                       (e.g. 2in1, phone, default). When set, the package name
+                       gains a -<TYPE> suffix unless DEVICE_TYPE_NAME_SUFFIX=0.
+  --device-type-profile PROFILE
+                       Build provenance: default, param_only,
+                       qemu_phone_full_source, or qemu_2in1_full_source. A full
+                       profile is accepted only when its source inherit and
+                       resolved preloader parts verify.
+
 This packages already-built OpenHarmony standard-system QEMU images and
 generates Linux, macOS, and Windows launchers where applicable.
 
 --rewrite-package rewrites launch scripts inside an existing package directory
 without re-copying guest images (useful when only launchers changed).
+
+To repackage existing release packages with a new deviceType only, prefer:
+  scripts/repackage_device_type.sh --device-type 2in1 ...
 USAGE
 }
 
@@ -32,6 +45,8 @@ PRODUCT=
 OUTPUT_DIR=
 REWRITE_ARM64_LAUNCHER=
 REWRITE_PACKAGE=
+DEVICE_TYPE="${DEVICE_TYPE:-}"
+DEVICE_TYPE_PROFILE="${DEVICE_TYPE_BUILD_PROFILE:-}"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -45,6 +60,14 @@ while [ "$#" -gt 0 ]; do
       ;;
     --output-dir)
       OUTPUT_DIR="${2:-}"
+      shift 2
+      ;;
+    --device-type)
+      DEVICE_TYPE="${2:-}"
+      shift 2
+      ;;
+    --device-type-profile)
+      DEVICE_TYPE_PROFILE="${2:-}"
       shift 2
       ;;
     --rewrite-arm64-launcher)
@@ -70,6 +93,39 @@ done
 if [ -z "${REWRITE_ARM64_LAUNCHER}" ] && [ -z "${REWRITE_PACKAGE}" ] && \
    { [ -z "${SOURCE_ROOT}" ] || [ -z "${PRODUCT}" ] || [ -z "${OUTPUT_DIR}" ]; }; then
   usage >&2
+  exit 2
+fi
+
+if [ -n "${DEVICE_TYPE}" ]; then
+  case "${DEVICE_TYPE}" in
+    default|phone|tablet|2in1|tv|wearable|car|liteWearable) ;;
+    *)
+      echo "unsupported --device-type: ${DEVICE_TYPE}" >&2
+      exit 2
+      ;;
+  esac
+fi
+
+if [ -z "${DEVICE_TYPE_PROFILE}" ]; then
+  if [ -n "${DEVICE_TYPE}" ]; then
+    DEVICE_TYPE_PROFILE=param_only
+  else
+    DEVICE_TYPE_PROFILE=default
+  fi
+fi
+case "${DEVICE_TYPE_PROFILE}" in
+  default|param_only|qemu_phone_full_source|qemu_2in1_full_source) ;;
+  *)
+    echo "unsupported --device-type-profile: ${DEVICE_TYPE_PROFILE}" >&2
+    exit 2
+    ;;
+esac
+if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] && [ "${DEVICE_TYPE}" != "2in1" ]; then
+  echo "qemu_2in1_full_source profile requires --device-type 2in1" >&2
+  exit 2
+fi
+if [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ] && [ "${DEVICE_TYPE}" != "phone" ]; then
+  echo "qemu_phone_full_source profile requires --device-type phone" >&2
   exit 2
 fi
 sed_in_place_extended() {
@@ -1226,7 +1282,14 @@ refresh_package_checksums() {
   local package_dir="$1"
   (
     cd "${package_dir}"
-    find images launch -type f -print0 2>/dev/null | sort -z | xargs -0 shasum -a 256 > SHA256SUMS
+    find images launch -type f -print0 2>/dev/null \
+      | sort -z \
+      | xargs -0 shasum -a 256 > SHA256SUMS
+    for metadata in manifest.json device-profile.json README.md; do
+      if [ -f "${metadata}" ]; then
+        shasum -a 256 "${metadata}" >> SHA256SUMS
+      fi
+    done
   )
 }
 
@@ -1533,6 +1596,12 @@ inject_standard_qemu_params() {
 
   if [ "${INJECT_DEVELOPER_MODE_PARAM:-1}" = "1" ]; then
     replace_or_append_param "${ohos_para}" "const.security.developermode.state" "const.security.developermode.state=true"
+  fi
+  if [ -n "${DEVICE_TYPE:-}" ]; then
+    replace_or_append_param "${ohos_para}" \
+      "const.product.devicetype" "const.product.devicetype=${DEVICE_TYPE}"
+    replace_or_append_param "${ohos_para}" \
+      "const.build.characteristics" "const.build.characteristics=${DEVICE_TYPE}"
   fi
   replace_or_append_param "${hdc_para}" "persist.hdc.mode.usb" 'persist.hdc.mode.usb = "disable"'
   replace_or_append_param "${hdc_para}" "persist.hdc.mode.tcp" 'persist.hdc.mode.tcp = "enable"'
@@ -1913,6 +1982,190 @@ verify_standard_vpn_capability() {
   echo "standard VPN capability verified for ${product}"
 }
 
+write_full_device_profile_evidence() {
+  local source_root="$1"
+  local product="$2"
+  local package_dir="$3"
+  local system_image="$4"
+  local sys_prod_image="$5"
+
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_2in1_full_source|qemu_phone_full_source) ;;
+    *) return ;;
+  esac
+
+  python3 - "${source_root}" "${product}" "${package_dir}/device-profile.json" \
+    "${DEVICE_TYPE_PROFILE}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+product = sys.argv[2]
+output = Path(sys.argv[3])
+profile_name = sys.argv[4]
+configs = {
+    "arm64_virt": "vendor/ohemu/qemu_arm64_linux_full/config.json",
+    "x86_64_virt": "vendor/ohemu/qemu_x86_64_linux_full/config.json",
+    "armv7a_virt": "vendor/ohemu/qemu_armv7a_linux_full/config.json",
+}
+profiles = {
+    "qemu_2in1_full_source": {
+        "device_type": "2in1",
+        "effective_profile": "vendor/ohemu/virt/virt_2in1_full.json",
+        "metadata": "vendor/ohemu/virt/virt_2in1_full.meta.json",
+        "upstream": "productdefine/common/inherit/2in1.json",
+    },
+    "qemu_phone_full_source": {
+        "device_type": "phone",
+        "effective_profile": "vendor/ohemu/virt/virt_phone_full.json",
+        "metadata": "vendor/ohemu/virt/virt_phone_full.meta.json",
+        "upstream": "productdefine/common/inherit/phone.json",
+    },
+}
+profile = profiles[profile_name]
+device_type = profile["device_type"]
+effective_profile = profile["effective_profile"]
+metadata_path = root / profile["metadata"]
+upstream_path = root / profile["upstream"]
+product_param_path = root / "vendor/ohemu/virt/etc/param/product_virt.para"
+parts_path = root / "out/preloader" / product / "parts.json"
+features_path = root / "out/preloader" / product / "features.json"
+config_path = root / configs[product]
+app_compatibility_parameter = "const.bms.supportAppTypes=2in1,phone,default,tablet"
+
+for path in (
+    metadata_path,
+    upstream_path,
+    product_param_path,
+    parts_path,
+    features_path,
+    config_path,
+):
+    if not path.is_file():
+        raise SystemExit(f"full {device_type} package evidence is missing: {path}")
+
+metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+config = json.loads(config_path.read_text(encoding="utf-8"))
+parts_document = json.loads(parts_path.read_text(encoding="utf-8"))
+features_document = json.loads(features_path.read_text(encoding="utf-8"))
+inherit = config.get("inherit", [])
+if effective_profile not in inherit:
+    raise SystemExit(f"{config_path} does not inherit {effective_profile}")
+if "productdefine/common/inherit/rich.json" not in inherit:
+    raise SystemExit(f"{config_path} lost the rich base profile")
+if metadata.get("profile") != profile_name:
+    raise SystemExit(f"invalid full {device_type} metadata: {metadata_path}")
+if metadata.get("app_compatibility_parameter") != app_compatibility_parameter:
+    raise SystemExit(f"full {device_type} metadata is missing the QEMU system-app compatibility parameter")
+product_params = product_param_path.read_text(encoding="utf-8").splitlines()
+if app_compatibility_parameter not in product_params:
+    raise SystemExit(f"{product_param_path} is missing {app_compatibility_parameter}")
+upstream_sha256 = hashlib.sha256(upstream_path.read_bytes()).hexdigest()
+if metadata.get("upstream_sha256") != upstream_sha256:
+    raise SystemExit(f"{device_type} profile metadata does not match its current upstream profile")
+
+parts = sorted(parts_document.get("parts", []))
+required_parts = sorted(metadata.get("required_parts", []))
+missing_parts = sorted(set(required_parts) - set(parts))
+if missing_parts:
+    raise SystemExit(f"resolved product is missing full {device_type} parts: " + ", ".join(missing_parts))
+
+features = features_document.get("features", {})
+required_features = {
+    "ace_engine_feature_enable_accessibility": True,
+    "ace_engine_feature_enable_web": True,
+    "drivers_interface_display_community": True,
+    "drivers_interface_display_vdi_default": True,
+    "memmgr_purgeable_memory": True,
+    "wifi_feature_non_hdf_driver": True,
+    "wifi_feature_non_seperate_p2p": True,
+}
+for name, expected in required_features.items():
+    if features.get(name) is not expected:
+        raise SystemExit(f"resolved {device_type} feature {name} is not {expected}")
+if features.get("memmgr_hyperhold_memory") is True:
+    raise SystemExit(f"resolved {device_type} profile unexpectedly enables memmgr hyperhold")
+
+evidence = {
+    "schema_version": 1,
+    "device_type": device_type,
+    "profile": profile_name,
+    "product": product,
+    "product_config": configs[product],
+    "inherit": inherit,
+    "upstream_profile": metadata["upstream_profile"],
+    "upstream_sha256": upstream_sha256,
+    "effective_profile": effective_profile,
+    "strategy": metadata["strategy"],
+    "qemu_adaptations": {
+        "omitted_unavailable_legacy_components": metadata.get(
+            "omitted_unavailable_legacy_components", []
+        ),
+        "mapped_components": metadata.get("mapped_components", []),
+        "app_compatibility_parameter": app_compatibility_parameter,
+    },
+    "required_parts": required_parts,
+    "resolved_parts_count": len(parts),
+    "resolved_parts": parts,
+    "validated_features": {name: features[name] for name in required_features},
+    "memmgr_hyperhold_memory": features.get("memmgr_hyperhold_memory", False),
+}
+output.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+
+  require_image_path "${system_image}" "${DEVICE_TYPE} UI appearance service" \
+    /system/lib64/libui_appearance_service.z.so \
+    /system/lib/libui_appearance_service.z.so \
+    /lib64/libui_appearance_service.z.so \
+    /lib/libui_appearance_service.z.so
+  require_image_path "${system_image}" "${DEVICE_TYPE} input automation tool" \
+    /system/bin/wukong \
+    /bin/wukong
+  require_image_path "${system_image}" "native package manager" \
+    /system/bin/hnp \
+    /bin/hnp
+  require_image_path "${system_image}" "${DEVICE_TYPE}-compatible Launcher system application" \
+    /system/app/com.ohos.launcher/Launcher.hap \
+    /app/com.ohos.launcher/Launcher.hap
+  require_image_path "${system_image}" "${DEVICE_TYPE}-compatible SystemUI system application" \
+    /system/app/com.ohos.systemui \
+    /app/com.ohos.systemui
+  require_image_file_contains "${sys_prod_image}" \
+    "BMS compatibility for current QEMU system applications on ${DEVICE_TYPE}" \
+    "const.bms.supportAppTypes=2in1,phone,default,tablet" \
+    /etc/param/product_virt.para \
+    /sys_prod/etc/param/product_virt.para
+
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
+    require_image_path "${system_image}" "2in1 DLP manager application" \
+      /system/app/com.ohos.dlpmanager \
+      /app/com.ohos.dlpmanager
+    require_image_path "${system_image}" "2in1 DLP permission service" \
+      /system/lib64/libdlp_permission_service.z.so \
+      /system/lib/libdlp_permission_service.z.so \
+      /lib64/libdlp_permission_service.z.so \
+      /lib/libdlp_permission_service.z.so
+  else
+    require_image_path "${system_image}" "phone Camera application" \
+      /system/app/com.ohos.camera \
+      /app/com.ohos.camera
+    require_image_path "${system_image}" "phone Photos application" \
+      /system/app/com.ohos.photos \
+      /app/com.ohos.photos
+    require_image_path "${system_image}" "phone Contacts application" \
+      /system/app/com.ohos.contacts \
+      /app/com.ohos.contacts
+    require_image_path "${system_image}" "phone telephony core service" \
+      /system/lib64/libtel_core_service.z.so \
+      /system/lib/libtel_core_service.z.so \
+      /lib64/libtel_core_service.z.so \
+      /lib/libtel_core_service.z.so
+  fi
+  echo "full ${DEVICE_TYPE} source profile and runtime artifacts verified for ${product}"
+}
+
 case "${PRODUCT}" in
   armv7a_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
@@ -1986,11 +2239,28 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
 fi
 
 PACKAGE_NAME="openharmony-qemu-${GUEST_ARCH}-${PRODUCT}"
+if [ -n "${DEVICE_TYPE}" ] && [ "${DEVICE_TYPE_NAME_SUFFIX:-1}" != "0" ]; then
+  PACKAGE_NAME="${PACKAGE_NAME}-${DEVICE_TYPE}"
+fi
 PACKAGE_DIR="${OUTPUT_DIR}/${PACKAGE_NAME}"
 IMAGES_OUT="${PACKAGE_DIR}/images"
 LAUNCH_OUT="${PACKAGE_DIR}/launch"
 STANDARD_VPN_VERIFIED=false
 VPN_AUTHORIZATION_MODE=unverified
+MANIFEST_DEVICE_TYPE="${DEVICE_TYPE:-default}"
+MANIFEST_DEVICE_TYPE_SOURCE=default
+MANIFEST_DEVICE_TYPE_PARAM_ONLY=false
+MANIFEST_DEVICE_TYPE_FULL=false
+case "${DEVICE_TYPE_PROFILE}" in
+  param_only)
+    MANIFEST_DEVICE_TYPE_SOURCE=build_parameter
+    MANIFEST_DEVICE_TYPE_PARAM_ONLY=true
+    ;;
+  qemu_2in1_full_source|qemu_phone_full_source)
+    MANIFEST_DEVICE_TYPE_SOURCE=source_product_inherit
+    MANIFEST_DEVICE_TYPE_FULL=true
+    ;;
+esac
 
 rm -rf "${PACKAGE_DIR}"
 mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}"
@@ -2013,6 +2283,12 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${PRODUCT}" \
     "${IMAGES_OUT}/system.img" \
     "${IMAGES_OUT}/userdata.img"
+  write_full_device_profile_evidence \
+    "${SOURCE_ROOT}" \
+    "${PRODUCT}" \
+    "${PACKAGE_DIR}" \
+    "${IMAGES_OUT}/system.img" \
+    "${IMAGES_OUT}/sys_prod.img"
 fi
 
 launcher_defaults_for_product "${PRODUCT}"
@@ -2021,6 +2297,9 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   "product": "${PRODUCT}",
   "guest_arch": "${GUEST_ARCH}",
   "kernel": "${KERNEL_FILE}",
+  "device_type": "${MANIFEST_DEVICE_TYPE}",
+  "device_type_profile": "${DEVICE_TYPE_PROFILE}",
+  "device_type_source": "${MANIFEST_DEVICE_TYPE_SOURCE}",
   "qemu_unix": "${QEMU_BIN_UNIX}",
   "qemu_windows": "${QEMU_BIN_WIN}",
   "display_default": "${DISPLAY_DEFAULT}",
@@ -2037,7 +2316,11 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "userdata_filesystem": "f2fs",
     "userdata_code_sign_ioctl": ${STANDARD_VPN_VERIFIED},
     "developer_device": ${STANDARD_VPN_VERIFIED},
-    "vpn_authorization": "${VPN_AUTHORIZATION_MODE}"
+    "vpn_authorization": "${VPN_AUTHORIZATION_MODE}",
+    "device_type": "${MANIFEST_DEVICE_TYPE}",
+    "device_type_profile": "${DEVICE_TYPE_PROFILE}",
+    "device_type_param_only": ${MANIFEST_DEVICE_TYPE_PARAM_ONLY},
+    "device_type_full": ${MANIFEST_DEVICE_TYPE_FULL}
   }
 }
 EOF
@@ -2060,7 +2343,15 @@ refresh_package_checksums "${PACKAGE_DIR}"
 
 (
   cd "${OUTPUT_DIR}"
-  tar -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+  # Avoid macOS AppleDouble forks and prefer sparse-aware GNU tar when present.
+  export COPYFILE_DISABLE=1
+  if command -v gtar >/dev/null 2>&1; then
+    gtar --format=gnu -Sczf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+  elif tar --help 2>&1 | grep -q -- '--no-mac-metadata'; then
+    tar --no-mac-metadata -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+  else
+    tar -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+  fi
 )
 
 echo "${PACKAGE_DIR}"

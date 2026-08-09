@@ -33,6 +33,9 @@ Environment:
   KERNEL_BUILD_JOBS   nested kernel make jobs, default: BUILD_JOBS
   CCACHE_MAXSIZE      ccache size limit, default: 100G
   CCACHE_DIR          ccache directory, default: $CACHE_ROOT/ccache
+  QEMU_CCACHE_ON_OUT_VOLUME
+                      Put ccache and its temp files under out/.ccache. Use 1
+                      when out/ is a native Linux volume, default: 0.
   GIT_USER_NAME       Global git user.name, default: richerfu
   GIT_USER_EMAIL      Global git user.email, default: southorange0929@foxmail.com
   NPM_REGISTRY        npm registry, default: https://repo.huaweicloud.com/repository/npm/
@@ -70,6 +73,9 @@ Environment:
                        and combined headers when upstream case-distinct files
                        alias each other on a case-insensitive host filesystem,
                        default: 1
+  QEMU_FIX_MINDSPORE_NON_ARM_HWCAP
+                       Keep MindSpore's ARM-only asm/hwcap.h include out of
+                       x86_64 OHOS builds, default: 1
   QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY
                        Copy ArkGuard node_modules launchers as regular files
                        when staging across shared filesystems, default: 1
@@ -85,6 +91,23 @@ Environment:
   STANDARD_VPN_OVERLAY
                        Enable and validate the standard VpnExtension stack,
                        default: 1
+  QEMU_2IN1_FULL_OVERLAY
+                       For DEVICE_TYPE=2in1, add the source component/feature
+                       profile derived from productdefine 2in1.json. Values:
+                       auto (default), 1, or 0. A value of 0 produces only a
+                       parameter-level device type and is not a full profile.
+  QEMU_PHONE_FULL_OVERLAY
+                       For DEVICE_TYPE=phone, add the source component/feature
+                       profile derived from productdefine phone.json. Values:
+                       auto (default), 1, or 0.
+  PRUNE_PRODUCT_OUT_AFTER_PACKAGE
+                       Remove out/<product> after its verified package is
+                       archived. Useful for six-package matrix builds on a
+                       space-constrained Docker disk, default: 0.
+  DEVICE_TYPE         Pass --device-type to build.sh and packaging
+                       (default|phone|tablet|2in1|...), default: empty
+                       (OpenHarmony default remains "default"). When set to
+                       e.g. 2in1, packaged names gain a -2in1 suffix.
 
 Build environment:
   This script is intended to run inside a Docker container based on
@@ -108,6 +131,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
 ARMV7A_OVERLAY="${SCRIPT_DIR}/../overlays/armv7a_virt_full/apply.sh"
 VPN_OVERLAY="${SCRIPT_DIR}/../overlays/standard_qemu_vpn/apply.sh"
+QEMU_2IN1_OVERLAY="${SCRIPT_DIR}/../overlays/qemu_2in1_full/apply.sh"
+QEMU_PHONE_OVERLAY="${SCRIPT_DIR}/../overlays/qemu_phone_full/apply.sh"
 
 if [ ! -x "${PACKAGER}" ]; then
   echo "missing executable packager: ${PACKAGER}" >&2
@@ -152,11 +177,18 @@ QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS:-1}"
 QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION="${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION:-1}"
 QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN="${QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN:-1}"
 QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK="${QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK:-1}"
+QEMU_FIX_MINDSPORE_NON_ARM_HWCAP="${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP:-1}"
 QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY="${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY:-1}"
 QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR="${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR:-1}"
 QEMU_FIX_VIRTIOFS_KERNEL_COPY="${QEMU_FIX_VIRTIOFS_KERNEL_COPY:-1}"
+QEMU_CCACHE_ON_OUT_VOLUME="${QEMU_CCACHE_ON_OUT_VOLUME:-0}"
 ARMV7A_FULL_OVERLAY="${ARMV7A_FULL_OVERLAY:-1}"
 STANDARD_VPN_OVERLAY="${STANDARD_VPN_OVERLAY:-1}"
+QEMU_2IN1_FULL_OVERLAY="${QEMU_2IN1_FULL_OVERLAY:-auto}"
+QEMU_PHONE_FULL_OVERLAY="${QEMU_PHONE_FULL_OVERLAY:-auto}"
+PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
+DEVICE_TYPE="${DEVICE_TYPE:-}"
+DEVICE_TYPE_BUILD_PROFILE="${DEVICE_TYPE_BUILD_PROFILE:-}"
 PRODUCTS=("$@")
 
 if [ "${#PRODUCTS[@]}" -eq 0 ]; then
@@ -172,6 +204,12 @@ for product in "${PRODUCTS[@]}"; do
       ;;
   esac
 done
+
+if [ "${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" != "0" ] && \
+   [ "${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" != "1" ]; then
+  echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE must be 0 or 1" >&2
+  exit 2
+fi
 
 require_docker_ubuntu_2204() {
   if [ "$(uname -s)" != "Linux" ]; then
@@ -217,64 +255,80 @@ install_deps() {
 
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get install -y --no-install-recommends \
-    autoconf \
-    automake \
-    bc \
-    bison \
-    build-essential \
-    ca-certificates \
-    ccache \
-    cmake \
-    cpio \
-    curl \
-    default-jdk \
-    dosfstools \
-    e2fsprogs \
-    file \
-    flex \
-    g++ \
-    gcc \
-    gcc-arm-none-eabi \
-    genext2fs \
-    git \
-    git-lfs \
-    gettext \
-    gperf \
-    lib32stdc++6 \
-    lib32z1 \
-    libc6-dev-i386 \
-    libelf-dev \
-    libfl-dev \
-    libgmp-dev \
-    libmpc-dev \
-    libmpfr-dev \
-    libncurses5 \
-    libncurses5-dev \
-    libncursesw5-dev \
-    libssl-dev \
-    libxml2-utils \
-    libtool \
-    make \
-    mtd-utils \
-    mtools \
-    ninja-build \
-    openssh-client \
-    openssl \
-    pkg-config \
-    python-is-python3 \
-    python3 \
-    python3-pip \
-    python3-setuptools \
-    python3-venv \
-    rsync \
-    ruby \
-    scons \
-    unzip \
-    u-boot-tools \
-    wget \
-    zip \
+
+  # Host-arch package set. x86 multilib packages only exist on amd64 images.
+  local host_arch
+  host_arch="$(dpkg --print-architecture 2>/dev/null || uname -m)"
+  local -a apt_packages=(
+    autoconf
+    automake
+    bc
+    bison
+    build-essential
+    ca-certificates
+    ccache
+    cmake
+    cpio
+    curl
+    default-jdk
+    dosfstools
+    e2fsprogs
+    file
+    flex
+    g++
+    gcc
+    gcc-arm-none-eabi
+    genext2fs
+    git
+    git-lfs
+    gettext
+    gperf
+    libelf-dev
+    libfl-dev
+    libgmp-dev
+    libmpc-dev
+    libmpfr-dev
+    libncurses5
+    libncurses5-dev
+    libncursesw5-dev
+    libssl-dev
+    libxml2-utils
+    libtool
+    make
+    mtd-utils
+    mtools
+    ninja-build
+    openssh-client
+    openssl
+    pkg-config
+    python-is-python3
+    python3
+    python3-pip
+    python3-setuptools
+    python3-venv
+    rsync
+    ruby
+    scons
+    unzip
+    u-boot-tools
+    wget
+    zip
     zlib1g-dev
+  )
+  case "${host_arch}" in
+    amd64|x86_64|i386)
+      apt_packages+=(
+        lib32stdc++6
+        lib32z1
+        libc6-dev-i386
+      )
+      ;;
+    *)
+      echo "host architecture ${host_arch}: skipping x86 multilib apt packages"
+      ;;
+  esac
+
+  apt-get install -y --no-install-recommends "${apt_packages[@]}"
 
   command -v git >/dev/null
   command -v ssh >/dev/null
@@ -286,11 +340,40 @@ install_deps() {
   git lfs install --system >/dev/null 2>&1 || true
 }
 
+verify_armv7_kernel_host_deps() {
+  local product
+  local needs_armv7=0
+  for product in "${PRODUCTS[@]}"; do
+    if [ "${product}" = "armv7a_virt" ]; then
+      needs_armv7=1
+      break
+    fi
+  done
+  if [ "${needs_armv7}" != "1" ]; then
+    return
+  fi
+
+  # Linux 6.6 enables an ARM GCC host plugin whose GCC-provided headers
+  # include <gmp.h>.  Most OHOS targets do not exercise this path, so a stale
+  # dependency image can otherwise fail hours into an armv7 build.
+  if ! printf '#include <gmp.h>\n' | c++ -E -x c++ - >/dev/null 2>&1; then
+    echo "armv7a_virt kernel build requires the host GMP header (libgmp-dev)" >&2
+    echo "rerun with SKIP_APT=0 or refresh the Docker dependency image" >&2
+    exit 1
+  fi
+}
+
 ensure_python_module() {
   local python_bin="$1"
   local module="$2"
   local package="$3"
   if ! command -v "${python_bin}" >/dev/null 2>&1 && [ ! -x "${python_bin}" ]; then
+    return
+  fi
+  # Skip host-prebuilt interpreters that cannot actually execute on this
+  # container (e.g. linux-x86 python on a pure arm64 image without multiarch).
+  if ! "${python_bin}" -c 'import sys' >/dev/null 2>&1; then
+    echo "skip unusable python interpreter: ${python_bin}"
     return
   fi
   if "${python_bin}" - "${module}" <<'PY' >/dev/null 2>&1
@@ -490,6 +573,40 @@ prepare_checkout() {
     sleep 20
     attempt=$((attempt + 1))
   done
+}
+
+configure_out_volume_ccache() {
+  if [ "${QEMU_CCACHE_ON_OUT_VOLUME}" != "1" ]; then
+    return
+  fi
+
+  # hb's --ccache resolver intentionally replaces CCACHE_DIR with
+  # $CCACHE_BASE/$CCACHE_LOCAL_DIR. On a macOS bind mount this eventually
+  # exhausts VirtioFS file handles even when the container nofile limit is
+  # high. Keep both the cache and temporary files on the native Linux out
+  # volume used by the full 2in1 build.
+  local native_ccache="${OHOS_ROOT}/out/.ccache"
+  local native_tmp="${OHOS_ROOT}/out/.ccache-tmp"
+  local seed_marker="${native_ccache}/.ohos-qemu-host-cache-seeded"
+  mkdir -p "${native_ccache}" "${native_tmp}"
+
+  if [ ! -f "${seed_marker}" ]; then
+    local source_cache
+    for source_cache in "${CONTAINER_HOME}/.ccache" "${CCACHE_DIR}"; do
+      if [ -d "${source_cache}" ] && [ "${source_cache}" != "${native_ccache}" ]; then
+        echo "seed native Linux ccache from ${source_cache}"
+        rsync -a --ignore-existing "${source_cache}/" "${native_ccache}/"
+      fi
+    done
+    touch "${seed_marker}"
+  fi
+
+  CCACHE_BASE="${OHOS_ROOT}/out"
+  CCACHE_LOCAL_DIR=.ccache
+  CCACHE_TEMPDIR="${native_tmp}"
+  CCACHE_DIR="${native_ccache}"
+  export CCACHE_BASE CCACHE_LOCAL_DIR CCACHE_TEMPDIR CCACHE_DIR
+  echo "ccache native volume: ${CCACHE_DIR} (temp: ${CCACHE_TEMPDIR})"
 }
 
 sync_git_lfs_objects() {
@@ -802,6 +919,21 @@ build_product() {
   export OHOS_KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS}"
   ccache -M "${CCACHE_MAXSIZE}" >/dev/null 2>&1 || true
 
+  # A component-profile change must not reuse a target graph or case-collided
+  # Taihe outputs from an earlier build. The host runner mounts out/ on a
+  # case-sensitive Linux volume; this stamp also makes profile switches safe.
+  local profile_stamp="${OHOS_ROOT}/out/.ohos-qemu-build-profile-${product}"
+  local previous_profile=""
+  if [ -f "${profile_stamp}" ]; then
+    previous_profile="$(<"${profile_stamp}")"
+  fi
+  if [ -n "${previous_profile}" ] && [ "${previous_profile}" != "${DEVICE_TYPE_BUILD_PROFILE}" ]; then
+    echo "device profile changed for ${product}: ${previous_profile} -> ${DEVICE_TYPE_BUILD_PROFILE}; clean product output"
+    rm -rf "${OHOS_ROOT}/out/${product}" "${OHOS_ROOT}/out/preloader/${product}"
+  fi
+  mkdir -p "${OHOS_ROOT}/out"
+  printf '%s\n' "${DEVICE_TYPE_BUILD_PROFILE}" > "${profile_stamp}"
+
   # Recent hb versions persist list-valued arguments in out/hb_args and append
   # the next invocation's values. Without clearing the generated default here,
   # sequential product builds can execute Ninja with multiple conflicting -j
@@ -837,23 +969,40 @@ PY
     --load-test-config=false
     --deps-guard=false
   )
+  if [ -n "${DEVICE_TYPE}" ]; then
+    # Ensure GN sees device_type at compile time (init ohos.para generation).
+    # --device-type is a post-image rewrite in hb and cannot run in
+    # --build-only-load mode because packages/phone/.../ohos.para does not yet
+    # exist.  The packager performs the same final-image rewrite as a verified
+    # step, while this GN arg keeps the compile-time device type available.
+    build_args+=(--gn-args "device_type=${DEVICE_TYPE}")
+    if [ "${BUILD_ONLY_LOAD}" != "1" ]; then
+      build_args+=(--device-type "${DEVICE_TYPE}")
+    fi
+  fi
   if [ "${NO_PREBUILT_SDK}" = "1" ]; then
     build_args+=(--no-prebuilt-sdk=true)
   fi
   if [ "${BUILD_ONLY_LOAD}" = "1" ]; then
     build_args+=(--build-only-load=true)
   fi
-  "${build_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/build_${product}.log"
+  "${build_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
 }
 
 package_product() {
   local product="$1"
   validate_prebuilt_haps "${product}"
-  bash "${PACKAGER}" \
-    --source-root "${OHOS_ROOT}" \
-    --product "${product}" \
-    --output-dir "${PACKAGE_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/package_${product}.log"
+  local package_args=(
+    bash "${PACKAGER}"
+    --source-root "${OHOS_ROOT}"
+    --product "${product}"
+    --output-dir "${PACKAGE_ROOT}"
+  )
+  if [ -n "${DEVICE_TYPE}" ]; then
+    package_args+=(--device-type "${DEVICE_TYPE}")
+  fi
+  package_args+=(--device-type-profile "${DEVICE_TYPE_BUILD_PROFILE}")
+  "${package_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/package_${product}_${DEVICE_TYPE:-default}.log"
 }
 
 validate_prebuilt_haps() {
@@ -898,6 +1047,64 @@ product_list_contains() {
     fi
   done
   return 1
+}
+
+configure_qemu_device_profile() {
+  local profile_args=()
+  local product
+  for product in "${PRODUCTS[@]}"; do
+    profile_args+=(--product "${product}")
+  done
+
+  for overlay in "${QEMU_2IN1_OVERLAY}" "${QEMU_PHONE_OVERLAY}"; do
+    if [ ! -f "${overlay}" ]; then
+      echo "missing QEMU device profile overlay: ${overlay}" >&2
+      exit 1
+    fi
+  done
+
+  case "${QEMU_2IN1_FULL_OVERLAY}" in auto|0|1) ;; *)
+    echo "unsupported QEMU_2IN1_FULL_OVERLAY=${QEMU_2IN1_FULL_OVERLAY}; expected auto, 1, or 0" >&2
+    exit 2
+  esac
+  case "${QEMU_PHONE_FULL_OVERLAY}" in auto|0|1) ;; *)
+    echo "unsupported QEMU_PHONE_FULL_OVERLAY=${QEMU_PHONE_FULL_OVERLAY}; expected auto, 1, or 0" >&2
+    exit 2
+  esac
+  if [ "${QEMU_2IN1_FULL_OVERLAY}" = "1" ] && [ "${DEVICE_TYPE}" != "2in1" ]; then
+    echo "QEMU_2IN1_FULL_OVERLAY=1 requires DEVICE_TYPE=2in1" >&2
+    exit 2
+  fi
+  if [ "${QEMU_PHONE_FULL_OVERLAY}" = "1" ] && [ "${DEVICE_TYPE}" != "phone" ]; then
+    echo "QEMU_PHONE_FULL_OVERLAY=1 requires DEVICE_TYPE=phone" >&2
+    exit 2
+  fi
+
+  # A product may inherit only one generated device profile. Disable both for
+  # the selected products before enabling the requested source profile.
+  bash "${QEMU_2IN1_OVERLAY}" --source-root "${OHOS_ROOT}" --disable \
+    "${profile_args[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_2in1_full_overlay.log"
+  bash "${QEMU_PHONE_OVERLAY}" --source-root "${OHOS_ROOT}" --disable \
+    "${profile_args[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_phone_full_overlay.log"
+
+  if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_FULL_OVERLAY}" != "0" ]; then
+    DEVICE_TYPE_BUILD_PROFILE=qemu_2in1_full_source
+    bash "${QEMU_2IN1_OVERLAY}" --source-root "${OHOS_ROOT}" \
+      "${profile_args[@]}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_2in1_full_overlay.log"
+  elif [ "${DEVICE_TYPE}" = "phone" ] && [ "${QEMU_PHONE_FULL_OVERLAY}" != "0" ]; then
+    DEVICE_TYPE_BUILD_PROFILE=qemu_phone_full_source
+    bash "${QEMU_PHONE_OVERLAY}" --source-root "${OHOS_ROOT}" \
+      "${profile_args[@]}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_phone_full_overlay.log"
+  elif [ -n "${DEVICE_TYPE}" ]; then
+    DEVICE_TYPE_BUILD_PROFILE=param_only
+  else
+    DEVICE_TYPE_BUILD_PROFILE=default
+  fi
+  export DEVICE_TYPE_BUILD_PROFILE
 }
 
 apply_armv7a_full_overlay() {
@@ -1113,6 +1320,41 @@ fix_case_insensitive_kernel_netfilter() {
     --source-root "${OHOS_ROOT}"
 }
 
+fix_mindspore_non_arm_hwcap_header() {
+  if [ "${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP}" != "1" ]; then
+    return
+  fi
+
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+source = source_root / (
+    "third_party/mindspore/mindspore-src/source/mindspore-lite/"
+    "src/common/utils.cc"
+)
+text = source.read_text()
+original = """#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#endif
+"""
+replacement = """#if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)
+#include <sys/auxv.h>
+#ifdef ENABLE_ARM64
+#include <asm/hwcap.h>
+#endif
+#endif
+"""
+if original in text:
+    source.write_text(text.replace(original, replacement, 1))
+elif replacement not in text:
+    raise SystemExit(f"unexpected MindSpore hwcap include layout in {source}")
+print(f"configured non-ARM MindSpore hwcap compatibility in {source}")
+PY
+}
+
 fix_virtiofs_node_symlink_copy() {
   if [ "${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY}" != "1" ]; then
     return
@@ -1236,19 +1478,36 @@ source_root = Path(sys.argv[1])
 script = source_root / "device/qemu/common/virt_full/kernel/build_kernel.sh"
 text = script.read_text()
 original_text = text
-original = '''    rm -rf ${KERNEL_BUILD_ROOT}
+# Prefer rsync over tar/cp -rL: VirtioFS + tar can hit EMFILE ("Too many open
+# files") when packing the full kernel tree. rsync streams file-by-file.
+rsync_replacement = '''    rm -rf "${KERNEL_BUILD_ROOT}"
+    mkdir -p "${KERNEL_BUILD_ROOT}"
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -a --delete --copy-links --exclude='.git' \\
+            "${KERNEL_SOURCE_DIR}/" "${KERNEL_BUILD_ROOT}/"
+    else
+        tar --exclude='./.git' --exclude='.git' \\
+            -C "${KERNEL_SOURCE_DIR}" -chf - . \\
+            | tar -C "${KERNEL_BUILD_ROOT}" -xf -
+    fi
+'''
+legacy_cp = '''    rm -rf ${KERNEL_BUILD_ROOT}
     mkdir -p ${OHOS_SOURCE_ROOT}/out/kernel/OBJ
     cp -rL ${KERNEL_SOURCE_DIR}  ${KERNEL_BUILD_ROOT}
 '''
-replacement = '''    rm -rf "${KERNEL_BUILD_ROOT}"
+legacy_tar = '''    rm -rf "${KERNEL_BUILD_ROOT}"
     mkdir -p "${KERNEL_BUILD_ROOT}"
     tar --exclude='./.git' --exclude='.git' \\
         -C "${KERNEL_SOURCE_DIR}" -chf - . \\
         | tar -C "${KERNEL_BUILD_ROOT}" -xf -
 '''
-if original in text:
-    text = text.replace(original, replacement, 1)
-elif replacement not in text:
+if rsync_replacement in text:
+    pass
+elif legacy_tar in text:
+    text = text.replace(legacy_tar, rsync_replacement, 1)
+elif legacy_cp in text:
+    text = text.replace(legacy_cp, rsync_replacement, 1)
+else:
     raise SystemExit(f"unexpected kernel copy layout in {script}")
 old_jobs = "    make ${MAKE_OPTIONS} -j$(nproc)\n"
 new_jobs = '    make ${MAKE_OPTIONS} -j"${OHOS_KERNEL_BUILD_JOBS:-$(nproc)}"\n'
@@ -1906,21 +2165,27 @@ main() {
   echo "qemu fix case-insensitive selinux VERSION: ${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION}"
   echo "qemu fix case-insensitive XMP Endian.h: ${QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN}"
   echo "qemu fix case-insensitive iptables variants: ${QEMU_FIX_CASE_INSENSITIVE_IPTABLES_CONNMARK}"
+  echo "qemu fix MindSpore non-ARM hwcap include: ${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP}"
   echo "qemu fix VirtioFS node symlink copy: ${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY}"
   echo "qemu serialize shared Arkoala generator: ${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR}"
   echo "qemu fix VirtioFS kernel worktree copy: ${QEMU_FIX_VIRTIOFS_KERNEL_COPY}"
+  echo "ccache on native out volume: ${QEMU_CCACHE_ON_OUT_VOLUME}"
   echo "armv7a full overlay: ${ARMV7A_FULL_OVERLAY}"
   echo "standard VPN overlay: ${STANDARD_VPN_OVERLAY}"
+  echo "QEMU full 2in1 overlay: ${QEMU_2IN1_FULL_OVERLAY}"
+  echo "device type: ${DEVICE_TYPE:-default (unset)}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} standard_vpn=${STANDARD_VPN_OVERLAY}"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_OVERLAY}"
 
   raise_nofile_limit
   install_deps
+  verify_armv7_kernel_host_deps
   ensure_python_modules
   configure_user_tools
   ensure_host_tools
   ensure_repo_tool
   prepare_checkout
+  configure_out_volume_ccache
   sync_git_lfs_objects
   verify_git_lfs_objects
   prepare_ets12_separate_npm_install
@@ -1934,12 +2199,17 @@ main() {
   ensure_python_modules
   ensure_hvigor_sdkmanager_common
   ensure_ohos_sdk_ets_loader_modules
+  # armv7a_virt is generated from the arm64 product template. Generate it
+  # before applying the managed phone/2in1 inheritance; otherwise the armv7
+  # overlay recreates config.json and silently drops the selected profile.
   apply_armv7a_full_overlay
+  configure_qemu_device_profile
   apply_standard_vpn_overlay
   fix_case_insensitive_selinux_version_header
   fix_case_insensitive_xmp_endian_header
   fix_case_insensitive_iptables_variants
   fix_case_insensitive_kernel_netfilter
+  fix_mindspore_non_arm_hwcap_header
   fix_virtiofs_node_symlink_copy
   serialize_shared_arkoala_generator
   fix_virtiofs_kernel_source_copy
@@ -1952,6 +2222,10 @@ main() {
     build_product "${product}"
     if [ "${BUILD_ONLY_LOAD}" != "1" ]; then
       package_product "${product}"
+      if [ "${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" = "1" ]; then
+        echo "prune packaged product output to conserve disk: out/${product}"
+        remove_under_ohos_root "${OHOS_ROOT}/out/${product}"
+      fi
     fi
   done
 

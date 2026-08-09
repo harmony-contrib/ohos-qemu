@@ -125,6 +125,89 @@ package is marked with `"standard_vpn": true` only after those checks pass.
 The guest VPN uses `/dev/tun` inside OpenHarmony and does not require a host
 TAP device when the default QEMU user-mode network is used.
 
+## Phone and 2in1 deviceType package matrix
+
+The matrix entry point builds both full source profiles for all three supported
+standard QEMU architectures and emits exactly six suffixed packages:
+
+```bash
+PACKAGE_ROOT=/Volumes/PSSD/qemu/packages/device-matrix \
+BUILD_JOBS=12 KERNEL_BUILD_JOBS=6 \
+scripts/run_device_type_matrix_build_docker.sh
+```
+
+The matrix is `phone,2in1` × `armv7a_virt,arm64_virt,x86_64_virt`. It is
+restartable (`MATRIX_SKIP_EXISTING=1` by default), strictly verifies every
+package, and writes `SHA256SUMS` plus `matrix-manifest.json`. It uses one native
+Linux source/out volume and defaults to pruning `out/<product>` immediately
+after its package is archived, while retaining ccache and kernel objects. This
+keeps the six-package build usable on hosts that cannot hold six complete Ninja
+trees at once. Set `PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0` only when enough Docker
+disk space is available.
+
+Complete phone packages inherit a current-tree-compatible profile derived from
+`productdefine/common/inherit/phone.json`; complete 2in1 packages use the same
+strategy with `2in1.json`. Both retain the QEMU `rich.json` base and board
+display adaptations, and both carry auditable resolved-part evidence.
+
+## 2in1 deviceType packages
+
+Complete **deviceType=2in1** QEMU packages are source-built. The QEMU product
+keeps its existing `rich.json` base (applications, SDK, code signing, and VPN)
+and then inherits a current-tree-compatible profile derived from
+`productdefine/common/inherit/2in1.json`. Shared parts use the 2in1 feature
+selection, while QEMU-specific board/display requirements remain enabled.
+
+```bash
+# macOS/Apple Silicon host with Docker or OrbStack. OpenHarmony's host
+# prebuilts require the default linux/amd64 container.
+PRODUCTS=arm64_virt \
+PACKAGE_ROOT=/Volumes/PSSD/qemu/packages/2in1-full \
+scripts/run_2in1_full_build_docker.sh
+```
+
+The runner mounts the checkout and `out/` on the case-sensitive Docker volumes
+`ohos-qemu-2in1-source` and `ohos-qemu-2in1-out`. The source volume is seeded
+once from the host checkout (excluding its `out/`), while the output volume is
+reused incrementally. This is required on macOS: Taihe generates case-distinct
+paths such as `SourceType` and `sourceType`, and a full compile can exhaust
+VirtioFS file handles while reading the checkout. Ccache and its temporary
+files also live in the output volume.
+
+Set `DOCKER_SOURCE_REFRESH=1` for one invocation after intentionally updating
+the host OpenHarmony checkout. The refresh preserves the separate output
+volume, so valid Ninja objects remain reusable when their inputs are unchanged.
+
+Each complete package contains `device-profile.json`, including the upstream
+2in1 profile hash, effective inherit chain, resolved part list, compatibility
+adaptations, and validated 2in1/QEMU feature flags. Packaging also requires the
+DLP manager/service, UI appearance service, Wukong, HNP, Launcher, and SystemUI
+runtime artifacts. The source overlay also installs
+`const.bms.supportAppTypes=2in1,phone,default,tablet` in the QEMU product parameters:
+the current signed Launcher/SystemUI HAPs advertise `default/tablet`, and BMS
+needs this compatibility list to register them and complete first-user account
+activation when the runtime device type is `2in1`.
+
+Offline verification:
+
+```bash
+scripts/verify_device_type_package.sh \
+  --package /path/to/openharmony-qemu-arm64-arm64_virt-2in1 \
+  --expect-device-type 2in1 \
+  --require-full-2in1
+
+scripts/verify_device_type_package.sh \
+  --package /path/to/openharmony-qemu-arm64-arm64_virt-phone \
+  --expect-device-type phone \
+  --require-full-phone
+```
+
+`scripts/repackage_device_type.sh` remains available for compatibility testing,
+but it only injects system parameters into an existing image and marks the
+result `device_type_profile=param_only`. Such a package is not considered a
+complete 2in1 build and fails `--require-full-2in1`. CI coverage for both paths
+is in `ci/device-type/test.sh`.
+
 ## License
 
 [MIT](./LICENSE)
