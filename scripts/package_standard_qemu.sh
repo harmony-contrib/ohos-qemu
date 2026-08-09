@@ -257,6 +257,7 @@ launcher_defaults_for_product() {
       LAUNCHER_DEFAULT_SMP=4
       LAUNCHER_DEFAULT_MEMORY=3072
       LAUNCHER_DEFAULT_DISPLAY=none
+      LAUNCHER_DEFAULT_CPU=cortex-a7
       LAUNCHER_QEMU_UNIX=qemu-system-arm
       LAUNCHER_QEMU_WIN=qemu-system-arm.exe
       ;;
@@ -264,6 +265,7 @@ launcher_defaults_for_product() {
       LAUNCHER_DEFAULT_SMP=4
       LAUNCHER_DEFAULT_MEMORY=4096
       LAUNCHER_DEFAULT_DISPLAY=sdl
+      LAUNCHER_DEFAULT_CPU=max
       LAUNCHER_QEMU_UNIX=qemu-system-x86_64
       LAUNCHER_QEMU_WIN=qemu-system-x86_64.exe
       ;;
@@ -271,6 +273,7 @@ launcher_defaults_for_product() {
       LAUNCHER_DEFAULT_SMP=4
       LAUNCHER_DEFAULT_MEMORY=4096
       LAUNCHER_DEFAULT_DISPLAY=sdl
+      LAUNCHER_DEFAULT_CPU=cortex-a57
       LAUNCHER_QEMU_UNIX=qemu-system-aarch64
       LAUNCHER_QEMU_WIN=qemu-system-aarch64.exe
       ;;
@@ -278,6 +281,7 @@ launcher_defaults_for_product() {
       LAUNCHER_DEFAULT_SMP=4
       LAUNCHER_DEFAULT_MEMORY=1024
       LAUNCHER_DEFAULT_DISPLAY=none
+      LAUNCHER_DEFAULT_CPU=cortex-a57
       LAUNCHER_QEMU_UNIX=qemu-system-aarch64
       LAUNCHER_QEMU_WIN=qemu-system-aarch64.exe
       ;;
@@ -285,6 +289,7 @@ launcher_defaults_for_product() {
       LAUNCHER_DEFAULT_SMP=4
       LAUNCHER_DEFAULT_MEMORY=4096
       LAUNCHER_DEFAULT_DISPLAY=sdl
+      LAUNCHER_DEFAULT_CPU=max
       LAUNCHER_QEMU_UNIX=qemu-system-x86_64
       LAUNCHER_QEMU_WIN=qemu-system-x86_64.exe
       ;;
@@ -296,11 +301,28 @@ inject_launcher_resource_defaults() {
   local default_smp="$2"
   local default_mem="$3"
   local default_qemu_bin="$4"
+  local default_cpu="${5:-max}"
   local block
   local tmp
 
   # Upgrade previously-normalized launchers that already have resolution vars.
   if grep -q '^QEMU_XRES=' "${file}"; then
+    if ! grep -q '^QEMU_CPU=' "${file}"; then
+      tmp="$(mktemp)"
+      awk -v default_cpu="${default_cpu}" '
+        { print }
+        !done && /^QEMU_MEMORY=/ {
+          print "QEMU_CPU=\"${QEMU_CPU:-" default_cpu "}\""
+          done = 1
+        }
+        END { if (!done) exit 42 }
+      ' "${file}" >"${tmp}" || {
+        rm -f "${tmp}"
+        echo "unable to inject QEMU_CPU into ${file}" >&2
+        exit 1
+      }
+      mv "${tmp}" "${file}"
+    fi
     if ! grep -q '^QEMU_SERIAL_PORT=' "${file}"; then
       sed_in_place_extended \
         's|^(QEMU_VNC_DISPLAY=.*)$|\1\
@@ -327,6 +349,7 @@ QEMU_XRES="\${QEMU_XRES:-800}"
 QEMU_YRES="\${QEMU_YRES:-500}"
 QEMU_SMP="\${QEMU_SMP:-${default_smp}}"
 QEMU_MEMORY="\${QEMU_MEMORY:-${default_mem}}"
+QEMU_CPU="\${QEMU_CPU:-${default_cpu}}"
 QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-21}"
 QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
 QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
@@ -395,6 +418,7 @@ normalize_common_qemu_launcher() {
   local default_smp="${2:-4}"
   local default_mem="${3:-4096}"
   local default_qemu_bin="${4:-qemu-system-x86_64}"
+  local default_cpu="${5:-max}"
 
   sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${file}"
   if ! grep -q '^HDC_HOST_PORT=' "${file}"; then
@@ -441,7 +465,8 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   mv "${tmp_display}" "${file}"
 
   inject_launcher_resource_defaults \
-    "${file}" "${default_smp}" "${default_mem}" "${default_qemu_bin}"
+    "${file}" "${default_smp}" "${default_mem}" "${default_qemu_bin}" \
+    "${default_cpu}"
 
   # Guest GPU resolution: replace hard-coded xres/yres, then bare virtio-gpu-pci
   # (only when not already followed by ,xres=...).
@@ -469,7 +494,10 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   ' "${file}" >"${tmp_dedupe}"
   mv "${tmp_dedupe}" "${file}"
 
-  # CPU / memory.
+  # CPU model / count / memory. Keep existing product defaults while allowing
+  # CLI wrappers and direct qemu_run.sh users to override the CPU model.
+  sed_in_place_extended \
+    's/-cpu (max|cortex-a57|cortex-a7)/-cpu ${QEMU_CPU}/g' "${file}"
   sed_in_place_extended 's/-smp [0-9]+/-smp ${QEMU_SMP}/g' "${file}"
   sed_in_place_extended 's/-m [0-9]+[MmGg]?/-m ${QEMU_MEMORY}/g' "${file}"
 
@@ -719,6 +747,7 @@ write_unix_cli_wrapper() {
   local default_mem="$3"
   local default_display="$4"
   local default_qemu_bin="$5"
+  local default_cpu="${6:-max}"
 
   cat >"${dest}" <<EOF
 #!/usr/bin/env bash
@@ -731,6 +760,7 @@ DEFAULT_SMP="${default_smp}"
 DEFAULT_MEMORY="${default_mem}"
 DEFAULT_DISPLAY="${default_display}"
 DEFAULT_QEMU_BIN="${default_qemu_bin}"
+DEFAULT_CPU="${default_cpu}"
 DEFAULT_XRES=800
 DEFAULT_YRES=500
 DEFAULT_HDC_PORT=5555
@@ -748,6 +778,7 @@ Options:
       --height N         Guest GPU height (alternative to --resolution)
   -m, --memory SIZE      RAM size for QEMU -m (default: \${DEFAULT_MEMORY}; accepts 4096, 4096M, 4G)
   -s, --smp N            Virtual CPUs (default: \${DEFAULT_SMP})
+      --cpu MODEL        QEMU CPU model (default: \${DEFAULT_CPU})
   -d, --display TYPE     none|vnc|sdl|gtk|cocoa|auto (default: \${DEFAULT_DISPLAY})
       --headless         Alias for --display none
   -c, --connect HOST:PORT  HDC forward address (default: 127.0.0.1:\${DEFAULT_HDC_PORT})
@@ -760,7 +791,7 @@ Options:
 
 CLI flags override environment variables, which override the defaults above.
 Supported environment variables:
-  QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY
+  QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
   QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
   QEMU_ACCEL QEMU_BIN QEMU_EXTRA_ARGS
 USAGE
@@ -797,6 +828,10 @@ while [ "\$#" -gt 0 ]; do
       ;;
     -s|--smp)
       export QEMU_SMP="\${2:?missing smp value}"
+      shift 2
+      ;;
+    --cpu)
+      export QEMU_CPU="\${2:?missing cpu model}"
       shift 2
       ;;
     -d|--display)
@@ -869,6 +904,7 @@ export QEMU_XRES="\${QEMU_XRES:-\${DEFAULT_XRES}}"
 export QEMU_YRES="\${QEMU_YRES:-\${DEFAULT_YRES}}"
 export QEMU_SMP="\${QEMU_SMP:-\${DEFAULT_SMP}}"
 export QEMU_MEMORY="\${QEMU_MEMORY:-\${DEFAULT_MEMORY}}"
+export QEMU_CPU="\${QEMU_CPU:-\${DEFAULT_CPU}}"
 export QEMU_DISPLAY="\${QEMU_DISPLAY:-\${DEFAULT_DISPLAY}}"
 export QEMU_HDC_HOST_PORT="\${QEMU_HDC_HOST_PORT:-\${DEFAULT_HDC_PORT}}"
 export QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-\${DEFAULT_VNC_DISPLAY}}"
@@ -898,6 +934,7 @@ write_windows_ps1() {
   local default_smp="$3"
   local default_mem="$4"
   local default_display="$5"
+  local default_cpu="${6:-max}"
 
   if [ "${product}" != "x86_64_virt" ]; then
     cat >"${dest}" <<EOF
@@ -914,6 +951,7 @@ param(
   [int]\$Height,
   [Alias("m")][string]\$Memory,
   [Alias("s")][int]\$Smp,
+  [string]\$Cpu,
   [Alias("d")][string]\$Display,
   [switch]\$Headless,
   [Alias("c")][string]\$Connect,
@@ -933,6 +971,7 @@ param(
 \$DefaultSmp = ${default_smp}
 \$DefaultMemory = "${default_mem}"
 \$DefaultDisplay = "${default_display}"
+\$DefaultCpu = "${default_cpu}"
 \$DefaultXres = 800
 \$DefaultYres = 500
 \$DefaultHdcPort = 5555
@@ -954,6 +993,7 @@ if (\$PSBoundParameters.ContainsKey("Height")) { \$env:QEMU_YRES = "\$Height" }
 
 if (\$Memory) { \$env:QEMU_MEMORY = \$Memory }
 if (\$PSBoundParameters.ContainsKey("Smp")) { \$env:QEMU_SMP = "\$Smp" }
+if (\$Cpu) { \$env:QEMU_CPU = \$Cpu }
 if (\$Display) { \$env:QEMU_DISPLAY = \$Display }
 if (\$Connect) {
   if (\$Connect -notmatch '^[^:]+:(\\d+)\$') {
@@ -971,6 +1011,7 @@ if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 \$Yres = if (\$env:QEMU_YRES) { \$env:QEMU_YRES } else { "\$DefaultYres" }
 \$SmpValue = if (\$env:QEMU_SMP) { \$env:QEMU_SMP } else { "\$DefaultSmp" }
 \$MemoryValue = if (\$env:QEMU_MEMORY) { \$env:QEMU_MEMORY } else { "\$DefaultMemory" }
+\$CpuValue = if (\$env:QEMU_CPU) { \$env:QEMU_CPU } else { "\$DefaultCpu" }
 \$HdcHostPort = if (\$env:QEMU_HDC_HOST_PORT) { \$env:QEMU_HDC_HOST_PORT } else { "\$DefaultHdcPort" }
 \$VncDisplayValue = if (\$env:QEMU_VNC_DISPLAY) { \$env:QEMU_VNC_DISPLAY } else { "\$DefaultVncDisplay" }
 \$GpuDevice = "virtio-gpu-pci,xres=\$Xres,yres=\$Yres"
@@ -1033,7 +1074,7 @@ switch (\$DisplayType) {
 \$ArgsList = @(
   "-machine", "q35",
   \$AccelArgs,
-  "-cpu", "max",
+  "-cpu", "\$CpuValue",
   "-smp", "\$SmpValue",
   "-m", "\$MemoryValue",
   "-kernel", (Join-Path \$Img "bzImage"),
@@ -1082,6 +1123,11 @@ write_package_launcher_readme() {
   local default_smp="$5"
   local default_mem="$6"
   local default_display="$7"
+  local default_cpu="${8:-max}"
+  local cpu_example="${default_cpu}"
+  if [ "${product}" = "x86_64_virt" ]; then
+    cpu_example=EPYC-v5
+  fi
 
   cat >"${package_dir}/README.md" <<EOF
 # ${package_name}
@@ -1104,6 +1150,7 @@ CLI flags override environment variables, which override package defaults.
 | \`--width\` / \`--height\` | \`QEMU_XRES\` / \`QEMU_YRES\` | same as above |
 | \`-m, --memory SIZE\` | \`QEMU_MEMORY\` | \`${default_mem}\` |
 | \`-s, --smp N\` | \`QEMU_SMP\` | \`${default_smp}\` |
+| \`--cpu MODEL\` | \`QEMU_CPU\` | \`${default_cpu}\` |
 | \`-d, --display TYPE\` / \`--headless\` | \`QEMU_DISPLAY\` | \`${default_display}\` |
 | \`-c, --connect host:port\` / \`--hdc-port\` | \`QEMU_HDC_HOST_PORT\` | \`5555\` |
 | \`--vnc-display N\` | \`QEMU_VNC_DISPLAY\` | \`21\` (TCP 5921) |
@@ -1116,6 +1163,7 @@ Examples:
 
 \`\`\`bash
 ./launch/linux.sh -r 1280x720 -m 8G -s 8
+./launch/linux.sh --cpu ${cpu_example}
 ./launch/linux.sh --width 1080 --height 1920 --display cocoa
 ./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
 QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
@@ -1127,6 +1175,18 @@ QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
 \`QEMU_ACCEL=auto|hvf|kvm|tcg\` (and \`whpx\` on Windows) selects acceleration;
 \`auto\` probes host support and falls back to TCG when needed.
 EOF
+
+  if [ "${product}" = "x86_64_virt" ]; then
+    cat >>"${package_dir}/README.md" <<'EOF'
+
+On Windows WHPX, override the CPU model when the host does not support the
+default `max` feature set:
+
+```powershell
+.\launch\windows.ps1 -Cpu EPYC-v5 -Accel whpx
+```
+EOF
+  fi
 
   if [ "${standard_vpn}" = "true" ]; then
     cat >>"${package_dir}/README.md" <<'EOF'
@@ -1178,7 +1238,8 @@ write_full_product_launchers() {
       "${launch_out}/qemu_run.sh" \
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
-      "${LAUNCHER_QEMU_UNIX}"
+      "${LAUNCHER_QEMU_UNIX}" \
+      "${LAUNCHER_DEFAULT_CPU}"
     if ! bash -n "${launch_out}/qemu_run.sh"; then
       echo "packaged launcher has invalid shell syntax: ${launch_out}/qemu_run.sh" >&2
       exit 1
@@ -1195,7 +1256,8 @@ write_full_product_launchers() {
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_DEFAULT_DISPLAY}" \
-      "${LAUNCHER_QEMU_UNIX}"
+      "${LAUNCHER_QEMU_UNIX}" \
+      "${LAUNCHER_DEFAULT_CPU}"
     cp "${launch_out}/linux.sh" "${launch_out}/macos.command"
     chmod +x "${launch_out}/macos.command"
 
@@ -1204,14 +1266,16 @@ write_full_product_launchers() {
       "${product}" \
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
-      "${LAUNCHER_DEFAULT_DISPLAY}"
+      "${LAUNCHER_DEFAULT_DISPLAY}" \
+      "${LAUNCHER_DEFAULT_CPU}"
   elif [ "${product}" = "qemu-arm64-linux-min" ]; then
     write_unix_cli_wrapper \
       "${launch_out}/linux.sh" \
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_DEFAULT_DISPLAY}" \
-      "${LAUNCHER_QEMU_UNIX}"
+      "${LAUNCHER_QEMU_UNIX}" \
+      "${LAUNCHER_DEFAULT_CPU}"
     # Minimal product embeds the QEMU command in linux.sh historically; keep a
     # dedicated qemu_run.sh that honors the same env surface.
     cat >"${launch_out}/qemu_run.sh" <<'MIN_EOF'
@@ -1222,6 +1286,7 @@ QEMU_XRES="${QEMU_XRES:-800}"
 QEMU_YRES="${QEMU_YRES:-500}"
 QEMU_SMP="${QEMU_SMP:-4}"
 QEMU_MEMORY="${QEMU_MEMORY:-1024}"
+QEMU_CPU="${QEMU_CPU:-cortex-a57}"
 QEMU_BIN="${QEMU_BIN:-qemu-system-aarch64}"
 QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS:-}"
 exec "${QEMU_BIN}" \
@@ -1229,7 +1294,7 @@ exec "${QEMU_BIN}" \
   -smp "${QEMU_SMP}" \
   -m "${QEMU_MEMORY}" \
   -nographic \
-  -cpu cortex-a57 \
+  -cpu "${QEMU_CPU}" \
   -kernel "${OHOS_IMG}/Image" \
   -initrd "${OHOS_IMG}/ramdisk.img" \
   -drive if=none,file="${OHOS_IMG}/userdata.img",format=raw,id=userdata,index=3 \
@@ -1251,7 +1316,8 @@ MIN_EOF
       "${product}" \
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
-      "${LAUNCHER_DEFAULT_DISPLAY}"
+      "${LAUNCHER_DEFAULT_DISPLAY}" \
+      "${LAUNCHER_DEFAULT_CPU}"
   fi
 
   cat >"${launch_out}/windows.cmd" <<'EOF'
@@ -1265,7 +1331,8 @@ EOF
       "${product}" \
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
-      "${LAUNCHER_DEFAULT_DISPLAY}"
+      "${LAUNCHER_DEFAULT_DISPLAY}" \
+      "${LAUNCHER_DEFAULT_CPU}"
   fi
 
   write_package_launcher_readme \
@@ -1275,7 +1342,8 @@ EOF
     "${standard_vpn}" \
     "${LAUNCHER_DEFAULT_SMP}" \
     "${LAUNCHER_DEFAULT_MEMORY}" \
-    "${LAUNCHER_DEFAULT_DISPLAY}"
+    "${LAUNCHER_DEFAULT_DISPLAY}" \
+    "${LAUNCHER_DEFAULT_CPU}"
 }
 
 refresh_package_checksums() {
@@ -1370,9 +1438,10 @@ rewrite_package_launchers() {
     python3 - "${manifest}" \
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
-      "${LAUNCHER_DEFAULT_DISPLAY}" <<'PY'
+      "${LAUNCHER_DEFAULT_DISPLAY}" \
+      "${LAUNCHER_DEFAULT_CPU}" <<'PY'
 import json, sys
-path, smp, mem, display = sys.argv[1:5]
+path, smp, mem, display, cpu = sys.argv[1:6]
 with open(path, encoding="utf-8") as fh:
     data = json.load(fh)
 data["display_default"] = display
@@ -1380,6 +1449,7 @@ data["launcher"] = {
     "resolution_default": "800x500",
     "smp_default": int(smp),
     "memory_default": mem,
+    "cpu_default": cpu,
     "cli": True,
 }
 with open(path, "w", encoding="utf-8") as fh:
@@ -1419,7 +1489,7 @@ if [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
     exit 1
   fi
   normalize_common_qemu_launcher \
-    "${REWRITE_ARM64_LAUNCHER}" 4 4096 qemu-system-aarch64
+    "${REWRITE_ARM64_LAUNCHER}" 4 4096 qemu-system-aarch64 cortex-a57
   chmod +x "${REWRITE_ARM64_LAUNCHER}"
   exit 0
 fi
@@ -2308,6 +2378,7 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "resolution_default": "800x500",
     "smp_default": ${LAUNCHER_DEFAULT_SMP},
     "memory_default": "${LAUNCHER_DEFAULT_MEMORY}",
+    "cpu_default": "${LAUNCHER_DEFAULT_CPU}",
     "cli": true
   },
   "capabilities": {

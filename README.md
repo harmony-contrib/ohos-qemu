@@ -61,6 +61,9 @@ CLI flags override environment variables, which override package defaults:
 
 # Acceleration and extra QEMU args
 ./launch/linux.sh --accel tcg -- -serial mon:stdio
+
+# Override the CPU model on an AMD host using Windows WHPX
+powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -Accel whpx
 ```
 
 | Option | Env | Default |
@@ -69,6 +72,7 @@ CLI flags override environment variables, which override package defaults:
 | `--width` / `--height` | `QEMU_XRES` / `QEMU_YRES` | same |
 | `-m, --memory SIZE` | `QEMU_MEMORY` | `4096` (armv7a: `3072`) |
 | `-s, --smp N` | `QEMU_SMP` | `4` |
+| `--cpu MODEL` | `QEMU_CPU` | `max` (arm64: `cortex-a57`, armv7a: `cortex-a7`) |
 | `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `none`) |
 | `-c, --connect` / `--hdc-port` | `QEMU_HDC_HOST_PORT` | `5555` |
 | `--vnc-display N` | `QEMU_VNC_DISPLAY` | `21` (TCP 5921) |
@@ -78,7 +82,7 @@ CLI flags override environment variables, which override package defaults:
 | `-- ...` | `QEMU_EXTRA_ARGS` | empty |
 
 On Windows PowerShell the same knobs are available as parameters
-(`-Resolution`, `-Memory`, `-Smp`, `-Display`, `-Headless`, …) or via the
+(`-Resolution`, `-Memory`, `-Smp`, `-Cpu`, `-Display`, `-Headless`, …) or via the
 environment variables above.
 
 The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
