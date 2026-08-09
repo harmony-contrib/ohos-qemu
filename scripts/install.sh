@@ -8,6 +8,7 @@ GITHUB_TOKEN="${OHOS_QEMU_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 PREFIX="${OHOS_QEMU_PREFIX:-${HOME}/.ohos-qemu}"
 PLATFORM="${OHOS_QEMU_PLATFORM:-auto}"
 ARCH="${OHOS_QEMU_ARCH:-auto}"
+DEVICE_TYPE="${OHOS_QEMU_DEVICE_TYPE:-phone}"
 FORCE=0
 KEEP_ARCHIVE=0
 
@@ -22,6 +23,7 @@ Options:
   --prefix DIR       Install directory. Default: $HOME/.ohos-qemu
   --platform NAME    Host platform: auto, linux, macos, windows
   --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64
+  --device-type TYPE Device type package: phone or 2in1. Default: phone
   --repo URL         GitHub repository URL. Default: https://github.com/harmony-contrib/ohos-qemu
   --release TAG      Release tag to download. Default: v20260717
   --download-base-url URL
@@ -33,7 +35,8 @@ Options:
 
 Examples:
   curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260717
-  bash scripts/install.sh --prefix "$HOME/opt/ohos-qemu" --arch arm64
+  bash scripts/install.sh --prefix "$HOME/opt/ohos-qemu" --arch arm64 --device-type phone
+  bash scripts/install.sh --release RELEASE_TAG --arch x86_64 --device-type 2in1
 USAGE
 }
 
@@ -49,6 +52,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --arch)
       ARCH="${2:-}"
+      shift 2
+      ;;
+    --device-type)
+      DEVICE_TYPE="${2:-}"
       shift 2
       ;;
     --repo)
@@ -88,6 +95,16 @@ if [ -z "${PREFIX}" ] || [ -z "${REPO_URL}" ] || [ -z "${RELEASE_TAG}" ]; then
   exit 2
 fi
 
+case "${DEVICE_TYPE}" in
+  phone|2in1)
+    ;;
+  *)
+    echo "unsupported --device-type: ${DEVICE_TYPE}" >&2
+    echo "expected phone or 2in1" >&2
+    exit 2
+    ;;
+esac
+
 detect_platform() {
   case "$(uname -s)" in
     Linux)
@@ -121,27 +138,35 @@ detect_arch() {
   esac
 }
 
-download_file() {
+try_download_file() {
   local url="$1"
   local dest="$2"
   if command -v curl >/dev/null 2>&1; then
     if [ -n "${GITHUB_TOKEN}" ]; then
-      curl -fL --retry 3 --retry-delay 2 \
-        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-        -o "${dest}" "${url}"
+      if curl -fL --retry 3 --retry-delay 2 \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          -o "${dest}" "${url}"; then
+        return 0
+      fi
     else
-      curl -fL --retry 3 --retry-delay 2 -o "${dest}" "${url}"
+      if curl -fL --retry 3 --retry-delay 2 -o "${dest}" "${url}"; then
+        return 0
+      fi
     fi
   elif command -v wget >/dev/null 2>&1; then
     if [ -n "${GITHUB_TOKEN}" ]; then
-      wget --header="Authorization: Bearer ${GITHUB_TOKEN}" -O "${dest}" "${url}"
+      if wget --header="Authorization: Bearer ${GITHUB_TOKEN}" \
+          -O "${dest}" "${url}"; then
+        return 0
+      fi
     else
-      wget -O "${dest}" "${url}"
+      if wget -O "${dest}" "${url}"; then
+        return 0
+      fi
     fi
-  else
-    echo "curl or wget is required to download ${url}" >&2
-    exit 1
   fi
+  rm -f "${dest}"
+  return 1
 }
 
 artifact_url() {
@@ -185,16 +210,25 @@ esac
 
 case "${ARCH}" in
   arm64)
-    PACKAGE="openharmony-qemu-arm64-arm64_virt.tar.gz"
-    PACKAGE_DIR="openharmony-qemu-arm64-arm64_virt"
+    PACKAGE_BASE_DIR="openharmony-qemu-arm64-arm64_virt"
     ;;
   armv7a)
-    PACKAGE="openharmony-qemu-armv7a-armv7a_virt.tar.gz"
-    PACKAGE_DIR="openharmony-qemu-armv7a-armv7a_virt"
+    PACKAGE_BASE_DIR="openharmony-qemu-armv7a-armv7a_virt"
     ;;
   x86_64)
-    PACKAGE="openharmony-qemu-x86_64-x86_64_virt.tar.gz"
-    PACKAGE_DIR="openharmony-qemu-x86_64-x86_64_virt"
+    PACKAGE_BASE_DIR="openharmony-qemu-x86_64-x86_64_virt"
+    ;;
+esac
+
+case "${DEVICE_TYPE}" in
+  phone)
+    PACKAGE_CANDIDATES=(
+      "${PACKAGE_BASE_DIR}-phone.tar.gz"
+      "${PACKAGE_BASE_DIR}.tar.gz"
+    )
+    ;;
+  2in1)
+    PACKAGE_CANDIDATES=("${PACKAGE_BASE_DIR}-2in1.tar.gz")
     ;;
 esac
 
@@ -210,10 +244,7 @@ case "${PLATFORM}" in
     ;;
 esac
 
-RAW_URL="$(artifact_url "${PACKAGE}")"
-INSTALL_DIR="${PREFIX}/${PACKAGE_DIR}"
 ARCHIVE_DIR="${PREFIX}/downloads"
-ARCHIVE_PATH="${ARCHIVE_DIR}/${PACKAGE}"
 
 echo "OpenHarmony QEMU installer"
 echo "repo:      ${REPO_URL}"
@@ -223,7 +254,41 @@ if [ -n "${DOWNLOAD_BASE_URL}" ]; then
 fi
 echo "platform:  ${PLATFORM}"
 echo "arch:      ${ARCH}"
+echo "device:    ${DEVICE_TYPE}"
 echo "prefix:    ${PREFIX}"
+
+if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+  echo "curl or wget is required to download QEMU packages" >&2
+  exit 1
+fi
+
+mkdir -p "${PREFIX}" "${ARCHIVE_DIR}"
+tmp_archive="${ARCHIVE_DIR}/.openharmony-qemu-download.tmp.$$"
+trap 'rm -f "${tmp_archive}"' EXIT
+
+PACKAGE=
+ATTEMPTED_URLS=()
+for candidate in "${PACKAGE_CANDIDATES[@]}"; do
+  candidate_url="$(artifact_url "${candidate}")"
+  ATTEMPTED_URLS+=("${candidate_url}")
+  echo "downloading: ${candidate_url}"
+  if try_download_file "${candidate_url}" "${tmp_archive}"; then
+    PACKAGE="${candidate}"
+    break
+  fi
+  echo "package unavailable: ${candidate}" >&2
+done
+
+if [ -z "${PACKAGE}" ]; then
+  echo "no downloadable ${DEVICE_TYPE} package found for ${ARCH}" >&2
+  echo "tried:" >&2
+  printf '  %s\n' "${ATTEMPTED_URLS[@]}" >&2
+  exit 1
+fi
+
+PACKAGE_DIR="${PACKAGE%.tar.gz}"
+INSTALL_DIR="${PREFIX}/${PACKAGE_DIR}"
+ARCHIVE_PATH="${ARCHIVE_DIR}/${PACKAGE}"
 echo "package:   ${PACKAGE}"
 
 if [ -e "${INSTALL_DIR}" ] && [ "${FORCE}" != "1" ]; then
@@ -231,13 +296,6 @@ if [ -e "${INSTALL_DIR}" ] && [ "${FORCE}" != "1" ]; then
   echo "use --force to replace it" >&2
   exit 1
 fi
-
-mkdir -p "${PREFIX}" "${ARCHIVE_DIR}"
-tmp_archive="${ARCHIVE_PATH}.tmp.$$"
-trap 'rm -f "${tmp_archive}"' EXIT
-
-echo "downloading: ${RAW_URL}"
-download_file "${RAW_URL}" "${tmp_archive}"
 
 mv "${tmp_archive}" "${ARCHIVE_PATH}"
 trap - EXIT
@@ -248,6 +306,11 @@ fi
 
 echo "extracting to: ${PREFIX}"
 tar -xzf "${ARCHIVE_PATH}" -C "${PREFIX}"
+
+if [ ! -d "${INSTALL_DIR}" ]; then
+  echo "archive did not contain the expected package directory: ${PACKAGE_DIR}" >&2
+  exit 1
+fi
 
 if [ "${KEEP_ARCHIVE}" != "1" ]; then
   rm -f "${ARCHIVE_PATH}"
