@@ -40,10 +40,18 @@ The overlay:
 - packages launchers with `oemmode=rd`, `buildvariant=eng`, and
   `developer_mode=1`, and enables the guest developer-mode parameter so both
   kernel XPM and AccessToken accept normal development HAP profiles;
-- forces QEMU's RenderService composer onto its CPU raster path while
-  retaining the existing OpenGL ABI and build cache compatibility, so the
-  authorization dialog works on hosts whose QEMU build has no guest 3D
-  acceleration.
+- keeps QEMU's RenderService on its standard OpenGL context and EGLImage path;
+  the portable `virtio-gpu` backend uses Mesa `kms_swrast` when host 3D
+  acceleration is unavailable. For arm64 and x86_64 it replaces the old QEMU
+  GPU prebuilts with Mesa 21.3.3 built from OHOS source plus upstream fix
+  `c285df95c30d1d7af26d8203c736ecf3f23dc67c`, which changes the broken
+  `va_list` formatting in `ohos_logger` to `vsnprintf`. armv7a uses the same
+  fix in its source-built Mesa path. The image installs both `swrast_dri.so`
+  and `virtio_gpu_dri.so` as aliases of the resulting multi-driver
+  `kms_swrast_dri.so`, matching every portable DRM selection path without
+  relying on QEMU GPU Git LFS binaries. This keeps authorization dialogs,
+  surface capture, and UI application switching on one coherent rendering
+  lifecycle.
 
 Apply it after the `armv7a_virt_full` overlay, when that product is selected,
 and before building:
@@ -61,3 +69,20 @@ and the exact signed VpnDialog HAP extracted from `system.img`. Packaging fails
 if a required VPN capability was optimized out, if userdata lacks the F2FS
 code-sign path, or if the HAP profile is expired or lacks a required system
 ACL.
+
+## Paws IPv6 runtime check
+
+Import `ci/standard-vpn/ipv6-direct.yaml` into Paws, start the VPN, and approve
+the system's first-use VPN dialog. Then run:
+
+```bash
+ci/standard-vpn/verify-paws-ipv6.sh \
+  --target 127.0.0.1:5555 \
+  --hilog /path/to/paws-smoke.hilog
+```
+
+The verifier requires the expected `fdfe:dcba:9876::1/126` address, the
+`::/0` VPN route, a running TUN fd, successful Paws network protection and
+startup, plus IPv6 connectivity to QEMU's user-network gateway. Supplying the
+smoke-test hilog also verifies the system's address and `::/0` route install
+events rather than relying only on the live interface and VPNManager state.

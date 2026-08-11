@@ -213,6 +213,21 @@ jobs:
           cd "${OHOS_ROOT}"
           ./build/prebuilts_download.sh
 
+      - name: Resolve required Git LFS objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          git lfs version
+          for path in \
+            applications/standard/hap \
+            base/web/webview \
+            foundation/arkui/ace_engine \
+            third_party/icu \
+            third_party/libphonenumber
+          do
+            git -C "${OHOS_ROOT}/${path}" lfs pull
+          done
+
       - name: Apply armv7a full overlay
         shell: bash
         run: |

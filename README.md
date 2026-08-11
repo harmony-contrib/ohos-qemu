@@ -181,6 +181,20 @@ package is marked with `"standard_vpn": true` only after those checks pass.
 The guest VPN uses `/dev/tun` inside OpenHarmony and does not require a host
 TAP device when the default QEMU user-mode network is used.
 
+## Standard QEMU GPU rendering
+
+All three architectures keep RenderService on its normal OpenGL/EGLImage
+lifecycle. QEMU exposes a plain `virtio-gpu` DRM device; the guest Mesa stack
+tries the virtio path and falls back to `kms_swrast` when host 3D is absent.
+The 64-bit Mesa libraries are built from the same OHOS Mesa 21.3.3 baseline as
+armv7a with the upstream `ohos_logger` `va_list` fix, instead of packaging the
+older QEMU GPU binaries. Both `virtio_gpu_dri.so` and `swrast_dri.so` resolve to
+the verified multi-driver `kms_swrast_dri.so` ELF.
+
+Package validation checks the DRI ELF architecture and aliases. QEMU smoke CI
+then opens Settings and Photos three times and fails if `render_service`
+changes PID or emits a new fault log.
+
 ## Phone and 2in1 deviceType package matrix
 
 The matrix entry point builds both full source profiles for all three supported

@@ -48,6 +48,7 @@ jobs:
       QEMU_SMOKE_HOST_PLATFORM: ${{ matrix.host_platform }}
       QEMU_SMOKE_REQUIRE_ACCOUNT: ${{ matrix.require_account }}
       QEMU_SMOKE_REQUIRE_KVM: ${{ matrix.require_kvm }}
+      QEMU_SMOKE_RUN_UI_SWITCH: ${{ matrix.run_ui_switch }}
       QEMU_SMOKE_RUN_OHOS_RUNNER: ${{ matrix.run_ohos_runner }}
       QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS: ${{ matrix.account_wait_attempts }}
       QEMU_SMOKE_MINIMUM_GUEST_UPTIME: ${{ matrix.minimum_guest_uptime }}
@@ -68,6 +69,7 @@ jobs:
             require_account: "true"
             require_kvm: "true"
             account_wait_attempts: "300"
+            run_ui_switch: "true"
             run_ohos_runner: "true"
             minimum_guest_uptime: "0"
             accel: "auto"
@@ -81,6 +83,7 @@ jobs:
             require_account: "true"
             require_kvm: "false"
             account_wait_attempts: "240"
+            run_ui_switch: "true"
             run_ohos_runner: "true"
             minimum_guest_uptime: "0"
             # GitHub-hosted Apple Silicon runners do not support nested HVF.
@@ -95,6 +98,7 @@ jobs:
             require_account: "false"
             require_kvm: "false"
             account_wait_attempts: "1"
+            run_ui_switch: "false"
             run_ohos_runner: "false"
             minimum_guest_uptime: "270"
             accel: "auto"
@@ -108,6 +112,7 @@ jobs:
             require_account: "true"
             require_kvm: "false"
             account_wait_attempts: "300"
+            run_ui_switch: "true"
             run_ohos_runner: "true"
             minimum_guest_uptime: "0"
             accel: "tcg"
@@ -205,6 +210,11 @@ jobs:
         if: ${{ matrix.require_account == 'true' }}
         shell: bash
         run: bash ci/qemu-smoke/phase.sh wait-account
+
+      - name: Switch UI applications without restarting RenderService
+        if: ${{ matrix.run_ui_switch == 'true' }}
+        shell: bash
+        run: bash ci/qemu-smoke/phase.sh run-ui-switch
 
       - name: Transfer and execute Rust binary
         shell: bash
