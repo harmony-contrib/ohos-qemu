@@ -13,7 +13,7 @@ Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260717
+curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260809
 ```
 
 The installer downloads the selected Release and installs the package under
@@ -113,6 +113,42 @@ OpenHarmony SDK toolchains installed:
 hdc tconn 127.0.0.1:5555
 hdc list targets
 ```
+
+## Sign and install development HAPs
+
+The `v20260809` image requires a HAP signing block. A truly unsigned package is
+rejected with bundle-manager error `9568320` (`no signature file`). The default
+installer also installs the Java-free `hap-sign` CLI under
+`~/.ohos-qemu/bin`; use `--without-hap-signer` when only the image is wanted.
+
+```bash
+export PATH="$HOME/.ohos-qemu/bin:$PATH"
+
+hap-sign sign entry-default-unsigned.hap \
+  --bundle-name com.example.application \
+  --output entry-default-signed.hap
+
+hdc install entry-default-signed.hap
+```
+
+VPN applications commonly need an ACL in the debug profile:
+
+```bash
+hap-sign sign entry-default-unsigned.hap \
+  --bundle-name com.example.vpn \
+  --acl ohos.permission.FILE_ACCESS_PERSIST \
+  --output entry-default-signed.hap
+```
+
+From a source checkout, `scripts/sign-hap.sh` is the equivalent wrapper and
+`scripts/install-hap-signer.sh` installs the signer. Release packages carry the
+same scripts under `tools/`. The signer is implemented in the separate
+[`ohos-rs/hapsigner-rs`](https://github.com/ohos-rs/hapsigner-rs) repository
+with RustCrypto CMS, X.509, P-256 ECDSA, and SHA-256 crates. `rustls` is not used
+because the on-disk format is CMS/PKCS#7 rather than TLS.
+
+The embedded OpenHarmony development key is public test material and is only
+appropriate for QEMU/RD development images.
 
 ## Standard VPN capability
 

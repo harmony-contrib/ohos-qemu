@@ -2315,6 +2315,7 @@ fi
 PACKAGE_DIR="${OUTPUT_DIR}/${PACKAGE_NAME}"
 IMAGES_OUT="${PACKAGE_DIR}/images"
 LAUNCH_OUT="${PACKAGE_DIR}/launch"
+TOOLS_OUT="${PACKAGE_DIR}/tools"
 STANDARD_VPN_VERIFIED=false
 VPN_AUTHORIZATION_MODE=unverified
 MANIFEST_DEVICE_TYPE="${DEVICE_TYPE:-default}"
@@ -2333,7 +2334,10 @@ case "${DEVICE_TYPE_PROFILE}" in
 esac
 
 rm -rf "${PACKAGE_DIR}"
-mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}"
+mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}" "${TOOLS_OUT}"
+cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
+cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
+chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 
 for file in "${COMMON_IMAGES[@]}"; do
   cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"
