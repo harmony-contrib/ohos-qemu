@@ -1,88 +1,61 @@
 #!/usr/bin/env python3
+"""Build the portable OpenHarmony QEMU GL stack from a fixed Mesa revision."""
+
 import multiprocessing
 import os
-import re
 import shutil
 import subprocess
 import sys
 import tarfile
+from dataclasses import dataclass
 from pathlib import Path
 
 
 QEMU_MESA_REPOSITORY = "https://github.com/openharmony/third_party_mesa3d"
 QEMU_MESA_COMMIT = "995d2506d18924b48db0cf40e6ad7de04fc4e558"
 QEMU_MESA_VERSION = "21.3.3"
+OHOS_LOGGER_FIX_COMMIT = "c285df95c30d1d7af26d8203c736ecf3f23dc67c"
 
 
-def arm_plt_got_slot(call_target: int, plt_disassembly: str) -> int | None:
-    """Resolve the GOT slot loaded by an ARM PLT entry.
-
-    LLVM 15 prints Thumb-to-ARM calls as ``blx ... <$a>`` instead of naming
-    the dynamic symbol.  A standard ARM PLT entry builds the GOT address from
-    the ARM PC (instruction address + 8), two adds, and the final ldr offset.
-    """
-    immediates = []
-    for pattern in (
-        r"\badd\s+r12,\s*pc,\s*#(0x[0-9a-f]+|[0-9]+)",
-        r"\badd\s+r12,\s*r12,\s*#(0x[0-9a-f]+|[0-9]+)",
-        r"\bldr\s+pc,\s*\[r12,\s*#(0x[0-9a-f]+|[0-9]+)\]!",
-    ):
-        match = re.search(pattern, plt_disassembly, re.IGNORECASE)
-        if match is None:
-            return None
-        immediates.append(int(match.group(1), 0))
-    return call_target + 8 + sum(immediates)
+@dataclass(frozen=True)
+class Target:
+    triple: str
+    cpu_family: str
+    cpu: str
+    sysroot_lib: str
+    elf_machine: int
 
 
-def arm_logger_calls_vsnprintf(
-    llvm_objdump: Path,
-    llvm_readobj: Path,
-    driver: Path,
-    logger_disassembly: str,
-) -> bool:
-    call = re.search(
-        r"\bblx?\s+(?:0x)?([0-9a-f]+)\b", logger_disassembly, re.IGNORECASE
-    )
-    if call is None:
-        return False
-    call_target = int(call.group(1), 16)
-    plt_disassembly = subprocess.check_output(
-        [
-            str(llvm_objdump),
-            "-d",
-            f"--start-address=0x{call_target:x}",
-            f"--stop-address=0x{call_target + 16:x}",
-            str(driver),
-        ],
-        text=True,
-    )
-    got_slot = arm_plt_got_slot(call_target, plt_disassembly)
-    if got_slot is None:
-        return False
-    relocations = subprocess.check_output(
-        [str(llvm_readobj), "--relocations", str(driver)], text=True
-    )
-    return re.search(
-        rf"\b0x{got_slot:x}\s+R_ARM_JUMP_SLOT\s+vsnprintf\b",
-        relocations,
-        re.IGNORECASE,
-    ) is not None
+TARGETS = {
+    "arm64_virt": Target(
+        "aarch64-linux-ohos", "aarch64", "armv8", "aarch64-linux-ohos", 183
+    ),
+    "x86_64_virt": Target(
+        "x86_64-linux-ohos", "x86_64", "x86_64", "x86_64-linux-ohos", 62
+    ),
+}
+
+REQUIRED_OUTPUTS = (
+    "libEGL.so.1.0.0",
+    "libgbm.so.1.0.0",
+    "libGLESv1_CM.so.1.1.0",
+    "libGLESv2.so.2.0.0",
+    "libglapi.so.0.0.0",
+    "kms_swrast_dri.so",
+)
 
 
-def write_cross_file(path: Path, root: Path, sysroot: Path) -> None:
+def write_cross_file(
+    path: Path, root: Path, sysroot: Path, target: Target
+) -> None:
     clang_bin = root / "prebuilts/clang/ohos/linux-x86_64/llvm/bin"
     common_args = [
-        "'-march=armv7-a'",
-        "'-mfloat-abi=softfp'",
-        "'-mtune=generic-armv7-a'",
-        "'-mfpu=neon'",
-        "'-mthumb'",
-        "'--target=arm-linux-ohos'",
+        f"'--target={target.triple}'",
         f"'--sysroot={sysroot}'",
         "'-fPIC'",
     ]
     link_args = common_args + [
-        f"'-L{sysroot / 'usr/lib/arm-linux-ohos'}'",
+        f"'-L{sysroot / 'usr/lib' / target.sysroot_lib}'",
         "'-fuse-ld=lld'",
         "'--rtlib=compiler-rt'",
     ]
@@ -106,14 +79,16 @@ cpp_link_args = [{', '.join(link_args)}]
 
 [host_machine]
 system = 'linux'
-cpu_family = 'arm'
-cpu = 'armv7'
+cpu_family = '{target.cpu_family}'
+cpu = '{target.cpu}'
 endian = 'little'
 """
     path.write_text(content, encoding="utf-8")
 
 
-def write_pkg_config_files(mesa_dir: Path, root: Path, product: str, output: Path) -> None:
+def write_pkg_config_files(
+    mesa_dir: Path, root: Path, product: str, output: Path
+) -> None:
     output.mkdir(parents=True, exist_ok=True)
     templates = mesa_dir / "ohos/pkgconfig_template"
     for source in templates.iterdir():
@@ -134,7 +109,8 @@ def write_pkg_config_files(mesa_dir: Path, root: Path, product: str, output: Pat
 
 def prepare_qemu_mesa_source(mesa_repo: Path, source_dir: Path) -> None:
     marker = source_dir / ".ohos-qemu-source-revision"
-    if marker.is_file() and marker.read_text(encoding="utf-8").strip() == QEMU_MESA_COMMIT:
+    expected_marker = f"{QEMU_MESA_COMMIT}+{OHOS_LOGGER_FIX_COMMIT}\n"
+    if marker.is_file() and marker.read_text(encoding="utf-8") == expected_marker:
         return
 
     version = subprocess.check_output(
@@ -164,11 +140,13 @@ def prepare_qemu_mesa_source(mesa_repo: Path, source_dir: Path) -> None:
         archive.stdout.close()
     if archive.wait() != 0:
         raise RuntimeError(f"failed to extract Mesa revision {QEMU_MESA_COMMIT}")
-    marker.write_text(f"{QEMU_MESA_COMMIT}\n", encoding="utf-8")
+
+    backport_ohos_logger_fixes(source_dir)
+    marker.write_text(expected_marker, encoding="utf-8")
 
 
 def backport_ohos_logger_fixes(source_dir: Path) -> None:
-    """Apply the later upstream OHOS fixes needed by the current sysroot."""
+    """Backport the upstream OHOS va_list fix that prevents EGL startup crashes."""
     path = source_dir / "src/loader/loader.c"
     content = path.read_text(encoding="utf-8")
     old_default = """        vfprintf(stderr, fmt, args);
@@ -192,7 +170,19 @@ def backport_ohos_logger_fixes(source_dir: Path) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def copy_outputs(install_dir: Path, package_dir: Path, root: Path) -> None:
+def elf_machine(path: Path) -> int:
+    data = path.read_bytes()
+    if len(data) <= 4096 or not data.startswith(b"\x7fELF"):
+        raise RuntimeError(f"Mesa output is not a materialized ELF file: {path}")
+    byteorder = "little" if data[5] == 1 else "big" if data[5] == 2 else None
+    if byteorder is None:
+        raise RuntimeError(f"Mesa output has an invalid ELF byte order: {path}")
+    return int.from_bytes(data[18:20], byteorder)
+
+
+def copy_outputs(
+    install_dir: Path, package_dir: Path, root: Path, target: Target
+) -> None:
     lib_dir = install_dir / "lib"
     package_dir.mkdir(parents=True, exist_ok=True)
     for output in package_dir.iterdir():
@@ -209,10 +199,12 @@ def copy_outputs(install_dir: Path, package_dir: Path, root: Path) -> None:
     packaged_driver = package_dir / "kms_swrast_dri.so"
     shutil.copy2(dri_driver, packaged_driver)
 
+    if elf_machine(packaged_driver) != target.elf_machine:
+        raise RuntimeError(f"Mesa driver has the wrong target architecture: {packaged_driver}")
+
     llvm_nm = root / "prebuilts/clang/ohos/linux-x86_64/llvm/bin/llvm-nm"
     symbols = subprocess.check_output(
-        [str(llvm_nm), "-D", "--defined-only", str(packaged_driver)],
-        text=True,
+        [str(llvm_nm), "-D", "--defined-only", str(packaged_driver)], text=True
     )
     required_driver_symbols = (
         "__driDriverGetExtensions_swrast",
@@ -237,65 +229,49 @@ def copy_outputs(install_dir: Path, package_dir: Path, root: Path) -> None:
         ],
         text=True,
     )
-    llvm_readobj = root / "prebuilts/clang/ohos/linux-x86_64/llvm/bin/llvm-readobj"
-    if (
-        "<vsnprintf@plt>" not in logger_disassembly
-        and not arm_logger_calls_vsnprintf(
-            llvm_objdump,
-            llvm_readobj,
-            packaged_driver,
-            logger_disassembly,
-        )
-    ):
+    if "<vsnprintf@plt>" not in logger_disassembly:
         raise RuntimeError(
             "Mesa ohos_logger did not compile with the upstream va_list fix: "
             f"{packaged_driver}"
         )
 
-    required = (
-        "libEGL.so.1.0.0",
-        "libgbm.so.1.0.0",
-        "libGLESv1_CM.so.1.1.0",
-        "libGLESv2.so.2.0.0",
-        "libglapi.so.0.0.0",
-        "kms_swrast_dri.so",
-    )
-    missing = [name for name in required if not (package_dir / name).is_file()]
+    missing = [name for name in REQUIRED_OUTPUTS if not (package_dir / name).is_file()]
     if missing:
         raise RuntimeError(f"Mesa outputs missing: {', '.join(missing)}")
 
 
 def main() -> None:
     if len(sys.argv) != 2:
-        raise SystemExit("usage: build_armv7a_mesa.py OUT_DIR")
+        raise SystemExit("usage: build_qemu_mesa.py OUT_DIR")
 
     out_dir = Path(sys.argv[1]).resolve()
     root = out_dir.parents[1]
     product = out_dir.name
-    if product != "armv7a_virt":
-        raise RuntimeError(f"armv7a Mesa builder received unexpected product: {product}")
+    try:
+        target = TARGETS[product]
+    except KeyError as error:
+        raise RuntimeError(f"unsupported 64-bit QEMU Mesa product: {product}") from error
 
     mesa_repo = root / "third_party/mesa3d"
     sysroot = out_dir / "obj/third_party/musl"
-    source_dir = mesa_repo / "build-ohos-armv7a-qemu-source-21.3.3"
-    build_dir = mesa_repo / "build-ohos-armv7a-qemu-21.3.3"
+    tag = product.replace("_virt", "")
+    source_dir = mesa_repo / "build-ohos-qemu-source-21.3.3-fixed"
+    build_dir = mesa_repo / f"build-ohos-qemu-{tag}-21.3.3-fixed"
     install_dir = build_dir / "install"
     package_dir = Path(
-        os.environ.get("MESA_PACKAGE_DIR", out_dir / "packages/phone/mesa3d")
+        os.environ.get("MESA_PACKAGE_DIR", out_dir / "packages/phone/qemu_mesa")
     ).resolve()
-    cross_file = mesa_repo / "cross_file_armv7a_qemu_21.3.3"
-    pkg_config_dir = mesa_repo / "pkgconfig_armv7a_qemu_21.3.3"
+    cross_file = mesa_repo / f"cross_file_qemu_{tag}_21.3.3"
+    pkg_config_dir = mesa_repo / f"pkgconfig_qemu_{tag}_21.3.3"
 
     prepare_qemu_mesa_source(mesa_repo, source_dir)
+    # Reapply and validate even when a cached extracted source tree is reused.
     backport_ohos_logger_fixes(source_dir)
-    write_cross_file(cross_file, root, sysroot)
-    # Historical Mesa sources use dependency paths that predate the current
-    # OpenHarmony tree. Use the current OHOS pkg-config templates so headers
-    # and already-built libraries resolve from the active checkout.
+    write_cross_file(cross_file, root, sysroot, target)
     write_pkg_config_files(mesa_repo, root, product, pkg_config_dir)
     meson = shutil.which("meson")
     if meson is None:
-        raise RuntimeError("meson >= 1.1 is required to build armv7a Mesa")
+        raise RuntimeError("meson >= 1.1 is required to build QEMU Mesa")
 
     env = os.environ.copy()
     env["PKG_CONFIG_PATH"] = str(pkg_config_dir)
@@ -322,7 +298,7 @@ def main() -> None:
         "-Dglvnd=false",
         "-Dshared-glapi=enabled",
         "-Dshader-cache=disabled",
-        "-Ddri-search-path=/system/lib",
+        "-Ddri-search-path=/system/lib64",
         "-Dlibdir=lib",
         f"--cross-file={cross_file}",
         f"--prefix={install_dir}",
@@ -348,7 +324,7 @@ def main() -> None:
     subprocess.run(["ninja", "-C", str(build_dir), f"-j{jobs}"], check=True, env=env)
     shutil.rmtree(install_dir, ignore_errors=True)
     subprocess.run(["ninja", "-C", str(build_dir), "install"], check=True, env=env)
-    copy_outputs(install_dir, package_dir, root)
+    copy_outputs(install_dir, package_dir, root, target)
 
 
 if __name__ == "__main__":

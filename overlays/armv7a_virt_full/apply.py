@@ -264,7 +264,10 @@ def ensure_armv7a_mesa(root: Path) -> None:
     "libGLESv3_impl.so",
   ]
   mesa3d_gallium_name = "kms_swrast_dri.so"
-  mesa3d_gallium_symlinks = [ "swrast_dri.so" ]
+  mesa3d_gallium_symlinks = [
+    "swrast_dri.so",
+    "virtio_gpu_dri.so",
+  ]
   mesa3d_optional_lib_items = [
     [
       "libglapi.so.0.0.0",

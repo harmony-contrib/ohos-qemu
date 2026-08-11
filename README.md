@@ -13,7 +13,7 @@ Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260717
+curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260809
 ```
 
 The installer downloads the selected Release and installs the package under
@@ -114,6 +114,42 @@ hdc tconn 127.0.0.1:5555
 hdc list targets
 ```
 
+## Sign and install development HAPs
+
+The `v20260809` image requires a HAP signing block. A truly unsigned package is
+rejected with bundle-manager error `9568320` (`no signature file`). The default
+installer also installs the Java-free `hap-sign` CLI under
+`~/.ohos-qemu/bin`; use `--without-hap-signer` when only the image is wanted.
+
+```bash
+export PATH="$HOME/.ohos-qemu/bin:$PATH"
+
+hap-sign sign entry-default-unsigned.hap \
+  --bundle-name com.example.application \
+  --output entry-default-signed.hap
+
+hdc install entry-default-signed.hap
+```
+
+VPN applications commonly need an ACL in the debug profile:
+
+```bash
+hap-sign sign entry-default-unsigned.hap \
+  --bundle-name com.example.vpn \
+  --acl ohos.permission.FILE_ACCESS_PERSIST \
+  --output entry-default-signed.hap
+```
+
+From a source checkout, `scripts/sign-hap.sh` is the equivalent wrapper and
+`scripts/install-hap-signer.sh` installs the signer. Release packages carry the
+same scripts under `tools/`. The signer is implemented in the separate
+[`ohos-rs/hapsigner-rs`](https://github.com/ohos-rs/hapsigner-rs) repository
+with RustCrypto CMS, X.509, P-256 ECDSA, and SHA-256 crates. `rustls` is not used
+because the on-disk format is CMS/PKCS#7 rather than TLS.
+
+The embedded OpenHarmony development key is public test material and is only
+appropriate for QEMU/RD development images.
+
 ## Standard VPN capability
 
 The full `armv7a_virt`, `arm64_virt`, and `x86_64_virt` packages are built with
@@ -144,6 +180,20 @@ of `userdata.img`, and the exact signed `VpnDialog.hap` inside `system.img`; a
 package is marked with `"standard_vpn": true` only after those checks pass.
 The guest VPN uses `/dev/tun` inside OpenHarmony and does not require a host
 TAP device when the default QEMU user-mode network is used.
+
+## Standard QEMU GPU rendering
+
+All three architectures keep RenderService on its normal OpenGL/EGLImage
+lifecycle. QEMU exposes a plain `virtio-gpu` DRM device; the guest Mesa stack
+tries the virtio path and falls back to `kms_swrast` when host 3D is absent.
+The 64-bit Mesa libraries are built from the same OHOS Mesa 21.3.3 baseline as
+armv7a with the upstream `ohos_logger` `va_list` fix, instead of packaging the
+older QEMU GPU binaries. Both `virtio_gpu_dri.so` and `swrast_dri.so` resolve to
+the verified multi-driver `kms_swrast_dri.so` ELF.
+
+Package validation checks the DRI ELF architecture and aliases. QEMU smoke CI
+then opens Settings and Photos three times and fails if `render_service`
+changes PID or emits a new fault log.
 
 ## Phone and 2in1 deviceType package matrix
 

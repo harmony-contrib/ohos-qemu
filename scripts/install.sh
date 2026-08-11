@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_URL="${OHOS_QEMU_REPO_URL:-https://github.com/harmony-contrib/ohos-qemu}"
-RELEASE_TAG="${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20260717}}"
+RELEASE_TAG="${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20260809}}"
 DOWNLOAD_BASE_URL="${OHOS_QEMU_DOWNLOAD_BASE_URL:-}"
 GITHUB_TOKEN="${OHOS_QEMU_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 PREFIX="${OHOS_QEMU_PREFIX:-${HOME}/.ohos-qemu}"
@@ -11,6 +11,11 @@ ARCH="${OHOS_QEMU_ARCH:-auto}"
 DEVICE_TYPE="${OHOS_QEMU_DEVICE_TYPE:-phone}"
 FORCE=0
 KEEP_ARCHIVE=0
+INSTALL_HAP_SIGNER="${OHOS_QEMU_INSTALL_HAP_SIGNER:-1}"
+HAP_SIGNER_REPO_URL="${OHOS_QEMU_HAPSIGNER_REPO_URL:-https://github.com/ohos-rs/hapsigner-rs}"
+HAP_SIGNER_VERSION="${OHOS_QEMU_HAPSIGNER_VERSION:-v0.1.0}"
+HAP_SIGNER_DOWNLOAD_BASE_URL="${OHOS_QEMU_HAPSIGNER_DOWNLOAD_BASE_URL:-}"
+HAP_SIGNER_INSTALLER="${OHOS_QEMU_HAPSIGNER_INSTALLER:-}"
 
 usage() {
   cat <<'USAGE'
@@ -25,16 +30,23 @@ Options:
   --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64
   --device-type TYPE Device type package: phone or 2in1. Default: phone
   --repo URL         GitHub repository URL. Default: https://github.com/harmony-contrib/ohos-qemu
-  --release TAG      Release tag to download. Default: v20260717
+  --release TAG      Release tag to download. Default: v20260809
   --download-base-url URL
                      Direct artifact base URL. Downloads URL/<package>.
                      Useful for GitHub Releases, private mirrors, or CDNs.
   --force            Replace an existing installed package directory
   --keep-archive     Keep the downloaded archive after extraction
+  --with-hap-signer  Install the pure Rust hap-sign CLI (default)
+  --without-hap-signer
+                     Install only the QEMU image package
+  --hap-signer-version TAG
+                     hap-sign release tag. Default: v0.1.0
+  --hap-signer-download-base-url URL
+                     Direct URL containing hap-sign release assets
   -h, --help         Show this help
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260717
+  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260809
   bash scripts/install.sh --prefix "$HOME/opt/ohos-qemu" --arch arm64 --device-type phone
   bash scripts/install.sh --release RELEASE_TAG --arch x86_64 --device-type 2in1
 USAGE
@@ -78,6 +90,22 @@ while [ "$#" -gt 0 ]; do
       KEEP_ARCHIVE=1
       shift
       ;;
+    --with-hap-signer)
+      INSTALL_HAP_SIGNER=1
+      shift
+      ;;
+    --without-hap-signer)
+      INSTALL_HAP_SIGNER=0
+      shift
+      ;;
+    --hap-signer-version)
+      HAP_SIGNER_VERSION="${2:-}"
+      shift 2
+      ;;
+    --hap-signer-download-base-url)
+      HAP_SIGNER_DOWNLOAD_BASE_URL="${2:-}"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -94,6 +122,14 @@ if [ -z "${PREFIX}" ] || [ -z "${REPO_URL}" ] || [ -z "${RELEASE_TAG}" ]; then
   usage >&2
   exit 2
 fi
+
+case "${INSTALL_HAP_SIGNER}" in
+  0|1) ;;
+  *)
+    echo "OHOS_QEMU_INSTALL_HAP_SIGNER must be 0 or 1" >&2
+    exit 2
+    ;;
+esac
 
 case "${DEVICE_TYPE}" in
   phone|2in1)
@@ -175,6 +211,46 @@ artifact_url() {
     printf '%s\n' "${DOWNLOAD_BASE_URL%/}/${name}"
   else
     printf '%s\n' "${REPO_URL%/}/releases/download/${RELEASE_TAG}/${name}"
+  fi
+}
+
+install_hap_signer() {
+  local installer="${HAP_SIGNER_INSTALLER}"
+  local temporary=""
+  local installer_url
+  local signer_repo_path
+  local args=(--prefix "${PREFIX}" --version "${HAP_SIGNER_VERSION}")
+  if [ "${FORCE}" = 1 ]; then
+    args+=(--force)
+  fi
+  if [ -n "${HAP_SIGNER_DOWNLOAD_BASE_URL}" ]; then
+    args+=(--download-base-url "${HAP_SIGNER_DOWNLOAD_BASE_URL}")
+  fi
+  if [ -z "${installer}" ]; then
+    temporary="$(mktemp "${TMPDIR:-/tmp}/hapsigner-installer.XXXXXX")"
+    installer_url="${HAP_SIGNER_REPO_URL%/}/raw/${HAP_SIGNER_VERSION}/install.sh"
+    case "${HAP_SIGNER_REPO_URL}" in
+      https://github.com/*)
+        signer_repo_path="${HAP_SIGNER_REPO_URL#https://github.com/}"
+        signer_repo_path="${signer_repo_path%.git}"
+        installer_url="https://raw.githubusercontent.com/${signer_repo_path}/${HAP_SIGNER_VERSION}/install.sh"
+        ;;
+    esac
+    echo "downloading signer installer: ${installer_url}"
+    if ! try_download_file "${installer_url}" "${temporary}"; then
+      rm -f "${temporary}"
+      echo "unable to download the hap-sign installer" >&2
+      return 1
+    fi
+    installer="${temporary}"
+  fi
+  HAPSIGNER_REPO_URL="${HAP_SIGNER_REPO_URL}" \
+  HAPSIGNER_VERSION="${HAP_SIGNER_VERSION}" \
+  HAPSIGNER_DOWNLOAD_BASE_URL="${HAP_SIGNER_DOWNLOAD_BASE_URL}" \
+  HAPSIGNER_GITHUB_TOKEN="${GITHUB_TOKEN}" \
+    bash "${installer}" "${args[@]}"
+  if [ -n "${temporary}" ]; then
+    rm -f "${temporary}"
   fi
 }
 
@@ -316,9 +392,19 @@ if [ "${KEEP_ARCHIVE}" != "1" ]; then
   rm -f "${ARCHIVE_PATH}"
 fi
 
+if [ "${INSTALL_HAP_SIGNER}" = 1 ]; then
+  install_hap_signer
+fi
+
 echo
 echo "installed: ${INSTALL_DIR}"
 echo "launcher:  ${INSTALL_DIR}/${LAUNCHER}"
+if [ "${INSTALL_HAP_SIGNER}" = 1 ]; then
+  case "${PLATFORM}" in
+    windows) echo "signer:    ${PREFIX}/bin/hap-sign.exe" ;;
+    *) echo "signer:    ${PREFIX}/bin/hap-sign" ;;
+  esac
+fi
 case "${PLATFORM}" in
   windows)
     echo "run:       powershell -ExecutionPolicy Bypass -File \"${INSTALL_DIR}/${LAUNCHER}\""

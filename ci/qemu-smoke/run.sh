@@ -10,11 +10,13 @@ Usage:
 
 OPTIONS:
   --phase PHASE                   all, prepare, start, wait-hdc, wait-account,
-                                  run-binary, run-ohos-runner, wait-stable,
+                                  run-binary, run-ui-switch, run-ohos-runner, wait-stable,
                                   diagnostics, cleanup
   --require-account true|false    Require foreground user 100, default: true
   --require-kvm true|false        Require Linux x86_64 KVM acceleration, default: false
   --run-ohos-runner true|false    Run the OpenHarmony Rust test runner, default: true
+  --run-ui-switch true|false      Launch two UI apps and require render_service
+                                  to keep the same PID, default: true
   --account-wait-attempts N       Account readiness attempts at 3 seconds each,
                                   default: 300
   --minimum-guest-uptime N        Keep the guest alive until this many guest
@@ -36,6 +38,7 @@ PACKAGE=
 GUEST_ARCH=
 HOST_PLATFORM=
 RUN_OHOS_RUNNER=true
+RUN_UI_SWITCH=true
 REQUIRE_ACCOUNT=true
 REQUIRE_KVM=false
 PHASE=all
@@ -61,6 +64,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --run-ohos-runner)
       RUN_OHOS_RUNNER="${2:-}"
+      shift 2
+      ;;
+    --run-ui-switch)
+      RUN_UI_SWITCH="${2:-}"
       shift 2
       ;;
     --require-account)
@@ -100,7 +107,7 @@ if [ -z "${PACKAGE}" ] || [ -z "${GUEST_ARCH}" ] || [ -z "${HOST_PLATFORM}" ]; t
   exit 2
 fi
 
-for bool_value in "${RUN_OHOS_RUNNER}" "${REQUIRE_ACCOUNT}" "${REQUIRE_KVM}"; do
+for bool_value in "${RUN_OHOS_RUNNER}" "${RUN_UI_SWITCH}" "${REQUIRE_ACCOUNT}" "${REQUIRE_KVM}"; do
   case "${bool_value}" in
     true|false)
       ;;
@@ -112,7 +119,7 @@ for bool_value in "${RUN_OHOS_RUNNER}" "${REQUIRE_ACCOUNT}" "${REQUIRE_KVM}"; do
 done
 
 case "${PHASE}" in
-  all|prepare|start|wait-hdc|wait-account|run-binary|run-ohos-runner|wait-stable|diagnostics|cleanup)
+  all|prepare|start|wait-hdc|wait-account|run-binary|run-ui-switch|run-ohos-runner|wait-stable|diagnostics|cleanup)
     ;;
   *)
     echo "unsupported --phase: ${PHASE}" >&2
@@ -741,6 +748,94 @@ run_binary() {
   "${HDC}" -t "${HDC_TARGET}" shell "uname -a; id; /data/local/tmp/${BIN_NAME} from-ci"
 }
 
+render_service_pid() {
+  "${HDC}" -t "${HDC_TARGET}" shell 'pidof render_service' 2>/dev/null \
+    | tr -d '\r[:space:]'
+}
+
+render_service_fault_count() {
+  "${HDC}" -t "${HDC_TARGET}" shell '
+    find /data/log/faultlog /log/faultlog -type f -name "*render_service*" 2>/dev/null |
+      wc -l
+  ' 2>/dev/null | tr -d '\r[:space:]'
+}
+
+run_ui_switch() {
+  if [ "${RUN_UI_SWITCH}" != "true" ]; then
+    echo "UI application-switch smoke disabled."
+    return 0
+  fi
+  if [ "${REQUIRE_ACCOUNT}" != "true" ]; then
+    echo "UI application-switch smoke requires a ready foreground account; skipping."
+    return 0
+  fi
+
+  ensure_hdc
+  assert_guest_healthy "before UI application-switch verification" || return 1
+  require_hdc_target "before UI application-switch verification" || return 1
+  local baseline_pid
+  local current_pid
+  local baseline_faults
+  local current_faults
+  local cycle
+  local log_file="${WORK}/ui-switch.log"
+  baseline_pid="$(render_service_pid)"
+  baseline_faults="$(render_service_fault_count)"
+  case "${baseline_pid}" in
+    ''|*[!0-9]*)
+      echo "render_service PID is unavailable before UI switching: ${baseline_pid:-empty}" >&2
+      return 1
+      ;;
+  esac
+  case "${baseline_faults}" in
+    ''|*[!0-9]*) baseline_faults=0 ;;
+  esac
+  : >"${log_file}"
+
+  for cycle in 1 2 3; do
+    {
+      printf 'cycle=%s app=settings\n' "${cycle}"
+      "${HDC}" -t "${HDC_TARGET}" shell \
+        'aa start -a com.ohos.settings.MainAbility -b com.ohos.settings'
+    } >>"${log_file}" 2>&1
+    sleep 3
+    current_pid="$(render_service_pid)"
+    if [ "${current_pid}" != "${baseline_pid}" ]; then
+      echo "render_service restarted after opening Settings: ${baseline_pid} -> ${current_pid:-missing}" >&2
+      "${HDC}" -t "${HDC_TARGET}" shell \
+        'hilog -x | grep -iE "render_service|RenderContext|EGL|GLES|surface.?capture" | tail -240' \
+        >>"${log_file}" 2>&1 || true
+      return 1
+    fi
+
+    {
+      printf 'cycle=%s app=photos\n' "${cycle}"
+      "${HDC}" -t "${HDC_TARGET}" shell \
+        'aa start -a com.ohos.photos.MainAbility -b com.ohos.photos'
+    } >>"${log_file}" 2>&1
+    sleep 3
+    current_pid="$(render_service_pid)"
+    if [ "${current_pid}" != "${baseline_pid}" ]; then
+      echo "render_service restarted after opening Photos: ${baseline_pid} -> ${current_pid:-missing}" >&2
+      "${HDC}" -t "${HDC_TARGET}" shell \
+        'hilog -x | grep -iE "render_service|RenderContext|EGL|GLES|surface.?capture" | tail -240' \
+        >>"${log_file}" 2>&1 || true
+      return 1
+    fi
+    assert_guest_healthy "after UI switch cycle ${cycle}" || return 1
+  done
+
+  current_faults="$(render_service_fault_count)"
+  case "${current_faults}" in
+    ''|*[!0-9]*) current_faults=0 ;;
+  esac
+  if [ "${current_faults}" -ne "${baseline_faults}" ]; then
+    echo "new render_service fault logs appeared during UI switching: ${baseline_faults} -> ${current_faults}" >&2
+    return 1
+  fi
+  echo "UI switching kept render_service PID ${baseline_pid} stable across 6 launches."
+}
+
 run_ohos_runner() {
   if [ "${RUN_OHOS_RUNNER}" != "true" ]; then
     echo "ohos-test-runner smoke disabled for ${GUEST_ARCH}; binary execution was verified."
@@ -867,6 +962,7 @@ collect_diagnostics() {
     printf 'require_account=%s\n' "${REQUIRE_ACCOUNT}"
     printf 'require_kvm=%s\n' "${REQUIRE_KVM}"
     printf 'run_ohos_runner=%s\n' "${RUN_OHOS_RUNNER}"
+    printf 'run_ui_switch=%s\n' "${RUN_UI_SWITCH}"
     printf 'minimum_guest_uptime=%s\n' "${MINIMUM_GUEST_UPTIME}"
     printf 'hdc_target=%s\n' "${HDC_TARGET}"
     printf 'qemu_accel=%s\n' "${SMOKE_ACCEL}"
@@ -894,7 +990,7 @@ collect_diagnostics() {
         "${LOG}" >"${DIAGNOSTICS_DIR}/guest-fatal.log" 2>&1 || true
     fi
   fi
-  for log_file in hdc-tconn.log account-ready.log account-last.log; do
+  for log_file in hdc-tconn.log account-ready.log account-last.log ui-switch.log; do
     if [ -f "${WORK}/${log_file}" ]; then
       cp "${WORK}/${log_file}" "${DIAGNOSTICS_DIR}/${log_file}" || true
     fi
@@ -946,6 +1042,7 @@ run_all() {
   trap 'set +e; collect_diagnostics; cleanup_qemu' EXIT
   wait_for_hdc
   wait_for_account
+  run_ui_switch
   run_binary
   run_ohos_runner
   wait_for_guest_stability
@@ -969,6 +1066,9 @@ case "${PHASE}" in
     ;;
   run-binary)
     run_binary
+    ;;
+  run-ui-switch)
+    run_ui_switch
     ;;
   run-ohos-runner)
     run_ohos_runner

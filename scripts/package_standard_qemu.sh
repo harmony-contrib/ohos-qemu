@@ -1845,6 +1845,73 @@ require_image_path() {
   exit 1
 }
 
+require_image_symlink_target() {
+  local image="$1"
+  local description="$2"
+  local expected_target="$3"
+  shift 3
+  local path
+  local metadata
+  for path in "$@"; do
+    metadata="$(debugfs -R "stat ${path}" "${image}" 2>/dev/null || true)"
+    if printf '%s\n' "${metadata}" \
+      | grep -Fqx "Fast link dest: \"${expected_target}\""; then
+      printf 'standard graphics symlink: %s -> %s/%s\n' \
+        "${description}" "${path%/*}" "${expected_target}"
+      return
+    fi
+  done
+  echo "standard graphics symlink is missing or has the wrong target in ${image}: ${description}" >&2
+  printf 'expected target: %s; checked path: %s\n' "${expected_target}" "$*" >&2
+  exit 1
+}
+
+require_image_elf() {
+  local image="$1"
+  local description="$2"
+  local expected_machine="$3"
+  shift 3
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local extracted="${tmpdir}/artifact"
+  local path
+  for path in "$@"; do
+    if ! image_has_path "${image}" "${path}"; then
+      continue
+    fi
+    rm -f "${extracted}"
+    if ! debugfs -R "dump ${path} ${extracted}" "${image}" >/dev/null 2>&1; then
+      continue
+    fi
+    if python3 - "${extracted}" "${expected_machine}" <<'PY'
+import sys
+from pathlib import Path
+
+expected_machine = int(sys.argv[2])
+try:
+    data = Path(sys.argv[1]).read_bytes()
+except OSError:
+    raise SystemExit(1)
+if len(data) <= 4096 or not data.startswith(b"\x7fELF"):
+    raise SystemExit(1)
+byteorder = "little" if data[5] == 1 else "big" if data[5] == 2 else None
+if byteorder is None:
+    raise SystemExit(1)
+machine = int.from_bytes(data[18:20], byteorder)
+raise SystemExit(0 if machine == expected_machine else 1)
+PY
+    then
+      printf 'standard graphics artifact: %s -> %s\n' "${description}" "${path}"
+      rm -rf "${tmpdir}"
+      return
+    fi
+  done
+  rm -rf "${tmpdir}"
+  echo "standard graphics ELF is missing or invalid in ${image}: ${description}" >&2
+  printf 'checked path: %s\n' "$@" >&2
+  exit 1
+}
+
 require_image_file_contains() {
   local image="$1"
   local description="$2"
@@ -2001,6 +2068,33 @@ verify_standard_vpn_capability() {
   require_f2fs_verity \
     "${userdata_image}" \
     "writable userdata code-sign support"
+  local gpu_elf_machine
+  case "${product}" in
+    armv7a_virt) gpu_elf_machine=40 ;;
+    arm64_virt) gpu_elf_machine=183 ;;
+    x86_64_virt) gpu_elf_machine=62 ;;
+    *) echo "unsupported product for GPU ELF verification: ${product}" >&2; exit 2 ;;
+  esac
+  require_image_elf "${system_image}" "Mesa kms_swrast DRI driver" \
+    "${gpu_elf_machine}" \
+    /system/lib64/kms_swrast_dri.so \
+    /system/lib/kms_swrast_dri.so \
+    /lib64/kms_swrast_dri.so \
+    /lib/kms_swrast_dri.so
+  require_image_symlink_target \
+    "${system_image}" "Mesa virtio-gpu DRI driver alias" \
+    "kms_swrast_dri.so" \
+    /system/lib64/virtio_gpu_dri.so \
+    /system/lib/virtio_gpu_dri.so \
+    /lib64/virtio_gpu_dri.so \
+    /lib/virtio_gpu_dri.so
+  require_image_symlink_target \
+    "${system_image}" "Mesa software-raster DRI driver alias" \
+    "kms_swrast_dri.so" \
+    /system/lib64/swrast_dri.so \
+    /system/lib/swrast_dri.so \
+    /lib64/swrast_dri.so \
+    /lib/swrast_dri.so
   require_image_file_contains "${system_image}" "QEMU developer mode parameter" \
     "const.security.developermode.state=true" \
     /system/etc/param/ohos.para \
@@ -2315,6 +2409,7 @@ fi
 PACKAGE_DIR="${OUTPUT_DIR}/${PACKAGE_NAME}"
 IMAGES_OUT="${PACKAGE_DIR}/images"
 LAUNCH_OUT="${PACKAGE_DIR}/launch"
+TOOLS_OUT="${PACKAGE_DIR}/tools"
 STANDARD_VPN_VERIFIED=false
 VPN_AUTHORIZATION_MODE=unverified
 MANIFEST_DEVICE_TYPE="${DEVICE_TYPE:-default}"
@@ -2333,7 +2428,10 @@ case "${DEVICE_TYPE_PROFILE}" in
 esac
 
 rm -rf "${PACKAGE_DIR}"
-mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}"
+mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}" "${TOOLS_OUT}"
+cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
+cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
+chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 
 for file in "${COMMON_IMAGES[@]}"; do
   cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"

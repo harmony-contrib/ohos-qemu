@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 INSTALLER="${REPO_ROOT}/scripts/install.sh"
+export OHOS_QEMU_INSTALL_HAP_SIGNER=0
 
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ohos-qemu-install-test.XXXXXX")"
 trap 'rm -rf "${WORKDIR}"' EXIT
@@ -121,6 +122,52 @@ OHOS_QEMU_DOWNLOAD_BASE_URL="file://${ASSET_ROOT}" \
 test -x "${ENV_PREFIX}/openharmony-qemu-arm64-arm64_virt-phone/launch/macos.command"
 grep -q '^arch:      arm64$' "${WORKDIR}/env.log"
 grep -q '^device:    phone$' "${WORKDIR}/env.log"
+
+# The opt-out keeps existing image-only installs deterministic, while the
+# explicit signer path installs a CLI into the shared prefix.
+MOCK_SIGNER_INSTALLER="${WORKDIR}/mock-hapsigner-installer.sh"
+cat >"${MOCK_SIGNER_INSTALLER}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+prefix=
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --prefix) prefix="${2:-}"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+test -n "${prefix}"
+mkdir -p "${prefix}/bin"
+cat >"${prefix}/bin/hap-sign" <<'SCRIPT'
+#!/usr/bin/env bash
+printf '%s\n' "$@" >"${HAP_SIGN_TEST_LOG}"
+SCRIPT
+chmod +x "${prefix}/bin/hap-sign"
+EOF
+chmod +x "${MOCK_SIGNER_INSTALLER}"
+
+SIGNER_PREFIX="${WORKDIR}/signer-install"
+env -u OHOS_QEMU_INSTALL_HAP_SIGNER \
+  OHOS_QEMU_HAPSIGNER_INSTALLER="${MOCK_SIGNER_INSTALLER}" \
+  bash "${INSTALLER}" \
+    --prefix "${SIGNER_PREFIX}" \
+    --platform linux \
+    --arch x86_64 \
+    --release test-release \
+    --download-base-url "file://${ASSET_ROOT}" \
+    >"${WORKDIR}/signer.log"
+test -x "${SIGNER_PREFIX}/bin/hap-sign"
+grep -q "^signer:    ${SIGNER_PREFIX}/bin/hap-sign$" "${WORKDIR}/signer.log"
+
+export HAP_SIGN_TEST_LOG="${WORKDIR}/signer-arguments.log"
+OHOS_HAP_SIGNER="${SIGNER_PREFIX}/bin/hap-sign" \
+  bash "${REPO_ROOT}/scripts/sign-hap.sh" input.hap --bundle-name com.example.test
+sed -n '1p' "${HAP_SIGN_TEST_LOG}" | grep -q '^sign$'
+sed -n '2p' "${HAP_SIGN_TEST_LOG}" | grep -q '^input.hap$'
+
+bash -n "${REPO_ROOT}/scripts/install.sh"
+bash -n "${REPO_ROOT}/scripts/install-hap-signer.sh"
+bash -n "${REPO_ROOT}/scripts/sign-hap.sh"
 
 # Missing phone candidates report both attempted assets.
 if bash "${INSTALLER}" \

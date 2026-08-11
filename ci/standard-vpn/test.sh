@@ -13,6 +13,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu" \
   "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/configs" \
   "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/patch" \
   "${OHOS_ROOT}/base/security/code_signature/interfaces/inner_api/code_sign_utils/include" \
@@ -55,6 +56,46 @@ CONFIG_SYSTEM_DATA_VERIFICATION=y
 # CONFIG_FS_VERITY is not set
 EOF
 done
+
+cat >"${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn" <<'EOF'
+virt_gpu_prebuilt_dir = target_cpu
+virt_lib = "lib64"
+
+ohos_prebuilt_shared_library("libglapi.so.0.0.0") {
+  source = "${virt_gpu_prebuilt_dir}/libglapi.so.0.0.0"
+  install_enable = true
+}
+
+ohos_prebuilt_shared_library("libEGL.so.1.0.0") {
+  source = "${virt_gpu_prebuilt_dir}/libEGL.so.1.0.0"
+  install_enable = true
+}
+
+ohos_prebuilt_shared_library("libgbm.so.1.0.0") {
+  source = "${virt_gpu_prebuilt_dir}/libgbm.so.1.0.0"
+  install_enable = true
+}
+
+ohos_prebuilt_shared_library("kms_swrast_dri.so") {
+  source = "${virt_gpu_prebuilt_dir}/kms_swrast_dri.so"
+  install_enable = true
+  if (target_cpu != "x86_64") {
+    symlink_target_name = [
+      "swrast_dri.so",
+    ]
+  }
+}
+
+ohos_prebuilt_shared_library("libGLESv1_CM.so.1.1.0") {
+  source = "${virt_gpu_prebuilt_dir}/libGLESv1_CM.so.1.1.0"
+  install_enable = true
+}
+
+ohos_prebuilt_shared_library("libGLESv2.so.2.0.0") {
+  source = "${virt_gpu_prebuilt_dir}/libGLESv2.so.2.0.0"
+  install_enable = true
+}
+EOF
 
 cat >"${OHOS_ROOT}/device/qemu/common/virt_full/kernel/patch/virt.patch" <<'EOF'
 diff --git a/fs/Kconfig b/fs/Kconfig
@@ -259,6 +300,7 @@ declare_args() {
   netmanager_ext_feature_vpnext = false
 }
 EOF
+
 : >"${OHOS_ROOT}/foundation/communication/netmanager_ext/frameworks/vpn_dialog/dialog_ui/vpn_dialog/BUILD.gn"
 : >"${OHOS_ROOT}/applications/standard/hap/SettingsData.hap"
 
@@ -290,17 +332,17 @@ void RSBaseRenderEngine::Init(RenderEngineType type)
 #if defined(RS_ENABLE_VK)
     renderContext_->SetUpGpuContext(skContext_);
 #else
-    renderContext_->SetUpGpuContext();
+    RS_LOGI("QEMU portable raster composition skips GPU context setup");
 #endif
 #endif // RS_ENABLE_GL || RS_ENABLE_VK
-#if (defined(RS_ENABLE_EGLIMAGE) && defined(RS_ENABLE_GPU)) || defined(RS_ENABLE_VK)
+#if defined(RS_ENABLE_VK)
     imageManager_ = RSImageManager::Create(renderContext_);
 #endif
 }
 
 bool RSBaseRenderEngine::NeedForceCPU(const std::vector<RSLayerPtr>& layers)
 {
-    bool forceCPU = false;
+    bool forceCPU = true;
     return forceCPU;
 }
 EOF
@@ -314,17 +356,17 @@ void RSMainThread::Init()
         auto gpuContext = isUniRender_? GetRenderEngine()->GetRenderContext()->GetDrGPUContext() :
             renderEngine_->GetRenderContext()->GetDrGPUContext();
         if (gpuContext == nullptr) {
-            RS_LOGE("Init gpuContext is nullptr!");
-            return;
-        }
-        int32_t maxResources = 0;
-        size_t maxResourcesSize = 0;
-        gpuContext->GetResourceCacheLimits(&maxResources, &maxResourcesSize);
-        if (maxResourcesSize > 0) {
-            gpuContext->SetResourceCacheLimits(cacheLimitsTimes * maxResources, cacheLimitsTimes *
-                std::fmin(maxResourcesSize, DEFAULT_SKIA_CACHE_SIZE));
+            RS_LOGI("GPU context is unavailable; continuing with QEMU CPU raster composition");
         } else {
-            gpuContext->SetResourceCacheLimits(DEFAULT_SKIA_CACHE_COUNT, DEFAULT_SKIA_CACHE_SIZE);
+            int32_t maxResources = 0;
+            size_t maxResourcesSize = 0;
+            gpuContext->GetResourceCacheLimits(&maxResources, &maxResourcesSize);
+            if (maxResourcesSize > 0) {
+                gpuContext->SetResourceCacheLimits(cacheLimitsTimes * maxResources, cacheLimitsTimes *
+                    std::fmin(maxResourcesSize, DEFAULT_SKIA_CACHE_SIZE));
+            } else {
+                gpuContext->SetResourceCacheLimits(DEFAULT_SKIA_CACHE_COUNT, DEFAULT_SKIA_CACHE_SIZE);
+            }
         }
     }
 #endif // RS_ENABLE_GL
@@ -371,6 +413,9 @@ EOF
 cp \
   "${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" \
   "${OHOS_ROOT}/vendor/ohemu/virt/virt_common_x86_64.json"
+cp \
+  "${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" \
+  "${OHOS_ROOT}/vendor/ohemu/virt/virt_common_armv7a.json"
 
 cat >"${OHOS_ROOT}/vendor/ohemu/virt/preinstall-config/install_list.json" <<'EOF'
 {
@@ -456,6 +501,7 @@ grep -Eq '^[[:space:]]*netmanager_ext_feature_vpnext = true$' \
   "${OHOS_ROOT}/foundation/communication/netmanager_ext/netmanager_ext_config.gni"
 for product_config in \
   "${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" \
+  "${OHOS_ROOT}/vendor/ohemu/virt/virt_common_armv7a.json" \
   "${OHOS_ROOT}/vendor/ohemu/virt/virt_common_x86_64.json"
 do
   grep -Fq \
@@ -480,19 +526,95 @@ grep -Fq \
   '#if (defined RS_ENABLE_GL) || (defined RS_ENABLE_VK)' \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp"
 grep -Fq \
-  'QEMU portable raster composition skips GPU context setup' \
+  'renderContext_->SetUpGpuContext();' \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp"
 grep -Fq \
-  'bool forceCPU = true;' \
+  'bool forceCPU = false;' \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp"
 grep -Fq \
-  'GPU context is unavailable; continuing with QEMU CPU raster composition' \
+  'RS_LOGE("Init gpuContext is nullptr!");' \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/core/pipeline/main_thread/rs_main_thread.cpp"
-if grep -Fq 'RS_LOGE("Init gpuContext is nullptr!");' \
+if grep -Fq 'QEMU portable raster composition skips GPU context setup' \
+  "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp" || \
+  grep -Fq 'GPU context is unavailable; continuing with QEMU CPU raster composition' \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/core/pipeline/main_thread/rs_main_thread.cpp"; then
-  echo "fatal GPU-context startup branch was not replaced" >&2
+  echo "legacy CPU-raster RenderService override was not removed" >&2
   exit 1
 fi
+grep -Fq '"virtio_gpu_dri.so",' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn"
+[ "$(grep -c '"virtio_gpu_dri.so",' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn")" -eq 1 ]
+grep -Fq 'action("qemu_mesa_build") {' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn"
+[ "$(grep -c 'action("qemu_mesa_build") {' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn")" -eq 1 ]
+[ "$(grep -c 'deps = \[ ":qemu_mesa_build" \]' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn")" -eq 6 ]
+if grep -Fq 'virt_gpu_prebuilt_dir' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn"; then
+  echo "obsolete QEMU GPU prebuilt variable was retained" >&2
+  exit 1
+fi
+for mesa_output in \
+  libEGL.so.1.0.0 \
+  libgbm.so.1.0.0 \
+  libGLESv1_CM.so.1.1.0 \
+  libGLESv2.so.2.0.0 \
+  libglapi.so.0.0.0 \
+  kms_swrast_dri.so
+do
+  grep -Fq "source = \"\$qemu_mesa_libs_dir/${mesa_output}\"" \
+    "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn"
+done
+cmp -s \
+  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py" \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/build_qemu_mesa.py"
+grep -Fq '(void)vsnprintf(log_string, MAX_BUFFER_LEN, fmt, args);' \
+  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py"
+grep -Fq '"<vsnprintf@plt>" not in logger_disassembly' \
+  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py"
+grep -Fq 'R_ARM_JUMP_SLOT' \
+  "${ROOT}/overlays/armv7a_virt_full/build_armv7a_mesa.py"
+python3 - \
+  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py" \
+  "${ROOT}/overlays/armv7a_virt_full/build_armv7a_mesa.py" <<'PY'
+import runpy
+import sys
+import tempfile
+from pathlib import Path
+
+builder = runpy.run_path(sys.argv[1])
+arm_builder = runpy.run_path(sys.argv[2])
+with tempfile.TemporaryDirectory() as directory:
+    source = Path(directory)
+    loader = source / "src/loader/loader.c"
+    loader.parent.mkdir(parents=True)
+    loader.write_text(
+        """        vfprintf(stderr, fmt, args);
+        sprintf_s(log_string, MAX_BUFFER_LEN, fmt, args);
+        va_end(args);
+    (void)sprintf_s(log_string, MAX_BUFFER_LEN, fmt, args);
+""",
+        encoding="utf-8",
+    )
+    builder["backport_ohos_logger_fixes"](source)
+    fixed = loader.read_text(encoding="utf-8")
+    assert "sprintf_s" not in fixed
+    assert "(void)vsnprintf(log_string, MAX_BUFFER_LEN, fmt, args);" in fixed
+
+assert builder["TARGETS"]["arm64_virt"].elf_machine == 183
+assert builder["TARGETS"]["x86_64_virt"].elf_machine == 62
+
+arm_plt = """
+0068a3d0 <$a>:
+  68a3d0: e28fc600 add r12, pc, #0, #12
+  68a3d4: e28cca96 add r12, r12, #614400
+  68a3d8: e5bcffcc ldr pc, [r12, #4044]!
+"""
+assert arm_builder["arm_plt_got_slot"](0x68A3D0, arm_plt) == 0x7213A4
+assert arm_builder["arm_plt_got_slot"](0x68A3D0, "invalid") is None
+PY
 grep -Fq \
   '//foundation/communication/netmanager_ext/frameworks/vpn_dialog/dialog_ui/vpn_dialog:dialog_hap' \
   "${OHOS_ROOT}/applications/standard/hap/ohos.build"
@@ -553,5 +675,8 @@ bash "${APPLY}" \
 [ "$(grep -c 'vpn_dialog:dialog_hap' "${OHOS_ROOT}/applications/standard/hap/ohos.build")" -eq 1 ]
 [ "$(grep -c '^--fs_type=f2fs$' "${OHOS_ROOT}/vendor/ohemu/virt/image_conf/userdata_image_conf.txt")" -eq 1 ]
 [ "$(grep -c '^--verity$' "${OHOS_ROOT}/vendor/ohemu/virt/image_conf/userdata_image_conf.txt")" -eq 0 ]
+grep -Fxq 'ipv6: true' "${ROOT}/ci/standard-vpn/ipv6-direct.yaml"
+bash -n "${ROOT}/ci/standard-vpn/verify-paws-ipv6.sh"
+[ -x "${ROOT}/ci/standard-vpn/verify-paws-ipv6.sh" ]
 
 echo "standard VPN overlay tests passed"

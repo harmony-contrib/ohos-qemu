@@ -14,6 +14,7 @@ exec bash "${SCRIPT_DIR}/run.sh" \
   --host-platform "${QEMU_SMOKE_HOST_PLATFORM:?QEMU_SMOKE_HOST_PLATFORM is required}" \
   --require-account "${QEMU_SMOKE_REQUIRE_ACCOUNT:?QEMU_SMOKE_REQUIRE_ACCOUNT is required}" \
   --require-kvm "${QEMU_SMOKE_REQUIRE_KVM:-false}" \
+  --run-ui-switch "${QEMU_SMOKE_RUN_UI_SWITCH:-true}" \
   --run-ohos-runner "${QEMU_SMOKE_RUN_OHOS_RUNNER:?QEMU_SMOKE_RUN_OHOS_RUNNER is required}" \
   --account-wait-attempts "${QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS:?QEMU_SMOKE_ACCOUNT_WAIT_ATTEMPTS is required}" \
   --minimum-guest-uptime "${QEMU_SMOKE_MINIMUM_GUEST_UPTIME:-0}" \

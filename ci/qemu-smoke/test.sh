@@ -21,6 +21,10 @@ cleanup() {
 trap cleanup EXIT
 
 bash -n "${RUN_SCRIPT}" "${PHASE_SCRIPT}" "${PACKAGE_SCRIPT}"
+grep -Fq 'aa start -a com.ohos.settings.MainAbility -b com.ohos.settings' \
+  "${RUN_SCRIPT}"
+grep -Fq 'aa start -a com.ohos.photos.MainAbility -b com.ohos.photos' \
+  "${RUN_SCRIPT}"
 
 mkdir -p "${FAKE_BIN}" "${WORK}"
 cat >"${FAKE_BIN}/hdc" <<'EOF'
@@ -190,6 +194,18 @@ case "${command}" in
   "dump /system/app/VpnDialog/VpnDialog.hap "*)
     output="${command#dump /system/app/VpnDialog/VpnDialog.hap }"
     cp "${FAKE_VPN_HAP}" "${output}"
+    ;;
+  "dump /system/lib64/kms_swrast_dri.so "*)
+    output="${command#dump /system/lib64/kms_swrast_dri.so }"
+    dd if=/dev/zero of="${output}" bs=8192 count=1 status=none
+    printf '\177ELF' | dd of="${output}" conv=notrunc status=none
+    # ELF64, little endian, EM_AARCH64 for this arm64 package fixture.
+    printf '\002\001\001\000\000\000\000\000\000\000\000\000\002\000\267\000' |
+      dd of="${output}" bs=1 seek=4 conv=notrunc status=none
+    ;;
+  "stat /system/lib64/virtio_gpu_dri.so"|"stat /system/lib64/swrast_dri.so")
+    printf '%s\n' 'Inode: 1'
+    printf '%s\n' 'Fast link dest: "kms_swrast_dri.so"'
     ;;
   stat*)
     printf '%s\n' 'Inode: 1'

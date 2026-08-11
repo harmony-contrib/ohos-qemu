@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -70,9 +71,9 @@ VPN_DIALOG_PROFILE_SHA256 = (
 )
 
 QEMU_GRAPHICS_FEATURES = {
-    # Keep the common RS/Canvas/OpenGL ABI compiled in so existing QEMU build
-    # caches remain reusable. The RenderService source fix below forces QEMU's
-    # composer onto its raster path without changing the public graphics ABI.
+    # Plain virtio-gpu provides display/DRM while the guest Mesa kms_swrast
+    # driver implements the portable OpenGL path. Keep RenderService on its
+    # normal GPU-context lifecycle even when the renderer itself is software.
     "graphic_2d_feature_ace_enable_gpu": True,
     "graphic_2d_feature_enable_opengl": True,
     "graphic_2d_feature_enable_vulkan": False,
@@ -80,6 +81,12 @@ QEMU_GRAPHICS_FEATURES = {
     # Upstream only defines rs_enable_parallel_render in the true branch, but
     # render_service references it unconditionally during GN evaluation.
     "graphic_2d_feature_parallel_render_enable": True,
+}
+
+QEMU_GRAPHICS_CONFIGS = {
+    "armv7a_virt": "vendor/ohemu/virt/virt_common_armv7a.json",
+    "arm64_virt": "vendor/ohemu/virt/virt_common.json",
+    "x86_64_virt": "vendor/ohemu/virt/virt_common_x86_64.json",
 }
 
 RENDER_ENGINE_PATH = (
@@ -90,6 +97,17 @@ RENDER_ENGINE_PATH = (
 RS_MAIN_THREAD_PATH = (
     "foundation/graphic/graphic_2d/rosen/modules/render_service/core/pipeline/"
     "main_thread/rs_main_thread.cpp"
+)
+
+QEMU_GPU_BUILD_PATH = "device/qemu/common/virt_full/hardware/gpu/BUILD.gn"
+
+QEMU_MESA_OUTPUTS = (
+    "libEGL.so.1.0.0",
+    "libgbm.so.1.0.0",
+    "libGLESv1_CM.so.1.1.0",
+    "libGLESv2.so.2.0.0",
+    "libglapi.so.0.0.0",
+    "kms_swrast_dri.so",
 )
 
 
@@ -744,7 +762,146 @@ def configure_portable_qemu_graphics(root: Path, relative: str) -> None:
         print(f"configured portable software rendering for QEMU: {path}")
 
 
-def configure_portable_render_context(root: Path) -> None:
+def configure_qemu_mesa_source_build(root: Path) -> None:
+    path = root / QEMU_GPU_BUILD_PATH
+    content = read_text(path)
+    # Once the core GL stack is source-built this variable is unused on arm64,
+    # which GN treats as a generation error. Keep optional x86-only targets
+    # valid by referring to target_cpu directly.
+    content = content.replace("virt_gpu_prebuilt_dir = target_cpu\n", "")
+    content = content.replace("${virt_gpu_prebuilt_dir}/", "${target_cpu}/")
+    action = '''qemu_mesa_libs_dir = "$root_build_dir/packages/phone/qemu_mesa"
+
+# Build the portable QEMU GL stack from the historical OHOS Mesa baseline
+# with the upstream va_list logger fix.  The checked-in 64-bit driver predates
+# that fix and crashes RenderService while eglInitialize() selects virtio_gpu.
+action("qemu_mesa_build") {
+  script = "build_qemu_mesa.py"
+  deps = [
+    "//third_party/expat:expat",
+    "//third_party/libdrm:libdrm",
+  ]
+  external_deps = [
+    "graphic_surface:surface",
+    "hilog:libhilog",
+  ]
+  outputs = [
+    "$qemu_mesa_libs_dir/libEGL.so.1.0.0",
+    "$qemu_mesa_libs_dir/libgbm.so.1.0.0",
+    "$qemu_mesa_libs_dir/libGLESv1_CM.so.1.1.0",
+    "$qemu_mesa_libs_dir/libGLESv2.so.2.0.0",
+    "$qemu_mesa_libs_dir/libglapi.so.0.0.0",
+    "$qemu_mesa_libs_dir/kms_swrast_dri.so",
+  ]
+  args = [ rebase_path(root_build_dir) ]
+}
+'''
+    if 'action("qemu_mesa_build") {' not in content:
+        marker = 'virt_lib = "lib64"\n'
+        if marker not in content:
+            die(f"QEMU GPU build variables have changed: {path}")
+        content = content.replace(marker, marker + "\n" + action, 1)
+
+    for name in QEMU_MESA_OUTPUTS:
+        target = f'ohos_prebuilt_shared_library("{name}") {{'
+        start = content.find(target)
+        if start < 0:
+            die(f"QEMU Mesa prebuilt target is missing from {path}: {name}")
+        end = content.find("\n}", start)
+        if end < 0:
+            die(f"QEMU Mesa prebuilt target is malformed in {path}: {name}")
+        block = content[start:end]
+        source_pattern = re.compile(r'^  source = ".*/' + re.escape(name) + r'"$', re.MULTILINE)
+        source = f'  source = "$qemu_mesa_libs_dir/{name}"'
+        if source not in block:
+            block, count = source_pattern.subn(source, block, count=1)
+            if count != 1:
+                die(f"QEMU Mesa source has changed in {path}: {name}")
+        dependency = '  deps = [ ":qemu_mesa_build" ]'
+        if dependency not in block:
+            block = block.replace(source, source + "\n" + dependency, 1)
+        content = content[:start] + block + content[end:]
+
+    legacy = '''  if (target_cpu != "x86_64") {
+    symlink_target_name = [
+      "swrast_dri.so",
+    ]
+  }'''
+    previous_standard = '''  symlink_target_name = [
+    "virtio_gpu_dri.so",
+  ]
+  if (target_cpu != "x86_64") {
+    symlink_target_name += [
+      "swrast_dri.so",
+    ]
+  }'''
+    standard = '''  symlink_target_name = [
+    "swrast_dri.so",
+    "virtio_gpu_dri.so",
+  ]'''
+    if standard not in content:
+        if previous_standard in content:
+            content = content.replace(previous_standard, standard, 1)
+        elif legacy in content:
+            content = content.replace(legacy, standard, 1)
+        else:
+            die(f"QEMU Mesa driver symlink configuration has changed: {path}")
+
+    # Vulkan is disabled for the portable renderer. Do not pull the old x86
+    # Vulkan/swrast prebuilts into the image; the fixed multi-driver build
+    # supplies both swrast and virtio_gpu entry points and aliases instead.
+    obsolete_x86_deps = (
+        "IMG.icd",
+        "VkLayer_MESA_device_select.json",
+        "VkLayer_MESA_overlay.json",
+        "icdconf.json",
+        "libVkLayer_MESA_device_select.so",
+        "libVkLayer_MESA_overlay.so",
+        "libvulkan_virtio.so",
+        "swrast_dri.so",
+    )
+    for name in obsolete_x86_deps:
+        content = content.replace(f'      ":{name}",\n', "")
+
+    for target_name in ("libEGL_impl_compat", "libGLESv3_impl_compat"):
+        target = f'ohos_copy("{target_name}") {{'
+        start = content.find(target)
+        if start < 0:
+            continue
+        end = content.find("\n  }", start)
+        if end < 0:
+            die(f"QEMU Mesa compatibility target is malformed in {path}: {target_name}")
+        block = content[start:end]
+        block = re.sub(
+            r'^(\s+)sources = \[ ".*/(lib(?:EGL|GLESv2)[^"]+)" \]$',
+            r'\1sources = [ "$qemu_mesa_libs_dir/\2" ]',
+            block,
+            count=1,
+            flags=re.MULTILINE,
+        )
+        dependency = '    deps = [ ":qemu_mesa_build" ]'
+        if dependency not in block:
+            source_line = next(
+                (line for line in block.splitlines() if "sources =" in line), None
+            )
+            if source_line is None:
+                die(f"QEMU Mesa compatibility source is missing in {path}: {target_name}")
+            block = block.replace(source_line, source_line + "\n" + dependency, 1)
+        content = content[:start] + block + content[end:]
+
+    write_text(path, content)
+    builder_source = Path(__file__).with_name("build_qemu_mesa.py")
+    builder_target = path.with_name("build_qemu_mesa.py")
+    if (
+        not builder_target.is_file()
+        or builder_target.read_bytes() != builder_source.read_bytes()
+    ):
+        shutil.copy2(builder_source, builder_target)
+    builder_target.chmod(0o755)
+    print(f"configured fixed source-built QEMU Mesa GL stack: {path}")
+
+
+def configure_standard_render_context(root: Path) -> None:
     path = root / RENDER_ENGINE_PATH
     content = read_text(path)
     supported_guards = (
@@ -770,7 +927,7 @@ def configure_portable_render_context(root: Path) -> None:
         else:
             die(f"RenderService context initialization guard has changed: {path}")
 
-    gl_gpu_setup = (
+    standard_gl_gpu_setup = (
         "#else\n"
         "    renderContext_->SetUpGpuContext();\n"
         "#endif\n"
@@ -782,12 +939,12 @@ def configure_portable_render_context(root: Path) -> None:
         "#endif\n"
         "#endif // RS_ENABLE_GL || RS_ENABLE_VK"
     )
-    if portable_gl_gpu_setup not in updated:
-        if gl_gpu_setup not in updated:
+    if standard_gl_gpu_setup not in updated:
+        if portable_gl_gpu_setup not in updated:
             die(f"RenderService OpenGL initialization has changed: {path}")
-        updated = updated.replace(gl_gpu_setup, portable_gl_gpu_setup, 1)
+        updated = updated.replace(portable_gl_gpu_setup, standard_gl_gpu_setup, 1)
 
-    manager_guard = (
+    standard_manager_guard = (
         "#if (defined(RS_ENABLE_EGLIMAGE) && defined(RS_ENABLE_GPU)) || "
         "defined(RS_ENABLE_VK)\n"
         "    imageManager_ = RSImageManager::Create(renderContext_);"
@@ -796,24 +953,24 @@ def configure_portable_render_context(root: Path) -> None:
         "#if defined(RS_ENABLE_VK)\n"
         "    imageManager_ = RSImageManager::Create(renderContext_);"
     )
-    if portable_manager_guard not in updated:
-        if manager_guard not in updated:
+    if standard_manager_guard not in updated:
+        if portable_manager_guard not in updated:
             die(f"RenderService image manager guard has changed: {path}")
-        updated = updated.replace(manager_guard, portable_manager_guard, 1)
+        updated = updated.replace(portable_manager_guard, standard_manager_guard, 1)
 
-    force_cpu = "    bool forceCPU = false;"
+    standard_force_cpu = "    bool forceCPU = false;"
     portable_force_cpu = "    bool forceCPU = true;"
-    if portable_force_cpu not in updated:
-        if force_cpu not in updated:
+    if standard_force_cpu not in updated:
+        if portable_force_cpu not in updated:
             die(f"RenderService CPU composition default has changed: {path}")
-        updated = updated.replace(force_cpu, portable_force_cpu, 1)
+        updated = updated.replace(portable_force_cpu, standard_force_cpu, 1)
 
     if updated != content:
         write_text(path, updated)
-        print(f"configured portable raster composition for QEMU: {path}")
+        print(f"restored standard OpenGL RenderService context for QEMU: {path}")
 
 
-def configure_portable_main_thread(root: Path) -> None:
+def configure_standard_main_thread(root: Path) -> None:
     path = root / RS_MAIN_THREAD_PATH
     content = read_text(path)
     gpu_cache_setup = """        auto gpuContext = isUniRender_? GetRenderEngine()->GetRenderContext()->GetDrGPUContext() :
@@ -848,23 +1005,18 @@ def configure_portable_main_thread(root: Path) -> None:
         }"""
 
     updated = content
-    if portable_gpu_cache_setup not in updated:
-        if gpu_cache_setup not in updated:
+    if gpu_cache_setup not in updated:
+        if portable_gpu_cache_setup not in updated:
             die(f"RenderService GPU cache initialization has changed: {path}")
-        updated = updated.replace(gpu_cache_setup, portable_gpu_cache_setup, 1)
+        updated = updated.replace(portable_gpu_cache_setup, gpu_cache_setup, 1)
 
     if updated != content:
         write_text(path, updated)
-        print(f"configured CPU-raster main-thread startup for QEMU: {path}")
+        print(f"restored standard GPU-context startup for QEMU: {path}")
 
 
 def validate_product_integration(root: Path, products: list[str]) -> None:
-    common_files = set()
-    for product in products:
-        if product == "x86_64_virt":
-            common_files.add("vendor/ohemu/virt/virt_common_x86_64.json")
-        else:
-            common_files.add("vendor/ohemu/virt/virt_common.json")
+    common_files = {QEMU_GRAPHICS_CONFIGS[product] for product in products}
 
     for relative in sorted(common_files):
         configure_portable_qemu_graphics(root, relative)
@@ -935,8 +1087,10 @@ def main() -> None:
     configure_userdata_code_sign_fs(root)
     configure_vpn_dialog_profile(root)
     configure_vpn_dialog_build(root)
-    configure_portable_render_context(root)
-    configure_portable_main_thread(root)
+    if any(product != "armv7a_virt" for product in products):
+        configure_qemu_mesa_source_build(root)
+    configure_standard_render_context(root)
+    configure_standard_main_thread(root)
     validate_product_integration(root, products)
     print(f"standard VPN support configured for: {' '.join(products)}")
 
