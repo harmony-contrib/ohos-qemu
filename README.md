@@ -101,6 +101,13 @@ On Windows PowerShell the same knobs are available as parameters
 (`-Resolution`, `-Memory`, `-Smp`, `-Cpu`, `-Display`, `-Headless`, …) or via the
 environment variables above.
 
+Current full packages pair `virtio-tablet` with a guest MMI absolute-coordinate
+mapping. The mapping uses the active framebuffer dimensions, so pointer clicks
+remain aligned after changing `--resolution`, resizing the host window, or
+using HiDPI scaling. The package manifest records this as
+`capabilities.absolute_pointer_sync=true`; older relative-mouse packages do not
+gain this capability merely by rewriting their launch scripts.
+
 The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
 and falls back to TCG when necessary. Set `QEMU_ACCEL=hvf` or
 `QEMU_ACCEL=tcg` to force either mode.

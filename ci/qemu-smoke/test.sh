@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
 PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
+POINTER_OVERLAY="${SCRIPT_DIR}/../../overlays/qemu_absolute_pointer/apply.sh"
 bash "${SCRIPT_DIR}/../standard-vpn/test.sh"
 TEST_ROOT="$(mktemp -d)"
 FAKE_BIN="${TEST_ROOT}/bin"
@@ -86,10 +87,12 @@ FAKE_OUTPUT="${TEST_ROOT}/package-output"
 FAKE_IMAGES="${FAKE_SOURCE}/out/arm64_virt/packages/phone/images"
 FAKE_KERNEL_OBJ="${FAKE_SOURCE}/out/kernel/OBJ/arm64_virt"
 FAKE_VENDOR="${FAKE_SOURCE}/vendor/ohemu/qemu_arm64_linux_full"
+FAKE_MMI_SOURCE="${FAKE_SOURCE}/foundation/multimodalinput/input/service/mouse_event_normalize/src"
 FAKE_QEMU_ARGS="${TEST_ROOT}/qemu-args.txt"
 FAKE_QEMU_PROBES="${TEST_ROOT}/qemu-probes.txt"
 FAKE_VPN_HAP="${TEST_ROOT}/VpnDialog.hap"
-mkdir -p "${FAKE_IMAGES}" "${FAKE_KERNEL_OBJ}" "${FAKE_VENDOR}" "${FAKE_OUTPUT}"
+mkdir -p "${FAKE_IMAGES}" "${FAKE_KERNEL_OBJ}" "${FAKE_VENDOR}" \
+  "${FAKE_MMI_SOURCE}" "${FAKE_OUTPUT}"
 for image in Image ramdisk.img system.img vendor.img userdata.img updater.img \
   sys_prod.img chip_prod.img; do
   : >"${FAKE_IMAGES}/${image}"
@@ -151,9 +154,42 @@ qemu-system-aarch64 ${ACCEL_ARGS} \
   -smp 4 \
   -m 4096 \
   ${DISPLAY_ARGS} \
+  -device virtio-mouse-pci \
   "${NET_ARGS[@]}" \
   -append "init=/init ohos.required_mount.system=/dev/block/vde@/system@ext4 ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,reservedsize=104857600"
 EOF
+cat >"${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp" <<'EOF'
+void ExtractMotionData()
+{
+    unaccelerated_.dx = libinput_event_pointer_get_dx_unaccelerated(data);
+    unaccelerated_.dy = libinput_event_pointer_get_dy_unaccelerated(data);
+    ctx.dx = unaccelerated_.dx;
+    ctx.dy = unaccelerated_.dy;
+    ctx.libinputEventType = libinput_event_get_type(event);
+    ctx.offset = Offset { unaccelerated_.dx, unaccelerated_.dy };
+
+    ctx.displayInfo = winMgr->GetPhysicalDisplay(cursorPos.displayId);
+    if (ctx.displayInfo == nullptr) {
+        MMI_HILOGE("displayInfo is nullptr");
+        return ctx;
+    }
+
+    ctx.deviceType = CheckDeviceType(ctx.displayInfo->width, ctx.displayInfo->height);
+}
+
+void ProcessMotionByEventType()
+{
+    if (ctx.libinputEventType == LIBINPUT_EVENT_POINTER_MOTION_TOUCHPAD) {
+        handleTouchpad();
+    }
+}
+EOF
+bash "${POINTER_OVERLAY}" --source-root "${FAKE_SOURCE}" >/dev/null
+bash "${POINTER_OVERLAY}" --source-root "${FAKE_SOURCE}" >/dev/null
+test "$(grep -c 'QEMU_ABSOLUTE_POINTER_SYNC' \
+  "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp")" -eq 1
+test "$(grep -c 'libinput_event_pointer_get_absolute_x_transformed' \
+  "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp")" -eq 1
 python3 - \
   "${SCRIPT_DIR}/../../overlays/standard_qemu_vpn/assets/vpndialog.p7b.b64" \
   "${FAKE_VPN_HAP}" <<'PY'
@@ -254,6 +290,11 @@ grep -Fq 'QEMU_SMP="${QEMU_SMP:-' "${PACKAGED_LAUNCHER}"
 grep -Fq 'QEMU_MEMORY="${QEMU_MEMORY:-' "${PACKAGED_LAUNCHER}"
 grep -Fq 'QEMU_CPU="${QEMU_CPU:-cortex-a57}"' "${PACKAGED_LAUNCHER}"
 grep -Eq 'xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\}' "${PACKAGED_LAUNCHER}"
+grep -Fq 'virtio-tablet-pci' "${PACKAGED_LAUNCHER}"
+if grep -Fq 'virtio-mouse-pci' "${PACKAGED_LAUNCHER}"; then
+  echo "packaged launcher retained a relative pointer after guest MMI verification" >&2
+  exit 1
+fi
 grep -Fq -- '-cpu ${QEMU_CPU}' "${PACKAGED_LAUNCHER}"
 grep -Fq -- '-smp ${QEMU_SMP}' "${PACKAGED_LAUNCHER}"
 grep -Fq -- '-m ${QEMU_MEMORY}' "${PACKAGED_LAUNCHER}"
@@ -285,6 +326,12 @@ grep -Fq '"developer_device": true' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"cpu_default": "cortex-a57"' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"pointer_device_default": "virtio-tablet-pci"' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"absolute_pointer_sync": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq 'absolute `virtio-tablet` pointer' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/README.md"
 grep -Fq '"vpn_authorization": "system_dialog"' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq 'No VPN application is' \

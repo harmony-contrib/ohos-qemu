@@ -145,6 +145,12 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "guest_arch": manifest["guest_arch"],
         "device_type": manifest["device_type"],
         "device_type_profile": manifest["device_type_profile"],
+        "absolute_pointer_sync": manifest.get("capabilities", {}).get(
+            "absolute_pointer_sync", False
+        ),
+        "pointer_device_default": manifest.get("launcher", {}).get(
+            "pointer_device_default", ""
+        ),
     })
 document = {
     "schema_version": 1,
