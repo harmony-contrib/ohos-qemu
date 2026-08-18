@@ -87,6 +87,9 @@ Environment:
                        Copy the kernel worktree without dereferencing the
                        repo-tool .git symlink on shared filesystems,
                        default: 1
+  QEMU_ABSOLUTE_POINTER_OVERLAY
+                       Map virtio-tablet absolute events to the active guest
+                       display dimensions, default: 1
   ARMV7A_FULL_OVERLAY Apply experimental armv7a_virt full overlay, default: 1
   STANDARD_VPN_OVERLAY
                        Enable and validate the standard VpnExtension stack,
@@ -133,6 +136,7 @@ ARMV7A_OVERLAY="${SCRIPT_DIR}/../overlays/armv7a_virt_full/apply.sh"
 VPN_OVERLAY="${SCRIPT_DIR}/../overlays/standard_qemu_vpn/apply.sh"
 QEMU_2IN1_OVERLAY="${SCRIPT_DIR}/../overlays/qemu_2in1_full/apply.sh"
 QEMU_PHONE_OVERLAY="${SCRIPT_DIR}/../overlays/qemu_phone_full/apply.sh"
+QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT="${SCRIPT_DIR}/../overlays/qemu_absolute_pointer/apply.sh"
 
 if [ ! -x "${PACKAGER}" ]; then
   echo "missing executable packager: ${PACKAGER}" >&2
@@ -181,6 +185,7 @@ QEMU_FIX_MINDSPORE_NON_ARM_HWCAP="${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP:-1}"
 QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY="${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY:-1}"
 QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR="${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR:-1}"
 QEMU_FIX_VIRTIOFS_KERNEL_COPY="${QEMU_FIX_VIRTIOFS_KERNEL_COPY:-1}"
+QEMU_ABSOLUTE_POINTER_OVERLAY="${QEMU_ABSOLUTE_POINTER_OVERLAY:-1}"
 QEMU_CCACHE_ON_OUT_VOLUME="${QEMU_CCACHE_ON_OUT_VOLUME:-0}"
 ARMV7A_FULL_OVERLAY="${ARMV7A_FULL_OVERLAY:-1}"
 STANDARD_VPN_OVERLAY="${STANDARD_VPN_OVERLAY:-1}"
@@ -1142,6 +1147,19 @@ apply_standard_vpn_overlay() {
     --source-root "${OHOS_ROOT}" \
     "${vpn_args[@]}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_standard_qemu_vpn_overlay.log"
+}
+
+apply_qemu_absolute_pointer_overlay() {
+  if [ "${QEMU_ABSOLUTE_POINTER_OVERLAY}" != "1" ]; then
+    echo "QEMU_ABSOLUTE_POINTER_OVERLAY=${QEMU_ABSOLUTE_POINTER_OVERLAY}; skip absolute pointer configuration"
+    return
+  fi
+  if [ ! -f "${QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT}" ]; then
+    echo "missing QEMU absolute-pointer overlay: ${QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT}" >&2
+    exit 1
+  fi
+  bash "${QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_absolute_pointer_overlay.log"
 }
 
 fix_case_insensitive_selinux_version_header() {
@@ -2169,13 +2187,14 @@ main() {
   echo "qemu fix VirtioFS node symlink copy: ${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY}"
   echo "qemu serialize shared Arkoala generator: ${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR}"
   echo "qemu fix VirtioFS kernel worktree copy: ${QEMU_FIX_VIRTIOFS_KERNEL_COPY}"
+  echo "QEMU absolute pointer overlay: ${QEMU_ABSOLUTE_POINTER_OVERLAY}"
   echo "ccache on native out volume: ${QEMU_CCACHE_ON_OUT_VOLUME}"
   echo "armv7a full overlay: ${ARMV7A_FULL_OVERLAY}"
   echo "standard VPN overlay: ${STANDARD_VPN_OVERLAY}"
   echo "QEMU full 2in1 overlay: ${QEMU_2IN1_FULL_OVERLAY}"
   echo "device type: ${DEVICE_TYPE:-default (unset)}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_OVERLAY}"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_OVERLAY} absolute_pointer=${QEMU_ABSOLUTE_POINTER_OVERLAY}"
 
   raise_nofile_limit
   install_deps
@@ -2205,6 +2224,7 @@ main() {
   apply_armv7a_full_overlay
   configure_qemu_device_profile
   apply_standard_vpn_overlay
+  apply_qemu_absolute_pointer_overlay
   fix_case_insensitive_selinux_version_header
   fix_case_insensitive_xmp_endian_header
   fix_case_insensitive_iptables_variants

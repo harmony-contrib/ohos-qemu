@@ -16,7 +16,8 @@ Checks (offline, no QEMU boot):
   3) system.img ohos.para const.product.devicetype / characteristics
   4) profile-specific applications plus UI, Wukong, HNP, Launcher, and SystemUI
   5) sys_prod BMS compatibility for current QEMU system HAPs
-  6) userdata compressibility heuristic (dirty image warning)
+  6) absolute-pointer guest capability and virtio-tablet launcher pairing
+  7) userdata compressibility heuristic (dirty image warning)
 USAGE
 }
 
@@ -120,6 +121,8 @@ checks = [
     manifest.get("device_type_source") == "source_product_inherit",
     manifest.get("capabilities", {}).get("device_type_full") is True,
     manifest.get("capabilities", {}).get("device_type_param_only") is False,
+    manifest.get("capabilities", {}).get("absolute_pointer_sync") is True,
+    manifest.get("launcher", {}).get("pointer_device_default") == "virtio-tablet-pci",
     profile.get("device_type") == device_type,
     profile.get("profile") == profile_name,
     effective_profile in profile.get("inherit", []),
@@ -140,6 +143,14 @@ PY
     else
       echo "PASS: full ${REQUIRE_FULL_DEVICE} source profile evidence"
     fi
+  fi
+  if [ ! -f "${PACKAGE}/launch/qemu_run.sh" ] || \
+     ! grep -q 'virtio-tablet-pci' "${PACKAGE}/launch/qemu_run.sh" || \
+     grep -q 'virtio-mouse-pci' "${PACKAGE}/launch/qemu_run.sh"; then
+    echo "FAIL: full ${REQUIRE_FULL_DEVICE} package lacks an exclusive virtio-tablet launcher" >&2
+    FAIL=1
+  else
+    echo "PASS: absolute-pointer capability is paired with virtio-tablet"
   fi
 fi
 

@@ -351,6 +351,11 @@ PRODUCT_VIRT_PARA="${WORKDIR}/product_virt.para"
 printf '%s\n' 'const.bms.supportAppTypes=2in1,phone,default,tablet' > "${PRODUCT_VIRT_PARA}"
 debugfs -w -R "write ${PRODUCT_VIRT_PARA} /etc/param/product_virt.para" \
   "${SYS_PROD_IMG}" >/dev/null
+cat >"${OUT_PKG}/launch/qemu_run.sh" <<'EOF'
+#!/usr/bin/env bash
+exec qemu-system-aarch64 -device virtio-tablet-pci
+EOF
+chmod +x "${OUT_PKG}/launch/qemu_run.sh"
 python3 - "${OUT_PKG}" <<'PY'
 import json
 import sys
@@ -361,7 +366,9 @@ manifest_path = package / "manifest.json"
 manifest = json.loads(manifest_path.read_text())
 manifest["device_type_profile"] = "qemu_2in1_full_source"
 manifest["device_type_source"] = "source_product_inherit"
+manifest.setdefault("launcher", {})["pointer_device_default"] = "virtio-tablet-pci"
 manifest["capabilities"].update({
+    "absolute_pointer_sync": True,
     "device_type_profile": "qemu_2in1_full_source",
     "device_type_param_only": False,
     "device_type_full": True,
@@ -423,7 +430,9 @@ manifest = json.loads(manifest_path.read_text())
 manifest["device_type"] = "phone"
 manifest["device_type_profile"] = "qemu_phone_full_source"
 manifest["device_type_source"] = "source_product_inherit"
+manifest.setdefault("launcher", {})["pointer_device_default"] = "virtio-tablet-pci"
 manifest["capabilities"].update({
+    "absolute_pointer_sync": True,
     "device_type": "phone",
     "device_type_profile": "qemu_phone_full_source",
     "device_type_param_only": False,

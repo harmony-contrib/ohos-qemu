@@ -167,6 +167,7 @@ echo "  - access_tokenid kernel ABI"
 echo "  - case-insensitive host FS fixes (when source on macOS volume)"
 echo "  - VirtioFS node/kernel copy fixes"
 echo "  - standard_qemu_vpn overlay"
+echo "  - qemu_absolute_pointer overlay + virtio-tablet launcher"
 echo "  - armv7a_virt full overlay (when armv7a selected)"
 echo "  - rich + effective productdefine/common/inherit/${DEVICE_TYPE}.json profile"
 echo "  - package_standard_qemu.sh --device-type ${DEVICE_TYPE}"
@@ -205,6 +206,7 @@ docker run --rm \
   -e PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" \
   -e SKIP_APT="${SKIP_APT}" \
   -e STANDARD_VPN_OVERLAY=1 \
+  -e QEMU_ABSOLUTE_POINTER_OVERLAY=1 \
   -e ARMV7A_FULL_OVERLAY=1 \
   -e QEMU_FIX_ACCESS_TOKENID_ABI=1 \
   -e QEMU_FIX_SYSTEM_COMPAT_SYMLINKS=1 \

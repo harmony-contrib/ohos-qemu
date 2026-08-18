@@ -419,6 +419,7 @@ normalize_common_qemu_launcher() {
   local default_mem="${3:-4096}"
   local default_qemu_bin="${4:-qemu-system-x86_64}"
   local default_cpu="${5:-max}"
+  local pointer_device="${6:-virtio-mouse-pci}"
 
   sed_in_place_extended 's|^OHOS_IMG="(out/[^"]+)"$|OHOS_IMG="${OHOS_IMG:-\1}"|' "${file}"
   if ! grep -q '^HDC_HOST_PORT=' "${file}"; then
@@ -478,6 +479,11 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
     "${file}"
   sed_in_place_extended \
     's/virtio-gpu-pci$/virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}/g' \
+    "${file}"
+  # A variable-sized graphical frontend needs an absolute pointing device.
+  # Keep legacy packages on virtio-mouse unless the guest MMI fix was verified.
+  sed_in_place_extended \
+    "s/virtio-(mouse|tablet)-pci/${pointer_device}/g" \
     "${file}"
   # Collapse accidental double xres/yres annotations and duplicate device lines.
   sed_in_place_extended \
@@ -935,6 +941,7 @@ write_windows_ps1() {
   local default_mem="$4"
   local default_display="$5"
   local default_cpu="${6:-max}"
+  local pointer_device="${7:-virtio-mouse-pci}"
 
   if [ "${product}" != "x86_64_virt" ]; then
     cat >"${dest}" <<EOF
@@ -1080,7 +1087,7 @@ switch (\$DisplayType) {
   "-kernel", (Join-Path \$Img "bzImage"),
   "-initrd", (Join-Path \$Img "ramdisk.img"),
   \$DisplayArgs,
-  "-device", "virtio-mouse-pci",
+  "-device", "${pointer_device}",
   "-device", "virtio-keyboard-pci",
   "-netdev", "user,id=net0,hostfwd=tcp::\${HdcHostPort}-:5555",
   "-device", "virtio-net-pci,netdev=net0",
@@ -1124,6 +1131,7 @@ write_package_launcher_readme() {
   local default_mem="$6"
   local default_display="$7"
   local default_cpu="${8:-max}"
+  local pointer_device="${9:-virtio-mouse-pci}"
   local cpu_example="${default_cpu}"
   if [ "${product}" = "x86_64_virt" ]; then
     cpu_example=EPYC-v5
@@ -1188,6 +1196,15 @@ default `max` feature set:
 EOF
   fi
 
+  if [ "${pointer_device}" = "virtio-tablet-pci" ]; then
+    cat >>"${package_dir}/README.md" <<'EOF'
+
+The launcher uses an absolute `virtio-tablet` pointer. OpenHarmony maps its
+coordinates to the active guest framebuffer, so clicks stay synchronized when
+`--resolution`, host window scaling, or HiDPI scaling changes.
+EOF
+  fi
+
   if [ "${standard_vpn}" = "true" ]; then
     cat >>"${package_dir}/README.md" <<'EOF'
 
@@ -1209,6 +1226,7 @@ write_full_product_launchers() {
   local package_name="$4"
   local standard_vpn="${5:-false}"
   local official_qemu_run="${6:-}"
+  local pointer_device="${7:-virtio-mouse-pci}"
 
   launcher_defaults_for_product "${product}"
 
@@ -1239,7 +1257,14 @@ write_full_product_launchers() {
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_QEMU_UNIX}" \
-      "${LAUNCHER_DEFAULT_CPU}"
+      "${LAUNCHER_DEFAULT_CPU}" \
+      "${pointer_device}"
+    if [ "${pointer_device}" = "virtio-tablet-pci" ] && \
+       { ! grep -q 'virtio-tablet-pci' "${launch_out}/qemu_run.sh" || \
+         grep -q 'virtio-mouse-pci' "${launch_out}/qemu_run.sh"; }; then
+      echo "absolute-pointer guest requires an exclusive virtio-tablet launcher" >&2
+      exit 1
+    fi
     if ! bash -n "${launch_out}/qemu_run.sh"; then
       echo "packaged launcher has invalid shell syntax: ${launch_out}/qemu_run.sh" >&2
       exit 1
@@ -1267,7 +1292,8 @@ write_full_product_launchers() {
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_DEFAULT_DISPLAY}" \
-      "${LAUNCHER_DEFAULT_CPU}"
+      "${LAUNCHER_DEFAULT_CPU}" \
+      "${pointer_device}"
   elif [ "${product}" = "qemu-arm64-linux-min" ]; then
     write_unix_cli_wrapper \
       "${launch_out}/linux.sh" \
@@ -1317,7 +1343,8 @@ MIN_EOF
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_DEFAULT_DISPLAY}" \
-      "${LAUNCHER_DEFAULT_CPU}"
+      "${LAUNCHER_DEFAULT_CPU}" \
+      "${pointer_device}"
   fi
 
   cat >"${launch_out}/windows.cmd" <<'EOF'
@@ -1332,7 +1359,8 @@ EOF
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_DEFAULT_DISPLAY}" \
-      "${LAUNCHER_DEFAULT_CPU}"
+      "${LAUNCHER_DEFAULT_CPU}" \
+      "${pointer_device}"
   fi
 
   write_package_launcher_readme \
@@ -1343,7 +1371,8 @@ EOF
     "${LAUNCHER_DEFAULT_SMP}" \
     "${LAUNCHER_DEFAULT_MEMORY}" \
     "${LAUNCHER_DEFAULT_DISPLAY}" \
-    "${LAUNCHER_DEFAULT_CPU}"
+    "${LAUNCHER_DEFAULT_CPU}" \
+    "${pointer_device}"
 }
 
 refresh_package_checksums() {
@@ -1402,6 +1431,8 @@ rewrite_package_launchers() {
   local product
   local package_name
   local standard_vpn
+  local absolute_pointer_sync
+  local pointer_device
 
   if [ ! -d "${package_dir}" ]; then
     echo "package directory not found: ${package_dir}" >&2
@@ -1423,6 +1454,11 @@ rewrite_package_launchers() {
   fi
   package_name="$(basename "${package_dir}")"
   standard_vpn="$(json_bool_field "${manifest}" standard_vpn)"
+  absolute_pointer_sync="$(json_bool_field "${manifest}" absolute_pointer_sync)"
+  pointer_device=virtio-mouse-pci
+  if [ "${absolute_pointer_sync}" = "true" ]; then
+    pointer_device=virtio-tablet-pci
+  fi
 
   write_full_product_launchers \
     "${launch_out}" \
@@ -1430,7 +1466,8 @@ rewrite_package_launchers() {
     "${package_dir}" \
     "${package_name}" \
     "${standard_vpn}" \
-    ""
+    "" \
+    "${pointer_device}"
 
   # Refresh launcher metadata in manifest.json when python is available.
   if command -v python3 >/dev/null 2>&1; then
@@ -1439,9 +1476,11 @@ rewrite_package_launchers() {
       "${LAUNCHER_DEFAULT_SMP}" \
       "${LAUNCHER_DEFAULT_MEMORY}" \
       "${LAUNCHER_DEFAULT_DISPLAY}" \
-      "${LAUNCHER_DEFAULT_CPU}" <<'PY'
+      "${LAUNCHER_DEFAULT_CPU}" \
+      "${pointer_device}" \
+      "${absolute_pointer_sync}" <<'PY'
 import json, sys
-path, smp, mem, display, cpu = sys.argv[1:6]
+path, smp, mem, display, cpu, pointer_device, absolute_pointer_sync = sys.argv[1:8]
 with open(path, encoding="utf-8") as fh:
     data = json.load(fh)
 data["display_default"] = display
@@ -1450,8 +1489,10 @@ data["launcher"] = {
     "smp_default": int(smp),
     "memory_default": mem,
     "cpu_default": cpu,
+    "pointer_device_default": pointer_device,
     "cli": True,
 }
+data.setdefault("capabilities", {})["absolute_pointer_sync"] = absolute_pointer_sync == "true"
 with open(path, "w", encoding="utf-8") as fh:
     json.dump(data, fh, indent=2)
     fh.write("\n")
@@ -2402,6 +2443,23 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   done
 fi
 
+ABSOLUTE_POINTER_SYNC_VERIFIED=false
+POINTER_DEVICE_DEFAULT=virtio-mouse-pci
+MMI_MOUSE_TRANSFORM_SOURCE="${SOURCE_ROOT}/foundation/multimodalinput/input/service/mouse_event_normalize/src/mouse_transform_processor.cpp"
+if [ -f "${MMI_MOUSE_TRANSFORM_SOURCE}" ] && \
+   grep -q 'QEMU_ABSOLUTE_POINTER_SYNC' "${MMI_MOUSE_TRANSFORM_SOURCE}" && \
+   grep -q 'libinput_event_pointer_get_absolute_x_transformed' "${MMI_MOUSE_TRANSFORM_SOURCE}" && \
+   grep -q 'libinput_event_pointer_get_absolute_y_transformed' "${MMI_MOUSE_TRANSFORM_SOURCE}" && \
+   grep -q 'ctx.cursorX = ctx.offset.dx' "${MMI_MOUSE_TRANSFORM_SOURCE}" && \
+   grep -q 'ctx.cursorY = ctx.offset.dy' "${MMI_MOUSE_TRANSFORM_SOURCE}"; then
+  ABSOLUTE_POINTER_SYNC_VERIFIED=true
+  POINTER_DEVICE_DEFAULT=virtio-tablet-pci
+  echo "QEMU absolute pointer synchronization source verified for ${PRODUCT}"
+elif [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || \
+     [ "${PRODUCT}" = "armv7a_virt" ]; then
+  echo "warning: guest absolute-pointer mapping is absent; retaining relative virtio-mouse" >&2
+fi
+
 PACKAGE_NAME="openharmony-qemu-${GUEST_ARCH}-${PRODUCT}"
 if [ -n "${DEVICE_TYPE}" ] && [ "${DEVICE_TYPE_NAME_SUFFIX:-1}" != "0" ]; then
   PACKAGE_NAME="${PACKAGE_NAME}-${DEVICE_TYPE}"
@@ -2477,9 +2535,11 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "smp_default": ${LAUNCHER_DEFAULT_SMP},
     "memory_default": "${LAUNCHER_DEFAULT_MEMORY}",
     "cpu_default": "${LAUNCHER_DEFAULT_CPU}",
+    "pointer_device_default": "${POINTER_DEVICE_DEFAULT}",
     "cli": true
   },
   "capabilities": {
+    "absolute_pointer_sync": ${ABSOLUTE_POINTER_SYNC_VERIFIED},
     "standard_vpn": ${STANDARD_VPN_VERIFIED},
     "userdata_fs_verity": ${STANDARD_VPN_VERIFIED},
     "userdata_filesystem": "f2fs",
@@ -2501,7 +2561,8 @@ write_full_product_launchers \
   "${PACKAGE_DIR}" \
   "${PACKAGE_NAME}" \
   "${STANDARD_VPN_VERIFIED}" \
-  "${OFFICIAL_FOR_LAUNCH}"
+  "${OFFICIAL_FOR_LAUNCH}" \
+  "${POINTER_DEVICE_DEFAULT}"
 
 chmod +x "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command" 2>/dev/null || true
 if [ -f "${LAUNCH_OUT}/qemu_run.sh" ]; then
