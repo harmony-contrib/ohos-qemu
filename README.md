@@ -111,6 +111,7 @@ gain this capability merely by rewriting their launch scripts.
 The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
 and falls back to TCG when necessary. Set `QEMU_ACCEL=hvf` or
 `QEMU_ACCEL=tcg` to force either mode.
+
 ## HDC
 
 The launchers forward guest HDC to host TCP port `5555`. With `hdc` from the
@@ -120,6 +121,155 @@ OpenHarmony SDK toolchains installed:
 hdc tconn 127.0.0.1:5555
 hdc list targets
 ```
+
+## Accessibility (a11y) testing
+
+The `v20260818` public QEMU phone image exposes the OpenHarmony accessibility
+framework, but does not include the `com.ohos.screenreader` system application.
+Enabling the built-in screen reader therefore fails even in an RD guest. For
+automated testing, install a HAP that contains an
+`AccessibilityExtensionAbility` and enable that extension through the platform
+accessibility configuration API.
+
+The commands below were validated with the `v20260818` x86_64 phone image. They
+use helper sources from the
+[`ohos-native-bindings`](https://github.com/ohos-rs/ohos-native-bindings)
+Accessibility E2E example.
+
+### Start QEMU with physical touch input
+
+Accessibility touch exploration must enter the guest through MMI as a physical
+touch device. `hdc shell uinput` and `uitest uiInput` may bypass accessibility
+touch interception, so they are not sufficient for screen-reader gesture E2E.
+
+QEMU 8.1 or newer supports the `mtt` QMP input events used here. Add a
+`virtio-multitouch` device and a QMP Unix socket when starting the guest:
+
+```bash
+QMP_SOCKET=/tmp/ohos-a11y-qmp.sock
+rm -f "$QMP_SOCKET"
+
+QEMU_DISPLAY=none \
+QEMU_EXTRA_ARGS="-device virtio-multitouch-pci -qmp unix:${QMP_SOCKET},server=on,wait=off" \
+./launch/linux.sh --headless
+```
+
+Run this from the installed package directory. Use
+`./launch/macos.command --headless` instead on macOS. This exact helper flow
+uses a Unix QMP socket and therefore targets Linux and macOS. After HDC
+connects, verify that the guest registered the device:
+
+```bash
+hdc tconn 127.0.0.1:5555
+hdc -t 127.0.0.1:5555 shell "cat /proc/bus/input/devices" \
+  | grep -A 6 "QEMU Virtio MultiTouch"
+```
+
+### Install and enable an accessibility extension
+
+The test HAP must declare an accessibility extension in `module.json5`, with
+metadata named `ohos.accessibleability`. Its profile should request the
+capabilities needed by the test, for example:
+
+```json
+{
+  "accessibilityCapabilities": ["retrieve", "gesture", "touchGuide"]
+}
+```
+
+Install the signed main HAP before enabling the extension. The QEMU package
+rejects a truly unsigned HAP; see the signing section below.
+
+The
+[`accessibility-enable.cpp`](https://github.com/ohos-rs/ohos-native-bindings/blob/5038e69e0715dbbd7fb0a6f00d120a7bd2e09510/examples-ui/scripts/accessibility-enable.cpp)
+helper calls `AccessibilityConfig::EnableAbility` with the system permission
+required to change accessibility configuration. It is deliberately limited to
+an RD/QEMU guest with root HDC and must never be packaged with a production
+application.
+
+For an x86_64 guest, build and install the helper as follows. Use
+`aarch64-unknown-linux-ohos` for an ARM64 guest.
+
+```bash
+BINDINGS=/path/to/ohos-native-bindings
+NATIVE_SDK="${OHOS_SDK_NATIVE:-${OHOS_BASE_SDK_HOME}/native}"
+HDC_TARGET=127.0.0.1:5555
+
+hdc -t "$HDC_TARGET" smode
+# smode restarts HDC; reconnect before continuing.
+hdc tconn "$HDC_TARGET"
+hdc -t "$HDC_TARGET" shell id -u   # must print 0
+
+"${NATIVE_SDK}/llvm/bin/clang++" \
+  --target=x86_64-unknown-linux-ohos \
+  --sysroot="${NATIVE_SDK}/sysroot" \
+  -std=c++17 -Wall -Wextra -Werror -O2 -fPIE -pie \
+  "${BINDINGS}/examples-ui/scripts/accessibility-enable.cpp" \
+  -ldl -o /tmp/accessibility-enable
+
+hdc -t "$HDC_TARGET" file send \
+  /tmp/accessibility-enable /data/local/tmp/accessibility-enable
+hdc -t "$HDC_TARGET" shell \
+  "chmod 755 /data/local/tmp/accessibility-enable"
+
+hdc -t "$HDC_TARGET" install -r /path/to/application-signed.hap
+hdc -t "$HDC_TARGET" shell \
+  "/data/local/tmp/accessibility-enable com.example.application/AccessibilityTestExtension"
+```
+
+The helper argument is `bundleName/abilityName`. Confirm that the extension is
+connected before injecting gestures:
+
+```bash
+hdc -t "$HDC_TARGET" shell \
+  "hidumper -s AccessibilityManagerService -a -u" \
+  | grep -E "accessible:[[:space:]]+1"
+```
+
+Re-enable the extension after `aa force-stop` when the extension and test
+ability belong to the same bundle, because force-stopping the bundle also stops
+the extension process.
+
+### Inject accessibility gestures
+
+The
+[`qemu-multitouch.py`](https://github.com/ohos-rs/ohos-native-bindings/blob/5038e69e0715dbbd7fb0a6f00d120a7bd2e09510/examples-ui/scripts/qemu-multitouch.py)
+helper sends QMP `mtt` frames through the socket created above. Width and height
+must match the active guest framebuffer:
+
+```bash
+python3 "${BINDINGS}/examples-ui/scripts/qemu-multitouch.py" \
+  --socket "$QMP_SOCKET" --width 800 --height 500 tap 400 250
+
+python3 "${BINDINGS}/examples-ui/scripts/qemu-multitouch.py" \
+  --socket "$QMP_SOCKET" --width 800 --height 500 double-tap 400 250
+```
+
+For a screen-reader-style extension, the first physical tap drives hover
+exploration and accessibility focus. The following double-tap is interpreted by
+the platform as activation of the focused accessibility element.
+
+### Run the AccessKit E2E example
+
+The `ohos-native-bindings` example covers an ArkUI custom accessibility node,
+an XComponent provider, and multi-instance callback registration and release:
+
+```bash
+cd "$BINDINGS"
+pnpm run ui:sync -- --arch x64 --fail-fast accessibility
+pnpm run ui:build
+
+export HDC_TARGET=127.0.0.1:5555
+export QEMU_QMP_SOCKET="$QMP_SOCKET"
+export ACCESSIBILITY_E2E_HAP="$BINDINGS/examples-ui/entry/build/default/outputs/default/entry-default-signed.hap"
+export ACCESSIBILITY_E2E_ENABLE_COMMAND="/data/local/tmp/accessibility-enable com.richerfu.ohos_example/AccessibilityE2ETestExtension"
+
+pnpm run test:ui:accessibility -- --arch x64
+```
+
+The test passes only after accessibility activation, Click action dispatch,
+tree updates, both multi-instance callbacks, and callback isolation after one
+provider is released have all been observed through AccessKit.
 
 ## Sign and install development HAPs
 
