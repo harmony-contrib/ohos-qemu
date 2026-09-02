@@ -126,5 +126,6 @@ docker run --rm --platform "${DOCKER_PLATFORM}" \
   -e M144_BUILD_JOBS="${BUILD_JOBS}" \
   -e M144_SYNC_JOBS="${SYNC_JOBS}" \
   -e M144_SKIP_SYNC="${M144_SKIP_SYNC:-0}" \
+  -e M144_SKIP_APT="${M144_SKIP_APT:-0}" \
   "${DOCKER_IMAGE}" \
   bash /work/scripts/build_m144_v8_in_docker.sh "${ARCHES[@]}"

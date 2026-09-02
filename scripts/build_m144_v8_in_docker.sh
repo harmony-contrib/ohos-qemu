@@ -11,6 +11,7 @@ OHOS_ROOT="${OHOS_ROOT:-/ohos}"
 BUILD_JOBS="${M144_BUILD_JOBS:-$(nproc)}"
 SYNC_JOBS="${M144_SYNC_JOBS:-8}"
 SKIP_SYNC="${M144_SKIP_SYNC:-0}"
+SKIP_APT="${M144_SKIP_APT:-0}"
 
 CHROMIUM_REVISION=4ae5a7f106cdf9d3f42acd1c6ab007140dcd249f
 V8_REVISION=1170083e0a717f67cead0abe20900f273ae01fb5
@@ -30,6 +31,10 @@ for arch in "${ARCHES[@]}"; do
     ;;
   esac
 done
+case "${SKIP_APT}" in 0|1) ;; *)
+  echo "M144_SKIP_APT must be 0 or 1" >&2
+  exit 2
+esac
 
 for repository in "${SOURCE_ROOT}" "${SOURCE_ROOT}/v8" \
   "${SOURCE_ROOT}/arkweb" "${SOURCE_ROOT}/cef" \
@@ -118,6 +123,50 @@ if [ ! -x "${CHROMIUM_CLANG}" ]; then
   )
 fi
 
+ensure_arm_snapshot_host_toolchain() {
+  local arch
+  local needs_i386=0
+  for arch in "${ARCHES[@]}"; do
+    if [ "${arch}" = arm ]; then
+      needs_i386=1
+      break
+    fi
+  done
+  if [ "${needs_i386}" = 0 ]; then
+    return
+  fi
+
+  local clangxx="${CHROMIUM_CLANG}++"
+  local probe=/tmp/ohos-qemu-m144-i386-probe
+  if printf '#include <asm/errno.h>\nint main() { return 0; }\n' | \
+     "${clangxx}" --target=i386-unknown-linux-gnu -x c++ - -o "${probe}" \
+       >/dev/null 2>&1; then
+    rm -f "${probe}"
+    echo "ArkWeb M144 arm snapshot host toolchain: i386 multilib ready"
+    return
+  fi
+  rm -f "${probe}"
+
+  if [ "${SKIP_APT}" = 1 ]; then
+    echo "ArkWeb M144 arm requires gcc-multilib and g++-multilib" >&2
+    exit 1
+  fi
+  if [ "$(id -u)" != 0 ] || ! command -v apt-get >/dev/null 2>&1; then
+    echo "cannot install the i386 multilib toolchain required by M144 arm" >&2
+    exit 1
+  fi
+
+  echo "install ArkWeb M144 arm snapshot host dependencies"
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update
+  apt-get install -y --no-install-recommends gcc-multilib g++-multilib
+  printf '#include <asm/errno.h>\nint main() { return 0; }\n' | \
+    "${clangxx}" --target=i386-unknown-linux-gnu -x c++ - -o "${probe}"
+  rm -f "${probe}"
+}
+
+ensure_arm_snapshot_host_toolchain
+
 SDK_NATIVE="${OHOS_ROOT}/prebuilts/ohos-sdk/linux/26.0.0/native"
 [ -x "${SDK_NATIVE}/llvm/bin/clang" ] || {
   echo "OpenHarmony API 26 native SDK is missing: ${SDK_NATIVE}" >&2
@@ -165,9 +214,24 @@ STRIP="${SDK_NATIVE}/llvm/bin/llvm-strip"
 mkdir -p "${ARTIFACT_ROOT}/v8" "${ARTIFACT_ROOT}/v8-include"
 for arch in "${ARCHES[@]}"; do
   case "${arch}" in
-    arm) target_cpu=arm; product_name=rk3568 ;;
-    arm64) target_cpu=arm64; product_name=rk3568 ;;
-    x86_64) target_cpu=x64; product_name=all ;;
+    arm)
+      target_cpu=arm
+      product_name=rk3568
+      pointer_compression=false
+      pointer_compression_shared_cage=false
+      ;;
+    arm64)
+      target_cpu=arm64
+      product_name=rk3568
+      pointer_compression=true
+      pointer_compression_shared_cage=true
+      ;;
+    x86_64)
+      target_cpu=x64
+      product_name=all
+      pointer_compression=true
+      pointer_compression_shared_cage=true
+      ;;
   esac
   out_dir="out/m144_${arch}"
   gn_args="
@@ -217,8 +281,8 @@ for arch in "${ARCHES[@]}"; do
     v8_component_build=true
     use_custom_libcxx=true
     use_custom_libcxx_for_host=true
-    v8_enable_pointer_compression=true
-    v8_enable_pointer_compression_shared_cage=true
+    v8_enable_pointer_compression=${pointer_compression}
+    v8_enable_pointer_compression_shared_cage=${pointer_compression_shared_cage}
     v8_enable_sandbox=false
     v8_use_external_startup_data=false
     v8_deprecation_warnings=false

@@ -68,7 +68,8 @@ for patch_file in \
   0004-track-source-location-shim.patch \
   0005-make-copy-v8-idempotent.patch \
   0006-adapt-jsvm-to-m144-v8-api.patch \
-  0007-link-openharmony-libcxx.patch; do
+  0007-link-openharmony-libcxx.patch \
+  0008-match-pointer-compression-to-target.patch; do
   bash "${PATCH_ROOT}/lib/apply_patch.sh" \
     "${SOURCE_ROOT}" "${SCRIPT_DIR}/${patch_file}"
 done

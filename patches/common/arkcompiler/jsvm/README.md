@@ -23,7 +23,9 @@ removes target-incompatible Arm compiler flags, and adapts JSVM's legacy V8
 calls to the M144 public API. M144 does not expose the old OpenHarmony-only raw
 heap dump extension, so that API streams the supported V8 heap snapshot format.
 The component also links the OpenHarmony toolchain's `libc++` instead of the
-obsolete `c++_static` library name.
+obsolete `c++_static` library name. Pointer compression and the shared cage are
+enabled for arm64 and x86_64, while the armv7a build and its JSVM wrapper both
+disable those 64-bit-only ABI definitions.
 
 The ArkWeb/Chromium source-build patches and their entry point live separately
 under `patches/common/web/arkweb/m144_v8_shared`. Artifact provenance remains
