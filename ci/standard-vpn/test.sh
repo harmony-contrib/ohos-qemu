@@ -2,13 +2,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-APPLY="${ROOT}/overlays/standard_qemu_vpn/apply.sh"
+APPLY="${ROOT}/patches/common/standard_vpn/apply.sh"
+QOS_APPLY="${ROOT}/patches/common/foundation/resourceschedule/qos_manager/apply.sh"
 VERIFY_HAP_PROFILE="${ROOT}/scripts/verify_hap_profile.py"
 TEST_ROOT="$(mktemp -d)"
 OHOS_ROOT="${TEST_ROOT}/openharmony"
 
 cleanup() {
-  rm -rf "${TEST_ROOT}"
+  if [ "${KEEP_TEST_ROOT:-0}" = "1" ]; then
+    echo "retained test root: ${TEST_ROOT}" >&2
+  else
+    rm -rf "${TEST_ROOT}"
+  fi
 }
 trap cleanup EXIT
 
@@ -296,8 +301,8 @@ EOF
 
 cat >"${OHOS_ROOT}/foundation/communication/netmanager_ext/netmanager_ext_config.gni" <<'EOF'
 declare_args() {
-  netmanager_ext_feature_vpn = false
-  netmanager_ext_feature_vpnext = false
+  netmanager_ext_feature_vpn = true
+  netmanager_ext_feature_vpnext = true
 }
 EOF
 
@@ -321,6 +326,8 @@ cat >"${OHOS_ROOT}/vendor/ohemu/virt/image_conf/userdata_image_conf.txt" <<'EOF'
 /data
 2147483648
 --fs_type=ext4
+--dac_config ../../build/ohos/images/mkimage/dac.txt
+--file_context obj/base/security/selinux/file_contexts.bin
 EOF
 
 cat >"${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp" <<'EOF'
@@ -332,7 +339,7 @@ void RSBaseRenderEngine::Init(RenderEngineType type)
 #if defined(RS_ENABLE_VK)
     renderContext_->SetUpGpuContext(skContext_);
 #else
-    RS_LOGI("QEMU portable raster composition skips GPU context setup");
+    renderContext_->SetUpGpuContext();
 #endif
 #endif // RS_ENABLE_GL || RS_ENABLE_VK
 #if defined(RS_ENABLE_VK)
@@ -342,7 +349,7 @@ void RSBaseRenderEngine::Init(RenderEngineType type)
 
 bool RSBaseRenderEngine::NeedForceCPU(const std::vector<RSLayerPtr>& layers)
 {
-    bool forceCPU = true;
+    bool forceCPU = false;
     return forceCPU;
 }
 EOF
@@ -356,7 +363,7 @@ void RSMainThread::Init()
         auto gpuContext = isUniRender_? GetRenderEngine()->GetRenderContext()->GetDrGPUContext() :
             renderEngine_->GetRenderContext()->GetDrGPUContext();
         if (gpuContext == nullptr) {
-            RS_LOGI("GPU context is unavailable; continuing with QEMU CPU raster composition");
+            RS_LOGE("Init gpuContext is nullptr!");
         } else {
             int32_t maxResources = 0;
             size_t maxResourcesSize = 0;
@@ -378,7 +385,8 @@ cat >"${OHOS_ROOT}/applications/standard/hap/ohos.build" <<'EOF'
   "parts": {
     "prebuilt_hap": {
       "module_list": [
-        "//applications/standard/hap"
+        "//applications/standard/hap",
+        "//foundation/communication/netmanager_ext/frameworks/vpn_dialog/dialog_ui/vpn_dialog:dialog_hap"
       ]
     }
   }
@@ -387,6 +395,7 @@ EOF
 
 cat >"${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" <<'EOF'
 {
+
   "subsystems": [
     {
       "subsystem": "graphic",
@@ -394,10 +403,13 @@ cat >"${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" <<'EOF'
         {
           "component": "graphic_2d",
           "features": [
-            "graphic_2d_feature_ace_enable_gpu = true",
             "graphic_2d_feature_rs_enable_eglimage = true",
-            "graphic_2d_feature_parallel_render_enable = true"
+            "graphic_2d_feature_use_texgine = true"
           ]
+        },
+        {
+          "component": "graphic_surface",
+          "features": []
         }
       ]
     },
@@ -439,16 +451,168 @@ cat >"${OHOS_ROOT}/vendor/ohemu/virt/preinstall-config/install_list_capability.j
 }
 EOF
 
+# Reconstruct the exact pinned-source preimages for the kernel patch fixtures.
+# Other component fixtures stay deliberately small and human-readable.
+python3 - \
+  "${ROOT}/patches/common/standard_vpn/components/device_qemu_kernel/0001-enable-vpn-kernel-support.patch" \
+  "${ROOT}/patches/common/standard_vpn/components/device_qemu_kernel/0002-copy-security-modules-after-qos.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0001-declare-qos-config.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0002-merge-qos-config.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0003-wire-qos-authority.patch" \
+  "${ROOT}/patches/common/standard_vpn/components/code_sign/0001-port-code-sign-to-qemu-architectures.patch" \
+  "${ROOT}/patches/common/standard_vpn/components/musl_uapi/0001-select-x86-uapi-headers.patch" \
+  "${ROOT}/patches/common/standard_vpn/components/linux_security/0001-fix-32-bit-security-build.patch" \
+  "${ROOT}/patches/common/standard_vpn/components/xpm/0001-enable-portable-xpm.patch" \
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/0001-build-qemu-mesa-from-source.patch" \
+  "${OHOS_ROOT}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+root = Path(sys.argv[-1])
+wanted = {
+    "device/qemu/common/virt_full/kernel/arm64_virt_defconfig",
+    "device/qemu/common/virt_full/kernel/x86_64_virt_defconfig",
+    "device/qemu/common/virt_full/kernel/patch/virt.patch",
+    "device/qemu/common/virt_full/kernel/build_kernel.sh",
+    "base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h",
+    "base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp",
+    "base/security/code_signature/services/key_enable/utils/src/key_utils.cpp",
+    "kernel/linux/common_modules/code_sign/code_sign_misc.c",
+    "third_party/musl/BUILD.gn",
+    "third_party/musl/scripts/copy_uapi.sh",
+    "third_party/musl/scripts/generate_uapi.py",
+    "kernel/linux/linux-6.6/fs/verity/enable.c",
+    "kernel/linux/linux-6.6/mm/mprotect.c",
+    "kernel/linux/common_modules/xpm/Kconfig",
+    "kernel/linux/linux-6.6/include/trace/events/mmflags.h",
+    "device/qemu/common/virt_full/hardware/gpu/BUILD.gn",
+}
+
+def preimages(patch_path: Path) -> dict[str, str]:
+    lines = patch_path.read_text(encoding="utf-8").splitlines()
+    result: dict[str, list[str]] = {}
+    path = None
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if line.startswith("diff --git "):
+            path = line.split(" b/", 1)[1]
+            index += 1
+            continue
+        match = re.match(r"@@ -(\d+)(?:,(\d+))? \+", line)
+        if path in wanted and match:
+            old_start = int(match.group(1))
+            output = result.setdefault(path, [])
+            while len(output) < old_start - 1:
+                output.append("# fixture padding")
+            index += 1
+            while index < len(lines) and not lines[index].startswith(("@@ ", "diff --git ")):
+                hunk_line = lines[index]
+                if hunk_line.startswith((" ", "-")):
+                    output.append(hunk_line[1:])
+                index += 1
+            continue
+        index += 1
+    return {name: "\n".join(content) + "\n" for name, content in result.items()}
+
+document_lines: dict[str, list[str]] = {}
+for argument in sys.argv[1:-1]:
+    for name, content in preimages(Path(argument)).items():
+        incoming = content.splitlines()
+        merged = document_lines.setdefault(name, [])
+        if len(merged) < len(incoming):
+            merged.extend(["# fixture padding"] * (len(incoming) - len(merged)))
+        for index, line in enumerate(incoming):
+            if line == "# fixture padding":
+                continue
+            if merged[index] not in ("# fixture padding", line):
+                raise SystemExit(
+                    f"conflicting fixture preimage for {name}:{index + 1}"
+                )
+            merged[index] = line
+documents = {
+    name: "\n".join(lines) + "\n" for name, lines in document_lines.items()
+}
+missing = wanted - documents.keys()
+if missing:
+    raise SystemExit(f"kernel fixture preimages are missing: {sorted(missing)}")
+for relative, content in documents.items():
+    destination = root / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if relative.endswith("/build_kernel.sh"):
+        build_lines = content.splitlines()
+        memory_copy = next(
+            (
+                index for index, line in enumerate(build_lines)
+                if "common_modules/memory_security" in line
+            ),
+            None,
+        )
+        if memory_copy is None:
+            raise SystemExit(f"incomplete build_kernel.sh fixture:\n{content}")
+        build_lines[memory_copy - 1] = "#cp common_modules"
+        content = "\n".join(build_lines) + "\n"
+    destination.write_text(content, encoding="utf-8")
+    if relative.endswith(("/build_kernel.sh", "/copy_uapi.sh", "/generate_uapi.py", "/hardware/gpu/BUILD.gn")):
+        destination.chmod(0o755)
+
+# These options are already enabled in the pinned QEMU defconfigs and are
+# therefore context, not additions carried by the VPN patch.
+for name in ("arm64_virt_defconfig", "x86_64_virt_defconfig"):
+    destination = root / "device/qemu/common/virt_full/kernel" / name
+    content = destination.read_text(encoding="utf-8")
+    additions = []
+    for option in (
+        "CONFIG_NAMESPACES",
+        "CONFIG_NET_NS",
+        "CONFIG_NETDEVICES",
+        "CONFIG_TUN",
+        "CONFIG_IP_ADVANCED_ROUTER",
+        "CONFIG_IP_MULTIPLE_TABLES",
+        "CONFIG_IPV6",
+        "CONFIG_IPV6_MULTIPLE_TABLES",
+        "CONFIG_FS_VERITY",
+        "CONFIG_FS_VERITY_BUILTIN_SIGNATURES",
+        "CONFIG_SECURITY_CODE_SIGN",
+        "CONFIG_HCK",
+        "CONFIG_HCK_VENDOR_HOOKS",
+        "CONFIG_CRYPTO_ECC",
+        "CONFIG_CRYPTO_ECDSA",
+        "CONFIG_CRYPTO_SHA256",
+        "CONFIG_FS_ENCRYPTION",
+        "CONFIG_F2FS_FS",
+        "CONFIG_F2FS_FS_XATTR",
+        "CONFIG_F2FS_FS_POSIX_ACL",
+        "CONFIG_F2FS_FS_SECURITY",
+        "CONFIG_ARCH_USES_HIGH_VMA_FLAGS",
+        "CONFIG_SECURITY_XPM",
+        "CONFIG_DSMM_DEVELOPER_ENABLE",
+        "CONFIG_QUOTA",
+        "CONFIG_QUOTACTL",
+    ):
+        if f"{option}=" not in content and f"# {option} is not set" not in content:
+            additions.append(f"{option}=y")
+    final_context = "#\n# end of Rust hacking\n# end of Kernel hacking\n"
+    if additions:
+        if final_context not in content:
+            raise SystemExit(f"missing defconfig final context: {destination}")
+        content = content.replace(
+            final_context,
+            "\n".join(additions) + "\n" + final_context,
+            1,
+        )
+    destination.write_text(content, encoding="utf-8")
+PY
+
+bash "${QOS_APPLY}" --source-root "${OHOS_ROOT}" >/dev/null
 bash "${APPLY}" \
   --source-root "${OHOS_ROOT}" \
-  --product armv7a_virt \
   --product arm64_virt \
   --product x86_64_virt \
   >/dev/null
 
 for config in \
-  arm_virt_defconfig \
-  configs/arm_virt_defconfig \
   arm64_virt_defconfig \
   x86_64_virt_defconfig
 do
@@ -501,7 +665,6 @@ grep -Eq '^[[:space:]]*netmanager_ext_feature_vpnext = true$' \
   "${OHOS_ROOT}/foundation/communication/netmanager_ext/netmanager_ext_config.gni"
 for product_config in \
   "${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" \
-  "${OHOS_ROOT}/vendor/ohemu/virt/virt_common_armv7a.json" \
   "${OHOS_ROOT}/vendor/ohemu/virt/virt_common_x86_64.json"
 do
   grep -Fq \
@@ -550,7 +713,7 @@ grep -Fq 'action("qemu_mesa_build") {' \
 [ "$(grep -c 'action("qemu_mesa_build") {' \
   "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn")" -eq 1 ]
 [ "$(grep -c 'deps = \[ ":qemu_mesa_build" \]' \
-  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn")" -eq 6 ]
+  "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn")" -eq 8 ]
 if grep -Fq 'virt_gpu_prebuilt_dir' \
   "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn"; then
   echo "obsolete QEMU GPU prebuilt variable was retained" >&2
@@ -568,24 +731,22 @@ do
     "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn"
 done
 cmp -s \
-  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py" \
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/files/build_qemu_mesa.py" \
   "${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/build_qemu_mesa.py"
 grep -Fq '(void)vsnprintf(log_string, MAX_BUFFER_LEN, fmt, args);' \
-  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py"
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/files/build_qemu_mesa.py"
 grep -Fq '"<vsnprintf@plt>" not in logger_disassembly' \
-  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py"
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/files/build_qemu_mesa.py"
 grep -Fq 'R_ARM_JUMP_SLOT' \
-  "${ROOT}/overlays/armv7a_virt_full/build_armv7a_mesa.py"
+  "${ROOT}/patches/common/device/qemu/armv7a_product/components/device_qemu/0001-add-armv7a-qemu-device.patch"
 python3 - \
-  "${ROOT}/overlays/standard_qemu_vpn/build_qemu_mesa.py" \
-  "${ROOT}/overlays/armv7a_virt_full/build_armv7a_mesa.py" <<'PY'
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/files/build_qemu_mesa.py" <<'PY'
 import runpy
 import sys
 import tempfile
 from pathlib import Path
 
 builder = runpy.run_path(sys.argv[1])
-arm_builder = runpy.run_path(sys.argv[2])
 with tempfile.TemporaryDirectory() as directory:
     source = Path(directory)
     loader = source / "src/loader/loader.c"
@@ -605,15 +766,6 @@ with tempfile.TemporaryDirectory() as directory:
 
 assert builder["TARGETS"]["arm64_virt"].elf_machine == 183
 assert builder["TARGETS"]["x86_64_virt"].elf_machine == 62
-
-arm_plt = """
-0068a3d0 <$a>:
-  68a3d0: e28fc600 add r12, pc, #0, #12
-  68a3d4: e28cca96 add r12, r12, #614400
-  68a3d8: e5bcffcc ldr pc, [r12, #4044]!
-"""
-assert arm_builder["arm_plt_got_slot"](0x68A3D0, arm_plt) == 0x7213A4
-assert arm_builder["arm_plt_got_slot"](0x68A3D0, "invalid") is None
 PY
 grep -Fq \
   '//foundation/communication/netmanager_ext/frameworks/vpn_dialog/dialog_ui/vpn_dialog:dialog_hap' \
@@ -638,15 +790,14 @@ python3 "${VERIFY_HAP_PROFILE}" \
   --min-valid-seconds 31536000 \
   >/dev/null
 
-# Reapplying the overlay must not duplicate Kconfig or HAP entries.
+# Reapplying the component patch set must not duplicate Kconfig or HAP entries.
 bash "${APPLY}" \
   --source-root "${OHOS_ROOT}" \
-  --product armv7a_virt \
   --product arm64_virt \
   --product x86_64_virt \
   >/dev/null
 
-[ "$(grep -c '^CONFIG_TUN=y$' "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/arm_virt_defconfig")" -eq 1 ]
+[ "$(grep -c '^CONFIG_TUN=y$' "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/arm64_virt_defconfig")" -eq 1 ]
 [ "$(grep -c '^ source \"fs/code_sign/Kconfig\"$' "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/patch/virt.patch")" -eq 1 ]
 [ "$(grep -c '^ obj-$(CONFIG_SECURITY_CODE_SIGN)' "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/patch/virt.patch")" -eq 1 ]
 [ "$(grep -c '^ source \"security/xpm/Kconfig\"$' "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/patch/virt.patch")" -eq 1 ]
@@ -679,4 +830,4 @@ grep -Fxq 'ipv6: true' "${ROOT}/ci/standard-vpn/ipv6-direct.yaml"
 bash -n "${ROOT}/ci/standard-vpn/verify-paws-ipv6.sh"
 [ -x "${ROOT}/ci/standard-vpn/verify-paws-ipv6.sh" ]
 
-echo "standard VPN overlay tests passed"
+echo "standard VPN component tests passed"

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
 PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
-POINTER_OVERLAY="${SCRIPT_DIR}/../../overlays/qemu_absolute_pointer/apply.sh"
+POINTER_COMPONENT="${SCRIPT_DIR}/../../patches/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
 bash "${SCRIPT_DIR}/../standard-vpn/test.sh"
 TEST_ROOT="$(mktemp -d)"
 FAKE_BIN="${TEST_ROOT}/bin"
@@ -128,6 +128,13 @@ CONFIG_F2FS_FS_POSIX_ACL=y
 CONFIG_F2FS_FS_SECURITY=y
 CONFIG_QUOTA=y
 CONFIG_QUOTACTL=y
+CONFIG_AUTHORITY_CTRL=y
+CONFIG_QOS_CTRL=y
+CONFIG_QOS_AUTHORITY=y
+CONFIG_QOS_POLICY_MAX_NR=6
+CONFIG_SCHED_LATENCY_NICE=y
+CONFIG_UCLAMP_TASK=y
+CONFIG_UCLAMP_TASK_GROUP=y
 EOF
 cat >"${FAKE_VENDOR}/qemu_run.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -184,14 +191,40 @@ void ProcessMotionByEventType()
     }
 }
 EOF
-bash "${POINTER_OVERLAY}" --source-root "${FAKE_SOURCE}" >/dev/null
-bash "${POINTER_OVERLAY}" --source-root "${FAKE_SOURCE}" >/dev/null
+python3 - \
+  "${SCRIPT_DIR}/../../patches/common/foundation/multimodalinput/input/absolute_pointer/0001-map-qemu-absolute-pointer.patch" \
+  "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+patch_lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+output = []
+index = 0
+while index < len(patch_lines):
+    match = re.match(r"@@ -(\d+)(?:,\d+)? \+", patch_lines[index])
+    if not match:
+        index += 1
+        continue
+    old_start = int(match.group(1))
+    while len(output) < old_start - 1:
+        output.append("// fixture padding")
+    index += 1
+    while index < len(patch_lines) and not patch_lines[index].startswith("@@ "):
+        line = patch_lines[index]
+        if line.startswith((" ", "-")):
+            output.append(line[1:])
+        index += 1
+Path(sys.argv[2]).write_text("\n".join(output) + "\n", encoding="utf-8")
+PY
+bash "${POINTER_COMPONENT}" --source-root "${FAKE_SOURCE}" >/dev/null
+bash "${POINTER_COMPONENT}" --source-root "${FAKE_SOURCE}" >/dev/null
 test "$(grep -c 'QEMU_ABSOLUTE_POINTER_SYNC' \
   "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp")" -eq 1
 test "$(grep -c 'libinput_event_pointer_get_absolute_x_transformed' \
   "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp")" -eq 1
 python3 - \
-  "${SCRIPT_DIR}/../../overlays/standard_qemu_vpn/assets/vpndialog.p7b.b64" \
+  "${SCRIPT_DIR}/../../patches/common/standard_vpn/components/vpn_dialog/assets/vpndialog.p7b.b64" \
   "${FAKE_VPN_HAP}" <<'PY'
 import base64
 import sys
@@ -233,6 +266,14 @@ case "${command}" in
     ;;
   "dump /system/lib64/kms_swrast_dri.so "*)
     output="${command#dump /system/lib64/kms_swrast_dri.so }"
+    dd if=/dev/zero of="${output}" bs=8192 count=1 status=none
+    printf '\177ELF' | dd of="${output}" conv=notrunc status=none
+    # ELF64, little endian, EM_AARCH64 for this arm64 package fixture.
+    printf '\002\001\001\000\000\000\000\000\000\000\000\000\002\000\267\000' |
+      dd of="${output}" bs=1 seek=4 conv=notrunc status=none
+    ;;
+  "dump /vendor/lib64/libhdi_product_vibrator_impl.z.so "*)
+    output="${command#dump /vendor/lib64/libhdi_product_vibrator_impl.z.so }"
     dd if=/dev/zero of="${output}" bs=8192 count=1 status=none
     printf '\177ELF' | dd of="${output}" conv=notrunc status=none
     # ELF64, little endian, EM_AARCH64 for this arm64 package fixture.

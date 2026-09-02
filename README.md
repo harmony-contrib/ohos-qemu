@@ -111,6 +111,50 @@ gain this capability merely by rewriting their launch scripts.
 The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
 and falls back to TCG when necessary. Set `QEMU_ACCEL=hvf` or
 `QEMU_ACCEL=tcg` to force either mode.
+
+## Source capability components
+
+Source builds use a component-owned patch tree under [`patches`](./patches).
+Phone and 2in1 are independent top-level entries; the removed `overlays/`
+commands are not retained as compatibility wrappers:
+
+```bash
+bash patches/phone/apply.sh \
+  --source-root /path/to/openharmony \
+  --artifact-root /path/to/jsvm-m144 \
+  --product arm64_virt
+
+bash patches/2in1/apply.sh \
+  --source-root /path/to/openharmony \
+  --artifact-root /path/to/jsvm-m144 \
+  --product arm64_virt
+```
+
+Every leaf component has its own `apply.sh`, and each stable source change is
+an independently reviewable numbered patch. The aggregate entries apply, in
+dependency order:
+
+- the generated phone or 2in1 product profile;
+- QoS authority kernel support and `qos_auth` integration;
+- a stateful QEMU vibrator product VDI;
+- release-HAP dependency handling that skips registry access only when no
+  runtime package dependency is declared;
+- absolute-pointer synchronization and the standard VPN/GPU stack;
+- JSVM linked to the pinned ArkWeb/Chromium M144 `v8_shared` artifact;
+- the armv7a product components when `armv7a_virt` is selected.
+
+Build the M144 engine artifacts for all supported guest architectures first:
+
+```bash
+scripts/build_m144_v8.sh arm arm64 x86_64
+```
+
+The builder pins Chromium, V8, ArkWeb, CEF, depot_tools, and the OpenHarmony
+7.0 WebView interface revisions. It records per-file SHA-256 values in
+`manifest.json`; the JSVM component rejects a wrong milestone, revision,
+architecture, checksum, or SDK link stub before modifying the OpenHarmony
+checkout.
+
 ## HDC
 
 The launchers forward guest HDC to host TCP port `5555`. With `hdc` from the
@@ -181,7 +225,7 @@ authorization dialog, and the user's decision is stored in the guest
 `userdata.img`.
 
 The build applies
-[`overlays/standard_qemu_vpn`](./overlays/standard_qemu_vpn) before compiling.
+[`patches/common/standard_vpn`](./patches/common/standard_vpn) before compiling.
 Packaging then checks the final kernel configuration, the F2FS verity feature
 of `userdata.img`, and the exact signed `VpnDialog.hap` inside `system.img`; a
 package is marked with `"standard_vpn": true` only after those checks pass.
@@ -259,7 +303,7 @@ Each complete package contains `device-profile.json`, including the upstream
 2in1 profile hash, effective inherit chain, resolved part list, compatibility
 adaptations, and validated 2in1/QEMU feature flags. Packaging also requires the
 DLP manager/service, UI appearance service, Wukong, HNP, Launcher, and SystemUI
-runtime artifacts. The source overlay also installs
+runtime artifacts. The source component also installs
 `const.bms.supportAppTypes=2in1,phone,default,tablet` in the QEMU product parameters:
 the current signed Launcher/SystemUI HAPs advertise `default/tablet`, and BMS
 needs this compatibility list to register them and complete first-user account
