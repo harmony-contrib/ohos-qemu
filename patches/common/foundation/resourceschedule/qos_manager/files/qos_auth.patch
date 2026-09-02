@@ -49,6 +49,15 @@ diff --git a/include/linux/sched.h b/include/linux/sched.h
  
  	/*
  	 * New fields for task_struct should be added above here, so that
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -51,1 +51,4 @@
+-#include <linux/uaccess.h>
++#ifdef CONFIG_COMPAT
++#include <linux/compat.h>
++#endif
++#include <linux/uaccess.h>
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
