@@ -1,0 +1,12 @@
+diff --git a/src/v8/BUILD.gn b/src/v8/BUILD.gn
+--- a/src/v8/BUILD.gn
++++ b/src/v8/BUILD.gn
+@@ -1766,7 +1766,7 @@ config("internal_config") {
+     defines += [ "V8_RUNTIME_CALL_STATS" ]
+   }
+ 
+-  if (v8_enable_hitrace_runtime_call_stats) {
++  if (v8_enable_hitrace_runtime_call_stats && current_os == "ohos") {
+     defines += [ "HITRACE_RUNTIME_CALL_STATS" ]
+   }
+ 

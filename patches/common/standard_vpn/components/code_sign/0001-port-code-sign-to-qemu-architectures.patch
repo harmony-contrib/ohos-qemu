@@ -1,0 +1,69 @@
+diff --git a/base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h b/base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h
+index 263fad9..fa5b847 100644
+--- a/base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h
++++ b/base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h
+@@ -18,7 +18,7 @@
+ 
+ #include <string>
+ #include <unistd.h>
+-#include <asm/unistd.h>
++#include <sys/syscall.h>
+ #include <linux/stat.h>
+ 
+ namespace OHOS {
+diff --git a/base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp b/base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp
+index 3ec110a..bf40d47 100644
+--- a/base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp
++++ b/base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp
+@@ -21,7 +21,7 @@ namespace CodeSign {
+ int Statx(int dfd, const char *filename, int flags,
+     unsigned int mask, struct statx *buffer)
+ {
+-    return syscall(__NR_statx, dfd, filename, flags, mask, buffer);
++    return syscall(SYS_statx, dfd, filename, flags, mask, buffer);
+ }
+ }
+ }
+diff --git a/base/security/code_signature/services/key_enable/utils/src/key_utils.cpp b/base/security/code_signature/services/key_enable/utils/src/key_utils.cpp
+index 0edcf14..f5175b9 100644
+--- a/base/security/code_signature/services/key_enable/utils/src/key_utils.cpp
++++ b/base/security/code_signature/services/key_enable/utils/src/key_utils.cpp
+@@ -15,7 +15,7 @@
+ 
+ #include "key_utils.h"
+ 
+-#include <asm/unistd.h>
++#include <sys/syscall.h>
+ #include <cerrno>
+ #include <cstring>
+ #include <unistd.h>
+@@ -41,7 +41,7 @@ KeySerial AddKey(
+     size_t pLen,
+     KeySerial ringId)
+ {
+-    KeySerial ret = syscall(__NR_add_key,
++    KeySerial ret = syscall(SYS_add_key,
+         type, description, static_cast<const void *>(payload),
+         pLen, ringId);
+     if (ret < 0) {
+@@ -56,7 +56,7 @@ KeySerial KeyctlRestrictKeyring(
+     const char *type,
+     const char *restriction)
+ {
+-    KeySerial ret = syscall(__NR_keyctl,
++    KeySerial ret = syscall(SYS_keyctl,
+         KEYCTL_RESTRICT_KEYRING, ringId,
+         type, restriction);
+     if (ret < 0) {
+diff --git a/kernel/linux/common_modules/code_sign/code_sign_misc.c b/kernel/linux/common_modules/code_sign/code_sign_misc.c
+index ffa02a0..dfad8f3 100644
+--- a/kernel/linux/common_modules/code_sign/code_sign_misc.c
++++ b/kernel/linux/common_modules/code_sign/code_sign_misc.c
+@@ -4,6 +4,7 @@
+  */
+ 
+ #include <linux/module.h>
++#include <linux/fs.h>
+ #include <linux/cdev.h>
+ #include <linux/miscdevice.h>
+ #include <linux/hck/lite_hck_code_sign.h>

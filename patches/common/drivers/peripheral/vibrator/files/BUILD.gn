@@ -1,0 +1,35 @@
+# Copyright (c) 2026 OpenHarmony QEMU contributors.
+# Licensed under the Apache License, Version 2.0.
+
+import("//build/ohos.gni")
+import("//device/qemu/common/virt_full/device.gni")
+
+ohos_shared_library("libhdi_product_vibrator_impl") {
+  sources = [ "qemu_virtual_vibrator.cpp" ]
+
+  external_deps = [
+    "drivers_peripheral_vibrator:libvibrator_vdi_config",
+    "drivers_interface_vibrator:libvibrator_stub_2.0",
+    "hdf_core:libhdf_host",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+  ]
+
+  cflags_cc = [
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    # The upstream VDI base class supplies default virtual methods whose
+    # named parameters are intentionally unused in the header itself.
+    "-Wno-unused-parameter",
+  ]
+
+  shlib_type = "hdi"
+  install_images = [ chipset_base_dir ]
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+
+group("qemu_virtual_vibrator") {
+  deps = [ ":libhdi_product_vibrator_impl" ]
+}

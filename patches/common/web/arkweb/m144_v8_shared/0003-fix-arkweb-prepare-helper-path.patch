@@ -1,0 +1,38 @@
+diff --git a/src/arkweb/build/prepare.sh b/src/arkweb/build/prepare.sh
+index a4c71e33472..43336400555 100755
+--- a/src/arkweb/build/prepare.sh
++++ b/src/arkweb/build/prepare.sh
+@@ -14,17 +14,19 @@
+ 
+ set -e
+ 
+-WORK_SPACE=$(cd $(dirname $0); pwd)
++ARKWEB_BUILD_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)
++ARKWEB_ROOT=$(cd "${ARKWEB_BUILD_DIR}/.."; pwd)
++WORK_SPACE=$(cd "${ARKWEB_ROOT}/.."; pwd)
+ 
+-OHOS_GLUE_DIR=${WORK_SPACE}/ohos_glue
+-OHOS_GLUE_REVISION=${WORK_SPACE}/ohos_glue/Revision.txt
++OHOS_GLUE_DIR=${ARKWEB_ROOT}/glue
++OHOS_GLUE_REVISION=${OHOS_GLUE_DIR}/Revision.txt
+ OHOS_GLUE_LOG_DIR=${1}
+-INTERFACE_DIR=${WORK_SPACE}/../deps_code/webview/ohos_interface
++INTERFACE_DIR=${ARKWEB_ROOT}/deps_code/webview/ohos_interface
+ 
+ INTERFACE_INCLUDE_DIR=${INTERFACE_DIR}/include
+ INTERFACE_OHOS_GLUE_DIR=${INTERFACE_DIR}/ohos_glue
+ 
+-CLANG_FORMAT_DIR=${WORK_SPACE}/buildtools/linux64
++CLANG_FORMAT_DIR=${WORK_SPACE}/buildtools/linux64
+ 
+ NEED_PROCESS=1
+ NEW_REVISION=
+@@ -268,7 +270,7 @@ handle_patch_apply() {
+ handle_patch_apply
+ need_processed
+ #临时遍历引用的头文件，添加#include <vector>
+-python3 ${WORK_SPACE}/arkweb/build/include_vector_patch.py ${INTERFACE_DIR}
++python3 ${ARKWEB_BUILD_DIR}/include_vector_patch.py ${INTERFACE_DIR}
+ if [ "$NEED_PROCESS" -eq 1 ]; then
+   handle_copy_commond
+   handle_translate_commond nweb

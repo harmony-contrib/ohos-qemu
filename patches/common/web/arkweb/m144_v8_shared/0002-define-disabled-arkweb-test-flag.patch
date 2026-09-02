@@ -1,0 +1,15 @@
+diff --git a/src/cc/BUILD.gn b/src/cc/BUILD.gn
+index c4f8ce82e71..9cff2cd52a9 100644
+--- a/src/cc/BUILD.gn
++++ b/src/cc/BUILD.gn
+@@ -7,6 +7,10 @@ import("//ui/gl/features.gni")
+ 
+ import("//cc/cc.gni")
+ 
++if (!is_arkweb) {
++  arkweb_unittests = false
++}
++
+ if (is_arkweb) {
+   import("//arkweb/chromium_ext/chromium_ext.gni")
+ }

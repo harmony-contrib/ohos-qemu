@@ -1,0 +1,61 @@
+diff --git a/src/build/config/ohos/BUILD.gn b/src/build/config/ohos/BUILD.gn
+--- a/src/build/config/ohos/BUILD.gn
++++ b/src/build/config/ohos/BUILD.gn
+@@ -152,6 +152,7 @@ config("runtime_library") {
+     defines = [ "__BUILD_LINUX_WITH_CLANG" ]
+   }
+   if (use_musl) {
++    llvm_version = clang_version
+     dynamic_linker = "/lib/ld-musl-arm.so.1"
+     if (current_cpu == "arm") {
+       ldflags += [ "-L" + rebase_path("$ohos_sysroot/usr/lib/arm-linux-ohos",
+@@ -161,24 +162,24 @@ config("runtime_library") {
+                                root_build_dir) ]
+       ldflags +=
+           [ "-L" + rebase_path(
+-                "$ohos_toolchain_root/lib/clang/current/lib/arm-linux-ohos",
++                "$ohos_toolchain_root/lib/clang/$llvm_version/lib/arm-linux-ohos",
+                 root_build_dir) ]
+ 
+-      libclang_rt_file = "$ohos_toolchain_root/lib/clang/current/lib/arm-linux-ohos/libclang_rt.builtins.a"
++      libclang_rt_file = "$ohos_toolchain_root/lib/clang/$llvm_version/lib/arm-linux-ohos/libclang_rt.builtins.a"
+ 
+       if (is_asan && arkweb_asan) {
+-        libasan_file = "$ohos_toolchain_root/lib/clang/current/lib/arm-linux-ohos/libclang_rt.asan.so"
++        libasan_file = "$ohos_toolchain_root/lib/clang/$llvm_version/lib/arm-linux-ohos/libclang_rt.asan.so"
+         libs += [ rebase_path(libasan_file) ]
+         dynamic_linker = "/lib/ld-musl-arm-asan.so.1"
+       }
+ 
+       if (is_hwasan && arkweb_asan) {
+-        libasan_file = "$ohos_toolchain_root/lib/clang/current/lib/arm-linux-ohos/libclang_rt.hwasan.so"
++        libasan_file = "$ohos_toolchain_root/lib/clang/$llvm_version/lib/arm-linux-ohos/libclang_rt.hwasan.so"
+         libs += [ rebase_path(libasan_file) ]
+         dynamic_linker = "/lib/ld-musl-arm-asan.so.1"
+       }
+       if (using_sanitizer) {
+-        libasan_file = "$ohos_toolchain_root/lib/clang/current/lib/arm-linux-ohos/libclang_rt.ubsan_standalone.so"
++        libasan_file = "$ohos_toolchain_root/lib/clang/$llvm_version/lib/arm-linux-ohos/libclang_rt.ubsan_standalone.so"
+         libs += [ rebase_path(libasan_file) ]
+       }
+     }
+@@ -193,7 +194,6 @@ config("runtime_library") {
+       ldflags += [ "-L" + rebase_path(
+                        "$ohos_toolchain_root/lib/aarch64-linux-ohos",
+                        root_build_dir) ]
+-      llvm_version = "22"
+       ldflags +=
+           [ "-L" + rebase_path(
+                 "$ohos_toolchain_root/lib/clang/$llvm_version/lib/aarch64-linux-ohos",
+@@ -222,9 +222,9 @@ config("runtime_library") {
+                                root_build_dir) ]
+       ldflags +=
+           [ "-L" + rebase_path(
+-                "$ohos_toolchain_root/lib/clang/current/lib/x86_64-linux-ohos",
++                "$ohos_toolchain_root/lib/clang/$llvm_version/lib/x86_64-linux-ohos",
+                 root_build_dir) ]
+-      libclang_rt_file = "$ohos_toolchain_root/lib/clang/current/lib/x86_64-linux-ohos/libclang_rt.builtins.a"
++      libclang_rt_file = "$ohos_toolchain_root/lib/clang/$llvm_version/lib/x86_64-linux-ohos/libclang_rt.builtins.a"
+     }
+ 
+     ldflags += [ "-Wl,--dynamic-linker,$dynamic_linker" ]

@@ -1,0 +1,41 @@
+diff --git a/src/build/config/clang/BUILD.gn b/src/build/config/clang/BUILD.gn
+--- a/src/build/config/clang/BUILD.gn
++++ b/src/build/config/clang/BUILD.gn
+@@ -221,11 +221,7 @@ template("clang_lib") {
+           assert(false)  # Unhandled cpu type
+         }
+       } else if (is_ohos) {
+-        if (llvm_ohos_mainline) {
+-          clang_version = "22"
+-        } else {
+-          clang_version = "15.0.4"
+-        }
++        clang_version = "15.0.4"
+         if (current_cpu == "x64") {
+           _dir = "x86_64-linux-ohos"
+         }  else if (current_cpu == "arm") {
+@@ -241,7 +237,11 @@ template("clang_lib") {
+         assert(false)  # Unhandled target platform
+       }
+ 
+-      _clang_lib_dir = "$clang_base_path/lib/clang/$clang_version/lib"
++      if (is_ohos) {
++        _clang_lib_dir = "$ohos_toolchain_root/lib/clang/$clang_version/lib"
++      } else {
++        _clang_lib_dir = "$clang_base_path/lib/clang/$clang_version/lib"
++      }
+       _lib_file = "${_prefix}clang_rt.${_libname}${_suffix}.${_ext}"
+       libs = [ "$_clang_lib_dir/$_dir/$_lib_file" ]
+     }
+diff --git a/src/build/config/ohos/BUILD.gn b/src/build/config/ohos/BUILD.gn
+--- a/src/build/config/ohos/BUILD.gn
++++ b/src/build/config/ohos/BUILD.gn
+@@ -152,7 +152,7 @@ config("runtime_library") {
+     defines = [ "__BUILD_LINUX_WITH_CLANG" ]
+   }
+   if (use_musl) {
+-    llvm_version = clang_version
++    llvm_version = "15.0.4"
+     dynamic_linker = "/lib/ld-musl-arm.so.1"
+     if (current_cpu == "arm") {
+       ldflags += [ "-L" + rebase_path("$ohos_sysroot/usr/lib/arm-linux-ohos",

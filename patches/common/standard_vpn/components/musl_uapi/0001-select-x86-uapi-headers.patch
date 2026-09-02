@@ -1,0 +1,42 @@
+diff --git a/third_party/musl/BUILD.gn b/third_party/musl/BUILD.gn
+index ab6db8b8b..fc4381f4d 100644
+--- a/third_party/musl/BUILD.gn
++++ b/third_party/musl/BUILD.gn
+@@ -331,7 +331,9 @@ if (is_lite_system && current_os == "ohos") {
+         file_name = "asm-riscv"
+       } else if ("${musl_arch}" == "loongarch64") {
+         file_name = "asm-loongarch"
+-      } else {  # aarch64 and x86_64 use same file
++      } else if ("${musl_arch}" == "x86_64") {
++        file_name = "asm-x86"
++      } else {  # aarch64
+         file_name = "asm-arm64"
+       }
+       sources = [ "${musl_uapi_dir}/${file_name}/asm" ]
+diff --git a/third_party/musl/scripts/copy_uapi.sh b/third_party/musl/scripts/copy_uapi.sh
+index 5d4056b88..5a2f11cee 100755
+--- a/third_party/musl/scripts/copy_uapi.sh
++++ b/third_party/musl/scripts/copy_uapi.sh
+@@ -35,7 +35,8 @@ elif [ ${TARGET_ARCH} = "aarch64" ]; then
+     rm -rf ${OUT_DIR}/asm-arm64
+     rm -rf ${OUT_DIR}/asm-arm
+ elif [ ${TARGET_ARCH} = "x86_64" ]; then
+-    mv ${OUT_DIR}/asm-arm64/asm ${OUT_DIR}/asm
++    mv ${OUT_DIR}/asm-x86/asm ${OUT_DIR}/asm
++    rm -rf ${OUT_DIR}/asm-x86
+     rm -rf ${OUT_DIR}/asm-arm64
+     rm -rf ${OUT_DIR}/asm-arm
+ elif [ ${TARGET_ARCH} = "riscv64" ]; then
+diff --git a/third_party/musl/scripts/generate_uapi.py b/third_party/musl/scripts/generate_uapi.py
+index 0b7e7ac87..f80b122e4 100755
+--- a/third_party/musl/scripts/generate_uapi.py
++++ b/third_party/musl/scripts/generate_uapi.py
+@@ -139,7 +139,7 @@ def main():
+         uapi_from = "local"
+         final_uapi_dir = args.musl_uapi_dir
+ 
+-    exclude_pattern = "^asm$|^scsi$" if uapi_from == "make" else "^asm-arm$|^asm-arm64$|^scsi$"
++    exclude_pattern = "^asm$|^scsi$" if uapi_from == "make" else "^asm-(arm|arm64|x86|riscv|loongarch)$|^scsi$"
+ 
+     # List UAPI
+     uapi_files = list_uapi_files(final_uapi_dir, exclude_pattern)

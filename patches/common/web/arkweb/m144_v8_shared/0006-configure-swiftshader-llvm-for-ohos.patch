@@ -1,0 +1,12 @@
+diff --git a/src/third_party/swiftshader/src/Reactor/BUILD.gn b/src/third_party/swiftshader/src/Reactor/BUILD.gn
+--- a/src/third_party/swiftshader/src/Reactor/BUILD.gn
++++ b/src/third_party/swiftshader/src/Reactor/BUILD.gn
+@@ -328,7 +328,7 @@ if (supports_llvm) {
+       "$llvm_dir/configs/common/include/",
+     ]
+ 
+-    if (is_linux || is_chromeos) {
++    if (is_linux || is_chromeos || is_ohos) {
+       include_dirs += [ "$llvm_dir/configs/linux/include/" ]
+     } else if (is_fuchsia) {
+       include_dirs += [ "$llvm_dir/configs/fuchsia/include/" ]

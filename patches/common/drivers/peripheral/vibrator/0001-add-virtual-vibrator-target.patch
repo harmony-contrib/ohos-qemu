@@ -1,0 +1,10 @@
+--- a/vendor/ohemu/virt/BUILD.gn
++++ b/vendor/ohemu/virt/BUILD.gn
+@@ -21,6 +21,7 @@ group("virtconfig_group") {
+     "resourceschedule:resourceschedule",
+     "etc:product_etc_conf",
+     "window_config:window_config",
++    "hals/vibrator:qemu_virtual_vibrator",
+     "hals/audio:hdf_audio_config",
+     "hals/codec:hdf_codec_config",
+     "hdf_config/uhdf:hdf_config",

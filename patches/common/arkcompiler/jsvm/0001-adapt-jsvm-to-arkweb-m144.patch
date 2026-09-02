@@ -1,0 +1,86 @@
+--- a/arkcompiler/jsvm/BUILD.gn
++++ b/arkcompiler/jsvm/BUILD.gn
+@@ -22,8 +22,14 @@ ohos_prebuilt_etc("jit_enable_list_appid") {
+   subsystem_name = "arkcompiler"
+ }
+ 
++declare_args() {
++  jsvm_engine_artifact_root =
++      "//vendor/default/binary/artifacts/js_engine_url"
++  jsvm_llvm_root = "//prebuilts/clang/ohos/linux-x86_64/llvm"
++}
++
+ dependency_tag = "default"
+-js_engine_url = "//vendor/${dependency_tag}/binary/artifacts/js_engine_url/"
++js_engine_url = jsvm_engine_artifact_root
+ 
+ action("copy_v8") {
+   external_deps = []
+@@ -263,7 +269,9 @@ action("build_libjsvm") {
+     "--target_platform",
+     "$target_platform",
+     "--prefix",
+-    rebase_path("${js_engine_url}/llvm/bin"),
++    rebase_path("${jsvm_llvm_root}/bin"),
++    "--js_engine_url",
++    rebase_path(js_engine_url),
+     "--sysroot",
+     rebase_path("$musl_sysroot"),
+     "--is_asan",
+--- a/arkcompiler/jsvm/build_jsvm.sh
++++ b/arkcompiler/jsvm/build_jsvm.sh
+@@ -33,13 +33,14 @@ usage() {
+     echo "-h|--help"
+     echo "--sysroot <path>            Sysroot path."
+     echo "--prefix <perfix>           Cross-compiler prefix."
++    echo "--js_engine_url <path>      V8 shared-library artifact root."
+     echo "--target_cpu <arm/arm64>    Cross-compile CPU types."
+     echo "--target_gen_dir <output path>"
+     echo "          if target_gen_dir not set, will install only to the default path."
+     exit 0
+ }
+ 
+-options="$(getopt -o h "help,sysroot:,jsvm_path:,prefix:,target_cpu:,base_path:" -- "$@")" || usage
++options="$(getopt -o h --long help,sysroot:,jsvm_path:,prefix:,js_engine_url:,target_cpu:,base_path:,target_platform:,target_gen_dir:,target_clang_coverage:,is_asan:,use_hwasan:,cmake_path:,target_out_dir:,dependency_tag:,depfile: -- "$@")" || usage
+ 
+ eval set -- "$options"
+ 
+@@ -91,7 +92,10 @@ do_opt_process() {
+             ;;
+         --prefix)
+             export PREFIX=$2
+-            export JS_ENGINE_URL=${PREFIX=}/../..
++            shift
++            ;;
++        --js_engine_url)
++            export JS_ENGINE_URL=$2
+             shift
+             ;;
+         --target_cpu)
+--- a/arkcompiler/jsvm/build_jsvm_inter.sh
++++ b/arkcompiler/jsvm/build_jsvm_inter.sh
+@@ -151,7 +151,6 @@ do_env() {
+         fi
+         cflags+=" -march=armv7-a"
+         cflags+=" -mfpu=neon"
+-        cflags+=" -mbranch-protection=pac-ret+b-key+bti"
+         cflags_host="-m32"
+         ARCH="arm"
+     elif [[ "${TARGET_CPU}" = "arm64" ]]; then
+@@ -159,7 +158,6 @@ do_env() {
+         cflags+=" --sysroot=${SYSROOT}"
+         cflags+=" -march=armv8-a"
+         cflags+=" -DV8_OS_OH=1"
+-        cflags+=" -mfpu=neon"
+         cflags+=" -mbranch-protection=pac-ret+b-key+bti"
+         cflags_host="-m64"
+         ARCH="aarch64"
+@@ -198,7 +196,7 @@ do_env() {
+     export AR="${PREFIX}/llvm-ar"
+     export STRIP="${PREFIX}/llvm-strip"
+     export OBJCOPY="${PREFIX}/llvm-objcopy"
+-    export OBJDUMP="${PREFIX}/llvm-obidump"
++    export OBJDUMP="${PREFIX}/llvm-objdump"
+     export RANLIB="${PREFIX}/llvm-ranlib"
+     export NM="${PREFIX}/llvm-nm"
+     export STRINGS="${PREFIX}/llvm-strings"
