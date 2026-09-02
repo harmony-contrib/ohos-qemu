@@ -2187,6 +2187,76 @@ verify_standard_vpn_capability() {
   echo "standard VPN capability verified for ${product}"
 }
 
+verify_qemu_runtime_capabilities() {
+  local source_root="$1"
+  local product="$2"
+  local system_image="$3"
+  local vendor_image="$4"
+  local expected_machine
+  case "${product}" in
+    armv7a_virt) expected_machine=40 ;;
+    arm64_virt) expected_machine=183 ;;
+    x86_64_virt) expected_machine=62 ;;
+    *) echo "unsupported QEMU runtime product: ${product}" >&2; exit 2 ;;
+  esac
+
+  QOS_VERIFIED=false
+  VIRTUAL_VIBRATOR_VERIFIED=false
+  JSVM_VERIFIED=false
+
+  if [ "${QEMU_QOS_COMPONENT:-1}" = "1" ]; then
+    local kernel_config
+    kernel_config="$(kernel_config_for_product "${source_root}" "${product}")"
+    local option
+    for option in \
+      CONFIG_AUTHORITY_CTRL \
+      CONFIG_QOS_CTRL \
+      CONFIG_QOS_AUTHORITY \
+      CONFIG_SCHED_LATENCY_NICE \
+      CONFIG_UCLAMP_TASK \
+      CONFIG_UCLAMP_TASK_GROUP
+    do
+      require_kernel_config_bool "${kernel_config}" "${option}"
+    done
+    if ! grep -qx 'CONFIG_QOS_POLICY_MAX_NR=6' "${kernel_config}"; then
+      echo "QoS policy count is missing from final kernel config: ${kernel_config}" >&2
+      exit 1
+    fi
+    QOS_VERIFIED=true
+    echo "QEMU QoS kernel capability verified for ${product}"
+  fi
+
+  if [ "${QEMU_VIBRATOR_COMPONENT:-1}" = "1" ]; then
+    require_image_elf "${vendor_image}" "QEMU virtual vibrator product VDI" \
+      "${expected_machine}" \
+      /vendor/lib64/libhdi_product_vibrator_impl.z.so \
+      /vendor/lib/libhdi_product_vibrator_impl.z.so \
+      /lib64/libhdi_product_vibrator_impl.z.so \
+      /lib/libhdi_product_vibrator_impl.z.so
+    VIRTUAL_VIBRATOR_VERIFIED=true
+    echo "QEMU virtual vibrator capability verified for ${product}"
+  fi
+
+  if [ "${QEMU_JSVM_ENABLED:-false}" = "true" ]; then
+    require_image_elf "${system_image}" "JSVM NDK runtime" \
+      "${expected_machine}" \
+      /system/lib64/libjsvm.so \
+      /system/lib/libjsvm.so \
+      /system/lib64/ndk/libjsvm.so \
+      /system/lib/ndk/libjsvm.so \
+      /lib64/libjsvm.so \
+      /lib/libjsvm.so
+    require_image_elf "${system_image}" "ArkWeb M144 V8 shared runtime" \
+      "${expected_machine}" \
+      /system/lib64/libv8_shared.so \
+      /system/lib/libv8_shared.so \
+      /lib64/libv8_shared.so \
+      /lib/libv8_shared.so
+    JSVM_VERIFIED=true
+    echo "QEMU JSVM/ArkWeb M144 capability verified for ${product}"
+  fi
+}
+
 write_full_device_profile_evidence() {
   local source_root="$1"
   local product="$2"
@@ -2310,6 +2380,7 @@ evidence = {
         ),
         "mapped_components": metadata.get("mapped_components", []),
         "app_compatibility_parameter": app_compatibility_parameter,
+        "jsvm_engine": metadata.get("qemu_adaptations", {}).get("jsvm_engine"),
     },
     "required_parts": required_parts,
     "resolved_parts_count": len(parts),
@@ -2470,6 +2541,9 @@ LAUNCH_OUT="${PACKAGE_DIR}/launch"
 TOOLS_OUT="${PACKAGE_DIR}/tools"
 STANDARD_VPN_VERIFIED=false
 VPN_AUTHORIZATION_MODE=unverified
+QOS_VERIFIED=false
+VIRTUAL_VIBRATOR_VERIFIED=false
+JSVM_VERIFIED=false
 MANIFEST_DEVICE_TYPE="${DEVICE_TYPE:-default}"
 MANIFEST_DEVICE_TYPE_SOURCE=default
 MANIFEST_DEVICE_TYPE_PARAM_ONLY=false
@@ -2491,6 +2565,16 @@ cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
 cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 
+if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || \
+   [ "${PRODUCT}" = "armv7a_virt" ]; then
+  FINAL_KERNEL_CONFIG="$(kernel_config_for_product "${SOURCE_ROOT}" "${PRODUCT}")"
+  if [ ! -f "${FINAL_KERNEL_CONFIG}" ]; then
+    echo "final kernel config is missing: ${FINAL_KERNEL_CONFIG}" >&2
+    exit 1
+  fi
+  cp "${FINAL_KERNEL_CONFIG}" "${PACKAGE_DIR}/kernel.config"
+fi
+
 for file in "${COMMON_IMAGES[@]}"; do
   cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"
 done
@@ -2509,6 +2593,11 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${PRODUCT}" \
     "${IMAGES_OUT}/system.img" \
     "${IMAGES_OUT}/userdata.img"
+  verify_qemu_runtime_capabilities \
+    "${SOURCE_ROOT}" \
+    "${PRODUCT}" \
+    "${IMAGES_OUT}/system.img" \
+    "${IMAGES_OUT}/vendor.img"
   write_full_device_profile_evidence \
     "${SOURCE_ROOT}" \
     "${PRODUCT}" \
@@ -2523,6 +2612,7 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   "product": "${PRODUCT}",
   "guest_arch": "${GUEST_ARCH}",
   "kernel": "${KERNEL_FILE}",
+  "kernel_config": "kernel.config",
   "device_type": "${MANIFEST_DEVICE_TYPE}",
   "device_type_profile": "${DEVICE_TYPE_PROFILE}",
   "device_type_source": "${MANIFEST_DEVICE_TYPE_SOURCE}",
@@ -2540,6 +2630,11 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   },
   "capabilities": {
     "absolute_pointer_sync": ${ABSOLUTE_POINTER_SYNC_VERIFIED},
+    "thread_qos": ${QOS_VERIFIED},
+    "virtual_vibrator": ${VIRTUAL_VIBRATOR_VERIFIED},
+    "virtual_vibrator_mode": "simulated",
+    "jsvm": ${JSVM_VERIFIED},
+    "jsvm_engine": "ArkWeb M144 V8",
     "standard_vpn": ${STANDARD_VPN_VERIFIED},
     "userdata_fs_verity": ${STANDARD_VPN_VERIFIED},
     "userdata_filesystem": "f2fs",

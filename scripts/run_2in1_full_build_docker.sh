@@ -38,17 +38,19 @@ SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
 BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
 PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
 PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
+QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-1}"
+JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144}"
 
 case "${DEVICE_TYPE}" in
   2in1)
     DEVICE_TYPE_BUILD_PROFILE=qemu_2in1_full_source
-    QEMU_2IN1_FULL_OVERLAY=1
-    QEMU_PHONE_FULL_OVERLAY=0
+    QEMU_2IN1_PROFILE_COMPONENT=1
+    QEMU_PHONE_PROFILE_COMPONENT=0
     ;;
   phone)
     DEVICE_TYPE_BUILD_PROFILE=qemu_phone_full_source
-    QEMU_2IN1_FULL_OVERLAY=0
-    QEMU_PHONE_FULL_OVERLAY=1
+    QEMU_2IN1_PROFILE_COMPONENT=0
+    QEMU_PHONE_PROFILE_COMPONENT=1
     ;;
   *)
     echo "DEVICE_TYPE must be phone or 2in1 for a full source-profile build" >&2
@@ -96,6 +98,13 @@ fi
 
 if [ ! -x "${OHOS_ROOT}/build.sh" ]; then
   echo "OpenHarmony checkout missing build.sh: ${OHOS_ROOT}" >&2
+  exit 1
+fi
+
+if [ "${QEMU_JSVM_COMPONENT}" = "1" ] && \
+   [ ! -f "${JSVM_ENGINE_ARTIFACTS}/manifest.json" ]; then
+  echo "M144 JSVM artifacts are required: ${JSVM_ENGINE_ARTIFACTS}" >&2
+  echo "build them first with scripts/build_m144_v8.sh" >&2
   exit 1
 fi
 
@@ -159,6 +168,8 @@ echo "BUILD_JOBS=${BUILD_JOBS}"
 echo "SKIP_REPO_SYNC=${SKIP_REPO_SYNC} SKIP_PREBUILTS=${SKIP_PREBUILTS}"
 echo "BUILD_ONLY_LOAD=${BUILD_ONLY_LOAD}"
 echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE=${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}"
+echo "QEMU_JSVM_COMPONENT=${QEMU_JSVM_COMPONENT}"
+echo "JSVM_ENGINE_ARTIFACTS=${JSVM_ENGINE_ARTIFACTS}"
 echo "LOG_FILE=${LOG_FILE}"
 echo
 echo "Full ${DEVICE_TYPE} QEMU capability stack:"
@@ -166,9 +177,12 @@ echo "  - QEMU rootfs /system compat symlinks"
 echo "  - access_tokenid kernel ABI"
 echo "  - case-insensitive host FS fixes (when source on macOS volume)"
 echo "  - VirtioFS node/kernel copy fixes"
-echo "  - standard_qemu_vpn overlay"
-echo "  - qemu_absolute_pointer overlay + virtio-tablet launcher"
-echo "  - armv7a_virt full overlay (when armv7a selected)"
+echo "  - standard VPN component patches"
+echo "  - absolute-pointer component + virtio-tablet launcher"
+echo "  - QoS authority kernel module/configuration"
+echo "  - virtual vibrator product VDI"
+echo "  - JSVM backed by ArkWeb M144 libv8_shared"
+echo "  - armv7a_virt product components (when armv7a selected)"
 echo "  - rich + effective productdefine/common/inherit/${DEVICE_TYPE}.json profile"
 echo "  - package_standard_qemu.sh --device-type ${DEVICE_TYPE}"
 echo "  - auditable resolved parts and profile metadata in each package"
@@ -195,8 +209,12 @@ docker run --rm \
   -e CCACHE_DIR="${CCACHE_DIR}" \
   -e DEVICE_TYPE="${DEVICE_TYPE}" \
   -e DEVICE_TYPE_BUILD_PROFILE="${DEVICE_TYPE_BUILD_PROFILE}" \
-  -e QEMU_2IN1_FULL_OVERLAY="${QEMU_2IN1_FULL_OVERLAY}" \
-  -e QEMU_PHONE_FULL_OVERLAY="${QEMU_PHONE_FULL_OVERLAY}" \
+  -e QEMU_2IN1_PROFILE_COMPONENT="${QEMU_2IN1_PROFILE_COMPONENT}" \
+  -e QEMU_PHONE_PROFILE_COMPONENT="${QEMU_PHONE_PROFILE_COMPONENT}" \
+  -e QEMU_QOS_COMPONENT=1 \
+  -e QEMU_VIBRATOR_COMPONENT=1 \
+  -e QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT}" \
+  -e JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS}" \
   -e BUILD_JOBS="${BUILD_JOBS}" \
   -e KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS}" \
   -e SKIP_REPO_SYNC="${SKIP_REPO_SYNC}" \
@@ -205,9 +223,9 @@ docker run --rm \
   -e BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD}" \
   -e PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" \
   -e SKIP_APT="${SKIP_APT}" \
-  -e STANDARD_VPN_OVERLAY=1 \
-  -e QEMU_ABSOLUTE_POINTER_OVERLAY=1 \
-  -e ARMV7A_FULL_OVERLAY=1 \
+  -e STANDARD_VPN_COMPONENT=1 \
+  -e QEMU_ABSOLUTE_POINTER_COMPONENT=1 \
+  -e ARMV7A_PRODUCT_COMPONENT=1 \
   -e QEMU_FIX_ACCESS_TOKENID_ABI=1 \
   -e QEMU_FIX_SYSTEM_COMPAT_SYMLINKS=1 \
   -e QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION=1 \

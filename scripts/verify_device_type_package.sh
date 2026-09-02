@@ -122,13 +122,21 @@ checks = [
     manifest.get("capabilities", {}).get("device_type_full") is True,
     manifest.get("capabilities", {}).get("device_type_param_only") is False,
     manifest.get("capabilities", {}).get("absolute_pointer_sync") is True,
+    manifest.get("capabilities", {}).get("thread_qos") is True,
+    manifest.get("capabilities", {}).get("virtual_vibrator") is True,
+    manifest.get("capabilities", {}).get("virtual_vibrator_mode") == "simulated",
+    manifest.get("capabilities", {}).get("jsvm") is True,
+    manifest.get("capabilities", {}).get("jsvm_engine") == "ArkWeb M144 V8",
     manifest.get("launcher", {}).get("pointer_device_default") == "virtio-tablet-pci",
     profile.get("device_type") == device_type,
     profile.get("profile") == profile_name,
     effective_profile in profile.get("inherit", []),
     profile.get("qemu_adaptations", {}).get("app_compatibility_parameter")
         == "const.bms.supportAppTypes=2in1,phone,default,tablet",
+    profile.get("qemu_adaptations", {}).get("jsvm_engine")
+        == "OpenHarmony-TPC ArkWeb M144 V8 shared library",
     "applications:prebuilt_hap" in required,
+    "arkcompiler:jsvm" in required,
     bool(required),
     required <= resolved,
     profile.get("resolved_parts_count") == len(resolved),
@@ -167,6 +175,29 @@ SYSIMG="${PACKAGE}/images/system.img"
 if [ ! -f "${SYSIMG}" ]; then
   echo "FAIL: missing images/system.img" >&2
   exit 1
+fi
+
+if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  KERNEL_CONFIG="${PACKAGE}/kernel.config"
+  if [ ! -f "${KERNEL_CONFIG}" ]; then
+    echo "FAIL: missing kernel.config QoS build evidence" >&2
+    FAIL=1
+  else
+    for option in \
+      CONFIG_AUTHORITY_CTRL=y \
+      CONFIG_QOS_CTRL=y \
+      CONFIG_QOS_AUTHORITY=y \
+      CONFIG_QOS_POLICY_MAX_NR=6 \
+      CONFIG_SCHED_LATENCY_NICE=y \
+      CONFIG_UCLAMP_TASK=y \
+      CONFIG_UCLAMP_TASK_GROUP=y
+    do
+      if ! grep -Fxq "${option}" "${KERNEL_CONFIG}"; then
+        echo "FAIL: kernel.config is missing ${option}" >&2
+        FAIL=1
+      fi
+    done
+  fi
 fi
 
 echo "-- ohos.para --"
@@ -213,6 +244,8 @@ RUNTIME_MARKERS=(
   '/system/bin/hnp /bin/hnp'
   '/system/app/com.ohos.launcher/Launcher.hap /app/com.ohos.launcher/Launcher.hap'
   '/system/app/com.ohos.systemui /app/com.ohos.systemui'
+  '/system/lib64/libjsvm.so /system/lib/libjsvm.so /system/lib64/ndk/libjsvm.so /system/lib/ndk/libjsvm.so /lib64/libjsvm.so /lib/libjsvm.so'
+  '/system/lib64/libv8_shared.so /system/lib/libv8_shared.so /lib64/libv8_shared.so /lib/libv8_shared.so'
 )
 if [ "${REQUIRE_FULL_DEVICE}" = "2in1" ]; then
   RUNTIME_MARKERS+=(
@@ -226,6 +259,29 @@ elif [ "${REQUIRE_FULL_DEVICE}" = "phone" ]; then
     '/system/app/com.ohos.contacts /app/com.ohos.contacts'
     '/system/lib64/libtel_core_service.z.so /system/lib/libtel_core_service.z.so /lib64/libtel_core_service.z.so /lib/libtel_core_service.z.so'
   )
+fi
+
+echo "-- virtual vibrator VDI --"
+VENDOR_IMG="${PACKAGE}/images/vendor.img"
+VIBRATOR_FOUND=
+if [ -f "${VENDOR_IMG}" ]; then
+  for path in \
+    /vendor/lib64/libhdi_product_vibrator_impl.z.so \
+    /vendor/lib/libhdi_product_vibrator_impl.z.so \
+    /lib64/libhdi_product_vibrator_impl.z.so \
+    /lib/libhdi_product_vibrator_impl.z.so
+  do
+    if debugfs -R "stat ${path}" "${VENDOR_IMG}" 2>&1 | grep -q 'Inode:'; then
+      VIBRATOR_FOUND="${path}"
+      break
+    fi
+  done
+fi
+if [ -n "${VIBRATOR_FOUND}" ]; then
+  echo "FOUND ${VIBRATOR_FOUND}"
+elif [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  echo "FAIL: vendor.img is missing the QEMU virtual vibrator VDI" >&2
+  FAIL=1
 fi
 for candidates in "${RUNTIME_MARKERS[@]}"
 do
