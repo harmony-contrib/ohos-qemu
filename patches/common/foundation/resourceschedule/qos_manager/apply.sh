@@ -23,7 +23,9 @@ PATCH_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 for patch_file in \
   0001-declare-qos-config.patch \
   0002-merge-qos-config.patch \
-  0003-wire-qos-authority.patch; do
+  0003-wire-qos-authority.patch \
+  0004-fix-x86-compat-ioctl.patch \
+  0005-fix-x86-qos-compat-ioctl.patch; do
   bash "${PATCH_ROOT}/lib/apply_patch.sh" \
     "${SOURCE_ROOT}" "${SCRIPT_DIR}/${patch_file}"
 done
