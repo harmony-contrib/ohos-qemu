@@ -263,8 +263,11 @@ package, and writes `SHA256SUMS` plus `matrix-manifest.json`. It uses one native
 Linux source/out volume and defaults to pruning `out/<product>` immediately
 after its package is archived, while retaining ccache and kernel objects. This
 keeps the six-package build usable on hosts that cannot hold six complete Ninja
-trees at once. Set `PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0` only when enough Docker
-disk space is available.
+trees at once. `PACKAGE_ROOT` may be placed outside `CACHE_ROOT`; the Docker
+runner bind-mounts it separately, which is useful for temporary package staging
+when the build cache disk is nearly full. Set
+`PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0` only when enough Docker disk space is
+available.
 
 Complete phone packages inherit a current-tree-compatible profile derived from
 `productdefine/common/inherit/phone.json`; complete 2in1 packages use the same

@@ -60,6 +60,15 @@ esac
 
 mkdir -p "${PACKAGE_ROOT}" "${CONTAINER_HOME}" "${CCACHE_DIR}" "${LOG_DIR}"
 
+# CACHE_ROOT is already bind-mounted below. Allow callers such as the six-image
+# matrix runner to stage packages on a different filesystem without requiring
+# PACKAGE_ROOT to live below CACHE_ROOT.
+PACKAGE_MOUNT_ARGS=()
+case "${PACKAGE_ROOT}/" in
+  "${CACHE_ROOT}/"*) ;;
+  *) PACKAGE_MOUNT_ARGS=(-v "${PACKAGE_ROOT}:${PACKAGE_ROOT}") ;;
+esac
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker not found in PATH" >&2
   exit 1
@@ -237,6 +246,7 @@ docker run --rm \
   -e QEMU_CCACHE_ON_OUT_VOLUME=1 \
   -e OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE="${OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE:-0}" \
   -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+  "${PACKAGE_MOUNT_ARGS[@]}" \
   --mount "type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}" \
   --mount "type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out" \
   -v "${REPO_ROOT}:/work" \

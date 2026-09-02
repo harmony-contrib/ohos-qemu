@@ -127,6 +127,7 @@ checks = [
     manifest.get("capabilities", {}).get("virtual_vibrator_mode") == "simulated",
     manifest.get("capabilities", {}).get("jsvm") is True,
     manifest.get("capabilities", {}).get("jsvm_engine") == "ArkWeb M144 V8",
+    manifest.get("capabilities", {}).get("standard_vpn") is True,
     manifest.get("launcher", {}).get("pointer_device_default") == "virtio-tablet-pci",
     profile.get("device_type") == device_type,
     profile.get("profile") == profile_name,

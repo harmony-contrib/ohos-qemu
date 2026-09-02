@@ -122,13 +122,15 @@ fi
     openharmony-qemu-*-2in1.tar.gz > SHA256SUMS
 )
 
-python3 - "${PACKAGE_ROOT}" > "${PACKAGE_ROOT}/matrix-manifest.json" <<'PY'
+python3 - "${PACKAGE_ROOT}" "${expected_packages}" \
+  > "${PACKAGE_ROOT}/matrix-manifest.json" <<'PY'
 import hashlib
 import json
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
+expected_package_count = int(sys.argv[2])
 packages = []
 for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
     package_dir = root / archive.name.removesuffix(".tar.gz")
@@ -136,6 +138,15 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
     if not manifest_path.is_file():
         continue
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    capabilities = manifest.get("capabilities", {})
+    required_capability_names = (
+        "absolute_pointer_sync",
+        "thread_qos",
+        "virtual_vibrator",
+        "jsvm",
+        "standard_vpn",
+        "device_type_full",
+    )
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
     packages.append({
         "archive": archive.name,
@@ -145,16 +156,38 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "guest_arch": manifest["guest_arch"],
         "device_type": manifest["device_type"],
         "device_type_profile": manifest["device_type_profile"],
-        "absolute_pointer_sync": manifest.get("capabilities", {}).get(
-            "absolute_pointer_sync", False
-        ),
+        "absolute_pointer_sync": capabilities.get("absolute_pointer_sync", False),
+        "thread_qos": capabilities.get("thread_qos", False),
+        "virtual_vibrator": capabilities.get("virtual_vibrator", False),
+        "virtual_vibrator_mode": capabilities.get("virtual_vibrator_mode", ""),
+        "jsvm": capabilities.get("jsvm", False),
+        "jsvm_engine": capabilities.get("jsvm_engine", ""),
+        "standard_vpn": capabilities.get("standard_vpn", False),
+        "device_type_full": capabilities.get("device_type_full", False),
+        "all_required_capabilities": all(
+            capabilities.get(name, False) for name in required_capability_names
+        ) and capabilities.get("virtual_vibrator_mode") == "simulated"
+          and capabilities.get("jsvm_engine") == "ArkWeb M144 V8",
         "pointer_device_default": manifest.get("launcher", {}).get(
             "pointer_device_default", ""
         ),
     })
+if len(packages) != expected_package_count:
+    raise SystemExit(
+        f"expected {expected_package_count} package manifests, found {len(packages)}"
+    )
+missing_capabilities = [
+    package["archive"]
+    for package in packages
+    if not package["all_required_capabilities"]
+]
+if missing_capabilities:
+    raise SystemExit(
+        "required capability contract failed: " + ", ".join(missing_capabilities)
+    )
 document = {
     "schema_version": 1,
-    "expected_package_count": len(packages),
+    "expected_package_count": expected_package_count,
     "packages": packages,
 }
 print(json.dumps(document, indent=2, ensure_ascii=False))
