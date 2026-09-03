@@ -459,6 +459,10 @@ python3 - \
   "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0001-declare-qos-config.patch" \
   "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0002-merge-qos-config.patch" \
   "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0003-wire-qos-authority.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0004-fix-x86-compat-ioctl.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0005-fix-x86-qos-compat-ioctl.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0006-use-native-arm32-auth-pointer.patch" \
+  "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0007-use-native-arm32-qos-pointer.patch" \
   "${ROOT}/patches/common/standard_vpn/components/code_sign/0001-port-code-sign-to-qemu-architectures.patch" \
   "${ROOT}/patches/common/standard_vpn/components/musl_uapi/0001-select-x86-uapi-headers.patch" \
   "${ROOT}/patches/common/standard_vpn/components/linux_security/0001-fix-32-bit-security-build.patch" \
@@ -475,6 +479,8 @@ wanted = {
     "device/qemu/common/virt_full/kernel/x86_64_virt_defconfig",
     "device/qemu/common/virt_full/kernel/patch/virt.patch",
     "device/qemu/common/virt_full/kernel/build_kernel.sh",
+    "kernel/linux/common_modules/qos_auth/auth_ctl/auth_ctrl.c",
+    "kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c",
     "base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h",
     "base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp",
     "base/security/code_signature/services/key_enable/utils/src/key_utils.cpp",
@@ -606,6 +612,14 @@ for name in ("arm64_virt_defconfig", "x86_64_virt_defconfig"):
 PY
 
 bash "${QOS_APPLY}" --source-root "${OHOS_ROOT}" >/dev/null
+grep -q 'static void __user \*auth_abi_user_ptr' \
+  "${OHOS_ROOT}/kernel/linux/common_modules/qos_auth/auth_ctl/auth_ctrl.c"
+grep -q 'uarg = auth_abi_user_ptr(abi, uarg);' \
+  "${OHOS_ROOT}/kernel/linux/common_modules/qos_auth/auth_ctl/auth_ctrl.c"
+grep -q 'static void __user \*qos_abi_user_ptr' \
+  "${OHOS_ROOT}/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c"
+test "$(grep -c 'uarg = qos_abi_user_ptr(abi, uarg);' \
+  "${OHOS_ROOT}/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c")" -eq 2
 bash "${APPLY}" \
   --source-root "${OHOS_ROOT}" \
   --product arm64_virt \

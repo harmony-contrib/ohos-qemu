@@ -25,7 +25,9 @@ for patch_file in \
   0002-merge-qos-config.patch \
   0003-wire-qos-authority.patch \
   0004-fix-x86-compat-ioctl.patch \
-  0005-fix-x86-qos-compat-ioctl.patch; do
+  0005-fix-x86-qos-compat-ioctl.patch \
+  0006-use-native-arm32-auth-pointer.patch \
+  0007-use-native-arm32-qos-pointer.patch; do
   bash "${PATCH_ROOT}/lib/apply_patch.sh" \
     "${SOURCE_ROOT}" "${SCRIPT_DIR}/${patch_file}"
 done

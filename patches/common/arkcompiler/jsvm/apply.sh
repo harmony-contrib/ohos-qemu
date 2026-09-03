@@ -69,7 +69,9 @@ for patch_file in \
   0005-make-copy-v8-idempotent.patch \
   0006-adapt-jsvm-to-m144-v8-api.patch \
   0007-link-openharmony-libcxx.patch \
-  0008-match-pointer-compression-to-target.patch; do
+  0008-match-pointer-compression-to-target.patch \
+  0009-use-clang-system-header-order-on-arm.patch \
+  0010-fix-armv7-jit-address-conversion.patch; do
   bash "${PATCH_ROOT}/lib/apply_patch.sh" \
     "${SOURCE_ROOT}" "${SCRIPT_DIR}/${patch_file}"
 done

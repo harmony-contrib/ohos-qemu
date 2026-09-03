@@ -1,0 +1,12 @@
+--- a/arkcompiler/jsvm/build_jsvm_inter.sh
++++ b/arkcompiler/jsvm/build_jsvm_inter.sh
+@@ -146,9 +146,6 @@ do_env() {
+     if [[ "${TARGET_CPU}" = "arm" ]]; then
+         cflags="  --target=arm-linux-ohos"
+         cflags+=" --sysroot=${SYSROOT}"
+-        if [[ "${DEPENDENCY_TAG}" = "default" ]]; then
+-          cflags+=" -isystem ${SYSROOT}/usr/include/arm-linux-ohos"
+-        fi
+         cflags+=" -march=armv7-a"
+         cflags+=" -mfpu=neon"
+         cflags_host="-m32"
