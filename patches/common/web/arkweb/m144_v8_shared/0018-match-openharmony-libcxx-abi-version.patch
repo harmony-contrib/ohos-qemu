@@ -1,0 +1,28 @@
+diff --git a/src/build/config/ohos/BUILD.gn b/src/build/config/ohos/BUILD.gn
+--- a/src/build/config/ohos/BUILD.gn
++++ b/src/build/config/ohos/BUILD.gn
+@@ -44,7 +44,10 @@ config("compiler") {
+   # __h. v8_shared exposes standard-library types in its public C++ symbols,
+   # so the target-side Chromium libc++ must use the same namespace.
+   if (use_custom_libcxx) {
+-    defines += [ "_LIBCPP_ABI_NAMESPACE=__h" ]
++    defines += [
++      "_LIBCPP_ABI_NAMESPACE=__h",
++      "_LIBCPP_ABI_VERSION=1",
++    ]
+   }
+ 
+   if (is_arkweb) {
+diff --git a/src/buildtools/third_party/libc++/__config_site b/src/buildtools/third_party/libc++/__config_site
+--- a/src/buildtools/third_party/libc++/__config_site
++++ b/src/buildtools/third_party/libc++/__config_site
+@@ -21,7 +21,9 @@
+ #define _LIBCPP_ABI_NAMESPACE __Cr
+ #endif
+ 
++#ifndef _LIBCPP_ABI_VERSION
+ #define _LIBCPP_ABI_VERSION 2
++#endif
+ 
+ #define _LIBCPP_ABI_FORCE_ITANIUM 0
+ #define _LIBCPP_ABI_FORCE_MICROSOFT 0

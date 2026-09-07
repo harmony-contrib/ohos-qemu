@@ -45,3 +45,7 @@ bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0015-limit-hitrace-runtime-stats-to-ohos-toolchain.patch"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0016-link-mainline-clang-against-ohos-runtime.patch"
+bash "${PATCH_ROOT}/lib/apply_patch.sh" \
+  "${SOURCE_ROOT}" "${SCRIPT_DIR}/0017-use-openharmony-libcxx-abi-namespace.patch"
+bash "${PATCH_ROOT}/lib/apply_patch.sh" \
+  "${SOURCE_ROOT}" "${SCRIPT_DIR}/0018-match-openharmony-libcxx-abi-version.patch"

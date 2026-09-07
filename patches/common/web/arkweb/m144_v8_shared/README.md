@@ -9,6 +9,9 @@ define disabled ArkWeb tests for component-only GN graphs, and make ArkWeb's
 preparation helper resolve paths from its source location. They also repair
 M144 component boundary checks, enable OpenHarmony Dawn and SwiftShader targets,
 and separate Chromium's pinned compiler from the API 26 sysroot and runtime.
+The target-side custom libc++ uses OpenHarmony's `std::__h` namespace and ABI
+version 1, because V8 exposes standard-library types in symbols consumed by
+JSVM. Host toolchains retain Chromium's defaults.
 
 The arm build disables V8 pointer compression/shared-cage support and installs
 the i386 multilib host toolchain needed by V8's arm snapshot generator. Set

@@ -50,6 +50,10 @@ def validate(root: Path, arches: list[str]) -> None:
         raise SystemExit("artifact is not marked as ArkWeb M144 V8")
     if manifest.get("chromium_milestone") != 144:
         raise SystemExit("artifact manifest is not Chromium milestone 144")
+    if manifest.get("libcxx_abi_namespace") != "__h":
+        raise SystemExit("artifact libc++ ABI namespace is not OpenHarmony __h")
+    if manifest.get("libcxx_abi_version") != 1:
+        raise SystemExit("artifact libc++ ABI version is not OpenHarmony version 1")
     for key, expected_revision in PINNED_REVISIONS.items():
         value = manifest.get(key, "")
         if value != expected_revision:
@@ -86,6 +90,17 @@ def validate(root: Path, arches: list[str]) -> None:
                 raise SystemExit(
                     f"wrong ELF machine for {library}: expected {expected}, got {actual}"
                 )
+            data = library.read_bytes()
+            if b"NSt3__h" not in data:
+                raise SystemExit(
+                    f"V8 artifact does not expose OpenHarmony std::__h ABI: {library}"
+                )
+            for foreign_namespace in (b"NSt4__Cr", b"NSt3__n1"):
+                if foreign_namespace in data:
+                    namespace = foreign_namespace.decode("ascii")[3:]
+                    raise SystemExit(
+                        f"V8 artifact exposes incompatible std::{namespace} ABI: {library}"
+                    )
             relative = library.relative_to(root).as_posix()
             record = artifacts.get(relative)
             if not isinstance(record, dict):

@@ -24,7 +24,6 @@ ohos_shared_library("libhdi_product_vibrator_impl") {
     "-Wno-unused-parameter",
   ]
 
-  shlib_type = "hdi"
   install_images = [ chipset_base_dir ]
   subsystem_name = virt_subsystem_name
   part_name = virt_part_name

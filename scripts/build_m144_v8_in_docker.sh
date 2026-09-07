@@ -373,6 +373,8 @@ manifest = {
     "webview_revision": revision(source_root / "arkweb/deps_code/webview"),
     "source_commit_date": commit_date(source_root),
     "ohos_sdk_api": 26,
+    "libcxx_abi_namespace": "__h",
+    "libcxx_abi_version": 1,
     "build_target": "v8:v8_shared",
     "source_patches": sorted(path.name for path in patch_root.glob("*.patch")),
     "headers_sha256": header_digest.hexdigest(),

@@ -71,7 +71,8 @@ for patch_file in \
   0007-link-openharmony-libcxx.patch \
   0008-match-pointer-compression-to-target.patch \
   0009-use-clang-system-header-order-on-arm.patch \
-  0010-fix-armv7-jit-address-conversion.patch; do
+  0010-fix-armv7-jit-address-conversion.patch \
+  0011-define-js-symbol-extractor-destructor.patch; do
   bash "${PATCH_ROOT}/lib/apply_patch.sh" \
     "${SOURCE_ROOT}" "${SCRIPT_DIR}/${patch_file}"
 done

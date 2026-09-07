@@ -15,7 +15,9 @@ v8/<arch>/lib.unstripped_v8/lib.unstripped/libv8_shared.so
 
 `manifest.json` records the 40-character Chromium, V8, ArkWeb, CEF, and
 OpenHarmony WebView interface revisions.
-The component rejects SDK link stubs and wrong-architecture ELF files. The M144
+The component rejects SDK link stubs, wrong-architecture ELF files, and V8
+libraries whose exported C++ API does not use OpenHarmony's `std::__h` ABI
+namespace and libc++ ABI version 1. The M144
 build uses Chromium's pinned Clang 22 compiler with the OpenHarmony API 26
 sysroot and target runtime libraries. The JSVM wrapper keeps the engine artifact
 root independent from that toolchain, accepts every long option passed by GN,
@@ -29,7 +31,9 @@ disable those 64-bit-only ABI definitions. The armv7a wrapper also preserves
 Clang's system-header order so the compiler resource `stddef.h` is not shadowed
 by Musl's architecture-specific UAPI headers.
 The JIT diagnostics path uses a width-safe integer conversion so its remote
-address handling compiles on both 32-bit and 64-bit targets.
+address handling compiles on both 32-bit and 64-bit targets, and defines the
+declared `JsSymbolExtractor` destructor so `libjsvm.so` has no unresolved
+internal DFX symbol at load time.
 
 The ArkWeb/Chromium source-build patches and their entry point live separately
 under `patches/common/web/arkweb/m144_v8_shared`. Artifact provenance remains
