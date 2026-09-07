@@ -246,7 +246,7 @@ docker run --rm \
   -e QEMU_CCACHE_ON_OUT_VOLUME=1 \
   -e OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE="${OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE:-0}" \
   -v "${CACHE_ROOT}:${CACHE_ROOT}" \
-  "${PACKAGE_MOUNT_ARGS[@]}" \
+  ${PACKAGE_MOUNT_ARGS[@]+"${PACKAGE_MOUNT_ARGS[@]}"} \
   --mount "type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}" \
   --mount "type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out" \
   -v "${REPO_ROOT}:/work" \
