@@ -1,0 +1,51 @@
+diff --git a/arkcompiler/jsvm/src/dfx/jsvm_hidump.cpp b/arkcompiler/jsvm/src/dfx/jsvm_hidump.cpp
+--- a/arkcompiler/jsvm/src/dfx/jsvm_hidump.cpp
++++ b/arkcompiler/jsvm/src/dfx/jsvm_hidump.cpp
+@@ -167,7 +167,17 @@ static void DoDump(DumpContext* ctx)
+     if (ctx->format() == DumpFormat::RAW_HEAP) {
+         LOG(Info) << "jsvm_dump_heapsnapshot: tid=" << ctx->tid()
+                   << " RAW_HEAP dump start";
+-        ctx->isolate()->GetHeapProfiler()->DumpRawHeapSnapshot(&stream);
++        // ArkWeb M144 no longer exposes the OpenHarmony-only
++        // DumpRawHeapSnapshot extension. Keep the dump path usable by
++        // serializing V8's supported heap snapshot format to the same stream.
++        const v8::HeapSnapshot* snapshot =
++            ctx->isolate()->GetHeapProfiler()->TakeHeapSnapshot();
++        if (snapshot == nullptr) {
++            LOG(Error) << "jsvm_dump_heapsnapshot: TakeHeapSnapshot returned nullptr";
++            return;
++        }
++        snapshot->Serialize(&stream);
++        const_cast<v8::HeapSnapshot*>(snapshot)->Delete();
+         LOG(Info) << "jsvm_dump_heapsnapshot: tid=" << ctx->tid()
+                   << " RAW_HEAP dump done";
+     } else {
+diff --git a/arkcompiler/jsvm/src/js_native_api_v8.cpp b/arkcompiler/jsvm/src/js_native_api_v8.cpp
+--- a/arkcompiler/jsvm/src/js_native_api_v8.cpp
++++ b/arkcompiler/jsvm/src/js_native_api_v8.cpp
+@@ -1509,7 +1509,7 @@ JSVM_Status OH_JSVM_BackgroundDeserialize(
+ 
+     auto task = v8impl::CreateConsumeCodeCacheTask(isolate, cacheData.cache, cacheData.length);
+ 
+-    *result = new JSVM_DeserializeResult__(task->GetResult());
++    *result = new JSVM_DeserializeResult__ { task->GetResult() };
+ 
+     v8impl::g_platform.get()->CallOnWorkerThread(std::move(task));
+ 
+@@ -6562,7 +6562,15 @@ JSVM_EXTERN JSVM_Status OH_JSVM_TakeRawHeapSnapshot(JSVM_VM vm, JSVM_OutputStre
+         return JSVM_INVALID_ARG;
+     }
+     v8impl::OutputStream os(stream, streamData);
+-    profiler->DumpRawHeapSnapshot(&os);
++    // DumpRawHeapSnapshot was an OpenHarmony V8 extension and is not exposed
++    // by ArkWeb M144. Preserve the synchronous streaming API with M144's
++    // supported heap snapshot serializer.
++    const v8::HeapSnapshot* snapshot = profiler->TakeHeapSnapshot();
++    if (snapshot == nullptr) {
++        return JSVM_GENERIC_FAILURE;
++    }
++    snapshot->Serialize(&os);
++    const_cast<v8::HeapSnapshot*>(snapshot)->Delete();
+     return JSVM_OK;
+ }
+ 

@@ -1,0 +1,72 @@
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -247,6 +247,8 @@ source "drivers/cdx/Kconfig"
+ 
+ source "drivers/accesstokenid/Kconfig"
+ 
++source "drivers/auth_ctl/Kconfig"
++
+ source "drivers/hck/Kconfig"
+ 
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -205,3 +205,4 @@ obj-$(CONFIG_S390)		+= s390/
+ 
+ obj-$(CONFIG_ACCESS_TOKENID)	+= accesstokenid/
++obj-$(CONFIG_AUTHORITY_CTRL)	+= auth_ctl/
+ obj-$(CONFIG_HCK_VENDOR_HOOKS)	+= hck/
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -835,6 +835,17 @@ struct wake_q_node {
+ 	struct wake_q_node *next;
+ };
+ 
++#ifdef CONFIG_QOS_CTRL
++struct qos_task_struct {
++	/*
++	 * in_qos tracks the current QoS level. qos_list links the task into
++	 * the authority record which owns its active QoS request.
++	 */
++	int			in_qos;
++	struct list_head	qos_list;
++};
++#endif
++
+ struct kmap_ctrl {
+ #ifdef CONFIG_KMAP_LOCAL
+ 	int				idx;
+@@ -1672,6 +1683,9 @@ struct task_struct {
+ 	u64				ftoken;
+ 	u32				user_id;
+ #endif
++#ifdef CONFIG_QOS_CTRL
++	struct qos_task_struct		qts;
++#endif
+ 
+ 	/*
+ 	 * New fields for task_struct should be added above here, so that
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -51,1 +51,4 @@
+-#include <linux/uaccess.h>
++#ifdef CONFIG_COMPAT
++#include <linux/compat.h>
++#endif
++#include <linux/uaccess.h>
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -10800,7 +10800,7 @@ void __init sched_init(void)
+ 	init_idle(current, smp_processor_id());
+ 	init_new_task_load(current);
+ 
+-#ifdef CONIG_QOS_CTRL
++#ifdef CONFIG_QOS_CTRL
+ 	init_task_qos(current);
+ #endif
+ 

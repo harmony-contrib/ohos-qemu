@@ -1,0 +1,595 @@
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/bundle.json b/vendor/ohemu/qemu_armv7a_linux_full/bundle.json
+new file mode 100644
+index 0000000..6c7274d
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/bundle.json
+@@ -0,0 +1,31 @@
++{
++  "name": "@ohos/qemu_armv7a_linux_full_product",
++  "description": "product part definition for qemu armv7a linux full",
++  "version": "4.0",
++  "license": "Apache License 2.0",
++  "publishAs": "code-segment",
++  "segment": {
++    "destPath": "vendor/ohemu/qemu_armv7a_linux_full"
++  },
++  "dirs": {},
++  "scripts": {},
++  "component": {
++    "name": "product_armv7a_virt",
++    "subsystem": "product_armv7a_virt",
++    "features": [],
++    "adapted_system_type": [
++      "standard"
++    ],
++    "rom": "",
++    "ram": "",
++    "deps": {
++      "components": [],
++      "third_party": []
++    },
++    "build": {
++      "sub_component": [
++        "//vendor/ohemu/qemu_armv7a_linux_full/power_config:power_mode_config"
++      ]
++    }
++  }
++}
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/config.json b/vendor/ohemu/qemu_armv7a_linux_full/config.json
+new file mode 100755
+index 0000000..e7f2986
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/config.json
+@@ -0,0 +1,151 @@
++{
++  "product_name": "armv7a_virt",
++  "device_company": "qemu",
++  "device_build_path": "device/qemu/arm_virt/linux_full_armv7a",
++  "target_cpu": "arm",
++  "type": "standard",
++  "version": "3.0",
++  "board": "armv7a_virt",
++  "api_version": 8,
++  "enable_ramdisk": true,
++  "enable_absystem": false,
++  "ext_sanitizer_check_list_path": "vendor/ohemu/virt/security_config/sanitizer_check_list.gni",
++  "build_selinux": true,
++  "build_seccomp": true,
++  "inherit": [
++    "productdefine/common/inherit/rich.json",
++    "productdefine/common/inherit/chipset_common.json",
++    "vendor/ohemu/virt/virt_common_armv7a.json"
++  ],
++  "subsystems": [
++    {
++      "subsystem": "thirdparty",
++      "components": [
++        {
++          "component": "rust_libc",
++          "features": []
++        },
++        {
++          "component": "typescript",
++          "features": []
++        },
++        {
++          "component": "libusb",
++          "features": []
++        },
++        {
++          "component": "expat",
++          "features": []
++        },
++        {
++          "component": "alsa-lib",
++          "features": []
++        },
++        {
++          "component": "alsa-utils",
++          "features": []
++        },
++        {
++          "component": "pcre2",
++          "features": []
++        },
++        {
++          "component": "vma",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "sdk",
++      "components": [
++        {
++          "component": "sdk",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "developtools",
++      "components": [
++        {
++          "component": "ace_ets2bundle",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "arkcompiler",
++      "components": [
++        {
++          "component": "ets_runtime",
++          "features": [
++            "ets_runtime_feature_enable_static_backtrace = false"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "graphic",
++      "components": [
++        {
++          "component": "graphics_effect",
++          "features": []
++        },
++        {
++          "component": "graphic_utils_lite",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "hdf",
++      "components": [
++        {
++          "component": "drivers_tools",
++          "features": []
++        },
++        {
++          "component": "drivers_interface_bluetooth",
++          "features": []
++        },
++        {
++          "component": "drivers_devhost",
++          "features": []
++        },
++        {
++          "component": "drivers_peripheral_camera",
++          "features": [
++            "drivers_peripheral_camera_v4l2_emulator=false"
++          ]
++        },
++        {
++          "component": "drivers_peripheral_display",
++          "features": [
++            "drivers_peripheral_display_bootstrap_hotplug=true"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "tee",
++      "components": [
++        {
++          "component": "tee_client",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "security",
++      "components": [
++        {
++          "component": "selinux_adapter",
++          "features": [
++            "selinux_adapter_enforce=false"
++          ]
++        }
++      ]
++    }
++  ],
++  "target_os": "ohos"
++}
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/power_config/BUILD.gn b/vendor/ohemu/qemu_armv7a_linux_full/power_config/BUILD.gn
+new file mode 100644
+index 0000000..43e698d
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/power_config/BUILD.gn
+@@ -0,0 +1,21 @@
++# Copyright (C) 2024 Institute of Software, Chinese Academy of Sciences.
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import("//build/ohos.gni")
++
++ohos_prebuilt_etc("power_mode_config") {
++  source = "../../virt/power_config/power_mode_config.xml"
++  subsystem_name = "product_armv7a_virt"
++  relative_install_dir = "power_config"
++  part_name = "product_armv7a_virt"
++}
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/product.gni b/vendor/ohemu/qemu_armv7a_linux_full/product.gni
+new file mode 100755
+index 0000000..8c50693
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/product.gni
+@@ -0,0 +1,14 @@
++# Copyright (c) 2021 Huawei Device Co., Ltd.
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++# http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import("//device/qemu/common/virt_full/device.gni")
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh b/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh
+new file mode 100755
+index 0000000..ba214e9
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh
+@@ -0,0 +1,74 @@
++#!/bin/bash
++
++# Experimental armv7a full-system QEMU launcher generated by ohos-qemu.
++
++set -euo pipefail
++
++OHOS_IMG="${OHOS_IMG:-out/armv7a_virt/packages/phone/images}"
++DISPLAY_TYPE="${QEMU_DISPLAY:-none}"
++
++ACCEL_SUPPORT=$(qemu-system-arm -accel help 2>&1 || true)
++if [ -e /dev/kvm ] && [ -r /dev/kvm ] && echo "$ACCEL_SUPPORT" | grep -q "kvm"; then
++    ACCEL_ARGS="-accel kvm"
++    echo "KVM acceleration enabled." >&2
++else
++    ACCEL_ARGS="-accel tcg,thread=multi"
++    echo "Hardware acceleration not available, using TCG software emulation." >&2
++fi
++
++NET_ARGS=(
++    -netdev user,id=net0,hostfwd=tcp::5555-:5555
++    -device virtio-net-device,netdev=net0,mac=12:22:33:44:55:67
++)
++
++case "${DISPLAY_TYPE}" in
++    none)
++        DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display none -monitor none -serial file:/dev/fd/1"
++        ;;
++    vnc)
++        DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -vnc :21"
++        echo "Display: VNC on port 5921"
++        ;;
++    sdl|*)
++        DISPLAY_ARGS="-device virtio-gpu-pci,xres=800,yres=500 -display sdl,gl=off"
++        echo "Display: SDL"
++        ;;
++esac
++
++QEMU_CMD="qemu-system-arm ${ACCEL_ARGS} \
++-M virt,highmem=off \
++-cpu cortex-a7 \
++-smp 4 \
++-m 3072 \
++-kernel ${OHOS_IMG}/zImage \
++-initrd ${OHOS_IMG}/ramdisk.img \
++${DISPLAY_ARGS} \
++-device virtio-mouse-pci \
++-device virtio-keyboard-pci \
++-k en-us \
++-rtc base=localtime,clock=host \
++${NET_ARGS[@]} \
++-drive if=none,file=${OHOS_IMG}/updater.img,format=raw,id=updater -device virtio-blk-device,drive=updater,serial=updater \
++-drive if=none,file=${OHOS_IMG}/system.img,format=raw,id=system -device virtio-blk-device,drive=system,serial=system \
++-drive if=none,file=${OHOS_IMG}/vendor.img,format=raw,id=vendor -device virtio-blk-device,drive=vendor,serial=vendor \
++-drive if=none,file=${OHOS_IMG}/sys_prod.img,format=raw,id=sys_prod -device virtio-blk-device,drive=sys_prod,serial=sys_prod \
++-drive if=none,file=${OHOS_IMG}/chip_prod.img,format=raw,id=chip_prod -device virtio-blk-device,drive=chip_prod,serial=chip_prod \
++-drive if=none,file=${OHOS_IMG}/userdata.img,format=raw,id=userdata -device virtio-blk-device,drive=userdata,serial=userdata \
++-append \" \
++default_boot_device=a003e00.virtio_mmio \
++sn=0023456789 \
++ip=dhcp \
++loglevel=4 \
++console=ttyAMA0,115200 \
++init=/bin/init ohos.boot.hardware=virt \
++root=/dev/ram0 rw \
++ohos.required_mount.system=/dev/block/vde@/usr@ext4@ro,barrier=1@wait,required \
++ohos.required_mount.vendor=/dev/block/vdd@/vendor@ext4@ro,barrier=1@wait,required \
++ohos.required_mount.sys_prod=/dev/block/vdc@/sys_prod@ext4@rw,barrier=1@wait,required \
++ohos.required_mount.chip_prod=/dev/block/vdb@/chip_prod@ext4@rw,barrier=1@wait,required \
++ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev,noatime,barrier=1,data=ordered,noauto_da_alloc@wait,required,reservedsize=104857600\""
++
++echo "=== QEMU Command ===" >&2
++echo "$QEMU_CMD" >&2
++echo "====================" >&2
++eval "$QEMU_CMD"
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/security_config b/vendor/ohemu/qemu_armv7a_linux_full/security_config
+new file mode 120000
+index 0000000..f7074ad
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/security_config
+@@ -0,0 +1 @@
++../virt/security_config
+\ No newline at end of file
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/updater_config b/vendor/ohemu/qemu_armv7a_linux_full/updater_config
+new file mode 120000
+index 0000000..9ea54a5
+--- /dev/null
++++ b/vendor/ohemu/qemu_armv7a_linux_full/updater_config
+@@ -0,0 +1 @@
++../virt/updater_config
+\ No newline at end of file
+diff --git a/vendor/ohemu/virt/virt_common_armv7a.json b/vendor/ohemu/virt/virt_common_armv7a.json
+new file mode 100644
+index 0000000..1790d80
+--- /dev/null
++++ b/vendor/ohemu/virt/virt_common_armv7a.json
+@@ -0,0 +1,252 @@
++{
++  "version": "3.0",
++  "subsystems": [
++    {
++      "subsystem": "graphic",
++      "components": [
++        {
++          "component": "graphic_2d",
++          "features": [
++            "graphic_2d_feature_rs_enable_eglimage = true",
++            "graphic_2d_feature_ace_enable_gpu = true",
++            "graphic_2d_feature_enable_opengl = true",
++            "graphic_2d_feature_enable_vulkan = false",
++            "graphic_2d_feature_parallel_render_enable = true",
++            "graphic_2d_feature_use_texgine = true"
++          ]
++        },
++        {
++          "component": "graphic_surface",
++          "features": []
++        },
++        {
++          "component": "graphic_3d",
++          "features": []
++        },
++        {
++          "component": "vulkan-loader",
++          "features": []
++        },
++        {
++          "component": "vulkan-headers",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "hiviewdfx",
++      "components": [
++        {
++          "component": "hiview",
++          "features": [
++            "hiview_enable_leak_detector = true",
++            "hiview_enable_performance_monitor = true"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "security",
++      "components": [
++        {
++          "component": "selinux_adapter",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "communication",
++      "components": [
++        {
++          "component": "netmanager_ext",
++          "features": []
++        },
++        {
++          "component": "bluetooth_service",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "hdf",
++      "components": [
++        {
++          "component": "drivers_interface_ril",
++          "features": []
++        },
++        {
++          "component": "drivers_peripheral_ril",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "device_armv7a_virt",
++      "components": [
++        {
++          "component": "qemu_virt_full_armv7a",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "arkui",
++      "components": [
++        {
++          "component": "ace_engine",
++          "features": [
++            "ace_engine_feature_enable_accessibility = true",
++            "ace_engine_feature_enable_web = true"
++          ]
++        },
++        {
++          "component": "ui_appearance",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "wpa_supplicant",
++      "components": [
++        {
++          "component": "wpa_supplicant",
++          "features": [
++            "wpa_supplicant_driver_nl80211 = true"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "hdf",
++      "components": [
++        {
++          "component": "drivers_interface_audio",
++          "features": []
++        },
++        {
++          "component": "drivers_peripheral_audio",
++          "features": [
++            "drivers_peripheral_audio_feature_full_test_suite = true",
++            "drivers_peripheral_audio_feature_alsa_lib = true",
++            "drivers_peripheral_audio_feature_effect = true",
++            "drivers_peripheral_audio_vendor_alsa_path = \"//device/qemu/common/virt_full/audio_alsa\""
++          ]
++        },
++        {
++          "component": "drivers_peripheral_codec",
++          "features": [
++            "drivers_peripheral_codec_feature_support_omx_extend_test = false",
++            "drivers_peripheral_codec_feature_support_hdi_v1 = false"
++          ]
++        },
++        {
++          "component": "drivers_peripheral_display",
++          "features": [
++            "drivers_peripheral_display_community = true",
++            "drivers_peripheral_display_vdi_default = true"
++          ]
++        },
++        {
++          "component": "drivers_peripheral_wlan",
++          "features": [
++            "drivers_peripheral_wlan_feature_enable_HDF_NL80211 = true",
++            "drivers_peripheral_wlan_feature_enable_HDF_UT = false"
++          ]
++        },
++        {
++          "component": "drivers_interface_camera",
++          "features": []
++        },
++        {
++          "component": "drivers_peripheral_camera",
++          "features": [
++            "drivers_peripheral_camera_feature_usb = false"
++          ]
++        },
++        {
++          "component": "hdf_core",
++          "features": [
++            "hdf_core_platform_test_support = true"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "msdp",
++      "components": [
++        {
++          "component": "device_status",
++          "features": [
++            "device_status_interaction_coordination = false"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "communication",
++      "components": [
++        {
++          "component": "wifi",
++          "features": [
++            "wifi_feature_non_seperate_p2p = true",
++            "wifi_feature_non_hdf_driver = true",
++            "wifi_feature_p2p_random_mac_addr = false",
++            "wifi_feature_with_hdi_chip_supported = false"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "multimedia",
++      "components": [
++        {
++          "component": "audio_framework",
++          "features": [
++            "audio_framework_feature_dtmf_tone = true",
++            "audio_framework_feature_opensl_es = true",
++            "audio_framework_feature_support_os_account = false"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "castplus",
++      "components": [
++        {
++          "component": "sharing_framework",
++          "features": []
++        },
++        {
++          "component": "cast_engine",
++          "features": []
++        }
++      ]
++    },
++    {
++      "subsystem": "thirdparty",
++      "components": [
++        {
++          "component": "libuv",
++          "features": [
++            "libuv_use_ffrt = true"
++          ]
++        },
++        {
++          "component": "wpa_supplicant",
++          "features": [
++            "wpa_supplicant_driver_nl80211 = true"
++          ]
++        }
++      ]
++    },
++    {
++      "subsystem": "startup",
++      "components": [
++        {
++          "component": "init",
++          "features": []
++        }
++      ]
++    }
++  ]
++}

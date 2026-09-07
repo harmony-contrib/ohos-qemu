@@ -12,11 +12,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 REPACKAGE="${REPO_ROOT}/scripts/repackage_device_type.sh"
 VERIFY="${REPO_ROOT}/scripts/verify_device_type_package.sh"
-PROFILE_OVERLAY="${REPO_ROOT}/overlays/qemu_2in1_full/apply.sh"
-PHONE_PROFILE_OVERLAY="${REPO_ROOT}/overlays/qemu_phone_full/apply.sh"
+PROFILE_COMPONENT="${REPO_ROOT}/patches/2in1/product_profile/apply.sh"
+PHONE_PROFILE_COMPONENT="${REPO_ROOT}/patches/phone/product_profile/apply.sh"
 
 if [ ! -x "${REPACKAGE}" ] || [ ! -x "${VERIFY}" ] || \
-   [ ! -x "${PROFILE_OVERLAY}" ] || [ ! -x "${PHONE_PROFILE_OVERLAY}" ]; then
+   [ ! -x "${PROFILE_COMPONENT}" ] || [ ! -x "${PHONE_PROFILE_COMPONENT}" ]; then
   echo "missing repackage/verify scripts under ${REPO_ROOT}/scripts" >&2
   exit 1
 fi
@@ -42,7 +42,7 @@ WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ohos-device-type-test.XXXXXX")"
 cleanup() { rm -rf "${WORKDIR}"; }
 trap cleanup EXIT
 
-# Verify that the source overlay derives a usable profile, maps current Wukong,
+# Verify that the source component derives a usable profile, maps current Wukong,
 # preserves the QEMU display VDI flags, and can be cleanly disabled.
 FIXTURE_ROOT="${WORKDIR}/source-fixture"
 mkdir -p \
@@ -144,7 +144,7 @@ for directory in [
 )
 PY
 
-bash "${PROFILE_OVERLAY}" --source-root "${FIXTURE_ROOT}" --product arm64_virt
+bash "${PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt
 python3 - "${FIXTURE_ROOT}" <<'PY'
 import json
 import sys
@@ -179,7 +179,7 @@ assert "const.bms.supportAppTypes=2in1,phone,default,tablet" in (
     root / "vendor/ohemu/virt/etc/param/product_virt.para"
 ).read_text()
 PY
-bash "${PROFILE_OVERLAY}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
+bash "${PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
 python3 -c 'import json,sys; assert "vendor/ohemu/virt/virt_2in1_full.json" not in json.load(open(sys.argv[1]))["inherit"]' \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_arm64_linux_full/config.json"
 if grep -q '^const\.bms\.supportAppTypes=' \
@@ -189,7 +189,7 @@ then
   exit 1
 fi
 
-bash "${PHONE_PROFILE_OVERLAY}" --source-root "${FIXTURE_ROOT}" --product arm64_virt
+bash "${PHONE_PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt
 python3 - "${FIXTURE_ROOT}" <<'PY'
 import json
 import sys
@@ -225,7 +225,7 @@ assert metadata["app_compatibility_parameter"] == (
     "const.bms.supportAppTypes=2in1,phone,default,tablet"
 )
 PY
-bash "${PHONE_PROFILE_OVERLAY}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
+bash "${PHONE_PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
 python3 -c 'import json,sys; assert "vendor/ohemu/virt/virt_phone_full.json" not in json.load(open(sys.argv[1]))["inherit"]' \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_arm64_linux_full/config.json"
 if grep -q '^const\.bms\.supportAppTypes=' \
@@ -332,6 +332,44 @@ do
 done
 EMPTY_MARKER="${WORKDIR}/empty-marker"
 : > "${EMPTY_MARKER}"
+VIBRATOR_ELF="${WORKDIR}/vibrator.so"
+JSVM_ELF="${WORKDIR}/libjsvm.so"
+V8_ELF="${WORKDIR}/libv8_shared.so"
+BAD_JSVM_ELF="${WORKDIR}/libjsvm-unresolved.so"
+BAD_V8_ELF="${WORKDIR}/libv8_shared-wrong-abi.so"
+V8_API='_ZN2v84JSON5ParseENSt3__h8optionalIiEE'
+BAD_V8_API='_ZN2v84JSON5ParseENSt4__Cr8optionalIiEE'
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined hdfVdiDesc --output "${VIBRATOR_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --undefined "${V8_API}" --output "${JSVM_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined "${V8_API}" --output "${V8_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --undefined "${V8_API}" \
+  --undefined _ZN4jsvm8jitparse17JsSymbolExtractorD1Ev \
+  --output "${BAD_JSVM_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined "${BAD_V8_API}" --output "${BAD_V8_ELF}"
+python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+  --elf "${VIBRATOR_ELF}" --require-defined hdfVdiDesc
+python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+  --jsvm "${JSVM_ELF}" --v8 "${V8_ELF}"
+if python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+    --elf "${V8_ELF}" --require-defined hdfVdiDesc >/dev/null 2>&1; then
+  echo "ELF contract verifier accepted a VDI without hdfVdiDesc" >&2
+  exit 1
+fi
+if python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+    --jsvm "${JSVM_ELF}" --v8 "${BAD_V8_ELF}" >/dev/null 2>&1; then
+  echo "ELF contract verifier accepted a mismatched libc++ ABI" >&2
+  exit 1
+fi
+if python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+    --jsvm "${BAD_JSVM_ELF}" --v8 "${V8_ELF}" >/dev/null 2>&1; then
+  echo "ELF contract verifier accepted an unresolved JSVM DFX symbol" >&2
+  exit 1
+fi
 for path in \
   /system/lib64/libdlp_permission_service.z.so \
   /system/lib64/libui_appearance_service.z.so \
@@ -341,6 +379,29 @@ for path in \
 do
   debugfs -w -R "write ${EMPTY_MARKER} ${path}" "${OUT_PKG}/images/system.img" >/dev/null
 done
+debugfs -w -R "write ${JSVM_ELF} /system/lib64/libjsvm.so" \
+  "${OUT_PKG}/images/system.img" >/dev/null
+debugfs -w -R "write ${V8_ELF} /system/lib64/libv8_shared.so" \
+  "${OUT_PKG}/images/system.img" >/dev/null
+
+VENDOR_IMG="${OUT_PKG}/images/vendor.img"
+dd if=/dev/zero of="${VENDOR_IMG}" bs=1m count=4 status=none
+mke2fs -t ext2 -F -q "${VENDOR_IMG}"
+debugfs -w -R "mkdir vendor" "${VENDOR_IMG}" >/dev/null
+debugfs -w -R "mkdir vendor/lib64" "${VENDOR_IMG}" >/dev/null
+debugfs -w -R \
+  "write ${VIBRATOR_ELF} /vendor/lib64/libhdi_product_vibrator_impl.z.so" \
+  "${VENDOR_IMG}" >/dev/null
+
+cat >"${OUT_PKG}/kernel.config" <<'EOF'
+CONFIG_AUTHORITY_CTRL=y
+CONFIG_QOS_CTRL=y
+CONFIG_QOS_AUTHORITY=y
+CONFIG_QOS_POLICY_MAX_NR=6
+CONFIG_SCHED_LATENCY_NICE=y
+CONFIG_UCLAMP_TASK=y
+CONFIG_UCLAMP_TASK_GROUP=y
+EOF
 
 SYS_PROD_IMG="${OUT_PKG}/images/sys_prod.img"
 dd if=/dev/zero of="${SYS_PROD_IMG}" bs=1m count=4 status=none
@@ -369,6 +430,12 @@ manifest["device_type_source"] = "source_product_inherit"
 manifest.setdefault("launcher", {})["pointer_device_default"] = "virtio-tablet-pci"
 manifest["capabilities"].update({
     "absolute_pointer_sync": True,
+    "thread_qos": True,
+    "virtual_vibrator": True,
+    "virtual_vibrator_mode": "simulated",
+    "jsvm": True,
+    "jsvm_engine": "ArkWeb M144 V8",
+    "standard_vpn": True,
     "device_type_profile": "qemu_2in1_full_source",
     "device_type_param_only": False,
     "device_type_full": True,
@@ -376,6 +443,7 @@ manifest["capabilities"].update({
 manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 required = [
     "applications:prebuilt_hap",
+    "arkcompiler:jsvm",
     "security:dlp_permission_service",
     "applications:dlp_manager",
 ]
@@ -390,6 +458,7 @@ required = [
     "qemu_adaptations": {
         "app_compatibility_parameter":
             "const.bms.supportAppTypes=2in1,phone,default,tablet",
+        "jsvm_engine": "OpenHarmony-TPC ArkWeb M144 V8 shared library",
     },
 }, indent=2) + "\n")
 PY
@@ -433,6 +502,12 @@ manifest["device_type_source"] = "source_product_inherit"
 manifest.setdefault("launcher", {})["pointer_device_default"] = "virtio-tablet-pci"
 manifest["capabilities"].update({
     "absolute_pointer_sync": True,
+    "thread_qos": True,
+    "virtual_vibrator": True,
+    "virtual_vibrator_mode": "simulated",
+    "jsvm": True,
+    "jsvm_engine": "ArkWeb M144 V8",
+    "standard_vpn": True,
     "device_type": "phone",
     "device_type_profile": "qemu_phone_full_source",
     "device_type_param_only": False,
@@ -441,6 +516,7 @@ manifest["capabilities"].update({
 manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 required = [
     "applications:prebuilt_hap",
+    "arkcompiler:jsvm",
     "applications:camera",
     "telephony:core_service",
 ]
@@ -455,6 +531,7 @@ required = [
     "qemu_adaptations": {
         "app_compatibility_parameter":
             "const.bms.supportAppTypes=2in1,phone,default,tablet",
+        "jsvm_engine": "OpenHarmony-TPC ArkWeb M144 V8 shared library",
     },
 }, indent=2) + "\n")
 PY

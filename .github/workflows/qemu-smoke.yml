@@ -14,21 +14,25 @@ on:
       - ".github/workflows/qemu-smoke.yml"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/install/**"
+      - "ci/make-elf-fixture.py"
       - "ci/qemu-smoke/**"
       - "ci/standard-vpn/**"
       - "overlays/standard_qemu_vpn/**"
       - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
+      - "scripts/verify_runtime_elf_contract.py"
   pull_request:
     paths:
       - ".github/workflows/qemu-smoke.yml"
       - "ci/ohos-test-runner-smoke/**"
       - "ci/install/**"
+      - "ci/make-elf-fixture.py"
       - "ci/qemu-smoke/**"
       - "ci/standard-vpn/**"
       - "overlays/standard_qemu_vpn/**"
       - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
+      - "scripts/verify_runtime_elf_contract.py"
 
 permissions:
   contents: read

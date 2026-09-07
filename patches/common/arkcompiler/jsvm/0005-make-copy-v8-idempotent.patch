@@ -1,0 +1,9 @@
+diff --git a/arkcompiler/jsvm/copy_v8.sh b/arkcompiler/jsvm/copy_v8.sh
+--- a/arkcompiler/jsvm/copy_v8.sh
++++ b/arkcompiler/jsvm/copy_v8.sh
+@@ -18,3 +18,4 @@ target_cpu=$4
+ 
+ cp -u ${v8_path}/v8/${target_cpu}/libv8_shared.so ${TARGET_GEN_DIR}/libv8_shared.so
+-cp -r ${v8_path}/v8-include/v8-include ${TARGET_GEN_DIR}/v8-include
++mkdir -p ${TARGET_GEN_DIR}/v8-include
++cp -a ${v8_path}/v8-include/v8-include/. ${TARGET_GEN_DIR}/v8-include/

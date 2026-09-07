@@ -1,0 +1,26 @@
+diff --git a/arkcompiler/jsvm/build_jsvm.sh b/arkcompiler/jsvm/build_jsvm.sh
+--- a/arkcompiler/jsvm/build_jsvm.sh
++++ b/arkcompiler/jsvm/build_jsvm.sh
+@@ -40,7 +40,10 @@ usage() {
+     exit 0
+ }
+ 
+-options="$(getopt -o h --long help,sysroot:,jsvm_path:,prefix:,js_engine_url:,target_cpu:,base_path:,target_platform:,target_gen_dir:,target_clang_coverage:,is_asan:,use_hwasan:,cmake_path:,target_out_dir:,dependency_tag:,depfile: -- "$@")" || usage
++options="$(getopt -o hI: --long help,sysroot:,jsvm_path:,prefix:,js_engine_url:,target_cpu:,base_path:,target_platform:,target_gen_dir:,target_clang_coverage:,is_asan:,use_hwasan:,cmake_path:,target_out_dir:,dependency_tag:,depfile: -- "$@")" || {
++    echo "invalid build_jsvm.sh option" >&2
++    exit 2
++}
+ 
+ eval set -- "$options"
+ 
+@@ -137,6 +140,10 @@ do_opt_process() {
+             export DEPFILE=$2
+             shift
+             ;;
++        -I)
++            export INCLUDE_DIRS="${INCLUDE_DIRS} -I${LIB_ROOT_DIR}/$2"
++            shift
++            ;;
+         -I*)
+             export INCLUDE_DIRS="${INCLUDE_DIRS} -I${LIB_ROOT_DIR}/${1#-I}"
+             ;;

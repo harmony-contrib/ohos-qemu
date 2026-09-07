@@ -1,0 +1,13 @@
+diff --git a/device/qemu/common/virt_full/kernel/build_kernel.sh b/device/qemu/common/virt_full/kernel/build_kernel.sh
+--- a/device/qemu/common/virt_full/kernel/build_kernel.sh
++++ b/device/qemu/common/virt_full/kernel/build_kernel.sh
+@@ -67,6 +67,9 @@ function copy_kernel(){
+ 
+ #cp config
+     cp ${KERNEL_PATCH_PATH}/${KERNEL_CONFIG_NAME} ${KERNEL_BUILD_ROOT}/.config
++    if [ -f "${QEMU_QOS_CONFIG}" ]; then
++        bash scripts/kconfig/merge_config.sh -m .config "${QEMU_QOS_CONFIG}"
++    fi
+ 
+     if [ -f arch/x86/Kconfig.cpu ]; then
+         sed -i '/^config CPU_SUP_AMD$/{n;s/default y/default n/;}' arch/x86/Kconfig.cpu

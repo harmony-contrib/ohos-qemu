@@ -1,0 +1,15 @@
+diff --git a/src/components/BUILD.gn b/src/components/BUILD.gn
+index 084081f06ae..68262748afe 100644
+--- a/src/components/BUILD.gn
++++ b/src/components/BUILD.gn
+@@ -980,8 +980,8 @@ test("components_unittests") {
+   # extensions targets.
+   assert_no_deps = []
+   if (!arkweb_unittests) {
+-    assert_no_deps += "//chrome/*"
+-  assert_no_deps += disallowed_extension_deps_
++    assert_no_deps += [ "//chrome/*" ]
++    assert_no_deps += disallowed_extension_deps_
+   }
+ 
+   if (is_ios) {

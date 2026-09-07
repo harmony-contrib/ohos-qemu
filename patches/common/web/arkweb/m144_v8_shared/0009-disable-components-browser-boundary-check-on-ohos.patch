@@ -1,0 +1,16 @@
+diff --git a/src/components/BUILD.gn b/src/components/BUILD.gn
+--- a/src/components/BUILD.gn
++++ b/src/components/BUILD.gn
+@@ -979,10 +979,8 @@ test("components_unittests") {
+   # Since //chrome depends on //extensions, we also only assert_no_deps on
+   # extensions targets.
+   assert_no_deps = []
+-  if (!arkweb_unittests) {
+-    if (!is_ohos) {
+-      assert_no_deps += [ "//chrome/*" ]
+-    }
++  if (!arkweb_unittests && !is_ohos) {
++    assert_no_deps += [ "//chrome/*" ]
+     assert_no_deps += disallowed_extension_deps_
+   }
+ 

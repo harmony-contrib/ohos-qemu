@@ -87,19 +87,28 @@ Environment:
                        Copy the kernel worktree without dereferencing the
                        repo-tool .git symlink on shared filesystems,
                        default: 1
-  QEMU_ABSOLUTE_POINTER_OVERLAY
+  QEMU_ABSOLUTE_POINTER_COMPONENT
                        Map virtio-tablet absolute events to the active guest
                        display dimensions, default: 1
-  ARMV7A_FULL_OVERLAY Apply experimental armv7a_virt full overlay, default: 1
-  STANDARD_VPN_OVERLAY
+  QEMU_QOS_COMPONENT  Apply the QEMU QoS kernel component, default: 1
+  QEMU_VIBRATOR_COMPONENT
+                       Install the QEMU virtual vibrator VDI, default: 1
+  QEMU_JSVM_COMPONENT Enable JSVM with ArkWeb M144 V8 artifacts. Values:
+                       auto (default), 1, or 0. Full phone/2in1 launchers set 1.
+  JSVM_ENGINE_ARTIFACTS
+                       M144 artifact root, default:
+                       $CACHE_ROOT/artifacts/jsvm-m144
+  ARMV7A_PRODUCT_COMPONENT
+                       Apply the armv7a_virt product components, default: 1
+  STANDARD_VPN_COMPONENT
                        Enable and validate the standard VpnExtension stack,
                        default: 1
-  QEMU_2IN1_FULL_OVERLAY
+  QEMU_2IN1_PROFILE_COMPONENT
                        For DEVICE_TYPE=2in1, add the source component/feature
                        profile derived from productdefine 2in1.json. Values:
                        auto (default), 1, or 0. A value of 0 produces only a
                        parameter-level device type and is not a full profile.
-  QEMU_PHONE_FULL_OVERLAY
+  QEMU_PHONE_PROFILE_COMPONENT
                        For DEVICE_TYPE=phone, add the source component/feature
                        profile derived from productdefine phone.json. Values:
                        auto (default), 1, or 0.
@@ -132,11 +141,16 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
-ARMV7A_OVERLAY="${SCRIPT_DIR}/../overlays/armv7a_virt_full/apply.sh"
-VPN_OVERLAY="${SCRIPT_DIR}/../overlays/standard_qemu_vpn/apply.sh"
-QEMU_2IN1_OVERLAY="${SCRIPT_DIR}/../overlays/qemu_2in1_full/apply.sh"
-QEMU_PHONE_OVERLAY="${SCRIPT_DIR}/../overlays/qemu_phone_full/apply.sh"
-QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT="${SCRIPT_DIR}/../overlays/qemu_absolute_pointer/apply.sh"
+PATCH_ROOT="${SCRIPT_DIR}/../patches"
+ARMV7A_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/armv7a_product/apply.sh"
+VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/apply.sh"
+QEMU_2IN1_PROFILE_SCRIPT="${PATCH_ROOT}/2in1/product_profile/apply.sh"
+QEMU_PHONE_PROFILE_SCRIPT="${PATCH_ROOT}/phone/product_profile/apply.sh"
+QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
+QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh"
+QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
+QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
+RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
 
 if [ ! -x "${PACKAGER}" ]; then
   echo "missing executable packager: ${PACKAGER}" >&2
@@ -185,15 +199,20 @@ QEMU_FIX_MINDSPORE_NON_ARM_HWCAP="${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP:-1}"
 QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY="${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY:-1}"
 QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR="${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR:-1}"
 QEMU_FIX_VIRTIOFS_KERNEL_COPY="${QEMU_FIX_VIRTIOFS_KERNEL_COPY:-1}"
-QEMU_ABSOLUTE_POINTER_OVERLAY="${QEMU_ABSOLUTE_POINTER_OVERLAY:-1}"
+QEMU_ABSOLUTE_POINTER_COMPONENT="${QEMU_ABSOLUTE_POINTER_COMPONENT:-1}"
+QEMU_QOS_COMPONENT="${QEMU_QOS_COMPONENT:-1}"
+QEMU_VIBRATOR_COMPONENT="${QEMU_VIBRATOR_COMPONENT:-1}"
+QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-auto}"
+export QEMU_QOS_COMPONENT QEMU_VIBRATOR_COMPONENT QEMU_JSVM_COMPONENT
 QEMU_CCACHE_ON_OUT_VOLUME="${QEMU_CCACHE_ON_OUT_VOLUME:-0}"
-ARMV7A_FULL_OVERLAY="${ARMV7A_FULL_OVERLAY:-1}"
-STANDARD_VPN_OVERLAY="${STANDARD_VPN_OVERLAY:-1}"
-QEMU_2IN1_FULL_OVERLAY="${QEMU_2IN1_FULL_OVERLAY:-auto}"
-QEMU_PHONE_FULL_OVERLAY="${QEMU_PHONE_FULL_OVERLAY:-auto}"
+ARMV7A_PRODUCT_COMPONENT="${ARMV7A_PRODUCT_COMPONENT:-1}"
+STANDARD_VPN_COMPONENT="${STANDARD_VPN_COMPONENT:-1}"
+QEMU_2IN1_PROFILE_COMPONENT="${QEMU_2IN1_PROFILE_COMPONENT:-auto}"
+QEMU_PHONE_PROFILE_COMPONENT="${QEMU_PHONE_PROFILE_COMPONENT:-auto}"
 PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
 DEVICE_TYPE="${DEVICE_TYPE:-}"
 DEVICE_TYPE_BUILD_PROFILE="${DEVICE_TYPE_BUILD_PROFILE:-}"
+JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144}"
 PRODUCTS=("$@")
 
 if [ "${#PRODUCTS[@]}" -eq 0 ]; then
@@ -1061,49 +1080,49 @@ configure_qemu_device_profile() {
     profile_args+=(--product "${product}")
   done
 
-  for overlay in "${QEMU_2IN1_OVERLAY}" "${QEMU_PHONE_OVERLAY}"; do
-    if [ ! -f "${overlay}" ]; then
-      echo "missing QEMU device profile overlay: ${overlay}" >&2
+  for component_script in "${QEMU_2IN1_PROFILE_SCRIPT}" "${QEMU_PHONE_PROFILE_SCRIPT}"; do
+    if [ ! -f "${component_script}" ]; then
+      echo "missing QEMU device profile component: ${component_script}" >&2
       exit 1
     fi
   done
 
-  case "${QEMU_2IN1_FULL_OVERLAY}" in auto|0|1) ;; *)
-    echo "unsupported QEMU_2IN1_FULL_OVERLAY=${QEMU_2IN1_FULL_OVERLAY}; expected auto, 1, or 0" >&2
+  case "${QEMU_2IN1_PROFILE_COMPONENT}" in auto|0|1) ;; *)
+    echo "unsupported QEMU_2IN1_PROFILE_COMPONENT=${QEMU_2IN1_PROFILE_COMPONENT}; expected auto, 1, or 0" >&2
     exit 2
   esac
-  case "${QEMU_PHONE_FULL_OVERLAY}" in auto|0|1) ;; *)
-    echo "unsupported QEMU_PHONE_FULL_OVERLAY=${QEMU_PHONE_FULL_OVERLAY}; expected auto, 1, or 0" >&2
+  case "${QEMU_PHONE_PROFILE_COMPONENT}" in auto|0|1) ;; *)
+    echo "unsupported QEMU_PHONE_PROFILE_COMPONENT=${QEMU_PHONE_PROFILE_COMPONENT}; expected auto, 1, or 0" >&2
     exit 2
   esac
-  if [ "${QEMU_2IN1_FULL_OVERLAY}" = "1" ] && [ "${DEVICE_TYPE}" != "2in1" ]; then
-    echo "QEMU_2IN1_FULL_OVERLAY=1 requires DEVICE_TYPE=2in1" >&2
+  if [ "${QEMU_2IN1_PROFILE_COMPONENT}" = "1" ] && [ "${DEVICE_TYPE}" != "2in1" ]; then
+    echo "QEMU_2IN1_PROFILE_COMPONENT=1 requires DEVICE_TYPE=2in1" >&2
     exit 2
   fi
-  if [ "${QEMU_PHONE_FULL_OVERLAY}" = "1" ] && [ "${DEVICE_TYPE}" != "phone" ]; then
-    echo "QEMU_PHONE_FULL_OVERLAY=1 requires DEVICE_TYPE=phone" >&2
+  if [ "${QEMU_PHONE_PROFILE_COMPONENT}" = "1" ] && [ "${DEVICE_TYPE}" != "phone" ]; then
+    echo "QEMU_PHONE_PROFILE_COMPONENT=1 requires DEVICE_TYPE=phone" >&2
     exit 2
   fi
 
   # A product may inherit only one generated device profile. Disable both for
   # the selected products before enabling the requested source profile.
-  bash "${QEMU_2IN1_OVERLAY}" --source-root "${OHOS_ROOT}" --disable \
+  bash "${QEMU_2IN1_PROFILE_SCRIPT}" --source-root "${OHOS_ROOT}" --disable \
     "${profile_args[@]}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_2in1_full_overlay.log"
-  bash "${QEMU_PHONE_OVERLAY}" --source-root "${OHOS_ROOT}" --disable \
+    2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_2in1_profile_component.log"
+  bash "${QEMU_PHONE_PROFILE_SCRIPT}" --source-root "${OHOS_ROOT}" --disable \
     "${profile_args[@]}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_phone_full_overlay.log"
+    2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_phone_profile_component.log"
 
-  if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_FULL_OVERLAY}" != "0" ]; then
+  if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_PROFILE_COMPONENT}" != "0" ]; then
     DEVICE_TYPE_BUILD_PROFILE=qemu_2in1_full_source
-    bash "${QEMU_2IN1_OVERLAY}" --source-root "${OHOS_ROOT}" \
+    bash "${QEMU_2IN1_PROFILE_SCRIPT}" --source-root "${OHOS_ROOT}" \
       "${profile_args[@]}" \
-      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_2in1_full_overlay.log"
-  elif [ "${DEVICE_TYPE}" = "phone" ] && [ "${QEMU_PHONE_FULL_OVERLAY}" != "0" ]; then
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_2in1_profile_component.log"
+  elif [ "${DEVICE_TYPE}" = "phone" ] && [ "${QEMU_PHONE_PROFILE_COMPONENT}" != "0" ]; then
     DEVICE_TYPE_BUILD_PROFILE=qemu_phone_full_source
-    bash "${QEMU_PHONE_OVERLAY}" --source-root "${OHOS_ROOT}" \
+    bash "${QEMU_PHONE_PROFILE_SCRIPT}" --source-root "${OHOS_ROOT}" \
       "${profile_args[@]}" \
-      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_phone_full_overlay.log"
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_phone_profile_component.log"
   elif [ -n "${DEVICE_TYPE}" ]; then
     DEVICE_TYPE_BUILD_PROFILE=param_only
   else
@@ -1112,29 +1131,29 @@ configure_qemu_device_profile() {
   export DEVICE_TYPE_BUILD_PROFILE
 }
 
-apply_armv7a_full_overlay() {
+apply_armv7a_product_component() {
   if ! product_list_contains armv7a_virt; then
     return
   fi
-  if [ "${ARMV7A_FULL_OVERLAY}" != "1" ]; then
-    echo "armv7a_virt selected but ARMV7A_FULL_OVERLAY=${ARMV7A_FULL_OVERLAY}; skip overlay"
+  if [ "${ARMV7A_PRODUCT_COMPONENT}" != "1" ]; then
+    echo "armv7a_virt selected but ARMV7A_PRODUCT_COMPONENT=${ARMV7A_PRODUCT_COMPONENT}; skip component"
     return
   fi
-  if [ ! -f "${ARMV7A_OVERLAY}" ]; then
-    echo "missing armv7a overlay: ${ARMV7A_OVERLAY}" >&2
+  if [ ! -f "${ARMV7A_COMPONENT_SCRIPT}" ]; then
+    echo "missing armv7a component: ${ARMV7A_COMPONENT_SCRIPT}" >&2
     exit 1
   fi
-  bash "${ARMV7A_OVERLAY}" --source-root "${OHOS_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/apply_armv7a_virt_full_overlay.log"
+  bash "${ARMV7A_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_armv7a_product_component.log"
 }
 
-apply_standard_vpn_overlay() {
-  if [ "${STANDARD_VPN_OVERLAY}" != "1" ]; then
-    echo "STANDARD_VPN_OVERLAY=${STANDARD_VPN_OVERLAY}; skip standard VPN configuration"
+apply_standard_vpn_component() {
+  if [ "${STANDARD_VPN_COMPONENT}" != "1" ]; then
+    echo "STANDARD_VPN_COMPONENT=${STANDARD_VPN_COMPONENT}; skip standard VPN configuration"
     return
   fi
-  if [ ! -f "${VPN_OVERLAY}" ]; then
-    echo "missing standard VPN overlay: ${VPN_OVERLAY}" >&2
+  if [ ! -f "${VPN_COMPONENT_SCRIPT}" ]; then
+    echo "missing standard VPN component: ${VPN_COMPONENT_SCRIPT}" >&2
     exit 1
   fi
 
@@ -1143,23 +1162,116 @@ apply_standard_vpn_overlay() {
   for product in "${PRODUCTS[@]}"; do
     vpn_args+=(--product "${product}")
   done
-  bash "${VPN_OVERLAY}" \
+  bash "${VPN_COMPONENT_SCRIPT}" \
     --source-root "${OHOS_ROOT}" \
     "${vpn_args[@]}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/apply_standard_qemu_vpn_overlay.log"
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_standard_qemu_vpn_component.log"
 }
 
-apply_qemu_absolute_pointer_overlay() {
-  if [ "${QEMU_ABSOLUTE_POINTER_OVERLAY}" != "1" ]; then
-    echo "QEMU_ABSOLUTE_POINTER_OVERLAY=${QEMU_ABSOLUTE_POINTER_OVERLAY}; skip absolute pointer configuration"
+apply_qemu_absolute_pointer_component() {
+  if [ "${QEMU_ABSOLUTE_POINTER_COMPONENT}" != "1" ]; then
+    echo "QEMU_ABSOLUTE_POINTER_COMPONENT=${QEMU_ABSOLUTE_POINTER_COMPONENT}; skip absolute pointer configuration"
     return
   fi
-  if [ ! -f "${QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT}" ]; then
-    echo "missing QEMU absolute-pointer overlay: ${QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT}" >&2
+  if [ ! -f "${QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT}" ]; then
+    echo "missing QEMU absolute-pointer component: ${QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT}" >&2
     exit 1
   fi
-  bash "${QEMU_ABSOLUTE_POINTER_OVERLAY_SCRIPT}" --source-root "${OHOS_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_absolute_pointer_overlay.log"
+  bash "${QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_absolute_pointer_component.log"
+}
+
+apply_qemu_runtime_components() {
+  local toggle
+  for toggle in "${QEMU_QOS_COMPONENT}" "${QEMU_VIBRATOR_COMPONENT}"; do
+    if [ "${toggle}" != "0" ] && [ "${toggle}" != "1" ]; then
+      echo "QEMU QoS/vibrator component toggles must be 0 or 1" >&2
+      exit 2
+    fi
+  done
+  case "${QEMU_JSVM_COMPONENT}" in auto|0|1) ;; *)
+    echo "QEMU_JSVM_COMPONENT must be auto, 0, or 1" >&2
+    exit 2
+    ;;
+  esac
+
+  if [ "${QEMU_QOS_COMPONENT}" = "1" ]; then
+    [ -f "${QEMU_QOS_COMPONENT_SCRIPT}" ] || {
+      echo "missing QoS component: ${QEMU_QOS_COMPONENT_SCRIPT}" >&2
+      exit 1
+    }
+    bash "${QEMU_QOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_qos_component.log"
+  fi
+
+  if [ "${QEMU_VIBRATOR_COMPONENT}" = "1" ]; then
+    [ -f "${QEMU_VIBRATOR_COMPONENT_SCRIPT}" ] || {
+      echo "missing virtual vibrator component: ${QEMU_VIBRATOR_COMPONENT_SCRIPT}" >&2
+      exit 1
+    }
+    bash "${QEMU_VIBRATOR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_vibrator_component.log"
+  fi
+
+  local enable_jsvm=false
+  if [ "${QEMU_JSVM_COMPONENT}" = "1" ]; then
+    enable_jsvm=true
+  elif [ "${QEMU_JSVM_COMPONENT}" = "auto" ] && \
+       [ -f "${JSVM_ENGINE_ARTIFACTS}/manifest.json" ]; then
+    enable_jsvm=true
+  fi
+  if [ "${QEMU_JSVM_COMPONENT}" = "1" ] && \
+     [ ! -f "${JSVM_ENGINE_ARTIFACTS}/manifest.json" ]; then
+    echo "JSVM is required but M144 artifacts are missing: ${JSVM_ENGINE_ARTIFACTS}" >&2
+    echo "run scripts/build_m144_v8.sh before the OpenHarmony image build" >&2
+    exit 1
+  fi
+
+  local metadata=
+  case "${DEVICE_TYPE}" in
+    phone) metadata=vendor/ohemu/virt/virt_phone_full.meta.json ;;
+    2in1) metadata=vendor/ohemu/virt/virt_2in1_full.meta.json ;;
+  esac
+
+  local product profile arch
+  for product in "${PRODUCTS[@]}"; do
+    case "${product}" in
+      armv7a_virt)
+        profile=vendor/ohemu/qemu_armv7a_linux_full/config.json
+        arch=arm
+        ;;
+      arm64_virt)
+        profile=vendor/ohemu/qemu_arm64_linux_full/config.json
+        arch=arm64
+        ;;
+      x86_64_virt)
+        profile=vendor/ohemu/qemu_x86_64_linux_full/config.json
+        arch=x86_64
+        ;;
+    esac
+    local args=(--source-root "${OHOS_ROOT}" --profile "${profile}")
+    if [ -n "${metadata}" ]; then
+      args+=(--metadata "${metadata}")
+    fi
+    if [ "${enable_jsvm}" = true ]; then
+      args+=(--artifact-root "${JSVM_ENGINE_ARTIFACTS}" --arch "${arch}")
+    else
+      args+=(--disable)
+    fi
+    bash "${QEMU_JSVM_COMPONENT_SCRIPT}" "${args[@]}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_jsvm_${product}.log"
+  done
+  QEMU_JSVM_ENABLED="${enable_jsvm}"
+  export QEMU_JSVM_ENABLED
+}
+
+apply_release_hap_dependencies_component() {
+  if [ ! -f "${RELEASE_HAP_DEPENDENCIES_SCRIPT}" ]; then
+    echo "missing release HAP dependency component: ${RELEASE_HAP_DEPENDENCIES_SCRIPT}" >&2
+    exit 1
+  fi
+  bash "${RELEASE_HAP_DEPENDENCIES_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_release_hap_dependencies.log"
 }
 
 fix_case_insensitive_selinux_version_header() {
@@ -2187,14 +2299,18 @@ main() {
   echo "qemu fix VirtioFS node symlink copy: ${QEMU_FIX_VIRTIOFS_NODE_SYMLINK_COPY}"
   echo "qemu serialize shared Arkoala generator: ${QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR}"
   echo "qemu fix VirtioFS kernel worktree copy: ${QEMU_FIX_VIRTIOFS_KERNEL_COPY}"
-  echo "QEMU absolute pointer overlay: ${QEMU_ABSOLUTE_POINTER_OVERLAY}"
+  echo "QEMU absolute pointer component: ${QEMU_ABSOLUTE_POINTER_COMPONENT}"
+  echo "QEMU QoS component: ${QEMU_QOS_COMPONENT}"
+  echo "QEMU virtual vibrator component: ${QEMU_VIBRATOR_COMPONENT}"
+  echo "QEMU JSVM component: ${QEMU_JSVM_COMPONENT}"
+  echo "JSVM M144 artifacts: ${JSVM_ENGINE_ARTIFACTS}"
   echo "ccache on native out volume: ${QEMU_CCACHE_ON_OUT_VOLUME}"
-  echo "armv7a full overlay: ${ARMV7A_FULL_OVERLAY}"
-  echo "standard VPN overlay: ${STANDARD_VPN_OVERLAY}"
-  echo "QEMU full 2in1 overlay: ${QEMU_2IN1_FULL_OVERLAY}"
+  echo "armv7a product component: ${ARMV7A_PRODUCT_COMPONENT}"
+  echo "standard VPN component: ${STANDARD_VPN_COMPONENT}"
+  echo "QEMU 2in1 profile component: ${QEMU_2IN1_PROFILE_COMPONENT}"
   echo "device type: ${DEVICE_TYPE:-default (unset)}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_OVERLAY} absolute_pointer=${QEMU_ABSOLUTE_POINTER_OVERLAY}"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_COMPONENT} absolute_pointer=${QEMU_ABSOLUTE_POINTER_COMPONENT} qos=${QEMU_QOS_COMPONENT} vibrator=${QEMU_VIBRATOR_COMPONENT} jsvm=${QEMU_JSVM_COMPONENT}"
 
   raise_nofile_limit
   install_deps
@@ -2220,11 +2336,13 @@ main() {
   ensure_ohos_sdk_ets_loader_modules
   # armv7a_virt is generated from the arm64 product template. Generate it
   # before applying the managed phone/2in1 inheritance; otherwise the armv7
-  # overlay recreates config.json and silently drops the selected profile.
-  apply_armv7a_full_overlay
+  # component recreates config.json and silently drops the selected profile.
+  apply_armv7a_product_component
   configure_qemu_device_profile
-  apply_standard_vpn_overlay
-  apply_qemu_absolute_pointer_overlay
+  apply_qemu_runtime_components
+  apply_release_hap_dependencies_component
+  apply_standard_vpn_component
+  apply_qemu_absolute_pointer_component
   fix_case_insensitive_selinux_version_header
   fix_case_insensitive_xmp_endian_header
   fix_case_insensitive_iptables_variants

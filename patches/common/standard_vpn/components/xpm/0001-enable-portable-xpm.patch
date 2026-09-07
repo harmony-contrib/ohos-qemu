@@ -1,0 +1,25 @@
+diff --git a/kernel/linux/common_modules/xpm/Kconfig b/kernel/linux/common_modules/xpm/Kconfig
+index fbb755a..644ff6b 100644
+--- a/kernel/linux/common_modules/xpm/Kconfig
++++ b/kernel/linux/common_modules/xpm/Kconfig
+@@ -10,6 +10,7 @@ config SECURITY_XPM
+ 	def_bool $(success, $(srctree)/scripts/ohos-check-dir.sh $(srctree)/security/xpm)
+ 	depends on 64BIT
+ 	depends on SECURITY_CODE_SIGN
++	select ARCH_USES_HIGH_VMA_FLAGS
+ 	help
+ 	  The Executable Permission Manager(XPM) control process execution
+ 	  by inserting control poliy into the security hook list, such as execv,
+diff --git a/kernel/linux/linux-6.6/include/trace/events/mmflags.h b/kernel/linux/linux-6.6/include/trace/events/mmflags.h
+index 5078d1dfc..7f0b2e23d 100644
+--- a/kernel/linux/linux-6.6/include/trace/events/mmflags.h
++++ b/kernel/linux/linux-6.6/include/trace/events/mmflags.h
+@@ -132,6 +132,8 @@
+ 	DEF_PAGEFLAG_NAME(swapbacked),					\
+ 	DEF_PAGEFLAG_NAME(unevictable)					\
+ IF_HAVE_PG_PURGEABLE(purgeable)						\
++IF_HAVE_PG_XPM_INTEGRITY(xpm_readonly)					\
++IF_HAVE_PG_XPM_INTEGRITY(xpm_writetainted)				\
+ IF_HAVE_PG_MLOCK(mlocked)						\
+ IF_HAVE_PG_UNCACHED(uncached)						\
+ IF_HAVE_PG_HWPOISON(hwpoison)						\

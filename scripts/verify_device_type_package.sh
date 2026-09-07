@@ -84,6 +84,13 @@ fi
 
 MANIFEST_DT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("device_type",""))' "${PACKAGE}/manifest.json")"
 MANIFEST_PROFILE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("device_type_profile",""))' "${PACKAGE}/manifest.json")"
+MANIFEST_ARCH="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("guest_arch",""))' "${PACKAGE}/manifest.json")"
+case "${MANIFEST_ARCH}" in
+  armv7a) ELF_MACHINE=40 ;;
+  arm64) ELF_MACHINE=183 ;;
+  x86_64) ELF_MACHINE=62 ;;
+  *) echo "FAIL: unsupported manifest guest_arch ${MANIFEST_ARCH}" >&2; exit 1 ;;
+esac
 echo "manifest.device_type=${MANIFEST_DT}"
 echo "manifest.device_type_profile=${MANIFEST_PROFILE:-missing}"
 if [ -n "${EXPECT}" ] && [ "${MANIFEST_DT}" != "${EXPECT}" ]; then
@@ -122,13 +129,22 @@ checks = [
     manifest.get("capabilities", {}).get("device_type_full") is True,
     manifest.get("capabilities", {}).get("device_type_param_only") is False,
     manifest.get("capabilities", {}).get("absolute_pointer_sync") is True,
+    manifest.get("capabilities", {}).get("thread_qos") is True,
+    manifest.get("capabilities", {}).get("virtual_vibrator") is True,
+    manifest.get("capabilities", {}).get("virtual_vibrator_mode") == "simulated",
+    manifest.get("capabilities", {}).get("jsvm") is True,
+    manifest.get("capabilities", {}).get("jsvm_engine") == "ArkWeb M144 V8",
+    manifest.get("capabilities", {}).get("standard_vpn") is True,
     manifest.get("launcher", {}).get("pointer_device_default") == "virtio-tablet-pci",
     profile.get("device_type") == device_type,
     profile.get("profile") == profile_name,
     effective_profile in profile.get("inherit", []),
     profile.get("qemu_adaptations", {}).get("app_compatibility_parameter")
         == "const.bms.supportAppTypes=2in1,phone,default,tablet",
+    profile.get("qemu_adaptations", {}).get("jsvm_engine")
+        == "OpenHarmony-TPC ArkWeb M144 V8 shared library",
     "applications:prebuilt_hap" in required,
+    "arkcompiler:jsvm" in required,
     bool(required),
     required <= resolved,
     profile.get("resolved_parts_count") == len(resolved),
@@ -163,10 +179,47 @@ if ! command -v debugfs >/dev/null 2>&1; then
   exit "${FAIL}"
 fi
 
+dump_first_image_file() {
+  local image="$1"
+  local destination="$2"
+  shift 2
+  local path
+  for path in "$@"; do
+    if debugfs -R "stat ${path}" "${image}" 2>&1 | grep -q 'Inode:' && \
+       debugfs -R "dump ${path} ${destination}" "${image}" >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 SYSIMG="${PACKAGE}/images/system.img"
 if [ ! -f "${SYSIMG}" ]; then
   echo "FAIL: missing images/system.img" >&2
   exit 1
+fi
+
+if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  KERNEL_CONFIG="${PACKAGE}/kernel.config"
+  if [ ! -f "${KERNEL_CONFIG}" ]; then
+    echo "FAIL: missing kernel.config QoS build evidence" >&2
+    FAIL=1
+  else
+    for option in \
+      CONFIG_AUTHORITY_CTRL=y \
+      CONFIG_QOS_CTRL=y \
+      CONFIG_QOS_AUTHORITY=y \
+      CONFIG_QOS_POLICY_MAX_NR=6 \
+      CONFIG_SCHED_LATENCY_NICE=y \
+      CONFIG_UCLAMP_TASK=y \
+      CONFIG_UCLAMP_TASK_GROUP=y
+    do
+      if ! grep -Fxq "${option}" "${KERNEL_CONFIG}"; then
+        echo "FAIL: kernel.config is missing ${option}" >&2
+        FAIL=1
+      fi
+    done
+  fi
 fi
 
 echo "-- ohos.para --"
@@ -213,6 +266,8 @@ RUNTIME_MARKERS=(
   '/system/bin/hnp /bin/hnp'
   '/system/app/com.ohos.launcher/Launcher.hap /app/com.ohos.launcher/Launcher.hap'
   '/system/app/com.ohos.systemui /app/com.ohos.systemui'
+  '/system/lib64/libjsvm.so /system/lib/libjsvm.so /system/lib64/ndk/libjsvm.so /system/lib/ndk/libjsvm.so /lib64/libjsvm.so /lib/libjsvm.so'
+  '/system/lib64/libv8_shared.so /system/lib/libv8_shared.so /lib64/libv8_shared.so /lib/libv8_shared.so'
 )
 if [ "${REQUIRE_FULL_DEVICE}" = "2in1" ]; then
   RUNTIME_MARKERS+=(
@@ -226,6 +281,41 @@ elif [ "${REQUIRE_FULL_DEVICE}" = "phone" ]; then
     '/system/app/com.ohos.contacts /app/com.ohos.contacts'
     '/system/lib64/libtel_core_service.z.so /system/lib/libtel_core_service.z.so /lib64/libtel_core_service.z.so /lib/libtel_core_service.z.so'
   )
+fi
+
+echo "-- virtual vibrator VDI --"
+VENDOR_IMG="${PACKAGE}/images/vendor.img"
+VIBRATOR_FOUND=
+if [ -f "${VENDOR_IMG}" ]; then
+  for path in \
+    /vendor/lib64/libhdi_product_vibrator_impl.z.so \
+    /vendor/lib/libhdi_product_vibrator_impl.z.so \
+    /lib64/libhdi_product_vibrator_impl.z.so \
+    /lib/libhdi_product_vibrator_impl.z.so
+  do
+    if debugfs -R "stat ${path}" "${VENDOR_IMG}" 2>&1 | grep -q 'Inode:'; then
+      VIBRATOR_FOUND="${path}"
+      break
+    fi
+  done
+fi
+if [ -n "${VIBRATOR_FOUND}" ]; then
+  echo "FOUND ${VIBRATOR_FOUND}"
+  VIBRATOR_TMP="$(mktemp -d)"
+  if ! debugfs -R "dump ${VIBRATOR_FOUND} ${VIBRATOR_TMP}/vibrator.so" \
+      "${VENDOR_IMG}" >/dev/null 2>&1 || \
+     ! python3 "$(dirname "$0")/verify_runtime_elf_contract.py" \
+       --machine "${ELF_MACHINE}" --elf "${VIBRATOR_TMP}/vibrator.so" \
+       --require-defined hdfVdiDesc; then
+    echo "FAIL: QEMU virtual vibrator VDI does not export hdfVdiDesc" >&2
+    FAIL=1
+  else
+    echo "PASS: virtual vibrator VDI exports hdfVdiDesc"
+  fi
+  rm -rf "${VIBRATOR_TMP}"
+elif [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  echo "FAIL: vendor.img is missing the QEMU virtual vibrator VDI" >&2
+  FAIL=1
 fi
 for candidates in "${RUNTIME_MARKERS[@]}"
 do
@@ -243,6 +333,30 @@ do
     RUNTIME_MARKER_FAIL=1
   fi
 done
+if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  JSVM_TMP="$(mktemp -d)"
+  if dump_first_image_file "${SYSIMG}" "${JSVM_TMP}/libjsvm.so" \
+       /system/lib64/libjsvm.so \
+       /system/lib/libjsvm.so \
+       /system/lib64/ndk/libjsvm.so \
+       /system/lib/ndk/libjsvm.so \
+       /lib64/libjsvm.so \
+       /lib/libjsvm.so && \
+     dump_first_image_file "${SYSIMG}" "${JSVM_TMP}/libv8_shared.so" \
+       /system/lib64/libv8_shared.so \
+       /system/lib/libv8_shared.so \
+       /lib64/libv8_shared.so \
+       /lib/libv8_shared.so && \
+     python3 "$(dirname "$0")/verify_runtime_elf_contract.py" \
+       --machine "${ELF_MACHINE}" --jsvm "${JSVM_TMP}/libjsvm.so" \
+       --v8 "${JSVM_TMP}/libv8_shared.so"; then
+    echo "PASS: JSVM/ArkWeb M144 dynamic-symbol contract"
+  else
+    echo "FAIL: JSVM/ArkWeb M144 dynamic-symbol contract" >&2
+    FAIL=1
+  fi
+  rm -rf "${JSVM_TMP}"
+fi
 if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
   if [ "${RUNTIME_MARKER_FAIL}" -ne 0 ]; then
     echo "FAIL: full ${REQUIRE_FULL_DEVICE} runtime artifacts are incomplete" >&2

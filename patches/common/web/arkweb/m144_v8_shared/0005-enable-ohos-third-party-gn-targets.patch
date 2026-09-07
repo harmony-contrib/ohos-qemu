@@ -1,0 +1,26 @@
+diff --git a/src/third_party/dawn/src/dawn/common/BUILD.gn b/src/third_party/dawn/src/dawn/common/BUILD.gn
+--- a/src/third_party/dawn/src/dawn/common/BUILD.gn
++++ b/src/third_party/dawn/src/dawn/common/BUILD.gn
+@@ -258,8 +258,8 @@ dawn_generator("dawn_gpu_info_gen") {
+ # This GN file is discovered by all Chromium builds, but common doesn't support
+ # all of Chromium's OSes so we explicitly make the target visible only on
+ # systems we know Dawn is able to compile on.
+ if (is_win || is_linux || is_chromeos || is_mac || is_fuchsia || is_android ||
+-    is_ios || is_wasm) {
++    is_ios || is_wasm || is_ohos) {
+   static_library("common") {
+     sources = [
+       "AlignedAlloc.cpp",
+diff --git a/src/third_party/swiftshader/src/Reactor/reactor.gni b/src/third_party/swiftshader/src/Reactor/reactor.gni
+--- a/src/third_party/swiftshader/src/Reactor/reactor.gni
++++ b/src/third_party/swiftshader/src/Reactor/reactor.gni
+@@ -14,7 +14,8 @@ declare_args() {
+ }
+ 
+ declare_args() {
+-  supports_llvm = is_linux || is_chromeos || is_fuchsia || is_win || is_android
++  supports_llvm =
++      is_linux || is_chromeos || is_fuchsia || is_win || is_android || is_ohos
+     # LLVM uses C++17 features which require macOS 10.12, while Chrome's minimum platform for x86 is 10.11.
+     # Don't build LLVM on Mac, unless we have to. This only happens on ARM64 devices, which launched with 11.0.
+     # TODO(b/174843857): Remove check for !supports_subzero once Chrome supports macOS 10.12

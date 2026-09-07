@@ -1,0 +1,12 @@
+diff --git a/device/qemu/common/virt_full/kernel/build_kernel.sh b/device/qemu/common/virt_full/kernel/build_kernel.sh
+--- a/device/qemu/common/virt_full/kernel/build_kernel.sh
++++ b/device/qemu/common/virt_full/kernel/build_kernel.sh
+@@ -83,2 +83,4 @@ function copy_kernel(){
+     cp -arfL  $OHOS_SOURCE_ROOT/kernel/linux/common_modules/dec ${KERNEL_BUILD_ROOT}/fs
++    bash "$OHOS_SOURCE_ROOT/kernel/linux/common_modules/qos_auth/apply_qos_auth.sh" \
++        "$OHOS_SOURCE_ROOT" "$KERNEL_BUILD_ROOT" virt "${6}_virt"
+ #patch
+@@ -86,2 +88,3 @@ function copy_kernel(){
+     patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/virt.patch
++    patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/qos_auth.patch
+     patch -d ${KERNEL_BUILD_ROOT} -p1 <${KERNEL_PATCH_PATH}/patch/x86_pfnmap_tracking.patch

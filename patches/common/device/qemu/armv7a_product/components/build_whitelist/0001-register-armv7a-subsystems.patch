@@ -1,0 +1,34 @@
+diff --git a/build/subsystem_components_whitelist.json b/build/subsystem_components_whitelist.json
+index e3da579d..a07b0bc0 100644
+--- a/build/subsystem_components_whitelist.json
++++ b/build/subsystem_components_whitelist.json
+@@ -15,15 +15,15 @@
+   "ability_tools": "ability",
+   "bluetooth_native_js": "communication",
+   "net_manager": "communication",
+-  "contacts_data" :"contacts_data",
+-  "device_rk3568" :"device_rk3568",
+-  "ril_device_driver_interface":"hdf",
++  "contacts_data": "contacts_data",
++  "device_rk3568": "device_rk3568",
++  "ril_device_driver_interface": "hdf",
+   "location_common": "location",
+   "location_geocode": "location",
+   "location_gnss": "location",
+   "location_locator": "location",
+-  "location_network" :"location",
+-  "location_passive" :"location",
++  "location_network": "location",
++  "location_passive": "location",
+   "thirdparty_bounds_checking_function": "securec",
+   "startup_l2": "startup",
+   "device_attest": "xts",
+@@ -43,5 +43,7 @@
+   "product_hispark_pegasus_mini_system": "product_hispark_pegasus_mini_system",
+   "device_llvm_build": "device_llvm_build",
+   "product_llvm_build": "product_llvm_build",
+-  "product_llvm_build_lite": "product_llvm_build_lite"
++  "product_llvm_build_lite": "product_llvm_build_lite",
++  "device_armv7a_virt": "device_armv7a_virt",
++  "product_armv7a_virt": "product_armv7a_virt"
+ }

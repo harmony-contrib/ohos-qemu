@@ -2,10 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
 PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
-POINTER_OVERLAY="${SCRIPT_DIR}/../../overlays/qemu_absolute_pointer/apply.sh"
+POINTER_COMPONENT="${SCRIPT_DIR}/../../patches/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
 bash "${SCRIPT_DIR}/../standard-vpn/test.sh"
 TEST_ROOT="$(mktemp -d)"
 FAKE_BIN="${TEST_ROOT}/bin"
@@ -128,6 +129,13 @@ CONFIG_F2FS_FS_POSIX_ACL=y
 CONFIG_F2FS_FS_SECURITY=y
 CONFIG_QUOTA=y
 CONFIG_QUOTACTL=y
+CONFIG_AUTHORITY_CTRL=y
+CONFIG_QOS_CTRL=y
+CONFIG_QOS_AUTHORITY=y
+CONFIG_QOS_POLICY_MAX_NR=6
+CONFIG_SCHED_LATENCY_NICE=y
+CONFIG_UCLAMP_TASK=y
+CONFIG_UCLAMP_TASK_GROUP=y
 EOF
 cat >"${FAKE_VENDOR}/qemu_run.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -184,14 +192,40 @@ void ProcessMotionByEventType()
     }
 }
 EOF
-bash "${POINTER_OVERLAY}" --source-root "${FAKE_SOURCE}" >/dev/null
-bash "${POINTER_OVERLAY}" --source-root "${FAKE_SOURCE}" >/dev/null
+python3 - \
+  "${SCRIPT_DIR}/../../patches/common/foundation/multimodalinput/input/absolute_pointer/0001-map-qemu-absolute-pointer.patch" \
+  "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+patch_lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+output = []
+index = 0
+while index < len(patch_lines):
+    match = re.match(r"@@ -(\d+)(?:,\d+)? \+", patch_lines[index])
+    if not match:
+        index += 1
+        continue
+    old_start = int(match.group(1))
+    while len(output) < old_start - 1:
+        output.append("// fixture padding")
+    index += 1
+    while index < len(patch_lines) and not patch_lines[index].startswith("@@ "):
+        line = patch_lines[index]
+        if line.startswith((" ", "-")):
+            output.append(line[1:])
+        index += 1
+Path(sys.argv[2]).write_text("\n".join(output) + "\n", encoding="utf-8")
+PY
+bash "${POINTER_COMPONENT}" --source-root "${FAKE_SOURCE}" >/dev/null
+bash "${POINTER_COMPONENT}" --source-root "${FAKE_SOURCE}" >/dev/null
 test "$(grep -c 'QEMU_ABSOLUTE_POINTER_SYNC' \
   "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp")" -eq 1
 test "$(grep -c 'libinput_event_pointer_get_absolute_x_transformed' \
   "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp")" -eq 1
 python3 - \
-  "${SCRIPT_DIR}/../../overlays/standard_qemu_vpn/assets/vpndialog.p7b.b64" \
+  "${SCRIPT_DIR}/../../patches/common/standard_vpn/components/vpn_dialog/assets/vpndialog.p7b.b64" \
   "${FAKE_VPN_HAP}" <<'PY'
 import base64
 import sys
@@ -200,6 +234,9 @@ from pathlib import Path
 source = Path(sys.argv[1]).read_text(encoding="ascii")
 Path(sys.argv[2]).write_bytes(base64.b64decode(source))
 PY
+FAKE_VIBRATOR_ELF="${TEST_ROOT}/libhdi_product_vibrator_impl.z.so"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined hdfVdiDesc --output "${FAKE_VIBRATOR_ELF}"
 cat >"${FAKE_BIN}/debugfs" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -239,6 +276,10 @@ case "${command}" in
     printf '\002\001\001\000\000\000\000\000\000\000\000\000\002\000\267\000' |
       dd of="${output}" bs=1 seek=4 conv=notrunc status=none
     ;;
+  "dump /vendor/lib64/libhdi_product_vibrator_impl.z.so "*)
+    output="${command#dump /vendor/lib64/libhdi_product_vibrator_impl.z.so }"
+    cp "${FAKE_VIBRATOR_ELF}" "${output}"
+    ;;
   "stat /system/lib64/virtio_gpu_dri.so"|"stat /system/lib64/swrast_dri.so")
     printf '%s\n' 'Inode: 1'
     printf '%s\n' 'Fast link dest: "kms_swrast_dri.so"'
@@ -262,6 +303,7 @@ chmod +x "${FAKE_BIN}/debugfs" "${FAKE_BIN}/od"
 
 PATH="${FAKE_BIN}:${PATH}" \
 FAKE_VPN_HAP="${FAKE_VPN_HAP}" \
+FAKE_VIBRATOR_ELF="${FAKE_VIBRATOR_ELF}" \
 SEED_USERDATA_DIRS=0 \
 INJECT_QEMU_RUNTIME_PARAMS=0 \
   bash "${PACKAGE_SCRIPT}" \

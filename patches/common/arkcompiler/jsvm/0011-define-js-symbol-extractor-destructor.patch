@@ -1,0 +1,12 @@
+diff --git a/arkcompiler/jsvm/src/dfx/parse_jitcode.cpp b/arkcompiler/jsvm/src/dfx/parse_jitcode.cpp
+--- a/arkcompiler/jsvm/src/dfx/parse_jitcode.cpp
++++ b/arkcompiler/jsvm/src/dfx/parse_jitcode.cpp
+@@ -215,6 +215,8 @@ JsSymbolExtractor::JsSymbolExtractor(uint32_t pid) : targetPid(pid)
+     }
+ }
+ 
++JsSymbolExtractor::~JsSymbolExtractor() = default;
++
+ ELFParser* JsSymbolExtractor::GetParser() const
+ {
+     return parser.get();
