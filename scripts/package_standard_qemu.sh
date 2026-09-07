@@ -1953,6 +1953,79 @@ PY
   exit 1
 }
 
+dump_first_image_file() {
+  local image="$1"
+  local destination="$2"
+  shift 2
+  local path
+  for path in "$@"; do
+    if image_has_path "${image}" "${path}" && \
+       debugfs -R "dump ${path} ${destination}" "${image}" >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+require_image_elf_symbol() {
+  local image="$1"
+  local description="$2"
+  local expected_machine="$3"
+  local symbol="$4"
+  shift 4
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local extracted="${tmpdir}/artifact"
+  if dump_first_image_file "${image}" "${extracted}" "$@" && \
+     python3 "${SCRIPT_DIR}/verify_runtime_elf_contract.py" \
+       --machine "${expected_machine}" --elf "${extracted}" \
+       --require-defined "${symbol}"; then
+    rm -rf "${tmpdir}"
+    printf 'runtime ELF contract: %s exports %s\n' "${description}" "${symbol}"
+    return
+  fi
+  rm -rf "${tmpdir}"
+  echo "runtime ELF contract failed: ${description} must export ${symbol}" >&2
+  exit 1
+}
+
+require_image_jsvm_contract() {
+  local image="$1"
+  local expected_machine="$2"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local jsvm="${tmpdir}/libjsvm.so"
+  local v8="${tmpdir}/libv8_shared.so"
+  if ! dump_first_image_file "${image}" "${jsvm}" \
+    /system/lib64/libjsvm.so \
+    /system/lib/libjsvm.so \
+    /system/lib64/ndk/libjsvm.so \
+    /system/lib/ndk/libjsvm.so \
+    /lib64/libjsvm.so \
+    /lib/libjsvm.so; then
+    rm -rf "${tmpdir}"
+    echo "cannot extract JSVM runtime for ABI verification" >&2
+    exit 1
+  fi
+  if ! dump_first_image_file "${image}" "${v8}" \
+    /system/lib64/libv8_shared.so \
+    /system/lib/libv8_shared.so \
+    /lib64/libv8_shared.so \
+    /lib/libv8_shared.so; then
+    rm -rf "${tmpdir}"
+    echo "cannot extract v8_shared runtime for ABI verification" >&2
+    exit 1
+  fi
+  if ! python3 "${SCRIPT_DIR}/verify_runtime_elf_contract.py" \
+    --machine "${expected_machine}" --jsvm "${jsvm}" --v8 "${v8}"; then
+    rm -rf "${tmpdir}"
+    echo "JSVM/ArkWeb M144 runtime ABI contract failed" >&2
+    exit 1
+  fi
+  rm -rf "${tmpdir}"
+  echo "JSVM/ArkWeb M144 runtime ABI contract verified"
+}
+
 require_image_file_contains() {
   local image="$1"
   local description="$2"
@@ -2233,6 +2306,13 @@ verify_qemu_runtime_capabilities() {
       /vendor/lib/libhdi_product_vibrator_impl.z.so \
       /lib64/libhdi_product_vibrator_impl.z.so \
       /lib/libhdi_product_vibrator_impl.z.so
+    require_image_elf_symbol "${vendor_image}" \
+      "QEMU virtual vibrator product VDI" "${expected_machine}" \
+      hdfVdiDesc \
+      /vendor/lib64/libhdi_product_vibrator_impl.z.so \
+      /vendor/lib/libhdi_product_vibrator_impl.z.so \
+      /lib64/libhdi_product_vibrator_impl.z.so \
+      /lib/libhdi_product_vibrator_impl.z.so
     VIRTUAL_VIBRATOR_VERIFIED=true
     echo "QEMU virtual vibrator capability verified for ${product}"
   fi
@@ -2252,6 +2332,7 @@ verify_qemu_runtime_capabilities() {
       /system/lib/libv8_shared.so \
       /lib64/libv8_shared.so \
       /lib/libv8_shared.so
+    require_image_jsvm_contract "${system_image}" "${expected_machine}"
     JSVM_VERIFIED=true
     echo "QEMU JSVM/ArkWeb M144 capability verified for ${product}"
   fi

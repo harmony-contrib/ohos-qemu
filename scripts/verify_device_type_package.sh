@@ -84,6 +84,13 @@ fi
 
 MANIFEST_DT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("device_type",""))' "${PACKAGE}/manifest.json")"
 MANIFEST_PROFILE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("device_type_profile",""))' "${PACKAGE}/manifest.json")"
+MANIFEST_ARCH="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("guest_arch",""))' "${PACKAGE}/manifest.json")"
+case "${MANIFEST_ARCH}" in
+  armv7a) ELF_MACHINE=40 ;;
+  arm64) ELF_MACHINE=183 ;;
+  x86_64) ELF_MACHINE=62 ;;
+  *) echo "FAIL: unsupported manifest guest_arch ${MANIFEST_ARCH}" >&2; exit 1 ;;
+esac
 echo "manifest.device_type=${MANIFEST_DT}"
 echo "manifest.device_type_profile=${MANIFEST_PROFILE:-missing}"
 if [ -n "${EXPECT}" ] && [ "${MANIFEST_DT}" != "${EXPECT}" ]; then
@@ -171,6 +178,20 @@ if ! command -v debugfs >/dev/null 2>&1; then
   echo "SKIP: debugfs not available for image inspection"
   exit "${FAIL}"
 fi
+
+dump_first_image_file() {
+  local image="$1"
+  local destination="$2"
+  shift 2
+  local path
+  for path in "$@"; do
+    if debugfs -R "stat ${path}" "${image}" 2>&1 | grep -q 'Inode:' && \
+       debugfs -R "dump ${path} ${destination}" "${image}" >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
 
 SYSIMG="${PACKAGE}/images/system.img"
 if [ ! -f "${SYSIMG}" ]; then
@@ -280,6 +301,18 @@ if [ -f "${VENDOR_IMG}" ]; then
 fi
 if [ -n "${VIBRATOR_FOUND}" ]; then
   echo "FOUND ${VIBRATOR_FOUND}"
+  VIBRATOR_TMP="$(mktemp -d)"
+  if ! debugfs -R "dump ${VIBRATOR_FOUND} ${VIBRATOR_TMP}/vibrator.so" \
+      "${VENDOR_IMG}" >/dev/null 2>&1 || \
+     ! python3 "$(dirname "$0")/verify_runtime_elf_contract.py" \
+       --machine "${ELF_MACHINE}" --elf "${VIBRATOR_TMP}/vibrator.so" \
+       --require-defined hdfVdiDesc; then
+    echo "FAIL: QEMU virtual vibrator VDI does not export hdfVdiDesc" >&2
+    FAIL=1
+  else
+    echo "PASS: virtual vibrator VDI exports hdfVdiDesc"
+  fi
+  rm -rf "${VIBRATOR_TMP}"
 elif [ -n "${REQUIRE_FULL_DEVICE}" ]; then
   echo "FAIL: vendor.img is missing the QEMU virtual vibrator VDI" >&2
   FAIL=1
@@ -300,6 +333,30 @@ do
     RUNTIME_MARKER_FAIL=1
   fi
 done
+if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  JSVM_TMP="$(mktemp -d)"
+  if dump_first_image_file "${SYSIMG}" "${JSVM_TMP}/libjsvm.so" \
+       /system/lib64/libjsvm.so \
+       /system/lib/libjsvm.so \
+       /system/lib64/ndk/libjsvm.so \
+       /system/lib/ndk/libjsvm.so \
+       /lib64/libjsvm.so \
+       /lib/libjsvm.so && \
+     dump_first_image_file "${SYSIMG}" "${JSVM_TMP}/libv8_shared.so" \
+       /system/lib64/libv8_shared.so \
+       /system/lib/libv8_shared.so \
+       /lib64/libv8_shared.so \
+       /lib/libv8_shared.so && \
+     python3 "$(dirname "$0")/verify_runtime_elf_contract.py" \
+       --machine "${ELF_MACHINE}" --jsvm "${JSVM_TMP}/libjsvm.so" \
+       --v8 "${JSVM_TMP}/libv8_shared.so"; then
+    echo "PASS: JSVM/ArkWeb M144 dynamic-symbol contract"
+  else
+    echo "FAIL: JSVM/ArkWeb M144 dynamic-symbol contract" >&2
+    FAIL=1
+  fi
+  rm -rf "${JSVM_TMP}"
+fi
 if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
   if [ "${RUNTIME_MARKER_FAIL}" -ne 0 ]; then
     echo "FAIL: full ${REQUIRE_FULL_DEVICE} runtime artifacts are incomplete" >&2

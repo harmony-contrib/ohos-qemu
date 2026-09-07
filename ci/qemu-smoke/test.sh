@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
 PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
@@ -233,6 +234,9 @@ from pathlib import Path
 source = Path(sys.argv[1]).read_text(encoding="ascii")
 Path(sys.argv[2]).write_bytes(base64.b64decode(source))
 PY
+FAKE_VIBRATOR_ELF="${TEST_ROOT}/libhdi_product_vibrator_impl.z.so"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined hdfVdiDesc --output "${FAKE_VIBRATOR_ELF}"
 cat >"${FAKE_BIN}/debugfs" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -274,11 +278,7 @@ case "${command}" in
     ;;
   "dump /vendor/lib64/libhdi_product_vibrator_impl.z.so "*)
     output="${command#dump /vendor/lib64/libhdi_product_vibrator_impl.z.so }"
-    dd if=/dev/zero of="${output}" bs=8192 count=1 status=none
-    printf '\177ELF' | dd of="${output}" conv=notrunc status=none
-    # ELF64, little endian, EM_AARCH64 for this arm64 package fixture.
-    printf '\002\001\001\000\000\000\000\000\000\000\000\000\002\000\267\000' |
-      dd of="${output}" bs=1 seek=4 conv=notrunc status=none
+    cp "${FAKE_VIBRATOR_ELF}" "${output}"
     ;;
   "stat /system/lib64/virtio_gpu_dri.so"|"stat /system/lib64/swrast_dri.so")
     printf '%s\n' 'Inode: 1'
@@ -303,6 +303,7 @@ chmod +x "${FAKE_BIN}/debugfs" "${FAKE_BIN}/od"
 
 PATH="${FAKE_BIN}:${PATH}" \
 FAKE_VPN_HAP="${FAKE_VPN_HAP}" \
+FAKE_VIBRATOR_ELF="${FAKE_VIBRATOR_ELF}" \
 SEED_USERDATA_DIRS=0 \
 INJECT_QEMU_RUNTIME_PARAMS=0 \
   bash "${PACKAGE_SCRIPT}" \

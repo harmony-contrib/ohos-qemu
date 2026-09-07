@@ -332,17 +332,57 @@ do
 done
 EMPTY_MARKER="${WORKDIR}/empty-marker"
 : > "${EMPTY_MARKER}"
+VIBRATOR_ELF="${WORKDIR}/vibrator.so"
+JSVM_ELF="${WORKDIR}/libjsvm.so"
+V8_ELF="${WORKDIR}/libv8_shared.so"
+BAD_JSVM_ELF="${WORKDIR}/libjsvm-unresolved.so"
+BAD_V8_ELF="${WORKDIR}/libv8_shared-wrong-abi.so"
+V8_API='_ZN2v84JSON5ParseENSt3__h8optionalIiEE'
+BAD_V8_API='_ZN2v84JSON5ParseENSt4__Cr8optionalIiEE'
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined hdfVdiDesc --output "${VIBRATOR_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --undefined "${V8_API}" --output "${JSVM_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined "${V8_API}" --output "${V8_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --undefined "${V8_API}" \
+  --undefined _ZN4jsvm8jitparse17JsSymbolExtractorD1Ev \
+  --output "${BAD_JSVM_ELF}"
+python3 "${REPO_ROOT}/ci/make-elf-fixture.py" --machine 183 \
+  --defined "${BAD_V8_API}" --output "${BAD_V8_ELF}"
+python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+  --elf "${VIBRATOR_ELF}" --require-defined hdfVdiDesc
+python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+  --jsvm "${JSVM_ELF}" --v8 "${V8_ELF}"
+if python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+    --elf "${V8_ELF}" --require-defined hdfVdiDesc >/dev/null 2>&1; then
+  echo "ELF contract verifier accepted a VDI without hdfVdiDesc" >&2
+  exit 1
+fi
+if python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+    --jsvm "${JSVM_ELF}" --v8 "${BAD_V8_ELF}" >/dev/null 2>&1; then
+  echo "ELF contract verifier accepted a mismatched libc++ ABI" >&2
+  exit 1
+fi
+if python3 "${REPO_ROOT}/scripts/verify_runtime_elf_contract.py" --machine 183 \
+    --jsvm "${BAD_JSVM_ELF}" --v8 "${V8_ELF}" >/dev/null 2>&1; then
+  echo "ELF contract verifier accepted an unresolved JSVM DFX symbol" >&2
+  exit 1
+fi
 for path in \
   /system/lib64/libdlp_permission_service.z.so \
   /system/lib64/libui_appearance_service.z.so \
-  /system/lib64/libjsvm.so \
-  /system/lib64/libv8_shared.so \
   /system/bin/wukong \
   /system/bin/hnp \
   /system/app/com.ohos.launcher/Launcher.hap
 do
   debugfs -w -R "write ${EMPTY_MARKER} ${path}" "${OUT_PKG}/images/system.img" >/dev/null
 done
+debugfs -w -R "write ${JSVM_ELF} /system/lib64/libjsvm.so" \
+  "${OUT_PKG}/images/system.img" >/dev/null
+debugfs -w -R "write ${V8_ELF} /system/lib64/libv8_shared.so" \
+  "${OUT_PKG}/images/system.img" >/dev/null
 
 VENDOR_IMG="${OUT_PKG}/images/vendor.img"
 dd if=/dev/zero of="${VENDOR_IMG}" bs=1m count=4 status=none
@@ -350,7 +390,7 @@ mke2fs -t ext2 -F -q "${VENDOR_IMG}"
 debugfs -w -R "mkdir vendor" "${VENDOR_IMG}" >/dev/null
 debugfs -w -R "mkdir vendor/lib64" "${VENDOR_IMG}" >/dev/null
 debugfs -w -R \
-  "write ${EMPTY_MARKER} /vendor/lib64/libhdi_product_vibrator_impl.z.so" \
+  "write ${VIBRATOR_ELF} /vendor/lib64/libhdi_product_vibrator_impl.z.so" \
   "${VENDOR_IMG}" >/dev/null
 
 cat >"${OUT_PKG}/kernel.config" <<'EOF'

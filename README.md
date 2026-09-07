@@ -152,8 +152,10 @@ scripts/build_m144_v8.sh arm arm64 x86_64
 The builder pins Chromium, V8, ArkWeb, CEF, depot_tools, and the OpenHarmony
 7.0 WebView interface revisions. It records per-file SHA-256 values in
 `manifest.json`; the JSVM component rejects a wrong milestone, revision,
-architecture, checksum, or SDK link stub before modifying the OpenHarmony
-checkout.
+architecture, checksum, SDK link stub, or non-OpenHarmony libc++ ABI
+namespace/version before modifying the OpenHarmony checkout. Image packaging
+also verifies that the vibrator VDI exports `hdfVdiDesc` and that
+`libv8_shared.so` satisfies every V8 C++ symbol required by `libjsvm.so`.
 
 ## HDC
 
