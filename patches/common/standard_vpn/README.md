@@ -17,6 +17,9 @@ The patch set:
   and F2FS in the kernel,
   including the explicit fs declarations needed by the 32-bit code-sign
   build and 32-bit-safe fs-verity Merkle-tree arithmetic,
+  and restores the Linux 5.10 ordering in the 6.6 fs-verity open path so the
+  OpenHarmony code-sign hook can accept its extended descriptor before the
+  upstream reserved-bit validator rejects it,
   then generates writable F2FS `userdata.img` with the verity/code-sign ioctl
   path required by HAP code-sign enforcement;
 - selects `statx` through the target ABI's `SYS_statx` definition so x86_64
@@ -69,6 +72,12 @@ and the exact signed VpnDialog HAP extracted from `system.img`. Packaging fails
 if a required VPN capability was optimized out, if userdata lacks the F2FS
 code-sign path, or if the HAP profile is expired or lacks a required system
 ACL.
+
+The Linux-security fixture also checks the descriptor-validation ordering.
+Runtime release validation installs a signed HAP, reboots the guest, verifies
+that both HAP files remain readable with identical SHA-256 values, and then
+enables an accessibility extension. This catches regressions that a clean
+image-only package inspection cannot expose.
 
 ## Paws IPv6 runtime check
 

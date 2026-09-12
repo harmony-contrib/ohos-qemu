@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 APPLY="${ROOT}/patches/common/standard_vpn/apply.sh"
 QOS_APPLY="${ROOT}/patches/common/foundation/resourceschedule/qos_manager/apply.sh"
+AUDIO_APPLY="${ROOT}/patches/common/drivers/peripheral/audio/apply.sh"
 VERIFY_HAP_PROFILE="${ROOT}/scripts/verify_hap_profile.py"
 TEST_ROOT="$(mktemp -d)"
 OHOS_ROOT="${TEST_ROOT}/openharmony"
@@ -271,6 +272,25 @@ static int fsverity_ioctl_enable_code_sign(void)
 }
 EOF
 
+cat >"${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/open.c" <<'EOF'
+static bool validate_fsverity_descriptor(struct inode *inode,
+					 const struct fsverity_descriptor *desc,
+					 size_t desc_size)
+{
+	if (desc_size < sizeof(*desc)) {
+		fsverity_err(inode, "Unrecognized descriptor size: %zu bytes",
+			     desc_size);
+		return false;
+	}
+
+	if (desc->version != 1) {
+		fsverity_err(inode, "Unrecognized descriptor version: %u",
+			     desc->version);
+		return false;
+	}
+}
+EOF
+
 cat >"${OHOS_ROOT}/kernel/linux/linux-6.6/mm/mprotect.c" <<'EOF'
 static int do_mprotect_pkey(unsigned long start, size_t len,
 		unsigned long prot, int pkey)
@@ -418,6 +438,24 @@ cat >"${OHOS_ROOT}/vendor/ohemu/virt/virt_common.json" <<'EOF'
       "components": [
         {"component": "netmanager_ext", "features": []}
       ]
+    },
+    {
+      "subsystem": "hdf",
+      "components": [
+        {
+          "component": "drivers_peripheral_audio",
+          "features": [
+            "drivers_peripheral_audio_feature_full_test_suite = true",
+            "drivers_peripheral_audio_feature_alsa_lib = true",
+            "drivers_peripheral_audio_feature_effect = true",
+            "drivers_peripheral_audio_vendor_alsa_path = \"//device/qemu/common/virt_full/audio_alsa\""
+          ]
+        },
+        {
+          "component": "drivers_peripheral_codec",
+          "features": []
+        }
+      ]
     }
   ]
 }
@@ -463,6 +501,12 @@ python3 - \
   "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0005-fix-x86-qos-compat-ioctl.patch" \
   "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0006-use-native-arm32-auth-pointer.patch" \
   "${ROOT}/patches/common/foundation/resourceschedule/qos_manager/0007-use-native-arm32-qos-pointer.patch" \
+  "${ROOT}/patches/common/drivers/peripheral/audio/0002-backport-vendor-alsa-path.patch" \
+  "${ROOT}/patches/common/drivers/peripheral/audio/0003-declare-vendor-alsa-feature.patch" \
+  "${ROOT}/patches/common/drivers/peripheral/audio/0004-adapt-qemu-vendor-to-7.0-alsa-abi.patch" \
+  "${ROOT}/patches/common/drivers/peripheral/audio/0005-provide-qemu-scene-device-selection.patch" \
+  "${ROOT}/patches/common/drivers/peripheral/audio/0006-fix-emulator-alsa-scene-selection.patch" \
+  "${ROOT}/patches/common/drivers/peripheral/audio/0007-provide-emulator-alsa-scene-device-selection.patch" \
   "${ROOT}/patches/common/standard_vpn/components/code_sign/0001-port-code-sign-to-qemu-architectures.patch" \
   "${ROOT}/patches/common/standard_vpn/components/musl_uapi/0001-select-x86-uapi-headers.patch" \
   "${ROOT}/patches/common/standard_vpn/components/linux_security/0001-fix-32-bit-security-build.patch" \
@@ -481,6 +525,13 @@ wanted = {
     "device/qemu/common/virt_full/kernel/build_kernel.sh",
     "kernel/linux/common_modules/qos_auth/auth_ctl/auth_ctrl.c",
     "kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c",
+    "drivers/peripheral/audio/audio.gni",
+    "drivers/peripheral/audio/bundle.json",
+    "drivers/peripheral/audio/hdi_service/supportlibs/BUILD.gn",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c",
+    "device/qemu/common/virt_full/audio_alsa/vendor_capture.c",
+    "device/qemu/common/virt_full/audio_alsa/vendor_render.c",
     "base/security/code_signature/interfaces/inner_api/code_sign_utils/include/stat_utils.h",
     "base/security/code_signature/interfaces/inner_api/code_sign_utils/src/stat_utils.cpp",
     "base/security/code_signature/services/key_enable/utils/src/key_utils.cpp",
@@ -546,6 +597,8 @@ if missing:
 for relative, content in documents.items():
     destination = root / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
+    if relative == "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c":
+        content = content.rstrip("\n")
     if relative.endswith("/build_kernel.sh"):
         build_lines = content.splitlines()
         memory_copy = next(
@@ -610,6 +663,48 @@ for name in ("arm64_virt_defconfig", "x86_64_virt_defconfig"):
         )
     destination.write_text(content, encoding="utf-8")
 PY
+
+bash "${AUDIO_APPLY}" --source-root "${OHOS_ROOT}" >/dev/null
+grep -Fq 'drivers_peripheral_audio_vendor_alsa_path = ""' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/audio.gni"
+test "$(grep -c 'drivers_peripheral_audio_vendor_alsa_path = ""' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/audio.gni")" -eq 1
+test "$(grep -c '"drivers_peripheral_audio_vendor_alsa_path"' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/bundle.json")" -eq 1
+test "$(grep -c 'drivers_peripheral_audio_vendor_alsa_path != ""' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/hdi_service/supportlibs/BUILD.gn")" -eq 4
+grep -Fq '"${drivers_peripheral_audio_vendor_alsa_path}/vendor_capture.c"' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/hdi_service/supportlibs/BUILD.gn"
+grep -Fq '"${drivers_peripheral_audio_vendor_alsa_path}/vendor_render.c"' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/hdi_service/supportlibs/BUILD.gn"
+grep -Fq 'handleData->captureMode.hwInfo.deviceDescript.pins' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c"
+! grep -Fq 'captureIns->descPins = descPins;' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c"
+grep -Fq 'CHECK_NULL_PTR_RETURN_DEFAULT(handleData);' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c"
+grep -Fq 'CHECK_NULL_PTR_RETURN_DEFAULT(handleData);' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c"
+grep -Fq 'int32_t CaptureGetSceneDev(enum AudioCategory scene)' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c"
+grep -Fq 'int32_t RenderGetSceneDev(enum AudioCategory scene)' \
+  "${OHOS_ROOT}/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c"
+grep -Fq 'const struct AudioHwCaptureParam *handleData' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
+grep -Fq 'handleData->captureMode.hwInfo.deviceDescript.pins' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
+grep -Fq 'const struct AudioHwRenderParam *handleData' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_render.c"
+grep -Fq 'handleData->renderMode.hwInfo.deviceDescript.pins' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_render.c"
+grep -Fq 'int32_t CaptureGetSceneDev(enum AudioCategory scene)' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
+grep -Fq 'int32_t RenderGetSceneDev(enum AudioCategory scene)' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_render.c"
+test "$(grep -c 'return -1;' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_capture.c")" -eq 1
+test "$(grep -c 'return -1;' \
+  "${OHOS_ROOT}/device/qemu/common/virt_full/audio_alsa/vendor_render.c")" -eq 1
 
 bash "${QOS_APPLY}" --source-root "${OHOS_ROOT}" >/dev/null
 grep -q 'static void __user \*auth_abi_user_ptr' \
@@ -751,6 +846,14 @@ grep -Fq '(void)vsnprintf(log_string, MAX_BUFFER_LEN, fmt, args);' \
   "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/files/build_qemu_mesa.py"
 grep -Fq '"<vsnprintf@plt>" not in logger_disassembly' \
   "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/files/build_qemu_mesa.py"
+grep -Fq 'QEMU_MESA_REVISION_CACHE' \
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/apply.sh"
+grep -Fq 'file://${QEMU_MESA_REVISION_CACHE}' \
+  "${ROOT}/patches/common/standard_vpn/components/qemu_mesa/apply.sh"
+grep -Fq '995d2506d18924b48db0cf40e6ad7de04fc4e558' \
+  "${ROOT}/scripts/prepare_qemu_mesa_revision_cache.sh"
+grep -Fq 'https://github.com/openharmony/third_party_mesa3d.git' \
+  "${ROOT}/scripts/prepare_qemu_mesa_revision_cache.sh"
 grep -Fq 'R_ARM_JUMP_SLOT' \
   "${ROOT}/patches/common/device/qemu/armv7a_product/components/device_qemu/0001-add-armv7a-qemu-device.patch"
 python3 - \
@@ -832,6 +935,8 @@ bash "${APPLY}" \
 [ "$(grep -c '^#include <linux/math64.h>$' "${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/enable.c")" -eq 1 ]
 [ "$(grep -c 'div_u64(offset, params->block_size)' "${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/enable.c")" -eq 2 ]
 [ "$(grep -c 'div_u64(offset - tree_offset, params->block_size)' "${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/enable.c")" -eq 1 ]
+[ "$(grep -c 'err = code_sign_check_descriptor_hook(inode, desc);' "${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/open.c")" -eq 1 ]
+[ "$(grep -c 'else if (err == 1)' "${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/open.c")" -eq 1 ]
 [ "$(grep -c 'arg.tree_offset & (arg.block_size - 1)' "${OHOS_ROOT}/kernel/linux/linux-6.6/fs/verity/enable.c")" -eq 1 ]
 [ "$(grep -c $'^\tint error = 0;$' "${OHOS_ROOT}/kernel/linux/linux-6.6/mm/mprotect.c")" -eq 1 ]
 [ "$(grep -c 'select ARCH_USES_HIGH_VMA_FLAGS' "${OHOS_ROOT}/kernel/linux/common_modules/xpm/Kconfig")" -eq 1 ]

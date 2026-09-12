@@ -1,6 +1,6 @@
 # Full phone profile component for QEMU
 
-This component adds a current-tree-compatible profile derived from OpenHarmony's
+This component adds an OpenHarmony 7.0 Release-compatible profile derived from
 `productdefine/common/inherit/phone.json` after the QEMU rich base profile.
 It removes unavailable legacy entries, maps the current Wukong part, preserves
 the QEMU community display VDI, and keeps the prebuilt Launcher/SystemUI part.

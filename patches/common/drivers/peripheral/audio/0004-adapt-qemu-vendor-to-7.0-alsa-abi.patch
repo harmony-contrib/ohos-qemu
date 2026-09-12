@@ -1,0 +1,64 @@
+diff --git a/device/qemu/common/virt_full/audio_alsa/vendor_capture.c b/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
+index 80db3f7..434ce90 100644
+--- a/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
++++ b/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
+@@ -48,10 +48,12 @@ static int32_t CaptureInitImpl(struct AlsaCapture *captureIns)
+     return HDF_SUCCESS;
+ }
+ 
+-static int32_t CaptureSelectSceneImpl(struct AlsaCapture *captureIns, enum AudioPortPin descPins,
+-    const struct PathDeviceInfo *deviceInfo)
++static int32_t CaptureSelectSceneImpl(struct AlsaCapture *captureIns,
++    const struct AudioHwCaptureParam *handleData)
+ {
+-    captureIns->descPins = descPins;
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
++    captureIns->descPins = handleData->captureMode.hwInfo.deviceDescript.pins;
+     return HDF_SUCCESS;
+ }
+ 
+@@ -151,8 +153,10 @@ static int32_t CaptureSetMuteImpl(struct AlsaCapture *captureIns, bool muteFlag)
+     return HDF_SUCCESS;
+ }
+ 
+-static int32_t CaptureStartImpl(struct AlsaCapture *captureIns)
++static int32_t CaptureStartImpl(struct AlsaCapture *captureIns,
++    const struct AudioHwCaptureParam *handleData)
+ {
++    (void)handleData;
+     struct AlsaMixerCtlElement mixerItem;
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+ 
+diff --git a/device/qemu/common/virt_full/audio_alsa/vendor_render.c b/device/qemu/common/virt_full/audio_alsa/vendor_render.c
+index 2a76a66..7bb6ae9 100644
+--- a/device/qemu/common/virt_full/audio_alsa/vendor_render.c
++++ b/device/qemu/common/virt_full/audio_alsa/vendor_render.c
+@@ -48,10 +48,12 @@ static int32_t RenderInitImpl(struct AlsaRender *renderIns)
+     return HDF_SUCCESS;
+ }
+ 
+-static int32_t RenderSelectSceneImpl(struct AlsaRender *renderIns, enum AudioPortPin descPins,
+-    const struct PathDeviceInfo *deviceInfo)
++static int32_t RenderSelectSceneImpl(struct AlsaRender *renderIns,
++    const struct AudioHwRenderParam *handleData)
+ {
+-    renderIns->descPins = descPins;
++    CHECK_NULL_PTR_RETURN_DEFAULT(renderIns);
++    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
++    renderIns->descPins = handleData->renderMode.hwInfo.deviceDescript.pins;
+     return HDF_SUCCESS;
+ }
+ 
+@@ -160,8 +162,10 @@ static int32_t RenderSetMuteImpl(struct AlsaRender *renderIns, bool muteFlag)
+     return HDF_SUCCESS;
+ }
+ 
+-static int32_t RenderStartImpl(struct AlsaRender *renderIns)
++static int32_t RenderStartImpl(struct AlsaRender *renderIns,
++    const struct AudioHwRenderParam *handleData)
+ {
++    (void)handleData;
+     int32_t ret;
+     struct AlsaMixerCtlElement elem;
+     struct AlsaSoundCard *cardIns = (struct AlsaSoundCard *)renderIns;

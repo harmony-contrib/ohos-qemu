@@ -30,8 +30,8 @@ PRODUCT_CONFIGS = {
 }
 
 # These entries still exist in productdefine/common/inherit/2in1.json on the
-# current master branch, but their projects are no longer present in the
-# master manifest. Keep them when a checkout explicitly provides the legacy
+# OpenHarmony 7.0 Release baseline, but their projects are no longer present in
+# the pinned manifest. Keep them when a checkout explicitly provides the legacy
 # sources; otherwise omit/map them so the current source tree can pass load.
 LEGACY_COMPONENTS = {
     ("thirdparty", "eudev"): "third_party/eudev",
@@ -142,7 +142,7 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
         if remove_component(effective, key):
             omitted.append(":".join(key))
 
-    # Current master renamed the historical wukong:wukong part to
+    # The pinned 7.0 Release tree renamed the historical wukong:wukong part to
     # ostest:wukong. Preserve the capability when that replacement is present.
     current_wukong = root / "test/ostest/wukong/bundle.json"
     if current_wukong.is_file():
@@ -245,7 +245,15 @@ def any_product_enabled(root: Path) -> bool:
         "vendor/ohemu/virt/virt_phone_full.json",
     }
     for relative in PRODUCT_CONFIGS.values():
-        document = load_json(root / relative)
+        path = root / relative
+        # armv7a_virt is an optional product created by the QEMU patch set.
+        # A clean upstream checkout that is building only arm64/x86_64 must
+        # not fail while checking whether another managed profile is active.
+        # Explicitly selected products are still validated strictly by
+        # configure_product() before this global state check.
+        if not path.is_file():
+            continue
+        document = load_json(path)
         if managed_profiles.intersection(document.get("inherit", [])):
             return True
     return False

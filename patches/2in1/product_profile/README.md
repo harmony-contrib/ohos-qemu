@@ -6,7 +6,7 @@ already required by the runnable QEMU packages, then adds an effective profile
 derived from OpenHarmony's `productdefine/common/inherit/2in1.json`. Because
 later inherited parts win, shared components use the 2in1 feature selection.
 
-Two current-master compatibility adaptations are intentional:
+Three OpenHarmony 7.0 Release compatibility adaptations are intentional:
 
 - stale `thirdparty:eudev`, `thirdparty:libsnd`, and `wukong:wukong` entries are
   omitted when their projects are absent from the checkout; current
@@ -17,6 +17,8 @@ Two current-master compatibility adaptations are intentional:
   component sets `const.bms.supportAppTypes=2in1,phone,default,tablet` and keeps
   `applications:prebuilt_hap`. Without this compatibility declaration BMS
   rejects the desktop, and AccountMgr cannot finish activating user 100.
+- optional QEMU products that are not selected and do not exist in the clean
+  upstream checkout are ignored by the global profile-state scan.
 
 The generated `vendor/ohemu/virt/virt_2in1_full.meta.json` records the upstream
 profile SHA-256, adaptations, and required parts. Packaging copies this evidence

@@ -1,0 +1,347 @@
+diff --git a/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/BUILD.gn b/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/BUILD.gn
+--- a/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/BUILD.gn
++++ b/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/BUILD.gn
+@@ -59,7 +59,9 @@ ohos_cli_executable("ohos-a11yManager") {
+ 
+   external_deps = [
+     "access_token:libaccesstoken_sdk",
++    "access_token:libnativetoken",
+     "access_token:libprivacy_sdk",
++    "access_token:libtoken_setproc",
+     "c_utils:utils",
+     "hilog:libhilog",
+     "ipc:ipc_single",
+diff --git a/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/src/main.cpp b/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/src/main.cpp
+--- a/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/src/main.cpp
++++ b/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/src/main.cpp
+@@ -17,6 +17,7 @@
+ #include <iostream>
+ #include <charconv>
+ #include <string>
++#include <unistd.h>
+ #include <vector>
+ #include <unordered_map>
+ #include <functional>
+@@ -24,14 +25,33 @@
+ #include "accessibility_config.h"
+ #include "accessibility_system_ability_client.h"
+ #include "accessibility_def.h"
++#include "nativetoken_kit.h"
+ #include "privacy_kit.h"
+ #include "ipc_skeleton.h"
++#include "token_setproc.h"
+ 
+ using namespace OHOS;
+ using namespace Accessibility;
+ 
+ constexpr int32_t ARGC_COUNT_TWO = 2;
+ 
++bool PrepareRootAccessibilityToken()
++{
++    if (getuid() != 0) {
++        return true;
++    }
++
++    static const char *permissions[] = {"ohos.permission.WRITE_ACCESSIBILITY_CONFIG"};
++    NativeTokenInfoParams tokenInfo{};
++    tokenInfo.permsNum = 1;
++    tokenInfo.perms = permissions;
++    tokenInfo.processName = "qemu_accessibility_cli";
++    tokenInfo.aplStr = "system_core";
++    tokenInfo.uid = 0;
++    uint64_t tokenId = GetAccessTokenId(&tokenInfo);
++    return tokenId != 0 && SetSelfTokenID(tokenId) == 0;
++}
++
+ void PrintHelp(const std::string& subcommand = "")
+ {
+     if (subcommand.empty()) {
+@@ -47,5 +67,7 @@ void PrintHelp(const std::string& subcommand = "")
+         std::cout << "SubCommands:" << std::endl;
+         std::cout << "  state-is-screen-reader-enabled      Check if screen reader is enabled" << std::endl;
++        std::cout << "  ability-enable                       Enable an accessibility ability" << std::endl;
++        std::cout << "  ability-disable                      Disable an accessibility ability" << std::endl;
+         std::cout << "  ability-enable-screen-reader          Enable screen reader" << std::endl;
+         std::cout << "  ability-disable-screen-reader         Disable screen reader" << std::endl;
+         std::cout << "  magnification-set-state               Set screen magnification state" << std::endl;
+@@ -80,6 +102,10 @@ void PrintHelp(const std::string& subcommand = "")
+         std::cout << std::endl;
+         std::cout << "  # Enable screen reader" << std::endl;
+         std::cout << "  ohos-a11yManager ability-enable-screen-reader" << std::endl;
++        std::cout << std::endl;
++        std::cout << "  # Enable an installed accessibility extension" << std::endl;
++        std::cout << "  ohos-a11yManager ability-enable --name com.example.app/AccessibilityExtAbility " \
++            "--capabilities 31" << std::endl;
+         std::cout << std::endl;
+         std::cout << "  # Set magnification state" << std::endl;
+         std::cout << "  ohos-a11yManager magnification-set-state --state true" << std::endl;
+@@ -99,7 +125,13 @@ void PrintHelp(const std::string& subcommand = "")
+             subcommand == "animation-off-set-state" || subcommand == "audio-set-mono" ||
+             subcommand == "daltonization-set-state" || subcommand == "ignore-repeat-click-set-state") {
+             std::cout << "  --state     <value>    Enable or disable the feature (required, values: [true, false])" \
+                 << std::endl;
++        } else if (subcommand == "ability-enable") {
++            std::cout << "  --name          <value>    bundleName/abilityName (required)" << std::endl;
++            std::cout << "  --capabilities  <value>    Capability bit mask (optional, range: 1 to 31, default: 31)" \
++                << std::endl;
++        } else if (subcommand == "ability-disable") {
++            std::cout << "  --name          <value>    bundleName/abilityName (required)" << std::endl;
+         } else if (subcommand == "audio-set-balance") {
+             std::cout << "  --balance   <value>    Audio balance value (required, range: -1.0 to 1.0)" << std::endl;
+         } else if (subcommand == "daltonization-set-filter") {
+@@ -126,5 +158,13 @@ void PrintHelp(const std::string& subcommand = "")
+             std::cout << "  # Disable the feature" << std::endl;
+             std::cout << "  ohos-a11yManager " << subcommand << " --state false" << std::endl;
++        } else if (subcommand == "ability-enable") {
++            std::cout << "  # Enable an installed accessibility extension" << std::endl;
++            std::cout << "  ohos-a11yManager ability-enable --name com.example.app/AccessibilityExtAbility " \
++                "--capabilities 31" << std::endl;
++        } else if (subcommand == "ability-disable") {
++            std::cout << "  # Disable an installed accessibility extension" << std::endl;
++            std::cout << "  ohos-a11yManager ability-disable --name " \
++                "com.example.app/AccessibilityExtAbility" << std::endl;
+         } else if (subcommand == "audio-set-balance") {
+             std::cout << "  # Set audio balance to center" << std::endl;
+             std::cout << "  ohos-a11yManager audio-set-balance --balance 0.0" << std::endl;
+@@ -241,12 +281,26 @@ int CommandStateIsScreenReaderEnabled(const std::vector<std::string>& args)
+         "Please check if accessibility service is running");
+ }
+ 
+-int CommandAbilityEnable(const std::vector<std::string>& args)
++bool IsValidAbilityName(const std::string& name)
++{
++    size_t separator = name.find('/');
++    if (separator == std::string::npos || separator == 0 || separator == name.size() - 1 ||
++        name.find('/', separator + 1) != std::string::npos) {
++        return false;
++    }
++    for (const char value : name) {
++        if ((value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') ||
++            (value >= '0' && value <= '9') || value == '.' || value == '_' || value == '-' || value == '/') {
++            continue;
++        }
++        return false;
++    }
++    return true;
++}
++
++int EnableAccessibilityAbility(const std::string& name, uint32_t capabilities)
+ {
+     auto& config = AccessibilityConfig::AccessibilityConfig::GetInstance();
+-    std::string name = "com.ohos.screenreader/AccessibilityExtAbility";
+-    uint32_t capabilities = 31;
+-
+     RetError ret = config.EnableAbility(name, capabilities);
+     if (ret == RetError::RET_OK) {
+         Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(IPCSkeleton::GetCallingTokenID(),
+@@ -256,24 +310,52 @@ int CommandAbilityEnable(const std::vector<std::string>& args)
+         return OutputSuccess(data);
+     }
+     Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(IPCSkeleton::GetCallingTokenID(),
+         "ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION", 0, 1);
+-    std::cout << "Failed to enable screen reader. Error: " << ret << std::endl;
++    std::cout << "Failed to enable accessibility ability. Error: " << ret << std::endl;
+     if (ret == RetError::RET_ERR_CONNECTION_EXIST) {
+-        return OutputError("ERR_ENABLE_SCREEN_READER", "Screen reader is already enabled.", "Do not enable again.");
++        return OutputError("ERR_ENABLE_ABILITY", "Accessibility ability is already enabled.", "Do not enable again.");
+     }
+     if (ret == RetError::RET_ERR_NO_PERMISSION || ret == RetError::RET_ERR_NOT_SYSTEM_APP) {
+-        return OutputError("ERR_ENABLE_SCREEN_READER", "Failed to enable screen reader", \
++        return OutputError("ERR_ENABLE_ABILITY", "Failed to enable accessibility ability", \
+             "Please check if you have sufficient permissions.");
+     }
+-    return OutputError("ERR_ENABLE_SCREEN_READER", "Failed to enable screen reader due to internal error.", \
++    return OutputError("ERR_ENABLE_ABILITY", "Failed to enable accessibility ability due to internal error.", \
+         "Please try again later.");
+ }
+ 
+-int CommandAbilityDisable(const std::vector<std::string>& args)
++int CommandAbilityEnable(const std::vector<std::string>& args)
++{
++    std::string name = GetOption(args, "--name");
++    if (!IsValidAbilityName(name)) {
++        return OutputError("ERR_ARG_INVALID", "Invalid or missing parameter: --name", \
++            "Please provide bundleName/abilityName using --name");
++    }
++
++    uint32_t capabilities = 31;
++    std::string capabilitiesStr = GetOption(args, "--capabilities");
++    if (!capabilitiesStr.empty()) {
++        int32_t value = 0;
++        if (!ConvertStringToInt64(capabilitiesStr, value) || value < 1 || value > 31) {
++            return OutputError("ERR_ARG_INVALID", "Invalid parameter value: --capabilities", \
++                "Please provide a capability bit mask from 1 to 31");
++        }
++        capabilities = static_cast<uint32_t>(value);
++    }
++    if (!PrepareRootAccessibilityToken()) {
++        return OutputError("ERR_TOKEN_INIT", "Failed to initialize the QEMU accessibility token", \
++            "Run the command from a root HDC shell in an RD QEMU image");
++    }
++    return EnableAccessibilityAbility(name, capabilities);
++}
++
++int CommandAbilityEnableScreenReader(const std::vector<std::string>& args)
++{
++    return EnableAccessibilityAbility("com.ohos.screenreader/AccessibilityExtAbility", 31);
++}
++
++int DisableAccessibilityAbility(const std::string& name)
+ {
+     auto& config = AccessibilityConfig::AccessibilityConfig::GetInstance();
+-    std::string name = "com.ohos.screenreader/AccessibilityExtAbility";
+-
+     RetError ret = config.DisableAbility(name);
+     if (ret == RetError::RET_OK) {
+         Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(IPCSkeleton::GetCallingTokenID(),
+@@ -282,19 +364,38 @@ int CommandAbilityDisable(const std::vector<std::string>& args)
+         return OutputSuccess(data);
+     }
+     Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(IPCSkeleton::GetCallingTokenID(),
+         "ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION", 0, 1);
+-    std::cout << "Failed to disable screen reader. Error: " << ret << std::endl;
++    std::cout << "Failed to disable accessibility ability. Error: " << ret << std::endl;
+     if (ret == RetError::RET_ERR_NOT_ENABLED) {
+-        return OutputError("ERR_DISABLE_SCREEN_READER", "Screen reader is not enabled.", "Do not disable again.");
++        return OutputError("ERR_DISABLE_ABILITY", "Accessibility ability is not enabled.", "Do not disable again.");
+     }
+     if (ret == RetError::RET_ERR_NO_PERMISSION || ret == RetError::RET_ERR_NOT_SYSTEM_APP) {
+-        return OutputError("ERR_DISABLE_SCREEN_READER", "Failed to disable screen reader", \
++        return OutputError("ERR_DISABLE_ABILITY", "Failed to disable accessibility ability", \
+             "Please check if you have sufficient permissions.");
+     }
+-    return OutputError("ERR_DISABLE_SCREEN_READER", "Failed to disable screen reader due to internal error.", \
++    return OutputError("ERR_DISABLE_ABILITY", "Failed to disable accessibility ability due to internal error.", \
+         "Please try again later.");
+ }
+ 
++int CommandAbilityDisable(const std::vector<std::string>& args)
++{
++    std::string name = GetOption(args, "--name");
++    if (!IsValidAbilityName(name)) {
++        return OutputError("ERR_ARG_INVALID", "Invalid or missing parameter: --name", \
++            "Please provide bundleName/abilityName using --name");
++    }
++    if (!PrepareRootAccessibilityToken()) {
++        return OutputError("ERR_TOKEN_INIT", "Failed to initialize the QEMU accessibility token", \
++            "Run the command from a root HDC shell in an RD QEMU image");
++    }
++    return DisableAccessibilityAbility(name);
++}
++
++int CommandAbilityDisableScreenReader(const std::vector<std::string>& args)
++{
++    return DisableAccessibilityAbility("com.ohos.screenreader/AccessibilityExtAbility");
++}
++
+ int CommandMagnificationSetState(const std::vector<std::string>& args)
+ {
+     auto& config = AccessibilityConfig::AccessibilityConfig::GetInstance();
+@@ -845,8 +946,10 @@ typedef int (*CommandHandler)(const std::vector<std::string>&);
+ 
+ std::unordered_map<std::string, CommandHandler> g_commands = {
+     {"state-is-screen-reader-enabled", CommandStateIsScreenReaderEnabled},
+-    {"ability-enable-screen-reader", CommandAbilityEnable},
+-    {"ability-disable-screen-reader", CommandAbilityDisable},
++    {"ability-enable", CommandAbilityEnable},
++    {"ability-disable", CommandAbilityDisable},
++    {"ability-enable-screen-reader", CommandAbilityEnableScreenReader},
++    {"ability-disable-screen-reader", CommandAbilityDisableScreenReader},
+     {"magnification-set-state", CommandMagnificationSetState},
+     {"magnification-get-state", CommandMagnificationGetState},
+     {"shortkey-set-state", CommandShortkeySetState},
+diff --git a/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/ohos-a11yManager.json b/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/ohos-a11yManager.json
+--- a/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/ohos-a11yManager.json
++++ b/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/ohos-a11yManager.json
+@@ -56,6 +56,91 @@
+         }
+       }
+     },
++    "ability-enable": {
++      "description": "Enable an installed accessibility extension ability by bundle and ability name.",
++      "requirePermissions": ["ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION"],
++      "inputSchema": {
++        "type": "object",
++        "properties": {
++          "name": {
++            "type": "string",
++            "description": "Accessibility extension in bundleName/abilityName form"
++          },
++          "capabilities": {
++            "type": "integer",
++            "description": "Accessibility capability bit mask from 1 to 31",
++            "default": 31
++          }
++        },
++        "required": ["name"]
++      },
++      "outputSchema": {
++        "type": "object",
++        "properties": {
++          "status": {
++            "type": "string",
++            "enum": ["success", "failed"]
++          },
++          "data": {
++            "type": "object",
++            "properties": {
++              "name": {
++                "type": "string",
++                "description": "Enabled accessibility extension"
++              },
++              "capabilities": {
++                "type": "integer",
++                "description": "Enabled accessibility capabilities"
++              }
++            }
++          },
++          "errCode": {
++            "type": "string"
++          },
++          "errMsg": {
++            "type": "string"
++          }
++        }
++      }
++    },
++    "ability-disable": {
++      "description": "Disable an accessibility extension ability by bundle and ability name.",
++      "requirePermissions": ["ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION"],
++      "inputSchema": {
++        "type": "object",
++        "properties": {
++          "name": {
++            "type": "string",
++            "description": "Accessibility extension in bundleName/abilityName form"
++          }
++        },
++        "required": ["name"]
++      },
++      "outputSchema": {
++        "type": "object",
++        "properties": {
++          "status": {
++            "type": "string",
++            "enum": ["success", "failed"]
++          },
++          "data": {
++            "type": "object",
++            "properties": {
++              "name": {
++                "type": "string",
++                "description": "Disabled accessibility extension"
++              }
++            }
++          },
++          "errCode": {
++            "type": "string"
++          },
++          "errMsg": {
++            "type": "string"
++          }
++        }
++      }
++    },
+     "ability-enable-screen-reader": {
+       "description": "Enable screen reader function. Used to turn on screen reading service for visually impaired users. Not applicable when screen reader is already enabled.",
+       "requirePermissions": ["ohos.permission.cli.WRITE_ACCESSIBILITY_CONFIG_VISION"],
