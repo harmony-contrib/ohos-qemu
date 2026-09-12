@@ -791,6 +791,9 @@ Options:
       --hdc-port PORT    HDC host TCP port (default: \${DEFAULT_HDC_PORT})
       --vnc-display N    VNC display number (default: \${DEFAULT_VNC_DISPLAY} => TCP \$((5900 + DEFAULT_VNC_DISPLAY)))
       --serial-port PORT Expose guest serial on telnet 127.0.0.1:PORT
+      --a11y            Enable virtio multitouch and a QMP control socket
+      --qmp-socket PATH QMP Unix socket (implies QMP; default with --a11y:
+                        /tmp/openharmony-qemu-a11y-<HDC_PORT>.sock)
   -a, --accel MODE       auto|hvf|kvm|tcg|whpx (default: auto)
   -q, --qemu PATH        Path to the qemu-system-* binary (default: \${DEFAULT_QEMU_BIN})
   -h, --help             Show this help
@@ -799,6 +802,7 @@ CLI flags override environment variables, which override the defaults above.
 Supported environment variables:
   QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
   QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
+  QEMU_ACCESSIBILITY QEMU_QMP_SOCKET
   QEMU_ACCEL QEMU_BIN QEMU_EXTRA_ARGS
 USAGE
 }
@@ -873,6 +877,14 @@ while [ "\$#" -gt 0 ]; do
       export QEMU_SERIAL_PORT="\${2:?missing serial port}"
       shift 2
       ;;
+    --a11y)
+      export QEMU_ACCESSIBILITY=1
+      shift
+      ;;
+    --qmp-socket)
+      export QEMU_QMP_SOCKET="\${2:?missing QMP socket path}"
+      shift 2
+      ;;
     -a|--accel)
       export QEMU_ACCEL="\${2:?missing accel mode}"
       shift 2
@@ -915,6 +927,8 @@ export QEMU_DISPLAY="\${QEMU_DISPLAY:-\${DEFAULT_DISPLAY}}"
 export QEMU_HDC_HOST_PORT="\${QEMU_HDC_HOST_PORT:-\${DEFAULT_HDC_PORT}}"
 export QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-\${DEFAULT_VNC_DISPLAY}}"
 export QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
+export QEMU_ACCESSIBILITY="\${QEMU_ACCESSIBILITY:-0}"
+export QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-}"
 export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
 export QEMU_BIN="\${QEMU_BIN:-\${DEFAULT_QEMU_BIN}}"
 export QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
@@ -928,6 +942,41 @@ esac
 case "\${QEMU_SMP}" in
   ''|*[!0-9]*) echo "invalid smp: \${QEMU_SMP}" >&2; exit 2 ;;
 esac
+case "\${QEMU_ACCESSIBILITY}" in
+  0|1) ;;
+  *) echo "QEMU_ACCESSIBILITY must be 0 or 1, got: \${QEMU_ACCESSIBILITY}" >&2; exit 2 ;;
+esac
+
+if [ "\${QEMU_ACCESSIBILITY}" = "1" ]; then
+  QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-/tmp/openharmony-qemu-a11y-\${QEMU_HDC_HOST_PORT}.sock}"
+  case " \${QEMU_EXTRA_ARGS} " in
+    *" virtio-multitouch-pci "*) ;;
+    *) QEMU_EXTRA_ARGS="-device virtio-multitouch-pci\${QEMU_EXTRA_ARGS:+ \${QEMU_EXTRA_ARGS}}" ;;
+  esac
+fi
+
+if [ -n "\${QEMU_QMP_SOCKET}" ]; then
+  case "\${QEMU_QMP_SOCKET}" in
+    *[[:space:],]*)
+      echo "QMP socket path cannot contain whitespace or commas: \${QEMU_QMP_SOCKET}" >&2
+      exit 2
+      ;;
+  esac
+  if [ -e "\${QEMU_QMP_SOCKET}" ]; then
+    [ -S "\${QEMU_QMP_SOCKET}" ] || {
+      echo "refusing to replace non-socket QMP path: \${QEMU_QMP_SOCKET}" >&2
+      exit 2
+    }
+    rm -f "\${QEMU_QMP_SOCKET}"
+  fi
+  case " \${QEMU_EXTRA_ARGS} " in
+    *" -qmp "*) ;;
+    *) QEMU_EXTRA_ARGS="-qmp unix:\${QEMU_QMP_SOCKET},server=on,wait=off\${QEMU_EXTRA_ARGS:+ \${QEMU_EXTRA_ARGS}}" ;;
+  esac
+  export QEMU_QMP_SOCKET
+  echo "Accessibility QMP socket: \${QEMU_QMP_SOCKET}" >&2
+fi
+export QEMU_EXTRA_ARGS
 
 exec "\${HERE}/launch/qemu_run.sh"
 EOF
@@ -965,6 +1014,8 @@ param(
   [int]\$HdcPort,
   [int]\$VncDisplay,
   [int]\$SerialPort,
+  [switch]\$A11y,
+  [int]\$QmpPort,
   [Alias("a")][string]\$Accel,
   [Alias("q")][string]\$QemuPath,
   [Parameter(ValueFromRemainingArguments = \$true)][string[]]\$ExtraArgs
@@ -1011,6 +1062,8 @@ if (\$Connect) {
 if (\$PSBoundParameters.ContainsKey("HdcPort")) { \$env:QEMU_HDC_HOST_PORT = "\$HdcPort" }
 if (\$PSBoundParameters.ContainsKey("VncDisplay")) { \$env:QEMU_VNC_DISPLAY = "\$VncDisplay" }
 if (\$PSBoundParameters.ContainsKey("SerialPort")) { \$env:QEMU_SERIAL_PORT = "\$SerialPort" }
+if (\$A11y) { \$env:QEMU_ACCESSIBILITY = "1" }
+if (\$PSBoundParameters.ContainsKey("QmpPort")) { \$env:QEMU_QMP_PORT = "\$QmpPort" }
 if (\$Accel) { \$env:QEMU_ACCEL = \$Accel }
 if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 
@@ -1110,6 +1163,22 @@ if (\$env:QEMU_SERIAL_PORT) {
   \$ArgsList += @("-serial", "telnet:127.0.0.1:\$(\$env:QEMU_SERIAL_PORT),server,nowait")
   Write-Host "Serial telnet console: 127.0.0.1:\$(\$env:QEMU_SERIAL_PORT)"
 }
+\$AccessibilityEnabled = if (\$env:QEMU_ACCESSIBILITY) { \$env:QEMU_ACCESSIBILITY } else { "0" }
+if (\$AccessibilityEnabled -notin @("0", "1")) {
+  throw "QEMU_ACCESSIBILITY must be 0 or 1, got: \$AccessibilityEnabled"
+}
+\$QmpPortValue = if (\$env:QEMU_QMP_PORT) { [int]\$env:QEMU_QMP_PORT } elseif (\$AccessibilityEnabled -eq "1") { 4445 } else { 0 }
+if ((\$AccessibilityEnabled -eq "1" -or \$env:QEMU_QMP_PORT) -and
+    (\$QmpPortValue -lt 1 -or \$QmpPortValue -gt 65535)) {
+  throw "QMP port must be between 1 and 65535"
+}
+if (\$AccessibilityEnabled -eq "1") {
+  \$ArgsList += @("-device", "virtio-multitouch-pci")
+}
+if (\$QmpPortValue -gt 0) {
+  \$ArgsList += @("-qmp", "tcp:127.0.0.1:\${QmpPortValue},server=on,wait=off")
+  Write-Host "Accessibility QMP endpoint: tcp://127.0.0.1:\$QmpPortValue"
+}
 if (\$env:QEMU_EXTRA_ARGS) {
   \$ArgsList += (\$env:QEMU_EXTRA_ARGS -split '\\s+' | Where-Object { \$_ })
 }
@@ -1163,6 +1232,9 @@ CLI flags override environment variables, which override package defaults.
 | \`-c, --connect host:port\` / \`--hdc-port\` | \`QEMU_HDC_HOST_PORT\` | \`5555\` |
 | \`--vnc-display N\` | \`QEMU_VNC_DISPLAY\` | \`21\` (TCP 5921) |
 | \`--serial-port PORT\` | \`QEMU_SERIAL_PORT\` | unset |
+| \`--a11y\` | \`QEMU_ACCESSIBILITY\` | \`0\` |
+| \`--qmp-socket PATH\` | \`QEMU_QMP_SOCKET\` | \`/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock\` with \`--a11y\` |
+| Windows \`-QmpPort PORT\` | \`QEMU_QMP_PORT\` | \`4445\` with \`-A11y\` |
 | \`-a, --accel MODE\` | \`QEMU_ACCEL\` | \`auto\` |
 | \`-q, --qemu PATH\` | \`QEMU_BIN\` | product QEMU binary |
 | \`-- ...\` | \`QEMU_EXTRA_ARGS\` | empty |
@@ -1174,6 +1246,7 @@ Examples:
 ./launch/linux.sh --cpu ${cpu_example}
 ./launch/linux.sh --width 1080 --height 1920 --display cocoa
 ./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
+./launch/linux.sh --headless --a11y --qmp-socket /tmp/ohos-a11y.sock
 QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
 \`\`\`
 
@@ -1182,6 +1255,39 @@ QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
 \`DISPLAY\`/\`WAYLAND_DISPLAY\`, graphical modes auto-fallback to headless.
 \`QEMU_ACCEL=auto|hvf|kvm|tcg\` (and \`whpx\` on Windows) selects acceleration;
 \`auto\` probes host support and falls back to TCG when needed.
+\`--a11y\` adds a virtio multitouch device and starts a QMP server for
+accessibility gesture injection (QEMU 8.1 or newer). The socket path is
+deterministic from the HDC port when \`--qmp-socket\` is omitted. On Windows, use
+\`.\\launch\\windows.ps1 -A11y -QmpPort 4445\`.
+
+After installing a HAP with an \`AccessibilityExtensionAbility\`, enable that
+extension from a root HDC shell through the image's system CLI (replace the
+example name):
+
+\`\`\`bash
+hdc smode
+hdc tconn 127.0.0.1:5555
+hdc shell /system/bin/cli_tool/executable/ohos-a11yManager ability-enable \\
+  --name com.example.app/AccessibilityExtAbility --capabilities 7
+\`\`\`
+
+The capability mask must be a subset of the extension's declared
+\`accessibilityCapabilities\`. The value \`7\` represents \`retrieve\`,
+\`touchGuide\`, and \`gesture\`.
+
+For the \`ohos-native-bindings\` accessibility E2E, point its existing hooks at
+the launcher socket and the built-in CLI:
+
+\`\`\`bash
+export QEMU_QMP_SOCKET=/tmp/ohos-a11y.sock
+export ACCESSIBILITY_E2E_ENABLE_COMMAND=\\
+'/system/bin/cli_tool/executable/ohos-a11yManager ability-enable '\\
+'--name com.richerfu.ohos_example/AccessibilityE2ETestExtension --capabilities 7'
+pnpm run test:ui:accessibility -- --arch x64  # use arm64 for an ARM64 guest
+\`\`\`
+
+The runner executes the enable command after HAP installation, when the bundle
+and ability are available in the guest.
 EOF
 
   if [ "${product}" = "x86_64_virt" ]; then
@@ -1285,6 +1391,13 @@ write_full_product_launchers() {
       "${LAUNCHER_DEFAULT_CPU}"
     cp "${launch_out}/linux.sh" "${launch_out}/macos.command"
     chmod +x "${launch_out}/macos.command"
+
+    if ! grep -q -- '--a11y' "${launch_out}/linux.sh" || \
+       ! grep -q 'virtio-multitouch-pci' "${launch_out}/linux.sh" || \
+       ! grep -q 'server=on,wait=off' "${launch_out}/linux.sh"; then
+      echo "packaged POSIX launcher is missing accessibility/QMP support" >&2
+      exit 1
+    fi
 
     write_windows_ps1 \
       "${launch_out}/windows.ps1" \
@@ -1483,6 +1596,7 @@ import json, sys
 path, smp, mem, display, cpu, pointer_device, absolute_pointer_sync = sys.argv[1:8]
 with open(path, encoding="utf-8") as fh:
     data = json.load(fh)
+accessibility = bool(data.get("capabilities", {}).get("accessibility_test", False))
 data["display_default"] = display
 data["launcher"] = {
     "resolution_default": "800x500",
@@ -1490,6 +1604,8 @@ data["launcher"] = {
     "memory_default": mem,
     "cpu_default": cpu,
     "pointer_device_default": pointer_device,
+    "accessibility": accessibility,
+    "qmp_unix": accessibility,
     "cli": True,
 }
 data.setdefault("capabilities", {})["absolute_pointer_sync"] = absolute_pointer_sync == "true"
@@ -1967,6 +2083,46 @@ dump_first_image_file() {
   return 1
 }
 
+require_image_accessibility_cli() {
+  local image="$1"
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  local executable="${tmpdir}/ohos-a11yManager"
+  if ! dump_first_image_file "${image}" "${executable}" \
+    /system/bin/cli_tool/executable/ohos-a11yManager \
+    /bin/cli_tool/executable/ohos-a11yManager; then
+    rm -rf "${tmpdir}"
+    echo "QEMU accessibility manager is missing from ${image}" >&2
+    exit 1
+  fi
+  if ! python3 - "${executable}" <<'PY'
+import sys
+from pathlib import Path
+
+data = Path(sys.argv[1]).read_bytes()
+required = (
+    b"ability-enable",
+    b"ability-disable",
+    b"--name",
+    b"--capabilities",
+    b"qemu_accessibility_cli",
+    b"ohos.permission.WRITE_ACCESSIBILITY_CONFIG",
+    b"Failed to initialize the QEMU accessibility token",
+)
+missing = [value.decode() for value in required if value not in data]
+if missing:
+    print("missing accessibility CLI strings: " + ", ".join(missing), file=sys.stderr)
+    raise SystemExit(1)
+PY
+  then
+    rm -rf "${tmpdir}"
+    echo "QEMU accessibility manager does not support arbitrary abilities" >&2
+    exit 1
+  fi
+  rm -rf "${tmpdir}"
+  echo "QEMU accessibility management CLI verified"
+}
+
 require_image_elf_symbol() {
   local image="$1"
   local description="$2"
@@ -2275,6 +2431,7 @@ verify_qemu_runtime_capabilities() {
 
   QOS_VERIFIED=false
   VIRTUAL_VIBRATOR_VERIFIED=false
+  ACCESSIBILITY_VERIFIED=false
   JSVM_VERIFIED=false
 
   if [ "${QEMU_QOS_COMPONENT:-1}" = "1" ]; then
@@ -2315,6 +2472,28 @@ verify_qemu_runtime_capabilities() {
       /lib/libhdi_product_vibrator_impl.z.so
     VIRTUAL_VIBRATOR_VERIFIED=true
     echo "QEMU virtual vibrator capability verified for ${product}"
+  fi
+
+  if [ "${QEMU_ACCESSIBILITY_COMPONENT:-1}" = "1" ]; then
+    local accessibility_source="${source_root}/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/src/main.cpp"
+    local accessibility_build="${source_root}/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/BUILD.gn"
+    local accessibility_config="${source_root}/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/ohos-a11yManager.json"
+    if [ ! -f "${accessibility_source}" ] || \
+       [ ! -f "${accessibility_build}" ] || \
+       [ ! -f "${accessibility_config}" ] || \
+       ! grep -Fq '{"ability-enable", CommandAbilityEnable}' "${accessibility_source}" || \
+       ! grep -Fq 'GetOption(args, "--name")' "${accessibility_source}" || \
+       ! grep -Fq 'PrepareRootAccessibilityToken()' "${accessibility_source}" || \
+       ! grep -Fq '"access_token:libnativetoken"' "${accessibility_build}" || \
+       ! grep -Fq '"access_token:libtoken_setproc"' "${accessibility_build}" || \
+       ! grep -Fq '"ability-enable"' "${accessibility_config}" || \
+       ! grep -Fq '"ability-disable"' "${accessibility_config}"; then
+      echo "QEMU generic accessibility CLI source/build/config contract is incomplete" >&2
+      exit 1
+    fi
+    require_image_accessibility_cli "${system_image}"
+    ACCESSIBILITY_VERIFIED=true
+    echo "QEMU accessibility test capability verified for ${product} (token helpers linked statically)"
   fi
 
   if [ "${QEMU_JSVM_ENABLED:-false}" = "true" ]; then
@@ -2624,6 +2803,7 @@ STANDARD_VPN_VERIFIED=false
 VPN_AUTHORIZATION_MODE=unverified
 QOS_VERIFIED=false
 VIRTUAL_VIBRATOR_VERIFIED=false
+ACCESSIBILITY_VERIFIED=false
 JSVM_VERIFIED=false
 MANIFEST_DEVICE_TYPE="${DEVICE_TYPE:-default}"
 MANIFEST_DEVICE_TYPE_SOURCE=default
@@ -2645,6 +2825,14 @@ mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}" "${TOOLS_OUT}"
 cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
 cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"
+
+if [ -f "${SOURCE_ROOT}/.ohos-qemu-source-baseline.json" ] && \
+   [ -f "${SOURCE_ROOT}/.ohos-qemu-resolved-manifest.xml" ]; then
+  cp "${SOURCE_ROOT}/.ohos-qemu-source-baseline.json" \
+    "${PACKAGE_DIR}/source-baseline.json"
+  cp "${SOURCE_ROOT}/.ohos-qemu-resolved-manifest.xml" \
+    "${PACKAGE_DIR}/resolved-manifest.xml"
+fi
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || \
    [ "${PRODUCT}" = "armv7a_virt" ]; then
@@ -2707,6 +2895,8 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "memory_default": "${LAUNCHER_DEFAULT_MEMORY}",
     "cpu_default": "${LAUNCHER_DEFAULT_CPU}",
     "pointer_device_default": "${POINTER_DEVICE_DEFAULT}",
+    "accessibility": ${ACCESSIBILITY_VERIFIED},
+    "qmp_unix": ${ACCESSIBILITY_VERIFIED},
     "cli": true
   },
   "capabilities": {
@@ -2714,6 +2904,9 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "thread_qos": ${QOS_VERIFIED},
     "virtual_vibrator": ${VIRTUAL_VIBRATOR_VERIFIED},
     "virtual_vibrator_mode": "simulated",
+    "accessibility_test": ${ACCESSIBILITY_VERIFIED},
+    "accessibility_cli": ${ACCESSIBILITY_VERIFIED},
+    "virtio_multitouch": ${ACCESSIBILITY_VERIFIED},
     "jsvm": ${JSVM_VERIFIED},
     "jsvm_engine": "ArkWeb M144 V8",
     "standard_vpn": ${STANDARD_VPN_VERIFIED},
@@ -2729,6 +2922,26 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   }
 }
 EOF
+
+if [ -f "${PACKAGE_DIR}/source-baseline.json" ]; then
+  python3 - "${PACKAGE_DIR}/manifest.json" \
+    "${PACKAGE_DIR}/source-baseline.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+manifest_path = Path(sys.argv[1])
+baseline_path = Path(sys.argv[2])
+manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+manifest["source_baseline"] = json.loads(
+    baseline_path.read_text(encoding="utf-8")
+)
+manifest_path.write_text(
+    json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+    encoding="utf-8",
+)
+PY
+fi
 
 OFFICIAL_FOR_LAUNCH="${OFFICIAL_QEMU_RUN:-}"
 write_full_product_launchers \

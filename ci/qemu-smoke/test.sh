@@ -7,6 +7,9 @@ RUN_SCRIPT="${SCRIPT_DIR}/run.sh"
 PHASE_SCRIPT="${SCRIPT_DIR}/phase.sh"
 PACKAGE_SCRIPT="${SCRIPT_DIR}/../../scripts/package_standard_qemu.sh"
 POINTER_COMPONENT="${SCRIPT_DIR}/../../patches/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
+LFS_ASSET_COMPONENT="${SCRIPT_DIR}/../../patches/common/build/github_lfs_assets/apply.sh"
+LFS_CACHE_PREPARER="${SCRIPT_DIR}/../../scripts/prepare_ohos_7_0_release_lfs_cache.sh"
+MESA_CACHE_PREPARER="${SCRIPT_DIR}/../../scripts/prepare_qemu_mesa_revision_cache.sh"
 bash "${SCRIPT_DIR}/../standard-vpn/test.sh"
 TEST_ROOT="$(mktemp -d)"
 FAKE_BIN="${TEST_ROOT}/bin"
@@ -22,13 +25,50 @@ cleanup() {
 }
 trap cleanup EXIT
 
-bash -n "${RUN_SCRIPT}" "${PHASE_SCRIPT}" "${PACKAGE_SCRIPT}"
+bash -n "${RUN_SCRIPT}" "${PHASE_SCRIPT}" "${PACKAGE_SCRIPT}" \
+  "${MESA_CACHE_PREPARER}"
 grep -Fq 'aa start -a com.ohos.settings.MainAbility -b com.ohos.settings' \
   "${RUN_SCRIPT}"
 grep -Fq 'aa start -a com.ohos.photos.MainAbility -b com.ohos.photos' \
   "${RUN_SCRIPT}"
 
 mkdir -p "${FAKE_BIN}" "${WORK}"
+
+FAKE_LFS_SOURCE="${TEST_ROOT}/lfs-source"
+FAKE_LFS_CACHE="${TEST_ROOT}/lfs-cache"
+FAKE_LFS_MAP="${TEST_ROOT}/lfs-assets.tsv"
+FAKE_LFS_PAYLOAD="${TEST_ROOT}/fixture.txt"
+FAKE_LFS_ARCHIVE="${TEST_ROOT}/fixture.tgz"
+mkdir -p "${FAKE_LFS_SOURCE}/component/assets"
+printf 'pinned GitHub former-LFS fixture\n' > "${FAKE_LFS_PAYLOAD}"
+tar -czf "${FAKE_LFS_ARCHIVE}" -C "${TEST_ROOT}" fixture.txt
+FAKE_LFS_OID="$(shasum -a 256 "${FAKE_LFS_ARCHIVE}" | awk '{print $1}')"
+FAKE_LFS_SIZE="$(wc -c < "${FAKE_LFS_ARCHIVE}" | tr -d '[:space:]')"
+mkdir -p "${FAKE_LFS_CACHE}/${FAKE_LFS_OID:0:2}"
+cp "${FAKE_LFS_ARCHIVE}" "${FAKE_LFS_CACHE}/${FAKE_LFS_OID:0:2}/${FAKE_LFS_OID}"
+cat > "${FAKE_LFS_SOURCE}/component/assets/fixture.tgz" <<EOF
+# This file was originally tracked by Git LFS but LFS tracking has been removed
+version https://git-lfs.github.com/spec/v1
+oid sha256:${FAKE_LFS_OID}
+size ${FAKE_LFS_SIZE}
+EOF
+printf 'component\tassets/fixture.tgz\thttps://gitcode.com/openharmony/fixture\t%s\t%s\n' \
+  "${FAKE_LFS_OID}" "${FAKE_LFS_SIZE}" > "${FAKE_LFS_MAP}"
+bash "${LFS_ASSET_COMPONENT}" \
+  --source-root "${FAKE_LFS_SOURCE}" \
+  --asset-root "${FAKE_LFS_CACHE}" \
+  --asset-map "${FAKE_LFS_MAP}" | grep -Fq 'restored: 1'
+test "$(shasum -a 256 "${FAKE_LFS_SOURCE}/component/assets/fixture.tgz" | awk '{print $1}')" = \
+  "${FAKE_LFS_OID}"
+bash "${LFS_ASSET_COMPONENT}" \
+  --source-root "${FAKE_LFS_SOURCE}" \
+  --asset-root "${FAKE_LFS_CACHE}" \
+  --asset-map "${FAKE_LFS_MAP}" | grep -Fq 'restored: 0'
+ASSET_MAP="${FAKE_LFS_MAP}" \
+OHOS_LFS_ASSET_ROOT="${FAKE_LFS_CACHE}" \
+LFS_JOBS=2 \
+  bash "${LFS_CACHE_PREPARER}" | grep -Fq '(1 mapped assets)'
+
 cat >"${FAKE_BIN}/hdc" <<'EOF'
 #!/usr/bin/env bash
 exit 1
@@ -89,11 +129,14 @@ FAKE_IMAGES="${FAKE_SOURCE}/out/arm64_virt/packages/phone/images"
 FAKE_KERNEL_OBJ="${FAKE_SOURCE}/out/kernel/OBJ/arm64_virt"
 FAKE_VENDOR="${FAKE_SOURCE}/vendor/ohemu/qemu_arm64_linux_full"
 FAKE_MMI_SOURCE="${FAKE_SOURCE}/foundation/multimodalinput/input/service/mouse_event_normalize/src"
+FAKE_A11Y_SOURCE="${FAKE_SOURCE}/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager/src"
+FAKE_A11Y_ROOT="${FAKE_SOURCE}/foundation/barrierfree/accessibility/tools/ohos-accessibilityManager"
 FAKE_QEMU_ARGS="${TEST_ROOT}/qemu-args.txt"
 FAKE_QEMU_PROBES="${TEST_ROOT}/qemu-probes.txt"
 FAKE_VPN_HAP="${TEST_ROOT}/VpnDialog.hap"
+FAKE_A11Y_BIN="${TEST_ROOT}/ohos-a11yManager"
 mkdir -p "${FAKE_IMAGES}" "${FAKE_KERNEL_OBJ}" "${FAKE_VENDOR}" \
-  "${FAKE_MMI_SOURCE}" "${FAKE_OUTPUT}"
+  "${FAKE_MMI_SOURCE}" "${FAKE_A11Y_SOURCE}" "${FAKE_OUTPUT}"
 for image in Image ramdisk.img system.img vendor.img userdata.img updater.img \
   sys_prod.img chip_prod.img; do
   : >"${FAKE_IMAGES}/${image}"
@@ -192,6 +235,39 @@ void ProcessMotionByEventType()
     }
 }
 EOF
+cat >"${FAKE_A11Y_SOURCE}/main.cpp" <<'EOF'
+void RegisterQemuAccessibilityCommands()
+{
+    GetOption(args, "--name");
+    PrepareRootAccessibilityToken();
+    {"ability-enable", CommandAbilityEnable};
+}
+EOF
+cat >"${FAKE_A11Y_ROOT}/BUILD.gn" <<'EOF'
+external_deps = [
+  "access_token:libnativetoken",
+  "access_token:libtoken_setproc",
+]
+EOF
+cat >"${FAKE_A11Y_ROOT}/ohos-a11yManager.json" <<'EOF'
+{
+  "commands": {
+    "ability-enable": {},
+    "ability-disable": {}
+  }
+}
+EOF
+cat >"${FAKE_A11Y_BIN}" <<'EOF'
+ability-enable
+ability-disable
+--name
+--capabilities
+qemu_accessibility_cli
+ohos.permission.WRITE_ACCESSIBILITY_CONFIG
+GetAccessTokenId
+SetSelfTokenID
+Failed to initialize the QEMU accessibility token
+EOF
 python3 - \
   "${SCRIPT_DIR}/../../patches/common/foundation/multimodalinput/input/absolute_pointer/0001-map-qemu-absolute-pointer.patch" \
   "${FAKE_MMI_SOURCE}/mouse_transform_processor.cpp" <<'PY'
@@ -280,6 +356,10 @@ case "${command}" in
     output="${command#dump /vendor/lib64/libhdi_product_vibrator_impl.z.so }"
     cp "${FAKE_VIBRATOR_ELF}" "${output}"
     ;;
+  "dump /system/bin/cli_tool/executable/ohos-a11yManager "*)
+    output="${command#dump /system/bin/cli_tool/executable/ohos-a11yManager }"
+    cp "${FAKE_A11Y_BIN}" "${output}"
+    ;;
   "stat /system/lib64/virtio_gpu_dri.so"|"stat /system/lib64/swrast_dri.so")
     printf '%s\n' 'Inode: 1'
     printf '%s\n' 'Fast link dest: "kms_swrast_dri.so"'
@@ -304,6 +384,7 @@ chmod +x "${FAKE_BIN}/debugfs" "${FAKE_BIN}/od"
 PATH="${FAKE_BIN}:${PATH}" \
 FAKE_VPN_HAP="${FAKE_VPN_HAP}" \
 FAKE_VIBRATOR_ELF="${FAKE_VIBRATOR_ELF}" \
+FAKE_A11Y_BIN="${FAKE_A11Y_BIN}" \
 SEED_USERDATA_DIRS=0 \
 INJECT_QEMU_RUNTIME_PARAMS=0 \
   bash "${PACKAGE_SCRIPT}" \
@@ -347,6 +428,8 @@ grep -Fq -- '--height' "${WRAPPER}"
 grep -Fq -- '--headless' "${WRAPPER}"
 grep -Fq -- '--vnc-display' "${WRAPPER}"
 grep -Fq -- '--serial-port' "${WRAPPER}"
+grep -Fq -- '--a11y' "${WRAPPER}"
+grep -Fq -- '--qmp-socket' "${WRAPPER}"
 grep -Fq -- '--cpu' "${WRAPPER}"
 grep -Fq -- 'QEMU_EXTRA_ARGS' "${WRAPPER}"
 grep -Fq -- 'QEMU_CPU' "${WRAPPER}"
@@ -371,6 +454,12 @@ grep -Fq '"cpu_default": "cortex-a57"' \
 grep -Fq '"pointer_device_default": "virtio-tablet-pci"' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq '"absolute_pointer_sync": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"accessibility_test": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"accessibility_cli": true' \
+  "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
+grep -Fq '"virtio_multitouch": true' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/manifest.json"
 grep -Fq 'absolute `virtio-tablet` pointer' \
   "${FAKE_OUTPUT}/openharmony-qemu-arm64-arm64_virt/README.md"
@@ -448,6 +537,25 @@ QEMU_CPU=cortex-a72 \
 QEMU_DISPLAY=none \
   bash "${PACKAGED_LAUNCHER}" >/dev/null 2>&1
 grep -Fq -- '-cpu cortex-a72' "${FAKE_QEMU_ARGS}"
+
+: >"${FAKE_QEMU_ARGS}"
+A11Y_QMP_SOCKET="${TEST_ROOT}/accessibility-qmp.sock"
+PATH="${FAKE_BIN}:${PATH}" \
+FAKE_QEMU_ACCELS='Accelerators supported in QEMU binary:\nhvf\ntcg' \
+QEMU_ACCEL=tcg \
+  bash "${WRAPPER}" --headless --a11y --qmp-socket "${A11Y_QMP_SOCKET}" \
+    >/dev/null 2>&1
+grep -Fq -- '-device virtio-multitouch-pci' "${FAKE_QEMU_ARGS}"
+grep -Fq -- "-qmp unix:${A11Y_QMP_SOCKET},server=on,wait=off" "${FAKE_QEMU_ARGS}"
+
+: >"${FAKE_QEMU_ARGS}"
+PATH="${FAKE_BIN}:${PATH}" \
+FAKE_QEMU_ACCELS='Accelerators supported in QEMU binary:\nhvf\ntcg' \
+QEMU_ACCEL=tcg \
+  bash "${WRAPPER}" --headless --a11y >/dev/null 2>&1
+grep -Fq -- '-device virtio-multitouch-pci' "${FAKE_QEMU_ARGS}"
+grep -Fq -- '-qmp unix:/tmp/openharmony-qemu-a11y-5555.sock,server=on,wait=off' \
+  "${FAKE_QEMU_ARGS}"
 
 sleep 60 &
 QEMU_PID=$!

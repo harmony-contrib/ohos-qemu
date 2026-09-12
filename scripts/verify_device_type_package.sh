@@ -3,27 +3,32 @@
 set -euo pipefail
 export LC_ALL=C
 export LANG=C
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LFS_ASSET_MAP="${SCRIPT_DIR}/../patches/common/build/github_lfs_assets/assets.tsv"
 
 usage() {
   cat <<'USAGE'
 Usage:
   verify_device_type_package.sh --package DIR [--expect-device-type TYPE]
+                                [--expect-manifest-revision COMMIT]
                                 [--require-full-2in1|--require-full-phone]
 
 Checks (offline, no QEMU boot):
   1) manifest.json device_type
-  2) full source-profile evidence and resolved parts (when required)
+  2) pinned manifest/LFS baseline plus full source-profile evidence
   3) system.img ohos.para const.product.devicetype / characteristics
   4) profile-specific applications plus UI, Wukong, HNP, Launcher, and SystemUI
   5) sys_prod BMS compatibility for current QEMU system HAPs
   6) absolute-pointer guest capability and virtio-tablet launcher pairing
-  7) userdata compressibility heuristic (dirty image warning)
+  7) self-contained accessibility CLI and --a11y launcher pairing
+  8) userdata compressibility heuristic (dirty image warning)
 USAGE
 }
 
 PACKAGE=
 EXPECT=
 REQUIRE_FULL_DEVICE=
+EXPECT_MANIFEST_REVISION=
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -33,6 +38,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --expect-device-type)
       EXPECT="${2:-}"
+      shift 2
+      ;;
+    --expect-manifest-revision)
+      EXPECT_MANIFEST_REVISION="${2:-}"
       shift 2
       ;;
     --require-full-2in1)
@@ -97,6 +106,47 @@ if [ -n "${EXPECT}" ] && [ "${MANIFEST_DT}" != "${EXPECT}" ]; then
   echo "FAIL: manifest device_type != ${EXPECT}" >&2
   FAIL=1
 fi
+if [ -n "${EXPECT_MANIFEST_REVISION}" ]; then
+  if ! python3 - "${PACKAGE}/manifest.json" "${EXPECT_MANIFEST_REVISION}" <<'PY'
+import json
+import sys
+
+manifest = json.load(open(sys.argv[1], encoding="utf-8"))
+expected = sys.argv[2]
+baseline = manifest.get("source_baseline", {})
+actual = baseline.get("manifest_revision", "")
+if actual != expected:
+    raise SystemExit(
+        f"manifest source baseline mismatch: expected {expected}, found {actual or 'missing'}"
+    )
+PY
+  then
+    FAIL=1
+  else
+    echo "manifest.source_baseline.manifest_revision=${EXPECT_MANIFEST_REVISION}"
+  fi
+  if [ ! -f "${LFS_ASSET_MAP}" ]; then
+    echo "FAIL: missing pinned GitHub/LFS asset map: ${LFS_ASSET_MAP}" >&2
+    FAIL=1
+  else
+    EXPECTED_LFS_ASSET_MAP_SHA256="$(shasum -a 256 "${LFS_ASSET_MAP}" | awk '{print $1}')"
+    ACTUAL_LFS_ASSET_MAP_SHA256="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("source_baseline", {}).get("github_lfs_assets_sha256", ""))' "${PACKAGE}/manifest.json")"
+    if [ "${ACTUAL_LFS_ASSET_MAP_SHA256}" != "${EXPECTED_LFS_ASSET_MAP_SHA256}" ]; then
+      echo "FAIL: package source baseline has the wrong GitHub/LFS asset map" >&2
+      FAIL=1
+    else
+      echo "manifest.source_baseline.github_lfs_assets_sha256=${EXPECTED_LFS_ASSET_MAP_SHA256}"
+    fi
+    EXPECTED_QEMU_MESA_REVISION=995d2506d18924b48db0cf40e6ad7de04fc4e558
+    ACTUAL_QEMU_MESA_REVISION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("source_baseline", {}).get("qemu_mesa_revision", ""))' "${PACKAGE}/manifest.json")"
+    if [ "${ACTUAL_QEMU_MESA_REVISION}" != "${EXPECTED_QEMU_MESA_REVISION}" ]; then
+      echo "FAIL: package source baseline has the wrong QEMU Mesa revision" >&2
+      FAIL=1
+    else
+      echo "manifest.source_baseline.qemu_mesa_revision=${EXPECTED_QEMU_MESA_REVISION}"
+    fi
+  fi
+fi
 
 if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
   EXPECTED_PROFILE="qemu_${REQUIRE_FULL_DEVICE}_full_source"
@@ -135,7 +185,12 @@ checks = [
     manifest.get("capabilities", {}).get("jsvm") is True,
     manifest.get("capabilities", {}).get("jsvm_engine") == "ArkWeb M144 V8",
     manifest.get("capabilities", {}).get("standard_vpn") is True,
+    manifest.get("capabilities", {}).get("accessibility_test") is True,
+    manifest.get("capabilities", {}).get("accessibility_cli") is True,
+    manifest.get("capabilities", {}).get("virtio_multitouch") is True,
     manifest.get("launcher", {}).get("pointer_device_default") == "virtio-tablet-pci",
+    manifest.get("launcher", {}).get("accessibility") is True,
+    manifest.get("launcher", {}).get("qmp_unix") is True,
     profile.get("device_type") == device_type,
     profile.get("profile") == profile_name,
     effective_profile in profile.get("inherit", []),
@@ -167,6 +222,15 @@ PY
     FAIL=1
   else
     echo "PASS: absolute-pointer capability is paired with virtio-tablet"
+  fi
+  if [ ! -f "${PACKAGE}/launch/linux.sh" ] || \
+     ! grep -q -- '--a11y' "${PACKAGE}/launch/linux.sh" || \
+     ! grep -q 'virtio-multitouch-pci' "${PACKAGE}/launch/linux.sh" || \
+     ! grep -q -- '-qmp' "${PACKAGE}/launch/linux.sh"; then
+    echo "FAIL: full ${REQUIRE_FULL_DEVICE} package lacks the --a11y multitouch/QMP launcher" >&2
+    FAIL=1
+  else
+    echo "PASS: accessibility capability is paired with --a11y multitouch/QMP"
   fi
 fi
 
@@ -268,6 +332,7 @@ RUNTIME_MARKERS=(
   '/system/app/com.ohos.systemui /app/com.ohos.systemui'
   '/system/lib64/libjsvm.so /system/lib/libjsvm.so /system/lib64/ndk/libjsvm.so /system/lib/ndk/libjsvm.so /lib64/libjsvm.so /lib/libjsvm.so'
   '/system/lib64/libv8_shared.so /system/lib/libv8_shared.so /lib64/libv8_shared.so /lib/libv8_shared.so'
+  '/system/bin/cli_tool/executable/ohos-a11yManager /bin/cli_tool/executable/ohos-a11yManager'
 )
 if [ "${REQUIRE_FULL_DEVICE}" = "2in1" ]; then
   RUNTIME_MARKERS+=(
@@ -334,6 +399,36 @@ do
   fi
 done
 if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  A11Y_TMP="$(mktemp -d)"
+  if dump_first_image_file "${SYSIMG}" "${A11Y_TMP}/ohos-a11yManager" \
+       /system/bin/cli_tool/executable/ohos-a11yManager \
+       /bin/cli_tool/executable/ohos-a11yManager && \
+     python3 - "${A11Y_TMP}/ohos-a11yManager" <<'PY'
+import sys
+from pathlib import Path
+
+data = Path(sys.argv[1]).read_bytes()
+required = (
+    b"ability-enable",
+    b"ability-disable",
+    b"--name",
+    b"--capabilities",
+    b"qemu_accessibility_cli",
+    b"ohos.permission.WRITE_ACCESSIBILITY_CONFIG",
+    b"Failed to initialize the QEMU accessibility token",
+)
+missing = [value.decode() for value in required if value not in data]
+if missing:
+    raise SystemExit("missing accessibility CLI strings: " + ", ".join(missing))
+PY
+  then
+    echo "PASS: generic accessibility manager CLI contract"
+  else
+    echo "FAIL: generic accessibility manager CLI contract" >&2
+    FAIL=1
+  fi
+  rm -rf "${A11Y_TMP}"
+
   JSVM_TMP="$(mktemp -d)"
   if dump_first_image_file "${SYSIMG}" "${JSVM_TMP}/libjsvm.so" \
        /system/lib64/libjsvm.so \
