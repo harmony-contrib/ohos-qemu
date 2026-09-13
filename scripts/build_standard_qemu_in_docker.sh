@@ -19,15 +19,26 @@ Environment:
   OHOS_ROOT           OpenHarmony checkout, default: $CACHE_ROOT/openharmony
   PACKAGE_ROOT        Package output dir, default: $CACHE_ROOT/packages
   CONTAINER_HOME      Persistent HOME, default: $CACHE_ROOT/home
-  OHOS_BRANCH         Manifest branch/tag, default: master
+  OHOS_BRANCH         Manifest baseline name, default: OpenHarmony-7.0-Release
+  MANIFEST_REVISION   Exact manifest commit used by repo init, default:
+                       f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549
   MANIFEST_URL        Manifest repo, default: https://github.com/openharmony/manifest.git
+  OHOS_PROJECT_MIRROR Rewrite official GitCode project URLs to this mirror,
+                       default: https://github.com/openharmony/
+  OHOS_GITHUB_FALLBACK
+                       Apply pinned 7.0 refs for incomplete GitHub mirrors,
+                       default: 1
+  OHOS_FALLBACK_MIRROR_ROOT
+                       Host-prepared bare mirrors for projects absent from
+                       GitHub, default: $CACHE_ROOT/git-mirrors/
+                       openharmony-7.0-release
   MANIFEST_GROUPS     Repo groups, default includes standard/full system groups
   REPO_URL            Repo tool mirror, default:
                        https://github.com/GerritCodeReview/git-repo.git
   REPO_LAUNCHER_URL   Repo launcher, default:
                        https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo
-  REPO_JOBS           repo sync jobs, default: 8
-  REPO_CHECKOUT_JOBS  repo checkout jobs, default: 1
+  REPO_JOBS           repo sync jobs, default: 16
+  REPO_CHECKOUT_JOBS  repo checkout jobs, default: 4
   REPO_SYNC_RETRIES   repo sync retry attempts, default: 3
   BUILD_JOBS          build jobs, default: nproc
   KERNEL_BUILD_JOBS   nested kernel make jobs, default: BUILD_JOBS
@@ -44,6 +55,8 @@ Environment:
   CLEAN_KERNEL_OBJ    Remove out/KERNEL_OBJ before each product build, default: 0
   NO_PREBUILT_SDK     Pass --no-prebuilt-sdk=true to build.sh, default: 0
   BUILD_ONLY_LOAD     Pass --build-only-load=true to build.sh, default: 0
+  PREPARE_ONLY        Sync, patch, and validate the selected source products,
+                       then stop before traversing builds, default: 0
   SKIP_APT            Skip apt dependency installation, default: 0
   SKIP_REPO_SYNC      Reuse existing checkout without repo sync, default: 0
   SKIP_PREBUILTS      Reuse existing prebuilts, default: 0
@@ -54,6 +67,13 @@ Environment:
                        applications/standard/hap base/web/webview
                        foundation/arkui/ace_engine third_party/icu
                        third_party/libphonenumber
+  OHOS_LFS_ASSET_ROOT Host-prepared cache for pinned objects that GitHub mirrors
+                       expose as former-LFS text stubs, default:
+                       $CACHE_ROOT/artifacts/openharmony-7.0-lfs
+  QEMU_MESA_REVISION_CACHE
+                       Host-prepared Git cache for the pinned QEMU Mesa 21.3.3
+                       source revision, default: $CACHE_ROOT/git-mirrors/
+                       qemu-mesa/third_party_mesa3d.git
   QEMU_FIX_ACCESS_TOKENID_ABI
                        Backport access_tokenid ABI used by current userspace, default: 1
   QEMU_FIX_SYSTEM_COMPAT_SYMLINKS
@@ -93,6 +113,11 @@ Environment:
   QEMU_QOS_COMPONENT  Apply the QEMU QoS kernel component, default: 1
   QEMU_VIBRATOR_COMPONENT
                        Install the QEMU virtual vibrator VDI, default: 1
+  QEMU_AUDIO_COMPONENT The pinned 7.0 build always backports the QEMU vendor
+                       ALSA source-selection contract before traversal.
+  QEMU_ACCESSIBILITY_COMPONENT
+                       Add generic accessibility ability enable/disable CLI
+                       commands for QEMU test extensions, default: 1
   QEMU_JSVM_COMPONENT Enable JSVM with ArkWeb M144 V8 artifacts. Values:
                        auto (default), 1, or 0. Full phone/2in1 launchers set 1.
   JSVM_ENGINE_ARTIFACTS
@@ -116,6 +141,12 @@ Environment:
                        Remove out/<product> after its verified package is
                        archived. Useful for six-package matrix builds on a
                        space-constrained Docker disk, default: 0.
+  PROFILE_STAMP_WRITE_RETRIES
+                       Retry the atomic device-profile stamp update while the
+                       output volume reclaims deleted blocks, default: 90.
+  PROFILE_STAMP_WRITE_RETRY_DELAY
+                       Seconds between profile-stamp write attempts,
+                       default: 2.
   DEVICE_TYPE         Pass --device-type to build.sh and packaging
                        (default|phone|tablet|2in1|...), default: empty
                        (OpenHarmony default remains "default"). When set to
@@ -149,8 +180,13 @@ QEMU_PHONE_PROFILE_SCRIPT="${PATCH_ROOT}/phone/product_profile/apply.sh"
 QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
 QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh"
 QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
+QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh"
+QEMU_ACCESSIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh"
 QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
 RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
+SDK_CORTEX_M_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/musl/cortex_m_sdk/apply.sh"
+GITHUB_LFS_ASSET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/github_lfs_assets/apply.sh"
+GITHUB_LFS_ASSET_MAP="${PATCH_ROOT}/common/build/github_lfs_assets/assets.tsv"
 
 if [ ! -x "${PACKAGER}" ]; then
   echo "missing executable packager: ${PACKAGER}" >&2
@@ -161,16 +197,21 @@ CACHE_ROOT="${CACHE_ROOT:-/Volumes/PSSD/qemu}"
 OHOS_ROOT="${OHOS_ROOT:-${CACHE_ROOT}/openharmony}"
 PACKAGE_ROOT="${PACKAGE_ROOT:-${CACHE_ROOT}/packages}"
 CONTAINER_HOME="${CONTAINER_HOME:-${CACHE_ROOT}/home}"
-OHOS_BRANCH="${OHOS_BRANCH:-master}"
+OHOS_BRANCH="${OHOS_BRANCH:-OpenHarmony-7.0-Release}"
+MANIFEST_REVISION="${MANIFEST_REVISION:-f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549}"
 MANIFEST_URL="${MANIFEST_URL:-https://github.com/openharmony/manifest.git}"
+OHOS_PROJECT_MIRROR="${OHOS_PROJECT_MIRROR-https://github.com/openharmony/}"
+OHOS_GITHUB_FALLBACK="${OHOS_GITHUB_FALLBACK:-1}"
+OHOS_GITHUB_FALLBACK_MAP="${OHOS_GITHUB_FALLBACK_MAP:-/work/scripts/openharmony_7_0_release_github_fallback.tsv}"
+OHOS_FALLBACK_MIRROR_ROOT="${OHOS_FALLBACK_MIRROR_ROOT:-${CACHE_ROOT}/git-mirrors/openharmony-7.0-release}"
 MANIFEST_GROUPS="${MANIFEST_GROUPS:-default,ohos:mini,ohos:small,ohos:standard,ohos:system,ohos:chipset}"
 REPO_URL="${REPO_URL:-https://github.com/GerritCodeReview/git-repo.git}"
 REPO_LAUNCHER_URL="${REPO_LAUNCHER_URL:-https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo}"
 REPO_NO_BUNDLE="${REPO_NO_BUNDLE:-1}"
-REPO_NO_TAGS="${REPO_NO_TAGS:-0}"
+REPO_NO_TAGS="${REPO_NO_TAGS:-1}"
 REPO_FORCE_SYNC="${REPO_FORCE_SYNC:-1}"
-REPO_JOBS="${REPO_JOBS:-8}"
-REPO_CHECKOUT_JOBS="${REPO_CHECKOUT_JOBS:-1}"
+REPO_JOBS="${REPO_JOBS:-16}"
+REPO_CHECKOUT_JOBS="${REPO_CHECKOUT_JOBS:-4}"
 REPO_SYNC_RETRIES="${REPO_SYNC_RETRIES:-3}"
 BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
 KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS:-${BUILD_JOBS}}"
@@ -184,12 +225,16 @@ PREBUILTS_CLEAN="${PREBUILTS_CLEAN:-0}"
 CLEAN_KERNEL_OBJ="${CLEAN_KERNEL_OBJ:-0}"
 NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
+PREPARE_ONLY="${PREPARE_ONLY:-0}"
 SKIP_APT="${SKIP_APT:-0}"
 SKIP_REPO_SYNC="${SKIP_REPO_SYNC:-0}"
 SKIP_PREBUILTS="${SKIP_PREBUILTS:-0}"
 SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
 ALLOW_NON_DOCKER="${ALLOW_NON_DOCKER:-0}"
 GIT_LFS_PATHS="${GIT_LFS_PATHS:-applications/standard/hap base/web/webview foundation/arkui/ace_engine third_party/icu third_party/libphonenumber}"
+OHOS_LFS_ASSET_ROOT="${OHOS_LFS_ASSET_ROOT:-${CACHE_ROOT}/artifacts/openharmony-7.0-lfs}"
+QEMU_MESA_REVISION_CACHE="${QEMU_MESA_REVISION_CACHE:-${CACHE_ROOT}/git-mirrors/qemu-mesa/third_party_mesa3d.git}"
+export QEMU_MESA_REVISION_CACHE
 QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI:-${QEMU_FIX_ACCESS_TOKENID_SPM:-1}}"
 QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS:-1}"
 QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION="${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION:-1}"
@@ -202,17 +247,23 @@ QEMU_FIX_VIRTIOFS_KERNEL_COPY="${QEMU_FIX_VIRTIOFS_KERNEL_COPY:-1}"
 QEMU_ABSOLUTE_POINTER_COMPONENT="${QEMU_ABSOLUTE_POINTER_COMPONENT:-1}"
 QEMU_QOS_COMPONENT="${QEMU_QOS_COMPONENT:-1}"
 QEMU_VIBRATOR_COMPONENT="${QEMU_VIBRATOR_COMPONENT:-1}"
+QEMU_ACCESSIBILITY_COMPONENT="${QEMU_ACCESSIBILITY_COMPONENT:-1}"
 QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-auto}"
-export QEMU_QOS_COMPONENT QEMU_VIBRATOR_COMPONENT QEMU_JSVM_COMPONENT
+export QEMU_QOS_COMPONENT QEMU_VIBRATOR_COMPONENT QEMU_ACCESSIBILITY_COMPONENT QEMU_JSVM_COMPONENT
 QEMU_CCACHE_ON_OUT_VOLUME="${QEMU_CCACHE_ON_OUT_VOLUME:-0}"
 ARMV7A_PRODUCT_COMPONENT="${ARMV7A_PRODUCT_COMPONENT:-1}"
 STANDARD_VPN_COMPONENT="${STANDARD_VPN_COMPONENT:-1}"
 QEMU_2IN1_PROFILE_COMPONENT="${QEMU_2IN1_PROFILE_COMPONENT:-auto}"
 QEMU_PHONE_PROFILE_COMPONENT="${QEMU_PHONE_PROFILE_COMPONENT:-auto}"
 PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
+PROFILE_STAMP_WRITE_RETRIES="${PROFILE_STAMP_WRITE_RETRIES:-90}"
+PROFILE_STAMP_WRITE_RETRY_DELAY="${PROFILE_STAMP_WRITE_RETRY_DELAY:-2}"
 DEVICE_TYPE="${DEVICE_TYPE:-}"
 DEVICE_TYPE_BUILD_PROFILE="${DEVICE_TYPE_BUILD_PROFILE:-}"
 JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144}"
+SDKMANAGER_COMMON_VERSION="${SDKMANAGER_COMMON_VERSION:-2.26.3}"
+SDKMANAGER_COMMON_ARTIFACT="${SDKMANAGER_COMMON_ARTIFACT:-${CACHE_ROOT}/artifacts/npm/sdkmanager-common-${SDKMANAGER_COMMON_VERSION}.tgz}"
+SDKMANAGER_COMMON_SHA512="${SDKMANAGER_COMMON_SHA512:-1f20b632c759085d79321f3b95425b4ee7608fdd1911c1c9965ab16d49f96c3384657f92dd16cda5710fdaa95215908a323cb1d629b9eede1edb500664170533}"
 PRODUCTS=("$@")
 
 if [ "${#PRODUCTS[@]}" -eq 0 ]; then
@@ -234,6 +285,40 @@ if [ "${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" != "0" ] && \
   echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE must be 0 or 1" >&2
   exit 2
 fi
+if [ "${PREPARE_ONLY}" != "0" ] && [ "${PREPARE_ONLY}" != "1" ]; then
+  echo "PREPARE_ONLY must be 0 or 1" >&2
+  exit 2
+fi
+if [ "${OHOS_GITHUB_FALLBACK}" != "0" ] && [ "${OHOS_GITHUB_FALLBACK}" != "1" ]; then
+  echo "OHOS_GITHUB_FALLBACK must be 0 or 1" >&2
+  exit 2
+fi
+case "${PROFILE_STAMP_WRITE_RETRIES}" in
+  ''|*[!0-9]*|0)
+    echo "PROFILE_STAMP_WRITE_RETRIES must be a positive integer" >&2
+    exit 2
+    ;;
+esac
+case "${PROFILE_STAMP_WRITE_RETRY_DELAY}" in
+  ''|*[!0-9]*)
+    echo "PROFILE_STAMP_WRITE_RETRY_DELAY must be a non-negative integer" >&2
+    exit 2
+    ;;
+esac
+
+verify_manifest_baseline() {
+  local actual
+  if [ ! -d "${OHOS_ROOT}/.repo/manifests" ]; then
+    echo "manifest checkout is missing under ${OHOS_ROOT}/.repo" >&2
+    return 1
+  fi
+  actual="$(git -C "${OHOS_ROOT}/.repo/manifests" rev-parse HEAD 2>/dev/null || true)"
+  if [ "${actual}" != "${MANIFEST_REVISION}" ]; then
+    echo "OpenHarmony manifest mismatch: expected ${MANIFEST_REVISION}, found ${actual:-unknown}" >&2
+    return 1
+  fi
+  echo "OpenHarmony manifest verified: ${OHOS_BRANCH} @ ${actual}"
+}
 
 require_docker_ubuntu_2204() {
   if [ "$(uname -s)" != "Linux" ]; then
@@ -545,10 +630,173 @@ ensure_repo_tool() {
   chmod +x /usr/local/bin/repo
 }
 
+configure_project_mirror() {
+  local previous_mirror
+  previous_mirror="$(git config --global --get ohos-qemu.projectMirror 2>/dev/null || true)"
+  if [ -n "${previous_mirror}" ] && [ "${previous_mirror}" != "${OHOS_PROJECT_MIRROR}" ]; then
+    git config --global --unset-all \
+      "url.${previous_mirror}.insteadOf" \
+      "https://gitcode.com/openharmony/" 2>/dev/null || true
+    git config --global --unset-all ohos-qemu.projectMirror 2>/dev/null || true
+  fi
+  if [ -z "${OHOS_PROJECT_MIRROR}" ]; then
+    echo "OpenHarmony project mirror rewrite disabled"
+    return
+  fi
+  case "${OHOS_PROJECT_MIRROR}" in
+    */) ;;
+    *) OHOS_PROJECT_MIRROR="${OHOS_PROJECT_MIRROR}/" ;;
+  esac
+
+  # The pinned 7.0 manifest itself comes from GitHub, but its project remote
+  # intentionally still names GitCode. Git's insteadOf mapping keeps the
+  # upstream manifest byte-for-byte fixed while fetching every project from
+  # the corresponding official GitHub mirror.
+  git config --global --replace-all \
+    "url.${OHOS_PROJECT_MIRROR}.insteadOf" \
+    "https://gitcode.com/openharmony/"
+  git config --global --replace-all ohos-qemu.projectMirror "${OHOS_PROJECT_MIRROR}"
+  echo "OpenHarmony project mirror: https://gitcode.com/openharmony/ -> ${OHOS_PROJECT_MIRROR}"
+}
+
+install_github_fallback_manifest() {
+  local local_manifest="${OHOS_ROOT}/.repo/local_manifests/ohos-qemu-7.0-github-fallback.xml"
+  if [ "${OHOS_GITHUB_FALLBACK}" != "1" ] || [ -z "${OHOS_PROJECT_MIRROR}" ]; then
+    rm -f "${local_manifest}"
+    echo "OpenHarmony GitHub fallback manifest disabled"
+    return
+  fi
+  if [ ! -f "${OHOS_GITHUB_FALLBACK_MAP}" ]; then
+    echo "missing GitHub fallback map: ${OHOS_GITHUB_FALLBACK_MAP}" >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "${local_manifest}")"
+  python3 - "${OHOS_GITHUB_FALLBACK_MAP}" "${OHOS_FALLBACK_MIRROR_ROOT}" \
+    "${local_manifest}" <<'PY'
+import hashlib
+import re
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+mapping = Path(sys.argv[1])
+mirror_root = Path(sys.argv[2]).resolve()
+destination = Path(sys.argv[3])
+rows = []
+for number, raw in enumerate(mapping.read_text(encoding="utf-8").splitlines(), 1):
+    line = raw.strip()
+    if not line or line.startswith("#"):
+        continue
+    fields = line.split()
+    if len(fields) != 3:
+        raise SystemExit(f"{mapping}:{number}: expected 3 columns")
+    name, source, revision = fields
+    if source not in {"github-cache", "gitcode-cache", "omit"}:
+        raise SystemExit(f"{mapping}:{number}: unsupported source {source}")
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise SystemExit(f"{mapping}:{number}: invalid pinned commit {revision}")
+    rows.append((name, source, revision))
+
+root = ET.Element("manifest")
+cache_remote = "ohos-qemu-release-cache"
+ET.SubElement(
+    root,
+    "remote",
+    name=cache_remote,
+    fetch=mirror_root.as_uri() + "/",
+)
+release_tag = "refs/tags/OpenHarmony-v7.0-Release"
+for name, source, revision in rows:
+    if source == "omit":
+        ET.SubElement(root, "remove-project", name=name)
+        continue
+    repository = mirror_root / f"{name}.git"
+    if not repository.is_dir():
+        raise SystemExit(f"missing host-prepared fallback mirror: {repository}")
+    actual = subprocess.check_output(
+        ["git", f"--git-dir={repository}", "rev-parse", f"{release_tag}^{{commit}}"],
+        text=True,
+    ).strip()
+    if actual != revision:
+        raise SystemExit(
+            f"fallback mirror mismatch for {name}: expected {revision}, found {actual}"
+        )
+    attributes = {
+        "name": name,
+        "remote": cache_remote,
+        "revision": revision,
+        "upstream": release_tag,
+    }
+    ET.SubElement(root, "extend-project", **attributes)
+
+ET.indent(root, space="  ")
+payload = ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
+destination.write_bytes(payload)
+print(
+    f"installed GitHub fallback manifest: {len(rows)} pinned projects, "
+    f"map sha256={hashlib.sha256(mapping.read_bytes()).hexdigest()}"
+)
+PY
+}
+
+verify_github_fallback_revisions() {
+  if [ "${OHOS_GITHUB_FALLBACK}" != "1" ] || [ -z "${OHOS_PROJECT_MIRROR}" ]; then
+    return
+  fi
+  (
+    cd "${OHOS_ROOT}"
+    python3 - "${OHOS_GITHUB_FALLBACK_MAP}" <<'PY'
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+mapping = Path(sys.argv[1])
+manifest = ET.fromstring(subprocess.check_output(["repo", "manifest"]))
+paths = {
+    project.attrib["name"]: project.attrib.get("path", project.attrib["name"])
+    for project in manifest.findall("project")
+}
+verified = 0
+for number, raw in enumerate(mapping.read_text(encoding="utf-8").splitlines(), 1):
+    line = raw.strip()
+    if not line or line.startswith("#"):
+        continue
+    name, source, expected = line.split()
+    if source == "omit":
+        if name in paths:
+            raise SystemExit(f"omitted project is still present in resolved manifest: {name}")
+        verified += 1
+        continue
+    if name not in paths:
+        raise SystemExit(f"{mapping}:{number}: project is absent from resolved manifest: {name}")
+    checkout = Path(paths[name])
+    actual = subprocess.check_output(
+        ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
+    ).strip()
+    if actual != expected:
+        raise SystemExit(
+            f"fallback checkout mismatch for {name}: expected {expected}, found {actual}"
+        )
+    verified += 1
+print(f"verified {verified} pinned OpenHarmony 7.0 fallback checkouts")
+PY
+  )
+}
+
 prepare_checkout() {
   mkdir -p "${CACHE_ROOT}" "${OHOS_ROOT}" "${PACKAGE_ROOT}" "${CACHE_ROOT}/logs" "${CCACHE_DIR}"
   cd "${OHOS_ROOT}"
+  configure_project_mirror
   if [ "${SKIP_REPO_SYNC}" = "1" ] && [ -d .repo ]; then
+    install_github_fallback_manifest
+    if ! verify_manifest_baseline; then
+      echo "refusing to reuse a checkout from another baseline; rerun with SKIP_REPO_SYNC=0" >&2
+      exit 1
+    fi
+    verify_github_fallback_revisions
     echo "skip repo init/sync; reusing existing checkout at ${OHOS_ROOT}"
     return
   fi
@@ -556,7 +804,7 @@ prepare_checkout() {
   local repo_init_args=(
     init
     -u "${MANIFEST_URL}"
-    -b "${OHOS_BRANCH}"
+    -b "${MANIFEST_REVISION}"
     -g "${MANIFEST_GROUPS}"
     --repo-url="${REPO_URL}"
     --no-repo-verify
@@ -565,6 +813,8 @@ prepare_checkout() {
     repo_init_args+=(--no-clone-bundle)
   fi
   repo "${repo_init_args[@]}"
+  install_github_fallback_manifest
+  verify_manifest_baseline
 
   local repo_sync_args=(
     sync
@@ -597,6 +847,8 @@ prepare_checkout() {
     sleep 20
     attempt=$((attempt + 1))
   done
+  verify_manifest_baseline
+  verify_github_fallback_revisions
 }
 
 configure_out_volume_ccache() {
@@ -659,6 +911,18 @@ sync_git_lfs_objects() {
   done
 }
 
+apply_github_lfs_asset_component() {
+  if [ ! -x "${GITHUB_LFS_ASSET_COMPONENT_SCRIPT}" ]; then
+    echo "missing GitHub/LFS compatibility component: ${GITHUB_LFS_ASSET_COMPONENT_SCRIPT}" >&2
+    exit 1
+  fi
+  bash "${GITHUB_LFS_ASSET_COMPONENT_SCRIPT}" \
+    --source-root "${OHOS_ROOT}" \
+    --asset-root "${OHOS_LFS_ASSET_ROOT}" \
+    --asset-map "${GITHUB_LFS_ASSET_MAP}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_github_lfs_assets.log"
+}
+
 verify_git_lfs_objects() {
   if ! git lfs version >/dev/null 2>&1; then
     echo "git-lfs not found; cannot verify cached LFS objects" >&2
@@ -688,6 +952,16 @@ verify_git_lfs_objects() {
         missing=1
       fi
     done < <(git -C "${OHOS_ROOT}/${path}" lfs ls-files --name-only)
+
+    while IFS= read -r object_path; do
+      [ -n "${object_path}" ] || continue
+      echo "unresolved former-LFS text stub: ${object_path#${OHOS_ROOT}/}" >&2
+      missing=1
+    done < <(
+      find "${OHOS_ROOT}/${path}" -type f -size -1024c \
+        -exec grep -Il 'This file was originally tracked by Git LFS' {} + \
+        2>/dev/null || true
+    )
   done
 
   if [ "${missing}" -ne 0 ]; then
@@ -705,6 +979,35 @@ remove_under_ohos_root() {
       exit 1
       ;;
   esac
+}
+
+write_profile_stamp_with_retry() {
+  local profile_stamp="$1"
+  local profile="$2"
+  local profile_stamp_dir
+  local profile_stamp_tmp="${profile_stamp}.tmp.$$"
+  local attempt
+  profile_stamp_dir="$(dirname "${profile_stamp}")"
+
+  for ((attempt = 1; attempt <= PROFILE_STAMP_WRITE_RETRIES; attempt++)); do
+    if mkdir -p "${profile_stamp_dir}" 2>/dev/null &&
+       (printf '%s\n' "${profile}" > "${profile_stamp_tmp}" &&
+        mv -f -- "${profile_stamp_tmp}" "${profile_stamp}") 2>/dev/null; then
+      return 0
+    fi
+
+    rm -f -- "${profile_stamp_tmp}" 2>/dev/null || true
+    if [ "${attempt}" -eq "${PROFILE_STAMP_WRITE_RETRIES}" ]; then
+      echo "failed to write profile stamp after ${attempt} attempts: ${profile_stamp}" >&2
+      df -h "${profile_stamp_dir}" >&2 || true
+      return 1
+    fi
+    if [ "${attempt}" -eq 1 ] || [ $((attempt % 10)) -eq 0 ]; then
+      echo "waiting for output-volume block reclaim before writing profile stamp (${attempt}/${PROFILE_STAMP_WRITE_RETRIES})"
+    fi
+    sync || true
+    sleep "${PROFILE_STAMP_WRITE_RETRY_DELAY}"
+  done
 }
 
 remove_under_cache_root() {
@@ -955,13 +1258,18 @@ build_product() {
     echo "device profile changed for ${product}: ${previous_profile} -> ${DEVICE_TYPE_BUILD_PROFILE}; clean product output"
     rm -rf "${OHOS_ROOT}/out/${product}" "${OHOS_ROOT}/out/preloader/${product}"
   fi
-  mkdir -p "${OHOS_ROOT}/out"
-  printf '%s\n' "${DEVICE_TYPE_BUILD_PROFILE}" > "${profile_stamp}"
+  # Docker-backed APFS storage can make space from the product cleanup visible
+  # asynchronously. Preserve the previous stamp until the replacement can be
+  # written and renamed, and give the backing store a bounded reclaim window.
+  write_profile_stamp_with_retry "${profile_stamp}" "${DEVICE_TYPE_BUILD_PROFILE}"
 
   # Recent hb versions persist list-valued arguments in out/hb_args and append
-  # the next invocation's values. Without clearing the generated default here,
+  # the next invocation's values. Without clearing the generated defaults here,
   # sequential product builds can execute Ninja with multiple conflicting -j
-  # values (for example, "-j2 -j8").
+  # values (for example, "-j2 -j8"). A preceding component-only validation can
+  # also leak its build_target into this invocation, causing hb to build only
+  # that component and then fail the --device-type post-image rewrite because
+  # packages/phone/system/etc/param/ohos.para was never produced.
   python3 - "${OHOS_ROOT}/out/hb_args/buildargs.json" <<'PY'
 import json
 import sys
@@ -970,9 +1278,13 @@ from pathlib import Path
 path = Path(sys.argv[1])
 if path.is_file():
     data = json.loads(path.read_text(encoding="utf-8"))
-    ninja_args = data.get("ninja_args")
-    if isinstance(ninja_args, dict) and ninja_args.get("argDefault"):
-        ninja_args["argDefault"] = []
+    changed = False
+    for name in ("ninja_args", "build_target"):
+        argument = data.get(name)
+        if isinstance(argument, dict) and argument.get("argDefault"):
+            argument["argDefault"] = []
+            changed = True
+    if changed:
         path.write_text(
             json.dumps(data, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
@@ -988,6 +1300,7 @@ PY
   local build_args=(
     ./build.sh
     --product-name "${product}"
+    --build-target images
     --ccache
     "--ninja-args=-j${BUILD_JOBS}"
     --load-test-config=false
@@ -1183,9 +1496,12 @@ apply_qemu_absolute_pointer_component() {
 
 apply_qemu_runtime_components() {
   local toggle
-  for toggle in "${QEMU_QOS_COMPONENT}" "${QEMU_VIBRATOR_COMPONENT}"; do
+  for toggle in \
+    "${QEMU_QOS_COMPONENT}" \
+    "${QEMU_VIBRATOR_COMPONENT}" \
+    "${QEMU_ACCESSIBILITY_COMPONENT}"; do
     if [ "${toggle}" != "0" ] && [ "${toggle}" != "1" ]; then
-      echo "QEMU QoS/vibrator component toggles must be 0 or 1" >&2
+      echo "QEMU QoS/vibrator/accessibility component toggles must be 0 or 1" >&2
       exit 2
     fi
   done
@@ -1211,6 +1527,15 @@ apply_qemu_runtime_components() {
     }
     bash "${QEMU_VIBRATOR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_vibrator_component.log"
+  fi
+
+  if [ "${QEMU_ACCESSIBILITY_COMPONENT}" = "1" ]; then
+    [ -f "${QEMU_ACCESSIBILITY_COMPONENT_SCRIPT}" ] || {
+      echo "missing accessibility component: ${QEMU_ACCESSIBILITY_COMPONENT_SCRIPT}" >&2
+      exit 1
+    }
+    bash "${QEMU_ACCESSIBILITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_accessibility_component.log"
   fi
 
   local enable_jsvm=false
@@ -1272,6 +1597,24 @@ apply_release_hap_dependencies_component() {
   fi
   bash "${RELEASE_HAP_DEPENDENCIES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_release_hap_dependencies.log"
+}
+
+apply_sdk_cortex_m_component() {
+  if [ ! -f "${SDK_CORTEX_M_COMPONENT_SCRIPT}" ]; then
+    echo "missing Cortex-M SDK component: ${SDK_CORTEX_M_COMPONENT_SCRIPT}" >&2
+    exit 1
+  fi
+  bash "${SDK_CORTEX_M_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_sdk_cortex_m_component.log"
+}
+
+apply_qemu_audio_component() {
+  if [ ! -f "${QEMU_AUDIO_COMPONENT_SCRIPT}" ]; then
+    echo "missing QEMU audio component: ${QEMU_AUDIO_COMPONENT_SCRIPT}" >&2
+    exit 1
+  fi
+  bash "${QEMU_AUDIO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_component.log"
 }
 
 fix_case_insensitive_selinux_version_header() {
@@ -2158,7 +2501,7 @@ PY
 }
 
 ensure_hvigor_sdkmanager_common() {
-  local version="2.26.3"
+  local version="${SDKMANAGER_COMMON_VERSION}"
   local registry="https://repo.harmonyos.com/npm/"
   local node_bin="${OHOS_ROOT}/prebuilts/build-tools/common/nodejs/current/bin"
   local npm="${node_bin}/npm"
@@ -2182,8 +2525,21 @@ PY
     return
   fi
 
-  local workdir archive
+  local workdir archive actual
   workdir="$(mktemp -d "${CACHE_ROOT}/sdkmanager-common.XXXXXX")"
+  if [ -f "${SDKMANAGER_COMMON_ARTIFACT}" ]; then
+    actual="$(sha512sum "${SDKMANAGER_COMMON_ARTIFACT}" | awk '{print $1}')"
+    if [ "${actual}" != "${SDKMANAGER_COMMON_SHA512}" ]; then
+      echo "sdkmanager-common checksum mismatch: expected ${SDKMANAGER_COMMON_SHA512}, found ${actual}" >&2
+      exit 1
+    fi
+    tar -xzf "${SDKMANAGER_COMMON_ARTIFACT}" -C "${workdir}"
+    rm -rf "${target}"
+    mv "${workdir}/package" "${target}"
+    rm -rf "${workdir}"
+    echo "updated Hvigor sdkmanager-common from pinned artifact: ${installed:-missing} -> ${version}"
+    return
+  fi
   archive="$({
     cd "${workdir}"
     PATH="${node_bin}:${PATH}" "${npm}" pack \
@@ -2271,12 +2627,76 @@ ensure_ohos_sdk_ets_loader_modules() {
   )
 }
 
+write_source_preparation_metadata() {
+  local product relative
+  for product in "${PRODUCTS[@]}"; do
+    case "${product}" in
+      arm64_virt) relative=vendor/ohemu/qemu_arm64_linux_full/config.json ;;
+      x86_64_virt) relative=vendor/ohemu/qemu_x86_64_linux_full/config.json ;;
+      armv7a_virt) relative=vendor/ohemu/qemu_armv7a_linux_full/config.json ;;
+    esac
+    if [ ! -f "${OHOS_ROOT}/${relative}" ]; then
+      echo "prepared source is missing selected product config: ${relative}" >&2
+      exit 1
+    fi
+  done
+
+  (
+    cd "${OHOS_ROOT}"
+    repo manifest -r -o .ohos-qemu-resolved-manifest.xml
+  )
+  python3 - "${OHOS_ROOT}" "${MANIFEST_URL}" "${OHOS_BRANCH}" \
+    "${MANIFEST_REVISION}" "${OHOS_PROJECT_MIRROR}" \
+    "${OHOS_GITHUB_FALLBACK_MAP}" "${GITHUB_LFS_ASSET_MAP}" \
+    "${OHOS_GITHUB_FALLBACK}" \
+    "${DEVICE_TYPE:-default}" "${PRODUCTS[@]}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+resolved = root / ".ohos-qemu-resolved-manifest.xml"
+document = {
+    "schema_version": 1,
+    "manifest_url": sys.argv[2],
+    "manifest_branch": sys.argv[3],
+    "manifest_revision": sys.argv[4],
+    "project_mirror": sys.argv[5],
+    "github_fallback_enabled": sys.argv[8] == "1",
+    "resolved_manifest": resolved.name,
+    "resolved_manifest_sha256": hashlib.sha256(resolved.read_bytes()).hexdigest(),
+    "prepared_device_type": sys.argv[9],
+    "products": sorted(sys.argv[10:]),
+    "qemu_mesa_revision": "995d2506d18924b48db0cf40e6ad7de04fc4e558",
+    "qemu_mesa_version": "21.3.3",
+}
+fallback_map = Path(sys.argv[6])
+asset_map = Path(sys.argv[7])
+if document["github_fallback_enabled"]:
+    document["github_fallback_map_sha256"] = hashlib.sha256(
+        fallback_map.read_bytes()
+    ).hexdigest()
+document["github_lfs_assets_sha256"] = hashlib.sha256(
+    asset_map.read_bytes()
+).hexdigest()
+(root / ".ohos-qemu-source-baseline.json").write_text(
+    json.dumps(document, indent=2, ensure_ascii=False) + "\n",
+    encoding="utf-8",
+)
+PY
+  echo "QEMU source preparation verified for: ${PRODUCTS[*]}"
+}
+
 main() {
   echo "cache root: ${CACHE_ROOT}"
   echo "home: ${CONTAINER_HOME}"
   echo "OpenHarmony root: ${OHOS_ROOT}"
   echo "package root: ${PACKAGE_ROOT}"
-  echo "manifest: ${MANIFEST_URL} ${OHOS_BRANCH} groups=${MANIFEST_GROUPS}"
+  echo "manifest: ${MANIFEST_URL} ${OHOS_BRANCH} @ ${MANIFEST_REVISION} groups=${MANIFEST_GROUPS}"
+  echo "OpenHarmony project mirror: ${OHOS_PROJECT_MIRROR:-disabled}"
+  echo "GitHub fallback map: enabled=${OHOS_GITHUB_FALLBACK} map=${OHOS_GITHUB_FALLBACK_MAP}"
+  echo "OpenHarmony release fallback cache: ${OHOS_FALLBACK_MIRROR_ROOT}"
   echo "repo tool: ${REPO_URL}"
   echo "repo jobs: network=${REPO_JOBS} checkout=${REPO_CHECKOUT_JOBS}"
   echo "npm registry: ${NPM_REGISTRY}"
@@ -2288,8 +2708,10 @@ main() {
   echo "skip prebuilts: ${SKIP_PREBUILTS}"
   echo "no prebuilt sdk: ${NO_PREBUILT_SDK}"
   echo "build only load: ${BUILD_ONLY_LOAD}"
+  echo "prepare only: ${PREPARE_ONLY}"
   echo "skip git lfs: ${SKIP_GIT_LFS}"
   echo "git lfs paths: ${GIT_LFS_PATHS}"
+  echo "GitHub/LFS compatibility cache: ${OHOS_LFS_ASSET_ROOT}"
   echo "qemu fix access_tokenid abi: ${QEMU_FIX_ACCESS_TOKENID_ABI}"
   echo "qemu fix system compat symlinks: ${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}"
   echo "qemu fix case-insensitive selinux VERSION: ${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION}"
@@ -2302,6 +2724,8 @@ main() {
   echo "QEMU absolute pointer component: ${QEMU_ABSOLUTE_POINTER_COMPONENT}"
   echo "QEMU QoS component: ${QEMU_QOS_COMPONENT}"
   echo "QEMU virtual vibrator component: ${QEMU_VIBRATOR_COMPONENT}"
+  echo "QEMU vendor ALSA component: always"
+  echo "QEMU accessibility component: ${QEMU_ACCESSIBILITY_COMPONENT}"
   echo "QEMU JSVM component: ${QEMU_JSVM_COMPONENT}"
   echo "JSVM M144 artifacts: ${JSVM_ENGINE_ARTIFACTS}"
   echo "ccache on native out volume: ${QEMU_CCACHE_ON_OUT_VOLUME}"
@@ -2310,7 +2734,7 @@ main() {
   echo "QEMU 2in1 profile component: ${QEMU_2IN1_PROFILE_COMPONENT}"
   echo "device type: ${DEVICE_TYPE:-default (unset)}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_COMPONENT} absolute_pointer=${QEMU_ABSOLUTE_POINTER_COMPONENT} qos=${QEMU_QOS_COMPONENT} vibrator=${QEMU_VIBRATOR_COMPONENT} jsvm=${QEMU_JSVM_COMPONENT}"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_COMPONENT} absolute_pointer=${QEMU_ABSOLUTE_POINTER_COMPONENT} qos=${QEMU_QOS_COMPONENT} vibrator=${QEMU_VIBRATOR_COMPONENT} audio=1 accessibility=${QEMU_ACCESSIBILITY_COMPONENT} jsvm=${QEMU_JSVM_COMPONENT}"
 
   raise_nofile_limit
   install_deps
@@ -2322,6 +2746,7 @@ main() {
   prepare_checkout
   configure_out_volume_ccache
   sync_git_lfs_objects
+  apply_github_lfs_asset_component
   verify_git_lfs_objects
   prepare_ets12_separate_npm_install
   trap restore_ets12_prebuilts_config EXIT
@@ -2341,6 +2766,8 @@ main() {
   configure_qemu_device_profile
   apply_qemu_runtime_components
   apply_release_hap_dependencies_component
+  apply_sdk_cortex_m_component
+  apply_qemu_audio_component
   apply_standard_vpn_component
   apply_qemu_absolute_pointer_component
   fix_case_insensitive_selinux_version_header
@@ -2354,6 +2781,13 @@ main() {
   configure_qemu_product_features
   ensure_flexlexer_header
   clean_corrupt_hvigor_state
+  write_source_preparation_metadata
+
+  if [ "${PREPARE_ONLY}" = "1" ]; then
+    echo
+    echo "source preparation complete; build traversal was not started"
+    return
+  fi
 
   local product
   for product in "${PRODUCTS[@]}"; do

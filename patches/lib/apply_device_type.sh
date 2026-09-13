@@ -10,14 +10,16 @@ shift
 
 SOURCE_ROOT=
 ARTIFACT_ROOT=
+LFS_ASSET_ROOT=
 PRODUCTS=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --source-root) SOURCE_ROOT="${2:-}"; shift 2 ;;
     --artifact-root) ARTIFACT_ROOT="${2:-}"; shift 2 ;;
+    --lfs-asset-root) LFS_ASSET_ROOT="${2:-}"; shift 2 ;;
     --product) PRODUCTS+=("${2:-}"); shift 2 ;;
     -h|--help)
-      echo "usage: apply.sh --source-root ROOT --artifact-root M144_DIR [--product PRODUCT ...]"
+      echo "usage: apply.sh --source-root ROOT --artifact-root M144_DIR --lfs-asset-root LFS_CACHE [--product PRODUCT ...]"
       exit 0
       ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -25,6 +27,7 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "${SOURCE_ROOT}" ] || { echo "--source-root is required" >&2; exit 2; }
 [ -n "${ARTIFACT_ROOT}" ] || { echo "--artifact-root is required" >&2; exit 2; }
+[ -n "${LFS_ASSET_ROOT}" ] || { echo "--lfs-asset-root is required" >&2; exit 2; }
 if [ "${#PRODUCTS[@]}" -eq 0 ]; then
   PRODUCTS=(armv7a_virt arm64_virt x86_64_virt)
 fi
@@ -50,12 +53,21 @@ for product in "${PRODUCTS[@]}"; do
   PROFILE_ARGS+=(--product "${product}")
   VPN_ARGS+=(--product "${product}")
 done
+bash "${PATCH_ROOT}/common/build/github_lfs_assets/apply.sh" \
+  --source-root "${SOURCE_ROOT}" \
+  --asset-root "${LFS_ASSET_ROOT}"
 bash "${PATCH_ROOT}/${DEVICE_TYPE}/product_profile/apply.sh" "${PROFILE_ARGS[@]}"
 bash "${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh" \
   --source-root "${SOURCE_ROOT}"
 bash "${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh" \
   --source-root "${SOURCE_ROOT}"
+bash "${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh" \
+  --source-root "${SOURCE_ROOT}"
 bash "${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh" \
+  --source-root "${SOURCE_ROOT}"
+bash "${PATCH_ROOT}/common/third_party/musl/cortex_m_sdk/apply.sh" \
+  --source-root "${SOURCE_ROOT}"
+bash "${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh" \
   --source-root "${SOURCE_ROOT}"
 bash "${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh" \
   --source-root "${SOURCE_ROOT}"

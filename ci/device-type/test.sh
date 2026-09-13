@@ -14,12 +14,23 @@ REPACKAGE="${REPO_ROOT}/scripts/repackage_device_type.sh"
 VERIFY="${REPO_ROOT}/scripts/verify_device_type_package.sh"
 PROFILE_COMPONENT="${REPO_ROOT}/patches/2in1/product_profile/apply.sh"
 PHONE_PROFILE_COMPONENT="${REPO_ROOT}/patches/phone/product_profile/apply.sh"
+BUILD_STANDARD="${REPO_ROOT}/scripts/build_standard_qemu_in_docker.sh"
+MUSL_SDK_COMPONENT="${REPO_ROOT}/patches/common/third_party/musl/cortex_m_sdk/apply.sh"
 
 if [ ! -x "${REPACKAGE}" ] || [ ! -x "${VERIFY}" ] || \
-   [ ! -x "${PROFILE_COMPONENT}" ] || [ ! -x "${PHONE_PROFILE_COMPONENT}" ]; then
+   [ ! -x "${PROFILE_COMPONENT}" ] || [ ! -x "${PHONE_PROFILE_COMPONENT}" ] || \
+   [ ! -x "${BUILD_STANDARD}" ] || [ ! -x "${MUSL_SDK_COMPONENT}" ]; then
   echo "missing repackage/verify scripts under ${REPO_ROOT}/scripts" >&2
   exit 1
 fi
+
+# A component-only build interrupted before hb removes out/hb_args can leak its
+# target into the next image build. The production runner must both clear that
+# persisted list and request the image target explicitly.
+grep -Fq 'for name in ("ninja_args", "build_target")' "${BUILD_STANDARD}"
+grep -Fq -- '--build-target images' "${BUILD_STANDARD}"
+grep -Fq 'write_profile_stamp_with_retry' "${BUILD_STANDARD}"
+grep -Fq 'mv -f -- "${profile_stamp_tmp}" "${profile_stamp}"' "${BUILD_STANDARD}"
 
 # Prefer Homebrew e2fsprogs on macOS.
 if ! command -v debugfs >/dev/null 2>&1 || ! command -v mke2fs >/dev/null 2>&1; then
@@ -41,6 +52,37 @@ done
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ohos-device-type-test.XXXXXX")"
 cleanup() { rm -rf "${WORKDIR}"; }
 trap cleanup EXIT
+
+# Ubuntu invokes musl's no-shebang porting action with dash. Verify the
+# component keeps the Cortex-M override POSIX-compatible and idempotent.
+MUSL_FIXTURE="${WORKDIR}/musl-fixture"
+mkdir -p "${MUSL_FIXTURE}/third_party/musl/scripts" \
+  "${MUSL_FIXTURE}/third_party/musl/crt/linux" \
+  "${MUSL_FIXTURE}/third_party/musl/crt/cortex_m" \
+  "${MUSL_FIXTURE}/ported/crt"
+cat >"${MUSL_FIXTURE}/third_party/musl/scripts/porting.sh" <<'EOF'
+cp -rfp ${SRC_DIR}/* ${DST_DIR}
+cp -rfp ${SRC_DIR}/src/internal/linux/* ${DST_DIR}/src/internal
+cp -rfp ${SRC_DIR}/src/hook/linux/* ${DST_DIR}/src/hook
+cp -rfp ${SRC_DIR}/crt/linux/* ${DST_DIR}/crt
+if [ "${ARCH}" == "cortex_m" ]; then
+    cp -rfp ${SRC_DIR}/crt/cortex_m/crtplus.c ${DST_DIR}/crt/crtplus.c
+fi
+cp -rfp ${SRC_DIR}/src/linux/arm/linux/* ${DST_DIR}/src/linux/arm
+EOF
+chmod +x "${MUSL_FIXTURE}/third_party/musl/scripts/porting.sh"
+printf 'linux crtplus\n' >"${MUSL_FIXTURE}/third_party/musl/crt/linux/crtplus.c"
+: >"${MUSL_FIXTURE}/third_party/musl/crt/cortex_m/crtplus.c"
+git -C "${MUSL_FIXTURE}" init -q
+bash "${MUSL_SDK_COMPONENT}" --source-root "${MUSL_FIXTURE}" >/dev/null
+bash "${MUSL_SDK_COMPONENT}" --source-root "${MUSL_FIXTURE}" >/dev/null
+test "$(grep -c 'ARCH.* = .*cortex_m' \
+  "${MUSL_FIXTURE}/third_party/musl/scripts/porting.sh")" -eq 1
+SRC_DIR="${MUSL_FIXTURE}/third_party/musl" \
+DST_DIR="${MUSL_FIXTURE}/ported" ARCH=cortex_m \
+  sh -c "$(sed -n '5,7p' \
+    "${MUSL_FIXTURE}/third_party/musl/scripts/porting.sh")"
+test ! -s "${MUSL_FIXTURE}/ported/crt/crtplus.c"
 
 # Verify that the source component derives a usable profile, maps current Wukong,
 # preserves the QEMU display VDI flags, and can be cleanly disabled.
@@ -235,6 +277,16 @@ then
   exit 1
 fi
 
+# A clean upstream checkout has arm64/x86_64 products but not the optional
+# armv7a product created by this repository. Selected-product operations must
+# not traverse into that missing optional config (regression for issue log
+# ae599fa5cf4aab867a437904b3283655).
+rm -rf "${FIXTURE_ROOT}/vendor/ohemu/qemu_armv7a_linux_full"
+bash "${PROFILE_COMPONENT}" \
+  --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
+bash "${PHONE_PROFILE_COMPONENT}" \
+  --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
+
 INPUT_PKG="${WORKDIR}/openharmony-qemu-arm64-arm64_virt"
 OUTPUT_ROOT="${WORKDIR}/out"
 mkdir -p "${INPUT_PKG}/images" "${INPUT_PKG}/launch"
@@ -326,12 +378,26 @@ for dir in \
   system/app/com.ohos.launcher \
   system/app/com.ohos.systemui \
   system/lib64 \
-  system/bin
+  system/bin \
+  system/bin/cli_tool \
+  system/bin/cli_tool/executable
 do
   debugfs -w -R "mkdir ${dir}" "${OUT_PKG}/images/system.img" >/dev/null 2>&1 || true
 done
 EMPTY_MARKER="${WORKDIR}/empty-marker"
 : > "${EMPTY_MARKER}"
+A11Y_MANAGER="${WORKDIR}/ohos-a11yManager"
+cat > "${A11Y_MANAGER}" <<'EOF'
+ability-enable
+ability-disable
+--name
+--capabilities
+qemu_accessibility_cli
+ohos.permission.WRITE_ACCESSIBILITY_CONFIG
+GetAccessTokenId
+SetSelfTokenID
+Failed to initialize the QEMU accessibility token
+EOF
 VIBRATOR_ELF="${WORKDIR}/vibrator.so"
 JSVM_ELF="${WORKDIR}/libjsvm.so"
 V8_ELF="${WORKDIR}/libv8_shared.so"
@@ -379,6 +445,9 @@ for path in \
 do
   debugfs -w -R "write ${EMPTY_MARKER} ${path}" "${OUT_PKG}/images/system.img" >/dev/null
 done
+debugfs -w -R \
+  "write ${A11Y_MANAGER} /system/bin/cli_tool/executable/ohos-a11yManager" \
+  "${OUT_PKG}/images/system.img" >/dev/null
 debugfs -w -R "write ${JSVM_ELF} /system/lib64/libjsvm.so" \
   "${OUT_PKG}/images/system.img" >/dev/null
 debugfs -w -R "write ${V8_ELF} /system/lib64/libv8_shared.so" \
@@ -414,9 +483,19 @@ debugfs -w -R "write ${PRODUCT_VIRT_PARA} /etc/param/product_virt.para" \
   "${SYS_PROD_IMG}" >/dev/null
 cat >"${OUT_PKG}/launch/qemu_run.sh" <<'EOF'
 #!/usr/bin/env bash
-exec qemu-system-aarch64 -device virtio-tablet-pci
+exec qemu-system-aarch64 -device virtio-tablet-pci "$@"
 EOF
 chmod +x "${OUT_PKG}/launch/qemu_run.sh"
+cat >"${OUT_PKG}/launch/linux.sh" <<'EOF'
+#!/usr/bin/env bash
+if [ "${1:-}" = "--a11y" ]; then
+  shift
+  set -- -device virtio-multitouch-pci \
+    -qmp unix:/tmp/openharmony-qemu-a11y.sock,server=on,wait=off "$@"
+fi
+exec "$(dirname "$0")/qemu_run.sh" "$@"
+EOF
+chmod +x "${OUT_PKG}/launch/linux.sh"
 python3 - "${OUT_PKG}" <<'PY'
 import json
 import sys
@@ -428,6 +507,7 @@ manifest = json.loads(manifest_path.read_text())
 manifest["device_type_profile"] = "qemu_2in1_full_source"
 manifest["device_type_source"] = "source_product_inherit"
 manifest.setdefault("launcher", {})["pointer_device_default"] = "virtio-tablet-pci"
+manifest["launcher"].update({"accessibility": True, "qmp_unix": True})
 manifest["capabilities"].update({
     "absolute_pointer_sync": True,
     "thread_qos": True,
@@ -436,6 +516,9 @@ manifest["capabilities"].update({
     "jsvm": True,
     "jsvm_engine": "ArkWeb M144 V8",
     "standard_vpn": True,
+    "accessibility_test": True,
+    "accessibility_cli": True,
+    "virtio_multitouch": True,
     "device_type_profile": "qemu_2in1_full_source",
     "device_type_param_only": False,
     "device_type_full": True,
@@ -500,6 +583,7 @@ manifest["device_type"] = "phone"
 manifest["device_type_profile"] = "qemu_phone_full_source"
 manifest["device_type_source"] = "source_product_inherit"
 manifest.setdefault("launcher", {})["pointer_device_default"] = "virtio-tablet-pci"
+manifest["launcher"].update({"accessibility": True, "qmp_unix": True})
 manifest["capabilities"].update({
     "absolute_pointer_sync": True,
     "thread_qos": True,
@@ -508,6 +592,9 @@ manifest["capabilities"].update({
     "jsvm": True,
     "jsvm_engine": "ArkWeb M144 V8",
     "standard_vpn": True,
+    "accessibility_test": True,
+    "accessibility_cli": True,
+    "virtio_multitouch": True,
     "device_type": "phone",
     "device_type_profile": "qemu_phone_full_source",
     "device_type_param_only": False,

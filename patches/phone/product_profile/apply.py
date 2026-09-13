@@ -253,7 +253,14 @@ def any_product_enabled(root: Path) -> bool:
         "vendor/ohemu/virt/virt_2in1_full.json",
     }
     for relative in PRODUCT_CONFIGS.values():
-        document = load_json(root / relative)
+        path = root / relative
+        # armv7a_virt is an optional product created by the QEMU patch set.
+        # Do not make an arm64/x86_64-only build depend on that unselected
+        # product. configure_product() above remains the strict check for an
+        # explicitly selected product.
+        if not path.is_file():
+            continue
+        document = load_json(path)
         if managed_profiles.intersection(document.get("inherit", [])):
             return True
     return False

@@ -16,10 +16,19 @@ on:
       - "ci/install/**"
       - "ci/make-elf-fixture.py"
       - "ci/qemu-smoke/**"
+      - "ci/device-type/**"
       - "ci/standard-vpn/**"
-      - "overlays/standard_qemu_vpn/**"
+      - "patches/**"
+      - "scripts/build_standard_qemu_in_docker.sh"
       - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
+      - "scripts/openharmony_7_0_release_github_fallback.tsv"
+      - "scripts/prepare_ohos_7_0_release_cache.sh"
+      - "scripts/prepare_ohos_7_0_release_lfs_cache.sh"
+      - "scripts/prepare_qemu_mesa_revision_cache.sh"
+      - "scripts/run_2in1_full_build_docker.sh"
+      - "scripts/run_device_type_matrix_build_docker.sh"
+      - "scripts/verify_device_type_package.sh"
       - "scripts/verify_runtime_elf_contract.py"
   pull_request:
     paths:
@@ -28,10 +37,19 @@ on:
       - "ci/install/**"
       - "ci/make-elf-fixture.py"
       - "ci/qemu-smoke/**"
+      - "ci/device-type/**"
       - "ci/standard-vpn/**"
-      - "overlays/standard_qemu_vpn/**"
+      - "patches/**"
+      - "scripts/build_standard_qemu_in_docker.sh"
       - "scripts/install.sh"
       - "scripts/package_standard_qemu.sh"
+      - "scripts/openharmony_7_0_release_github_fallback.tsv"
+      - "scripts/prepare_ohos_7_0_release_cache.sh"
+      - "scripts/prepare_ohos_7_0_release_lfs_cache.sh"
+      - "scripts/prepare_qemu_mesa_revision_cache.sh"
+      - "scripts/run_2in1_full_build_docker.sh"
+      - "scripts/run_device_type_matrix_build_docker.sh"
+      - "scripts/verify_device_type_package.sh"
       - "scripts/verify_runtime_elf_contract.py"
 
 permissions:
@@ -132,6 +150,7 @@ jobs:
         shell: bash
         run: |
           bash ci/install/test.sh
+          bash ci/device-type/test.sh
           bash ci/qemu-smoke/test.sh
 
       - name: Download QEMU package from Release

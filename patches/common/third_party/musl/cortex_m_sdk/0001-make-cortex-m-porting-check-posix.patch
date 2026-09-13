@@ -1,0 +1,13 @@
+diff --git a/third_party/musl/scripts/porting.sh b/third_party/musl/scripts/porting.sh
+index f57983321..3d94fb3f4 100755
+--- a/third_party/musl/scripts/porting.sh
++++ b/third_party/musl/scripts/porting.sh
+@@ -35,7 +35,7 @@ cp -rfp ${SRC_DIR}/* ${DST_DIR}
+ cp -rfp ${SRC_DIR}/src/internal/linux/* ${DST_DIR}/src/internal
+ cp -rfp ${SRC_DIR}/src/hook/linux/* ${DST_DIR}/src/hook
+ cp -rfp ${SRC_DIR}/crt/linux/* ${DST_DIR}/crt
+-if [ "${ARCH}" == "cortex_m" ]; then
++if [ "${ARCH}" = "cortex_m" ]; then
+     cp -rfp ${SRC_DIR}/crt/cortex_m/crtplus.c ${DST_DIR}/crt/crtplus.c
+ fi
+ cp -rfp ${SRC_DIR}/src/linux/arm/linux/* ${DST_DIR}/src/linux/arm

@@ -4,7 +4,8 @@ Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 
 ## Requirements
 
-- QEMU installed and available in `PATH`.
+- QEMU installed and available in `PATH` (`8.1+` for accessibility QMP
+  multitouch events).
 - Bash, `curl` or `wget`, and `tar`.
 - Windows installation must be run from Git Bash, MSYS2, or Cygwin.
 - Linux x86_64 should provide readable and writable `/dev/kvm`. TCG is too slow
@@ -78,6 +79,9 @@ CLI flags override environment variables, which override package defaults:
 # Acceleration and extra QEMU args
 ./launch/linux.sh --accel tcg -- -serial mon:stdio
 
+# Accessibility testing: virtio multitouch + QMP control socket
+./launch/linux.sh --headless --a11y --qmp-socket /tmp/ohos-a11y.sock
+
 # Override the CPU model on an AMD host using Windows WHPX
 powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -Accel whpx
 ```
@@ -93,6 +97,9 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `-c, --connect` / `--hdc-port` | `QEMU_HDC_HOST_PORT` | `5555` |
 | `--vnc-display N` | `QEMU_VNC_DISPLAY` | `21` (TCP 5921) |
 | `--serial-port PORT` | `QEMU_SERIAL_PORT` | unset |
+| `--a11y` | `QEMU_ACCESSIBILITY` | `0` |
+| `--qmp-socket PATH` | `QEMU_QMP_SOCKET` | `/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock` with `--a11y` |
+| Windows `-QmpPort PORT` | `QEMU_QMP_PORT` | `4445` with `-A11y` |
 | `-a, --accel` | `QEMU_ACCEL` | `auto` (`hvf`/`kvm`/`tcg`/`whpx`) |
 | `-q, --qemu PATH` | `QEMU_BIN` | product `qemu-system-*` |
 | `-- ...` | `QEMU_EXTRA_ARGS` | empty |
@@ -112,6 +119,43 @@ The ARM64 launcher defaults to `QEMU_ACCEL=auto`, probes whether HVF is usable,
 and falls back to TCG when necessary. Set `QEMU_ACCEL=hvf` or
 `QEMU_ACCEL=tcg` to force either mode.
 
+For accessibility tests, `--a11y` adds `virtio-multitouch-pci` and enables a
+QMP server. After installing a HAP containing an `AccessibilityExtensionAbility`,
+switch HDC to root mode and enable it through the guest's built-in QEMU CLI:
+
+```bash
+hdc smode
+hdc tconn 127.0.0.1:5555
+hdc shell /system/bin/cli_tool/executable/ohos-a11yManager ability-enable \
+  --name com.example.app/AccessibilityExtAbility \
+  --capabilities 7
+```
+
+The capability mask must be a subset of the extension's
+`accessibilityCapabilities` metadata. The value `7` matches an extension that
+declares `retrieve`, `touchGuide`, and `gesture`.
+
+The package manifest reports this complete host/guest path as
+`capabilities.accessibility_test=true` only when the generic CLI is present in
+`system.img`.
+
+For the `ohos-native-bindings` accessibility E2E, the packaged launcher and
+system CLI replace the manual `QEMU_EXTRA_ARGS` and uploaded
+`accessibility-enable` helper from
+[PR #13](https://github.com/harmony-contrib/ohos-qemu/pull/13):
+
+```bash
+export QEMU_QMP_SOCKET=/tmp/ohos-a11y.sock
+export ACCESSIBILITY_E2E_ENABLE_COMMAND=\
+'/system/bin/cli_tool/executable/ohos-a11yManager ability-enable '\
+'--name com.richerfu.ohos_example/AccessibilityE2ETestExtension --capabilities 7'
+pnpm run test:ui:accessibility -- --arch x64  # use arm64 for an ARM64 guest
+```
+
+The extension still has to be enabled after its HAP is installed: its bundle
+and ability do not exist when QEMU starts. The E2E runner performs that step by
+executing `ACCESSIBILITY_E2E_ENABLE_COMMAND` after installation.
+
 ## Source capability components
 
 Source builds use a component-owned patch tree under [`patches`](./patches).
@@ -122,11 +166,13 @@ commands are not retained as compatibility wrappers:
 bash patches/phone/apply.sh \
   --source-root /path/to/openharmony \
   --artifact-root /path/to/jsvm-m144 \
+  --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 
 bash patches/2in1/apply.sh \
   --source-root /path/to/openharmony \
   --artifact-root /path/to/jsvm-m144 \
+  --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 ```
 
@@ -134,9 +180,12 @@ Every leaf component has its own `apply.sh`, and each stable source change is
 an independently reviewable numbered patch. The aggregate entries apply, in
 dependency order:
 
+- pinned former-LFS asset restoration for GitHub mirror checkouts;
 - the generated phone or 2in1 product profile;
 - QoS authority kernel support and `qos_auth` integration;
 - a stateful QEMU vibrator product VDI;
+- a generic `ohos-a11yManager` entry for enabling an installed test
+  `AccessibilityExtensionAbility` without pushing a helper binary;
 - release-HAP dependency handling that skips registry access only when no
   runtime package dependency is declared;
 - absolute-pointer synchronization and the standard VPN/GPU stack;
@@ -251,7 +300,9 @@ changes PID or emits a new fault log.
 ## Phone and 2in1 deviceType package matrix
 
 The matrix entry point builds both full source profiles for all three supported
-standard QEMU architectures and emits exactly six suffixed packages:
+standard QEMU architectures and emits exactly six suffixed packages. The
+source baseline is the `OpenHarmony-7.0-Release` manifest pinned at
+`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`; `master` is not used:
 
 ```bash
 PACKAGE_ROOT=/Volumes/PSSD/qemu/packages/device-matrix \
@@ -261,15 +312,23 @@ scripts/run_device_type_matrix_build_docker.sh
 
 The matrix is `phone,2in1` × `armv7a_virt,arm64_virt,x86_64_virt`. It is
 restartable (`MATRIX_SKIP_EXISTING=1` by default), strictly verifies every
-package, and writes `SHA256SUMS` plus `matrix-manifest.json`. It uses one native
-Linux source/out volume and defaults to pruning `out/<product>` immediately
-after its package is archived, while retaining ccache and kernel objects. This
+package, and writes `SHA256SUMS` plus `matrix-manifest.json`. Before traversing
+the six builds it initializes the pinned source, applies the complete patch set
+for all selected products, validates the prepared product configurations, and
+records a resolved revision manifest. It uses one native Linux source/out
+volume and defaults to pruning `out/<product>` immediately
+after its package is archived, while retaining ccache and kernel objects. The
+matrix caps ccache at 4 GiB by default so image assembly retains disk headroom;
+set `CCACHE_MAXSIZE` explicitly on hosts with more space. This
 keeps the six-package build usable on hosts that cannot hold six complete Ninja
 trees at once. `PACKAGE_ROOT` may be placed outside `CACHE_ROOT`; the Docker
 runner bind-mounts it separately, which is useful for temporary package staging
 when the build cache disk is nearly full. Set
 `PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0` only when enough Docker disk space is
-available.
+available. When switching between phone and 2in1 profiles, the builder writes
+the profile stamp atomically and retries while Docker-backed storage makes
+newly reclaimed blocks visible. The retry window can be adjusted with
+`PROFILE_STAMP_WRITE_RETRIES` and `PROFILE_STAMP_WRITE_RETRY_DELAY`.
 
 Complete phone packages inherit a current-tree-compatible profile derived from
 `productdefine/common/inherit/phone.json`; complete 2in1 packages use the same
@@ -293,16 +352,58 @@ scripts/run_2in1_full_build_docker.sh
 ```
 
 The runner mounts the checkout and `out/` on the case-sensitive Docker volumes
-`ohos-qemu-2in1-source` and `ohos-qemu-2in1-out`. The source volume is seeded
-once from the host checkout (excluding its `out/`), while the output volume is
-reused incrementally. This is required on macOS: Taihe generates case-distinct
+`ohos-qemu-7_0-release-source` and `ohos-qemu-7_0-release-out`. By default the
+source volume is initialized directly from the pinned 7.0 Release manifest;
+the host checkout is not copied into it. The output volume is reused
+incrementally. This is required on macOS: Taihe generates case-distinct
 paths such as `SourceType` and `sourceType`, and a full compile can exhaust
 VirtioFS file handles while reading the checkout. Ccache and its temporary
-files also live in the output volume.
+files also live in the output volume. The QEMU runner builds the pinned SDK by
+default because ArkWeb M144 consumes its generated NDK libraries. A component
+patch makes musl's Cortex-M porting script POSIX-safe so Ubuntu's dash shell
+reliably installs the intended empty `crtplus.c` and the SDK no longer fails on
+`__aeabi_unwind_cpp_pr0`. Set `NO_PREBUILT_SDK=1` only for products that do not
+consume the generated SDK.
 
-Set `DOCKER_SOURCE_REFRESH=1` for one invocation after intentionally updating
-the host OpenHarmony checkout. The refresh preserves the separate output
-volume, so valid Ninja objects remain reusable when their inputs are unchanged.
+Although the immutable upstream manifest declares GitCode project remotes,
+the runner rewrites those URLs to the official `github.com/openharmony`
+mirrors by default. Because the GitHub organization is a read-only mirror and
+does not expose the 7.0 branch for every project, the checked-in fallback map
+pins affected repositories to their immutable `OpenHarmony-v7.0-Release`
+commit. All 35 fallback repositories are fetched once on the host as shallow
+bare caches in `$CACHE_ROOT/git-mirrors/openharmony-7.0-release`; 25 come from
+GitHub and only the 10 repositories without a usable GitHub release tag come
+directly from GitCode. Docker reads their exact peeled commits through a local
+remote, avoiding both moving branches and annotated-tag checkout ambiguity.
+Some 7.0 GitHub mirrors also expose former Git LFS files as explanatory text
+stubs that `git lfs pull` cannot discover. A second pinned map caches the 77
+affected objects (about 724 MiB) concurrently on the host, verifies their
+OID/size, and restores them before source-profile or architecture traversal.
+This includes release HAPs, ArkWebCore, Arkoala packages, ICU, and phone-number
+data; archive formats are checked before the build starts. The cache defaults
+to `$CACHE_ROOT/artifacts/openharmony-7.0-lfs`, with 10 download jobs controlled
+by `LFS_JOBS`.
+The QEMU GPU source build additionally needs historical Mesa 21.3.3 commit
+`995d2506d18924b48db0cf40e6ad7de04fc4e558`, which is no longer present in a
+fresh 7.0 GitHub-mirror checkout. The host runner fetches that exact commit
+from GitHub into `$CACHE_ROOT/git-mirrors/qemu-mesa`, validates its `VERSION`,
+and the Mesa component imports it before build-graph traversal. Ninja therefore
+never performs an unpinned network fetch.
+Set `OHOS_PROJECT_MIRROR` to a path-compatible
+mirror, or to an empty value to disable rewriting and the fallback manifest.
+Source synchronization defaults to 16 network jobs and 4 checkout jobs; tune
+them with `REPO_JOBS` and `REPO_CHECKOUT_JOBS`. The host fallback cache uses 10
+parallel jobs by default (`FALLBACK_JOBS`).
+The documentation-only `docs` project is explicitly omitted from this build
+manifest because it is not an input to any of the six QEMU images and its
+multi-gigabyte Git history is not needed for product compilation.
+GitHub domains are also added to the build container's `NO_PROXY` list by
+default so multi-gigabyte Git packs do not traverse a local HTTP proxy; adjust
+that list with `OHOS_GITHUB_NO_PROXY` when required by the host network.
+
+Set `DOCKER_SOURCE_SEED=1 DOCKER_SOURCE_REFRESH=1` only when intentionally
+seeding from a compatible host OpenHarmony checkout. A reused source volume is
+rejected when its manifest commit differs from the pinned revision.
 
 Each complete package contains `device-profile.json`, including the upstream
 2in1 profile hash, effective inherit chain, resolved part list, compatibility

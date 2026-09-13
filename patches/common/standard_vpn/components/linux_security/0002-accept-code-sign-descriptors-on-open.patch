@@ -1,0 +1,31 @@
+diff --git a/kernel/linux/linux-6.6/fs/verity/open.c b/kernel/linux/linux-6.6/fs/verity/open.c
+--- a/kernel/linux/linux-6.6/fs/verity/open.c
++++ b/kernel/linux/linux-6.6/fs/verity/open.c
+@@ -292,12 +292,27 @@ static bool validate_fsverity_descriptor(struct inode *inode,
+ 					 const struct fsverity_descriptor *desc,
+ 					 size_t desc_size)
+ {
++	int err;
++
+ 	if (desc_size < sizeof(*desc)) {
+ 		fsverity_err(inode, "Unrecognized descriptor size: %zu bytes",
+ 			     desc_size);
+ 		return false;
+ 	}
+
++	/*
++	 * OpenHarmony code signing extends the standard fs-verity descriptor.
++	 * Linux 6.6 validates descriptors before fsverity_create_info(), so the
++	 * code-sign hook must get the same early bypass it had in Linux 5.10.
++	 */
++	err = code_sign_check_descriptor_hook(inode, desc);
++	if (err < 0) {
++		fsverity_err(inode, "Invalid code sign descriptor.");
++		return false;
++	} else if (err == 1) {
++		return true;
++	}
++
+ 	if (desc->version != 1) {
+ 		fsverity_err(inode, "Unrecognized descriptor version: %u",
+ 			     desc->version);

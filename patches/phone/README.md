@@ -6,5 +6,7 @@ artifact directory.
 
 ```sh
 bash patches/phone/apply.sh --source-root /path/to/openharmony \
-  --artifact-root /path/to/jsvm-m144 --product arm64_virt
+  --artifact-root /path/to/jsvm-m144 \
+  --lfs-asset-root /path/to/openharmony-7.0-lfs \
+  --product arm64_virt
 ```
