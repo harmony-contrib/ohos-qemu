@@ -37,7 +37,7 @@ if [ -z "${SOURCE_ROOT}" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMPONENTS=(device_qemu vendor_ohemu mesa3d kernel libvpx build_whitelist)
+COMPONENTS=(device_qemu vendor_ohemu mesa3d kernel libvpx build_whitelist appspawn_cleanup)
 for component in "${COMPONENTS[@]}"; do
   bash "${SCRIPT_DIR}/components/${component}/apply.sh" \
     --source-root "${SOURCE_ROOT}"

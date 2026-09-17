@@ -182,6 +182,7 @@ QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_
 QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
 QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh"
 QEMU_ACCESSIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh"
+NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/native_child_process/apply.sh"
 QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
 RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
 SDK_CORTEX_M_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/musl/cortex_m_sdk/apply.sh"
@@ -1308,12 +1309,14 @@ PY
   )
   if [ -n "${DEVICE_TYPE}" ]; then
     # Ensure GN sees device_type at compile time (init ohos.para generation).
-    # --device-type is a post-image rewrite in hb and cannot run in
-    # --build-only-load mode because packages/phone/.../ohos.para does not yet
-    # exist.  The packager performs the same final-image rewrite as a verified
-    # step, while this GN arg keeps the compile-time device type available.
+    # --device-type is a post-image rewrite in hb. In load-only mode explicitly
+    # select its no-op "default" value: hb can otherwise inherit the profile's
+    # 2in1 device type and try to rewrite ohos.para before it has been built.
+    # The GN argument still selects the compile-time device type.
     build_args+=(--gn-args "device_type=${DEVICE_TYPE}")
-    if [ "${BUILD_ONLY_LOAD}" != "1" ]; then
+    if [ "${BUILD_ONLY_LOAD}" = "1" ]; then
+      build_args+=(--device-type default)
+    else
       build_args+=(--device-type "${DEVICE_TYPE}")
     fi
   fi
@@ -2765,6 +2768,8 @@ main() {
   apply_armv7a_product_component
   configure_qemu_device_profile
   apply_qemu_runtime_components
+  bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_native_child_process_component.log"
   apply_release_hap_dependencies_component
   apply_sdk_cortex_m_component
   apply_qemu_audio_component

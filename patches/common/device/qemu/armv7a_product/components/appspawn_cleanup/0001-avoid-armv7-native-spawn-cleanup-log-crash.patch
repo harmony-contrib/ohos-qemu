@@ -1,0 +1,13 @@
+--- a/base/startup/appspawn/modules/common/appspawn_cgroup.c
++++ b/base/startup/appspawn/modules/common/appspawn_cgroup.c
+@@ -185,6 +185,8 @@ APPSPAWN_STATIC int ProcessMgrRemoveApp(const AppSpawnMgr *content, const AppS
+     KillProcessesByCGroup(procPath, (AppSpawnMgr *)content, appInfo);
+     ret = rmdir(cgroupPath);
+-    APPSPAWN_CHECK(ret == 0, return APPSPAWN_ERROR_FILE_RMDIR_FAIL,
+-        "Failed to rmdir in ProcessMgrRemoveApp %{public}s errno: %{public}d", cgroupPath, errno);
++    // On 32-bit guests, logging this failure through HiLog can crash nativespawn.
++    if (ret != 0) {
++        return APPSPAWN_ERROR_FILE_RMDIR_FAIL;
++    }
+     return ret;
+ }

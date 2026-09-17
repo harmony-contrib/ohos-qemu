@@ -145,8 +145,8 @@ if [ "${MATRIX_PREPARE_SOURCE}" = "1" ]; then
 fi
 
 # Build both profiles for one architecture before pruning its product output.
-# Profile switching is incremental, so this keeps the expensive common object
-# graph while still limiting peak disk use to one architecture.
+# A profile switch deliberately removes that product's old output graph, while
+# the final profile is pruned after packaging to limit peak disk use.
 for product in ${PRODUCTS}; do
   device_type_index=0
   for device_type in ${DEVICE_TYPES}; do

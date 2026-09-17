@@ -63,6 +63,12 @@ bash "${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh" \
   --source-root "${SOURCE_ROOT}"
 bash "${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh" \
   --source-root "${SOURCE_ROOT}"
+bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/native_child_process/apply.sh" \
+  --source-root "${SOURCE_ROOT}"
+if [[ " ${PRODUCTS[*]} " == *" armv7a_virt "* ]]; then
+  bash "${PATCH_ROOT}/common/device/qemu/armv7a_product/components/compact_child_args/apply.sh" \
+    --source-root "${SOURCE_ROOT}"
+fi
 bash "${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh" \
   --source-root "${SOURCE_ROOT}"
 bash "${PATCH_ROOT}/common/third_party/musl/cortex_m_sdk/apply.sh" \

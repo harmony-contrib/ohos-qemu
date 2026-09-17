@@ -337,6 +337,17 @@ display adaptations, and both carry auditable resolved-part evidence.
 
 ## 2in1 deviceType packages
 
+Multi-package changes must pass runtime validation on the first newly packaged
+artifact before the remaining packages are built; see [AGENTS.md](AGENTS.md).
+The shared system patches fix Native child-process argument queries and the
+150 KiB parameter boundary. The [direct C API regression](ci/native-child-process/README.md)
+provides the corresponding package validation.
+The [six-package release record](ci/native-child-process/RELEASE-20260917.md)
+lists archive hashes, runtime evidence, and ARMv7a validation limits.
+The [enabled six-package record](ci/native-child-process/RELEASE-20260917-enabled.md)
+tracks archives with Native child processes available at first boot; all six
+passed the direct C API regression.
+
 Complete **deviceType=2in1** QEMU packages are source-built. The QEMU product
 keeps its existing `rich.json` base (applications, SDK, code signing, and VPN)
 and then inherits a current-tree-compatible profile derived from
