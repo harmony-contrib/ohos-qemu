@@ -1,0 +1,81 @@
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/include/appmgr/child_process_args.h
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/include/appmgr/child_process_args.h
+@@ -25,6 +25,18 @@
+ namespace AppExecFwk {
+ constexpr int32_t CHILD_PROCESS_ARGS_FDS_MAX_COUNT = 16;
+ constexpr int32_t CHILD_PROCESS_ARGS_FD_KEY_MAX_LENGTH = 20;
++constexpr size_t CHILD_PROCESS_ARGS_PARAMS_MAX_SIZE = 150 * 1024;
++// ASCII expands to twice its UTF-8 size in the existing UTF-16 wire format.
++// Leave room for the enclosing request/reply, options, names and descriptors.
++constexpr size_t CHILD_PROCESS_ARGS_PARCEL_CAPACITY = 512 * 1024;
++
++inline bool PrepareChildProcessArgsParcel(Parcel &parcel)
++{
++    // SetMaxCapacity returns false when the capacity is already sufficient.
++    return parcel.GetMaxCapacity() >= CHILD_PROCESS_ARGS_PARCEL_CAPACITY ||
++        parcel.SetMaxCapacity(CHILD_PROCESS_ARGS_PARCEL_CAPACITY);
++}
++
+ struct ChildProcessArgs : public Parcelable {
+     std::string entryParams;
+     std::map<std::string, int32_t> fds;
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_args.cpp
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_args.cpp
+@@ -60,6 +60,10 @@
+ 
+ bool ChildProcessArgs::Marshalling(Parcel &parcel) const
+ {
++    if (entryParams.size() > CHILD_PROCESS_ARGS_PARAMS_MAX_SIZE || !PrepareChildProcessArgsParcel(parcel)) {
++        TAG_LOGE(AAFwkTag::APPMGR, "child args exceed parameter or parcel capacity");
++        return false;
++    }
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String16, parcel, Str8ToStr16(entryParams));
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(Int32, parcel, fds.size());
+     auto messageParcel = static_cast<MessageParcel*>(&parcel);
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_info.cpp
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_info.cpp
+@@ -14,6 +14,8 @@
+  */
+ 
+ #include "child_process_info.h"
++
++#include "child_process_args.h"
+ 
+ #include "hilog_tag_wrapper.h"
+ #include "nlohmann/json.hpp"
+@@ -89,6 +91,10 @@
+ 
+ bool ChildProcessInfo::Marshalling(Parcel &parcel) const
+ {
++    if (entryParams.size() > CHILD_PROCESS_ARGS_PARAMS_MAX_SIZE || !PrepareChildProcessArgsParcel(parcel)) {
++        TAG_LOGE(AAFwkTag::APPMGR, "child info exceeds parameter or parcel capacity");
++        return false;
++    }
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(Int32, parcel, static_cast<int32_t>(pid));
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(Int32, parcel, static_cast<int32_t>(hostPid));
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(Int32, parcel, static_cast<int32_t>(uid));
+--- a/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp
+@@ -14,6 +14,7 @@
+  */
+ 
+ #include "native_child_process.h"
++#include <cstring>
+ #include <map>
+ #include <mutex>
+ #include <regex>
+@@ -183,8 +184,12 @@
+     }
+     childArgs.fds = fds;
+     if (args.entryParams != nullptr && *(args.entryParams) != '\0') {
+-        std::string entryParams(args.entryParams);
+-        childArgs.entryParams = entryParams;
++        auto size = strnlen(args.entryParams, AppExecFwk::CHILD_PROCESS_ARGS_PARAMS_MAX_SIZE + 1);
++        if (size > AppExecFwk::CHILD_PROCESS_ARGS_PARAMS_MAX_SIZE) {
++            TAG_LOGE(AAFwkTag::PROCESSMGR, "entry params exceed 150 KiB");
++            return NCP_ERR_INVALID_PARAM;
++        }
++        childArgs.entryParams.assign(args.entryParams, size);
+     }
+     return NCP_NO_ERROR;
+ }

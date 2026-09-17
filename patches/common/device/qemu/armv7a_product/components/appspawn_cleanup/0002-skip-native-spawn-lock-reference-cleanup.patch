@@ -1,0 +1,9 @@
+--- a/base/startup/appspawn/modules/sandbox/normal/sandbox_shared_mount.cpp
++++ b/base/startup/appspawn/modules/sandbox/normal/sandbox_shared_mount.cpp
+@@ -553,5 +553,5 @@ APPSPAWN_STATIC int AppCleanupHook(const AppSpawnMgr *content, const AppSpawned
+ {
+-    APPSPAWN_ONLY_EXPER(appInfo == nullptr || IsNWebSpawnMode(content),
++    APPSPAWN_ONLY_EXPER(appInfo == nullptr || IsNWebSpawnMode(content) || IsNativeSpawnMode(content),
+         return 0);
+
+     // Only process when uid > 0 and device is locked

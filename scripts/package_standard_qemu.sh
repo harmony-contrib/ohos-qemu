@@ -2944,6 +2944,14 @@ PY
 fi
 
 OFFICIAL_FOR_LAUNCH="${OFFICIAL_QEMU_RUN:-}"
+if [ -f "${SOURCE_ROOT}/.ohos-qemu-native-child-process.json" ]; then
+  cp "${SOURCE_ROOT}/.ohos-qemu-native-child-process.json" \
+    "${PACKAGE_DIR}/native-child-process-patches.json"
+  python3 "${SCRIPT_DIR}/verify_native_child_process_package.py" \
+    --package "${PACKAGE_DIR}" \
+    --output "${PACKAGE_DIR}/native-child-process-elf.json"
+fi
+
 write_full_product_launchers \
   "${LAUNCH_OUT}" \
   "${PRODUCT}" \
