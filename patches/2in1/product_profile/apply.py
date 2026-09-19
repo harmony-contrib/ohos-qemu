@@ -14,8 +14,37 @@ RICH_PROFILE = "productdefine/common/inherit/rich.json"
 EFFECTIVE_PROFILE = "vendor/ohemu/virt/virt_2in1_full.json"
 PROFILE_METADATA = "vendor/ohemu/virt/virt_2in1_full.meta.json"
 PRODUCT_PARAM_FILE = "vendor/ohemu/virt/etc/param/product_virt.para"
+PRODUCT_ETC_BUILD_FILE = "vendor/ohemu/virt/etc/BUILD.gn"
+BOOT_UNLOCK_CONFIG_FILE = "vendor/ohemu/virt/etc/qemu_2in1_unlock.cfg"
+SCENEBOARD_BUILD_FILE = "foundation/window/window_manager/etc/BUILD.gn"
+SCENEBOARD_CONFIG_FILE = "foundation/window/window_manager/etc/sceneboard.config"
+SANITIZER_CHECK_LIST = "vendor/ohemu/virt/security_config/sanitizer_check_list.gni"
+PREINSTALL_LIST = "vendor/ohemu/virt/preinstall-config/install_list.json"
+PREINSTALL_CAPABILITIES = "vendor/ohemu/virt/preinstall-config/install_list_capability.json"
+SCENEBOARD_APP_DIR = "/system/app/SceneBoard"
+SCENEBOARD_BUNDLE = "com.ohos.sceneboard"
+SCENEBOARD_SIGNATURE = "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
 APP_COMPAT_COMMENT = "# QEMU full device-profile compatibility for current system HAPs."
 APP_COMPAT_PARAM = "const.bms.supportAppTypes=2in1,phone,default,tablet"
+PC_WINDOW_COMMENT = "# QEMU 2in1 uses the PC window layout."
+PC_WINDOW_PARAM = "const.window.multiWindowUIType=FreeFormMultiWindow"
+PC_MODE_PARAM = "persist.sceneboard.ispcmode=true"
+BOOT_UNLOCK_EVENTS = [
+    "usual.event.USER_UNLOCKED",
+    "usual.event.SCREEN_UNLOCKED",
+]
+BOOT_UNLOCK_TRIGGER = "bootevent.boot.completed=true"
+BOOT_UNLOCK_USER_ID = 100
+BOOT_UNLOCK_BUILD_BLOCK = """
+# QEMU 2in1 has no interactive lock screen during headless test boots.
+ohos_prebuilt_etc("qemu_2in1_unlock_cfg") {
+  source = "qemu_2in1_unlock.cfg"
+  output = "qemu_2in1_unlock.cfg"
+  relative_install_dir = "init"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+""".strip()
 MANAGED_APP_COMPAT_LINES = {
     APP_COMPAT_COMMENT,
     APP_COMPAT_PARAM,
@@ -167,6 +196,13 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             rich_components[display_key].get("features", [])
         )
 
+    window_key = ("window", "window_manager")
+    if window_key in effective_components:
+        features = effective_components[window_key].setdefault("features", [])
+        features = [feature for feature in features if not feature.startswith("window_manager_use_sceneboard")]
+        features.append("window_manager_use_sceneboard = true")
+        effective_components[window_key]["features"] = features
+
     effective_parts = {
         f"{subsystem}:{component}"
         for subsystem, component in component_map(effective)
@@ -185,6 +221,12 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
         "omitted_unavailable_legacy_components": sorted(omitted),
         "mapped_components": sorted(mapped),
         "app_compatibility_parameter": APP_COMPAT_PARAM,
+        "window_architecture_feature": "window_manager_use_sceneboard = true",
+        "pc_window_parameter": PC_WINDOW_PARAM,
+        "pc_mode_parameter": PC_MODE_PARAM,
+        "boot_unlock_events": BOOT_UNLOCK_EVENTS,
+        "boot_unlock_trigger": BOOT_UNLOCK_TRIGGER,
+        "boot_unlock_user_id": BOOT_UNLOCK_USER_ID,
         "required_parts": sorted(REQUIRED_2IN1_PARTS),
     }
     return effective, metadata
@@ -209,7 +251,7 @@ def configure_product(root: Path, product: str, enable: bool) -> None:
     write_json(path, document)
 
 
-def configure_app_compatibility(root: Path, enable: bool) -> None:
+def configure_product_parameters(root: Path, enable_compatibility: bool, enable_pc_window: bool) -> None:
     path = root / PRODUCT_PARAM_FILE
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -228,11 +270,27 @@ def configure_app_compatibility(root: Path, enable: bool) -> None:
             + ", ".join(conflicting)
         )
 
-    filtered = [line for line in lines if line not in MANAGED_APP_COMPAT_LINES]
-    if enable:
+    for pc_parameter in (PC_WINDOW_PARAM, PC_MODE_PARAM):
+        pc_key = pc_parameter.split("=", 1)[0] + "="
+        conflicting_pc = [
+            line for line in lines if line.startswith(pc_key) and line != pc_parameter
+        ]
+        if enable_pc_window and conflicting_pc:
+            die(
+                f"{path} already defines {pc_key[:-1]} with a different value: "
+                + ", ".join(conflicting_pc)
+            )
+
+    filtered = [
+        line for line in lines
+        if line not in MANAGED_APP_COMPAT_LINES | {PC_WINDOW_COMMENT, PC_WINDOW_PARAM, PC_MODE_PARAM}
+    ]
+    if enable_compatibility:
         if filtered and filtered[-1] != "":
             filtered.append("")
         filtered.extend([APP_COMPAT_COMMENT, APP_COMPAT_PARAM])
+    if enable_pc_window:
+        filtered.extend([PC_WINDOW_COMMENT, PC_WINDOW_PARAM, PC_MODE_PARAM])
 
     content = "\n".join(filtered).rstrip() + "\n"
     if path.read_text(encoding="utf-8") != content:
@@ -259,6 +317,148 @@ def any_product_enabled(root: Path) -> bool:
     return False
 
 
+def any_2in1_enabled(root: Path) -> bool:
+    for relative in PRODUCT_CONFIGS.values():
+        path = root / relative
+        if path.is_file() and EFFECTIVE_PROFILE in load_json(path).get("inherit", []):
+            return True
+    return False
+
+
+def configure_sceneboard(root: Path, enabled: bool) -> None:
+    """Install the runtime switch required by SceneBoardJudgement."""
+    build_path = root / SCENEBOARD_BUILD_FILE
+    config_path = root / SCENEBOARD_CONFIG_FILE
+    build = build_path.read_text(encoding="utf-8")
+    disabled = "if (!window_manager_use_sceneboard) {"
+    enabled_condition = "if (window_manager_use_sceneboard) {"
+    if build.count(disabled) + build.count(enabled_condition) != 2:
+        die(f"unexpected SceneBoard build configuration: {build_path}")
+    if enabled:
+        build = build.replace(disabled, enabled_condition)
+    else:
+        build = build.replace(enabled_condition, disabled)
+    if build_path.read_text(encoding="utf-8") != build:
+        build_path.write_text(build, encoding="utf-8")
+    expected = "ENABLED\n" if enabled else "DISABLED\n"
+    if config_path.read_text(encoding="utf-8") != expected:
+        config_path.write_text(expected, encoding="utf-8")
+
+
+def configure_sceneboard_cfi_exception(root: Path, enabled: bool) -> None:
+    """The unified build traverses a test-only target without CFI settings."""
+    path = root / SANITIZER_CHECK_LIST
+    content = path.read_text(encoding="utf-8")
+    marker = '  "dm_unittest_common_lite",  # test-only target without CFI settings\n'
+    if enabled:
+        if marker not in content:
+            anchor = 'bypass_window_manager = [\n'
+            if content.count(anchor) != 1:
+                die(f"unexpected CFI exception list: {path}")
+            content = content.replace(anchor, anchor + marker, 1)
+    else:
+        content = content.replace(marker, "")
+    if path.read_text(encoding="utf-8") != content:
+        path.write_text(content, encoding="utf-8")
+
+
+def configure_sceneboard_preinstall(root: Path, enabled: bool) -> None:
+    """Register the SceneBoard HAPs before the first user starts."""
+    entries = (
+        (PREINSTALL_LIST, "app_dir", SCENEBOARD_APP_DIR,
+         {"app_dir": SCENEBOARD_APP_DIR, "removable": False}),
+        (PREINSTALL_CAPABILITIES, "bundleName", SCENEBOARD_BUNDLE,
+         {"bundleName": SCENEBOARD_BUNDLE,
+          "app_signature": [SCENEBOARD_SIGNATURE],
+          "allowAppUsePrivilegeExtension": True,
+          "allowAppDesktopIconHide": True}),
+    )
+    for relative, key, value, expected in entries:
+        path = root / relative
+        document = load_json(path)
+        install_list = document.get("install_list")
+        if not isinstance(install_list, list):
+            die(f"missing install_list in {path}")
+        matches = [entry for entry in install_list if entry.get(key) == value]
+        if matches and matches != [expected]:
+            die(f"conflicting SceneBoard preinstall entry in {path}")
+        if enabled and not matches:
+            install_list.insert(0, expected)
+            write_json(path, document)
+        elif not enabled and matches:
+            document["install_list"] = [entry for entry in install_list if entry.get(key) != value]
+            write_json(path, document)
+
+
+def configure_boot_unlock_publisher(root: Path, enabled: bool) -> None:
+    """Install the headless 2in1 user- and screen-unlock event services."""
+    build_path = root / PRODUCT_ETC_BUILD_FILE
+    config_path = root / BOOT_UNLOCK_CONFIG_FILE
+    build = build_path.read_text(encoding="utf-8")
+    dependency = '    ":qemu_2in1_unlock_cfg",\n'
+    block = BOOT_UNLOCK_BUILD_BLOCK + "\n\n"
+    build = build.replace(block, "").replace(dependency, "")
+    if enabled:
+        anchor = 'group("product_etc_conf") {\n'
+        if build.count(anchor) != 1:
+            die(f"unexpected QEMU product etc build file: {build_path}")
+        build = build.replace(anchor, block + anchor, 1)
+        deps_anchor = '  deps = [\n'
+        group_offset = build.index(anchor)
+        deps_offset = build.index(deps_anchor, group_offset) + len(deps_anchor)
+        build = build[:deps_offset] + dependency + build[deps_offset:]
+    if build_path.read_text(encoding="utf-8") != build:
+        build_path.write_text(build, encoding="utf-8")
+
+    if enabled:
+        config = {
+            "jobs": [{
+                "name": f"param:{BOOT_UNLOCK_TRIGGER}",
+                "condition": BOOT_UNLOCK_TRIGGER,
+                "cmds": ["start qemu_2in1_user_unlock", "start qemu_2in1_unlock"],
+            }],
+            "services": [
+                {
+                    "name": "qemu_2in1_user_unlock",
+                    "path": [
+                        "/system/bin/cem", "publish", "-e", BOOT_UNLOCK_EVENTS[0],
+                        "-c", str(BOOT_UNLOCK_USER_ID),
+                    ],
+                    "uid": "system",
+                    "gid": ["system"],
+                    "apl": "system_core",
+                    "permission": [
+                        "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
+                        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+                    ],
+                    "once": 1,
+                    "start-mode": "condition",
+                    "secon": "u:r:cem:s0",
+                },
+                {
+                    "name": "qemu_2in1_unlock",
+                    "path": [
+                        "/system/bin/cem", "publish", "-e", BOOT_UNLOCK_EVENTS[1],
+                        "-u", str(BOOT_UNLOCK_USER_ID),
+                    ],
+                    "uid": "system",
+                    "gid": ["system"],
+                    "apl": "system_core",
+                    "permission": [
+                        "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
+                        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+                    ],
+                    "once": 1,
+                    "start-mode": "condition",
+                    "secon": "u:r:cem:s0",
+                },
+            ],
+        }
+        write_json(config_path, config)
+    elif config_path.exists():
+        config_path.unlink()
+
+
 def main() -> None:
     if len(sys.argv) < 3:
         die("usage: apply.py OHOS_ROOT enable|disable [PRODUCT ...]")
@@ -279,7 +479,11 @@ def main() -> None:
 
     for product in products:
         configure_product(root, product, action == "enable")
-    configure_app_compatibility(root, any_product_enabled(root))
+    configure_product_parameters(root, any_product_enabled(root), any_2in1_enabled(root))
+    configure_sceneboard(root, any_2in1_enabled(root))
+    configure_sceneboard_cfi_exception(root, any_2in1_enabled(root))
+    configure_sceneboard_preinstall(root, any_2in1_enabled(root))
+    configure_boot_unlock_publisher(root, any_2in1_enabled(root))
 
     state = "configured" if action == "enable" else "disabled"
     print(f"full 2in1 QEMU source profile {state} for: {' '.join(products)}")

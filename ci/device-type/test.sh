@@ -16,6 +16,8 @@ PROFILE_COMPONENT="${REPO_ROOT}/patches/2in1/product_profile/apply.sh"
 PHONE_PROFILE_COMPONENT="${REPO_ROOT}/patches/phone/product_profile/apply.sh"
 BUILD_STANDARD="${REPO_ROOT}/scripts/build_standard_qemu_in_docker.sh"
 MUSL_SDK_COMPONENT="${REPO_ROOT}/patches/common/third_party/musl/cortex_m_sdk/apply.sh"
+SCENEBOARD_2IN1_RUNTIME="${REPO_ROOT}/scripts/configure_2in1_runtime.py"
+SCENEBOARD_RUNTIME_COMPONENT="${REPO_ROOT}/patches/2in1/sceneboard_runtime/apply.py"
 
 if [ ! -x "${REPACKAGE}" ] || [ ! -x "${VERIFY}" ] || \
    [ ! -x "${PROFILE_COMPONENT}" ] || [ ! -x "${PHONE_PROFILE_COMPONENT}" ] || \
@@ -23,6 +25,8 @@ if [ ! -x "${REPACKAGE}" ] || [ ! -x "${VERIFY}" ] || \
   echo "missing repackage/verify scripts under ${REPO_ROOT}/scripts" >&2
   exit 1
 fi
+test -x "${SCENEBOARD_2IN1_RUNTIME}"
+test -f "${SCENEBOARD_RUNTIME_COMPONENT}"
 
 # A component-only build interrupted before hb removes out/hb_args can leak its
 # target into the next image build. The production runner must both clear that
@@ -52,6 +56,93 @@ done
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ohos-device-type-test.XXXXXX")"
 cleanup() { rm -rf "${WORKDIR}"; }
 trap cleanup EXIT
+
+# QEMU TCG needs extra startup time for SceneBoard. Verify the image updater
+# is idempotent and preserves the system parameter file's mode and SELinux
+# label while changing only the 2in1 timeout value.
+ARMV7A_SYSTEM_IMG="${WORKDIR}/armv7a-system.img"
+dd if=/dev/zero of="${ARMV7A_SYSTEM_IMG}" bs=1M count=4 status=none
+mke2fs -t ext2 -F -q "${ARMV7A_SYSTEM_IMG}"
+debugfs -w -R 'mkdir /etc' "${ARMV7A_SYSTEM_IMG}" >/dev/null
+debugfs -w -R 'mkdir /etc/param' "${ARMV7A_SYSTEM_IMG}" >/dev/null
+ARMV7A_APPFWK="${WORKDIR}/appfwk.para"
+printf '%s\n' 'persist.sys.abilityms.timeout_unit_time_ratio = 1' >"${ARMV7A_APPFWK}"
+chmod 0500 "${ARMV7A_APPFWK}"
+debugfs -w -R "write ${ARMV7A_APPFWK} /etc/param/appfwk.para" \
+  "${ARMV7A_SYSTEM_IMG}" >/dev/null
+ARMV7A_LABEL="${WORKDIR}/appfwk.selinux"
+python3 - "${ARMV7A_LABEL}" <<'PY'
+from pathlib import Path
+import sys
+Path(sys.argv[1]).write_bytes(b"u:object_r:system_etc_file:s0\0")
+PY
+debugfs -w -R \
+  "ea_set -f ${ARMV7A_LABEL} /etc/param/appfwk.para security.selinux" \
+  "${ARMV7A_SYSTEM_IMG}" >/dev/null
+python3 "${SCENEBOARD_2IN1_RUNTIME}" "${ARMV7A_SYSTEM_IMG}" >/dev/null
+python3 "${SCENEBOARD_2IN1_RUNTIME}" "${ARMV7A_SYSTEM_IMG}" >/dev/null
+test "$(debugfs -R 'cat /etc/param/appfwk.para' "${ARMV7A_SYSTEM_IMG}" 2>/dev/null)" = \
+  'persist.sys.abilityms.timeout_unit_time_ratio = 10'
+ARMV7A_PARAM_STAT="$(debugfs -R 'stat /etc/param/appfwk.para' \
+  "${ARMV7A_SYSTEM_IMG}" 2>/dev/null)"
+printf '%s\n' "${ARMV7A_PARAM_STAT}" | grep -Eq 'Mode:[[:space:]]+0500'
+printf '%s\n' "${ARMV7A_PARAM_STAT}" | grep -Eq 'User:[[:space:]]+0[[:space:]]+Group:[[:space:]]+0'
+printf '%s\n' "${ARMV7A_PARAM_STAT}" | grep -Fq 'security.selinux'
+
+# Rewriting an ARMv7a 2in1 package maps DISPLAY_TYPE=none to a private VNC
+# scanout so the guest creates a DRM connector. The phone profile retains the
+# normal -display none behavior.
+for profile in qemu_2in1_full_source qemu_phone_full_source; do
+  launcher_package="${WORKDIR}/launcher-${profile}"
+  mkdir -p "${launcher_package}/launch" "${launcher_package}/images"
+  cat >"${launcher_package}/launch/qemu_run.sh" <<'EOF'
+#!/usr/bin/env bash
+OHOS_IMG="out/armv7a_virt/packages/phone/images"
+DISPLAY_TYPE="${QEMU_DISPLAY:-none}"
+HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"
+case "${DISPLAY_TYPE}" in
+  none)
+    DISPLAY_ARGS="-device virtio-gpu-pci -display none -monitor none"
+    ;;
+  vnc)
+    DISPLAY_ARGS="-device virtio-gpu-pci -vnc :21"
+    ;;
+esac
+QEMU_CMD="qemu-system-arm -cpu cortex-a7 -smp 4 -m 3072 -device virtio-mouse-pci ${DISPLAY_ARGS} -append \"ohos.required_mount.data=/dev/block/vda@/data@ext4@nosuid,nodev@wait\""
+eval "${QEMU_CMD}"
+EOF
+  chmod +x "${launcher_package}/launch/qemu_run.sh"
+  python3 - "${launcher_package}/manifest.json" "${profile}" <<'PY'
+import json
+import sys
+json.dump({
+    "product": "armv7a_virt",
+    "guest_arch": "armv7a",
+    "device_type_profile": sys.argv[2],
+    "capabilities": {"absolute_pointer_sync": True},
+}, open(sys.argv[1], "w"))
+PY
+  bash "${REPO_ROOT}/scripts/package_standard_qemu.sh" \
+    --rewrite-package "${launcher_package}" >/dev/null
+done
+python3 - "${WORKDIR}" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+def headless(profile):
+    text = (root / f"launcher-{profile}/launch/qemu_run.sh").read_text()
+    display = re.search(r'case\s+"?\$\{DISPLAY_TYPE\}"?\s+in(.*?)esac', text, re.S)
+    return re.search(r'\bnone\)(.*?);;', display.group(1), re.S).group(1)
+
+two_in_one = headless("qemu_2in1_full_source")
+phone = headless("qemu_phone_full_source")
+assert '-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}' in two_in_one
+assert "-display none" not in two_in_one
+assert "-display none" in phone
+assert "-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}" not in phone
+PY
 
 # Ubuntu invokes musl's no-shebang porting action with dash. Verify the
 # component keeps the Cortex-M override POSIX-compatible and idempotent.
@@ -90,11 +181,17 @@ FIXTURE_ROOT="${WORKDIR}/source-fixture"
 mkdir -p \
   "${FIXTURE_ROOT}/productdefine/common/inherit" \
   "${FIXTURE_ROOT}/vendor/ohemu/virt" \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/etc" \
   "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/param" \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_arm64_linux_full" \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_x86_64_linux_full" \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_armv7a_linux_full" \
+  "${FIXTURE_ROOT}/foundation/window/window_manager/etc" \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/security_config" \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/preinstall-config" \
+  "${FIXTURE_ROOT}/applications/standard/hap" \
   "${FIXTURE_ROOT}/applications/standard/contacts_data" \
+  "${FIXTURE_ROOT}/base/notification/common_event_service/tools/cem/src" \
   "${FIXTURE_ROOT}/test/ostest/wukong"
 
 python3 - "${FIXTURE_ROOT}" <<'PY'
@@ -184,6 +281,90 @@ for directory in [
 (root / "vendor/ohemu/virt/etc/param/product_virt.para").write_text(
     "const.product.brand=default\n"
 )
+(root / "vendor/ohemu/virt/etc/BUILD.gn").write_text('''group("product_etc_conf") {
+  deps = [
+    ":product_virt.para",
+  ]
+}
+''')
+(root / "foundation/window/window_manager/etc/BUILD.gn").write_text('''group("wms_etc") {
+  deps = [ ":wms.para" ]
+  if (!window_manager_use_sceneboard) {
+    deps += [ ":sceneboard.config" ]
+  }
+}
+
+if (!window_manager_use_sceneboard) {
+  ohos_prebuilt_etc("sceneboard.config") {
+    source = "sceneboard.config"
+    subsystem_name = "window"
+  }
+}
+''')
+(root / "foundation/window/window_manager/etc/sceneboard.config").write_text("DISABLED\n")
+(root / "vendor/ohemu/virt/preinstall-config/install_list.json").write_text(
+    json.dumps({"install_list": [{"app_dir": "/system/app/com.ohos.launcher", "removable": False}]}) + "\n"
+)
+(root / "vendor/ohemu/virt/preinstall-config/install_list_capability.json").write_text(
+    json.dumps({"install_list": []}) + "\n"
+)
+(root / "vendor/ohemu/virt/security_config/sanitizer_check_list.gni").write_text(
+    'bypass_window_manager = [\n  "libwm_lite",\n]\n'
+)
+(root / "applications/standard/hap/BUILD.gn").write_text('''import("//build/ohos.gni")
+
+hap_src_dir = ""
+ohos_prebuilt_etc("sceneboard_hap") {
+  source = hap_src_dir + "SceneBoard.hap"
+  module_install_dir = "app/SceneBoard"
+}
+ohos_prebuilt_etc("sceneboard_notificationManagement_hap") {
+  source = hap_src_dir + "NotificationManagement.hap"
+  module_install_dir = "app/SceneBoard"
+}
+ohos_prebuilt_etc("themeservice_hap") {
+  source = hap_src_dir + "ThemeService.hap"
+  module_install_dir = "app/SceneBoard"
+}
+ohos_prebuilt_etc("themecomponent_hap") {
+  source = hap_src_dir + "ThemeComponent.hap"
+  module_install_dir = "app/SceneBoard"
+}
+
+group("hap") {
+  deps = [ ":launcher_hap" ]
+  if (defined(product_name) && product_name == "watchos") {
+    deps -= [ ":launcher_hap" ]
+  }
+}
+''')
+(root / "base/notification/common_event_service/tools/cem/src/common_event_command.cpp").write_text('''
+        Want want;
+        want.SetAction(cmdInfo.action);
+        CommonEventData commonEventData;
+        int32_t publishResult = CommonEvent::GetInstance()->PublishCommonEventAsUser(
+            commonEventData, publishInfo, nullptr, cmdInfo.userId);
+''')
+PY
+
+# The 2in1 runtime component must preserve `-u` as Want metadata while routing
+# through the current user. This avoids CES's system-HAP-only special-user
+# publisher check for the init-launched native CEM process.
+python3 - "${FIXTURE_ROOT}" "${SCENEBOARD_RUNTIME_COMPONENT}" <<'PY'
+import importlib.util
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("sceneboard_runtime_apply", sys.argv[2])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+module.patch_cem_user_id(root)
+module.patch_cem_user_id(root)
+content = (root / module.CEM_SOURCE).read_text()
+assert content.count('want.SetParam("userId", cmdInfo.userId);') == 1
+assert content.count('commonEventData, publishInfo, nullptr, UNDEFINED_USER);') == 1
+assert 'commonEventData, publishInfo, nullptr, cmdInfo.userId);' not in content
 PY
 
 bash "${PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt
@@ -213,14 +394,81 @@ assert ("applications", "prebuilt_hap") in parts
 assert "drivers_interface_display_vdi_default = true" in parts[
     ("hdf", "drivers_interface_display")
 ]
+assert "window_manager_use_sceneboard = true" in parts[("window", "window_manager")]
 assert metadata["profile"] == "qemu_2in1_full_source"
 assert metadata["app_compatibility_parameter"] == (
     "const.bms.supportAppTypes=2in1,phone,default,tablet"
 )
+assert metadata["window_architecture_feature"] == "window_manager_use_sceneboard = true"
+assert metadata["pc_window_parameter"] == "const.window.multiWindowUIType=FreeFormMultiWindow"
+assert metadata["pc_mode_parameter"] == "persist.sceneboard.ispcmode=true"
+assert metadata["boot_unlock_events"] == [
+    "usual.event.USER_UNLOCKED",
+    "usual.event.SCREEN_UNLOCKED",
+]
+assert metadata["boot_unlock_trigger"] == "bootevent.boot.completed=true"
+assert metadata["boot_unlock_user_id"] == 100
 assert "const.bms.supportAppTypes=2in1,phone,default,tablet" in (
     root / "vendor/ohemu/virt/etc/param/product_virt.para"
 ).read_text()
+assert "const.window.multiWindowUIType=FreeFormMultiWindow" in (
+    root / "vendor/ohemu/virt/etc/param/product_virt.para"
+).read_text()
+assert "persist.sceneboard.ispcmode=true" in (
+    root / "vendor/ohemu/virt/etc/param/product_virt.para"
+).read_text()
+assert (root / "foundation/window/window_manager/etc/sceneboard.config").read_text() == "ENABLED\n"
+assert (
+    root / "foundation/window/window_manager/etc/BUILD.gn"
+).read_text().count('if (window_manager_use_sceneboard)') == 2
+assert 'if (!window_manager_use_sceneboard)' not in (
+    root / "foundation/window/window_manager/etc/BUILD.gn"
+).read_text()
+assert '"dm_unittest_common_lite"' in (
+    root / "vendor/ohemu/virt/security_config/sanitizer_check_list.gni"
+).read_text()
+preinstall = json.loads((root / "vendor/ohemu/virt/preinstall-config/install_list.json").read_text())
+assert {"app_dir": "/system/app/SceneBoard", "removable": False} in preinstall["install_list"]
+capabilities = json.loads((root / "vendor/ohemu/virt/preinstall-config/install_list_capability.json").read_text())
+assert any(entry.get("bundleName") == "com.ohos.sceneboard" and
+           entry.get("allowAppUsePrivilegeExtension") and
+           entry.get("app_signature") == ["8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"]
+           for entry in capabilities["install_list"])
+boot_unlock = json.loads((root / "vendor/ohemu/virt/etc/qemu_2in1_unlock.cfg").read_text())
+assert boot_unlock["jobs"] == [{
+    "name": "param:bootevent.boot.completed=true",
+    "condition": "bootevent.boot.completed=true",
+    "cmds": ["start qemu_2in1_user_unlock", "start qemu_2in1_unlock"],
+}]
+common_service = {
+    "uid": "system",
+    "gid": ["system"],
+    "apl": "system_core",
+    "permission": [
+        "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
+        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+    ],
+    "once": 1,
+    "start-mode": "condition",
+    "secon": "u:r:cem:s0",
+}
+assert boot_unlock["services"] == [
+    {
+        **common_service,
+        "name": "qemu_2in1_user_unlock",
+        "path": ["/system/bin/cem", "publish", "-e", "usual.event.USER_UNLOCKED", "-c", "100"],
+    },
+    {
+        **common_service,
+        "name": "qemu_2in1_unlock",
+        "path": ["/system/bin/cem", "publish", "-e", "usual.event.SCREEN_UNLOCKED", "-u", "100"],
+    },
+]
+etc_build = (root / "vendor/ohemu/virt/etc/BUILD.gn").read_text()
+assert etc_build.count('ohos_prebuilt_etc("qemu_2in1_unlock_cfg")') == 1
+assert etc_build.count('":qemu_2in1_unlock_cfg"') == 1
 PY
+
 bash "${PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
 python3 -c 'import json,sys; assert "vendor/ohemu/virt/virt_2in1_full.json" not in json.load(open(sys.argv[1]))["inherit"]' \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_arm64_linux_full/config.json"
@@ -228,6 +476,44 @@ if grep -q '^const\.bms\.supportAppTypes=' \
   "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/param/product_virt.para"
 then
   echo "2in1 app compatibility parameter was not removed on disable" >&2
+  exit 1
+fi
+if grep -q '^const\.window\.multiWindowUIType=' \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/param/product_virt.para"
+then
+  echo "2in1 PC window parameter was not removed on disable" >&2
+  exit 1
+fi
+if grep -q '^persist\.sceneboard\.ispcmode=' \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/param/product_virt.para"
+then
+  echo "2in1 PC mode parameter was not removed on disable" >&2
+  exit 1
+fi
+test "$(cat "${FIXTURE_ROOT}/foundation/window/window_manager/etc/sceneboard.config")" = DISABLED
+python3 - "${FIXTURE_ROOT}" <<'PY'
+import json
+import sys
+from pathlib import Path
+root = Path(sys.argv[1])
+preinstall = json.loads((root / "vendor/ohemu/virt/preinstall-config/install_list.json").read_text())
+capabilities = json.loads((root / "vendor/ohemu/virt/preinstall-config/install_list_capability.json").read_text())
+assert all(entry.get("app_dir") != "/system/app/SceneBoard" for entry in preinstall["install_list"])
+assert all(entry.get("bundleName") != "com.ohos.sceneboard" for entry in capabilities["install_list"])
+PY
+grep -Fq 'if (!window_manager_use_sceneboard)' \
+  "${FIXTURE_ROOT}/foundation/window/window_manager/etc/BUILD.gn"
+test ! -e "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/qemu_2in1_unlock.cfg"
+if grep -Fq 'qemu_2in1_unlock' \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/BUILD.gn"
+then
+  echo "2in1 boot unlock publisher was not removed on disable" >&2
+  exit 1
+fi
+if grep -Fq '"dm_unittest_common_lite"' \
+  "${FIXTURE_ROOT}/vendor/ohemu/virt/security_config/sanitizer_check_list.gni"
+then
+  echo "2in1 test-only CFI exception was not removed on disable" >&2
   exit 1
 fi
 
@@ -266,6 +552,9 @@ assert "applications:contacts->contacts_data:contacts_data" in metadata[
 assert metadata["app_compatibility_parameter"] == (
     "const.bms.supportAppTypes=2in1,phone,default,tablet"
 )
+assert "const.window.multiWindowUIType=" not in (
+    root / "vendor/ohemu/virt/etc/param/product_virt.para"
+).read_text()
 PY
 bash "${PHONE_PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
 python3 -c 'import json,sys; assert "vendor/ohemu/virt/virt_phone_full.json" not in json.load(open(sys.argv[1]))["inherit"]' \
@@ -296,11 +585,11 @@ mkdir -p "${INPUT_PKG}/images" "${INPUT_PKG}/launch"
 : > "${INPUT_PKG}/images/ramdisk.img"
 : > "${INPUT_PKG}/images/vendor.img"
 # Sparse-ish clean userdata: small raw file that compresses well.
-dd if=/dev/zero of="${INPUT_PKG}/images/userdata.img" bs=1m count=8 status=none
+dd if=/dev/zero of="${INPUT_PKG}/images/userdata.img" bs=1M count=8 status=none
 
 # Build a real ext2 system.img with default deviceType params.
 SYSTEM_IMG="${INPUT_PKG}/images/system.img"
-dd if=/dev/zero of="${SYSTEM_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${SYSTEM_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${SYSTEM_IMG}"
 debugfs -w -R "mkdir etc" "${SYSTEM_IMG}" >/dev/null
 debugfs -w -R "mkdir etc/param" "${SYSTEM_IMG}" >/dev/null
@@ -454,7 +743,7 @@ debugfs -w -R "write ${V8_ELF} /system/lib64/libv8_shared.so" \
   "${OUT_PKG}/images/system.img" >/dev/null
 
 VENDOR_IMG="${OUT_PKG}/images/vendor.img"
-dd if=/dev/zero of="${VENDOR_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${VENDOR_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${VENDOR_IMG}"
 debugfs -w -R "mkdir vendor" "${VENDOR_IMG}" >/dev/null
 debugfs -w -R "mkdir vendor/lib64" "${VENDOR_IMG}" >/dev/null
@@ -473,7 +762,7 @@ CONFIG_UCLAMP_TASK_GROUP=y
 EOF
 
 SYS_PROD_IMG="${OUT_PKG}/images/sys_prod.img"
-dd if=/dev/zero of="${SYS_PROD_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${SYS_PROD_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${SYS_PROD_IMG}"
 debugfs -w -R "mkdir etc" "${SYS_PROD_IMG}" >/dev/null
 debugfs -w -R "mkdir etc/param" "${SYS_PROD_IMG}" >/dev/null
@@ -632,7 +921,7 @@ DIRTY_PKG="${WORKDIR}/openharmony-qemu-arm64-arm64_virt-dirty"
 cp -a "${INPUT_PKG}" "${DIRTY_PKG}"
 # ~32MB of high-entropy data so gzip -1 exceeds the 200MB threshold when padded,
 # or use a larger random blob. 220MB of /dev/urandom is slow; use sparse+random mix.
-dd if=/dev/urandom of="${DIRTY_PKG}/images/userdata.img" bs=1m count=220 status=none
+dd if=/dev/urandom of="${DIRTY_PKG}/images/userdata.img" bs=1M count=220 status=none
 set +e
 bash "${REPACKAGE}" \
   --device-type 2in1 \

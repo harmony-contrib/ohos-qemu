@@ -353,6 +353,36 @@ keeps its existing `rich.json` base (applications, SDK, code signing, and VPN)
 and then inherits a current-tree-compatible profile derived from
 `productdefine/common/inherit/2in1.json`. Shared parts use the 2in1 feature
 selection, while QEMU-specific board/display requirements remain enabled.
+The 2in1 profile enables SceneBoard and the PC window layout, installs
+`/etc/sceneboard.config` as `ENABLED`, and sets
+`const.window.multiWindowUIType=FreeFormMultiWindow` plus
+`persist.sceneboard.ispcmode=true`. It stages four signed SceneBoard HAPs from
+`SCENEBOARD_RUNTIME_ASSET_ROOT`; see
+[the asset checksums and provisioning requirements](patches/2in1/sceneboard_runtime/README.md).
+The SceneBoard HAPs are checked for privileged-extension authorization,
+signature validity, ABI coverage, and exact packaged hashes. These additions
+apply only to 2in1 builds; existing phone packages do not require rebuilding.
+The 7.0 AbilityManager removes its first-boot UI-ability interceptor only after
+it has received both `usual.event.USER_UNLOCKED` and
+`usual.event.SCREEN_UNLOCKED` for the same user. The upstream SceneBoard
+prebuilt publishes the older `common.event.UNLOCK_SCREEN`; the 2in1 runtime
+asset corrects that event name. For headless QEMU boots, a 2in1-only init
+configuration publishes both required events after
+`bootevent.boot.completed=true`, when AbilityManager has subscribed and user
+100 is ready. `USER_UNLOCKED` carries 100 in the common-event code, while
+`SCREEN_UNLOCKED` carries it as the Want `userId` parameter. The CEM change
+adds that Want parameter and uses the current-user route so the native process
+does not hit CES's system-HAP-only special-user check. Phone images do not
+install these services and the existing phone archives remain unchanged.
+Applications calling the snapshot and main-window enumeration APIs must request
+and receive `ohos.permission.CUSTOM_SCREEN_CAPTURE`. Privacy-mode and cursor-lock
+APIs also require `ohos.permission.PRIVACY_WINDOW` and
+`ohos.permission.LOCK_WINDOW_CURSOR`, respectively.
+The 2in1 source component also adds `/system/app/SceneBoard` to BMS's
+`install_list.json` and adds the signing certificate and privileged-extension
+authorization to `install_list_capability.json`. Without these first-boot
+entries the HAP files remain on disk but SceneBoard is not installed, and the
+first user cannot finish starting. The package verifier checks both entries.
 
 ```bash
 # macOS/Apple Silicon host with Docker or OrbStack. OpenHarmony's host
@@ -432,12 +462,26 @@ Offline verification:
 scripts/verify_device_type_package.sh \
   --package /path/to/openharmony-qemu-arm64-arm64_virt-2in1 \
   --expect-device-type 2in1 \
-  --require-full-2in1
+  --require-full-2in1 \
+  --require-scene-window
 
 scripts/verify_device_type_package.sh \
   --package /path/to/openharmony-qemu-arm64-arm64_virt-phone \
   --expect-device-type phone \
   --require-full-phone
+```
+
+For a freshly archived 2in1 package, the runtime check boots a private QEMU
+guest, runs the PR #156 WindowManager tests, and checks all 21 Native child
+regression cases. Set `QEMU_SMOKE_ACCEL=hvf` for arm64 on Apple Silicon; use
+`tcg` for x86_64 and armv7a on that host.
+
+```bash
+BINDINGS_EXAMPLES=/path/to/ohos-native-bindings/examples-ui \
+QEMU_SMOKE_ACCEL=hvf \
+ci/window-manager/validate-package.sh arm64 \
+  /path/to/openharmony-qemu-arm64-arm64_virt-2in1.tar.gz \
+  /path/to/validation/arm64-2in1
 ```
 
 `scripts/repackage_device_type.sh` remains available for compatibility testing,

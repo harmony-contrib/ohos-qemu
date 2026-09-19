@@ -12,6 +12,7 @@ Usage:
   verify_device_type_package.sh --package DIR [--expect-device-type TYPE]
                                 [--expect-manifest-revision COMMIT]
                                 [--require-full-2in1|--require-full-phone]
+                                [--require-scene-window]
 
 Checks (offline, no QEMU boot):
   1) manifest.json device_type
@@ -28,6 +29,7 @@ USAGE
 PACKAGE=
 EXPECT=
 REQUIRE_FULL_DEVICE=
+REQUIRE_PC_WINDOW=0
 EXPECT_MANIFEST_REVISION=
 
 while [ "$#" -gt 0 ]; do
@@ -50,6 +52,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --require-full-phone)
       REQUIRE_FULL_DEVICE=phone
+      shift
+      ;;
+    --require-pc-window|--require-scene-window)
+      REQUIRE_PC_WINDOW=1
       shift
       ;;
     -h|--help)
@@ -482,6 +488,255 @@ elif [ -n "${REQUIRE_FULL_DEVICE}" ]; then
   FAIL=1
 else
   echo "SKIP: images/sys_prod.img is not present"
+fi
+
+if [ "${REQUIRE_PC_WINDOW}" = "1" ]; then
+  if [ "${MANIFEST_DT}" != "2in1" ] || [ "${MANIFEST_PROFILE}" != "qemu_2in1_full_source" ]; then
+    echo "FAIL: PC window validation requires a full 2in1 package" >&2
+    FAIL=1
+  fi
+  if [ "$(python3 -c 'import json,sys; print(str(json.load(open(sys.argv[1])).get("capabilities", {}).get("sceneboard_window_manager", False)).lower())' "${PACKAGE}/manifest.json")" != true ]; then
+    echo "FAIL: SceneBoard WindowManager capability is not marked in manifest.json" >&2
+    FAIL=1
+  fi
+  PC_WINDOW_TMP="$(mktemp -d "${TMPDIR:-/tmp}/ohos-pc-window-check.XXXXXX")"
+  if ! python3 - "${PACKAGE}/device-profile.json" "${PC_WINDOW_TMP}/hashes.json" <<'PY'
+import json
+import re
+import sys
+
+profile = json.load(open(sys.argv[1], encoding="utf-8"))
+adaptations = profile.get("qemu_adaptations", {})
+board = adaptations.get("sceneboard_runtime") or {}
+expected = {
+    "SceneBoard.hap",
+    "NotificationManagement.hap",
+    "ThemeService.hap",
+    "ThemeComponent.hap",
+}
+hashes = board.get("hap_sha256", {})
+checks = [
+    adaptations.get("window_architecture_feature") == "window_manager_use_sceneboard = true",
+    adaptations.get("pc_window_parameter") == "const.window.multiWindowUIType=FreeFormMultiWindow",
+    adaptations.get("pc_mode_parameter") == "persist.sceneboard.ispcmode=true",
+    adaptations.get("boot_unlock_events") == [
+        "usual.event.USER_UNLOCKED", "usual.event.SCREEN_UNLOCKED"
+    ],
+    adaptations.get("boot_unlock_trigger") == "bootevent.boot.completed=true",
+    adaptations.get("boot_unlock_user_id") == 100,
+    bool(re.fullmatch(r"[0-9a-f]{40}", board.get("native_source_revision", ""))),
+    board.get("profile_valid_until", 0) > 1893456000,
+    set(hashes) == expected,
+    all(re.fullmatch(r"[0-9a-f]{64}", value) for value in hashes.values()),
+]
+if not all(checks):
+    raise SystemExit("incomplete SceneBoard runtime build evidence")
+with open(sys.argv[2], "w", encoding="utf-8") as output:
+    json.dump(hashes, output)
+PY
+  then
+    echo "FAIL: SceneBoard runtime build evidence" >&2
+    FAIL=1
+  else
+    while IFS= read -r hap; do
+      expected_sha="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' "${PC_WINDOW_TMP}/hashes.json" "${hap}")"
+      if dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/${hap}" \
+          "/system/app/SceneBoard/${hap}" "/app/SceneBoard/${hap}" && \
+         [ "$(shasum -a 256 "${PC_WINDOW_TMP}/${hap}" | awk '{print $1}')" = "${expected_sha}" ]; then
+        echo "PASS: SceneBoard ${hap} matches build evidence"
+      else
+        echo "FAIL: SceneBoard ${hap} is missing or has the wrong hash" >&2
+        FAIL=1
+      fi
+    done <<'HAPS'
+SceneBoard.hap
+NotificationManagement.hap
+ThemeService.hap
+ThemeComponent.hap
+HAPS
+    if ! python3 - "${PACKAGE}/sceneboard-unlock-event.json" \
+        "${PC_WINDOW_TMP}/SceneBoard.hap" <<'PY'
+import hashlib
+import json
+import sys
+from zipfile import ZipFile
+
+evidence_path, hap_path = sys.argv[1:]
+expected_legacy = "4866846a48fa6247ce48edf449fc306c5ce1a2f19f7338f6377621c5130b1549"
+expected_patched = "f1ceb224f8ffa56181c5de199db9bcf7e3c25a84d4dd538f8600330019d63759"
+try:
+    evidence = json.load(open(evidence_path, encoding="utf-8"))
+    with ZipFile(hap_path) as archive:
+        actual = hashlib.sha256(archive.read("ets/modules.abc")).hexdigest()
+except (FileNotFoundError, KeyError, ValueError) as exc:
+    raise SystemExit(str(exc))
+checks = [
+    evidence.get("legacy_event") == "common.event.UNLOCK_SCREEN",
+    evidence.get("ability_manager_event") == "usual.event.SCREEN_UNLOCKED",
+    evidence.get("baseline_modules_abc_sha256") == expected_legacy,
+    evidence.get("patched_modules_abc_sha256") == expected_patched,
+    actual == expected_patched,
+]
+if not all(checks):
+    raise SystemExit("SceneBoard unlock-event evidence does not match the installed ABC")
+PY
+    then
+      echo "FAIL: SceneBoard does not publish the AbilityManager 7.0 screen-unlocked event" >&2
+      FAIL=1
+    else
+      echo "PASS: SceneBoard publishes the AbilityManager 7.0 screen-unlocked event"
+    fi
+  fi
+  if dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/cem" \
+       /system/bin/cem /bin/cem && \
+     dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/qemu_2in1_unlock.cfg" \
+       /system/etc/init/qemu_2in1_unlock.cfg /etc/init/qemu_2in1_unlock.cfg && \
+     python3 - "${PACKAGE}/qemu-2in1-boot-unlock.json" \
+       "${PC_WINDOW_TMP}/cem" "${PC_WINDOW_TMP}/qemu_2in1_unlock.cfg" \
+       "${ELF_MACHINE}" <<'PY'
+import hashlib
+import json
+import re
+import sys
+
+evidence_path, cem_path, config_path, expected_machine = sys.argv[1:]
+evidence = json.load(open(evidence_path, encoding="utf-8"))
+cem = open(cem_path, "rb").read()
+config_bytes = open(config_path, "rb").read()
+config = json.loads(config_bytes)
+if cem[:4] != b"\x7fELF" or int.from_bytes(cem[18:20], "little") != int(expected_machine):
+    raise SystemExit("2in1 event publisher has the wrong ELF architecture")
+if b"userId" not in cem:
+    raise SystemExit("2in1 event publisher does not carry the userId Want parameter")
+jobs = config.get("jobs", [])
+services = config.get("services", [])
+expected_paths = {
+    "qemu_2in1_user_unlock": [
+        "/system/bin/cem", "publish", "-e", "usual.event.USER_UNLOCKED", "-c", "100"
+    ],
+    "qemu_2in1_unlock": [
+        "/system/bin/cem", "publish", "-e", "usual.event.SCREEN_UNLOCKED", "-u", "100"
+    ],
+}
+checks = [
+    evidence.get("schema_version") == 2,
+    evidence.get("events") == [
+        "usual.event.USER_UNLOCKED", "usual.event.SCREEN_UNLOCKED"
+    ],
+    evidence.get("user_id") == 100,
+    evidence.get("trigger") == "bootevent.boot.completed=true",
+    evidence.get("cem_path") == "/system/bin/cem",
+    evidence.get("init_config_path") == "/system/etc/init/qemu_2in1_unlock.cfg",
+    evidence.get("patched_cem_sha256") == hashlib.sha256(cem).hexdigest(),
+    evidence.get("init_config_sha256") == hashlib.sha256(config_bytes).hexdigest(),
+    bool(re.fullmatch(r"[0-9a-f]{64}", evidence.get("baseline_cem_sha256", ""))),
+    jobs == [{
+        "name": "param:bootevent.boot.completed=true",
+        "condition": "bootevent.boot.completed=true",
+        "cmds": ["start qemu_2in1_user_unlock", "start qemu_2in1_unlock"],
+    }],
+    len(services) == 2,
+    {service.get("name") for service in services} == set(expected_paths),
+]
+for service in services:
+    name = service.get("name")
+    checks.extend([
+        name in expected_paths,
+        service.get("path") == expected_paths.get(name),
+        service.get("uid") == "system",
+        service.get("gid") == ["system"],
+        service.get("apl") == "system_core",
+        service.get("once") == 1,
+        service.get("start-mode") == "condition",
+        service.get("secon") == "u:r:cem:s0",
+        set(service.get("permission", [])) == {
+            "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
+            "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+        },
+    ])
+if not all(checks):
+    raise SystemExit("incomplete 2in1 boot-unlock publisher evidence")
+PY
+  then
+    echo "PASS: 2in1 boot publisher sends user- and screen-unlocked events for user 100"
+  else
+    echo "FAIL: 2in1 boot-unlock publisher is missing or invalid" >&2
+    FAIL=1
+  fi
+  SCENEBOARD_CONFIG="$(debugfs -R 'cat /etc/sceneboard.config' "${SYSIMG}" 2>/dev/null || true)"
+  if [ "${SCENEBOARD_CONFIG}" != "ENABLED" ]; then
+    echo "FAIL: SceneBoard runtime switch is not enabled" >&2
+    FAIL=1
+  fi
+  if dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/install_list.json" \
+       /system/etc/app/install_list.json /etc/app/install_list.json && \
+     dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/install_list_capability.json" \
+       /system/etc/app/install_list_capability.json /etc/app/install_list_capability.json && \
+     python3 - "${PC_WINDOW_TMP}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+install = json.loads((root / "install_list.json").read_text())
+capabilities = json.loads((root / "install_list_capability.json").read_text())
+required = {"app_dir": "/system/app/SceneBoard", "removable": False}
+signature = "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+if required not in install.get("install_list", []):
+    raise SystemExit("SceneBoard is missing from the system preinstall list")
+if not any(entry.get("bundleName") == "com.ohos.sceneboard" and
+           entry.get("app_signature") == [signature] and
+           entry.get("allowAppUsePrivilegeExtension") is True
+           for entry in capabilities.get("install_list", [])):
+    raise SystemExit("SceneBoard is missing its privileged-extension capability")
+PY
+  then
+    echo "PASS: SceneBoard first-boot preinstall and capabilities"
+  else
+    echo "FAIL: SceneBoard first-boot preinstall or capabilities are missing" >&2
+    FAIL=1
+  fi
+  for parameter in \
+    'const.window.multiWindowUIType=FreeFormMultiWindow' \
+    'persist.sceneboard.ispcmode=true'; do
+    if ! printf '%s\n' "${PRODUCT_PARAMS:-}" | grep -Fxq "${parameter}"; then
+      echo "FAIL: PC window parameter is missing: ${parameter}" >&2
+      FAIL=1
+    fi
+  done
+  SCENEBOARD_APPFWK_PARAMS="$(debugfs -R 'cat /etc/param/appfwk.para' "${SYSIMG}" 2>/dev/null || true)"
+  if [ -z "${SCENEBOARD_APPFWK_PARAMS}" ]; then
+    SCENEBOARD_APPFWK_PARAMS="$(debugfs -R 'cat /system/etc/param/appfwk.para' "${SYSIMG}" 2>/dev/null || true)"
+  fi
+  if printf '%s\n' "${SCENEBOARD_APPFWK_PARAMS}" | \
+     grep -Eq '^persist\.sys\.abilityms\.timeout_unit_time_ratio[[:space:]]*=[[:space:]]*10[[:space:]]*$'; then
+    echo "PASS: SceneBoard lifecycle timeout is scaled for QEMU TCG"
+  else
+    echo "FAIL: 2in1 image is missing its SceneBoard lifecycle timeout scale" >&2
+    FAIL=1
+  fi
+  if [ "${MANIFEST_ARCH}" = "armv7a" ]; then
+    if python3 - "${PACKAGE}/launch/qemu_run.sh" <<'PY'
+import re
+import sys
+
+text = open(sys.argv[1], encoding="utf-8").read()
+display = re.search(r'case\s+"?\$\{DISPLAY_TYPE\}"?\s+in(.*?)esac', text, re.S)
+headless = re.search(r'\bnone\)(.*?);;', display.group(1), re.S) if display else None
+if not headless:
+    raise SystemExit("missing DISPLAY_TYPE=none branch")
+branch = headless.group(1)
+if '-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}' not in branch or '-display none' in branch:
+    raise SystemExit("headless branch does not provide a loopback VNC scanout")
+PY
+    then
+      echo "PASS: ARMv7a headless launcher provides a loopback DRM scanout"
+    else
+      echo "FAIL: ARMv7a headless launcher cannot provide a SceneBoard display" >&2
+      FAIL=1
+    fi
+  fi
+  rm -rf "${PC_WINDOW_TMP}"
 fi
 
 if [ -f "${PACKAGE}/images/userdata.img" ]; then

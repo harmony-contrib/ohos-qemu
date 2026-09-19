@@ -566,6 +566,28 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   fi
 }
 
+ensure_armv7a_2in1_headless_scanout() {
+  local file="$1"
+  local product="$2"
+  local device_type_profile="$3"
+
+  if [ "${product}" != "armv7a_virt" ] || \
+     [ "${device_type_profile}" != "qemu_2in1_full_source" ]; then
+    return 0
+  fi
+
+  # ARMv7a's composer does not create a DRM connector with -display none.
+  # Keep headless mode private to the host while providing a real scanout for
+  # RenderService and SceneBoard.
+  sed_in_place_extended \
+    's|(DISPLAY_ARGS="[^"]*)-display none|\1-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}|' \
+    "${file}"
+  if ! grep -Fq -- '-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}' "${file}"; then
+    echo "ARMv7a 2in1 launcher is missing its loopback headless scanout" >&2
+    exit 1
+  fi
+}
+
 ensure_qemu_accel_env_support() {
   local file="$1"
   local default_qemu_bin="${2:-qemu-system-x86_64}"
@@ -1333,6 +1355,7 @@ write_full_product_launchers() {
   local standard_vpn="${5:-false}"
   local official_qemu_run="${6:-}"
   local pointer_device="${7:-virtio-mouse-pci}"
+  local device_type_profile="${8:-${DEVICE_TYPE_PROFILE:-default}}"
 
   launcher_defaults_for_product "${product}"
 
@@ -1365,6 +1388,8 @@ write_full_product_launchers() {
       "${LAUNCHER_QEMU_UNIX}" \
       "${LAUNCHER_DEFAULT_CPU}" \
       "${pointer_device}"
+    ensure_armv7a_2in1_headless_scanout \
+      "${launch_out}/qemu_run.sh" "${product}" "${device_type_profile}"
     if [ "${pointer_device}" = "virtio-tablet-pci" ] && \
        { ! grep -q 'virtio-tablet-pci' "${launch_out}/qemu_run.sh" || \
          grep -q 'virtio-mouse-pci' "${launch_out}/qemu_run.sh"; }; then
@@ -1546,6 +1571,7 @@ rewrite_package_launchers() {
   local standard_vpn
   local absolute_pointer_sync
   local pointer_device
+  local device_type_profile
 
   if [ ! -d "${package_dir}" ]; then
     echo "package directory not found: ${package_dir}" >&2
@@ -1568,6 +1594,7 @@ rewrite_package_launchers() {
   package_name="$(basename "${package_dir}")"
   standard_vpn="$(json_bool_field "${manifest}" standard_vpn)"
   absolute_pointer_sync="$(json_bool_field "${manifest}" absolute_pointer_sync)"
+  device_type_profile="$(json_string_field "${manifest}" device_type_profile)"
   pointer_device=virtio-mouse-pci
   if [ "${absolute_pointer_sync}" = "true" ]; then
     pointer_device=virtio-tablet-pci
@@ -1580,7 +1607,8 @@ rewrite_package_launchers() {
     "${package_name}" \
     "${standard_vpn}" \
     "" \
-    "${pointer_device}"
+    "${pointer_device}" \
+    "${device_type_profile}"
 
   # Refresh launcher metadata in manifest.json when python is available.
   if command -v python3 >/dev/null 2>&1; then
@@ -1804,6 +1832,7 @@ replace_or_append_param() {
 
 inject_standard_qemu_params() {
   local image="$1"
+  local product="$2"
   if [ "${INJECT_QEMU_RUNTIME_PARAMS:-1}" != "1" ]; then
     return
   fi
@@ -1840,6 +1869,9 @@ inject_standard_qemu_params() {
   debugfs -w -R "write ${ohos_para} /etc/param/ohos.para" "${image}" >/dev/null
   debugfs -w -R "rm /etc/param/hdc.para" "${image}" >/dev/null 2>&1 || true
   debugfs -w -R "write ${hdc_para} /etc/param/hdc.para" "${image}" >/dev/null
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
+    python3 "${SCRIPT_DIR}/configure_2in1_runtime.py" "${image}"
+  fi
   rm -rf "${tmpdir}"
   trap - RETURN
 }
@@ -2622,6 +2654,25 @@ for name, expected in required_features.items():
         raise SystemExit(f"resolved {device_type} feature {name} is not {expected}")
 if features.get("memmgr_hyperhold_memory") is True:
     raise SystemExit(f"resolved {device_type} profile unexpectedly enables memmgr hyperhold")
+if device_type == "2in1":
+    runtime = metadata.get("sceneboard_runtime") or {}
+    expected_haps = {"SceneBoard.hap", "NotificationManagement.hap", "ThemeService.hap", "ThemeComponent.hap"}
+    hashes = runtime.get("hap_sha256", {})
+    if (set(hashes) != expected_haps or
+            any(len(digest) != 64 for digest in hashes.values()) or
+            runtime.get("profile_valid_until", 0) < 1893456000):
+        raise SystemExit("renewed SceneBoard runtime evidence is missing")
+    for feature, expected in (("window_manager_use_sceneboard", True),):
+        if features.get(feature) is not expected:
+            raise SystemExit(f"resolved 2in1 feature {feature} is not {expected}")
+    for parameter in (metadata["pc_window_parameter"], metadata["pc_mode_parameter"]):
+        if parameter not in product_params:
+            raise SystemExit(f"2in1 product parameters are missing {parameter}")
+    if (metadata.get("boot_unlock_events") != [
+            "usual.event.USER_UNLOCKED", "usual.event.SCREEN_UNLOCKED"] or
+            metadata.get("boot_unlock_trigger") != "bootevent.boot.completed=true" or
+            metadata.get("boot_unlock_user_id") != 100):
+        raise SystemExit("2in1 boot-unlock publisher metadata is missing")
 
 evidence = {
     "schema_version": 1,
@@ -2641,6 +2692,13 @@ evidence = {
         "mapped_components": metadata.get("mapped_components", []),
         "app_compatibility_parameter": app_compatibility_parameter,
         "jsvm_engine": metadata.get("qemu_adaptations", {}).get("jsvm_engine"),
+        "window_architecture_feature": metadata.get("window_architecture_feature"),
+        "pc_window_parameter": metadata.get("pc_window_parameter"),
+        "pc_mode_parameter": metadata.get("pc_mode_parameter"),
+        "boot_unlock_events": metadata.get("boot_unlock_events"),
+        "boot_unlock_trigger": metadata.get("boot_unlock_trigger"),
+        "boot_unlock_user_id": metadata.get("boot_unlock_user_id"),
+        "sceneboard_runtime": metadata.get("sceneboard_runtime"),
     },
     "required_parts": required_parts,
     "resolved_parts_count": len(parts),
@@ -2675,6 +2733,23 @@ PY
     /sys_prod/etc/param/product_virt.para
 
   if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
+    for hap in SceneBoard.hap NotificationManagement.hap ThemeService.hap ThemeComponent.hap; do
+      require_image_path "${system_image}" "SceneBoard ${hap}" \
+        "/system/app/SceneBoard/${hap}" "/app/SceneBoard/${hap}"
+    done
+    require_image_file_contains "${system_image}" "enabled SceneBoard" \
+      ENABLED /system/etc/sceneboard.config /etc/sceneboard.config
+    require_image_file_contains "${system_image}" "SceneBoard first-boot preinstall" \
+      '/system/app/SceneBoard' /system/etc/app/install_list.json /etc/app/install_list.json
+    require_image_file_contains "${system_image}" "SceneBoard privileged extension" \
+      '"bundleName": "com.ohos.sceneboard"' \
+      /system/etc/app/install_list_capability.json /etc/app/install_list_capability.json
+    require_image_file_contains "${sys_prod_image}" "PC window layout" \
+      "const.window.multiWindowUIType=FreeFormMultiWindow" \
+      /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
+    require_image_file_contains "${sys_prod_image}" "SceneBoard PC mode" \
+      "persist.sceneboard.ispcmode=true" \
+      /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
     require_image_path "${system_image}" "2in1 DLP manager application" \
       /system/app/com.ohos.dlpmanager \
       /app/com.ohos.dlpmanager
@@ -2805,6 +2880,7 @@ QOS_VERIFIED=false
 VIRTUAL_VIBRATOR_VERIFIED=false
 ACCESSIBILITY_VERIFIED=false
 JSVM_VERIFIED=false
+SCENEBOARD_WINDOW_MANAGER_VERIFIED=false
 MANIFEST_DEVICE_TYPE="${DEVICE_TYPE:-default}"
 MANIFEST_DEVICE_TYPE_SOURCE=default
 MANIFEST_DEVICE_TYPE_PARAM_ONLY=false
@@ -2853,7 +2929,7 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"
   done
   install_developer_policy "${IMAGES_OUT}/system.img" "${SOURCE_ROOT}" "${PRODUCT}"
-  inject_standard_qemu_params "${IMAGES_OUT}/system.img"
+  inject_standard_qemu_params "${IMAGES_OUT}/system.img" "${PRODUCT}"
   ensure_standard_system_root "${IMAGES_OUT}/system.img"
   seed_standard_userdata_dirs "${IMAGES_OUT}/userdata.img"
   install_standard_tun_compat "${IMAGES_OUT}/system.img"
@@ -2873,6 +2949,9 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${PACKAGE_DIR}" \
     "${IMAGES_OUT}/system.img" \
     "${IMAGES_OUT}/sys_prod.img"
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
+    SCENEBOARD_WINDOW_MANAGER_VERIFIED=true
+  fi
 fi
 
 launcher_defaults_for_product "${PRODUCT}"
@@ -2918,7 +2997,8 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "device_type": "${MANIFEST_DEVICE_TYPE}",
     "device_type_profile": "${DEVICE_TYPE_PROFILE}",
     "device_type_param_only": ${MANIFEST_DEVICE_TYPE_PARAM_ONLY},
-    "device_type_full": ${MANIFEST_DEVICE_TYPE_FULL}
+    "device_type_full": ${MANIFEST_DEVICE_TYPE_FULL},
+    "sceneboard_window_manager": ${SCENEBOARD_WINDOW_MANAGER_VERIFIED}
   }
 }
 EOF
@@ -2959,7 +3039,8 @@ write_full_product_launchers \
   "${PACKAGE_NAME}" \
   "${STANDARD_VPN_VERIFIED}" \
   "${OFFICIAL_FOR_LAUNCH}" \
-  "${POINTER_DEVICE_DEFAULT}"
+  "${POINTER_DEVICE_DEFAULT}" \
+  "${DEVICE_TYPE_PROFILE}"
 
 chmod +x "${LAUNCH_OUT}/linux.sh" "${LAUNCH_OUT}/macos.command" 2>/dev/null || true
 if [ -f "${LAUNCH_OUT}/qemu_run.sh" ]; then
