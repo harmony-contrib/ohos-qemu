@@ -176,6 +176,7 @@ PATCH_ROOT="${SCRIPT_DIR}/../patches"
 ARMV7A_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/armv7a_product/apply.sh"
 VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/apply.sh"
 QEMU_2IN1_PROFILE_SCRIPT="${PATCH_ROOT}/2in1/product_profile/apply.sh"
+SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/sceneboard_runtime/apply.sh"
 QEMU_PHONE_PROFILE_SCRIPT="${PATCH_ROOT}/phone/product_profile/apply.sh"
 QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
 QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh"
@@ -195,6 +196,8 @@ if [ ! -x "${PACKAGER}" ]; then
 fi
 
 CACHE_ROOT="${CACHE_ROOT:-/Volumes/PSSD/qemu}"
+SCENEBOARD_RUNTIME_ASSET_ROOT="${SCENEBOARD_RUNTIME_ASSET_ROOT:-${CACHE_ROOT}/artifacts/sceneboard-runtime}"
+SCENEBOARD_RUNTIME_NATIVE_REVISION="${SCENEBOARD_RUNTIME_NATIVE_REVISION:-27befcf82a71047a585d725bb8c7805031472e86}"
 OHOS_ROOT="${OHOS_ROOT:-${CACHE_ROOT}/openharmony}"
 PACKAGE_ROOT="${PACKAGE_ROOT:-${CACHE_ROOT}/packages}"
 CONTAINER_HOME="${CONTAINER_HOME:-${CACHE_ROOT}/home}"
@@ -924,6 +927,34 @@ apply_github_lfs_asset_component() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_github_lfs_assets.log"
 }
 
+restore_staged_sceneboard_lfs_assets() {
+  # A previous architecture leaves the renewed HAPs in the persistent source
+  # volume. Restore only those exact staged files to their pinned originals so
+  # the LFS baseline audit can run again before this build stages them anew.
+  local hap target renewed oid object
+  for hap in SceneBoard.hap NotificationManagement.hap ThemeService.hap ThemeComponent.hap; do
+    target="${OHOS_ROOT}/applications/standard/hap/sceneboard/${hap}"
+    renewed="${SCENEBOARD_RUNTIME_ASSET_ROOT}/${hap}"
+    if [ ! -f "${target}" ] || [ ! -f "${renewed}" ] || ! cmp -s "${target}" "${renewed}"; then
+      continue
+    fi
+    oid="$(awk -F '\t' -v relative="sceneboard/${hap}" \
+      '$1 == "applications/standard/hap" && $2 == relative { print $4 }' \
+      "${GITHUB_LFS_ASSET_MAP}")"
+    [ "${#oid}" -eq 64 ] || {
+      echo "missing pinned LFS object for SceneBoard ${hap}" >&2
+      exit 1
+    }
+    object="${OHOS_LFS_ASSET_ROOT}/${oid:0:2}/${oid}"
+    [ -f "${object}" ] && [ "$(sha256sum "${object}" | awk '{print $1}')" = "${oid}" ] || {
+      echo "invalid pinned LFS object for SceneBoard ${hap}" >&2
+      exit 1
+    }
+    cp -p "${object}" "${target}"
+    echo "restored pinned SceneBoard LFS asset before baseline audit: ${hap}"
+  done
+}
+
 verify_git_lfs_objects() {
   if ! git lfs version >/dev/null 2>&1; then
     echo "git-lfs not found; cannot verify cached LFS objects" >&2
@@ -1391,9 +1422,24 @@ product_list_contains() {
 
 configure_qemu_device_profile() {
   local profile_args=()
+  local all_profile_args=()
   local product
+  local config_path
   for product in "${PRODUCTS[@]}"; do
     profile_args+=(--product "${product}")
+  done
+  # The QEMU products share product_virt.para. Clear stale profiles from every
+  # architecture before selecting this build's device type, so a later phone
+  # build cannot inherit PC-only parameters from an earlier 2in1 build.
+  for product in arm64_virt x86_64_virt armv7a_virt; do
+    case "${product}" in
+      arm64_virt) config_path="vendor/ohemu/qemu_arm64_linux_full/config.json" ;;
+      x86_64_virt) config_path="vendor/ohemu/qemu_x86_64_linux_full/config.json" ;;
+      armv7a_virt) config_path="vendor/ohemu/qemu_armv7a_linux_full/config.json" ;;
+    esac
+    if [ -f "${OHOS_ROOT}/${config_path}" ]; then
+      all_profile_args+=(--product "${product}")
+    fi
   done
 
   for component_script in "${QEMU_2IN1_PROFILE_SCRIPT}" "${QEMU_PHONE_PROFILE_SCRIPT}"; do
@@ -1423,10 +1469,10 @@ configure_qemu_device_profile() {
   # A product may inherit only one generated device profile. Disable both for
   # the selected products before enabling the requested source profile.
   bash "${QEMU_2IN1_PROFILE_SCRIPT}" --source-root "${OHOS_ROOT}" --disable \
-    "${profile_args[@]}" \
+    "${all_profile_args[@]}" \
     2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_2in1_profile_component.log"
   bash "${QEMU_PHONE_PROFILE_SCRIPT}" --source-root "${OHOS_ROOT}" --disable \
-    "${profile_args[@]}" \
+    "${all_profile_args[@]}" \
     2>&1 | tee "${CACHE_ROOT}/logs/disable_qemu_phone_profile_component.log"
 
   if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_PROFILE_COMPONENT}" != "0" ]; then
@@ -2749,6 +2795,7 @@ main() {
   prepare_checkout
   configure_out_volume_ccache
   sync_git_lfs_objects
+  restore_staged_sceneboard_lfs_assets
   apply_github_lfs_asset_component
   verify_git_lfs_objects
   prepare_ets12_separate_npm_install
@@ -2767,6 +2814,13 @@ main() {
   # component recreates config.json and silently drops the selected profile.
   apply_armv7a_product_component
   configure_qemu_device_profile
+  if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_PROFILE_COMPONENT}" != "0" ]; then
+    bash "${SCENEBOARD_RUNTIME_COMPONENT_SCRIPT}" \
+      --source-root "${OHOS_ROOT}" \
+      --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
+      --native-source-revision "${SCENEBOARD_RUNTIME_NATIVE_REVISION}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_sceneboard_runtime_component.log"
+  fi
   apply_qemu_runtime_components
   bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_native_child_process_component.log"

@@ -62,8 +62,12 @@ verify_package() {
   local device_type="$1"
   local package_dir="$2"
   local full_arg
+  local scene_args=()
   case "${device_type}" in
-    2in1) full_arg=--require-full-2in1 ;;
+    2in1)
+      full_arg=--require-full-2in1
+      scene_args=(--require-scene-window)
+      ;;
     phone) full_arg=--require-full-phone ;;
     *) return 2 ;;
   esac
@@ -71,7 +75,8 @@ verify_package() {
     --package "${package_dir}" \
     --expect-device-type "${device_type}" \
     --expect-manifest-revision "${MANIFEST_REVISION}" \
-    "${full_arg}"
+    "${full_arg}" \
+    "${scene_args[@]}"
 }
 
 mkdir -p "${PACKAGE_ROOT}"
@@ -282,9 +287,12 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "accessibility_cli": capabilities.get("accessibility_cli", False),
         "virtio_multitouch": capabilities.get("virtio_multitouch", False),
         "device_type_full": capabilities.get("device_type_full", False),
+        "sceneboard_window_manager": capabilities.get("sceneboard_window_manager", False),
         "all_required_capabilities": all(
             capabilities.get(name, False) for name in required_capability_names
-        ) and capabilities.get("virtual_vibrator_mode") == "simulated"
+        ) and (manifest["device_type"] != "2in1" or
+               capabilities.get("sceneboard_window_manager") is True)
+          and capabilities.get("virtual_vibrator_mode") == "simulated"
           and capabilities.get("jsvm_engine") == "ArkWeb M144 V8"
           and manifest.get("launcher", {}).get("accessibility") is True
           and manifest.get("launcher", {}).get("qmp_unix") is True
