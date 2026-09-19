@@ -61,7 +61,7 @@ trap cleanup EXIT
 # is idempotent and preserves the system parameter file's mode and SELinux
 # label while changing only the 2in1 timeout value.
 ARMV7A_SYSTEM_IMG="${WORKDIR}/armv7a-system.img"
-dd if=/dev/zero of="${ARMV7A_SYSTEM_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${ARMV7A_SYSTEM_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${ARMV7A_SYSTEM_IMG}"
 debugfs -w -R 'mkdir /etc' "${ARMV7A_SYSTEM_IMG}" >/dev/null
 debugfs -w -R 'mkdir /etc/param' "${ARMV7A_SYSTEM_IMG}" >/dev/null
@@ -585,11 +585,11 @@ mkdir -p "${INPUT_PKG}/images" "${INPUT_PKG}/launch"
 : > "${INPUT_PKG}/images/ramdisk.img"
 : > "${INPUT_PKG}/images/vendor.img"
 # Sparse-ish clean userdata: small raw file that compresses well.
-dd if=/dev/zero of="${INPUT_PKG}/images/userdata.img" bs=1m count=8 status=none
+dd if=/dev/zero of="${INPUT_PKG}/images/userdata.img" bs=1M count=8 status=none
 
 # Build a real ext2 system.img with default deviceType params.
 SYSTEM_IMG="${INPUT_PKG}/images/system.img"
-dd if=/dev/zero of="${SYSTEM_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${SYSTEM_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${SYSTEM_IMG}"
 debugfs -w -R "mkdir etc" "${SYSTEM_IMG}" >/dev/null
 debugfs -w -R "mkdir etc/param" "${SYSTEM_IMG}" >/dev/null
@@ -743,7 +743,7 @@ debugfs -w -R "write ${V8_ELF} /system/lib64/libv8_shared.so" \
   "${OUT_PKG}/images/system.img" >/dev/null
 
 VENDOR_IMG="${OUT_PKG}/images/vendor.img"
-dd if=/dev/zero of="${VENDOR_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${VENDOR_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${VENDOR_IMG}"
 debugfs -w -R "mkdir vendor" "${VENDOR_IMG}" >/dev/null
 debugfs -w -R "mkdir vendor/lib64" "${VENDOR_IMG}" >/dev/null
@@ -762,7 +762,7 @@ CONFIG_UCLAMP_TASK_GROUP=y
 EOF
 
 SYS_PROD_IMG="${OUT_PKG}/images/sys_prod.img"
-dd if=/dev/zero of="${SYS_PROD_IMG}" bs=1m count=4 status=none
+dd if=/dev/zero of="${SYS_PROD_IMG}" bs=1M count=4 status=none
 mke2fs -t ext2 -F -q "${SYS_PROD_IMG}"
 debugfs -w -R "mkdir etc" "${SYS_PROD_IMG}" >/dev/null
 debugfs -w -R "mkdir etc/param" "${SYS_PROD_IMG}" >/dev/null
@@ -921,7 +921,7 @@ DIRTY_PKG="${WORKDIR}/openharmony-qemu-arm64-arm64_virt-dirty"
 cp -a "${INPUT_PKG}" "${DIRTY_PKG}"
 # ~32MB of high-entropy data so gzip -1 exceeds the 200MB threshold when padded,
 # or use a larger random blob. 220MB of /dev/urandom is slow; use sparse+random mix.
-dd if=/dev/urandom of="${DIRTY_PKG}/images/userdata.img" bs=1m count=220 status=none
+dd if=/dev/urandom of="${DIRTY_PKG}/images/userdata.img" bs=1M count=220 status=none
 set +e
 bash "${REPACKAGE}" \
   --device-type 2in1 \
