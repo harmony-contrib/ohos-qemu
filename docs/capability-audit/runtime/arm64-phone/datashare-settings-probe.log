@@ -1,0 +1,1 @@
+09-22 02:27:49.538   638  1942 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:hilog -x -v time | grep -E '15700010|DataShareHelper is not initialized|SettingsData' fd:41 pid:20247

@@ -1,0 +1,5 @@
+# source=/private/tmp/ohos_native_child_support_probe_arm64
+# target=127.0.0.1:5665
+FileTransfer finish, Size:13856, File count = 1, time:1ms rate:13856.00kB/s
+supported=false
+exit=0

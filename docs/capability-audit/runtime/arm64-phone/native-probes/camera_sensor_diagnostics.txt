@@ -1,0 +1,8 @@
+# camera/sensor probe logs
+09-22 00:01:41.322   460  1959 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:hilog -x | grep -E 'ohos_hardware_(camera|sensor)|CAMERA|SensorService|SensorNDK' | tail -n 1200 fd:40 pid:2714
+# faults
+no records found.
+# fault files
+/data/log/faultlog/temp/cppcrash-2236-1790006472713.json
+/data/log/faultlog/faultlogger/cppcrash-ohos_hardware_camera-0-20260922000112713.log
+/data/log/reliability/bbox/bbox.save.log.flags

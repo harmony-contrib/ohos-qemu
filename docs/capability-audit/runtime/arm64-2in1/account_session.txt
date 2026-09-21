@@ -1,0 +1,252 @@
+### os_account -h
+/bin/sh: os_account: inaccessible or not found
+### os_account -l
+/bin/sh: os_account: inaccessible or not found
+### aa dump -a
+User ID #100
+  current mission lists:{
+ }
+  ExtensionRecords:
+    uri [/com.example.kikakeyboard/entry/ServiceExtAbility]
+      AbilityRecord ID #13   state #ACTIVE   start time [4302]
+      main name [ServiceExtAbility]
+      bundle name [com.example.kikakeyboard]
+      ability type [SERVICE]
+      app state #BEGIN
+        isKeepAlive: false
+      Connections: 1
+       > com.example.kikakeyboard/ServiceExtAbility   connectionState #CONNECTED
+    uri [/com.ohos.contactsdataability/contactsdata/com.ohos.contactsdataability.ServiceAbility]
+      AbilityRecord ID #9   state #ACTIVE   start time [3907]
+      main name [com.ohos.contactsdataability.ServiceAbility]
+      bundle name [com.ohos.contactsdataability]
+      ability type [SERVICE]
+      app state #BEGIN
+        isKeepAlive: false
+      Connections: 0
+    uri [/com.ohos.medialibrary.medialibrarydata/entry/DataShareExtAbility]
+      AbilityRecord ID #5   state #ACTIVE   start time [3612]
+      main name [DataShareExtAbility]
+      bundle name [com.ohos.medialibrary.medialibrarydata]
+      ability type [SERVICE]
+      app state #BEGIN
+        isKeepAlive: false
+      Connections: 1
+       > com.ohos.medialibrary.medialibrarydata/DataShareExtAbility   connectionState #CONNECTED
+    uri [/com.ohos.sceneboard/phone_sceneboard/com.ohos.sceneboard.MainAbility]
+      AbilityRecord ID #0   state #ACTIVE   start time [2595]
+      main name [com.ohos.sceneboard.MainAbility]
+      bundle name [com.ohos.sceneboard]
+      ability type [SERVICE]
+      app state #BEGIN
+        isKeepAlive: true
+      Connections: 0
+    uri [/com.ohos.sceneboard/themeservice_core/ThemeServiceAbility]
+      AbilityRecord ID #12   state #ACTIVE   start time [4146]
+      main name [ThemeServiceAbility]
+      bundle name [com.ohos.sceneboard]
+      ability type [SERVICE]
+      app state #BEGIN
+        isKeepAlive: false
+      Connections: 0
+    PendingWantRecords:
+        PendWantRecord ID #1  type #4
+        bundle name []
+        result who []
+        request code #0  flags #134217728
+        resolved type []
+        Wants:
+          uri [///]
+          resolved types []
+  AppRunningRecords:
+    AppRunningRecord ID #0
+      process name [com.ohos.sceneboard]
+      pid #1388  uid #20010011
+      state #READY
+    AppRunningRecord ID #1
+      process name [com.ohos.settingsdata]
+      pid #1407  uid #10004
+      state #READY
+    AppRunningRecord ID #2
+      process name [com.ohos.contactsdataability]
+      pid #1429  uid #20010014
+      state #READY
+    AppRunningRecord ID #3
+      process name [com.ohos.medialibrary.medialibrarydata]
+      pid #1434  uid #20010009
+      state #READY
+    AppRunningRecord ID #4
+      process name [com.example.kikakeyboard:inputMethod]
+      pid #1607  uid #20010029
+      state #READY
+### ps -A -o USER,PID,PPID,NAME,ARGS
+USER           PID  PPID NAME                        ARGS
+root             1     0 init                        init --second-stage 232802
+root             2     0 [kthreadd]                  [kthreadd]
+root             3     2 [pool_workqueue_release]    [pool_workqueue_release]
+root             4     2 [kworker/R-rcu_g]           [kworker/R-rcu_g]
+root             5     2 [kworker/R-rcu_p]           [kworker/R-rcu_p]
+root             6     2 [kworker/R-slub_]           [kworker/R-slub_]
+root             7     2 [kworker/R-netns]           [kworker/R-netns]
+root             8     2 [kworker/0:0-events]        [kworker/0:0-events]
+root             9     2 [kworker/0:0H-events_highpri] [kworker/0:0H-events_highpri]
+root            11     2 [kworker/u8:0-events_power_efficient] [kworker/u8:0-events_power_efficient]
+root            12     2 [kworker/R-mm_pe]           [kworker/R-mm_pe]
+root            13     2 [ksoftirqd/0]               [ksoftirqd/0]
+root            14     2 [rcu_preempt]               [rcu_preempt]
+root            15     2 [migration/0]               [migration/0]
+root            16     2 [cpuhp/0]                   [cpuhp/0]
+root            17     2 [cpuhp/1]                   [cpuhp/1]
+root            18     2 [migration/1]               [migration/1]
+root            19     2 [ksoftirqd/1]               [ksoftirqd/1]
+root            21     2 [kworker/1:0H-kblockd]      [kworker/1:0H-kblockd]
+root            22     2 [cpuhp/2]                   [cpuhp/2]
+root            23     2 [migration/2]               [migration/2]
+root            24     2 [ksoftirqd/2]               [ksoftirqd/2]
+root            26     2 [kworker/2:0H-kblockd]      [kworker/2:0H-kblockd]
+root            27     2 [cpuhp/3]                   [cpuhp/3]
+root            28     2 [migration/3]               [migration/3]
+root            29     2 [ksoftirqd/3]               [ksoftirqd/3]
+root            30     2 [kworker/3:0-rcu_gp]        [kworker/3:0-rcu_gp]
+root            31     2 [kworker/3:0H-kblockd]      [kworker/3:0H-kblockd]
+root            32     2 [kdevtmpfs]                 [kdevtmpfs]
+root            33     2 [kworker/R-inet_]           [kworker/R-inet_]
+root            34     2 [kauditd]                   [kauditd]
+root            35     2 [oom_reaper]                [oom_reaper]
+root            36     2 [kworker/R-write]           [kworker/R-write]
+root            37     2 [kcompactd0]                [kcompactd0]
+root            38     2 [khugepaged]                [khugepaged]
+root            39     2 [kworker/R-crypt]           [kworker/R-crypt]
+root            40     2 [kworker/R-kinte]           [kworker/R-kinte]
+root            41     2 [kworker/R-kbloc]           [kworker/R-kbloc]
+root            42     2 [kworker/R-tpm_d]           [kworker/R-tpm_d]
+root            43     2 [kworker/R-ata_s]           [kworker/R-ata_s]
+root            44     2 [kworker/R-edac-]           [kworker/R-edac-]
+root            45     2 [kworker/R-devfr]           [kworker/R-devfr]
+root            46     2 [watchdogd]                 [watchdogd]
+root            47     2 [kworker/1:1-cgroup_pidlist_destroy] [kworker/1:1-cgroup_pidlist_destroy]
+root            48     2 [kworker/u8:1-events_power_efficient] [kworker/u8:1-events_power_efficient]
+root            49     2 [kworker/0:1H-kblockd]      [kworker/0:1H-kblockd]
+root            50     2 [kworker/R-rpcio]           [kworker/R-rpcio]
+root            51     2 [kworker/R-xprti]           [kworker/R-xprti]
+root            52     2 [kswapd0]                   [kswapd0]
+root            53     2 [kworker/R-nfsio]           [kworker/R-nfsio]
+root            54     2 [kworker/2:1-events]        [kworker/2:1-events]
+root            56     2 [kworker/0:2-events]        [kworker/0:2-events]
+root            57     2 [kworker/u8:2-events_unbound] [kworker/u8:2-events_unbound]
+root            60     2 [kworker/R-vfio-]           [kworker/R-vfio-]
+root            61     2 [kworker/R-mld]             [kworker/R-mld]
+root            62     2 [kworker/R-ipv6_]           [kworker/R-ipv6_]
+root            63     2 [kworker/u9:0]              [kworker/u9:0]
+root            64     2 [spi0]                      [spi0]
+root            65     2 [usb pnp notify handle kthread] [usb pnp notify handle kthread]
+root            66     2 [gadget pnp notify handle kthread] [gadget pnp notify handle kthread]
+root            67     2 [MessageDispatcher]         [MessageDispatcher]
+root            69     2 [kworker/3:1-events]        [kworker/3:1-events]
+root            70     2 [kworker/R-ext4-]           [kworker/R-ext4-]
+root            71     2 [kworker/R-ext4-]           [kworker/R-ext4-]
+root            72     2 [kworker/3:1H-kblockd]      [kworker/3:1H-kblockd]
+root            73     2 [kworker/R-ext4-]           [kworker/R-ext4-]
+root            75     2 [kworker/R-ext4-]           [kworker/R-ext4-]
+root            77     2 [kworker/1:1H-kblockd]      [kworker/1:1H-kblockd]
+root            86     2 [f2fs_ckpt-254:0]           [f2fs_ckpt-254:0]
+root            87     2 [f2fs_flush-254:0]          [f2fs_flush-254:0]
+root            88     2 [f2fs_discard-254:0]        [f2fs_discard-254:0]
+root            89     2 [f2fs_gc-254:0]             [f2fs_gc-254:0]
+ueventd         91     1 ueventd                     ueventd
+root            93     2 [kworker/2:1H-kblockd]      [kworker/2:1H-kblockd]
+faultloggerd    98     1 faultloggerd                faultloggerd
+logd            99     1 hilogd                      hilogd
+root           110     1 key_enable                  key_enable
+paramwatcher   111     1 param_watcher               param_watcher
+root           112     1 appspawn                    appspawn
+hiview         117     1 hiview                      hiview
+root           118     1 storage_daemon              storage_daemon
+samgr          119     1 samgr                       samgr
+hdf_devmgr     120     1 hdf_devmgr                  hdf_devmgr
+storage_manager 121    1 storage_manager             storage_manager
+tee            122     1 cadaemon                    cadaemon
+audio          158     1 audio_server                audio_server
+huks_server    180     1 huks_service                huks_service
+input          194     1 uinput_inject               uinput_inject
+input          195     1 multimodalinput             multimodalinput
+system         196     1 concurrent_task_service     concurrent_task_service
+accessibility  197     1 accessibility               accessibility
+ressched       220     1 resource_schedule_service   resource_schedule_service
+bluetooth      221     1 bluetooth_service           bluetooth_service
+memmgr         222     1 memmgrservice               memmgrservice
+root           232     1 resource_schedule_executor  resource_schedule_executor
+net_manager    261     1 netmanager                  netmanager
+radio          262     1 telephony                   telephony
+access_token   267     1 accesstoken_service         accesstoken_service
+wallpaper      268     1 wallpaper_service           wallpaper_service
+msdp           331     1 msdp                        msdp
+time           333     1 time_service                time_service
+fingerprint_auth_host 369 1 fingerprint_auth_host    fingerprint_auth_host   -i 23 -n fingerprint_auth_host
+user_auth_host 370     1 user_auth_host              user_auth_host          -i 22 -n user_auth_host
+face_auth_host 371     1 face_auth_host              face_auth_host          -i 20 -n face_auth_host
+codec_host     372     1 codec_host                  codec_host              -i 17 -n codec_host
+light_host     381     1 light_host                  light_host              -i 16 -n light_host
+vibrator_host  382     1 vibrator_host               vibrator_host           -i 15 -n vibrator_host
+sensor_host    383     1 sensor_host                 sensor_host             -i 14 -n sensor_host
+input_user_host 384    1 input_user_host             input_user_host         -i 11 -n input_user_host
+wifi           385     1 wifi_manager_service        wifi_manager_service
+camera_host    387     1 camera_host                 camera_host             -i 9 -n camera_host
+audio_host     388     1 audio_host                  audio_host              -i 8 -n audio_host
+wifi_host      389     1 wifi_host                   wifi_host               -i 5 -n wifi_host
+power_host     390     1 power_host                  power_host              -i 4 -n power_host
+usb_host       393     1 usb_host                    usb_host                -i 3 -n usb_host
+blue_host      395     1 blue_host                   blue_host               -i 1 -n blue_host
+allocator_host 398     1 allocator_host              allocator_host          -i 13 -n allocator_host
+composer_host  399     1 composer_host               composer_host           -i 12 -n composer_host -p -8 -s 1
+sysselection   401     1 selection_service           selection_service
+media          402     1 media_service               media_service
+graphics       404     1 render_service              render_service
+radio          410     1 telecom                     telecom
+audio          411     1 sharing_service             sharing_service
+pin_auth_host  412     1 pin_auth_host               pin_auth_host           -i 21 -n pin_auth_host
+security_guard 413     1 security_guard              security_guard
+access_token   414     1 privacy_service             privacy_service
+dsoftbus       415     1 softbus_server              softbus_server
+powermgr       416     1 powermgr                    powermgr
+inputmethod    417     1 inputmethod_service         inputmethod_service
+ddms           418     1 distributeddata             distributeddata
+drmserver      419     1 drm_service                 drm_service
+media          420     1 av_codec_service            av_codec_service
+foundation     422     1 foundation                  foundation
+uiserver       424     1 ui_service                  ui_service
+av_session     426     1 av_session                  av_session
+account        427     1 accountmgr                  accountmgr
+netsysnative   449     1 netsysnative                netsysnative
+sensor         453     1 sensors                     sensors
+device_manager 454     1 device_manager              device_manager
+useriam        455     1 useriam                     useriam
+cameraserver   456     1 camera_service              camera_service
+media_monitor  457     1 media_monitor               media_monitor
+root           572     1 hdcd                        hdcd
+root          1006     2 [kworker/R-share]           [kworker/R-share]
+root          1007     2 [kworker/R-dfs_i]           [kworker/R-dfs_i]
+root          1008     2 [kworker/R-dfs_s]           [kworker/R-dfs_s]
+root          1009     2 [kworker/R-dfs_s]           [kworker/R-dfs_s]
+root          1010     2 [kworker/R-share]           [kworker/R-share]
+root          1011     2 [kworker/R-dfs_i]           [kworker/R-dfs_i]
+root          1012     2 [kworker/R-dfs_s]           [kworker/R-dfs_s]
+root          1013     2 [kworker/R-dfs_s]           [kworker/R-dfs_s]
+root          1014     2 [kworker/R-share]           [kworker/R-share]
+root          1015     2 [kworker/R-dfs_i]           [kworker/R-dfs_i]
+root          1016     2 [kworker/R-dfs_s]           [kworker/R-dfs_s]
+root          1017     2 [kworker/R-dfs_s]           [kworker/R-dfs_s]
+asset_service 1154     1 asset_service               asset_service
+dms           1219     1 deviceprofile               deviceprofile
+20010011      1388   112 com.ohos.sceneboard         com.ohos.sceneboard
+10004         1407   112 com.ohos.settingsdata       com.ohos.settingsdata
+20010014      1429   112 com.ohos.contactsdataability com.ohos.contactsdataability
+20010009      1434   112 com.ohos.medialibrary.medialibrarydata com.ohos.medialibrary.medialibrarydata
+20010029      1607   112 com.example.kikakeyboard:inputMethod com.example.kikakeyboard:inputMethod
+pasteboard    1894     1 pasteboard_service          pasteboard_service
+nwebspawn     1902     1 nwebspawn                   nwebspawn
+root          1915   112 apppool                     apppool
+root          2158     2 [kworker/1:2-events]        [kworker/1:2-events]
+root          2199     2 [kworker/2:2]               [kworker/2:2]
+hidumper_service 2293  1 hidumper_service            hidumper_service
+root         12472   572 ps                          ps -A -o USER,PID,PPID,NAME,ARGS

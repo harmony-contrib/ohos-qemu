@@ -1,0 +1,18 @@
+wifi before
+{"type":"result","status":"failed","errCode":"WIFI_ERROR","errMsg":"Failed to get WiFi linked info"}
+wifi enable
+{"type":"result","status":"success","data":{"message":"WiFi STA mode enabled successfully"}}
+wifi after enable
+{"type":"result","status":"failed","errCode":"WIFI_ERROR","errMsg":"Failed to get WiFi linked info"}
+wifi scan
+{"type":"result","status":"failed","errCode":"WIFI_ERROR","errMsg":"Scan service is not opened"}
+{"type":"result","status":"success","data":{"networks":[],"count":0}}
+wifi disable
+{"type":"result","status":"success","data":{"message":"WiFi STA mode disabled successfully"}}
+bluetooth before
+{"type":"result","status":"success","data":{"state":"STATE_TURN_OFF","stateCode":3,"description":"Bluetooth Disabled","classicBluetooth":"Disabled","ble":"Disabled"}}
+bluetooth enable
+{"type":"result","status":"success","data":{"message":"Bluetooth enabled successfully"}}
+{"type":"result","status":"success","data":{"state":"STATE_TURN_OFF","stateCode":3,"description":"Bluetooth Disabled","classicBluetooth":"Disabled","ble":"Disabled"}}
+bluetooth disable
+{"type":"result","status":"failed","errCode":"ERR_BT_DISABLE_FAILED","errMsg":"Failed to disable Bluetooth","suggestion":"Please check if Bluetooth service is running properly"}

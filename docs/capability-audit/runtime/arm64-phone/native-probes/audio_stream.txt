@@ -1,0 +1,17 @@
+audio_stream.builder_create=0 builder=0xffffb678a000
+audio_stream.set_rate=0
+audio_stream.set_channels=0
+audio_stream.set_format=0
+audio_stream.set_encoding=0
+audio_stream.set_latency=0
+audio_stream.set_usage=0
+audio_stream.set_callbacks=0
+audio_stream.set_frame_size=0
+audio_stream.generate=0 renderer=0xffffb4b4d620
+audio_stream.start=2
+audio_stream.state_result=0 state=1
+audio_stream.frames_result=0 frames=0
+audio_stream.callbacks=0 bytes=0 error=0
+audio_stream.stop=2
+audio_stream.release=0
+audio_stream.builder_destroy=0

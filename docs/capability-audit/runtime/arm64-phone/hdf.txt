@@ -1,0 +1,14 @@
+# target=127.0.0.1:5665
+# device=phone
+# arch=arm64
+# command=hidumper -s HdfDeviceServiceManager
+
+-------------------------------[ability]-------------------------------
+
+
+----------------------------------HdfDeviceServiceManager----------------------------------
+ usage:
+ -help  :display help information
+ -query :query all services and devices information
+ -host hostName parameter1 parameter2 ... :dump for host, maximum number of parameters is 20
+ -service serviceName parameter1 parameter2 ... :dump for device service, maximum number of parameters is 20

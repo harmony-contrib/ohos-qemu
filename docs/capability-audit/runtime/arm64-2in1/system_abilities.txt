@@ -1,0 +1,40 @@
+# target=127.0.0.1:5665
+# device=2in1
+# arch=arm64
+# command=hidumper -ls
+System ability list:
+SystemAbilityManager             RenderService                    AbilityManagerService
+DataObserverMgr                  AgentManagerService              AccountMgr
+BundleMgr                        FormMgr                          ApplicationManagerService
+Installd                         AccessibilityManagerService      UserIdmService
+UserAuthService                  AuthExecutorMgrService           PinAuthService
+FaceAuthService                  945                              WifiDevice
+WifiHotspot                      WifiP2p                          WifiScan
+1126                             BluetoothHost                    NetConnManager
+NetPolicyManager                 NetStatsManager                  NetTetheringManager
+EthernetManager                  NetsysNative                     HiviewService
+HiviewFaultLogger                HiviewSysEventService            HiDumperService
+HiDumperCpuService               DistributedKvData                ResourceSched
+BackgroundTaskManager            WorkSchedule                     SocPerfService
+DeviceUsageStatistics            MemoryManagerService             ConcurrentTaskService
+DeviceStandbyService             1918                             DeviceStatusService
+AudioDistributed                 PlayerDistributedService         3006
+CameraService                    AudioPolicyService               AVSessionService
+AVCodecService                   MediaKeySystemService            3013
+MultimodalInput                  DistributedNotificationService   CommonEventService
+PowerManagerService              BatteryService                   ThermalService
+DisplayPowerManagerService       AccessTokenManagerService        PrivacyManagerService
+SecurityComponentService         LocalCodeSignService             SandboxManagerService
+KeystoreService                  DlpPermissionService             RiskAnalysisManagerService
+DataCollectManagerService        SensorService                    MiscDeviceService
+PasteboardService                TimeService                      InputMethodService
+ScreenlockService                WallpaperManagerService          ParamWatcher
+TelephonyCallManager             TelephonyCellularCall            TelephonyCellularData
+TelephonySmsMms                  TelephonyStateRegistry           TelephonyCoreService
+WindowManagerService             DisplayManagerService            DSoftbus
+DeviceAuthService                DeviceManagerService             StorageDaemon
+StorageManager                   HdfDeviceServiceManager          CloudFileSyncService
+5527                             5528                             DistributedDeviceProfile
+EcologicalRuleManager            AppDomainVerifyManager           AppDomainVerifyAgent
+UiService                        UiAppearanceService              CaDaemon
+AssetService                     SelectionService

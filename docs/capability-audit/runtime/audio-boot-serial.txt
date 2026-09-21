@@ -1,0 +1,5 @@
+# Fresh ARM64 phone package, serial console during boot
+[    0.061318] [E/HDF_AUDIO_KADM] [AudioSeekCpuDaiDevice][line:209]: daiController is empty.
+
+# Fresh ARM64 2in1 package, serial console during boot
+[    0.066652] [E/HDF_AUDIO_KADM] [AudioSeekCpuDaiDevice][line:209]: daiController is empty.

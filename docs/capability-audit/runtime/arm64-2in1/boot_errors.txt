@@ -1,0 +1,659 @@
+# target=127.0.0.1:5665
+# device=2in1
+# arch=arm64
+# command=hilog -x | grep -Ei "fail|error|not found|unsupported|not support|denied|no such|cannot|unable|ENOSYS|ENOTSUP" | tail -n 12000
+09-22 07:27:50.556  1388  1388 E A01b00/SCB: ResourceUtils: getNumber failed,bundleName:com.ohos.sceneboard,moduleName:phone_sceneboard,error:
+09-22 07:27:50.557  1388  1388 E A01b00/SCB: ResourceUtils: getNumber failed,bundleName:com.ohos.sceneboard,moduleName:phone_sceneboard,error:
+09-22 07:27:50.557  1388  1388 E A01b00/SCB: ResourceUtils: getNumber failed,bundleName:com.ohos.sceneboard,moduleName:phone_sceneboard,error:
+09-22 07:27:50.563  1388  1388 E A01a01/NC: DropdownPanel-Index: init animation_blur_policy failed.
+09-22 07:27:50.563  1388  1388 E A01a01/NC: DropdownPanel-Index: init animation_blur_stop_time_normal failed.
+09-22 07:27:50.563  1388  1388 E A01a01/NC: DropdownPanel-Index: init animation_blur_stop_time_abnormal failed.
+09-22 07:27:50.563  1388  1388 E A01a01/NC: DropdownPanel-Index: init animation_blur_cancel_thermal_level failed.
+09-22 07:27:50.588  1388  1388 E A01b04/CC: Ctrl.QuickToggleController: isSystemAppExist getApplicationInfoSync error, error=Error: BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.588  1388  1388 E A01b04/CC: Ctrl.QuickToggleController: isSystemAppExist getApplicationInfoSync error, error=Error: BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.589  1388  1388 E A01b04/CC: Ctrl.QuickToggleController: isSystemAppExist getApplicationInfoSync error, error=Error: BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.589  1388  1388 E A01b04/CC: Ctrl.QuickToggleController: isSystemAppExist getApplicationInfoSync error, error=Error: BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.602  1388  1388 E A01a00/SYS_UI: Model.WifiController: Distributed modem is not supported
+09-22 07:27:50.667  1388  1388 I A01b01/HOME: WallpaperManager --> getWallpaper error, reason: can not resolve unlockThemePath
+09-22 07:27:50.670  1388  1388 W A04200/WINDOW: SCBSSM: Failed to get system Session with systemBarType: 1}
+09-22 07:27:50.671  1388  1388 W A04200/WINDOW: SCBSSM: Failed to get system Session with systemBarType: 1}
+09-22 07:27:50.686  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: registerSimStateChange failed: Invalid parameter value.
+09-22 07:27:50.691  1388  1388 E A01a00/SYS_UI: Model.AlarmClockController --> getBundleInfoSync failed error code: 17700001
+09-22 07:27:50.698  1388  1388 I A01a00/SYS_UI: SystemUIColorVm: Theme color not support brightness.
+09-22 07:27:50.730  1388  1388 E A01b06/KG: AccountHelper: osAccount error -> getOtherUserProperty user -1. err code 12300003
+09-22 07:27:50.748  1388  1388 E A01b01/HOME: SettingsUtil: getValueExAsync domainName: secure, name: isDesktopIconShowName error
+09-22 07:27:50.756  1388  1474 E A01b00/SCB: TransparentBorderIconCropper: loadTransparentBorderIconAppCfg error e:No such file or directory
+09-22 07:27:50.757  1388  1388 E A04200/WINDOW: SCBScenePersistent: Failed to fetch persistent json array, message : Unexpected Text in JSON: Empty Text, code : undefined
+09-22 07:27:50.773  1388  1388 E A01b00/SCB: CommonBundleManager: bundleName:com.ohos.startupguide, getBundleInfoByBundleName error: [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.773  1388  1388 E A01b00/SCB: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.776  1388  1388 E A01b06/KG: AccountHelper: osAccount error -> getOtherUserProperty user -1. err code 12300003
+09-22 07:27:50.777  1388  1388 W A04200/WINDOW: SCBSSM: onShiftFocus get nextSession failed. nextId:0, focusedSession persistentId:0
+09-22 07:27:50.778  1388  1388 I A01b00/SCB: CommonEventManagerA: publishCommentEvent fail:
+09-22 07:27:50.778  1388  1388 E A01b06/KG: ScreenLockFormSaveUtils --> jsonPath:/data/storage/el1/base/haps/phone_sceneboard/files/ScreenLockForm_data.json Read failed error:13900002 No such file or directory. Open failed, path is: /d**a/st****e/e**/b**e/h**s/ph*************d/f***s/Sc****************a.j**n
+09-22 07:27:50.782  1388  1388 E A01b01/HOME: SCBOtaManager-OobeManager: isMigrateClientNeedShow catch error: {"code":15700010,"message":"The DataShareHelper is not initialized successfully."}
+09-22 07:27:50.782  1388  1388 E A01b04/CC: Ctrl.ControlCenterToggleDataRestore: loadTogglesMatchConfig exception: No such file or directory
+09-22 07:27:50.786  1388  1388 E A01b04/CC: Ctrl.ControlCenterComponent: get osAccountInfo fail: Error: Permission denied
+09-22 07:27:50.788  1388  1388 W A01b01/HOME: EngineContainer: EngineContainer On ThemeEngine UIExt error, info 100018
+09-22 07:27:50.788  1388  1388 W A01b01/HOME: DualInstanceHandler: DualInstanceHandler Error occurred from UIExtension instance, retrying.
+09-22 07:27:50.795  1388  1474 E A01b00/SCB: getAllLauncherAbilityInfo: get info err Error: BusinessError 201: Permission denied. An attempt was made to GetAllLauncherAbilityResourceInfo forbidden by permission: ohos.permission.GET_INSTALLED_BUNDLE_LIST and ohos.permission.GET_BUNDLE_RESOURCES.
+09-22 07:27:50.796  1388  1388 E A01b01/HOME: SettingsUtil: getValueExAsync name: settings.biometrics.drop_down_control_center_enable error
+09-22 07:27:50.800  1388  1388 E A01c04/MC: AVSessionAdapter: getInstance fail, create new one
+09-22 07:27:50.806  1388  1388 E A01a00/SYS_UI: Ctrl.HotSpotController: get connect number failed: BussinessError 13: Ap service is not enabled.
+09-22 07:27:50.809  1388  1388 E A01b00/SCB: CommonBundleManager: getAllBundleList bundleManager.getAllBundleInfo error: BusinessError 201: Permission denied. An attempt was made to GetBundleInfos forbidden by permission: ohos.permission.GET_INSTALLED_BUNDLE_LIST.
+09-22 07:27:50.825  1388  1579 E A01b00/SCB: getAllLauncherAbilityInfo: get info err Error: BusinessError 201: Permission denied. An attempt was made to GetAllLauncherAbilityResourceInfo forbidden by permission: ohos.permission.GET_INSTALLED_BUNDLE_LIST and ohos.permission.GET_BUNDLE_RESOURCES.
+09-22 07:27:50.827  1388  1388 E A01c06/ICON: ShortcutViewModel: addDesktopShortcutInfo error, code: 17700070, message: BusinessError 17700070: The specified shortcut id is illegal.
+09-22 07:27:50.827  1388  1388 E A01b00/SCB: CommonBundleManager: getAllBundleList bundleManager.getAllBundleInfo error: BusinessError 201: Permission denied. An attempt was made to GetBundleInfos forbidden by permission: ohos.permission.GET_INSTALLED_BUNDLE_LIST.
+09-22 07:27:50.907  1388  1388 E A01c06/ICON: AppIconCommonEvent: get image error: Failed to create image loader., bunldName: com.ohos.contacts, isOuterDesktop: false!
+09-22 07:27:50.972  1388  1388 E A01b06/KG: SimCardStateManager: getActiveSimAccountInfoList error. code 8300004
+09-22 07:27:50.973  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: hasSimCardSync1 error: System internal error.
+09-22 07:27:50.973  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: hasSimCardSync1 error: System internal error.
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.977  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.983  1388  1388 W A01b01/HOME: FormModel: com.ohos.sceneboard get appInfo failed
+09-22 07:27:50.984  1388  1388 E A01b01/HOME: NoIconAppModel: getBundleResourceInfo failed:  [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.984  1388  1388 E A01b01/HOME: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.984  1388  1388 E A01b01/HOME: NoIconAppModel: getBundleResourceInfo failed:  [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.984  1388  1388 E A01b01/HOME: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.984  1388  1388 E A01b01/HOME: NoIconAppModel: getBundleResourceInfo failed:  [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.984  1388  1388 E A01b01/HOME: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.985  1388  1388 E A01b01/HOME: NoIconAppModel: getBundleResourceInfo failed:  [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.985  1388  1388 E A01b01/HOME: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.985  1388  1388 E A01b01/HOME: NoIconAppModel: getBundleResourceInfo failed:  [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.985  1388  1388 E A01b01/HOME: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.985  1388  1388 E A01b01/HOME: NoIconAppModel: getBundleResourceInfo failed:  [17700001]BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:50.985  1388  1388 E A01b01/HOME: Cannot get SourceMap info, dump raw stack:
+09-22 07:27:50.986  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: getSimCardIsActive error, code:8300001, msg: Invalid parameter value.
+09-22 07:27:50.986  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: getSimCardIsActive error, code:8300001, msg: Invalid parameter value.
+09-22 07:27:50.986  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: hasSimCardSync1 error: System internal error.
+09-22 07:27:50.986  1388  1388 W A01a00/SYS_UI: FreqLimitMaintenance: (1)No report event(6) because errorCode [5255] exceeded limit
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillFunInteractionParams failed
+09-22 07:27:50.987  1388  1388 I A01b01/HOME: OverflowFormInfoUtil: fillSceneAnimationParams failed
+09-22 07:27:50.988  1388  1388 I A01b01/HOME: PageInfoManager: isHomePageSetSupport not Support Device
+09-22 07:27:50.988  1388  1388 I A01b01/HOME: PageInfoManager: isHomePageSetSupport not Support Device
+09-22 07:27:50.989  1388  1388 E A01a00/SYS_UI: Model.NetSpeedController: getSimCardIsActive error, code:8300001, msg: Invalid parameter value.
+09-22 07:27:50.989  1388  1388 W A01a00/SYS_UI: FreqLimitMaintenance: (1)No report event(6) because errorCode [5255] exceeded limit
+09-22 07:27:51.100  1388  1388 E A01b00/SCB: HiSysEventUtil: get bundle info of the bundleName com.ohos.litegamelauncher error, code: undefined, msg: BusinessError 17700001: The specified bundle is not found.
+09-22 07:27:51.178  1388  1388 E A01c06/ICON: AppIconCommonEvent: get image error: Failed to create image loader., bunldName: com.ohos.calculator, isOuterDesktop: false!
+09-22 07:27:51.178  1388  1388 E A01c06/ICON: AppIconCommonEvent: get image error: Failed to create image loader., bunldName: com.ohos.note, isOuterDesktop: false!
+09-22 07:27:51.179  1388  1388 E A01c06/ICON: AppIconCommonEvent: get image error: Failed to create image loader., bunldName: com.ohos.updateapp, isOuterDesktop: false!
+09-22 07:27:51.179  1388  1388 E A01c06/ICON: AppIconCommonEvent: get image error: Failed to create image loader., bunldName: ohos.samples.distributedmusicplayer, isOuterDesktop: false!
+09-22 07:27:51.213  1388  1388 E A01b00/SCB: CommonBundleManager: getAllBundleList bundleManager.getAllBundleInfo error: BusinessError 201: Permission denied. An attempt was made to GetBundleInfos forbidden by permission: ohos.permission.GET_INSTALLED_BUNDLE_LIST.
+09-22 07:27:51.225  1388  1388 W A01b00/SCB: CheckEmptyUtils: isEmptyPixelMap getPixelBytesNumber throw error code: 501, return false
+09-22 07:27:51.225  1388  1388 W A01b00/SCB: CheckEmptyUtils: isEmptyPixelMap getPixelBytesNumber throw error code: 501, return false
+09-22 07:27:51.225  1388  1388 W A01b00/SCB: CheckEmptyUtils: isEmptyPixelMap getPixelBytesNumber throw error code: 501, return false
+09-22 07:27:51.226  1388  1388 W A01b00/SCB: CheckEmptyUtils: isEmptyPixelMap getPixelBytesNumber throw error code: 501, return false
+09-22 07:27:51.265  1388  1388 I A01b04/CC: Ctrl.ControlCenterComponent: requestFocus error: Error: The component doesn't exist, is currently invisible, or has been disabled.
+09-22 07:27:51.266  1388  1388 W A01b01/HOME: EngineContainer: EngineContainer On ThemeEngine UIExt error, info 100018
+09-22 07:27:51.266  1388  1388 W A01b01/HOME: DualInstanceHandler: DualInstanceHandler Error occurred from UIExtension instance, retrying.
+09-22 07:27:51.272  1388  1388 W A01b01/HOME: EngineContainer: EngineContainer On ThemeEngine UIExt error, info 100018
+09-22 07:27:51.272  1388  1388 W A01b01/HOME: DualInstanceHandler: DualInstanceHandler Error occurred from UIExtension instance, retrying.
+09-22 07:27:51.283  1388  1388 I A01a00/SYS_UI: SystemUIColorVm: Theme color not support brightness.
+09-22 07:27:51.283  1388  1388 I A01a00/SYS_UI: SystemUIColorVm: Theme color not support brightness.
+09-22 07:27:51.306  1388  1388 I A01a00/SYS_UI: SystemUIColorVm: Theme color not support brightness.
+09-22 07:27:51.306  1388  1388 W A01c06/ICON: ShortcutViewModel: not support shortcuts
+09-22 07:27:51.306  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.306  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.306  1388  1388 W A01c06/ICON: ShortcutViewModel: not support shortcuts
+09-22 07:27:51.306  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.306  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.308  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: com.ohos.calculator not support card, formInfoList: 0, appIndex :0}
+09-22 07:27:51.308  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.308  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.309  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: com.ohos.calculator not support card, formInfoList: 0, appIndex :0}
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.309  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: com.ohos.note not support card, formInfoList: undefined, appIndex :0}
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.309  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: com.ohos.note not support card, formInfoList: undefined, appIndex :0}
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.309  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: com.ohos.updateapp not support card, formInfoList: undefined, appIndex :0}
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.309  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: com.ohos.updateapp not support card, formInfoList: undefined, appIndex :0}
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.309  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.309  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: ohos.samples.distributedmusicplayer not support card, formInfoList: undefined, appIndex :0}
+09-22 07:27:51.310  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.310  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.310  1388  1388 W A01b01/HOME: PageDesktopViewModel --> bundleName: ohos.samples.distributedmusicplayer not support card, formInfoList: undefined, appIndex :0}
+09-22 07:27:51.310  1388  1388 I A01b01/HOME: AppLockManager --> current devices is not support
+09-22 07:27:51.310  1388  1388 I A01b01/HOME: AppLockUtils: status is not support, status: NOT_DISPLAY
+09-22 07:27:51.355  1388  1388 W A01b01/HOME: EngineContainer: EngineContainer On ThemeEngine UIExt error, info 100018
+09-22 07:27:51.355  1388  1388 W A01b01/HOME: DualInstanceHandler: DualInstanceHandler Error occurred from UIExtension instance, retrying.
+09-22 07:27:51.368  1388  1388 W A01b01/HOME: EngineContainer: EngineContainer On ThemeEngine UIExt error, info 100018
+09-22 07:27:51.368  1388  1388 W A01b01/HOME: DualInstanceHandler: DualInstanceHandler Error occurred from UIExtension instance, retrying.
+09-22 07:27:51.368  1388  1388 W A01b01/HOME: TsResilienceHandler: TsResilienceHandler Requesting SCB to load wallpaper as TE continuously failed to start
+09-21 23:27:51.900  1388  1388 E A01c05/FORM: AppFormWeightManager: queryModuleUsageRecords throw error, code: 10000003, message: BusinessError 10000003:System service operation failed. Failed to get system ability manager.
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"common_exception","extendType":"read config file failed, error code: 14700101, message: System parameter not found.","detailType":"Cannot get SourceMap info, dump raw stack:\n    at getNtfLimit (sceneboard|@ohos/notificationcomponent|1.0.0|src/main/ets/model/NotificationListLimiter.ts:253:52)\n    at NotificationListLimiter (sceneboard|@ohos/notificationcomponent|1.0.0|src/main/ets/model/NotificationListLimiter.ts:28:74)\n    at NotificationListener (sceneboard|@ohos/notificationcomponent|1.0.0|src/main/ets/model/NotificationListener.ts:148:1)\n    at getInstance (sceneboard|@ohos/basicutils|1.0.0|src/main/ets/utils/SingletonHelper.ts:35:1)\n    at func_main_0 (sceneboard|@ohos/notificationcomponent|1.0.0|src/main/ets/model/NotificationListener.ts:1275:64)\n","errorCodes":"[4238]","deliveryTime":"1790033269997"}
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"Model.NetSpeedController","extendType":"registerSimStateChange failed: Invalid parameter value.","detailType":"Cannot get SourceMap info, dump raw stack:\n    at anonymous (sceneboard|@ohos/linkspeedcomponent|1.0.0|src/main/ets/default/controller/NetSpeedController.ts:291:22)\n    at run (sceneboard|@ohos/systemuicommon|1.0.0|src/main/ets/statusbar/RegisterAPIProtector.ts:21:1)\n    at observerSimCard (sceneboard|@ohos/linkspeedcomponent|1.0.0|src/main/ets/default/controller/NetSpeedController.ts:285:31)\n    at onStart (sceneboard|@ohos/linkspeedcomponent|1.0.0|src/main/ets/default/controller/NetSpeedController.ts:172:14)\n    at NetSpeedController (sceneboard|@ohos/linkspeedcomponent|1.0.0|src/main/ets/default/controller/NetSpeedController.ts:156:14)\n    at getInstance (sceneboard|@ohos/basicutils|1.0.0|src/main/ets/utils/SingletonHelper.ts:35:1)\n    at func_main_0 (sceneboard|@ohos/linkspeedcomponent|1.0.0|src/main/ets/default/controller/NetSpeedController.ts:651:43)\n    at get (sceneboard|@ohos/statusbarcomponent|1.0.0|src/main/ets/StatusBarVmInjectorFactory.ts:13:1)\n    at StatusBarViewV2 (sceneboard|@ohos/phonebase|1.0.0|src/main/ets/SceneBoard/statusbar/view/StatusBarBridgeView.ts:531:63)\n    at anonymous (sceneboard|@ohos/phonebase|1.0.0|src/main/ets/SceneBoard/statusbar/view/StatusBarBridgeView.ts:428:1)\n    at updateFunc (/Volumes/PSSD/qemu/openharmony/out/arm64_virt/obj/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/stateMgmt.js:10643:1)\n    at observeComponentCreation2 (/Volumes/PSSD/qemu/openharmony/out/arm64_virt/obj/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/stateMgmt.js:10673:1)\n    at initialRender (sceneboard|@ohos/phonebase|1.0.0|src/main/ets/SceneBoard/statusbar/view/StatusBarBridgeView.ts:426:18)\n    at initialRenderView (/Volumes/PSSD/qemu/openharmony/out/arm64_virt/obj/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/stateMgmt.js:10098:1)\n","errorCodes":"[5255]","deliveryTime":"1790033270686"}
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"Ctrl.HotSpotController","extendType":"get connect number failed: BussinessError 13: Ap service is not enabled.","detailType":"Cannot get SourceMap info, dump raw stack:\n    at getWifiAPConnectNum (sceneboard|@ohos/hotspotcomponent|1.0.0|src/main/ets/com/ohos/controller/HotSpotController.ts:307:40)\n    at anonymous (sceneboard|@ohos/hotspotcomponent|1.0.0|src/main/ets/com/ohos/controller/HotSpotController.ts:158:22)\n","errorCodes":"[5256]","deliveryTime":"1790033270806"}
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"Model.NetSpeedController","extendType":"hasSimCardSync1 error: System internal error.","errorCodes":"[5255]","deliveryTime":"1790033270973"}
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"Model.NetSpeedController","extendType":"hasSimCardSync1 error: System internal error.","errorCodes":"[5255]","deliveryTime":"1790033270973"}
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"Model.NetSpeedController","extendType":"getSimCardIsActive error, code:8300001, msg: Invalid parameter value.","errorCodes":"[5255]","deliveryTime":"1790033270986"}
+09-21 23:28:49.410  1388  1581 I A01a00/SYS_UI: HaReportBase: start report SYSTEM_UI_NOTIFICATION, params {"operationType":"6","creatorBundleName":"Model.NetSpeedController","extendType":"getSimCardIsActive error, code:8300001, msg: Invalid parameter value.","errorCodes":"[5255]","deliveryTime":"1790033270986"}
+09-21 23:28:56.781   390   772 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-21 23:28:56.894   415  1408 E C05703/CommDfx: [softbus_hisysevt_nstack.c:183] NstackHiEventCb# change NstackDfxEvent to SoftBusEvtReportMsg failed!
+09-21 23:28:56.894   415  1408 E C05703/CommDfx: [softbus_hisysevt_nstack.c:183] NstackHiEventCb# change NstackDfxEvent to SoftBusEvtReportMsg failed!
+09-21 23:28:56.895   415   864 E C05787/LnnState: [lnn_ohos_account.cpp:83] LnnGetOhosAccountInfo# get osAccountId fail
+09-21 23:28:56.895   415   864 W C05787/LnnState: [lnn_ohos_account.cpp:252] LnnUpdateOhosAccount# OnAccountChanged get account account hash fail
+09-21 23:28:58.774   112   112 E C02c11/APPSPAWN: [appspawn_kickdog.c:29]open /sys/kernel/hungtask/userlist fail,errno:2
+09-21 23:29:01.363  1902  1902 E C02c11/APPSPAWN: [appspawn_kickdog.c:29]open /sys/kernel/hungtask/userlist fail,errno:2
+09-21 23:29:01.745   262   818 E C01f04/TelephonySubsystem: GetSimAccountInfo fail!
+09-21 23:29:01.785   390   772 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-21 23:29:06.788   390   772 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-21 23:29:07.492  2677  2677 E C02c0b/BEGET: [control_fd_client.c:165]Failed tcgetattr stdin, err=25
+09-21 23:29:07.807  2721  2721 E C02d33/HitraceMeter: open trace file /sys/kernel/debug/tracing/trace_marker failed: 2
+09-21 23:29:07.807  2721  2721 E C02d33/HitraceMeter: open trace file /sys/kernel/tracing/trace_marker failed: 2
+09-21 23:29:07.858  2726  2726 E C02d33/HitraceMeter: open trace file /sys/kernel/debug/tracing/trace_marker failed: 2
+09-21 23:29:07.858  2726  2726 E C02d33/HitraceMeter: open trace file /sys/kernel/tracing/trace_marker failed: 2
+09-21 23:29:07.921   261   277 E C015b0/NetNativeMnager: fail to GetTotalStats ret= 2103011
+09-21 23:29:07.921  2293  2293 E C02d20/DumperService: GetAllBytes# GetAllRxBytes failed, ret:2103011.
+09-21 23:29:07.921   261   277 E C015b0/NetNativeMnager: fail to GetTotalStats ret= 2103011
+09-21 23:29:07.921  2293  2293 E C02d20/DumperService: GetAllBytes# GetAllRxBytes failed, ret:2103011.
+09-21 23:29:07.926  2293  2293 I C02d20/DumperService: FdToRead# fail to check consistency. path=[/proc/2293/net/dev], file=[/proc/net/dev]
+09-21 23:29:07.926  2293  2293 E C02d20/DumperService: FdToRead# realpath, no such file. path=[], file=[/proc/net/xt_qtaguid/iface_stat_all]
+09-21 23:29:07.926  2293  2293 E C02d20/DumperService: FdToRead# realpath, no such file. path=[], file=[/proc/net/xt_qtaguid/iface_stat_fmt]
+09-21 23:29:07.926  2293  2293 E C02d20/DumperService: FdToRead# realpath, no such file. path=[], file=[/proc/net/xt_qtaguid/ctrl]
+09-21 23:29:07.926  2293  2293 E C02d20/DumperService: FdToRead# realpath, no such file. path=[], file=[/proc/net/xt_qtaguid/stats]
+09-21 23:29:07.951  2293  2293 E C02d20/DumperService: FdToRead# realpath, no such file. path=[], file=[/data/misc/net/rt_tables]
+09-21 23:29:08.492  2293  2293 I C02d20/DumperService: FdToRead# fail to check consistency. path=[/proc/2293/mounts], file=[/proc/mounts]
+09-21 23:29:08.535  2293  2293 W C03f07/MUSL-LDSO: load absolute_path /system/lib64/libhidumperplugin_impl.z.so: check ns accessible failed namespace=ndk.
+09-21 23:29:08.535  2293  2293 W C03f07/MUSL-LDSO: load /system/lib64/libhidumperplugin_impl.z.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.535  2293  2293 W C03f07/MUSL-LDSO: load /system/lib64/libhidumperplugin_impl.z.so failed, namespace=default, errno=2
+09-21 23:29:08.535  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for /system/lib64/libhidumperplugin_impl.z.so caller namespace : default
+09-21 23:29:08.535  2293  2293 E C02d20/DumperService: LoadPlugin# load plugin failed: <private>
+09-21 23:29:08.549  2293  2293 I C01706/rtg_interface: rtg fOpen fail, errno = 2(No such file or directory)
+09-21 23:29:08.554  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.554  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.554  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.554  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.554   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.554  2293  2293 E C057c2/IPCObjectProxy: PrintErrorDetailedInfo: failed, handle:3 error:9 desc:*.ClientToServiceConnection proxy:2213230080 time:83401122913
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.555  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.555   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.555  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.555   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.555  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.555  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.555   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.556  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.556  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.556  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.556  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.556   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.556  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.556  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.556  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.556  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.556   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.559  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.559  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.559  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.559  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.559   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.559  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.559  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.559  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.559  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.559   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.560  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.560   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.560  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.560   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.560  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.560   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.560  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.560  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.560   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.561  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.561  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.561  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.561  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.561   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.561  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.561  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.561  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.561  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.561   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.562  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.562   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.562  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.562   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.562  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.562  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.562   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.563  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.563   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.563  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.563   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.563  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.563  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.563   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.564  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.564  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.564  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.564  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.564   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.564  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.564  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.564  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.564  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.564   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.565  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.565   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.565  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.565   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.565  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.565  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.565   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.566  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.566  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.566  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.566  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.566   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.566  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.566  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.566  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.566  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.566   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.567  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.567   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.567  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.567   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.567  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.567  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.568   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.568  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.568   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.568  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.568   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.568  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.568  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.568   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.569  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.569   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.569  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.569   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.569  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.569  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.569   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.570  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.570   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.570  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.570   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.570  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.570  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.570   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.571  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.571   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.571  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.571   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.571  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.571  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.571   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.572  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.572   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.572  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.572   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.572  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.572  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.572   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.573  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.573   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.573  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.573   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.573  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.573  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.573   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.574  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.574  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.574  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.574  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.574   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.575  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.575  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.575  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.575  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.575   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.576  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.576  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.576  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.576  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.576   404   637 E C01406/RSClientToServiceConnection: RSMultiRenderProcessManager::GetMemoryGraphics first connection failed!
+09-21 23:29:08.576   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHICS Write memoryGraphics failed!
+09-21 23:29:08.577  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.577  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.577  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.577  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.577   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.577  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.577  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.577  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.577  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.577   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.578  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.578   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.578  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.578   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.578  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.578  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.578   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.579  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.579  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.579  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.579  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.579   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.579  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.579  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.579  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.579  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.579   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.580  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.580  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.580  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.580  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.580   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.580  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.580  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.580  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.580  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.580   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.581  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.581  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.581  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.581  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.581   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.581  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.581  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.581  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.581  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.581   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.582  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.582  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.582  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.582  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.582   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.583  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.583  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.583  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.583  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.583   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.583  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.583  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.583  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.583  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.583   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.584  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.584   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.584  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.584   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.584  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.584  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.585   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.585  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.585  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.585  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.585  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.585   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.585  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.585  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.585  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.585  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.586   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.586  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.586  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.586  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.586  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.586   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.586  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.586  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.586  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.586  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.586   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.587  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.587   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.587  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.587   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.587  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.587  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.587   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.588  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.588  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.588  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.588  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.588   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.588  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.588  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.588  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.588  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.588   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.592  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.592  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.592  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.592  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.592   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.593  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.593  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.593  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.593  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.593   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.594  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.594  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.594  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.594  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.594   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.595  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.595  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.595  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.595  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.595   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.597  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.597  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.597  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.597  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.597   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.597  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.597  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.597  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.597  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.598   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.599  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.599  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.599  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.599  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.599   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.599  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.599  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.599  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.599  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.599   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.600  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.600  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.600  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.600  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.600   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.601  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.601   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.601  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.601   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.601  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.601  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.601   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.602  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.602  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.602  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.602  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.602   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.602  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.602  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.602  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.602  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.602   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.603  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=ndk no inherits, errno=2
+09-21 23:29:08.603  2293  2293 W C03f07/MUSL-LDSO: load libmemorytracker.default.so failed, namespace=default, errno=2
+09-21 23:29:08.603  2293  2293 W C03f07/MUSL-LDSO: dlopen_impl load library header failed for libmemorytracker.default.so caller namespace : default
+09-21 23:29:08.603  2293  2293 E C02517/hdf_memorytracker_impl: GetDevMem, dlopen libmemorytracker failed!
+09-21 23:29:08.603   404   637 E C01406/skia: RSClientToServiceConnectionStub::GET_MEMORY_GRAPHIC Write memoryGraphic failed!
+09-21 23:29:08.632  2293  2293 E C02d08/HISYSEVENT: Read result failed, code is: 3.
+09-21 23:29:08.653   572  2221 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:hilog -x | grep -Ei "fail|error|not found|unsupported|not support|denied|no such|cannot|unable|ENOSYS|ENOTSUP" | tail -n 12000 fd:40 pid:2796

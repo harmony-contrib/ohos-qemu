@@ -1,0 +1,14 @@
+# target=127.0.0.1:5665
+# device=phone
+# arch=arm64
+# command=param get const.product.devicetype; param get const.product.name; param get const.product.model; param get const.ohos.apiversion; param get const.ohos.fullname; param get persist.sys.abilityms.multi_process_model; param get const.max_native_child_process; uname -a; uptime; getenforce
+phone
+OpenHarmony 3.2
+ohos
+26
+OpenHarmony-7.0.0.39
+true
+50
+Linux localhost 6.6.101 #1 SMP PREEMPT Wed Sep  9 17:34:11 UTC 2026 aarch64 Toybox
+ 23:23:24 up 6 min,  0 users,  load average: 1.02, 0.77, 0.37
+Permissive

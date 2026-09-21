@@ -1,0 +1,80 @@
+{
+  "2in1": {
+    "audit_status_counts": {
+      "architecture_dependent_failure": 1,
+      "confirmed_broken": 20,
+      "invalid_declaration": 64,
+      "missing_capability": 3,
+      "not_applicable": 6,
+      "partially_broken": 6,
+      "runtime_validation_required": 195,
+      "runtime_verified_subset": 9
+    },
+    "declaration_counts": {
+      "declared_as_expected": 218,
+      "declared_outside_official_profile": 75,
+      "missing_from_image": 3,
+      "not_declared_for_device": 8
+    },
+    "image_declared": 293,
+    "official_sdk_profile": 221,
+    "sdk_not_in_tablet_reference_profile": 21,
+    "tablet_reference_not_in_sdk_profile": 23,
+    "tablet_reference_profile": 223
+  },
+  "advertised_or_expected_capability_count": 304,
+  "api_index": {
+    "arkts_syscap_count": 266,
+    "c_api_syscap_count": 107,
+    "documented_api_entry_count": 32043,
+    "documented_callable_count": 21899,
+    "documented_syscap_count": 315,
+    "xts_syscap_count": 272
+  },
+  "method_device_boundaries": {
+    "classification": {
+      "2in1": {
+        "conditional_hardware": 6,
+        "conditional_mode": 72,
+        "conditional_policy": 67,
+        "review_required": 62,
+        "supported": 681,
+        "unsupported": 183
+      },
+      "phone": {
+        "conditional_hardware": 6,
+        "conditional_mode": 72,
+        "conditional_policy": 67,
+        "review_required": 58,
+        "supported": 599,
+        "unsupported": 269
+      }
+    },
+    "count": 1071
+  },
+  "ohos_public_syscap_registry_count": 327,
+  "phone": {
+    "audit_status_counts": {
+      "architecture_dependent_failure": 1,
+      "confirmed_broken": 19,
+      "device_restricted_methods": 1,
+      "invalid_declaration": 48,
+      "missing_capability": 8,
+      "not_applicable": 3,
+      "partially_broken": 6,
+      "runtime_validation_required": 204,
+      "runtime_verified_subset": 14
+    },
+    "declaration_counts": {
+      "declared_as_expected": 231,
+      "declared_outside_official_profile": 61,
+      "missing_from_image": 1,
+      "not_declared_for_device": 11
+    },
+    "documented_minimum_profile": 231,
+    "documented_not_in_sdk_profile": 10,
+    "image_declared": 292,
+    "official_sdk_profile": 232,
+    "sdk_not_in_documented_profile": 11
+  }
+}

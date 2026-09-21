@@ -1,0 +1,18 @@
+# Regenerated detail exports and large raw snapshots. The compact matrices,
+# ledgers, summaries and targeted probe evidence remain versioned.
+/public-api-inventory.csv
+/public-api-inventory.json
+/advertised-capability-matrix.json
+/runtime/*/libraries*.txt
+/runtime/*/network.txt
+/runtime/*/parameters.txt
+/runtime/*/storage.txt
+/runtime/*/system-ability-probes/raw/
+/runtime/*/arkts-module-load.csv
+/runtime/*/arkts-module-load.json
+/runtime/*/hap-probe/results.log
+/runtime/*/hap-probe/results-all-permissions.log
+/runtime/*/hap-probe/results-expanded.log
+/runtime/*/hap-probe/results-full-registry.log
+/runtime/*/hap-probe/results-module-load.log
+/runtime/*/hap-probe/results-settings.log

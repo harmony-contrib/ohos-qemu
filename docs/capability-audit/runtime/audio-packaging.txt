@@ -1,0 +1,10 @@
+# Both window-manager-2in1-20260917 ARM64 package launch commands
+qemu_audio_device_arguments=0
+
+# Both packaged kernel.config files
+# CONFIG_SND_VIRTIO is not set
+
+# Host qemu-system-aarch64 device inventory includes these available devices
+virtio-sound-device
+virtio-sound-pci
+intel-hda + hda-duplex/hda-micro/hda-output

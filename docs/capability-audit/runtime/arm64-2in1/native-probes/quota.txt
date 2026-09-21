@@ -1,0 +1,7 @@
+# source=/private/tmp/ohos_quota_probe_arm64
+# target=127.0.0.1:5665
+FileTransfer finish, Size:14328, File count = 1, time:2ms rate:7164.00kB/s
+USRQUOTA ret=-1 errno=3(No such process) curspace=0
+GRPQUOTA ret=-1 errno=3(No such process) curspace=0
+PRJQUOTA ret=-1 errno=3(No such process) curspace=0
+exit=0

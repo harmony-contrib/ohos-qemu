@@ -1,0 +1,2941 @@
+{
+  "arch": "arm64",
+  "capabilities": [
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "neural_network_runtime/neural_network_core.h",
+        "neural_network_runtime/neural_network_runtime.h",
+        "neural_network_runtime/neural_network_runtime_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libneural_network_core.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libneural_network_core.so",
+          "public_function_count": 50,
+          "runtime_paths": [
+            "/system/lib64/ndk/libneural_network_core.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libneural_network_runtime.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libneural_network_runtime.so",
+          "public_function_count": 25,
+          "runtime_paths": [
+            "/system/lib64/ndk/libneural_network_runtime.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.AI.NeuralNetworkRuntime"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "AbilityKit/ability_base/ability_base_common.h",
+        "AbilityKit/ability_base/want.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libability_base_want.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libability_base_want.so",
+          "public_function_count": 16,
+          "runtime_paths": [
+            "/system/lib64/ndk/libability_base_want.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Ability.AbilityBase"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "AbilityKit/ability_runtime/ability_runtime_common.h",
+        "AbilityKit/ability_runtime/application_context.h",
+        "AbilityKit/ability_runtime/connect_options.h",
+        "AbilityKit/ability_runtime/context.h",
+        "AbilityKit/ability_runtime/context_constant.h",
+        "AbilityKit/ability_runtime/extension_ability.h",
+        "AbilityKit/ability_runtime/modular_object_dispatcher.h",
+        "AbilityKit/ability_runtime/modular_object_extension_ability.h",
+        "AbilityKit/ability_runtime/modular_object_extension_context.h",
+        "AbilityKit/ability_runtime/modular_object_extension_manager.h",
+        "AbilityKit/ability_runtime/native_ability_wrapper.h",
+        "AbilityKit/ability_runtime/start_options.h",
+        "AbilityKit/native_child_process.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libability_runtime.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libability_runtime.so",
+          "public_function_count": 180,
+          "runtime_paths": [
+            "/system/lib64/ndk/libability_runtime.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libchild_process.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libchild_process.so",
+          "public_function_count": 14,
+          "runtime_paths": [
+            "/system/lib64/ndk/libchild_process.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Ability.AbilityRuntime.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "BasicServicesKit/os_account.h",
+        "BasicServicesKit/os_account_common.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libos_account_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libos_account_ndk.so",
+          "public_function_count": 2,
+          "runtime_paths": [
+            "/system/lib64/ndk/libos_account_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Account.OsAccount"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "mindspore/model.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libmindspore_lite_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libmindspore_lite_ndk.so",
+          "public_function_count": 31,
+          "runtime_paths": [
+            "/system/lib64/ndk/libmindspore_lite_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Ai.MindSpore"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "ark_runtime/jsvm.h",
+        "ark_runtime/jsvm_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libjsvm.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libjsvm.so",
+          "public_function_count": 228,
+          "runtime_paths": [
+            "/system/lib64/ndk/libjsvm.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.ArkCompiler.JSVM"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "ace/xcomponent/native_interface_xcomponent.h",
+        "ace/xcomponent/native_xcomponent_key_event.h",
+        "arkui/common_type.h",
+        "arkui/drag_and_drop.h",
+        "arkui/drawable_descriptor.h",
+        "arkui/error_code.h",
+        "arkui/native_animate.h",
+        "arkui/native_dialog.h",
+        "arkui/native_gesture.h",
+        "arkui/native_interface.h",
+        "arkui/native_interface_accessibility.h",
+        "arkui/native_interface_focus.h",
+        "arkui/native_key_event.h",
+        "arkui/native_material.h",
+        "arkui/native_node.h",
+        "arkui/native_node_napi.h",
+        "arkui/native_render.h",
+        "arkui/native_type.h",
+        "arkui/native_type_visual.h",
+        "arkui/node_attributes/button.h",
+        "arkui/node_attributes/checkbox.h",
+        "arkui/node_attributes/common_attributes.h",
+        "arkui/node_attributes/custom_attributes.h",
+        "arkui/node_attributes/custom_span.h",
+        "arkui/node_attributes/embedded_component.h",
+        "arkui/node_attributes/grid.h",
+        "arkui/node_attributes/image.h",
+        "arkui/node_attributes/image_animator.h",
+        "arkui/node_attributes/image_span.h",
+        "arkui/node_attributes/layout.h",
+        "arkui/node_attributes/list.h",
+        "arkui/node_attributes/navigation_router.h",
+        "arkui/node_attributes/picker.h",
+        "arkui/node_attributes/progress.h",
+        "arkui/node_attributes/rich_editor.h",
+        "arkui/node_attributes/scroll.h",
+        "arkui/node_attributes/slider.h",
+        "arkui/node_attributes/swiper.h",
+        "arkui/node_attributes/text.h",
+        "arkui/node_attributes/text_area.h",
+        "arkui/node_attributes/text_common.h",
+        "arkui/node_attributes/text_input.h",
+        "arkui/node_attributes/water_flow.h",
+        "arkui/node_attributes/xcomponent.h",
+        "arkui/styled_string.h",
+        "arkui/ui_input_event.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libace_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libace_ndk.z.so",
+          "public_function_count": 1727,
+          "runtime_paths": [
+            "/system/lib64/ndk/libace_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.ArkUI.ArkUI.Full"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "napi/common.h",
+        "napi/native_api.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libace_napi.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/platformsdk/libace_napi.z.so",
+          "public_function_count": 0,
+          "runtime_paths": [
+            "/system/lib64/platformsdk/libace_napi.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.ArkUI.ArkUI.Napi"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "bundle/ability_resource_info.h",
+        "bundle/bundle_manager_common.h",
+        "bundle/native_interface_bundle.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libbundle_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libbundle_ndk.z.so",
+          "public_function_count": 17,
+          "runtime_paths": [
+            "/system/lib64/libbundle_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.BundleManager.BundleFramework.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "ConnectivityKit/bluetooth/oh_bluetooth.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libbluetooth_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libbluetooth_ndk.so",
+          "public_function_count": 1,
+          "runtime_paths": [
+            "/system/lib64/ndk/libbluetooth_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Communication.Bluetooth.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "IPCKit/ipc_cparcel.h",
+        "IPCKit/ipc_cremote_object.h",
+        "IPCKit/ipc_cskeleton.h",
+        "IPCKit/ipc_error_code.h",
+        "IPCKit/ipc_kit.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libipc_capi.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libipc_capi.so",
+          "public_function_count": 64,
+          "runtime_paths": [
+            "/system/lib64/ndk/libipc_capi.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Communication.IPC.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "network/netmanager/net_connection.h",
+        "network/netmanager/net_connection_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnet_connection.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnet_connection.so",
+          "public_function_count": 27,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnet_connection.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Communication.NetManager.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "network/netmanager_ext/net_ethernet.h",
+        "network/netmanager_ext/net_ethernet_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnet_ethernet.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnet_ethernet.so",
+          "public_function_count": 2,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnet_ethernet.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Communication.NetManager.Ethernet"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "network/netmanager_ext/net_trafficfilter.h",
+        "network/netmanager_ext/net_trafficfilter_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnet_trafficfilter.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": null,
+          "public_function_count": 5,
+          "runtime_paths": [],
+          "status": "library_missing"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Communication.NetManager.NetFirewall"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "network/netstack/http_interceptor.h",
+        "network/netstack/http_interceptor_type.h",
+        "network/netstack/net_http.h",
+        "network/netstack/net_http_type.h",
+        "network/netstack/net_ssl/net_ssl_c.h",
+        "network/netstack/net_ssl/net_ssl_c_type.h",
+        "network/netstack/net_websocket.h",
+        "network/netstack/net_websocket_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhttp_interceptor.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libhttp_interceptor.so",
+          "public_function_count": 6,
+          "runtime_paths": [
+            "/system/lib64/ndk/libhttp_interceptor.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnet_http.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnet_http.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnet_http.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnet_ssl.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnet_ssl.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnet_ssl.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnet_websocket.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnet_websocket.so",
+          "public_function_count": 6,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnet_websocket.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Communication.NetStack"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "ConnectivityKit/wifi/oh_wifi.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libwifi_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libwifi_ndk.so",
+          "public_function_count": 3,
+          "runtime_paths": [
+            "/system/lib64/ndk/libwifi_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Communication.WiFi.STA"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "ContentEmbedKit/content_embed/content_embed_common.h",
+        "ContentEmbedKit/content_embed/content_embed_document.h",
+        "ContentEmbedKit/content_embed/content_embed_extension.h",
+        "ContentEmbedKit/content_embed/content_embed_proxy.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libcontent_embed_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libcontent_embed_ndk.so",
+          "public_function_count": 84,
+          "runtime_paths": [
+            "/system/lib64/ndk/libcontent_embed_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.ContentEmbed.ObjectEditor"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "database/preferences/oh_preferences.h",
+        "database/preferences/oh_preferences_err_code.h",
+        "database/preferences/oh_preferences_option.h",
+        "database/preferences/oh_preferences_value.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohpreferences.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohpreferences.so",
+          "public_function_count": 56,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohpreferences.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.DistributedDataManager.Preferences.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "database/data/data_asset.h",
+        "database/data/oh_data_value.h",
+        "database/data/oh_data_values.h",
+        "database/data/oh_data_values_buckets.h",
+        "database/rdb/oh_cursor.h",
+        "database/rdb/oh_predicates.h",
+        "database/rdb/oh_rdb_crypto_param.h",
+        "database/rdb/oh_rdb_transaction.h",
+        "database/rdb/oh_rdb_types.h",
+        "database/rdb/oh_value_object.h",
+        "database/rdb/oh_values_bucket.h",
+        "database/rdb/relational_store.h",
+        "database/rdb/relational_store_error_code.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_rdb_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_rdb_ndk.z.so",
+          "public_function_count": 190,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_rdb_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.DistributedDataManager.RelationalStore.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "database/udmf/udmf.h",
+        "database/udmf/udmf_err_code.h",
+        "database/udmf/udmf_meta.h",
+        "database/udmf/uds.h",
+        "database/udmf/utd.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libudmf.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libudmf.so",
+          "public_function_count": 189,
+          "runtime_paths": [
+            "/system/lib64/ndk/libudmf.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.DistributedDataManager.UDMF.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "distributedhardware/device_manager/oh_device_manager.h",
+        "distributedhardware/device_manager/oh_device_manager_err_code.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libdevicemanager_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libdevicemanager_ndk.so",
+          "public_function_count": 2,
+          "runtime_paths": [
+            "/system/lib64/ndk/libdevicemanager_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.DistributedHardware.DeviceManager"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "ddk/ddk_api.h",
+        "ddk/ddk_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libddk_base.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libddk_base.z.so",
+          "public_function_count": 4,
+          "runtime_paths": [
+            "/system/lib64/ndk/libddk_base.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Driver.DDK.Extension"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "hid/hid_ddk_api.h",
+        "hid/hid_ddk_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhid.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libhid.z.so",
+          "public_function_count": 18,
+          "runtime_paths": [
+            "/system/lib64/ndk/libhid.z.so",
+            "/system/lib64/module/bluetooth/libhid.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Driver.HID.Extension"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "scsi_peripheral/scsi_peripheral_api.h",
+        "scsi_peripheral/scsi_peripheral_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libscsi.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libscsi.z.so",
+          "public_function_count": 15,
+          "runtime_paths": [
+            "/system/lib64/ndk/libscsi.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Driver.SCSI.Extension"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "usb/usb_ddk_api.h",
+        "usb/usb_ddk_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libusb_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libusb_ndk.z.so",
+          "public_function_count": 19,
+          "runtime_paths": [
+            "/system/lib64/ndk/libusb_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Driver.USB.Extension"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "usb_serial/usb_serial_api.h",
+        "usb_serial/usb_serial_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libusb_serial_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libusb_serial_ndk.z.so",
+          "public_function_count": 13,
+          "runtime_paths": [
+            "/system/lib64/ndk/libusb_serial_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Driver.UsbSerial.Extension"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "filemanagement/file_uri/oh_file_uri.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohfileuri.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohfileuri.so",
+          "public_function_count": 5,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohfileuri.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.FileManagement.AppFileService"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "filemanagement/fileshare/oh_file_share.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohfileshare.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohfileshare.so",
+          "public_function_count": 6,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohfileshare.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.FileManagement.AppFileService.FolderAuthorization"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "filemanagement/clouddiskmanager/cloud_disk_error_code.h",
+        "filemanagement/clouddiskmanager/oh_cloud_disk_manager.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohclouddiskmanager.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohclouddiskmanager.so",
+          "public_function_count": 11,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohclouddiskmanager.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.FileManagement.CloudDiskManager"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "filemanagement/environment/oh_environment.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohenvironment.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohenvironment.so",
+          "public_function_count": 3,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohenvironment.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.FileManagement.File.Environment.FolderObtain"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "filemanagement/archive/oh_archive.h",
+        "filemanagement/archive/oh_archive_errcode.h",
+        "filemanagement/fileio/oh_fileio.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "liboharchive.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/liboharchive.so",
+          "public_function_count": 25,
+          "runtime_paths": [
+            "/system/lib64/ndk/liboharchive.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libohfileio.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohfileio.so",
+          "public_function_count": 1,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohfileio.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.FileManagement.File.FileIO"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/media_library/media_access_helper_capi.h",
+        "multimedia/media_library/media_asset_base_capi.h",
+        "multimedia/media_library/media_asset_capi.h",
+        "multimedia/media_library/media_asset_change_request_capi.h",
+        "multimedia/media_library/media_asset_manager_capi.h",
+        "multimedia/media_library/moving_photo_capi.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libmedia_asset_manager.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libmedia_asset_manager.so",
+          "public_function_count": 38,
+          "runtime_paths": [
+            "/system/lib64/ndk/libmedia_asset_manager.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.FileManagement.PhotoAccessHelper.Core"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "GameControllerKit/game_controller_type.h",
+        "GameControllerKit/game_device.h",
+        "GameControllerKit/game_device_event.h",
+        "GameControllerKit/game_pad.h",
+        "GameControllerKit/game_pad_event.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohgame_controller.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohgame_controller.z.so",
+          "public_function_count": 80,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohgame_controller.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Game.GameController"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "i18n/errorcode.h",
+        "i18n/timezone.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohi18n.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohi18n.so",
+          "public_function_count": 11,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohi18n.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Global.I18n"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "rawfile/raw_dir.h",
+        "rawfile/raw_file.h",
+        "rawfile/raw_file_manager.h",
+        "resourcemanager/ohresmgr.h",
+        "resourcemanager/resmgr_common.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohresmgr.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohresmgr.so",
+          "public_function_count": 40,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohresmgr.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "librawfile.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/librawfile.z.so",
+          "public_function_count": 27,
+          "runtime_paths": [
+            "/system/lib64/librawfile.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Global.ResourceManager"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_color_space_manager/native_color_space_manager.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_color_space_manager.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_color_space_manager.so",
+          "public_function_count": 6,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_color_space_manager.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.ColorManager.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_display_soloist/native_display_soloist.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_display_soloist.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_display_soloist.so",
+          "public_function_count": 5,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_display_soloist.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.HyperGraphicManager"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_buffer/buffer_common.h",
+        "native_buffer/native_buffer.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_buffer.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/platformsdk/libnative_buffer.so",
+          "public_function_count": 18,
+          "runtime_paths": [
+            "/system/lib64/platformsdk/libnative_buffer.so",
+            "/system/lib64/chipset-sdk-sp/libnative_buffer.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.NativeBuffer"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_drawing/drawing_bitmap.h",
+        "native_drawing/drawing_brush.h",
+        "native_drawing/drawing_canvas.h",
+        "native_drawing/drawing_color.h",
+        "native_drawing/drawing_color_filter.h",
+        "native_drawing/drawing_color_space.h",
+        "native_drawing/drawing_error_code.h",
+        "native_drawing/drawing_filter.h",
+        "native_drawing/drawing_font.h",
+        "native_drawing/drawing_font_collection.h",
+        "native_drawing/drawing_font_mgr.h",
+        "native_drawing/drawing_gpu_context.h",
+        "native_drawing/drawing_image.h",
+        "native_drawing/drawing_image_filter.h",
+        "native_drawing/drawing_lattice.h",
+        "native_drawing/drawing_mask_filter.h",
+        "native_drawing/drawing_matrix.h",
+        "native_drawing/drawing_memory_stream.h",
+        "native_drawing/drawing_path.h",
+        "native_drawing/drawing_path_effect.h",
+        "native_drawing/drawing_path_iterator.h",
+        "native_drawing/drawing_pen.h",
+        "native_drawing/drawing_pixel_map.h",
+        "native_drawing/drawing_point.h",
+        "native_drawing/drawing_record_cmd.h",
+        "native_drawing/drawing_rect.h",
+        "native_drawing/drawing_region.h",
+        "native_drawing/drawing_register_font.h",
+        "native_drawing/drawing_round_rect.h",
+        "native_drawing/drawing_sampling_options.h",
+        "native_drawing/drawing_shader_effect.h",
+        "native_drawing/drawing_shadow_layer.h",
+        "native_drawing/drawing_surface.h",
+        "native_drawing/drawing_text_blob.h",
+        "native_drawing/drawing_text_declaration.h",
+        "native_drawing/drawing_text_font_descriptor.h",
+        "native_drawing/drawing_text_global.h",
+        "native_drawing/drawing_text_line.h",
+        "native_drawing/drawing_text_lineTypography.h",
+        "native_drawing/drawing_text_run.h",
+        "native_drawing/drawing_text_typography.h",
+        "native_drawing/drawing_typeface.h",
+        "native_drawing/drawing_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_drawing.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_drawing.so",
+          "public_function_count": 757,
+          "runtime_paths": [
+            "/system/lib64/libnative_drawing.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.NativeDrawing"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_image/native_image.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_image.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/platformsdk/libnative_image.so",
+          "public_function_count": 26,
+          "runtime_paths": [
+            "/system/lib64/platformsdk/libnative_image.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.NativeImage"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_vsync/native_vsync.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_vsync.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/platformsdk/libnative_vsync.so",
+          "public_function_count": 8,
+          "runtime_paths": [
+            "/system/lib64/platformsdk/libnative_vsync.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.NativeVsync"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "native_buffer/graphic_error_code.h",
+        "native_fence/native_fence.h",
+        "native_image/graphic_error_code.h",
+        "native_vsync/graphic_error_code.h",
+        "native_window/buffer_handle.h",
+        "native_window/external_window.h",
+        "native_window/graphic_error_code.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_fence.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_fence.so",
+          "public_function_count": 4,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_fence.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_window.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/chipset-sdk-sp/libnative_window.so",
+          "public_function_count": 37,
+          "runtime_paths": [
+            "/system/lib64/chipset-sdk-sp/libnative_window.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Graphic2D.NativeWindow"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "vulkan/vulkan_ohos.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libvulkan.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/platformsdk/libvulkan.so",
+          "public_function_count": 0,
+          "runtime_paths": [
+            "/system/lib64/platformsdk/libvulkan.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Graphic.Vulkan"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "hiappevent/hiappevent.h",
+        "hiappevent/hiappevent_cfg.h",
+        "hiappevent/hiappevent_event.h",
+        "hiappevent/hiappevent_param.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhiappevent_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libhiappevent_ndk.z.so",
+          "public_function_count": 47,
+          "runtime_paths": [
+            "/system/lib64/libhiappevent_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.HiviewDFX.HiAppEvent"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "hicollie/hicollie.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohhicollie.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohhicollie.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohhicollie.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.HiviewDFX.HiCollie"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "hilog/log.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhilog_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libhilog_ndk.z.so",
+          "public_function_count": 8,
+          "runtime_paths": [
+            "/system/lib64/ndk/libhilog_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.HiviewDFX.HiLog"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "hidebug/hidebug.h",
+        "hidebug/hidebug_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohhidebug.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohhidebug.so",
+          "public_function_count": 31,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohhidebug.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.HiviewDFX.HiProfiler.HiDebug"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "hitrace/trace.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhitrace_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libhitrace_ndk.z.so",
+          "public_function_count": 34,
+          "runtime_paths": [
+            "/system/lib64/ndk/libhitrace_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.HiviewDFX.HiTrace"
+    },
+    {
+      "declaration_status": "not_declared_for_device",
+      "declared": false,
+      "headers": [
+        "purgeable_memory/purgeable_memory.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libpurgeable_memory_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libpurgeable_memory_ndk.z.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/ndk/libpurgeable_memory_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Kernel.Memory"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "LocationKit/oh_location.h",
+        "LocationKit/oh_location_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "liblocation_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/liblocation_ndk.so",
+          "public_function_count": 11,
+          "runtime_paths": [
+            "/system/lib64/ndk/liblocation_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Location.Location.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "inputmethod/inputmethod_attach_options_capi.h",
+        "inputmethod/inputmethod_controller_capi.h",
+        "inputmethod/inputmethod_cursor_info_capi.h",
+        "inputmethod/inputmethod_inputmethod_proxy_capi.h",
+        "inputmethod/inputmethod_private_command_capi.h",
+        "inputmethod/inputmethod_text_avoid_info_capi.h",
+        "inputmethod/inputmethod_text_config_capi.h",
+        "inputmethod/inputmethod_text_editor_proxy_capi.h",
+        "inputmethod/inputmethod_types_capi.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohinputmethod.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohinputmethod.so",
+          "public_function_count": 89,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohinputmethod.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.MiscServices.InputMethodFramework"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "database/pasteboard/oh_pasteboard.h",
+        "database/pasteboard/oh_pasteboard_err_code.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libpasteboard.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libpasteboard.so",
+          "public_function_count": 27,
+          "runtime_paths": [
+            "/system/lib64/ndk/libpasteboard.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.MiscServices.Pasteboard"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "BasicServicesKit/time_service.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libtime_service_ndk.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libtime_service_ndk.so",
+          "public_function_count": 1,
+          "runtime_paths": [
+            "/system/lib64/ndk/libtime_service_ndk.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.MiscServices.Time"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/av_session/native_avcastcontroller.h",
+        "multimedia/av_session/native_avmetadata.h",
+        "multimedia/av_session/native_avplaybackstate.h",
+        "multimedia/av_session/native_avqueueitem.h",
+        "multimedia/av_session/native_avsession.h",
+        "multimedia/av_session/native_avsession_base.h",
+        "multimedia/av_session/native_avsession_errors.h",
+        "multimedia/av_session/native_deviceinfo.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohavsession.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohavsession.so",
+          "public_function_count": 113,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohavsession.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.AVSession.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "ohaudio/native_audio_accessory_common.h",
+        "ohaudio/native_audio_accessory_input_stream_manager.h",
+        "ohaudio/native_audio_accessory_manager.h",
+        "ohaudio/native_audio_common.h",
+        "ohaudio/native_audio_debugging_manager.h",
+        "ohaudio/native_audio_device_base.h",
+        "ohaudio/native_audio_device_enhance_manager.h",
+        "ohaudio/native_audio_manager.h",
+        "ohaudio/native_audio_resource_manager.h",
+        "ohaudio/native_audio_routing_manager.h",
+        "ohaudio/native_audio_session_base.h",
+        "ohaudio/native_audio_session_manager.h",
+        "ohaudio/native_audio_stream_manager.h",
+        "ohaudio/native_audio_volume_manager.h",
+        "ohaudio/native_audiocapturer.h",
+        "ohaudio/native_audiorenderer.h",
+        "ohaudio/native_audiostream_base.h",
+        "ohaudio/native_audiostreambuilder.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohaudio.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohaudio.so",
+          "public_function_count": 203,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohaudio.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Audio.Core"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "ohmidi/native_midi.h",
+        "ohmidi/native_midi_base.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohmidi.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohmidi.so",
+          "public_function_count": 16,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohmidi.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Multimedia.Audio.MIDI"
+    },
+    {
+      "declaration_status": "not_declared_for_device",
+      "declared": false,
+      "headers": [
+        "ohaudiosuite/native_audio_converter.h",
+        "ohaudiosuite/native_audio_suite_base.h",
+        "ohaudiosuite/native_audio_suite_engine.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohaudiosuite.so",
+          "missing_symbols": [
+            "OH_AudioConverter_Create",
+            "OH_AudioConverter_Destroy",
+            "OH_AudioConverter_Process",
+            "OH_AudioConverter_SetInputCallback",
+            "OH_AudioSuiteEngine_BypassEffectNode",
+            "OH_AudioSuiteEngine_ConnectNodes",
+            "OH_AudioSuiteEngine_Create",
+            "OH_AudioSuiteEngine_CreateNode",
+            "OH_AudioSuiteEngine_CreatePipeline",
+            "OH_AudioSuiteEngine_Destroy",
+            "OH_AudioSuiteEngine_DestroyNode",
+            "OH_AudioSuiteEngine_DestroyPipeline",
+            "OH_AudioSuiteEngine_DisconnectNodes",
+            "OH_AudioSuiteEngine_GetEnvironmentType",
+            "OH_AudioSuiteEngine_GetEqualizerFrequencyBandGains",
+            "OH_AudioSuiteEngine_GetGeneralVoiceChangeType",
+            "OH_AudioSuiteEngine_GetNodeBypassStatus",
+            "OH_AudioSuiteEngine_GetPipelineState",
+            "OH_AudioSuiteEngine_GetPureVoiceChangeOption",
+            "OH_AudioSuiteEngine_GetSoundFieldType",
+            "OH_AudioSuiteEngine_GetSpaceRenderExtensionParams",
+            "OH_AudioSuiteEngine_GetSpaceRenderPositionParams",
+            "OH_AudioSuiteEngine_GetSpaceRenderRotationParams",
+            "OH_AudioSuiteEngine_GetTempoAndPitch",
+            "OH_AudioSuiteEngine_GetVoiceBeautifierType",
+            "OH_AudioSuiteEngine_IsNodeTypeSupported",
+            "OH_AudioSuiteEngine_MultiRenderFrame",
+            "OH_AudioSuiteEngine_RenderFrame",
+            "OH_AudioSuiteEngine_SetAudioFormat",
+            "OH_AudioSuiteEngine_SetEnvironmentType",
+            "OH_AudioSuiteEngine_SetEqualizerFrequencyBandGains",
+            "OH_AudioSuiteEngine_SetGeneralVoiceChangeType",
+            "OH_AudioSuiteEngine_SetPureVoiceChangeOption",
+            "OH_AudioSuiteEngine_SetSoundFieldType",
+            "OH_AudioSuiteEngine_SetSpaceRenderExtensionParams",
+            "OH_AudioSuiteEngine_SetSpaceRenderPositionParams",
+            "OH_AudioSuiteEngine_SetSpaceRenderRotationParams",
+            "OH_AudioSuiteEngine_SetTempoAndPitch",
+            "OH_AudioSuiteEngine_SetVoiceBeautifierType",
+            "OH_AudioSuiteEngine_StartPipeline",
+            "OH_AudioSuiteEngine_StopPipeline",
+            "OH_AudioSuiteNodeBuilder_Create",
+            "OH_AudioSuiteNodeBuilder_Destroy",
+            "OH_AudioSuiteNodeBuilder_Reset",
+            "OH_AudioSuiteNodeBuilder_SetFormat",
+            "OH_AudioSuiteNodeBuilder_SetNodeType",
+            "OH_AudioSuiteNodeBuilder_SetRequestDataCallback",
+            "OH_AudioSuite_PrintInfo"
+          ],
+          "preferred_runtime_path": "/system/lib64/ndk/libohaudiosuite.so",
+          "public_function_count": 48,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohaudiosuite.so"
+          ],
+          "status": "symbols_missing"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Multimedia.Audio.SuiteEngine"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "ohcamera/camera.h",
+        "ohcamera/camera_device.h",
+        "ohcamera/camera_input.h",
+        "ohcamera/camera_manager.h",
+        "ohcamera/capture_session.h",
+        "ohcamera/metadata_object_ext.h",
+        "ohcamera/metadata_output.h",
+        "ohcamera/photo_native.h",
+        "ohcamera/photo_output.h",
+        "ohcamera/preview_output.h",
+        "ohcamera/video_output.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohcamera.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohcamera.so",
+          "public_function_count": 287,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohcamera.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Camera.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/drm_framework/native_drm_common.h",
+        "multimedia/drm_framework/native_drm_err.h",
+        "multimedia/drm_framework/native_mediakeysession.h",
+        "multimedia/drm_framework/native_mediakeysystem.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [
+            "libnative_drm.z.so"
+          ],
+          "library": "libnative_drm.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_drm.so",
+          "public_function_count": 33,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_drm.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Drm.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/image_framework/image/image_common.h",
+        "multimedia/image_framework/image/image_native.h",
+        "multimedia/image_framework/image/picture_native.h",
+        "multimedia/image_framework/image/pixelmap_native.h",
+        "multimedia/image_framework/image_mdk.h",
+        "multimedia/image_framework/image_mdk_common.h",
+        "multimedia/image_framework/image_pixel_map_mdk.h",
+        "multimedia/image_framework/image_pixel_map_napi.h",
+        "native_effect/effect_filter.h",
+        "native_effect/effect_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_common.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_common.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_common.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_ndk.z.so",
+          "public_function_count": 6,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_effect.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_effect.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_effect.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libohimage.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohimage.so",
+          "public_function_count": 11,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohimage.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libpicture.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libpicture.so",
+          "public_function_count": 41,
+          "runtime_paths": [
+            "/system/lib64/ndk/libpicture.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libpixelmap.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libpixelmap.so",
+          "public_function_count": 76,
+          "runtime_paths": [
+            "/system/lib64/ndk/libpixelmap.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libpixelmap_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libpixelmap_ndk.z.so",
+          "public_function_count": 23,
+          "runtime_paths": [
+            "/system/lib64/ndk/libpixelmap_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Image.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/image_framework/image/image_packer_native.h",
+        "multimedia/image_framework/image_packer_mdk.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_packer.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_packer.so",
+          "public_function_count": 32,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_packer.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_packer_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_packer_ndk.z.so",
+          "public_function_count": 5,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_packer_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Image.ImagePacker"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/image_framework/image/image_receiver_native.h",
+        "multimedia/image_framework/image_receiver_mdk.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_receiver.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_receiver.so",
+          "public_function_count": 17,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_receiver.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_receiver_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_receiver_ndk.z.so",
+          "public_function_count": 10,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_receiver_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Image.ImageReceiver"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/image_framework/image/image_source_native.h",
+        "multimedia/image_framework/image_source_mdk.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_source.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_source.so",
+          "public_function_count": 66,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_source.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_source_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_source_ndk.z.so",
+          "public_function_count": 18,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_source_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Image.ImageSource"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "multimedia/image_effect/image_effect.h",
+        "multimedia/image_effect/image_effect_errors.h",
+        "multimedia/image_effect/image_effect_filter.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_effect.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libimage_effect.so",
+          "public_function_count": 63,
+          "runtime_paths": [
+            "/system/lib64/ndk/libimage_effect.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Multimedia.ImageEffect.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/avimage_generator.h",
+        "multimedia/player_framework/avimage_generator_base.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libavimage_generator.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libavimage_generator.so",
+          "public_function_count": 4,
+          "runtime_paths": [
+            "/system/lib64/ndk/libavimage_generator.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AVImageGenerator"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/avmetadata_extractor.h",
+        "multimedia/player_framework/avmetadata_extractor_base.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libavmetadata_extractor.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libavmetadata_extractor.so",
+          "public_function_count": 14,
+          "runtime_paths": [
+            "/system/lib64/ndk/libavmetadata_extractor.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AVMetadataExtractor"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/avrecorder.h",
+        "multimedia/player_framework/avrecorder_base.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libavrecorder.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libavrecorder.so",
+          "public_function_count": 18,
+          "runtime_paths": [
+            "/system/lib64/libavrecorder.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AVRecorder"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avscreen_capture.h",
+        "multimedia/player_framework/native_avscreen_capture_base.h",
+        "multimedia/player_framework/native_avscreen_capture_errors.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_avscreen_capture.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_avscreen_capture.so",
+          "public_function_count": 52,
+          "runtime_paths": [
+            "/system/lib64/libnative_avscreen_capture.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AVScreenCapture"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/avtranscoder.h",
+        "multimedia/player_framework/avtranscoder_base.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libavtranscoder.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libavtranscoder.so",
+          "public_function_count": 21,
+          "runtime_paths": [
+            "/system/lib64/ndk/libavtranscoder.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AVTranscoder"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avcodec_audiocodec.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_acodec.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_media_acodec.so",
+          "public_function_count": 20,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_media_acodec.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AudioCodec"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avcodec_audiodecoder.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_adec.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_adec.so",
+          "public_function_count": 15,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_adec.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AudioDecoder"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avcodec_audioencoder.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_aenc.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_aenc.so",
+          "public_function_count": 15,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_aenc.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.AudioEncoder"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/avcodec_audio_channel_layout.h",
+        "multimedia/player_framework/native_avcapability.h",
+        "multimedia/player_framework/native_avcodec_base.h",
+        "multimedia/player_framework/native_avcodec_videobase.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_codecbase.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_codecbase.so",
+          "public_function_count": 36,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_codecbase.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.CodecBase"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/avmedia_base.h",
+        "multimedia/player_framework/avmedia_source.h",
+        "multimedia/player_framework/avmetakeys.h",
+        "multimedia/player_framework/media_types.h",
+        "multimedia/player_framework/native_audio_vivid.h",
+        "multimedia/player_framework/native_avbuffer.h",
+        "multimedia/player_framework/native_avbuffer_info.h",
+        "multimedia/player_framework/native_averrors.h",
+        "multimedia/player_framework/native_avformat.h",
+        "multimedia/player_framework/native_avmemory.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libavmedia_base.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libavmedia_base.so",
+          "public_function_count": 0,
+          "runtime_paths": [
+            "/system/lib64/ndk/libavmedia_base.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libavmedia_source.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libavmedia_source.so",
+          "public_function_count": 21,
+          "runtime_paths": [
+            "/system/lib64/ndk/libavmedia_source.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_core.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_media_core.so",
+          "public_function_count": 47,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_media_core.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.Core"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/lowpower_audio_sink.h",
+        "multimedia/player_framework/lowpower_audio_sink_base.h",
+        "multimedia/player_framework/lowpower_avsink_base.h",
+        "multimedia/player_framework/lowpower_video_sink.h",
+        "multimedia/player_framework/lowpower_video_sink_base.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "liblowpower_avsink.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/liblowpower_avsink.so",
+          "public_function_count": 57,
+          "runtime_paths": [
+            "/system/lib64/ndk/liblowpower_avsink.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Multimedia.Media.LowPowerAVSink"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avmuxer.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_avmuxer.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_avmuxer.so",
+          "public_function_count": 9,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_avmuxer.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.Muxer"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avdemuxer.h",
+        "multimedia/player_framework/native_avsource.h",
+        "multimedia/player_framework/native_cencinfo.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_avcencinfo.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_media_avcencinfo.so",
+          "public_function_count": 7,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_media_avcencinfo.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_avdemuxer.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_avdemuxer.so",
+          "public_function_count": 10,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_avdemuxer.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_avsource.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_avsource.so",
+          "public_function_count": 8,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_avsource.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.Spliter"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avcodec_videodecoder.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_vdec.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_vdec.so",
+          "public_function_count": 27,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_vdec.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.VideoDecoder"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimedia/player_framework/native_avcodec_videoencoder.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_media_venc.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/libnative_media_venc.so",
+          "public_function_count": 29,
+          "runtime_paths": [
+            "/system/lib64/libnative_media_venc.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Multimedia.Media.VideoEncoder"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "multimedia/video_processing_engine/image_processing.h",
+        "multimedia/video_processing_engine/image_processing_types.h",
+        "multimedia/video_processing_engine/video_processing.h",
+        "multimedia/video_processing_engine/video_processing_types.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libimage_processing.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": null,
+          "public_function_count": 15,
+          "runtime_paths": [],
+          "status": "library_missing"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libvideo_processing.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": null,
+          "public_function_count": 19,
+          "runtime_paths": [],
+          "status": "library_missing"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Multimedia.VideoProcessingEngine"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "multimodalinput/oh_axis_type.h",
+        "multimodalinput/oh_input_manager.h",
+        "multimodalinput/oh_key_code.h",
+        "multimodalinput/oh_pointer_style.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohinput.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohinput.so",
+          "public_function_count": 177,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohinput.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.MultimodalInput.Input.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "BasicServicesKit/oh_commonevent.h",
+        "BasicServicesKit/oh_commonevent_support.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohcommonevent.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohcommonevent.so",
+          "public_function_count": 54,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohcommonevent.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Notification.CommonEvent"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "NotificationKit/notification.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohnotification.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohnotification.so",
+          "public_function_count": 1,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohnotification.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Notification.Notification"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "BasicServicesKit/ohbattery_info.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohbattery_info.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohbattery_info.so",
+          "public_function_count": 2,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohbattery_info.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.PowerManager.BatteryManager.Core"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "BasicServicesKit/ohprint.h",
+        "BasicServicesKit/ohscan.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohprint.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohprint.so",
+          "public_function_count": 19,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohprint.so"
+          ],
+          "status": "symbols_match"
+        },
+        {
+          "documented_library_aliases": [],
+          "library": "libohscan.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohscan.so",
+          "public_function_count": 10,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohscan.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Print.PrintFramework"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "transient_task/transient_task_api.h",
+        "transient_task/transient_task_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libtransient_task.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libtransient_task.so",
+          "public_function_count": 4,
+          "runtime_paths": [
+            "/system/lib64/ndk/libtransient_task.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.ResourceSchedule.BackgroundTaskManager.TransientTask"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "background_process_manager/background_process_manager.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libbackground_process_manager.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libbackground_process_manager.z.so",
+          "public_function_count": 2,
+          "runtime_paths": [
+            "/system/lib64/ndk/libbackground_process_manager.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Resourceschedule.BackgroundProcessManager"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "ffrt/condition_variable.h",
+        "ffrt/fiber.h",
+        "ffrt/loop.h",
+        "ffrt/mutex.h",
+        "ffrt/queue.h",
+        "ffrt/shared_mutex.h",
+        "ffrt/sleep.h",
+        "ffrt/task.h",
+        "ffrt/timer.h",
+        "ffrt/type_def.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libffrt.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libffrt.z.so",
+          "public_function_count": 0,
+          "runtime_paths": [
+            "/system/lib64/ndk/libffrt.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Resourceschedule.Ffrt.Core"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "qos/qos.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libqos.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libqos.so",
+          "public_function_count": 7,
+          "runtime_paths": [
+            "/system/lib64/ndk/libqos.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Resourceschedule.QoS.Core"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "accesstoken/ability_access_control.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [
+            "ability_access_control.so"
+          ],
+          "library": "libability_access_control.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libability_access_control.so",
+          "public_function_count": 1,
+          "runtime_paths": [
+            "/system/lib64/ndk/libability_access_control.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Security.AccessToken"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "asset/asset_api.h",
+        "asset/asset_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libasset_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libasset_ndk.z.so",
+          "public_function_count": 10,
+          "runtime_paths": [
+            "/system/lib64/ndk/libasset_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Security.Asset"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "device_certificate/certmanager/cm_native_api.h",
+        "device_certificate/certmanager/cm_native_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohcert_manager.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohcert_manager.z.so",
+          "public_function_count": 5,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohcert_manager.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Security.CertificateManager"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "CryptoArchitectureKit/crypto_architecture_kit.h",
+        "CryptoArchitectureKit/crypto_asym_cipher.h",
+        "CryptoArchitectureKit/crypto_asym_key.h",
+        "CryptoArchitectureKit/crypto_common.h",
+        "CryptoArchitectureKit/crypto_digest.h",
+        "CryptoArchitectureKit/crypto_kdf.h",
+        "CryptoArchitectureKit/crypto_key_agreement.h",
+        "CryptoArchitectureKit/crypto_mac.h",
+        "CryptoArchitectureKit/crypto_rand.h",
+        "CryptoArchitectureKit/crypto_signature.h",
+        "CryptoArchitectureKit/crypto_sym_cipher.h",
+        "CryptoArchitectureKit/crypto_sym_key.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohcrypto.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohcrypto.so",
+          "public_function_count": 108,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohcrypto.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Security.CryptoFramework"
+    },
+    {
+      "declaration_status": "declared_outside_official_profile",
+      "declared": true,
+      "headers": [
+        "DataProtectionKit/dlp_permission_api.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohdlp_permission.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohdlp_permission.so",
+          "public_function_count": 6,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohdlp_permission.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Security.DataLossPrevention"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "huks/native_huks_api.h",
+        "huks/native_huks_param.h",
+        "huks/native_huks_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhuks_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/platformsdk/libhuks_ndk.z.so",
+          "public_function_count": 28,
+          "runtime_paths": [
+            "/system/lib64/platformsdk/libhuks_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Security.Huks.Core"
+    },
+    {
+      "declaration_status": "not_declared_for_device",
+      "declared": false,
+      "headers": [
+        "huks/native_huks_external_crypto_api.h",
+        "huks/native_huks_external_crypto_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libhuks_external_crypto.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": null,
+          "public_function_count": 11,
+          "runtime_paths": [],
+          "status": "library_missing"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Security.Huks.CryptoExtension"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "sensors/vibrator.h",
+        "sensors/vibrator_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohvibrator.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohvibrator.z.so",
+          "public_function_count": 3,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohvibrator.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Sensors.MiscDevice"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "sensors/oh_sensor.h",
+        "sensors/oh_sensor_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohsensor.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohsensor.so",
+          "public_function_count": 27,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohsensor.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Sensors.Sensor"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "deviceinfo.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libdeviceinfo_ndk.z.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libdeviceinfo_ndk.z.so",
+          "public_function_count": 27,
+          "runtime_paths": [
+            "/system/lib64/ndk/libdeviceinfo_ndk.z.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Startup.SystemInfo"
+    },
+    {
+      "declaration_status": "not_declared_for_device",
+      "declared": false,
+      "headers": [
+        "TEEKit/tee_client/tee_client_api.h",
+        "TEEKit/tee_client/tee_client_constants.h",
+        "TEEKit/tee_client/tee_client_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libteec.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libteec.so",
+          "public_function_count": 0,
+          "runtime_paths": [
+            "/system/lib64/ndk/libteec.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Tee.TeeClient"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "telephony/cellular_data/telephony_data.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libtelephony_data.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libtelephony_data.so",
+          "public_function_count": 1,
+          "runtime_paths": [
+            "/system/lib64/ndk/libtelephony_data.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Telephony.CellularData"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "telephony/core_service/telephony_radio.h",
+        "telephony/core_service/telephony_radio_type.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libtelephony_radio.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libtelephony_radio.so",
+          "public_function_count": 2,
+          "runtime_paths": [
+            "/system/lib64/ndk/libtelephony_radio.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Telephony.CoreService"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "web/arkweb_error_code.h",
+        "web/arkweb_interface.h",
+        "web/arkweb_net_error_list.h",
+        "web/arkweb_scheme_handler.h",
+        "web/arkweb_type.h",
+        "web/native_interface_arkweb.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libohweb.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libohweb.so",
+          "public_function_count": 87,
+          "runtime_paths": [
+            "/system/lib64/ndk/libohweb.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.Web.Webview.Core"
+    },
+    {
+      "declaration_status": "not_declared_for_device",
+      "declared": false,
+      "headers": [
+        "window_manager/oh_window.h",
+        "window_manager/oh_window_comm.h",
+        "window_manager/oh_window_event_filter.h",
+        "window_manager/oh_window_pip.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_window_manager.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_window_manager.so",
+          "public_function_count": 75,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_window_manager.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": false,
+      "syscap": "SystemCapability.Window.SessionManager"
+    },
+    {
+      "declaration_status": "declared_as_expected",
+      "declared": true,
+      "headers": [
+        "window_manager/oh_display_capture.h",
+        "window_manager/oh_display_info.h",
+        "window_manager/oh_display_manager.h"
+      ],
+      "libraries": [
+        {
+          "documented_library_aliases": [],
+          "library": "libnative_display_manager.so",
+          "missing_symbols": [],
+          "preferred_runtime_path": "/system/lib64/ndk/libnative_display_manager.so",
+          "public_function_count": 36,
+          "runtime_paths": [
+            "/system/lib64/ndk/libnative_display_manager.so"
+          ],
+          "status": "symbols_match"
+        }
+      ],
+      "official_sdk_profile": true,
+      "syscap": "SystemCapability.WindowManager.WindowManager.Core"
+    }
+  ],
+  "device": "phone",
+  "sdk_native": "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/native",
+  "summary": {
+    "declared_missing_library_contract_count": 3,
+    "declared_missing_symbol_count": 0,
+    "library_contract_count": 128,
+    "missing_library_contract_count": 4,
+    "missing_symbol_count": 48,
+    "official_profile_missing_library_contract_count": 0,
+    "official_profile_missing_symbol_count": 0,
+    "syscap_contract_count": 105
+  }
+}

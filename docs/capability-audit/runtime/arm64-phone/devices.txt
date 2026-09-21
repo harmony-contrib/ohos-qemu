@@ -1,0 +1,291 @@
+# target=127.0.0.1:5665
+# device=phone
+# arch=arm64
+# command=find /dev -maxdepth 3 -type b -o -type c -o -type d | sort; echo INPUT; cat /proc/bus/input/devices 2>/dev/null; echo DRM; ls -la /dev/dri 2>/dev/null; echo SND; ls -la /dev/snd 2>/dev/null
+/dev
+/dev/HDF_PLATFORM_GPIO_MANAGER
+/dev/HDF_PLATFORM_I2C_MANAGER
+/dev/HDF_PLATFORM_MMC_0
+/dev/HDF_PLATFORM_PWM_0
+/dev/HDF_PLATFORM_PWM_1
+/dev/HDF_PLATFORM_PWM_2
+/dev/HDF_PLATFORM_PWM_3
+/dev/HDF_PLATFORM_PWM_4
+/dev/HDF_PLATFORM_RTC
+/dev/HDF_PLATFORM_UART_0
+/dev/HDF_PLATFORM_UART_1
+/dev/HDF_PLATFORM_UART_3
+/dev/__parameters__
+/dev/access_token_id
+/dev/ashmem
+/dev/auth_ctrl
+/dev/autofs
+/dev/bbox
+/dev/binder
+/dev/block
+/dev/block/loop0
+/dev/block/loop1
+/dev/block/loop2
+/dev/block/loop3
+/dev/block/loop4
+/dev/block/loop5
+/dev/block/loop6
+/dev/block/loop7
+/dev/block/mtdblock0
+/dev/block/platform
+/dev/block/platform/a003200.virtio_mmio
+/dev/block/platform/a003400.virtio_mmio
+/dev/block/platform/a003600.virtio_mmio
+/dev/block/platform/a003800.virtio_mmio
+/dev/block/platform/a003a00.virtio_mmio
+/dev/block/platform/a003c00.virtio_mmio
+/dev/block/vda
+/dev/block/vdb
+/dev/block/vdc
+/dev/block/vdd
+/dev/block/vde
+/dev/block/vdf
+/dev/bus
+/dev/bus/usb
+/dev/bus/usb/001
+/dev/bus/usb/002
+/dev/char
+/dev/code_sign
+/dev/console
+/dev/cpu_dma_latency
+/dev/cpuctl
+/dev/cpuctl/background
+/dev/cpuctl/foreground
+/dev/cpuctl/system-background
+/dev/cpuctl/top-app
+/dev/cpuset
+/dev/cpuset/background
+/dev/cpuset/foreground
+/dev/cpuset/system-background
+/dev/cpuset/top-app
+/dev/dev_mgr
+/dev/devsvc_mgr
+/dev/dma_heap
+/dev/dma_heap/reserved
+/dev/dma_heap/system
+/dev/dri
+/dev/dri/card0
+/dev/dri/renderD128
+/dev/f2fs-tools
+/dev/frz
+/dev/frz/DeepFrozen
+/dev/frz/DeepFrozenTemporary
+/dev/frz/Frozen
+/dev/frz/Thawed
+/dev/fscklogs
+/dev/full
+/dev/gpiochip0
+/dev/graphics
+/dev/graphics/fb0
+/dev/hdf_audio_codec_primary_dev0
+/dev/hdf_bl
+/dev/hdf_input_host
+/dev/hdf_kevent
+/dev/hdf_usb_pnp_notify_service
+/dev/hdfwifi
+/dev/hwbinder
+/dev/input
+/dev/input/event0
+/dev/input/event1
+/dev/input/event2
+/dev/kmsg
+/dev/loop-control
+/dev/mem
+/dev/memcg
+/dev/mtd0
+/dev/mtd0ro
+/dev/net
+/dev/null
+/dev/pids
+/dev/pids/0
+/dev/pids/0/com.ohos.settingsdata
+/dev/pids/0/com.ohos.systemui
+/dev/pids/100
+/dev/pids/100/com.example.kikakeyboard
+/dev/pids/100/com.ohos.launcher
+/dev/pids/100/com.ohos.medialibrary.medialibrarydata
+/dev/pids/100/com.ohos.ringtonelibrary.ringtonelibrarydata
+/dev/pids/100/com.ohos.telephonydataability
+/dev/pids/native
+/dev/pids/native/appspawn
+/dev/pids/native/installs
+/dev/port
+/dev/ptmx
+/dev/pts
+/dev/pts/ptmx
+/dev/ptyp0
+/dev/ptyp1
+/dev/ptyp2
+/dev/ptyp3
+/dev/ptyp4
+/dev/ptyp5
+/dev/ptyp6
+/dev/ptyp7
+/dev/ptyp8
+/dev/ptyp9
+/dev/ptypa
+/dev/ptypb
+/dev/ptypc
+/dev/ptypd
+/dev/ptype
+/dev/ptypf
+/dev/random
+/dev/rtc0
+/dev/snapshot
+/dev/snd
+/dev/snd/timer
+/dev/tty
+/dev/tty0
+/dev/tty1
+/dev/tty10
+/dev/tty11
+/dev/tty12
+/dev/tty13
+/dev/tty14
+/dev/tty15
+/dev/tty16
+/dev/tty17
+/dev/tty18
+/dev/tty19
+/dev/tty2
+/dev/tty20
+/dev/tty21
+/dev/tty22
+/dev/tty23
+/dev/tty24
+/dev/tty25
+/dev/tty26
+/dev/tty27
+/dev/tty28
+/dev/tty29
+/dev/tty3
+/dev/tty30
+/dev/tty31
+/dev/tty32
+/dev/tty33
+/dev/tty34
+/dev/tty35
+/dev/tty36
+/dev/tty37
+/dev/tty38
+/dev/tty39
+/dev/tty4
+/dev/tty40
+/dev/tty41
+/dev/tty42
+/dev/tty43
+/dev/tty44
+/dev/tty45
+/dev/tty46
+/dev/tty47
+/dev/tty48
+/dev/tty49
+/dev/tty5
+/dev/tty50
+/dev/tty51
+/dev/tty52
+/dev/tty53
+/dev/tty54
+/dev/tty55
+/dev/tty56
+/dev/tty57
+/dev/tty58
+/dev/tty59
+/dev/tty6
+/dev/tty60
+/dev/tty61
+/dev/tty62
+/dev/tty63
+/dev/tty7
+/dev/tty8
+/dev/tty9
+/dev/ttyAMA0
+/dev/ttyAMA1
+/dev/ttyS0
+/dev/ttyS1
+/dev/ttyS2
+/dev/ttyS3
+/dev/ttyp0
+/dev/ttyp1
+/dev/ttyp2
+/dev/ttyp3
+/dev/ttyp4
+/dev/ttyp5
+/dev/ttyp6
+/dev/ttyp7
+/dev/ttyp8
+/dev/ttyp9
+/dev/ttypa
+/dev/ttypb
+/dev/ttypc
+/dev/ttypd
+/dev/ttype
+/dev/ttypf
+/dev/tun
+/dev/unix
+/dev/unix/socket
+/dev/urandom
+/dev/usb-ffs
+/dev/usb-ffs/hdc
+/dev/v4l
+/dev/vcs
+/dev/vcs1
+/dev/vcsa
+/dev/vcsa1
+/dev/vcsu
+/dev/vcsu1
+/dev/vfio
+/dev/vga_arbiter
+/dev/vndbinder
+/dev/xpm
+/dev/zero
+INPUT
+I: Bus=0006 Vendor=0627 Product=0003 Version=0002
+N: Name="QEMU Virtio Tablet"
+P: Phys=virtio8/input0
+S: Sysfs=/devices/platform/4010000000.pcie/pci0000:00/0000:00:02.0/virtio8/input/input0
+U: Uniq=
+H: Handlers=event0
+B: PROP=0
+B: EV=f
+B: KEY=30400 1f0000 0 0 0 0
+B: REL=100
+B: ABS=3
+
+I: Bus=0006 Vendor=0627 Product=0001 Version=0001
+N: Name="QEMU Virtio Keyboard"
+P: Phys=virtio9/input0
+S: Sysfs=/devices/platform/4010000000.pcie/pci0000:00/0000:00:03.0/virtio9/input/input1
+U: Uniq=
+H: Handlers=kbd leds event1
+B: PROP=0
+B: EV=120003
+B: KEY=400000007 ff803078f800dfff febeffff7bcfffff fffffffffffffffe
+B: LED=7
+
+I: Bus=0019 Vendor=0001 Product=0001 Version=0100
+N: Name="gpio-keys"
+P: Phys=gpio-keys/input0
+S: Sysfs=/devices/platform/gpio-keys/input/input2
+U: Uniq=
+H: Handlers=kbd event2
+B: PROP=0
+B: EV=3
+B: KEY=10000000000000 0
+
+DRM
+total 0
+drwxr-xr-x  2 ueventd root           80 2026-09-22 07:16 .
+drwxr-xr-x 23 root    root         3760 2026-09-22 07:16 ..
+crw-rw-rw-  1 system  graphics 226,   0 2026-09-22 07:16 card0
+crw-rw-rw-  1 system  graphics 226, 128 2026-09-22 07:16 renderD128
+SND
+total 0
+drwxr-xr-x  2 ueventd root        60 2026-09-22 07:16 .
+drwxr-xr-x 23 root    root      3760 2026-09-22 07:16 ..
+crw-rw----  1 system  audio 116,  33 2026-09-22 07:16 timer

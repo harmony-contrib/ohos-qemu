@@ -1,0 +1,9 @@
+09-22 10:53:03.755  1313  1313 I A01b06/KG: DataShareManager: registerUserSettingsDataShareListener end,key=font_scale
+09-22 10:53:03.755  1313  1313 I A01b06/KG: DataShareManager: registerUserSettingsDataShareListener end,key=lockscreen_sounds_enabled
+09-22 10:53:03.875  1313  1313 E A01b01/HOME: SCBOtaManager-OobeManager: isMigrateClientNeedShow catch error: {"code":15700010,"message":"The DataShareHelper is not initialized successfully."}
+09-22 10:53:03.922  1313  1313 W A01b01/HOME: ContextModifyUtils: modifyGlobalContext finsh from:NaviBarSettingsDataMgr-getPreference finsh
+09-22 10:53:03.928  1313  1313 I A01b0a/GESTURE: NaviBarSettingsDataMgr: syncData preference clickBackStatus is:null
+09-22 10:53:03.928  1313  1313 I A01b0a/GESTURE: NaviBarSettingsDataMgr: get clickBackStatus value is false
+09-22 10:53:03.928  1313  1313 I A01b0a/GESTURE: NaviBarSettingsDataMgr: syncData end
+09-22 02:53:22.033  1313  1313 I A01b0a/GESTURE: NaviBarSettingsDataMgr: completedInit is true
+09-22 02:53:56.763   629  2146 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:hilog -x -v time | grep -E '15700010|DataShareHelper is not initialized|SettingsData' | tail -n 200 fd:40 pid:2841

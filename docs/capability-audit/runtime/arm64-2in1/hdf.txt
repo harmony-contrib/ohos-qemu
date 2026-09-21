@@ -1,0 +1,109 @@
+# target=127.0.0.1:5665
+# device=2in1
+# arch=arm64
+# command=hidumper -s HdfDeviceServiceManager -a '-query'
+
+-------------------------------[ability]-------------------------------
+
+
+----------------------------------HdfDeviceServiceManager----------------------------------
+hdf device information in user space, format:
+hostName                        :hostId
+        deviceName                      :deviceId      :serviceName
+allocator_host                  :0xd
+        device0                         :0xd000101     :allocator_service
+composer_host                   :0xc
+        device0                         :0xc000101     :display_composer_service
+location_host                   :0x18
+total 3 hosts, 2 devNodes in user space
+
+hdf service information in user space, format:
+serviceName                     :devClass       :devId
+hdf_device_manager              :0x1            :0xffffffff
+hid_ddk_service                 :0x1            :0xb000301
+usb_pnp_manager                 :0x1            :0x3000101
+display_composer_service        :0x1            :0xc000101
+allocator_service               :0x1            :0xd000101
+codec_image_service             :0x1            :0x11000401
+face_auth_interface_service     :0x100          :0x14000101
+vibrator_interface_service      :0x1            :0xf000101
+fingerprint_auth_interface_servi:0x100          :0x17000101
+hci_interface_service           :0x1            :0x1000101
+usb_ddk_service                 :0x1            :0x3000701
+codec_component_manager_service :0x1            :0x11000201
+intell_voice_trigger_manager_ser:0x1            :0x8000701
+effect_model_service            :0x20           :0x8000601
+thermal_interface_service       :0x1            :0x4000301
+audio_manager_service           :0x20           :0x8000501
+pin_auth_interface_service      :0x100          :0x15000101
+user_auth_interface_service     :0x100          :0x16000101
+battery_interface_service       :0x1            :0x4000201
+power_interface_service         :0x1            :0x4000101
+total 20 services in user space
+
+hdf device information in kernel space, format:
+hostName                        :hostId
+        deviceName                      :deviceId      :serviceName
+platform_host                   :0x1
+        device0                         :0x1000901     :HDF_PLATFORM_PWM_0
+        device1                         :0x1000902     :HDF_PLATFORM_PWM_1
+        device2                         :0x1000903     :HDF_PLATFORM_PWM_2
+        device3                         :0x1000904     :HDF_PLATFORM_PWM_3
+        device4                         :0x1000905     :HDF_PLATFORM_PWM_4
+        device0                         :0x1000701     :HDF_PLATFORM_MMC_2
+        device0                         :0x1000601     :HDF_PLATFORM_SPI_0
+        device1                         :0x1000602     :HDF_PLATFORM_SPI_1
+        device2                         :0x1000603     :HDF_PLATFORM_SPI_2
+        device3                         :0x1000604     :HDF_PLATFORM_SPI_3
+        device1                         :0x1000502     :
+        device0                         :0x1000501     :HDF_PLATFORM_I2C_MANAGER
+        device0                         :0x1000401     :HDF_PLATFORM_UART_0
+        device1                         :0x1000402     :HDF_PLATFORM_UART_1
+        device2                         :0x1000403     :HDF_PLATFORM_UART_3
+        device0                         :0x1000301     :HDF_PLATFORM_RTC
+        device0                         :0x1000201     :HDF_PLATFORM_WATCHDOG_0
+        device0                         :0x1000801     :HDF_PLATFORM_MMC_0
+        device0                         :0x1000101     :HDF_PLATFORM_GPIO_MANAGER
+        device1                         :0x1000102     :
+base_host                       :0x0
+        device0                         :0x101         :hdf_kevent
+usb_pnp_linux_host              :0x5
+        device0                         :0x5000101     :hdf_usb_pnp_notify_service
+network_host                    :0x4
+        device0                         :0x4000101     :hdfwifi
+input_host                      :0x3
+        device0                         :0x3000301     :
+        device0                         :0x3000101     :hdf_input_host
+display_host                    :0x2
+        device0                         :0x2000401     :hdf_bl
+audio_host                      :0x6
+        device_primary                  :0x6000101     :hdf_audio_codec_primary_dev0
+total 7 hosts, 27 devNodes in kernel space
+
+hdf service information in kernel space, format:
+serviceName                     :devClass       :devId
+HDF_PLATFORM_GPIO_MANAGER       :0x1            :0x1000101
+HDF_PLATFORM_MMC_0              :0x1            :0x1000801
+HDF_PLATFORM_WATCHDOG_0         :0x1            :0x1000201
+HDF_PLATFORM_RTC                :0x1            :0x1000301
+HDF_PLATFORM_UART_3             :0x1            :0x1000403
+HDF_PLATFORM_UART_1             :0x1            :0x1000402
+HDF_PLATFORM_UART_0             :0x1            :0x1000401
+HDF_PLATFORM_I2C_MANAGER        :0x1            :0x1000501
+HDF_PLATFORM_SPI_3              :0x1            :0x1000604
+HDF_PLATFORM_SPI_2              :0x1            :0x1000603
+HDF_PLATFORM_SPI_1              :0x1            :0x1000602
+HDF_PLATFORM_SPI_0              :0x1            :0x1000601
+HDF_PLATFORM_MMC_2              :0x1            :0x1000701
+HDF_PLATFORM_PWM_4              :0x1            :0x1000905
+HDF_PLATFORM_PWM_3              :0x1            :0x1000904
+HDF_PLATFORM_PWM_2              :0x1            :0x1000903
+HDF_PLATFORM_PWM_1              :0x1            :0x1000902
+HDF_PLATFORM_PWM_0              :0x1            :0x1000901
+hdf_kevent                      :0x1            :0x101
+hdf_usb_pnp_notify_service      :0x1            :0x5000101
+hdfwifi                         :0x1            :0x4000101
+hdf_input_host                  :0x1            :0x3000101
+hdf_bl                          :0x1            :0x2000401
+hdf_audio_codec_primary_dev0    :0x20           :0x6000101
+total 24 services in kernel space

@@ -1,0 +1,37 @@
+09-22 08:00:20.408  1165  1165 I A0002a/ScreenLock_Default: [a92ab1c5145e44d, 0, 0] WifiComponent-WifiIcon --> aboutToAppear
+09-22 08:00:20.409  1165  1165 I A0002a/ScreenLock_Default: [a92ab1c5145e44d, 0, 0] WifiComponent-WifiModel --> getWifiInfo, isWifiActive: false
+09-22 08:00:20.409  1165  1165 I A0002a/ScreenLock_Default: [a92ab1c5145e44d, 0, 0] WifiComponent-WifiModel --> setDisconnectedStatus
+09-22 08:00:20.501  1165  1165 I A0001a/SystemUI_Default: WifiVM --> constructor
+09-22 08:00:20.501  1165  1165 I A0001a/SystemUI_Default: SingleInstanceHelper --> Create key of WifiVM
+09-22 08:00:20.512  1165  1165 I A0001a/SystemUI_Default: SingleInstanceHelper --> Create key of BluetoothModel
+09-22 08:00:20.512  1165  1165 I A0001a/SystemUI_Default: SingleInstanceHelper --> Create key of BluetoothVM
+09-22 08:00:20.517  1165  1165 I A0001a/SystemUI_Default: SingleInstanceHelper --> Create key of LocationModel
+09-22 08:00:20.517  1165  1165 I A0001a/SystemUI_Default: SingleInstanceHelper --> Create key of LocationVM
+09-22 08:00:20.572  1165  1165 I A0001a/SystemUI_Default: Common-StyleManager --> Create storageKey of StatusBar-Index-wifi-StyleConfiguration-startsBarWifi
+09-22 08:00:20.572  1165  1165 I A0001a/SystemUI_Default: WifiComponent-WifiModel --> initWifiModel
+09-22 08:00:20.572  1165  1165 I A0001a/SystemUI_Default: WifiComponent-WifiModel --> getWifiInfo, isWifiActive: false
+09-22 08:00:20.572  1165  1165 I A0001a/SystemUI_Default: WifiComponent-WifiModel --> setDisconnectedStatus
+09-22 08:00:20.576  1165  1165 I A0001a/SystemUI_Default: Common-StyleManager --> Create storageKey of StatusBar-Index-location-StyleConfiguration-startsBarLocation
+09-22 08:00:20.576  1165  1165 I A0001a/SystemUI_Default: location-StatusBarIconItemLocationComponent --> aboutToAppear
+09-22 08:00:20.576  1165  1165 I A0001a/SystemUI_Default: LocationVM --> initViewModel
+09-22 08:00:20.576  1165  1165 I A0001a/SystemUI_Default: LocationModel --> registerListener, listener: [object Object]
+09-22 08:00:20.576  1165  1165 I A0001a/SystemUI_Default: LocationModel --> startService
+09-22 08:00:20.577  1165  1165 I A0001a/SystemUI_Default: LocationModel --> getServiceState isLocationEnabled, data: false
+09-22 08:00:20.577  1165  1165 I A0001a/SystemUI_Default: LocationVM --> updateServiceState, state: false
+09-22 08:00:20.578  1165  1165 I A0001a/SystemUI_Default: Common-StyleManager --> Create storageKey of StatusBar-Index-bluetooth-StyleConfiguration-StatusBarBluetoothComponent
+09-22 08:00:20.578  1165  1165 I A0001a/SystemUI_Default: bluetooth-StatusBarIconItemBluetoothComponent --> aboutToAppear
+09-22 08:00:20.578  1165  1165 I A0001a/SystemUI_Default: BluetoothModel --> BluetoothState is: 0
+09-22 08:00:20.578  1165  1165 I A0001a/SystemUI_Default: BluetoothModel --> startService, mIsBluetoothOpen: false
+09-22 08:00:20.578  1165  1165 I A0001a/SystemUI_Default: BluetoothModel --> registerListener, listener: [object Object]
+09-22 08:00:20.578  1165  1165 I A0001a/SystemUI_Default: BluetoothVM --> updateState, state: false this.mBluetoothOpenStatus [object Object]
+09-22 08:00:20.723  1274  1274 I A03d00/JSAPP: [TelephonyData:]TelephonyDataAbilityStage:onCreate
+09-22 08:00:20.752  1274  1274 I A03d00/JSAPP: [TelephonyData:]TelephonyDataAbilityStage:onDestroy
+09-22 08:00:20.875  1582  1582 I A03d00/JSAPP: [TelephonyData:]TelephonyDataAbilityStage:onCreate
+09-22 08:00:20.907  1582  1582 I A03d00/JSAPP: [TelephonyData:]TelephonyDataAbilityStage:onDestroy
+09-22 00:31:11.513   253   604 W C01f04/TelephonySubsystem: [GetSimAccountInfo-(multi_sim_controller.cpp:1168)] slotId 0 is invalid
+09-22 00:31:11.513   253   604 E C01f04/TelephonySubsystem: GetSimAccountInfo fail!
+09-22 00:31:11.513   253   604 I C01f04/TelephonySubsystem: default slotId is 0 for single card version
+09-22 00:31:21.516   253   606 W C01f04/TelephonySubsystem: [GetSimAccountInfo-(multi_sim_controller.cpp:1168)] slotId 0 is invalid
+09-22 00:31:21.516   253   606 E C01f04/TelephonySubsystem: GetSimAccountInfo fail!
+09-22 00:31:21.517   253   606 I C01f04/TelephonySubsystem: default slotId is 0 for single card version
+09-22 00:31:26.899   460  1959 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:hilog -x | grep -E 'Camera|camera|Sensor|sensor|Telephony|Vibrator|Bluetooth|Wifi|Location|NetConn' | tail -n 2000 fd:40 pid:23216

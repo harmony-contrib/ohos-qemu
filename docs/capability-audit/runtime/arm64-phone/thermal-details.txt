@@ -1,0 +1,15 @@
+/system/etc/thermal_config
+/system/etc/thermal_config/thermal_service_config.xml
+/system/etc/init/sensors_musl.cfg
+/vendor/etc/param/thermal.para
+/vendor/etc/param/thermal.para.dac
+/vendor/etc/thermal_config
+/vendor/etc/thermal_config/thermal_hdi_config.xml
+09-22 01:42:49.405   420   736 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-22 01:42:54.407   420   736 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-22 01:42:59.409   420   736 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-22 01:43:04.411   420   736 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-22 01:43:09.411   420   736 W C02943/ThermalHdi: Read node failed, title = gpu-thermal
+09-22 01:43:10.195   485   969 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:find /system/etc /vendor/etc /sys_prod/etc /chip_prod/etc -iname "*thermal*" -o -iname "*sensor*" 2>/dev/null | head -200; hilog -x | grep -Ei "thermal|temperature" | tail -300; cat /sys/class/thermal/thermal_zone0/temp; cat /sys/class/thermal/thermal_zone0/type fd:41 pid:25661
+2600
+battery

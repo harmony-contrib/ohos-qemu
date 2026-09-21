@@ -1,0 +1,10 @@
+# source=/private/tmp/ohos_background_process_probe_arm64
+# target=127.0.0.1:5665
+FileTransfer finish, Size:15040, File count = 1, time:5ms rate:3008.00kB/s
+pid=8289
+set_priority=0
+reset_priority=0
+set_power_save=801
+is_power_save=801
+get_power_save=801 mode=1
+exit=0

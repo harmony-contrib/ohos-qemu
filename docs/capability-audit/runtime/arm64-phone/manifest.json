@@ -1,0 +1,108 @@
+{
+  "arch": "arm64",
+  "device": "phone",
+  "files": [
+    {
+      "bytes": 2410,
+      "file": "ability_state.txt",
+      "sha256": "d2365713a7b1a4655784d4970a900922b8fe463e4798644365047d424c4817f5"
+    },
+    {
+      "bytes": 3250,
+      "file": "applications.txt",
+      "sha256": "9f31c5db333cf9f4dc477812f7491b423cf21b8fec48fde0ecbb36fb9c7d2ba1"
+    },
+    {
+      "bytes": 60373,
+      "file": "boot_errors.txt",
+      "sha256": "91c5350c2c861d329c99abf79d61f55337a91668a2c4131d0fef46c2ae7f8cc6"
+    },
+    {
+      "bytes": 1145,
+      "file": "bundles.txt",
+      "sha256": "d5e0a893ec140282b93486441be59072075428d4ff9b3e2ce609c161e606b66c"
+    },
+    {
+      "bytes": 5238,
+      "file": "devices.txt",
+      "sha256": "739ff16c1dab633ff24ded16b290e898204815dd1fb8f64887e876fd708d0d65"
+    },
+    {
+      "bytes": 106,
+      "file": "faults.txt",
+      "sha256": "45301e9d5e14a1ef0403a39c61643ca3c66beb2674d453a1385734ba84142e78"
+    },
+    {
+      "bytes": 561,
+      "file": "hdf.txt",
+      "sha256": "7c3e4ac252398e1df90670ba769345959f376cb1dbb316540c068a7704275e63"
+    },
+    {
+      "bytes": 569,
+      "file": "identity.txt",
+      "sha256": "857a61ea2f9a2af6ad12812cf63b34c65ec050363bf8af92933de8880921d6a1"
+    },
+    {
+      "bytes": 107,
+      "file": "init_services.txt",
+      "sha256": "22118a8b65162bf4bf0d375ce62ef8c9fe230305207931df6cac217dc3e7f0ec"
+    },
+    {
+      "bytes": 1098,
+      "file": "kernel_backends.txt",
+      "sha256": "b310f6cc51db4961bd7a2e790323ab7dd06609a3d4330202595be9e39bfe3483"
+    },
+    {
+      "bytes": 141449,
+      "file": "libraries.txt",
+      "sha256": "8cf276049a5f6e48d1efc14cb6708c6ea5d1eba3448fb49d5396deea8839e718"
+    },
+    {
+      "bytes": 7421,
+      "file": "memory.txt",
+      "sha256": "bc9870943c9c29e3dc16f34afae2d43e4ef3646b099a326765740188cd4317ef"
+    },
+    {
+      "bytes": 7135,
+      "file": "mounts.txt",
+      "sha256": "694645649f1337c338db2038130636dd30665c7d2f107f0abddc6e674cec4151"
+    },
+    {
+      "bytes": 302999,
+      "file": "network.txt",
+      "sha256": "8ff760ae6b9cc53c340c5005e3c444a5bf9ffa23804566387cb9a05d0d0949aa"
+    },
+    {
+      "bytes": 132337,
+      "file": "parameters.txt",
+      "sha256": "77ba82954a9d86d7d77fefe49b76a1db4bd9e25af1fe31400cafa5d5f881ca14"
+    },
+    {
+      "bytes": 12685,
+      "file": "processes.txt",
+      "sha256": "abc3804466b15da929f33510b1ebd525cb2b3864b23a6ac2e302254dc1c9996e"
+    },
+    {
+      "bytes": 17125,
+      "file": "service_profiles.txt",
+      "sha256": "02f303b32368abc742a5372ac28e26afd1a82ba7fd3856d504f21e06f9123e09"
+    },
+    {
+      "bytes": 2843806,
+      "file": "storage.txt",
+      "sha256": "d6953b520a73f6f6659201ce97a529c75586bd3ecadc165ad95eb02dbd77e514"
+    },
+    {
+      "bytes": 3330,
+      "file": "system_abilities.txt",
+      "sha256": "e6f38772faca008b8cbe51dc6b03736a6daf19270326f400fd9da554dbf7082f"
+    },
+    {
+      "bytes": 163,
+      "file": "system_information_clusters.txt",
+      "sha256": "6d4eb894ee27177e1aa9a3a8021d6cec75897fcdb0f86384a0c44b92f5be2c84"
+    }
+  ],
+  "schema_version": 1,
+  "target": "127.0.0.1:5665"
+}

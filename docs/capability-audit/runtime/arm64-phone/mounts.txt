@@ -1,0 +1,94 @@
+# target=127.0.0.1:5665
+# device=phone
+# arch=arm64
+# command=cat /proc/filesystems; echo MOUNTS; cat /proc/mounts; echo CGROUPS; cat /proc/cgroups
+nodev	sysfs
+nodev	tmpfs
+nodev	bdev
+nodev	proc
+nodev	cgroup
+nodev	cgroup2
+nodev	cpuset
+nodev	devtmpfs
+nodev	configfs
+nodev	debugfs
+nodev	securityfs
+nodev	sockfs
+nodev	pipefs
+nodev	ramfs
+nodev	hugetlbfs
+nodev	rpc_pipefs
+nodev	devpts
+	ext3
+	ext4
+nodev	hmdfs
+nodev	sharefs
+	ext2
+	squashfs
+	vfat
+nodev	nfs
+nodev	nfs4
+nodev	autofs
+nodev	9p
+	f2fs
+nodev	efivarfs
+nodev	mqueue
+nodev	selinuxfs
+nodev	pstore
+nodev	functionfs
+MOUNTS
+tmpfs /dev tmpfs rw,seclabel,nosuid,relatime,mode=755 0 0
+tmpfs /mnt tmpfs rw,seclabel,nosuid,relatime,mode=755 0 0
+tmpfs /mnt/data tmpfs rw,seclabel,nosuid,relatime,mode=755 0 0
+tmpfs /storage tmpfs rw,seclabel,nosuid,nodev,noexec,relatime,mode=755 0 0
+devpts /dev/pts devpts rw,seclabel,relatime,mode=600,ptmxmode=000 0 0
+proc /proc proc rw,relatime,gid=3009,hidepid=invisible 0 0
+sysfs /sys sysfs rw,seclabel,relatime 0 0
+selinuxfs /sys/fs/selinux selinuxfs rw,relatime 0 0
+/dev/block/vde / ext4 ro,seclabel,nodev,relatime 0 0
+/dev/block/vdd /vendor ext4 ro,seclabel,relatime 0 0
+/dev/block/vdc /sys_prod ext4 rw,seclabel,relatime 0 0
+/dev/block/vdb /chip_prod ext4 rw,seclabel,relatime 0 0
+/dev/block/vda /data f2fs rw,lazytime,seclabel,nosuid,relatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal,errors=continue 0 0
+tmpfs /module_update tmpfs rw,seclabel,nosuid,nodev,noexec,relatime,mode=755 0 0
+none /config configfs rw,nosuid,nodev,noexec,relatime 0 0
+/sys/kernel/debug /sys/kernel/debug debugfs rw,seclabel,relatime,mode=755 0 0
+none /dev/cpuset cgroup rw,relatime,cpuset,clone_children 0 0
+none /dev/cpuctl cgroup rw,relatime,cpu 0 0
+pstore /sys/fs/pstore pstore rw,seclabel,nosuid,nodev,noexec,relatime 0 0
+none /dev/memcg cgroup rw,relatime,memory 0 0
+none /dev/pids cgroup rw,relatime,pids 0 0
+tmpfs /mnt/user/100/nosharefs/docs tmpfs rw,seclabel,nosuid,relatime,mode=755 0 0
+tmpfs /mnt/user/100/sharefs/docs tmpfs rw,seclabel,nosuid,relatime,mode=755 0 0
+/dev/block/vda /mnt/user/100/nosharefs/appdata/el1/base f2fs rw,lazytime,seclabel,nosuid,relatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal,errors=continue 0 0
+hdc /dev/usb-ffs/hdc functionfs rw,relatime 0 0
+/dev/block/vda /system/usr/ohos_icu/icudt72l.dat f2fs rw,lazytime,seclabel,nosuid,relatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal,errors=continue 0 0
+/data/service/el2/100/hmdfs/account /mnt/hmdfs/100/account hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/data/service/el2/100/hmdfs/account /storage/media/100 hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/data/service/el2/100/hmdfs/account /storage/cloud/100 hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/data/service/el2/100/hmdfs/account /storage/cloud/100/files/Docs hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/data/service/el2/100/hmdfs/non_account /mnt/hmdfs/100/non_account hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/non_account_cache/,real_dst=/mnt/hmdfs/100/non_account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/mnt/data/100/cloud_fuse /mnt/hmdfs/100/cloud hmdfs rw,nodev,relatime,insensitive,merge_disable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cloud/,real_dst=/mnt/hmdfs/100/cloud,offline_stash,dentry_cache 0 0
+/data/service/el2/100/share /mnt/share/100 sharefs rw,nodev,relatime 0 0
+/dev/block/vda /mnt/user/100/nosharefs/appdata/el2/base f2fs rw,lazytime,seclabel,nosuid,relatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal,errors=continue 0 0
+/data/service/el2/100/hmdfs/account /mnt/user/100/nosharefs/appdata/el2/distributedfiles hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/dev/block/vda /mnt/user/100/nosharefs/appdata/el5/base f2fs rw,lazytime,seclabel,nosuid,relatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal,errors=continue 0 0
+/storage/media/100/local/files/Docs /mnt/user/100/currentUser/other sharefs rw,nodev,relatime 0 0
+/mnt/user/100/nosharefs/appdata /mnt/user/100/currentUser/other/appdata sharefs rw,nodev,relatime 0 0
+/data/service/el2/100/hmdfs/account /mnt/user/100/currentUser/filemgr hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/mnt/user/100/nosharefs/appdata /mnt/user/100/currentUser/filemgr/appdata sharefs rw,nodev,relatime 0 0
+/storage/media/100/local/files/Docs /mnt/user/100/sharefs/docs/currentUser sharefs rw,nodev,relatime 0 0
+/mnt/user/100/nosharefs/appdata /mnt/user/100/sharefs/docs/currentUser/appdata sharefs rw,nodev,relatime 0 0
+/data/service/el2/100/hmdfs/account /mnt/user/100/nosharefs/docs/currentUser hmdfs rw,nodev,relatime,insensitive,merge_enable,ra_pages=512,user_id=100,cache_dir=/data/service/el2/100/hmdfs/cache/account_cache/,real_dst=/mnt/hmdfs/100/account,cloud_dir=/mnt/data/100/cloud,offline_stash,dentry_cache 0 0
+/mnt/user/100/nosharefs/appdata /mnt/user/100/nosharefs/docs/currentUser/appdata sharefs rw,nodev,relatime 0 0
+CGROUPS
+#subsys_name	hierarchy	num_cgroups	enabled
+cpuset	1	5	1
+cpu	2	5	1
+cpuacct	0	1	1
+blkio	0	1	1
+memory	3	1	1
+devices	0	1	1
+perf_event	0	1	1
+hugetlb	0	1	1
+pids	4	20	1

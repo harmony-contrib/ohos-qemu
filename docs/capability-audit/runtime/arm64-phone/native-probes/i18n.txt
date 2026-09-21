@@ -1,0 +1,5 @@
+# source=/private/tmp/ohos_i18n_probe_arm64
+# target=127.0.0.1:5666
+FileTransfer finish, Size:15256, File count = 1, time:2ms rate:7628.00kB/s
+SetSystemLanguage=2
+exit=0
