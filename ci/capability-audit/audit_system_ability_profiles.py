@@ -17,6 +17,11 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--system-ability-list", required=True, type=Path)
     parser.add_argument("--definition-header", required=True, type=Path)
     parser.add_argument("--dump-utils", required=True, type=Path)
+    parser.add_argument(
+        "--probe-summary",
+        type=Path,
+        help="Optional direct hidumper probe summary; a non-empty response proves that the SA is reachable",
+    )
     parser.add_argument("--output", required=True, type=Path)
     return parser.parse_args()
 
@@ -94,6 +99,19 @@ def main() -> int:
     aliases_by_id = {value: name for name, value in aliases.items()}
     expected = packaged_profiles(args.profile_dir)
     registered, unknown_names, raw_names = registered_ids(args.system_ability_list, aliases)
+    direct_registered: set[int] = set()
+    if args.probe_summary and args.probe_summary.exists():
+        probe_report = json.loads(args.probe_summary.read_text(encoding="utf-8"))
+        for item in probe_report.get("abilities", []):
+            sa_id = aliases.get(item.get("system_ability", ""))
+            if (
+                sa_id is not None
+                and not item.get("timed_out", False)
+                and item.get("returncode") == 0
+                and item.get("output_bytes", 0) > 0
+            ):
+                direct_registered.add(sa_id)
+    registered.update(direct_registered)
 
     rows = []
     for sa_id, profile in sorted(expected.items()):
@@ -109,6 +127,7 @@ def main() -> int:
                 "run_on_create": eager,
                 "start_on_demand": profile.get("start-on-demand") is True,
                 "registered": sa_id in registered,
+                "registered_via_direct_probe": sa_id in direct_registered,
                 "status": (
                     "registered"
                     if sa_id in registered
@@ -126,6 +145,7 @@ def main() -> int:
             "packaged_profile_count": len(rows),
             "eager_profile_count": len(eager),
             "registered_id_count": len(registered),
+            "direct_probe_registered_id_count": len(direct_registered),
             "eager_not_registered_count": sum(not row["registered"] for row in eager),
             "inactive_on_demand_count": sum(
                 row["status"] == "inactive_on_demand" for row in rows

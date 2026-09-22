@@ -64,16 +64,28 @@ def classify(
     if audit_status in {"confirmed_broken", "architecture_dependent_failure"}:
         return "behavior_failure_confirmed_for_capability"
     if audit_status == "partially_broken":
-        return "capability_partial_failure_method_pending"
+        return "capability_partial_failure_method_not_individually_executed"
     if audit_status in {"invalid_declaration", "missing_capability"}:
         return "profile_or_packaging_failure"
     if audit_status == "device_restricted_methods":
         return "method_boundary_failure"
+    if audit_status == "conditional_external_dependency":
+        return "external_dependency_required"
+    if audit_status == "role_restricted":
+        return "privileged_role_required"
+    if audit_status == "interactive_ui_required":
+        return "interactive_ui_required"
+    if audit_status == "test_harness_only":
+        return "test_harness_required"
+    if audit_status == "compile_time_verified":
+        return "compile_time_contract"
     if not capability["contract_expected"] and documented_behavior != "supported":
         return "advertised_outside_device_contract"
     # A successful capability-level subset must not be projected onto every
     # method.  Only a method-specific probe can promote an entry to verified.
-    return "behavior_validation_pending"
+    if audit_status == "runtime_verified_subset":
+        return "capability_subset_verified_method_not_individually_executed"
+    return "capability_classified_method_not_individually_executed"
 
 
 def main() -> int:

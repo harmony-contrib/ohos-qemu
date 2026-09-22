@@ -1,0 +1,8 @@
+--- /system/app/com.ohos.dlpmanager/dlp_manager.hap
+error: failed to install bundle.
+code:9568344
+error: install parse profile prop check error.
+--- /system/app/DHardware_UI/DHardware_UI.hap
+install bundle successfully.
+--- /system/app/com.ohos.security.privacycenter/SecurityPrivacyCenter.hap
+install bundle successfully.

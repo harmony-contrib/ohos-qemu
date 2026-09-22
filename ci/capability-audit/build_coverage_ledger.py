@@ -154,6 +154,16 @@ def coverage_state(audit_status: str, surface: str) -> str:
         return "surface_failure_unclassified"
     if audit_status == "runtime_verified_subset":
         return "behavior_verified_subset"
+    if audit_status == "conditional_external_dependency":
+        return "external_dependency_required"
+    if audit_status == "role_restricted":
+        return "privileged_role_required"
+    if audit_status == "interactive_ui_required":
+        return "interactive_ui_required"
+    if audit_status == "test_harness_only":
+        return "test_harness_required"
+    if audit_status == "compile_time_verified":
+        return "compile_time_contract"
     return "behavior_validation_pending"
 
 

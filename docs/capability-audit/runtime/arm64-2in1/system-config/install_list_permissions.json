@@ -1,0 +1,352 @@
+[
+    {
+        "bundleName" : "com.ohos.screenshot",
+        "app_signature" : ["com.ohos.screenshot_BPgjq9cj5JyweCCfYME1bzHG1/mf3O8o3TRauZBbLY88KQDsXTsuFVd36R3cnIdxpOosELsi0BKxgowdI7IOBUU="],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.MEDIA_LOCATION",
+                "userCancellable" : true
+            },
+            {
+                "name" : "ohos.permission.READ_MEDIA",
+                "userCancellable" : true
+            },
+            {
+                "name" : "ohos.permission.WRITE_MEDIA",
+                "userCancellable" : true
+            },
+            {
+                "name" : "ohos.permission.WRITE_IMAGEVIDEO",
+                "userCancellable" : true
+            }
+        ]
+    },
+	{
+        "bundleName" : "com.ohos.medialibrary.medialibrarydata",
+        "app_signature" : ["F9431859ED7A3959B5D72EF36FBE8B210A00082B044063E4424F823A01B3B7CA"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.DISTRIBUTED_DATASYNC",
+                "userCancellable" : false
+            }
+        ]
+    },
+	{
+        "bundleName" : "com.ohos.ringtonelibrary.ringtonelibrarydata",
+        "app_signature" : ["8C6B95137E594835B00A60DF8DC1350D040D58624F17F4E841246B97B9A7A9FD"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_AUDIO",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName" : "com.ohos.callui",
+        "app_signature" : ["E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_CONTACTS",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.SEND_MESSAGES",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.ANSWER_CALL",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName" : "com.ohos.mms",
+        "app_signature" : ["04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_CONTACTS",
+                "userCancellable" : true
+            },
+            {
+                "name" : "ohos.permission.READ_MESSAGES",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.SEND_MESSAGES",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.RECEIVE_SMS",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.systemui",
+        "app_signature" : ["8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.DISTRIBUTED_DATASYNC",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.GET_INSTALLED_BUNDLE_LIST",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.ACCESS_BLUETOOTH",
+                "userCancellable" : false
+            }
+        ]
+    },
+	{
+        "bundleName": "com.ohos.contacts",
+        "app_signature" : ["04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_CONTACTS",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_CONTACTS",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.READ_CALL_LOG",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_CALL_LOG",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.MANAGE_VOICEMAIL",
+                "userCancellable" : false
+            }
+        ]
+    },
+	{
+        "bundleName": "com.ohos.photos",
+        "app_signature" : ["9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_IMAGEVIDEO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_IMAGEVIDEO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.READ_MEDIA",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_MEDIA",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.MEDIA_LOCATION",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.DISTRIBUTED_DATASYNC",
+                "userCancellable" : false
+            }
+        ]
+    },
+	{
+        "bundleName": "com.ohos.filepicker",
+        "app_signature" : ["799EAC4119A566D438C1AB0199D9401D77176C368A334F33C03DBB21E54F970E"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_MEDIA",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_MEDIA",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.MEDIA_LOCATION",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.READ_AUDIO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_AUDIO",
+                "userCancellable" : false
+            }
+        ]
+    },
+	{
+        "bundleName": "com.ohos.camera",
+        "app_signature" : ["62C298EE70BEEB3D58082FFEFFEAD4F26BE83350B46B75C393281BA6AAED2A91"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.READ_IMAGEVIDEO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.WRITE_IMAGEVIDEO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.MEDIA_LOCATION",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.DISTRIBUTED_DATASYNC",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.CAMERA",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.MICROPHONE",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.LOCATION",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.LOCATION_IN_BACKGROUND",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.APPROXIMATELY_LOCATION",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.inputmethodchoosedialog",
+        "app_signature" : ["CE4D01EF424B829E13652BB1743E18B8E4542DD5A7BBA7D7D472F727FA6F8A9D"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.CONNECT_IME_ABILITY",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.huawei.ohos.hiviewx",
+        "app_signature" : ["57D4E9DFE7504D12EB6ACAF39876F420BCABCA2F4721989B90FD2E4F1FB7ED2B"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.sec.ACCESS_UDID",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.GET_WIFI_INFO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.GET_NETWORK_INFO",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.INTERNET",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.READ_DFX_SYSEVENT",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.permissionmanager",
+        "app_signature" : ["68079CC9CB1BD69283D70790305645FFF61CD1E46CAFD7AA53B9FA8540432B81"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.GET_INSTALLED_BUNDLE_LIST",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.dlpmanager",
+        "app_signature" : ["E3F4322139E0109BAFAD8DA4096762068E31708C3CF201780E736D377D60B639"],
+        "permissions" : [
+            {
+                "name": "ohos.permission.READ_MEDIA",
+                "userCancellable" : false
+            },
+            {
+                "name": "ohos.permission.WRITE_MEDIA",
+                "userCancellable" : false
+            },
+            {
+                "name": "ohos.permission.ACCESS_DLP_FILE",
+                "userCancellable" : false
+            },
+            {
+                "name": "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+                "userCancellable" : false
+            },
+            {
+                "name":"ohos.permission.FILE_ACCESS_MANAGER",
+                "userCancellable" : false
+            },
+            {
+                "name":"ohos.permission.START_ABILIIES_FROM_BACKGROUND",
+                "userCancellable" : false
+            },
+            {
+                "name":"ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+                "userCancellable" : false
+            },
+            {
+                "name": "ohos.permission.MEDIA_LOCATION",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.useriam.authwidget",
+        "app_signature" : ["8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.ACCESS_PIN_AUTH",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.ACCESS_BIOMETRIC",
+                "userCancellable" : false
+            },
+            {
+                "name" : "ohos.permission.SUPPORT_USER_AUTH",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.settings",
+        "app_signature" : ["EB5DBE52EE8DD7206DDE612E7484E88CE264E74958704D0712BFA774C87F4DA1"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.GET_INSTALLED_BUNDLE_LIST",
+                "userCancellable" : false
+            }
+        ]
+    },
+    {
+        "bundleName": "com.ohos.dhardwareui",
+        "app_signature" : ["D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"],
+        "permissions" : [
+            {
+                "name" : "ohos.permission.ACCESS_DISTRIBUTED_HARDWARE",
+                "userCancellable" : false
+            }
+        ]
+    }
+]

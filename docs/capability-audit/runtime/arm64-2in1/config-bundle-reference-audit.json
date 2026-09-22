@@ -1,0 +1,808 @@
+{
+  "missing_references": [
+    {
+      "bundle": "com.huawei.ohos.hiviewx",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[12].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[11].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.calendardata",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[34].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "silentProxys[0].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.callui",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[3].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[3].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.camera",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "[9].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        },
+        {
+          "json_path": "silentProxys[1].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.devicetest",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[9].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.dhardwareui",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[38].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[16].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.dlpmanager",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[21].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[13].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.emergencycommunication",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "RepeatKeys[0].ability.bundleName",
+          "source": "etc/multimodalinput/ability_launch_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.launcher",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[17].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.mms",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[5].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[4].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.nweb",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[28].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.photos",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[22].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[7].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        },
+        {
+          "json_path": "silentProxys[2].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.security.privacycenter",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "silentProxys[3].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.settings",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "[15].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.sharepickerdialog",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[24].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.spooler",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[33].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.systemui",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[2].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[5].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.samples.AdsServiceDemo",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "providerBundleName",
+          "source": "etc/advertising/ads_framework/ad_service_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.usb.function",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[36].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "bundle": "com.example.kikakeyboard",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[1].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.huawei.ohos.hiviewx",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[12].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[11].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.amsdialog",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[15].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.backgroundtaskmgr.resources",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[7].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.calendardata",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[34].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "silentProxys[0].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.callui",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[3].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[3].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.camera",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "[9].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        },
+        {
+          "json_path": "silentProxys[1].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.contacts",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[4].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[6].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.contactsdataability",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[10].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "silentProxys[4].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.devicemanagerui",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[16].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.devicetest",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[9].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.dhardwareui",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[38].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[16].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.dlpmanager",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[21].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[13].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.emergencycommunication",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "RepeatKeys[0].ability.bundleName",
+          "source": "etc/multimodalinput/ability_launch_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.filepicker",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "[8].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.formrenderservice",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[31].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.inputmethodchoosedialog",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[13].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[10].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.launcher",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[17].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.medialibrary.medialibrarydata",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[18].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[1].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.mms",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[5].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[4].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.notificationdialog",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[27].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.nweb",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[28].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.pasteboarddialog",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[14].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.permissionmanager",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[20].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[12].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.photos",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[22].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[7].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        },
+        {
+          "json_path": "silentProxys[2].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.powerdialog",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[23].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.ringtonelibrary.ringtonelibrarydata",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[19].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[2].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        },
+        {
+          "json_path": "silentProxys[5].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.sceneboard",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[0].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.screenshot",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[26].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[0].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.security.privacycenter",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "silentProxys[3].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.settings",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "[15].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.settings.faceauth",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[29].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.settingsdata",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[6].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "silentProxys[6].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.sharepickerdialog",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[24].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.spooler",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[33].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.systemui",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[2].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[5].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.telephonydataability",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[11].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "silentProxys[7].bundleName",
+          "source": "etc/silent/conf/silentproxy_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.updateapp",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[32].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.useriam.authwidget",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[30].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        },
+        {
+          "json_path": "[14].bundleName",
+          "source": "etc/app/install_list_permissions.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.vpndialog",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[37].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.samples.AdsServiceDemo",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "providerBundleName",
+          "source": "etc/advertising/ads_framework/ad_service_config.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.usb.function",
+      "installed": false,
+      "locations": [
+        {
+          "json_path": "install_list[36].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "com.usb.right",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[25].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "ohos.global.systemres",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[8].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    },
+    {
+      "bundle": "ohos.samples.distributedmusicplayer",
+      "installed": true,
+      "locations": [
+        {
+          "json_path": "install_list[35].bundleName",
+          "source": "etc/app/install_list_capability.json"
+        }
+      ]
+    }
+  ],
+  "skipped_non_json_files": [
+    "etc/accessibility/api_event_reporter.cfg",
+    "etc/app_domain_verify/api_report.conf",
+    "etc/ark/app_aot_jit_enable_list_default.conf",
+    "etc/ark/app_startup_snapshot.json",
+    "etc/ark/system_framework_aot_enable_list.conf",
+    "etc/audio/alsa/share/smixer.conf",
+    "etc/communication/netmanager_ext/network_share_config.cfg",
+    "etc/cups/cups-files.conf",
+    "etc/cups/cupsd.conf",
+    "etc/deeplink_reserve_config.json",
+    "etc/detectionconfig.conf",
+    "etc/drirc.d/00-mesa-defaults.conf",
+    "etc/drm/drm_api_operation.cfg",
+    "etc/drm/drm_plugin_lazyloding.cfg",
+    "etc/dslm_finger.cfg",
+    "etc/ffrt/ffrt_whitelist.conf",
+    "etc/fontconfig_ohos.json",
+    "etc/hdfconfig/hdf_pnp.cfg",
+    "etc/hiview/monitor.cfg",
+    "etc/jsvm/jit_enable_list_appid.conf",
+    "etc/netdetectionurl.conf",
+    "etc/resolv.conf",
+    "etc/trusts/conf/trusts_config.json",
+    "etc/wifi/hostapd.conf",
+    "etc/wifi/hostapd_coex.conf",
+    "etc/wifi/p2p_supplicant.conf",
+    "etc/wifi/wpa_supplicant.conf",
+    "etc/zoneinfo/timezone_list.cfg"
+  ],
+  "summary": {
+    "config_file_count": 897,
+    "installed_bundle_count": 33,
+    "json_config_parsed_count": 298,
+    "json_config_skipped_count": 28,
+    "missing_referenced_bundle_count": 19,
+    "referenced_bundle_count": 45
+  }
+}

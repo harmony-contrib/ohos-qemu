@@ -1,0 +1,5 @@
+09-22 23:04:09.767   444 22400 E C01121/BMSInstaller: [a92ab998e9b862b, 0, 0] bundleName: com.ohos.dlpmanager signature verify failed in capability list
+09-22 23:04:09.767   444 22400 E C01121/BMSInstaller: [a92ab998e9b862b, 0, 0] bundle_install_checker.cpp:ProcessBundleInfoByPrivilegeCapability:1681 not allow use privilege extension
+09-22 23:04:09.767   444 22400 E C01121/BMSInstaller: [a92ab998e9b862b, 0, 0] base_bundle_installer.cpp:ParseHapFiles:5631 parse hap file failed due to errorCode : 8519888
+09-22 23:04:09.767   444 22400 E C01120/BMS: [a92ab998e9b862b, 0, 0] [bundle_data_mgr.cpp(GetOdidByBundleName:11419)]bundleName: /data/service/el1/public/bms/bundle_manager_service/stream_install/17900894492/ is not found
+09-22 23:04:09.767   444 22400 I C01121/BMSInstaller: [a92ab998e9b862b, 0, 0] InstallBundle finished -n  -u 100

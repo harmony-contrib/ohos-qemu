@@ -1,0 +1,4481 @@
+{
+  "certificate_mismatches": [
+    {
+      "abilities": [],
+      "bundle": "com.example.kikakeyboard",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.example.kikakeyboard",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "inputMethod"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "inputMethod"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.example.kikakeyboard/kikaInput.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.backgroundtaskmgr.resources",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "72BE2C651A9E0C57B4BB67825BA6F8180FC883858434712150A55C17C7E1A6F7"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "72BE2C651A9E0C57B4BB67825BA6F8180FC883858434712150A55C17C7E1A6F7"
+      ],
+      "device_types": [
+        "tablet",
+        "default",
+        "tv",
+        "car",
+        "wearable",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.backgroundtaskmgr.resources",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "EnableBgTaskAuthDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.backgroundtaskmgr.resources/BackgroundTaskResources.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "EFDBE35DD45860CE04BA8DB3F38C0DA15233F6FDEC2B031D1721923FFA5E309C"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.dlpmanager",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "5FEDFF587F4109E565B96512404D606D539C8DFFCE1424ACBD1B2A7D3E843D4D",
+        "E3F4322139E0109BAFAD8DA4096762068E31708C3CF201780E736D377D60B639"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "E3F4322139E0109BAFAD8DA4096762068E31708C3CF201780E736D377D60B639",
+        "5FEDFF587F4109E565B96512404D606D539C8DFFCE1424ACBD1B2A7D3E843D4D"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.dlpmanager",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "action",
+        "service",
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "DialogUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "MainAbilityEx",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "ViewAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "DataAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "DlpFileProcessAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "EncryptedSharingAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "action"
+        },
+        {
+          "exported": true,
+          "name": "CleanDlpCacheFileAbility",
+          "permissions": [
+            "ohos.permission.START_DLP_CRED"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "OpeningDialogUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "PhoneDialogUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "ClearDlpCacheAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.dlpmanager/dlp_manager.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "D2E890E59AFB0135A8ACF02558988F37A51F43E099368883DB235C04619CC31C"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.ringtonelibrary.ringtonelibrarydata",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "8C6B95137E594835B00A60DF8DC1350D040D58624F17F4E841246B97B9A7A9FD"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8C6B95137E594835B00A60DF8DC1350D040D58624F17F4E841246B97B9A7A9FD"
+      ],
+      "device_types": [
+        "default",
+        "phone",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "backup",
+        "dataShare"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "DataShareExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "RingtoneBackupExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "backup"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData/Ringtone_Library_Ext.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "F9431859ED7A3959B5D72EF36FBE8B210A00082B044063E4424F823A01B3B7CA"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        },
+        {
+          "exported": null,
+          "name": "JobManagerAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.spooler",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "B68D7BE6599CA7ADEDBC95CD1CE176AA96D996D3F41588A487E5F5C4E5DC9427"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "B68D7BE6599CA7ADEDBC95CD1CE176AA96D996D3F41588A487E5F5C4E5DC9427"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.spooler",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "print",
+        "sysDialog/print"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "PrintExtension",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "print"
+        },
+        {
+          "exported": true,
+          "name": "PrintServiceExtAbility",
+          "permissions": [
+            "ohos.permission.PRINT"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/print"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.spooler/PrintSpooler.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "0B0289F397E77F1D28B5AF426BEA72C53FB963CCC45BA193F6CB4A52CAB5987A"
+    }
+  ],
+  "device": "phone",
+  "haps": [
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        },
+        {
+          "exported": true,
+          "name": "BluetoothReceiveUIAbility",
+          "skills": []
+        },
+        {
+          "exported": true,
+          "name": "BluetoothSendUIAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.bluetooth",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "phone",
+        "tablet",
+        "2in1",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/Bluetooth",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "share",
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "BluetoothServiceAbility",
+          "permissions": [
+            "ohos.permission.KEEP_BACKGROUND_RUNNING"
+          ],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "ohos.want.action.sendData"
+              ],
+              "uris": [
+                {
+                  "maxFileSupported": 300,
+                  "scheme": "file",
+                  "utd": "general.object"
+                },
+                {
+                  "maxFileSupported": 300,
+                  "scheme": "file",
+                  "utd": "general.entity"
+                }
+              ]
+            }
+          ],
+          "type": "share"
+        },
+        {
+          "exported": true,
+          "name": "BluetoothReceiveServiceUIAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/Bluetooth/Bluetooth.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "BD0265C275DC5883742AAC22C5C8ED1DAF2CF084D55882F43211AD697DC65FA8"
+    },
+    {
+      "abilities": [
+        {
+          "exported": false,
+          "name": "DHardwareUIAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.dhardwareui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/DHardware_UI",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "MechExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "MechFirstConnectAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/DHardware_UI/DHardware_UI.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.locationdialog",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "phone",
+        "tablet",
+        "2in1",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/LocationDialog",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "service",
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "ConfirmUIExtAbility",
+          "permissions": [
+            "ohos.permission.LOCATION_IN_BACKGROUND"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "LocationPrivacyExtAbility",
+          "permissions": [
+            "ohos.permission.LOCATION_IN_BACKGROUND",
+            "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "WifiUIExtAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "WifiServiceAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "HotSpotServiceAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/LocationDialog/LocationDialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8FD346D9BF992BE6CD80BFB4F1E60EF0D50BC9E04593AF1D47714E339B44268D"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.wifiservice.portallogin",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/PortalLogin",
+      "enabled_for_user_100": false,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/PortalLogin/PortalLogin.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "4FDDCB75408C949246EA750C61D8AE1F64FDA30FD767E133806A86054211BCB2"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.vpndialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/VpnDialog",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "VpnServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "vpn_dialog",
+      "path": "/system/app/VpnDialog/VpnDialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "ohos.samples.distributedcalc",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.example.distributedcalc",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.example.distributedcalc/Calc_Demo.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "87C073301A48223F2823E14F2B07B83F6E5FE29CEDF502C1203C40AB5D4E44DC"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.example.kikakeyboard",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.example.kikakeyboard",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "inputMethod"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "inputMethod"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.example.kikakeyboard/kikaInput.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "ohos.want.action.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.UserFile.ExternalFileManager",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.UserFile.ExternalFileManager",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "backup",
+        "fileAccess"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "EntryBackupAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "backup"
+        },
+        {
+          "exported": null,
+          "name": "FileExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "fileAccess"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.UserFile.ExternalFileManager/external_file_manager.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.amsdialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "A004990956B96A415E849F6050AE472EE0B85F15E1928AE2CEFB49419BD2D074"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "A004990956B96A415E849F6050AE472EE0B85F15E1928AE2CEFB49419BD2D074"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.amsdialog",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service",
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "SelectorDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "TipsDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "JumpInterceptorDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "SwitchUserDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "CommonSelectPickerAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": null,
+          "name": "AssertFaultDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.amsdialog/ams_system_dialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "A004990956B96A415E849F6050AE472EE0B85F15E1928AE2CEFB49419BD2D074"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.amsdialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "A004990956B96A415E849F6050AE472EE0B85F15E1928AE2CEFB49419BD2D074"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "A004990956B96A415E849F6050AE472EE0B85F15E1928AE2CEFB49419BD2D074"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.amsdialog",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "default",
+      "path": "/system/app/com.ohos.amsdialog/intent_debug_app.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "A004990956B96A415E849F6050AE472EE0B85F15E1928AE2CEFB49419BD2D074"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.arkwebcore",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/com.ohos.arkwebcore",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.arkwebcore/ArkWebCore.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.backgroundtaskmgr.resources",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "72BE2C651A9E0C57B4BB67825BA6F8180FC883858434712150A55C17C7E1A6F7"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "72BE2C651A9E0C57B4BB67825BA6F8180FC883858434712150A55C17C7E1A6F7"
+      ],
+      "device_types": [
+        "tablet",
+        "default",
+        "tv",
+        "car",
+        "wearable",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.backgroundtaskmgr.resources",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "EnableBgTaskAuthDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.backgroundtaskmgr.resources/BackgroundTaskResources.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "EFDBE35DD45860CE04BA8DB3F38C0DA15233F6FDEC2B031D1721923FFA5E309C"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "MainAbility",
+          "skills": []
+        },
+        {
+          "exported": true,
+          "name": "Application",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.calendardata",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "CC249153FA175206B1427C71DB0F2232D91FA4B2ED7955AE1D6EBA4C362D359A"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "CC249153FA175206B1427C71DB0F2232D91FA4B2ED7955AE1D6EBA4C362D359A"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.calendardata",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "dataShare"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "DataShareExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.calendardata/CalendarData.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "CC249153FA175206B1427C71DB0F2232D91FA4B2ED7955AE1D6EBA4C362D359A"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.callui.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.callui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.callui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.callui.ServiceAbility",
+          "permissions": [
+            "ohos.permission.PLACE_CALL"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "callui",
+      "path": "/system/app/com.ohos.callui/CallUI.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.mobiledatasettings.MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.callui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.callui",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "mobiledatasettings",
+      "path": "/system/app/com.ohos.callui/MobileDataSettings.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "E64B13B84E6D2167F73B46530C6E02E323DA43C9C2DA251D7C64D20E091B936F"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.camera.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home",
+                "ohos.want.action.imageCapture",
+                "ohos.want.action.videoCapture"
+              ],
+              "entities": [
+                "entity.system.home"
+              ],
+              "uris": [
+                {
+                  "pathStartWith": "file://",
+                  "scheme": "file"
+                },
+                {
+                  "scheme": "",
+                  "type": ""
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.camera",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.camera",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "form",
+        "sysPicker/camera"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.camera.FormAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "form"
+        },
+        {
+          "exported": null,
+          "name": "com.ohos.camera.ExtensionPickerAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "ohos.want.action.imageCapture",
+                "ohos.want.action.videoCapture",
+                "collaborationFwk.CameraAbility.TakePhoto"
+              ],
+              "uris": [
+                {
+                  "pathStartWith": "file://",
+                  "scheme": "file"
+                },
+                {
+                  "scheme": "",
+                  "type": ""
+                }
+              ]
+            }
+          ],
+          "type": "sysPicker/camera"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone",
+      "path": "/system/app/com.ohos.camera/Camera.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "62C298EE70BEEB3D58082FFEFFEAD4F26BE83350B46B75C393281BA6AAED2A91"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.certmanager",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.certificatemanager",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "MainExtensionAbility",
+          "permissions": [
+            "ohos.permission.ACCESS_CERT_MANAGER"
+          ],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "action.system.home",
+                "action.access.privacy.center",
+                "ohos.want.action.viewData"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "CertPickerUIExtAbility",
+          "permissions": [
+            "ohos.permission.ACCESS_CERT_MANAGER"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "CertManager",
+      "path": "/system/app/com.ohos.certificatemanager/CertificateManager.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "C47D73E889DF1220F5E7B0A88FFCC7BECA6A80A7C3958580D592191EBAD70EB3"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.contacts.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.contacts",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.contacts",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "staticSubscriber"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "Subscriber",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "staticSubscriber"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.contacts/Contacts.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.contactsdataability",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "D729F438E1EF2E154994E2B077F6C0CD592BA9F9C938BB428FCDA564FF805EE4"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "D729F438E1EF2E154994E2B077F6C0CD592BA9F9C938BB428FCDA564FF805EE4"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/com.ohos.contactsdataability",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "dataShare",
+        "service",
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.contactsdataability.ServiceAbility",
+          "permissions": [
+            "ohos.permission.READ_CONTACTS",
+            "ohos.permission.WRITE_CONTACTS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "ContactsDataAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "VoiceMailAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_VOICEMAIL"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "CallLogAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": true,
+          "name": "CallLogCheckAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "com.ohos.contactsdataability.HandleContactEventsServiceAbility",
+          "permissions": [
+            "ohos.permission.READ_CONTACTS",
+            "ohos.permission.WRITE_CONTACTS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "PermissionExtAbility",
+          "permissions": [
+            "ohos.permission.READ_CONTACTS",
+            "ohos.permission.WRITE_CONTACTS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "contactsdata",
+      "path": "/system/app/com.ohos.contactsdataability/Contacts_DataAbility.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "D729F438E1EF2E154994E2B077F6C0CD592BA9F9C938BB428FCDA564FF805EE4"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.devicemanagerui.MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.devicemanagerui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "DFBBF5BC714865FCCCACA69F30BEF951B499329F66C98523795BAD817E49D1A0"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "DFBBF5BC714865FCCCACA69F30BEF951B499329F66C98523795BAD817E49D1A0"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable",
+        "car"
+      ],
+      "directory": "/system/app/com.ohos.devicemanagerui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "com.ohos.devicemanagerui.InputUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.devicemanagerui.PincodeUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.devicemanagerui.ConfirmUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.devicemanagerui.BluetoothDialogAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.devicemanagerui/DeviceManager_UI.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "DFBBF5BC714865FCCCACA69F30BEF951B499329F66C98523795BAD817E49D1A0"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "ohos.samples.distributedmusicplayer.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "ohos.samples.distributedmusicplayer",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "CE457F6ACB11F9406B393AF490E6DEFAA4DD1CA7AB6F694EA6119EE18DDF4BBE"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "CE457F6ACB11F9406B393AF490E6DEFAA4DD1CA7AB6F694EA6119EE18DDF4BBE"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.distributedmusicplayer",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "ServiceAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.distributedmusicplayer/Music_Demo.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "CE457F6ACB11F9406B393AF490E6DEFAA4DD1CA7AB6F694EA6119EE18DDF4BBE"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.dlpmanager",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "5FEDFF587F4109E565B96512404D606D539C8DFFCE1424ACBD1B2A7D3E843D4D",
+        "E3F4322139E0109BAFAD8DA4096762068E31708C3CF201780E736D377D60B639"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "E3F4322139E0109BAFAD8DA4096762068E31708C3CF201780E736D377D60B639",
+        "5FEDFF587F4109E565B96512404D606D539C8DFFCE1424ACBD1B2A7D3E843D4D"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.dlpmanager",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "action",
+        "service",
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "DialogUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "MainAbilityEx",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "ViewAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "DataAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "DlpFileProcessAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "EncryptedSharingAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "action"
+        },
+        {
+          "exported": true,
+          "name": "CleanDlpCacheFileAbility",
+          "permissions": [
+            "ohos.permission.START_DLP_CRED"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "OpeningDialogUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "PhoneDialogUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "ClearDlpCacheAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.dlpmanager/dlp_manager.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "D2E890E59AFB0135A8ACF02558988F37A51F43E099368883DB235C04619CC31C"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.filepicker",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.filepicker",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysPicker/audioPicker"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "audiopicker",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysPicker/audioPicker"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "audiopicker",
+      "path": "/system/app/com.ohos.filepicker/AudioPicker.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "799EAC4119A566D438C1AB0199D9401D77176C368A334F33C03DBB21E54F970E"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "ohos.want.action.OPEN_FILE",
+                "ohos.want.action.CREATE_FILE"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.filepicker",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.filepicker",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysPicker/filePicker"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "FilePickerUIExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysPicker/filePicker"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.filepicker/FilePicker.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "799EAC4119A566D438C1AB0199D9401D77176C368A334F33C03DBB21E54F970E"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.formrenderservice",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable",
+        "phone",
+        "tv",
+        "car"
+      ],
+      "directory": "/system/app/com.ohos.formrenderservice",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "ServiceExtension",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.formrenderservice/Form_Render_Service.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.inputmethodchoosedialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "CE4D01EF424B829E13652BB1743E18B8E4542DD5A7BBA7D7D472F727FA6F8A9D"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "CE4D01EF424B829E13652BB1743E18B8E4542DD5A7BBA7D7D472F727FA6F8A9D"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/com.ohos.inputmethodchoosedialog",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "InputMethod",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.inputmethodchoosedialog/input_method_choose_dialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "CE4D01EF424B829E13652BB1743E18B8E4542DD5A7BBA7D7D472F727FA6F8A9D"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.launcher",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.launcher",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "com.ohos.launcher.MainAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "action.system.home",
+                "com.ohos.action.main",
+                "action.form.publish"
+              ],
+              "entities": [
+                "entity.system.home",
+                "flag.home.intent.from.system"
+              ]
+            }
+          ],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone_launcher",
+      "path": "/system/app/com.ohos.launcher/Launcher.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": false,
+          "name": "com.ohos.launcher.settings.MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.launcher",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.launcher",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "launcher_settings",
+      "path": "/system/app/com.ohos.launcher/Launcher_Settings.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.medialibrary.medialibrarydata",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "F9431859ED7A3959B5D72EF36FBE8B210A00082B044063E4424F823A01B3B7CA"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "F9431859ED7A3959B5D72EF36FBE8B210A00082B044063E4424F823A01B3B7CA"
+      ],
+      "device_types": [
+        "default",
+        "phone",
+        "tablet",
+        "wearable",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.medialibrary.MediaLibraryData",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "backup",
+        "dataShare"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "DataShareExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "MediaBackupExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "backup"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.medialibrary.MediaLibraryData/Media_Library_Ext.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "F9431859ED7A3959B5D72EF36FBE8B210A00082B044063E4424F823A01B3B7CA"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.mms.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.mms",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.mms",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "staticSubscriber"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "Subscriber",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "staticSubscriber"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.mms/Mms.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "04AC9C3F045EAB7DB992B7C4E38B59468CA3EABB7D654AE47641471B9785EA04"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.note",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "tablet",
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.note",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "default",
+      "path": "/system/app/com.ohos.note/Note.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "1182A0E83B6657C210FEDBC2FFCA1ED2C2A68AEC6F88FD4C5A63D525C2C3A667"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.notificationdialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/com.ohos.notificationdialog",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "EnableNotificationDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.notificationdialog/enable_notification_dialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.pasteboarddialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "96BC128A658C8AA7A3C6601791F109E975CBBCDE37067725C240875E98CB99C8"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "96BC128A658C8AA7A3C6601791F109E975CBBCDE37067725C240875E98CB99C8"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "phone"
+      ],
+      "directory": "/system/app/com.ohos.pasteboarddialog",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "ToastExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "PasteboardProgressAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.pasteboarddialog/pasteboard_dialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "96BC128A658C8AA7A3C6601791F109E975CBBCDE37067725C240875E98CB99C8"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.access.privacy.center"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.permissionmanager",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "68079CC9CB1BD69283D70790305645FFF61CD1E46CAFD7AA53B9FA8540432B81"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "68079CC9CB1BD69283D70790305645FFF61CD1E46CAFD7AA53B9FA8540432B81"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.permissionmanager",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service",
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.MainAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.GrantAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.GlobalExtAbility",
+          "permissions": [
+            "ohos.permission.GET_SENSITIVE_PERMISSIONS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.SecurityExtAbility",
+          "permissions": [
+            "ohos.permission.GET_SENSITIVE_PERMISSIONS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.PermissionStateSheetAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": true,
+          "name": "com.ohos.permissionmanager.GlobalSwitchSheetAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "permissionmanager",
+      "path": "/system/app/com.ohos.permissionmanager/permission_manager.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "68079CC9CB1BD69283D70790305645FFF61CD1E46CAFD7AA53B9FA8540432B81"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.photos.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home",
+                "ohos.want.action.viewData",
+                "ohos.want.action.photoPicker"
+              ],
+              "entities": [
+                "entity.system.home"
+              ],
+              "uris": [
+                {
+                  "scheme": "file",
+                  "type": "image/*"
+                },
+                {
+                  "scheme": "file",
+                  "type": "video/*"
+                },
+                {
+                  "scheme": "file",
+                  "type": "multipleselect"
+                },
+                {
+                  "scheme": "file",
+                  "type": "singleselect"
+                },
+                {
+                  "type": "image/*"
+                },
+                {
+                  "type": "video/*"
+                },
+                {
+                  "type": "multipleselect"
+                },
+                {
+                  "type": "singleselect"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.photos",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.photos",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "form",
+        "service",
+        "sysDialog/common",
+        "sysPicker/photoPicker"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.photos.FormAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "form"
+        },
+        {
+          "exported": null,
+          "name": "com.ohos.photos.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "ohos.want.action.deleteDialog"
+              ],
+              "uris": [
+                {
+                  "type": "image/*"
+                }
+              ]
+            }
+          ],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "PickerUIExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysPicker/photoPicker"
+        },
+        {
+          "exported": true,
+          "name": "DeleteUIExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "SaveUIExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone_photos",
+      "path": "/system/app/com.ohos.photos/Photos.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
+    },
+    {
+      "abilities": [
+        {
+          "exported": false,
+          "name": "MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.powerdialog",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/com.ohos.powerdialog",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service",
+        "sys/commonUI",
+        "sysDialog/power"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "PowerUiExtensionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/power"
+        },
+        {
+          "exported": null,
+          "name": "ThermalServiceExtAbility_high",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "ThermalServiceExtAbility_low",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "InjectNoticeAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": false,
+          "name": "CapsuleWindowAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "action.systemui.plugin.STATUS_BAR"
+              ]
+            }
+          ],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "ChargeSoundPlayerExtension",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.powerdialog/power_dialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.ringtonelibrary.ringtonelibrarydata",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "8C6B95137E594835B00A60DF8DC1350D040D58624F17F4E841246B97B9A7A9FD"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8C6B95137E594835B00A60DF8DC1350D040D58624F17F4E841246B97B9A7A9FD"
+      ],
+      "device_types": [
+        "default",
+        "phone",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "backup",
+        "dataShare"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "DataShareExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "RingtoneBackupExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "backup"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData/Ringtone_Library_Ext.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "F9431859ED7A3959B5D72EF36FBE8B210A00082B044063E4424F823A01B3B7CA"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.screenshot",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "com.ohos.screenshot_BPgjq9cj5JyweCCfYME1bzHG1/mf3O8o3TRauZBbLY88KQDsXTsuFVd36R3cnIdxpOosELsi0BKxgowdI7IOBUU="
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.screenshot",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service",
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.screenshot.ServiceExtAbility",
+          "permissions": [
+            "ohos.permission.CAPTURE_SCREEN"
+          ],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "com.ohos.systemui.action.TOGGLE"
+              ]
+            }
+          ],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "com.ohos.screenshot.DialogAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone",
+      "path": "/system/app/com.ohos.screenshot/ScreenShot.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "4DBA6C79DC701D7ACF3367099ADCE17C6FB9E6062D0481E5481612D3A101EB7A"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.security.privacycenter",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.security.privacycenter",
+      "enabled_for_user_100": false,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/com.ohos.security.privacycenter/SecurityPrivacyCenter.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "C47D73E889DF1220F5E7B0A88FFCC7BECA6A80A7C3958580D592191EBAD70EB3"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.settings.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        },
+        {
+          "exported": null,
+          "name": "com.ohos.settings.AppInfoAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.settings.app.info"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.settings",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.settings",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "AccessibilityShortKeyDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "bluetooth",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "BluetoothPairDialog",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone",
+      "path": "/system/app/com.ohos.settings/Settings.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "EB5DBE52EE8DD7206DDE612E7484E88CE264E74958704D0712BFA774C87F4DA1"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.settings.faceauth.enrollmentstartview",
+          "skills": [
+            {
+              "actions": [],
+              "entities": []
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.settings.faceauth",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.settings.faceauth",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.settings.faceauth/Settings_FaceAuth.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.settingsdata",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.settingsdata",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "dataShare",
+        "staticSubscriber"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "DataExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "UserChangeStaticSubscriber",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "staticSubscriber"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.settingsdata/SettingsData.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "MainAbility",
+          "skills": []
+        },
+        {
+          "exported": null,
+          "name": "JobManagerAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.spooler",
+      "certificate_matches_capability_list": false,
+      "configured_certificate_sha256": [
+        "B68D7BE6599CA7ADEDBC95CD1CE176AA96D996D3F41588A487E5F5C4E5DC9427"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "B68D7BE6599CA7ADEDBC95CD1CE176AA96D996D3F41588A487E5F5C4E5DC9427"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.spooler",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "print",
+        "sysDialog/print"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "PrintExtension",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "print"
+        },
+        {
+          "exported": true,
+          "name": "PrintServiceExtAbility",
+          "permissions": [
+            "ohos.permission.PRINT"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/print"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.spooler/PrintSpooler.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "0B0289F397E77F1D28B5AF426BEA72C53FB963CCC45BA193F6CB4A52CAB5987A"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.dropdownpanel.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone_dropdownpanel",
+      "path": "/system/app/com.ohos.systemui/SystemUI-DropdownPanel.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.navigationbar.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "default_navigationBar",
+      "path": "/system/app/com.ohos.systemui/SystemUI-NavigationBar.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.notificationmanagement.MainAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "default_notificationmanagement",
+      "path": "/system/app/com.ohos.systemui/SystemUI-NotificationManagement.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "phone"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.screenlock.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone",
+      "path": "/system/app/com.ohos.systemui/SystemUI-ScreenLock.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.statusbar.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone_statusbar",
+      "path": "/system/app/com.ohos.systemui/SystemUI-StatusBar.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "com.ohos.systemui.dialog",
+          "permissions": [
+            "ohos.permission.START_SYSTEM_DIALOG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "default_dialog",
+      "path": "/system/app/com.ohos.systemui/SystemUI-SystemDialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.volumepanel.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "default_volumepanel",
+      "path": "/system/app/com.ohos.systemui/SystemUI-VolumePanel.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.systemui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.systemui",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "com.ohos.systemui.ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "phone_entry",
+      "path": "/system/app/com.ohos.systemui/SystemUI.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.telephonydataability",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "D729F438E1EF2E154994E2B077F6C0CD592BA9F9C938BB428FCDA564FF805EE4"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "D729F438E1EF2E154994E2B077F6C0CD592BA9F9C938BB428FCDA564FF805EE4"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "wearable"
+      ],
+      "directory": "/system/app/com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "backup",
+        "dataShare",
+        "service",
+        "workScheduler"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "OpKeyAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "BackupRestoreWorkScheduler",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "workScheduler"
+        },
+        {
+          "exported": true,
+          "name": "BackupRestoreServiceAbility",
+          "permissions": [
+            "ohos.permission.READ_MESSAGES"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": null,
+          "name": "PdpProfileAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "SimAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "SmsMmsAbility",
+          "permissions": [
+            "ohos.permission.READ_MESSAGES"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "GlobalParamsAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "OpkeyVersionAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "dataShare"
+        },
+        {
+          "exported": null,
+          "name": "BackupExtensionAbility",
+          "permissions": [
+            "ohos.permission.READ_MESSAGES"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "backup"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "telephonydataentry",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "D729F438E1EF2E154994E2B077F6C0CD592BA9F9C938BB428FCDA564FF805EE4"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.ohos.updateapp.MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            },
+            {
+              "actions": [
+                "action.settings.menu.v1"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.updateapp",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "BA6EBDF53DD63B7D5616F3789F8C15FD4DE134B2587C577B01DA4D027B44A23C"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "BA6EBDF53DD63B7D5616F3789F8C15FD4DE134B2587C577B01DA4D027B44A23C"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.updateapp",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "service"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "ServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "updateapp",
+      "path": "/system/app/com.ohos.updateapp/UpdateApp.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "BA6EBDF53DD63B7D5616F3789F8C15FD4DE134B2587C577B01DA4D027B44A23C"
+    },
+    {
+      "abilities": [],
+      "bundle": "com.ohos.useriam.authwidget",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/com.ohos.useriam.authwidget",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/userAuth"
+      ],
+      "extensions": [
+        {
+          "exported": null,
+          "name": "userauthuiextensionability",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/userAuth"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/com.ohos.useriam.authwidget/AuthWidget.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "com.usb.right.MainAbility",
+          "skills": []
+        },
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.usb.right",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/com.usb.right",
+      "enabled_for_user_100": true,
+      "extension_types": [
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "UsbServiceExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": false,
+          "name": "UsbFunctionSwitchExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "usb_right_dialog",
+      "path": "/system/app/com.usb.right/usb_right_dialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "ohos.global.systemres",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+      ],
+      "device_types": [
+        "default",
+        "tv",
+        "car",
+        "wearable",
+        "tablet",
+        "2in1"
+      ],
+      "directory": "/system/app/ohos.global.systemres",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/ohos.global.systemres/SystemResources.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "MainAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "ohos.samples.etsclock",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet"
+      ],
+      "directory": "/system/app/ohos.samples.clock",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "entry",
+      "path": "/system/app/ohos.samples.clock/Clock_Demo.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    },
+    {
+      "abilities": [],
+      "bundle": "ohos.telephony.resources",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tv",
+        "car",
+        "wearable",
+        "tablet"
+      ],
+      "directory": "/system/app/ohos.telephony.resources",
+      "enabled_for_user_100": true,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": true,
+      "module": "ohos.telephony.resources",
+      "path": "/system/app/ohos.telephony.resources/TelephonyResources.hap",
+      "profile": "config.json",
+      "signing_certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+    }
+  ],
+  "logical_system_app_root": "/system/app",
+  "preinstall_entries": [
+    {
+      "app_dir": "/system/app/com.ohos.systemui",
+      "bundles": [
+        "com.ohos.systemui"
+      ],
+      "enabled_bundles": [
+        "com.ohos.systemui"
+      ],
+      "hap_count": 8,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.launcher",
+      "bundles": [
+        "com.ohos.launcher"
+      ],
+      "enabled_bundles": [
+        "com.ohos.launcher"
+      ],
+      "hap_count": 2,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.settings",
+      "bundles": [
+        "com.ohos.settings"
+      ],
+      "enabled_bundles": [
+        "com.ohos.settings"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.note",
+      "bundles": [
+        "com.ohos.note"
+      ],
+      "enabled_bundles": [
+        "com.ohos.note"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.settingsdata",
+      "bundles": [
+        "com.ohos.settingsdata"
+      ],
+      "enabled_bundles": [
+        "com.ohos.settingsdata"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.screenshot",
+      "bundles": [
+        "com.ohos.screenshot"
+      ],
+      "enabled_bundles": [
+        "com.ohos.screenshot"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/ohos.samples.clock",
+      "bundles": [
+        "ohos.samples.etsclock"
+      ],
+      "enabled_bundles": [
+        "ohos.samples.etsclock"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/ohos.samples.airquality",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.example.distributedcalc",
+      "bundles": [
+        "ohos.samples.distributedcalc"
+      ],
+      "enabled_bundles": [
+        "ohos.samples.distributedcalc"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/ohos.samples.flashlight",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/ohos.samples.ecg",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.photos",
+      "bundles": [
+        "com.ohos.photos"
+      ],
+      "enabled_bundles": [
+        "com.ohos.photos"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.distributedmusicplayer",
+      "bundles": [
+        "ohos.samples.distributedmusicplayer"
+      ],
+      "enabled_bundles": [
+        "ohos.samples.distributedmusicplayer"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.camera",
+      "bundles": [
+        "com.ohos.camera"
+      ],
+      "enabled_bundles": [
+        "com.ohos.camera"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.devicemanagerui",
+      "bundles": [
+        "com.ohos.devicemanagerui"
+      ],
+      "enabled_bundles": [
+        "com.ohos.devicemanagerui"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.dlpmanager",
+      "bundles": [
+        "com.ohos.dlpmanager"
+      ],
+      "enabled_bundles": [],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "present_but_not_enabled"
+    },
+    {
+      "app_dir": "/system/app/com.example.kikakeyboard",
+      "bundles": [
+        "com.example.kikakeyboard"
+      ],
+      "enabled_bundles": [
+        "com.example.kikakeyboard"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.medialibrary.MediaLibraryData",
+      "bundles": [
+        "com.ohos.medialibrary.medialibrarydata"
+      ],
+      "enabled_bundles": [
+        "com.ohos.medialibrary.medialibrarydata"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData",
+      "bundles": [
+        "com.ohos.ringtonelibrary.ringtonelibrarydata"
+      ],
+      "enabled_bundles": [
+        "com.ohos.ringtonelibrary.ringtonelibrarydata"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.callui",
+      "bundles": [
+        "com.ohos.callui"
+      ],
+      "enabled_bundles": [
+        "com.ohos.callui"
+      ],
+      "hap_count": 2,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.mms",
+      "bundles": [
+        "com.ohos.mms"
+      ],
+      "enabled_bundles": [
+        "com.ohos.mms"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.contacts",
+      "bundles": [
+        "com.ohos.contacts"
+      ],
+      "enabled_bundles": [
+        "com.ohos.contacts"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.permissionmanager",
+      "bundles": [
+        "com.ohos.permissionmanager"
+      ],
+      "enabled_bundles": [
+        "com.ohos.permissionmanager"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.settings.faceauth",
+      "bundles": [
+        "com.ohos.settings.faceauth"
+      ],
+      "enabled_bundles": [
+        "com.ohos.settings.faceauth"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.useriam.authwidget",
+      "bundles": [
+        "com.ohos.useriam.authwidget"
+      ],
+      "enabled_bundles": [
+        "com.ohos.useriam.authwidget"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.adminprovisioning",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.filepicker",
+      "bundles": [
+        "com.ohos.filepicker"
+      ],
+      "enabled_bundles": [
+        "com.ohos.filepicker"
+      ],
+      "hap_count": 2,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/ohos.global.systemres",
+      "bundles": [
+        "ohos.global.systemres"
+      ],
+      "enabled_bundles": [
+        "ohos.global.systemres"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.contactsdataability",
+      "bundles": [
+        "com.ohos.contactsdataability"
+      ],
+      "enabled_bundles": [
+        "com.ohos.contactsdataability"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.arkwebcore",
+      "bundles": [
+        "com.ohos.arkwebcore"
+      ],
+      "enabled_bundles": [
+        "com.ohos.arkwebcore"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/ohos.telephony.resources",
+      "bundles": [
+        "ohos.telephony.resources"
+      ],
+      "enabled_bundles": [
+        "ohos.telephony.resources"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.download",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.telephonydataability",
+      "bundles": [
+        "com.ohos.telephonydataability"
+      ],
+      "enabled_bundles": [
+        "com.ohos.telephonydataability"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.UserFile.ExternalFileManager",
+      "bundles": [
+        "com.ohos.UserFile.ExternalFileManager"
+      ],
+      "enabled_bundles": [
+        "com.ohos.UserFile.ExternalFileManager"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.gameperceptio",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.backgroundtaskmgr.resources",
+      "bundles": [
+        "com.ohos.backgroundtaskmgr.resources"
+      ],
+      "enabled_bundles": [
+        "com.ohos.backgroundtaskmgr.resources"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/ohos.sample.shopping",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.wallpaper",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": true,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.inputmethodchoosedialog",
+      "bundles": [
+        "com.ohos.inputmethodchoosedialog"
+      ],
+      "enabled_bundles": [
+        "com.ohos.inputmethodchoosedialog"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.sharepickerdialog",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.pasteboarddialog",
+      "bundles": [
+        "com.ohos.pasteboarddialog"
+      ],
+      "enabled_bundles": [
+        "com.ohos.pasteboarddialog"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": true,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.amsdialog",
+      "bundles": [
+        "com.ohos.amsdialog"
+      ],
+      "enabled_bundles": [
+        "com.ohos.amsdialog"
+      ],
+      "hap_count": 2,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.usb.right",
+      "bundles": [
+        "com.usb.right"
+      ],
+      "enabled_bundles": [
+        "com.usb.right"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": true,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.certificatemanager",
+      "bundles": [
+        "com.ohos.certmanager"
+      ],
+      "enabled_bundles": [
+        "com.ohos.certmanager"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": true,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.powerdialog",
+      "bundles": [
+        "com.ohos.powerdialog"
+      ],
+      "enabled_bundles": [
+        "com.ohos.powerdialog"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.notificationdialog",
+      "bundles": [
+        "com.ohos.notificationdialog"
+      ],
+      "enabled_bundles": [
+        "com.ohos.notificationdialog"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": true,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.formrenderservice",
+      "bundles": [
+        "com.ohos.formrenderservice"
+      ],
+      "enabled_bundles": [
+        "com.ohos.formrenderservice"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.updateapp",
+      "bundles": [
+        "com.ohos.updateapp"
+      ],
+      "enabled_bundles": [
+        "com.ohos.updateapp"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.spooler",
+      "bundles": [
+        "com.ohos.spooler"
+      ],
+      "enabled_bundles": [
+        "com.ohos.spooler"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.calendardata",
+      "bundles": [
+        "com.ohos.calendardata"
+      ],
+      "enabled_bundles": [
+        "com.ohos.calendardata"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.usb.function",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [],
+      "removable": true,
+      "status": "payload_path_missing"
+    },
+    {
+      "app_dir": "/system/app/VpnDialog",
+      "bundles": [
+        "com.ohos.vpndialog"
+      ],
+      "enabled_bundles": [
+        "com.ohos.vpndialog"
+      ],
+      "hap_count": 1,
+      "path_exists": true,
+      "path_mismatch_candidates": [],
+      "removable": false,
+      "status": "enabled"
+    },
+    {
+      "app_dir": "/system/app/com.ohos.dhardwareui",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [
+        "/system/app/DHardware_UI"
+      ],
+      "removable": true,
+      "status": "payload_path_missing"
+    }
+  ],
+  "preinstall_path_mismatch_candidates": [
+    {
+      "app_dir": "/system/app/com.ohos.dhardwareui",
+      "bundles": [],
+      "enabled_bundles": [],
+      "hap_count": 0,
+      "path_exists": false,
+      "path_mismatch_candidates": [
+        "/system/app/DHardware_UI"
+      ],
+      "removable": true,
+      "status": "payload_path_missing"
+    }
+  ],
+  "schema_version": 2,
+  "summary": {
+    "certificate_mismatch_hap_count": 5,
+    "enabled_bundle_count": 42,
+    "hap_bundle_count": 47,
+    "hap_count": 58,
+    "inspect_error_count": 0,
+    "preinstall_enabled_count": 41,
+    "preinstall_entry_count": 53,
+    "preinstall_missing_payload_count": 11,
+    "preinstall_path_mismatch_candidate_count": 1,
+    "preinstall_present_but_not_enabled_count": 1,
+    "unlisted_bundle_count": 5,
+    "unlisted_enabled_bundle_count": 0,
+    "unlisted_hap_count": 5
+  },
+  "unlisted_bundles": [
+    "com.ohos.bluetooth",
+    "com.ohos.dhardwareui",
+    "com.ohos.locationdialog",
+    "com.ohos.security.privacycenter",
+    "com.wifiservice.portallogin"
+  ],
+  "unlisted_haps": [
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        },
+        {
+          "exported": true,
+          "name": "BluetoothReceiveUIAbility",
+          "skills": []
+        },
+        {
+          "exported": true,
+          "name": "BluetoothSendUIAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.ohos.bluetooth",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "phone",
+        "tablet",
+        "2in1",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/Bluetooth",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "share",
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "BluetoothServiceAbility",
+          "permissions": [
+            "ohos.permission.KEEP_BACKGROUND_RUNNING"
+          ],
+          "process": null,
+          "skills": [
+            {
+              "actions": [
+                "ohos.want.action.sendData"
+              ],
+              "uris": [
+                {
+                  "maxFileSupported": 300,
+                  "scheme": "file",
+                  "utd": "general.object"
+                },
+                {
+                  "maxFileSupported": 300,
+                  "scheme": "file",
+                  "utd": "general.entity"
+                }
+              ]
+            }
+          ],
+          "type": "share"
+        },
+        {
+          "exported": true,
+          "name": "BluetoothReceiveServiceUIAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/Bluetooth/Bluetooth.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "BD0265C275DC5883742AAC22C5C8ED1DAF2CF084D55882F43211AD697DC65FA8"
+    },
+    {
+      "abilities": [
+        {
+          "exported": false,
+          "name": "DHardwareUIAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.dhardwareui",
+      "certificate_matches_capability_list": true,
+      "configured_certificate_sha256": [
+        "D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"
+      ],
+      "configured_in_capability_list": true,
+      "configured_signature_values": [
+        "D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"
+      ],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable"
+      ],
+      "directory": "/system/app/DHardware_UI",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "sys/commonUI"
+      ],
+      "extensions": [
+        {
+          "exported": false,
+          "name": "MechExtAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        },
+        {
+          "exported": false,
+          "name": "MechFirstConnectAbility",
+          "permissions": [],
+          "process": null,
+          "skills": [],
+          "type": "sys/commonUI"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/DHardware_UI/DHardware_UI.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "D8B95864BA867BE8299BEB45CEC85B6905D59FD726D43C3AE60E051E9E658738"
+    },
+    {
+      "abilities": [
+        {
+          "exported": null,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.locationdialog",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "phone",
+        "tablet",
+        "2in1",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/LocationDialog",
+      "enabled_for_user_100": false,
+      "extension_types": [
+        "service",
+        "sysDialog/common"
+      ],
+      "extensions": [
+        {
+          "exported": true,
+          "name": "ConfirmUIExtAbility",
+          "permissions": [
+            "ohos.permission.LOCATION_IN_BACKGROUND"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "LocationPrivacyExtAbility",
+          "permissions": [
+            "ohos.permission.LOCATION_IN_BACKGROUND",
+            "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "WifiUIExtAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "sysDialog/common"
+        },
+        {
+          "exported": true,
+          "name": "WifiServiceAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        },
+        {
+          "exported": true,
+          "name": "HotSpotServiceAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ],
+          "process": null,
+          "skills": [],
+          "type": "service"
+        }
+      ],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/LocationDialog/LocationDialog.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "8FD346D9BF992BE6CD80BFB4F1E60EF0D50BC9E04593AF1D47714E339B44268D"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": []
+        }
+      ],
+      "bundle": "com.wifiservice.portallogin",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default",
+        "tablet",
+        "2in1",
+        "wearable",
+        "tv"
+      ],
+      "directory": "/system/app/PortalLogin",
+      "enabled_for_user_100": false,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/PortalLogin/PortalLogin.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "4FDDCB75408C949246EA750C61D8AE1F64FDA30FD767E133806A86054211BCB2"
+    },
+    {
+      "abilities": [
+        {
+          "exported": true,
+          "name": "EntryAbility",
+          "skills": [
+            {
+              "actions": [
+                "action.system.home"
+              ],
+              "entities": [
+                "entity.system.home"
+              ]
+            }
+          ]
+        }
+      ],
+      "bundle": "com.ohos.security.privacycenter",
+      "certificate_matches_capability_list": null,
+      "configured_certificate_sha256": [],
+      "configured_in_capability_list": false,
+      "configured_signature_values": [],
+      "device_types": [
+        "default"
+      ],
+      "directory": "/system/app/com.ohos.security.privacycenter",
+      "enabled_for_user_100": false,
+      "extension_types": [],
+      "extensions": [],
+      "inspect_error": null,
+      "listed_for_preinstall": false,
+      "module": "entry",
+      "path": "/system/app/com.ohos.security.privacycenter/SecurityPrivacyCenter.hap",
+      "profile": "module.json",
+      "signing_certificate_sha256": "C47D73E889DF1220F5E7B0A88FFCC7BECA6A80A7C3958580D592191EBAD70EB3"
+    }
+  ]
+}

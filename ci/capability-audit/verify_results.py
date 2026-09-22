@@ -59,6 +59,22 @@ def main() -> int:
     ledger_syscaps = {row["syscap"] for row in ledger_rows}
     require(ledger_syscaps == expected_syscaps, "ledger SysCap set differs from matrix", failures)
     require(len(ledger_rows) == len(ledger_syscaps), "ledger has duplicate SysCaps", failures)
+    unresolved_capability_states = {
+        "behavior_validation_pending",
+        "surface_failure_unclassified",
+        "permission_registry_gap",
+    }
+    for device in DEVICES:
+        unresolved = [
+            row["syscap"] for row in ledger_rows
+            if row["devices"][device]["contract_expected"] and
+            row["devices"][device]["coverage_state"] in unresolved_capability_states
+        ]
+        require(
+            not unresolved,
+            f"{device}: contract capabilities remain unclassified: {', '.join(unresolved)}",
+            failures,
+        )
 
     api_inventory = read(args.matrix.parent / "public-api-inventory.json")["entries"]
     api_ledger = read(args.api_ledger)
@@ -96,9 +112,69 @@ def main() -> int:
             f"{device}: runtime backend audit contains an evidence-free classification",
             failures,
         )
+        require(
+            all(row.get("evidence_complete") for row in backend_rows),
+            f"{device}: runtime backend audit has unmatched required evidence",
+            failures,
+        )
     require(
         backend_ids.get("phone") == backend_ids.get("2in1") and bool(backend_ids.get("phone")),
         "runtime backend audit sets differ between phone and 2in1",
+        failures,
+    )
+
+    provider_audit = read(args.matrix.parent / "system-bundle-provider-audit.json")
+    provider_rows = provider_audit.get("provider_rules", [])
+    provider_source_rows = provider_audit.get("source_bundle_references", [])
+    provider_ids = [row.get("id") for row in provider_rows]
+    require(provider_rows and len(provider_ids) == len(set(provider_ids)),
+            "system bundle-provider audit is empty or has duplicate IDs", failures)
+    require(
+        provider_audit.get("summary", {}).get("provider_rule_count") == len(provider_rows),
+        "system bundle-provider audit summary is incomplete",
+        failures,
+    )
+    require(
+        provider_audit.get("summary", {}).get("production_bundle_token_count", 0) > 0,
+        "production source bundle-reference scan is empty",
+        failures,
+    )
+    require(
+        provider_audit.get("schema_version", 0) >= 2
+        and provider_audit.get("summary", {}).get("production_bundle_token_unique_count")
+        == len(provider_source_rows)
+        and len({row.get("token") for row in provider_source_rows}) == len(provider_source_rows),
+        "production source bundle-reference inventory drops or duplicates tokens",
+        failures,
+    )
+    require(
+        all(
+            row.get("classification")
+            and set(row.get("devices", {})) == set(DEVICES)
+            and all(row["devices"][device] for device in DEVICES)
+            for row in provider_source_rows
+        ),
+        "production source bundle-reference inventory has unclassified device state",
+        failures,
+    )
+    require(
+        {
+            "permission-manager-dialogs",
+            "accessibility-screen-reader",
+            "accessibility-caption-assistant",
+            "media-control-ui",
+            "ability-share-picker",
+        }.issubset(set(provider_ids)),
+        "system bundle-provider audit omits critical framework-delegated UI flows",
+        failures,
+    )
+    require(
+        all(
+            set(row.get("devices", {})) == set(DEVICES)
+            and all(row["devices"][device].get("status") for device in DEVICES)
+            for row in provider_rows
+        ),
+        "system bundle-provider rules do not classify both devices",
         failures,
     )
 
@@ -218,6 +294,42 @@ def main() -> int:
             failures,
         )
 
+        config_bundle_audit = read(root / "config-bundle-reference-audit.json")
+        require(
+            config_bundle_audit["summary"]["referenced_bundle_count"] ==
+            len(config_bundle_audit["references"]),
+            f"{device}: config bundle-reference audit is incomplete",
+            failures,
+        )
+
+        preinstall_audit = read(root / "preinstalled-hap-audit.json")
+        hap_rows = preinstall_audit.get("haps", [])
+        preinstall_rows = preinstall_audit.get("preinstall_entries", [])
+        require(
+            preinstall_audit.get("schema_version", 0) >= 2
+            and preinstall_audit["summary"]["hap_count"] == len(hap_rows)
+            and preinstall_audit["summary"]["preinstall_entry_count"] == len(preinstall_rows),
+            f"{device}: preinstalled HAP activation audit is incomplete",
+            failures,
+        )
+        require(
+            all(
+                "listed_for_preinstall" in row
+                and "abilities" in row
+                and "extensions" in row
+                and "configured_in_capability_list" in row
+                for row in hap_rows
+            ),
+            f"{device}: preinstalled HAP audit omits bundle entrypoints or activation state",
+            failures,
+        )
+        require(
+            preinstall_audit["summary"]["unlisted_hap_count"] ==
+            len(preinstall_audit.get("unlisted_haps", [])),
+            f"{device}: unlisted preinstalled HAP count is stale",
+            failures,
+        )
+
         result["devices"][device] = {
             "syscaps_probed": len(probed_syscaps),
             "can_i_use_enabled": syscap_report["summary"]["enabled_count"],
@@ -243,14 +355,24 @@ def main() -> int:
             ],
             "official_callable_load_failures": arkts["summary"]["official_callable_load_failure"],
             "permissions_audited": permission_audit["summary"]["api_permission_count"],
+            "missing_config_bundle_references": config_bundle_audit["summary"][
+                "missing_referenced_bundle_count"
+            ],
             "runtime_backends_audited": len(backend_ids[device]),
+            "preinstalled_haps_audited": len(hap_rows),
+            "unlisted_preinstalled_haps": preinstall_audit["summary"]["unlisted_hap_count"],
+            "provider_rules_audited": len(provider_rows),
+            "production_bundle_tokens_audited": len(provider_source_rows),
+            "non_usable_contract_provider_rules": provider_audit["summary"][
+                f"{device}_non_usable_provider_rule_count"
+            ],
         }
 
     if failures:
         result["failures"] = failures
         print(json.dumps(result, indent=2, sort_keys=True))
         return 1
-    result["status"] = "complete_surface_inventory_behavior_pending"
+    result["status"] = "complete_capability_classification_method_sampling_full_provider_inventory"
     result["documented_api_entries_classified"] = len(api_rows)
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0

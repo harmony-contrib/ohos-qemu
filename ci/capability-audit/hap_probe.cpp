@@ -2,8 +2,17 @@
 #include <ConnectivityKit/bluetooth/oh_bluetooth.h>
 #include <ConnectivityKit/wifi/oh_wifi.h>
 #include <LocationKit/oh_location.h>
+#include <ffrt/task.h>
+#include <hicollie/hicollie.h>
 #include <napi/native_api.h>
 #include <network/netmanager/net_connection.h>
+#include <multimedia/player_framework/native_avcapability.h>
+#include <multimedia/player_framework/native_avcodec_audiocodec.h>
+#include <multimedia/player_framework/native_avcodec_videodecoder.h>
+#include <multimedia/player_framework/native_avcodec_videoencoder.h>
+#include <multimedia/player_framework/native_avdemuxer.h>
+#include <multimedia/player_framework/native_avmuxer.h>
+#include <multimedia/player_framework/native_avsource.h>
 #include <ohaudio/native_audio_manager.h>
 #include <ohaudio/native_audio_routing_manager.h>
 #include <ohaudio/native_audiorenderer.h>
@@ -13,10 +22,12 @@
 #include <sensors/vibrator.h>
 #include <telephony/core_service/telephony_radio.h>
 #include <window_manager/oh_display_manager.h>
+#include <uv.h>
 
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 #include <unistd.h>
 
 namespace {
@@ -297,15 +308,132 @@ void ProbeConnectivityAndDeviceServices()
     Report("vibrator.play.result=%d cancel=%d", vibratorResult, vibratorCancel);
 }
 
+void ProbeMediaCodecs()
+{
+    uint32_t videoEncoderCount = 0;
+    uint32_t videoDecoderCount = 0;
+    uint32_t audioEncoderCount = 0;
+    uint32_t audioDecoderCount = 0;
+    OH_AVCapability **videoEncoders = OH_AVCodec_GetCapabilityList(
+        OH_AVCODEC_TYPE_VIDEO_ENCODER, &videoEncoderCount);
+    uint32_t createdVideoEncoders = 0;
+    for (uint32_t index = 0; videoEncoders != nullptr && index < videoEncoderCount; ++index) {
+        const char *name = OH_AVCapability_GetName(videoEncoders[index]);
+        const char *mime = OH_AVCapability_GetMimeType(videoEncoders[index]);
+        OH_AVCodec *codec = name == nullptr ? nullptr : OH_VideoEncoder_CreateByName(name);
+        Report("media.codec.video_encoder=index:%u,name:%s,mime:%s,created:%d",
+            index, name == nullptr ? "" : name, mime == nullptr ? "" : mime, codec != nullptr);
+        if (codec != nullptr) {
+            ++createdVideoEncoders;
+            Report("media.codec.video_encoder.destroy=index:%u,result:%d", index,
+                OH_VideoEncoder_Destroy(codec));
+        }
+    }
+    OH_AVCapability **videoDecoders = OH_AVCodec_GetCapabilityList(
+        OH_AVCODEC_TYPE_VIDEO_DECODER, &videoDecoderCount);
+    OH_AVCapability **audioEncoders = OH_AVCodec_GetCapabilityList(
+        OH_AVCODEC_TYPE_AUDIO_ENCODER, &audioEncoderCount);
+    OH_AVCapability **audioDecoders = OH_AVCodec_GetCapabilityList(
+        OH_AVCODEC_TYPE_AUDIO_DECODER, &audioDecoderCount);
+    Report("media.codec.capabilities=video_encoders:%u,video_decoders:%u,audio_encoders:%u,audio_decoders:%u,lists:%d%d%d%d",
+        videoEncoderCount, videoDecoderCount, audioEncoderCount, audioDecoderCount,
+        videoEncoders != nullptr, videoDecoders != nullptr, audioEncoders != nullptr, audioDecoders != nullptr);
+    OH_AVCodec *audioEncoder = OH_AudioCodec_CreateByMime("audio/mp4a-latm", true);
+    OH_AVCodec *audioDecoder = OH_AudioCodec_CreateByMime("audio/mp4a-latm", false);
+    OH_AVCodec *videoDecoder = OH_VideoDecoder_CreateByMime("video/avc");
+    Report("media.codec.instances=audio_encoder:%d,audio_decoder:%d,video_encoders:%u/%u,video_decoder:%d",
+        audioEncoder != nullptr, audioDecoder != nullptr, createdVideoEncoders, videoEncoderCount,
+        videoDecoder != nullptr);
+    if (audioEncoder != nullptr) {
+        Report("media.codec.audio_encoder.destroy=%d", OH_AudioCodec_Destroy(audioEncoder));
+    }
+    if (audioDecoder != nullptr) {
+        Report("media.codec.audio_decoder.destroy=%d", OH_AudioCodec_Destroy(audioDecoder));
+    }
+    if (videoDecoder != nullptr) {
+        Report("media.codec.video_decoder.destroy=%d", OH_VideoDecoder_Destroy(videoDecoder));
+    }
+}
+
+void ProbeMediaContainers()
+{
+    constexpr const char *muxerPath = "/data/storage/el2/base/files/capability-audit-muxer.mp4";
+    int muxerFd = open(muxerPath, O_CREAT | O_TRUNC | O_RDWR, 0600);
+    OH_AVMuxer *muxer = muxerFd < 0 ? nullptr : OH_AVMuxer_Create(muxerFd, AV_OUTPUT_FORMAT_MPEG_4);
+    Report("media.muxer.lifecycle=fd:%d,created:%d", muxerFd >= 0, muxer != nullptr);
+    if (muxer != nullptr) {
+        Report("media.muxer.destroy=%d", OH_AVMuxer_Destroy(muxer));
+    }
+    if (muxerFd >= 0) {
+        close(muxerFd);
+    }
+
+    constexpr const char *wavPath = "/data/storage/el2/base/files/capability-audit-source.wav";
+    unsigned char wav[364] = {};
+    const unsigned char header[] = {
+        'R','I','F','F', 100,1,0,0, 'W','A','V','E', 'f','m','t',' ',
+        16,0,0,0, 1,0, 1,0, 0x80,0x3e,0,0, 0x00,0x7d,0,0,
+        2,0, 16,0, 'd','a','t','a', 0x40,1,0,0
+    };
+    memcpy(wav, header, sizeof(header));
+    FILE *wavFile = fopen(wavPath, "wb");
+    size_t written = wavFile == nullptr ? 0 : fwrite(wav, 1, sizeof(wav), wavFile);
+    if (wavFile != nullptr) {
+        fclose(wavFile);
+    }
+    int sourceFd = open(wavPath, O_RDONLY);
+    OH_AVSource *source = sourceFd < 0 ? nullptr : OH_AVSource_CreateWithFD(sourceFd, 0, sizeof(wav));
+    OH_AVDemuxer *demuxer = source == nullptr ? nullptr : OH_AVDemuxer_CreateWithSource(source);
+    Report("media.spliter.lifecycle=file:%d,source:%d,demuxer:%d",
+        written == sizeof(wav), source != nullptr, demuxer != nullptr);
+    if (demuxer != nullptr) {
+        Report("media.spliter.destroy=%d", OH_AVDemuxer_Destroy(demuxer));
+    }
+    if (source != nullptr) {
+        Report("media.source.destroy=%d", OH_AVSource_Destroy(source));
+    }
+    if (sourceFd >= 0) {
+        close(sourceFd);
+    }
+}
+
+void ProbeRuntimeLibraries()
+{
+    Report("arkui.libuv.version=%s number=%u", uv_version_string(), uv_version());
+
+    int taskResult = 0;
+    ffrt_submit_f([](void *argument) {
+        *static_cast<int *>(argument) = 1;
+    }, &taskResult, nullptr, nullptr, nullptr);
+    ffrt_wait();
+    Report("resource.ffrt.task=result:%d", taskResult);
+
+    HiCollie_SetTimerParam timer{};
+    timer.name = "capability-audit";
+    timer.timeout = 5;
+    timer.func = [](void *) {};
+    timer.arg = nullptr;
+    timer.flag = HICOLLIE_FLAG_NOOP;
+    int timerId = -1;
+    HiCollie_ErrorCode timerResult = OH_HiCollie_SetTimer(timer, &timerId);
+    if (timerResult == HICOLLIE_SUCCESS) {
+        OH_HiCollie_CancelTimer(timerId);
+    }
+    Report("dfx.hicollie.timer=result:%d,id:%d,cancelled:%d",
+        timerResult, timerId, timerResult == HICOLLIE_SUCCESS);
+}
+
 napi_value Run(napi_env env, napi_callback_info)
 {
-    unlink(RESULT);
     ProbeCamera();
     ProbeSensor();
     ProbeAudio();
     ProbeAudioStream();
     ProbeBatteryAndDisplay();
     ProbeConnectivityAndDeviceServices();
+    ProbeMediaCodecs();
+    ProbeMediaContainers();
+    ProbeRuntimeLibraries();
     Report("SUMMARY complete=1");
     napi_value result;
     napi_get_undefined(env, &result);

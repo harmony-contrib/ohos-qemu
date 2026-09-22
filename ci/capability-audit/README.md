@@ -1,11 +1,14 @@
 # OpenHarmony capability audit
 
-This audit keeps four questions separate for every phone and 2in1 API:
+This audit keeps five questions separate for every phone and 2in1 API:
 
 1. Is the API documented for the device?
 2. Does the image declare the SysCap and register every required permission?
 3. Is the ArkTS or Native surface present?
 4. Does a real call reach a working service, kernel, or virtual-hardware backend?
+5. If the service delegates to a system HAP, is its payload listed, accepted by
+   the signature policy, registered by BMS, and exposing the exact ability or
+   extension name that the framework targets?
 
 `canIUse()`, a packaged library, and a registered System Ability are evidence
 for different layers. None of them alone proves an API is usable.
@@ -45,10 +48,26 @@ Generated artifacts:
 - `method-device-boundaries.json/csv`: explicit document device differences.
 - `runtime-backend-audit.json`: hardware, service, kernel, and launch-topology
   evidence for critical backend families.
+- `runtime/arm64-*/config-bundle-reference-audit.json`: every bundle name
+  referenced by packaged JSON configuration, checked against `bm dump -a`.
+- `runtime/arm64-*/preinstalled-hap-audit.json`: every `/system/app` HAP,
+  module entrypoint, preinstall-list membership, live BMS state, certificate
+  fingerprint, signature allow-list result, and path mismatch candidate.
+- `system-bundle-provider-audit.json`: every production source bundle-like
+  token, its normalized package/device state, and public API flows that depend
+  on system HAP providers on both devices. The scanner retains absent and
+  nonlocal targets so a missing provider cannot disappear during filtering.
 
 ## Runtime and ABI stages
 
-Build and run the HAP probe with the same latest JS declarations:
+Run two HAP personas on each device:
+
+- a normal application for public permission and sandbox behavior;
+- a platform-signed system application with both `apl=system_core` and
+  `app-feature=system` for system APIs. Setting the APL alone still returns
+  error 202 for multiple system APIs.
+
+Build the probe with the same latest JS declarations:
 
 ```bash
 python3 ci/capability-audit/build_hap_probe.py \
@@ -58,6 +77,21 @@ python3 ci/capability-audit/build_hap_probe.py \
   --api-dir /path/to/interface-sdk-js/api \
   --kits-dir /path/to/interface-sdk-js/kits \
   --output /tmp/ohos-capability-hap
+```
+
+Provider-backed UI calls also have a focused persona. It runs before the broad
+native probe and avoids a slow emulator consuming the UIAbility lifecycle
+deadline before a picker or dialog is reached:
+
+```bash
+python3 ci/capability-audit/build_hap_probe.py \
+  --provider-only \
+  --arch arm64 \
+  --udid DEVICE_UDID \
+  --syscap-registry docs/capability-audit/all-capability-matrix.json \
+  --api-dir /path/to/interface-sdk-js/api \
+  --kits-dir /path/to/interface-sdk-js/kits \
+  --output /tmp/ohos-provider-probe
 ```
 
 Then regenerate the SysCap, module, export, permission, C ABI, static ArkTS,
@@ -78,6 +112,12 @@ python3 ci/capability-audit/build_api_usability_ledger.py \
 python3 ci/capability-audit/audit_runtime_backends.py \
   --runtime-root docs/capability-audit/runtime \
   --output docs/capability-audit/runtime-backend-audit.json
+
+python3 ci/capability-audit/audit_system_bundle_providers.py \
+  --ohos-root /path/to/openharmony \
+  --runtime-root docs/capability-audit/runtime \
+  --matrix docs/capability-audit/all-capability-matrix.json \
+  --output docs/capability-audit/system-bundle-provider-audit.json
 ```
 
 ## Strict verification
@@ -94,10 +134,11 @@ python3 ci/capability-audit/verify_results.py \
   --static-sdk /path/to/static-arkts-sdk
 ```
 
-The verifier proves that the surface inventory and classifications are
-complete. Its success status is deliberately
-`complete_surface_inventory_behavior_pending`; it does not turn uncalled APIs
-into verified behavior.
+The verifier proves that the surface inventory is complete and that every
+phone/2in1 contract SysCap has a concrete classification. Its success status
+is `complete_capability_classification_method_sampling_full_provider_inventory`. Method rows still say
+when a method was not individually executed; a capability-level sample never
+turns every method into a verified pass.
 
 For a multi-package change, build and boot one ARM64 representative artifact
 first. Validate every changed behavior and device boundary before building the

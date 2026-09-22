@@ -641,6 +641,30 @@ def base_audit_status(declared: bool, expected: bool) -> str:
     return "not_applicable"
 
 
+STATUS_PRIORITY = {
+    "confirmed_broken": 100,
+    "missing_capability": 95,
+    "invalid_declaration": 90,
+    "architecture_dependent_failure": 85,
+    "partially_broken": 80,
+    "device_restricted_methods": 75,
+    "role_restricted": 55,
+    "interactive_ui_required": 52,
+    "conditional_external_dependency": 50,
+    "test_harness_only": 45,
+    "compile_time_verified": 40,
+    "runtime_verified_subset": 30,
+    "runtime_validation_required": 20,
+    "not_applicable": 0,
+}
+
+
+def strongest_status(default: str, findings: list[dict[str, Any]]) -> str:
+    """Select the most consequential finding instead of relying on JSON order."""
+    statuses = [default] + [finding.get("status", default) for finding in findings]
+    return max(statuses, key=lambda value: STATUS_PRIORITY.get(value, 25))
+
+
 def main() -> int:
     args = parse_args()
     root = args.ohos_root.resolve()
@@ -718,9 +742,9 @@ def main() -> int:
                 if finding.get("devices", {}).get(device)
             ]
             contract_expected = expected or (documented_expected and not reference_only)
-            status = base_audit_status(declared, contract_expected)
-            if device_findings:
-                status = device_findings[0].get("status", status)
+            status = strongest_status(
+                base_audit_status(declared, contract_expected), device_findings
+            )
             item["devices"][device] = {
                 "declared": declared,
                 "official_sdk_profile": expected,

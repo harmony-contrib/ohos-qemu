@@ -1,0 +1,88 @@
+libEGL warning: ohos_open_device 1
+libEGL warning: loader_open_device /dev/dri/renderD128
+libEGL debug: using driver virtio_gpu for 6
+
+libEGL debug: pci id for fd 6: 1af4:1050, driver virtio_gpu
+
+libEGL debug: MESA-LOADER: dlopen(/system/lib64/virtio_gpu_dri.so)
+
+libEGL debug: found extension `DRI_Core'
+libEGL info: found extension DRI_Core version 2
+libEGL debug: found extension `DRI_IMAGE_DRIVER'
+libEGL info: found extension DRI_IMAGE_DRIVER version 1
+libEGL debug: found extension `DRI_DRI2'
+libEGL debug: found extension `DRI_ConfigOptions'
+libEGL debug: found extension `DRI_Core'
+libEGL debug: found extension `DRI_IMAGE_DRIVER'
+libEGL debug: found extension `DRI_DRI2'
+libEGL debug: found extension `DRI_ConfigOptions'
+libEGL info: found extension DRI_ConfigOptions version 2
+libEGL warning: DRI2: failed to create dri screen
+libEGL warning: DRI2: failed to create screen
+libEGL warning: Failed to open any DRM device
+libEGL debug: EGL user error 0x3001 (EGL_NOT_INITIALIZED) in eglInitialize: DRI2: failed to open device
+
+libEGL warning: ohos_open_device 1
+libEGL warning: loader_open_device /dev/dri/card0
+libEGL debug: using driver virtio_gpu for 6
+
+libEGL debug: pci id for fd 6: 1af4:1050, driver virtio_gpu
+
+libEGL debug: MESA-LOADER: dlopen(/system/lib64/kms_swrast_dri.so)
+
+libEGL debug: found extension `DRI_Core'
+libEGL info: found extension DRI_Core version 2
+libEGL debug: found extension `DRI_IMAGE_DRIVER'
+libEGL info: found extension DRI_IMAGE_DRIVER version 1
+libEGL debug: found extension `DRI_DRI2'
+libEGL debug: found extension `DRI_ConfigOptions'
+libEGL debug: found extension `DRI_Core'
+libEGL debug: found extension `DRI_IMAGE_DRIVER'
+libEGL debug: found extension `DRI_DRI2'
+libEGL debug: found extension `DRI_ConfigOptions'
+libEGL info: found extension DRI_ConfigOptions version 2
+libEGL debug: found extension `DRI_TexBuffer'
+libEGL info: found extension DRI_TexBuffer version 2
+libEGL debug: found extension `DRI2_Flush'
+libEGL info: found extension DRI2_Flush version 4
+libEGL debug: found extension `DRI_RENDERER_QUERY'
+libEGL debug: found extension `DRI_CONFIG_QUERY'
+libEGL debug: found extension `DRI2_Throttle'
+libEGL debug: found extension `DRI2_Fence'
+libEGL debug: found extension `DRI2_Interop'
+libEGL debug: found extension `DRI_NoError'
+libEGL debug: found extension `DRI2_Blob'
+libEGL debug: found extension `DRI_MutableRenderBufferDriver'
+libEGL debug: found extension `DRI_IMAGE'
+libEGL info: found extension DRI_IMAGE version 19
+libEGL debug: found extension `DRI_TexBuffer'
+libEGL debug: found extension `DRI2_Flush'
+libEGL debug: found extension `DRI_RENDERER_QUERY'
+libEGL info: found extension DRI_RENDERER_QUERY version 1
+libEGL debug: found extension `DRI_CONFIG_QUERY'
+libEGL info: found extension DRI_CONFIG_QUERY version 2
+libEGL debug: found extension `DRI2_Throttle'
+libEGL debug: found extension `DRI2_Fence'
+libEGL info: found extension DRI2_Fence version 2
+libEGL debug: found extension `DRI2_Interop'
+libEGL info: found extension DRI2_Interop version 1
+libEGL debug: found extension `DRI_NoError'
+libEGL info: found extension DRI_NoError version 1
+libEGL debug: found extension `DRI2_Blob'
+libEGL info: found extension DRI2_Blob version 1
+libEGL debug: found extension `DRI_MutableRenderBufferDriver'
+libEGL info: found extension DRI_MutableRenderBufferDriver version 1
+libEGL debug: found extension `DRI_IMAGE'
+libEGL info: found extension DRI_IMAGE version 19
+libEGL debug: did not find optional extension DRI_Robustness version 1
+libEGL debug: did not find optional extension DRI2_BufferDamage version 1
+libEGL debug: did not find optional extension DRI_FlushControl version 1
+libEGL debug: No DRI config supports native format 0x14
+gles2.egl_get_display=1 initialize=1 error=0x3000 version=1.4
+libEGL debug: ohos_destroy_surface : 448 : destroy dri_image_front
+gles2.choose=1 count=1 error=0x3000
+gles2.surface=1 context=1 current=1 error=0x3000 vendor=Mesa/X.org renderer=softpipe gl_version=OpenGL ES 3.1 Mesa 21.3.3
+gles3.egl_get_display=1 initialize=1 error=0x3000 version=1.4
+gles3.choose=1 count=1 error=0x3000
+gles3.surface=1 context=1 current=1 error=0x3000 vendor=Mesa/X.org renderer=softpipe gl_version=OpenGL ES 3.1 Mesa 21.3.3
+exit=0

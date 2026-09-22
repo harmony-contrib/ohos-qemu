@@ -1,0 +1,216 @@
+{
+    "install_list" : [
+        {
+            "app_dir" : "/system/app/com.ohos.systemui",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.launcher",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.settings",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.note",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.settingsdata",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.screenshot",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.samples.clock",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.samples.airquality",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.example.distributedcalc",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.samples.flashlight",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.samples.ecg",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.photos",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.distributedmusicplayer",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.camera",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.devicemanagerui",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.dlpmanager",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.example.kikakeyboard",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.medialibrary.MediaLibraryData",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.callui",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.mms",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.contacts",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.permissionmanager",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.settings.faceauth",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.useriam.authwidget",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.adminprovisioning",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.filepicker",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.global.systemres",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.contactsdataability",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.arkwebcore",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.telephony.resources",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.download",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.telephonydataability",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.UserFile.ExternalFileManager",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.gameperceptio",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.backgroundtaskmgr.resources",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/ohos.sample.shopping",
+            "removable" : false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.wallpaper",
+            "removable" : true
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.inputmethodchoosedialog",
+            "removable" : false
+        },
+        {
+            "app_dir": "/system/app/com.ohos.sharepickerdialog",
+            "removable": false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.pasteboarddialog",
+            "removable" : true
+        },
+        {
+            "app_dir": "/system/app/com.ohos.amsdialog",
+            "removable": false
+        },
+        {
+            "app_dir": "/system/app/com.usb.right",
+            "removable": true
+        },
+        {
+            "app_dir": "/system/app/com.ohos.certificatemanager",
+            "removable": true
+        },
+        {
+            "app_dir": "/system/app/com.ohos.powerdialog",
+            "removable": false
+        },
+        {
+            "app_dir": "/system/app/com.ohos.notificationdialog",
+            "removable": true
+        },
+        {
+            "app_dir": "/system/app/com.ohos.formrenderservice",
+            "removable": false
+        },
+        {
+            "app_dir": "/system/app/com.ohos.updateapp",
+            "removable": false
+        },
+        {
+            "app_dir": "/system/app/com.ohos.spooler",
+            "removable": false
+        },
+        {
+            "app_dir": "/system/app/com.ohos.calendardata",
+            "removable": false
+        },
+        {
+            "app_dir": "/system/app/com.usb.function",
+            "removable": true
+        },
+        {
+            "app_dir": "/system/app/VpnDialog",
+            "removable": false
+        },
+        {
+            "app_dir" : "/system/app/com.ohos.dhardwareui",
+            "removable" : true
+        }
+    ]
+}

@@ -1,0 +1,179 @@
+# Compact, exact excerpts selected from dated on-device probe captures.
+# Regenerate only from the corresponding raw probe directories.
+
+# backend=display-drm
+display.width.result=0 width=800
+
+# backend=audio-pcm
+audio.stream.start=2
+
+# backend=audio-pcm
+audio.stream.callbacks=0 bytes=0
+
+# backend=camera-video-input
+camera.devices.result=7400101 count=0
+
+# backend=ethernet-nat
+network.get_default.result=0 net_id=100
+
+# backend=dns-mdns
+network.mdns.discovery.result=started:true
+
+# backend=dns-mdns
+network.dns.external.result=
+
+# backend=web-basic-page-load
+web.page_end=true
+
+# backend=web-basic-page-load
+web.title=Example Domain
+
+# backend=web-basic-page-load
+web.url=https://example.com/
+
+# backend=web-gpu-context
+web.graphics.begin=true
+
+# backend=huks-key-lifecycle
+security.huks.key_lifecycle=generated:true,present:true
+
+# backend=huks-key-lifecycle
+security.huks.key_deleted=true
+
+# backend=i18n-basic-query
+i18n.system_languages.count=5
+
+# backend=i18n-basic-query
+i18n.system_countries.count=245
+
+# backend=app-sandbox-file-io
+file.io.lifecycle=value:ohos-qemu-capability-audit,removed:true
+
+# backend=local-preferences
+data.preferences.lifecycle=value:ohos-qemu-capability-audit,removed:true
+
+# backend=crypto-random-message-digest
+security.crypto.lifecycle=random:32,sha256:32
+
+# backend=bundle-self-query
+bundle.self.result=org.harmonycontrib.capabilityaudit:1.0.0
+
+# backend=notification-and-local-emitter
+notification.enabled.result=false
+
+# backend=notification-and-local-emitter
+notification.emitter.lifecycle=callbacks:1
+
+# backend=common-event-publish-subscribe
+common_event.lifecycle=published:true,callbacks:1
+
+# backend=pasteboard-permissioned-lifecycle
+pasteboard.lifecycle=value:ohos-qemu-capability-audit,cleared:true
+
+# backend=power-state-query
+power.state.result=active:true,screen:true,mode:600
+
+# backend=system-time-timezone
+time.state.result=time:1790077567529,timezone:Asia/Shanghai
+
+# backend=wallpaper-color-query
+wallpaper.colors.result=count:1
+
+# backend=input-device-enumeration
+input.devices.result=[0,1,2]
+
+# backend=image-decode-pixelmap-encode
+image.codec.lifecycle=source:1x1,pixel:1x1,encoded:99
+
+# backend=app-account-lifecycle
+account.app.lifecycle=created:true,removed:true
+
+# backend=relational-store-lifecycle
+data.rdb.lifecycle=value:ohos-qemu-capability-audit,removed:true
+
+# backend=asset-store-lifecycle
+security.asset.lifecycle=initial:1,updated_secret:10,removed:true
+
+# backend=contacts-lifecycle
+contacts.lifecycle=id:1,found:true,removed:true
+
+# backend=calendar-lifecycle
+calendar.lifecycle=count:2,removed:true
+
+# backend=notification-publish-authorization
+notification.publish.error=Error: Notification disabled:{"code":1600004}
+
+# backend=oaid-permission-boundary
+advertising.oaid.result=6d096b94-828a-4eef-b9ea-d07ae79b6ab5
+
+# backend=crypto-cipher-and-mac
+security.crypto.extended=cipher:32,mac:32
+
+# backend=local-single-version-kv-store
+data.kv.lifecycle=value:ohos-qemu-capability-audit,removed:true
+
+# backend=zlib-file-roundtrip
+bundle.zlib.lifecycle=archive:156,roundtrip:true
+
+# backend=dfx-application-event-and-checker
+dfx.hiappevent.result=written:true
+
+# backend=dfx-application-event-and-checker
+dfx.hichecker.lifecycle=added:true,removed:true
+
+# backend=avsession-lifecycle
+media.avsession.lifecycle=active:true,destroyed:true
+
+# backend=ability-share-picker-provider
+ability.share_picker.start=success:true
+
+# backend=ability-share-picker-provider
+ability.share_picker.callback_error=code:16000050
+
+# backend=avcast-picker-provider
+media.avcast_picker.immediate_result=success:true
+
+# backend=background-transient-task
+resource.background_suspend.lifecycle=request:3,cancelled:true
+
+# backend=folder-obtain
+file.environment.result=download:error:Error: The device doesn't support this api:{"code":801}
+
+# backend=usb-host-device
+usb.devices.result=count:0
+
+# backend=sensor-accelerometer
+sensor.infos.enumerate.result=0 count=1
+
+# backend=sensor-accelerometer
+sensor.subscribe.callback=0 type=0 interval=0 subscribe=0 unsubscribe=0 callbacks=9
+
+# backend=vibrator
+vibrator.play.result=0 cancel=0
+
+# backend=location-provider
+location.start.result=3301100 stop.result=401 callbacks=0
+
+# backend=thermal-sensors
+thermal.level.result=0
+
+# backend=useriam-fingerprint-enrollment
+useriam.fingerprint.available_status.error=Error: Authentication template has not been enrolled.:{"code":12500010
+
+# backend=advertising-oaid-consent
+advertising.oaid.result=00000000-0000-0000-0000-000000000000
+
+# backend=selection-input-service
+selection.content.error=Error: Selection service invocation exception.:{"code":33600001
+
+# backend=print-extension-and-cups
+print.discovery.result=started:true
+
+# backend=window-session-features
+window.pip.enabled=false
+
+# backend=window-session-features
+window.floating_ball.enabled=false
+
+# backend=window-session-features
+window.float_view.enabled=false

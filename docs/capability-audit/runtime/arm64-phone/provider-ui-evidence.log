@@ -1,0 +1,5 @@
+# Compact, exact excerpts selected from dated on-device probe captures.
+# Regenerate only from the corresponding raw probe directories.
+
+# backend=photo-picker-provider
+com.ohos.photos/PickerUIExtensionAbility, persistentId:1188384770, abilityState:FOREGROUND

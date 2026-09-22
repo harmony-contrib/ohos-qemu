@@ -1,0 +1,2 @@
+get_sdk_version.code=0 size=7 msg=Success. value=2.0.0.5
+exit=0

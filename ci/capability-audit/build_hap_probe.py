@@ -19,6 +19,22 @@ parser.add_argument(
 )
 parser.add_argument("--arkdown", default=os.environ.get("ARKDOWN", "arkdown"))
 parser.add_argument("--hap-sign", default=os.environ.get("HAP_SIGN", "hap-sign"))
+parser.add_argument("--apl", default="system_basic")
+parser.add_argument(
+    "--app-feature",
+    choices=("normal", "system"),
+    default="normal",
+    help="Provisioning-profile application feature; use system for system-API probes",
+)
+parser.add_argument(
+    "--restricted-permission",
+    action="append",
+    default=[
+        "ohos.permission.READ_PASTEBOARD",
+        "ohos.permission.READ_CONTACTS",
+        "ohos.permission.WRITE_CONTACTS",
+    ],
+)
 parser.add_argument("--udid", required=True)
 parser.add_argument("--output", type=Path, required=True)
 parser.add_argument("--syscap-registry", type=Path)
@@ -31,6 +47,11 @@ parser.add_argument(
     "--kits-dir",
     type=Path,
     help="Public interface-sdk-js kits directory; defaults to the sibling of --api-dir when present",
+)
+parser.add_argument(
+    "--provider-only",
+    action="store_true",
+    help="Run only provider-backed UI probes so lifecycle deadlines do not hide provider failures",
 )
 args = parser.parse_args()
 
@@ -164,6 +185,31 @@ write(
                 {"name": "ohos.permission.VIBRATE"},
                 {"name": "ohos.permission.MANAGE_INPUT_INFRARED_EMITTER"},
                 {"name": "ohos.permission.PRINT", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.READ_PASTEBOARD", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.READ_CONTACTS", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.WRITE_CONTACTS", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.READ_CALENDAR", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.WRITE_CALENDAR", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED"},
+                {"name": "ohos.permission.GET_BUNDLE_RESOURCES"},
+                {"name": "ohos.permission.CONNECTIVITY_INTERNAL"},
+                {"name": "ohos.permission.STORAGE_MANAGER"},
+                {"name": "ohos.permission.MOUNT_UNMOUNT_MANAGER"},
+                {"name": "ohos.permission.NOTIFICATION_CONTROLLER"},
+                {"name": "ohos.permission.PUBLISH_AGENT_REMINDER"},
+                {"name": "ohos.permission.DEVICE_STANDBY_EXEMPTION"},
+                {"name": "ohos.permission.GET_DISPOSED_APP_STATUS"},
+                {"name": "ohos.permission.READ_HIVIEW_SYSTEM"},
+                {"name": "ohos.permission.ACCESS_CERT_MANAGER"},
+                {"name": "ohos.permission.ACCESS_CERT_MANAGER_INTERNAL"},
+                {"name": "ohos.permission.INPUT_MONITORING"},
+                {"name": "ohos.permission.GET_APP_DOMAIN_BUNDLE_INFO"},
+                {"name": "ohos.permission.MANAGE_MEDIA_RESOURCES"},
+                {"name": "ohos.permission.QUERY_SECURITY_MODEL_RESULT"},
+                {"name": "ohos.permission.GET_DONOTDISTURB_STATE", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.FILE_ACCESS_MANAGER", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.READ_IMAGEVIDEO", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.KEEP_BACKGROUND_RUNNING", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
             ],
             "abilities": [
                 {
@@ -174,6 +220,7 @@ write(
                     "icon": "$media:icon",
                     "startWindowIcon": "$media:icon",
                     "startWindowBackground": "$color:background",
+                    "backgroundModes": ["dataTransfer"],
                 }
             ],
         }
@@ -188,7 +235,8 @@ write(
     {"color": [{"name": "background", "value": "#ffffff"}]},
 )
 write("entry/src/main/resources/base/profile/main_pages.json", {"src": ["pages/Index"]})
-entry_ability = """import { UIAbility } from '@kit.AbilityKit';
+entry_ability = """import { UIAbility, common } from '@kit.AbilityKit';
+import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import window from '@ohos.window';
 import infraredEmitter from '@ohos.multimodalInput.infraredEmitter';
 import thermal from '@ohos.thermal';
@@ -207,14 +255,117 @@ import floatingBall from '@ohos.window.floatingBall';
 import floatView from '@ohos.window.floatView';
 import printManager from '@ohos.print';
 import i18n from '@ohos.i18n';
+import ranging from '@ohos.FusionConnectivity.ranging';
+import partnerAgent from '@ohos.FusionConnectivity.partnerAgent';
+import { huks } from '@kit.UniversalKeystoreKit';
+import fs from '@ohos.file.fs';
+import preferences from '@ohos.data.preferences';
+import cryptoFramework from '@ohos.security.cryptoFramework';
+import bundleManager from '@ohos.bundle.bundleManager';
+import notificationManager from '@ohos.notificationManager';
+import emitter from '@ohos.events.emitter';
+import pasteboard from '@ohos.pasteboard';
+import power from '@ohos.power';
+import commonEventManager from '@ohos.commonEventManager';
+import systemDateTime from '@ohos.systemDateTime';
+import wallpaper from '@ohos.wallpaper';
+import inputDevice from '@ohos.multimodalInput.inputDevice';
+import image from '@ohos.multimedia.image';
+import appAccount from '@ohos.account.appAccount';
+import relationalStore from '@ohos.data.relationalStore';
+import contact from '@ohos.contact';
+import calendarManager from '@ohos.calendarManager';
+import distributedKVStore from '@ohos.data.distributedKVStore';
+import environment from '@ohos.file.environment';
+import zlib from '@ohos.zlib';
+import hiAppEvent from '@ohos.hiviewdfx.hiAppEvent';
+import hichecker from '@ohos.hichecker';
+import avSession from '@ohos.multimedia.avsession';
+import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
+import startupManager from '@ohos.app.appstartup.startupManager';
+import quickFixManager from '@ohos.app.ability.quickFixManager';
+import formHost from '@ohos.app.form.formHost';
+import defaultAppManager from '@ohos.bundle.defaultAppManager';
+import launcherBundleManager from '@ohos.bundle.launcherBundleManager';
+import bundleResourceManager from '@ohos.bundle.bundleResourceManager';
+import overlay from '@ohos.bundle.overlay';
+import netSharing from '@ohos.net.sharing';
+import configPolicy from '@ohos.configPolicy';
+import customConfig from '@ohos.customization.customConfig';
+import systemCapability from '@ohos.systemCapability';
+import volumeManager from '@ohos.file.volumeManager';
+import reminderAgentManager from '@ohos.reminderAgentManager';
+import deviceStandby from '@ohos.resourceschedule.deviceStandby';
+import systemLoad from '@ohos.resourceschedule.systemload';
+import workScheduler from '@ohos.resourceschedule.workScheduler';
+import brightness from '@ohos.brightness';
+import drm from '@ohos.multimedia.drm';
+import media from '@ohos.multimedia.media';
+import screenLockFileManager from '@ohos.ability.screenLockFileManager';
+import deviceAttest from '@ohos.deviceAttest';
+import hiSysEvent from '@ohos.hiSysEvent';
+import uiAppearance from '@ohos.uiAppearance';
+import appDomainVerify from '@ohos.bundle.appDomainVerify';
+import appControl from '@ohos.bundle.appControl';
+import hiRetrieval from '@ohos.hiviewdfx.hiRetrieval';
+import faultLogger from '@ohos.faultLogger';
+import logLibrary from '@ohos.logLibrary';
+import batteryStatistics from '@ohos.batteryStatistics';
+import colorSpaceManager from '@ohos.graphics.colorSpaceManager';
+import pointer from '@ohos.multimodalInput.pointer';
+import shortKey from '@ohos.multimodalInput.shortKey';
+import inputConsumer from '@ohos.multimodalInput.inputConsumer';
+import inputMonitor from '@ohos.multimodalInput.inputMonitor';
+import audioHaptic from '@ohos.multimedia.audioHaptic';
+import certificateManager from '@ohos.security.certManager';
+import certificateManagerDialog from '@ohos.security.certManagerDialog';
+import cloudSync from '@ohos.file.cloudSync';
+import adminManager from '@ohos.enterprise.adminManager';
+import securityGuard from '@ohos.security.securityGuard';
+import intelligentScene from '@ohos.intelligentScene';
+import router from '@ohos.router';
+import fileAccess from '@ohos.file.fileAccess';
+import picker from '@ohos.file.picker';
+import userFileManager from '@ohos.filemanagement.userFileManager';
+import cert from '@ohos.security.cert';
+import request from '@ohos.request';
+import { Driver } from '@ohos.UiTest';
+import { PerfMetric, PerfTest, PerfTestStrategy } from '@ohos.test.PerfTest';
+import accessibility from '@ohos.accessibility';
+import { Scene } from '@kit.ArkGraphics3D';
+import { asset } from '@kit.AssetStoreKit';
+import { util } from '@kit.ArkTS';
 import probe from 'libcapabilityprobe.so';
 const PUBLIC_OHOS_MODULES: string[] = __API_MODULES__;
 const PUBLIC_SYSCAPS: string[] = __PUBLIC_SYSCAPS__;
 export default class EntryAbility extends UIAbility {
   onWindowStageCreate(stage: window.WindowStage): void {
     stage.loadContent('pages/Index');
-    probe.run();
-    this.runArkTsProbes();
+    try {
+      fs.unlinkSync(this.context.filesDir + '/capability-results.log');
+    } catch (_) {
+      // A fresh install or the first run has no previous result file.
+    }
+    // Provider-backed UI calls must run before the native breadth probe.  On
+    // slower emulator profiles the synchronous native probe can consume the
+    // UIAbility lifecycle deadline and the process is terminated before these
+    // calls are reached.
+    this.runProviderUiProbes();
+__BREADTH_PROBE_CALLS__
+  }
+
+  private runProviderUiProbes(): void {
+    try {
+      const castPicker = new avSession.AVCastPickerHelper(this.context);
+      this.report('media.avcast_picker.immediate_invoked', 'true');
+      castPicker.select().then((): void => {
+        this.report('media.avcast_picker.immediate_result', 'success:true');
+      }).catch((error: object): void => {
+        this.report('media.avcast_picker.immediate_error', this.errorText(error));
+      });
+    } catch (error) {
+      this.report('media.avcast_picker.immediate_error', this.errorText(error));
+    }
   }
 
   private report(name: string, value: string): void {
@@ -223,6 +374,987 @@ export default class EntryAbility extends UIAbility {
 
   private errorText(error: object): string {
     return error.toString() + ':' + JSON.stringify(error);
+  }
+
+  private async runHuksProbe(): Promise<void> {
+    try {
+      this.report('security.huks.step', 'setup.begin');
+      const keyAlias = 'ohos-qemu-capability-audit-key';
+      const keyOptions: huks.HuksOptions = {
+        properties: [
+          { tag: huks.HuksTag.HUKS_TAG_ALGORITHM, value: huks.HuksKeyAlg.HUKS_ALG_AES },
+          { tag: huks.HuksTag.HUKS_TAG_PURPOSE,
+            value: huks.HuksKeyPurpose.HUKS_KEY_PURPOSE_ENCRYPT | huks.HuksKeyPurpose.HUKS_KEY_PURPOSE_DECRYPT },
+          { tag: huks.HuksTag.HUKS_TAG_KEY_SIZE, value: huks.HuksKeySize.HUKS_AES_KEY_SIZE_256 }
+        ],
+        inData: new Uint8Array([])
+      };
+      this.report('security.huks.step', 'setup.end');
+      this.report('security.huks.step', 'has_key.begin');
+      const existed = await huks.hasKeyItem(keyAlias, { properties: [] });
+      this.report('security.huks.step', 'has_key.end:' + existed.toString());
+      if (existed) {
+        await huks.deleteKeyItem(keyAlias, { properties: [] });
+        this.report('security.huks.step', 'preexisting_key.deleted');
+      }
+      this.report('security.huks.step', 'generate.begin');
+      await huks.generateKeyItem(keyAlias, keyOptions);
+      this.report('security.huks.step', 'generate.end');
+      const present = await huks.hasKeyItem(keyAlias, { properties: [] });
+      this.report('security.huks.key_lifecycle', 'generated:true,present:' + present.toString());
+      await huks.deleteKeyItem(keyAlias, { properties: [] });
+      this.report('security.huks.key_deleted', 'true');
+    } catch (error) {
+      this.report('security.huks.error', this.errorText(error));
+    }
+  }
+
+  private async runCoreSoftwareProbes(): Promise<void> {
+    const auditValue = 'ohos-qemu-capability-audit';
+    try {
+      const filePath = this.context.filesDir + '/capability-audit.txt';
+      const file = fs.openSync(filePath, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+      fs.writeSync(file.fd, auditValue);
+      fs.closeSync(file);
+      const value = fs.readTextSync(filePath);
+      fs.unlinkSync(filePath);
+      this.report('file.io.lifecycle', 'value:' + value + ',removed:true');
+    } catch (error) {
+      this.report('file.io.error', this.errorText(error));
+    }
+    try {
+      const store = await preferences.getPreferences(this.context, 'capability-audit');
+      await store.put('probe', auditValue);
+      await store.flush();
+      const value = await store.get('probe', 'missing');
+      await store.delete('probe');
+      await store.flush();
+      this.report('data.preferences.lifecycle', 'value:' + value.toString() + ',removed:true');
+    } catch (error) {
+      this.report('data.preferences.error', this.errorText(error));
+    }
+    try {
+      const random = cryptoFramework.createRandom();
+      const randomValue = await random.generateRandom(32);
+      const md = cryptoFramework.createMd('SHA256');
+      await md.update({ data: new Uint8Array([97, 117, 100, 105, 116]) });
+      const digest = await md.digest();
+      this.report('security.crypto.lifecycle',
+        'random:' + randomValue.data.length.toString() + ',sha256:' + digest.data.length.toString());
+    } catch (error) {
+      this.report('security.crypto.error', this.errorText(error));
+    }
+    try {
+      const info = await bundleManager.getBundleInfoForSelf(0);
+      this.report('bundle.self.result', info.name + ':' + info.versionName);
+    } catch (error) {
+      this.report('bundle.self.error', this.errorText(error));
+    }
+    try {
+      const enabled = await notificationManager.isNotificationEnabled();
+      this.report('notification.enabled.result', enabled.toString());
+    } catch (error) {
+      this.report('notification.enabled.error', this.errorText(error));
+    }
+    try {
+      const event: emitter.InnerEvent = { eventId: 19491, priority: emitter.EventPriority.IMMEDIATE };
+      let callbackCount: number = 0;
+      const callback = (data: emitter.EventData): void => {
+        callbackCount++;
+        this.report('notification.emitter.callback', JSON.stringify(data));
+      };
+      emitter.on(event, callback);
+      emitter.emit(event, { data: { value: auditValue } });
+      await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+      emitter.off(19491, callback);
+      this.report('notification.emitter.lifecycle', 'callbacks:' + callbackCount.toString());
+    } catch (error) {
+      this.report('notification.emitter.error', this.errorText(error));
+    }
+    try {
+      const board = pasteboard.getSystemPasteboard();
+      await board.setData(pasteboard.createPlainTextData(auditValue));
+      const data = await board.getData();
+      const value = data.getPrimaryText();
+      await board.clearData();
+      this.report('pasteboard.lifecycle', 'value:' + value + ',cleared:true');
+    } catch (error) {
+      this.report('pasteboard.error', this.errorText(error));
+    }
+    try {
+      this.report('power.state.result',
+        'active:' + power.isActive().toString() +
+        ',screen:' + (await power.isScreenOn()).toString() +
+        ',mode:' + power.getPowerMode().toString());
+    } catch (error) {
+      this.report('power.state.error', this.errorText(error));
+    }
+    try {
+      const eventName = 'org.harmonycontrib.capabilityaudit.EVENT';
+      const subscriber = await commonEventManager.createSubscriber({ events: [eventName] });
+      let callbackCount: number = 0;
+      commonEventManager.subscribe(subscriber, (error, data) => {
+        if (error) {
+          this.report('common_event.callback.error', this.errorText(error));
+          return;
+        }
+        callbackCount++;
+        this.report('common_event.callback.result', data.event);
+      });
+      await new Promise<void>((resolve) => {
+        commonEventManager.publish(eventName, (error) => {
+          if (error) {
+            this.report('common_event.publish.error', this.errorText(error));
+          }
+          resolve();
+        });
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+      await commonEventManager.unsubscribe(subscriber);
+      this.report('common_event.lifecycle', 'published:true,callbacks:' + callbackCount.toString());
+    } catch (error) {
+      this.report('common_event.error', this.errorText(error));
+    }
+    try {
+      this.report('time.state.result',
+        'time:' + systemDateTime.getTime().toString() +
+        ',timezone:' + (await systemDateTime.getTimezone()));
+    } catch (error) {
+      this.report('time.state.error', this.errorText(error));
+    }
+    try {
+      const colors = await wallpaper.getColors(wallpaper.WallpaperType.WALLPAPER_SYSTEM);
+      this.report('wallpaper.colors.result', 'count:' + colors.length.toString());
+    } catch (error) {
+      this.report('wallpaper.colors.error', this.errorText(error));
+    }
+    try {
+      const devices = await inputDevice.getDeviceList();
+      this.report('input.devices.result', JSON.stringify(devices));
+    } catch (error) {
+      this.report('input.devices.error', this.errorText(error));
+    }
+    try {
+      const png = new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82,
+        0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137,
+        0, 0, 0, 13, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 240, 31,
+        0, 5, 0, 1, 255, 137, 153, 61, 29, 0, 0, 0, 0, 73, 69, 78, 68,
+        174, 66, 96, 130
+      ]);
+      const source = image.createImageSource(png.buffer);
+      const info = await source.getImageInfo();
+      const pixelMap = await source.createPixelMap();
+      const pixelInfo = await pixelMap.getImageInfo();
+      const packer = image.createImagePacker();
+      const encoded = await packer.packing(pixelMap, { format: 'image/png', quality: 100 });
+      await packer.release();
+      await pixelMap.release();
+      await source.release();
+      this.report('image.codec.lifecycle',
+        'source:' + info.size.width.toString() + 'x' + info.size.height.toString() +
+        ',pixel:' + pixelInfo.size.width.toString() + 'x' + pixelInfo.size.height.toString() +
+        ',encoded:' + encoded.byteLength.toString());
+    } catch (error) {
+      this.report('image.codec.error', this.errorText(error));
+    }
+    try {
+      const manager = appAccount.createAppAccountManager();
+      const name = 'ohos-qemu-capability-audit';
+      try {
+        await manager.removeAccount(name);
+      } catch (_) {
+      }
+      await manager.createAccount(name);
+      const accounts = await manager.getAllAccounts();
+      let present: boolean = false;
+      for (let index = 0; index < accounts.length; index++) {
+        if (accounts[index].name === name) {
+          present = true;
+        }
+      }
+      await manager.removeAccount(name);
+      this.report('account.app.lifecycle', 'created:' + present.toString() + ',removed:true');
+    } catch (error) {
+      this.report('account.app.error', this.errorText(error));
+    }
+    try {
+      const config: relationalStore.StoreConfig = {
+        name: 'CapabilityAudit.db',
+        securityLevel: relationalStore.SecurityLevel.S1
+      };
+      try {
+        await relationalStore.deleteRdbStore(this.context, config);
+      } catch (_) {
+      }
+      const store = await relationalStore.getRdbStore(this.context, config);
+      await store.executeSql('CREATE TABLE audit (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+      await store.executeSql('INSERT INTO audit (id, value) VALUES (?, ?)', [1, auditValue]);
+      const result = await store.querySql('SELECT value FROM audit WHERE id = ?', [1]);
+      const found = result.goToFirstRow();
+      const value = found ? result.getString(result.getColumnIndex('value')) : 'missing';
+      result.close();
+      await store.close();
+      await relationalStore.deleteRdbStore(this.context, config);
+      this.report('data.rdb.lifecycle', 'value:' + value + ',removed:true');
+    } catch (error) {
+      this.report('data.rdb.error', this.errorText(error));
+    }
+    try {
+      const encoder = new util.TextEncoder();
+      const alias = encoder.encodeInto('ohos-qemu-capability-audit');
+      const secret = encoder.encodeInto('secret-one');
+      const updatedSecret = encoder.encodeInto('secret-two');
+      const query: asset.AssetMap = new Map();
+      query.set(asset.Tag.ALIAS, alias);
+      try {
+        await asset.remove(query);
+      } catch (_) {
+      }
+      const attributes: asset.AssetMap = new Map();
+      attributes.set(asset.Tag.ALIAS, alias);
+      attributes.set(asset.Tag.SECRET, secret);
+      attributes.set(asset.Tag.ACCESSIBILITY, asset.Accessibility.DEVICE_FIRST_UNLOCKED);
+      await asset.add(attributes);
+      query.set(asset.Tag.RETURN_TYPE, asset.ReturnType.ALL);
+      const initial = await asset.query(query);
+      const update: asset.AssetMap = new Map();
+      update.set(asset.Tag.SECRET, updatedSecret);
+      const updateQuery: asset.AssetMap = new Map();
+      updateQuery.set(asset.Tag.ALIAS, alias);
+      await asset.update(updateQuery, update);
+      const updated = await asset.query(query);
+      const value = updated[0].get(asset.Tag.SECRET) as Uint8Array;
+      await asset.remove(updateQuery);
+      this.report('security.asset.lifecycle',
+        'initial:' + initial.length.toString() + ',updated_secret:' + value.length.toString() + ',removed:true');
+    } catch (error) {
+      this.report('security.asset.error', this.errorText(error));
+    }
+    try {
+      const request: notificationManager.NotificationRequest = {
+        id: 19491,
+        content: {
+          notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
+          normal: { title: 'Capability audit', text: auditValue }
+        }
+      };
+      await notificationManager.publish(request);
+      await notificationManager.cancel(19491);
+      this.report('notification.publish.lifecycle', 'published:true,cancelled:true');
+    } catch (error) {
+      this.report('notification.publish.error', this.errorText(error));
+    }
+    try {
+      const contactInfo: contact.Contact = {
+        name: { fullName: 'OHOS QEMU Capability Audit' },
+        phoneNumbers: [{ phoneNumber: '10086' }]
+      };
+      const contactId = await contact.addContact(this.context, contactInfo);
+      const contacts = await contact.queryContacts(this.context);
+      let key: string = '';
+      for (let index = 0; index < contacts.length; index++) {
+        if (contacts[index].id === contactId && contacts[index].key !== undefined) {
+          key = contacts[index].key as string;
+        }
+      }
+      if (key.length > 0) {
+        await contact.deleteContact(this.context, key);
+      }
+      this.report('contacts.lifecycle',
+        'id:' + contactId.toString() + ',found:' + (key.length > 0).toString() + ',removed:' + (key.length > 0).toString());
+    } catch (error) {
+      this.report('contacts.error', this.errorText(error));
+    }
+    try {
+      const manager = calendarManager.getCalendarManager(this.context);
+      const calendar = await manager.createCalendar({
+        name: 'ohos-qemu-capability-audit',
+        type: calendarManager.CalendarType.LOCAL,
+        displayName: 'Capability audit'
+      });
+      const calendars = await manager.getAllCalendars();
+      await manager.deleteCalendar(calendar);
+      this.report('calendar.lifecycle', 'count:' + calendars.length.toString() + ',removed:true');
+    } catch (error) {
+      this.report('calendar.error', this.errorText(error));
+    }
+  }
+
+  private async runExpandedSoftwareProbes(): Promise<void> {
+    const encoder = new util.TextEncoder();
+    try {
+      const generator = cryptoFramework.createSymKeyGenerator('AES128');
+      const key = await generator.generateSymKey();
+      const cipher = cryptoFramework.createCipher('AES128|ECB|PKCS7');
+      await cipher.init(cryptoFramework.CryptoMode.ENCRYPT_MODE, key, null);
+      const encrypted = await cipher.doFinal({ data: encoder.encodeInto('ohos-qemu-capability-audit') });
+      const macGenerator = cryptoFramework.createSymKeyGenerator('HMAC');
+      const macKey = await macGenerator.convertKey({ data: encoder.encodeInto('12345678abcdefgh') });
+      const mac = cryptoFramework.createMac('SHA256');
+      await mac.init(macKey);
+      await mac.update({ data: encoder.encodeInto('ohos-qemu-capability-audit') });
+      const macValue = await mac.doFinal();
+      this.report('security.crypto.extended',
+        'cipher:' + encrypted.data.length.toString() + ',mac:' + macValue.data.length.toString());
+    } catch (error) {
+      this.report('security.crypto.extended.error', this.errorText(error));
+    }
+    try {
+      const manager = distributedKVStore.createKVManager({
+        bundleName: 'org.harmonycontrib.capabilityaudit',
+        context: this.context
+      });
+      const options: distributedKVStore.Options = {
+        createIfMissing: true,
+        encrypt: false,
+        backup: false,
+        autoSync: false,
+        kvStoreType: distributedKVStore.KVStoreType.SINGLE_VERSION,
+        securityLevel: distributedKVStore.SecurityLevel.S1
+      };
+      const store = await manager.getKVStore<distributedKVStore.SingleKVStore>('capability_audit', options);
+      await store.put('payload', 'ohos-qemu-capability-audit');
+      const value: string = (await store.get('payload')).toString();
+      await store.delete('payload');
+      await manager.closeKVStore('org.harmonycontrib.capabilityaudit', 'capability_audit');
+      await manager.deleteKVStore('org.harmonycontrib.capabilityaudit', 'capability_audit');
+      this.report('data.kv.lifecycle', 'value:' + value + ',removed:true');
+    } catch (error) {
+      this.report('data.kv.error', this.errorText(error));
+    }
+    try {
+      const source = this.context.filesDir + '/zlib-source.txt';
+      const archive = this.context.filesDir + '/zlib-audit.zip';
+      const output = this.context.filesDir + '/zlib-output';
+      const sourceFile = fs.openSync(source, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+      fs.writeSync(sourceFile.fd, 'ohos-qemu-capability-audit');
+      fs.closeSync(sourceFile);
+      await zlib.compressFile(source, archive, {});
+      fs.mkdirSync(output);
+      await zlib.decompressFile(archive, output, {});
+      const archiveStat = fs.statSync(archive);
+      fs.unlinkSync(source);
+      fs.unlinkSync(archive);
+      this.report('bundle.zlib.lifecycle', 'archive:' + archiveStat.size.toString() + ',roundtrip:true');
+    } catch (error) {
+      this.report('bundle.zlib.error', this.errorText(error));
+    }
+    try {
+      let download: string = '';
+      try {
+        download = environment.getUserDownloadDir();
+      } catch (error) {
+        download = 'error:' + this.errorText(error);
+      }
+      this.report('file.environment.result', 'download:' + download);
+    } catch (error) {
+      this.report('file.environment.error', this.errorText(error));
+    }
+    try {
+      await hiAppEvent.write({
+        domain: 'capability_audit',
+        name: 'probe_event',
+        eventType: hiAppEvent.EventType.BEHAVIOR,
+        params: { value: 1 }
+      });
+      this.report('dfx.hiappevent.result', 'written:true');
+    } catch (error) {
+      this.report('dfx.hiappevent.error', this.errorText(error));
+    }
+    try {
+      hichecker.addCheckRule(hichecker.RULE_THREAD_CHECK_SLOW_PROCESS);
+      hichecker.removeCheckRule(hichecker.RULE_THREAD_CHECK_SLOW_PROCESS);
+      this.report('dfx.hichecker.lifecycle', 'added:true,removed:true');
+    } catch (error) {
+      this.report('dfx.hichecker.error', this.errorText(error));
+    }
+    try {
+      const session = await avSession.createAVSession(this.context, 'capability-audit', 'audio');
+      const descriptors = await avSession.getAllSessionDescriptors();
+      await session.activate();
+      await session.deactivate();
+      await session.destroy();
+      this.report('media.avsession.lifecycle',
+        'manager_count:' + descriptors.length.toString() + ',active:true,destroyed:true');
+    } catch (error) {
+      this.report('media.avsession.error', this.errorText(error));
+    }
+    try {
+      const delay = backgroundTaskManager.requestSuspendDelay('capability-audit', () => {});
+      backgroundTaskManager.cancelSuspendDelay(delay.requestId);
+      this.report('resource.background_suspend.lifecycle',
+        'request:' + delay.requestId.toString() + ',cancelled:true');
+    } catch (error) {
+      this.report('resource.background_suspend.error', this.errorText(error));
+    }
+  }
+
+  private async runBreadthSoftwareProbes(): Promise<void> {
+    try {
+      const domains = appDomainVerify.queryAssociatedDomains('org.harmonycontrib.capabilityaudit');
+      const bundles = appDomainVerify.queryAssociatedBundleNames('example.com');
+      this.report('bundle.app_domain.query',
+        'domains:' + domains.length.toString() + ',bundles:' + bundles.length.toString());
+    } catch (error) {
+      this.report('bundle.app_domain.error', this.errorText(error));
+    }
+    try {
+      const rules = appControl.getAllDisposedRules();
+      this.report('bundle.app_control.query', 'count:' + rules.length.toString());
+    } catch (error) {
+      this.report('bundle.app_control.error', this.errorText(error));
+    }
+    try {
+      this.report('ability.startup.initialized',
+        startupManager.isStartupTaskInitialized('capability-audit').toString());
+    } catch (error) {
+      this.report('ability.startup.error', this.errorText(error));
+    }
+    try {
+      await formHost.isSystemReady();
+      this.report('ability.form.ready', 'true');
+    } catch (error) {
+      this.report('ability.form.error', this.errorText(error));
+    }
+    try {
+      const info = await quickFixManager.getApplicationQuickFixInfo('org.harmonycontrib.capabilityaudit');
+      this.report('ability.quickfix.query', JSON.stringify(info));
+    } catch (error) {
+      this.report('ability.quickfix.error', this.errorText(error));
+    }
+    try {
+      const isDefault = await defaultAppManager.isDefaultApplication('browser');
+      this.report('bundle.default_app.query', isDefault.toString());
+    } catch (error) {
+      this.report('bundle.default_app.error', this.errorText(error));
+    }
+    try {
+      const launcherAbilities = await launcherBundleManager.getAllLauncherAbilityInfo(100);
+      this.report('bundle.launcher.query', 'count:' + launcherAbilities.length.toString());
+    } catch (error) {
+      this.report('bundle.launcher.error', this.errorText(error));
+    }
+    try {
+      const resourceInfo = bundleResourceManager.getBundleResourceInfo(
+        'org.harmonycontrib.capabilityaudit');
+      this.report('bundle.resource.query', 'bundle:' + resourceInfo.bundleName);
+    } catch (error) {
+      this.report('bundle.resource.error', this.errorText(error));
+    }
+    try {
+      const overlayInfo = await overlay.getOverlayModuleInfo('entry');
+      this.report('bundle.overlay.query', JSON.stringify(overlayInfo));
+    } catch (error) {
+      this.report('bundle.overlay.error', this.errorText(error));
+    }
+    try {
+      const supported = await netSharing.isSharingSupported();
+      const sharing = await netSharing.isSharing();
+      const interfaces = await netSharing.getSharingIfaces(netSharing.SharingIfaceState.SHARING_NIC_SERVING);
+      this.report('network.sharing.query',
+        'supported:' + supported.toString() + ',sharing:' + sharing.toString() +
+        ',ifaces:' + interfaces.length.toString());
+    } catch (error) {
+      this.report('network.sharing.error', this.errorText(error));
+    }
+    try {
+      const directories = configPolicy.getCfgDirListSync();
+      const parameterFile = configPolicy.getOneCfgFileSync('etc/param/ohos.para');
+      this.report('customization.config_policy.query',
+        'dirs:' + directories.length.toString() + ',file:' + parameterFile);
+    } catch (error) {
+      this.report('customization.config_policy.error', this.errorText(error));
+    }
+    try {
+      this.report('customization.channel_id.query', customConfig.getChannelId());
+    } catch (error) {
+      this.report('customization.channel_id.error', this.errorText(error));
+    }
+    try {
+      const capabilities = await systemCapability.querySystemCapabilities();
+      this.report('developtools.syscap.query', 'length:' + capabilities.length.toString());
+    } catch (error) {
+      this.report('developtools.syscap.error', this.errorText(error));
+    }
+    try {
+      const volumes = await volumeManager.getAllVolumes();
+      const disks = await volumeManager.getAllDisks();
+      this.report('file.volume.query',
+        'volumes:' + volumes.length.toString() + ',disks:' + disks.length.toString());
+    } catch (error) {
+      this.report('file.volume.error', this.errorText(error));
+    }
+    try {
+      const dnd = await notificationManager.getDoNotDisturbDate();
+      this.report('notification.settings.query', JSON.stringify(dnd));
+    } catch (error) {
+      this.report('notification.settings.error', this.errorText(error));
+    }
+    try {
+      const reminders = await reminderAgentManager.getValidReminders();
+      this.report('notification.reminder.query', 'count:' + reminders.length.toString());
+    } catch (error) {
+      this.report('notification.reminder.error', this.errorText(error));
+    }
+    try {
+      const exempted = await deviceStandby.getExemptedApps(1);
+      this.report('resource.device_standby.query', 'count:' + exempted.length.toString());
+    } catch (error) {
+      this.report('resource.device_standby.error', this.errorText(error));
+    }
+    try {
+      this.report('resource.system_load.query', (await systemLoad.getLevel()).toString());
+    } catch (error) {
+      this.report('resource.system_load.error', this.errorText(error));
+    }
+    try {
+      const works = await workScheduler.obtainAllWorks();
+      this.report('resource.work_scheduler.query', 'count:' + works.length.toString());
+    } catch (error) {
+      this.report('resource.work_scheduler.error', this.errorText(error));
+    }
+    try {
+      brightness.setValue(255);
+      this.report('power.display_brightness.set', 'success:true');
+    } catch (error) {
+      this.report('power.display_brightness.error', this.errorText(error));
+    }
+    try {
+      const keySystems = drm.getMediaKeySystems();
+      this.report('media.drm.query', 'count:' + keySystems.length.toString());
+    } catch (error) {
+      this.report('media.drm.error', this.errorText(error));
+    }
+    try {
+      const player = await media.createAVPlayer();
+      await player.release();
+      this.report('media.avplayer.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('media.avplayer.error', this.errorText(error));
+    }
+    try {
+      const player = await media.createVideoPlayer();
+      await player.release();
+      this.report('media.video_player.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('media.video_player.error', this.errorText(error));
+    }
+    try {
+      const generator = await media.createAVImageGenerator();
+      await generator.release();
+      this.report('media.avimage_generator.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('media.avimage_generator.error', this.errorText(error));
+    }
+    try {
+      const transcoder = await media.createAVTranscoder();
+      await transcoder.release();
+      this.report('media.avtranscoder.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('media.avtranscoder.error', this.errorText(error));
+    }
+    try {
+      const recorder = await media.createAVScreenCaptureRecorder();
+      await recorder.release();
+      this.report('media.screen_capture.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('media.screen_capture.error', this.errorText(error));
+    }
+    try {
+      const manager = audioHaptic.getAudioHapticManager();
+      this.report('media.audio_haptic.manager', 'created:' + (manager !== undefined).toString());
+    } catch (error) {
+      this.report('media.audio_haptic.error', this.errorText(error));
+    }
+    try {
+      const creator = image.createImageCreator({ width: 1, height: 1 }, image.ImageFormat.JPEG, 1);
+      const receiver = image.createImageReceiver({ width: 1, height: 1 }, image.ImageFormat.JPEG, 1);
+      await creator.release();
+      await receiver.release();
+      this.report('image.creator_receiver.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('image.creator_receiver.error', this.errorText(error));
+    }
+    try {
+      this.report('security.screenlock_file.query', screenLockFileManager.queryAppKeyState().toString());
+    } catch (error) {
+      this.report('security.screenlock_file.error', this.errorText(error));
+    }
+    try {
+      this.report('xts.device_attest.query', JSON.stringify(deviceAttest.getAttestStatusSync()));
+    } catch (error) {
+      this.report('xts.device_attest.error', this.errorText(error));
+    }
+    try {
+      await hiSysEvent.write({
+        domain: 'CAPABILITY_AUDIT',
+        name: 'PROBE_EVENT',
+        eventType: hiSysEvent.EventType.BEHAVIOR,
+        params: { value: 1 }
+      });
+      this.report('dfx.hisysevent.write', 'success:true');
+    } catch (error) {
+      this.report('dfx.hisysevent.error', this.errorText(error));
+    }
+    try {
+      this.report('arkui.appearance.query',
+        'dark:' + uiAppearance.getDarkMode().toString() +
+        ',fontScale:' + uiAppearance.getFontScale().toString());
+    } catch (error) {
+      this.report('arkui.appearance.error', this.errorText(error));
+    }
+    try {
+      const userData = await environment.getUserDataDir();
+      this.report('file.environment.user_data', userData);
+    } catch (error) {
+      this.report('file.environment.user_data.error', this.errorText(error));
+    }
+    try {
+      const manager = colorSpaceManager.create(colorSpaceManager.ColorSpace.SRGB);
+      this.report('graphic.color_space.query',
+        'name:' + manager.getColorSpaceName().toString() +
+        ',white_point:' + manager.getWhitePoint().length.toString());
+    } catch (error) {
+      this.report('graphic.color_space.error', this.errorText(error));
+    }
+    setTimeout((): void => {
+      try {
+        const options = new photoAccessHelper.PhotoSelectOptions();
+        options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+        options.maxSelectNumber = 1;
+        const picker = new photoAccessHelper.PhotoViewPicker();
+        this.report('file.photo_picker.invoked', 'true');
+        picker.select(options).then((result: photoAccessHelper.PhotoSelectResult): void => {
+          this.report('file.photo_picker.result', JSON.stringify(result));
+        }).catch((error: object): void => {
+          this.report('file.photo_picker.error', this.errorText(error));
+        });
+      } catch (error) {
+        this.report('file.photo_picker.error', this.errorText(error));
+      }
+    }, 4500);
+    setTimeout((): void => {
+      try {
+        const documentPicker = new picker.DocumentViewPicker(this.context);
+        this.report('file.document_picker.invoked', 'true');
+        documentPicker.select().then((uris: Array<string>): void => {
+          this.report('file.document_picker.result', JSON.stringify(uris));
+        }).catch((error: object): void => {
+          this.report('file.document_picker.error', this.errorText(error));
+        });
+      } catch (error) {
+        this.report('file.document_picker.error', this.errorText(error));
+      }
+    }, 1500);
+    setTimeout((): void => {
+      try {
+        const castPicker = new avSession.AVCastPickerHelper(this.context);
+        this.report('media.avcast_picker.invoked', 'true');
+        castPicker.select().then((): void => {
+          this.report('media.avcast_picker.result', 'success:true');
+        }).catch((error: object): void => {
+          this.report('media.avcast_picker.error', this.errorText(error));
+        });
+      } catch (error) {
+        this.report('media.avcast_picker.error', this.errorText(error));
+      }
+    }, 0);
+    setTimeout((): void => {
+      try {
+        const abilityStartCallback: common.AbilityStartCallback = {
+          onError: (code: number, name: string, message: string): void => {
+            this.report('ability.share_picker.callback_error',
+              'code:' + code.toString() + ',name:' + name + ',message:' + message);
+          },
+          onResult: (result: common.AbilityResult): void => {
+            this.report('ability.share_picker.callback_result', JSON.stringify(result));
+          }
+        };
+        this.report('ability.share_picker.invoked', 'true');
+        this.context.startAbilityByType('share', {}, abilityStartCallback).then(() => {
+          this.report('ability.share_picker.start', 'success:true');
+        }).catch((error: object) => {
+          this.report('ability.share_picker.error', this.errorText(error));
+        });
+      } catch (error) {
+        this.report('ability.share_picker.error', this.errorText(error));
+      }
+    }, 3000);
+    try {
+      this.report('input.pointer.query',
+        'speed:' + pointer.getPointerSpeedSync().toString() +
+        ',visible:' + pointer.isPointerVisibleSync().toString());
+    } catch (error) {
+      this.report('input.pointer.error', this.errorText(error));
+    }
+    try {
+      const hotkeys: Array<inputConsumer.HotkeyOptions> = await inputConsumer.getAllSystemHotkeys();
+      this.report('input.consumer.query', 'hotkeys:' + hotkeys.length.toString());
+    } catch (error) {
+      this.report('input.consumer.error', this.errorText(error));
+    }
+    try {
+      const mouseCallback = (): void => {};
+      inputMonitor.on('mouse', mouseCallback);
+      inputMonitor.off('mouse', mouseCallback);
+      this.report('input.monitor.lifecycle', 'mouse_registered:true,removed:true');
+    } catch (error) {
+      this.report('input.monitor.error', this.errorText(error));
+    }
+    try {
+      hiRetrieval.init();
+      const participating = hiRetrieval.isParticipant();
+      const timestamp = hiRetrieval.getLastParticipationTimestamp();
+      hiRetrieval.quit();
+      this.report('dfx.hiretrieval.lifecycle',
+        'participant:' + participating.toString() + ',timestamp:' + timestamp.toString() + ',quit:true');
+    } catch (error) {
+      this.report('dfx.hiretrieval.error', this.errorText(error));
+    }
+    try {
+      const faults = await faultLogger.query(faultLogger.FaultType.JS_CRASH);
+      this.report('dfx.fault_logger.query', 'count:' + faults.length.toString());
+    } catch (error) {
+      this.report('dfx.fault_logger.error', this.errorText(error));
+    }
+    try {
+      const logs = logLibrary.list('FAULTLOG');
+      this.report('dfx.log_library.query', 'count:' + logs.length.toString());
+    } catch (error) {
+      this.report('dfx.log_library.error', this.errorText(error));
+    }
+    try {
+      const stats = await batteryStatistics.getBatteryStats();
+      this.report('power.battery_statistics.query', 'count:' + stats.length.toString());
+    } catch (error) {
+      this.report('power.battery_statistics.error', this.errorText(error));
+    }
+    try {
+      const certificates = await certificateManager.getAllAppPrivateCertificates();
+      if (certificates === undefined) {
+        this.report('security.certificate_manager.query', 'undefined_result:true');
+      } else {
+        const count = certificates.credentialList === undefined ? 0 : certificates.credentialList.length;
+        this.report('security.certificate_manager.query', 'count:' + count.toString());
+      }
+    } catch (error) {
+      this.report('security.certificate_manager.error', this.errorText(error));
+    }
+    try {
+      this.report('security.certificate_dialog.supported',
+        certificateManagerDialog.supportsCACertDialog().toString());
+    } catch (error) {
+      this.report('security.certificate_dialog.error', this.errorText(error));
+    }
+    try {
+      const keyGenerator = cryptoFramework.createAsyKeyGenerator('X25519');
+      const pairA = await keyGenerator.generateKeyPair();
+      const pairB = await keyGenerator.generateKeyPair();
+      const agreement = cryptoFramework.createKeyAgreement('X25519');
+      const secretA = await agreement.generateSecret(pairA.priKey, pairB.pubKey);
+      const secretB = await agreement.generateSecret(pairB.priKey, pairA.pubKey);
+      this.report('security.crypto.key_agreement',
+        'asym_keys:true,bytes:' + secretA.data.length.toString() +
+        ',equal:' + (secretA.data.toString() === secretB.data.toString()).toString());
+    } catch (error) {
+      this.report('security.crypto.key_agreement.error', this.errorText(error));
+    }
+    try {
+      const keyGenerator = cryptoFramework.createAsyKeyGenerator('RSA1024');
+      const keyPair = await keyGenerator.generateKeyPair();
+      const signer = cryptoFramework.createSign('RSA1024|PKCS1|SHA256');
+      const verifier = cryptoFramework.createVerify('RSA1024|PKCS1|SHA256');
+      const data: cryptoFramework.DataBlob = { data: new Uint8Array([97, 117, 100, 105, 116]) };
+      await signer.init(keyPair.priKey);
+      const signature = await signer.sign(data);
+      await verifier.init(keyPair.pubKey);
+      const valid = await verifier.verify(data, signature);
+      this.report('security.crypto.signature',
+        'bytes:' + signature.data.length.toString() + ',valid:' + valid.toString());
+    } catch (error) {
+      this.report('security.crypto.signature.error', this.errorText(error));
+    }
+    try {
+      const spec: cryptoFramework.PBKDF2Spec = {
+        algName: 'PBKDF2', password: 'capability-audit', salt: new Uint8Array(16),
+        iterations: 1000, keySize: 32
+      };
+      const kdf = cryptoFramework.createKdf('PBKDF2|SHA256');
+      const secret = await kdf.generateSecret(spec);
+      this.report('security.crypto.kdf', 'bytes:' + secret.data.length.toString());
+    } catch (error) {
+      this.report('security.crypto.kdf.error', this.errorText(error));
+    }
+    try {
+      const sync = new cloudSync.FileSync();
+      this.report('file.cloud_sync.constructor', 'default:true');
+      try {
+        const lastSyncTime = await sync.getLastSyncTime();
+        this.report('file.cloud_sync.query', 'last_sync:' + lastSyncTime.toString());
+      } catch (error) {
+        this.report('file.cloud_sync.query.error', this.errorText(error));
+      }
+    } catch (error) {
+      this.report('file.cloud_sync.constructor.error', this.errorText(error));
+    }
+    try {
+      const sync = new cloudSync.FileSync('org.harmonycontrib.capabilityaudit');
+      this.report('file.cloud_sync.system_constructor', 'bundle:true');
+      try {
+        const lastSyncTime = await sync.getLastSyncTime();
+        this.report('file.cloud_sync.system_query', 'last_sync:' + lastSyncTime.toString());
+      } catch (error) {
+        this.report('file.cloud_sync.system_query.error', this.errorText(error));
+      }
+    } catch (error) {
+      this.report('file.cloud_sync.system_constructor.error', this.errorText(error));
+    }
+    try {
+      const enabled = await adminManager.isSuperAdmin('org.harmonycontrib.capabilityaudit');
+      this.report('enterprise.admin.query', 'self_super_admin:' + enabled.toString());
+    } catch (error) {
+      this.report('enterprise.admin.error', this.errorText(error));
+    }
+    try {
+      const result = await securityGuard.getModelResult({ modelName: 'capability-audit' });
+      this.report('security.guard.model', result.result);
+    } catch (error) {
+      this.report('security.guard.model.error', this.errorText(error));
+    }
+    try {
+      const enabled = await intelligentScene.isDoNotDisturbEnabled();
+      const allowed = await intelligentScene.isNotifyAllowedInDoNotDisturb();
+      this.report('applications.intelligent_scene.query',
+        'dnd:' + enabled.toString() + ',notify_allowed:' + allowed.toString());
+    } catch (error) {
+      this.report('applications.intelligent_scene.error', this.errorText(error));
+    }
+    try {
+      const state = router.getState();
+      this.report('arkui.router.query', 'index:' + state.index.toString());
+    } catch (error) {
+      this.report('arkui.router.error', this.errorText(error));
+    }
+    try {
+      const helper = fileAccess.createFileAccessHelper(this.context);
+      const roots = await helper.getRoots();
+      const first = roots.next();
+      this.report('file.user_file_service.roots', 'first_done:' + first.done.toString());
+    } catch (error) {
+      this.report('file.user_file_service.error', this.errorText(error));
+    }
+    try {
+      const manager = userFileManager.getUserFileMgr(this.context);
+      await manager.release();
+      this.report('file.user_file_manager.lifecycle', 'created:true,released:true');
+    } catch (error) {
+      this.report('file.user_file_manager.error', this.errorText(error));
+    }
+    try {
+      const validator = cert.createCertChainValidator('PKIX');
+      this.report('security.cert.validator', 'created:' + (validator !== undefined).toString());
+    } catch (error) {
+      this.report('security.cert.validator.error', this.errorText(error));
+    }
+    try {
+      const captions = accessibility.getCaptionsManager();
+      this.report('accessibility.hearing.captions',
+        'created:' + (captions !== undefined).toString() + ',enabled:' + captions.enabled.toString());
+    } catch (error) {
+      this.report('accessibility.hearing.error', this.errorText(error));
+    }
+    try {
+      const scene = await Scene.load();
+      const factory = scene.getResourceFactory();
+      scene.destroy();
+      this.report('graphics3d.scene.lifecycle',
+        'created:true,factory:' + (factory !== undefined).toString() + ',destroyed:true');
+    } catch (error) {
+      this.report('graphics3d.scene.error', this.errorText(error));
+    }
+    try {
+      await shortKey.setKeyDownDuration('businessId', 500);
+      this.report('input.short_key.duration', 'configured:true');
+    } catch (error) {
+      this.report('input.short_key.error', this.errorText(error));
+    }
+    try {
+      const tasks = await request.agent.search();
+      this.report('request.file_transfer_agent.search', 'count:' + tasks.length.toString());
+    } catch (error) {
+      this.report('request.file_transfer_agent.error', this.errorText(error));
+    }
+    try {
+      const destination = this.context.cacheDir + '/capability-audit-download.html';
+      const task = await request.downloadFile(this.context,
+        { url: 'http://10.0.2.2:18080/download', filePath: destination });
+      task.on('complete', (): void => {
+        this.report('request.download.complete', 'exists:' + fs.accessSync(destination).toString());
+      });
+      task.on('fail', (code: number): void => {
+        this.report('request.download.fail', code.toString());
+      });
+      this.report('request.download.created', 'true');
+    } catch (error) {
+      this.report('request.download.error', this.errorText(error));
+    }
+    try {
+      const uploadPath = this.context.cacheDir + '/capability-audit-upload.txt';
+      const uploadFile = fs.openSync(uploadPath, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+      fs.writeSync(uploadFile.fd, 'ohos-qemu-capability-audit');
+      fs.closeSync(uploadFile);
+      const task = await request.uploadFile(this.context, {
+        url: 'http://10.0.2.2:18080/upload', header: {}, method: 'POST',
+        files: [{ filename: 'capability-audit-upload.txt', name: 'file',
+          uri: 'internal://cache/capability-audit-upload.txt', type: 'text/plain' }],
+        data: [{ name: 'probe', value: 'ohos-qemu-capability-audit' }]
+      });
+      task.on('complete', (states: Array<request.TaskState>): void => {
+        this.report('request.upload.complete', 'states:' + states.length.toString());
+      });
+      task.on('fail', (states: Array<request.TaskState>): void => {
+        this.report('request.upload.fail', 'states:' + states.length.toString());
+      });
+      this.report('request.upload.created', 'true');
+    } catch (error) {
+      this.report('request.upload.error', this.errorText(error));
+    }
+    try {
+      const continuous = await backgroundTaskManager.getAllContinuousTasks(this.context);
+      this.report('resource.background_continuous.query', 'count:' + continuous.length.toString());
+    } catch (error) {
+      this.report('resource.background_continuous.error', this.errorText(error));
+    }
+    try {
+      const resources = await backgroundTaskManager.getAllEfficiencyResources();
+      this.report('resource.background_efficiency.query', 'count:' + resources.length.toString());
+    } catch (error) {
+      this.report('resource.background_efficiency.error', this.errorText(error));
+    }
+    try {
+      const driver = Driver.create();
+      await driver.delayMs(1);
+      this.report('test.ui_driver.lifecycle', 'created:true,delay:true');
+    } catch (error) {
+      this.report('test.ui_driver.error', this.errorText(error));
+    }
+    try {
+      const strategy: PerfTestStrategy = {
+        metrics: [PerfMetric.DURATION],
+        actionCode: (finish: Callback<boolean>): void => { finish(true); },
+        iterations: 1,
+        timeout: 1000
+      };
+      const performance = PerfTest.create(strategy);
+      await performance.run();
+      const result = performance.getMeasureResult(PerfMetric.DURATION);
+      performance.destroy();
+      this.report('test.performance.lifecycle',
+        'rounds:' + result.roundValues.length.toString() + ',average:' + result.average.toString());
+    } catch (error) {
+      this.report('test.performance.error', this.errorText(error));
+    }
   }
 
   private async runArkTsProbes(): Promise<void> {
@@ -366,8 +1498,20 @@ export default class EntryAbility extends UIAbility {
       this.report('i18n.system_language.result', i18n.getSystemLanguage());
       this.report('i18n.system_region.result', i18n.getSystemRegion());
       this.report('i18n.system_locale.result', i18n.getSystemLocale());
+      this.report('i18n.system_languages.count', i18n.System.getSystemLanguages().length.toString());
+      this.report('i18n.system_countries.count', i18n.System.getSystemCountries('zh').length.toString());
     } catch (error) {
       this.report('i18n.system.error', this.errorText(error));
+    }
+    try {
+      this.report('fusion.ranging.supported', ranging.isRangingSupported().toString());
+    } catch (error) {
+      this.report('fusion.ranging.error', this.errorText(error));
+    }
+    try {
+      this.report('fusion.partner_agent.supported', partnerAgent.isPartnerAgentSupported().toString());
+    } catch (error) {
+      this.report('fusion.partner_agent.error', this.errorText(error));
     }
     let loaded: number = 0;
     for (let index = 0; index < PUBLIC_OHOS_MODULES.length; index++) {
@@ -380,15 +1524,61 @@ export default class EntryAbility extends UIAbility {
   }
 }
 """
+probe_calls = "" if args.provider_only else """    probe.run();
+    this.runArkTsProbes();
+    this.runHuksProbe();
+    this.runCoreSoftwareProbes();
+    this.runExpandedSoftwareProbes();
+    this.runBreadthSoftwareProbes();"""
 write(
     "entry/src/main/ets/entryability/EntryAbility.ets",
     entry_ability.replace("__API_MODULES__", json.dumps(api_modules)).replace(
         "__PUBLIC_SYSCAPS__", json.dumps(public_syscaps)
-    ),
+    ).replace("__BREADTH_PROBE_CALLS__", probe_calls),
 )
 write(
     "entry/src/main/ets/pages/Index.ets",
-    '@Entry\n@Component\nstruct Index { build() { Column() { Text("Capability audit") } } }\n',
+    """import web_webview from '@ohos.web.webview';
+import probe from 'libcapabilityprobe.so';
+
+@Entry
+@Component
+struct Index {
+  private controller: web_webview.WebviewController = new web_webview.WebviewController();
+
+  build() {
+    Column() {
+      Text('Capability audit')
+      Web({ src: 'https://example.com', controller: this.controller })
+        .width('100%')
+        .height('90%')
+        .javaScriptAccess(true)
+        .onPageBegin(() => { probe.append('web.page_begin=true'); })
+        .onPageEnd(() => {
+          probe.append('web.page_end=true');
+          try {
+            probe.append('web.title=' + this.controller.getTitle());
+            probe.append('web.url=' + this.controller.getUrl());
+            probe.append('web.graphics.begin=true');
+            this.controller.runJavaScript(
+              "(() => { const canvas = document.createElement('canvas'); return JSON.stringify({" +
+              "webgl: !!canvas.getContext('webgl'), webgl2: !!canvas.getContext('webgl2')}); })()"
+            ).then((value: string) => {
+              probe.append('web.graphics=' + value);
+            }).catch((error: object) => {
+              probe.append('web.graphics.error=' + error.toString() + ':' + JSON.stringify(error));
+            });
+          } catch (error) {
+            probe.append('web.controller.error=' + error.toString() + ':' + JSON.stringify(error));
+          }
+        })
+        .onErrorReceive((event) => {
+          probe.append('web.load.error=' + event.error.getErrorCode().toString() + ':' + event.error.getErrorInfo());
+        })
+    }
+  }
+}
+""",
 )
 
 libs = root / "entry/libs" / abi
@@ -418,6 +1608,16 @@ command = [
     "-lohvibrator.z",
     "-ltelephony_radio",
     "-lnative_display_manager",
+    "-lnative_media_codecbase",
+    "-lnative_media_acodec",
+    "-lnative_media_venc",
+    "-lnative_media_vdec",
+    "-lnative_media_avsource",
+    "-lnative_media_avdemuxer",
+    "-lnative_media_avmuxer",
+    "-lffrt.z",
+    "-lohhicollie",
+    "-luv",
     "-o",
     str(libs / "libcapabilityprobe.so"),
 ]
@@ -434,21 +1634,27 @@ subprocess.run(
     check=True,
 )
 output = root / "entry/build/default/outputs/default"
-subprocess.run(
-    [
-        args.hap_sign,
-        "sign",
-        str(output / "entry-default-unsigned.hap"),
-        "--bundle-name",
-        bundle,
-        "--compatible-version",
-        "17",
-        "--device-id",
-        args.udid,
-        "--output",
-        str(output / "entry-default-signed.hap"),
-        "--force",
-    ],
-    check=True,
-)
+sign_command = [
+    args.hap_sign,
+    "sign",
+    str(output / "entry-default-unsigned.hap"),
+    "--bundle-name",
+    bundle,
+    "--compatible-version",
+    "17",
+    "--device-id",
+    args.udid,
+    "--apl",
+    args.apl,
+    "--app-feature",
+    args.app_feature,
+]
+for permission in args.restricted_permission:
+    sign_command.extend(["--restricted-permission", permission])
+sign_command.extend([
+    "--output",
+    str(output / "entry-default-signed.hap"),
+    "--force",
+])
+subprocess.run(sign_command, check=True)
 print(output / "entry-default-signed.hap")

@@ -57,4 +57,18 @@ build_family telephony telephony_radio
 build_family display native_display_manager
 build_family image_effect image_effect
 
-file "${OUTPUT}"/hardware_*
+"${SDK}/llvm/bin/clang" \
+  --target="${TARGET}" --sysroot="${SDK}/sysroot" \
+  -O2 -g -Wall -Wextra -Werror \
+  "${ROOT}/probes/huks.c" \
+  -L"${SDK}/sysroot/usr/lib/${LIBDIR}" -lhuks_ndk.z \
+  -o "${OUTPUT}/huks"
+
+"${SDK}/llvm/bin/clang" \
+  --target="${TARGET}" --sysroot="${SDK}/sysroot" \
+  -O2 -g -Wall -Wextra -Werror \
+  "${ROOT}/probes/egl_gles.c" \
+  -L"${SDK}/sysroot/usr/lib/${LIBDIR}" -lEGL -lGLESv3 \
+  -o "${OUTPUT}/egl_gles"
+
+file "${OUTPUT}"/hardware_* "${OUTPUT}/huks" "${OUTPUT}/egl_gles"

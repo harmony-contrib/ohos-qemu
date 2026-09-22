@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2021 Huawei Device Co., Ltd.
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     Itemations under the License.
+-->
+<Codecs>
+    <AudioCodecs>
+            <AudioDecoder>
+                <Item codecName="avdec_mp3"/>
+                <Item codecType="AUDIO_DECODER"/>
+                <Item mimeType="audio/mpeg"/>
+                <Item isVendor="false"/>
+                <Item bitrate="1-384000"/>
+                <Item channels="1-2"/>
+                <Item mpegVersion="1"/>
+                <Item sampleRate="8000,11025,12000,16000,22050,24000,32000,44100,48000,64000,88200,96000"/>
+                <Item format="S16LE"/>
+            </AudioDecoder>
+            <AudioDecoder>
+                <Item codecName="avdec_aac"/>
+                <Item codecType="AUDIO_DECODER"/>
+                <Item mimeType="audio/mp4a-latm"/>
+                <Item isVendor="false"/>
+                <Item bitrate="1-384000"/>
+                <Item channels="1-2"/>
+                <Item mpegVersion="4"/>
+                <Item format="S16LE"/>
+                <Item sampleRate="8000,11025,12000,16000,22050,24000,32000,44100,48000,64000,88200,96000"/>
+                <Item streamFormat="adts"/>
+                <Item profiles="AAC_LC"/>
+                <Item layout="non-interleaved"/>
+            </AudioDecoder>
+            <AudioDecoder>
+                <Item codecName="avdec_vorbis" />
+                <Item codecType="AUDIO_DECODER" />
+                <Item mimeType="audio/vorbis" />
+                <Item isVendor="false" />
+                <Item bitrate="1-384000"/>
+                <Item channels="1-7"/>
+                <Item format="S16LE"/>
+                <Item sampleRate="8000,11025,12000,16000,22050,24000,32000,44100,48000,64000,88200,96000,176400,192000"/>
+            </AudioDecoder>
+            <AudioDecoder>
+                <Item codecName="avdec_flac"/>
+                <Item codecType="AUDIO_DECODER"/>
+                <Item mimeType="audio/flac"/>
+                <Item isVendor="false"/>
+                <Item bitrate="1-384000"/>
+                <Item channels="1-2"/>
+                <Item framed="true"/>
+                <Item format="S16LE"/>
+                <Item layout="interleaved,non-interleaved"/>
+                <Item sampleRate="8000,11025,12000,16000,22050,24000,32000,44100,48000,64000,88200,96000"/>
+            </AudioDecoder>
+            <AudioDecoder>
+                <Item codecName="avdec_opus"/>
+                <Item codecType="AUDIO_DECODER"/>
+                <Item mimeType="audio/opus"/>
+                <Item isVendor="false"/>
+                <Item bitrate="1-384000"/>
+                <Item channels="1-2"/>
+                <Item format="S16LE"/>
+                <Item sampleRate="48000"/>
+            </AudioDecoder>
+            <AudioEncoder>
+                <Item codecName="avenc_aac"/>
+                <Item codecType="AUDIO_ENCODER"/>
+                <Item mimeType="audio/mp4a-latm"/>
+                <Item isVendor="false"/>
+                <Item bitrate="8000-384000"/>
+                <Item channels="1-2"/>
+                <Item format="S32LE"/>
+                <Item mpegVersion="4"/>
+                <Item sampleRate="8000,12000,16000,22050,24000,32000,44100,48000,64000,88200,96000"/>
+                <Item streamFormat="raw"/>
+            </AudioEncoder>
+            <AudioEncoder>
+                <Item codecName="avenc_opus"/>
+                <Item codecType="AUDIO_ENCODER"/>
+                <Item mimeType="audio/opus"/>
+                <Item isVendor="false"/>
+                <Item bitrate="1-384000"/>
+                <Item channels="1-2"/>
+                <Item format="S16LE"/>
+                <Item sampleRate="48000"/>
+            </AudioEncoder>
+    </AudioCodecs>
+    <VideoCodecs>
+            <VideoDecoder>
+                <Item codecName="avdec_h264"/>
+                <Item codecType="VIDEO_DECODER"/>
+                <Item mimeType="video/avc"/>
+                <Item isVendor="false"/>
+                <Item alignment="0-0"/>
+                <Item width="2-3840"/>
+                <Item height="2-2160"/>
+                <Item bitrate="1-3000000"/>
+                <Item frameRate="1-30"/>
+                <Item blockPerFrame="1-32768"/>
+                <Item blockPerSecond="1-244800"/>
+                <Item blockSize="16x16"/>
+                <Item format="NV12,NV21"/>
+                <Item profiles="AVCBaseline,AVCMain,AVCHigh"/>
+                <Item measuredFrameRate="1920x1080@1-30"/>
+            </VideoDecoder>
+            <VideoDecoder>
+                <Item codecName="avdec_h263"/>
+                <Item codecType="VIDEO_DECODER"/>
+                <Item mimeType="video/h263"/>
+                <Item isVendor="false"/>
+                <Item alignment="0-0" />
+                <Item width="2-3840"/>
+                <Item height="2-2160"/>
+                <Item bitrate="1-3000000"/>
+                <Item frameRate="1-30"/>
+                <Item blockSize="16x16"/>
+                <Item blockPerSecond="1-244800"/>
+                <Item format="NV12,NV21"/>
+                <Item profiles="H263Baseline"/>
+                <Item measuredFrameRate="1920x1080@1-30"/>
+            </VideoDecoder>
+            <VideoDecoder>
+                <Item codecName="avdec_mpeg2video"/>
+                <Item codecType="VIDEO_DECODER"/>
+                <Item mimeType="video/mpeg2"/>
+                <Item isVendor="false"/>
+                <Item alignment="0-0"/>
+                <Item width="2-3840"/>
+                <Item height="2-2160"/>
+                <Item bitrate="1-3000000"/>
+                <Item frameRate="1-30"/>
+                <Item blockPerSecond="1-244800"/>
+                <Item blockSize="16x16"/>
+                <Item format="NV12,NV21"/>
+                <Item profiles="MPEG2Main,MPEG2Simple"/>
+                <Item measuredFrameRate="1920x1080@1-30"/>
+            </VideoDecoder>
+            <VideoDecoder>
+                <Item codecName="avdec_mpeg4"/>
+                <Item codecType="VIDEO_DECODER"/>
+                <Item mimeType="video/mp4v-es"/>
+                <Item isVendor="false"/>
+                <Item alignment="0-0"/>
+                <Item width="2-3840"/>
+                <Item height="2-2160"/>
+                <Item bitrate="1-3000000"/>
+                <Item frameRate="1-30"/>
+                <Item blockPerSecond="12-244800"/>
+                <Item blockSize="16x16"/>
+                <Item format="NV12,NV21"/>
+                <Item profiles="MPEG4Simple,MPEG4AdvancedSimple"/>
+                <Item measuredFrameRate="1920x1080@1-30"/>
+            </VideoDecoder>
+            <VideoEncoder>
+                <Item codecName="avenc_mpeg4"/>
+                <Item codecType="VIDEO_ENCODER"/>
+                <Item mimeType="video/mp4v-es"/>
+                <Item isVendor="false"/>
+                <Item alignment="0-0"/>
+                <Item bitrateMode="VBR,CBR"/>
+                <Item width="2-1920"/>
+                <Item height="2-1080"/>
+                <Item bitrate="1-3000000"/>
+                <Item frameRate="1-30"/>
+                <Item blockPerSecond="1-36000"/>
+                <Item blockSize="16x16"/>
+                <Item format="YUVI420,NV21"/>
+                <Item profiles="MPEG4Simple,MPEG4AdvancedSimple"/>
+                <Item measuredFrameRate="720x480@1-40"/>
+            </VideoEncoder>
+    </VideoCodecs>
+</Codecs>

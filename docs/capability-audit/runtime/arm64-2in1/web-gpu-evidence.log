@@ -1,0 +1,10 @@
+# Compact, exact excerpts selected from the raw ArkWeb hilog captures.
+
+# backend=web-gpu-context
+eglCreateContext failed with error EGL_BAD_ATTRIBUTE
+
+# backend=web-gpu-context
+Failed to create shared context for virtualization
+
+# backend=web-gpu-context
+Failed to create SharedImageStub

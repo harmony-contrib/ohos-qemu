@@ -1,0 +1,183 @@
+{
+  "arch": "arm64",
+  "device": "phone",
+  "interpretation": {
+    "full_suite": "32 of 33 modules have zero failures; WindowManager is 1 pass / 3 fail because the new visible-layout, input-filter, injection, cursor, density-callback and snapshot-list APIs are intentionally 2in1-only and return documented device-boundary errors on phone."
+  },
+  "runs": [
+    {
+      "custom_screen_capture_granted": false,
+      "failed": 3,
+      "id": "full_suite",
+      "module_count": 33,
+      "modules": [
+        {
+          "failed": 0,
+          "module": "ability_access_control",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "ark_web",
+          "passed": 4
+        },
+        {
+          "failed": 0,
+          "module": "arkui",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "arkui_input",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "ashmem",
+          "passed": 3
+        },
+        {
+          "failed": 0,
+          "module": "asset",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "bundle",
+          "passed": 6
+        },
+        {
+          "failed": 0,
+          "module": "camera",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "display",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "display_soloist",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "drawing",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "fileshare",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "fileuri",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "hilog",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "huks",
+          "passed": 4
+        },
+        {
+          "failed": 0,
+          "module": "image",
+          "passed": 4
+        },
+        {
+          "failed": 0,
+          "module": "image_native",
+          "passed": 4
+        },
+        {
+          "failed": 0,
+          "module": "ime",
+          "passed": 3
+        },
+        {
+          "failed": 0,
+          "module": "init",
+          "passed": 3
+        },
+        {
+          "failed": 0,
+          "module": "jsvm",
+          "passed": 11
+        },
+        {
+          "failed": 0,
+          "module": "native_buffer",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "native_window",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "net_connection",
+          "passed": 5
+        },
+        {
+          "failed": 0,
+          "module": "net_stack",
+          "passed": 5
+        },
+        {
+          "failed": 0,
+          "module": "pasteboard",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "qos",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "raw",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "sensor",
+          "passed": 3
+        },
+        {
+          "failed": 0,
+          "module": "udmf",
+          "passed": 5
+        },
+        {
+          "failed": 0,
+          "module": "vibrator",
+          "passed": 2
+        },
+        {
+          "failed": 0,
+          "module": "vsync",
+          "passed": 4
+        },
+        {
+          "failed": 3,
+          "module": "window_manager",
+          "passed": 1
+        },
+        {
+          "failed": 0,
+          "module": "xcomponent",
+          "passed": 4
+        }
+      ],
+      "passed": 96
+    }
+  ]
+}

@@ -210,11 +210,11 @@
       "devices": {
         "phone": {
           "status": "partially_broken",
-          "evidence": "Native Child Process succeeds when enabled and returns 16010004 when disabled; required result is 801"
+          "evidence": "Native Child Process succeeds when enabled and returns 16010004 when disabled instead of required 801; the API 26 runtime module also omits the declared StartMode export"
         },
         "2in1": {
-          "status": "runtime_verified_subset",
-          "evidence": "21 native-child start/configs regression cases pass on ARM64"
+          "status": "partially_broken",
+          "evidence": "21 native-child start/config regression cases pass on ARM64, but the API 26 runtime module omits the declared StartMode export"
         }
       }
     },
@@ -703,12 +703,12 @@
       },
       "devices": {
         "phone": {
-          "status": "runtime_verified_subset",
-          "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks"
+          "status": "partially_broken",
+          "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks; however the API 26 startBlinking and stopBlinking runtime exports are absent"
         },
         "2in1": {
-          "status": "runtime_verified_subset",
-          "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks"
+          "status": "partially_broken",
+          "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks; however the API 26 startBlinking and stopBlinking runtime exports are absent"
         }
       }
     },
@@ -739,8 +739,8 @@
       },
       "devices": {
         "phone": {
-          "status": "runtime_verified_subset",
-          "evidence": "display/window basics and the real UI window work; ARM64 phone still lacks a complete method-level native regression run"
+          "status": "device_restricted_methods",
+          "evidence": "the complete ARM64 native suite passes 96 tests and fails only the three WindowManager groups that exercise 2in1-only visible-layout, input-filter, touch-injection, cursor, density-callback and snapshot-list methods; the real phone window remains functional and the restricted methods return documented device-boundary errors"
         },
         "2in1": {
           "status": "runtime_verified_subset",
@@ -751,16 +751,17 @@
     {
       "id": "peer-device-user-nat-isolation",
       "match": {
+        "prefixes": [
+          "SystemCapability.DistributedHardware.",
+          "SystemCapability.DistributedSched."
+        ],
         "exact": [
           "SystemCapability.Communication.SoftBus.Core",
           "SystemCapability.FileManagement.File.DistributedFile",
           "SystemCapability.Multimedia.AVSession.AVCast",
-          "SystemCapability.Multimedia.AVSession.AVInputCast"
-        ],
-        "prefixes": [
-          "SystemCapability.DistributedHardware.",
-          "SystemCapability.DistributedDataManager.",
-          "SystemCapability.DistributedSched."
+          "SystemCapability.Multimedia.AVSession.AVInputCast",
+          "SystemCapability.DistributedDataManager.DataObject.DistributedObject",
+          "SystemCapability.DistributedDataManager.KVStore.DistributedKVStore"
         ]
       },
       "devices": {
@@ -771,6 +772,2154 @@
         "2in1": {
           "status": "partially_broken",
           "evidence": "the default launcher uses QEMU user-mode NAT, which isolates emulator guests from peer discovery; distributed/SoftBus/cast behavior requires explicit bridge networking and a second device"
+        }
+      }
+    },
+    {
+      "id": "backup-init-invalid-linux-capability",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.StorageService.Backup"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "init rejects backup_sa because its packaged config requests nonexistent CAP_CHMOD; the service definition is discarded before API calls can reach it"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "init rejects backup_sa because its packaged config requests nonexistent CAP_CHMOD; the service definition is discarded before API calls can reach it"
+        }
+      }
+    },
+    {
+      "id": "i18n-core-and-customization-paths",
+      "match": {
+        "exact": [
+          "SystemCapability.Global.I18n"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "language, locale, 5-language and 245-country queries pass, but init uses nonexistent i18n_service owner and three packaged customization mount helpers are missing"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "language, locale, 5-language and 245-country queries pass, but init uses nonexistent i18n_service owner and three packaged customization mount helpers are missing"
+        }
+      }
+    },
+    {
+      "id": "huks-core-key-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.Huks.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "ArkTS AES-256 generate/has/delete lifecycle passes and native OH_Huks_GetSdkVersion returns 2.0.0.5"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "ArkTS AES-256 generate/has/delete lifecycle passes and native OH_Huks_GetSdkVersion returns 2.0.0.5"
+        }
+      }
+    },
+    {
+      "id": "huks-compatibility-helper-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.Huks.Extension"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "HUKS core key lifecycle works, but init cannot execute missing /system/bin/hks_compatibility_bin, so legacy compatibility migration is unavailable"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "HUKS core key lifecycle works, but init cannot execute missing /system/bin/hks_compatibility_bin, so legacy compatibility migration is unavailable"
+        }
+      }
+    },
+    {
+      "id": "egl-gles-software-renderer",
+      "match": {
+        "exact": [
+          "SystemCapability.Graphic.Graphic2D.EGL",
+          "SystemCapability.Graphic.Graphic2D.GLES2",
+          "SystemCapability.Graphic.Graphic2D.GLES3"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "native EGL pbuffer creation and GLES 2/3 contexts succeed through Mesa softpipe and report OpenGL ES 3.1"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "native EGL pbuffer creation and GLES 2/3 contexts succeed through Mesa softpipe and report OpenGL ES 3.1"
+        }
+      }
+    },
+    {
+      "id": "web-basic-load-gpu-context-failure",
+      "match": {
+        "exact": [
+          "SystemCapability.Web.Webview.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "HTTPS page begin/end, title and URL pass, but WebGL context evaluation never returns while ArkWeb repeatedly fails EGL shared context and SharedImageStub creation"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "HTTPS page begin/end, title and URL pass, but WebGL context evaluation never returns while ArkWeb repeatedly fails EGL shared context and SharedImageStub creation"
+        }
+      }
+    },
+    {
+      "id": "webgl-context-unavailable",
+      "match": {
+        "exact": [
+          "SystemCapability.Graphic.Graphic2D.WebGL",
+          "SystemCapability.Graphic.Graphic2D.WebGL2"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "WebView reaches the WebGL context probe, then never returns; ArkWeb logs EGL_BAD_ATTRIBUTE, shared virtualization context failure and SharedImageStub failure"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "WebView reaches the WebGL context probe, then never returns; ArkWeb logs EGL_BAD_ATTRIBUTE, shared virtualization context failure and SharedImageStub failure"
+        }
+      }
+    },
+    {
+      "id": "module-update-initializer-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Update.UpdateService"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "boot-time module_update_init cannot execute its packaged initializer because the executable is missing"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "boot-time module_update_init cannot execute its packaged initializer because the executable is missing"
+        }
+      }
+    },
+    {
+      "id": "usage-statistics-stale-init-profile",
+      "match": {
+        "exact": [
+          "SystemCapability.ResourceSchedule.UsageStatistics.App",
+          "SystemCapability.ResourceSchedule.UsageStatistics.AppGroup"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "SA 1907 responds, but a packaged device_usage_stats_service init definition has no path and is rejected during config parsing"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "SA 1907 responds, but a packaged device_usage_stats_service init definition has no path and is rejected during config parsing"
+        }
+      }
+    },
+    {
+      "id": "useriam-service-without-enrollment",
+      "match": {
+        "exact": [
+          "SystemCapability.UserIAM.UserAuth.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "fingerprint availability call reaches UserIAM and returns documented 12500010 because no template is enrolled"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "fingerprint availability call reaches UserIAM and returns documented 12500010 because no template is enrolled"
+        }
+      }
+    },
+    {
+      "id": "app-sandbox-file-io-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.File.FileIO"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 app creates, writes, reads and removes a sandbox file with the exact payload"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 app creates, writes, reads and removes a sandbox file with the exact payload"
+        }
+      }
+    },
+    {
+      "id": "local-preferences-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.DistributedDataManager.Preferences.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 Preferences put, flush, get, delete and second flush complete with the exact payload"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 Preferences put, flush, get, delete and second flush complete with the exact payload"
+        }
+      }
+    },
+    {
+      "id": "crypto-random-and-message-digest",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.CryptoFramework.Rand",
+          "SystemCapability.Security.CryptoFramework.MessageDigest"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 CryptoFramework returns 32 random bytes and a 32-byte SHA-256 digest"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 CryptoFramework returns 32 random bytes and a 32-byte SHA-256 digest"
+        }
+      }
+    },
+    {
+      "id": "bundle-self-query",
+      "match": {
+        "exact": [
+          "SystemCapability.BundleManager.BundleFramework"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "getBundleInfoForSelf returns the installed probe bundle and version"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "getBundleInfoForSelf returns the installed probe bundle and version"
+        }
+      }
+    },
+    {
+      "id": "notification-local-event-lifecycles",
+      "match": {
+        "exact": [
+          "SystemCapability.Notification.Notification",
+          "SystemCapability.Notification.Emitter",
+          "SystemCapability.Notification.CommonEvent"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "notification state query returns; Emitter and CommonEvent each deliver one callback after publish and unsubscribe cleanly"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "notification state query returns; Emitter and CommonEvent each deliver one callback after publish and unsubscribe cleanly"
+        }
+      }
+    },
+    {
+      "id": "pasteboard-permissioned-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.MiscServices.Pasteboard"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "system_basic probe with declared and granted READ_PASTEBOARD writes, reads the exact text and clears the pasteboard"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "system_basic probe with declared and granted READ_PASTEBOARD writes, reads the exact text and clears the pasteboard"
+        }
+      }
+    },
+    {
+      "id": "power-state-query",
+      "match": {
+        "exact": [
+          "SystemCapability.PowerManager.PowerManager.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "active, screen-on and power-mode queries return coherent live values"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "active, screen-on and power-mode queries return coherent live values"
+        }
+      }
+    },
+    {
+      "id": "system-time-and-timezone-query",
+      "match": {
+        "exact": [
+          "SystemCapability.MiscServices.Time"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "system time and Asia/Shanghai timezone queries return successfully"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "system time and Asia/Shanghai timezone queries return successfully"
+        }
+      }
+    },
+    {
+      "id": "wallpaper-color-query",
+      "match": {
+        "exact": [
+          "SystemCapability.MiscServices.Wallpaper"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "home-screen wallpaper color query returns one color"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "home-screen wallpaper color query returns one color"
+        }
+      }
+    },
+    {
+      "id": "input-device-enumeration",
+      "match": {
+        "exact": [
+          "SystemCapability.MultimodalInput.Input.InputDevice"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 enumerates the three packaged virtual input devices"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 enumerates the three packaged virtual input devices"
+        }
+      }
+    },
+    {
+      "id": "image-decode-pixelmap-encode-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Image.ImageSource",
+          "SystemCapability.Multimedia.Image.ImagePacker"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 decodes a 1x1 PNG, creates a PixelMap and encodes a valid 99-byte PNG"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 decodes a 1x1 PNG, creates a PixelMap and encodes a valid 99-byte PNG"
+        }
+      }
+    },
+    {
+      "id": "app-account-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Account.AppAccount"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates, enumerates and removes a local app account"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates, enumerates and removes a local app account"
+        }
+      }
+    },
+    {
+      "id": "relational-store-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.DistributedDataManager.RelationalStore.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates a local RDB table, inserts and queries the exact payload, then closes and deletes the database"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates a local RDB table, inserts and queries the exact payload, then closes and deletes the database"
+        }
+      }
+    },
+    {
+      "id": "asset-store-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.Asset"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 Asset Store add, query, update, second query and remove complete with the expected secret lengths"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 Asset Store add, query, update, second query and remove complete with the expected secret lengths"
+        }
+      }
+    },
+    {
+      "id": "contacts-lifecycle-and-device-contract",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.Contacts",
+          "SystemCapability.Applications.ContactsData"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "with READ_CONTACTS and WRITE_CONTACTS granted, API 26 adds, queries and removes a contact"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "the add/query/remove lifecycle works at runtime, but Contacts is advertised by this 2in1 image outside the official OHOS 7 2in1 SysCap contract"
+        }
+      }
+    },
+    {
+      "id": "calendar-lifecycle-device-difference",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.CalendarData"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "with READ_CALENDAR and WRITE_CALENDAR granted, API 26 creates, enumerates and removes a local calendar"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "the same signed API 26 HAP receives error 201 Permission denied from createCalendar after both calendar permissions report grantStatus 0; CalendarData is part of the official 2in1 contract"
+        }
+      }
+    },
+    {
+      "id": "oaid-device-difference",
+      "match": {
+        "exact": [
+          "SystemCapability.Advertising.OAID"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "getOAID returns the documented all-zero sentinel before APP_TRACKING_CONSENT is granted and a non-zero UUID-shaped identifier after the permission is granted"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "getOAID returns the documented all-zero sentinel before APP_TRACKING_CONSENT is granted and a non-zero UUID-shaped identifier after the permission is granted"
+        }
+      }
+    },
+    {
+      "id": "application-runtime-stage-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityBase",
+          "SystemCapability.Ability.AbilityRuntime.AbilityCore",
+          "SystemCapability.Base"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "the signed API 26 UIAbility installs, starts, creates its WindowStage, renders ArkUI, loads native code and completes asynchronous probes"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "the signed API 26 UIAbility installs, starts, creates its WindowStage, renders ArkUI, loads native code and completes asynchronous probes"
+        }
+      }
+    },
+    {
+      "id": "native-ui-input-regression",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.ArkUI.Napi",
+          "SystemCapability.Graphic.Graphic2D.NativeDrawing",
+          "SystemCapability.Graphic.Graphic2D.NativeVsync",
+          "SystemCapability.MultimodalInput.Input.Core",
+          "SystemCapability.Graphic.Graphic2D.NativeBuffer",
+          "SystemCapability.Graphic.Graphic2D.NativeImage",
+          "SystemCapability.Graphic.Graphic2D.NativeWindow"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "ARM64 native tests pass ArkUI construction and gesture event parsing, offscreen NativeDrawing canvas operations, and four NativeVsync lifecycle/callback cases; NativeBuffer allocation/reference/mapping, NativeImage lifecycle, and NativeWindow buffer-queue tests also pass"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "ARM64 native tests pass ArkUI construction and gesture event parsing, offscreen NativeDrawing canvas operations, and four NativeVsync lifecycle/callback cases; NativeBuffer allocation/reference/mapping, NativeImage lifecycle, and NativeWindow buffer-queue tests also pass"
+        }
+      }
+    },
+    {
+      "id": "hilog-native-levels",
+      "match": {
+        "exact": [
+          "SystemCapability.HiviewDFX.HiLog"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "the ARM64 native suite emits all supported HiLog levels without failure"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "the ARM64 native suite emits all supported HiLog levels without failure"
+        }
+      }
+    },
+    {
+      "id": "input-method-native-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.MiscServices.InputMethodFramework"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "three native IME tests pass hide/detach and add/show/attach/hide/detach lifecycles"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "three native IME tests pass hide/detach and add/show/attach/hide/detach lifecycles"
+        }
+      }
+    },
+    {
+      "id": "netstack-and-mdns-runtime",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetStack",
+          "SystemCapability.Communication.NetManager.MDNS"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "default-network queries, localhost and external DNS resolution, HTTPS Web loading, request/WebSocket construction and mDNS discovery startup complete"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "default-network queries, localhost and external DNS resolution, HTTPS Web loading, request/WebSocket construction and mDNS discovery startup complete"
+        }
+      }
+    },
+    {
+      "id": "crypto-cipher-key-and-mac-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.CryptoFramework",
+          "SystemCapability.Security.CryptoFramework.Cipher",
+          "SystemCapability.Security.CryptoFramework.Key",
+          "SystemCapability.Security.CryptoFramework.Key.SymKey",
+          "SystemCapability.Security.CryptoFramework.Mac"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 generates an AES-128 key, encrypts the exact payload with AES-ECB-PKCS7, converts an HMAC key and produces a 32-byte SHA-256 MAC"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 generates an AES-128 key, encrypts the exact payload with AES-ECB-PKCS7, converts an HMAC key and produces a 32-byte SHA-256 MAC"
+        }
+      }
+    },
+    {
+      "id": "local-kv-store-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.DistributedDataManager.KVStore.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates a single-version KV store, writes and reads the exact payload, deletes the key, closes the store and deletes the database"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates a single-version KV store, writes and reads the exact payload, deletes the key, closes the store and deletes the database"
+        }
+      }
+    },
+    {
+      "id": "zlib-file-roundtrip",
+      "match": {
+        "exact": [
+          "SystemCapability.BundleManager.Zlib"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 compresses a real sandbox file into a 156-byte archive and decompresses it successfully"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 compresses a real sandbox file into a 156-byte archive and decompresses it successfully"
+        }
+      }
+    },
+    {
+      "id": "dfx-application-event-and-checker",
+      "match": {
+        "exact": [
+          "SystemCapability.HiviewDFX.HiAppEvent",
+          "SystemCapability.HiviewDFX.HiChecker"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "HiAppEvent writes an application event and HiChecker adds then removes a runtime check rule"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "HiAppEvent writes an application event and HiChecker adds then removes a runtime check rule"
+        }
+      }
+    },
+    {
+      "id": "avsession-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.AVSession.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates an audio AVSession, activates it, deactivates it and destroys it"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 creates an audio AVSession, activates it, deactivates it and destroys it"
+        }
+      }
+    },
+    {
+      "id": "background-transient-task-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.ResourceSchedule.BackgroundTaskManager.TransientTask"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "requestSuspendDelay returns a live request ID and cancelSuspendDelay releases it"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "requestSuspendDelay returns a live request ID and cancelSuspendDelay releases it"
+        }
+      }
+    },
+    {
+      "id": "folder-obtain-device-contract-failure",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.File.Environment.FolderObtain"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "invalid_declaration",
+          "evidence": "the phone image advertises this 2in1-only capability outside its official profile and getUserDownloadDir returns documented unsupported error 801"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "FolderObtain is in the official 2in1 profile and canIUse returns true, but getUserDownloadDir returns unsupported error 801"
+        }
+      }
+    },
+    {
+      "id": "arkui-runtime-export-gaps",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.ArkUI.Full"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "ArkUI rendering and native gesture tests pass, but the API 26 runtime omits seven public matrix4 functions and multiple declared image-generation functions"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "ArkUI rendering and native gesture tests pass, but the API 26 runtime omits seven public matrix4 functions and multiple declared image-generation functions"
+        }
+      }
+    },
+    {
+      "id": "ethernet-api26-export-gaps",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.Ethernet"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "virtio Ethernet and the legacy interface APIs work, but API 26 disableEthernetInterface, enableEthernetInterface and isEthernetEnabled are absent from the runtime module"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "virtio Ethernet and the legacy interface APIs work, but API 26 disableEthernetInterface, enableEthernetInterface and isEthernetEnabled are absent from the runtime module"
+        }
+      }
+    },
+    {
+      "id": "vpn-runtime-export-gaps",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.Vpn"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "legacy VpnConnection exports load, but all declared system VPN configuration APIs and always-on VPN APIs from API 11/12/20 are absent"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "legacy VpnConnection exports load, but all declared system VPN configuration APIs and always-on VPN APIs from API 11/12/20 are absent"
+        }
+      }
+    },
+    {
+      "id": "system-app-ability-and-bundle-queries",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.QuickFix",
+          "SystemCapability.Ability.AppStartup",
+          "SystemCapability.Ability.Form",
+          "SystemCapability.BundleManager.BundleFramework.DefaultApp",
+          "SystemCapability.BundleManager.BundleFramework.Launcher",
+          "SystemCapability.BundleManager.BundleFramework.Overlay",
+          "SystemCapability.BundleManager.BundleFramework.Resource"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP reaches the Form and QuickFix services, enumerates launcher abilities and bundle resources, queries default-app state, and receives the documented no-overlay error for its ordinary entry module; AppStartup rejects an unconfigured task with documented parameter error 401"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP reaches the Form and QuickFix services, enumerates launcher abilities and bundle resources, queries default-app state, and receives the documented no-overlay error for its ordinary entry module; AppStartup rejects an unconfigured task with documented parameter error 401"
+        }
+      }
+    },
+    {
+      "id": "network-sharing-system-query",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.NetSharing"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP reports network sharing supported, currently inactive, with zero serving interfaces"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP reports network sharing supported, currently inactive, with zero serving interfaces"
+        }
+      }
+    },
+    {
+      "id": "customization-and-syscap-queries",
+      "match": {
+        "exact": [
+          "SystemCapability.Customization.ConfigPolicy",
+          "SystemCapability.Customization.CustomConfig",
+          "SystemCapability.Developtools.Syscap"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 returns four configuration-policy roots, a channel-ID string for the non-preinstalled probe, and a serialized system-capability document of length 175"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 returns four configuration-policy roots, a channel-ID string for the non-preinstalled probe, and a serialized system-capability document of length 175"
+        }
+      }
+    },
+    {
+      "id": "volume-and-notification-system-queries",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.StorageService.Volume",
+          "SystemCapability.Notification.NotificationSettings",
+          "SystemCapability.Notification.ReminderAgent"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP queries disks/volumes, DND settings and valid reminders successfully; the virtual image has no removable disk, DND schedule or reminders"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP queries disks/volumes, DND settings and valid reminders successfully; the virtual image has no removable disk, DND schedule or reminders"
+        }
+      }
+    },
+    {
+      "id": "resource-schedule-system-queries",
+      "match": {
+        "exact": [
+          "SystemCapability.ResourceSchedule.DeviceStandby",
+          "SystemCapability.ResourceSchedule.SystemLoad",
+          "SystemCapability.ResourceSchedule.WorkScheduler"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP queries exempted apps, live system-load level and scheduled work; all calls return successfully with the current empty/idle state"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP queries exempted apps, live system-load level and scheduled work; all calls return successfully with the current empty/idle state"
+        }
+      }
+    },
+    {
+      "id": "display-power-brightness-system-call",
+      "match": {
+        "exact": [
+          "SystemCapability.PowerManager.DisplayPowerManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP successfully applies the current maximum display-brightness value"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP successfully applies the current maximum display-brightness value"
+        }
+      }
+    },
+    {
+      "id": "drm-avplayer-and-image-object-lifecycles",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Drm.Core",
+          "SystemCapability.Multimedia.Media.AVPlayer",
+          "SystemCapability.Multimedia.Media.Core",
+          "SystemCapability.Multimedia.Image.ImageCreator",
+          "SystemCapability.Multimedia.Image.ImageReceiver"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 enumerates one DRM key system, creates and releases an AVPlayer, and creates and releases ImageCreator and ImageReceiver objects"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 enumerates one DRM key system, creates and releases an AVPlayer, and creates and releases ImageCreator and ImageReceiver objects"
+        }
+      }
+    },
+    {
+      "id": "screenlock-file-key-state-query",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.ScreenLockFileManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP successfully queries the probe application key state and receives documented KEY_NOT_EXIST (-2)"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP successfully queries the probe application key state and receives documented KEY_NOT_EXIST (-2)"
+        }
+      }
+    },
+    {
+      "id": "hisysevent-system-write",
+      "match": {
+        "exact": [
+          "SystemCapability.HiviewDFX.HiSysEvent"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP writes a behavior HiSysEvent successfully"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "A system-core API 26 HAP writes a behavior HiSysEvent successfully"
+        }
+      }
+    },
+    {
+      "id": "ui-appearance-live-query",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.UiAppearance"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 returns the current dark-mode and font-scale values"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 returns the current dark-mode and font-scale values"
+        }
+      }
+    },
+    {
+      "id": "device-attest-uninitialized",
+      "match": {
+        "exact": [
+          "SystemCapability.XTS.DeviceAttest"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "system-core API 26 reaches SA 5501 but authResult, softwareResult and all five detail fields remain DEVATTEST_INIT (-2) and ticket is empty; the packaged default OEM adapter has empty product ID and product key"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "system-core API 26 reaches SA 5501 but authResult, softwareResult and all five detail fields remain DEVATTEST_INIT (-2) and ticket is empty; the packaged default OEM adapter has empty product ID and product key"
+        }
+      }
+    },
+    {
+      "id": "api26-runtime-export-mismatches-phone",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core",
+          "SystemCapability.Ability.AbilityRuntime.FAModel",
+          "SystemCapability.Ability.AbilityRuntime.Mission",
+          "SystemCapability.Ability.AgentRuntime.Core",
+          "SystemCapability.Applications.ContactsData",
+          "SystemCapability.Applications.Settings.Core",
+          "SystemCapability.ArkUI.ArkUI.Circle",
+          "SystemCapability.ArkUI.ArkUI.Full",
+          "SystemCapability.BarrierFree.Accessibility.Core",
+          "SystemCapability.Communication.Bluetooth.Core",
+          "SystemCapability.Communication.IPC.Core",
+          "SystemCapability.Communication.NetManager.Ethernet",
+          "SystemCapability.Communication.NetManager.Vpn",
+          "SystemCapability.DistributedDataManager.CloudSync.Server",
+          "SystemCapability.DistributedDataManager.DataShare.Core",
+          "SystemCapability.DistributedDataManager.UDMF.Core",
+          "SystemCapability.DistributedHardware.DeviceManager",
+          "SystemCapability.FileManagement.PhotoAccessHelper.Core",
+          "SystemCapability.Global.I18n",
+          "SystemCapability.Global.ResourceManager",
+          "SystemCapability.Graphics.Drawing",
+          "SystemCapability.Location.Location.Core",
+          "SystemCapability.Location.Location.Geocoder",
+          "SystemCapability.Location.Location.Geofence",
+          "SystemCapability.Location.Location.Gnss",
+          "SystemCapability.MiscServices.ScreenLock",
+          "SystemCapability.Multimedia.Audio.Device",
+          "SystemCapability.Multimedia.Audio.Spatialization",
+          "SystemCapability.Multimedia.Audio.SuiteEngine",
+          "SystemCapability.Multimedia.Audio.Volume",
+          "SystemCapability.Multimedia.Camera.Core",
+          "SystemCapability.Multimedia.Image.Core",
+          "SystemCapability.Multimedia.Media.AVMetadataExtractor",
+          "SystemCapability.Multimedia.SystemSound.Core",
+          "SystemCapability.Telephony.CallManager",
+          "SystemCapability.Telephony.CoreService",
+          "SystemCapability.Telephony.SmsMms",
+          "SystemCapability.Telephony.StateRegistry",
+          "SystemCapability.Utils.Lang",
+          "SystemCapability.Web.Webview.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json"
+        }
+      }
+    },
+    {
+      "id": "api26-permission-registry-gaps-phone",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core",
+          "SystemCapability.Account.OsAccount",
+          "SystemCapability.BundleManager.BundleFramework.Core",
+          "SystemCapability.Communication.NetManager.Core",
+          "SystemCapability.MultimodalInput.Input.InputSimulator",
+          "SystemCapability.Resourceschedule.BackgroundProcessManager",
+          "SystemCapability.Sensors.Sensor",
+          "SystemCapability.Startup.SystemInfo",
+          "SystemCapability.WindowManager.WindowManager.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "one or more OHOS 7 documented permissions are absent from the packaged phone permission registry; see permission-audit.json"
+        }
+      }
+    },
+    {
+      "id": "api26-runtime-export-mismatches-2in1",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core",
+          "SystemCapability.Ability.AbilityRuntime.FAModel",
+          "SystemCapability.Ability.AbilityRuntime.Mission",
+          "SystemCapability.Ability.AgentRuntime.Core",
+          "SystemCapability.Applications.Settings.Core",
+          "SystemCapability.ArkUI.ArkUI.Circle",
+          "SystemCapability.ArkUI.ArkUI.Full",
+          "SystemCapability.BarrierFree.Accessibility.Core",
+          "SystemCapability.BusManager.Serial",
+          "SystemCapability.Communication.Bluetooth.Core",
+          "SystemCapability.Communication.IPC.Core",
+          "SystemCapability.Communication.NetManager.Ethernet",
+          "SystemCapability.Communication.NetManager.NetFirewall",
+          "SystemCapability.Communication.NetManager.Vpn",
+          "SystemCapability.DistributedDataManager.DataShare.Core",
+          "SystemCapability.DistributedDataManager.UDMF.Core",
+          "SystemCapability.DistributedHardware.DeviceManager",
+          "SystemCapability.FileManagement.PhotoAccessHelper.Core",
+          "SystemCapability.Global.I18n",
+          "SystemCapability.Global.ResourceManager",
+          "SystemCapability.Graphics.Drawing",
+          "SystemCapability.MiscServices.ScreenLock",
+          "SystemCapability.Multimedia.Audio.Device",
+          "SystemCapability.Multimedia.Audio.Spatialization",
+          "SystemCapability.Multimedia.Audio.Volume",
+          "SystemCapability.Multimedia.Image.Core",
+          "SystemCapability.Multimedia.Media.AVMetadataExtractor",
+          "SystemCapability.Multimedia.SystemSound.Core",
+          "SystemCapability.Utils.Lang",
+          "SystemCapability.Web.Webview.Core"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged 2in1 ArkTS module; see arkts-export-surface-latest.json"
+        }
+      }
+    },
+    {
+      "id": "api26-permission-registry-gaps-2in1",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core",
+          "SystemCapability.Account.OsAccount",
+          "SystemCapability.BundleManager.BundleFramework.Core",
+          "SystemCapability.Communication.NetManager.Core",
+          "SystemCapability.Communication.NetManager.NetFirewall",
+          "SystemCapability.MultimodalInput.Input.InputSimulator",
+          "SystemCapability.Print.PrintFramework",
+          "SystemCapability.Security.DataLossPrevention",
+          "SystemCapability.Startup.SystemInfo",
+          "SystemCapability.WindowManager.WindowManager.Core"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "one or more OHOS 7 documented permissions are absent from the packaged 2in1 permission registry; see permission-audit.json"
+        }
+      }
+    },
+    {
+      "id": "photo-editor-extension-provider-required",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AppExtension.PhotoEditorExtension"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "conditional_external_dependency",
+          "evidence": "framework type is packaged, but end-to-end behavior requires a photo application to invoke an installed PhotoEditorExtension"
+        },
+        "2in1": {
+          "status": "conditional_external_dependency",
+          "evidence": "framework type is packaged, but end-to-end behavior requires a photo application to invoke an installed PhotoEditorExtension"
+        }
+      }
+    },
+    {
+      "id": "distributed-manager-peer-required",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.DistributedAbilityManager",
+          "SystemCapability.BundleManager.DistributedBundleFramework"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "conditional_external_dependency",
+          "evidence": "module loads, but end-to-end behavior requires a discoverable trusted peer; user-mode QEMU NAT exposes no peer"
+        },
+        "2in1": {
+          "status": "conditional_external_dependency",
+          "evidence": "module loads, but end-to-end behavior requires a discoverable trusted peer; user-mode QEMU NAT exposes no peer"
+        }
+      }
+    },
+    {
+      "id": "advertising-service-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Advertising.Ads"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "ads_framework configuration targets com.samples.AdsServiceDemo, but that bundle is absent from the image"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "ads_framework configuration targets com.samples.AdsServiceDemo, but that bundle is absent from the image"
+        }
+      }
+    },
+    {
+      "id": "intelligent-scene-notification-query-fails",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.IntelligentScene"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 system HAP calls isDoNotDisturbEnabled/isNotifyAllowedInDoNotDisturb and receives internal error 35200001"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 system HAP calls isDoNotDisturbEnabled/isNotifyAllowedInDoNotDisturb and receives internal error 35200001"
+        }
+      }
+    },
+    {
+      "id": "native-runtime-support-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.ArkUI.Libuv",
+          "SystemCapability.HiviewDFX.HiCollie",
+          "SystemCapability.Resourceschedule.Ffrt.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe executes libuv 1.52, an FFRT task, and a HiCollie timer lifecycle successfully"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe executes libuv 1.52, an FFRT task, and a HiCollie timer lifecycle successfully"
+        }
+      }
+    },
+    {
+      "id": "arkui-lite-router-query",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.ArkUI.Lite"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP loads a page and router.getState returns the active route"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP loads a page and router.getState returns the active route"
+        }
+      }
+    },
+    {
+      "id": "graphics3d-scene-manager-unavailable",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUi.Graphics3D"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 Scene.load() fails with \"Creating scene manager failed\" although the module and graphics3d libraries are packaged"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 Scene.load() fails with \"Creating scene manager failed\" although the module and graphics3d libraries are packaged"
+        }
+      }
+    },
+    {
+      "id": "accessibility-hearing-caption-manager",
+      "match": {
+        "exact": [
+          "SystemCapability.BarrierFree.Accessibility.Hearing"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP obtains CaptionsManager and reads enabled=false without error"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP obtains CaptionsManager and reads enabled=false without error"
+        }
+      }
+    },
+    {
+      "id": "bundle-policy-query-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.BundleManager.BundleFramework.AppControl"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP executes getAllDisposedRules and receives an empty rule list"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP executes getAllDisposedRules and receives an empty rule list"
+        }
+      }
+    },
+    {
+      "id": "app-domain-query-probe",
+      "match": {
+        "exact": [
+          "SystemCapability.BundleManager.AppDomainVerify"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP executes associated-domain and bundle-name queries without error"
+        }
+      }
+    },
+    {
+      "id": "free-install-system-role",
+      "match": {
+        "exact": [
+          "SystemCapability.BundleManager.BundleFramework.FreeInstall"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "role_restricted",
+          "evidence": "runtime module is packaged, but all documented operations require INSTALL_BUNDLE or GET_BUNDLE_INFO_PRIVILEGED and a free-install dispatch role"
+        },
+        "2in1": {
+          "status": "role_restricted",
+          "evidence": "runtime module is packaged, but all documented operations require INSTALL_BUNDLE or GET_BUNDLE_INFO_PRIVILEGED and a free-install dispatch role"
+        }
+      }
+    },
+    {
+      "id": "enterprise-admin-query-probe",
+      "match": {
+        "exact": [
+          "SystemCapability.Customization.EnterpriseDeviceManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP executes isSuperAdmin for itself and returns false without backend error"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP executes isSuperAdmin for itself and returns false without backend error"
+        }
+      }
+    },
+    {
+      "id": "cloud-provider-and-account-required",
+      "match": {
+        "exact": [
+          "SystemCapability.DistributedDataManager.CloudSync.Client",
+          "SystemCapability.DistributedDataManager.CloudSync.Config",
+          "SystemCapability.FileManagement.DistributedFileService.CloudSync.Core",
+          "SystemCapability.FileManagement.DistributedFileService.CloudSyncManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "conditional_external_dependency",
+          "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role"
+        },
+        "2in1": {
+          "status": "conditional_external_dependency",
+          "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role"
+        }
+      }
+    },
+    {
+      "id": "distributed-common-types",
+      "match": {
+        "exact": [
+          "SystemCapability.DistributedDataManager.CommonType"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "compile_time_verified",
+          "evidence": "capability contains shared compile-time data contracts and has no independent runtime operation"
+        },
+        "2in1": {
+          "status": "compile_time_verified",
+          "evidence": "capability contains shared compile-time data contracts and has no independent runtime operation"
+        }
+      }
+    },
+    {
+      "id": "app-file-service-native-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.AppFileService",
+          "SystemCapability.FileManagement.AppFileService.FolderAuthorization"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "native ohostest fileuri/fileshare suites pass on ARM64 for both products"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "native ohostest fileuri/fileshare suites pass on ARM64 for both products"
+        }
+      }
+    },
+    {
+      "id": "file-environment-user-data",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.File.Environment"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP obtains the user data directory; the separately-scoped FolderObtain download-directory failure remains recorded"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP obtains the user data directory; the separately-scoped FolderObtain download-directory failure remains recorded"
+        }
+      }
+    },
+    {
+      "id": "storage-key-lockscreen-role",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.StorageService.Encryption"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "role_restricted",
+          "evidence": "the only documented API, deactivateUserKey, is restricted to the lock-screen system role"
+        },
+        "2in1": {
+          "status": "role_restricted",
+          "evidence": "the only documented API, deactivateUserKey, is restricted to the lock-screen system role"
+        }
+      }
+    },
+    {
+      "id": "user-file-service-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.UserFileManager.Core",
+          "SystemCapability.FileManagement.UserFileService"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates/releases UserFileManager and enumerates FileAccess roots"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates/releases UserFileManager and enumerates FileAccess roots"
+        }
+      }
+    },
+    {
+      "id": "distributed-user-file-peer-required",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.UserFileManager.DistributedCore"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "conditional_external_dependency",
+          "evidence": "distributed user-file operations require a discoverable trusted peer, which user-mode QEMU NAT does not provide"
+        }
+      }
+    },
+    {
+      "id": "folder-selection-interactive-contract",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.UserFileService.FolderSelection"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "interactive_ui_required",
+          "evidence": "folder selection is a user-driven picker contract and requires interactive UI validation"
+        },
+        "2in1": {
+          "status": "interactive_ui_required",
+          "evidence": "folder selection is a user-driven picker contract and requires interactive UI validation"
+        }
+      }
+    },
+    {
+      "id": "graphics-color-and-soloist-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.Graphic.Graphic2D.ColorManager.Core",
+          "SystemCapability.Graphic.Graphic2D.HyperGraphicManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 ColorSpace query succeeds and the native display-soloist suite passes"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 ColorSpace query succeeds and the native display-soloist suite passes"
+        }
+      }
+    },
+    {
+      "id": "dfx-query-and-timer-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.HiviewDFX.HiRetrieval",
+          "SystemCapability.HiviewDFX.Hiview.FaultLogger",
+          "SystemCapability.HiviewDFX.Hiview.LogLibrary"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP executes participant, fault-log and log-library queries without error"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP executes participant, fault-log and log-library queries without error"
+        }
+      }
+    },
+    {
+      "id": "request-download-upload-local-server",
+      "match": {
+        "exact": [
+          "SystemCapability.MiscServices.Download",
+          "SystemCapability.MiscServices.Upload"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP completes a download and upload against the QEMU host; the host observes HTTP GET and POST and the downloaded file exists"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP completes a download and upload against the QEMU host; the host observes HTTP GET and POST and the downloaded file exists"
+        }
+      }
+    },
+    {
+      "id": "avsession-manager-probe",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.AVSession.Manager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP obtains AVSessionManager, creates an active session, then destroys it"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP obtains AVSessionManager, creates an active session, then destroys it"
+        }
+      }
+    },
+    {
+      "id": "audio-interrupt-haptic-renderer-dependency",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Audio.Interrupt",
+          "SystemCapability.Multimedia.AudioHaptic.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "manager objects are available, but the native audio renderer Start returns 2 with no callback data, so interrupt/playback-dependent behavior cannot complete"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "manager objects are available, but the native audio renderer Start returns 2 with no callback data, so interrupt/playback-dependent behavior cannot complete"
+        }
+      }
+    },
+    {
+      "id": "media-object-lifecycle-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.AVImageGenerator",
+          "SystemCapability.Multimedia.Media.AVScreenCapture",
+          "SystemCapability.Multimedia.Media.AVTranscoder"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates and releases the media object successfully"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates and releases the media object successfully"
+        }
+      }
+    },
+    {
+      "id": "media-audio-codec-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.AudioCodec",
+          "SystemCapability.Multimedia.Media.AudioDecoder",
+          "SystemCapability.Multimedia.Media.AudioEncoder"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe enumerates codec capabilities and creates/destroys audio encoder and decoder instances"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe enumerates codec capabilities and creates/destroys audio encoder and decoder instances"
+        }
+      }
+    },
+    {
+      "id": "media-codec-base-partial",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.CodecBase"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "codec enumeration and audio/video decode work, but both advertised video encoder instances fail creation"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "codec enumeration and audio/video decode work, but both advertised video encoder instances fail creation"
+        }
+      }
+    },
+    {
+      "id": "media-container-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.Muxer",
+          "SystemCapability.Multimedia.Media.Spliter"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe creates/destroys an MP4 muxer and creates a WAV source/demuxer"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe creates/destroys an MP4 muxer and creates a WAV source/demuxer"
+        }
+      }
+    },
+    {
+      "id": "media-video-decoder-probe",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.VideoDecoder"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe creates and destroys an advertised video decoder"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 native probe creates and destroys an advertised video decoder"
+        }
+      }
+    },
+    {
+      "id": "media-video-encoder-creation-failure",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.VideoEncoder"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "both advertised OMX.rk AVC and HEVC video encoders fail instance creation on ARM64"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "both advertised OMX.rk AVC and HEVC video encoders fail instance creation on ARM64"
+        }
+      }
+    },
+    {
+      "id": "legacy-video-player-lifecycle",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.VideoPlayer"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates and releases the deprecated VideoPlayer object successfully"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates and releases the deprecated VideoPlayer object successfully"
+        }
+      }
+    },
+    {
+      "id": "input-manager-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.MultimodalInput.Input.InputConsumer",
+          "SystemCapability.MultimodalInput.Input.InputMonitor",
+          "SystemCapability.MultimodalInput.Input.Pointer"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP queries hotkeys/pointer state and registers/removes an input monitor"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP queries hotkeys/pointer state and registers/removes an input monitor"
+        }
+      }
+    },
+    {
+      "id": "input-cooperator-peer-required",
+      "match": {
+        "exact": [
+          "SystemCapability.MultimodalInput.Input.Cooperator"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "conditional_external_dependency",
+          "evidence": "input cooperation requires a discoverable trusted peer and a second input endpoint"
+        }
+      }
+    },
+    {
+      "id": "shortkey-empty-launch-config",
+      "match": {
+        "exact": [
+          "SystemCapability.MultimodalInput.Input.ShortKey"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "ability_launch_config.json has empty Shortkeys/Sequences and setKeyDownDuration for the documented businessId returns 401"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "ability_launch_config.json has empty Shortkeys/Sequences and setKeyDownDuration for the documented businessId returns 401"
+        }
+      }
+    },
+    {
+      "id": "battery-statistics-query",
+      "match": {
+        "exact": [
+          "SystemCapability.PowerManager.BatteryStatistics"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP returns five battery statistic entries"
+        }
+      }
+    },
+    {
+      "id": "file-transfer-agent-query",
+      "match": {
+        "exact": [
+          "SystemCapability.Request.FileTransferAgent"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP executes request.agent.search and receives an empty task list"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP executes request.agent.search and receives an empty task list"
+        }
+      }
+    },
+    {
+      "id": "background-task-query-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.ResourceSchedule.BackgroundTaskManager.ContinuousTask",
+          "SystemCapability.ResourceSchedule.BackgroundTaskManager.EfficiencyResourcesApply"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP queries continuous tasks and efficiency resources without error"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 system HAP queries continuous tasks and efficiency resources without error"
+        }
+      }
+    },
+    {
+      "id": "certificate-parser-and-crypto-probes",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.Cert",
+          "SystemCapability.Security.CryptoFramework.Kdf",
+          "SystemCapability.Security.CryptoFramework.Key.AsymKey",
+          "SystemCapability.Security.CryptoFramework.KeyAgreement",
+          "SystemCapability.Security.CryptoFramework.Signature"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates a PKIX validator and completes PBKDF2, RSA signing/verification and X25519 agreement"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP creates a PKIX validator and completes PBKDF2, RSA signing/verification and X25519 agreement"
+        }
+      }
+    },
+    {
+      "id": "certificate-manager-undefined-result",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.CertificateManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "getAllAppPrivateCertificates resolves undefined although its OHOS 7 Promise contract returns CMResult"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "getAllAppPrivateCertificates resolves undefined although its OHOS 7 Promise contract returns CMResult"
+        }
+      }
+    },
+    {
+      "id": "certificate-dialog-device-result",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.CertificateManagerDialog"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "supportsCACertDialog returns false on phone"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "supportsCACertDialog returns true on 2in1"
+        }
+      }
+    },
+    {
+      "id": "legacy-cipher-replacement-backend",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.Cipher"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "legacy @system.cipher module loads and its documented CryptoFramework replacement completes AES/RSA operations"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "legacy @system.cipher module loads and its documented CryptoFramework replacement completes AES/RSA operations"
+        }
+      }
+    },
+    {
+      "id": "security-guard-empty-model-config",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.SecurityGuard"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "security_guard_model.cfg contains an empty model list; a model-result query returns 401"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "security_guard_model.cfg contains an empty model list; a model-result query returns 401"
+        }
+      }
+    },
+    {
+      "id": "test-kit-harness-only",
+      "match": {
+        "exact": [
+          "SystemCapability.Test.PerfTest",
+          "SystemCapability.Test.UiTest"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "test_harness_only",
+          "evidence": "OHOS 7 checker restricts these APIs to test directories; calling Driver from a normal HAP returns null and PerfTest cannot complete"
+        },
+        "2in1": {
+          "status": "test_harness_only",
+          "evidence": "OHOS 7 checker restricts these APIs to test directories; calling Driver from a normal HAP returns null and PerfTest cannot complete"
+        }
+      }
+    },
+    {
+      "id": "ability-share-picker-system-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "startAbilityByType('share') initially resolves, then reports callback error 16000050 because com.ohos.sharepickerdialog is listed in system configuration but absent from the image and BMS"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "startAbilityByType('share') initially resolves, then reports callback error 16000050 because com.ohos.sharepickerdialog is listed in system configuration but absent from the image and BMS"
+        }
+      }
+    },
+    {
+      "id": "avcast-media-controller-provider-mismatch",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.AVSession.AVCast",
+          "SystemCapability.Multimedia.AVSession.AVInputCast"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "AVCastPickerHelper.select resolves success without starting a picker; no media-controller provider exists in the phone image"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "the image payload is com.hmos.mediacontroller but it is not preinstalled; JS NAPI and ANI implementations target absent com.ohos.mediacontroller, still resolve success, and the payload also lacks AVInputCastPickerAbility"
+        }
+      }
+    },
+    {
+      "id": "media-control-volume-provider-activation",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Audio.Volume"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "AVVolumePanel source depends on com.hmos.mediacontroller, which is absent from the phone image"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "com.hmos.mediacontroller contains AVVolumeExtension but its HAP is omitted from the preinstall list and absent from BMS"
+        }
+      }
+    },
+    {
+      "id": "distributed-hardware-ui-preinstall-path-mismatch",
+      "match": {
+        "exact": [
+          "SystemCapability.DistributedHardware.DeviceManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "DHardware_UI.hap exists under /system/app/DHardware_UI and installs manually, while install_list.json points to absent /system/app/com.ohos.dhardwareui; BMS does not register it"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "DHardware_UI.hap exists under /system/app/DHardware_UI and installs manually, while install_list.json points to absent /system/app/com.ohos.dhardwareui; BMS does not register it"
+        }
+      }
+    },
+    {
+      "id": "photo-provider-not-activated-2in1",
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.PhotoAccessHelper.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "PhotoViewPicker starts com.ohos.photos/PickerUIExtensionAbility in the foreground"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "PhotoViewPicker returns an empty PhotoSelectResult without a usable UI; Photos.hap is present but not registered and manual installation is rejected because its certificate does not match install_list_capability.json"
+        }
+      }
+    },
+    {
+      "id": "system-provider-signature-policy-2in1",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.CalendarData",
+          "SystemCapability.Print.PrintFramework",
+          "SystemCapability.Security.DataLossPrevention"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "CalendarData, PrintSpooler and DLP HAP payloads are present but absent from BMS; manual installation fails capability-list signature or privileged-extension checks because packaged certificates differ from install_list_capability.json"
+        }
+      }
+    },
+    {
+      "id": "settings-ui-provider-not-activated-2in1",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.Settings.Core"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "Settings DataShare reads work, but the com.ohos.settings UI HAP and its public system-dialog/UIExtension entrypoints are present yet not registered; SceneBoard does not provide those Settings-specific entrypoints"
+        }
+      }
+    },
+    {
+      "id": "enterprise-provisioning-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Customization.EnterpriseDeviceManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "basic EDM service queries work, but production EDM code targets com.ohos.adminprovisioning and the provider payload is absent"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "basic EDM service queries work, but production EDM code targets com.ohos.adminprovisioning and the provider payload is absent"
+        }
+      }
+    },
+    {
+      "id": "wallpaper-ui-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.MiscServices.Wallpaper"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider payload is absent"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider payload is absent"
+        }
+      }
+    },
+    {
+      "id": "access-token-open-setting-entrypoint-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.AccessToken"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "AccessToken service defaults to com.ohos.permissionmanager.OpenSettingAbility, but the enabled PermissionManager HAP does not declare that ability or extension"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "AccessToken service defaults to com.ohos.permissionmanager.OpenSettingAbility, but the enabled PermissionManager HAP does not declare that ability or extension"
+        }
+      }
+    },
+    {
+      "id": "accessibility-screen-reader-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.BarrierFree.Accessibility.Core",
+          "SystemCapability.BarrierFree.Accessibility.Vision"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged"
+        }
+      }
+    },
+    {
+      "id": "accessibility-caption-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.BarrierFree.Accessibility.Hearing"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "CaptionsManager state queries work, but enabling the caption assistant targets absent com.ohos.vassistant/AiCaptionServiceExtAbility"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "CaptionsManager state queries work, but enabling the caption assistant targets absent com.ohos.vassistant/AiCaptionServiceExtAbility"
         }
       }
     }

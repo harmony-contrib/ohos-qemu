@@ -1,0 +1,16 @@
+--- /system/app/com.ohos.photos/Photos.hap
+error: failed to install bundle.
+code:9568344
+error: install parse profile prop check error.
+--- /system/app/com.ohos.calendardata/CalendarData.hap
+error: failed to install bundle.
+code:9568344
+error: install parse profile prop check error.
+--- /system/app/com.ohos.launcher/Launcher.hap
+install bundle successfully.
+--- /system/app/com.ohos.systemui/SystemUI.hap
+install bundle successfully.
+--- /system/app/com.ohos.spooler/PrintSpooler.hap
+error: failed to install bundle.
+code:9568344
+error: install parse profile prop check error.

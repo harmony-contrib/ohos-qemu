@@ -17,15 +17,20 @@
       "usability_status_counts": {
         "advertised_outside_device_contract": 360,
         "api_surface_missing": 239,
-        "behavior_failure_confirmed_for_capability": 1845,
-        "behavior_validation_pending": 27735,
-        "capability_partial_failure_method_pending": 3018,
+        "behavior_failure_confirmed_for_capability": 4286,
+        "capability_classified_method_not_individually_executed": 13,
+        "capability_partial_failure_method_not_individually_executed": 18715,
+        "capability_subset_verified_method_not_individually_executed": 9140,
         "conditional_contract_requires_runtime_case": 146,
         "device_contract_review_required": 68,
         "documentation_missing_syscap_contract": 180,
         "documented_unsupported_on_device": 578,
+        "external_dependency_required": 71,
+        "interactive_ui_required": 5,
         "permission_registry_failure": 56,
-        "profile_or_packaging_failure": 3695
+        "privileged_role_required": 9,
+        "profile_or_packaging_failure": 3836,
+        "test_harness_required": 218
       }
     },
     "phone": {
@@ -42,16 +47,20 @@
       "usability_status_counts": {
         "advertised_outside_device_contract": 388,
         "api_surface_missing": 306,
-        "behavior_failure_confirmed_for_capability": 2985,
-        "behavior_validation_pending": 27161,
-        "capability_partial_failure_method_pending": 4003,
+        "behavior_failure_confirmed_for_capability": 4395,
+        "capability_classified_method_not_individually_executed": 2,
+        "capability_partial_failure_method_not_individually_executed": 19929,
+        "capability_subset_verified_method_not_individually_executed": 9337,
         "conditional_contract_requires_runtime_case": 146,
         "device_contract_review_required": 76,
         "documentation_missing_syscap_contract": 179,
         "documented_unsupported_on_device": 753,
-        "method_boundary_failure": 9,
+        "external_dependency_required": 250,
+        "interactive_ui_required": 3,
         "permission_registry_failure": 44,
-        "profile_or_packaging_failure": 1870
+        "privileged_role_required": 9,
+        "profile_or_packaging_failure": 1885,
+        "test_harness_required": 218
       }
     }
   },
