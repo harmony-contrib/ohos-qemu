@@ -157,9 +157,13 @@ write(
                 {"name": "ohos.permission.LOCATION", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
                 {"name": "ohos.permission.APPROXIMATELY_LOCATION", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
                 {"name": "ohos.permission.GET_NETWORK_INFO"},
+                {"name": "ohos.permission.INTERNET"},
                 {"name": "ohos.permission.GET_WIFI_INFO"},
+                {"name": "ohos.permission.APP_TRACKING_CONSENT", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
+                {"name": "ohos.permission.ACCESS_BIOMETRIC", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
                 {"name": "ohos.permission.VIBRATE"},
                 {"name": "ohos.permission.MANAGE_INPUT_INFRARED_EMITTER"},
+                {"name": "ohos.permission.PRINT", "reason": "$string:permission_reason", "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}},
             ],
             "abilities": [
                 {
@@ -192,16 +196,17 @@ import usbManager from '@ohos.usbManager';
 import usbSerial from '@ohos.usbManager.serial';
 import audio from '@ohos.multimedia.audio';
 import settings from '@ohos.settings';
-import sensor from '@ohos.sensor';
-import geoLocationManager from '@ohos.geoLocationManager';
-import ethernet from '@ohos.net.ethernet';
-import image from '@ohos.multimedia.image';
-import matrix4 from '@ohos.matrix4';
-import display from '@ohos.display';
-import emitter from '@ohos.events.emitter';
-import telephonyObserver from '@ohos.telephony.observer';
-import wifiManager from '@ohos.wifiManager';
-import errorManager from '@ohos.app.ability.errorManager';
+import connection from '@ohos.net.connection';
+import mdns from '@ohos.net.mdns';
+import identifier from '@ohos.identifier.oaid';
+import deviceInfo from '@ohos.deviceInfo';
+import { userAuth } from '@kit.UserAuthenticationKit';
+import selectionManager from '@ohos.selectionInput.selectionManager';
+import pipWindow from '@ohos.PiPWindow';
+import floatingBall from '@ohos.window.floatingBall';
+import floatView from '@ohos.window.floatView';
+import printManager from '@ohos.print';
+import i18n from '@ohos.i18n';
 import probe from 'libcapabilityprobe.so';
 const PUBLIC_OHOS_MODULES: string[] = __API_MODULES__;
 const PUBLIC_SYSCAPS: string[] = __PUBLIC_SYSCAPS__;
@@ -217,7 +222,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   private errorText(error: object): string {
-    return JSON.stringify(error);
+    return error.toString() + ':' + JSON.stringify(error);
   }
 
   private async runArkTsProbes(): Promise<void> {
@@ -230,16 +235,43 @@ export default class EntryAbility extends UIAbility {
       this.report('syscap.canIUse.' + PUBLIC_SYSCAPS[index], enabled.toString());
     }
     this.report('syscap.canIUse.summary', 'enabled:' + enabledSysCaps.toString() + ',total:' + PUBLIC_SYSCAPS.length.toString());
-    this.report('arkts.static_export.sensor.onAccelerometerChange', typeof sensor.onAccelerometerChange);
-    this.report('arkts.static_export.location.getCurrentDistrict', typeof geoLocationManager.getCurrentDistrict);
-    this.report('arkts.static_export.ethernet.enableEthernetInterface', typeof ethernet.enableEthernetInterface);
-    this.report('arkts.static_export.image.createIncrementalSource', typeof image.createIncrementalSource);
-    this.report('arkts.static_export.matrix4.combine', typeof matrix4.combine);
-    this.report('arkts.static_export.display.onAdd', typeof display.onAdd);
-    this.report('arkts.static_export.emitter.onEventData', typeof emitter.onEventData);
-    this.report('arkts.static_export.telephony.onNetworkStateChange', typeof telephonyObserver.onNetworkStateChange);
-    this.report('arkts.static_export.wifi.onWifiStateChange', typeof wifiManager.onWifiStateChange);
-    this.report('arkts.static_export.errorManager.onUnhandledRejection', typeof errorManager.onUnhandledRejection);
+    try {
+      const oaid = await identifier.getOAID();
+      this.report('advertising.oaid.result', oaid);
+    } catch (error) {
+      this.report('advertising.oaid.error', this.errorText(error));
+    }
+    try {
+      const discovery = mdns.createDiscoveryService(this.context, '_http._tcp');
+      discovery.startSearchingMDNS();
+      this.report('network.mdns.discovery.result', 'started:true');
+      discovery.stopSearchingMDNS();
+    } catch (error) {
+      this.report('network.mdns.discovery.error', this.errorText(error));
+    }
+    try {
+      const addresses = await connection.getAddressesByName('localhost');
+      this.report('network.dns.localhost.result', JSON.stringify(addresses));
+      const externalAddresses = await connection.getAddressesByName('example.com');
+      this.report('network.dns.external.result', JSON.stringify(externalAddresses));
+    } catch (error) {
+      this.report('network.dns.localhost.error', this.errorText(error));
+    }
+    try {
+      this.report('device.info.type.result', deviceInfo.deviceType);
+      this.report('device.info.product_model.result', deviceInfo.productModel);
+    } catch (error) {
+      this.report('device.info.error', this.errorText(error));
+    }
+    try {
+      userAuth.getAvailableStatus(
+        userAuth.UserAuthType.FINGERPRINT,
+        userAuth.AuthTrustLevel.ATL1
+      );
+      this.report('useriam.fingerprint.available_status.result', 'available:true');
+    } catch (error) {
+      this.report('useriam.fingerprint.available_status.error', this.errorText(error));
+    }
     try {
       const brightnessKey = settings.display.SCREEN_BRIGHTNESS_STATUS;
       const brightnessUri = settings.getUriSync(brightnessKey);
@@ -297,6 +329,45 @@ export default class EntryAbility extends UIAbility {
       this.report('infrared.has_emitter.result', hasEmitter.toString());
     } catch (error) {
       this.report('infrared.has_emitter.error', this.errorText(error));
+    }
+    try {
+      const selectionListener = (info: selectionManager.SelectionInfo): void => {
+        this.report('selection.completed.callback', JSON.stringify(info));
+      };
+      selectionManager.on('selectionCompleted', selectionListener);
+      this.report('selection.listener.result', 'registered:true');
+      selectionManager.off('selectionCompleted', selectionListener);
+      this.report('selection.listener.stop', 'success:true');
+    } catch (error) {
+      this.report('selection.listener.error', this.errorText(error));
+    }
+    try {
+      const content = await selectionManager.getSelectionContent();
+      this.report('selection.content.result', JSON.stringify(content));
+    } catch (error) {
+      this.report('selection.content.error', this.errorText(error));
+    }
+    try {
+      this.report('window.pip.enabled', pipWindow.isPiPEnabled().toString());
+      this.report('window.floating_ball.enabled', floatingBall.isFloatingBallEnabled().toString());
+      this.report('window.float_view.enabled', floatView.isFloatViewEnabled().toString());
+    } catch (error) {
+      this.report('window.session_features.error', this.errorText(error));
+    }
+    try {
+      await printManager.startDiscoverPrinter([]);
+      this.report('print.discovery.result', 'started:true');
+      await printManager.stopDiscoverPrinter();
+      this.report('print.discovery.stop', 'success:true');
+    } catch (error) {
+      this.report('print.discovery.error', this.errorText(error));
+    }
+    try {
+      this.report('i18n.system_language.result', i18n.getSystemLanguage());
+      this.report('i18n.system_region.result', i18n.getSystemRegion());
+      this.report('i18n.system_locale.result', i18n.getSystemLocale());
+    } catch (error) {
+      this.report('i18n.system.error', this.errorText(error));
     }
     let loaded: number = 0;
     for (let index = 0; index < PUBLIC_OHOS_MODULES.length; index++) {

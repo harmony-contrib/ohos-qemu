@@ -15,7 +15,9 @@ LOAD_RE = re.compile(
     r"^module\.load=(.*?)\|status:(\d+)\|exception:(\d+)\|type:(\d+)$"
 )
 EXPORTS_RE = re.compile(r"^module\.exports=(.*?)\|status:(\d+)\|count:(\d+)$")
-EXPORT_RE = re.compile(r"^module\.export=(.*?)\|index:(\d+)\|key:(.*)$")
+EXPORT_RE = re.compile(
+    r"^module\.export=(.*?)\|index:(\d+)\|key:(.*?)(?:\|type:(\d+)\|status:(\d+))?$"
+)
 
 
 def arguments() -> argparse.Namespace:
@@ -48,7 +50,7 @@ def main() -> int:
     )
     loads = {}
     export_summaries = {}
-    exports: dict[str, list[tuple[int, str]]] = {}
+    exports: dict[str, list[tuple[int, str, int | None, int | None]]] = {}
     for line in args.probe_log.read_text(encoding="utf-8").splitlines():
         match = LOAD_RE.match(line)
         if match:
@@ -67,7 +69,14 @@ def main() -> int:
             continue
         match = EXPORT_RE.match(line)
         if match:
-            exports.setdefault(match.group(1), []).append((int(match.group(2)), match.group(3)))
+            exports.setdefault(match.group(1), []).append(
+                (
+                    int(match.group(2)),
+                    match.group(3),
+                    int(match.group(4)) if match.group(4) is not None else None,
+                    int(match.group(5)) if match.group(5) is not None else None,
+                )
+            )
 
     rows = []
     for module in sorted(loads):
@@ -80,7 +89,22 @@ def main() -> int:
         callable_module = has_runtime_callable(source)
         loaded = loads[module]["load_status"] == 0
         export_summary = export_summaries.get(module, {})
-        export_names = [name for _, name in sorted(exports.get(module, []))]
+        export_values = [
+            {"name": name, "value_type": value_type, "read_status": read_status}
+            for _, name, value_type, read_status in sorted(exports.get(module, []))
+        ]
+        # napi_undefined is 0. Old logs have no value type and remain usable as
+        # name-only evidence; new logs exclude properties whose value is
+        # actually undefined or unreadable.
+        export_names = [
+            value["name"] for value in export_values
+            if value["value_type"] is None or
+            (value["read_status"] == 0 and value["value_type"] != 0)
+        ]
+        undefined_exports = [
+            value["name"] for value in export_values
+            if value["value_type"] == 0
+        ]
         if loaded:
             audit_status = "loaded"
         elif not callable_module:
@@ -100,6 +124,8 @@ def main() -> int:
                 "export_probe_status": export_summary.get("export_probe_status"),
                 "export_count": export_summary.get("export_count"),
                 "exports": export_names,
+                "export_values": export_values,
+                "undefined_exports": undefined_exports,
                 **loads[module],
                 "audit_status": audit_status,
             }
@@ -149,6 +175,8 @@ def main() -> int:
         writer.writeheader()
         for row in rows:
             csv_row = dict(row)
+            csv_row.pop("export_values")
+            csv_row.pop("undefined_exports")
             csv_row["exports"] = ";".join(row["exports"])
             csv_row["syscaps"] = ";".join(row["syscaps"])
             csv_row["official_profile_syscaps"] = ";".join(row["official_profile_syscaps"])

@@ -1,0 +1,45 @@
+09-22 10:47:06.891   574  2259 I C02d13/HDC_LOG: [async_cmd.cpp:251] ExecuteCommand cmd:hilog -x | grep -Ei 'qemu.*vibrat|vibrat.*qemu|virtual vibrator|vibrator started|vibrator stopped' fd:41 pid:5279
+vibrator_host  399     1 0 10:43:47 ?     00:00:00 vibrator_host           -i 15 -n vibrator_host
+root          5608   574 0 10:47:31 ?     00:00:00 sh -c ps -ef | grep -i vibrat; find /vendor /system -name '*vibrat*' -type f 2>/dev/null; ls -l /vendor/lib64/libhdi_product_vibrator_impl.z.so; strings /vendor/lib64/libhdi_product_vibrator_impl.z.so | grep -E 'QEMU virtual|qemu_virtual|started|stopped'
+root          5611  5608 0 10:47:31 ?     00:00:00 grep -i vibrat
+/vendor/lib64/libhdi_product_vibrator_impl.z.so
+/vendor/lib64/libhdi_vibrator.z.so
+/vendor/lib64/libhdi_vibrator_impl.z.so
+/vendor/lib64/libvibrator_driver.z.so
+/vendor/lib64/libvibrator_interface_service_2.0.z.so
+/vendor/lib64/libvibrator_stub_2.0.z.so
+/system/etc/battery/battery_vibrator.json
+/system/etc/power_config/power_vibrator.json
+/system/bin/cli_tool/executable/ohos-vibratorControl
+/system/bin/cli_tool/configs/ohos-vibratorControl.json
+/system/framework/vibrator_abc.abc
+/system/lib64/ndk/libohvibrator.z.so
+/system/lib64/libpower_vibrator.z.so
+/system/lib64/libvibrator_proxy_2.0.z.so
+/system/lib64/libvibrator_taihe_native.z.so
+/system/lib64/module/libvibrator.z.so
+/system/lib64/platformsdk/libcj_vibrator_ffi.z.so
+/system/lib64/platformsdk/libhe_vibrator_decoder.z.so
+/system/lib64/platformsdk/libvibrator_agent.z.so
+/system/lib64/platformsdk/libvibrator_decoder.z.so
+/system/lib64/platformsdk/libvibrator_native.z.so
+-rw-r--r-- 1 root root 13208 2026-09-18 07:37 /vendor/lib64/libhdi_product_vibrator_impl.z.so
+QEMU virtual vibrator started for %{public}u ms
+qemu_virtual_vibrator
+QEMU virtual vibrator stopped
+ffff33c00000-ffff33c02000 r--p 00000000 fe:30 157                        /vendor/lib64/libhdi_product_vibrator_impl.z.so
+ffff33c02000-ffff33c04000 r-xp 00001000 fe:30 157                        /vendor/lib64/libhdi_product_vibrator_impl.z.so
+ffff33c04000-ffff33c05000 r--p 00002000 fe:30 157                        /vendor/lib64/libhdi_product_vibrator_impl.z.so
+ffff33c05000-ffff33c06000 rw-p 00002000 fe:30 157                        /vendor/lib64/libhdi_product_vibrator_impl.z.so
+ffff33c40000-ffff33c44000 r--p 00000000 fe:30 281                        /vendor/lib64/libvibrator_interface_service_2.0.z.so
+ffff33c44000-ffff33c48000 r-xp 00003000 fe:30 281                        /vendor/lib64/libvibrator_interface_service_2.0.z.so
+ffff33c48000-ffff33c4a000 r--p 00006000 fe:30 281                        /vendor/lib64/libvibrator_interface_service_2.0.z.so
+ffff33c4a000-ffff33c4b000 rw-p 00007000 fe:30 281                        /vendor/lib64/libvibrator_interface_service_2.0.z.so
+ffff33d40000-ffff33d42000 r--p 00000000 fe:30 280                        /vendor/lib64/libvibrator_driver.z.so
+ffff33d42000-ffff33d44000 r-xp 00001000 fe:30 280                        /vendor/lib64/libvibrator_driver.z.so
+ffff33d44000-ffff33d45000 r--p 00002000 fe:30 280                        /vendor/lib64/libvibrator_driver.z.so
+ffff33d45000-ffff33d46000 rw-p 00002000 fe:30 280                        /vendor/lib64/libvibrator_driver.z.so
+ffff33d80000-ffff33d8a000 r--p 00000000 fe:30 282                        /vendor/lib64/libvibrator_stub_2.0.z.so
+ffff33d8a000-ffff33d93000 r-xp 00009000 fe:30 282                        /vendor/lib64/libvibrator_stub_2.0.z.so
+ffff33d93000-ffff33d95000 r--p 00011000 fe:30 282                        /vendor/lib64/libvibrator_stub_2.0.z.so
+ffff33d95000-ffff33d96000 rw-p 00012000 fe:30 282                        /vendor/lib64/libvibrator_stub_2.0.z.so

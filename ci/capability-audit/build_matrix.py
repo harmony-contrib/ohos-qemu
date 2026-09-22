@@ -32,6 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ohos-root", required=True, type=Path)
     parser.add_argument("--docs-root", type=Path)
     parser.add_argument("--sdk-js-root", type=Path)
+    parser.add_argument("--sdk-c-root", type=Path)
     parser.add_argument("--phone-syscap", required=True, type=Path)
     parser.add_argument("--two-in-one-syscap", required=True, type=Path)
     parser.add_argument("--findings", type=Path)
@@ -235,21 +236,44 @@ def extract_signature(lines: list[str]) -> str:
 def load_documented_api_index(
     root: Path,
 ) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], set[str]]:
-    """Index every reference-doc section carrying a SysCap contract.
+    """Index every documented API section, inheriting file-level contracts.
 
-    The generated rows are the method-level audit queue. Some rows describe a
-    type, enum, or module rather than a callable method; ``entry_kind`` keeps
-    those visible instead of silently dropping public API surface.
+    Many Native API pages state their SysCap once in ``概述`` and omit it from
+    every function below.  Looking only for method-local SysCap markers drops
+    thousands of C functions.  This parser starts from API headings and uses a
+    method-local contract when present, otherwise the file's leading contract.
+    Entries whose documentation has no SysCap at either scope stay in the
+    inventory with ``syscap=None`` so the omission cannot disappear silently.
     """
     reference_root = root / "zh-cn/application-dev/reference"
     rows: list[dict[str, Any]] = []
     registry: set[str] = set()
     per_cap_count: Counter[str] = Counter()
     per_cap_files: dict[str, set[str]] = defaultdict(set)
-    for path in rg_files(root, str(reference_root.relative_to(root)), glob="*.md"):
+    doc_paths = rg_files(root, str(reference_root.relative_to(root)), glob="*.md")
+    doc_lines: dict[Path, list[str]] = {}
+    direct_file_caps: dict[Path, set[str]] = {}
+    for doc_path in doc_paths:
         try:
-            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+            cached_lines = doc_path.read_text(encoding="utf-8", errors="ignore").splitlines()
         except OSError:
+            continue
+        doc_lines[doc_path.resolve()] = cached_lines
+        direct_file_caps[doc_path.resolve()] = {
+            cap.rstrip(".,;:）)")
+            for line in cached_lines
+            if re.search(r"系统能力|SystemCapability", line)
+            for cap in DOCUMENTED_SYSCAP_RE.findall(line)
+            if "xxx" not in cap.lower()
+        }
+
+    for path in doc_paths:
+        # Error-code guides contain troubleshooting snippets that look like
+        # function signatures, but they are not API declaration pages.
+        if path.name.startswith("errorcode-"):
+            continue
+        lines = doc_lines.get(path.resolve())
+        if lines is None:
             continue
         headings: list[tuple[int, int, str, str]] = []
         for index, line in enumerate(lines):
@@ -264,52 +288,114 @@ def load_documented_api_index(
                         compact_text(raw_heading),
                     )
                 )
-            caps = {
+
+        generic_headings = {
+            "汇总", "概述", "导入模块", "使用说明", "函数说明", "属性说明",
+            "接口说明", "类说明", "枚举说明", "结构体说明", "类型说明",
+            "常量说明", "字段说明", "成员函数说明", "成员变量说明", "错误码",
+            "错误码异常处理", "相关实例", "系统能力说明",
+        }
+        provisional_api_indices = []
+        for heading_index, _level, raw_heading, heading_label in headings:
+            probe = lines[heading_index + 1 : min(len(lines), heading_index + 38)]
+            if (
+                "(" in heading_label
+                or extract_signature(probe)
+                or (
+                    extract_api_version(raw_heading, probe) is not None
+                    and heading_label not in generic_headings
+                )
+            ):
+                provisional_api_indices.append(heading_index)
+        first_api_heading = min(provisional_api_indices, default=min(len(lines), 160))
+        leading_lines = lines[:first_api_heading]
+        module_constraint = device_constraint_text(leading_lines)
+
+        def caps_in(section_lines: list[str]) -> set[str]:
+            return {
                 cap.rstrip(".,;:）)")
-                for cap in DOCUMENTED_SYSCAP_RE.findall(line)
+                for section_line in section_lines
+                if re.search(r"系统能力|SystemCapability", section_line)
+                for cap in DOCUMENTED_SYSCAP_RE.findall(section_line)
                 if "xxx" not in cap.lower()
             }
-            if not caps or not re.search(r"系统能力|SystemCapability", line):
-                continue
-            heading_index = 0
-            heading_level = 2
-            heading = path.stem
-            heading_label = path.stem
-            if headings:
-                heading_index, heading_level, heading, heading_label = headings[-1]
+
+        file_caps = caps_in(leading_lines)
+        if not file_caps:
+            # Use the first explicit contract as the file fallback.  Do not
+            # union every method-local SysCap: some modules intentionally use
+            # different capabilities for different methods.
+            for section_line in lines:
+                first_caps = caps_in([section_line])
+                if first_caps:
+                    file_caps = first_caps
+                    break
+        if not file_caps:
+            # Struct/type pages often omit SysCap but link their owning C
+            # header or module.  Follow those local documentation links and
+            # inherit the linked file's explicit contract.
+            for link in re.findall(r"\]\(([^)#]+\.md)(?:#[^)]+)?\)", "\n".join(lines[:100])):
+                target = (path.parent / link).resolve()
+                linked_caps = direct_file_caps.get(target, set())
+                if linked_caps:
+                    file_caps = linked_caps
+                    break
+
+        seen_entries: set[tuple[int, str | None]] = set()
+        for heading_position, (heading_index, heading_level, heading, heading_label) in enumerate(headings):
             end = section_end(lines, heading_index, heading_level)
             section = lines[heading_index:end]
-            signature = extract_signature(lines[heading_index + 1 : index])
+            heading_plain = compact_text(
+                re.sub(r"<sup>.*?</sup>", "", heading, flags=re.IGNORECASE)
+            )
+            signature = extract_signature(section[1:])
+            start_version = extract_api_version(heading, section)
+            explicit_caps = caps_in(section)
+            is_module_entry = heading_plain in {"概述", "系统能力说明"} and bool(explicit_caps)
+            is_api_entry = heading_plain not in generic_headings and (
+                "(" in heading_plain
+                or bool(signature)
+                or (start_version is not None and heading_plain not in generic_headings)
+            )
+            if not is_module_entry and not is_api_entry:
+                continue
+
+            effective_caps: list[str | None] = sorted(explicit_caps or file_caps) or [None]
             boundary_blocks = [
                 device_boundary_block(section, boundary_index)
                 for boundary_index, boundary_line in enumerate(section)
                 if "设备行为差异" in boundary_line
             ]
-            boundary_text = compact_text(" ".join(boundary_blocks))
+            section_constraint = device_constraint_text(section)
+            boundary_text = compact_text(
+                " ".join(boundary_blocks or ([section_constraint] if section_constraint else []))
+            )
+            effective_constraint = boundary_text or module_constraint
             permission_lines = [
                 compact_text(section_line)
                 for section_line in section
                 if re.search(r"\*\*(?:需要权限|权限要求|权限)\s*[：:]", section_line)
             ]
-            start_version = extract_api_version(heading, section)
-            heading_plain = compact_text(
-                re.sub(r"<sup>.*?</sup>", "", heading, flags=re.IGNORECASE)
-            )
-            if heading_plain in {"概述", "系统能力说明"}:
+            if is_module_entry:
                 entry_kind = "module_or_header"
             elif "(" in heading_plain or signature:
                 entry_kind = "callable"
             else:
                 entry_kind = "type_or_constant"
-            for cap in sorted(caps):
-                registry.add(cap)
-                per_cap_count[cap] += 1
-                per_cap_files[cap].add(str(path.relative_to(root)))
+            for cap in effective_caps:
+                key = (heading_index, cap)
+                if key in seen_entries:
+                    continue
+                seen_entries.add(key)
+                if cap is not None:
+                    registry.add(cap)
+                    per_cap_count[cap] += 1
+                    per_cap_files[cap].add(str(path.relative_to(root)))
                 rows.append(
                     {
                         "syscap": cap,
                         "source": str(path.relative_to(root)),
-                        "line": index + 1,
+                        "line": heading_index + 1,
                         "heading": heading_plain,
                         "signature": signature,
                         "entry_kind": entry_kind,
@@ -317,20 +403,23 @@ def load_documented_api_index(
                         "system_api": any("系统接口" in value for value in section[:36]),
                         "deprecated": any("废弃" in value for value in section[:36]),
                         "permissions": permission_lines,
-                        "device_boundary": boundary_text,
+                        "device_boundary": effective_constraint,
+                        "device_boundary_scope": (
+                            "method" if boundary_text else ("module" if module_constraint else "none")
+                        ),
                         "phone_documented_behavior": (
-                            infer_device_behavior(boundary_text, "phone")
-                            if boundary_text
+                            infer_device_behavior(effective_constraint, "phone")
+                            if effective_constraint
                             else "default_contract"
                         ),
                         "2in1_documented_behavior": (
-                            infer_device_behavior(boundary_text, "2in1")
-                            if boundary_text
+                            infer_device_behavior(effective_constraint, "2in1")
+                            if effective_constraint
                             else "default_contract"
                         ),
                     }
                 )
-    rows.sort(key=lambda row: (row["syscap"], row["source"], row["line"]))
+    rows.sort(key=lambda row: (row["syscap"] or "", row["source"], row["line"]))
     index = {
         cap: {
             "entry_count": per_cap_count[cap],
@@ -348,9 +437,40 @@ def compact_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+DEVICE_NAME_RE = re.compile(
+    r"(?:(?<![A-Za-z])(?:Phone|phone|PHONE)(?![A-Za-z])|手机|"
+    r"PC\s*/\s*2in1|PC/2in1|2in1|PC设备|"
+    r"(?<![A-Za-z])Tablet(?![A-Za-z])|平板|"
+    r"(?<![A-Za-z])Wearable(?![A-Za-z])|穿戴|"
+    r"(?<![A-Za-z])TV(?![A-Za-z])|智慧屏|"
+    r"(?<![A-Za-z])Car(?![A-Za-z])|车机)"
+)
+DEVICE_CONTRACT_RE = re.compile(
+    r"(?:设备行为差异|仅支持|仅在|只支持|只在|适用于|可正常|正常调用|"
+    r"不支持|不可用|不生效|返回\s*\d+\s*错误码|新增支持|设备使用)"
+)
+
+
+def device_constraint_text(lines: list[str]) -> str:
+    """Collect device-family contracts even when docs omit the standard marker.
+
+    OpenHarmony reference pages use both a formal ``设备行为差异`` field and
+    prose notes such as ``本模块仅支持PC/2in1设备``.  The old audit only read the
+    former and silently lost module-wide and partial-device restrictions.
+    """
+    selected: list[str] = []
+    for line in lines:
+        normalized = compact_text(line)
+        if not normalized or not DEVICE_NAME_RE.search(normalized):
+            continue
+        if DEVICE_CONTRACT_RE.search(normalized):
+            selected.append(normalized)
+    return compact_text(" ".join(dict.fromkeys(selected)))
+
+
 def device_named(text: str, device: str) -> bool:
     if device == "phone":
-        return bool(re.search(r"(?:Phone|phone|PHONE|手机)", text))
+        return bool(re.search(r"(?:(?<![A-Za-z])(?:Phone|phone|PHONE)(?![A-Za-z])|手机)", text))
     return bool(re.search(r"(?:PC\s*/\s*2in1|PC/2in1|2in1|PC设备|PC中|PC和)", text))
 
 
@@ -379,7 +499,7 @@ def infer_device_behavior(text: str, device: str) -> str:
     if not normalized or normalized.rstrip("：:") == "设备行为差异":
         return "review_required"
 
-    if any(word in normalized for word in ("真机调试", "硬件支持", "器件", "发射器")):
+    if any(word in normalized for word in ("真机调试", "硬件支持", "器件", "发射器", "部分Phone")):
         return "conditional_hardware"
     if any(word in normalized for word in ("企业策略", "企业管控")):
         return "conditional_policy"
@@ -415,6 +535,14 @@ def infer_device_behavior(text: str, device: str) -> str:
     only = re.search(r"(?:仅支持|仅在|只支持|只在)(.+)", normalized)
     if only:
         scope = re.split(r"(?:中|上)?(?:可正常|正常|支持|生效|设备)", only.group(1), maxsplit=1)[0]
+        return "supported" if device_named(scope, device) else "unsupported"
+
+    applicable = re.search(r"(?:适用于|支持在?)(.+)", normalized)
+    if applicable and DEVICE_NAME_RE.search(applicable.group(1)):
+        # Phrases that explicitly enumerate supported device families are a
+        # positive allow-list.  This also handles API-26 notes such as
+        # "新增支持在手机、平板上使用".
+        scope = re.split(r"(?:设备)?(?:使用|调用|运行|，|。)", applicable.group(1), maxsplit=1)[0]
         return "supported" if device_named(scope, device) else "unsupported"
 
     # A statement that names only another family as failing is an explicit
@@ -518,6 +646,7 @@ def main() -> int:
     root = args.ohos_root.resolve()
     docs_root = (args.docs_root or (root / "docs")).resolve()
     sdk_js_root = (args.sdk_js_root or (root / "interface/sdk-js")).resolve()
+    sdk_c_root = (args.sdk_c_root or (root / "interface/sdk_c")).resolve()
     output = args.output_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
 
@@ -535,7 +664,7 @@ def main() -> int:
         sdk_js_root, ("api", "kits"), "*.d.ts"
     )
     capi, capi_registry = load_annotation_index(
-        root, ("interface/sdk_c", "interface/sdk"), "*.h"
+        sdk_c_root, (".",), "*.h"
     )
     xts, xts_registry = load_xts_index(root)
     documented_apis, documented_api_index, documented_registry = load_documented_api_index(docs_root)
@@ -717,6 +846,7 @@ def main() -> int:
             "phone_documented_behavior",
             "2in1_documented_behavior",
             "device_boundary",
+            "device_boundary_scope",
         )
         writer = csv.DictWriter(stream, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()

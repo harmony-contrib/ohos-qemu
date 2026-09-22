@@ -361,7 +361,14 @@ void ReportModuleExports(napi_env env, const char *name, napi_value module)
                     key[offset] = '_';
                 }
             }
-            Report("module.export=%s|index:%u|key:%s", name, index, key);
+            napi_value value = nullptr;
+            napi_status valueStatus = napi_get_property(env, module, property, &value);
+            napi_valuetype valueType = napi_undefined;
+            if (valueStatus == napi_ok && value != nullptr) {
+                valueStatus = napi_typeof(env, value, &valueType);
+            }
+            Report("module.export=%s|index:%u|key:%s|type:%d|status:%d",
+                name, index, key, valueType, valueStatus);
         }
         delete[] key;
     }

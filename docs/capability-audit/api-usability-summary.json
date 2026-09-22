@@ -1,0 +1,62 @@
+{
+  "callable_entry_count": 32280,
+  "deprecated_entry_count": 2997,
+  "device_boundary_entry_count": 1822,
+  "devices": {
+    "2in1": {
+      "documented_behavior_counts": {
+        "conditional_hardware": 3,
+        "conditional_mode": 93,
+        "conditional_policy": 50,
+        "default_contract": 36098,
+        "review_required": 68,
+        "supported": 1030,
+        "unsupported": 578
+      },
+      "entries_with_missing_permission": 58,
+      "usability_status_counts": {
+        "advertised_outside_device_contract": 360,
+        "api_surface_missing": 239,
+        "behavior_failure_confirmed_for_capability": 1845,
+        "behavior_validation_pending": 27735,
+        "capability_partial_failure_method_pending": 3018,
+        "conditional_contract_requires_runtime_case": 146,
+        "device_contract_review_required": 68,
+        "documentation_missing_syscap_contract": 180,
+        "documented_unsupported_on_device": 578,
+        "permission_registry_failure": 56,
+        "profile_or_packaging_failure": 3695
+      }
+    },
+    "phone": {
+      "documented_behavior_counts": {
+        "conditional_hardware": 3,
+        "conditional_mode": 93,
+        "conditional_policy": 50,
+        "default_contract": 36098,
+        "review_required": 76,
+        "supported": 847,
+        "unsupported": 753
+      },
+      "entries_with_missing_permission": 58,
+      "usability_status_counts": {
+        "advertised_outside_device_contract": 388,
+        "api_surface_missing": 306,
+        "behavior_failure_confirmed_for_capability": 2985,
+        "behavior_validation_pending": 27161,
+        "capability_partial_failure_method_pending": 4003,
+        "conditional_contract_requires_runtime_case": 146,
+        "device_contract_review_required": 76,
+        "documentation_missing_syscap_contract": 179,
+        "documented_unsupported_on_device": 753,
+        "method_boundary_failure": 9,
+        "permission_registry_failure": 44,
+        "profile_or_packaging_failure": 1870
+      }
+    }
+  },
+  "documented_api_entry_count": 37920,
+  "entry_without_syscap_contract_count": 182,
+  "permission_gated_entry_count": 2278,
+  "system_api_entry_count": 4847
+}

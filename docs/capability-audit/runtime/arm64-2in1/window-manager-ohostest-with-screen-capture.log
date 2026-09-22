@@ -1,0 +1,101 @@
+start ability successfully.
+
+OHOS_REPORT_SUM: 4
+OHOS_REPORT_STATUS: class=window_manager
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=1
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=reads visible window layouts
+OHOS_REPORT_STATUS_CODE: 1
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=1
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stack=    at AssertException (entry_test|@ohos/hypium|1.0.24|src/main/service.js:72:9)
+    at anonymous (entry_test|@ohos/hypium|1.0.24|src/main/service.js:1107:37)
+    at anonymous (entry_test|entry_test||src/ohosTest/ets/test/modules/WindowManager.test.ts:24:28)
+    at anonymous (entry_test|@ohos/hypium|1.0.24|src/main/service.js:87:19)
+    at getFuncWithArgsZero (entry_test|@ohos/hypium|1.0.24|src/main/service.js:79:12)
+    at processedFunc (entry_test|@ohos/hypium|1.0.24|src/main/service.js:158:24)
+    at asyncRun (entry_test|@ohos/hypium|1.0.24|src/main/service.js:989:24)
+    at asyncRunSpecs (entry_test|@ohos/hypium|1.0.24|src/main/service.js:697:32)
+OHOS_REPORT_STATUS: stream=Error in reads visible window layouts, expect layout_count=3 equals layout_count=2
+OHOS_REPORT_STATUS: test=reads visible window layouts
+OHOS_REPORT_STATUS_CODE: -2
+OHOS_REPORT_STATUS: consuming=1
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=2
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=reads the active test window
+OHOS_REPORT_STATUS_CODE: 1
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=2
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=reads the active test window
+OHOS_REPORT_STATUS_CODE: 0
+OHOS_REPORT_STATUS: consuming=510
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=3
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=pins the API-26 QEMU capability matrix
+OHOS_REPORT_STATUS_CODE: 1
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=3
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=pins the API-26 QEMU capability matrix
+OHOS_REPORT_STATUS_CODE: 0
+OHOS_REPORT_STATUS: consuming=510
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=4
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=receives asynchronous callbacks
+OHOS_REPORT_STATUS_CODE: 1
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: current=4
+OHOS_REPORT_STATUS: id=JS
+OHOS_REPORT_STATUS: numtests=4
+OHOS_REPORT_STATUS: stream=
+OHOS_REPORT_STATUS: test=receives asynchronous callbacks
+OHOS_REPORT_STATUS_CODE: 0
+OHOS_REPORT_STATUS: consuming=1006
+
+
+OHOS_REPORT_STATUS: class=window_manager
+OHOS_REPORT_STATUS: suiteconsuming=2027
+
+
+OHOS_REPORT_RESULT: stream=Tests run: 4, Failure: 1, Error: 0, Pass: 3, Ignore: 0
+OHOS_REPORT_CODE: -1
+OHOS_REPORT_STATUS: taskconsuming=2027
+
+TestFinished-ResultCode: 0
+TestFinished-ResultMsg: your test finished!!!
+user test finished.

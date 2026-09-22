@@ -1959,17 +1959,6 @@
       "syscap": "SystemCapability.Multimedia.AVSession.AVMusicTemplate"
     },
     {
-      "can_i_use": false,
-      "contract_expected": false,
-      "declared": false,
-      "documented_minimum_profile": false,
-      "documented_profile_is_reference_only": false,
-      "official_sdk_profile": false,
-      "profile_source_status": "matches",
-      "status": "disabled_outside_contract",
-      "syscap": "SystemCapability.Multimedia.AVSession.AVinputCast"
-    },
-    {
       "can_i_use": true,
       "contract_expected": true,
       "declared": true,
@@ -2188,17 +2177,6 @@
       "profile_source_status": "matches",
       "status": "enabled_contract_capability",
       "syscap": "SystemCapability.Multimedia.Drm.Core"
-    },
-    {
-      "can_i_use": false,
-      "contract_expected": false,
-      "declared": false,
-      "documented_minimum_profile": false,
-      "documented_profile_is_reference_only": false,
-      "official_sdk_profile": false,
-      "profile_source_status": "matches",
-      "status": "disabled_outside_contract",
-      "syscap": "SystemCapability.Multimedia.Image"
     },
     {
       "can_i_use": true,
@@ -3601,11 +3579,11 @@
   "summary": {
     "device": "phone",
     "enabled_count": 292,
-    "probed_count": 327,
-    "public_syscap_count": 327,
+    "probed_count": 325,
+    "public_syscap_count": 325,
     "status_counts": {
       "disabled_contract_capability": 9,
-      "disabled_outside_contract": 26,
+      "disabled_outside_contract": 24,
       "enabled_contract_capability": 233,
       "enabled_outside_contract": 59
     }

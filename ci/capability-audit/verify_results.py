@@ -16,8 +16,11 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--matrix", required=True, type=Path)
     parser.add_argument("--runtime-root", required=True, type=Path)
     parser.add_argument("--ledger", required=True, type=Path)
+    parser.add_argument("--api-ledger", required=True, type=Path)
+    parser.add_argument("--backend-audit", required=True, type=Path)
     parser.add_argument("--api-dir", required=True, type=Path)
     parser.add_argument("--kits-dir", required=True, type=Path)
+    parser.add_argument("--static-sdk", required=True, type=Path)
     return parser.parse_args()
 
 
@@ -43,6 +46,12 @@ def main() -> int:
         path.name.removesuffix(".d.ts")
         for path in args.kits_dir.glob("@kit*.d.ts")
     )
+    expected_static_modules = {
+        path.name.removesuffix(".d.ets")
+        for directory in (args.static_sdk / "api", args.static_sdk / "kits")
+        for path in directory.glob("@*.d.ets")
+        if path.name.startswith(("@ohos.", "@system.", "@kit."))
+    }
     require(len(matrix_rows) == len(expected_syscaps), "matrix has duplicate SysCaps", failures := [])
 
     ledger = read(args.ledger)
@@ -50,6 +59,48 @@ def main() -> int:
     ledger_syscaps = {row["syscap"] for row in ledger_rows}
     require(ledger_syscaps == expected_syscaps, "ledger SysCap set differs from matrix", failures)
     require(len(ledger_rows) == len(ledger_syscaps), "ledger has duplicate SysCaps", failures)
+
+    api_inventory = read(args.matrix.parent / "public-api-inventory.json")["entries"]
+    api_ledger = read(args.api_ledger)
+    api_rows = api_ledger["entries"]
+    api_ids = [row["api_entry_id"] for row in api_rows]
+    require(
+        len(api_rows) == len(api_inventory),
+        "API usability ledger does not cover every documented API entry",
+        failures,
+    )
+    require(len(api_ids) == len(set(api_ids)), "API usability ledger has duplicate IDs", failures)
+    require(
+        all(set(row.get("devices", {})) == set(DEVICES) for row in api_rows),
+        "API usability ledger has entries without both device outcomes",
+        failures,
+    )
+    require(
+        all(row["devices"][device].get("usability_status") for row in api_rows for device in DEVICES),
+        "API usability ledger has an unclassified device outcome",
+        failures,
+    )
+
+    backend_audit = read(args.backend_audit)
+    backend_ids: dict[str, set[str]] = {}
+    for device in DEVICES:
+        backend_rows = backend_audit.get("devices", {}).get(device, {}).get("backends", [])
+        backend_ids[device] = {row["id"] for row in backend_rows}
+        require(
+            len(backend_rows) == len(backend_ids[device]),
+            f"{device}: runtime backend audit has duplicate IDs",
+            failures,
+        )
+        require(
+            all(row.get("evidence_required_count", 0) > 0 for row in backend_rows),
+            f"{device}: runtime backend audit contains an evidence-free classification",
+            failures,
+        )
+    require(
+        backend_ids.get("phone") == backend_ids.get("2in1") and bool(backend_ids.get("phone")),
+        "runtime backend audit sets differ between phone and 2in1",
+        failures,
+    )
 
     result: dict[str, object] = {
         "public_syscap_count": len(expected_syscaps),
@@ -59,17 +110,6 @@ def main() -> int:
     }
     for device in DEVICES:
         root = args.runtime_root / f"arm64-{device}"
-        probe_log = (root / "hap-probe/results-ohos7-latest.log").read_text(encoding="utf-8")
-        static_exports = {}
-        for line in probe_log.splitlines():
-            if line.startswith("arkts.static_export.") and "=" in line:
-                name, value = line.split("=", 1)
-                static_exports[name] = value
-        require(
-            len(static_exports) == 10,
-            f"{device}: direct ArkTS export probes are incomplete",
-            failures,
-        )
         syscap_report = read(root / "syscap-runtime.json")
         syscap_rows = syscap_report["capabilities"]
         probed_syscaps = {row["syscap"] for row in syscap_rows}
@@ -138,6 +178,46 @@ def main() -> int:
             failures,
         )
 
+        static_surface = read(root / "arkts-static-surface.json")
+        static_modules = {row["module"] for row in static_surface["modules"]}
+        require(
+            static_modules == expected_static_modules,
+            f"{device}: static ArkTS module set differs from generated OHOS 7 SDK",
+            failures,
+        )
+        require(
+            static_surface["summary"]["ani_shared_library_count"] > 0 and
+            static_surface["summary"]["framework_abc_count"] > 0,
+            f"{device}: static ArkTS ANI/ABC runtime inventory is empty",
+            failures,
+        )
+
+        c_abi = read(root / "c-api-abi-latest.json")
+        require(
+            c_abi.get("contract_source") == "interface_sdk_c_ndk_manifests",
+            f"{device}: C ABI report does not use latest interface_sdk_c manifests",
+            failures,
+        )
+        require(
+            c_abi["summary"].get("header_backed_manifest_function_count", 0) > 0,
+            f"{device}: latest C ABI callable inventory is empty",
+            failures,
+        )
+
+        sa_profiles = read(root / "system-ability-profile-audit.json")
+        require(
+            sa_profiles["summary"]["packaged_profile_count"] == len(sa_profiles["abilities"]),
+            f"{device}: System Ability profile audit is incomplete",
+            failures,
+        )
+
+        permission_audit = read(root / "permission-audit.json")
+        require(
+            permission_audit["summary"]["api_permission_count"] == len(permission_audit["permissions"]),
+            f"{device}: permission registry audit is incomplete",
+            failures,
+        )
+
         result["devices"][device] = {
             "syscaps_probed": len(probed_syscaps),
             "can_i_use_enabled": syscap_report["summary"]["enabled_count"],
@@ -153,18 +233,25 @@ def main() -> int:
             "arkts_missing_official_system_functions": export_surface["summary"][
                 "missing_official_system_function_count"
             ],
-            "direct_arkts_exports_probed": len(static_exports),
-            "direct_arkts_exports_undefined": sum(
-                value == "undefined" for value in static_exports.values()
-            ),
+            "static_arkts_modules_inventoried": len(static_modules),
+            "static_arkts_behavior_status": static_surface["summary"]["runtime_behavior_status"],
+            "latest_c_abi_functions_inventoried": c_abi["summary"][
+                "header_backed_manifest_function_count"
+            ],
+            "eager_system_abilities_not_registered": sa_profiles["summary"][
+                "eager_not_registered_count"
+            ],
             "official_callable_load_failures": arkts["summary"]["official_callable_load_failure"],
+            "permissions_audited": permission_audit["summary"]["api_permission_count"],
+            "runtime_backends_audited": len(backend_ids[device]),
         }
 
     if failures:
         result["failures"] = failures
         print(json.dumps(result, indent=2, sort_keys=True))
         return 1
-    result["status"] = "complete_inventory"
+    result["status"] = "complete_surface_inventory_behavior_pending"
+    result["documented_api_entries_classified"] = len(api_rows)
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 

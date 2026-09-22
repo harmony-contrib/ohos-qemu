@@ -5,7 +5,7 @@
       "arkts_annotation_count": 148,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 72,
+      "documented_api_entry_count": 64,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.AI.IntelligentVoice.Core",
@@ -16,7 +16,7 @@
       "arkts_annotation_count": 110,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 44,
+      "documented_api_entry_count": 39,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.AI.MindSporeLite",
@@ -26,8 +26,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 3,
-      "documented_api_entry_count": 3,
+      "c_api_annotation_count": 6,
+      "documented_api_entry_count": 90,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.AI.NeuralNetworkRuntime",
@@ -37,8 +37,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 175,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
-      "documented_api_entry_count": 28,
+      "c_api_annotation_count": 8,
+      "documented_api_entry_count": 34,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -58,7 +58,7 @@
       "arkts_annotation_count": 352,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 144,
+      "documented_api_entry_count": 122,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -77,8 +77,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 1625,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 15,
-      "documented_api_entry_count": 886,
+      "c_api_annotation_count": 34,
+      "documented_api_entry_count": 1094,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -98,7 +98,7 @@
       "arkts_annotation_count": 158,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 78,
+      "documented_api_entry_count": 66,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -118,7 +118,7 @@
       "arkts_annotation_count": 160,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 99,
+      "documented_api_entry_count": 89,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -138,7 +138,7 @@
       "arkts_annotation_count": 18,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -168,7 +168,7 @@
       "arkts_annotation_count": 194,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 81,
+      "documented_api_entry_count": 61,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -188,7 +188,7 @@
       "arkts_annotation_count": 11,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 10,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -207,7 +207,7 @@
       "arkts_annotation_count": 18,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Ability.AppExtension.VerticalPanel",
@@ -218,7 +218,7 @@
       "arkts_annotation_count": 19,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 16,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -238,7 +238,7 @@
       "arkts_annotation_count": 50,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 37,
+      "documented_api_entry_count": 34,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -256,7 +256,7 @@
       "arkts_annotation_count": 555,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 262,
+      "documented_api_entry_count": 251,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -275,7 +275,7 @@
       "arkts_annotation_count": 211,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 142,
+      "documented_api_entry_count": 141,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -295,7 +295,7 @@
       "arkts_annotation_count": 543,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 289,
+      "documented_api_entry_count": 297,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -333,7 +333,7 @@
       "arkts_annotation_count": 4,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -363,7 +363,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 8,
+      "documented_api_entry_count": 111,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Ai.MindSpore",
@@ -374,7 +374,7 @@
       "arkts_annotation_count": 126,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 55,
+      "documented_api_entry_count": 50,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -394,7 +394,7 @@
       "arkts_annotation_count": 49,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 34,
+      "documented_api_entry_count": 22,
       "documented_device_profiles": [
         "phone"
       ],
@@ -410,7 +410,7 @@
       "arkts_annotation_count": 276,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 116,
+      "documented_api_entry_count": 110,
       "documented_device_profiles": [
         "phone"
       ],
@@ -440,7 +440,7 @@
       "arkts_annotation_count": 125,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 53,
+      "documented_api_entry_count": 38,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -495,8 +495,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
-      "documented_api_entry_count": 36,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 304,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.ArkCompiler.JSVM",
@@ -507,7 +507,7 @@
       "arkts_annotation_count": 116,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 106,
+      "documented_api_entry_count": 125,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -523,8 +523,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 12366,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 71,
-      "documented_api_entry_count": 6043,
+      "c_api_annotation_count": 107,
+      "documented_api_entry_count": 9969,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -544,7 +544,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -564,7 +564,7 @@
       "arkts_annotation_count": 180,
       "bundle_definition_count": 2,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 22,
+      "documented_api_entry_count": 20,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -585,7 +585,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -605,7 +605,7 @@
       "arkts_annotation_count": 11,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -624,7 +624,7 @@
       "arkts_annotation_count": 447,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 168,
+      "documented_api_entry_count": 131,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -643,7 +643,7 @@
       "arkts_annotation_count": 603,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 194,
+      "documented_api_entry_count": 168,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -662,7 +662,7 @@
       "arkts_annotation_count": 21,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 13,
+      "documented_api_entry_count": 9,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -681,7 +681,7 @@
       "arkts_annotation_count": 6,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 9,
+      "documented_api_entry_count": 5,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -700,7 +700,7 @@
       "arkts_annotation_count": 9,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 10,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -721,7 +721,7 @@
       "arkts_annotation_count": 3,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 3,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [
         "phone"
       ],
@@ -736,7 +736,7 @@
       "arkts_annotation_count": 297,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 97,
+      "documented_api_entry_count": 92,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -756,7 +756,7 @@
       "arkts_annotation_count": 50,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 29,
+      "documented_api_entry_count": 24,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -776,7 +776,7 @@
       "arkts_annotation_count": 729,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 12,
-      "documented_api_entry_count": 276,
+      "documented_api_entry_count": 258,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -796,7 +796,7 @@
       "arkts_annotation_count": 27,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 16,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -816,7 +816,7 @@
       "arkts_annotation_count": 93,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 38,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -836,7 +836,7 @@
       "arkts_annotation_count": 59,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 37,
+      "documented_api_entry_count": 26,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -856,7 +856,7 @@
       "arkts_annotation_count": 17,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 19,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -876,7 +876,7 @@
       "arkts_annotation_count": 43,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 26,
+      "documented_api_entry_count": 18,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -896,7 +896,7 @@
       "arkts_annotation_count": 24,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -926,7 +926,7 @@
       "arkts_annotation_count": 191,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 115,
+      "documented_api_entry_count": 114,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -946,7 +946,7 @@
       "arkts_annotation_count": 47,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 22,
+      "documented_api_entry_count": 17,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -959,7 +959,7 @@
       "arkts_annotation_count": 1723,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 675,
+      "documented_api_entry_count": 658,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -990,7 +990,7 @@
       "arkts_annotation_count": 18,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 15,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Communication.ConnectedTag",
@@ -1001,7 +1001,7 @@
       "arkts_annotation_count": 71,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 35,
+      "documented_api_entry_count": 19,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Communication.FusionConnectivity.Core",
@@ -1011,8 +1011,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 350,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 79,
-      "documented_api_entry_count": 360,
+      "c_api_annotation_count": 158,
+      "documented_api_entry_count": 358,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1032,7 +1032,7 @@
       "arkts_annotation_count": 24,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 17,
+      "documented_api_entry_count": 15,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable",
@@ -1046,7 +1046,7 @@
       "arkts_annotation_count": 18,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 14,
+      "documented_api_entry_count": 15,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "wearable"
@@ -1059,7 +1059,7 @@
       "arkts_annotation_count": 197,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 123,
+      "documented_api_entry_count": 134,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Communication.NFC.Tag",
@@ -1070,7 +1070,7 @@
       "arkts_annotation_count": 384,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 160,
+      "documented_api_entry_count": 102,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Communication.NearLink.Base",
@@ -1080,8 +1080,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 429,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 22,
-      "documented_api_entry_count": 258,
+      "c_api_annotation_count": 40,
+      "documented_api_entry_count": 248,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1101,7 +1101,7 @@
       "arkts_annotation_count": 49,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 10,
+      "documented_api_entry_count": 5,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -1113,8 +1113,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 47,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 4,
-      "documented_api_entry_count": 27,
+      "c_api_annotation_count": 8,
+      "documented_api_entry_count": 21,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1133,7 +1133,7 @@
       "arkts_annotation_count": 35,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 25,
+      "documented_api_entry_count": 22,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1152,8 +1152,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 87,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
-      "documented_api_entry_count": 26,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 21,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -1166,7 +1166,7 @@
       "arkts_annotation_count": 39,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 33,
+      "documented_api_entry_count": 27,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1185,7 +1185,7 @@
       "arkts_annotation_count": 128,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 26,
+      "documented_api_entry_count": 24,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1203,8 +1203,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 673,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 28,
-      "documented_api_entry_count": 400,
+      "c_api_annotation_count": 56,
+      "documented_api_entry_count": 419,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1225,7 +1225,7 @@
       "arkts_annotation_count": 40,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 33,
+      "documented_api_entry_count": 36,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Communication.SecureElement",
@@ -1236,7 +1236,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1250,7 +1250,7 @@
       "arkts_annotation_count": 68,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 38,
+      "documented_api_entry_count": 32,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1269,7 +1269,7 @@
       "arkts_annotation_count": 21,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 18,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Communication.WiFi.AP.Extension",
@@ -1280,7 +1280,7 @@
       "arkts_annotation_count": 39,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 16,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1300,7 +1300,7 @@
       "arkts_annotation_count": 164,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 74,
+      "documented_api_entry_count": 63,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1320,7 +1320,7 @@
       "arkts_annotation_count": 454,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 149,
+      "documented_api_entry_count": 141,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1340,7 +1340,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 12,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 105,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.ContentEmbed.ObjectEditor",
@@ -1351,7 +1351,7 @@
       "arkts_annotation_count": 23,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 20,
+      "documented_api_entry_count": 16,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1371,7 +1371,7 @@
       "arkts_annotation_count": 2,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 1,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1391,7 +1391,7 @@
       "arkts_annotation_count": 1054,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 559,
+      "documented_api_entry_count": 501,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1409,7 +1409,7 @@
       "arkts_annotation_count": 3,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1429,7 +1429,7 @@
       "arkts_annotation_count": 114,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 61,
+      "documented_api_entry_count": 48,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1446,7 +1446,7 @@
       "arkts_annotation_count": 59,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 36,
+      "documented_api_entry_count": 31,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1463,7 +1463,7 @@
       "arkts_annotation_count": 117,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 55,
+      "documented_api_entry_count": 38,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1480,7 +1480,7 @@
       "arkts_annotation_count": 19,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 9,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1500,7 +1500,7 @@
       "arkts_annotation_count": 31,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 18,
+      "documented_api_entry_count": 13,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.DistributedDataManager.DataIntelligence.Core",
@@ -1511,7 +1511,7 @@
       "arkts_annotation_count": 54,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 40,
+      "documented_api_entry_count": 37,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1531,7 +1531,7 @@
       "arkts_annotation_count": 132,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 73,
+      "documented_api_entry_count": 69,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1551,7 +1551,7 @@
       "arkts_annotation_count": 93,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 84,
+      "documented_api_entry_count": 78,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1571,7 +1571,7 @@
       "arkts_annotation_count": 38,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 23,
+      "documented_api_entry_count": 21,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1591,7 +1591,7 @@
       "arkts_annotation_count": 348,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 261,
+      "documented_api_entry_count": 227,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1611,7 +1611,7 @@
       "arkts_annotation_count": 88,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 62,
+      "documented_api_entry_count": 55,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1630,8 +1630,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 67,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 4,
-      "documented_api_entry_count": 115,
+      "c_api_annotation_count": 8,
+      "documented_api_entry_count": 174,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1651,7 +1651,7 @@
       "arkts_annotation_count": 26,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 9,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -1663,8 +1663,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 571,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 13,
-      "documented_api_entry_count": 407,
+      "c_api_annotation_count": 26,
+      "documented_api_entry_count": 648,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1683,8 +1683,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 439,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 9,
-      "documented_api_entry_count": 91,
+      "c_api_annotation_count": 18,
+      "documented_api_entry_count": 292,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1723,7 +1723,7 @@
       "arkts_annotation_count": 18,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -1737,7 +1737,7 @@
       "arkts_annotation_count": 187,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 89,
+      "documented_api_entry_count": 65,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.DistributedSched.AppCollaboration",
@@ -1748,7 +1748,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Driver.DDK.Extension",
@@ -1759,7 +1759,7 @@
       "arkts_annotation_count": 60,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 28,
+      "documented_api_entry_count": 19,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Driver.ExternalDevice",
@@ -1770,7 +1770,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 8,
-      "documented_api_entry_count": 3,
+      "documented_api_entry_count": 31,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Driver.HID.Extension",
@@ -1781,7 +1781,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 20,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Driver.SCSI.Extension",
@@ -1792,7 +1792,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 8,
-      "documented_api_entry_count": 3,
+      "documented_api_entry_count": 24,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Driver.USB.Extension",
@@ -1803,7 +1803,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 3,
+      "documented_api_entry_count": 20,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Driver.UsbSerial.Extension",
@@ -1814,7 +1814,7 @@
       "arkts_annotation_count": 17,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 6,
-      "documented_api_entry_count": 18,
+      "documented_api_entry_count": 15,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1834,7 +1834,7 @@
       "arkts_annotation_count": 42,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 22,
+      "documented_api_entry_count": 29,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -1849,7 +1849,7 @@
       "arkts_annotation_count": 13,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 23,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.FileManagement.CloudDiskManager",
@@ -1860,7 +1860,7 @@
       "arkts_annotation_count": 200,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 92,
+      "documented_api_entry_count": 91,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1877,7 +1877,7 @@
       "arkts_annotation_count": 74,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 34,
+      "documented_api_entry_count": 26,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1894,7 +1894,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1908,7 +1908,7 @@
       "arkts_annotation_count": 5,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1928,7 +1928,7 @@
       "arkts_annotation_count": 5,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 9,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -1941,8 +1941,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 495,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 6,
-      "documented_api_entry_count": 376,
+      "c_api_annotation_count": 8,
+      "documented_api_entry_count": 422,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -1962,7 +1962,7 @@
       "arkts_annotation_count": 101,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 29,
+      "documented_api_entry_count": 13,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -1974,7 +1974,7 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
-      "c_api_annotation_count": 0,
+      "c_api_annotation_count": 14,
       "documented_api_entry_count": 0,
       "documented_device_profiles": [],
       "sdk_profiles": [],
@@ -1985,8 +1985,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 1263,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 6,
-      "documented_api_entry_count": 644,
+      "c_api_annotation_count": 12,
+      "documented_api_entry_count": 678,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2005,7 +2005,7 @@
       "arkts_annotation_count": 112,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 74,
+      "documented_api_entry_count": 68,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2025,7 +2025,7 @@
       "arkts_annotation_count": 2,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 1,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2045,7 +2045,7 @@
       "arkts_annotation_count": 48,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 36,
+      "documented_api_entry_count": 32,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2065,7 +2065,7 @@
       "arkts_annotation_count": 79,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 40,
+      "documented_api_entry_count": 30,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2084,7 +2084,7 @@
       "arkts_annotation_count": 183,
       "bundle_definition_count": 2,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 106,
+      "documented_api_entry_count": 108,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2117,7 +2117,7 @@
       "arkts_annotation_count": 229,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 125,
+      "documented_api_entry_count": 105,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2136,7 +2136,7 @@
       "arkts_annotation_count": 13,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 5,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -2151,7 +2151,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 10,
-      "documented_api_entry_count": 93,
+      "documented_api_entry_count": 96,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Game.GameController",
@@ -2162,7 +2162,7 @@
       "arkts_annotation_count": 11,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Global.FontManager",
@@ -2172,7 +2172,7 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 464,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
+      "c_api_annotation_count": 5,
       "documented_api_entry_count": 287,
       "documented_device_profiles": [
         "phone",
@@ -2193,7 +2193,7 @@
       "arkts_annotation_count": 195,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 10,
-      "documented_api_entry_count": 161,
+      "documented_api_entry_count": 232,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2213,7 +2213,7 @@
       "arkts_annotation_count": 61,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 25,
+      "documented_api_entry_count": 24,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2233,7 +2233,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2253,7 +2253,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2273,7 +2273,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2293,7 +2293,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -2308,7 +2308,7 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 72,
+      "c_api_annotation_count": 76,
       "documented_api_entry_count": 33,
       "documented_device_profiles": [
         "phone",
@@ -2329,7 +2329,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 676,
-      "documented_api_entry_count": 750,
+      "documented_api_entry_count": 878,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2349,7 +2349,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 58,
-      "documented_api_entry_count": 34,
+      "documented_api_entry_count": 29,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2369,7 +2369,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 20,
-      "documented_api_entry_count": 15,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2388,8 +2388,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 82,
-      "documented_api_entry_count": 50,
+      "c_api_annotation_count": 86,
+      "documented_api_entry_count": 53,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2409,7 +2409,7 @@
       "arkts_annotation_count": 482,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2429,7 +2429,7 @@
       "arkts_annotation_count": 402,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2449,7 +2449,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 18,
+      "documented_api_entry_count": 21,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2469,7 +2469,7 @@
       "arkts_annotation_count": 1137,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 564,
+      "documented_api_entry_count": 557,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2488,8 +2488,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 158,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 6,
-      "documented_api_entry_count": 57,
+      "c_api_annotation_count": 12,
+      "documented_api_entry_count": 107,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2509,7 +2509,7 @@
       "arkts_annotation_count": 42,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 20,
+      "documented_api_entry_count": 15,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2529,7 +2529,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 21,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2549,7 +2549,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2562,8 +2562,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 38,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 24,
+      "c_api_annotation_count": 2,
+      "documented_api_entry_count": 38,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2583,7 +2583,7 @@
       "arkts_annotation_count": 126,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 64,
+      "documented_api_entry_count": 109,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2603,7 +2603,7 @@
       "arkts_annotation_count": 12,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 8,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -2619,7 +2619,7 @@
       "arkts_annotation_count": 50,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 20,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2639,7 +2639,7 @@
       "arkts_annotation_count": 59,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 36,
+      "documented_api_entry_count": 70,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2659,7 +2659,7 @@
       "arkts_annotation_count": 25,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 14,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2679,7 +2679,7 @@
       "arkts_annotation_count": 11,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2699,7 +2699,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 1,
-      "documented_api_entry_count": 1,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Kernel.Memory",
@@ -2721,7 +2721,7 @@
       "arkts_annotation_count": 307,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 120,
+      "documented_api_entry_count": 127,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2739,7 +2739,7 @@
       "arkts_annotation_count": 90,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 23,
+      "documented_api_entry_count": 15,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2757,7 +2757,7 @@
       "arkts_annotation_count": 118,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 30,
+      "documented_api_entry_count": 26,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2774,7 +2774,7 @@
       "arkts_annotation_count": 64,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 30,
+      "documented_api_entry_count": 25,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2792,7 +2792,7 @@
       "arkts_annotation_count": 28,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 10,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -2805,7 +2805,7 @@
       "arkts_annotation_count": 177,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 44,
+      "documented_api_entry_count": 23,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Mechanic.Core",
@@ -2816,7 +2816,7 @@
       "arkts_annotation_count": 128,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 45,
+      "documented_api_entry_count": 35,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2836,7 +2836,7 @@
       "arkts_annotation_count": 689,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 9,
-      "documented_api_entry_count": 374,
+      "documented_api_entry_count": 480,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2855,8 +2855,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 145,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
-      "documented_api_entry_count": 103,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 138,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2875,7 +2875,7 @@
       "arkts_annotation_count": 49,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 20,
+      "documented_api_entry_count": 16,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2895,7 +2895,7 @@
       "arkts_annotation_count": 71,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 63,
+      "documented_api_entry_count": 60,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2915,7 +2915,7 @@
       "arkts_annotation_count": 60,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 25,
+      "documented_api_entry_count": 18,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2935,7 +2935,7 @@
       "arkts_annotation_count": 71,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 50,
+      "documented_api_entry_count": 47,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -2964,7 +2964,7 @@
       "arkts_annotation_count": 13,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Msdp.DeviceStatus.Drag",
@@ -2975,7 +2975,7 @@
       "arkts_annotation_count": 14,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Msdp.DeviceStatus.Stationary",
@@ -2986,7 +2986,7 @@
       "arkts_annotation_count": 290,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 196,
+      "documented_api_entry_count": 122,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3005,7 +3005,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -3020,29 +3020,18 @@
       "arkts_annotation_count": 385,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 193,
+      "documented_api_entry_count": 116,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Multimedia.AVSession.AVMusicTemplate",
       "xts_source_count": 6
     },
     {
-      "advertised_or_expected": false,
-      "arkts_annotation_count": 0,
-      "bundle_definition_count": 0,
-      "c_api_annotation_count": 0,
-      "documented_api_entry_count": 1,
-      "documented_device_profiles": [],
-      "sdk_profiles": [],
-      "syscap": "SystemCapability.Multimedia.AVSession.AVinputCast",
-      "xts_source_count": 0
-    },
-    {
       "advertised_or_expected": true,
       "arkts_annotation_count": 444,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 11,
-      "documented_api_entry_count": 270,
+      "documented_api_entry_count": 370,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3062,7 +3051,7 @@
       "arkts_annotation_count": 14,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 5,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Multimedia.AVSession.ExtendedDisplayCast",
@@ -3073,7 +3062,7 @@
       "arkts_annotation_count": 61,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 42,
+      "documented_api_entry_count": 35,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3104,7 +3093,7 @@
       "arkts_annotation_count": 175,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 108,
+      "documented_api_entry_count": 101,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3124,7 +3113,7 @@
       "arkts_annotation_count": 32,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 24,
+      "documented_api_entry_count": 20,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3143,8 +3132,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 315,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 26,
-      "documented_api_entry_count": 115,
+      "c_api_annotation_count": 29,
+      "documented_api_entry_count": 388,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3164,7 +3153,7 @@
       "arkts_annotation_count": 205,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 121,
+      "documented_api_entry_count": 98,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3184,7 +3173,7 @@
       "arkts_annotation_count": 8,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -3197,7 +3186,7 @@
       "arkts_annotation_count": 23,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 16,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3217,7 +3206,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 28,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Multimedia.Audio.MIDI",
@@ -3228,7 +3217,7 @@
       "arkts_annotation_count": 22,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 13,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3247,7 +3236,7 @@
       "arkts_annotation_count": 162,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 118,
+      "documented_api_entry_count": 113,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3267,7 +3256,7 @@
       "arkts_annotation_count": 80,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 45,
+      "documented_api_entry_count": 43,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3285,8 +3274,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
-      "c_api_annotation_count": 3,
-      "documented_api_entry_count": 7,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 93,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3300,7 +3289,7 @@
       "arkts_annotation_count": 42,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 15,
+      "documented_api_entry_count": 12,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3320,7 +3309,7 @@
       "arkts_annotation_count": 182,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 116,
+      "documented_api_entry_count": 114,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3340,7 +3329,7 @@
       "arkts_annotation_count": 43,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 30,
+      "documented_api_entry_count": 26,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3359,8 +3348,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 1412,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 12,
-      "documented_api_entry_count": 647,
+      "c_api_annotation_count": 22,
+      "documented_api_entry_count": 1038,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3376,8 +3365,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 128,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 9,
-      "documented_api_entry_count": 74,
+      "c_api_annotation_count": 18,
+      "documented_api_entry_count": 112,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3393,22 +3382,11 @@
       "xts_source_count": 11
     },
     {
-      "advertised_or_expected": false,
-      "arkts_annotation_count": 0,
-      "bundle_definition_count": 0,
-      "c_api_annotation_count": 45,
-      "documented_api_entry_count": 0,
-      "documented_device_profiles": [],
-      "sdk_profiles": [],
-      "syscap": "SystemCapability.Multimedia.Image",
-      "xts_source_count": 0
-    },
-    {
       "advertised_or_expected": true,
       "arkts_annotation_count": 1169,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 22,
-      "documented_api_entry_count": 334,
+      "c_api_annotation_count": 21,
+      "documented_api_entry_count": 530,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3428,7 +3406,7 @@
       "arkts_annotation_count": 15,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 15,
+      "documented_api_entry_count": 10,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3447,8 +3425,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 51,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 32,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 65,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3467,8 +3445,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 28,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 29,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 54,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3487,8 +3465,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 112,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 75,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 168,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3508,7 +3486,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 92,
-      "documented_api_entry_count": 98,
+      "documented_api_entry_count": 85,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3522,7 +3500,7 @@
       "arkts_annotation_count": 31,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 25,
+      "documented_api_entry_count": 21,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3542,7 +3520,7 @@
       "arkts_annotation_count": 63,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 34,
+      "documented_api_entry_count": 42,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3562,7 +3540,7 @@
       "arkts_annotation_count": 220,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 187,
+      "documented_api_entry_count": 239,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3582,7 +3560,7 @@
       "arkts_annotation_count": 120,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 7,
-      "documented_api_entry_count": 87,
+      "documented_api_entry_count": 85,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3602,7 +3580,7 @@
       "arkts_annotation_count": 86,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 8,
-      "documented_api_entry_count": 95,
+      "documented_api_entry_count": 116,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3621,7 +3599,7 @@
       "arkts_annotation_count": 34,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 5,
-      "documented_api_entry_count": 47,
+      "documented_api_entry_count": 45,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3640,7 +3618,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 26,
+      "documented_api_entry_count": 22,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3660,7 +3638,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 17,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3680,7 +3658,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 17,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3700,7 +3678,7 @@
       "arkts_annotation_count": 24,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 16,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3720,7 +3698,7 @@
       "arkts_annotation_count": 33,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 17,
+      "documented_api_entry_count": 13,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3739,8 +3717,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 37,
-      "documented_api_entry_count": 206,
+      "c_api_annotation_count": 237,
+      "documented_api_entry_count": 98,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3759,8 +3737,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 258,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 17,
-      "documented_api_entry_count": 121,
+      "c_api_annotation_count": 68,
+      "documented_api_entry_count": 160,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3780,7 +3758,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 10,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 75,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Multimedia.Media.LowPowerAVSink",
@@ -3790,8 +3768,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 3,
-      "documented_api_entry_count": 15,
+      "c_api_annotation_count": 2,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3811,7 +3789,7 @@
       "arkts_annotation_count": 69,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 46,
+      "documented_api_entry_count": 41,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3830,8 +3808,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 3,
-      "documented_api_entry_count": 36,
+      "c_api_annotation_count": 35,
+      "documented_api_entry_count": 35,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3850,8 +3828,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 33,
+      "c_api_annotation_count": 31,
+      "documented_api_entry_count": 30,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3870,8 +3848,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 37,
+      "c_api_annotation_count": 31,
+      "documented_api_entry_count": 34,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3891,7 +3869,7 @@
       "arkts_annotation_count": 58,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 39,
+      "documented_api_entry_count": 35,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3911,7 +3889,7 @@
       "arkts_annotation_count": 45,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 27,
+      "documented_api_entry_count": 23,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3931,7 +3909,7 @@
       "arkts_annotation_count": 174,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 111,
+      "documented_api_entry_count": 104,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -3950,8 +3928,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 25,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 4,
-      "documented_api_entry_count": 19,
+      "c_api_annotation_count": 8,
+      "documented_api_entry_count": 63,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Multimedia.VideoProcessingEngine",
@@ -3962,7 +3940,7 @@
       "arkts_annotation_count": 13,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.MultimodalAwareness.DeviceStatus",
@@ -3973,7 +3951,7 @@
       "arkts_annotation_count": 36,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.MultimodalAwareness.DistanceMeasurement",
@@ -3995,7 +3973,7 @@
       "arkts_annotation_count": 61,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 23,
+      "documented_api_entry_count": 15,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.MultimodalAwareness.Motion",
@@ -4006,7 +3984,7 @@
       "arkts_annotation_count": 82,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 23,
+      "documented_api_entry_count": 17,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.MultimodalAwareness.OnScreenAwareness",
@@ -4017,7 +3995,7 @@
       "arkts_annotation_count": 97,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 20,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.MultimodalAwareness.UserStatus",
@@ -4039,7 +4017,7 @@
       "arkts_annotation_count": 17,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 12,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -4052,7 +4030,7 @@
       "arkts_annotation_count": 552,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 252,
-      "documented_api_entry_count": 166,
+      "documented_api_entry_count": 222,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4072,7 +4050,7 @@
       "arkts_annotation_count": 7,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4088,7 +4066,7 @@
       "arkts_annotation_count": 40,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 13,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4108,7 +4086,7 @@
       "arkts_annotation_count": 68,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 41,
+      "documented_api_entry_count": 35,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4128,7 +4106,7 @@
       "arkts_annotation_count": 57,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 33,
+      "documented_api_entry_count": 28,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4148,7 +4126,7 @@
       "arkts_annotation_count": 44,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 29,
+      "documented_api_entry_count": 26,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4168,7 +4146,7 @@
       "arkts_annotation_count": 150,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 88,
+      "documented_api_entry_count": 84,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4186,7 +4164,7 @@
       "arkts_annotation_count": 3,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4206,7 +4184,7 @@
       "arkts_annotation_count": 479,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 311,
+      "documented_api_entry_count": 244,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4226,7 +4204,7 @@
       "arkts_annotation_count": 66,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 40,
+      "documented_api_entry_count": 36,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4245,8 +4223,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 880,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 455,
+      "c_api_annotation_count": 2,
+      "documented_api_entry_count": 382,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4266,7 +4244,7 @@
       "arkts_annotation_count": 2,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4285,7 +4263,7 @@
       "arkts_annotation_count": 177,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 66,
+      "documented_api_entry_count": 47,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4305,7 +4283,7 @@
       "arkts_annotation_count": 62,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 18,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4324,7 +4302,7 @@
       "arkts_annotation_count": 9,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -4337,7 +4315,7 @@
       "arkts_annotation_count": 21,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 9,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -4351,7 +4329,7 @@
       "arkts_annotation_count": 3,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4370,7 +4348,7 @@
       "arkts_annotation_count": 33,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 13,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -4383,7 +4361,7 @@
       "arkts_annotation_count": 49,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 40,
+      "documented_api_entry_count": 37,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4403,7 +4381,7 @@
       "arkts_annotation_count": 16,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 10,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4422,7 +4400,7 @@
       "arkts_annotation_count": 416,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 201,
+      "documented_api_entry_count": 212,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -4435,7 +4413,7 @@
       "arkts_annotation_count": 268,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 96,
+      "documented_api_entry_count": 90,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4455,7 +4433,7 @@
       "arkts_annotation_count": 194,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 64,
+      "documented_api_entry_count": 57,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4475,7 +4453,7 @@
       "arkts_annotation_count": 34,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 5,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4495,7 +4473,7 @@
       "arkts_annotation_count": 19,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 7,
-      "documented_api_entry_count": 21,
+      "documented_api_entry_count": 20,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4515,7 +4493,7 @@
       "arkts_annotation_count": 23,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 11,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4535,7 +4513,7 @@
       "arkts_annotation_count": 15,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 6,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -4552,7 +4530,7 @@
       "arkts_annotation_count": 108,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 45,
+      "documented_api_entry_count": 34,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4572,7 +4550,7 @@
       "arkts_annotation_count": 32,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 25,
+      "documented_api_entry_count": 19,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4592,7 +4570,7 @@
       "arkts_annotation_count": 62,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 28,
+      "documented_api_entry_count": 18,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4612,7 +4590,7 @@
       "arkts_annotation_count": 12,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 9,
+      "documented_api_entry_count": 12,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "default",
@@ -4627,8 +4605,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 10,
-      "documented_api_entry_count": 14,
+      "c_api_annotation_count": 20,
+      "documented_api_entry_count": 106,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4647,8 +4625,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 0,
       "bundle_definition_count": 2,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 1,
+      "c_api_annotation_count": 2,
+      "documented_api_entry_count": 12,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Resourceschedule.QoS.Core",
@@ -4658,8 +4636,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 172,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 1,
-      "documented_api_entry_count": 78,
+      "c_api_annotation_count": 2,
+      "documented_api_entry_count": 73,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4679,7 +4657,7 @@
       "arkts_annotation_count": 163,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 55,
+      "documented_api_entry_count": 60,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4699,7 +4677,7 @@
       "arkts_annotation_count": 453,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 211,
+      "documented_api_entry_count": 213,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4719,7 +4697,7 @@
       "arkts_annotation_count": 153,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 72,
+      "documented_api_entry_count": 64,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4739,7 +4717,7 @@
       "arkts_annotation_count": 45,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 18,
+      "documented_api_entry_count": 14,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4757,7 +4735,7 @@
       "arkts_annotation_count": 24,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 5,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -4774,7 +4752,7 @@
       "arkts_annotation_count": 278,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 24,
-      "documented_api_entry_count": 194,
+      "documented_api_entry_count": 295,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4795,7 +4773,7 @@
       "arkts_annotation_count": 74,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 44,
+      "documented_api_entry_count": 36,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4815,7 +4793,7 @@
       "arkts_annotation_count": 30,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 14,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4835,7 +4813,7 @@
       "arkts_annotation_count": 5,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4855,7 +4833,7 @@
       "arkts_annotation_count": 178,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 105,
+      "documented_api_entry_count": 78,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4875,7 +4853,7 @@
       "arkts_annotation_count": 11,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 13,
+      "documented_api_entry_count": 11,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4895,7 +4873,7 @@
       "arkts_annotation_count": 6,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 9,
+      "documented_api_entry_count": 6,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4915,7 +4893,7 @@
       "arkts_annotation_count": 20,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 20,
+      "documented_api_entry_count": 17,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4935,7 +4913,7 @@
       "arkts_annotation_count": 10,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 14,
+      "documented_api_entry_count": 10,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4956,7 +4934,7 @@
       "arkts_annotation_count": 8,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 12,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4977,7 +4955,7 @@
       "arkts_annotation_count": 56,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 52,
+      "documented_api_entry_count": 43,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -4997,7 +4975,7 @@
       "arkts_annotation_count": 162,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 2,
-      "documented_api_entry_count": 91,
+      "documented_api_entry_count": 89,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -5010,7 +4988,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5024,7 +5002,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5038,7 +5016,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5052,7 +5030,7 @@
       "arkts_annotation_count": 243,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 6,
-      "documented_api_entry_count": 200,
+      "documented_api_entry_count": 94,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5073,7 +5051,7 @@
       "arkts_annotation_count": 84,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 44,
+      "documented_api_entry_count": 46,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Security.Huks.CryptoExtension",
@@ -5084,7 +5062,7 @@
       "arkts_annotation_count": 298,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 190,
+      "documented_api_entry_count": 82,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5104,7 +5082,7 @@
       "arkts_annotation_count": 20,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 13,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5122,7 +5100,7 @@
       "arkts_annotation_count": 36,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 3,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5141,7 +5119,7 @@
       "arkts_annotation_count": 55,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 30,
+      "documented_api_entry_count": 22,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.SelectionInput.Selection",
@@ -5162,7 +5140,7 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 109,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
+      "c_api_annotation_count": 4,
       "documented_api_entry_count": 53,
       "documented_device_profiles": [
         "phone",
@@ -5194,8 +5172,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 457,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
-      "documented_api_entry_count": 245,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 252,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5214,7 +5192,7 @@
       "arkts_annotation_count": 85,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 43,
+      "documented_api_entry_count": 26,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -5227,7 +5205,7 @@
       "arkts_annotation_count": 74,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 59,
-      "documented_api_entry_count": 22,
+      "documented_api_entry_count": 48,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5247,7 +5225,7 @@
       "arkts_annotation_count": 21,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 4,
+      "documented_api_entry_count": 2,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "liteWearable"
@@ -5271,7 +5249,7 @@
       "arkts_annotation_count": 517,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 188,
+      "documented_api_entry_count": 177,
       "documented_device_profiles": [
         "phone"
       ],
@@ -5286,8 +5264,8 @@
       "advertised_or_expected": true,
       "arkts_annotation_count": 51,
       "bundle_definition_count": 1,
-      "c_api_annotation_count": 2,
-      "documented_api_entry_count": 36,
+      "c_api_annotation_count": 4,
+      "documented_api_entry_count": 32,
       "documented_device_profiles": [
         "phone"
       ],
@@ -5303,7 +5281,7 @@
       "arkts_annotation_count": 506,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 4,
-      "documented_api_entry_count": 251,
+      "documented_api_entry_count": 224,
       "documented_device_profiles": [
         "phone"
       ],
@@ -5319,7 +5297,7 @@
       "arkts_annotation_count": 150,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 40,
+      "documented_api_entry_count": 7,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.Telephony.CoreService.Esim",
@@ -5330,7 +5308,7 @@
       "arkts_annotation_count": 273,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 82,
+      "documented_api_entry_count": 72,
       "documented_device_profiles": [
         "phone"
       ],
@@ -5346,7 +5324,7 @@
       "arkts_annotation_count": 99,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 49,
+      "documented_api_entry_count": 38,
       "documented_device_profiles": [
         "phone"
       ],
@@ -5362,7 +5340,7 @@
       "arkts_annotation_count": 28,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 7,
+      "documented_api_entry_count": 8,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1",
@@ -5397,7 +5375,7 @@
       "arkts_annotation_count": 305,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 101,
+      "documented_api_entry_count": 76,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5416,7 +5394,7 @@
       "arkts_annotation_count": 67,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 19,
+      "documented_api_entry_count": 13,
       "documented_device_profiles": [],
       "sdk_profiles": [
         "2in1"
@@ -5429,7 +5407,7 @@
       "arkts_annotation_count": 202,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 88,
+      "documented_api_entry_count": 51,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5449,7 +5427,7 @@
       "arkts_annotation_count": 51,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 23,
+      "documented_api_entry_count": 13,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.UserIAM.UserAuth.CompanionDeviceAuth",
@@ -5460,7 +5438,7 @@
       "arkts_annotation_count": 218,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 76,
+      "documented_api_entry_count": 68,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5479,7 +5457,7 @@
       "arkts_annotation_count": 4,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 2,
+      "documented_api_entry_count": 4,
       "documented_device_profiles": [],
       "sdk_profiles": [],
       "syscap": "SystemCapability.UserIAM.UserAuth.FaceAuth",
@@ -5490,7 +5468,7 @@
       "arkts_annotation_count": 0,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 3,
+      "documented_api_entry_count": 0,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5515,7 +5493,7 @@
       "arkts_annotation_count": 1354,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 1527,
+      "documented_api_entry_count": 1595,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5535,7 +5513,7 @@
       "arkts_annotation_count": 1889,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 96,
-      "documented_api_entry_count": 1039,
+      "documented_api_entry_count": 1069,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5555,7 +5533,7 @@
       "arkts_annotation_count": 863,
       "bundle_definition_count": 0,
       "c_api_annotation_count": 8,
-      "documented_api_entry_count": 465,
+      "documented_api_entry_count": 504,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5569,7 +5547,7 @@
       "arkts_annotation_count": 646,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 12,
-      "documented_api_entry_count": 427,
+      "documented_api_entry_count": 381,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"
@@ -5589,7 +5567,7 @@
       "arkts_annotation_count": 9,
       "bundle_definition_count": 1,
       "c_api_annotation_count": 0,
-      "documented_api_entry_count": 8,
+      "documented_api_entry_count": 3,
       "documented_device_profiles": [
         "phone",
         "tablet_reference_for_2in1"

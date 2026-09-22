@@ -28,6 +28,10 @@
     },
     "local_interface_sdk_js_before_refresh": {
       "commit": "de6fe2ac83e9c1837c4e591d1230ef80028dd606"
+    },
+    "interface_sdk_c_latest": {
+      "commit": "731b1e08a25e82500df591f2331d560a970b4bbf",
+      "worktree": "/private/tmp/interface-sdk-c-7-latest"
     }
   },
   "runtime_images": {
@@ -40,6 +44,7 @@
   },
   "notes": [
     "The checked-in OpenHarmony source mirrors were behind the remote OpenHarmony-7.0-Release heads, so the profile and API inventory use detached worktrees at the commits above.",
-    "Runtime behavior was measured on fresh copies extracted from the packaged ARM64 artifacts."
+    "Runtime behavior was measured on fresh copies extracted from the packaged ARM64 artifacts.",
+    "The tested phone and 2in1 image SysCap inputs were pulled from /system/etc/syscap.json in the running guests."
   ]
 }

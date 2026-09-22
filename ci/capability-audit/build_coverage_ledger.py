@@ -89,9 +89,30 @@ def syscap_runtime_index(path: Path) -> dict[str, dict[str, Any]]:
     }
 
 
+def missing_permission_index(path: Path) -> dict[str, list[dict[str, Any]]]:
+    result: dict[str, list[dict[str, Any]]] = {}
+    report = json.loads(path.read_text(encoding="utf-8"))
+    for permission in report["permissions"]:
+        if permission["registered"]:
+            continue
+        for syscap in permission["official_profile_syscaps"]:
+            result.setdefault(syscap, []).append({
+                "permission": permission["permission"],
+                "public_api": permission["public_api"],
+                "system_api": permission["system_api"],
+                "status": permission["status"],
+            })
+    return result
+
+
 def preferred_arkts_report(device_root: Path) -> Path:
     latest = device_root / "arkts-module-load-latest.json"
     return latest if latest.exists() else device_root / "arkts-module-load.json"
+
+
+def preferred_c_abi_report(device_root: Path) -> Path:
+    latest = device_root / "c-api-abi-latest.json"
+    return latest if latest.exists() else device_root / "c-api-abi.json"
 
 
 def surface_state(
@@ -157,11 +178,15 @@ def main() -> int:
         for device in DEVICES
     }
     c_abi = {
-        device: c_index(device_roots[device] / "c-api-abi.json")
+        device: c_index(preferred_c_abi_report(device_roots[device]))
         for device in DEVICES
     }
     syscap_runtime = {
         device: syscap_runtime_index(device_roots[device] / "syscap-runtime.json")
+        for device in DEVICES
+    }
+    missing_permissions = {
+        device: missing_permission_index(device_roots[device] / "permission-audit.json")
         for device in DEVICES
     }
 
@@ -185,6 +210,12 @@ def main() -> int:
             syscap_probe = syscap_runtime[device].get(syscap, {})
             surface, surface_problems = surface_state(modules, contract, missing_exports)
             runtime_modules = [module for module in modules if module["has_runtime_callable"]]
+            permission_gaps = missing_permissions[device].get(syscap, [])
+            coverage = coverage_state(profile["audit_status"], surface)
+            if permission_gaps and coverage in {
+                "behavior_validation_pending", "behavior_verified_subset"
+            }:
+                coverage = "permission_registry_gap"
             row["devices"][device] = {
                 "official_sdk_profile": profile["official_sdk_profile"],
                 "documented_minimum_profile": profile["documented_minimum_profile"],
@@ -195,11 +226,12 @@ def main() -> int:
                 "declaration_status": profile["declaration_status"],
                 "contract_declaration_status": profile["contract_declaration_status"],
                 "audit_status": profile["audit_status"],
-                "coverage_state": coverage_state(profile["audit_status"], surface),
+                "coverage_state": coverage,
                 "can_i_use": syscap_probe.get("can_i_use"),
                 "syscap_runtime_status": syscap_probe.get("status", "not_probed"),
                 "surface_state": surface,
                 "surface_problems": surface_problems,
+                "missing_runtime_permissions": permission_gaps,
                 "arkts_modules": [module["module"] for module in modules],
                 "arkts_runtime_module_count": len(runtime_modules),
                 "arkts_loaded_runtime_module_count": sum(module["loaded"] for module in runtime_modules),
@@ -275,6 +307,7 @@ def main() -> int:
         "declared", "declaration_status", "contract_declaration_status",
         "audit_status", "coverage_state", "can_i_use", "syscap_runtime_status",
         "surface_state", "surface_problems",
+        "missing_runtime_permissions",
         "arkts_modules", "arkts_runtime_module_count", "arkts_loaded_runtime_module_count",
         "arkts_missing_runtime_exports", "arkts_missing_public_function_count",
         "arkts_missing_system_function_count",
@@ -291,6 +324,9 @@ def main() -> int:
                     "device": device,
                     **{key: device_row[key] for key in fields[7:20]},
                     "surface_problems": ";".join(device_row["surface_problems"]),
+                    "missing_runtime_permissions": ";".join(
+                        item["permission"] for item in device_row["missing_runtime_permissions"]
+                    ),
                     "arkts_modules": ";".join(device_row["arkts_modules"]),
                     "arkts_runtime_module_count": device_row["arkts_runtime_module_count"],
                     "arkts_loaded_runtime_module_count": device_row["arkts_loaded_runtime_module_count"],

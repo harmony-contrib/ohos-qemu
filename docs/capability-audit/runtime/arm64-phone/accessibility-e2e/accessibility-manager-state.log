@@ -1,0 +1,31 @@
+
+-------------------------------[ability]-------------------------------
+
+
+----------------------------------AccessibilityManagerService----------------------------------
+id:  100
+accessible:  1
+touchGuide:  1
+gesture:  1
+keyEventObserver:  0
+screenMagnification:  0
+mouseKey:  0
+shortKey:  1
+shortKeyOnLockScreen:  0
+animationOff:  0
+invertColor:  0
+highContrastText:  0
+audioMono:  0
+shortkeyTarget:  none
+mouseAutoClick:  -1
+daltonizationState:  0
+daltonizationColorFilter:  2
+contentTimeout:  0
+brightnessDiscount:  1
+audioBalance:  0
+clickResponseTime:  0
+ignoreRepeatClickState:  0
+ignoreRepeatClickTime:  0
+flashReminderSwitch:  0
+captionState:  0
+

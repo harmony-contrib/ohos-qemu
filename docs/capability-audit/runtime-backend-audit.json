@@ -1,0 +1,1086 @@
+{
+  "devices": {
+    "2in1": {
+      "backends": [
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "functional",
+          "id": "display-drm",
+          "matches": [
+            {
+              "excerpt": "/dev/dri: total 0 crw-rw-rw- 1 system graphics 226, 0 2026-09-22 17:53 card0 crw-rw-rw- 1 system graphics 226, 128 2026-09-22 17:53 renderD128",
+              "pattern": "/dev/dri:[\\s\\S]*card0[\\s\\S]*renderD128",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "display.width.result=0 width=800",
+              "pattern": "display\\.width\\.result=0 width=800",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Graphic.Graphic2D.",
+            "SystemCapability.WindowManager."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "vulkan-icd",
+          "matches": [
+            {
+              "excerpt": "vkCreateInstance=-9",
+              "pattern": "(?:VK_ERROR_INCOMPATIBLE_DRIVER|result=-9|vkCreateInstance.*-9)",
+              "source": "native/vulkan"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Graphic.Vulkan"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 3,
+          "evidence_required_count": 3,
+          "expected_status": "unavailable",
+          "id": "audio-pcm",
+          "matches": [
+            {
+              "excerpt": "/dev/snd: total 0 crw-rw---- 1 system audio 116, 33 2026-09-22 17:53 timer",
+              "pattern": "/dev/snd:[\\s\\S]{0,200}\\btimer\\b",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "audio.stream.start=2",
+              "pattern": "audio\\.stream\\.start=2",
+              "source": "hap"
+            },
+            {
+              "excerpt": "audio.stream.callbacks=0 bytes=0",
+              "pattern": "audio\\.stream\\.callbacks=0 bytes=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Multimedia.Audio.",
+            "SystemCapability.AI.IntelligentVoice.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "unavailable",
+          "id": "camera-video-input",
+          "matches": [
+            {
+              "excerpt": "/dev/video*: No such file",
+              "pattern": "/dev/video\\*: No such file",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "camera.devices.result=7400101 count=0",
+              "pattern": "camera\\.devices\\.result=7400101 count=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Multimedia.Camera.Core",
+            "SystemCapability.Multimedia.Media.AVRecorder",
+            "SystemCapability.Multimedia.Media.VideoRecorder"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "unavailable",
+          "id": "wifi-radio",
+          "matches": [
+            {
+              "excerpt": "HDF_WLAN_CHIPS_AP6275S not found",
+              "pattern": "HDF_WLAN_CHIPS_AP6275S not found",
+              "source": "serial"
+            },
+            {
+              "excerpt": "eth0: 5508435 52484 0 0 0 0 0 0 4769161 31710 0 0 0 0 0 0 lo Link encap:Local Loopback inet addr:127.0.0.1 Mask:255.0.0.0 inet6 addr: ::1/128 Scope: Host UP LOOPBACK RUNNING MTU:65536 Metric:1 RX packets:2 errors:0 dropped:0 overruns:0 frame:0 TX packets:2 errors:0 dropped:0 overruns:0 carrier:0 collisions:0 txqueuelen",
+              "pattern": "eth0[\\s\\S]*Driver virtio_net",
+              "source": "hardware"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.WiFi."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "bluetooth-radio",
+          "matches": [
+            {
+              "excerpt": "STATE_TURN_OFF",
+              "pattern": "(?:libbt_vendor\\.z\\.so|STATE_TURN_OFF|ERR_BT_DISABLE_FAILED)",
+              "source": "radio"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.Bluetooth."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "functional",
+          "id": "ethernet-nat",
+          "matches": [
+            {
+              "excerpt": "inet addr:10.0.2.15",
+              "pattern": "inet addr:10\\.0\\.2\\.15",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "network.get_default.result=0 net_id=100",
+              "pattern": "network\\.get_default\\.result=0 net_id=100",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.NetManager.Ethernet",
+            "SystemCapability.Communication.NetStack"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "functional",
+          "id": "dns-mdns",
+          "matches": [
+            {
+              "excerpt": "network.mdns.discovery.result=started:true",
+              "pattern": "network\\.mdns\\.discovery\\.result=started:true",
+              "source": "hap"
+            },
+            {
+              "excerpt": "network.dns.external.result=",
+              "pattern": "network\\.dns\\.external\\.result=",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.NetManager.MDNS",
+            "SystemCapability.Communication.NetStack"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "net-ebpf",
+          "matches": [
+            {
+              "excerpt": "errno=38",
+              "pattern": "(?:ENOSYS|errno=38|Function not implemented)",
+              "source": "native/bpf"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.NetManager.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "partial",
+          "id": "usb-host-device",
+          "matches": [
+            {
+              "excerpt": "usb_gadget/g1/functions/fxfer.aoa' failed",
+              "pattern": "(?:usb_gadget.*failed|/UDC failed)",
+              "source": "serial"
+            },
+            {
+              "excerpt": "usb.devices.result=count:0",
+              "pattern": "usb\\.devices\\.result=count:0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.USB.USBManager",
+            "SystemCapability.Driver.USB.Extension"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "simulated",
+          "id": "sensor-accelerometer",
+          "matches": [
+            {
+              "excerpt": "sensor.infos.enumerate.result=0 count=1",
+              "pattern": "sensor\\.infos\\.enumerate\\.result=0 count=1",
+              "source": "hap"
+            },
+            {
+              "excerpt": "sensor.subscribe.callback=0 type=0 interval=0 subscribe=0 unsubscribe=0 callbacks=9",
+              "pattern": "sensor\\.subscribe\\.callback=0.*callbacks=9",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Sensors.Sensor"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "simulated",
+          "id": "vibrator",
+          "matches": [
+            {
+              "excerpt": "vibrator.play.result=0 cancel=0",
+              "pattern": "vibrator\\.play\\.result=0 cancel=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Sensors.MiscDevice"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "location-provider",
+          "matches": [
+            {
+              "excerpt": "location.start.result=3301100 stop.result=401 callbacks=0",
+              "pattern": "location\\.start\\.result=.*callbacks=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Location.Location.Core",
+            "SystemCapability.Location.Location.Gnss",
+            "SystemCapability.Location.Location.Geofence"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "thermal-sensors",
+          "matches": [
+            {
+              "excerpt": "thermal.level.result=0",
+              "pattern": "thermal\\.level\\.result=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.PowerManager.ThermalManager"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "conditional_host_flag",
+          "id": "accessibility-input",
+          "matches": [
+            {
+              "excerpt": "pass",
+              "pattern": "(?:PASS|passed|complete|multi-after-release)",
+              "source": "a11y"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.BarrierFree.Accessibility.Core",
+            "SystemCapability.BarrierFree.Accessibility.Vision"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "ftrace",
+          "matches": [
+            {
+              "excerpt": "/sys/kernel/debug/tracing/buffer_size_kb \" to 0666, err=2",
+              "pattern": "/sys/kernel/(?:debug/)?tracing.*err=2",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.HiviewDFX.HiTrace"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "storage-quota",
+          "matches": [
+            {
+              "excerpt": "F2FS-fs (vda): quota file may be corrupt",
+              "pattern": "(?:F2FS|f2fs).*(?:quota|Quota).*(?:fail|error|corrupt)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.FileManagement.StorageService.SpatialStatistics"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "access-token-kernel-driver",
+          "matches": [
+            {
+              "excerpt": "access tokenid cmd error",
+              "pattern": "access tokenid cmd error",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Security.AccessToken"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable_for_application_process",
+          "id": "qos-authorization",
+          "matches": [
+            {
+              "excerpt": "AUTH_CTRL] no auth data",
+              "pattern": "(?:AUTH_CTRL.*no auth data|QOS_CTRL.*not authorized)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Resourceschedule.QoS.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "partial_missing_configured_extension",
+          "id": "selection-input-service",
+          "matches": [
+            {
+              "excerpt": "selection.listener.error=Error: The application calling the API does not match the application selected in the system settings. BundleName is invalid:{\"code\":33600003",
+              "pattern": "selection\\.listener\\.error=.*33600003",
+              "source": "hap"
+            },
+            {
+              "excerpt": "selection.content.error=Error: Selection service invocation exception.:{\"code\":33600001",
+              "pattern": "selection\\.content\\.error=.*33600001",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.SelectionInput.Selection"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial_missing_extension_and_driver",
+          "id": "print-extension-and-cups",
+          "matches": [
+            {
+              "excerpt": "print.discovery.error=13100004",
+              "pattern": "print\\.discovery\\.error=13100004",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Print.PrintFramework"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 3,
+          "evidence_required_count": 3,
+          "expected_status": "partial_pip_only",
+          "id": "window-session-features",
+          "matches": [
+            {
+              "excerpt": "window.pip.enabled=true",
+              "pattern": "window\\.pip\\.enabled=true",
+              "source": "hap"
+            },
+            {
+              "excerpt": "window.floating_ball.enabled=false",
+              "pattern": "window\\.floating_ball\\.enabled=false",
+              "source": "hap"
+            },
+            {
+              "excerpt": "window.float_view.enabled=false",
+              "pattern": "window\\.float_view\\.enabled=false",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Window.SessionManager",
+            "SystemCapability.WindowManager.WindowManager.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "conditional_bridge_required",
+          "id": "peer-device-network-topology",
+          "matches": [
+            {
+              "excerpt": "-netdev user,id=net0",
+              "pattern": "-netdev user,id=net0",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.SoftBus.Core",
+            "SystemCapability.DistributedHardware.",
+            "SystemCapability.DistributedDataManager.",
+            "SystemCapability.DistributedSched.",
+            "SystemCapability.FileManagement.File.DistributedFile",
+            "SystemCapability.Multimedia.AVSession.AVCast"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "secure-hardware-devices",
+          "matches": [
+            {
+              "excerpt": "/sec_storage \" to 0700, err=2",
+              "pattern": "(?:/dev/tc_ns_client|/dev/tc_private|/sec_storage).*(?:err=2|failed)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Security.DeviceSecurityLevel",
+            "SystemCapability.Security.DeviceAuth",
+            "SystemCapability.Security.Huks.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "resource-control-cgroups",
+          "matches": [
+            {
+              "excerpt": "/memcg/perf_sensitive/cgroup.procs errno:2",
+              "pattern": "/(?:memcg|stune|blkio)/.*(?:errno:2|err=2)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.ResourceSchedule.",
+            "SystemCapability.Resourceschedule."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "hyperhold-memory-reclaim",
+          "matches": [
+            {
+              "excerpt": "/proc/sys/kernel/hyperhold/cache_level failed",
+              "pattern": "/proc/sys/kernel/hyperhold/.*failed",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Kernel.Memory",
+            "SystemCapability.ResourceSchedule.SystemLoad"
+          ]
+        }
+      ],
+      "summary": {
+        "backend_count": 26,
+        "complete_evidence_count": 26,
+        "incomplete_evidence": [],
+        "serial_error_family_counts": {
+          "access_token_ioctl": 18896,
+          "camera_isp": 14,
+          "hyperhold": 83,
+          "qos_authorization": 7398,
+          "quota": 4,
+          "resource_cgroups": 26,
+          "secure_hardware": 2,
+          "tracing": 1314,
+          "usb_gadget": 32,
+          "wifi_driver": 10
+        }
+      }
+    },
+    "phone": {
+      "backends": [
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "functional",
+          "id": "display-drm",
+          "matches": [
+            {
+              "excerpt": "/dev/dri: total 0 crw-rw-rw- 1 system graphics 226, 0 2026-09-22 18:39 card0 crw-rw-rw- 1 system graphics 226, 128 2026-09-22 18:39 renderD128 /dev/input: total 0 crw-rw---- 1 root input 13, 64 2026-09-22 18:39 event0 crw-rw---- 1 root input 13, 65 2026-09-22 18:39 event1 crw-rw---- 1 root input 13, 66 2026-09-22 18:39",
+              "pattern": "/dev/dri:[\\s\\S]*card0[\\s\\S]*renderD128",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "display.width.result=0 width=800",
+              "pattern": "display\\.width\\.result=0 width=800",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Graphic.Graphic2D.",
+            "SystemCapability.WindowManager."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "vulkan-icd",
+          "matches": [
+            {
+              "excerpt": "vkCreateInstance=-9",
+              "pattern": "(?:VK_ERROR_INCOMPATIBLE_DRIVER|result=-9|vkCreateInstance.*-9)",
+              "source": "native/vulkan"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Graphic.Vulkan"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 3,
+          "evidence_required_count": 3,
+          "expected_status": "unavailable",
+          "id": "audio-pcm",
+          "matches": [
+            {
+              "excerpt": "/dev/snd: total 0 crw-rw---- 1 system audio 116, 33 2026-09-22 18:39 timer",
+              "pattern": "/dev/snd:[\\s\\S]{0,200}\\btimer\\b",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "audio.stream.start=2",
+              "pattern": "audio\\.stream\\.start=2",
+              "source": "hap"
+            },
+            {
+              "excerpt": "audio.stream.callbacks=0 bytes=0",
+              "pattern": "audio\\.stream\\.callbacks=0 bytes=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Multimedia.Audio.",
+            "SystemCapability.AI.IntelligentVoice.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "unavailable",
+          "id": "camera-video-input",
+          "matches": [
+            {
+              "excerpt": "/dev/video*: No such file",
+              "pattern": "/dev/video\\*: No such file",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "camera.devices.result=7400101 count=0",
+              "pattern": "camera\\.devices\\.result=7400101 count=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Multimedia.Camera.Core",
+            "SystemCapability.Multimedia.Media.AVRecorder",
+            "SystemCapability.Multimedia.Media.VideoRecorder"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "unavailable",
+          "id": "wifi-radio",
+          "matches": [
+            {
+              "excerpt": "HDF_WLAN_CHIPS_AP6275S not found",
+              "pattern": "HDF_WLAN_CHIPS_AP6275S not found",
+              "source": "serial"
+            },
+            {
+              "excerpt": "eth0: 9106291 11641 0 0 0 0 0 0 1375813 4258 0 0 0 0 0 0 lo Link encap:Local Loopback inet addr:127.0.0.1 Mask:255.0.0.0 inet6 addr: ::1/128 Scope: Host UP LOOPBACK RUNNING MTU:65536 Metric:1 RX packets:0 errors:0 dropped:0 overruns:0 frame:0 TX packets:0 errors:0 dropped:0 overruns:0 carrier:0 collisions:0 txqueuelen:",
+              "pattern": "eth0[\\s\\S]*Driver virtio_net",
+              "source": "hardware"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.WiFi."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "bluetooth-radio",
+          "matches": [
+            {
+              "excerpt": "STATE_TURN_OFF",
+              "pattern": "(?:libbt_vendor\\.z\\.so|STATE_TURN_OFF|ERR_BT_DISABLE_FAILED)",
+              "source": "radio"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.Bluetooth."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "functional",
+          "id": "ethernet-nat",
+          "matches": [
+            {
+              "excerpt": "inet addr:10.0.2.15",
+              "pattern": "inet addr:10\\.0\\.2\\.15",
+              "source": "hardware"
+            },
+            {
+              "excerpt": "network.get_default.result=0 net_id=100",
+              "pattern": "network\\.get_default\\.result=0 net_id=100",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.NetManager.Ethernet",
+            "SystemCapability.Communication.NetStack"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "functional",
+          "id": "dns-mdns",
+          "matches": [
+            {
+              "excerpt": "network.mdns.discovery.result=started:true",
+              "pattern": "network\\.mdns\\.discovery\\.result=started:true",
+              "source": "hap"
+            },
+            {
+              "excerpt": "network.dns.external.result=",
+              "pattern": "network\\.dns\\.external\\.result=",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.NetManager.MDNS",
+            "SystemCapability.Communication.NetStack"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "net-ebpf",
+          "matches": [
+            {
+              "excerpt": "errno=38",
+              "pattern": "(?:ENOSYS|errno=38|Function not implemented)",
+              "source": "native/bpf"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.NetManager.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "partial",
+          "id": "usb-host-device",
+          "matches": [
+            {
+              "excerpt": "usb_gadget/g1/functions/fxfer.aoa' failed",
+              "pattern": "(?:usb_gadget.*failed|/UDC failed)",
+              "source": "serial"
+            },
+            {
+              "excerpt": "usb.devices.result=count:0",
+              "pattern": "usb\\.devices\\.result=count:0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.USB.USBManager",
+            "SystemCapability.Driver.USB.Extension"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 2,
+          "evidence_required_count": 2,
+          "expected_status": "simulated",
+          "id": "sensor-accelerometer",
+          "matches": [
+            {
+              "excerpt": "sensor.infos.enumerate.result=0 count=1",
+              "pattern": "sensor\\.infos\\.enumerate\\.result=0 count=1",
+              "source": "hap"
+            },
+            {
+              "excerpt": "sensor.subscribe.callback=0 type=0 interval=0 subscribe=0 unsubscribe=0 callbacks=9",
+              "pattern": "sensor\\.subscribe\\.callback=0.*callbacks=9",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Sensors.Sensor"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "simulated",
+          "id": "vibrator",
+          "matches": [
+            {
+              "excerpt": "vibrator.play.result=0 cancel=0",
+              "pattern": "vibrator\\.play\\.result=0 cancel=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Sensors.MiscDevice"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "location-provider",
+          "matches": [
+            {
+              "excerpt": "location.start.result=3301100 stop.result=401 callbacks=0",
+              "pattern": "location\\.start\\.result=.*callbacks=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Location.Location.Core",
+            "SystemCapability.Location.Location.Gnss",
+            "SystemCapability.Location.Location.Geofence"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "thermal-sensors",
+          "matches": [
+            {
+              "excerpt": "thermal.level.result=0",
+              "pattern": "thermal\\.level\\.result=0",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.PowerManager.ThermalManager"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "conditional_host_flag",
+          "id": "accessibility-input",
+          "matches": [
+            {
+              "excerpt": "pass",
+              "pattern": "(?:PASS|passed|complete|multi-after-release)",
+              "source": "a11y"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.BarrierFree.Accessibility.Core",
+            "SystemCapability.BarrierFree.Accessibility.Vision"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "ftrace",
+          "matches": [
+            {
+              "excerpt": "/sys/kernel/debug/tracing/buffer_size_kb \" to 0666, err=2",
+              "pattern": "/sys/kernel/(?:debug/)?tracing.*err=2",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.HiviewDFX.HiTrace"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "storage-quota",
+          "matches": [
+            {
+              "excerpt": "F2FS-fs (vda): quota file may be corrupt",
+              "pattern": "(?:F2FS|f2fs).*(?:quota|Quota).*(?:fail|error|corrupt)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.FileManagement.StorageService.SpatialStatistics"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "access-token-kernel-driver",
+          "matches": [
+            {
+              "excerpt": "access tokenid cmd error",
+              "pattern": "access tokenid cmd error",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Security.AccessToken"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable_for_application_process",
+          "id": "qos-authorization",
+          "matches": [
+            {
+              "excerpt": "AUTH_CTRL] no auth data",
+              "pattern": "(?:AUTH_CTRL.*no auth data|QOS_CTRL.*not authorized)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Resourceschedule.QoS.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "declared_outside_device_contract",
+          "id": "selection-input-service",
+          "matches": [
+            {
+              "excerpt": "selection.content.error=Error: Selection service invocation exception.:{\"code\":33600001",
+              "pattern": "selection\\.content\\.error=.*33600001",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.SelectionInput.Selection"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "declared_outside_device_contract",
+          "id": "print-extension-and-cups",
+          "matches": [
+            {
+              "excerpt": "print.discovery.result=started:true",
+              "pattern": "print\\.discovery\\.result=started:true",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Print.PrintFramework"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 3,
+          "evidence_required_count": 3,
+          "expected_status": "profile_gap_and_disabled_features",
+          "id": "window-session-features",
+          "matches": [
+            {
+              "excerpt": "window.pip.enabled=false",
+              "pattern": "window\\.pip\\.enabled=false",
+              "source": "hap"
+            },
+            {
+              "excerpt": "window.floating_ball.enabled=false",
+              "pattern": "window\\.floating_ball\\.enabled=false",
+              "source": "hap"
+            },
+            {
+              "excerpt": "window.float_view.enabled=false",
+              "pattern": "window\\.float_view\\.enabled=false",
+              "source": "hap"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Window.SessionManager",
+            "SystemCapability.WindowManager.WindowManager.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "conditional_bridge_required",
+          "id": "peer-device-network-topology",
+          "matches": [
+            {
+              "excerpt": "-netdev user,id=net0",
+              "pattern": "-netdev user,id=net0",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Communication.SoftBus.Core",
+            "SystemCapability.DistributedHardware.",
+            "SystemCapability.DistributedDataManager.",
+            "SystemCapability.DistributedSched.",
+            "SystemCapability.FileManagement.File.DistributedFile",
+            "SystemCapability.Multimedia.AVSession.AVCast"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "secure-hardware-devices",
+          "matches": [
+            {
+              "excerpt": "/sec_storage \" to 0700, err=2",
+              "pattern": "(?:/dev/tc_ns_client|/dev/tc_private|/sec_storage).*(?:err=2|failed)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Security.DeviceSecurityLevel",
+            "SystemCapability.Security.DeviceAuth",
+            "SystemCapability.Security.Huks.Core"
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "partial",
+          "id": "resource-control-cgroups",
+          "matches": [
+            {
+              "excerpt": "/memcg/perf_sensitive/cgroup.procs errno:2",
+              "pattern": "/(?:memcg|stune|blkio)/.*(?:errno:2|err=2)",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.ResourceSchedule.",
+            "SystemCapability.Resourceschedule."
+          ]
+        },
+        {
+          "evidence_complete": true,
+          "evidence_match_count": 1,
+          "evidence_required_count": 1,
+          "expected_status": "unavailable",
+          "id": "hyperhold-memory-reclaim",
+          "matches": [
+            {
+              "excerpt": "/proc/sys/kernel/hyperhold/cache_level failed",
+              "pattern": "/proc/sys/kernel/hyperhold/.*failed",
+              "source": "serial"
+            }
+          ],
+          "syscap_dependencies": [
+            "SystemCapability.Kernel.Memory",
+            "SystemCapability.ResourceSchedule.SystemLoad"
+          ]
+        }
+      ],
+      "summary": {
+        "backend_count": 26,
+        "complete_evidence_count": 26,
+        "incomplete_evidence": [],
+        "serial_error_family_counts": {
+          "access_token_ioctl": 2618,
+          "camera_isp": 7,
+          "hyperhold": 42,
+          "qos_authorization": 2280,
+          "quota": 2,
+          "resource_cgroups": 13,
+          "secure_hardware": 1,
+          "tracing": 657,
+          "usb_gadget": 16,
+          "wifi_driver": 5
+        }
+      }
+    }
+  },
+  "schema_version": 1
+}

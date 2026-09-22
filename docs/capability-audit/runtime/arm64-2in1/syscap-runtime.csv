@@ -177,7 +177,6 @@ SystemCapability.Msdp.DeviceStatus.Stationary,True,True,False,False,True,False,m
 SystemCapability.Multimedia.AVSession.AVCast,True,True,True,True,True,True,matches,enabled_contract_capability
 SystemCapability.Multimedia.AVSession.AVInputCast,True,True,True,False,True,True,sdk_only,enabled_contract_capability
 SystemCapability.Multimedia.AVSession.AVMusicTemplate,False,False,False,False,True,False,matches,disabled_outside_contract
-SystemCapability.Multimedia.AVSession.AVinputCast,False,False,False,False,True,False,matches,disabled_outside_contract
 SystemCapability.Multimedia.AVSession.Core,True,True,True,True,True,True,matches,enabled_contract_capability
 SystemCapability.Multimedia.AVSession.ExtendedDisplayCast,True,True,False,False,True,False,matches,enabled_outside_contract
 SystemCapability.Multimedia.AVSession.Manager,True,True,True,True,True,True,matches,enabled_contract_capability
@@ -198,7 +197,6 @@ SystemCapability.Multimedia.Audio.Volume,True,True,True,True,True,True,matches,e
 SystemCapability.Multimedia.AudioHaptic.Core,True,True,True,True,True,True,matches,enabled_contract_capability
 SystemCapability.Multimedia.Camera.Core,True,True,False,True,True,False,documentation_only,enabled_outside_contract
 SystemCapability.Multimedia.Drm.Core,True,True,True,True,True,True,matches,enabled_contract_capability
-SystemCapability.Multimedia.Image,False,False,False,False,True,False,matches,disabled_outside_contract
 SystemCapability.Multimedia.Image.Core,True,True,True,True,True,True,matches,enabled_contract_capability
 SystemCapability.Multimedia.Image.ImageCreator,True,True,True,True,True,True,matches,enabled_contract_capability
 SystemCapability.Multimedia.Image.ImagePacker,True,True,True,True,True,True,matches,enabled_contract_capability

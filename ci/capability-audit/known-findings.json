@@ -3,34 +3,74 @@
   "findings": [
     {
       "id": "access-token-api26-kernel-abi",
-      "match": { "exact": ["SystemCapability.Security.AccessToken"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Security.AccessToken"
+        ]
+      },
       "devices": {
-        "phone": { "status": "partially_broken", "evidence": "GET_ALL_PERMISSIONS and GET_SPM_VERSION return ENOTSUP on ARM64" },
-        "2in1": { "status": "partially_broken", "evidence": "GET_ALL_PERMISSIONS and GET_SPM_VERSION return ENOTSUP on ARM64" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "GET_ALL_PERMISSIONS and GET_SPM_VERSION return ENOTSUP on ARM64"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "GET_ALL_PERMISSIONS and GET_SPM_VERSION return ENOTSUP on ARM64"
+        }
       }
     },
     {
       "id": "qos-authorization-backend",
-      "match": { "exact": ["SystemCapability.Resourceschedule.QoS.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Resourceschedule.QoS.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "OH_QoS_SetThreadQoS is rejected because the PID has no auth data" },
-        "2in1": { "status": "confirmed_broken", "evidence": "OH_QoS_SetThreadQoS is rejected because the PID has no auth data" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "OH_QoS_SetThreadQoS is rejected because the PID has no auth data"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "OH_QoS_SetThreadQoS is rejected because the PID has no auth data"
+        }
       }
     },
     {
       "id": "netfirewall-feature-disabled",
-      "match": { "exact": ["SystemCapability.Communication.NetManager.NetFirewall"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.NetFirewall"
+        ]
+      },
       "devices": {
-        "phone": { "status": "invalid_declaration", "evidence": "outside the official phone profile; feature false and client, library, service, module, and SA 8300 are absent" },
-        "2in1": { "status": "confirmed_broken", "evidence": "feature false; client, service, module and SA 8300 absent" }
+        "phone": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official phone profile; feature false and client, library, service, module, and SA 8300 are absent"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "feature false; client, service, module and SA 8300 absent"
+        }
       }
     },
     {
       "id": "fusion-connectivity-init-accounts",
-      "match": { "exact": ["SystemCapability.Communication.FusionConnectivity.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.FusionConnectivity.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "init cannot resolve fusion_ranging and partner_device_agent accounts" },
-        "2in1": { "status": "confirmed_broken", "evidence": "init cannot resolve fusion_ranging and partner_device_agent accounts" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "init cannot resolve fusion_ranging and partner_device_agent accounts"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "init cannot resolve fusion_ranging and partner_device_agent accounts"
+        }
       }
     },
     {
@@ -42,88 +82,194 @@
         ]
       },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "rich-only declaration; product uses mock backend and required clients are missing" },
-        "2in1": { "status": "confirmed_broken", "evidence": "rich-only declaration; product uses mock backend and required clients are missing" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "rich-only declaration; product uses mock backend and required clients are missing"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "rich-only declaration; product uses mock backend and required clients are missing"
+        }
       }
     },
     {
       "id": "vulkan-no-icd",
-      "match": { "exact": ["SystemCapability.Graphic.Vulkan"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Graphic.Vulkan"
+        ]
+      },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "vkCreateInstance returns VK_ERROR_INCOMPATIBLE_DRIVER" },
-        "2in1": { "status": "confirmed_broken", "evidence": "no Vulkan ICD manifest or driver is packaged" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "vkCreateInstance returns VK_ERROR_INCOMPATIBLE_DRIVER"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "no Vulkan ICD manifest or driver is packaged"
+        }
       }
     },
     {
       "id": "storage-quota-not-mounted",
-      "match": { "exact": ["SystemCapability.FileManagement.StorageService.SpatialStatistics"] },
+      "match": {
+        "exact": [
+          "SystemCapability.FileManagement.StorageService.SpatialStatistics"
+        ]
+      },
       "devices": {
-        "phone": { "status": "partially_broken", "evidence": "F2FS quota initialization fails; statistics and limits can return false success" },
-        "2in1": { "status": "partially_broken", "evidence": "F2FS quota initialization fails; statistics and limits can return false success" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "F2FS quota initialization fails; statistics and limits can return false success"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "F2FS quota initialization fails; statistics and limits can return false success"
+        }
       }
     },
     {
       "id": "netmanager-ebpf-backend",
-      "match": { "exact": ["SystemCapability.Communication.NetManager.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "partially_broken", "evidence": "BPF syscall is ENOSYS; UID statistics and access-policy backend unavailable" },
-        "2in1": { "status": "partially_broken", "evidence": "BPF syscall is ENOSYS; UID statistics and access-policy backend unavailable" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "BPF syscall is ENOSYS; UID statistics and access-policy backend unavailable"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "BPF syscall is ENOSYS; UID statistics and access-policy backend unavailable"
+        }
       }
     },
     {
       "id": "hitrace-arm64-kernel",
-      "match": { "exact": ["SystemCapability.HiviewDFX.HiTrace"] },
+      "match": {
+        "exact": [
+          "SystemCapability.HiviewDFX.HiTrace"
+        ]
+      },
       "devices": {
-        "phone": { "status": "architecture_dependent_failure", "evidence": "ARM64 has CONFIG_FTRACE disabled; armv7a/x86_64 need runtime confirmation" },
-        "2in1": { "status": "architecture_dependent_failure", "evidence": "ARM64 has CONFIG_FTRACE disabled; armv7a/x86_64 need runtime confirmation" }
+        "phone": {
+          "status": "architecture_dependent_failure",
+          "evidence": "ARM64 has CONFIG_FTRACE disabled; armv7a/x86_64 need runtime confirmation"
+        },
+        "2in1": {
+          "status": "architecture_dependent_failure",
+          "evidence": "ARM64 has CONFIG_FTRACE disabled; armv7a/x86_64 need runtime confirmation"
+        }
       }
     },
     {
       "id": "hidebug-dmabuf-kernel",
-      "match": { "exact": ["SystemCapability.HiviewDFX.HiProfiler.HiDebug"] },
+      "match": {
+        "exact": [
+          "SystemCapability.HiviewDFX.HiProfiler.HiDebug"
+        ]
+      },
       "devices": {
-        "phone": { "status": "partially_broken", "evidence": "graphics-memory API returns success and zero without DMABUF_PROCESS_INFO" },
-        "2in1": { "status": "partially_broken", "evidence": "graphics-memory API returns success and zero without DMABUF_PROCESS_INFO" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "graphics-memory API returns success and zero without DMABUF_PROCESS_INFO"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "graphics-memory API returns success and zero without DMABUF_PROCESS_INFO"
+        }
       }
     },
     {
       "id": "background-process-manager",
-      "match": { "exact": ["SystemCapability.Resourceschedule.BackgroundProcessManager"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Resourceschedule.BackgroundProcessManager"
+        ]
+      },
       "devices": {
-        "phone": { "status": "device_restricted_methods", "evidence": "native-child and AppNap methods are not supported on phone" },
-        "2in1": { "status": "confirmed_broken", "evidence": "event 134 has no consumer; AppNap client and backend are absent" }
+        "phone": {
+          "status": "device_restricted_methods",
+          "evidence": "native-child and AppNap methods are not supported on phone"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "event 134 has no consumer; AppNap client and backend are absent"
+        }
       }
     },
     {
       "id": "native-child-process-phone-boundary",
-      "match": { "exact": ["SystemCapability.Ability.AbilityRuntime.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "partially_broken", "evidence": "Native Child Process succeeds when enabled and returns 16010004 when disabled; required result is 801" },
-        "2in1": { "status": "runtime_verified_subset", "evidence": "21 native-child start/configs regression cases pass on ARM64" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "Native Child Process succeeds when enabled and returns 16010004 when disabled; required result is 801"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "21 native-child start/configs regression cases pass on ARM64"
+        }
       }
     },
     {
       "id": "camera-host-backend-missing",
-      "match": { "exact": ["SystemCapability.Multimedia.Camera.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Camera.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "API 26 HAP creates Camera_Manager, but GetSupportedCameras returns 7400101 with count 0; camera service logs show ICameraHost is unavailable" },
-        "2in1": { "status": "invalid_declaration", "evidence": "Camera is outside the official 2in1 SDK profile, inherited from rich.json, and the image has no camera host/backend" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 HAP creates Camera_Manager, but GetSupportedCameras returns 7400101 with count 0; camera service logs show ICameraHost is unavailable"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "Camera is outside the official 2in1 SDK profile, inherited from rich.json, and the image has no camera host/backend"
+        }
       }
     },
     {
       "id": "sensor-simulated-backend",
-      "match": { "exact": ["SystemCapability.Sensors.Sensor"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Sensors.Sensor"
+        ]
+      },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "API 26 HAP enumerates the packaged sensor_test accelerometer and receives 9 simulated data callbacks in 2 seconds; the source backend generates random mock acceleration" },
-        "2in1": { "status": "invalid_declaration", "evidence": "Sensor is outside the official 2in1 SDK profile, inherited from rich.json; its packaged sensor_test backend nevertheless produces simulated accelerometer callbacks" }
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP enumerates the packaged sensor_test accelerometer and receives 9 simulated data callbacks in 2 seconds; the source backend generates random mock acceleration"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "Sensor is outside the official 2in1 SDK profile, inherited from rich.json; its packaged sensor_test backend nevertheless produces simulated accelerometer callbacks"
+        }
       }
     },
     {
       "id": "video-processing-libraries-not-packaged",
-      "match": { "exact": ["SystemCapability.Multimedia.VideoProcessingEngine"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.VideoProcessingEngine"
+        ]
+      },
       "devices": {
-        "phone": { "status": "invalid_declaration", "evidence": "outside the official phone profile; libimage_processing.so and libvideo_processing.so are absent" },
-        "2in1": { "status": "invalid_declaration", "evidence": "outside the official 2in1 profile; libimage_processing.so and libvideo_processing.so are absent" }
+        "phone": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official phone profile; libimage_processing.so and libvideo_processing.so are absent"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official 2in1 profile; libimage_processing.so and libvideo_processing.so are absent"
+        }
       }
     },
     {
@@ -131,101 +277,186 @@
       "match": {
         "exact": [
           "SystemCapability.Multimedia.Audio.Device",
-          "SystemCapability.PowerManager.BatteryManager.Core",
-          "SystemCapability.WindowManager.WindowManager.Core"
+          "SystemCapability.PowerManager.BatteryManager.Core"
         ]
       },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "API 26 HAP successfully queries audio manager/devices, battery, and display" },
-        "2in1": { "status": "runtime_verified_subset", "evidence": "API 26 HAP successfully queries audio manager/devices, battery, and display" }
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP successfully queries audio manager/devices, battery, and display"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP successfully queries audio manager/devices, battery, and display"
+        }
       }
     },
     {
       "id": "bluetooth-state-transition-false-success",
-      "match": { "exact": ["SystemCapability.Communication.Bluetooth.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.Bluetooth.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "enable-bt reports success but the adapter remains STATE_TURN_OFF; the vendor loader cannot open libbt_vendor.z.so, so state rolls back and disable-bt reports ERR_BT_DISABLE_FAILED" },
-        "2in1": { "status": "confirmed_broken", "evidence": "enable-bt reports success but the adapter remains STATE_TURN_OFF; the vendor loader cannot open libbt_vendor.z.so, so state rolls back and disable-bt reports ERR_BT_DISABLE_FAILED" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "enable-bt reports success but the adapter remains STATE_TURN_OFF; the vendor loader cannot open libbt_vendor.z.so, so state rolls back and disable-bt reports ERR_BT_DISABLE_FAILED"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "enable-bt reports success but the adapter remains STATE_TURN_OFF; the vendor loader cannot open libbt_vendor.z.so, so state rolls back and disable-bt reports ERR_BT_DISABLE_FAILED"
+        }
       }
     },
     {
       "id": "wifi-sta-backend-unavailable",
       "match": {
-        "exact": [
-          "SystemCapability.Communication.WiFi.Core",
-          "SystemCapability.Communication.WiFi.STA"
+        "prefixes": [
+          "SystemCapability.Communication.WiFi."
         ]
       },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "sta-enable reports success, but linked-info fails and scan-start reports that the scan service is not opened" },
-        "2in1": { "status": "confirmed_broken", "evidence": "sta-enable reports success, but linked-info fails and scan-start reports that the scan service is not opened" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend"
+        }
       }
     },
     {
       "id": "phone-device-service-basic-probes",
       "match": {
         "exact": [
-          "SystemCapability.Location.Location.Core",
-          "SystemCapability.Telephony.CoreService",
           "SystemCapability.Sensors.MiscDevice"
         ]
       },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "API 26 HAP successfully queries location and telephony state and completes vibrator play/cancel; provider/data-path behavior remains to be validated" },
-        "2in1": { "status": "invalid_declaration", "evidence": "outside the official 2in1 profile even though the packaged client APIs return basic state" }
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP completes virtual vibrator play/cancel and the vibrator host maps libhdi_product_vibrator_impl.z.so"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official 2in1 profile; the inherited virtual vibrator backend nevertheless completes play/cancel"
+        }
       }
     },
     {
       "id": "thermal-backend-zero-data",
-      "match": { "exact": ["SystemCapability.PowerManager.ThermalManager"] },
+      "match": {
+        "exact": [
+          "SystemCapability.PowerManager.ThermalManager"
+        ]
+      },
       "devices": {
-        "phone": { "status": "partially_broken", "evidence": "thermal.getLevel succeeds, but ThermalService reports every configured zone as 0 while the kernel battery zone reports 2600; ThermalHdi repeatedly fails to read gpu-thermal" },
-        "2in1": { "status": "partially_broken", "evidence": "thermal.getLevel succeeds, but ThermalService reports every configured zone as 0 while the kernel battery zone reports 2600; ThermalHdi repeatedly fails to read gpu-thermal" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "thermal.getLevel succeeds, but ThermalService reports every configured zone as 0 while the kernel battery zone reports 2600; ThermalHdi repeatedly fails to read gpu-thermal"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "thermal.getLevel succeeds, but ThermalService reports every configured zone as 0 while the kernel battery zone reports 2600; ThermalHdi repeatedly fails to read gpu-thermal"
+        }
       }
     },
     {
       "id": "infrared-device-query",
-      "match": { "exact": ["SystemCapability.MultimodalInput.Input.InfraredEmitter"] },
+      "match": {
+        "exact": [
+          "SystemCapability.MultimodalInput.Input.InfraredEmitter"
+        ]
+      },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "API 26 HAP loads the module, returns hasIrEmitter=false, and returns the documented API 23+ zero frequency range for a device without an IR emitter" },
-        "2in1": { "status": "invalid_declaration", "evidence": "outside the official 2in1 profile; the inherited module only reports that no emitter is present" }
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP loads the module, returns hasIrEmitter=false, and returns the documented API 23+ zero frequency range for a device without an IR emitter"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official 2in1 profile; the inherited module only reports that no emitter is present"
+        }
       }
     },
     {
       "id": "usb-manager-device-query",
-      "match": { "exact": ["SystemCapability.USB.USBManager"] },
+      "match": {
+        "exact": [
+          "SystemCapability.USB.USBManager"
+        ]
+      },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "API 26 HAP loads USBManager and returns an empty device list; accessory query returns documented 14400004 when no accessory is attached" },
-        "2in1": { "status": "runtime_verified_subset", "evidence": "API 26 HAP loads USBManager and returns an empty device list; accessory query returns documented 14400004 when no accessory is attached" }
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable"
+        }
       }
     },
     {
       "id": "usb-serial-device-query",
-      "match": { "exact": ["SystemCapability.USB.USBManager.Serial"] },
+      "match": {
+        "exact": [
+          "SystemCapability.USB.USBManager.Serial"
+        ]
+      },
       "devices": {
-        "phone": { "status": "invalid_declaration", "evidence": "outside the official phone profile; the inherited API loads and returns an empty USB serial port list" },
-        "2in1": { "status": "invalid_declaration", "evidence": "removed from the latest OpenHarmony-7.0-Release 2in1 SDK profile; the inherited API still loads and returns an empty port list" }
+        "phone": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official phone profile; the inherited API loads and returns an empty USB serial port list"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "removed from the latest OpenHarmony-7.0-Release 2in1 SDK profile; the inherited API still loads and returns an empty port list"
+        }
       }
     },
     {
       "id": "bus-manager-serial-not-packaged",
-      "match": { "exact": ["SystemCapability.BusManager.Serial"] },
+      "match": {
+        "exact": [
+          "SystemCapability.BusManager.Serial"
+        ]
+      },
       "devices": {
-        "2in1": { "status": "confirmed_broken", "evidence": "required by the official 2in1 profile but absent from image syscap; canIUse returns false and @ohos.busManager.serial fails to load with NAPI status 10" }
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "required by the official 2in1 profile but absent from image syscap; canIUse returns false and @ohos.busManager.serial fails to load with NAPI status 10"
+        }
       }
     },
     {
       "id": "netmanager-eap-not-declared",
-      "match": { "exact": ["SystemCapability.Communication.NetManager.Eap"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.Eap"
+        ]
+      },
       "devices": {
-        "2in1": { "status": "missing_capability", "evidence": "required by the official 2in1 profile but absent from image syscap; @ohos.net.eap loads, yet canIUse returns false" }
+        "2in1": {
+          "status": "missing_capability",
+          "evidence": "required by the official 2in1 profile but absent from image syscap; @ohos.net.eap loads, yet canIUse returns false"
+        }
       }
     },
     {
       "id": "audio-device-enhance-not-declared",
-      "match": { "exact": ["SystemCapability.Multimedia.Audio.DeviceEnhance"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Audio.DeviceEnhance"
+        ]
+      },
       "devices": {
-        "2in1": { "status": "missing_capability", "evidence": "required by the official 2in1 profile but absent from image syscap; the manager can be created but canIUse returns false and enhanced routing reports unsupported" }
+        "2in1": {
+          "status": "missing_capability",
+          "evidence": "required by the official 2in1 profile but absent from image syscap; the manager can be created but canIUse returns false and enhanced routing reports unsupported"
+        }
       }
     },
     {
@@ -237,16 +468,32 @@
         ]
       },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "API 26 HAP creates and configures an OH_AudioRenderer, but Start returns AUDIOSTREAM_ERROR_ILLEGAL_STATE; state stays PREPARED with zero frames and zero write callbacks. Boot reports AudioSeekCpuDaiDevice: daiController is empty; the launcher adds no QEMU audio device and the kernel has CONFIG_SND_VIRTIO disabled" },
-        "2in1": { "status": "confirmed_broken", "evidence": "API 26 HAP creates and configures an OH_AudioRenderer, but Start returns AUDIOSTREAM_ERROR_ILLEGAL_STATE; state stays PREPARED with zero frames and zero write callbacks. Boot reports AudioSeekCpuDaiDevice: daiController is empty; the launcher adds no QEMU audio device and the kernel has CONFIG_SND_VIRTIO disabled" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 HAP creates and configures an OH_AudioRenderer, but Start returns AUDIOSTREAM_ERROR_ILLEGAL_STATE; state stays PREPARED with zero frames and zero write callbacks. Boot reports AudioSeekCpuDaiDevice: daiController is empty; the launcher adds no QEMU audio device and the kernel has CONFIG_SND_VIRTIO disabled"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "API 26 HAP creates and configures an OH_AudioRenderer, but Start returns AUDIOSTREAM_ERROR_ILLEGAL_STATE; state stays PREPARED with zero frames and zero write callbacks. Boot reports AudioSeekCpuDaiDevice: daiController is empty; the launcher adds no QEMU audio device and the kernel has CONFIG_SND_VIRTIO disabled"
+        }
       }
     },
     {
       "id": "audio-suite-placeholder-library",
-      "match": { "exact": ["SystemCapability.Multimedia.Audio.SuiteEngine"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Audio.SuiteEngine"
+        ]
+      },
       "devices": {
-        "phone": { "status": "confirmed_broken", "evidence": "required by the published phone minimum profile but canIUse is false; packaged libohaudiosuite.so is a 5176-byte placeholder exporting only _init/_fini and misses all 48 API 26 public symbols" },
-        "2in1": { "status": "partially_broken", "evidence": "the tablet reference profile documents SuiteEngine but the exact 2in1 SDK omits it; packaged libohaudiosuite.so is a 5176-byte placeholder missing all 48 API 26 public symbols" }
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "required by the published phone minimum profile but canIUse is false; packaged libohaudiosuite.so is a 5176-byte placeholder exporting only _init/_fini and misses all 65 API 26 public symbols"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "the tablet reference profile documents SuiteEngine but the exact 2in1 SDK omits it; packaged libohaudiosuite.so is a 5176-byte placeholder missing all 65 API 26 public symbols"
+        }
       }
     },
     {
@@ -260,24 +507,50 @@
         ]
       },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "API 26 HAP resolves the Settings DataShare URI and reads brightness=255 through both synchronous and asynchronous APIs" },
-        "2in1": { "status": "runtime_verified_subset", "evidence": "API 26 HAP resolves the Settings DataShare URI and reads brightness=255 through both synchronous and asynchronous APIs; an early HOME/OOBE 15700010 failure is a boot-readiness race because settled reads and listeners succeed" }
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP resolves the Settings DataShare URI and reads brightness=255 through both synchronous and asynchronous APIs"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "API 26 HAP resolves the Settings DataShare URI and reads brightness=255 through both synchronous and asynchronous APIs; an early HOME/OOBE 15700010 failure is a boot-readiness race because settled reads and listeners succeed"
+        }
       }
     },
     {
       "id": "image-effect-native-pipeline",
-      "match": { "exact": ["SystemCapability.Multimedia.ImageEffect.Core"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.ImageEffect.Core"
+        ]
+      },
       "devices": {
-        "phone": { "status": "runtime_verified_subset", "evidence": "native probe creates an ImageEffect, adds the brightness filter, observes count=1, and releases it successfully" },
-        "2in1": { "status": "invalid_declaration", "evidence": "outside the exact latest 2in1 SDK profile although present in the tablet reference; the inherited native implementation can create a pipeline and add/release a brightness filter" }
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "native probe creates an ImageEffect, adds the brightness filter, observes count=1, and releases it successfully"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the exact latest 2in1 SDK profile although present in the tablet reference; the inherited native implementation can create a pipeline and add/release a brightness filter"
+        }
       }
     },
     {
       "id": "session-manager-profile-gap",
-      "match": { "exact": ["SystemCapability.Window.SessionManager"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Window.SessionManager"
+        ]
+      },
       "devices": {
-        "phone": { "status": "missing_capability", "evidence": "the published phone minimum profile includes SessionManager, but the SDK default profile and image omit it and canIUse returns false; related window/PiP modules and native window-manager symbols are packaged" },
-        "2in1": { "status": "missing_capability", "evidence": "the tablet reference and hundreds of API method annotations expose SessionManager for PC/2in1, but the exact 2in1 SDK and image omit it and canIUse returns false; related window/PiP modules load" }
+        "phone": {
+          "status": "missing_capability",
+          "evidence": "the published phone minimum profile includes SessionManager, but the SDK default profile and image omit it and canIUse returns false; related window/PiP modules and native window-manager symbols are packaged"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "the SDK/image omit SessionManager and canIUse returns false even though OHOS 7 documents PC/2in1 support; PiP reports enabled after the window fix, while FloatingBall and FloatView report disabled"
+        }
       }
     },
     {
@@ -293,14 +566,212 @@
         ]
       },
       "devices": {
-        "phone": { "status": "missing_capability", "evidence": "listed by the latest published phone minimum profile but absent from the image declaration; canIUse returns false. Some services or partial backends are packaged, so this is a contract/discoverability failure even where a subset may respond" }
+        "phone": {
+          "status": "missing_capability",
+          "evidence": "listed by the latest published phone minimum profile but absent from the image declaration; canIUse returns false. Some services or partial backends are packaged, so this is a contract/discoverability failure even where a subset may respond"
+        }
       }
     },
     {
       "id": "phone-avinputcast-not-declared",
-      "match": { "exact": ["SystemCapability.Multimedia.AVSession.AVInputCast"] },
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.AVSession.AVInputCast"
+        ]
+      },
       "devices": {
-        "phone": { "status": "missing_capability", "evidence": "required by the latest SDK default profile but absent from the phone image; canIUse returns false" }
+        "phone": {
+          "status": "missing_capability",
+          "evidence": "required by the latest SDK default profile but absent from the phone image; canIUse returns false"
+        }
+      }
+    },
+    {
+      "id": "location-provider-backends-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Location.Location.Core",
+          "SystemCapability.Location.Location.Gnss",
+          "SystemCapability.Location.Location.Geofence",
+          "SystemCapability.Location.Location.Lite"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "framework state APIs respond, but the image has no GNSS/location provider; an enabled-location run produced zero callbacks and the current disabled run returns 3301100"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official 2in1 profile; inherited APIs load but there is no GNSS/location provider and no location callbacks"
+        }
+      }
+    },
+    {
+      "id": "telephony-no-modem-or-sim",
+      "match": {
+        "exact": [
+          "SystemCapability.Telephony.CallManager",
+          "SystemCapability.Telephony.CellularData",
+          "SystemCapability.Telephony.CoreService",
+          "SystemCapability.Telephony.SmsMms",
+          "SystemCapability.Telephony.StateRegistry"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "telephony framework and state queries load, but QEMU exposes no modem/SIM/radio transport; boot and service state report no SIM/network, so calls, SMS and cellular data cannot complete"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the official 2in1 profile; inherited telephony services expose no modem/SIM/radio transport"
+        }
+      }
+    },
+    {
+      "id": "audio-capture-and-dependent-pipelines",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Audio.Capturer",
+          "SystemCapability.Multimedia.Audio.Communication",
+          "SystemCapability.Multimedia.Audio.MIDI",
+          "SystemCapability.Multimedia.Audio.PlaybackCapture",
+          "SystemCapability.Multimedia.Audio.Spatialization",
+          "SystemCapability.Multimedia.Audio.Tone",
+          "SystemCapability.AI.IntelligentVoice.Core",
+          "SystemCapability.Multimedia.Media.AudioPlayer",
+          "SystemCapability.Multimedia.Media.AudioRecorder",
+          "SystemCapability.Multimedia.Media.SoundPool"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "the policy layer advertises MIC/SPEAKER, but /dev/snd has only timer, QEMU launches no audio device and AudioSeekCpuDaiDevice has no controller; playback/capture dependent pipelines have no PCM data path"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "the policy layer advertises virtual endpoints, but /dev/snd has only timer, QEMU launches no audio device and AudioSeekCpuDaiDevice has no controller; playback/capture dependent pipelines have no PCM data path"
+        }
+      }
+    },
+    {
+      "id": "media-recording-input-backends-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.AVRecorder",
+          "SystemCapability.Multimedia.Media.VideoRecorder"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "recording requires camera and/or audio input; the image has neither a camera host/video node nor an ALSA PCM capture node"
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "outside the exact 2in1 profile and no camera or PCM capture backend is present"
+        }
+      }
+    },
+    {
+      "id": "selection-input-device-contract-gap",
+      "match": {
+        "exact": [
+          "SystemCapability.SelectionInput.Selection"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "invalid_declaration",
+          "evidence": "OHOS 7 documentation says the module is PC/2in1-only, yet the phone image declares it and canIUse returns true"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "documentation defines this as PC/2in1-only and the image declares it, but the 2in1 SDK profile omits it; SA 8500 is present while the configured com.selection.selectionapplication is not installed, and listener/content calls return 33600003/33600001"
+        }
+      }
+    },
+    {
+      "id": "accessibility-qemu-input-e2e",
+      "match": {
+        "exact": [
+          "SystemCapability.BarrierFree.Accessibility.Core",
+          "SystemCapability.BarrierFree.Accessibility.Vision"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks"
+        }
+      }
+    },
+    {
+      "id": "print-framework-missing-runtime-extension",
+      "match": {
+        "exact": [
+          "SystemCapability.Print.PrintFramework"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "invalid_declaration",
+          "evidence": "outside the phone profile; the inherited service can start but the package has no printer extension or physical printer backend"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "official 2in1 capability; PrintService starts, but vendor driver dlopen and CUPS resource setup fail, no print extension is installed, and discovery returns 13100004 E_PRINT_INVALID_EXTENSION"
+        }
+      }
+    },
+    {
+      "id": "window-manager-native-runtime-gaps",
+      "match": {
+        "exact": [
+          "SystemCapability.WindowManager.WindowManager.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "runtime_verified_subset",
+          "evidence": "display/window basics and the real UI window work; ARM64 phone still lacks a complete method-level native regression run"
+        },
+        "2in1": {
+          "status": "runtime_verified_subset",
+          "evidence": "real ARM64 2in1 native run passes active-window, complete API-26 matrix, and asynchronous callback cases after CUSTOM_SCREEN_CAPTURE is granted (3/4); the remaining assertion expects exactly 2 visible layouts but the service validly returns 3 in the non-pristine guest, so it is a fixture assumption rather than an API failure"
+        }
+      }
+    },
+    {
+      "id": "peer-device-user-nat-isolation",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.SoftBus.Core",
+          "SystemCapability.FileManagement.File.DistributedFile",
+          "SystemCapability.Multimedia.AVSession.AVCast",
+          "SystemCapability.Multimedia.AVSession.AVInputCast"
+        ],
+        "prefixes": [
+          "SystemCapability.DistributedHardware.",
+          "SystemCapability.DistributedDataManager.",
+          "SystemCapability.DistributedSched."
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "the default launcher uses QEMU user-mode NAT, which isolates emulator guests from peer discovery; distributed/SoftBus/cast behavior requires explicit bridge networking and a second device"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "the default launcher uses QEMU user-mode NAT, which isolates emulator guests from peer discovery; distributed/SoftBus/cast behavior requires explicit bridge networking and a second device"
+        }
       }
     }
   ]

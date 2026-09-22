@@ -33,7 +33,14 @@ function bindingNames(name, output) {
 }
 
 function metadata(node) {
-  const result = {syscaps: [], since: null, system_api: false};
+  const result = {
+    syscaps: [],
+    since: null,
+    dynamic_since: null,
+    static_since: null,
+    availability: [],
+    system_api: false,
+  };
   for (const tag of ts.getJSDocTags(node)) {
     const name = tag.tagName.text;
     const comment = typeof tag.comment === 'string' ? tag.comment : '';
@@ -42,11 +49,27 @@ function metadata(node) {
       if (match) result.syscaps.push(match[0]);
     } else if (name === 'since') {
       const match = comment.match(/\d+/);
-      if (match) result.since = Number(match[0]);
+      if (!match) continue;
+      const version = Number(match[0]);
+      const normalized = comment.toLowerCase();
+      let modes;
+      if (/dynamic\s*&\s*static/.test(normalized)) modes = ['dynamic', 'static'];
+      else if (/\bdynamiconly\b|\bdynamic\b/.test(normalized)) modes = ['dynamic'];
+      else if (/\bstaticonly\b|\bstatic\b/.test(normalized)) modes = ['static'];
+      // interface-sdk-js defines an unqualified @since as dynamic by default.
+      else modes = ['dynamic'];
+      for (const mode of modes) {
+        const key = `${mode}_since`;
+        if (result[key] === null || version < result[key]) result[key] = version;
+      }
     } else if (name === 'systemapi') {
       result.system_api = true;
     }
   }
+  result.availability = ['dynamic', 'static'].filter(
+    (mode) => result[`${mode}_since`] !== null
+  );
+  result.since = result.dynamic_since ?? result.static_since;
   result.syscaps = [...new Set(result.syscaps)].sort();
   return result;
 }
@@ -63,6 +86,15 @@ function addDeclaration(output, name, node, kind) {
   if (previous.since === null || (detail.since !== null && detail.since < previous.since)) {
     previous.since = detail.since;
   }
+  for (const mode of ['dynamic', 'static']) {
+    const key = `${mode}_since`;
+    if (previous[key] === null || (detail[key] !== null && detail[key] < previous[key])) {
+      previous[key] = detail[key];
+    }
+  }
+  previous.availability = ['dynamic', 'static'].filter(
+    (mode) => previous[`${mode}_since`] !== null
+  );
   previous.system_api = previous.system_api && detail.system_api;
   if (previous.kind !== detail.kind) previous.kind = 'overloaded';
 }
@@ -139,7 +171,19 @@ const rows = [];
 for (const module of runtime.modules) {
   const root = module.module.startsWith('@kit.') ? args['kits-dir'] : args['api-dir'];
   const file = path.join(root, `${module.module}.d.ts`);
-  const expectedDetails = expectedExports(file);
+  const allExpectedDetails = expectedExports(file);
+  // napi_load_module() exercises dynamic ArkTS. Static-only declarations use
+  // the ANI/Taihe/ABC path and must not be treated as properties of a NAPI
+  // module object. Declarations without a mode-qualified @since remain part
+  // of the dynamic contract; excluding them would silently drop inherited or
+  // older declarations whose mode is not written on the export itself.
+  const expectedDetails = allExpectedDetails.filter(
+    (detail) => detail.availability.length === 0 || detail.availability.includes('dynamic')
+  );
+  const staticOnlyDetails = allExpectedDetails.filter(
+    (detail) => !detail.availability.includes('dynamic') &&
+      detail.availability.includes('static')
+  );
   const expected = expectedDetails.map((detail) => detail.name);
   const actual = [...(module.exports || [])].sort();
   const actualSet = new Set(actual);
@@ -165,6 +209,7 @@ for (const module of runtime.modules) {
     official_profile_syscaps: module.official_profile_syscaps,
     expected_runtime_exports: expected,
     expected_runtime_export_details: expectedDetails,
+    static_only_exports_excluded_from_dynamic_probe: staticOnlyDetails,
     actual_runtime_exports: actual,
     missing_runtime_exports: missing,
     missing_runtime_export_details: missingDetails,
@@ -199,6 +244,9 @@ const summary = {
     (total, row) => total + row.missing_official_runtime_exports.filter(
       (detail) => detail.kind === 'function' && detail.system_api
     ).length, 0
+  ),
+  static_only_export_count_excluded_from_dynamic_probe: rows.reduce(
+    (total, row) => total + row.static_only_exports_excluded_from_dynamic_probe.length, 0
   ),
 };
 const result = {profile: runtime.profile, summary, modules: rows};

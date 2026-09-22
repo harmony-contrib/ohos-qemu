@@ -2,3 +2,15 @@
 ci/ohos-test-runner-smoke/target/
 __pycache__/
 .DS_Store
+docs/capability-audit/api-usability-ledger.csv
+docs/capability-audit/api-usability-ledger.json
+docs/capability-audit/runtime/*/native-ohostest/
+docs/capability-audit/runtime/*/native-ohostest-screen-capture/
+docs/capability-audit/runtime/*/hap-probe-v2/
+docs/capability-audit/runtime/*/permission-definitions.json
+docs/capability-audit/runtime/*/processes-after-behavior.txt
+docs/capability-audit/runtime/*/static-ani-files.txt
+docs/capability-audit/runtime/*/static-framework-files.txt
+docs/capability-audit/runtime/*/system-abilities-after-behavior.txt
+docs/capability-audit/runtime/*/system-ability-profile-after-behavior.json
+docs/capability-audit/runtime/arm64-2in1/serial-boot.log

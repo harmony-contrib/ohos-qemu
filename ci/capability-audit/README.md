@@ -1,107 +1,104 @@
 # OpenHarmony capability audit
 
-This audit treats the complete capability list as the work queue. It does not
-infer runtime support from `syscap.json`, a library, a System Ability profile,
-or an XTS source file.
+This audit keeps four questions separate for every phone and 2in1 API:
 
-Generate the index from the exact `syscap.json` files extracted from the two
-representative ARM64 images. Always pass fresh `OpenHarmony-7.0-Release`
-documentation and interface-sdk-js worktrees; the main OpenHarmony checkout may
-lag those repositories:
+1. Is the API documented for the device?
+2. Does the image declare the SysCap and register every required permission?
+3. Is the ArkTS or Native surface present?
+4. Does a real call reach a working service, kernel, or virtual-hardware backend?
+
+`canIUse()`, a packaged library, and a registered System Ability are evidence
+for different layers. None of them alone proves an API is usable.
+
+## Build the inventory
+
+Use the `syscap.json` extracted from each tested image and the exact OHOS 7
+documentation, JS SDK, and C SDK revisions:
 
 ```bash
 python3 ci/capability-audit/build_matrix.py \
-  --ohos-root /Volumes/PSSD/qemu/openharmony \
-  --docs-root /path/to/latest/openharmony-docs \
-  --sdk-js-root /path/to/latest/interface-sdk-js \
-  --phone-syscap /path/to/phone-syscap.json \
-  --two-in-one-syscap /path/to/2in1-syscap.json \
+  --ohos-root /path/to/openharmony \
+  --docs-root /path/to/openharmony-docs \
+  --sdk-js-root /path/to/interface-sdk-js \
+  --sdk-c-root /path/to/interface_sdk_c \
+  --phone-syscap docs/capability-audit/runtime/arm64-phone/image-syscap.json \
+  --two-in-one-syscap docs/capability-audit/runtime/arm64-2in1/image-syscap.json \
   --findings ci/capability-audit/known-findings.json \
   --output-dir docs/capability-audit
 ```
 
-The generated artifacts have separate purposes:
+The documentation parser starts from API headings. It inherits a file or
+module SysCap into child methods when the method does not repeat the marker.
+This is required for Native reference pages such as Camera, which declare the
+SysCap once in the header and then document dozens of functions. Entries with
+no document-level or inherited SysCap remain visible with `syscap=null`.
 
-- `all-capability-matrix.csv/json`: every public SysCap found in the OHOS 7
-  SDK, docs, API annotations, XTS metadata, bundles, or runtime images;
-- `advertised-capability-matrix.csv/json`: every capability declared by either
-  image or required by the official phone/2in1 SDK profile;
-- `ohos-public-syscap-registry.json`: the union of SDK profiles, API
-  annotations, bundle declarations, XTS metadata, and image declarations;
-- `method-device-boundaries.csv/json`: every OHOS 7 reference-document entry
-  containing an explicit device behavior difference;
-- `summary.json`: completeness counts. A capability remains
-  `runtime_validation_required` until a real application or native API probe
-  supplies behavioral evidence.
+Generated artifacts:
 
-Build the HAP from the same latest interface API directory. The probe calls
-`canIUse` for every row in `all-capability-matrix.json`, probes every public
-module entry (`@ohos.*`, legacy `@system.*`, and `@kit.*`), and performs
-targeted behavior checks. `permissions.d.ts` and the ArkTS language builtins
-are declarations rather than OHOS module entry points, so they are kept out of
-the runtime module count:
+- `all-capability-matrix.json`: every public SysCap found in SDK profiles,
+  image declarations, API annotations, docs, bundles, or XTS metadata.
+- `capability-coverage-ledger.json/csv`: one result per SysCap and device.
+- `public-api-inventory.json/csv`: regenerated full method/type inventory;
+  ignored by Git because it is large.
+- `api-usability-ledger.json/csv`: one result per documented API and device;
+  ignored by Git. `api-usability-summary.json` is the checked-in summary.
+- `method-device-boundaries.json/csv`: explicit document device differences.
+- `runtime-backend-audit.json`: hardware, service, kernel, and launch-topology
+  evidence for critical backend families.
 
-The compiler SDK must contain the same `api/@ohos*.d.ts`, `api/@system*.d.ts`,
-and `kits/@kit*.d.ts` revision passed below. A nominally API 26 DevEco SDK may
-still lag the current `OpenHarmony-7.0-Release` declarations; using that older
-copy would make the audit HAP fail to compile newer API 26 probes.
+## Runtime and ABI stages
+
+Build and run the HAP probe with the same latest JS declarations:
 
 ```bash
 python3 ci/capability-audit/build_hap_probe.py \
   --arch arm64 \
   --udid DEVICE_UDID \
   --syscap-registry docs/capability-audit/all-capability-matrix.json \
-  --api-dir /path/to/latest/interface-sdk-js/api \
-  --kits-dir /path/to/latest/interface-sdk-js/kits \
+  --api-dir /path/to/interface-sdk-js/api \
+  --kits-dir /path/to/interface-sdk-js/kits \
   --output /tmp/ohos-capability-hap
 ```
 
-Analyze each device independently, then build the one-row-per-SysCap ledger:
+Then regenerate the SysCap, module, export, permission, C ABI, static ArkTS,
+System Ability, and backend reports for each device. Build the two ledgers last:
 
 ```bash
-python3 ci/capability-audit/analyze_syscap_runtime.py \
-  --matrix docs/capability-audit/all-capability-matrix.json \
-  --device phone --probe-log /path/to/phone-results.log \
-  --output docs/capability-audit/runtime/arm64-phone/syscap-runtime.json
-
-python3 ci/capability-audit/analyze_arkts_modules.py \
-  --sdk /Applications/DevEco-Studio.app/Contents/sdk/default/openharmony \
-  --api-dir /path/to/latest/interface-sdk-js/api \
-  --profile phone --probe-log /path/to/phone-results.log \
-  --output docs/capability-audit/runtime/arm64-phone/arkts-module-load-latest.json
-
-node ci/capability-audit/analyze_arkts_exports.js \
-  --typescript /path/to/typescript/lib/typescript.js \
-  --api-dir /path/to/latest/interface-sdk-js/api \
-  --kits-dir /path/to/latest/interface-sdk-js/kits \
-  --runtime docs/capability-audit/runtime/arm64-phone/arkts-module-load-latest.json \
-  --output docs/capability-audit/runtime/arm64-phone/arkts-export-surface-latest.json
-
 python3 ci/capability-audit/build_coverage_ledger.py \
   --matrix docs/capability-audit/all-capability-matrix.json \
   --runtime-root docs/capability-audit/runtime \
   --output docs/capability-audit/capability-coverage-ledger.json
 
+python3 ci/capability-audit/build_api_usability_ledger.py \
+  --inventory docs/capability-audit/public-api-inventory.json \
+  --capability-ledger docs/capability-audit/capability-coverage-ledger.json \
+  --runtime-root docs/capability-audit/runtime \
+  --output docs/capability-audit/api-usability-ledger.json
+
+python3 ci/capability-audit/audit_runtime_backends.py \
+  --runtime-root docs/capability-audit/runtime \
+  --output docs/capability-audit/runtime-backend-audit.json
+```
+
+## Strict verification
+
+```bash
 python3 ci/capability-audit/verify_results.py \
   --matrix docs/capability-audit/all-capability-matrix.json \
   --runtime-root docs/capability-audit/runtime \
   --ledger docs/capability-audit/capability-coverage-ledger.json \
-  --api-dir /path/to/latest/interface-sdk-js/api \
-  --kits-dir /path/to/latest/interface-sdk-js/kits
+  --api-ledger docs/capability-audit/api-usability-ledger.json \
+  --backend-audit docs/capability-audit/runtime-backend-audit.json \
+  --api-dir /path/to/interface-sdk-js/api \
+  --kits-dir /path/to/interface-sdk-js/kits \
+  --static-sdk /path/to/static-arkts-sdk
 ```
 
-The inventory and surface scan are complete only when the strict verifier
-passes. That does not mean every API behavior has been proven. A behavioral
-audit is complete only when:
-
-1. no declared or officially expected capability remains
-   `runtime_validation_required`;
-2. every `review_required` method/device boundary has been classified;
-3. successful probes validate observable behavior, not only return values;
-4. phone and 2in1 results are recorded separately;
-5. architecture-sensitive backends are checked on arm64, armv7a, and x86_64.
+The verifier proves that the surface inventory and classifications are
+complete. Its success status is deliberately
+`complete_surface_inventory_behavior_pending`; it does not turn uncalled APIs
+into verified behavior.
 
 For a multi-package change, build and boot one ARM64 representative artifact
-first. Validate every changed behavior and its device boundary before building
-the remaining architectures and device packages. Keep the per-package logs and
-checksums with the audit evidence.
+first. Validate every changed behavior and device boundary before building the
+remaining architectures and products. Keep per-package logs and checksums.
