@@ -19,6 +19,7 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 
 SHA256_RE = re.compile(r"^[0-9A-Fa-f]{64}$")
@@ -76,6 +77,7 @@ def profile_fields(data: dict[str, Any], profile_name: str | None) -> dict[str, 
             {
                 "name": item.get("name"),
                 "exported": item.get("exported"),
+                "permissions": item.get("permissions", []),
                 "skills": item.get("skills", []),
             }
             for item in module.get("abilities", [])
@@ -88,6 +90,9 @@ def profile_fields(data: dict[str, Any], profile_name: str | None) -> dict[str, 
                 "exported": item.get("exported"),
                 "process": item.get("process"),
                 "permissions": item.get("permissions", []),
+                "uri": item.get("uri"),
+                "read_permission": item.get("readPermission"),
+                "write_permission": item.get("writePermission"),
                 "skills": item.get("skills", []),
             }
             for item in module.get("extensionAbilities", [])
@@ -165,6 +170,19 @@ def normalise_root(path: Path) -> Path:
     path = path.resolve()
     nested = path / "app"
     return nested if nested.is_dir() else path
+
+
+def uri_authority(uri: Any) -> str | None:
+    """Return the authority used to resolve an extension URI."""
+    if not isinstance(uri, str) or "://" not in uri:
+        return None
+    parsed = urlsplit(uri)
+    authority = parsed.netloc.strip()
+    if not authority:
+        # DataShare accepts both ``scheme://authority`` and
+        # ``scheme:///authority/path`` spellings.
+        authority = parsed.path.lstrip("/").split("/", 1)[0].strip()
+    return authority or None
 
 
 def main() -> int:
@@ -257,8 +275,33 @@ def main() -> int:
     unlisted_haps = [row for row in hap_rows if not row["listed_for_preinstall"]]
     unlisted_bundles = sorted({row["bundle"] for row in unlisted_haps if row["bundle"]})
     path_mismatches = [row for row in preinstall_rows if row["path_mismatch_candidates"]]
+    uri_providers: list[dict[str, Any]] = []
+    for row in hap_rows:
+        for extension in row.get("extensions", []):
+            authority = uri_authority(extension.get("uri"))
+            if not authority:
+                continue
+            uri_providers.append(
+                {
+                    "authority": authority,
+                    "scheme": extension["uri"].split(":", 1)[0],
+                    "uri": extension["uri"],
+                    "bundle": row.get("bundle"),
+                    "entrypoint": extension.get("name"),
+                    "extension_type": extension.get("type"),
+                    "read_permission": extension.get("read_permission"),
+                    "write_permission": extension.get("write_permission"),
+                    "path": row["path"],
+                    "enabled_for_user_100": row["enabled_for_user_100"],
+                }
+            )
+    uri_providers.sort(
+        key=lambda item: (
+            item["authority"].lower(), item.get("bundle") or "", item.get("entrypoint") or ""
+        )
+    )
     output = {
-        "schema_version": 2,
+        "schema_version": 3,
         "device": args.device,
         "logical_system_app_root": "/system/app",
         "summary": {
@@ -280,12 +323,17 @@ def main() -> int:
             "unlisted_bundle_count": len(unlisted_bundles),
             "unlisted_enabled_bundle_count": len(set(unlisted_bundles) & enabled),
             "preinstall_path_mismatch_candidate_count": len(path_mismatches),
+            "declared_extension_uri_count": len(uri_providers),
+            "declared_extension_authority_count": len(
+                {row["authority"].lower() for row in uri_providers}
+            ),
         },
         "preinstall_entries": preinstall_rows,
         "preinstall_path_mismatch_candidates": path_mismatches,
         "unlisted_bundles": unlisted_bundles,
         "unlisted_haps": unlisted_haps,
         "certificate_mismatches": signature_mismatches,
+        "extension_uri_providers": uri_providers,
         "haps": hap_rows,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

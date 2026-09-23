@@ -1,6 +1,6 @@
 # OpenHarmony capability audit
 
-This audit keeps five questions separate for every phone and 2in1 API:
+This audit keeps seven questions separate for every phone and 2in1 API:
 
 1. Is the API documented for the device?
 2. Does the image declare the SysCap and register every required permission?
@@ -9,6 +9,13 @@ This audit keeps five questions separate for every phone and 2in1 API:
 5. If the service delegates to a system HAP, is its payload listed, accepted by
    the signature policy, registered by BMS, and exposing the exact ability or
    extension name that the framework targets?
+6. If resolution is implicit, does an enabled HAP skill match the action while
+   retaining its entity, URI/UTD, and domain-verification constraints? An
+   action-only source reference cannot prove a constraint-bound route; the
+   audit leaves that state explicitly unresolved.
+7. If the framework loads a product plug-in at runtime, is the exact shared
+   library present in the image, or does execution fall back to a no-op or
+   unsupported implementation?
 
 `canIUse()`, a packaged library, and a registered System Ability are evidence
 for different layers. None of them alone proves an API is usable.
@@ -53,10 +60,17 @@ Generated artifacts:
 - `runtime/arm64-*/preinstalled-hap-audit.json`: every `/system/app` HAP,
   module entrypoint, preinstall-list membership, live BMS state, certificate
   fingerprint, signature allow-list result, and path mismatch candidate.
-- `system-bundle-provider-audit.json`: every production source bundle-like
-  token, its normalized package/device state, and public API flows that depend
-  on system HAP providers on both devices. The scanner retains absent and
-  nonlocal targets so a missing provider cannot disappear during filtering.
+- `system-bundle-provider-audit.json`: every semantically retained provider
+  candidate token; exact bundle/entrypoint pairs resolved from C++ and
+  same-object ArkTS/TS/JS Wants; implicit actions joined to HAP skills while
+  retaining entity, URI/UTD, and domain-verification constraints; DataShare authorities;
+  runtime-parameter target pairs; and production `dlopen()` dependencies. The
+  scanner preserves absent, nonlocal, and unresolved targets so filtering or a
+  hand-written rule list cannot hide a missing provider or product plug-in.
+  Provider scans include `applications`, `arkcompiler`, `base`,
+  `commonlibrary`, `domains`, `drivers`, and `foundation`; the runtime-library
+  pass also includes device-side `developtools`. Test, sample, mock, demo,
+  build, and output trees are excluded.
 
 ## Runtime and ABI stages
 
@@ -134,11 +148,15 @@ python3 ci/capability-audit/verify_results.py \
   --static-sdk /path/to/static-arkts-sdk
 ```
 
-The verifier proves that the surface inventory is complete and that every
-phone/2in1 contract SysCap has a concrete classification. Its success status
-is `complete_capability_classification_method_sampling_full_provider_inventory`. Method rows still say
-when a method was not individually executed; a capability-level sample never
-turns every method into a verified pass.
+The verifier proves that the surface inventory is complete, every phone/2in1
+contract SysCap has a concrete classification, every C++ and ArkTS/TS/JS
+provider target is either resolved or retained as an unresolved record, and
+runtime parameter, implicit-Want skill, DataShare provider, and `dlopen()`
+library joins are populated. Its success
+status is
+`complete_capability_classification_method_sampling_full_provider_inventory`.
+Method rows still say when a method was not individually executed; a
+capability-level sample never turns every method into a verified pass.
 
 For a multi-package change, build and boot one ARM64 representative artifact
 first. Validate every changed behavior and device boundary before building the

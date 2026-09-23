@@ -4,14 +4,14 @@
       "architecture_dependent_failure": 1,
       "compile_time_verified": 1,
       "conditional_external_dependency": 5,
-      "confirmed_broken": 49,
+      "confirmed_broken": 50,
       "interactive_ui_required": 1,
       "invalid_declaration": 63,
       "missing_capability": 2,
       "not_applicable": 5,
-      "partially_broken": 54,
+      "partially_broken": 59,
       "role_restricted": 2,
-      "runtime_verified_subset": 119,
+      "runtime_verified_subset": 113,
       "test_harness_only": 2
     },
     "declaration_counts": {
@@ -61,15 +61,15 @@
     "audit_status_counts": {
       "architecture_dependent_failure": 1,
       "compile_time_verified": 1,
-      "conditional_external_dependency": 7,
-      "confirmed_broken": 45,
+      "conditional_external_dependency": 3,
+      "confirmed_broken": 52,
       "interactive_ui_required": 1,
       "invalid_declaration": 46,
       "missing_capability": 7,
       "not_applicable": 3,
-      "partially_broken": 66,
+      "partially_broken": 72,
       "role_restricted": 2,
-      "runtime_verified_subset": 123,
+      "runtime_verified_subset": 114,
       "test_harness_only": 2
     },
     "declaration_counts": {

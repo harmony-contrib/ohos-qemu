@@ -1520,6 +1520,11 @@
               "evidence": "startAbilityByType('share') initially resolves, then reports callback error 16000050 because com.ohos.sharepickerdialog is listed in system configuration but absent from the image and BMS",
               "id": "ability-share-picker-system-provider-missing",
               "status": "confirmed_broken"
+            },
+            {
+              "evidence": "the standard implicit Want action ohos.want.action.sendData has no enabled BMS handler; all declared handlers are in unregistered Bluetooth, Calendar, MMS, or PrintSpooler payloads",
+              "id": "ability-send-data-action-has-no-enabled-handler",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -1553,6 +1558,11 @@
               "evidence": "startAbilityByType('share') initially resolves, then reports callback error 16000050 because com.ohos.sharepickerdialog is listed in system configuration but absent from the image and BMS",
               "id": "ability-share-picker-system-provider-missing",
               "status": "confirmed_broken"
+            },
+            {
+              "evidence": "the standard implicit Want action ohos.want.action.sendData has no enabled BMS handler; the only phone handler is BluetoothServiceAbility in the unregistered com.ohos.bluetooth payload",
+              "id": "ability-send-data-action-has-no-enabled-handler",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -8767,7 +8777,7 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "ads_framework configuration targets com.samples.AdsServiceDemo, but that bundle is absent from the image",
+              "evidence": "ads_framework configuration targets absent com.samples.AdsServiceDemo and its AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService entrypoints; the packaged JSON also omits providerApiAbilityName, which AdLoadService requires before connecting",
               "id": "advertising-service-provider-missing",
               "status": "confirmed_broken"
             }
@@ -8785,7 +8795,7 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "ads_framework configuration targets com.samples.AdsServiceDemo, but that bundle is absent from the image",
+              "evidence": "ads_framework configuration targets absent com.samples.AdsServiceDemo and its AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService entrypoints; the packaged JSON also omits providerApiAbilityName, which AdLoadService requires before connecting",
               "id": "advertising-service-provider-missing",
               "status": "confirmed_broken"
             }
@@ -9091,7 +9101,7 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "the same signed API 26 HAP receives error 201 Permission denied from createCalendar after both calendar permissions report grantStatus 0; CalendarData is part of the official 2in1 contract",
+              "evidence": "createCalendar returns error 201 despite granted permissions; CalendarData and Calendar UI HAPs are not registered. The CalendarData payload declares calendardata_whole but BMS cannot resolve it while the HAP is disabled, and the payload also lacks EditorUIExtensionAbility",
               "id": "calendar-lifecycle-device-difference",
               "status": "confirmed_broken"
             },
@@ -9105,7 +9115,7 @@
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -9114,9 +9124,9 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "with READ_CALENDAR and WRITE_CALENDAR granted, API 26 creates, enumerates and removes a local calendar",
+              "evidence": "calendar CRUD works with READ_CALENDAR/WRITE_CALENDAR, but API 21+ also publicly accepts READ_WHOLE_CALENDAR/WRITE_WHOLE_CALENDAR; the implementation selects datashare:///calendardata_whole for those permissions while the phone CalendarData HAP declares only datashare://calendardata. Public editEvent also targets missing EditorUIExtensionAbility, and reminder integration lacks ReminderCallbackExtAbility and com.ohos.calendar/MainAbility",
               "id": "calendar-lifecycle-device-difference",
-              "status": "runtime_verified_subset"
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -9198,7 +9208,7 @@
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -9210,6 +9220,11 @@
               "evidence": "with READ_CONTACTS and WRITE_CONTACTS granted, API 26 adds, queries and removes a contact",
               "id": "contacts-lifecycle-and-device-contract",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "contact.selectContact/selectContacts hardcode com.ohos.contacts/ContactUiExtentionAbility; the enabled phone Contacts HAP declares only MainAbility and Subscriber, so CRUD can work while every documented picker overload lacks its target entrypoint",
+              "id": "contacts-picker-entrypoint-missing-phone",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -9464,6 +9479,11 @@
               "evidence": "Settings DataShare reads work, but the com.ohos.settings UI HAP and its public system-dialog/UIExtension entrypoints are present yet not registered; SceneBoard does not provide those Settings-specific entrypoints",
               "id": "settings-ui-provider-not-activated-2in1",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "OHOS 7 @ohos.settings navigation APIs hardcode absent com.huawei.hmos.settings; the similarly named com.ohos.settings payload is not registered, contains OpenNetworkUIExtensionAbility only, and lacks ExternalCommonUIExtensionAbility. openAppDetailSettingsPage separately uses action.settings.app.info, for which 2in1 has no registered handler",
+              "id": "settings-navigation-provider-mismatch",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -9486,6 +9506,11 @@
             {
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "OHOS 7 @ohos.settings navigation APIs hardcode com.huawei.hmos.settings: openNetworkManagerSettings targets OpenNetworkUIExtensionAbility, input-method routes target ExternalCommonUIExtensionAbility, and the remaining open*SettingsPage methods target com.huawei.hmos.settings.MainAbility; only com.ohos.settings is packaged, and its phone HAP also lacks both UIExtension entrypoints. openAppDetailSettingsPage uses implicit action.settings.app.info; that handler is enabled only on phone",
+              "id": "settings-navigation-provider-mismatch",
               "status": "partially_broken"
             }
           ],
@@ -11918,6 +11943,16 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged 2in1 ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-2in1",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "OHOS 7 documents ArkUI built-in TextMenuItemId search, share, URL, email, phone, address and date/time actions, but the 2in1 image lacks /system/lib64/expanded_menu/libexpanded_menu.z.so. The implementation therefore cannot obtain the provider mapping; the image also has no enabled ohos.want.action.search or appdetail handler, no sendData handler, and lacks the mapped Huawei Browser, Calendar, Maps and SuperDevice bundles",
+              "id": "arkui-expanded-text-menu-providers-missing",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "ArkUI public TextMenu SHARE/TRANSLATE and Text/RichEditor entity recognition load libsystemshare_innerkits.z.so, libai_text_translation_innerapi.z.so and libai_text_analyzer_innerapi.z.so. All three are absent; built-in fallbacks return -1, report unsupported, or produce no share action.",
+              "id": "arkui-text-service-runtime-plugins-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -11940,6 +11975,16 @@
             {
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "OHOS 7 documents ArkUI built-in TextMenuItemId search, share, URL, email, phone, address and date/time actions, but the phone image lacks /system/lib64/expanded_menu/libexpanded_menu.z.so. The implementation therefore cannot obtain the provider mapping; the image also has no enabled ohos.want.action.search or appdetail handler, no sendData handler, and lacks the mapped Huawei Browser, Calendar, Maps and SuperDevice bundles",
+              "id": "arkui-expanded-text-menu-providers-missing",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "ArkUI public TextMenu SHARE/TRANSLATE and Text/RichEditor entity recognition load libsystemshare_innerkits.z.so, libai_text_translation_innerapi.z.so and libai_text_analyzer_innerapi.z.so. All three are absent; built-in fallbacks return -1, report unsupported, or produce no share action.",
+              "id": "arkui-text-service-runtime-plugins-missing",
               "status": "partially_broken"
             }
           ],
@@ -16113,6 +16158,11 @@
               "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged",
               "id": "accessibility-screen-reader-provider-missing",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "the 2in1 Settings payload declares SettingsExtService and IgnoreRepeatClickExtService but is not registered, so Accessibility settings integration cannot connect to them",
+              "id": "accessibility-settings-entrypoints-unavailable",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -16140,6 +16190,11 @@
             {
               "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged",
               "id": "accessibility-screen-reader-provider-missing",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "Accessibility services connect to com.ohos.settings/SettingsExtService and IgnoreRepeatClickExtService, but the enabled phone Settings HAP declares neither entrypoint",
+              "id": "accessibility-settings-entrypoints-unavailable",
               "status": "partially_broken"
             }
           ],
@@ -16334,6 +16389,11 @@
               "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged",
               "id": "accessibility-screen-reader-provider-missing",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "the 2in1 Settings payload declares SettingsExtService and IgnoreRepeatClickExtService but is not registered, so Accessibility settings integration cannot connect to them",
+              "id": "accessibility-settings-entrypoints-unavailable",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -16356,6 +16416,11 @@
             {
               "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged",
               "id": "accessibility-screen-reader-provider-missing",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "Accessibility services connect to com.ohos.settings/SettingsExtService and IgnoreRepeatClickExtService, but the enabled phone Settings HAP declares neither entrypoint",
+              "id": "accessibility-settings-entrypoints-unavailable",
               "status": "partially_broken"
             }
           ],
@@ -16544,12 +16609,18 @@
           "declared": true,
           "documented_minimum_profile": false,
           "documented_profile_is_reference_only": true,
-          "findings": [],
+          "findings": [
+            {
+              "evidence": "The image advertises AppDomainVerify outside the exact 2in1 SDK profile and also omits /system/lib64/libapp_domain_verify_extension.z.so, so verification and verified HTTP/HTTPS implicit-Want conversion cannot run.",
+              "id": "app-domain-verification-extension-missing",
+              "status": "invalid_declaration"
+            }
+          ],
           "official_sdk_profile": false,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -16561,6 +16632,11 @@
               "evidence": "API 26 system HAP executes associated-domain and bundle-name queries without error",
               "id": "app-domain-query-probe",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "Associated-domain query calls return, but the app-domain agent cannot perform verification, refresh verified state, or convert verified HTTP/HTTPS implicit Wants because /system/lib64/libapp_domain_verify_extension.z.so is absent; the implementation returns E_EXTENSIONS_LIB_NOT_FOUND.",
+              "id": "app-domain-verification-extension-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -19997,6 +20073,11 @@
               "evidence": "one or more OHOS 7 documented permissions are absent from the packaged 2in1 permission registry; see permission-audit.json",
               "id": "api26-permission-registry-gaps-2in1",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "network policy and usage-limit UI handoffs target absent com.huawei.hmos.communicationsetting and com.huawei.hmos.settings packages; similarly named OpenHarmony payloads are present but not registered and do not match the hardcoded bundle names",
+              "id": "network-policy-settings-providers-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -20019,6 +20100,11 @@
             {
               "evidence": "one or more OHOS 7 documented permissions are absent from the packaged phone permission registry; see permission-audit.json",
               "id": "api26-permission-registry-gaps-phone",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "showAppNetPolicySettings targets absent com.huawei.hmos.communicationsetting/NetAccessPolicySettingUIExtension; network-limit notifications separately target absent com.huawei.hmos.settings/MainAbility although com.ohos.settings is installed",
+              "id": "network-policy-settings-providers-missing",
               "status": "partially_broken"
             }
           ],
@@ -20625,7 +20711,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "partially_broken",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -20642,13 +20728,18 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged 2in1 ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-2in1",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "NetworkVpnService hardcodes com.huawei.hmos.vpndialog/VpnServiceExtAbility, while the enabled image provider is com.ohos.vpndialog/VpnServiceExtAbility; VPN authorization cannot connect to the packaged dialog",
+              "id": "vpn-dialog-provider-prefix-mismatch",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "partially_broken",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -20665,6 +20756,11 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "NetworkVpnService hardcodes com.huawei.hmos.vpndialog/VpnServiceExtAbility, while the enabled image provider is com.ohos.vpndialog/VpnServiceExtAbility; VPN authorization cannot connect to the packaged dialog",
+              "id": "vpn-dialog-provider-prefix-mismatch",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -21143,6 +21239,11 @@
               "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend",
               "id": "wifi-sta-backend-unavailable",
               "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register",
+              "id": "wifi-system-ui-providers-not-activated",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -21160,6 +21261,11 @@
             {
               "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend",
               "id": "wifi-sta-backend-unavailable",
+              "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register",
+              "id": "wifi-system-ui-providers-not-activated",
               "status": "confirmed_broken"
             }
           ],
@@ -21340,6 +21446,11 @@
               "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend",
               "id": "wifi-sta-backend-unavailable",
               "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register",
+              "id": "wifi-system-ui-providers-not-activated",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -21357,6 +21468,11 @@
             {
               "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend",
               "id": "wifi-sta-backend-unavailable",
+              "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register",
+              "id": "wifi-system-ui-providers-not-activated",
               "status": "confirmed_broken"
             }
           ],
@@ -21600,6 +21716,11 @@
               "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend",
               "id": "wifi-sta-backend-unavailable",
               "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register",
+              "id": "wifi-system-ui-providers-not-activated",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -21617,6 +21738,11 @@
             {
               "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend",
               "id": "wifi-sta-backend-unavailable",
+              "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register",
+              "id": "wifi-system-ui-providers-not-activated",
               "status": "confirmed_broken"
             }
           ],
@@ -22194,16 +22320,16 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "cloud sync is outside the exact 2in1 SDK profile, yet the image inherits the SysCaps and packages the same hardcoded com.example.cloudsync/ServiceExtAbility client without the provider HAP",
+              "id": "cloud-provider-implementation-missing",
+              "status": "invalid_declaration"
             }
           ],
           "official_sdk_profile": false,
           "profile_source_status": "documentation_only"
         },
         "phone": {
-          "audit_status": "conditional_external_dependency",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -22212,9 +22338,9 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "the packaged libylong_cloud_extension.z.so and libconn_adapter.z.so unconditionally connect com.example.cloudsync/ServiceExtAbility, but no such HAP exists and there is no product parameter or configuration indirection for a real cloud provider; a cloud account alone cannot make the published phone cloud-sync APIs work",
+              "id": "cloud-provider-implementation-missing",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -22306,16 +22432,16 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "cloud sync is outside the exact 2in1 SDK profile, yet the image inherits the SysCaps and packages the same hardcoded com.example.cloudsync/ServiceExtAbility client without the provider HAP",
+              "id": "cloud-provider-implementation-missing",
+              "status": "invalid_declaration"
             }
           ],
           "official_sdk_profile": false,
           "profile_source_status": "documentation_only"
         },
         "phone": {
-          "audit_status": "conditional_external_dependency",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -22324,9 +22450,9 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "the packaged libylong_cloud_extension.z.so and libconn_adapter.z.so unconditionally connect com.example.cloudsync/ServiceExtAbility, but no such HAP exists and there is no product parameter or configuration indirection for a real cloud provider; a cloud account alone cannot make the published phone cloud-sync APIs work",
+              "id": "cloud-provider-implementation-missing",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -22410,12 +22536,18 @@
           "declared": true,
           "documented_minimum_profile": true,
           "documented_profile_is_reference_only": true,
-          "findings": [],
+          "findings": [
+            {
+              "evidence": "cloud sync is outside the exact 2in1 SDK profile, yet the image inherits the SysCaps and packages the same hardcoded com.example.cloudsync/ServiceExtAbility client without the provider HAP",
+              "id": "cloud-provider-implementation-missing",
+              "status": "invalid_declaration"
+            }
+          ],
           "official_sdk_profile": false,
           "profile_source_status": "documentation_only"
         },
         "phone": {
-          "audit_status": "partially_broken",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -22427,6 +22559,11 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "the packaged libylong_cloud_extension.z.so and libconn_adapter.z.so unconditionally connect com.example.cloudsync/ServiceExtAbility, but no such HAP exists and there is no product parameter or configuration indirection for a real cloud provider; a cloud account alone cannot make the published phone cloud-sync APIs work",
+              "id": "cloud-provider-implementation-missing",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -24940,16 +25077,16 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "cloud sync is outside the exact 2in1 SDK profile, yet the image inherits the SysCaps and packages the same hardcoded com.example.cloudsync/ServiceExtAbility client without the provider HAP",
+              "id": "cloud-provider-implementation-missing",
+              "status": "invalid_declaration"
             }
           ],
           "official_sdk_profile": false,
           "profile_source_status": "documentation_only"
         },
         "phone": {
-          "audit_status": "conditional_external_dependency",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -24958,9 +25095,9 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "the packaged libylong_cloud_extension.z.so and libconn_adapter.z.so unconditionally connect com.example.cloudsync/ServiceExtAbility, but no such HAP exists and there is no product parameter or configuration indirection for a real cloud provider; a cloud account alone cannot make the published phone cloud-sync APIs work",
+              "id": "cloud-provider-implementation-missing",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -25031,16 +25168,16 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "cloud sync is outside the exact 2in1 SDK profile, yet the image inherits the SysCaps and packages the same hardcoded com.example.cloudsync/ServiceExtAbility client without the provider HAP",
+              "id": "cloud-provider-implementation-missing",
+              "status": "invalid_declaration"
             }
           ],
           "official_sdk_profile": false,
           "profile_source_status": "documentation_only"
         },
         "phone": {
-          "audit_status": "conditional_external_dependency",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -25049,9 +25186,9 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role",
-              "id": "cloud-provider-and-account-required",
-              "status": "conditional_external_dependency"
+              "evidence": "the packaged libylong_cloud_extension.z.so and libconn_adapter.z.so unconditionally connect com.example.cloudsync/ServiceExtAbility, but no such HAP exists and there is no product parameter or configuration indirection for a real cloud provider; a cloud account alone cannot make the published phone cloud-sync APIs work",
+              "id": "cloud-provider-implementation-missing",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -25656,7 +25793,7 @@
               "status": "partially_broken"
             },
             {
-              "evidence": "PhotoViewPicker returns an empty PhotoSelectResult without a usable UI; Photos.hap is present but not registered and manual installation is rejected because its certificate does not match install_list_capability.json",
+              "evidence": "PhotoViewPicker returns an empty PhotoSelectResult without a usable UI; the Photos payload contains its picker and recent-photo entrypoints but is not registered, and manual installation is rejected because its certificate does not match install_list_capability.json. Its bundle is com.ohos.photos, while media-library FA-card and cloud-setting integration hardcodes the absent com.huawei.hmos.photos namespace",
               "id": "photo-provider-not-activated-2in1",
               "status": "confirmed_broken"
             }
@@ -25679,9 +25816,9 @@
               "status": "partially_broken"
             },
             {
-              "evidence": "PhotoViewPicker starts com.ohos.photos/PickerUIExtensionAbility in the foreground",
+              "evidence": "PhotoViewPicker starts successfully, but OHOS 7 RecentPhotoComponent, getRecentPhotoInfo and getPhotoPickerComponentDefaultAlbumName target three entrypoints absent from the enabled phone Photos HAP. Media-library FA-card and cloud-setting integration also targets absent com.huawei.hmos.photos/FACardServiceAbility and datashare:///com.huawei.hmos.photos.provider.userPropertySettings",
               "id": "photo-provider-not-activated-2in1",
-              "status": "runtime_verified_subset"
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -30323,6 +30460,11 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "location privacy flows require com.ohos.locationdialog/LocationPrivacyExtAbility and com.huawei.hmos.location/LocationPrivacyDetailAbility; the first is an unregistered payload and the second is absent",
+              "id": "location-privacy-ui-providers-unavailable",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -31579,7 +31721,7 @@
               "status": "runtime_verified_subset"
             },
             {
-              "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider payload is absent",
+              "evidence": "wallpaper color query works, but com.ohos.wallpaper is absent and the fallback com.ohos.launcher/WallpaperExtAbility provider is present only as an unregistered Launcher payload",
               "id": "wallpaper-ui-provider-missing",
               "status": "partially_broken"
             }
@@ -31602,7 +31744,7 @@
               "status": "runtime_verified_subset"
             },
             {
-              "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider payload is absent",
+              "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider is absent; with ThemeService absent, WallpaperService also targets com.ohos.launcher/WallpaperExtAbility, which the enabled phone Launcher HAP does not declare",
               "id": "wallpaper-ui-provider-missing",
               "status": "partially_broken"
             }
@@ -32238,7 +32380,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -32250,13 +32392,18 @@
               "evidence": "API 26 creates an audio AVSession, activates it, deactivates it and destroys it",
               "id": "avsession-lifecycle",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "AVSession reports desktop lyrics supported on 2in1 and targets com.ohos.mediacontroller/DesktopLyricAbility; the only MediaController payload is disabled, uses bundle com.hmos.mediacontroller, and does not declare DesktopLyricAbility",
+              "id": "avsession-desktop-lyrics-provider-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -32268,6 +32415,11 @@
               "evidence": "API 26 creates an audio AVSession, activates it, deactivates it and destroys it",
               "id": "avsession-lifecycle",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "AVSession reports desktop lyrics supported on phone and enableDesktopLyric starts com.ohos.mediacontroller/DesktopLyricAbility, but no matching provider is packaged",
+              "id": "avsession-desktop-lyrics-provider-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -34680,6 +34832,11 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "cameraPicker.pick defaults to the non-TV UIAbility branch and hardcodes com.ohos.camera/PickerAbility; the enabled phone Camera HAP declares MainAbility and ExtensionPickerAbility but not PickerAbility",
+              "id": "camera-picker-entrypoint-missing-phone",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -36842,7 +36999,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -36854,13 +37011,23 @@
               "evidence": "API 26 HAP creates and releases the media object successfully",
               "id": "media-object-lifecycle-probes",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "runtime parameters route AVScreenCapture privacy/auth UI to com.ohos.systemui/com.ohos.systemui.dialog; that payload is disabled on 2in1 and enabled SceneBoard does not satisfy the configured element target",
+              "id": "screen-capture-dialog-provider-disabled-2in1",
+              "status": "partially_broken"
+            },
+            {
+              "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64.",
+              "id": "video-encoder-dependent-media-pipelines",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -36872,6 +37039,11 @@
               "evidence": "API 26 HAP creates and releases the media object successfully",
               "id": "media-object-lifecycle-probes",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64.",
+              "id": "video-encoder-dependent-media-pipelines",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -37016,7 +37188,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -37028,13 +37200,18 @@
               "evidence": "API 26 HAP creates and releases the media object successfully",
               "id": "media-object-lifecycle-probes",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64.",
+              "id": "video-encoder-dependent-media-pipelines",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -37046,6 +37223,11 @@
               "evidence": "API 26 HAP creates and releases the media object successfully",
               "id": "media-object-lifecycle-probes",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64.",
+              "id": "video-encoder-dependent-media-pipelines",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -38079,7 +38261,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -38091,13 +38273,18 @@
               "evidence": "API 26 enumerates one DRM key system, creates and releases an AVPlayer, and creates and releases ImageCreator and ImageReceiver objects",
               "id": "drm-avplayer-and-image-object-lifecycles",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "OHOS 7 API 26 exposes OH_AudioVividMetaBuilder_* through libnative_media_core.so, but /system/lib64/libAudioVividMetaBuilder.z.so is absent; Create and CreateEmptyBuilder therefore return AV_ERR_UNSUPPORT.",
+              "id": "audio-vivid-metadata-runtime-plugin-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -38109,6 +38296,11 @@
               "evidence": "API 26 enumerates one DRM key system, creates and releases an AVPlayer, and creates and releases ImageCreator and ImageReceiver objects",
               "id": "drm-avplayer-and-image-object-lifecycles",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "OHOS 7 API 26 exposes OH_AudioVividMetaBuilder_* through libnative_media_core.so, but /system/lib64/libAudioVividMetaBuilder.z.so is absent; Create and CreateEmptyBuilder therefore return AV_ERR_UNSUPPORT.",
+              "id": "audio-vivid-metadata-runtime-plugin-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -41964,7 +42156,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -41976,13 +42168,18 @@
               "evidence": "notification state query returns; Emitter and CommonEvent each deliver one callback after publish and unsubscribe cleanly",
               "id": "notification-local-event-lifecycles",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "public openSubscriptionSettings APIs hardcode com.ohos.sceneboard/NotificationAccessGrantUIExtensionAbility; SceneBoard is enabled but does not declare that entrypoint",
+              "id": "notification-extension-settings-entrypoint-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -41994,6 +42191,11 @@
               "evidence": "notification state query returns; Emitter and CommonEvent each deliver one callback after publish and unsubscribe cleanly",
               "id": "notification-local-event-lifecycles",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "public openSubscriptionSettings APIs hardcode com.ohos.sceneboard/NotificationAccessGrantUIExtensionAbility; the phone image has no SceneBoard provider, so this specific settings flow cannot create its modal UI extension",
+              "id": "notification-extension-settings-entrypoint-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -42236,7 +42438,7 @@
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -42248,6 +42450,11 @@
               "evidence": "A system-core API 26 HAP queries disks/volumes, DND settings and valid reminders successfully; the virtual image has no removable disk, DND schedule or reminders",
               "id": "volume-and-notification-system-queries",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "public openNotificationSettings APIs hardcode com.ohos.sceneboard/NotificationManangerUIExtensionAbility; the phone image has no SceneBoard package, while its enabled SystemUI notification-management ability is a different bundle and entrypoint",
+              "id": "notification-manager-settings-provider-missing-phone",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -43176,6 +43383,11 @@
             {
               "evidence": "CalendarData, PrintSpooler and DLP HAP payloads are present but absent from BMS; manual installation fails capability-list signature or privileged-extension checks because packaged certificates differ from install_list_capability.json",
               "id": "system-provider-signature-policy-2in1",
+              "status": "confirmed_broken"
+            },
+            {
+              "evidence": "in addition to the disabled PrintSpooler, printer discovery connects absent com.ohos.remotesvc/RemoteServiceExtAbility and the print-job notification AI action targets absent com.ohos.vassistant/VoicePcServiceExtAbility",
+              "id": "print-remote-provider-missing",
               "status": "confirmed_broken"
             }
           ],
@@ -46203,6 +46415,11 @@
               "evidence": "CalendarData, PrintSpooler and DLP HAP payloads are present but absent from BMS; manual installation fails capability-list signature or privileged-extension checks because packaged certificates differ from install_list_capability.json",
               "id": "system-provider-signature-policy-2in1",
               "status": "confirmed_broken"
+            },
+            {
+              "evidence": "the disabled DLP Manager payload lacks SaveAsAbility, and DLP credential/watermark integration separately hardcodes absent com.huawei.hmos.dlpcredmgr/DlpPermServiceAbility",
+              "id": "dlp-provider-entrypoints-incomplete",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -47006,7 +47223,7 @@
           "documented_profile_is_reference_only": true,
           "findings": [
             {
-              "evidence": "documentation defines this as PC/2in1-only and the image declares it, but the 2in1 SDK profile omits it; SA 8500 is present while the configured com.selection.selectionapplication is not installed, and listener/content calls return 33600003/33600001",
+              "evidence": "documentation defines this as PC/2in1-only and the image declares it, but the 2in1 SDK profile omits it; SA 8500 is present while configured com.selection.selectionapplication is not installed, listener/content calls return 33600003/33600001, and API 26 SelectionExtensionAbility cannot load the absent libselection_extension_ani.z.so",
               "id": "selection-input-device-contract-gap",
               "status": "partially_broken"
             }
@@ -47024,7 +47241,7 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "OHOS 7 documentation says the module is PC/2in1-only, yet the phone image declares it and canIUse returns true",
+              "evidence": "OHOS 7 documentation says the module is PC/2in1-only, yet the phone image declares it and canIUse returns true; the API 26 SelectionExtensionAbility runtime also cannot load the absent libselection_extension_ani.z.so",
               "id": "selection-input-device-contract-gap",
               "status": "invalid_declaration"
             }
@@ -48228,6 +48445,11 @@
               "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json",
               "id": "api26-runtime-export-mismatches-phone",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "CallManager number identity and incoming-call classification have no usable provider: number-mark refresh connects absent com.numberidentity/NumberIdentityServiceExtAbility; the numberlocationability and numbermarkability DataShare authorities are unresolved; spam detection targets absent com.spamshield/SpamShieldServiceExtAbility; anti-fraud cloud results target absent com.hmos.hsdr/HSDRService",
+              "id": "telephony-number-identity-provider-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -48319,7 +48541,7 @@
           "profile_source_status": "matches"
         },
         "phone": {
-          "audit_status": "partially_broken",
+          "audit_status": "confirmed_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -48331,6 +48553,11 @@
               "evidence": "telephony framework and state queries load, but QEMU exposes no modem/SIM/radio transport; boot and service state report no SIM/network, so calls, SMS and cellular data cannot complete",
               "id": "telephony-no-modem-or-sim",
               "status": "partially_broken"
+            },
+            {
+              "evidence": "OHOS 7 API 26 showSystemApnSettings hardcodes com.huawei.hmos.callsetting/GeneralCallSettingDialogAbility, but the phone image has no matching provider",
+              "id": "telephony-apn-settings-provider-missing",
+              "status": "confirmed_broken"
             }
           ],
           "official_sdk_profile": true,
@@ -49122,7 +49349,7 @@
           "documented_profile_is_reference_only": false,
           "findings": [
             {
-              "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable",
+              "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable. The media-library MTP path also starts com.ohos.medialibrary.medialibrarydata/MtpService, which the enabled HAP does not declare",
               "id": "usb-manager-device-query",
               "status": "partially_broken"
             }
@@ -49441,7 +49668,7 @@
       },
       "devices": {
         "2in1": {
-          "audit_status": "runtime_verified_subset",
+          "audit_status": "partially_broken",
           "contract_declaration_status": "declared_as_expected",
           "contract_expected": true,
           "declaration_status": "declared_as_expected",
@@ -49453,6 +49680,11 @@
               "evidence": "fingerprint availability call reaches UserIAM and returns documented 12500010 because no template is enrolled",
               "id": "useriam-service-without-enrollment",
               "status": "runtime_verified_subset"
+            },
+            {
+              "evidence": "the documented 2in1-only WidgetParam.uiContext application-modal path hardcodes com.ohos.useriam.authwidget/UserAuthModalUIAbility, but the enabled AuthWidget HAP only declares userauthuiextensionability",
+              "id": "user-auth-application-modal-entrypoint-missing",
+              "status": "partially_broken"
             }
           ],
           "official_sdk_profile": true,

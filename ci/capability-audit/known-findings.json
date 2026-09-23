@@ -391,7 +391,7 @@
       "devices": {
         "phone": {
           "status": "partially_broken",
-          "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable"
+          "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable. The media-library MTP path also starts com.ohos.medialibrary.medialibrarydata/MtpService, which the enabled HAP does not declare"
         },
         "2in1": {
           "status": "partially_broken",
@@ -685,11 +685,11 @@
       "devices": {
         "phone": {
           "status": "invalid_declaration",
-          "evidence": "OHOS 7 documentation says the module is PC/2in1-only, yet the phone image declares it and canIUse returns true"
+          "evidence": "OHOS 7 documentation says the module is PC/2in1-only, yet the phone image declares it and canIUse returns true; the API 26 SelectionExtensionAbility runtime also cannot load the absent libselection_extension_ani.z.so"
         },
         "2in1": {
           "status": "partially_broken",
-          "evidence": "documentation defines this as PC/2in1-only and the image declares it, but the 2in1 SDK profile omits it; SA 8500 is present while the configured com.selection.selectionapplication is not installed, and listener/content calls return 33600003/33600001"
+          "evidence": "documentation defines this as PC/2in1-only and the image declares it, but the 2in1 SDK profile omits it; SA 8500 is present while configured com.selection.selectionapplication is not installed, listener/content calls return 33600003/33600001, and API 26 SelectionExtensionAbility cannot load the absent libselection_extension_ani.z.so"
         }
       }
     },
@@ -1243,12 +1243,12 @@
       },
       "devices": {
         "phone": {
-          "status": "runtime_verified_subset",
-          "evidence": "with READ_CALENDAR and WRITE_CALENDAR granted, API 26 creates, enumerates and removes a local calendar"
+          "status": "partially_broken",
+          "evidence": "calendar CRUD works with READ_CALENDAR/WRITE_CALENDAR, but API 21+ also publicly accepts READ_WHOLE_CALENDAR/WRITE_WHOLE_CALENDAR; the implementation selects datashare:///calendardata_whole for those permissions while the phone CalendarData HAP declares only datashare://calendardata. Public editEvent also targets missing EditorUIExtensionAbility, and reminder integration lacks ReminderCallbackExtAbility and com.ohos.calendar/MainAbility"
         },
         "2in1": {
           "status": "confirmed_broken",
-          "evidence": "the same signed API 26 HAP receives error 201 Permission denied from createCalendar after both calendar permissions report grantStatus 0; CalendarData is part of the official 2in1 contract"
+          "evidence": "createCalendar returns error 201 despite granted permissions; CalendarData and Calendar UI HAPs are not registered. The CalendarData payload declares calendardata_whole but BMS cannot resolve it while the HAP is disabled, and the payload also lacks EditorUIExtensionAbility"
         }
       }
     },
@@ -1956,11 +1956,11 @@
       "devices": {
         "phone": {
           "status": "confirmed_broken",
-          "evidence": "ads_framework configuration targets com.samples.AdsServiceDemo, but that bundle is absent from the image"
+          "evidence": "ads_framework configuration targets absent com.samples.AdsServiceDemo and its AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService entrypoints; the packaged JSON also omits providerApiAbilityName, which AdLoadService requires before connecting"
         },
         "2in1": {
           "status": "confirmed_broken",
-          "evidence": "ads_framework configuration targets com.samples.AdsServiceDemo, but that bundle is absent from the image"
+          "evidence": "ads_framework configuration targets absent com.samples.AdsServiceDemo and its AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService entrypoints; the packaged JSON also omits providerApiAbilityName, which AdLoadService requires before connecting"
         }
       }
     },
@@ -2125,23 +2125,24 @@
       }
     },
     {
-      "id": "cloud-provider-and-account-required",
+      "id": "cloud-provider-implementation-missing",
       "match": {
         "exact": [
           "SystemCapability.DistributedDataManager.CloudSync.Client",
           "SystemCapability.DistributedDataManager.CloudSync.Config",
+          "SystemCapability.DistributedDataManager.CloudSync.Server",
           "SystemCapability.FileManagement.DistributedFileService.CloudSync.Core",
           "SystemCapability.FileManagement.DistributedFileService.CloudSyncManager"
         ]
       },
       "devices": {
         "phone": {
-          "status": "conditional_external_dependency",
-          "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role"
+          "status": "confirmed_broken",
+          "evidence": "the packaged libylong_cloud_extension.z.so and libconn_adapter.z.so unconditionally connect com.example.cloudsync/ServiceExtAbility, but no such HAP exists and there is no product parameter or configuration indirection for a real cloud provider; a cloud account alone cannot make the published phone cloud-sync APIs work"
         },
         "2in1": {
-          "status": "conditional_external_dependency",
-          "evidence": "cloud synchronization requires a configured cloud account/provider; FileSync constructs but getLastSyncTime returns 401 outside the system file-manager role"
+          "status": "invalid_declaration",
+          "evidence": "cloud sync is outside the exact 2in1 SDK profile, yet the image inherits the SysCaps and packages the same hardcoded com.example.cloudsync/ServiceExtAbility client without the provider HAP"
         }
       }
     },
@@ -2730,6 +2731,24 @@
       }
     },
     {
+      "id": "ability-send-data-action-has-no-enabled-handler",
+      "match": {
+        "exact": [
+          "SystemCapability.Ability.AbilityRuntime.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "the standard implicit Want action ohos.want.action.sendData has no enabled BMS handler; the only phone handler is BluetoothServiceAbility in the unregistered com.ohos.bluetooth payload"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "the standard implicit Want action ohos.want.action.sendData has no enabled BMS handler; all declared handlers are in unregistered Bluetooth, Calendar, MMS, or PrintSpooler payloads"
+        }
+      }
+    },
+    {
       "id": "avcast-media-controller-provider-mismatch",
       "match": {
         "exact": [
@@ -2793,12 +2812,12 @@
       },
       "devices": {
         "phone": {
-          "status": "runtime_verified_subset",
-          "evidence": "PhotoViewPicker starts com.ohos.photos/PickerUIExtensionAbility in the foreground"
+          "status": "partially_broken",
+          "evidence": "PhotoViewPicker starts successfully, but OHOS 7 RecentPhotoComponent, getRecentPhotoInfo and getPhotoPickerComponentDefaultAlbumName target three entrypoints absent from the enabled phone Photos HAP. Media-library FA-card and cloud-setting integration also targets absent com.huawei.hmos.photos/FACardServiceAbility and datashare:///com.huawei.hmos.photos.provider.userPropertySettings"
         },
         "2in1": {
           "status": "confirmed_broken",
-          "evidence": "PhotoViewPicker returns an empty PhotoSelectResult without a usable UI; Photos.hap is present but not registered and manual installation is rejected because its certificate does not match install_list_capability.json"
+          "evidence": "PhotoViewPicker returns an empty PhotoSelectResult without a usable UI; the Photos payload contains its picker and recent-photo entrypoints but is not registered, and manual installation is rejected because its certificate does not match install_list_capability.json. Its bundle is com.ohos.photos, while media-library FA-card and cloud-setting integration hardcodes the absent com.huawei.hmos.photos namespace"
         }
       }
     },
@@ -2860,11 +2879,11 @@
       "devices": {
         "phone": {
           "status": "partially_broken",
-          "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider payload is absent"
+          "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider is absent; with ThemeService absent, WallpaperService also targets com.ohos.launcher/WallpaperExtAbility, which the enabled phone Launcher HAP does not declare"
         },
         "2in1": {
           "status": "partially_broken",
-          "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider payload is absent"
+          "evidence": "wallpaper color query works, but com.ohos.wallpaper is absent and the fallback com.ohos.launcher/WallpaperExtAbility provider is present only as an unregistered Launcher payload"
         }
       }
     },
@@ -2920,6 +2939,366 @@
         "2in1": {
           "status": "partially_broken",
           "evidence": "CaptionsManager state queries work, but enabling the caption assistant targets absent com.ohos.vassistant/AiCaptionServiceExtAbility"
+        }
+      }
+    },
+    {
+      "id": "vpn-dialog-provider-prefix-mismatch",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.Vpn"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "NetworkVpnService hardcodes com.huawei.hmos.vpndialog/VpnServiceExtAbility, while the enabled image provider is com.ohos.vpndialog/VpnServiceExtAbility; VPN authorization cannot connect to the packaged dialog"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "NetworkVpnService hardcodes com.huawei.hmos.vpndialog/VpnServiceExtAbility, while the enabled image provider is com.ohos.vpndialog/VpnServiceExtAbility; VPN authorization cannot connect to the packaged dialog"
+        }
+      }
+    },
+    {
+      "id": "network-policy-settings-providers-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.NetManager.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "showAppNetPolicySettings targets absent com.huawei.hmos.communicationsetting/NetAccessPolicySettingUIExtension; network-limit notifications separately target absent com.huawei.hmos.settings/MainAbility although com.ohos.settings is installed"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "network policy and usage-limit UI handoffs target absent com.huawei.hmos.communicationsetting and com.huawei.hmos.settings packages; similarly named OpenHarmony payloads are present but not registered and do not match the hardcoded bundle names"
+        }
+      }
+    },
+    {
+      "id": "telephony-apn-settings-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Telephony.CellularData"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "OHOS 7 API 26 showSystemApnSettings hardcodes com.huawei.hmos.callsetting/GeneralCallSettingDialogAbility, but the phone image has no matching provider"
+        }
+      }
+    },
+    {
+      "id": "wifi-system-ui-providers-not-activated",
+      "match": {
+        "exact": [
+          "SystemCapability.Communication.WiFi.Core",
+          "SystemCapability.Communication.WiFi.STA",
+          "SystemCapability.Communication.WiFi.AP.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register"
+        },
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register"
+        }
+      }
+    },
+    {
+      "id": "camera-picker-entrypoint-missing-phone",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Camera.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "confirmed_broken",
+          "evidence": "cameraPicker.pick defaults to the non-TV UIAbility branch and hardcodes com.ohos.camera/PickerAbility; the enabled phone Camera HAP declares MainAbility and ExtensionPickerAbility but not PickerAbility"
+        }
+      }
+    },
+    {
+      "id": "user-auth-application-modal-entrypoint-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.UserIAM.UserAuth.Core"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "the documented 2in1-only WidgetParam.uiContext application-modal path hardcodes com.ohos.useriam.authwidget/UserAuthModalUIAbility, but the enabled AuthWidget HAP only declares userauthuiextensionability"
+        }
+      }
+    },
+    {
+      "id": "notification-extension-settings-entrypoint-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Notification.Notification"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "public openSubscriptionSettings APIs hardcode com.ohos.sceneboard/NotificationAccessGrantUIExtensionAbility; the phone image has no SceneBoard provider, so this specific settings flow cannot create its modal UI extension"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "public openSubscriptionSettings APIs hardcode com.ohos.sceneboard/NotificationAccessGrantUIExtensionAbility; SceneBoard is enabled but does not declare that entrypoint"
+        }
+      }
+    },
+    {
+      "id": "accessibility-settings-entrypoints-unavailable",
+      "match": {
+        "exact": [
+          "SystemCapability.BarrierFree.Accessibility.Core",
+          "SystemCapability.BarrierFree.Accessibility.Vision"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "Accessibility services connect to com.ohos.settings/SettingsExtService and IgnoreRepeatClickExtService, but the enabled phone Settings HAP declares neither entrypoint"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "the 2in1 Settings payload declares SettingsExtService and IgnoreRepeatClickExtService but is not registered, so Accessibility settings integration cannot connect to them"
+        }
+      }
+    },
+    {
+      "id": "notification-manager-settings-provider-missing-phone",
+      "match": {
+        "exact": [
+          "SystemCapability.Notification.NotificationSettings"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "public openNotificationSettings APIs hardcode com.ohos.sceneboard/NotificationManangerUIExtensionAbility; the phone image has no SceneBoard package, while its enabled SystemUI notification-management ability is a different bundle and entrypoint"
+        }
+      }
+    },
+    {
+      "id": "avsession-desktop-lyrics-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.AVSession.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "AVSession reports desktop lyrics supported on phone and enableDesktopLyric starts com.ohos.mediacontroller/DesktopLyricAbility, but no matching provider is packaged"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "AVSession reports desktop lyrics supported on 2in1 and targets com.ohos.mediacontroller/DesktopLyricAbility; the only MediaController payload is disabled, uses bundle com.hmos.mediacontroller, and does not declare DesktopLyricAbility"
+        }
+      }
+    },
+    {
+      "id": "screen-capture-dialog-provider-disabled-2in1",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.AVScreenCapture"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "runtime parameters route AVScreenCapture privacy/auth UI to com.ohos.systemui/com.ohos.systemui.dialog; that payload is disabled on 2in1 and enabled SceneBoard does not satisfy the configured element target"
+        }
+      }
+    },
+    {
+      "id": "location-privacy-ui-providers-unavailable",
+      "match": {
+        "exact": [
+          "SystemCapability.Location.Location.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "location privacy flows require com.ohos.locationdialog/LocationPrivacyExtAbility and com.huawei.hmos.location/LocationPrivacyDetailAbility; the first is an unregistered payload and the second is absent"
+        }
+      }
+    },
+    {
+      "id": "dlp-provider-entrypoints-incomplete",
+      "match": {
+        "exact": [
+          "SystemCapability.Security.DataLossPrevention"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "the disabled DLP Manager payload lacks SaveAsAbility, and DLP credential/watermark integration separately hardcodes absent com.huawei.hmos.dlpcredmgr/DlpPermServiceAbility"
+        }
+      }
+    },
+    {
+      "id": "print-remote-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Print.PrintFramework"
+        ]
+      },
+      "devices": {
+        "2in1": {
+          "status": "confirmed_broken",
+          "evidence": "in addition to the disabled PrintSpooler, printer discovery connects absent com.ohos.remotesvc/RemoteServiceExtAbility and the print-job notification AI action targets absent com.ohos.vassistant/VoicePcServiceExtAbility"
+        }
+      }
+    },
+    {
+      "id": "telephony-number-identity-provider-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Telephony.CallManager"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "CallManager number identity and incoming-call classification have no usable provider: number-mark refresh connects absent com.numberidentity/NumberIdentityServiceExtAbility; the numberlocationability and numbermarkability DataShare authorities are unresolved; spam detection targets absent com.spamshield/SpamShieldServiceExtAbility; anti-fraud cloud results target absent com.hmos.hsdr/HSDRService"
+        }
+      }
+    },
+    {
+      "id": "settings-navigation-provider-mismatch",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.Settings.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 @ohos.settings navigation APIs hardcode com.huawei.hmos.settings: openNetworkManagerSettings targets OpenNetworkUIExtensionAbility, input-method routes target ExternalCommonUIExtensionAbility, and the remaining open*SettingsPage methods target com.huawei.hmos.settings.MainAbility; only com.ohos.settings is packaged, and its phone HAP also lacks both UIExtension entrypoints. openAppDetailSettingsPage uses implicit action.settings.app.info; that handler is enabled only on phone"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 @ohos.settings navigation APIs hardcode absent com.huawei.hmos.settings; the similarly named com.ohos.settings payload is not registered, contains OpenNetworkUIExtensionAbility only, and lacks ExternalCommonUIExtensionAbility. openAppDetailSettingsPage separately uses action.settings.app.info, for which 2in1 has no registered handler"
+        }
+      }
+    },
+    {
+      "id": "contacts-picker-entrypoint-missing-phone",
+      "match": {
+        "exact": [
+          "SystemCapability.Applications.Contacts"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "contact.selectContact/selectContacts hardcode com.ohos.contacts/ContactUiExtentionAbility; the enabled phone Contacts HAP declares only MainAbility and Subscriber, so CRUD can work while every documented picker overload lacks its target entrypoint"
+        }
+      }
+    },
+    {
+      "id": "arkui-expanded-text-menu-providers-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.ArkUI.Full"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 documents ArkUI built-in TextMenuItemId search, share, URL, email, phone, address and date/time actions, but the phone image lacks /system/lib64/expanded_menu/libexpanded_menu.z.so. The implementation therefore cannot obtain the provider mapping; the image also has no enabled ohos.want.action.search or appdetail handler, no sendData handler, and lacks the mapped Huawei Browser, Calendar, Maps and SuperDevice bundles"
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 documents ArkUI built-in TextMenuItemId search, share, URL, email, phone, address and date/time actions, but the 2in1 image lacks /system/lib64/expanded_menu/libexpanded_menu.z.so. The implementation therefore cannot obtain the provider mapping; the image also has no enabled ohos.want.action.search or appdetail handler, no sendData handler, and lacks the mapped Huawei Browser, Calendar, Maps and SuperDevice bundles"
+        }
+      }
+    },
+    {
+      "id": "arkui-text-service-runtime-plugins-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.ArkUI.ArkUI.Full"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "ArkUI public TextMenu SHARE/TRANSLATE and Text/RichEditor entity recognition load libsystemshare_innerkits.z.so, libai_text_translation_innerapi.z.so and libai_text_analyzer_innerapi.z.so. All three are absent; built-in fallbacks return -1, report unsupported, or produce no share action."
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "ArkUI public TextMenu SHARE/TRANSLATE and Text/RichEditor entity recognition load libsystemshare_innerkits.z.so, libai_text_translation_innerapi.z.so and libai_text_analyzer_innerapi.z.so. All three are absent; built-in fallbacks return -1, report unsupported, or produce no share action."
+        }
+      }
+    },
+    {
+      "id": "app-domain-verification-extension-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.BundleManager.AppDomainVerify"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "Associated-domain query calls return, but the app-domain agent cannot perform verification, refresh verified state, or convert verified HTTP/HTTPS implicit Wants because /system/lib64/libapp_domain_verify_extension.z.so is absent; the implementation returns E_EXTENSIONS_LIB_NOT_FOUND."
+        },
+        "2in1": {
+          "status": "invalid_declaration",
+          "evidence": "The image advertises AppDomainVerify outside the exact 2in1 SDK profile and also omits /system/lib64/libapp_domain_verify_extension.z.so, so verification and verified HTTP/HTTPS implicit-Want conversion cannot run."
+        }
+      }
+    },
+    {
+      "id": "audio-vivid-metadata-runtime-plugin-missing",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.Core"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 API 26 exposes OH_AudioVividMetaBuilder_* through libnative_media_core.so, but /system/lib64/libAudioVividMetaBuilder.z.so is absent; Create and CreateEmptyBuilder therefore return AV_ERR_UNSUPPORT."
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "OHOS 7 API 26 exposes OH_AudioVividMetaBuilder_* through libnative_media_core.so, but /system/lib64/libAudioVividMetaBuilder.z.so is absent; Create and CreateEmptyBuilder therefore return AV_ERR_UNSUPPORT."
+        }
+      }
+    },
+    {
+      "id": "video-encoder-dependent-media-pipelines",
+      "match": {
+        "exact": [
+          "SystemCapability.Multimedia.Media.AVScreenCapture",
+          "SystemCapability.Multimedia.Media.AVTranscoder"
+        ]
+      },
+      "devices": {
+        "phone": {
+          "status": "partially_broken",
+          "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64."
+        },
+        "2in1": {
+          "status": "partially_broken",
+          "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64."
         }
       }
     }

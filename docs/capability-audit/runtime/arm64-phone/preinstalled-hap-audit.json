@@ -26,8 +26,11 @@
           "name": "ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "inputMethod"
+          "type": "inputMethod",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -67,8 +70,11 @@
           "name": "EnableBgTaskAuthDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -109,48 +115,66 @@
           "name": "DialogUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "MainAbilityEx",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "ViewAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "DataAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "DlpFileProcessAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "EncryptedSharingAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "action"
+          "type": "action",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -159,32 +183,44 @@
             "ohos.permission.START_DLP_CRED"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "OpeningDialogUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "PhoneDialogUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "ClearDlpCacheAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -199,6 +235,7 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -230,16 +267,22 @@
           "name": "DataShareExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://ringtone",
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "RingtoneBackupExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "backup"
+          "type": "backup",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -254,11 +297,13 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         },
         {
           "exported": null,
           "name": "JobManagerAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -287,8 +332,11 @@
           "name": "PrintExtension",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "print"
+          "type": "print",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -297,8 +345,11 @@
             "ohos.permission.PRINT"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/print"
+          "type": "sysDialog/print",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -310,12 +361,207 @@
     }
   ],
   "device": "phone",
+  "extension_uri_providers": [
+    {
+      "authority": "calendardata",
+      "bundle": "com.ohos.calendardata",
+      "enabled_for_user_100": true,
+      "entrypoint": "DataShareExtAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.calendardata/CalendarData.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://calendardata",
+      "write_permission": null
+    },
+    {
+      "authority": "com.ohos.calllogability",
+      "bundle": "com.ohos.contactsdataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "CallLogAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.contactsdataability/Contacts_DataAbility.hap",
+      "read_permission": "ohos.permission.READ_CALL_LOG",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.calllogability",
+      "write_permission": "ohos.permission.WRITE_CALL_LOG"
+    },
+    {
+      "authority": "com.ohos.calllogcheckability",
+      "bundle": "com.ohos.contactsdataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "CallLogCheckAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.contactsdataability/Contacts_DataAbility.hap",
+      "read_permission": "ohos.permission.CHECK_CALL_LOG",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.calllogcheckability",
+      "write_permission": null
+    },
+    {
+      "authority": "com.ohos.contactsdataability",
+      "bundle": "com.ohos.contactsdataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "ContactsDataAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.contactsdataability/Contacts_DataAbility.hap",
+      "read_permission": "ohos.permission.READ_CONTACTS",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.contactsdataability",
+      "write_permission": "ohos.permission.WRITE_CONTACTS"
+    },
+    {
+      "authority": "com.ohos.formrenderservice.ServiceExtension",
+      "bundle": "com.ohos.formrenderservice",
+      "enabled_for_user_100": true,
+      "entrypoint": "ServiceExtension",
+      "extension_type": "service",
+      "path": "/system/app/com.ohos.formrenderservice/Form_Render_Service.hap",
+      "read_permission": null,
+      "scheme": "ServiceExtension",
+      "uri": "ServiceExtension://com.ohos.formrenderservice.ServiceExtension",
+      "write_permission": null
+    },
+    {
+      "authority": "com.ohos.globalparamsability",
+      "bundle": "com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "GlobalParamsAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.globalparamsability",
+      "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
+    },
+    {
+      "authority": "com.ohos.opkeyability",
+      "bundle": "com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "OpKeyAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.opkeyability",
+      "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
+    },
+    {
+      "authority": "com.ohos.opkeyversionability",
+      "bundle": "com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "OpkeyVersionAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.opkeyversionability",
+      "write_permission": null
+    },
+    {
+      "authority": "com.ohos.pdpprofileability",
+      "bundle": "com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "PdpProfileAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.pdpprofileability",
+      "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
+    },
+    {
+      "authority": "com.ohos.settingsdata.DataAbility",
+      "bundle": "com.ohos.settingsdata",
+      "enabled_for_user_100": true,
+      "entrypoint": "DataExtAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.settingsdata/SettingsData.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.settingsdata.DataAbility",
+      "write_permission": "ohos.permission.MANAGE_SECURE_SETTINGS"
+    },
+    {
+      "authority": "com.ohos.simability",
+      "bundle": "com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "SimAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.simability",
+      "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
+    },
+    {
+      "authority": "com.ohos.smsmmsability",
+      "bundle": "com.ohos.telephonydataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "SmsMmsAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.telephonydataability/Telephony_Data_Storage.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.smsmmsability",
+      "write_permission": null
+    },
+    {
+      "authority": "com.ohos.voicemailability",
+      "bundle": "com.ohos.contactsdataability",
+      "enabled_for_user_100": true,
+      "entrypoint": "VoiceMailAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.contactsdataability/Contacts_DataAbility.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://com.ohos.voicemailability",
+      "write_permission": null
+    },
+    {
+      "authority": "docs",
+      "bundle": "com.ohos.UserFile.ExternalFileManager",
+      "enabled_for_user_100": true,
+      "entrypoint": "FileExtensionAbility",
+      "extension_type": "fileAccess",
+      "path": "/system/app/com.ohos.UserFile.ExternalFileManager/external_file_manager.hap",
+      "read_permission": null,
+      "scheme": "fileAccess",
+      "uri": "fileAccess://docs",
+      "write_permission": null
+    },
+    {
+      "authority": "media",
+      "bundle": "com.ohos.medialibrary.medialibrarydata",
+      "enabled_for_user_100": true,
+      "entrypoint": "DataShareExtAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.medialibrary.MediaLibraryData/Media_Library_Ext.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://media",
+      "write_permission": null
+    },
+    {
+      "authority": "ringtone",
+      "bundle": "com.ohos.ringtonelibrary.ringtonelibrarydata",
+      "enabled_for_user_100": true,
+      "entrypoint": "DataShareExtAbility",
+      "extension_type": "dataShare",
+      "path": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData/Ringtone_Library_Ext.hap",
+      "read_permission": null,
+      "scheme": "datashare",
+      "uri": "datashare://ringtone",
+      "write_permission": null
+    }
+  ],
   "haps": [
     {
       "abilities": [
         {
           "exported": null,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -330,11 +576,17 @@
         {
           "exported": true,
           "name": "BluetoothReceiveUIAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ],
           "skills": []
         },
         {
           "exported": true,
           "name": "BluetoothSendUIAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ],
           "skills": []
         }
       ],
@@ -364,6 +616,7 @@
             "ohos.permission.KEEP_BACKGROUND_RUNNING"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -383,7 +636,9 @@
               ]
             }
           ],
-          "type": "share"
+          "type": "share",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -392,8 +647,11 @@
             "ohos.permission.MANAGE_BLUETOOTH"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -408,6 +666,7 @@
         {
           "exported": false,
           "name": "DHardwareUIAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -446,16 +705,22 @@
           "name": "MechExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "MechFirstConnectAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -470,6 +735,7 @@
         {
           "exported": null,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -508,8 +774,11 @@
             "ohos.permission.LOCATION_IN_BACKGROUND"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -519,8 +788,11 @@
             "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -530,8 +802,11 @@
             "ohos.permission.SET_WIFI_CONFIG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -541,8 +816,11 @@
             "ohos.permission.SET_WIFI_CONFIG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -552,8 +830,11 @@
             "ohos.permission.SET_WIFI_CONFIG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -568,6 +849,11 @@
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG",
+            "ohos.permission.GET_WIFI_INFO"
+          ],
           "skills": []
         }
       ],
@@ -599,6 +885,7 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -627,8 +914,11 @@
           "name": "VpnServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -643,6 +933,7 @@
         {
           "exported": true,
           "name": "MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -701,8 +992,11 @@
           "name": "ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "inputMethod"
+          "type": "inputMethod",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -717,6 +1011,7 @@
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -751,16 +1046,22 @@
           "name": "EntryBackupAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "backup"
+          "type": "backup",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "FileExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "fileAccess"
+          "type": "fileAccess",
+          "uri": "fileAccess://docs",
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -798,48 +1099,66 @@
           "name": "SelectorDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "TipsDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "JumpInterceptorDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "SwitchUserDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "CommonSelectPickerAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "AssertFaultDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -854,6 +1173,7 @@
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -934,8 +1254,11 @@
           "name": "EnableBgTaskAuthDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -950,11 +1273,13 @@
         {
           "exported": true,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         },
         {
           "exported": true,
           "name": "Application",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -982,8 +1307,11 @@
           "name": "DataShareExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://calendardata",
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -998,6 +1326,7 @@
         {
           "exported": null,
           "name": "com.ohos.callui.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1036,8 +1365,11 @@
             "ohos.permission.PLACE_CALL"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1052,6 +1384,7 @@
         {
           "exported": null,
           "name": "com.ohos.mobiledatasettings.MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -1084,6 +1417,7 @@
         {
           "exported": null,
           "name": "com.ohos.camera.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1128,14 +1462,18 @@
           "name": "com.ohos.camera.FormAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "form"
+          "type": "form",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "com.ohos.camera.ExtensionPickerAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -1155,7 +1493,9 @@
               ]
             }
           ],
-          "type": "sysPicker/camera"
+          "type": "sysPicker/camera",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1170,6 +1510,7 @@
         {
           "exported": true,
           "name": "MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1203,6 +1544,7 @@
             "ohos.permission.ACCESS_CERT_MANAGER"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -1215,7 +1557,9 @@
               ]
             }
           ],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -1224,8 +1568,11 @@
             "ohos.permission.ACCESS_CERT_MANAGER"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1240,6 +1587,7 @@
         {
           "exported": null,
           "name": "com.ohos.contacts.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1275,8 +1623,11 @@
           "name": "Subscriber",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "staticSubscriber"
+          "type": "staticSubscriber",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1291,6 +1642,7 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -1325,16 +1677,22 @@
             "ohos.permission.WRITE_CONTACTS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "ContactsDataAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.READ_CONTACTS",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.contactsdataability",
+          "write_permission": "ohos.permission.WRITE_CONTACTS"
         },
         {
           "exported": null,
@@ -1343,24 +1701,33 @@
             "ohos.permission.MANAGE_VOICEMAIL"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.voicemailability",
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "CallLogAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.READ_CALL_LOG",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.calllogability",
+          "write_permission": "ohos.permission.WRITE_CALL_LOG"
         },
         {
           "exported": true,
           "name": "CallLogCheckAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.CHECK_CALL_LOG",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.calllogcheckability",
+          "write_permission": null
         },
         {
           "exported": null,
@@ -1370,8 +1737,11 @@
             "ohos.permission.WRITE_CONTACTS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -1381,8 +1751,11 @@
             "ohos.permission.WRITE_CONTACTS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1397,6 +1770,7 @@
         {
           "exported": null,
           "name": "com.ohos.devicemanagerui.MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -1427,32 +1801,44 @@
           "name": "com.ohos.devicemanagerui.InputUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "com.ohos.devicemanagerui.PincodeUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "com.ohos.devicemanagerui.ConfirmUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "com.ohos.devicemanagerui.BluetoothDialogAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1467,6 +1853,7 @@
         {
           "exported": true,
           "name": "ohos.samples.distributedmusicplayer.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1503,8 +1890,11 @@
           "name": "ServiceAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1545,48 +1935,66 @@
           "name": "DialogUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "MainAbilityEx",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "ViewAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "DataAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "DlpFileProcessAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "EncryptedSharingAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "action"
+          "type": "action",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -1595,32 +2003,44 @@
             "ohos.permission.START_DLP_CRED"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "OpeningDialogUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "PhoneDialogUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "ClearDlpCacheAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1652,8 +2072,11 @@
           "name": "audiopicker",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysPicker/audioPicker"
+          "type": "sysPicker/audioPicker",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1668,6 +2091,7 @@
         {
           "exported": true,
           "name": "MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1698,8 +2122,11 @@
           "name": "FilePickerUIExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysPicker/filePicker"
+          "type": "sysPicker/filePicker",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1740,8 +2167,11 @@
           "name": "ServiceExtension",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": "ServiceExtension://com.ohos.formrenderservice.ServiceExtension",
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1779,8 +2209,11 @@
           "name": "InputMethod",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1816,6 +2249,7 @@
           "name": "com.ohos.launcher.MainAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -1829,7 +2263,9 @@
               ]
             }
           ],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1844,6 +2280,7 @@
         {
           "exported": false,
           "name": "com.ohos.launcher.settings.MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -1876,6 +2313,7 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -1907,16 +2345,22 @@
           "name": "DataShareExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://media",
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "MediaBackupExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "backup"
+          "type": "backup",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1931,6 +2375,7 @@
         {
           "exported": null,
           "name": "com.ohos.mms.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -1966,8 +2411,11 @@
           "name": "Subscriber",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "staticSubscriber"
+          "type": "staticSubscriber",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -1982,6 +2430,7 @@
         {
           "exported": true,
           "name": "MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -2042,8 +2491,11 @@
           "name": "EnableNotificationDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2081,16 +2533,22 @@
           "name": "ToastExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "PasteboardProgressAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2105,6 +2563,9 @@
         {
           "exported": true,
           "name": "com.ohos.permissionmanager.MainAbility",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ],
           "skills": [
             {
               "actions": [
@@ -2139,16 +2600,22 @@
           "name": "com.ohos.permissionmanager.MainAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "com.ohos.permissionmanager.GrantAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -2157,8 +2624,11 @@
             "ohos.permission.GET_SENSITIVE_PERMISSIONS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -2167,24 +2637,33 @@
             "ohos.permission.GET_SENSITIVE_PERMISSIONS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "com.ohos.permissionmanager.PermissionStateSheetAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "com.ohos.permissionmanager.GlobalSwitchSheetAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2199,6 +2678,7 @@
         {
           "exported": null,
           "name": "com.ohos.photos.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -2270,14 +2750,18 @@
           "name": "com.ohos.photos.FormAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "form"
+          "type": "form",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "com.ohos.photos.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -2290,31 +2774,42 @@
               ]
             }
           ],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "PickerUIExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysPicker/photoPicker"
+          "type": "sysPicker/photoPicker",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "DeleteUIExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "SaveUIExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2329,6 +2824,7 @@
         {
           "exported": false,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -2359,38 +2855,51 @@
           "name": "PowerUiExtensionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/power"
+          "type": "sysDialog/power",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "ThermalServiceExtAbility_high",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "ThermalServiceExtAbility_low",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "InjectNoticeAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "CapsuleWindowAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -2398,15 +2907,20 @@
               ]
             }
           ],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "ChargeSoundPlayerExtension",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2421,6 +2935,7 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -2452,16 +2967,22 @@
           "name": "DataShareExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://ringtone",
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "RingtoneBackupExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "backup"
+          "type": "backup",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2498,6 +3019,7 @@
             "ohos.permission.CAPTURE_SCREEN"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -2505,15 +3027,20 @@
               ]
             }
           ],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "com.ohos.screenshot.DialogAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2528,6 +3055,9 @@
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ],
           "skills": [
             {
               "actions": [
@@ -2564,6 +3094,7 @@
         {
           "exported": null,
           "name": "com.ohos.settings.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -2578,6 +3109,7 @@
         {
           "exported": null,
           "name": "com.ohos.settings.AppInfoAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -2607,24 +3139,33 @@
           "name": "AccessibilityShortKeyDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "bluetooth",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
           "name": "BluetoothPairDialog",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2639,6 +3180,9 @@
         {
           "exported": null,
           "name": "com.ohos.settings.faceauth.enrollmentstartview",
+          "permissions": [
+            "ohos.permission.MANAGE_USER_IDM"
+          ],
           "skills": [
             {
               "actions": [],
@@ -2698,16 +3242,22 @@
           "name": "DataExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.settingsdata.DataAbility",
+          "write_permission": "ohos.permission.MANAGE_SECURE_SETTINGS"
         },
         {
           "exported": null,
           "name": "UserChangeStaticSubscriber",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "staticSubscriber"
+          "type": "staticSubscriber",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2722,11 +3272,13 @@
         {
           "exported": null,
           "name": "MainAbility",
+          "permissions": [],
           "skills": []
         },
         {
           "exported": null,
           "name": "JobManagerAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -2755,8 +3307,11 @@
           "name": "PrintExtension",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "print"
+          "type": "print",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -2765,8 +3320,11 @@
             "ohos.permission.PRINT"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/print"
+          "type": "sysDialog/print",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2801,8 +3359,11 @@
           "name": "com.ohos.systemui.dropdownpanel.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2838,8 +3399,11 @@
           "name": "com.ohos.systemui.navigationbar.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2854,6 +3418,7 @@
         {
           "exported": null,
           "name": "com.ohos.systemui.notificationmanagement.MainAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -2906,8 +3471,11 @@
           "name": "com.ohos.systemui.screenlock.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2942,8 +3510,11 @@
           "name": "com.ohos.systemui.statusbar.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -2980,8 +3551,11 @@
             "ohos.permission.START_SYSTEM_DIALOG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3017,8 +3591,11 @@
           "name": "com.ohos.systemui.volumepanel.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3053,8 +3630,11 @@
           "name": "com.ohos.systemui.ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3094,16 +3674,22 @@
           "name": "OpKeyAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.opkeyability",
+          "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
         },
         {
           "exported": null,
           "name": "BackupRestoreWorkScheduler",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "workScheduler"
+          "type": "workScheduler",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -3112,24 +3698,33 @@
             "ohos.permission.READ_MESSAGES"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "PdpProfileAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.pdpprofileability",
+          "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
         },
         {
           "exported": null,
           "name": "SimAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.simability",
+          "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
         },
         {
           "exported": null,
@@ -3138,24 +3733,33 @@
             "ohos.permission.READ_MESSAGES"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.smsmmsability",
+          "write_permission": null
         },
         {
           "exported": null,
           "name": "GlobalParamsAbility",
           "permissions": [],
           "process": null,
+          "read_permission": "ohos.permission.GET_TELEPHONY_STATE",
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.globalparamsability",
+          "write_permission": "ohos.permission.SET_TELEPHONY_STATE"
         },
         {
           "exported": null,
           "name": "OpkeyVersionAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "dataShare"
+          "type": "dataShare",
+          "uri": "datashare://com.ohos.opkeyversionability",
+          "write_permission": null
         },
         {
           "exported": null,
@@ -3164,8 +3768,11 @@
             "ohos.permission.READ_MESSAGES"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "backup"
+          "type": "backup",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3180,6 +3787,7 @@
         {
           "exported": null,
           "name": "com.ohos.updateapp.MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -3221,8 +3829,11 @@
           "name": "ServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3258,8 +3869,11 @@
           "name": "userauthuiextensionability",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/userAuth"
+          "type": "sysDialog/userAuth",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3274,11 +3888,13 @@
         {
           "exported": null,
           "name": "com.usb.right.MainAbility",
+          "permissions": [],
           "skills": []
         },
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": []
         }
       ],
@@ -3307,16 +3923,22 @@
           "name": "UsbServiceExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "UsbFunctionSwitchExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -3361,6 +3983,7 @@
         {
           "exported": true,
           "name": "MainAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -4134,9 +4757,11 @@
       "status": "payload_path_missing"
     }
   ],
-  "schema_version": 2,
+  "schema_version": 3,
   "summary": {
     "certificate_mismatch_hap_count": 5,
+    "declared_extension_authority_count": 16,
+    "declared_extension_uri_count": 16,
     "enabled_bundle_count": 42,
     "hap_bundle_count": 47,
     "hap_count": 58,
@@ -4163,6 +4788,7 @@
         {
           "exported": null,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -4177,11 +4803,17 @@
         {
           "exported": true,
           "name": "BluetoothReceiveUIAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ],
           "skills": []
         },
         {
           "exported": true,
           "name": "BluetoothSendUIAbility",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ],
           "skills": []
         }
       ],
@@ -4211,6 +4843,7 @@
             "ohos.permission.KEEP_BACKGROUND_RUNNING"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [
             {
               "actions": [
@@ -4230,7 +4863,9 @@
               ]
             }
           ],
-          "type": "share"
+          "type": "share",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -4239,8 +4874,11 @@
             "ohos.permission.MANAGE_BLUETOOTH"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -4255,6 +4893,7 @@
         {
           "exported": false,
           "name": "DHardwareUIAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -4293,16 +4932,22 @@
           "name": "MechExtAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": false,
           "name": "MechFirstConnectAbility",
           "permissions": [],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sys/commonUI"
+          "type": "sys/commonUI",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -4317,6 +4962,7 @@
         {
           "exported": null,
           "name": "EntryAbility",
+          "permissions": [],
           "skills": [
             {
               "actions": [
@@ -4355,8 +5001,11 @@
             "ohos.permission.LOCATION_IN_BACKGROUND"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -4366,8 +5015,11 @@
             "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -4377,8 +5029,11 @@
             "ohos.permission.SET_WIFI_CONFIG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "sysDialog/common"
+          "type": "sysDialog/common",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -4388,8 +5043,11 @@
             "ohos.permission.SET_WIFI_CONFIG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         },
         {
           "exported": true,
@@ -4399,8 +5057,11 @@
             "ohos.permission.SET_WIFI_CONFIG"
           ],
           "process": null,
+          "read_permission": null,
           "skills": [],
-          "type": "service"
+          "type": "service",
+          "uri": null,
+          "write_permission": null
         }
       ],
       "inspect_error": null,
@@ -4415,6 +5076,11 @@
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG",
+            "ohos.permission.GET_WIFI_INFO"
+          ],
           "skills": []
         }
       ],
@@ -4446,6 +5112,9 @@
         {
           "exported": true,
           "name": "EntryAbility",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ],
           "skills": [
             {
               "actions": [
