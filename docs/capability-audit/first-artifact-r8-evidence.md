@@ -35,3 +35,22 @@ not replace a new archive boot or close the remaining runtime gaps. The
 independent `python3 scripts/verify_first_artifact_gate.py --archive <R8 archive>
 --evidence <R8 first-artifact-behavior.json> --repository "$PWD" --product
 arm64_virt --device-type phone` correctly rejected the failed evidence.
+
+A later diagnostic-only replay captured the existing R8 boot serial trace for
+`backup_sa`: init started and executed the same PID, and SAMGR started SA 5203.
+The new package-bound probe and its negative tests would close only the old
+invalid-capability init finding, not Backup API behavior. This raises the
+diagnostic count to 63/291 (228 unresolved) in
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/diagnostic-r8-gap-closure-after-backup-proof.json`.
+It does not retroactively pass R8's frozen-input first-artifact gate.
+
+The same diagnostic-only method then inspected the extracted `system.img` with
+Docker `debugfs`: the module-update initializer is an executable regular file,
+the obsolete `device_usage_statistics_service.cfg` is absent at both image
+path aliases, and the R8 serial trace shows module-update init lifecycle and
+UsageStatistics SA 1907 startup/publication. Those two *specific* original
+findings are now backed by image-plus-boot checks; the diagnostic is 65/291
+closed, 226 unresolved:
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/diagnostic-r8-gap-closure-after-profile-proof.json`.
+Neither check claims full module-update or UsageStatistics API behavior, and
+neither turns R8 into a gate pass.

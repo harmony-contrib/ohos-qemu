@@ -75,6 +75,58 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             return None
         return path, result
 
+    backup = child('backup-init/evidence.json')
+    if backup and backup[1].get('persona') == 'backup-init':
+        document = backup[1]
+        serial = backup[0].parent / 'serial.log'
+        if (document.get('scope') == 'actual_init_accepts_and_execs_backup_sa_NOT_Backup_API_data_behavior' and
+                document.get('serial') == str(serial) and serial.is_file() and not serial.is_symlink() and
+                digest(serial) == document.get('serial_sha256')):
+            from verify_backup_init_results import verify
+            if verify(serial.read_text(errors='replace')) != document.get('result'):
+                raise ValueError('backup SA init/exec differs from captured serial trace')
+            closed['behavior:backup-init-invalid-linux-capability'] = {
+                'evidence': str(backup[0]), 'sha256': digest(backup[0]),
+                'serial': str(serial), 'serial_sha256': digest(serial),
+                'verifier': 'actual_new_package_init_start_and_exec_same_backup_SA_pid',
+                'not_claimed': 'Backup_API_data_transfer_restore_or_authorization'}
+
+    profile = child('boot-profile/evidence.json')
+    if profile and profile[1].get('persona') == 'boot-profile':
+        document = profile[1]
+        boot_path = runtime / 'boot/boot.json'
+        boot = json.loads(boot_path.read_text()) if boot_path.is_file() and not boot_path.is_symlink() else {}
+        image = Path(document.get('system_image', ''))
+        image_root = runtime / 'boot/extract'
+        files = {name: profile[0].parent / name for name in
+                 ('serial.log', 'module-stat.txt', 'usage-system-stat.txt', 'usage-root-stat.txt')}
+        if (document.get('scope') == 'module_update_initializer_and_unused_usage_init_only' and
+                boot.get('status') == 'pass' and boot.get('purpose') == 'acceptance' and
+                boot.get('archive_sha256') == archive_sha and
+                boot.get('test_environment', {}).get('boot_id') == boot_id and
+                boot.get('test_environment', {}).get('external_keepalive') is False and
+                image.is_file() and not image.is_symlink() and image.parent.name == 'images' and
+                image.name == 'system.img' and image_root in image.parents and
+                boot.get('test_environment', {}).get('freshly_extracted_directory') == str(image.parent.parent) and
+                digest(image) == document.get('system_image_sha256') ==
+                boot.get('initial_package_file_sha256', {}).get('images/system.img') and
+                all(path.is_file() and not path.is_symlink() for path in files.values()) and
+                digest(files['serial.log']) == document.get('serial_sha256') and
+                all(digest(files[name]) == document.get('stat_sha256', {}).get(name)
+                    for name in files if name != 'serial.log')):
+            from verify_boot_profile_results import verify
+            actual = verify(files['module-stat.txt'].read_text(),
+                            [files['usage-system-stat.txt'].read_text(),
+                             files['usage-root-stat.txt'].read_text()],
+                            files['serial.log'].read_text(errors='replace'))
+            if actual != document.get('result'):
+                raise ValueError('boot profile repair differs from actual image and init trace')
+            proof = {'evidence': str(profile[0]), 'sha256': digest(profile[0]),
+                     'verifier': 'actual_system_image_debugfs_and_fresh_boot_init_SA_events',
+                     'not_claimed': 'full_module_update_or_usage_statistics_API_behavior'}
+            closed['behavior:module-update-initializer-missing'] = proof
+            closed['behavior:usage-statistics-stale-init-profile'] = proof
+
     web = child('web/evidence.json')
     if web and web[1].get('persona') == 'web':
         verification = Path(web[1].get('result', ''))

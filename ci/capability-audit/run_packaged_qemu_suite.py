@@ -127,6 +127,16 @@ def run(args):
         check('boot', work / 'boot/boot.json', [{'argv': guest.report['qemu_launch_argv'], 'exit_code': 0}])
         if args.package_directory and args.package_directory.name != guest.directory.name:
             raise ValueError('matrix directory does not match actual archive extraction')
+        backup_record = command([sys.executable, Path(__file__).with_name('run_backup_init_probe.py'),
+            '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
+            '--output', work / 'backup-init'], 'actual-backup-SA-init-and-exec')
+        check('backup-init', work / 'backup-init/evidence.json', [backup_record])
+        profile_record = command([sys.executable, Path(__file__).with_name('run_boot_profile_probe.py'),
+            '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
+            '--output', work / 'boot-profile', '--docker-image',
+            os.environ.get('QEMU_TEST_DOCKER_IMAGE', 'ohos-qemu-m144-build-env:7.0-release')],
+            'actual-image-and-boot-profile-boundaries', timeout=300)
+        check('boot-profile', work / 'boot-profile/evidence.json', [profile_record])
         power_record = command([sys.executable, Path(__file__).with_name('run_power_suspend_probe.py'),
             '--boot', work / 'boot/boot.json', '--output', work / 'power-suspend', '--hdc', hdc],
             'default-policy-real-suspend-wake-compositor', timeout=300)
