@@ -1,0 +1,43 @@
+diff --git a/base/powermgr/thermal_manager/services/native/profile/qemu_thermal_service_config.xml b/base/powermgr/thermal_manager/services/native/profile/qemu_thermal_service_config.xml
+new file mode 100644
+--- /dev/null
++++ b/base/powermgr/thermal_manager/services/native/profile/qemu_thermal_service_config.xml
+@@ -0,0 +1,38 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- SPDX-License-Identifier: Apache-2.0 -->
++<thermal version="0.01" product="qemu">
++    <base>
++        <item tag="history_temp_count" value="10"/>
++        <item tag="temperature_query_enum" value="battery"/>
++        <item tag="sim_tz" value="0"/>
++    </base>
++    <level>
++        <sensor_cluster name="qemu_battery" sensor="battery">
++            <item level="1" threshold="40000" threshold_clr="38000"/>
++            <item level="2" threshold="43000" threshold_clr="41000"/>
++            <item level="3" threshold="46000" threshold_clr="44000"/>
++            <item level="4" threshold="48000" threshold_clr="46000"/>
++            <item level="5" threshold="53000" threshold_clr="51000"/>
++            <item level="6" threshold="58000" threshold_clr="56000"/>
++            <item level="7" threshold="63000" threshold_clr="61000"/>
++        </sensor_cluster>
++    </level>
++    <state>
++        <item name="scene" param="cam,call,game,test"/>
++        <item name="screen"/>
++        <item name="charge"/>
++    </state>
++    <action>
++        <item name="thermallevel" event="1"/>
++    </action>
++    <policy>
++        <config name="qemu_battery" level="0"><thermallevel>0</thermallevel></config>
++        <config name="qemu_battery" level="1"><thermallevel>1</thermallevel></config>
++        <config name="qemu_battery" level="2"><thermallevel>2</thermallevel></config>
++        <config name="qemu_battery" level="3"><thermallevel>3</thermallevel></config>
++        <config name="qemu_battery" level="4"><thermallevel>4</thermallevel></config>
++        <config name="qemu_battery" level="5"><thermallevel>5</thermallevel></config>
++        <config name="qemu_battery" level="6"><thermallevel>6</thermallevel></config>
++        <config name="qemu_battery" level="7"><thermallevel>7</thermallevel></config>
++    </policy>
++</thermal>

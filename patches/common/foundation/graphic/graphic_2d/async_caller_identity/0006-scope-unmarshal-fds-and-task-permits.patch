@@ -1,0 +1,167 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
+@@ -410,6 +410,26 @@
+     return ret;
+ }
+ 
++AshmemFdContainerScope::AshmemFdContainerScope(AshmemFdWorker* worker)
++    : container_(AshmemFdContainer::Instance()), previousFds_(std::move(container_.fds_)),
++      previousUse_(container_.isUseFdContainer_), previousUnmarshal_(g_isUnmarshalThread)
++{
++    AshmemFdContainer::SetIsUnmarshalThread(true);
++    container_.isUseFdContainer_ = false;
++    if (worker != nullptr) {
++        worker->PushFdsToContainer();
++    }
++}
++
++AshmemFdContainerScope::~AshmemFdContainerScope()
++{
++    // Never defer TLS cleanup to the final shared worker owner: that owner
++    // may be the producer, or a queue cancellation thread.
++    container_.fds_ = std::move(previousFds_);
++    container_.isUseFdContainer_ = previousUse_;
++    AshmemFdContainer::SetIsUnmarshalThread(previousUnmarshal_);
++}
++
+ AshmemFdWorker::AshmemFdWorker(const pid_t callingPid) : callingPid_(callingPid) {}
+ 
+ AshmemFdWorker::~AshmemFdWorker()
+@@ -421,10 +441,6 @@
+             }
+         }
+     }
+-    if (!isFdContainerUpdated_) {
+-        return;
+-    }
+-    AshmemFdContainer::Instance().Clear();
+ }
+ 
+ void AshmemFdWorker::InsertFdWithOffset(int fd, binder_size_t offset, bool shouldCloseFd)
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/include/transaction/rs_ashmem_helper.h b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/include/transaction/rs_ashmem_helper.h
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/include/transaction/rs_ashmem_helper.h
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/include/transaction/rs_ashmem_helper.h
+@@ -48,6 +48,7 @@
+ };
+ 
+ class AshmemFdWorker;
++class AshmemFdContainerScope;
+ class RSB_EXPORT AshmemFdContainer {
+ public:
+     static AshmemFdContainer& Instance();
+@@ -67,6 +68,7 @@
+     bool isUseFdContainer_ = false;
+ 
+     friend class AshmemFdWorker;
++    friend class AshmemFdContainerScope;
+ };
+ 
+ class RSB_EXPORT AshmemFdWorker {
+@@ -89,6 +91,20 @@
+     bool needManualCloseFds_ = false;
+ };
+ 
++// This scope is constructed and destroyed only by the executing task.
++class RSB_EXPORT AshmemFdContainerScope final {
++public:
++    explicit AshmemFdContainerScope(AshmemFdWorker* worker);
++    ~AshmemFdContainerScope();
++
++private:
++    DISALLOW_COPY_AND_MOVE(AshmemFdContainerScope);
++    AshmemFdContainer& container_;
++    std::unordered_map<binder_size_t, int> previousFds_;
++    const bool previousUse_;
++    const bool previousUnmarshal_;
++};
++
+ class RSB_EXPORT RSAshmemHelper {
+ public:
+     static std::shared_ptr<MessageParcel> CreateAshmemParcel(std::shared_ptr<MessageParcel>& dataParcel);
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_unmarshal_thread.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_unmarshal_thread.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_unmarshal_thread.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_unmarshal_thread.cpp
+@@ -48,6 +48,42 @@
+ constexpr int MAX_CONCURRENCY = 3;
+ const char* TRANSACTION_REPORT_NAME = "IPC_DATA_OVER_ERROR";
+ 
++class NoWaitTaskPermit final {
++public:
++    explicit NoWaitTaskPermit(std::atomic<int>& count) : count_(count)
++    {
++        count_.fetch_add(1);
++    }
++    ~NoWaitTaskPermit()
++    {
++        Complete();
++    }
++    void Complete()
++    {
++        if (pending_.exchange(false)) {
++            count_.fetch_sub(1);
++        }
++    }
++
++private:
++    std::atomic<int>& count_;
++    std::atomic<bool> pending_ { true };
++};
++
++class NoWaitTaskCompletion final {
++public:
++    explicit NoWaitTaskCompletion(std::shared_ptr<NoWaitTaskPermit> permit) : permit_(std::move(permit)) {}
++    ~NoWaitTaskCompletion()
++    {
++        if (permit_) {
++            permit_->Complete();
++        }
++    }
++
++private:
++    const std::shared_ptr<NoWaitTaskPermit> permit_;
++};
++
+ const std::shared_ptr<AppExecFwk::AppMgrClient> GetAppMgrClient()
+ {
+     static std::shared_ptr<AppExecFwk::AppMgrClient> appMgrClient =
+@@ -134,13 +170,14 @@
+     bool isPendingUnmarshal = (parcel->GetDataSize() > MIN_PENDING_REQUEST_SYNC_DATA_SIZE);
+     bool unmarshalParallel = RSSystemProperties::GetUnmarshalParallelEnabled() &&
+                              parcel->GetDataSize() > RSSystemProperties::GetUnmarshalParallelMinDataSize();
++    // Register before publication; each non-wait task owns exactly one permit.
++    auto noWaitPermit = waitUnmarshalling ? nullptr : std::make_shared<NoWaitTaskPermit>(noNeedWaitTaskNum_);
+     RSTaskMessage::RSTask task = [this, parcel = parcel, isPendingUnmarshal, isNonSystemAppCalling, callingPid,
+-        ashmemFdWorker = std::shared_ptr(std::move(ashmemFdWorker)), ashmemFlowControlUnit, parcelNumber]() {
++        ashmemFdWorker = std::shared_ptr(std::move(ashmemFdWorker)), ashmemFlowControlUnit, parcelNumber,
++        noWaitPermit]() {
++        NoWaitTaskCompletion complete(noWaitPermit);
+         RSMarshallingHelper::SetCallingPid(callingPid);
+-        AshmemFdContainer::SetIsUnmarshalThread(true);
+-        if (ashmemFdWorker) {
+-            ashmemFdWorker->PushFdsToContainer();
+-        }
++        AshmemFdContainerScope fdScope(ashmemFdWorker.get());
+         static thread_local int unmarshalTid = gettid();
+         RsFrameReport::ReportUnmarshalData(unmarshalTid, parcel->GetDataSize());
+         auto transData = RSBaseRenderUtil::ParseTransactionData(*parcel, parcelNumber);
+@@ -183,9 +220,6 @@
+                 RSMainThread::Instance()->RequestNextVSync("UI", time);
+             }
+         }
+-        if (noNeedWaitTaskNum_ > 0) {
+-            noNeedWaitTaskNum_--;
+-        }
+         RSMainThread::Instance()->NotifyUnmarshalTask(time);
+         // ashmem parcel flow control ends in the destructor of ashmemFlowControlUnit
+     };
+@@ -199,9 +233,6 @@
+     }
+     if (!isPendingUnmarshal) {
+         RSMainThread::Instance()->RequestNextVSync();
+-    }
+-    if (!waitUnmarshalling) {
+-        noNeedWaitTaskNum_++;
+     }
+ }
+ 

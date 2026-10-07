@@ -23,6 +23,8 @@ Checks (offline, no QEMU boot):
   6) absolute-pointer guest capability and virtio-tablet launcher pairing
   7) self-contained accessibility CLI and --a11y launcher pairing
   8) userdata compressibility heuristic (dirty image warning)
+  9) full source profiles: complete pinned ALSA vendor config and native ABI
+ 10) complete exact-ABI source M144 core bound to packaged build provenance
 USAGE
 }
 
@@ -30,6 +32,7 @@ PACKAGE=
 EXPECT=
 REQUIRE_FULL_DEVICE=
 REQUIRE_PC_WINDOW=0
+REQUIRE_SCENE_WINDOW=0
 EXPECT_MANIFEST_REVISION=
 
 while [ "$#" -gt 0 ]; do
@@ -54,8 +57,13 @@ while [ "$#" -gt 0 ]; do
       REQUIRE_FULL_DEVICE=phone
       shift
       ;;
-    --require-pc-window|--require-scene-window)
+    --require-pc-window)
       REQUIRE_PC_WINDOW=1
+      REQUIRE_SCENE_WINDOW=1
+      shift
+      ;;
+    --require-scene-window)
+      REQUIRE_SCENE_WINDOW=1
       shift
       ;;
     -h|--help)
@@ -155,8 +163,52 @@ PY
 fi
 
 if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  if ! python3 - "${PACKAGE}" "${SCRIPT_DIR}" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+import xml.etree.ElementTree as ET
+package, scripts = map(Path, sys.argv[1:])
+sys.path.insert(0, str(scripts))
+from openharmony_release_source_lock import load_lock
+expected = scripts / 'openharmony_7_0_release_source_lock.json'
+included = package / 'openharmony-project-lock.json'
+heads = package / 'openharmony-project-heads.json'
+resolved = package / 'resolved-manifest.xml'
+for path in (included, heads, resolved):
+    if path.is_symlink() or not path.is_file():
+        raise SystemExit('missing regular full-source graph evidence: ' + path.name)
+if included.read_bytes() != expected.read_bytes():
+    raise SystemExit('packaged main-system source lock differs from current Release lock')
+document = load_lock(included)
+digest = hashlib.sha256(included.read_bytes()).hexdigest()
+baseline = json.loads((package / 'manifest.json').read_text())['source_baseline']
+if (baseline.get('project_source_lock_sha256') != digest or
+        baseline.get('resolved_manifest_sha256') != hashlib.sha256(resolved.read_bytes()).hexdigest()):
+    raise SystemExit('full-source manifest/graph checksum mismatch')
+actual = [{'name': p.attrib['name'], 'path': p.attrib.get('path', p.attrib['name']),
+           'revision': p.attrib['revision']} for p in ET.parse(resolved).findall('project')]
+record = json.loads(heads.read_text())
+observed = [{**p, 'observed_head': p['revision']} for p in document['projects']]
+if (sorted(actual, key=lambda p: p['path']) != document['projects'] or record.get('status') != 'pass'
+        or record.get('source_lock_sha256') != digest or record.get('projects') != observed
+        or record.get('scope') != 'actual_main_Release_project_HEADs_NOT_guest_behavior'):
+    raise SystemExit('full main-system graph/HEAD evidence does not match the exact locked Release')
+PY
+  then FAIL=1; fi
   EXPECTED_PROFILE="qemu_${REQUIRE_FULL_DEVICE}_full_source"
   EXPECTED_EFFECTIVE_PROFILE="vendor/ohemu/virt/virt_${REQUIRE_FULL_DEVICE}_full.json"
+  if ! python3 "${SCRIPT_DIR}/../patches/lib/package_validation.py" \
+    --manifest "${PACKAGE}/manifest.json"; then
+    echo "FAIL: package conflates static capability checks with runtime validation" >&2
+    FAIL=1
+  fi
+  if ! python3 "${SCRIPT_DIR}/../patches/lib/kernel_evidence.py" \
+    --package "${PACKAGE}" --guest-arch "${MANIFEST_ARCH}"; then
+    echo "FAIL: full source package has stale or missing kernel build evidence" >&2
+    FAIL=1
+  fi
   if [ "${MANIFEST_DT}" != "${REQUIRE_FULL_DEVICE}" ] || \
      [ "${MANIFEST_PROFILE}" != "${EXPECTED_PROFILE}" ]; then
     echo "FAIL: package is not marked as a full source-built ${REQUIRE_FULL_DEVICE} profile" >&2
@@ -270,6 +322,23 @@ if [ ! -f "${SYSIMG}" ]; then
 fi
 
 if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  if ! python3 "${SCRIPT_DIR}/verify_native_gap_abi_image.py" --package "${PACKAGE}" \
+      --arch "${MANIFEST_ARCH}"; then
+    echo "FAIL: actual final Native gap ABI/profile evidence differs" >&2
+    FAIL=1
+  else
+    echo "PASS: whole original Native gap ABI (offline, not backend behavior)"
+  fi
+  if ! python3 "${SCRIPT_DIR}/verify_arkweb_core_image.py" --system-image "${SYSIMG}" \
+      --arch "${MANIFEST_ARCH}" --packaged-source-core "${PACKAGE}/arkweb-source-core"; then
+    echo "FAIL: packaged full M144 core ABI/resources/source provenance differs" >&2
+    FAIL=1
+  else
+    echo "PASS: exact-ABI complete source M144 core (offline, not Web behavior)"
+  fi
+fi
+
+if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
   KERNEL_CONFIG="${PACKAGE}/kernel.config"
   if [ ! -f "${KERNEL_CONFIG}" ]; then
     echo "FAIL: missing kernel.config QoS build evidence" >&2
@@ -356,6 +425,34 @@ fi
 
 echo "-- virtual vibrator VDI --"
 VENDOR_IMG="${PACKAGE}/images/vendor.img"
+if [ "${REQUIRE_FULL_DEVICE}" = "phone" ]; then
+  echo "-- AudioSuite three DSP native ABI/XML (offline only, not PCM behavior) --"
+  if ! python3 "${SCRIPT_DIR}/verify_audio_suite_dsp_image.py" \
+      --system-image "${SYSIMG}" --machine "${ELF_MACHINE}"; then
+    echo "FAIL: full phone source package lacks real AudioSuite DSP closure" >&2
+    FAIL=1
+  fi
+fi
+if [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  echo "-- software AVC backend/ABI (offline only, not media API behavior) --"
+  if ! python3 "${SCRIPT_DIR}/verify_avc_backend_image.py" \
+      --system-image "${SYSIMG}" --machine "${ELF_MACHINE}"; then
+    echo "FAIL: full source package lacks the real pinned software AVC backend closure" >&2
+    FAIL=1
+  fi
+  echo "-- ALSA vendor config/ABI (offline only, not audio behavior) --"
+  if ! python3 "${SCRIPT_DIR}/verify_alsa_config_image.py" \
+      --vendor-image "${VENDOR_IMG}" --machine "${ELF_MACHINE}"; then
+    echo "FAIL: full source package lacks pinned ALSA hardware/config closure" >&2
+    FAIL=1
+  fi
+  echo "-- AudioPolicy 7.0 device/pipe mappings (offline only, not PCM behavior) --"
+  if ! python3 "${SCRIPT_DIR}/verify_qemu_audio_policy_image.py" \
+      --chip-prod-image "${PACKAGE}/images/chip_prod.img"; then
+    echo "FAIL: full source package lacks pinned AudioPolicy normal-route mappings" >&2
+    FAIL=1
+  fi
+fi
 VIBRATOR_FOUND=
 if [ -f "${VENDOR_IMG}" ]; then
   for path in \
@@ -490,9 +587,14 @@ else
   echo "SKIP: images/sys_prod.img is not present"
 fi
 
-if [ "${REQUIRE_PC_WINDOW}" = "1" ]; then
-  if [ "${MANIFEST_DT}" != "2in1" ] || [ "${MANIFEST_PROFILE}" != "qemu_2in1_full_source" ]; then
-    echo "FAIL: PC window validation requires a full 2in1 package" >&2
+if [ "${REQUIRE_SCENE_WINDOW}" = "1" ] || [ -n "${REQUIRE_FULL_DEVICE}" ]; then
+  if { [ "${MANIFEST_DT}" != "phone" ] && [ "${MANIFEST_DT}" != "2in1" ]; } || \
+     [ "${MANIFEST_PROFILE}" != "qemu_${MANIFEST_DT}_full_source" ]; then
+    echo "FAIL: SceneBoard validation requires a full phone/2in1 package" >&2
+    FAIL=1
+  fi
+  if [ "${REQUIRE_PC_WINDOW}" = "1" ] && [ "${MANIFEST_DT}" != "2in1" ]; then
+    echo "FAIL: PC window validation requires a 2in1 package" >&2
     FAIL=1
   fi
   if [ "$(python3 -c 'import json,sys; print(str(json.load(open(sys.argv[1])).get("capabilities", {}).get("sceneboard_window_manager", False)).lower())' "${PACKAGE}/manifest.json")" != true ]; then
@@ -500,7 +602,7 @@ if [ "${REQUIRE_PC_WINDOW}" = "1" ]; then
     FAIL=1
   fi
   PC_WINDOW_TMP="$(mktemp -d "${TMPDIR:-/tmp}/ohos-pc-window-check.XXXXXX")"
-  if ! python3 - "${PACKAGE}/device-profile.json" "${PC_WINDOW_TMP}/hashes.json" <<'PY'
+  if ! python3 - "${PACKAGE}/device-profile.json" "${PC_WINDOW_TMP}/hashes.json" "${MANIFEST_DT}" <<'PY'
 import json
 import re
 import sys
@@ -517,8 +619,8 @@ expected = {
 hashes = board.get("hap_sha256", {})
 checks = [
     adaptations.get("window_architecture_feature") == "window_manager_use_sceneboard = true",
-    adaptations.get("pc_window_parameter") == "const.window.multiWindowUIType=FreeFormMultiWindow",
-    adaptations.get("pc_mode_parameter") == "persist.sceneboard.ispcmode=true",
+    adaptations.get("window_layout_parameter") == ("const.window.multiWindowUIType=FreeFormMultiWindow" if sys.argv[3] == "2in1" else "const.window.multiWindowUIType=HandsetSmartWindow"),
+    adaptations.get("sceneboard_mode_parameter") == ("persist.sceneboard.ispcmode=true" if sys.argv[3] == "2in1" else "persist.sceneboard.ispcmode=false"),
     adaptations.get("boot_unlock_events") == [
         "usual.event.USER_UNLOCKED", "usual.event.SCREEN_UNLOCKED"
     ],
@@ -589,10 +691,10 @@ PY
   fi
   if dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/cem" \
        /system/bin/cem /bin/cem && \
-     dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/qemu_2in1_unlock.cfg" \
-       /system/etc/init/qemu_2in1_unlock.cfg /etc/init/qemu_2in1_unlock.cfg && \
-     python3 - "${PACKAGE}/qemu-2in1-boot-unlock.json" \
-       "${PC_WINDOW_TMP}/cem" "${PC_WINDOW_TMP}/qemu_2in1_unlock.cfg" \
+     dump_first_image_file "${SYSIMG}" "${PC_WINDOW_TMP}/qemu_sceneboard_unlock.cfg" \
+       /system/etc/init/qemu_sceneboard_unlock.cfg /etc/init/qemu_sceneboard_unlock.cfg && \
+     python3 - "${PACKAGE}/qemu-sceneboard-boot-unlock.json" \
+       "${PC_WINDOW_TMP}/cem" "${PC_WINDOW_TMP}/qemu_sceneboard_unlock.cfg" \
        "${ELF_MACHINE}" <<'PY'
 import hashlib
 import json
@@ -605,35 +707,36 @@ cem = open(cem_path, "rb").read()
 config_bytes = open(config_path, "rb").read()
 config = json.loads(config_bytes)
 if cem[:4] != b"\x7fELF" or int.from_bytes(cem[18:20], "little") != int(expected_machine):
-    raise SystemExit("2in1 event publisher has the wrong ELF architecture")
+    raise SystemExit("SceneBoard event publisher has the wrong ELF architecture")
 if b"userId" not in cem:
-    raise SystemExit("2in1 event publisher does not carry the userId Want parameter")
+    raise SystemExit("SceneBoard event publisher does not carry the userId Want parameter")
 jobs = config.get("jobs", [])
 services = config.get("services", [])
 expected_paths = {
-    "qemu_2in1_user_unlock": [
+    "qemu_sceneboard_user_unlock": [
         "/system/bin/cem", "publish", "-e", "usual.event.USER_UNLOCKED", "-c", "100"
     ],
-    "qemu_2in1_unlock": [
+    "qemu_sceneboard_unlock": [
         "/system/bin/cem", "publish", "-e", "usual.event.SCREEN_UNLOCKED", "-u", "100"
     ],
 }
 checks = [
-    evidence.get("schema_version") == 2,
+    evidence.get("schema_version") == 3,
+    evidence.get("implementation") == "source_built",
+    evidence.get("runtime_validated") is False,
     evidence.get("events") == [
         "usual.event.USER_UNLOCKED", "usual.event.SCREEN_UNLOCKED"
     ],
     evidence.get("user_id") == 100,
     evidence.get("trigger") == "bootevent.boot.completed=true",
     evidence.get("cem_path") == "/system/bin/cem",
-    evidence.get("init_config_path") == "/system/etc/init/qemu_2in1_unlock.cfg",
+    evidence.get("init_config_path") == "/system/etc/init/qemu_sceneboard_unlock.cfg",
     evidence.get("patched_cem_sha256") == hashlib.sha256(cem).hexdigest(),
     evidence.get("init_config_sha256") == hashlib.sha256(config_bytes).hexdigest(),
-    bool(re.fullmatch(r"[0-9a-f]{64}", evidence.get("baseline_cem_sha256", ""))),
     jobs == [{
         "name": "param:bootevent.boot.completed=true",
         "condition": "bootevent.boot.completed=true",
-        "cmds": ["start qemu_2in1_user_unlock", "start qemu_2in1_unlock"],
+        "cmds": ["start qemu_sceneboard_user_unlock", "start qemu_sceneboard_unlock"],
     }],
     len(services) == 2,
     {service.get("name") for service in services} == set(expected_paths),
@@ -655,12 +758,12 @@ for service in services:
         },
     ])
 if not all(checks):
-    raise SystemExit("incomplete 2in1 boot-unlock publisher evidence")
+    raise SystemExit("incomplete SceneBoard boot-unlock publisher evidence")
 PY
   then
-    echo "PASS: 2in1 boot publisher sends user- and screen-unlocked events for user 100"
+    echo "PASS: SceneBoard boot publisher sends user- and screen-unlocked events for user 100"
   else
-    echo "FAIL: 2in1 boot-unlock publisher is missing or invalid" >&2
+    echo "FAIL: SceneBoard boot-unlock publisher is missing or invalid" >&2
     FAIL=1
   fi
   SCENEBOARD_CONFIG="$(debugfs -R 'cat /etc/sceneboard.config' "${SYSIMG}" 2>/dev/null || true)"
@@ -696,9 +799,16 @@ PY
     echo "FAIL: SceneBoard first-boot preinstall or capabilities are missing" >&2
     FAIL=1
   fi
+  if [ "${MANIFEST_DT}" = "2in1" ]; then
+    SCENE_LAYOUT=FreeFormMultiWindow
+    SCENE_PC_MODE=true
+  else
+    SCENE_LAYOUT=HandsetSmartWindow
+    SCENE_PC_MODE=false
+  fi
   for parameter in \
-    'const.window.multiWindowUIType=FreeFormMultiWindow' \
-    'persist.sceneboard.ispcmode=true'; do
+    "const.window.multiWindowUIType=${SCENE_LAYOUT}" \
+    "persist.sceneboard.ispcmode=${SCENE_PC_MODE}"; do
     if ! printf '%s\n' "${PRODUCT_PARAMS:-}" | grep -Fxq "${parameter}"; then
       echo "FAIL: PC window parameter is missing: ${parameter}" >&2
       FAIL=1
@@ -712,7 +822,7 @@ PY
      grep -Eq '^persist\.sys\.abilityms\.timeout_unit_time_ratio[[:space:]]*=[[:space:]]*10[[:space:]]*$'; then
     echo "PASS: SceneBoard lifecycle timeout is scaled for QEMU TCG"
   else
-    echo "FAIL: 2in1 image is missing its SceneBoard lifecycle timeout scale" >&2
+    echo "FAIL: SceneBoard image is missing its SceneBoard lifecycle timeout scale" >&2
     FAIL=1
   fi
   if [ "${MANIFEST_ARCH}" = "armv7a" ]; then

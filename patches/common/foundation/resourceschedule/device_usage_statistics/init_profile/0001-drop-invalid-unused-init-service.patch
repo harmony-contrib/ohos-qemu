@@ -1,0 +1,11 @@
+diff --git a/foundation/resourceschedule/device_usage_statistics/BUILD.gn b/foundation/resourceschedule/device_usage_statistics/BUILD.gn
+--- a/foundation/resourceschedule/device_usage_statistics/BUILD.gn
++++ b/foundation/resourceschedule/device_usage_statistics/BUILD.gn
+@@ -465,7 +465,6 @@ group("service_group_all") {
+   if (device_usage_statistics_device_enable) {
+     deps = [
+       "${usage_statistics_path}:device_usage_statistics_sa_profile",
+-      "${usage_statistics_path}:device_usage_statistics_service_init",
+       "${usage_statistics_path}:usagestatistics",
+       "${usage_statistics_path}:usagestatservice",
+     ]

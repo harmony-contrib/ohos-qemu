@@ -1,0 +1,8 @@
+diff --git a/foundation/multimedia/av_codec/bundle.json b/foundation/multimedia/av_codec/bundle.json
+--- a/foundation/multimedia/av_codec/bundle.json
++++ b/foundation/multimedia/av_codec/bundle.json
+@@ -131,3 +131,4 @@
+           "service_group": [
++            "//foundation/multimedia/av_codec/qemu_avc:backend",
+             "//foundation/multimedia/av_codec/services:av_codec_services_package",
+             "//foundation/multimedia/av_codec/services/etc:av_codec_service_etc"

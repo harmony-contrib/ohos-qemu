@@ -1,0 +1,42 @@
+diff --git a/src/third_party/swiftshader/third_party/marl/src/thread.cpp b/src/third_party/swiftshader/third_party/marl/src/thread.cpp
+--- a/src/third_party/swiftshader/third_party/marl/src/thread.cpp
++++ b/src/third_party/swiftshader/third_party/marl/src/thread.cpp
+@@ -38,6 +38,9 @@
+ #include <unistd.h>
+ #include <thread>
+ #endif
++#if defined(OS_OHOS)
++#include <sched.h>
++#endif
+ 
+ namespace {
+ 
+@@ -155,10 +158,14 @@ Thread::Affinity Thread::Affinity::all(
+     }
+   }
+ #elif defined(__linux__) && !defined(__ANDROID__) && !defined(__BIONIC__)
+-  auto thread = pthread_self();
+   cpu_set_t cpuset;
+   CPU_ZERO(&cpuset);
++#if defined(OS_OHOS)
++  if (sched_getaffinity(0, sizeof(cpu_set_t), &cpuset) == 0) {
++#else
++  auto thread = pthread_self();
+   if (pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset) == 0) {
++#endif
+     int count = CPU_COUNT(&cpuset);
+     for (int i = 0; i < count; i++) {
+       Core core;
+@@ -403,8 +410,12 @@ struct Thread::Impl {
+     for (size_t i = 0; i < count; i++) {
+       CPU_SET(affinity[i].pthread.index, &cpuset);
+     }
++#if defined(OS_OHOS)
++    sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
++#else
+     auto thread = pthread_self();
+     pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
++#endif
+ #elif defined(__FreeBSD__)
+     cpuset_t cpuset;
+     CPU_ZERO(&cpuset);

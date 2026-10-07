@@ -1,0 +1,12 @@
+diff --git a/base/location/location/frameworks/native/location_ndk/source/locator_c_impl.cpp b/base/location/location/frameworks/native/location_ndk/source/locator_c_impl.cpp
+--- a/base/location/location/frameworks/native/location_ndk/source/locator_c_impl.cpp
++++ b/base/location/location/frameworks/native/location_ndk/source/locator_c_impl.cpp
+@@ -101,7 +101,7 @@ int32_t OH_Location_StopLocating(Location_RequestConfig* requestConfig)
+     return LOCATION_SUCCESS;
+ }
+ 
+-bool OH_Location_IsFromMock(Location_Info* location)
++bool OH_LocationInfo_IsFromMock(Location_Info* location)
+ {
+     if (location == nullptr) {
+         return false;

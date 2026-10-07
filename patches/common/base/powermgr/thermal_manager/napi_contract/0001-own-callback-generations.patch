@@ -1,0 +1,46 @@
+diff --git a/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.h b/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.h
+--- a/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.h
++++ b/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.h
+@@ -27,19 +27,24 @@
+ 
+ namespace OHOS {
+ namespace PowerMgr {
++struct ThermalCallbackCleanup;
+ class ThermalLevelCallback : public ThermalLevelCallbackStub {
+ public:
+     ThermalLevelCallback() = default;
+     virtual ~ThermalLevelCallback();
+-    void UpdateCallback(napi_env env, napi_value jsCallback);
++    bool UpdateCallback(napi_env env, napi_value jsCallback, bool legacy);
+     void ReleaseCallback();
++    bool HasCallback();
+     bool OnAsyncThermalLevelChanged(ThermalLevel level) override;
+-    void OnThermalLevel();
++    void OnThermalLevel(ThermalLevel level, uint64_t generation);
+ 
+ private:
+-    ThermalLevel level_ {ThermalLevel::COOL};
++    static void CleanupCallbackEnv(void* data);
+     napi_ref callbackRef_ {nullptr};
+     napi_env env_ {nullptr};
++    ThermalCallbackCleanup* cleanup_ {nullptr};
++    uint64_t generation_ {0};
++    bool legacy_ {false};
+     std::mutex mutex_;
+ };
+ 
+@@ -51,9 +56,14 @@
+     static napi_value Init(napi_env env, napi_value exports);
+     static napi_value InitThermalLevel(napi_env env, napi_value exports);
+     static napi_value SubscribeThermalLevel(napi_env env, napi_callback_info info);
++    static napi_value SubscribeThermalLevelLegacy(napi_env env, napi_callback_info info);
+     static napi_value UnSubscribeThermalLevel(napi_env env, napi_callback_info info);
++    static napi_value UnSubscribeThermalLevelLegacy(napi_env env, napi_callback_info info);
+     static napi_value GetThermalLevel(napi_env env, napi_callback_info info);
+     static napi_value EnumThermalLevelConstructor(napi_env env, napi_callback_info info);
++private:
++    static napi_value SubscribeThermalLevelImpl(napi_env env, napi_callback_info info, bool legacy);
++    static napi_value UnSubscribeThermalLevelImpl(napi_env env, napi_callback_info info, bool legacy);
+ };
+ } // namespace PowerMgr
+ } // namespace OHOS

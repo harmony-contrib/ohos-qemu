@@ -1,0 +1,2603 @@
+{
+  "schema_version": 1,
+  "manifest_branch": "OpenHarmony-7.0-Release",
+  "manifest_revision": "f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549",
+  "description": "Exact prepared Release project HEAD graph; source patches do not alter pinned commits. No moving branch resolution.",
+  "projects": [
+    {
+      "name": "applications_sample_camera",
+      "path": "applications/sample/camera",
+      "revision": "dc0da04e26898223cc4a4c5421f99c2518f0b8c6"
+    },
+    {
+      "name": "applications_camera_sample_communication",
+      "path": "applications/sample/camera/communication",
+      "revision": "34195bfe52d168a279987ce3655af7ccb0fe6bd3"
+    },
+    {
+      "name": "applications_camera_screensaver_app",
+      "path": "applications/sample/camera/screensaver",
+      "revision": "21efcb82d22d179c3b8952e8590d80629cf26edc"
+    },
+    {
+      "name": "applications_sample_wifi_iot",
+      "path": "applications/sample/wifi-iot",
+      "revision": "162978812243c11aa51a58e4f928c4ca1243902a"
+    },
+    {
+      "name": "applications_admin_provisioning",
+      "path": "applications/standard/admin_provisioning",
+      "revision": "352a226f5c969a14be6f711fb41c8d02fddce2d7"
+    },
+    {
+      "name": "applications_app_samples",
+      "path": "applications/standard/app_samples",
+      "revision": "ac058c3b322a77090eb21992747e2b7f2aeb5b45"
+    },
+    {
+      "name": "applications_applications_cangjie_wrapper",
+      "path": "applications/standard/applications_cangjie_wrapper",
+      "revision": "7a710430f13daf4d53b152b861dde9968ae32bf5"
+    },
+    {
+      "name": "applications_auth_widget",
+      "path": "applications/standard/auth_widget",
+      "revision": "4d8c0642bdd377640c913d7a6dc43c1f3786450f"
+    },
+    {
+      "name": "applications_browser",
+      "path": "applications/standard/browser",
+      "revision": "909497683c6b2df4e23957e558469fb9dbc5bfe9"
+    },
+    {
+      "name": "applications_calendar",
+      "path": "applications/standard/calendar",
+      "revision": "1136345d0820f942410344eda106c80f182f4878"
+    },
+    {
+      "name": "applications_calendar_data",
+      "path": "applications/standard/calendardata",
+      "revision": "f922427ca0dc20895a0e254ae41382e5b03299a4"
+    },
+    {
+      "name": "applications_call",
+      "path": "applications/standard/call",
+      "revision": "8383e1930ffb28b512929b913eadf266a4e3a55a"
+    },
+    {
+      "name": "applications_camera",
+      "path": "applications/standard/camera",
+      "revision": "bba744e37a26ef9a169d5c3dc771f81e225f04a4"
+    },
+    {
+      "name": "applications_contacts",
+      "path": "applications/standard/contacts",
+      "revision": "65de33df8d6d7aaa5797a5625ed0e5938e5cb050"
+    },
+    {
+      "name": "applications_contacts_data",
+      "path": "applications/standard/contacts_data",
+      "revision": "c73bd27daa3fcd8ed6099b17cbffbd7021e3873e"
+    },
+    {
+      "name": "applications_dlp_manager",
+      "path": "applications/standard/dlp_manager",
+      "revision": "3a8875e2f5382ec2baa4b7534e56ffdf35ade3f6"
+    },
+    {
+      "name": "applications_filepicker",
+      "path": "applications/standard/filepicker",
+      "revision": "0bad6e29e1d6b4f0f68ff382e9e7ec291735abea"
+    },
+    {
+      "name": "applications_hap",
+      "path": "applications/standard/hap",
+      "revision": "f2e956a5dd26102f85c86e91d2bfd7c0998534f8"
+    },
+    {
+      "name": "applications_launcher",
+      "path": "applications/standard/launcher",
+      "revision": "6f54005f12daea63d8a6964934497a334eb8be44"
+    },
+    {
+      "name": "applications_mms",
+      "path": "applications/standard/mms",
+      "revision": "26df98e3738f4219aa45efe6a3e7f6b1be55c051"
+    },
+    {
+      "name": "applications_notes",
+      "path": "applications/standard/notes",
+      "revision": "b1b545adb2b214b48cb1389ae6f68f6937c45cc9"
+    },
+    {
+      "name": "applications_permission_manager",
+      "path": "applications/standard/permission_manager",
+      "revision": "0493f7ef47813591928db29989bd7b14f05a66b4"
+    },
+    {
+      "name": "applications_photos",
+      "path": "applications/standard/photos",
+      "revision": "5d5fcdb4d65010232aca6f389be44e58cf11b18a"
+    },
+    {
+      "name": "applications_players",
+      "path": "applications/standard/players",
+      "revision": "befdfe1f4824e5a136e5fb88974f980a70445594"
+    },
+    {
+      "name": "applications_print_spooler",
+      "path": "applications/standard/printspooler",
+      "revision": "dded0236a8ea8b0563cd61bd8c4901d37b242c4b"
+    },
+    {
+      "name": "applications_screenlock",
+      "path": "applications/standard/screenlock",
+      "revision": "67825fb1bafd397485a720d3f3870272c4bf0c44"
+    },
+    {
+      "name": "applications_screenshot",
+      "path": "applications/standard/screenshot",
+      "revision": "904c518a49fb87dce3a63b49af0caac68b60fb0f"
+    },
+    {
+      "name": "security_privacy_center",
+      "path": "applications/standard/security_privacy_center",
+      "revision": "73160632785f0bd2427f56a5faa62d2e230d139b"
+    },
+    {
+      "name": "applications_settings",
+      "path": "applications/standard/settings",
+      "revision": "0aba461c750fda71977c2f5186ca0e756ecfc6ca"
+    },
+    {
+      "name": "applications_settings_data",
+      "path": "applications/standard/settings_data",
+      "revision": "5dd2a29fd5f7284f843bfc9e46e4867427947a5f"
+    },
+    {
+      "name": "applications_simcardmanagement",
+      "path": "applications/standard/simcardmanagement",
+      "revision": "d7b85ef001fd342a9382d7b444ba0445a2816078"
+    },
+    {
+      "name": "applications_sound_recorder",
+      "path": "applications/standard/sound_recorder",
+      "revision": "74fbe3ad70283d0e52de6e8541e943ee0acd3ec0"
+    },
+    {
+      "name": "applications_startup_guide",
+      "path": "applications/standard/startup_guide",
+      "revision": "1349d9ebd6c95e7ef662bb81e83028fef5362eac"
+    },
+    {
+      "name": "applications_systemui",
+      "path": "applications/standard/systemui",
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01"
+    },
+    {
+      "name": "applications_theme",
+      "path": "applications/standard/theme",
+      "revision": "a436a43f1c0948fa12df6d520ec695ae4388a057"
+    },
+    {
+      "name": "applications_tips",
+      "path": "applications/standard/tips",
+      "revision": "39c905eb1a745e5625abbe8c8ffd49247c561247"
+    },
+    {
+      "name": "applications_user_certificate_manager",
+      "path": "applications/standard/user_certificate_manager",
+      "revision": "0acf067c28bc3957759d288835762ee0209e9fbe"
+    },
+    {
+      "name": "arkcompiler_cangjie_ark_interop",
+      "path": "arkcompiler/cangjie_ark_interop",
+      "revision": "1f88d506aa0b991ffa1b79ef337850c9d93906f0"
+    },
+    {
+      "name": "arkcompiler_ets_frontend",
+      "path": "arkcompiler/ets_frontend",
+      "revision": "de435fc5934576adedb9f07fc06b208aacf4defc"
+    },
+    {
+      "name": "arkcompiler_ets_runtime",
+      "path": "arkcompiler/ets_runtime",
+      "revision": "152fc05b90eca210b3a39127aed09ae0e8df0983"
+    },
+    {
+      "name": "arkcompiler_jsvm",
+      "path": "arkcompiler/jsvm",
+      "revision": "dafa869fc2e6330322565d9276020804d9a26119"
+    },
+    {
+      "name": "arkcompiler_runtime_core",
+      "path": "arkcompiler/runtime_core",
+      "revision": "4fba38ecc7a9264159a60a87048af831932f2c21"
+    },
+    {
+      "name": "arkcompiler_taihe_ffi_gen",
+      "path": "arkcompiler/taihe_ffi_gen",
+      "revision": "8e172a4f8510988dcb8b9af4424f1b74200bdc54"
+    },
+    {
+      "name": "arkcompiler_toolchain",
+      "path": "arkcompiler/toolchain",
+      "revision": "a64107dbf1d53a6d798b2a3aea99a08ddadac847"
+    },
+    {
+      "name": "accesscontrol_accesscontrol_cangjie_wrapper",
+      "path": "base/accesscontrol/accesscontrol_cangjie_wrapper",
+      "revision": "afeb7fdd9ec94da31f0710a54c3c21f0a6fd37da"
+    },
+    {
+      "name": "accesscontrol_sandbox_manager",
+      "path": "base/accesscontrol/sandbox_manager",
+      "revision": "0fa18c4ced5b4c30bd6e5fb7367a352a06683f63"
+    },
+    {
+      "name": "account_os_account",
+      "path": "base/account/os_account",
+      "revision": "da111cfa5b0d7eca6d327b05216a606b47a87546"
+    },
+    {
+      "name": "customization_config_policy",
+      "path": "base/customization/config_policy",
+      "revision": "bf3771a57b8a186594b4773970f7f36620de90da"
+    },
+    {
+      "name": "customization_enterprise_device_management",
+      "path": "base/customization/enterprise_device_management",
+      "revision": "131833d1ebd85b52526326b2f089b90305db4013"
+    },
+    {
+      "name": "global_font_manager",
+      "path": "base/global/font_manager",
+      "revision": "ce4ddfbc3a91c3297265f9a9fc07b2872a2444c5"
+    },
+    {
+      "name": "global_global_cangjie_wrapper",
+      "path": "base/global/global_cangjie_wrapper",
+      "revision": "a0273d24cac39b3ee37dcb295508ca077d8c736d"
+    },
+    {
+      "name": "global_i18n",
+      "path": "base/global/i18n",
+      "revision": "76e82e29f33b717b0346e2c549b8805c083ea2ad"
+    },
+    {
+      "name": "global_i18n_lite",
+      "path": "base/global/i18n_lite",
+      "revision": "09583909a16a0dec69a8053c2dc2cc3ae6e88fde"
+    },
+    {
+      "name": "global_resource_management",
+      "path": "base/global/resource_management",
+      "revision": "f42b03fe0e3754d5af5bfd80cab84775161fc789"
+    },
+    {
+      "name": "global_resource_management_lite",
+      "path": "base/global/resource_management_lite",
+      "revision": "ba8993efae27c3e94b9fb81643d6384f30a12e44"
+    },
+    {
+      "name": "global_system_resources",
+      "path": "base/global/system_resources",
+      "revision": "8cb84b3f3dd2142826e3f09cf2c171a421a06c14"
+    },
+    {
+      "name": "global_timezone",
+      "path": "base/global/timezone",
+      "revision": "3a605462b6518a5d2cfc43049db751c191cc2ef4"
+    },
+    {
+      "name": "hiviewdfx_blackbox_lite",
+      "path": "base/hiviewdfx/blackbox_lite",
+      "revision": "ddba889abe217fda505aa7646b899313c18d66d1"
+    },
+    {
+      "name": "hiviewdfx_faultloggerd",
+      "path": "base/hiviewdfx/faultloggerd",
+      "revision": "2398ff7d5659b3652e32a06323f24264c63f3e6d"
+    },
+    {
+      "name": "hiviewdfx_hiappevent",
+      "path": "base/hiviewdfx/hiappevent",
+      "revision": "95458e2686fdccfcc887357f814b228a61244a85"
+    },
+    {
+      "name": "hiviewdfx_hichecker",
+      "path": "base/hiviewdfx/hichecker",
+      "revision": "76194f8ae5432026f3aae637a9f7275e88f777ec"
+    },
+    {
+      "name": "hiviewdfx_hicollie",
+      "path": "base/hiviewdfx/hicollie",
+      "revision": "13daf4a2e18b570ff22813c192a1ffa252dfd2d2"
+    },
+    {
+      "name": "hiviewdfx_hidumper",
+      "path": "base/hiviewdfx/hidumper",
+      "revision": "9e4f5640a40c50162f5e3c1a4a24bdf1788425b9"
+    },
+    {
+      "name": "hiviewdfx_hidumper_lite",
+      "path": "base/hiviewdfx/hidumper_lite",
+      "revision": "ef7ee94e41afb2432df15760a1c4f03073a4deac"
+    },
+    {
+      "name": "hiviewdfx_hievent_lite",
+      "path": "base/hiviewdfx/hievent_lite",
+      "revision": "cec814eeb9563f0ffd68125888bf672db1e8ae3a"
+    },
+    {
+      "name": "hiviewdfx_hilog",
+      "path": "base/hiviewdfx/hilog",
+      "revision": "cb1a8c98a4677255441a7136e4e3bf99266ae9dd"
+    },
+    {
+      "name": "hiviewdfx_hilog_lite",
+      "path": "base/hiviewdfx/hilog_lite",
+      "revision": "600b3efb6389357225f309dfc4ba4058926af90d"
+    },
+    {
+      "name": "hiviewdfx_hisysevent",
+      "path": "base/hiviewdfx/hisysevent",
+      "revision": "5019f239528f17e41358b04b25418ee834877754"
+    },
+    {
+      "name": "hiviewdfx_hitrace",
+      "path": "base/hiviewdfx/hitrace",
+      "revision": "105999d16510653ba6edab982d09c40e182c435c"
+    },
+    {
+      "name": "hiviewdfx_hiview",
+      "path": "base/hiviewdfx/hiview",
+      "revision": "178b73c0a9a8edea8982ca9cd41b367ad5ff52f6"
+    },
+    {
+      "name": "hiviewdfx_hiview_lite",
+      "path": "base/hiviewdfx/hiview_lite",
+      "revision": "a71ac5bd31c913c1603f49d5762a1460d370ddb7"
+    },
+    {
+      "name": "hiviewdfx_api_metrics",
+      "path": "base/hiviewdfx/hiviewdfx_api_metrics",
+      "revision": "321edc08a24b865d86bc01a688c8f2389d4950e8"
+    },
+    {
+      "name": "hiviewdfx_hiviewdfx_cangjie_wrapper",
+      "path": "base/hiviewdfx/hiviewdfx_cangjie_wrapper",
+      "revision": "2bcb59c81a970c918decafd763e01e6a8ab7ae74"
+    },
+    {
+      "name": "inputmethod_imf",
+      "path": "base/inputmethod/imf",
+      "revision": "100f6122479bdb112abfd3e5fef494a194a92990"
+    },
+    {
+      "name": "iothardware_peripheral",
+      "path": "base/iothardware/peripheral",
+      "revision": "8377f3d107e1d247b48be5e494253a6a5d0ed26d"
+    },
+    {
+      "name": "base_location",
+      "path": "base/location/location",
+      "revision": "5a0c49c2adb0623fdac73f76e4f98f2e57674c00"
+    },
+    {
+      "name": "location_location_cangjie_wrapper",
+      "path": "base/location/location_cangjie_wrapper",
+      "revision": "5058c5cdfb0e94bb46d6102717c64cb8cf2d1dc3"
+    },
+    {
+      "name": "msdp_device_status",
+      "path": "base/msdp/device_status",
+      "revision": "96335211bea5ca348325d55746e14e102208354f"
+    },
+    {
+      "name": "notification_common_event_service",
+      "path": "base/notification/common_event_service",
+      "revision": "a65497310fd31530bc7717151223ded0ef22656f"
+    },
+    {
+      "name": "notification_distributed_notification_service",
+      "path": "base/notification/distributed_notification_service",
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c"
+    },
+    {
+      "name": "notification_eventhandler",
+      "path": "base/notification/eventhandler",
+      "revision": "5fe2be3af50a710de40b224fff986e82332047f4"
+    },
+    {
+      "name": "notification_notification_cangjie_wrapper",
+      "path": "base/notification/notification_cangjie_wrapper",
+      "revision": "355d55e52766190ed94fd89f610d8b2f47411705"
+    },
+    {
+      "name": "powermgr_battery_lite",
+      "path": "base/powermgr/battery_lite",
+      "revision": "6798d238e99c1f8f797ff566f169766deac3d8bd"
+    },
+    {
+      "name": "powermgr_battery_manager",
+      "path": "base/powermgr/battery_manager",
+      "revision": "d521ec0cb155d15f73f908f7f62ebc613972f8f0"
+    },
+    {
+      "name": "powermgr_battery_statistics",
+      "path": "base/powermgr/battery_statistics",
+      "revision": "de2cd17ac22d74e7463c8f89cb88d35b2061d427"
+    },
+    {
+      "name": "powermgr_display_manager",
+      "path": "base/powermgr/display_manager",
+      "revision": "9da794dc921d577afc9e9351e2f9014eb3eeacf1"
+    },
+    {
+      "name": "powermgr_power_manager",
+      "path": "base/powermgr/power_manager",
+      "revision": "ea8929763ef6c0505a1c260b08644a14ef6afebe"
+    },
+    {
+      "name": "powermgr_powermgr_cangjie_wrapper",
+      "path": "base/powermgr/powermgr_cangjie_wrapper",
+      "revision": "ece3b6a0fee69c7dda18e6a68b88d27c192eff2e"
+    },
+    {
+      "name": "powermgr_powermgr_lite",
+      "path": "base/powermgr/powermgr_lite",
+      "revision": "7137cd8bce57ceb8a70f3f90324e1f3ca1dae161"
+    },
+    {
+      "name": "powermgr_thermal_manager",
+      "path": "base/powermgr/thermal_manager",
+      "revision": "dbba4e1d77e4bc2c8ff7e5a0796a36e388277461"
+    },
+    {
+      "name": "print_print_fwk",
+      "path": "base/print/print_fwk",
+      "revision": "961b2896b28b00a96709b26ba3b256762a815c03"
+    },
+    {
+      "name": "request_request",
+      "path": "base/request/request",
+      "revision": "1f1e345ada4bff8adbc45e6de68be4554f14bfab"
+    },
+    {
+      "name": "request_request_cangjie_wrapper",
+      "path": "base/request/request_cangjie_wrapper",
+      "revision": "5bfc0e57b48c06504b8ffd9b2c61fb400ee2988d"
+    },
+    {
+      "name": "security_access_token",
+      "path": "base/security/access_token",
+      "revision": "d3e0d2cdab18e6cf25279a01ad1e892e3de214f1"
+    },
+    {
+      "name": "security_appverify",
+      "path": "base/security/appverify",
+      "revision": "23c525515452ffe1e9dfd10c1de934ba010ed4aa"
+    },
+    {
+      "name": "security_asset",
+      "path": "base/security/asset",
+      "revision": "e654ac8d486983515fc0151b2226943e91c00ca3"
+    },
+    {
+      "name": "security_certificate_framework",
+      "path": "base/security/certificate_framework",
+      "revision": "be1cd900cbd5541ff34538175a0c8faf4f538fcd"
+    },
+    {
+      "name": "security_certificate_manager",
+      "path": "base/security/certificate_manager",
+      "revision": "57bd41128a07c5289987cf98e04dfc66421029a6"
+    },
+    {
+      "name": "security_code_signature",
+      "path": "base/security/code_signature",
+      "revision": "a1d936e9515d1337189e2e8c8141b5b53a1a70de"
+    },
+    {
+      "name": "security_crypto_framework",
+      "path": "base/security/crypto_framework",
+      "revision": "98e06ab5dd730d01c5404c90f5294ddece74d932"
+    },
+    {
+      "name": "security_dataclassification",
+      "path": "base/security/dataclassification",
+      "revision": "58f832209c4a01c064211caeed158dd809b829f7"
+    },
+    {
+      "name": "security_device_auth",
+      "path": "base/security/device_auth",
+      "revision": "250115d3a6f0f991421d8074db96d3f0f0342c4d"
+    },
+    {
+      "name": "security_device_security_level",
+      "path": "base/security/device_security_level",
+      "revision": "aedfc69cf022ce1a183acbd05293d5ec834a2fe7"
+    },
+    {
+      "name": "security_dlp_permission_service",
+      "path": "base/security/dlp_permission_service",
+      "revision": "bb90171b9ed49c74f58706b84505396ca895a70c"
+    },
+    {
+      "name": "security_huks",
+      "path": "base/security/huks",
+      "revision": "de427af57d2844b499c72971c56351be571d9258"
+    },
+    {
+      "name": "security_permission_lite",
+      "path": "base/security/permission_lite",
+      "revision": "f5a9fcd74b6612a434739e7421d4d8aa86216af7"
+    },
+    {
+      "name": "security_security_cangjie_wrapper",
+      "path": "base/security/security_cangjie_wrapper",
+      "revision": "0debfaf4e031231fb5c3eaab33720f607c1c11f7"
+    },
+    {
+      "name": "security_security_component_manager",
+      "path": "base/security/security_component_manager",
+      "revision": "be2a8321d2568cec8dd18b582472ed4a3546db8d"
+    },
+    {
+      "name": "security_security_guard",
+      "path": "base/security/security_guard",
+      "revision": "024019c82dc1aa4bfb9b6846968b37140703e959"
+    },
+    {
+      "name": "security_selinux_adapter",
+      "path": "base/security/selinux_adapter",
+      "revision": "cfc1d5b31a7438dbc87763f9222f00337221cf21"
+    },
+    {
+      "name": "sensors_medical_sensor",
+      "path": "base/sensors/medical_sensor",
+      "revision": "e1a374072772ed767b356d6850cb9d5d7f898661"
+    },
+    {
+      "name": "sensors_miscdevice",
+      "path": "base/sensors/miscdevice",
+      "revision": "248a21a014a0794fc8d1853387d139f815df9a56"
+    },
+    {
+      "name": "sensors_miscdevice_lite",
+      "path": "base/sensors/miscdevice_lite",
+      "revision": "ab110a125e16604a4feb3719de90962b3fc1a628"
+    },
+    {
+      "name": "sensors_sensor",
+      "path": "base/sensors/sensor",
+      "revision": "48299e99cb89a27ff151d74c9c1f8c0ba153c329"
+    },
+    {
+      "name": "sensors_sensor_lite",
+      "path": "base/sensors/sensor_lite",
+      "revision": "ac4b6af0caceccf4b02d3a37987ecfa990c389ef"
+    },
+    {
+      "name": "sensors_sensors_cangjie_wrapper",
+      "path": "base/sensors/sensors_cangjie_wrapper",
+      "revision": "ab95531567da5f98afb555788a0ae99b490e580c"
+    },
+    {
+      "name": "sensors_start",
+      "path": "base/sensors/start",
+      "revision": "ddc24bcbced5a1a79a2be8d7d55093f49851e9d0"
+    },
+    {
+      "name": "startup_appspawn",
+      "path": "base/startup/appspawn",
+      "revision": "af295aa195f54d4f21be067c287680dec223e011"
+    },
+    {
+      "name": "startup_bootstrap_lite",
+      "path": "base/startup/bootstrap_lite",
+      "revision": "81232a7806886840d51d19cea1847c574ac8cdcd"
+    },
+    {
+      "name": "startup_hvb",
+      "path": "base/startup/hvb",
+      "revision": "58914167fd588d655fd5482a8875aa713b301583"
+    },
+    {
+      "name": "startup_init",
+      "path": "base/startup/init",
+      "revision": "475fcc1e48db623ea4a9ee03b5408a21a19b99c4"
+    },
+    {
+      "name": "startup_startup_cangjie_wrapper",
+      "path": "base/startup/startup_cangjie_wrapper",
+      "revision": "2bc5cd939c26e0a81f32bc93bb46279f086a5a6e"
+    },
+    {
+      "name": "tee_tee_client",
+      "path": "base/tee/tee_client",
+      "revision": "af85a35e17c6cc5f3bfd46c9d9f6c3af48bdd201"
+    },
+    {
+      "name": "tee_tee_dev_kit",
+      "path": "base/tee/tee_dev_kit",
+      "revision": "c337c8a571e93923f16600410be21197f3d9a5aa"
+    },
+    {
+      "name": "tee_tee_os_framework",
+      "path": "base/tee/tee_os_framework",
+      "revision": "815d743e535e1d3517270adfa6294ad0b9ccb9b5"
+    },
+    {
+      "name": "tee_tee_os_kernel",
+      "path": "base/tee/tee_os_kernel",
+      "revision": "79f4a226b6120d28ce4fa52d2d69b993fd3bb915"
+    },
+    {
+      "name": "telephony_call_manager",
+      "path": "base/telephony/call_manager",
+      "revision": "42f264011d0a44a300e3e8b825863754916cb6a8"
+    },
+    {
+      "name": "telephony_cellular_call",
+      "path": "base/telephony/cellular_call",
+      "revision": "4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c"
+    },
+    {
+      "name": "telephony_cellular_data",
+      "path": "base/telephony/cellular_data",
+      "revision": "a0a56af15fe15d27494af99546cf3d7da23ac93f"
+    },
+    {
+      "name": "telephony_core_service",
+      "path": "base/telephony/core_service",
+      "revision": "504dcba74da128ed446967e328e5c7162bfebbe2"
+    },
+    {
+      "name": "applications_number_identity",
+      "path": "base/telephony/number_identity",
+      "revision": "50e1330646432ce166e7981c577f25f46c90e7ac"
+    },
+    {
+      "name": "telephony_ril_adapter",
+      "path": "base/telephony/ril_adapter",
+      "revision": "81fac83292857fcd9bee90808a81d8ad7224b4e0"
+    },
+    {
+      "name": "telephony_sms_mms",
+      "path": "base/telephony/sms_mms",
+      "revision": "ff69686aa6275d3ce0e1e801f222e28f843aa297"
+    },
+    {
+      "name": "telephony_state_registry",
+      "path": "base/telephony/state_registry",
+      "revision": "2327cba6f48f4274b269e530c48a919e2eed28b7"
+    },
+    {
+      "name": "telephony_telephony_cangjie_wrapper",
+      "path": "base/telephony/telephony_cangjie_wrapper",
+      "revision": "409f1102805e81f089b28e7638f23fe1518bee99"
+    },
+    {
+      "name": "telephony_telephony_data",
+      "path": "base/telephony/telephony_data",
+      "revision": "f7c674e36bd1495e05e17a1927634b3c816d8324"
+    },
+    {
+      "name": "theme_screenlock_mgr",
+      "path": "base/theme/screenlock_mgr",
+      "revision": "0ee87e038fb5bcd7f23ea0bb0e91f23a0478a6bd"
+    },
+    {
+      "name": "theme_wallpaper_mgr",
+      "path": "base/theme/wallpaper_mgr",
+      "revision": "42256bdeaa504da4ae4d038c24d42a4601e3a6cf"
+    },
+    {
+      "name": "time_time_cangjie_wrapper",
+      "path": "base/time/time_cangjie_wrapper",
+      "revision": "32940752c17996c981110267af785a6027d5789f"
+    },
+    {
+      "name": "time_time_service",
+      "path": "base/time/time_service",
+      "revision": "86ab9731551afe15d0ab95f877d3b6f6e0433cab"
+    },
+    {
+      "name": "update_packaging_tools",
+      "path": "base/update/packaging_tools",
+      "revision": "bc216e95ea11ecd1c057ab66db9f0dd1d39f0865"
+    },
+    {
+      "name": "update_sys_installer",
+      "path": "base/update/sys_installer",
+      "revision": "ec55725e5fd69fa316581c27334f5c05797bd1d0"
+    },
+    {
+      "name": "update_sys_installer_lite",
+      "path": "base/update/sys_installer_lite",
+      "revision": "4224548fb49c9bbdc12aa772a5eb15e74bce835c"
+    },
+    {
+      "name": "update_update_app",
+      "path": "base/update/update_app",
+      "revision": "7a7fba8d69999f8152ccb9eddf56eefee6ebb50e"
+    },
+    {
+      "name": "update_updater",
+      "path": "base/update/updater",
+      "revision": "81eae8de88d113f3c4b680188c1d8e93a0403144"
+    },
+    {
+      "name": "update_update_service",
+      "path": "base/update/updateservice",
+      "revision": "13dd106fe7a3b0588390a9edb023d82be8379607"
+    },
+    {
+      "name": "busmanager_usb_manager",
+      "path": "base/usb/usb_manager",
+      "revision": "4b5f23603e43628bc70449f0a043f072dcf19814"
+    },
+    {
+      "name": "useriam_companion_device_auth",
+      "path": "base/useriam/companion_device_auth",
+      "revision": "9208321d282dfb02c853e758df6faafcfbeef72b"
+    },
+    {
+      "name": "useriam_face_auth",
+      "path": "base/useriam/face_auth",
+      "revision": "375ca203e59d94662cd0849d7e417c70e04a44d1"
+    },
+    {
+      "name": "useriam_fingerprint_auth",
+      "path": "base/useriam/fingerprint_auth",
+      "revision": "0a82e5d367c863191053bc1eb8355d458c54f029"
+    },
+    {
+      "name": "useriam_pin_auth",
+      "path": "base/useriam/pin_auth",
+      "revision": "1d061b01785e13f41dad6175d8404da01c79824a"
+    },
+    {
+      "name": "useriam_user_auth_framework",
+      "path": "base/useriam/user_auth_framework",
+      "revision": "77896a507778e84d24f7b7e2eae155d787cf25d9"
+    },
+    {
+      "name": "arkweb_arkweb_cangjie_wrapper",
+      "path": "base/web/arkweb_cangjie_wrapper",
+      "revision": "f492851cbc49cbb112b5f0b95a2ad5d69fc4193c"
+    },
+    {
+      "name": "web_webview",
+      "path": "base/web/webview",
+      "revision": "d421b6b549fa3038ad01cf34589b959286137be9"
+    },
+    {
+      "name": "build",
+      "path": "build",
+      "revision": "5c0623072ed9c2ee93ab909a7a01f428fee95082"
+    },
+    {
+      "name": "commonlibrary_c_utils",
+      "path": "commonlibrary/c_utils",
+      "revision": "755d3e6c85468d395b8210733456fc8d33f4f5b8"
+    },
+    {
+      "name": "commonlibrary_ets_utils",
+      "path": "commonlibrary/ets_utils",
+      "revision": "37cafe4c6d96858e976107d41d4f723adfde4a61"
+    },
+    {
+      "name": "commonlibrary_memory_utils",
+      "path": "commonlibrary/memory_utils",
+      "revision": "d02cbb97efe078187cc9e7b0c42c84470fb68be1"
+    },
+    {
+      "name": "commonlibrary_qrcode_generator",
+      "path": "commonlibrary/qrcode_generator",
+      "revision": "993bd298a703301b21bb60fc1e352626558a66e7"
+    },
+    {
+      "name": "commonlibrary_rust_ylong_http",
+      "path": "commonlibrary/rust/ylong_http",
+      "revision": "261ec2b60765af600885a809bac5494e6722e5e1"
+    },
+    {
+      "name": "commonlibrary_rust_ylong_json",
+      "path": "commonlibrary/rust/ylong_json",
+      "revision": "6e9e29b1d1dbbd6fc6075722128b68193f7ffaec"
+    },
+    {
+      "name": "commonlibrary_rust_ylong_runtime",
+      "path": "commonlibrary/rust/ylong_runtime",
+      "revision": "0538ca7b6635e0ac27cf7242d4c2dcf519ce0f5c"
+    },
+    {
+      "name": "commonlibrary_utils_lite",
+      "path": "commonlibrary/utils_lite",
+      "revision": "2f86dfa9c00a151a87b96a29d64b45a511cb8d7d"
+    },
+    {
+      "name": "developtools_ace_ets2bundle",
+      "path": "developtools/ace_ets2bundle",
+      "revision": "1bf5835ef50129250a660986f69437f22f3ed0f0"
+    },
+    {
+      "name": "developtools_ace_js2bundle",
+      "path": "developtools/ace_js2bundle",
+      "revision": "f3c173f149c73ba81649b79e6e8deb6987174e6d"
+    },
+    {
+      "name": "developtools_global_resource_tool",
+      "path": "developtools/global_resource_tool",
+      "revision": "183292ff4817903d7f289de613585a3a243428b4"
+    },
+    {
+      "name": "developtools_hapsigner",
+      "path": "developtools/hapsigner",
+      "revision": "013eae8637d5e853276e57ebc8921dbd8262ce34"
+    },
+    {
+      "name": "developtools_hdc",
+      "path": "developtools/hdc",
+      "revision": "8ae22770c5d7758808ef7499b6957fcdb92d7fb4"
+    },
+    {
+      "name": "developtools_hiperf",
+      "path": "developtools/hiperf",
+      "revision": "cf53f6cdac099459a9a5b6506629a82cce72e795"
+    },
+    {
+      "name": "developtools_integration_verification",
+      "path": "developtools/integration_verification",
+      "revision": "7ae22f435b5975e3f2e7a4f7443d3ddeb568a8f7"
+    },
+    {
+      "name": "developtools_packing_tool",
+      "path": "developtools/packing_tool",
+      "revision": "4347ac981150938cfbc1eda6cd135759bd8bf877"
+    },
+    {
+      "name": "developtools_profiler",
+      "path": "developtools/profiler",
+      "revision": "d296fc944663c80e1c8f0b0d56bbf5065ad15b58"
+    },
+    {
+      "name": "developtools_smartperf_host",
+      "path": "developtools/smartperf_host",
+      "revision": "260b028b289befa8dc2f85b98687d323c7d20fa0"
+    },
+    {
+      "name": "developtools_syscap_codec",
+      "path": "developtools/syscap_codec",
+      "revision": "314b8ae9c2b90a9b7bead2f0231be7e65220ae23"
+    },
+    {
+      "name": "device_board_hihope",
+      "path": "device/board/hihope",
+      "revision": "b3ff979de8e36a9a3b4e8e4fd20bd45c78cf6df8"
+    },
+    {
+      "name": "device_board_hisilicon",
+      "path": "device/board/hisilicon",
+      "revision": "abd615cc4f897d231e1f404423adb65935bab55e"
+    },
+    {
+      "name": "device_board_revoview",
+      "path": "device/board/revoview",
+      "revision": "e35bf35db12de76ac3950bddd32ad9f7e01c981b"
+    },
+    {
+      "name": "device_qemu",
+      "path": "device/qemu",
+      "revision": "b017aee8e2dfc97e45aeb508facc1527c3d06f4b"
+    },
+    {
+      "name": "device_soc_hisilicon",
+      "path": "device/soc/hisilicon",
+      "revision": "367abbec95802c43e9391842ea869c8200c64d9d"
+    },
+    {
+      "name": "device_soc_rockchip",
+      "path": "device/soc/rockchip",
+      "revision": "0aa6ba16f89844023137fb84ac03189b30c8780b"
+    },
+    {
+      "name": "device_soc_unisoc",
+      "path": "device/soc/unisoc",
+      "revision": "4836f19e7e0fa2b1095a3fe7e0bcc43861a08e98"
+    },
+    {
+      "name": "docs_cangjie",
+      "path": "docs_cangjie",
+      "revision": "d31eceda211368f90b1b4726abde03c0d463dd37"
+    },
+    {
+      "name": "advertising_ads_framework",
+      "path": "domains/advertising/advertising",
+      "revision": "a31d0874a5634771c57f1d875f596479628cdbd3"
+    },
+    {
+      "name": "advertising_oaid",
+      "path": "domains/advertising/oaid",
+      "revision": "8f4262273373b8cb5bc88405f8096679db8b085a"
+    },
+    {
+      "name": "game_game_controller_framework",
+      "path": "domains/game/game_controller_framework",
+      "revision": "9226c7254468a3a09b667ef992d9e6aaddeac2a3"
+    },
+    {
+      "name": "drivers_external_device_manager",
+      "path": "drivers/external_device_manager",
+      "revision": "06421d1596d9b5675883bef9e8656b38cbfece86"
+    },
+    {
+      "name": "drivers_hdf_core",
+      "path": "drivers/hdf_core",
+      "revision": "6abd61d562bf683f7fe02667401891a1d3f65149"
+    },
+    {
+      "name": "drivers_interface",
+      "path": "drivers/interface",
+      "revision": "42289d3f8e46f5a112bd7ea6d36e4baaeac0718d"
+    },
+    {
+      "name": "drivers_liteos",
+      "path": "drivers/liteos",
+      "revision": "e57dd9259142f2375628c7024bfb97d428519b41"
+    },
+    {
+      "name": "drivers_peripheral",
+      "path": "drivers/peripheral",
+      "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c"
+    },
+    {
+      "name": "castengine_cast_framework",
+      "path": "foundation/CastEngine/castengine_cast_framework",
+      "revision": "d10d850cd2a6c23227f7c49cbe45d962d1e1b318"
+    },
+    {
+      "name": "castengine_cast_plus_stream",
+      "path": "foundation/CastEngine/castengine_cast_plus_stream",
+      "revision": "259c79910f64d74714381179a6c45efd2dd7267b"
+    },
+    {
+      "name": "castengine_wifi_display",
+      "path": "foundation/CastEngine/castengine_wifi_display",
+      "revision": "1e69f153dc66332598395b1ba0c248a30ef07658"
+    },
+    {
+      "name": "ability_ability_base",
+      "path": "foundation/ability/ability_base",
+      "revision": "80137119ae7c306427b7672fa744ad5c2375905d"
+    },
+    {
+      "name": "ability_ability_cangjie_wrapper",
+      "path": "foundation/ability/ability_cangjie_wrapper",
+      "revision": "10947b2c76721ce6c3f98fde88ec1547afc2c57f"
+    },
+    {
+      "name": "ability_ability_lite",
+      "path": "foundation/ability/ability_lite",
+      "revision": "aea95e8b4d2dd78243f31d44b3e44065d8f69c2c"
+    },
+    {
+      "name": "ability_ability_runtime",
+      "path": "foundation/ability/ability_runtime",
+      "revision": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8"
+    },
+    {
+      "name": "ability_dmsfwk",
+      "path": "foundation/ability/dmsfwk",
+      "revision": "68abf5e06a1d5c2f615c2cd185af9fb0c619e4e1"
+    },
+    {
+      "name": "ability_dmsfwk_lite",
+      "path": "foundation/ability/dmsfwk_lite",
+      "revision": "034aec87f02eb68a8dec6f8b6535e230ed0816c4"
+    },
+    {
+      "name": "ability_form_fwk",
+      "path": "foundation/ability/form_fwk",
+      "revision": "d86a2bbd25390f2fdcceffe5fa7e20076730556a"
+    },
+    {
+      "name": "ability_idl_tool",
+      "path": "foundation/ability/idl_tool",
+      "revision": "2d5d5b2e7e50f1f83028da3be8a946aecace12ec"
+    },
+    {
+      "name": "ai_engine",
+      "path": "foundation/ai/ai_engine",
+      "revision": "8349d119d4fa3a4086ac1c479f7082a666d48565"
+    },
+    {
+      "name": "ai_intelligent_voice_framework",
+      "path": "foundation/ai/intelligent_voice_framework",
+      "revision": "44488fa30c8c3778660b7c43af80f070b6a0cb76"
+    },
+    {
+      "name": "ai_neural_network_runtime",
+      "path": "foundation/ai/neural_network_runtime",
+      "revision": "097bd331a36ced8260f726d1993eea53cefad8fa"
+    },
+    {
+      "name": "arkui_ace_engine",
+      "path": "foundation/arkui/ace_engine",
+      "revision": "e55e178228b9f6388b15d3024e8caf125fa293d7"
+    },
+    {
+      "name": "arkui_ace_engine_lite",
+      "path": "foundation/arkui/ace_engine_lite",
+      "revision": "4cb8fa96636936c61ba7515bfa3101e5b1ed2487"
+    },
+    {
+      "name": "arkui_advanced_ui_component",
+      "path": "foundation/arkui/advanced_ui_component",
+      "revision": "698d145c36e2bf4060bb08e532628b8134b5f6e3"
+    },
+    {
+      "name": "arkui_arkui_cangjie_wrapper",
+      "path": "foundation/arkui/arkui_cangjie_wrapper",
+      "revision": "7e9fb0d2d789c0918264c201e6fa53631a3223c8"
+    },
+    {
+      "name": "arkui_napi",
+      "path": "foundation/arkui/napi",
+      "revision": "0ae3008b9621ce7b9f197ec9f578ca278a6ad6cd"
+    },
+    {
+      "name": "arkui_ui_appearance",
+      "path": "foundation/arkui/ui_appearance",
+      "revision": "1684ee0659cd87af90e2cadebb7147e8b01a4a11"
+    },
+    {
+      "name": "arkui_ui_lite",
+      "path": "foundation/arkui/ui_lite",
+      "revision": "c7d46eaba08b7702026de96a624c75a5a2997d10"
+    },
+    {
+      "name": "accessibility",
+      "path": "foundation/barrierfree/accessibility",
+      "revision": "c593c7e1a6149a2c13e5931b2114d3c2d0bf20ea"
+    },
+    {
+      "name": "bundlemanager_app_domain_verify",
+      "path": "foundation/bundlemanager/app_domain_verify",
+      "revision": "4cb6b794a914e5712287eb5bb799969c3da6d140"
+    },
+    {
+      "name": "bundlemanager_bundle_framework",
+      "path": "foundation/bundlemanager/bundle_framework",
+      "revision": "537bdea9ae5634a847db774fe00ba4d190cbcc65"
+    },
+    {
+      "name": "bundlemanager_bundle_framework_lite",
+      "path": "foundation/bundlemanager/bundle_framework_lite",
+      "revision": "9ba55ce6bd67b882536f2d9f536bf7b437a35b81"
+    },
+    {
+      "name": "bundlemanager_bundle_tool",
+      "path": "foundation/bundlemanager/bundle_tool",
+      "revision": "6f77a87868c4da1747ef7c8c44f946ecfc10bf9d"
+    },
+    {
+      "name": "bundlemanager_bundlemanager_cangjie_wrapper",
+      "path": "foundation/bundlemanager/bundlemanager_cangjie_wrapper",
+      "revision": "29519da78f701be3f3542b9128addc66e672ea7b"
+    },
+    {
+      "name": "bundlemanager_distributed_bundle_framework",
+      "path": "foundation/bundlemanager/distributed_bundle_framework",
+      "revision": "4b3557c9466a7773757859982bab4b221da230d9"
+    },
+    {
+      "name": "bundlemanager_ecological_rule_manager",
+      "path": "foundation/bundlemanager/ecological_rule_manager",
+      "revision": "30d2c8fc0fee68b692ae55d40677cf202ef5236d"
+    },
+    {
+      "name": "communication_bluetooth",
+      "path": "foundation/communication/bluetooth",
+      "revision": "1727fa05c457f697f7cf80f290c82c663f1c3aab"
+    },
+    {
+      "name": "communication_bluetooth_service",
+      "path": "foundation/communication/bluetooth_service",
+      "revision": "c489d0aabf77624a4f5ca80ab8b5adefd2d5cfbf"
+    },
+    {
+      "name": "communication_communication_cangjie_wrapper",
+      "path": "foundation/communication/communication_cangjie_wrapper",
+      "revision": "2ab1726be2e8a9d027f9b5c4a8785b9c030f7ec6"
+    },
+    {
+      "name": "communication_connected_nfc_tag",
+      "path": "foundation/communication/connected_nfc_tag",
+      "revision": "cef7d4f2ea47707f1d9d6d824ee1b93dd8040efa"
+    },
+    {
+      "name": "connectivity_connectivity_cangjie_wrapper",
+      "path": "foundation/communication/connectivity_cangjie_wrapper",
+      "revision": "8121d3db275319cda1ea6e561bdc84b8ce9fa892"
+    },
+    {
+      "name": "communication_dhcp",
+      "path": "foundation/communication/dhcp",
+      "revision": "24072d9bb66d4e3581c07ed22e9fac12f2981761"
+    },
+    {
+      "name": "communication_dsoftbus",
+      "path": "foundation/communication/dsoftbus",
+      "revision": "7aa1de055a281d0a1279a6f76f3cf397e1ec9b4a"
+    },
+    {
+      "name": "communication_fusion_connectivity",
+      "path": "foundation/communication/fusion_connectivity",
+      "revision": "dd319c8b946cf6ed1f68867626333945e36424ae"
+    },
+    {
+      "name": "communication_ipc",
+      "path": "foundation/communication/ipc",
+      "revision": "b8d3e96cfcf382c8fae54502679ac8b3d827b428"
+    },
+    {
+      "name": "communication_netmanager_base",
+      "path": "foundation/communication/netmanager_base",
+      "revision": "9831989d54f490d046a632ab13d309580d2fa710"
+    },
+    {
+      "name": "netmanager_netmanager_cangjie_wrapper",
+      "path": "foundation/communication/netmanager_cangjie_wrapper",
+      "revision": "41460abdc4595f423b608d67c4121c506ab3006c"
+    },
+    {
+      "name": "communication_netmanager_ext",
+      "path": "foundation/communication/netmanager_ext",
+      "revision": "8c41289750820fb2ddb347b1205cee9a7b527388"
+    },
+    {
+      "name": "communication_netstack",
+      "path": "foundation/communication/netstack",
+      "revision": "b1590759f4d279007ab979a1a61e37749e1fc1dc"
+    },
+    {
+      "name": "communication_nfc",
+      "path": "foundation/communication/nfc",
+      "revision": "5811e8845f6d4e7b92916fe3d83bc702a35e2a1e"
+    },
+    {
+      "name": "communication_t2stack",
+      "path": "foundation/communication/t2stack",
+      "revision": "31448e0839d111ff99213c7de15aea6622e7c300"
+    },
+    {
+      "name": "communication_wifi",
+      "path": "foundation/communication/wifi",
+      "revision": "367605c52dfaf5f09bd690f16d9ee9a301cfc98a"
+    },
+    {
+      "name": "communication_wifi_aware",
+      "path": "foundation/communication/wifi_aware",
+      "revision": "2b64ed2d586c2ad82d272003a74e69a4efc15672"
+    },
+    {
+      "name": "communication_wifi_lite",
+      "path": "foundation/communication/wifi_lite",
+      "revision": "ad028ee75dd94f62ea9f798e98bdbad6c7f6172a"
+    },
+    {
+      "name": "deviceprofile_device_info_manager",
+      "path": "foundation/deviceprofile/device_info_manager",
+      "revision": "bdff4da4a8661cd5b36d2d1ede642b34e80ce6a9"
+    },
+    {
+      "name": "distributeddatamgr_data_object",
+      "path": "foundation/distributeddatamgr/data_object",
+      "revision": "e61da9237e85219e06992c217ffc891832b4dcd3"
+    },
+    {
+      "name": "distributeddatamgr_data_share",
+      "path": "foundation/distributeddatamgr/data_share",
+      "revision": "53d15baf2170e6bf9733f6139d4d864fbd514034"
+    },
+    {
+      "name": "distributeddatamgr_datamgr_service",
+      "path": "foundation/distributeddatamgr/datamgr_service",
+      "revision": "c832f79e8f6a1ea5d35d319b45f2ae96b1ddd526"
+    },
+    {
+      "name": "distributeddatamgr_distributeddatamgr_cangjie_wrapper",
+      "path": "foundation/distributeddatamgr/distributeddatamgr_cangjie_wrapper",
+      "revision": "6fb927b184b2e846028b7923bbc03c80f596048e"
+    },
+    {
+      "name": "distributeddatamgr_file",
+      "path": "foundation/distributeddatamgr/distributedfile",
+      "revision": "2aa8fdd353a7390e2e93f43d71e25a0158607b24"
+    },
+    {
+      "name": "distributeddatamgr_kv_store",
+      "path": "foundation/distributeddatamgr/kv_store",
+      "revision": "2edc675d4807ebb71b994da3548660ea2f692dbe"
+    },
+    {
+      "name": "distributeddatamgr_pasteboard",
+      "path": "foundation/distributeddatamgr/pasteboard",
+      "revision": "6909fc2dc334c03afaf1e7c131d0f82639393a4d"
+    },
+    {
+      "name": "distributeddatamgr_preferences",
+      "path": "foundation/distributeddatamgr/preferences",
+      "revision": "341bcfa4058f2573065880efd45b2e03891ae034"
+    },
+    {
+      "name": "distributeddatamgr_relational_store",
+      "path": "foundation/distributeddatamgr/relational_store",
+      "revision": "41f08a8ee0140ebc525f9f9152906a312c6cf30e"
+    },
+    {
+      "name": "distributeddatamgr_udmf",
+      "path": "foundation/distributeddatamgr/udmf",
+      "revision": "fd89a77203fd9d6d95204f0ca20d34b3be165081"
+    },
+    {
+      "name": "distributedhardware_device_manager",
+      "path": "foundation/distributedhardware/device_manager",
+      "revision": "2eae052259e141788396570fcf66b165f2578242"
+    },
+    {
+      "name": "distributedhardware_distributed_audio",
+      "path": "foundation/distributedhardware/distributed_audio",
+      "revision": "61e375e5a8e82f07b76fe9e3d1a56e87f2640673"
+    },
+    {
+      "name": "distributedhardware_distributed_camera",
+      "path": "foundation/distributedhardware/distributed_camera",
+      "revision": "e712256e891ff0575d079966808fa8702c45c6c1"
+    },
+    {
+      "name": "distributedhardware_distributed_hardware_fwk",
+      "path": "foundation/distributedhardware/distributed_hardware_fwk",
+      "revision": "3f80b952a8588435fc2392150d4aa57fc0612281"
+    },
+    {
+      "name": "distributedhardware_distributed_input",
+      "path": "foundation/distributedhardware/distributed_input",
+      "revision": "30b523fdff3043ee06788f6301d449ef1662f03d"
+    },
+    {
+      "name": "distributedhardware_distributed_screen",
+      "path": "foundation/distributedhardware/distributed_screen",
+      "revision": "fb98c2b2cc22bc2efa5bbf64c88856a2e2df3c3e"
+    },
+    {
+      "name": "distributedhardware_mechbody_controller",
+      "path": "foundation/distributedhardware/mechbody_controller",
+      "revision": "299eb8f6c7635e6d44d2144c77db988151e55524"
+    },
+    {
+      "name": "filemanagement_app_file_service",
+      "path": "foundation/filemanagement/app_file_service",
+      "revision": "450bd9f22b71fcc08d148030a377ed6fe8c2543e"
+    },
+    {
+      "name": "filemanagement_dfs_service",
+      "path": "foundation/filemanagement/dfs_service",
+      "revision": "7352a4c4a3488e5dd23f0d0dffc4d94658a1205f"
+    },
+    {
+      "name": "filemanagement_disk_manager",
+      "path": "foundation/filemanagement/disk_manager",
+      "revision": "674efa0e99b0b3e6251086826d46cc76ae9632b5"
+    },
+    {
+      "name": "filemanagement_file_api",
+      "path": "foundation/filemanagement/file_api",
+      "revision": "700b8d5cf1dcd273638637c678bfa4d9096b7f3d"
+    },
+    {
+      "name": "filemanagement_filemanagement_cangjie_wrapper",
+      "path": "foundation/filemanagement/filemanagement_cangjie_wrapper",
+      "revision": "9d92d7b33a3ed8880b044b163f0e7150944905b3"
+    },
+    {
+      "name": "filemanagement_storage_service",
+      "path": "foundation/filemanagement/storage_service",
+      "revision": "37fd4b0c4ac39d97de9da69c888bfbe469f32ae7"
+    },
+    {
+      "name": "filemanagement_user_file_service",
+      "path": "foundation/filemanagement/user_file_service",
+      "revision": "1380eadcd325558a10ab3dc59dbd5e7fd3fc8050"
+    },
+    {
+      "name": "graphic_graphic_2d",
+      "path": "foundation/graphic/graphic_2d",
+      "revision": "81cc9ca9509bccd86c435064136fe45591d29eeb"
+    },
+    {
+      "name": "graphic_graphic_3d",
+      "path": "foundation/graphic/graphic_3d",
+      "revision": "b2d7af910f2d4b941697630020b0940245d5bd99"
+    },
+    {
+      "name": "graphic_graphic_cangjie_wrapper",
+      "path": "foundation/graphic/graphic_cangjie_wrapper",
+      "revision": "0553bc1ce150407db4be388528d2942b72a0446c"
+    },
+    {
+      "name": "graphic_graphic_surface",
+      "path": "foundation/graphic/graphic_surface",
+      "revision": "bd80c28b14d74226533e25e11176eee140aa9567"
+    },
+    {
+      "name": "graphic_graphic_utils_lite",
+      "path": "foundation/graphic/graphic_utils_lite",
+      "revision": "0a76a0fd9313346249a25ae8ef9cb0a2bdbbd397"
+    },
+    {
+      "name": "graphic_graphics_effect",
+      "path": "foundation/graphic/graphics_effect",
+      "revision": "9638a3096a278a4618294bddd40e8c7c65548450"
+    },
+    {
+      "name": "graphic_surface_lite",
+      "path": "foundation/graphic/surface_lite",
+      "revision": "d3b91c4a98ce08222aa6e0ad5a1b637ba99cf057"
+    },
+    {
+      "name": "multimedia_audio_framework",
+      "path": "foundation/multimedia/audio_framework",
+      "revision": "6932fa64335b8272ca4a59de7808ab0d6c9eae7a"
+    },
+    {
+      "name": "multimedia_audio_lite",
+      "path": "foundation/multimedia/audio_lite",
+      "revision": "411785b6b5ab4e2bda82501b28d2a03373002959"
+    },
+    {
+      "name": "multimedia_av_codec",
+      "path": "foundation/multimedia/av_codec",
+      "revision": "e5c525670d1f6622d441c9e5bf975ea0579ea177"
+    },
+    {
+      "name": "multimedia_av_session",
+      "path": "foundation/multimedia/av_session",
+      "revision": "47a2014c7040a039303109f0ebe817ebc31bfe6b"
+    },
+    {
+      "name": "multimedia_camera_framework",
+      "path": "foundation/multimedia/camera_framework",
+      "revision": "a421fc5b11593deb06a1b3928ebdf81b2655870b"
+    },
+    {
+      "name": "multimedia_camera_lite",
+      "path": "foundation/multimedia/camera_lite",
+      "revision": "13d6f405d162c8eb4a748ef5285d144268264833"
+    },
+    {
+      "name": "multimedia_drm_framework",
+      "path": "foundation/multimedia/drm_framework",
+      "revision": "b8f563306b7cc43121dcc9b8cebcdef16e635aa8"
+    },
+    {
+      "name": "multimedia_image_effect",
+      "path": "foundation/multimedia/image_effect",
+      "revision": "d1a269d8b787056c592afbb96ed38ca323b1727b"
+    },
+    {
+      "name": "multimedia_image_framework",
+      "path": "foundation/multimedia/image_framework",
+      "revision": "711db218c8d1c4d6546b28d8cf466059644dfa77"
+    },
+    {
+      "name": "multimedia_media_foundation",
+      "path": "foundation/multimedia/media_foundation",
+      "revision": "a9d40eb0bfcb61626ea6780527d2235cbd9bc5dc"
+    },
+    {
+      "name": "multimedia_media_library",
+      "path": "foundation/multimedia/media_library",
+      "revision": "564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380"
+    },
+    {
+      "name": "multimedia_media_lite",
+      "path": "foundation/multimedia/media_lite",
+      "revision": "f7201f87c94fceffe2dddf7d5c6dc5bfadb38190"
+    },
+    {
+      "name": "multimedia_media_utils_lite",
+      "path": "foundation/multimedia/media_utils_lite",
+      "revision": "ec33289139f8ea0c39cd005388c3b8c1f759b9df"
+    },
+    {
+      "name": "multimedia_midi_framework",
+      "path": "foundation/multimedia/midi_framework",
+      "revision": "73451437d0af23a5a3d32e831ef35b4f6f68196b"
+    },
+    {
+      "name": "multimedia_multimedia_cangjie_wrapper",
+      "path": "foundation/multimedia/multimedia_cangjie_wrapper",
+      "revision": "503482d065e996296578744f98c9dbd4be275072"
+    },
+    {
+      "name": "multimedia_player_framework",
+      "path": "foundation/multimedia/player_framework",
+      "revision": "3d3b1231db27561e8978652d7ae867c12f488d9a"
+    },
+    {
+      "name": "multimedia_ringtone_library",
+      "path": "foundation/multimedia/ringtone_library",
+      "revision": "51e9637cdebe2472f547f0b6322539999890c713"
+    },
+    {
+      "name": "multimedia_video_processing_engine",
+      "path": "foundation/multimedia/video_processing_engine",
+      "revision": "f75967e2a642efe0dc34dbf6230484375259d9ef"
+    },
+    {
+      "name": "multimodalinput_input",
+      "path": "foundation/multimodalinput/input",
+      "revision": "64a0e42f22c9c6739651bf79b33746c500788322"
+    },
+    {
+      "name": "officeservice_object_editor",
+      "path": "foundation/officeservice/object_editor",
+      "revision": "c8026c38cd15b19bb919eeb5fd04b5e53c4cbe95"
+    },
+    {
+      "name": "resourceschedule_background_task_mgr",
+      "path": "foundation/resourceschedule/background_task_mgr",
+      "revision": "ada26aa972cc85b94949a3abf2b1fc7053b19bb8"
+    },
+    {
+      "name": "resourceschedule_device_standby",
+      "path": "foundation/resourceschedule/device_standby",
+      "revision": "467921741b41fb129fe0e93680e5294faec5895b"
+    },
+    {
+      "name": "resourceschedule_device_usage_statistics",
+      "path": "foundation/resourceschedule/device_usage_statistics",
+      "revision": "d73d804a01031dda0e76194b64f06090a214db09"
+    },
+    {
+      "name": "resourceschedule_ffrt",
+      "path": "foundation/resourceschedule/ffrt",
+      "revision": "bcaabdb891e2be0c3e004c6db87d0c6e79515886"
+    },
+    {
+      "name": "linux_frame_aware_sched",
+      "path": "foundation/resourceschedule/frame_aware_sched",
+      "revision": "9205f38a5f06b624dbc7195ae3ea543bf3d10551"
+    },
+    {
+      "name": "resourceschedule_memmgr",
+      "path": "foundation/resourceschedule/memmgr",
+      "revision": "b22db8f1ffddd1092eae5252a5e46a7bf3a4a97a"
+    },
+    {
+      "name": "resourceschedule_qos_manager",
+      "path": "foundation/resourceschedule/qos_manager",
+      "revision": "217f40b648b5c663d939b4a485bbe2f21416ea2b"
+    },
+    {
+      "name": "resourceschedule_resource_schedule_service",
+      "path": "foundation/resourceschedule/resource_schedule_service",
+      "revision": "c3f73c4683b67a9b84a00149188814c720d5ec56"
+    },
+    {
+      "name": "resourceschedule_soc_perf",
+      "path": "foundation/resourceschedule/soc_perf",
+      "revision": "1b77ec1ac2582193cccca8f512d0245aebd332e0"
+    },
+    {
+      "name": "resourceschedule_work_scheduler",
+      "path": "foundation/resourceschedule/work_scheduler",
+      "revision": "ec17e3153830eeb019fe11c56c297dfafd1ba589"
+    },
+    {
+      "name": "systemabilitymgr_safwk",
+      "path": "foundation/systemabilitymgr/safwk",
+      "revision": "288892fb2550b0fdaf2adb7c5c59f800e83f7747"
+    },
+    {
+      "name": "systemabilitymgr_safwk_lite",
+      "path": "foundation/systemabilitymgr/safwk_lite",
+      "revision": "e4295d56f83bdecdb75a883dab5e363a7b6a1cd2"
+    },
+    {
+      "name": "systemabilitymgr_samgr",
+      "path": "foundation/systemabilitymgr/samgr",
+      "revision": "e8c6b7007c0898a552db5eca1018c21b126ec27a"
+    },
+    {
+      "name": "systemabilitymgr_samgr_lite",
+      "path": "foundation/systemabilitymgr/samgr_lite",
+      "revision": "ca0aefa851f76122a496e730dc9035e8209bc0da"
+    },
+    {
+      "name": "systemabilitymgr_selectionfwk",
+      "path": "foundation/systemabilitymgr/selectionfwk",
+      "revision": "7b3a6e5084cd2e63022e2b9ad03c97268a40dff0"
+    },
+    {
+      "name": "window_window_cangjie_wrapper",
+      "path": "foundation/window/window_cangjie_wrapper",
+      "revision": "f932641565fa271be73e0bf0cc0a513084d96239"
+    },
+    {
+      "name": "window_window_manager",
+      "path": "foundation/window/window_manager",
+      "revision": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73"
+    },
+    {
+      "name": "window_window_manager_lite",
+      "path": "foundation/window/window_manager_lite",
+      "revision": "62b8cbc951418cc65e0e8a63a32561a9eee4f007"
+    },
+    {
+      "name": "ide_previewer",
+      "path": "ide/tools/previewer",
+      "revision": "86b7b6fb40c1e29dcf634cc818dc876b32c90355"
+    },
+    {
+      "name": "interface_sdk-js",
+      "path": "interface/sdk-js",
+      "revision": "43e34facc58b9c0f15c58571554ddd7eaa004455"
+    },
+    {
+      "name": "interface_sdk_c",
+      "path": "interface/sdk_c",
+      "revision": "41b00f09528cf514b566553b2503c54e6347786b"
+    },
+    {
+      "name": "interface_sdk_cangjie",
+      "path": "interface/sdk_cangjie",
+      "revision": "80162f46bdea533276288294602d802dc555baf6"
+    },
+    {
+      "name": "kernel_linux_build",
+      "path": "kernel/linux/build",
+      "revision": "84d533f5b11e7efbc8285ed33ea4d8ebb27bd860"
+    },
+    {
+      "name": "kernel_linux_common_modules",
+      "path": "kernel/linux/common_modules",
+      "revision": "b76d914d0f09fa3d4abfa124048c56fa150b57e3"
+    },
+    {
+      "name": "kernel_linux_config",
+      "path": "kernel/linux/config",
+      "revision": "2f85a471bee806afe8bd71e923c992a2f54b603a"
+    },
+    {
+      "name": "kernel_linux_5.10",
+      "path": "kernel/linux/linux-5.10",
+      "revision": "70e6c83fc02e1607ac341c056af949ae7ad51b41"
+    },
+    {
+      "name": "kernel_linux_6.6",
+      "path": "kernel/linux/linux-6.6",
+      "revision": "14c77f1541a53e814d89ad6dea5f7f211f9895a6"
+    },
+    {
+      "name": "kernel_linux_patches",
+      "path": "kernel/linux/patches",
+      "revision": "4a74180ee538b08acc8f1bc7f13649ceb82ed51f"
+    },
+    {
+      "name": "kernel_liteos_a",
+      "path": "kernel/liteos_a",
+      "revision": "92cab0135ae51bc36718db994a13a2bf1a6018b1"
+    },
+    {
+      "name": "kernel_liteos_m",
+      "path": "kernel/liteos_m",
+      "revision": "bca80e0bc4b4925ac3c14819bcf3ba7ae04c590c"
+    },
+    {
+      "name": "kernel_uniproton",
+      "path": "kernel/uniproton",
+      "revision": "8547b402f0a8605a1ba555237138a1047fb33c53"
+    },
+    {
+      "name": "napi_generator",
+      "path": "napi_generator",
+      "revision": "5d0aada4cc297bffc41c93b883904f8e0904248e"
+    },
+    {
+      "name": "productdefine_common",
+      "path": "productdefine/common",
+      "revision": "28e111dc181cadde46dda3f61170c37c83d7639b"
+    },
+    {
+      "name": "ostest_wukong",
+      "path": "test/ostest/wukong",
+      "revision": "368d50b52a4a33bc12e15df5ba0481d25721a10c"
+    },
+    {
+      "name": "testfwk_arkxtest",
+      "path": "test/testfwk/arkxtest",
+      "revision": "b956f48caba16ff23e8cff3a36b4a1992e12c860"
+    },
+    {
+      "name": "testfwk_developer_test",
+      "path": "test/testfwk/developer_test",
+      "revision": "1174687a3ffd0ca78bd5761cb2db04ac1d847004"
+    },
+    {
+      "name": "testfwk_testfwk_cangjie_wrapper",
+      "path": "test/testfwk/testfwk_cangjie_wrapper",
+      "revision": "46fac38025d3a6fe528aca30d0ced73fce9a844e"
+    },
+    {
+      "name": "testfwk_xdevice",
+      "path": "test/testfwk/xdevice",
+      "revision": "4bc2d78cf2b192cc4cc97cb5175244a415011dc5"
+    },
+    {
+      "name": "xts_acts",
+      "path": "test/xts/acts",
+      "revision": "12ed38d7aec9c680ed1510a77a96efcc7b101489"
+    },
+    {
+      "name": "xts_dcts",
+      "path": "test/xts/dcts",
+      "revision": "16277cb8939a31e457f33b790fa9cfcd366e7a92"
+    },
+    {
+      "name": "xts_device_attest",
+      "path": "test/xts/device_attest",
+      "revision": "0c237eb28301ba4315c8b3f399db827d1d143caa"
+    },
+    {
+      "name": "xts_device_attest_lite",
+      "path": "test/xts/device_attest_lite",
+      "revision": "0d8554eafb6c98890af82272de75b22a84fc8cc0"
+    },
+    {
+      "name": "xts_hats",
+      "path": "test/xts/hats",
+      "revision": "ea8a1b0c469771bdb3f5987bce8353a521cd4a8f"
+    },
+    {
+      "name": "xts_tools",
+      "path": "test/xts/tools",
+      "revision": "334e6d5392feeed4e3c7bb73fb6ff4febb460d64"
+    },
+    {
+      "name": "third_party_egl",
+      "path": "third_party/EGL",
+      "revision": "f873cded2f876f5f2a832c51b77496ef9d3a7f49"
+    },
+    {
+      "name": "third_party_FatFs",
+      "path": "third_party/FatFs",
+      "revision": "1e303a3da729d066b55d7576fa63108932bea5a1"
+    },
+    {
+      "name": "third_party_FreeBSD",
+      "path": "third_party/FreeBSD",
+      "revision": "74f769337b059bc4ee13123e7ce159b8b7447e71"
+    },
+    {
+      "name": "third_party_NuttX",
+      "path": "third_party/NuttX",
+      "revision": "769a2719db93c115cd69f29d122587a72ce9c5ef"
+    },
+    {
+      "name": "third_party_pyyaml",
+      "path": "third_party/PyYAML",
+      "revision": "234a8fd99a908faf18b4019f91134a931af7b649"
+    },
+    {
+      "name": "third_party_abseil-cpp",
+      "path": "third_party/abseil-cpp",
+      "revision": "0fec8aba2edfb6021e5823e5f25e56c5d5466531"
+    },
+    {
+      "name": "third_party_alsa-lib",
+      "path": "third_party/alsa-lib",
+      "revision": "dececa15b19fba7445fbdb5559b60e88f53f6960"
+    },
+    {
+      "name": "third_party_alsa-utils",
+      "path": "third_party/alsa-utils",
+      "revision": "e231370a43541362983835e4658d4597229a4b36"
+    },
+    {
+      "name": "third_party_astc-encoder",
+      "path": "third_party/astc-encoder",
+      "revision": "00caff1c1768c84bda00a64b19c34acb5a0f270c"
+    },
+    {
+      "name": "third_party_backends",
+      "path": "third_party/backends",
+      "revision": "90dc1ec1183e0f89fd01e4ea76a7e69ca302506d"
+    },
+    {
+      "name": "third_party_benchmark",
+      "path": "third_party/benchmark",
+      "revision": "9ef675c871779af6310977a3684ff7cd54ae13fb"
+    },
+    {
+      "name": "third_party_bounds_checking_function",
+      "path": "third_party/bounds_checking_function",
+      "revision": "61baa7a3eb9347efca58397d1d0504faa96d79f0"
+    },
+    {
+      "name": "third_party_brotli",
+      "path": "third_party/brotli",
+      "revision": "c873180bd93138d91dc33a64a2b7e62cf4cd0e3c"
+    },
+    {
+      "name": "third_party_bzip2",
+      "path": "third_party/bzip2",
+      "revision": "520344ba5c1baea38c2e56aaaa3f0d2fb8bc270c"
+    },
+    {
+      "name": "third_party_cJSON",
+      "path": "third_party/cJSON",
+      "revision": "96ec51f9776ca08079d7804df747b388eba88e47"
+    },
+    {
+      "name": "third_party_cangjie_compiler",
+      "path": "third_party/cangjie_compiler",
+      "revision": "a5b91429baca3bce3b030cba15d0eaffb7a5f0c2"
+    },
+    {
+      "name": "third_party_cangjie_runtime",
+      "path": "third_party/cangjie_runtime",
+      "revision": "cb48ed75dae66bb37fc68771fa444adb18c81313"
+    },
+    {
+      "name": "third_party_cangjie_tools",
+      "path": "third_party/cangjie_tools",
+      "revision": "d2705c98aac9c894f02eebed4c7cb7798c8ddea0"
+    },
+    {
+      "name": "third_party_cares",
+      "path": "third_party/cares",
+      "revision": "a5ae9460417b54cc32e6d48e7bb89450345654ae"
+    },
+    {
+      "name": "third_party_cmsis",
+      "path": "third_party/cmsis",
+      "revision": "22eba97725ef919017fcce23fc1671dd75faec63"
+    },
+    {
+      "name": "third_party_css-what",
+      "path": "third_party/css-what",
+      "revision": "5bf1b02e5d471baa648933ad06a2d0ee830c03a6"
+    },
+    {
+      "name": "third_party_cups",
+      "path": "third_party/cups",
+      "revision": "954c09b3534c46c93d9ee5ca3748a792c87fd6b5"
+    },
+    {
+      "name": "third_party_cups-filters",
+      "path": "third_party/cups-filters",
+      "revision": "c7f0e96f1f3cc903609a35b4b0aeb3e6b64eb1d3"
+    },
+    {
+      "name": "third_party_curl",
+      "path": "third_party/curl",
+      "revision": "50d05dc7df3b5ecd977a02f3f2cdbfc1e4c12ebf"
+    },
+    {
+      "name": "third_party_dav1d",
+      "path": "third_party/dav1d",
+      "revision": "2f6aec92e9cc81a610a53ccde3fd0bcc06c5dad8"
+    },
+    {
+      "name": "third_party_decimal.js",
+      "path": "third_party/decimal.js",
+      "revision": "def7ff60bf57630d4771350d107153a53aa682a8"
+    },
+    {
+      "name": "third_party_e2fsprogs",
+      "path": "third_party/e2fsprogs",
+      "revision": "2e9885131cc18fbbb92a69db02c79a68559485ba"
+    },
+    {
+      "name": "third_party_elfio",
+      "path": "third_party/elfio",
+      "revision": "177cb4a063460fdeb31bbb04c5a1c0380d73f3ad"
+    },
+    {
+      "name": "third_party_elfutils",
+      "path": "third_party/elfutils",
+      "revision": "b9158263368a994a5434c08c84ed55484c56eef9"
+    },
+    {
+      "name": "third_party_exfatprogs",
+      "path": "third_party/exfatprogs",
+      "revision": "8ef43c5a790f324450155a804ca7eea351e46d47"
+    },
+    {
+      "name": "third_party_expat",
+      "path": "third_party/expat",
+      "revision": "5d36e7c02fbba8b4572031d3ffddbc5d48ba2f5e"
+    },
+    {
+      "name": "third_party_f2fs-tools",
+      "path": "third_party/f2fs-tools",
+      "revision": "680fef46e9f6208ee4e7c2c1bf284606a8b3e954"
+    },
+    {
+      "name": "third_party_ffmpeg",
+      "path": "third_party/ffmpeg",
+      "revision": "bceaf12f648b7ef5917f26616793d09d88cb62b5"
+    },
+    {
+      "name": "third_party_flatbuffers",
+      "path": "third_party/flatbuffers",
+      "revision": "c2c74e9cc8ce734c03864cd489d4c91eab61f05d"
+    },
+    {
+      "name": "third_party_freetype",
+      "path": "third_party/freetype",
+      "revision": "549566d2e7ebcbd7cb48afd2eae3d3d3d08e816f"
+    },
+    {
+      "name": "third_party_fsverity-utils",
+      "path": "third_party/fsverity-utils",
+      "revision": "16dfbd47d20a8606a84091bdf546a48c15024165"
+    },
+    {
+      "name": "third_party_glfw",
+      "path": "third_party/glfw",
+      "revision": "841ae5306c5e7a6e1913bb34fbc1ae05380e209c"
+    },
+    {
+      "name": "third_party_glslang",
+      "path": "third_party/glslang",
+      "revision": "7435e231421a663324bf8ef322c70f7597b370c9"
+    },
+    {
+      "name": "third_party_gn",
+      "path": "third_party/gn",
+      "revision": "71c506b7db0e7dd8684994bb0e3f6eeea583054a"
+    },
+    {
+      "name": "third_party_googletest",
+      "path": "third_party/googletest",
+      "revision": "cc04e6f4e30df6a3e1c913ee14ffb30eee203c30"
+    },
+    {
+      "name": "third_party_gptfdisk",
+      "path": "third_party/gptfdisk",
+      "revision": "3ba408b8b0e219c9dba434b3e6497e1103f710a5"
+    },
+    {
+      "name": "third_party_grpc",
+      "path": "third_party/grpc",
+      "revision": "ac9e5488980940565a6a6d7e2b62f303beab4d95"
+    },
+    {
+      "name": "third_party_harfbuzz",
+      "path": "third_party/harfbuzz",
+      "revision": "5b8f1d6de169ce2a125861d85248cdc841cca668"
+    },
+    {
+      "name": "third_party_icu",
+      "path": "third_party/icu",
+      "revision": "b04331d0efe4dad9aec36b2f5539c0fde64bfe06"
+    },
+    {
+      "name": "third_party_iptables",
+      "path": "third_party/iptables",
+      "revision": "735f75a4a669e3452c2b7d5e2a22c9d7a73032cf"
+    },
+    {
+      "name": "third_party_jerryscript",
+      "path": "third_party/jerryscript",
+      "revision": "d775a2d56f8a817388dd37a50eb32c09b570bb3b"
+    },
+    {
+      "name": "third_party_jinja2",
+      "path": "third_party/jinja2",
+      "revision": "852463cbb0678037f5ca9ed80924c30def600438"
+    },
+    {
+      "name": "third_party_jsframework",
+      "path": "third_party/jsframework",
+      "revision": "abb00e2f162379c008b71fbaccd015dce5706322"
+    },
+    {
+      "name": "third_party_json",
+      "path": "third_party/json",
+      "revision": "899cae79d1accbd475b9737167417eabc82c4b52"
+    },
+    {
+      "name": "third_party_jsoncpp",
+      "path": "third_party/jsoncpp",
+      "revision": "ea808a0b6318fbe1fee1d3acb8cb0fa36d4748d0"
+    },
+    {
+      "name": "third_party_lame",
+      "path": "third_party/lame",
+      "revision": "dbef2a4f2c52b1ac9694e91424e7842e3841eed1"
+    },
+    {
+      "name": "third_party_libabigail",
+      "path": "third_party/libabigail",
+      "revision": "bd8a8e750bd5a690cb7e1b7069a25cfab3993d7e"
+    },
+    {
+      "name": "third_party_libbpf",
+      "path": "third_party/libbpf",
+      "revision": "7c0fb68ee1f3f599064fb49d48a9d75a45bcb5aa"
+    },
+    {
+      "name": "third_party_libcoap",
+      "path": "third_party/libcoap",
+      "revision": "90d3c3f9ceac2b25aea132bfce080af851315097"
+    },
+    {
+      "name": "third_party_libdrm",
+      "path": "third_party/libdrm",
+      "revision": "eaa67d5fdabd5968e6c553e06c5a5976a573ee01"
+    },
+    {
+      "name": "third_party_libedit",
+      "path": "third_party/libedit",
+      "revision": "57a7dd15119830c0adb39d66a0f31bbf013f798d"
+    },
+    {
+      "name": "third_party_libevdev",
+      "path": "third_party/libevdev",
+      "revision": "8c146f75071f4adfa53a96b52f6ef95e344fee26"
+    },
+    {
+      "name": "third_party_libexif",
+      "path": "third_party/libexif",
+      "revision": "2154dccb4fc31c2d1f4a240d4a3093e1d86e0835"
+    },
+    {
+      "name": "third_party_libfuse",
+      "path": "third_party/libfuse",
+      "revision": "ca1384998b3bd3a675ac96b88b426be8623962ef"
+    },
+    {
+      "name": "third_party_libinput",
+      "path": "third_party/libinput",
+      "revision": "64dde5b2f969dcaa64a1631126e213db0ddabd94"
+    },
+    {
+      "name": "third_party_libjpeg-turbo",
+      "path": "third_party/libjpeg-turbo",
+      "revision": "19603e5c6d67d7bf73cfafe097182f6d029ac571"
+    },
+    {
+      "name": "third_party_libnl",
+      "path": "third_party/libnl",
+      "revision": "f418e5f4dc6642d4a6e4e0efcef72a3a2062f276"
+    },
+    {
+      "name": "third_party_libphonenumber",
+      "path": "third_party/libphonenumber",
+      "revision": "13f194a8419be00aae5263ca89c6b5a8576d1b0a"
+    },
+    {
+      "name": "third_party_libpng",
+      "path": "third_party/libpng",
+      "revision": "55ccafd48dabf5355887765faa6e92568622a9a6"
+    },
+    {
+      "name": "third_party_libtiff",
+      "path": "third_party/libtiff",
+      "revision": "f3146768b1364edf579e5b1876ba3cc300c4e786"
+    },
+    {
+      "name": "third_party_libunwind",
+      "path": "third_party/libunwind",
+      "revision": "564026d0769285be5735a088585aadbb34f9789b"
+    },
+    {
+      "name": "third_party_liburing",
+      "path": "third_party/liburing",
+      "revision": "89994945d659332035855a19d17e6eae45e959dd"
+    },
+    {
+      "name": "third_party_libusb",
+      "path": "third_party/libusb",
+      "revision": "f48740b7bcb2d8ee713cc0b5e9a4e68fab41277c"
+    },
+    {
+      "name": "third_party_libuv",
+      "path": "third_party/libuv",
+      "revision": "f8143ba4a2c4facd3437641aa2f900faf0db6fce"
+    },
+    {
+      "name": "third_party_libvpx",
+      "path": "third_party/libvpx",
+      "revision": "a4085bb3be63db13e6908c24be52bd2698aa57c7"
+    },
+    {
+      "name": "third_party_libwebsockets",
+      "path": "third_party/libwebsockets",
+      "revision": "88901237b680bb2fb7efd335ce06895560f363c1"
+    },
+    {
+      "name": "third_party_libxml2",
+      "path": "third_party/libxml2",
+      "revision": "53b1b6ca62c0ed272f36546c66e24378109be184"
+    },
+    {
+      "name": "third_party_littlefs",
+      "path": "third_party/littlefs",
+      "revision": "dfe9d04d30de9e3475c561f408e7ee227531c716"
+    },
+    {
+      "name": "third_party_ltp",
+      "path": "third_party/ltp",
+      "revision": "229660069ed0f06c2afdb5249d9ea3c18a4afb51"
+    },
+    {
+      "name": "third_party_lwip",
+      "path": "third_party/lwip",
+      "revision": "83886e5c2bebe98dc85976deceaccecfd627b950"
+    },
+    {
+      "name": "third_party_lz4",
+      "path": "third_party/lz4",
+      "revision": "67c1d8d4eaf58dd58004488c6fcace8a6b849ee8"
+    },
+    {
+      "name": "third_party_lzma",
+      "path": "third_party/lzma",
+      "revision": "de5a4ec90f91f9b4299d659a066c243aec1e168c"
+    },
+    {
+      "name": "third_party_markupsafe",
+      "path": "third_party/markupsafe",
+      "revision": "e6770a1e4dbace5b3ecf7957bac64cf80932749c"
+    },
+    {
+      "name": "third_party_mbedtls",
+      "path": "third_party/mbedtls",
+      "revision": "3d3f165a2ccb09f8162cf32e249d6cee9639a587"
+    },
+    {
+      "name": "third_party_mesa3d",
+      "path": "third_party/mesa3d",
+      "revision": "952a438c56ce20610d88f0c4d8c673485aefeff7"
+    },
+    {
+      "name": "third_party_meshoptimizer",
+      "path": "third_party/meshoptimizer",
+      "revision": "317dd03ddbadae61fcac4616f32eb4f38efdc5b0"
+    },
+    {
+      "name": "third_party_mindspore",
+      "path": "third_party/mindspore",
+      "revision": "c34a149209fb4dfb81f2af0cc167d7e7be96559b"
+    },
+    {
+      "name": "third_party_mksh",
+      "path": "third_party/mksh",
+      "revision": "d05184eaab44fc58927237f49ad69345edbb2478"
+    },
+    {
+      "name": "third_party_mtdev",
+      "path": "third_party/mtdev",
+      "revision": "88ece84a8095f58d24230bf58b29823893857c3e"
+    },
+    {
+      "name": "third_party_musl",
+      "path": "third_party/musl",
+      "revision": "415a7e7e24c2e1a97ca1cc4c4122f3b12a032cee"
+    },
+    {
+      "name": "third_party_ncurses",
+      "path": "third_party/ncurses",
+      "revision": "b867caba6f0f8345b2e2e536688ee37c9d94326e"
+    },
+    {
+      "name": "third_party_nghttp2",
+      "path": "third_party/nghttp2",
+      "revision": "584e1782ff0d7981892c54426f0da6fda1805f75"
+    },
+    {
+      "name": "third_party_ninja",
+      "path": "third_party/ninja",
+      "revision": "dc674abe270d5ec0664342b7d588c72dc1485b24"
+    },
+    {
+      "name": "third_party_node",
+      "path": "third_party/node",
+      "revision": "de27540291771dbde6f4097997cae63840684e37"
+    },
+    {
+      "name": "third_party_noto-cjk",
+      "path": "third_party/noto-cjk",
+      "revision": "34ef2b40154738ee7e6c178ae8c2ef130e60d315"
+    },
+    {
+      "name": "third_party_notofonts",
+      "path": "third_party/notofonts",
+      "revision": "33eb1641520fdf00bb8d657b7479461d31769232"
+    },
+    {
+      "name": "third_party_ntfs-3g",
+      "path": "third_party/ntfs-3g",
+      "revision": "c5cbcefe43469cd73b873ccb2311711ea27d28c9"
+    },
+    {
+      "name": "third_party_opengles",
+      "path": "third_party/openGLES",
+      "revision": "12d8e91f30921ceee5b70e31f0ec7607638d83e2"
+    },
+    {
+      "name": "third_party_opensles",
+      "path": "third_party/openSLES",
+      "revision": "77418cd0ccf0ea5bd968f2affe64133245162e9e"
+    },
+    {
+      "name": "third_party_opencl-headers",
+      "path": "third_party/opencl-headers",
+      "revision": "a9305c0f9923386ac8b5dcd818112e4249314be4"
+    },
+    {
+      "name": "third_party_opencore-amr",
+      "path": "third_party/opencore-amr",
+      "revision": "b91d7171ddcec7acb99eaa32b138f7e5ae051aeb"
+    },
+    {
+      "name": "third_party_openhitls",
+      "path": "third_party/openhitls",
+      "revision": "65bafa176cbe25a837262f57175faa5ce34d237b"
+    },
+    {
+      "name": "third_party_openmax",
+      "path": "third_party/openmax",
+      "revision": "48489a367dccea31532c846ac4572da6394c8a94"
+    },
+    {
+      "name": "third_party_openssl",
+      "path": "third_party/openssl",
+      "revision": "448a110352e8c36cc29828f53ffe0a44c1d56500"
+    },
+    {
+      "name": "third_party_optimized_routines",
+      "path": "third_party/optimized-routines",
+      "revision": "a52a7d4792ef1618a854271e2421e2ab66d24f99"
+    },
+    {
+      "name": "third_party_opus",
+      "path": "third_party/opus",
+      "revision": "51b2602089f501ebf96e33f7ac6aee3b06b0d813"
+    },
+    {
+      "name": "third_party_parse5",
+      "path": "third_party/parse5",
+      "revision": "c06fb9085228cecba9983c170d572dd717479ada"
+    },
+    {
+      "name": "third_party_pcre2",
+      "path": "third_party/pcre2",
+      "revision": "86a46615b011a68df68072cab9fe6d597ca2d8b5"
+    },
+    {
+      "name": "third_party_popt",
+      "path": "third_party/popt",
+      "revision": "051ab160bd23767e5de90ec3d7ef67ac0b905d98"
+    },
+    {
+      "name": "third_party_protobuf",
+      "path": "third_party/protobuf",
+      "revision": "a29b13a02b382449aa3f1c70df787b46d4cc479a"
+    },
+    {
+      "name": "third_party_pulseaudio",
+      "path": "third_party/pulseaudio",
+      "revision": "66ab5d57fef2718e38b50cc53fae0b7358a4ada1"
+    },
+    {
+      "name": "third_party_python",
+      "path": "third_party/python",
+      "revision": "c2f5273b2033f09080838d1d9e2ac250c8dabcb3"
+    },
+    {
+      "name": "third_party_re2",
+      "path": "third_party/re2",
+      "revision": "a9ecb2d52e01180347d1ea5d08a15e5c422d9ee3"
+    },
+    {
+      "name": "third_party_rust_aho-corasick",
+      "path": "third_party/rust/crates/aho-corasick",
+      "revision": "54b0403bcba833301fe200bab21be0502acbea97"
+    },
+    {
+      "name": "third_party_rust_atty",
+      "path": "third_party/rust/crates/atty",
+      "revision": "076a3accf08a1bef06e76c114347817b707f51fe"
+    },
+    {
+      "name": "third_party_rust_autocfg",
+      "path": "third_party/rust/crates/autocfg",
+      "revision": "d4bf45d00b1041d8e3d0c7c1fc0c80788e60b4f3"
+    },
+    {
+      "name": "third_party_rust_bindgen",
+      "path": "third_party/rust/crates/bindgen",
+      "revision": "63b4efa5c523c68558b03bbdbdf332c527c9fcd8"
+    },
+    {
+      "name": "third_party_rust_bitflags",
+      "path": "third_party/rust/crates/bitflags",
+      "revision": "c85fa455ecba64e73ac3cf4ec0ef1254392936d9"
+    },
+    {
+      "name": "third_party_rust_cfg-if",
+      "path": "third_party/rust/crates/cfg-if",
+      "revision": "39bb93e5a1f1cf7cc1b2bf9f79e9e88c3858abd3"
+    },
+    {
+      "name": "third_party_rust_clang-sys",
+      "path": "third_party/rust/crates/clang-sys",
+      "revision": "d0fb15fb74d742c6a78c9ca0a2709ca32f721c17"
+    },
+    {
+      "name": "third_party_rust_clap",
+      "path": "third_party/rust/crates/clap",
+      "revision": "87ebcc657344a855639e81be87ba53cfef21579a"
+    },
+    {
+      "name": "third_party_rust_codespan",
+      "path": "third_party/rust/crates/codespan",
+      "revision": "1e215d4181cfbd40d0366833d8df5bf69164336c"
+    },
+    {
+      "name": "third_party_rust_cxx",
+      "path": "third_party/rust/crates/cxx",
+      "revision": "b5b9ba474068c480dfff89176f539c6de2de12f2"
+    },
+    {
+      "name": "third_party_rust_either",
+      "path": "third_party/rust/crates/either",
+      "revision": "30420ec062531d529d54cc9b0601280926b669d1"
+    },
+    {
+      "name": "third_party_rust_env_logger",
+      "path": "third_party/rust/crates/env_logger",
+      "revision": "d1e097e91134c2cc54ca153aad4463904e66a01c"
+    },
+    {
+      "name": "third_party_rust_foreign-types",
+      "path": "third_party/rust/crates/foreign-types",
+      "revision": "ab142a0bd07300ce35fa74305fc5a3f6f6101b62"
+    },
+    {
+      "name": "third_party_rust_glob",
+      "path": "third_party/rust/crates/glob",
+      "revision": "8b3e812b1427ff8c895b060818be745b7519af77"
+    },
+    {
+      "name": "third_party_rust_heck",
+      "path": "third_party/rust/crates/heck",
+      "revision": "d054aa59f052d272e72924d7f519dbc655664dec"
+    },
+    {
+      "name": "third_party_rust_humantime",
+      "path": "third_party/rust/crates/humantime",
+      "revision": "5aedab74c87614f3523b19ea31c2766b0206e0ce"
+    },
+    {
+      "name": "third_party_rust_io-lifetimes",
+      "path": "third_party/rust/crates/io-lifetimes",
+      "revision": "d9e5aceb1d36a6630bb2480d224cd884e100498c"
+    },
+    {
+      "name": "third_party_rust_is-terminal",
+      "path": "third_party/rust/crates/is-terminal",
+      "revision": "1bed5a0ce0ee0e97efcef84ec343dc8a1c52aec4"
+    },
+    {
+      "name": "third_party_rust_lazy-static.rs",
+      "path": "third_party/rust/crates/lazy-static.rs",
+      "revision": "46f62512459a5dd3a4c8478e6b975ed72c755993"
+    },
+    {
+      "name": "third_party_rust_lazycell",
+      "path": "third_party/rust/crates/lazycell",
+      "revision": "c391770a72563b43790b4959d618069b787e27de"
+    },
+    {
+      "name": "third_party_rust_libc",
+      "path": "third_party/rust/crates/libc",
+      "revision": "90b8832365d33a78722d2dcb23bfda3e71784830"
+    },
+    {
+      "name": "third_party_rust_libloading",
+      "path": "third_party/rust/crates/libloading",
+      "revision": "7bf9dbe2329cf95005f653231cad6307dad569aa"
+    },
+    {
+      "name": "third_party_rust_link-cplusplus",
+      "path": "third_party/rust/crates/link-cplusplus",
+      "revision": "8bb918587463867672f906536a946a3a0290637e"
+    },
+    {
+      "name": "third_party_rust_linux-raw-sys",
+      "path": "third_party/rust/crates/linux-raw-sys",
+      "revision": "8e8696f67139c280100af9a579678dd06f415444"
+    },
+    {
+      "name": "third_party_rust_log",
+      "path": "third_party/rust/crates/log",
+      "revision": "ea11f9088c12e69777cc23235fff669aec9c28cc"
+    },
+    {
+      "name": "third_party_rust_memchr",
+      "path": "third_party/rust/crates/memchr",
+      "revision": "82f0e8bcf7b3403c3383dd07afc7d05248bf7671"
+    },
+    {
+      "name": "third_party_rust_memoffset",
+      "path": "third_party/rust/crates/memoffset",
+      "revision": "21cf2383258bdec24bebfab713a3df8b57bf5957"
+    },
+    {
+      "name": "third_party_rust_minimal-lexical",
+      "path": "third_party/rust/crates/minimal-lexical",
+      "revision": "4c4f04e72abd4920257b12701496d3e3afc0ebbd"
+    },
+    {
+      "name": "third_party_rust_nix",
+      "path": "third_party/rust/crates/nix",
+      "revision": "a12cda3ce2c8c28496228858b413ea8329e02d6b"
+    },
+    {
+      "name": "third_party_rust_nom",
+      "path": "third_party/rust/crates/nom",
+      "revision": "fd17d9035190e7d7a90efca771ae8b4a5d9e1193"
+    },
+    {
+      "name": "third_party_rust_once_cell",
+      "path": "third_party/rust/crates/once_cell",
+      "revision": "ad855aa18ca83a96b5fffcc0a70bee388fc09347"
+    },
+    {
+      "name": "third_party_rust_os_str_bytes",
+      "path": "third_party/rust/crates/os_str_bytes",
+      "revision": "9b1c1834afc84fcb55bc039c507a16d153ee9499"
+    },
+    {
+      "name": "third_party_rust_peeking_take_while",
+      "path": "third_party/rust/crates/peeking_take_while",
+      "revision": "0fd8847fa79284da87ead6354076e064fe697ae5"
+    },
+    {
+      "name": "third_party_rust_pin-utils",
+      "path": "third_party/rust/crates/pin-utils",
+      "revision": "2752855aa98793b333d805a56b8134b95d5456d8"
+    },
+    {
+      "name": "third_party_rust_proc-macro-error",
+      "path": "third_party/rust/crates/proc-macro-error",
+      "revision": "b619db8f1ae4984a9e17727f538ee9973d59712b"
+    },
+    {
+      "name": "third_party_rust_proc-macro2",
+      "path": "third_party/rust/crates/proc-macro2",
+      "revision": "aa5d7c5b1966cadf4d46f9912b87eef304ea4095"
+    },
+    {
+      "name": "third_party_rust_quote",
+      "path": "third_party/rust/crates/quote",
+      "revision": "0a3ca249aaff014ff9ba12783d316241ec757659"
+    },
+    {
+      "name": "third_party_rust_regex",
+      "path": "third_party/rust/crates/regex",
+      "revision": "e1048c35ed9d5c6d8a14e5636b944c2e96ec3fdb"
+    },
+    {
+      "name": "third_party_rust_rust-cexpr",
+      "path": "third_party/rust/crates/rust-cexpr",
+      "revision": "dbfd8f603484ea197b8c5be0daba4c59700e2b63"
+    },
+    {
+      "name": "third_party_rust_rust-openssl",
+      "path": "third_party/rust/crates/rust-openssl",
+      "revision": "69c28e25030d731945ed8734de197a2a3cbcce59"
+    },
+    {
+      "name": "third_party_rust_rustc-hash",
+      "path": "third_party/rust/crates/rustc-hash",
+      "revision": "95f7623ec901633978fd2c9d3a5e5ebd94d2d4ad"
+    },
+    {
+      "name": "third_party_rust_rustix",
+      "path": "third_party/rust/crates/rustix",
+      "revision": "2b8c3cc46a9d02e44d8a0719991bfc7565818e7e"
+    },
+    {
+      "name": "third_party_rust_serde",
+      "path": "third_party/rust/crates/serde",
+      "revision": "9dae17d74fbfb56729e0dfe051610159b7cf17a9"
+    },
+    {
+      "name": "third_party_rust_shlex",
+      "path": "third_party/rust/crates/shlex",
+      "revision": "885430644452b250256a9b1dc803e5a61980f845"
+    },
+    {
+      "name": "third_party_rust_static-assertions-rs",
+      "path": "third_party/rust/crates/static-assertions-rs",
+      "revision": "5a366776e1518bda2e05e64ca4341eb6c86afa9d"
+    },
+    {
+      "name": "third_party_rust_strsim-rs",
+      "path": "third_party/rust/crates/strsim-rs",
+      "revision": "71e0bbaba1123d79e57277ae9dec72a078975e8e"
+    },
+    {
+      "name": "third_party_rust_syn",
+      "path": "third_party/rust/crates/syn",
+      "revision": "8bcc6c97ede6626898644e220cf2cc77637eadbb"
+    },
+    {
+      "name": "third_party_rust_termcolor",
+      "path": "third_party/rust/crates/termcolor",
+      "revision": "2cc888f86d56f5e99566455df944399dde8aec28"
+    },
+    {
+      "name": "third_party_rust_unicode-ident",
+      "path": "third_party/rust/crates/unicode-ident",
+      "revision": "2ef0c11cb08203f46f732f67fe295a000ed9ab20"
+    },
+    {
+      "name": "third_party_rust_unicode-width",
+      "path": "third_party/rust/crates/unicode-width",
+      "revision": "2acb8b6a734292bea680ed7a1c91346fd1fbdc87"
+    },
+    {
+      "name": "third_party_rust_version_check",
+      "path": "third_party/rust/crates/version_check",
+      "revision": "3c1b24972bc74c6a47e025df481ea7ab6b740994"
+    },
+    {
+      "name": "third_party_rust_which-rs",
+      "path": "third_party/rust/crates/which-rs",
+      "revision": "22962cf63cda0b8ba456a545f7461d9f9072a81e"
+    },
+    {
+      "name": "third_party_rust_rust",
+      "path": "third_party/rust/rust",
+      "revision": "3a7a241e520c76780b6b9ab9223e4453979d7601"
+    },
+    {
+      "name": "third_party_sane-airscan",
+      "path": "third_party/sane-airscan",
+      "revision": "01e2f67b2e3a1fd8bd531cb1091d84a64864a294"
+    },
+    {
+      "name": "third_party_selinux",
+      "path": "third_party/selinux",
+      "revision": "50551684481f036feed566d30676f08867015d6b"
+    },
+    {
+      "name": "third_party_skia",
+      "path": "third_party/skia",
+      "revision": "e90be76815b2d01c00237c7ab4cee527aca6576f"
+    },
+    {
+      "name": "third_party_sonic",
+      "path": "third_party/sonic",
+      "revision": "8d4c9a54ed508f9cc43e3362b85358349d3c3df2"
+    },
+    {
+      "name": "third_party_spirv-headers",
+      "path": "third_party/spirv-headers",
+      "revision": "a74bcfd405c336c6076e304fdcda690ed7e72a8e"
+    },
+    {
+      "name": "third_party_spirv-tools",
+      "path": "third_party/spirv-tools",
+      "revision": "5dc13cc32cbe4c829e738c9e8fb8e895d238f6f8"
+    },
+    {
+      "name": "third_party_sqlite",
+      "path": "third_party/sqlite",
+      "revision": "d4583b9f12ec65b7fe316e49f4102cb3f35d6906"
+    },
+    {
+      "name": "third_party_tex-hyphen",
+      "path": "third_party/tex-hyphen",
+      "revision": "a6370d35abe986548425933743083aff64c45c33"
+    },
+    {
+      "name": "third_party_toybox",
+      "path": "third_party/toybox",
+      "revision": "6e7d558fe7bfb55880073e36f18b7d8f9e31ea16"
+    },
+    {
+      "name": "third_party_typescript",
+      "path": "third_party/typescript",
+      "revision": "9807f3fd8754d91cf3f18891a277408ae741d8d3"
+    },
+    {
+      "name": "third_party_tzdata",
+      "path": "third_party/tzdata",
+      "revision": "eb9cebdfb5a748f99551e27886c42de926f22629"
+    },
+    {
+      "name": "third_party_unity",
+      "path": "third_party/unity",
+      "revision": "d3ffab559a177a171b87cb1bbd4c6d611a439e28"
+    },
+    {
+      "name": "third_party_vixl",
+      "path": "third_party/vixl",
+      "revision": "53ba5b4392242d67cbeaa9a95da5514bd62f09c5"
+    },
+    {
+      "name": "third_party_vk-gl-cts",
+      "path": "third_party/vk-gl-cts",
+      "revision": "9536bc43fa66beb1a89fad20030156c49ad4e982"
+    },
+    {
+      "name": "third_party_vma",
+      "path": "third_party/vma",
+      "revision": "c410a5c6d510ca5f7127c8932360176b1efa8975"
+    },
+    {
+      "name": "third_party_vulkan-headers",
+      "path": "third_party/vulkan-headers",
+      "revision": "05dad78c59f7e40d2c05708aae59e716c777c9ec"
+    },
+    {
+      "name": "third_party_vulkan-loader",
+      "path": "third_party/vulkan-loader",
+      "revision": "2a3e35b84a405e5f66102a16b978baed268953e3"
+    },
+    {
+      "name": "third_party_weex-loader",
+      "path": "third_party/weex-loader",
+      "revision": "16c8da2d8ba45a6c5f40e8d3a67fef7c858b4b36"
+    },
+    {
+      "name": "third_party_wpa_supplicant",
+      "path": "third_party/wpa_supplicant",
+      "revision": "966df143fda86a2ef75ca2a182d853d5fa480495"
+    },
+    {
+      "name": "third_party_xmp_toolkit_sdk",
+      "path": "third_party/xmp_toolkit_sdk",
+      "revision": "9c78ab05e587a7cdfed68425c27e6068b0d7e3df"
+    },
+    {
+      "name": "third_party_zlib",
+      "path": "third_party/zlib",
+      "revision": "511031649072e0ab25558c5b837243fff35f4fc3"
+    },
+    {
+      "name": "vendor_hihope",
+      "path": "vendor/hihope",
+      "revision": "c168631ffe39d4c556361841d7ffe30d1f5ef207"
+    },
+    {
+      "name": "vendor_hisilicon",
+      "path": "vendor/hisilicon",
+      "revision": "8e93f06abf258293ddab40988533e49203cda349"
+    },
+    {
+      "name": "vendor_ohemu",
+      "path": "vendor/ohemu",
+      "revision": "b56c5a95ec590543691278b85afe9fe228744163"
+    },
+    {
+      "name": "vendor_revoview",
+      "path": "vendor/revoview",
+      "revision": "5a409163b97f2c9ca6d601a6d2a21ecf959df43c"
+    }
+  ]
+}

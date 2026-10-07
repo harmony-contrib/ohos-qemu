@@ -1,0 +1,21 @@
+diff --git a/src/third_party/swiftshader/src/Reactor/BUILD.gn b/src/third_party/swiftshader/src/Reactor/BUILD.gn
+--- a/src/third_party/swiftshader/src/Reactor/BUILD.gn
++++ b/src/third_party/swiftshader/src/Reactor/BUILD.gn
+@@ -109,7 +109,7 @@ if (supports_subzero) {
+     if (is_win) {
+       include_dirs +=
+           [ "../../third_party/llvm-subzero/build/Windows/include/" ]
+-    } else if (is_linux || is_chromeos) {
++    } else if (is_linux || is_chromeos || is_ohos) {
+       include_dirs += [ "../../third_party/llvm-subzero/build/Linux/include/" ]
+     } else if (is_fuchsia) {
+       include_dirs +=
+@@ -158,7 +158,7 @@ if (supports_subzero) {
+           cflags += [ "-Wno-sign-compare" ]
+         }
+       }
+-    } else if (is_linux || is_chromeos || is_mac || is_fuchsia) {
++    } else if (is_linux || is_chromeos || is_mac || is_fuchsia || is_ohos) {
+       cflags += [ "-Wno-macro-redefined" ]
+     }
+ 

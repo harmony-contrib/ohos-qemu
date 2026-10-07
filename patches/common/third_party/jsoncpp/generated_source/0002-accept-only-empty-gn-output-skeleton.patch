@@ -1,0 +1,34 @@
+diff --git a/third_party/jsoncpp/install.py b/third_party/jsoncpp/install.py
+--- a/third_party/jsoncpp/install.py
++++ b/third_party/jsoncpp/install.py
+@@ -66,6 +66,21 @@
+             raise ValueError("missing jsoncpp generated output: " + relative)
+ 
+ 
++def empty_gn_skeleton(tree):
++    # GN may create source-output parent directories before this action.
++    # Only an entirely directory-only, known-output skeleton is incomplete
++    # generation, never a nonempty/partial/unsafe previous generated tree.
++    if tree.is_symlink() or not tree.is_dir():
++        return False
++    allowed = {str(parent) for name in OUTPUTS
++               for parent in PurePosixPath(name).parents if str(parent) != "."}
++    for entry in tree.rglob("*"):
++        if (entry.is_symlink() or not entry.is_dir()
++                or str(entry.relative_to(tree)) not in allowed):
++            return False
++    return True
++
++
+ def install(source, generated):
+     source = Path(source).resolve()
+     archive = validate_archive(source)
+@@ -76,7 +91,7 @@
+         raise ValueError("jsoncpp generation must not write into source")
+     generated.mkdir(parents=True, exist_ok=True)
+     destination = generated / TREE
+-    if destination.exists() or destination.is_symlink():
++    if (destination.exists() or destination.is_symlink()) and not empty_gn_skeleton(destination):
+         verify_tree(destination)
+     # GN consumes only generated sources and headers. A unique staging tree
+     # avoids source writes and cross-product extraction/removal races.

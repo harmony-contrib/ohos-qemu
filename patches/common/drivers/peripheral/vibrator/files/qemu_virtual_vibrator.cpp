@@ -30,6 +30,7 @@ constexpr int32_t QEMU_DEVICE_ID = 0;
 constexpr int32_t QEMU_VIBRATOR_ID = 0;
 constexpr int32_t QEMU_VIBRATOR_POSITION = 0;
 constexpr int32_t QEMU_PRESET_DURATION_MS = 100;
+constexpr const char *QEMU_TIMER_EFFECT = "haptic.clock.timer";
 
 bool IsQemuVibrator(const DeviceVibratorInfo &info)
 {
@@ -61,6 +62,9 @@ public:
     {
         if (effectType.empty()) {
             return HDF_ERR_INVALID_PARAM;
+        }
+        if (effectType != QEMU_TIMER_EFFECT) {
+            return HDF_ERR_NOT_SUPPORT;
         }
         SetTimedState(QEMU_PRESET_DURATION_MS);
         return HDF_SUCCESS;
@@ -108,32 +112,42 @@ public:
         if (effect.effects.empty()) {
             return HDF_ERR_INVALID_PARAM;
         }
+        if (effect.type != VDI_EFFECT_TYPE_TIME) {
+            return effect.type == VDI_EFFECT_TYPE_PRIMITIVE ? HDF_ERR_NOT_SUPPORT : HDF_ERR_INVALID_PARAM;
+        }
 
+        uint64_t startTime = 0;
         uint64_t duration = 0;
-        for (const auto &item : effect.effects) {
-            if (effect.type == VDI_EFFECT_TYPE_TIME) {
-                if (item.timeEffect.delay < 0 || item.timeEffect.time <= 0) {
-                    return HDF_ERR_INVALID_PARAM;
-                }
-                duration += static_cast<uint64_t>(item.timeEffect.delay) +
-                    static_cast<uint64_t>(item.timeEffect.time);
-            } else if (effect.type == VDI_EFFECT_TYPE_PRIMITIVE) {
-                if (item.primitiveEffect.delay < 0) {
-                    return HDF_ERR_INVALID_PARAM;
-                }
-                duration += static_cast<uint64_t>(item.primitiveEffect.delay) + QEMU_PRESET_DURATION_MS;
-            } else {
+        for (size_t index = 0; index < effect.effects.size(); ++index) {
+            const auto &item = effect.effects[index].timeEffect;
+            if (item.delay < 0 || item.time < 0) {
                 return HDF_ERR_INVALID_PARAM;
             }
+            // TransformTime emits delays between event starts, not after the
+            // preceding event ends. Its last item is a zero-duration stop.
+            if (item.time == 0 && (index + 1 != effect.effects.size() ||
+                item.intensity != 0 || item.frequency != 0)) {
+                return HDF_ERR_INVALID_PARAM;
+            }
+            startTime += static_cast<uint64_t>(item.delay);
+            const uint64_t endTime = startTime + static_cast<uint64_t>(item.time);
+            if (endTime > UINT32_MAX) {
+                return HDF_ERR_INVALID_PARAM;
+            }
+            duration = std::max(duration, endTime);
         }
-        SetTimedState(static_cast<uint32_t>(std::min<uint64_t>(duration, UINT32_MAX)));
+        if (duration == 0) {
+            StopState();
+        } else {
+            SetTimedState(static_cast<uint32_t>(duration));
+        }
         return HDF_SUCCESS;
     }
 
     int32_t GetEffectInfo(const std::string &effectType, HdfEffectInfoVdi &effectInfo) override
     {
-        effectInfo.duration = effectType.empty() ? 0 : QEMU_PRESET_DURATION_MS;
-        effectInfo.isSupportEffect = !effectType.empty();
+        effectInfo.isSupportEffect = effectType == QEMU_TIMER_EFFECT;
+        effectInfo.duration = effectInfo.isSupportEffect ? QEMU_PRESET_DURATION_MS : 0;
         return effectType.empty() ? HDF_ERR_INVALID_PARAM : HDF_SUCCESS;
     }
 
@@ -152,7 +166,7 @@ public:
 
     int32_t GetHapticCapacity(HapticCapacityVdi &capacity) override
     {
-        capacity = {false, false, false, QEMU_VIBRATOR_ID, false, 0};
+        capacity = {false, false, true, QEMU_VIBRATOR_ID, false, 0};
         return HDF_SUCCESS;
     }
 

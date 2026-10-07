@@ -74,8 +74,11 @@ Environment:
                        Host-prepared Git cache for the pinned QEMU Mesa 21.3.3
                        source revision, default: $CACHE_ROOT/git-mirrors/
                        qemu-mesa/third_party_mesa3d.git
+  QEMU_SERIAL_SOURCE_REPO
+                       Read-only fixed Serial SIG git cache for 2in1, default:
+                       $CACHE_ROOT/git-mirrors/busmanager_serial_manager.c05fbbf.git
   QEMU_FIX_ACCESS_TOKENID_ABI
-                       Backport access_tokenid ABI used by current userspace, default: 1
+                       Real Linux 6.6 permission bitmap ioctl and SPM detection, default: 1
   QEMU_FIX_SYSTEM_COMPAT_SYMLINKS
                        Map ramdisk /system to /usr/system, add
                        /bin/init -> /system/bin/init, and add
@@ -123,6 +126,15 @@ Environment:
   JSVM_ENGINE_ARTIFACTS
                        M144 artifact root, default:
                        $CACHE_ROOT/artifacts/jsvm-m144
+  QEMU_VULKAN_COMPONENT
+                       Install the QEMU SwiftShader Vulkan ICD. Values:
+                       auto (default), 1, or 0.
+  QEMU_VULKAN_ARTIFACTS
+                       SwiftShader artifact root, default:
+                       $CACHE_ROOT/artifacts/swiftshader-m144
+  QEMU_AVC_ARTIFACTS    Required pinned real software AVC backend/provenance for
+                       every selected ABI, default: $CACHE_ROOT/artifacts/avc-m144
+                       Build with scripts/build_m144_avc_encoder.sh first.
   ARMV7A_PRODUCT_COMPONENT
                        Apply the armv7a_virt product components, default: 1
   STANDARD_VPN_COMPONENT
@@ -175,8 +187,10 @@ PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
 PATCH_ROOT="${SCRIPT_DIR}/../patches"
 ARMV7A_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/armv7a_product/apply.sh"
 VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/apply.sh"
+QEMU_VULKAN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/components/qemu_vulkan/apply.sh"
 QEMU_2IN1_PROFILE_SCRIPT="${PATCH_ROOT}/2in1/product_profile/apply.sh"
 SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/sceneboard_runtime/apply.sh"
+PHONE_SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/phone/sceneboard_runtime/apply.sh"
 QEMU_PHONE_PROFILE_SCRIPT="${PATCH_ROOT}/phone/product_profile/apply.sh"
 QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
 QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh"
@@ -185,6 +199,78 @@ QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply
 QEMU_ACCESSIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh"
 NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/native_child_process/apply.sh"
 QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
+LOCATION_NDK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location_ndk/apply.sh"
+ETHERNET_API26_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_api26/apply.sh"
+NETMANAGER_API26_FEATURES_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/api26_features/apply.sh"
+VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_dialog_bundle/apply.sh"
+DHW_UI_PREINSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/dhardware_preinstall/apply.sh"
+QEMU_AUDIO_DEVICE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/qemu_audio_device/apply.sh"
+QEMU_AUDIO_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/audio_profile/apply.sh"
+QEMU_AUDIO_POLICY_7_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/audio_policy_7/apply.sh"
+QEMU_CAMERA_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/camera_profile/apply.sh"
+QEMU_CAMERA_USB_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/usb_backend/apply.sh"
+QEMU_CAMERA_VIVID_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/vivid_capture/apply.sh"
+QEMU_CAMERA_JPEG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/jpeg_rotation/apply.sh"
+QEMU_CAMERA_JPEG_CAPTURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/jpeg_capture/apply.sh"
+QEMU_CAMERA_FORK_TIMESTAMP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/fork_timestamp/apply.sh"
+QEMU_THERMAL_HDI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/thermal/qemu_backend/apply.sh"
+QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/qemu_backend/apply.sh"
+QEMU_THERMAL_CLIENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/client_reply/apply.sh"
+QEMU_THERMAL_NAPI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/napi_contract/apply.sh"
+QEMU_VIVID_KERNEL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/vivid_capture/apply.sh"
+QEMU_WLAN_RADIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_radio/apply.sh"
+VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/vivid_capture/apply.sh"
+SETTINGS_NAVIGATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/network_navigation/apply.sh"
+PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/permission_manager/open_setting/apply.sh"
+MATRIX4_EXPORTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/matrix4_exports/apply.sh"
+BACKUP_INIT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/filemanagement/app_file_service/backup_init/apply.sh"
+MODULE_UPDATE_INIT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/update/sys_installer/module_update_init/apply.sh"
+USAGE_STATS_INIT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/device_usage_statistics/init_profile/apply.sh"
+HUKS_COMPATIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/huks/compatibility_bin/apply.sh"
+QEMU_KERNEL_CAPABILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/kernel_capability/apply.sh"
+QEMU_HOST_GN_EXECUTION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/host_gn_execution/apply.sh"
+QEMU_POWER_WAKELOCKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/power_wakelocks/apply.sh"
+QEMU_POWER_BUTTON_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_power_button/apply.sh"
+QEMU_VIRTIO_GPU_S2IDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_virtio_gpu_s2idle/apply.sh"
+QEMU_BINDER_ASYNC_SENDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/binder_async_sender/apply.sh"
+QEMU_BINDER_CONNECTOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/ipc/binder_connector_initialization/apply.sh"
+QEMU_BINDER_OBJECT_SAFETY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/ipc/binder_object_safety/apply.sh"
+RS_ASYNC_CALLER_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/async_caller_identity/apply.sh"
+QEMU_KERNEL_DEPENDENCIES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/kernel_build_dependencies/apply.sh"
+DMABUF_PROCESS_INFO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/dmabuf_process_info/apply.sh"
+ACCESS_TOKEN_ABI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/access_token_abi/apply.sh"
+RENDER_CONNECTION_REPLY_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/render_connection_reply/apply.sh"
+RS_YUV_CPU_FALLBACK_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/yuv_cpu_fallback/apply.sh"
+SHARED_FENCE_OWNER_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_surface/shared_fence_owner/apply.sh"
+ACCESS_TOKEN_SPM_HANDSHAKE_SCRIPT="${PATCH_ROOT}/common/base/security/access_token/kernel_spm_handshake/apply.sh"
+APPSPAWN_KERNEL_USER_ID_SCRIPT="${PATCH_ROOT}/common/base/startup/appspawn/kernel_user_id/apply.sh"
+APPSPAWN_RENDER_PID_NAMESPACE_SCRIPT="${PATCH_ROOT}/common/base/startup/appspawn/render_pid_namespace/apply.sh"
+I18N_INIT_OWNERSHIP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/init_ownership/apply.sh"
+I18N_BUILTIN_DATA_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/builtin_data/apply.sh"
+I18N_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/business_error/apply.sh"
+CERTIFICATE_EMPTY_LISTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/certificate_manager/empty_lists/apply.sh"
+CONTACT_SYNC_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/contacts_data/sync_mode/apply.sh"
+AUDIO_DEVICE_BLOCK_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/device_block_status/apply.sh"
+PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/fusion_asset_type/apply.sh"
+ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/config_install/apply.sh"
+CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/source_provider/apply.sh"
+CALENDAR_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/calendar_provider/apply.sh"
+CALENDAR_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/calendar_provider/apply.sh"
+SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
+AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
+QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
+AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_library_path/apply.sh"
+AUDIO_SUITE_DSP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_dsp/apply.sh"
+NOTICE_READONLY_INPUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/notice/readonly_input/apply.sh"
+LIBJPEG_RELEASE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/libjpeg-turbo/release_3_1_0/apply.sh"
+JSONCPP_GENERATED_SOURCE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/jsoncpp/generated_source/apply.sh"
+SERIAL_METADATA_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/security/selinux_adapter/serial_metadata/apply.sh"
+SERIAL_MANAGER_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/busmanager/serial_manager/apply.sh"
+SERIAL_DIALOG_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/usb/usb_manager/serial_dialog/apply.sh"
+SERIAL_DEVICES_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/startup/init/serial_devices/apply.sh"
+SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/device/qemu/serial_usb_endpoint/apply.sh"
+FUSION_ACCOUNTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/fusion_accounts/apply.sh"
+VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/vulkan-loader/ohos_surface_dispatch/apply.sh"
 RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
 SDK_CORTEX_M_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/musl/cortex_m_sdk/apply.sh"
 GITHUB_LFS_ASSET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/github_lfs_assets/apply.sh"
@@ -230,7 +316,11 @@ CLEAN_KERNEL_OBJ="${CLEAN_KERNEL_OBJ:-0}"
 NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
+SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
+PATCH_COMPONENTS_ONLY="${PATCH_COMPONENTS_ONLY:-0}"
 SKIP_APT="${SKIP_APT:-0}"
+export QEMU_HOST_GN_QEMU_USER="${QEMU_HOST_GN_QEMU_USER:-0}"
+case "${QEMU_HOST_GN_QEMU_USER}" in 0|1) ;; *) echo 'QEMU_HOST_GN_QEMU_USER must be 0 or 1' >&2; exit 2 ;; esac
 SKIP_REPO_SYNC="${SKIP_REPO_SYNC:-0}"
 SKIP_PREBUILTS="${SKIP_PREBUILTS:-0}"
 SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
@@ -238,8 +328,9 @@ ALLOW_NON_DOCKER="${ALLOW_NON_DOCKER:-0}"
 GIT_LFS_PATHS="${GIT_LFS_PATHS:-applications/standard/hap base/web/webview foundation/arkui/ace_engine third_party/icu third_party/libphonenumber}"
 OHOS_LFS_ASSET_ROOT="${OHOS_LFS_ASSET_ROOT:-${CACHE_ROOT}/artifacts/openharmony-7.0-lfs}"
 QEMU_MESA_REVISION_CACHE="${QEMU_MESA_REVISION_CACHE:-${CACHE_ROOT}/git-mirrors/qemu-mesa/third_party_mesa3d.git}"
+QEMU_SERIAL_SOURCE_REPO="${QEMU_SERIAL_SOURCE_REPO:-${CACHE_ROOT}/git-mirrors/busmanager_serial_manager.c05fbbf.git}"
 export QEMU_MESA_REVISION_CACHE
-QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI:-${QEMU_FIX_ACCESS_TOKENID_SPM:-1}}"
+QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI:-1}"
 QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS:-1}"
 QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION="${QEMU_FIX_CASE_INSENSITIVE_SELINUX_VERSION:-1}"
 QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN="${QEMU_FIX_CASE_INSENSITIVE_XMP_ENDIAN:-1}"
@@ -253,6 +344,11 @@ QEMU_QOS_COMPONENT="${QEMU_QOS_COMPONENT:-1}"
 QEMU_VIBRATOR_COMPONENT="${QEMU_VIBRATOR_COMPONENT:-1}"
 QEMU_ACCESSIBILITY_COMPONENT="${QEMU_ACCESSIBILITY_COMPONENT:-1}"
 QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-auto}"
+QEMU_VULKAN_COMPONENT="${QEMU_VULKAN_COMPONENT:-auto}"
+QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/swiftshader-m144-7.0}"
+QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/avc-m144-7.0}"
+QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0}"
+export QEMU_ARKWEB_CORE_ARTIFACTS
 export QEMU_QOS_COMPONENT QEMU_VIBRATOR_COMPONENT QEMU_ACCESSIBILITY_COMPONENT QEMU_JSVM_COMPONENT
 QEMU_CCACHE_ON_OUT_VOLUME="${QEMU_CCACHE_ON_OUT_VOLUME:-0}"
 ARMV7A_PRODUCT_COMPONENT="${ARMV7A_PRODUCT_COMPONENT:-1}"
@@ -264,7 +360,7 @@ PROFILE_STAMP_WRITE_RETRIES="${PROFILE_STAMP_WRITE_RETRIES:-90}"
 PROFILE_STAMP_WRITE_RETRY_DELAY="${PROFILE_STAMP_WRITE_RETRY_DELAY:-2}"
 DEVICE_TYPE="${DEVICE_TYPE:-}"
 DEVICE_TYPE_BUILD_PROFILE="${DEVICE_TYPE_BUILD_PROFILE:-}"
-JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144}"
+JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144-7.0}"
 SDKMANAGER_COMMON_VERSION="${SDKMANAGER_COMMON_VERSION:-2.26.3}"
 SDKMANAGER_COMMON_ARTIFACT="${SDKMANAGER_COMMON_ARTIFACT:-${CACHE_ROOT}/artifacts/npm/sdkmanager-common-${SDKMANAGER_COMMON_VERSION}.tgz}"
 SDKMANAGER_COMMON_SHA512="${SDKMANAGER_COMMON_SHA512:-1f20b632c759085d79321f3b95425b4ee7608fdd1911c1c9965ab16d49f96c3384657f92dd16cda5710fdaa95215908a323cb1d629b9eede1edb500664170533}"
@@ -293,6 +389,11 @@ if [ "${PREPARE_ONLY}" != "0" ] && [ "${PREPARE_ONLY}" != "1" ]; then
   echo "PREPARE_ONLY must be 0 or 1" >&2
   exit 2
 fi
+if [ "${SOURCE_PREPARE_ONLY}" != "0" ] && [ "${SOURCE_PREPARE_ONLY}" != "1" ]; then
+  echo "SOURCE_PREPARE_ONLY must be 0 or 1" >&2
+  exit 2
+fi
+case "${PATCH_COMPONENTS_ONLY}" in 0|1) ;; *) echo 'PATCH_COMPONENTS_ONLY must be 0 or 1' >&2; exit 2 ;; esac
 if [ "${OHOS_GITHUB_FALLBACK}" != "0" ] && [ "${OHOS_GITHUB_FALLBACK}" != "1" ]; then
   echo "OHOS_GITHUB_FALLBACK must be 0 or 1" >&2
   exit 2
@@ -440,6 +541,10 @@ install_deps() {
       echo "host architecture ${host_arch}: skipping x86 multilib apt packages"
       ;;
   esac
+
+  if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ]; then
+    apt_packages+=(qemu-user-static)
+  fi
 
   apt-get install -y --no-install-recommends "${apt_packages[@]}"
 
@@ -796,11 +901,13 @@ prepare_checkout() {
   configure_project_mirror
   if [ "${SKIP_REPO_SYNC}" = "1" ] && [ -d .repo ]; then
     install_github_fallback_manifest
+    python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${OHOS_ROOT}" --install
     if ! verify_manifest_baseline; then
       echo "refusing to reuse a checkout from another baseline; rerun with SKIP_REPO_SYNC=0" >&2
       exit 1
     fi
     verify_github_fallback_revisions
+    python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${OHOS_ROOT}"
     echo "skip repo init/sync; reusing existing checkout at ${OHOS_ROOT}"
     return
   fi
@@ -818,6 +925,7 @@ prepare_checkout() {
   fi
   repo "${repo_init_args[@]}"
   install_github_fallback_manifest
+  python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${OHOS_ROOT}" --install
   verify_manifest_baseline
 
   local repo_sync_args=(
@@ -853,6 +961,7 @@ prepare_checkout() {
   done
   verify_manifest_baseline
   verify_github_fallback_revisions
+  python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${OHOS_ROOT}"
 }
 
 configure_out_volume_ccache() {
@@ -1345,19 +1454,48 @@ PY
     # 2in1 device type and try to rewrite ohos.para before it has been built.
     # The GN argument still selects the compile-time device type.
     build_args+=(--gn-args "device_type=${DEVICE_TYPE}")
-    if [ "${BUILD_ONLY_LOAD}" = "1" ]; then
-      build_args+=(--device-type default)
-    else
-      build_args+=(--device-type "${DEVICE_TYPE}")
-    fi
+    case "${DEVICE_TYPE}" in
+      phone) build_args+=(--gn-args "target_platform=phone") ;;
+      # AccessToken and other platform branches use pc, not the BMS device type
+      # 2in1. Leaving GN's phone default disables PC-only permissions even in
+      # an otherwise complete 2in1 product. Preserve their APL/ACL policy.
+      2in1) build_args+=(--gn-args "target_platform=pc") ;;
+    esac
   fi
   if [ "${NO_PREBUILT_SDK}" = "1" ]; then
     build_args+=(--no-prebuilt-sdk=true)
   fi
+  if [ "${DEVICE_TYPE}" = "phone" ] || [ "${DEVICE_TYPE}" = "2in1" ]; then
+    # Preload the newly patched profile and reject incompatible feature pairs
+    # before compiling tens of thousands of targets. Old preloader output is
+    # not evidence for the current inputs. Explicit false below also prevents
+    # hb's persisted load-only argument leaking into the actual image build.
+    "${build_args[@]}" --device-type default --build-only-load=true 2>&1 | tee "${CACHE_ROOT}/logs/load_${product}_${DEVICE_TYPE}.log"
+    python3 "${PATCH_ROOT}/lib/network_features.py" \
+      --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
+    python3 "${PATCH_ROOT}/lib/graphics_features.py" \
+      --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
+    python3 "${PATCH_ROOT}/lib/audio_features.py" \
+      --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
+    python3 "${PATCH_ROOT}/lib/camera_features.py" \
+      --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
+    if [ "${BUILD_ONLY_LOAD}" = "1" ]; then
+      return
+    fi
+  fi
   if [ "${BUILD_ONLY_LOAD}" = "1" ]; then
-    build_args+=(--build-only-load=true)
+    build_args+=(--device-type default --build-only-load=true)
+  else
+    build_args+=(--build-only-load=false)
+    if [ -n "${DEVICE_TYPE}" ]; then
+      build_args+=(--device-type "${DEVICE_TYPE}")
+    fi
   fi
   "${build_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
+  if [ "${DEVICE_TYPE}" = "phone" ] || [ "${DEVICE_TYPE}" = "2in1" ]; then
+    python3 "${PATCH_ROOT}/lib/permission_profile.py" \
+      --source-root "${OHOS_ROOT}" --product "${product}" --device "${DEVICE_TYPE}"
+  fi
 }
 
 package_product() {
@@ -1493,6 +1631,28 @@ configure_qemu_device_profile() {
   export DEVICE_TYPE_BUILD_PROFILE
 }
 
+apply_qemu_serial_components() {
+  # Never import or change Serial device permissions for a phone build.
+  if [ "${DEVICE_TYPE}" != "2in1" ] || [ "${QEMU_2IN1_PROFILE_COMPONENT}" = "0" ]; then
+    return
+  fi
+  if [ ! -d "${QEMU_SERIAL_SOURCE_REPO}" ]; then
+    echo "missing fixed Serial SIG cache; set QEMU_SERIAL_SOURCE_REPO to a git cache containing c05fbbf156230982aa576373da6ee04378b09ca0" >&2
+    exit 1
+  fi
+  bash "${SERIAL_METADATA_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_metadata_component.log"
+  bash "${SERIAL_MANAGER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    --source-repo "${QEMU_SERIAL_SOURCE_REPO}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_manager_component.log"
+  bash "${SERIAL_DIALOG_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_dialog_component.log"
+  bash "${SERIAL_DEVICES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_devices_component.log"
+  bash "${SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_usb_endpoint_component.log"
+}
+
 apply_armv7a_product_component() {
   if ! product_list_contains armv7a_virt; then
     return
@@ -1528,6 +1688,46 @@ apply_standard_vpn_component() {
     --source-root "${OHOS_ROOT}" \
     "${vpn_args[@]}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_standard_qemu_vpn_component.log"
+}
+
+apply_qemu_vulkan_component() {
+  case "${QEMU_VULKAN_COMPONENT}" in auto|0|1) ;; *)
+    echo "QEMU_VULKAN_COMPONENT must be auto, 0, or 1" >&2
+    exit 2
+  esac
+  if [ "${QEMU_VULKAN_COMPONENT}" = "0" ]; then
+    echo "QEMU_VULKAN_COMPONENT=0; skip QEMU SwiftShader Vulkan ICD"
+    return
+  fi
+
+  local product arch
+  local available=1
+  local vulkan_args=()
+  for product in "${PRODUCTS[@]}"; do
+    case "${product}" in
+      armv7a_virt) arch=arm ;;
+      arm64_virt) arch=arm64 ;;
+      x86_64_virt) arch=x86_64 ;;
+      *) echo "unsupported QEMU Vulkan product: ${product}" >&2; exit 2 ;;
+    esac
+    vulkan_args+=(--product "${product}")
+    if [ ! -s "${QEMU_VULKAN_ARTIFACTS}/${arch}/libvk_swiftshader.so" ]; then
+      available=0
+    fi
+  done
+  if [ "${available}" = "0" ]; then
+    if [ "${QEMU_VULKAN_COMPONENT}" = "1" ]; then
+      echo "QEMU_VULKAN_COMPONENT=1 but SwiftShader artifacts are incomplete: ${QEMU_VULKAN_ARTIFACTS}" >&2
+      exit 1
+    fi
+    echo "SwiftShader artifacts are incomplete; skip optional QEMU Vulkan ICD"
+    return
+  fi
+  bash "${QEMU_VULKAN_COMPONENT_SCRIPT}" \
+    --source-root "${OHOS_ROOT}" \
+    --artifact-root "${QEMU_VULKAN_ARTIFACTS}" \
+    "${vulkan_args[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_vulkan_component.log"
 }
 
 apply_qemu_absolute_pointer_component() {
@@ -2082,18 +2282,16 @@ PY
 }
 
 configure_qemu_product_features() {
-  if [ "${QEMU_FIX_ACCESS_TOKENID_ABI}" != "1" ] && [ "${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}" != "1" ]; then
+  if [ "${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}" != "1" ]; then
     return
   fi
 
   cd "${OHOS_ROOT}"
-  QEMU_FIX_ACCESS_TOKENID_ABI="${QEMU_FIX_ACCESS_TOKENID_ABI}" \
-    QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}" \
+  QEMU_FIX_SYSTEM_COMPAT_SYMLINKS="${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS}" \
     python3 - <<'PY'
 import os
 from pathlib import Path
 
-fix_access_tokenid_abi = os.environ.get("QEMU_FIX_ACCESS_TOKENID_ABI") == "1"
 fix_system_compat_symlinks = os.environ.get("QEMU_FIX_SYSTEM_COMPAT_SYMLINKS") == "1"
 
 if fix_system_compat_symlinks:
@@ -2186,318 +2384,6 @@ if fix_system_compat_symlinks:
         if text != original:
             path.write_text(text)
             print(f"configured {path}: map QEMU /system to /usr/system and add QEMU init/chipset symlinks")
-
-if fix_access_tokenid_abi:
-    for version in ["5.10", "6.6"]:
-        header = Path(f"kernel/linux/linux-{version}/drivers/accesstokenid/access_tokenid.h")
-        source = Path(f"kernel/linux/linux-{version}/drivers/accesstokenid/access_tokenid.c")
-        if not header.exists() or not source.exists():
-            continue
-
-        text = header.read_text()
-        original = text
-        old = '''enum {
-\tGET_TOKEN_ID = 1,
-\tSET_TOKEN_ID,
-\tGET_FTOKEN_ID,
-\tSET_FTOKEN_ID,
-\tADD_PERMISSIONS,
-\tREMOVE_PERMISSIONS,
-\tGET_PERMISSION,
-\tSET_PERMISSION,
-\tACCESS_TOKENID_MAX_NR
-};
-'''
-        new = '''enum {
-\tGET_TOKEN_ID = 1,
-\tSET_TOKEN_ID,
-\tGET_FTOKEN_ID,
-\tSET_FTOKEN_ID,
-\tADD_PERMISSIONS,
-\tREMOVE_PERMISSIONS,
-\tGET_PERMISSION,
-\tSET_PERMISSION,
-\tGET_CLOSEST_HAP_TOKENID,
-\tGET_FAMILY_TOKENIDS,
-\tGET_ALL_PERMISSIONS = 11,
-\tSET_USERID,
-\tGET_USERID,
-\tADD_SPM_ENTRIES = 16,
-\tSET_SPM_ENTRIES,
-\tGET_SPM_ENTRY,
-\tREMOVE_SPM_ENTRY,
-\tSET_REFCNT_UID,
-\tGET_REFCNT_UID,
-\tSET_REFCNT_TOKENID,
-\tGET_REFCNT_TOKENID,
-\tCLEAR_REFCNT_SPAWNID,
-\tGET_SPM_VERSION,
-\tSET_HAP_PTOKENID = 0x1A,
-\tACCESS_TOKENID_MAX_NR
-};
-'''
-        if old in text:
-            text = text.replace(old, new, 1)
-        if "\tSET_USERID," not in text:
-            text = text.replace(
-                "\tGET_ALL_PERMISSIONS = 11,\n\tADD_SPM_ENTRIES = 16,\n",
-                "\tGET_CLOSEST_HAP_TOKENID,\n\tGET_FAMILY_TOKENIDS,\n\tGET_ALL_PERMISSIONS = 11,\n\tSET_USERID,\n\tGET_USERID,\n\tADD_SPM_ENTRIES = 16,\n",
-                1,
-            )
-        if "\tSET_HAP_PTOKENID = 0x1A," not in text:
-            text = text.replace(
-                "\tGET_SPM_VERSION,\n\tACCESS_TOKENID_MAX_NR\n",
-                "\tGET_SPM_VERSION,\n\tSET_HAP_PTOKENID = 0x1A,\n\tACCESS_TOKENID_MAX_NR\n",
-                1,
-            )
-        if "ioctl_get_all_perm_data" not in text:
-            marker = '''typedef struct {
-\tuint32_t token;
-\tuint32_t perm[MAX_PERM_GROUP_NUM];
-} ioctl_add_perm_data;
-'''
-            replacement = marker + '''
-typedef struct {
-\tuint32_t token;
-\tuint32_t perm[MAX_PERM_GROUP_NUM];
-} ioctl_get_all_perm_data;
-
-typedef struct {
-\tuint32_t uid;
-\tuint64_t refcnt;
-} ioctl_spm_uid_ref;
-
-typedef struct {
-\tuint32_t tokenid;
-\tuint64_t refcnt;
-} ioctl_spm_tokenid_ref;
-'''
-            if marker in text:
-                text = text.replace(marker, replacement, 1)
-        if "ACCESS_TOKENID_GET_ALL_PERMISSIONS" not in text:
-            marker = '''#define\tACCESS_TOKENID_SET_PERMISSION \\
-\t_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, ioctl_set_get_perm_data)
-'''
-            replacement = marker + '''#define\tACCESS_TOKENID_GET_ALL_PERMISSIONS \\
-\t_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, GET_ALL_PERMISSIONS, ioctl_get_all_perm_data)
-#define\tACCESS_TOKENID_GET_SPM_VERSION \\
-\t_IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_SPM_VERSION, uint32_t)
-'''
-            if marker in text:
-                text = text.replace(marker, replacement, 1)
-        if text != original:
-            header.write_text(text)
-            print(f"configured {header}: extend access_tokenid ioctl command numbers for SPM")
-
-        text = source.read_text()
-        original = text
-        if "int access_tokenid_get_all_permissions(" not in text:
-            marker = "typedef int (*access_token_id_func)(struct file *file, void __user *arg);"
-            helper_funcs = '''
-int access_tokenid_get_all_permissions(struct file *file, void __user *uarg)
-{
-\tioctl_get_all_perm_data get_all_perm_data;
-\tstruct token_perm_node *target_node = NULL;
-\tstruct token_perm_node *parent_node = NULL;
-
-\tif (copy_from_user(&get_all_perm_data, uarg, sizeof(get_all_perm_data)))
-\t\treturn -EFAULT;
-
-\tread_lock(&token_rwlock);
-\tfind_node_by_token(g_token_perm_root, get_all_perm_data.token, &target_node, &parent_node);
-\tif (target_node != NULL)
-\t\tmemcpy(get_all_perm_data.perm, target_node->perm_data.perm, sizeof(get_all_perm_data.perm));
-\telse
-\t\tmemset(get_all_perm_data.perm, 0, sizeof(get_all_perm_data.perm));
-\tread_unlock(&token_rwlock);
-
-\treturn copy_to_user(uarg, &get_all_perm_data, sizeof(get_all_perm_data)) ? -EFAULT : 0;
-}
-
-int access_tokenid_spm_success(struct file *file, void __user *uarg)
-{
-\treturn 0;
-}
-
-int access_tokenid_get_spm_refcnt_uid(struct file *file, void __user *uarg)
-{
-\tioctl_spm_uid_ref ref = {0};
-
-\tif (copy_from_user(&ref, uarg, sizeof(ref)))
-\t\treturn -EFAULT;
-\tref.refcnt = 0;
-\treturn copy_to_user(uarg, &ref, sizeof(ref)) ? -EFAULT : 0;
-}
-
-int access_tokenid_get_spm_refcnt_tokenid(struct file *file, void __user *uarg)
-{
-\tioctl_spm_tokenid_ref ref = {0};
-
-\tif (copy_from_user(&ref, uarg, sizeof(ref)))
-\t\treturn -EFAULT;
-\tref.refcnt = 0;
-\treturn copy_to_user(uarg, &ref, sizeof(ref)) ? -EFAULT : 0;
-}
-
-int access_tokenid_get_spm_version(struct file *file, void __user *uarg)
-{
-\tuint32_t version = 1;
-
-\treturn copy_to_user(uarg, &version, sizeof(version)) ? -EFAULT : 0;
-}
-
-int access_tokenid_set_userid(struct file *file, void __user *uarg)
-{
-\tuint32_t user_id = 0;
-
-\tif (copy_from_user(&user_id, uarg, sizeof(user_id)))
-\t\treturn -EFAULT;
-\tcurrent->user_id = user_id;
-\treturn 0;
-}
-
-int access_tokenid_get_userid(struct file *file, void __user *uarg)
-{
-\treturn copy_to_user(uarg, &current->user_id, sizeof(current->user_id)) ? -EFAULT : 0;
-}
-
-int access_tokenid_set_hap_ptokenid(struct file *file, void __user *uarg)
-{
-\tuint64_t tokenid = 0;
-
-\tif (copy_from_user(&tokenid, uarg, sizeof(tokenid)))
-\t\treturn -EFAULT;
-\tcurrent->ftoken = tokenid;
-\treturn 0;
-}
-'''
-            if marker in text:
-                text = text.replace(marker, helper_funcs + "\n" + marker, 1)
-        if "int access_tokenid_set_userid(" not in text:
-            marker = "typedef int (*access_token_id_func)(struct file *file, void __user *arg);"
-            helper_funcs = '''
-int access_tokenid_set_userid(struct file *file, void __user *uarg)
-{
-\tuint32_t user_id = 0;
-
-\tif (copy_from_user(&user_id, uarg, sizeof(user_id)))
-\t\treturn -EFAULT;
-\tcurrent->user_id = user_id;
-\treturn 0;
-}
-
-int access_tokenid_get_userid(struct file *file, void __user *uarg)
-{
-\treturn copy_to_user(uarg, &current->user_id, sizeof(current->user_id)) ? -EFAULT : 0;
-}
-
-int access_tokenid_set_hap_ptokenid(struct file *file, void __user *uarg)
-{
-\tuint64_t tokenid = 0;
-
-\tif (copy_from_user(&tokenid, uarg, sizeof(tokenid)))
-\t\treturn -EFAULT;
-\tcurrent->ftoken = tokenid;
-\treturn 0;
-}
-'''
-            if marker in text:
-                text = text.replace(marker, helper_funcs + "\n" + marker, 1)
-        old = '''static access_token_id_func g_func_array[ACCESS_TOKENID_MAX_NR] = {
-\tNULL, /* reserved */
-\taccess_tokenid_get_tokenid,
-\taccess_tokenid_set_tokenid,
-\taccess_tokenid_get_ftokenid,
-\taccess_tokenid_set_ftokenid,
-\taccess_tokenid_add_permission,
-\taccess_tokenid_remove_permission,
-\taccess_tokenid_get_permission,
-\taccess_tokenid_set_permission,
-};
-'''
-        new = '''static access_token_id_func g_func_array[ACCESS_TOKENID_MAX_NR] = {
-\t[GET_TOKEN_ID] = access_tokenid_get_tokenid,
-\t[SET_TOKEN_ID] = access_tokenid_set_tokenid,
-\t[GET_FTOKEN_ID] = access_tokenid_get_ftokenid,
-\t[SET_FTOKEN_ID] = access_tokenid_set_ftokenid,
-\t[ADD_PERMISSIONS] = access_tokenid_add_permission,
-\t[REMOVE_PERMISSIONS] = access_tokenid_remove_permission,
-\t[GET_PERMISSION] = access_tokenid_get_permission,
-\t[SET_PERMISSION] = access_tokenid_set_permission,
-\t[GET_ALL_PERMISSIONS] = access_tokenid_get_all_permissions,
-\t[SET_USERID] = access_tokenid_set_userid,
-\t[GET_USERID] = access_tokenid_get_userid,
-\t[ADD_SPM_ENTRIES] = access_tokenid_spm_success,
-\t[SET_SPM_ENTRIES] = access_tokenid_spm_success,
-\t[GET_SPM_ENTRY] = access_tokenid_spm_success,
-\t[REMOVE_SPM_ENTRY] = access_tokenid_spm_success,
-\t[SET_REFCNT_UID] = access_tokenid_spm_success,
-\t[GET_REFCNT_UID] = access_tokenid_get_spm_refcnt_uid,
-\t[SET_REFCNT_TOKENID] = access_tokenid_spm_success,
-\t[GET_REFCNT_TOKENID] = access_tokenid_get_spm_refcnt_tokenid,
-\t[CLEAR_REFCNT_SPAWNID] = access_tokenid_spm_success,
-\t[GET_SPM_VERSION] = access_tokenid_get_spm_version,
-\t[SET_HAP_PTOKENID] = access_tokenid_set_hap_ptokenid,
-};
-'''
-        if old in text:
-            text = text.replace(old, new, 1)
-        if "\t[SET_USERID] = access_tokenid_set_userid," not in text:
-            text = text.replace(
-                "\t[GET_ALL_PERMISSIONS] = access_tokenid_get_all_permissions,\n\t[ADD_SPM_ENTRIES] = access_tokenid_spm_success,\n",
-                "\t[GET_ALL_PERMISSIONS] = access_tokenid_get_all_permissions,\n\t[SET_USERID] = access_tokenid_set_userid,\n\t[GET_USERID] = access_tokenid_get_userid,\n\t[ADD_SPM_ENTRIES] = access_tokenid_spm_success,\n",
-                1,
-            )
-        if "\t[SET_HAP_PTOKENID] = access_tokenid_set_hap_ptokenid," not in text:
-            text = text.replace(
-                "\t[GET_SPM_VERSION] = access_tokenid_get_spm_version,\n};\n",
-                "\t[GET_SPM_VERSION] = access_tokenid_get_spm_version,\n\t[SET_HAP_PTOKENID] = access_tokenid_set_hap_ptokenid,\n};\n",
-                1,
-            )
-        if text != original:
-            source.write_text(text)
-            print(f"configured {source}: add access_tokenid userspace ABI compatibility for QEMU")
-
-        sched = Path(f"kernel/linux/linux-{version}/include/linux/sched.h")
-        fork = Path(f"kernel/linux/linux-{version}/kernel/fork.c")
-        if sched.exists():
-            text = sched.read_text()
-            original = text
-            old = '''#ifdef CONFIG_ACCESS_TOKENID
-\tu64\t\t\t\ttoken;
-\tu64\t\t\t\tftoken;
-#endif
-'''
-            new = '''#ifdef CONFIG_ACCESS_TOKENID
-\tu64\t\t\t\ttoken;
-\tu64\t\t\t\tftoken;
-\tu32\t\t\t\tuser_id;
-#endif
-'''
-            if old in text:
-                text = text.replace(old, new, 1)
-            if text != original:
-                sched.write_text(text)
-                print(f"configured {sched}: add access_tokenid user_id task field")
-        if fork.exists():
-            text = fork.read_text()
-            original = text
-            old = '''#ifdef CONFIG_ACCESS_TOKENID
-\ttsk->token = orig->token;
-\ttsk->ftoken = 0;
-#endif
-'''
-            new = '''#ifdef CONFIG_ACCESS_TOKENID
-\ttsk->token = orig->token;
-\ttsk->ftoken = 0;
-\ttsk->user_id = orig->user_id;
-#endif
-'''
-            if old in text:
-                text = text.replace(old, new, 1)
-            if text != original:
-                fork.write_text(text)
-                print(f"configured {fork}: inherit access_tokenid user_id on fork")
 
 PY
 }
@@ -2694,11 +2580,13 @@ write_source_preparation_metadata() {
     cd "${OHOS_ROOT}"
     repo manifest -r -o .ohos-qemu-resolved-manifest.xml
   )
+  python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${OHOS_ROOT}" \
+    --resolved-manifest "${OHOS_ROOT}/.ohos-qemu-resolved-manifest.xml"
   python3 - "${OHOS_ROOT}" "${MANIFEST_URL}" "${OHOS_BRANCH}" \
     "${MANIFEST_REVISION}" "${OHOS_PROJECT_MIRROR}" \
     "${OHOS_GITHUB_FALLBACK_MAP}" "${GITHUB_LFS_ASSET_MAP}" \
     "${OHOS_GITHUB_FALLBACK}" \
-    "${DEVICE_TYPE:-default}" "${PRODUCTS[@]}" <<'PY'
+    "${DEVICE_TYPE:-default}" "${SCRIPT_DIR}/openharmony_7_0_release_source_lock.json" "${PRODUCTS[@]}" <<'PY'
 import hashlib
 import json
 import sys
@@ -2716,9 +2604,10 @@ document = {
     "resolved_manifest": resolved.name,
     "resolved_manifest_sha256": hashlib.sha256(resolved.read_bytes()).hexdigest(),
     "prepared_device_type": sys.argv[9],
-    "products": sorted(sys.argv[10:]),
+    "products": sorted(sys.argv[11:]),
     "qemu_mesa_revision": "995d2506d18924b48db0cf40e6ad7de04fc4e558",
     "qemu_mesa_version": "21.3.3",
+    "project_source_lock_sha256": hashlib.sha256(Path(sys.argv[10]).read_bytes()).hexdigest(),
 }
 fallback_map = Path(sys.argv[6])
 asset_map = Path(sys.argv[7])
@@ -2737,7 +2626,7 @@ PY
   echo "QEMU source preparation verified for: ${PRODUCTS[*]}"
 }
 
-main() {
+prepare_source_and_sdk() {
   echo "cache root: ${CACHE_ROOT}"
   echo "home: ${CONTAINER_HOME}"
   echo "OpenHarmony root: ${OHOS_ROOT}"
@@ -2754,6 +2643,7 @@ main() {
   echo "ccache max size: ${CCACHE_MAXSIZE}"
   echo "ccache dir: ${CCACHE_DIR}"
   echo "kernel build jobs: ${KERNEL_BUILD_JOBS}"
+  echo "host GN explicit software CPU: ${QEMU_HOST_GN_QEMU_USER}"
   echo "skip prebuilts: ${SKIP_PREBUILTS}"
   echo "no prebuilt sdk: ${NO_PREBUILT_SDK}"
   echo "build only load: ${BUILD_ONLY_LOAD}"
@@ -2777,13 +2667,16 @@ main() {
   echo "QEMU accessibility component: ${QEMU_ACCESSIBILITY_COMPONENT}"
   echo "QEMU JSVM component: ${QEMU_JSVM_COMPONENT}"
   echo "JSVM M144 artifacts: ${JSVM_ENGINE_ARTIFACTS}"
+  echo "QEMU Vulkan component: ${QEMU_VULKAN_COMPONENT}"
+  echo "QEMU SwiftShader M144 artifacts: ${QEMU_VULKAN_ARTIFACTS}"
+  echo "Required software AVC M144 artifacts: ${QEMU_AVC_ARTIFACTS}"
   echo "ccache on native out volume: ${QEMU_CCACHE_ON_OUT_VOLUME}"
   echo "armv7a product component: ${ARMV7A_PRODUCT_COMPONENT}"
   echo "standard VPN component: ${STANDARD_VPN_COMPONENT}"
   echo "QEMU 2in1 profile component: ${QEMU_2IN1_PROFILE_COMPONENT}"
   echo "device type: ${DEVICE_TYPE:-default (unset)}"
   echo "products: ${PRODUCTS[*]}"
-  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_COMPONENT} absolute_pointer=${QEMU_ABSOLUTE_POINTER_COMPONENT} qos=${QEMU_QOS_COMPONENT} vibrator=${QEMU_VIBRATOR_COMPONENT} audio=1 accessibility=${QEMU_ACCESSIBILITY_COMPONENT} jsvm=${QEMU_JSVM_COMPONENT}"
+  echo "source changes: system_compat_symlinks=${QEMU_FIX_SYSTEM_COMPAT_SYMLINKS} access_tokenid_abi=${QEMU_FIX_ACCESS_TOKENID_ABI} mindspore_non_arm_hwcap=${QEMU_FIX_MINDSPORE_NON_ARM_HWCAP} standard_vpn=${STANDARD_VPN_COMPONENT} vulkan=${QEMU_VULKAN_COMPONENT} absolute_pointer=${QEMU_ABSOLUTE_POINTER_COMPONENT} qos=${QEMU_QOS_COMPONENT} vibrator=${QEMU_VIBRATOR_COMPONENT} audio=1 accessibility=${QEMU_ACCESSIBILITY_COMPONENT} jsvm=${QEMU_JSVM_COMPONENT}"
 
   raise_nofile_limit
   install_deps
@@ -2809,10 +2702,76 @@ main() {
   ensure_python_modules
   ensure_hvigor_sdkmanager_common
   ensure_ohos_sdk_ets_loader_modules
+  if [ "${SOURCE_PREPARE_ONLY}" = 1 ]; then
+    echo "fixed release source/SDK preparation complete; no product traversal or artifact acceptance"
+    return 0
+  fi
+}
+
+# The only aggregate capability patch plan, shared by Docker and both profiles.
+apply_qemu_capability_patch_plan() {
+  bash "${QEMU_HOST_GN_EXECUTION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_host_gn_execution_component.log"
+  if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ]; then
+    test -x /usr/bin/qemu-x86_64-static
+    sha256sum "${OHOS_ROOT}/prebuilts/build-tools/linux-x86/bin/gn" /usr/bin/qemu-x86_64-static
+    /usr/bin/qemu-x86_64-static -cpu max "${OHOS_ROOT}/prebuilts/build-tools/linux-x86/bin/gn" --version
+  fi
+  core_hap_args=(--source-root "${OHOS_ROOT}" --artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS}")
+  for product in "${PRODUCTS[@]}"; do core_hap_args+=(--product "${product}"); done
+  bash "${PATCH_ROOT}/common/base/web/webview/core_hap_source/apply.sh" "${core_hap_args[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_source_arkweb_core.log"
   # armv7a_virt is generated from the arm64 product template. Generate it
   # before applying the managed phone/2in1 inheritance; otherwise the armv7
   # component recreates config.json and silently drops the selected profile.
   apply_armv7a_product_component
+  bash "${QEMU_AUDIO_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_profile_component.log"
+  bash "${QEMU_AUDIO_POLICY_7_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_policy_7_component.log"
+  bash "${QEMU_CAMERA_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_profile_component.log"
+  bash "${QEMU_CAMERA_USB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_usb_component.log"
+  bash "${QEMU_CAMERA_VIVID_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_vivid_component.log"
+  bash "${QEMU_CAMERA_JPEG_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_jpeg_component.log"
+  bash "${QEMU_CAMERA_JPEG_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_jpeg_capture_component.log"
+  bash "${QEMU_CAMERA_FORK_TIMESTAMP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_fork_timestamp_component.log"
+  bash "${QEMU_THERMAL_HDI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_hdi_component.log"
+  bash "${QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_service_component.log"
+  bash "${QEMU_THERMAL_CLIENT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_client_component.log"
+  bash "${QEMU_THERMAL_NAPI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_napi_component.log"
+  bash "${QEMU_VIVID_KERNEL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_vivid_kernel_component.log"
+  bash "${QEMU_WLAN_RADIO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wlan_radio_component.log"
+  bash "${VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_vivid_capture_defaults_component.log"
+  bash "${QEMU_POWER_WAKELOCKS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_power_wakelocks_component.log"
+  bash "${QEMU_POWER_BUTTON_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_power_button_component.log"
+  bash "${QEMU_VIRTIO_GPU_S2IDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_virtio_gpu_s2idle_component.log"
+  bash "${QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_virtio_yuv_buffer_component.log"
+  bash "${QEMU_BINDER_ASYNC_SENDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_binder_async_sender_component.log"
+  bash "${QEMU_BINDER_CONNECTOR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_binder_connector_component.log"
+  bash "${QEMU_BINDER_OBJECT_SAFETY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_binder_object_safety_component.log"
+  bash "${RS_ASYNC_CALLER_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_async_caller_identity_component.log"
+  apply_qemu_serial_components
   configure_qemu_device_profile
   if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_PROFILE_COMPONENT}" != "0" ]; then
     bash "${SCENEBOARD_RUNTIME_COMPONENT_SCRIPT}" \
@@ -2820,6 +2779,12 @@ main() {
       --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
       --native-source-revision "${SCENEBOARD_RUNTIME_NATIVE_REVISION}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_sceneboard_runtime_component.log"
+  elif [ "${DEVICE_TYPE}" = "phone" ] && [ "${QEMU_PHONE_PROFILE_COMPONENT}" != "0" ]; then
+    bash "${PHONE_SCENEBOARD_RUNTIME_COMPONENT_SCRIPT}" \
+      --source-root "${OHOS_ROOT}" \
+      --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
+      --native-source-revision "${SCENEBOARD_RUNTIME_NATIVE_REVISION}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_phone_sceneboard_runtime_component.log"
   fi
   apply_qemu_runtime_components
   bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -2828,6 +2793,101 @@ main() {
   apply_sdk_cortex_m_component
   apply_qemu_audio_component
   apply_standard_vpn_component
+  apply_qemu_vulkan_component
+  bash "${RENDER_CONNECTION_REPLY_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_render_connection_reply.log"
+  bash "${RS_YUV_CPU_FALLBACK_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_yuv_cpu_fallback.log"
+  bash "${SHARED_FENCE_OWNER_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_shared_fence_owner.log"
+  bash "${LOCATION_NDK_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_location_ndk_component.log"
+  bash "${ETHERNET_API26_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_api26_component.log"
+  bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_netmanager_api26_features_component.log"
+  bash "${VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_dialog_bundle_component.log"
+  bash "${DHW_UI_PREINSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_dhardware_ui_preinstall_component.log"
+  bash "${QEMU_AUDIO_DEVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_device_component.log"
+  bash "${SETTINGS_NAVIGATION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_navigation_component.log"
+  bash "${PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_permission_open_setting_component.log"
+  bash "${MATRIX4_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_matrix4_exports_component.log"
+  bash "${BACKUP_INIT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_backup_init_component.log"
+  bash "${MODULE_UPDATE_INIT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_module_update_init_component.log"
+  bash "${USAGE_STATS_INIT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_usage_stats_init_component.log"
+  bash "${HUKS_COMPATIBILITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_huks_compatibility_component.log"
+  bash "${QEMU_KERNEL_CAPABILITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_kernel_capability_component.log"
+  bash "${QEMU_KERNEL_DEPENDENCIES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_kernel_dependencies.log"
+  bash "${DMABUF_PROCESS_INFO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_dmabuf_process_info_component.log"
+  if [ "${QEMU_FIX_ACCESS_TOKENID_ABI}" = "1" ]; then
+    bash "${ACCESS_TOKEN_ABI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_access_token_abi_component.log"
+    bash "${ACCESS_TOKEN_SPM_HANDSHAKE_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_access_token_spm_handshake.log"
+    bash "${APPSPAWN_KERNEL_USER_ID_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_appspawn_kernel_user_id.log"
+  fi
+  bash "${APPSPAWN_RENDER_PID_NAMESPACE_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_appspawn_render_pid_namespace.log"
+  bash "${I18N_INIT_OWNERSHIP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_i18n_init_ownership_component.log"
+  bash "${I18N_BUILTIN_DATA_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_i18n_builtin_data_component.log"
+  bash "${I18N_BUSINESS_ERROR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_i18n_business_error_component.log"
+  bash "${CERTIFICATE_EMPTY_LISTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_certificate_empty_lists_component.log"
+  bash "${CONTACT_SYNC_MODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_contact_sync_mode_component.log"
+  bash "${AUDIO_DEVICE_BLOCK_STATUS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_device_block_status_component.log"
+  bash "${PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_fusion_asset_type_component.log"
+  bash "${ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_alsa_config_install_component.log"
+  bash "${CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_source_provider_component.log"
+  bash "${CALENDAR_PREBUILT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_prebuilt_component.log"
+  bash "${CALENDAR_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_signing_component.log"
+  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_calendar_source_provider.log"
+  bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_eos_component.log"
+  avc_component_args=(--source-root "${OHOS_ROOT}" --artifact-root "${QEMU_AVC_ARTIFACTS}")
+  for avc_product in "${PRODUCTS[@]}"; do
+    avc_component_args+=(--product "${avc_product}")
+  done
+  bash "${SOFTWARE_AVC_COMPONENT_SCRIPT}" "${avc_component_args[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_software_avc_component.log"
+  bash "${AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_library_path_component.log"
+  bash "${AUDIO_SUITE_DSP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_dsp_component.log"
+  bash "${NOTICE_READONLY_INPUT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_notice_readonly_input_component.log"
+  bash "${LIBJPEG_RELEASE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_libjpeg_release_component.log"
+  bash "${JSONCPP_GENERATED_SOURCE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_jsoncpp_generated_source_component.log"
+  bash "${FUSION_ACCOUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_accounts_component.log"
+  bash "${VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_vulkan_ohos_surface_component.log"
   apply_qemu_absolute_pointer_component
   fix_case_insensitive_selinux_version_header
   fix_case_insensitive_xmp_endian_header
@@ -2840,7 +2900,37 @@ main() {
   configure_qemu_product_features
   ensure_flexlexer_header
   clean_corrupt_hvigor_state
+  # Hash actual, fully patched kernel/config/HDI sources before any traversal.
+  # Directory mtimes and a shell environment flag cannot invalidate Ninja's
+  # old Image output; the GN action now consumes this stable fingerprint.
+  python3 "${OHOS_ROOT}/device/qemu/common/virt_full/kernel/kernel_input_evidence.py" \
+    prepare --source-root "${OHOS_ROOT}"
   write_source_preparation_metadata
+}
+
+main() {
+  if [ "${PATCH_COMPONENTS_ONLY}" = 1 ]; then
+    # Prepared Linux sources only: no sync, host install, hb/GN or output pruning.
+    verify_manifest_baseline
+    python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${OHOS_ROOT}"
+    case "${DEVICE_TYPE}" in phone|2in1) ;; *) echo 'patch plan requires phone or 2in1' >&2; exit 2 ;; esac
+    for product in "${PRODUCTS[@]}"; do
+      case "${product}" in armv7a_virt) dependency_arch=arm ;; arm64_virt) dependency_arch=arm64 ;; x86_64_virt) dependency_arch=x86_64 ;; esac
+      python3 "${SCRIPT_DIR}/m144_core_artifacts.py" --artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS}" --arch "${dependency_arch}"
+      python3 "${PATCH_ROOT}/common/arkcompiler/jsvm/validate_artifacts.py" --artifact-root "${JSVM_ENGINE_ARTIFACTS}" --arch "${dependency_arch}"
+      python3 "${SCRIPT_DIR}/verify_m144_swiftshader_artifacts.py" --artifact-root "${QEMU_VULKAN_ARTIFACTS}" --arch "${dependency_arch}"
+      python3 "${PATCH_ROOT}/lib/avc_artifacts.py" --artifact-root "${QEMU_AVC_ARTIFACTS}" --arch "${dependency_arch}"
+    done
+    mkdir -p "${CACHE_ROOT}/logs"
+    restore_staged_sceneboard_lfs_assets
+    apply_github_lfs_asset_component
+    apply_qemu_capability_patch_plan
+    echo "complete ${DEVICE_TYPE} capability patch plan applied; no build or runtime acceptance"
+    return 0
+  fi
+  prepare_source_and_sdk
+  if [ "${SOURCE_PREPARE_ONLY}" = 1 ]; then return 0; fi
+  apply_qemu_capability_patch_plan
 
   if [ "${PREPARE_ONLY}" = "1" ]; then
     echo

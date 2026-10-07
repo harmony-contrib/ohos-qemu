@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Build and package the complete phone/2in1 x armv7a/arm64/x86_64 matrix.
+# Build a representative package, require real behavior evidence, then complete
+# the phone/2in1 x armv7a/arm64/x86_64 matrix. Static checks are not this gate.
 set -euo pipefail
 export LC_ALL=C
 export LANG=C
+
+main() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNNER="${SCRIPT_DIR}/run_2in1_full_build_docker.sh"
@@ -27,10 +30,22 @@ LFS_JOBS="${LFS_JOBS:-10}"
 CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-4G}"
 MATRIX_SKIP_EXISTING="${MATRIX_SKIP_EXISTING:-1}"
 MATRIX_PREPARE_SOURCE="${MATRIX_PREPARE_SOURCE:-1}"
-PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-1}"
 DOCKER_OUT_VOLUME="${DOCKER_OUT_VOLUME:-ohos-qemu-7_0-release-out}"
 DOCKER_SOURCE_VOLUME="${DOCKER_SOURCE_VOLUME:-ohos-qemu-7_0-release-source}"
 DOCKER_SOURCE_REFRESH="${DOCKER_SOURCE_REFRESH:-0}"
+MATRIX_FIRST_PRODUCT="${MATRIX_FIRST_PRODUCT:-arm64_virt}"
+MATRIX_FIRST_DEVICE_TYPE="${MATRIX_FIRST_DEVICE_TYPE:-phone}"
+MATRIX_FIRST_ARTIFACT_EVIDENCE="${MATRIX_FIRST_ARTIFACT_EVIDENCE:-${PACKAGE_ROOT}/first-artifact-behavior.json}"
+MATRIX_FIRST_VALIDATOR="${MATRIX_FIRST_VALIDATOR:-${SCRIPT_DIR}/validate_packaged_qemu.sh}"
+MATRIX_PACKAGE_VALIDATOR="${MATRIX_PACKAGE_VALIDATOR:-${MATRIX_FIRST_VALIDATOR}}"
+MATRIX_RUNTIME_EVIDENCE_ROOT="${MATRIX_RUNTIME_EVIDENCE_ROOT:-${PACKAGE_ROOT}/runtime-evidence}"
+MATRIX_BUILD_DEPENDENCIES="${MATRIX_BUILD_DEPENDENCIES:-1}"
+dependency_recipe="$(python3 "${SCRIPT_DIR}/m144_dependency_recipe.py")"
+MATRIX_DEPENDENCY_ROOT="${MATRIX_DEPENDENCY_ROOT:-${CACHE_ROOT}/artifacts/m144-7.0-dependencies/${dependency_recipe}}"
+matrix_jsvm_shared="${JSVM_ENGINE_ARTIFACTS:-}"
+matrix_vulkan_shared="${QEMU_VULKAN_ARTIFACTS:-}"
+matrix_avc_shared="${QEMU_AVC_ARTIFACTS:-}"
+export QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
 
 if [ ! -x "${RUNNER}" ] || [ ! -x "${VERIFY}" ]; then
   echo "missing executable matrix dependency under ${SCRIPT_DIR}" >&2
@@ -44,10 +59,7 @@ case "${MATRIX_PREPARE_SOURCE}" in 0|1) ;; *)
   echo "MATRIX_PREPARE_SOURCE must be 0 or 1" >&2
   exit 2
 esac
-case "${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" in 0|1) ;; *)
-  echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE must be 0 or 1" >&2
-  exit 2
-esac
+case "${MATRIX_BUILD_DEPENDENCIES}" in 0|1) ;; *) echo 'MATRIX_BUILD_DEPENDENCIES must be 0 or 1' >&2; exit 2 ;; esac
 
 product_arch() {
   case "$1" in
@@ -76,7 +88,59 @@ verify_package() {
     --expect-device-type "${device_type}" \
     --expect-manifest-revision "${MANIFEST_REVISION}" \
     "${full_arg}" \
-    "${scene_args[@]}"
+    ${scene_args[@]+"${scene_args[@]}"}
+}
+
+select_arch_dependencies() {
+  local dependency_arch
+  case "$1" in armv7a_virt) dependency_arch=arm ;; arm64_virt) dependency_arch=arm64 ;; x86_64_virt) dependency_arch=x86_64 ;; *) return 2 ;; esac
+  export JSVM_ENGINE_ARTIFACTS="${matrix_jsvm_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/jsvm}"
+  export QEMU_VULKAN_ARTIFACTS="${matrix_vulkan_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/swiftshader}"
+  export QEMU_AVC_ARTIFACTS="${matrix_avc_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/avc}"
+}
+
+prepare_arch_dependencies() {
+  select_arch_dependencies "$1"
+  if [ "${MATRIX_BUILD_DEPENDENCIES}" = 1 ]; then
+    bash "${SCRIPT_DIR}/prepare_qemu_release_dependencies.sh" "$1"
+  fi
+}
+
+verify_current_inputs() {
+  python3 - "${SCRIPT_DIR}" "$1" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0, sys.argv[1])
+from snapshot_build_inputs import digest_files
+from verify_first_artifact_gate import archive_inputs
+current = digest_files(Path(sys.argv[1]).parent)
+inputs = archive_inputs(Path(sys.argv[2]))
+if (inputs.get('files_sha256') != current or inputs.get('tree_sha256') !=
+        hashlib.sha256(json.dumps(current, sort_keys=True).encode()).hexdigest()):
+    raise SystemExit('archive is not from the current frozen build/validation recipes')
+PY
+}
+
+verify_package_runtime() {
+  local profile="$1" product="$2" directory="$3" archive="$4"
+  local evidence="${MATRIX_RUNTIME_EVIDENCE_ROOT}/$(basename "${directory}").json"
+  if [ "${archive}" = "${first_tar}" ]; then evidence="${MATRIX_FIRST_ARTIFACT_EVIDENCE}"; fi
+  if python3 "${SCRIPT_DIR}/verify_first_artifact_gate.py" --archive "${archive}" \
+    --evidence "${evidence}" --repository "${SCRIPT_DIR}/.." --product "${product}" \
+    --device-type "${profile}" >/dev/null 2>&1; then
+    return 0
+  fi
+  [ -n "${MATRIX_PACKAGE_VALIDATOR}" ] && [ -f "${MATRIX_PACKAGE_VALIDATOR}" ] || {
+    echo 'each delivered archive requires its own real boot/behavior evidence or local package validator' >&2; return 1;
+  }
+  mkdir -p "${MATRIX_RUNTIME_EVIDENCE_ROOT}"
+  bash "${MATRIX_PACKAGE_VALIDATOR}" --package-archive "${archive}" \
+    --package-directory "${directory}" --evidence-output "${evidence}"
+  python3 "${SCRIPT_DIR}/verify_first_artifact_gate.py" --archive "${archive}" \
+    --evidence "${evidence}" --repository "${SCRIPT_DIR}/.." --product "${product}" \
+    --device-type "${profile}"
 }
 
 mkdir -p "${PACKAGE_ROOT}"
@@ -95,7 +159,7 @@ echo "DOCKER_SOURCE_VOLUME=${DOCKER_SOURCE_VOLUME}"
 echo "DOCKER_OUT_VOLUME=${DOCKER_OUT_VOLUME}"
 echo "MATRIX_SKIP_EXISTING=${MATRIX_SKIP_EXISTING}"
 echo "MATRIX_PREPARE_SOURCE=${MATRIX_PREPARE_SOURCE}"
-echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE=${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}"
+echo "Product output is retained until its archive-bound runtime probes finish."
 
 refresh="${DOCKER_SOURCE_REFRESH}"
 expected_packages=0
@@ -115,16 +179,22 @@ if [ "${device_type_count}" -eq 0 ]; then
   echo "DEVICE_TYPES must contain phone and/or 2in1" >&2
   exit 2
 fi
+case " ${PRODUCTS} " in *" ${MATRIX_FIRST_PRODUCT} "*) ;; *)
+  echo 'representative product must be included in PRODUCTS' >&2; exit 2 ;; esac
+case " ${DEVICE_TYPES} " in *" ${MATRIX_FIRST_DEVICE_TYPE} "*) ;; *)
+  echo 'representative device profile must be included in DEVICE_TYPES' >&2; exit 2 ;; esac
+first_arch="$(product_arch "${MATRIX_FIRST_PRODUCT}")"
+first_name="openharmony-qemu-${first_arch}-${MATRIX_FIRST_PRODUCT}-${MATRIX_FIRST_DEVICE_TYPE}"
+first_dir="${PACKAGE_ROOT}/${first_name}"
+first_tar="${first_dir}.tar.gz"
 
-# Establish one clean, pinned source baseline and apply the complete product
-# patch set before any architecture/device-type traversal begins. Individual
-# builds still switch their selected profile, but never discover a missing
-# optional product halfway through a multi-hour matrix.
+# Bootstrap source/SDK without requiring already-built M144 dependencies.
+# Other ABIs' dependencies and profile traversal wait for the real first gate.
 if [ "${MATRIX_PREPARE_SOURCE}" = "1" ]; then
   echo
-  echo "=== prepare pinned OpenHarmony source and patch all matrix products ==="
-  DEVICE_TYPE="${prepare_device_type}" \
-  PRODUCTS="${PRODUCTS}" \
+  echo "=== prepare pinned OpenHarmony source and API26 SDK before dependencies ==="
+  DEVICE_TYPE="${MATRIX_FIRST_DEVICE_TYPE}" \
+  PRODUCTS="${MATRIX_FIRST_PRODUCT}" \
   PACKAGE_ROOT="${PACKAGE_ROOT}" \
   CACHE_ROOT="${CACHE_ROOT}" \
   OHOS_BRANCH="${OHOS_BRANCH}" \
@@ -145,14 +215,42 @@ if [ "${MATRIX_PREPARE_SOURCE}" = "1" ]; then
   SKIP_REPO_SYNC=0 \
   SKIP_PREBUILTS=0 \
   PREPARE_ONLY=1 \
+  SOURCE_PREPARE_ONLY=1 \
     bash "${RUNNER}"
   refresh=0
 fi
+prepare_arch_dependencies "${MATRIX_FIRST_PRODUCT}"
 
-# Build both profiles for one architecture before pruning its product output.
-# A profile switch deliberately removes that product's old output graph, while
-# the final profile is pruned after packaging to limit peak disk use.
+# Never start the remaining five before the new representative archive has
+# actually booted and passed the intended behavior/boundary/regression checks.
+if ! { [ "${MATRIX_SKIP_EXISTING}" = 1 ] && [ -f "${first_tar}" ] &&
+       verify_package "${MATRIX_FIRST_DEVICE_TYPE}" "${first_dir}" >/dev/null 2>&1 &&
+       verify_current_inputs "${first_tar}" >/dev/null 2>&1; }; then
+  DEVICE_TYPE="${MATRIX_FIRST_DEVICE_TYPE}" PRODUCTS="${MATRIX_FIRST_PRODUCT}" \
+  PACKAGE_ROOT="${PACKAGE_ROOT}" CACHE_ROOT="${CACHE_ROOT}" \
+  OHOS_BRANCH="${OHOS_BRANCH}" MANIFEST_REVISION="${MANIFEST_REVISION}" \
+  DOCKER_SOURCE_VOLUME="${DOCKER_SOURCE_VOLUME}" DOCKER_OUT_VOLUME="${DOCKER_OUT_VOLUME}" \
+  DOCKER_SOURCE_REFRESH="${refresh}" SKIP_REPO_SYNC=1 SKIP_PREBUILTS=1 PREPARE_ONLY=0 \
+  PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0 bash "${RUNNER}"
+  refresh=0
+fi
+verify_package "${MATRIX_FIRST_DEVICE_TYPE}" "${first_dir}"
+verify_current_inputs "${first_tar}"
+if [ -n "${MATRIX_FIRST_VALIDATOR}" ]; then
+  [ -f "${MATRIX_FIRST_VALIDATOR}" ] || { echo 'first-artifact validator script is missing' >&2; exit 1; }
+  bash "${MATRIX_FIRST_VALIDATOR}" --package-archive "${first_tar}" \
+    --package-directory "${first_dir}" --evidence-output "${MATRIX_FIRST_ARTIFACT_EVIDENCE}"
+fi
+python3 "${SCRIPT_DIR}/verify_first_artifact_gate.py" \
+  --archive "${first_tar}" --evidence "${MATRIX_FIRST_ARTIFACT_EVIDENCE}" \
+  --repository "${SCRIPT_DIR}/.." --product "${MATRIX_FIRST_PRODUCT}" \
+  --device-type "${MATRIX_FIRST_DEVICE_TYPE}"
+
+# Validate each profile before switching its graph. Runtime probes require the
+# actual just-built private innerkits; never prune them merely because tar
+# succeeded. The profile switch already replaces that product's old graph.
 for product in ${PRODUCTS}; do
+  prepare_arch_dependencies "${product}"
   device_type_index=0
   for device_type in ${DEVICE_TYPES}; do
     device_type_index=$((device_type_index + 1))
@@ -164,17 +262,15 @@ for product in ${PRODUCTS}; do
 
     if [ "${MATRIX_SKIP_EXISTING}" = "1" ] && \
        [ -d "${package_dir}" ] && [ -f "${package_tar}" ] && \
-       verify_package "${device_type}" "${package_dir}" >/dev/null 2>&1; then
+       verify_package "${device_type}" "${package_dir}" >/dev/null 2>&1 && \
+       verify_current_inputs "${package_tar}" >/dev/null 2>&1; then
       echo "reuse verified matrix package: ${package_tar}"
+      verify_package_runtime "${device_type}" "${product}" "${package_dir}" "${package_tar}"
       continue
     fi
 
     echo
     echo "=== build ${device_type} / ${product} ==="
-    prune_after_package=0
-    if [ "${device_type_index}" -eq "${device_type_count}" ]; then
-      prune_after_package="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}"
-    fi
     DEVICE_TYPE="${device_type}" \
     PRODUCTS="${product}" \
     PACKAGE_ROOT="${PACKAGE_ROOT}" \
@@ -198,15 +294,17 @@ for product in ${PRODUCTS}; do
     SKIP_REPO_SYNC=1 \
     SKIP_PREBUILTS=1 \
     PREPARE_ONLY=0 \
-    PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${prune_after_package}" \
+    PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0 \
       bash "${RUNNER}"
     refresh=0
 
     verify_package "${device_type}" "${package_dir}"
+    verify_current_inputs "${package_tar}"
     if [ ! -f "${package_tar}" ]; then
       echo "matrix build did not create archive: ${package_tar}" >&2
       exit 1
     fi
+    verify_package_runtime "${device_type}" "${product}" "${package_dir}" "${package_tar}"
   done
 done
 
@@ -226,7 +324,7 @@ fi
 
 LFS_ASSET_MAP_SHA256="$(shasum -a 256 "${LFS_ASSET_MAP}" | awk '{print $1}')"
 python3 - "${PACKAGE_ROOT}" "${expected_packages}" "${MANIFEST_REVISION}" \
-  "${LFS_ASSET_MAP_SHA256}" \
+  "${LFS_ASSET_MAP_SHA256}" "${MATRIX_RUNTIME_EVIDENCE_ROOT}" "${first_tar}" "${MATRIX_FIRST_ARTIFACT_EVIDENCE}" \
   > "${PACKAGE_ROOT}/matrix-manifest.json" <<'PY'
 import hashlib
 import json
@@ -238,6 +336,9 @@ expected_package_count = int(sys.argv[2])
 expected_manifest_revision = sys.argv[3]
 expected_lfs_asset_map_sha256 = sys.argv[4]
 expected_qemu_mesa_revision = "995d2506d18924b48db0cf40e6ad7de04fc4e558"
+runtime_root = Path(sys.argv[5])
+first_archive = Path(sys.argv[6])
+first_evidence = Path(sys.argv[7])
 packages = []
 for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
     package_dir = root / archive.name.removesuffix(".tar.gz")
@@ -258,10 +359,22 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "virtio_multitouch",
         "device_type_full",
     )
-    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with archive.open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(block)
+    digest = digest.hexdigest()
+    runtime_evidence = first_evidence if archive == first_archive else runtime_root / (package_dir.name + '.json')
+    runtime = json.loads(runtime_evidence.read_text())
+    if (runtime.get('scope') != 'new_packaged_qemu_behavior' or runtime.get('first_artifact_behavior_gate_passed') is not True
+            or runtime.get('package', {}).get('sha256') != digest):
+        raise SystemExit('runtime evidence no longer matches delivered archive: ' + archive.name)
     packages.append({
         "archive": archive.name,
         "sha256": digest,
+        "runtime_validated": True,
+        "runtime_evidence": str(runtime_evidence),
+        "runtime_evidence_sha256": hashlib.sha256(runtime_evidence.read_bytes()).hexdigest(),
         "size_bytes": archive.stat().st_size,
         "product": manifest["product"],
         "guest_arch": manifest["guest_arch"],
@@ -288,7 +401,7 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "virtio_multitouch": capabilities.get("virtio_multitouch", False),
         "device_type_full": capabilities.get("device_type_full", False),
         "sceneboard_window_manager": capabilities.get("sceneboard_window_manager", False),
-        "all_required_capabilities": all(
+        "all_required_packaging_capabilities": all(
             capabilities.get(name, False) for name in required_capability_names
         ) and (manifest["device_type"] != "2in1" or
                capabilities.get("sceneboard_window_manager") is True)
@@ -317,11 +430,11 @@ if len(packages) != expected_package_count:
 missing_capabilities = [
     package["archive"]
     for package in packages
-    if not package["all_required_capabilities"]
+    if not package["all_required_packaging_capabilities"] or not package['runtime_validated']
 ]
 if missing_capabilities:
     raise SystemExit(
-        "required capability contract failed: " + ", ".join(missing_capabilities)
+        "required packaging/runtime contract failed: " + ", ".join(missing_capabilities)
     )
 document = {
     "schema_version": 1,
@@ -336,3 +449,6 @@ echo "matrix complete: ${expected_packages} verified packages"
 find "${PACKAGE_ROOT}" -maxdepth 1 -type f -name 'openharmony-qemu-*.tar.gz' -print | sort
 echo "checksums: ${PACKAGE_ROOT}/SHA256SUMS"
 echo "manifest:  ${PACKAGE_ROOT}/matrix-manifest.json"
+}
+
+main "$@"

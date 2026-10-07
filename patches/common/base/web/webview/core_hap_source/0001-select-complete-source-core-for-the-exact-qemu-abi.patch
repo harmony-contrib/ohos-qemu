@@ -1,0 +1,19 @@
+diff --git a/base/web/webview/ohos_nweb/BUILD.gn b/base/web/webview/ohos_nweb/BUILD.gn
+--- a/base/web/webview/ohos_nweb/BUILD.gn
++++ b/base/web/webview/ohos_nweb/BUILD.gn
+@@ -19,12 +19,12 @@
+ webview_root_path = webview_path
+ if (target_cpu == "arm64") {
+-  web_source = "prebuilts/arm64/ArkWebCore.hap"
++  web_source = "qemu-core/arm64/ArkWebCore.hap"
+   defines = [ "webview_arm64" ]
+ } else if (target_cpu == "arm") {
+-  web_source = "prebuilts/arm/ArkWebCore.hap"
++  web_source = "qemu-core/arm/ArkWebCore.hap"
+   defines = []
+ } else if (target_cpu == "x86_64") {
+-  web_source = "prebuilts/arm64/ArkWebCore.hap"
++  web_source = "qemu-core/x86_64/ArkWebCore.hap"
+   defines = [ "webview_x86_64" ]
+ }
+ 

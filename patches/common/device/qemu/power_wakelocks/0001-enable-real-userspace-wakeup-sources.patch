@@ -1,0 +1,41 @@
+diff --git a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+@@ -526,7 +526,9 @@
+ CONFIG_PM_SLEEP=y
+ CONFIG_PM_SLEEP_SMP=y
+ # CONFIG_PM_AUTOSLEEP is not set
+ # CONFIG_PM_USERSPACE_AUTOSLEEP is not set
+-# CONFIG_PM_WAKELOCKS is not set
++CONFIG_PM_WAKELOCKS=y
++CONFIG_PM_WAKELOCKS_LIMIT=100
++CONFIG_PM_WAKELOCKS_GC=y
+ CONFIG_PM=y
+ # CONFIG_PM_DEBUG is not set
+diff --git a/device/qemu/common/virt_full/kernel/arm_virt_defconfig b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+@@ -650,5 +650,8 @@
+-# CONFIG_SUSPEND is not set
++CONFIG_SUSPEND=y
+ # CONFIG_HIBERNATION is not set
++CONFIG_PM_WAKELOCKS=y
++CONFIG_PM_WAKELOCKS_LIMIT=100
++CONFIG_PM_WAKELOCKS_GC=y
+ CONFIG_PM=y
+ # CONFIG_PM_DEBUG is not set
+ # CONFIG_APM_EMULATION is not set
+diff --git a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+@@ -528,7 +528,9 @@
+ CONFIG_PM_SLEEP=y
+ CONFIG_PM_SLEEP_SMP=y
+ # CONFIG_PM_AUTOSLEEP is not set
+ # CONFIG_PM_USERSPACE_AUTOSLEEP is not set
+-# CONFIG_PM_WAKELOCKS is not set
++CONFIG_PM_WAKELOCKS=y
++CONFIG_PM_WAKELOCKS_LIMIT=100
++CONFIG_PM_WAKELOCKS_GC=y
+ CONFIG_PM=y
+ # CONFIG_PM_DEBUG is not set

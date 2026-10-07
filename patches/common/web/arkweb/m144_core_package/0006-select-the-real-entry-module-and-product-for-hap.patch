@@ -1,0 +1,12 @@
+diff --git a/src/arkweb/build/hap/build_hap_rk.py b/src/arkweb/build/hap/build_hap_rk.py
+--- a/src/arkweb/build/hap/build_hap_rk.py
++++ b/src/arkweb/build/hap/build_hap_rk.py
+@@ -121,6 +121,7 @@
+     self._build([
+-        '--mode=module', 'clean', '-p', 'debuggable=false', 'assembleHap',
++        '--mode=module', '-p', 'module=entry@default', '-p', 'product=default',
++        'clean', '-p', 'debuggable=false', 'assembleHap',
+         '--no-daemon'
+     ])
+ 
+     _hap = os.path.join(

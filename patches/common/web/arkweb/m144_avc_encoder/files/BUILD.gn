@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Harmony Contrib
+# SPDX-License-Identifier: Apache-2.0
+shared_library("avcenc_ohos") {
+  sources = [ "qemu_avc_encoder.cc" ]
+  include_dirs = [
+    ".",
+    "//third_party/openh264/src/codec/api",
+  ]
+  deps = [ "//third_party/openh264:encoder" ]
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [ "//build/config/compiler:no_chromium_code" ]
+  output_name = "avcenc_ohos.z"
+  inputs = [ "avcenc.map" ]
+  ldflags =
+      [ "-Wl,--version-script=" + rebase_path("avcenc.map", root_build_dir) ]
+}

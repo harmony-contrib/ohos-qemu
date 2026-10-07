@@ -3,6 +3,10 @@
 # build inside Ubuntu 22.04 Docker (OrbStack / Docker Desktop).
 set -euo pipefail
 
+# Parse the complete launcher before any long-running command. The container
+# already uses a frozen input tree; the host shell must not resume reading an
+# edited worktree script at its previous byte offset after Docker returns.
+main() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CACHE_PREPARER="${SCRIPT_DIR}/prepare_ohos_7_0_release_cache.sh"
@@ -32,6 +36,19 @@ SKIP_APT="${SKIP_APT:-}"
 # Override with DOCKER_PLATFORM=linux/arm64 only if the checkout has a full
 # aarch64 host toolchain set.
 DOCKER_PLATFORM="${DOCKER_PLATFORM:-linux/amd64}"
+QEMU_HOST_GN_QEMU_USER="${QEMU_HOST_GN_QEMU_USER:-auto}"
+case "${QEMU_HOST_GN_QEMU_USER}" in
+  auto)
+    case "$(uname -m)/${DOCKER_PLATFORM}" in
+      arm64/linux/amd64|aarch64/linux/amd64) QEMU_HOST_GN_QEMU_USER=1 ;;
+      *) QEMU_HOST_GN_QEMU_USER=0 ;;
+    esac ;;
+  0|1) ;;
+  *) echo 'QEMU_HOST_GN_QEMU_USER must be auto, 0 or 1' >&2; exit 2 ;;
+esac
+if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ] && [ "${DOCKER_PLATFORM}" != linux/amd64 ]; then
+  echo 'explicit host GN CPU execution requires amd64 Docker' >&2; exit 2
+fi
 # Keep generated output on a native Linux, case-sensitive filesystem. Taihe
 # emits identifiers that differ only by case (for example SourceType and
 # sourceType); placing out/ on macOS VirtioFS corrupts those generated files.
@@ -51,6 +68,7 @@ FALLBACK_JOBS="${FALLBACK_JOBS:-10}"
 FALLBACK_MIRROR_ROOT="${FALLBACK_MIRROR_ROOT:-${CACHE_ROOT}/git-mirrors/openharmony-7.0-release}"
 OHOS_LFS_ASSET_ROOT="${OHOS_LFS_ASSET_ROOT:-${CACHE_ROOT}/artifacts/openharmony-7.0-lfs}"
 QEMU_MESA_REVISION_CACHE="${QEMU_MESA_REVISION_CACHE:-${CACHE_ROOT}/git-mirrors/qemu-mesa/third_party_mesa3d.git}"
+QEMU_SERIAL_SOURCE_REPO="${QEMU_SERIAL_SOURCE_REPO:-${CACHE_ROOT}/git-mirrors/busmanager_serial_manager.c05fbbf.git}"
 LFS_JOBS="${LFS_JOBS:-10}"
 CONTAINER_NO_PROXY="${NO_PROXY:-${no_proxy:-}}"
 if [ -n "${OHOS_GITHUB_NO_PROXY}" ]; then
@@ -62,11 +80,17 @@ SKIP_GIT_LFS="${SKIP_GIT_LFS:-0}"
 BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
 NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
+SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
 PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
 PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
 QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-1}"
+QEMU_VULKAN_COMPONENT="${QEMU_VULKAN_COMPONENT:-1}"
 QEMU_ACCESSIBILITY_COMPONENT="${QEMU_ACCESSIBILITY_COMPONENT:-1}"
-JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144}"
+dependency_recipe="$(python3 "${SCRIPT_DIR}/m144_dependency_recipe.py")"
+JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144-7.0/${dependency_recipe}}"
+QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/swiftshader-m144-7.0/${dependency_recipe}}"
+QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/avc-m144-7.0/${dependency_recipe}}"
+QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
 SCENEBOARD_RUNTIME_ASSET_ROOT="${SCENEBOARD_RUNTIME_ASSET_ROOT:-${CACHE_ROOT}/artifacts/sceneboard-runtime}"
 SCENEBOARD_RUNTIME_NATIVE_REVISION="${SCENEBOARD_RUNTIME_NATIVE_REVISION:-27befcf82a71047a585d725bb8c7805031472e86}"
 SDKMANAGER_COMMON_VERSION="${SDKMANAGER_COMMON_VERSION:-2.26.3}"
@@ -90,6 +114,25 @@ case "${DEVICE_TYPE}" in
     exit 2
     ;;
 esac
+
+SERIAL_CACHE_MOUNT_ARGS=()
+if [ "${DEVICE_TYPE}" = "2in1" ]; then
+  mkdir -p "${CACHE_ROOT}/build-inputs"
+  python3 "${SCRIPT_DIR}/prepare_serial_release_cache.py" --repository "${QEMU_SERIAL_SOURCE_REPO}" \
+    --evidence "${CACHE_ROOT}/build-inputs/serial-cache-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
+  if [ ! -d "${QEMU_SERIAL_SOURCE_REPO}" ]; then
+    echo "missing fixed Serial SIG cache: ${QEMU_SERIAL_SOURCE_REPO}" >&2
+    echo "set QEMU_SERIAL_SOURCE_REPO to a local git cache containing c05fbbf156230982aa576373da6ee04378b09ca0; no moving branch is fetched" >&2
+    exit 1
+  fi
+  serial_cache_revision="$(git -c "safe.directory=${QEMU_SERIAL_SOURCE_REPO}" \
+    -C "${QEMU_SERIAL_SOURCE_REPO}" rev-parse 'c05fbbf156230982aa576373da6ee04378b09ca0^{commit}')"
+  if [ "${serial_cache_revision}" != "c05fbbf156230982aa576373da6ee04378b09ca0" ]; then
+    echo "Serial SIG cache does not contain the pinned commit" >&2
+    exit 1
+  fi
+  SERIAL_CACHE_MOUNT_ARGS=(--mount "type=bind,src=${QEMU_SERIAL_SOURCE_REPO},dst=${QEMU_SERIAL_SOURCE_REPO},readonly")
+fi
 
 mkdir -p "${PACKAGE_ROOT}" "${CONTAINER_HOME}" "${CCACHE_DIR}" "${LOG_DIR}"
 
@@ -129,6 +172,12 @@ fi
 # Detect stale prepared images before the multi-hour OHOS build starts and
 # let the inner build script repair their package set.
 if [ "${SKIP_APT}" = "1" ]; then
+  if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ] && \
+     ! docker run --rm --platform "${DOCKER_PLATFORM}" "${DOCKER_IMAGE}" \
+       bash -lc 'test -x /usr/bin/qemu-x86_64-static'; then
+    echo "${DOCKER_IMAGE} lacks the selected host GN CPU runtime; enabling apt dependency repair"
+    SKIP_APT=0
+  fi
   for requested_product in ${PRODUCTS}; do
     if [ "${requested_product}" = "armv7a_virt" ] && \
        ! docker run --rm --platform "${DOCKER_PLATFORM}" \
@@ -146,12 +195,57 @@ if [ "${DOCKER_SOURCE_SEED}" = "1" ] && [ ! -x "${OHOS_ROOT}/build.sh" ]; then
   exit 1
 fi
 
-if [ "${QEMU_JSVM_COMPONENT}" = "1" ] && \
+if [ "${SOURCE_PREPARE_ONLY}" != 1 ] && [ "${QEMU_JSVM_COMPONENT}" = "1" ] && \
    [ ! -f "${JSVM_ENGINE_ARTIFACTS}/manifest.json" ]; then
   echo "M144 JSVM artifacts are required: ${JSVM_ENGINE_ARTIFACTS}" >&2
   echo "build them first with scripts/build_m144_v8.sh" >&2
   exit 1
 fi
+
+if [ "${SOURCE_PREPARE_ONLY}" != 1 ] && [ "${QEMU_VULKAN_COMPONENT}" = "1" ]; then
+  for requested_product in ${PRODUCTS}; do
+    case "${requested_product}" in
+      armv7a_virt) vulkan_arch=arm ;;
+      arm64_virt) vulkan_arch=arm64 ;;
+      x86_64_virt) vulkan_arch=x86_64 ;;
+      *) echo "unsupported QEMU Vulkan product: ${requested_product}" >&2; exit 2 ;;
+    esac
+    if [ ! -s "${QEMU_VULKAN_ARTIFACTS}/${vulkan_arch}/libvk_swiftshader.so" ]; then
+      echo "M144 SwiftShader ICD is required: ${QEMU_VULKAN_ARTIFACTS}/${vulkan_arch}/libvk_swiftshader.so" >&2
+      echo "build it first with scripts/build_m144_swiftshader.sh ${vulkan_arch}" >&2
+      exit 1
+    fi
+  done
+fi
+
+# A declared software AVC encoder needs its real backend for every selected ABI.
+# Validate before source preparation, not after an expensive build traversal.
+avc_arches=()
+for requested_product in ${PRODUCTS}; do
+  case "${requested_product}" in
+    armv7a_virt) avc_arches+=(arm) ;;
+    arm64_virt) avc_arches+=(arm64) ;;
+    x86_64_virt) avc_arches+=(x86_64) ;;
+    *) echo "unsupported QEMU AVC product: ${requested_product}" >&2; exit 2 ;;
+  esac
+done
+if [ "${SOURCE_PREPARE_ONLY}" != 1 ] && ! python3 "${REPO_ROOT}/patches/lib/avc_artifacts.py" \
+    --artifact-root "${QEMU_AVC_ARTIFACTS}" --arch "${avc_arches[@]}"; then
+  echo "pinned software AVC artifacts are required; build with scripts/build_m144_avc_encoder.sh" >&2
+  exit 1
+fi
+if [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
+  python3 "${REPO_ROOT}/scripts/m144_core_artifacts.py" \
+    --artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS}" --arch "${avc_arches[@]}" \
+    >"${LOG_DIR}/arkweb-source-core-preflight-${DEVICE_TYPE}.json"
+fi
+ARTIFACT_MOUNT_ARGS=()
+for artifact_root in "${JSVM_ENGINE_ARTIFACTS}" "${QEMU_VULKAN_ARTIFACTS}" \
+    "${QEMU_AVC_ARTIFACTS}" "${QEMU_ARKWEB_CORE_ARTIFACTS}"; do
+  if [ -d "${artifact_root}" ]; then
+    ARTIFACT_MOUNT_ARGS+=(--mount "type=bind,src=${artifact_root},dst=${artifact_root},readonly")
+  fi
+done
 
 for volume_name in "${DOCKER_SOURCE_VOLUME}" "${DOCKER_OUT_VOLUME}"; do
   if [[ ! "${volume_name}" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
@@ -261,6 +355,7 @@ echo "OHOS_LFS_ASSET_ROOT=${OHOS_LFS_ASSET_ROOT} LFS_JOBS=${LFS_JOBS}"
 echo "CONTAINER_NO_PROXY=${CONTAINER_NO_PROXY}"
 echo "DOCKER_PLATFORM=${DOCKER_PLATFORM}"
 echo "DOCKER_IMAGE=${DOCKER_IMAGE} SKIP_APT=${SKIP_APT}"
+echo "QEMU_HOST_GN_QEMU_USER=${QEMU_HOST_GN_QEMU_USER} (same pinned GN, explicit host CPU only)"
 echo "DOCKER_SOURCE_VOLUME=${DOCKER_SOURCE_VOLUME} (mounted at ${OHOS_ROOT})"
 echo "DOCKER_SOURCE_SEED=${DOCKER_SOURCE_SEED}"
 echo "DOCKER_OUT_VOLUME=${DOCKER_OUT_VOLUME} (mounted at ${OHOS_ROOT}/out)"
@@ -273,8 +368,11 @@ echo "NO_PREBUILT_SDK=${NO_PREBUILT_SDK}"
 echo "PREPARE_ONLY=${PREPARE_ONLY}"
 echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE=${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}"
 echo "QEMU_JSVM_COMPONENT=${QEMU_JSVM_COMPONENT}"
+echo "QEMU_VULKAN_COMPONENT=${QEMU_VULKAN_COMPONENT}"
 echo "QEMU_ACCESSIBILITY_COMPONENT=${QEMU_ACCESSIBILITY_COMPONENT}"
 echo "JSVM_ENGINE_ARTIFACTS=${JSVM_ENGINE_ARTIFACTS}"
+echo "QEMU_VULKAN_ARTIFACTS=${QEMU_VULKAN_ARTIFACTS}"
+echo "QEMU_AVC_ARTIFACTS=${QEMU_AVC_ARTIFACTS}"
 if [ "${DEVICE_TYPE}" = "2in1" ]; then
   echo "SCENEBOARD_RUNTIME_ASSET_ROOT=${SCENEBOARD_RUNTIME_ASSET_ROOT}"
   echo "SCENEBOARD_RUNTIME_NATIVE_REVISION=${SCENEBOARD_RUNTIME_NATIVE_REVISION}"
@@ -320,12 +418,21 @@ LFS_JOBS="${LFS_JOBS}" \
 
 seed_source_volume
 
+# Keep every long-running build on one immutable scripts/patches snapshot.
+# Reading a bind-mounted shell script while it is edited can even make bash
+# resume at the wrong byte offset after main() returns. Snapshot hashes also
+# identify dirty-worktree inputs which a git commit alone cannot describe.
+mkdir -p "${CACHE_ROOT}/build-inputs"
+BUILD_INPUT_ROOT="$(mktemp -d "${CACHE_ROOT}/build-inputs/${DEVICE_TYPE}-XXXXXX")"
+python3 "${SCRIPT_DIR}/snapshot_build_inputs.py" \
+  --source "${REPO_ROOT}" --destination "${BUILD_INPUT_ROOT}"
+
 # shellcheck disable=SC2086
 set -- ${PRODUCTS}
 
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
-docker run --rm \
+exec docker run --rm \
   --platform "${DOCKER_PLATFORM}" \
   --name "ohos-qemu-${DEVICE_TYPE}-build" \
   --ulimit nofile=1048576:1048576 \
@@ -347,6 +454,7 @@ docker run --rm \
   -e OHOS_FALLBACK_MIRROR_ROOT="${FALLBACK_MIRROR_ROOT}" \
   -e OHOS_LFS_ASSET_ROOT="${OHOS_LFS_ASSET_ROOT}" \
   -e QEMU_MESA_REVISION_CACHE="${QEMU_MESA_REVISION_CACHE}" \
+  -e QEMU_SERIAL_SOURCE_REPO="${QEMU_SERIAL_SOURCE_REPO}" \
   -e DEVICE_TYPE="${DEVICE_TYPE}" \
   -e DEVICE_TYPE_BUILD_PROFILE="${DEVICE_TYPE_BUILD_PROFILE}" \
   -e QEMU_2IN1_PROFILE_COMPONENT="${QEMU_2IN1_PROFILE_COMPONENT}" \
@@ -355,7 +463,12 @@ docker run --rm \
   -e QEMU_VIBRATOR_COMPONENT=1 \
   -e QEMU_ACCESSIBILITY_COMPONENT="${QEMU_ACCESSIBILITY_COMPONENT}" \
   -e QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT}" \
+  -e QEMU_VULKAN_COMPONENT="${QEMU_VULKAN_COMPONENT}" \
   -e JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS}" \
+  -e QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS}" \
+  -e QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS}" \
+  -e QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS}" \
+  -e SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY}" \
   -e SCENEBOARD_RUNTIME_ASSET_ROOT="${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
   -e SCENEBOARD_RUNTIME_NATIVE_REVISION="${SCENEBOARD_RUNTIME_NATIVE_REVISION}" \
   -e SDKMANAGER_COMMON_VERSION="${SDKMANAGER_COMMON_VERSION}" \
@@ -373,6 +486,7 @@ docker run --rm \
   -e PREPARE_ONLY="${PREPARE_ONLY}" \
   -e PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" \
   -e SKIP_APT="${SKIP_APT}" \
+  -e QEMU_HOST_GN_QEMU_USER="${QEMU_HOST_GN_QEMU_USER}" \
   -e STANDARD_VPN_COMPONENT=1 \
   -e QEMU_ABSOLUTE_POINTER_COMPONENT=1 \
   -e ARMV7A_PRODUCT_COMPONENT=1 \
@@ -386,12 +500,18 @@ docker run --rm \
   -e QEMU_FIX_VIRTIOFS_KERNEL_COPY=1 \
   -e QEMU_CCACHE_ON_OUT_VOLUME=1 \
   -e OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE="${OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE:-0}" \
+  -e QEMU_BUILD_INPUT_MANIFEST=/work/build-inputs.json \
   -v "${CACHE_ROOT}:${CACHE_ROOT}" \
+  ${SERIAL_CACHE_MOUNT_ARGS[@]+"${SERIAL_CACHE_MOUNT_ARGS[@]}"} \
   ${PACKAGE_MOUNT_ARGS[@]+"${PACKAGE_MOUNT_ARGS[@]}"} \
+  ${ARTIFACT_MOUNT_ARGS[@]+"${ARTIFACT_MOUNT_ARGS[@]}"} \
   --mount "type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}" \
   --mount "type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out" \
-  -v "${REPO_ROOT}:/work" \
+  -v "${BUILD_INPUT_ROOT}:/work:ro" \
   -w /work \
   --tmpfs /tmp:exec,mode=1777,size=32g \
   "${DOCKER_IMAGE}" \
   bash -lc "ulimit -n ${NOFILE_LIMIT:-1048576} 2>/dev/null || true; ulimit -n; exec bash /work/scripts/build_standard_qemu_in_docker.sh $(printf '%q ' "$@")"
+}
+
+main "$@"

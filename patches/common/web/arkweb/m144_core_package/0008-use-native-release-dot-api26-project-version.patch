@@ -1,0 +1,22 @@
+diff --git a/src/third_party/ohos_nweb_hap/build-profile.json5 b/src/third_party/ohos_nweb_hap/build-profile.json5
+--- a/src/third_party/ohos_nweb_hap/build-profile.json5
++++ b/src/third_party/ohos_nweb_hap/build-profile.json5
+@@ -4,7 +4,7 @@
+     "products": [
+       {
+         "name": "default",
+-        "compileSdkVersion": 26,
++        "compileSdkVersion": "26.0.0",
+         "compatibleSdkVersion": 12,
+         "runtimeOS": "OpenHarmony"
+       },
+diff --git a/src/third_party/ohos_nweb_hap/oh-package.json5 b/src/third_party/ohos_nweb_hap/oh-package.json5
+--- a/src/third_party/ohos_nweb_hap/oh-package.json5
++++ b/src/third_party/ohos_nweb_hap/oh-package.json5
+@@ -1,5 +1,5 @@
+ {
+-  "modelVersion": "5.0.0",
++  "modelVersion": "6.0.0",
+   "name": "nweb",
+   "description": "",
+   "version": "1.0.0",

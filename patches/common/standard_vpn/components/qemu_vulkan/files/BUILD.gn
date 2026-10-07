@@ -1,0 +1,35 @@
+import("//build/ohos.gni")
+import("//device/qemu/common/virt_full/device.gni")
+
+assert(target_cpu == "arm" || target_cpu == "arm64" || target_cpu == "x86_64",
+       "QEMU SwiftShader Vulkan ICD supports arm, arm64, and x86_64 only")
+
+vulkan_lib_dir = "lib64"
+if (target_cpu == "arm") {
+  vulkan_lib_dir = "lib"
+}
+
+ohos_prebuilt_shared_library("libvk_swiftshader") {
+  source = "artifacts/${target_cpu}/libvk_swiftshader.so"
+  install_images = [ "system" ]
+  module_install_dir = vulkan_lib_dir
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+  install_enable = true
+}
+
+ohos_prebuilt_etc("swiftshader.json") {
+  source = "etc/vulkan/icd.d/${target_cpu}/swiftshader.json"
+  install_images = [ "system" ]
+  module_install_dir = "etc/vulkan/icd.d"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+  install_enable = true
+}
+
+group("swiftshader_vulkan") {
+  deps = [
+    ":libvk_swiftshader",
+    ":swiftshader.json",
+  ]
+}

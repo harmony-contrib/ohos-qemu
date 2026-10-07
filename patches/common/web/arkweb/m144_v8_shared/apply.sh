@@ -14,15 +14,11 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \
-  "${SOURCE_ROOT}" "${SCRIPT_DIR}/0001-remove-v8-presubmit-gate-from-build.patch"
-bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0002-define-disabled-arkweb-test-flag.patch"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0003-fix-arkweb-prepare-helper-path.patch"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0004-fix-components-assert-no-deps-list.patch"
-bash "${PATCH_ROOT}/lib/apply_patch.sh" \
-  "${SOURCE_ROOT}" "${SCRIPT_DIR}/0005-enable-ohos-third-party-gn-targets.patch"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0006-configure-swiftshader-llvm-for-ohos.patch"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \

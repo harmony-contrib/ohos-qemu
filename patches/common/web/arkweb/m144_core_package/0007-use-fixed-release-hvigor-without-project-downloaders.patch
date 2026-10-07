@@ -1,0 +1,11 @@
+diff --git a/src/third_party/ohos_nweb_hap/hvigorw b/src/third_party/ohos_nweb_hap/hvigorw
+--- a/src/third_party/ohos_nweb_hap/hvigorw
++++ b/src/third_party/ohos_nweb_hap/hvigorw
+@@ -12,6 +12,6 @@
+ 
+ HVIGOR_APP_HOME=$(dirname $(readlink -f $0))
+-HVIGOR_WRAPPER_SCRIPT=${HVIGOR_APP_HOME}/hvigor/hvigor-wrapper.js
++HVIGOR_WRAPPER_SCRIPT=${OHOS_BASE_SDK_HOME}/hvigor/bin/hvigorw.js
+ warn() {
+ 	echo ""
+ 	echo -e "\033[1;33m`date '+[%Y-%m-%d %H:%M:%S]'`$@\033[0m"

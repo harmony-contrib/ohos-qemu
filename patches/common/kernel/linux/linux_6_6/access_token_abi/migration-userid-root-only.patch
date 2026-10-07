@@ -1,0 +1,15 @@
+diff --git a/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.c b/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.c
+--- a/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.c
++++ b/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.c
+@@ -130,7 +130,9 @@ int access_tokenid_set_userid(struct file *file, void __user *uarg)
+ {
+ 	uint32_t user_id;
+-	/* AppSpawn sets this before dropping root; apps cannot retag themselves. */
+-	if (!check_permission_for_set_token_permission())
++	/* nwebspawn sets its child's account before dropping to renderer uid.
++	 * This exception does not authorize token or permission bitmap writes.
++	 */
++	if (!check_permission_for_set_token_permission() && !uid_eq(current_uid(), NWEBSPAWN_UID))
+ 		return -EPERM;
+ 	if (copy_from_user(&user_id, uarg, sizeof(user_id)))
+ 		return -EFAULT;

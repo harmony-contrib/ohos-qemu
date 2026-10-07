@@ -1,0 +1,12 @@
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/busmanager/serial_manager/system/serial_service.te b/base/security/selinux_adapter/sepolicy/ohos_policy/busmanager/serial_manager/system/serial_service.te
+--- a/base/security/selinux_adapter/sepolicy/ohos_policy/busmanager/serial_manager/system/serial_service.te
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/busmanager/serial_manager/system/serial_service.te
+@@ -90,7 +90,7 @@ allow serial_service dev_bus_usb_file:file { read open getattr };
+ # avc: denied { ioctl } for path="/dev/ttyUSB0" ioctlcmd=0x5415 scontext=u:r:serial_service:s0 tcontext=u:object_r:tty_device:s0 tclass=chr_file permissive=1
+ # avc: denied { ioctl } for path="/dev/ttyUSB0" ioctlcmd=0x5418 scontext=u:r:serial_service:s0 tcontext=u:object_r:tty_device:s0 tclass=chr_file permissive=1
+ # avc: denied { ioctl } for pid=9579 comm="/system/bin/sa_main" path="/dev/ttyUSB0" ioctlcmd=0x540b scontext=u:r:serial_service:s0 tcontext=u:object_r:tty_device:s0 tclass=chr_file permissive=0
+-allow serial_service tty_device:chr_file { read write open lock ioctl };
++allow serial_service tty_device:chr_file { getattr read write open lock ioctl };
+ allowxperm serial_service tty_device:chr_file ioctl { 0x5401 0x5402 0x5409 0x540b 0x5415 0x5418 };
+ 
+ # avc: denied { call } for scontext=u:r:serial_service:s0 tcontext=u:r:debug_hap:s0 tclass=binder permissive=1

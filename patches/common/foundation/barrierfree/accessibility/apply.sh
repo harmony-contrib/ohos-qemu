@@ -18,5 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" \
   "${SOURCE_ROOT}" "${SCRIPT_DIR}/0001-enable-arbitrary-accessibility-ability.patch"
+bash "${PATCH_ROOT}/lib/apply_patch.sh" \
+  "${SOURCE_ROOT}" "${SCRIPT_DIR}/0002-export-dynamic-accessibility-result-enums.patch"
 
-echo "QEMU accessibility management CLI configured"
+echo "QEMU accessibility management CLI and ArkTS 1.1 result enums configured"

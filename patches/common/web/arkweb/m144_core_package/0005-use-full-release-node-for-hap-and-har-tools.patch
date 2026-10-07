@@ -1,0 +1,21 @@
+diff --git a/src/arkweb/build/hap/hap.gni b/src/arkweb/build/hap/hap.gni
+--- a/src/arkweb/build/hap/hap.gni
++++ b/src/arkweb/build/hap/hap.gni
+@@ -37,7 +37,7 @@
+       "--sdk-root",
+       rebase_path("//ohos_sdk", root_build_dir),
+       "--node-root",
+-      rebase_path("//third_party/node/linux/node-linux-x64/", root_build_dir),
++      rebase_path("//ohos_sdk/nodejs/", root_build_dir),
+     ]
+ 
+     _project_root_dir =
+@@ -138,7 +138,7 @@
+       "--sdk-root",
+       rebase_path("//ohos_sdk", root_build_dir),
+       "--node-root",
+-      rebase_path("//third_party/node/linux/node-linux-x64/", root_build_dir),
++      rebase_path("//ohos_sdk/nodejs/", root_build_dir),
+     ]
+ 
+     _project_root_dir =

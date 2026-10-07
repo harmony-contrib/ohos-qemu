@@ -1,0 +1,12 @@
+diff --git a/foundation/graphic/graphic_surface/utils/frame_report/BUILD.gn b/foundation/graphic/graphic_surface/utils/frame_report/BUILD.gn
+--- a/foundation/graphic/graphic_surface/utils/frame_report/BUILD.gn
++++ b/foundation/graphic/graphic_surface/utils/frame_report/BUILD.gn
+@@ -54,7 +54,7 @@ ohos_static_library("frame_report") {
+   }
+ 
+   deps = [
+-    "$graphic_surface_root/sync_fence:sync_fence_static",
++    "$graphic_surface_root/sync_fence:sync_fence",
+   ]
+ 
+   subsystem_name = "graphic"

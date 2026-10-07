@@ -469,6 +469,29 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
     "${file}" "${default_smp}" "${default_mem}" "${default_qemu_bin}" \
     "${default_cpu}"
 
+  # Observe real sleep/wake through a supported option, without editing the
+  # packaged launcher or disabling the guest's power policy.
+  if ! grep -q '^QEMU_KERNEL_LOG_LEVEL=' "${file}"; then
+    local tmp_log_level
+    tmp_log_level="$(mktemp)"
+    awk '
+      { print }
+      /^QEMU_CPU=/ {
+        print "QEMU_KERNEL_LOG_LEVEL=\"${QEMU_KERNEL_LOG_LEVEL:-4}\""
+        print "case \"${QEMU_KERNEL_LOG_LEVEL}\" in"
+        print "  [0-8]) ;;"
+        print "  *) echo \"kernel log level must be 0..8\" >&2; exit 2 ;;"
+        print "esac"
+      }
+    ' "${file}" >"${tmp_log_level}"
+    mv "${tmp_log_level}" "${file}"
+  fi
+  if grep -Eq 'loglevel=[0-9]+' "${file}"; then
+    sed_in_place_extended 's|loglevel=[0-9]+|loglevel=${QEMU_KERNEL_LOG_LEVEL}|g' "${file}"
+  elif ! grep -q 'loglevel=${QEMU_KERNEL_LOG_LEVEL}' "${file}"; then
+    sed_in_place_extended 's|oemmode=rd|oemmode=rd loglevel=${QEMU_KERNEL_LOG_LEVEL}|g' "${file}"
+  fi
+
   # Guest GPU resolution: replace hard-coded xres/yres, then bare virtio-gpu-pci
   # (only when not already followed by ,xres=...).
   sed_in_place_extended \
@@ -564,15 +587,20 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
       fi
     fi
   fi
+  # Preserve the owning launch process for supervision and signal handling.
+  # ARM64 upstream uses eval without exec, which otherwise orphans QEMU when
+  # a boot/test launcher is interrupted. Existing direct exec branches stay.
+  sed_in_place_extended 's#^[[:space:]]*eval "(\$QEMU_CMD|\$\{QEMU_CMD\})#eval "exec \1#' "${file}"
 }
 
-ensure_armv7a_2in1_headless_scanout() {
+ensure_armv7a_sceneboard_headless_scanout() {
   local file="$1"
   local product="$2"
   local device_type_profile="$3"
 
   if [ "${product}" != "armv7a_virt" ] || \
-     [ "${device_type_profile}" != "qemu_2in1_full_source" ]; then
+     { [ "${device_type_profile}" != "qemu_2in1_full_source" ] && \
+       [ "${device_type_profile}" != "qemu_phone_full_source" ]; }; then
     return 0
   fi
 
@@ -583,7 +611,7 @@ ensure_armv7a_2in1_headless_scanout() {
     's|(DISPLAY_ARGS="[^"]*)-display none|\1-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}|' \
     "${file}"
   if ! grep -Fq -- '-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}' "${file}"; then
-    echo "ARMv7a 2in1 launcher is missing its loopback headless scanout" >&2
+    echo "ARMv7a SceneBoard launcher is missing its loopback headless scanout" >&2
     exit 1
   fi
 }
@@ -813,6 +841,7 @@ Options:
       --hdc-port PORT    HDC host TCP port (default: \${DEFAULT_HDC_PORT})
       --vnc-display N    VNC display number (default: \${DEFAULT_VNC_DISPLAY} => TCP \$((5900 + DEFAULT_VNC_DISPLAY)))
       --serial-port PORT Expose guest serial on telnet 127.0.0.1:PORT
+      --kernel-log-level N Kernel console verbosity 0..8 (default: 4)
       --a11y            Enable virtio multitouch and a QMP control socket
       --qmp-socket PATH QMP Unix socket (implies QMP; default with --a11y:
                         /tmp/openharmony-qemu-a11y-<HDC_PORT>.sock)
@@ -824,6 +853,7 @@ CLI flags override environment variables, which override the defaults above.
 Supported environment variables:
   QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
   QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
+  QEMU_KERNEL_LOG_LEVEL
   QEMU_ACCESSIBILITY QEMU_QMP_SOCKET
   QEMU_ACCEL QEMU_BIN QEMU_EXTRA_ARGS
 USAGE
@@ -899,6 +929,10 @@ while [ "\$#" -gt 0 ]; do
       export QEMU_SERIAL_PORT="\${2:?missing serial port}"
       shift 2
       ;;
+    --kernel-log-level)
+      export QEMU_KERNEL_LOG_LEVEL="\${2:?missing kernel log level}"
+      shift 2
+      ;;
     --a11y)
       export QEMU_ACCESSIBILITY=1
       shift
@@ -949,6 +983,7 @@ export QEMU_DISPLAY="\${QEMU_DISPLAY:-\${DEFAULT_DISPLAY}}"
 export QEMU_HDC_HOST_PORT="\${QEMU_HDC_HOST_PORT:-\${DEFAULT_HDC_PORT}}"
 export QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-\${DEFAULT_VNC_DISPLAY}}"
 export QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
+export QEMU_KERNEL_LOG_LEVEL="\${QEMU_KERNEL_LOG_LEVEL:-4}"
 export QEMU_ACCESSIBILITY="\${QEMU_ACCESSIBILITY:-0}"
 export QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-}"
 export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
@@ -967,6 +1002,10 @@ esac
 case "\${QEMU_ACCESSIBILITY}" in
   0|1) ;;
   *) echo "QEMU_ACCESSIBILITY must be 0 or 1, got: \${QEMU_ACCESSIBILITY}" >&2; exit 2 ;;
+esac
+case "\${QEMU_KERNEL_LOG_LEVEL}" in
+  [0-8]) ;;
+  *) echo "kernel log level must be 0..8" >&2; exit 2 ;;
 esac
 
 if [ "\${QEMU_ACCESSIBILITY}" = "1" ]; then
@@ -1036,6 +1075,7 @@ param(
   [int]\$HdcPort,
   [int]\$VncDisplay,
   [int]\$SerialPort,
+  [ValidateRange(0, 8)][int]\$KernelLogLevel,
   [switch]\$A11y,
   [int]\$QmpPort,
   [Alias("a")][string]\$Accel,
@@ -1084,6 +1124,7 @@ if (\$Connect) {
 if (\$PSBoundParameters.ContainsKey("HdcPort")) { \$env:QEMU_HDC_HOST_PORT = "\$HdcPort" }
 if (\$PSBoundParameters.ContainsKey("VncDisplay")) { \$env:QEMU_VNC_DISPLAY = "\$VncDisplay" }
 if (\$PSBoundParameters.ContainsKey("SerialPort")) { \$env:QEMU_SERIAL_PORT = "\$SerialPort" }
+if (\$PSBoundParameters.ContainsKey("KernelLogLevel")) { \$env:QEMU_KERNEL_LOG_LEVEL = "\$KernelLogLevel" }
 if (\$A11y) { \$env:QEMU_ACCESSIBILITY = "1" }
 if (\$PSBoundParameters.ContainsKey("QmpPort")) { \$env:QEMU_QMP_PORT = "\$QmpPort" }
 if (\$Accel) { \$env:QEMU_ACCEL = \$Accel }
@@ -1095,6 +1136,8 @@ if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 \$MemoryValue = if (\$env:QEMU_MEMORY) { \$env:QEMU_MEMORY } else { "\$DefaultMemory" }
 \$CpuValue = if (\$env:QEMU_CPU) { \$env:QEMU_CPU } else { "\$DefaultCpu" }
 \$HdcHostPort = if (\$env:QEMU_HDC_HOST_PORT) { \$env:QEMU_HDC_HOST_PORT } else { "\$DefaultHdcPort" }
+\$KernelLogLevelValue = if (\$env:QEMU_KERNEL_LOG_LEVEL) { \$env:QEMU_KERNEL_LOG_LEVEL } else { "4" }
+if (\$KernelLogLevelValue -notmatch '^[0-8]\$') { throw "kernel log level must be 0..8" }
 \$VncDisplayValue = if (\$env:QEMU_VNC_DISPLAY) { \$env:QEMU_VNC_DISPLAY } else { "\$DefaultVncDisplay" }
 \$GpuDevice = "virtio-gpu-pci,xres=\$Xres,yres=\$Yres"
 
@@ -1151,7 +1194,7 @@ switch (\$DisplayType) {
   }
 }
 
-\$KernelBootArgs = "oemmode=rd buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600"
+\$KernelBootArgs = "oemmode=rd loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600"
 
 \$ArgsList = @(
   "-machine", "q35",
@@ -1233,6 +1276,11 @@ write_package_launcher_readme() {
 
 This package contains an OpenHarmony standard-system QEMU image.
 
+The manifest's capability flags record static packaging checks, not proof that
+an API works. Boot and behavior results belong in a separate report bound to
+this archive's SHA-256. Archive creation or the offline verifier cannot satisfy
+the first-artifact behavior gate.
+
 Install QEMU on the host first, then run one of:
 
 - Linux: \`launch/linux.sh\`
@@ -1254,6 +1302,7 @@ CLI flags override environment variables, which override package defaults.
 | \`-c, --connect host:port\` / \`--hdc-port\` | \`QEMU_HDC_HOST_PORT\` | \`5555\` |
 | \`--vnc-display N\` | \`QEMU_VNC_DISPLAY\` | \`21\` (TCP 5921) |
 | \`--serial-port PORT\` | \`QEMU_SERIAL_PORT\` | unset |
+| \`--kernel-log-level N\` / Windows \`-KernelLogLevel N\` | \`QEMU_KERNEL_LOG_LEVEL\` | \`4\` (0..8) |
 | \`--a11y\` | \`QEMU_ACCESSIBILITY\` | \`0\` |
 | \`--qmp-socket PATH\` | \`QEMU_QMP_SOCKET\` | \`/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock\` with \`--a11y\` |
 | Windows \`-QmpPort PORT\` | \`QEMU_QMP_PORT\` | \`4445\` with \`-A11y\` |
@@ -1388,7 +1437,7 @@ write_full_product_launchers() {
       "${LAUNCHER_QEMU_UNIX}" \
       "${LAUNCHER_DEFAULT_CPU}" \
       "${pointer_device}"
-    ensure_armv7a_2in1_headless_scanout \
+    ensure_armv7a_sceneboard_headless_scanout \
       "${launch_out}/qemu_run.sh" "${product}" "${device_type_profile}"
     if [ "${pointer_device}" = "virtio-tablet-pci" ] && \
        { ! grep -q 'virtio-tablet-pci' "${launch_out}/qemu_run.sh" || \
@@ -1520,11 +1569,10 @@ refresh_package_checksums() {
     find images launch -type f -print0 2>/dev/null \
       | sort -z \
       | xargs -0 shasum -a 256 > SHA256SUMS
-    for metadata in manifest.json device-profile.json README.md; do
-      if [ -f "${metadata}" ]; then
-        shasum -a 256 "${metadata}" >> SHA256SUMS
-      fi
-    done
+    # Include every evidence file, especially frozen build inputs and the
+    # source-built SceneBoard records, not only the original three files.
+    find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
+      | sort -z | xargs -0 shasum -a 256 >> SHA256SUMS
   )
 }
 
@@ -1869,8 +1917,9 @@ inject_standard_qemu_params() {
   debugfs -w -R "write ${ohos_para} /etc/param/ohos.para" "${image}" >/dev/null
   debugfs -w -R "rm /etc/param/hdc.para" "${image}" >/dev/null 2>&1 || true
   debugfs -w -R "write ${hdc_para} /etc/param/hdc.para" "${image}" >/dev/null
-  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
-    python3 "${SCRIPT_DIR}/configure_2in1_runtime.py" "${image}"
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
+     [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
+    python3 "${SCRIPT_DIR}/configure_sceneboard_runtime.py" "${image}"
   fi
   rm -rf "${tmpdir}"
   trap - RETURN
@@ -2207,11 +2256,11 @@ require_image_jsvm_contract() {
   if ! python3 "${SCRIPT_DIR}/verify_runtime_elf_contract.py" \
     --machine "${expected_machine}" --jsvm "${jsvm}" --v8 "${v8}"; then
     rm -rf "${tmpdir}"
-    echo "JSVM/ArkWeb M144 runtime ABI contract failed" >&2
+    echo "JSVM M144 V8 runtime ABI contract failed" >&2
     exit 1
   fi
   rm -rf "${tmpdir}"
-  echo "JSVM/ArkWeb M144 runtime ABI contract verified"
+  echo "JSVM M144 V8 runtime ABI contract verified (not the ArkWeb engine)"
 }
 
 require_image_file_contains() {
@@ -2545,7 +2594,7 @@ verify_qemu_runtime_capabilities() {
       /lib/libv8_shared.so
     require_image_jsvm_contract "${system_image}" "${expected_machine}"
     JSVM_VERIFIED=true
-    echo "QEMU JSVM/ArkWeb M144 capability verified for ${product}"
+    echo "QEMU JSVM M144 V8 capability verified for ${product} (not the ArkWeb engine)"
   fi
 }
 
@@ -2561,12 +2610,19 @@ write_full_device_profile_evidence() {
     *) return ;;
   esac
 
+  python3 "${SCRIPT_DIR}/../patches/lib/permission_profile.py" \
+    --source-root "${source_root}" --product "${product}" --device "${DEVICE_TYPE}" \
+    --output "${package_dir}/permission-profile.json"
+
   python3 - "${source_root}" "${product}" "${package_dir}/device-profile.json" \
-    "${DEVICE_TYPE_PROFILE}" <<'PY'
+    "${DEVICE_TYPE_PROFILE}" "${SCRIPT_DIR}/../patches/lib" <<'PY'
 import hashlib
 import json
 import sys
 from pathlib import Path
+
+sys.path.insert(0, sys.argv[5])
+from device_contract import QEMU_REQUIRED_SYSCAPS, active_official_requirements, retired_declaration_evidence
 
 root = Path(sys.argv[1])
 product = sys.argv[2]
@@ -2599,6 +2655,7 @@ upstream_path = root / profile["upstream"]
 product_param_path = root / "vendor/ohemu/virt/etc/param/product_virt.para"
 parts_path = root / "out/preloader" / product / "parts.json"
 features_path = root / "out/preloader" / product / "features.json"
+syscap_path = root / "out/preloader" / product / "system/etc/syscap.json"
 config_path = root / configs[product]
 app_compatibility_parameter = "const.bms.supportAppTypes=2in1,phone,default,tablet"
 
@@ -2608,6 +2665,7 @@ for path in (
     product_param_path,
     parts_path,
     features_path,
+    syscap_path,
     config_path,
 ):
     if not path.is_file():
@@ -2617,6 +2675,7 @@ metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
 config = json.loads(config_path.read_text(encoding="utf-8"))
 parts_document = json.loads(parts_path.read_text(encoding="utf-8"))
 features_document = json.loads(features_path.read_text(encoding="utf-8"))
+syscap_document = json.loads(syscap_path.read_text(encoding="utf-8"))
 inherit = config.get("inherit", [])
 if effective_profile not in inherit:
     raise SystemExit(f"{config_path} does not inherit {effective_profile}")
@@ -2649,12 +2708,42 @@ required_features = {
     "wifi_feature_non_hdf_driver": True,
     "wifi_feature_non_seperate_p2p": True,
 }
+for overrides in metadata["contract_feature_overrides"].values():
+    required_features.update(overrides)
 for name, expected in required_features.items():
     if features.get(name) is not expected:
         raise SystemExit(f"resolved {device_type} feature {name} is not {expected}")
 if features.get("memmgr_hyperhold_memory") is True:
     raise SystemExit(f"resolved {device_type} profile unexpectedly enables memmgr hyperhold")
-if device_type == "2in1":
+declared_caps = {cap for component in syscap_document["components"] for cap in component.get("syscap", [])}
+recorded_requirements = metadata.get("explicit_qemu_requirements")
+if (not isinstance(recorded_requirements, list) or
+        any(not isinstance(cap, str) for cap in recorded_requirements) or
+        not QEMU_REQUIRED_SYSCAPS.issubset(recorded_requirements)):
+    raise SystemExit("profile metadata omits explicitly requested QEMU capabilities")
+official_requirements = metadata.get("required_official_syscaps")
+if (not isinstance(official_requirements, list) or not official_requirements or
+        any(not isinstance(cap, str) for cap in official_requirements)):
+    raise SystemExit("profile metadata has no valid official device capability requirements")
+required_qemu_caps = (QEMU_REQUIRED_SYSCAPS | set(recorded_requirements) |
+                      set(metadata["enabled_required_syscaps"]) | active_official_requirements(metadata))
+sdk_name = "default" if device_type == "phone" else "2in1"
+sdk_required = set(json.loads((root / f"interface/sdk-js/api/device-define/{sdk_name}.json").read_text())["SysCaps"])
+retired = metadata.get("retired_documented_syscap_names", {})
+if retired != retired_declaration_evidence(root, set(official_requirements), sdk_required):
+    raise SystemExit("retired SysCap evidence does not match current source / SDK")
+for cap, item in retired.items():
+    if item["owning_part"] not in parts:
+        raise SystemExit(f"retired SysCap name {cap} cannot hide a missing part: {item['owning_part']}")
+missing_qemu_caps = sorted(required_qemu_caps - declared_caps)
+if missing_qemu_caps:
+    raise SystemExit("resolved profile lost requested capabilities: " + ", ".join(missing_qemu_caps))
+invalid_caps = sorted(declared_caps.intersection(metadata["excluded_unsupported_syscaps"]))
+if invalid_caps:
+    raise SystemExit("resolved profile still declares excluded capabilities: " + ", ".join(invalid_caps))
+if device_type == "2in1" and "SystemCapability.Communication.NetManager.NetFirewall" not in declared_caps:
+    raise SystemExit("resolved 2in1 profile lost its required NetFirewall capability")
+if device_type in {"phone", "2in1"}:
     runtime = metadata.get("sceneboard_runtime") or {}
     expected_haps = {"SceneBoard.hap", "NotificationManagement.hap", "ThemeService.hap", "ThemeComponent.hap"}
     hashes = runtime.get("hap_sha256", {})
@@ -2664,15 +2753,15 @@ if device_type == "2in1":
         raise SystemExit("renewed SceneBoard runtime evidence is missing")
     for feature, expected in (("window_manager_use_sceneboard", True),):
         if features.get(feature) is not expected:
-            raise SystemExit(f"resolved 2in1 feature {feature} is not {expected}")
-    for parameter in (metadata["pc_window_parameter"], metadata["pc_mode_parameter"]):
+            raise SystemExit(f"resolved {device_type} feature {feature} is not {expected}")
+    for parameter in (metadata["window_layout_parameter"], metadata["sceneboard_mode_parameter"]):
         if parameter not in product_params:
-            raise SystemExit(f"2in1 product parameters are missing {parameter}")
+            raise SystemExit(f"{device_type} product parameters are missing {parameter}")
     if (metadata.get("boot_unlock_events") != [
             "usual.event.USER_UNLOCKED", "usual.event.SCREEN_UNLOCKED"] or
             metadata.get("boot_unlock_trigger") != "bootevent.boot.completed=true" or
             metadata.get("boot_unlock_user_id") != 100):
-        raise SystemExit("2in1 boot-unlock publisher metadata is missing")
+        raise SystemExit("SceneBoard boot-unlock publisher metadata is missing")
 
 evidence = {
     "schema_version": 1,
@@ -2695,15 +2784,26 @@ evidence = {
         "window_architecture_feature": metadata.get("window_architecture_feature"),
         "pc_window_parameter": metadata.get("pc_window_parameter"),
         "pc_mode_parameter": metadata.get("pc_mode_parameter"),
+        "window_layout_parameter": metadata.get("window_layout_parameter"),
+        "sceneboard_mode_parameter": metadata.get("sceneboard_mode_parameter"),
+        "boot_unlock_config": metadata.get("boot_unlock_config"),
         "boot_unlock_events": metadata.get("boot_unlock_events"),
         "boot_unlock_trigger": metadata.get("boot_unlock_trigger"),
         "boot_unlock_user_id": metadata.get("boot_unlock_user_id"),
         "sceneboard_runtime": metadata.get("sceneboard_runtime"),
+        "official_contract_sources": metadata["official_contract_sources"],
+        "required_official_syscaps": metadata["required_official_syscaps"],
+        "retired_documented_syscap_names": metadata.get("retired_documented_syscap_names", {}),
+        "explicit_qemu_requirements": metadata["explicit_qemu_requirements"],
+        "enabled_required_syscaps": metadata["enabled_required_syscaps"],
+        "excluded_unsupported_syscaps": metadata["excluded_unsupported_syscaps"],
+        "contract_feature_overrides": metadata["contract_feature_overrides"],
     },
     "required_parts": required_parts,
     "resolved_parts_count": len(parts),
     "resolved_parts": parts,
     "validated_features": {name: features[name] for name in required_features},
+    "resolved_syscap_sha256": hashlib.sha256(syscap_path.read_bytes()).hexdigest(),
     "memmgr_hyperhold_memory": features.get("memmgr_hyperhold_memory", False),
 }
 output.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -2732,8 +2832,7 @@ PY
     /etc/param/product_virt.para \
     /sys_prod/etc/param/product_virt.para
 
-  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
-    for hap in SceneBoard.hap NotificationManagement.hap ThemeService.hap ThemeComponent.hap; do
+  for hap in SceneBoard.hap NotificationManagement.hap ThemeService.hap ThemeComponent.hap; do
       require_image_path "${system_image}" "SceneBoard ${hap}" \
         "/system/app/SceneBoard/${hap}" "/app/SceneBoard/${hap}"
     done
@@ -2744,6 +2843,9 @@ PY
     require_image_file_contains "${system_image}" "SceneBoard privileged extension" \
       '"bundleName": "com.ohos.sceneboard"' \
       /system/etc/app/install_list_capability.json /etc/app/install_list_capability.json
+  python3 "${SCRIPT_DIR}/record_sceneboard_boot_unlock.py" \
+    --system-image "${system_image}" --package "${package_dir}" --product "${product}"
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
     require_image_file_contains "${sys_prod_image}" "PC window layout" \
       "const.window.multiWindowUIType=FreeFormMultiWindow" \
       /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
@@ -2818,6 +2920,17 @@ case "${PRODUCT}" in
     exit 2
     ;;
 esac
+
+if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
+   [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
+  KERNEL_CPU="${GUEST_ARCH}"
+  [ "${KERNEL_CPU}" != armv7a ] || KERNEL_CPU=arm
+  python3 "${SOURCE_ROOT}/device/qemu/common/virt_full/kernel/kernel_input_evidence.py" \
+    verify --source-root "${SOURCE_ROOT}" --arch "${KERNEL_CPU}" \
+    --image "${IMAGE_DIR}/${KERNEL_FILE}" \
+    --modules-dir "${SOURCE_ROOT}/out/${PRODUCT}/kernel_modules" \
+    --certificate "${IMAGE_DIR}/kernel-inputs.json"
+fi
 
 COMMON_IMAGES=(
   "${KERNEL_FILE}"
@@ -2902,12 +3015,26 @@ cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
 cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 
+if [ -n "${QEMU_BUILD_INPUT_MANIFEST:-}" ]; then
+  if [ ! -f "${QEMU_BUILD_INPUT_MANIFEST}" ]; then
+    echo "build input manifest is missing: ${QEMU_BUILD_INPUT_MANIFEST}" >&2
+    exit 1
+  fi
+  cp "${QEMU_BUILD_INPUT_MANIFEST}" "${PACKAGE_DIR}/build-inputs.json"
+fi
+
 if [ -f "${SOURCE_ROOT}/.ohos-qemu-source-baseline.json" ] && \
    [ -f "${SOURCE_ROOT}/.ohos-qemu-resolved-manifest.xml" ]; then
   cp "${SOURCE_ROOT}/.ohos-qemu-source-baseline.json" \
     "${PACKAGE_DIR}/source-baseline.json"
   cp "${SOURCE_ROOT}/.ohos-qemu-resolved-manifest.xml" \
     "${PACKAGE_DIR}/resolved-manifest.xml"
+fi
+if [ "${DEVICE_TYPE_PROFILE}" = qemu_2in1_full_source ] || [ "${DEVICE_TYPE_PROFILE}" = qemu_phone_full_source ]; then
+  python3 "${SCRIPT_DIR}/openharmony_release_source_lock.py" --source-root "${SOURCE_ROOT}" \
+    --resolved-manifest "${PACKAGE_DIR}/resolved-manifest.xml" \
+    --evidence "${PACKAGE_DIR}/openharmony-project-heads.json"
+  cp "${SCRIPT_DIR}/openharmony_7_0_release_source_lock.json" "${PACKAGE_DIR}/openharmony-project-lock.json"
 fi
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || \
@@ -2923,6 +3050,11 @@ fi
 for file in "${COMMON_IMAGES[@]}"; do
   cp "${IMAGE_DIR}/${file}" "${IMAGES_OUT}/"
 done
+if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
+   [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
+  cp "${IMAGE_DIR}/kernel-inputs.json" "${PACKAGE_DIR}/kernel-inputs.json"
+  cp "${SOURCE_ROOT}/.ohos-qemu-kernel-inputs.json" "${PACKAGE_DIR}/kernel-source-inputs.json"
+fi
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${PRODUCT}" = "armv7a_virt" ]; then
   for file in "${FULL_ONLY_IMAGES[@]}"; do
@@ -2943,13 +3075,46 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${PRODUCT}" \
     "${IMAGES_OUT}/system.img" \
     "${IMAGES_OUT}/vendor.img"
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
+     [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
+    python3 "${SCRIPT_DIR}/verify_arkweb_core_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
+      --source-artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS:?full profile requires verified source core artifacts}" \
+      --output "${PACKAGE_DIR}/arkweb-core-evidence.json"
+    core_arch="${GUEST_ARCH}"
+    if [ "${core_arch}" = armv7a ]; then core_arch=arm; fi
+    cp "${QEMU_ARKWEB_CORE_ARTIFACTS}/${core_arch}/core-artifact.json" "${PACKAGE_DIR}/arkweb-source-core.json"
+    python3 - "${SCRIPT_DIR}" "${QEMU_ARKWEB_CORE_ARTIFACTS}/${core_arch}" "${PACKAGE_DIR}/arkweb-source-core" <<'PY'
+from pathlib import Path
+import shutil
+import sys
+sys.path.insert(0, sys.argv[1])
+from m144_core_artifacts import REPORTS
+source, target = map(Path, sys.argv[2:])
+target.mkdir(exist_ok=False)
+for name in (*REPORTS, 'core-artifact.json'):
+    shutil.copy2(source / name, target / name)
+for name in ('frozen-build-inputs', 'hap-build-inputs'):
+    shutil.copytree(source / name, target / name)
+PY
+    python3 "${SCRIPT_DIR}/verify_shared_fence_owner.py" \
+      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
+      --output "${PACKAGE_DIR}/shared-fence-owner-evidence.json"
+  fi
   write_full_device_profile_evidence \
     "${SOURCE_ROOT}" \
     "${PRODUCT}" \
     "${PACKAGE_DIR}" \
     "${IMAGES_OUT}/system.img" \
     "${IMAGES_OUT}/sys_prod.img"
-  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
+  if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
+     [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
+    python3 "${SCRIPT_DIR}/verify_native_gap_abi_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" \
+      --sdk-c-source "${SOURCE_ROOT}/interface/sdk_c" \
+      --device-profile "${PACKAGE_DIR}/device-profile.json" \
+      --arch "${GUEST_ARCH}" \
+      --output "${PACKAGE_DIR}/native-gap-abi-image.json"
     SCENEBOARD_WINDOW_MANAGER_VERIFIED=true
   fi
 fi
@@ -2977,6 +3142,13 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
     "accessibility": ${ACCESSIBILITY_VERIFIED},
     "qmp_unix": ${ACCESSIBILITY_VERIFIED},
     "cli": true
+  },
+  "validation": {
+    "capability_flags_scope": "static_packaging_contract_only",
+    "new_package_boot_tested": false,
+    "runtime_behavior_tested": false,
+    "first_artifact_behavior_gate_passed": false,
+    "runtime_evidence_location": "external_report_bound_to_archive_sha256"
   },
   "capabilities": {
     "absolute_pointer_sync": ${ABSOLUTE_POINTER_SYNC_VERIFIED},
@@ -3053,13 +3225,19 @@ refresh_package_checksums "${PACKAGE_DIR}"
   cd "${OUTPUT_DIR}"
   # Avoid macOS AppleDouble forks and prefer sparse-aware GNU tar when present.
   export COPYFILE_DISABLE=1
+  # The final path must never expose an in-progress archive to validation or
+  # download consumers. Keep any previously completed package until tar exits
+  # successfully; publish by a same-directory atomic rename.
+  archive_tmp="$(mktemp "${PACKAGE_NAME}.tar.gz.tmp.XXXXXX")"
+  trap 'rm -f "${archive_tmp}"' EXIT
   if command -v gtar >/dev/null 2>&1; then
-    gtar --format=gnu -Sczf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+    gtar --format=gnu -Sczf "${archive_tmp}" "${PACKAGE_NAME}"
   elif tar --help 2>&1 | grep -q -- '--no-mac-metadata'; then
-    tar --no-mac-metadata -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+    tar --no-mac-metadata -czf "${archive_tmp}" "${PACKAGE_NAME}"
   else
-    tar -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+    tar -czf "${archive_tmp}" "${PACKAGE_NAME}"
   fi
+  mv -f "${archive_tmp}" "${PACKAGE_NAME}.tar.gz"
 )
 
 echo "${PACKAGE_DIR}"

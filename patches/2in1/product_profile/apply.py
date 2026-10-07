@@ -8,43 +8,22 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from device_contract import apply_contract_overrides, contract_overlay
+from sceneboard_profile import (any_sceneboard_enabled, configure_sceneboard_runtime,
+                                sceneboard_metadata)
+
 
 UPSTREAM_PROFILE = "productdefine/common/inherit/2in1.json"
 RICH_PROFILE = "productdefine/common/inherit/rich.json"
 EFFECTIVE_PROFILE = "vendor/ohemu/virt/virt_2in1_full.json"
 PROFILE_METADATA = "vendor/ohemu/virt/virt_2in1_full.meta.json"
 PRODUCT_PARAM_FILE = "vendor/ohemu/virt/etc/param/product_virt.para"
-PRODUCT_ETC_BUILD_FILE = "vendor/ohemu/virt/etc/BUILD.gn"
-BOOT_UNLOCK_CONFIG_FILE = "vendor/ohemu/virt/etc/qemu_2in1_unlock.cfg"
-SCENEBOARD_BUILD_FILE = "foundation/window/window_manager/etc/BUILD.gn"
-SCENEBOARD_CONFIG_FILE = "foundation/window/window_manager/etc/sceneboard.config"
-SANITIZER_CHECK_LIST = "vendor/ohemu/virt/security_config/sanitizer_check_list.gni"
-PREINSTALL_LIST = "vendor/ohemu/virt/preinstall-config/install_list.json"
-PREINSTALL_CAPABILITIES = "vendor/ohemu/virt/preinstall-config/install_list_capability.json"
-SCENEBOARD_APP_DIR = "/system/app/SceneBoard"
-SCENEBOARD_BUNDLE = "com.ohos.sceneboard"
-SCENEBOARD_SIGNATURE = "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
 APP_COMPAT_COMMENT = "# QEMU full device-profile compatibility for current system HAPs."
 APP_COMPAT_PARAM = "const.bms.supportAppTypes=2in1,phone,default,tablet"
 PC_WINDOW_COMMENT = "# QEMU 2in1 uses the PC window layout."
 PC_WINDOW_PARAM = "const.window.multiWindowUIType=FreeFormMultiWindow"
 PC_MODE_PARAM = "persist.sceneboard.ispcmode=true"
-BOOT_UNLOCK_EVENTS = [
-    "usual.event.USER_UNLOCKED",
-    "usual.event.SCREEN_UNLOCKED",
-]
-BOOT_UNLOCK_TRIGGER = "bootevent.boot.completed=true"
-BOOT_UNLOCK_USER_ID = 100
-BOOT_UNLOCK_BUILD_BLOCK = """
-# QEMU 2in1 has no interactive lock screen during headless test boots.
-ohos_prebuilt_etc("qemu_2in1_unlock_cfg") {
-  source = "qemu_2in1_unlock.cfg"
-  output = "qemu_2in1_unlock.cfg"
-  relative_install_dir = "init"
-  subsystem_name = virt_subsystem_name
-  part_name = virt_part_name
-}
-""".strip()
 MANAGED_APP_COMPAT_LINES = {
     APP_COMPAT_COMMENT,
     APP_COMPAT_PARAM,
@@ -73,9 +52,14 @@ REQUIRED_2IN1_PARTS = {
     "applications:dlp_manager",
     "arkui:ui_appearance",
     "bundlemanager:bundle_framework",
+    "busmanager:serial_manager",
     "communication:t2stack",
+    "communication:netmanager_base",
+    "communication:netmanager_ext",
     "filemanagement:storage_service",
     "hdf:drivers_peripheral_input",
+    "hdf:drivers_interface_serial",
+    "hdf:drivers_peripheral_serial",
     "multimodalinput:input",
     "security:dlp_permission_service",
     "window:window_manager",
@@ -183,6 +167,26 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # still needs those system applications to finish the first-user switch,
     # so keep their owning part explicit in the effective profile.
     add_component(effective, "applications", "prebuilt_hap")
+    add_component(effective, "thirdparty", "alsa-lib")
+    # The release manifest omits the Serial SIG repository. Its fixed source
+    # is imported before profile generation; select the real service and HDI
+    # together rather than retaining only the SDK/SysCap declaration.
+    add_component(effective, "busmanager", "serial_manager")
+    add_component(effective, "hdf", "drivers_interface_serial")
+    add_component(effective, "hdf", "drivers_peripheral_serial")
+
+    # rich.json installs camera_framework, although the official 2in1 SDK
+    # contract omits Camera.Core and QEMU has no usable Camera VDI. Carry the
+    # existing owner into this profile so the last contract overlay can revoke
+    # only that false declaration. Preserve its existing board settings and
+    # libraries; do not change the shared bundle or the required phone camera.
+    camera_key = ("multimedia", "camera_framework")
+    if camera_key not in component_map(effective):
+        rich_camera = component_map(rich).get(camera_key)
+        if rich_camera is None:
+            die("rich profile lost camera_framework contract owner")
+        add_component(effective, *camera_key)
+        component_map(effective)[camera_key].update(json.loads(json.dumps(rich_camera)))
 
     # 2in1.json intentionally leaves this hardware-interface feature list
     # empty. QEMU's community display VDI requires the rich profile flags, so
@@ -211,6 +215,48 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     if missing:
         die("effective 2in1 profile lost required parts: " + ", ".join(missing))
 
+    contract_metadata = apply_contract_overrides(
+        root, effective, "2in1",
+        {
+            **{
+                f"SystemCapability.DistributedDataManager.CloudSync.{name}": (
+                    "distributeddatamgr", "relational_store",
+                    "Outside the official 2in1 contract; the client hardcodes an absent com.example.cloudsync provider.",
+                ) for name in ("Client", "Config", "Server")
+            },
+            "SystemCapability.FileManagement.DistributedFileService.CloudSync.Core": (
+                "filemanagement", "dfs_service",
+                "Outside the official 2in1 contract; no usable cloud-sync provider is packaged.",
+            ),
+            "SystemCapability.FileManagement.DistributedFileService.CloudSyncManager": (
+                "filemanagement", "dfs_service",
+                "Outside the official 2in1 contract; no usable cloud-sync provider is packaged.",
+            ),
+            "SystemCapability.Multimedia.VideoProcessingEngine": (
+                "multimedia", "media_foundation",
+                "Not in the official 2in1 contract; public processing libraries are not packaged.",
+            ),
+            "SystemCapability.Multimedia.Camera.Core": (
+                "multimedia", "camera_framework",
+                "Outside the official 2in1 SDK contract; QEMU has no usable Camera Host VDI.",
+            ),
+        },
+        {
+            ("communication", "netmanager_base"): {
+                "netmanager_base_enable_feature_net_firewall": True,
+                "netmanager_base_enable_feature_sysvpn": True,
+            },
+            ("communication", "netmanager_ext"): {
+                "netmanager_ext_feature_net_firewall": True,
+                "netmanager_ext_feature_sysvpn": True,
+            },
+            # Pair SceneBoard's logical display tree with the unified renderer,
+            # not the historical QEMU legacy composition configuration.
+            ("graphic", "graphic_2d"): {"graphic_2d_feature_rs_enable_uni_render": True},
+            ("thirdparty", "alsa-lib"): {"alsa_lib_feature_config_enable": True},
+        },
+    )
+
     metadata = {
         "profile": "qemu_2in1_full_source",
         "upstream_profile": UPSTREAM_PROFILE,
@@ -221,13 +267,13 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
         "omitted_unavailable_legacy_components": sorted(omitted),
         "mapped_components": sorted(mapped),
         "app_compatibility_parameter": APP_COMPAT_PARAM,
-        "window_architecture_feature": "window_manager_use_sceneboard = true",
+        **sceneboard_metadata(),
         "pc_window_parameter": PC_WINDOW_PARAM,
         "pc_mode_parameter": PC_MODE_PARAM,
-        "boot_unlock_events": BOOT_UNLOCK_EVENTS,
-        "boot_unlock_trigger": BOOT_UNLOCK_TRIGGER,
-        "boot_unlock_user_id": BOOT_UNLOCK_USER_ID,
+        "window_layout_parameter": PC_WINDOW_PARAM,
+        "sceneboard_mode_parameter": PC_MODE_PARAM,
         "required_parts": sorted(REQUIRED_2IN1_PARTS),
+        **contract_metadata,
     }
     return effective, metadata
 
@@ -240,7 +286,8 @@ def configure_product(root: Path, product: str, enable: bool) -> None:
     if not isinstance(inherit, list):
         die(f"expected inherit array in {path}")
 
-    inherit = [item for item in inherit if item != EFFECTIVE_PROFILE]
+    overlay_path = f"vendor/ohemu/virt/virt_2in1_contract_{product}.json"
+    inherit = [item for item in inherit if item not in (EFFECTIVE_PROFILE, overlay_path)]
     if enable:
         try:
             rich_index = inherit.index(RICH_PROFILE)
@@ -248,6 +295,10 @@ def configure_product(root: Path, product: str, enable: bool) -> None:
             die(f"{path} does not inherit {RICH_PROFILE}")
         inherit.insert(rich_index + 1, EFFECTIVE_PROFILE)
     document["inherit"] = inherit
+    if enable:
+        metadata = load_json(root / PROFILE_METADATA)
+        write_json(root / overlay_path, contract_overlay(root, document, metadata))
+        document["inherit"].append(overlay_path)
     write_json(path, document)
 
 
@@ -325,138 +376,6 @@ def any_2in1_enabled(root: Path) -> bool:
     return False
 
 
-def configure_sceneboard(root: Path, enabled: bool) -> None:
-    """Install the runtime switch required by SceneBoardJudgement."""
-    build_path = root / SCENEBOARD_BUILD_FILE
-    config_path = root / SCENEBOARD_CONFIG_FILE
-    build = build_path.read_text(encoding="utf-8")
-    disabled = "if (!window_manager_use_sceneboard) {"
-    enabled_condition = "if (window_manager_use_sceneboard) {"
-    if build.count(disabled) + build.count(enabled_condition) != 2:
-        die(f"unexpected SceneBoard build configuration: {build_path}")
-    if enabled:
-        build = build.replace(disabled, enabled_condition)
-    else:
-        build = build.replace(enabled_condition, disabled)
-    if build_path.read_text(encoding="utf-8") != build:
-        build_path.write_text(build, encoding="utf-8")
-    expected = "ENABLED\n" if enabled else "DISABLED\n"
-    if config_path.read_text(encoding="utf-8") != expected:
-        config_path.write_text(expected, encoding="utf-8")
-
-
-def configure_sceneboard_cfi_exception(root: Path, enabled: bool) -> None:
-    """The unified build traverses a test-only target without CFI settings."""
-    path = root / SANITIZER_CHECK_LIST
-    content = path.read_text(encoding="utf-8")
-    marker = '  "dm_unittest_common_lite",  # test-only target without CFI settings\n'
-    if enabled:
-        if marker not in content:
-            anchor = 'bypass_window_manager = [\n'
-            if content.count(anchor) != 1:
-                die(f"unexpected CFI exception list: {path}")
-            content = content.replace(anchor, anchor + marker, 1)
-    else:
-        content = content.replace(marker, "")
-    if path.read_text(encoding="utf-8") != content:
-        path.write_text(content, encoding="utf-8")
-
-
-def configure_sceneboard_preinstall(root: Path, enabled: bool) -> None:
-    """Register the SceneBoard HAPs before the first user starts."""
-    entries = (
-        (PREINSTALL_LIST, "app_dir", SCENEBOARD_APP_DIR,
-         {"app_dir": SCENEBOARD_APP_DIR, "removable": False}),
-        (PREINSTALL_CAPABILITIES, "bundleName", SCENEBOARD_BUNDLE,
-         {"bundleName": SCENEBOARD_BUNDLE,
-          "app_signature": [SCENEBOARD_SIGNATURE],
-          "allowAppUsePrivilegeExtension": True,
-          "allowAppDesktopIconHide": True}),
-    )
-    for relative, key, value, expected in entries:
-        path = root / relative
-        document = load_json(path)
-        install_list = document.get("install_list")
-        if not isinstance(install_list, list):
-            die(f"missing install_list in {path}")
-        matches = [entry for entry in install_list if entry.get(key) == value]
-        if matches and matches != [expected]:
-            die(f"conflicting SceneBoard preinstall entry in {path}")
-        if enabled and not matches:
-            install_list.insert(0, expected)
-            write_json(path, document)
-        elif not enabled and matches:
-            document["install_list"] = [entry for entry in install_list if entry.get(key) != value]
-            write_json(path, document)
-
-
-def configure_boot_unlock_publisher(root: Path, enabled: bool) -> None:
-    """Install the headless 2in1 user- and screen-unlock event services."""
-    build_path = root / PRODUCT_ETC_BUILD_FILE
-    config_path = root / BOOT_UNLOCK_CONFIG_FILE
-    build = build_path.read_text(encoding="utf-8")
-    dependency = '    ":qemu_2in1_unlock_cfg",\n'
-    block = BOOT_UNLOCK_BUILD_BLOCK + "\n\n"
-    build = build.replace(block, "").replace(dependency, "")
-    if enabled:
-        anchor = 'group("product_etc_conf") {\n'
-        if build.count(anchor) != 1:
-            die(f"unexpected QEMU product etc build file: {build_path}")
-        build = build.replace(anchor, block + anchor, 1)
-        deps_anchor = '  deps = [\n'
-        group_offset = build.index(anchor)
-        deps_offset = build.index(deps_anchor, group_offset) + len(deps_anchor)
-        build = build[:deps_offset] + dependency + build[deps_offset:]
-    if build_path.read_text(encoding="utf-8") != build:
-        build_path.write_text(build, encoding="utf-8")
-
-    if enabled:
-        config = {
-            "jobs": [{
-                "name": f"param:{BOOT_UNLOCK_TRIGGER}",
-                "condition": BOOT_UNLOCK_TRIGGER,
-                "cmds": ["start qemu_2in1_user_unlock", "start qemu_2in1_unlock"],
-            }],
-            "services": [
-                {
-                    "name": "qemu_2in1_user_unlock",
-                    "path": [
-                        "/system/bin/cem", "publish", "-e", BOOT_UNLOCK_EVENTS[0],
-                        "-c", str(BOOT_UNLOCK_USER_ID),
-                    ],
-                    "uid": "system",
-                    "gid": ["system"],
-                    "apl": "system_core",
-                    "permission": [
-                        "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
-                        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
-                    ],
-                    "once": 1,
-                    "start-mode": "condition",
-                    "secon": "u:r:cem:s0",
-                },
-                {
-                    "name": "qemu_2in1_unlock",
-                    "path": [
-                        "/system/bin/cem", "publish", "-e", BOOT_UNLOCK_EVENTS[1],
-                        "-u", str(BOOT_UNLOCK_USER_ID),
-                    ],
-                    "uid": "system",
-                    "gid": ["system"],
-                    "apl": "system_core",
-                    "permission": [
-                        "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
-                        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
-                    ],
-                    "once": 1,
-                    "start-mode": "condition",
-                    "secon": "u:r:cem:s0",
-                },
-            ],
-        }
-        write_json(config_path, config)
-    elif config_path.exists():
-        config_path.unlink()
 
 
 def main() -> None:
@@ -480,10 +399,7 @@ def main() -> None:
     for product in products:
         configure_product(root, product, action == "enable")
     configure_product_parameters(root, any_product_enabled(root), any_2in1_enabled(root))
-    configure_sceneboard(root, any_2in1_enabled(root))
-    configure_sceneboard_cfi_exception(root, any_2in1_enabled(root))
-    configure_sceneboard_preinstall(root, any_2in1_enabled(root))
-    configure_boot_unlock_publisher(root, any_2in1_enabled(root))
+    configure_sceneboard_runtime(root, any_sceneboard_enabled(root, PRODUCT_CONFIGS))
 
     state = "configured" if action == "enable" else "disabled"
     print(f"full 2in1 QEMU source profile {state} for: {' '.join(products)}")

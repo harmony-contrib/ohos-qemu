@@ -1,0 +1,32 @@
+diff --git a/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp b/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp
+--- a/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp
+@@ -25,7 +25,11 @@ namespace AudioStandard {
+ namespace AudioSuite {
+ 
+ static constexpr uint32_t MAX_CACHE = std::numeric_limits<uint32_t>::max() - 1; // Maximum allocation capacity.
++#if defined(__LP64__)
+ static const char *const PREFIX = "/system/lib64/";
++#else
++static const char *const PREFIX = "/system/lib/";
++#endif
+ 
+ int32_t AudioSuiteRingBuffer::PushData(uint8_t* byteData, uint32_t size)
+ {
+diff --git a/foundation/multimedia/audio_framework/services/audio_suite/client/config/src/audio_suite_capabilities_parser.cpp b/foundation/multimedia/audio_framework/services/audio_suite/client/config/src/audio_suite_capabilities_parser.cpp
+--- a/foundation/multimedia/audio_framework/services/audio_suite/client/config/src/audio_suite_capabilities_parser.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_suite/client/config/src/audio_suite_capabilities_parser.cpp
+@@ -93,6 +93,13 @@ void AudioSuiteCapabilitiesParser::ParserNodeType(
+     curNode->GetProp("name", name);
+     curNode->GetProp("soName", nodeParameter.soName);
+     curNode->GetProp("soPath", nodeParameter.soPath);
++#if !defined(__LP64__)
++    // The shared default XML is also installed on 32-bit products. Keep
++    // custom paths unchanged; LoadLibrary still validates the canonical path.
++    if (nodeParameter.soPath == "/system/lib64/") {
++        nodeParameter.soPath = "/system/lib/";
++    }
++#endif
+     curNode->GetProp("general", nodeParameter.general);
+     curNode->GetProp("realtimeFactor", realtimeFactorStr);
+     curNode->GetProp("frameLen", frameLenStr);

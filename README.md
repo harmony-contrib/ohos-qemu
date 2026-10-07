@@ -165,16 +165,29 @@ commands are not retained as compatibility wrappers:
 ```bash
 bash patches/phone/apply.sh \
   --source-root /path/to/openharmony \
-  --artifact-root /path/to/jsvm-m144 \
+  --v8-artifact-root /path/to/jsvm-m144 \
+  --core-artifact-root /path/to/source-arkweb-core \
+  --vulkan-artifact-root /path/to/swiftshader-m144 \
+  --avc-artifact-root /path/to/avc-m144 \
   --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 
 bash patches/2in1/apply.sh \
   --source-root /path/to/openharmony \
-  --artifact-root /path/to/jsvm-m144 \
+  --v8-artifact-root /path/to/jsvm-m144 \
+  --core-artifact-root /path/to/source-arkweb-core \
+  --vulkan-artifact-root /path/to/swiftshader-m144 \
+  --avc-artifact-root /path/to/avc-m144 \
   --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 ```
+
+Run these source-only entries inside the prepared local Ubuntu 22.04 Docker
+environment. Both invoke the exact ordered `apply_qemu_capability_patch_plan`
+used by the full builder, including graphics, providers, audio, camera,
+kernel and the profile-specific Serial integration. They do not sync, build,
+package or assert runtime success. All four dependency roots are required;
+the old ambiguous `--artifact-root` option is not retained.
 
 Every leaf component has its own `apply.sh`, and each stable source change is
 an independently reviewable numbered patch. The aggregate entries apply, in
@@ -192,7 +205,7 @@ dependency order:
 - JSVM linked to the pinned ArkWeb/Chromium M144 `v8_shared` artifact;
 - the armv7a product components when `armv7a_virt` is selected.
 
-Build the M144 engine artifacts for all supported guest architectures first:
+For standalone V8 artifacts (not the complete ArkWeb core HAP):
 
 ```bash
 scripts/build_m144_v8.sh arm arm64 x86_64
@@ -306,26 +319,104 @@ source baseline is the `OpenHarmony-7.0-Release` manifest pinned at
 
 ```bash
 PACKAGE_ROOT=/Volumes/PSSD/qemu/packages/device-matrix \
-BUILD_JOBS=12 KERNEL_BUILD_JOBS=6 \
-scripts/run_device_type_matrix_build_docker.sh
+BUILD_JOBS=4 KERNEL_BUILD_JOBS=2 M144_CORE_BUILD_JOBS=4 \
+QEMU_TEST_SDK_HOME=/absolute/path/to/host-compatible-API26-Release-SDK \
+OHOS_NATIVE_BINDINGS=/absolute/path/to/ohos-native-bindings \
+bash scripts/run_device_type_matrix_build_docker.sh
 ```
 
 The matrix is `phone,2in1` × `armv7a_virt,arm64_virt,x86_64_virt`. It is
 restartable (`MATRIX_SKIP_EXISTING=1` by default), strictly verifies every
-package, and writes `SHA256SUMS` plus `matrix-manifest.json`. Before traversing
-the six builds it initializes the pinned source, applies the complete patch set
-for all selected products, validates the prepared product configurations, and
-records a resolved revision manifest. It uses one native Linux source/out
-volume and defaults to pruning `out/<product>` immediately
-after its package is archived, while retaining ccache and kernel objects. The
+package, and writes `SHA256SUMS` plus `matrix-manifest.json`. Everything builds
+in local Docker; GitHub CI is not required. It first prepares the release
+source/SDK, builds the representative ARM64 phone dependencies and package,
+and requires real behavior evidence for that exact new archive before starting
+the remaining five. Compilation, a signed HAP, archive creation, static checks,
+old-image tests and external keepalive do not satisfy this gate.
+
+The default validator is the repository's `scripts/validate_packaged_qemu.sh`;
+an external test script is not required. The API26 test SDK must contain real
+host-compatible `native` and `ets` components. Its patch version and tool hashes
+are recorded separately from the Linux OS-build SDK. No SDK libraries are
+copied into the guest to make a failing test pass.
+
+Default M144 dependency directories include the fixed dependency-recipe SHA.
+Changes to source locks, engine patches or builders select a new cache rather
+than accepting stale manifests or deleting old outputs. Unrelated OS/test
+changes do not rebuild Chromium. Explicit `QEMU_ARKWEB_CORE_ARTIFACTS`,
+`JSVM_ENGINE_ARTIFACTS`, `QEMU_VULKAN_ARTIFACTS`, `QEMU_AVC_ARTIFACTS` and
+`MATRIX_DEPENDENCY_ROOT` overrides are preserved and strictly verified.
+
+`MATRIX_FIRST_VALIDATOR` is a local behavior-test script invoked with
+`--package-archive`, `--package-directory` and `--evidence-output`. Its output
+must pass [the first-artifact evidence contract](scripts/verify_first_artifact_gate.py),
+covering boot, live ArkWeb, visible Vulkan, UDMF/Pasteboard/AVPlayer exit
+regressions, native-bindings E2E and the audited C++/ArkTS 1.1 gaps. Without a
+validator or an already passing archive-bound `MATRIX_FIRST_ARTIFACT_EVIDENCE`,
+the script refuses to start the remaining matrix; it never invents a runtime
+pass. Reusing a package also requires its frozen build scripts, patches and
+capability/smoke validation code and original Native/ArkTS gap ledger to match
+the current repository; changed tests
+cannot silently reuse an earlier acceptance result.
+
+Each remaining archive must also have its own archive-bound runtime evidence.
+`MATRIX_PACKAGE_VALIDATOR` defaults to the same local validator and
+`MATRIX_RUNTIME_EVIDENCE_ROOT` defaults to `<PACKAGE_ROOT>/runtime-evidence`.
+Reuse skips compilation, not runtime evidence validation. 2in1 additionally
+requires real Serial service/authorization/data-path evidence. The final
+matrix manifest separates packaging assertions from runtime validation and
+records the per-package runtime report checksum; it does not certify every API
+merely because the archive or ELF checks passed.
+
+Full-source packages also carry `native-gap-abi-image.json`: all functions from
+the pinned SDK-C source are checked against the final image for every required
+or declared Native library, then rechecked by standalone package validation.
+The runtime validator verifies actual DSO loading and symbol ownership, not
+SDK stub libraries. Undeclared profile-optional components are explicitly
+unimplemented; this does not waive official profile or real backend checks.
+
+The [M144 release lock](scripts/m144_release_source_lock.json) fixes all 156
+project directories. Source preparation also verifies the real PGO LFS input,
+instead of compiling its pointer text or installing obsolete SDK archives.
+The [main-system project lock](scripts/openharmony_7_0_release_source_lock.json)
+also fixes all 519 prepared Release project HEADs. Both fresh synchronization
+and checkout reuse verify these commits without resetting source edits. Full
+packages carry the graph and actual HEAD evidence; moving Release branches
+are fetch hints only, never the selected build input. The fixed 2in1 Serial
+SIG cache is prepared automatically when absent, not from a moving branch.
+`prepare_qemu_release_dependencies.sh` builds the complete source ArkWebCore
+HAP, JSVM V8, SwiftShader and AVC dependencies for one ABI at a time. The
+matrix automatically calls it (`MATRIX_BUILD_DEPENDENCIES=1`), with separate
+per-ABI dependency directories under `artifacts/m144-7.0-dependencies` and
+source core HAPs under `artifacts/arkweb-m144-7.0`. Explicit artifact-root
+environment variables override these paths. Their provenance/patch hashes and
+ELF ABI are checked before source-profile evaluation and build traversal.
+x86_64 cannot fall back to an ARM64 HAP. Official prebuilt HAP files are
+preserved, and each package includes the source core's build/signature evidence
+bound to the actual HAP inside `system.img`.
+
+HAP host tools use the checksum-pinned command-line archive selected by the
+fixed Release build configuration, not the obsolete project Hvigor downloader.
+The project uses model 6.0 and the native Release `26.0.0` version/layout,
+preserving all original tool code and SDK metadata. Docker mounts and
+verifies that cache read-only; real wrapper startup and valid/invalid version
+boundaries must pass before native/HAP work. Both stages' tool evidence is
+bound to the final core HAP. HAP uses full release Node 18/npm; Chromium keeps
+its fixed npm-free Node 24. Actual compilation and packaging remain in local
+Docker. The private SDK includes all five tool components required by Hvigor.
+
+It uses native Linux source/out volumes and retains each product's output until
+its archive-bound runtime probes finish, including probes built from the real
+innerkit libraries. A later profile switch reclaims the incompatible product
+graph while retaining ccache and kernel objects. The
 matrix caps ccache at 4 GiB by default so image assembly retains disk headroom;
 set `CCACHE_MAXSIZE` explicitly on hosts with more space. This
 keeps the six-package build usable on hosts that cannot hold six complete Ninja
 trees at once. `PACKAGE_ROOT` may be placed outside `CACHE_ROOT`; the Docker
 runner bind-mounts it separately, which is useful for temporary package staging
-when the build cache disk is nearly full. Set
-`PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0` only when enough Docker disk space is
-available. When switching between phone and 2in1 profiles, the builder writes
+when the build cache disk is nearly full. The matrix always sets
+`PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0`; do not prune before runtime verification.
+When switching between phone and 2in1 profiles, the builder writes
 the profile stamp atomically and retries while Docker-backed storage makes
 newly reclaimed blocks visible. The retry window can be adjusted with
 `PROFILE_STAMP_WRITE_RETRIES` and `PROFILE_STAMP_WRITE_RETRY_DELAY`.

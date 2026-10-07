@@ -1,0 +1,57 @@
+diff --git a/kernel/linux/linux-6.6/drivers/android/binder_internal.h b/kernel/linux/linux-6.6/drivers/android/binder_internal.h
+--- a/kernel/linux/linux-6.6/drivers/android/binder_internal.h
++++ b/kernel/linux/linux-6.6/drivers/android/binder_internal.h
+@@ -539,6 +539,10 @@
+ 	long    priority;
+ 	long    saved_priority;
+ 	kuid_t  sender_euid;
++#ifdef CONFIG_BINDER_SENDER_INFO
++	/* Private reference for one-way sender info, not the wire PID. */
++	struct pid *async_sender_pid;
++#endif
+ 	ktime_t start_time;
+ 	struct list_head fd_fixups;
+ 	binder_uintptr_t security_ctx;
+diff --git a/kernel/linux/linux-6.6/drivers/android/binder.c b/kernel/linux/linux-6.6/drivers/android/binder.c
+--- a/kernel/linux/linux-6.6/drivers/android/binder.c
++++ b/kernel/linux/linux-6.6/drivers/android/binder.c
+@@ -1633,6 +1633,9 @@
+ 	 * t->buffer->transaction has already been cleared.
+ 	 */
+ 	binder_free_txn_fixups(t);
++#ifdef CONFIG_BINDER_SENDER_INFO
++	put_pid(t->async_sender_pid);
++#endif
+ 	kfree(t);
+ 	binder_stats_deleted(BINDER_STAT_TRANSACTION);
+ }
+@@ -3242,6 +3245,10 @@
+ #endif
+ 	}
+ 
++#ifdef CONFIG_BINDER_SENDER_INFO
++	if (!reply && (tr->flags & TF_ONE_WAY))
++		t->async_sender_pid = get_task_pid(current, PIDTYPE_TGID);
++#endif
+ 	t->sender_euid = task_euid(proc->tsk);
+ #ifdef CONFIG_ACCESS_TOKENID
+ 	t->sender_tokenid = current->token;
+@@ -3758,6 +3765,9 @@
+ err_alloc_tcomplete_failed:
+ 	if (trace_binder_txn_latency_free_enabled())
+ 		binder_txn_latency_free(t);
++#ifdef CONFIG_BINDER_SENDER_INFO
++	put_pid(t->async_sender_pid);
++#endif
+ 	kfree(t);
+ 	binder_stats_deleted(BINDER_STAT_TRANSACTION);
+ err_alloc_t_failed:
+@@ -4741,7 +4751,7 @@
+ 			trd->sender_pid = 0;
+ #ifdef CONFIG_BINDER_SENDER_INFO
+ 			binder_inner_proc_lock(thread->proc);
+-			thread->sender_pid_nr = 0;
++			thread->sender_pid_nr = pid_nr(t->async_sender_pid);
+ 			binder_inner_proc_unlock(thread->proc);
+ #endif
+ 		}

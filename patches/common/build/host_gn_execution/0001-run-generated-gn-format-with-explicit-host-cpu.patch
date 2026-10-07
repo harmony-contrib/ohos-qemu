@@ -1,0 +1,32 @@
+diff --git a/build/scripts/util/file_utils.py b/build/scripts/util/file_utils.py
+--- a/build/scripts/util/file_utils.py
++++ b/build/scripts/util/file_utils.py
+@@ -20,6 +20,22 @@ import hashlib
+ import platform
+ 
+ 
++def _qemu_host_gn_command(cmd):
++    if (not isinstance(cmd, (list, tuple)) or not cmd or
++            not isinstance(cmd[0], str) or
++            not cmd[0].endswith('/prebuilts/build-tools/linux-x86/bin/gn')):
++        return cmd
++    mode = os.environ.get('QEMU_HOST_GN_QEMU_USER', '0')
++    if mode not in ('0', '1'):
++        raise ValueError('QEMU_HOST_GN_QEMU_USER must be 0 or 1')
++    if mode == '0':
++        return cmd
++    if (platform.system().lower() != 'linux' or
++            platform.machine().lower() not in ('x86_64', 'amd64')):
++        raise ValueError('explicit GN CPU execution requires Linux x86_64')
++    return ['/usr/bin/qemu-x86_64-static', '-cpu', 'max'] + list(cmd)
++
++
+ def find_top():
+     cur_dir = os.getcwd()
+     while cur_dir != "/":
+@@ -114,4 +130,4 @@ def write_file(output_file, content):
+         # Call gn format to make the output gn file prettier.
+         cmd = [gn_exe, 'format']
+         cmd.append(output_file)
+-        subprocess.check_output(cmd)
++        subprocess.check_output(_qemu_host_gn_command(cmd))

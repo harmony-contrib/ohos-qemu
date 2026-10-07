@@ -1,0 +1,156 @@
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+@@ -203,6 +203,11 @@
+     auto objectNum = old.GetOffsetsSize();
+     if (objectNum != 0) {
+         parcelCopied->InjectOffsets(old.GetObjectOffsets(), objectNum);
++        if (parcelCopied->GetOffsetsSize() != objectNum || parcelCopied->GetObjectOffsets() == 0) {
++            // No FD has been duplicated yet; discard borrowed object metadata.
++            parcelCopied->FlushBuffer();
++            return nullptr;
++        }
+         CopyFileDescriptor(old, *parcelCopied);
+     }
+     auto token = parcelCopied->ReadInterfaceToken();
+@@ -213,12 +218,10 @@
+     int32_t data{0};
+     if (!parcelCopied->ReadInt32(data)) {
+         RS_LOGE("RSClientToRenderConnectionStub::CopyParcelIfNeed parcel data Read failed");
+-        free(base);
+         return nullptr;
+     }
+     if (data != 0) {
+         RS_LOGE("RSClientToRenderConnectionStub::CopyParcelIfNeed parcel data not match");
+-        free(base);
+         return nullptr;
+     }
+     return parcelCopied;
+@@ -394,7 +397,7 @@
+                                 "IsCallingPidValid check failed");
+                         }
+                     }
+-                    CommitTransaction(transactionData);
++                    ret = CommitTransaction(transactionData);
+                     break;
+                 }
+             } else {
+@@ -429,7 +432,7 @@
+                         RS_LOGE("RSClientToRenderConnectionStub::COMMIT_TRANSACTION IsCallingPidValid check failed");
+                     }
+                 }
+-                CommitTransaction(transactionData);
++                ret = CommitTransaction(transactionData);
+             }
+             break;
+         }
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
+@@ -15,6 +15,7 @@
+ 
+ #include "transaction/rs_ashmem_helper.h"
+ 
++#include <cstdlib>
+ #include <memory>
+ #include <sys/mman.h>
+ #include <unistd.h>
+@@ -34,6 +35,61 @@
+ namespace {
+ constexpr size_t LARGE_MALLOC = 200000000;
+ thread_local bool g_isUnmarshalThread = false;
++
++bool IsValidAshmemObjectOffsets(const binder_size_t* offsets, size_t count, size_t dataSize)
++{
++    if (count > 0 && offsets == nullptr) {
++        return false;
++    }
++    size_t previousEnd = 0;
++    for (size_t i = 0; i < count; ++i) {
++        const binder_size_t offset = offsets[i];
++        if (offset < previousEnd || offset > dataSize ||
++            sizeof(flat_binder_object) > dataSize - static_cast<size_t>(offset) ||
++            offset % sizeof(uint32_t) != 0) {
++            return false;
++        }
++        previousEnd = static_cast<size_t>(offset) + sizeof(flat_binder_object);
++    }
++    return true;
++}
++
++bool RestoreAshmemObjectOffsets(std::shared_ptr<MessageParcel>& dataParcel, MessageParcel* ashmemParcel,
++    std::unique_ptr<AshmemFdWorker>& ashmemFdWorker, pid_t callingPid)
++{
++    int32_t offsetSize = 0;
++    if (!ashmemParcel->ReadInt32(offsetSize) || offsetSize < 0) {
++        return false;
++    }
++    const size_t count = static_cast<size_t>(offsetSize);
++    // Division precedes multiplication, including on ARM32 Binder64.
++    if (count > ashmemParcel->GetReadableBytes() / sizeof(binder_size_t) ||
++        count > dataParcel->GetDataSize() / sizeof(flat_binder_object)) {
++        return false;
++    }
++    if (count == 0) {
++        return true;
++    }
++    const size_t bytes = count * sizeof(binder_size_t);
++    const auto* rawOffsets = ashmemParcel->ReadBuffer(bytes);
++    if (rawOffsets == nullptr) {
++        return false;
++    }
++    // Parcel buffers are only 4-byte aligned, even with Binder64 offsets.
++    std::unique_ptr<binder_size_t, decltype(&free)> offsets(
++        static_cast<binder_size_t*>(malloc(bytes)), &free);
++    if (!offsets || memcpy_s(offsets.get(), bytes, rawOffsets, bytes) != EOK ||
++        !IsValidAshmemObjectOffsets(offsets.get(), count, dataParcel->GetDataSize())) {
++        return false;
++    }
++    dataParcel->InjectOffsets(reinterpret_cast<binder_size_t>(offsets.get()), count);
++    if (dataParcel->GetOffsetsSize() != count || dataParcel->GetObjectOffsets() == 0) {
++        return false;
++    }
++    RSAshmemHelper::InjectFileDescriptor(dataParcel, ashmemParcel, ashmemFdWorker, callingPid);
++    return true;
++}
++
+ }
+ std::unique_ptr<AshmemAllocator> AshmemAllocator::CreateAshmemAllocator(size_t size, int mapType)
+ {
+@@ -374,7 +430,8 @@
+     uintptr_t data = dataParcel->GetData();
+     for (size_t i = 0; i < objectNum; i++) {
+         binder_size_t offset = object[i];
+-        if (offset + sizeof(flat_binder_object) > dataParcel->GetDataSize()) {
++        if (offset > dataParcel->GetDataSize() ||
++            sizeof(flat_binder_object) > dataParcel->GetDataSize() - static_cast<size_t>(offset)) {
+             ROSEN_LOGW("RSAshmemHelper::InjectFileDescriptor offset invalid");
+             continue;
+         }
+@@ -467,19 +524,15 @@
+     }
+     void* data = ashmemAllocator->GetData();
+     auto dataParcel = std::make_shared<MessageParcel>(ashmemAllocator.release());
+-    dataParcel->ParseFrom(reinterpret_cast<uintptr_t>(data), dataSize);
+-
+-    int32_t offsetSize = ashmemParcel->ReadInt32();
+-    if (offsetSize > 0) {
+-        auto* offsets = ashmemParcel->ReadBuffer(sizeof(binder_size_t) * offsetSize);
+-        if (offsets == nullptr) {
+-            ROSEN_LOGE("ParseFromAshmemParcel: read object offsets failed");
+-            return nullptr;
+-        }
+-        // restore array that record the offsets of all fds
+-        dataParcel->InjectOffsets(reinterpret_cast<binder_size_t>(offsets), offsetSize);
+-        // restore all fds
+-        InjectFileDescriptor(dataParcel, ashmemParcel, ashmemFdWorker, callingPid);
++    if (!dataParcel->ParseFrom(reinterpret_cast<uintptr_t>(data), dataSize)) {
++        return nullptr;
++    }
++
++    if (!RestoreAshmemObjectOffsets(dataParcel, ashmemParcel, ashmemFdWorker, callingPid)) {
++        // Failed injection may hold borrowed FD numbers. Clear them before destruction.
++        dataParcel->FlushBuffer();
++        ROSEN_LOGE("ParseFromAshmemParcel: invalid or incomplete object offsets");
++        return nullptr;
+     }
+ 
+     auto token = dataParcel->ReadInterfaceToken();

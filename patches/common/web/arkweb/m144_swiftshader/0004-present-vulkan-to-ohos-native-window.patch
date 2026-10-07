@@ -1,0 +1,355 @@
+diff --git a/src/third_party/swiftshader/src/Vulkan/BUILD.gn b/src/third_party/swiftshader/src/Vulkan/BUILD.gn
+--- a/src/third_party/swiftshader/src/Vulkan/BUILD.gn
++++ b/src/third_party/swiftshader/src/Vulkan/BUILD.gn
+@@ -23,3 +23,6 @@
+   if (is_linux || is_ohos) {
+     defines = [ "VK_EXPORT=__attribute__((visibility(\"default\")))" ]
++    if (is_ohos) {
++      defines += [ "VK_USE_PLATFORM_OHOS" ]
++    }
+     if (ozone_platform_x11) {
+diff --git a/src/third_party/swiftshader/src/WSI/BUILD.gn b/src/third_party/swiftshader/src/WSI/BUILD.gn
+--- a/src/third_party/swiftshader/src/WSI/BUILD.gn
++++ b/src/third_party/swiftshader/src/WSI/BUILD.gn
+@@ -45,2 +45,10 @@
++  if (is_ohos) {
++    sources += [
++      "OHOSSurfaceKHR.cpp",
++      "OHOSSurfaceKHR.hpp",
++      "OHOSPresentCopy.hpp",
++    ]
++  }
++
+   if (is_linux) {
+     if (ozone_platform_x11) {
+diff --git a/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp b/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp
+--- a/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp
++++ b/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp
+@@ -16,3 +16,6 @@
+ #include "VkDevice.hpp"
++#ifdef VK_USE_PLATFORM_OHOS
++#	include <vulkan/vulkan_ohos.h>
++#endif
+ 
+ #include <string>
+diff --git a/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp b/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp
+--- a/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp
++++ b/src/third_party/swiftshader/src/Vulkan/VkGetProcAddress.cpp
+@@ -209,2 +209,5 @@
++#ifdef VK_USE_PLATFORM_OHOS
++	MAKE_VULKAN_INSTANCE_ENTRY(vkCreateSurfaceOHOS),
++#endif
+ 	MAKE_VULKAN_INSTANCE_ENTRY(vkCreateHeadlessSurfaceEXT),
+ };
+diff --git a/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp b/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
+--- a/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
++++ b/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
+@@ -55,3 +55,6 @@
+ #include "WSI/VkSwapchainKHR.hpp"
++#ifdef VK_USE_PLATFORM_OHOS
++#	include "WSI/OHOSSurfaceKHR.hpp"
++#endif
+ 
+ #if defined(VK_USE_PLATFORM_METAL_EXT) || defined(VK_USE_PLATFORM_MACOS_MVK)
+diff --git a/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp b/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
+--- a/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
++++ b/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
+@@ -324,2 +324,5 @@
+ 	{ { VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME, VK_EXT_HEADLESS_SURFACE_SPEC_VERSION } },
++#ifdef VK_USE_PLATFORM_OHOS
++	{ { VK_OHOS_SURFACE_EXTENSION_NAME, VK_OHOS_SURFACE_SPEC_VERSION }, [] { return vk::OHOSSurfaceKHR::isSupported(); } },
++#endif
+ #if defined(OSOHOS)
+diff --git a/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp b/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
+--- a/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
++++ b/src/third_party/swiftshader/src/Vulkan/libVulkan.cpp
+@@ -4742,2 +4742,22 @@
++#ifdef VK_USE_PLATFORM_OHOS
++VKAPI_ATTR VkResult VKAPI_CALL vkCreateSurfaceOHOS(VkInstance instance, const VkSurfaceCreateInfoOHOS *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface)
++{
++	if(!pSurface) { return VK_ERROR_INITIALIZATION_FAILED; }
++	*pSurface = VK_NULL_HANDLE;
++	if(!pCreateInfo || !pCreateInfo->window || pCreateInfo->flags || !vk::OHOSSurfaceKHR::isSupported())
++	{
++		return VK_ERROR_INITIALIZATION_FAILED;
++	}
++	VkResult result = vk::OHOSSurfaceKHR::Create(pAllocator, pCreateInfo, pSurface);
++	if(result == VK_SUCCESS && !static_cast<vk::OHOSSurfaceKHR *>(vk::Cast(*pSurface))->isReady())
++	{
++		vk::destroy(*pSurface, pAllocator);
++		*pSurface = VK_NULL_HANDLE;
++		return VK_ERROR_INITIALIZATION_FAILED;
++	}
++	return result;
++}
++#endif
++
+ VKAPI_ATTR VkResult VKAPI_CALL vkCreateHeadlessSurfaceEXT(VkInstance instance, const VkHeadlessSurfaceCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface)
+ {
+diff --git a/src/third_party/swiftshader/src/WSI/OHOSPresentCopy.hpp b/src/third_party/swiftshader/src/WSI/OHOSPresentCopy.hpp
+new file mode 100644
+--- /dev/null
++++ b/src/third_party/swiftshader/src/WSI/OHOSPresentCopy.hpp
+@@ -0,0 +1,43 @@
++// QEMU CPU presentation bridge. Apache-2.0.
++#ifndef SWIFTSHADER_OHOS_PRESENT_COPY_HPP
++#define SWIFTSHADER_OHOS_PRESENT_COPY_HPP
++#include <cstddef>
++#include <cstdint>
++#include <limits>
++
++namespace vk {
++// SwiftShader's WSI formats are BGRA8; NativeWindow uses RGBA8. Both row
++// pitches are bytes, not pixels. Reject invalid layouts before writing.
++inline bool CopyBGRA8ToRGBA8(const uint8_t *source, size_t sourceStride,
++                            uint8_t *destination, size_t destinationStride,
++                            uint32_t width, uint32_t height)
++{
++	if(!source || !destination || width == 0 || height == 0 ||
++	   static_cast<size_t>(width) > std::numeric_limits<size_t>::max() / 4)
++	{
++		return false;
++	}
++	const size_t rowBytes = static_cast<size_t>(width) * 4;
++	if(sourceStride < rowBytes || destinationStride < rowBytes ||
++	   height > std::numeric_limits<size_t>::max() / sourceStride ||
++	   height > std::numeric_limits<size_t>::max() / destinationStride)
++	{
++		return false;
++	}
++	for(uint32_t y = 0; y < height; ++y)
++	{
++		const uint8_t *in = source + y * sourceStride;
++		uint8_t *out = destination + y * destinationStride;
++		for(uint32_t x = 0; x < width; ++x)
++		{
++			const size_t offset = static_cast<size_t>(x) * 4;
++			out[offset + 0] = in[offset + 2];
++			out[offset + 1] = in[offset + 1];
++			out[offset + 2] = in[offset + 0];
++			out[offset + 3] = in[offset + 3];
++		}
++	}
++	return true;
++}
++}  // namespace vk
++#endif
+diff --git a/src/third_party/swiftshader/src/WSI/OHOSSurfaceKHR.hpp b/src/third_party/swiftshader/src/WSI/OHOSSurfaceKHR.hpp
+new file mode 100644
+--- /dev/null
++++ b/src/third_party/swiftshader/src/WSI/OHOSSurfaceKHR.hpp
+@@ -0,0 +1,31 @@
++// QEMU CPU NativeWindow presentation bridge. Apache-2.0.
++#ifndef SWIFTSHADER_OHOS_SURFACE_HPP
++#define SWIFTSHADER_OHOS_SURFACE_HPP
++
++#include "VkSurfaceKHR.hpp"
++#include <vulkan/vulkan_ohos.h>
++#include <mutex>
++
++namespace vk {
++class OHOSSurfaceKHR : public SurfaceKHR, public ObjectBase<OHOSSurfaceKHR, VkSurfaceKHR>
++{
++public:
++	static bool isSupported();
++	OHOSSurfaceKHR(const VkSurfaceCreateInfoOHOS *info, void *mem);
++	static size_t ComputeRequiredAllocationSize(const VkSurfaceCreateInfoOHOS *) { return 0; }
++	bool isReady() const { return ready; }
++	void destroySurface(const VkAllocationCallbacks *) override;
++	VkResult getSurfaceCapabilities(const void *, VkSurfaceCapabilitiesKHR *, void *) const override;
++	void attachImage(PresentImage *) override {}
++	void detachImage(PresentImage *) override {}
++	VkResult present(PresentImage *) override;
++
++private:
++	bool getExtent(VkExtent2D *) const;
++	OHNativeWindow *window;
++	bool referenced = false;
++	bool ready = false;
++	mutable std::mutex mutex;
++};
++}  // namespace vk
++#endif
+diff --git a/src/third_party/swiftshader/src/WSI/OHOSSurfaceKHR.cpp b/src/third_party/swiftshader/src/WSI/OHOSSurfaceKHR.cpp
+new file mode 100644
+--- /dev/null
++++ b/src/third_party/swiftshader/src/WSI/OHOSSurfaceKHR.cpp
+@@ -0,0 +1,178 @@
++// QEMU CPU NativeWindow presentation bridge. Apache-2.0.
++// Use the SDK public APIs rather than depending on private SurfaceBuffer ABI.
++#include "OHOSSurfaceKHR.hpp"
++#include "OHOSPresentCopy.hpp"
++#include "Vulkan/VkImage.hpp"
++
++#include <native_window/external_window.h>
++#include <native_buffer/native_buffer.h>
++#include <dlfcn.h>
++#include <cerrno>
++#include <poll.h>
++#include <unistd.h>
++
++namespace {
++template<class T>
++T symbol(void *library, const char *name)
++{
++	return library ? reinterpret_cast<T>(dlsym(library, name)) : nullptr;
++}
++
++struct NativeAPI
++{
++	// Kept open for the ICD lifetime, including musl's atexit callbacks.
++	void *windowLib = dlopen("libnative_window.so", RTLD_NOW | RTLD_LOCAL);
++	void *bufferLib = dlopen("libnative_buffer.so", RTLD_NOW | RTLD_LOCAL);
++	decltype(&OH_NativeWindow_NativeObjectReference) reference = symbol<decltype(reference)>(windowLib, "OH_NativeWindow_NativeObjectReference");
++	decltype(&OH_NativeWindow_NativeObjectUnreference) unreference = symbol<decltype(unreference)>(windowLib, "OH_NativeWindow_NativeObjectUnreference");
++	decltype(&OH_NativeWindow_NativeWindowHandleOpt) options = symbol<decltype(options)>(windowLib, "OH_NativeWindow_NativeWindowHandleOpt");
++	decltype(&OH_NativeWindow_NativeWindowRequestBuffer) request = symbol<decltype(request)>(windowLib, "OH_NativeWindow_NativeWindowRequestBuffer");
++	decltype(&OH_NativeWindow_NativeWindowFlushBuffer) flush = symbol<decltype(flush)>(windowLib, "OH_NativeWindow_NativeWindowFlushBuffer");
++	decltype(&OH_NativeWindow_NativeWindowAbortBuffer) abort = symbol<decltype(abort)>(windowLib, "OH_NativeWindow_NativeWindowAbortBuffer");
++	decltype(&OH_NativeBuffer_FromNativeWindowBuffer) fromWindow = symbol<decltype(fromWindow)>(bufferLib, "OH_NativeBuffer_FromNativeWindowBuffer");
++	decltype(&OH_NativeBuffer_Map) map = symbol<decltype(map)>(bufferLib, "OH_NativeBuffer_Map");
++	decltype(&OH_NativeBuffer_Unmap) unmap = symbol<decltype(unmap)>(bufferLib, "OH_NativeBuffer_Unmap");
++	decltype(&OH_NativeBuffer_GetConfig) config = symbol<decltype(config)>(bufferLib, "OH_NativeBuffer_GetConfig");
++
++	bool available() const
++	{
++		return reference && unreference && options && request && flush && abort &&
++		       fromWindow && map && unmap && config;
++	}
++};
++
++NativeAPI &nativeAPI()
++{
++	static NativeAPI api;
++	return api;
++}
++
++bool waitFence(int fd)
++{
++	if(fd < 0) { return true; }
++	pollfd fence = { fd, POLLIN, 0 };
++	// A stuck consumer must not hang vkQueuePresentKHR indefinitely. EINTR
++	// is a failed present too; the caller can recreate the surface.
++	return poll(&fence, 1, 3000) > 0 &&
++	       (fence.revents & POLLIN) && !(fence.revents & (POLLERR | POLLNVAL));
++}
++}  // namespace
++
++namespace vk {
++bool OHOSSurfaceKHR::isSupported()
++{
++	return nativeAPI().available();
++}
++
++OHOSSurfaceKHR::OHOSSurfaceKHR(const VkSurfaceCreateInfoOHOS *info, void *mem)
++    : window(info->window)
++{
++	auto &api = nativeAPI();
++	referenced = api.reference(window) == 0;
++	if(!referenced) { return; }
++	uint64_t usage = 0;
++	ready = api.options(window, GET_USAGE, &usage) == 0 &&
++	        api.options(window, SET_USAGE, usage | NATIVEBUFFER_USAGE_CPU_READ |
++	                    NATIVEBUFFER_USAGE_CPU_WRITE) == 0 &&
++	        api.options(window, SET_FORMAT, NATIVEBUFFER_PIXEL_FMT_RGBA_8888) == 0;
++}
++
++void OHOSSurfaceKHR::destroySurface(const VkAllocationCallbacks *)
++{
++	if(referenced)
++	{
++		nativeAPI().unreference(window);
++		referenced = false;
++	}
++}
++
++bool OHOSSurfaceKHR::getExtent(VkExtent2D *extent) const
++{
++	int32_t height = 0, width = 0;
++	if(!ready || nativeAPI().options(window, GET_BUFFER_GEOMETRY, &height, &width) != 0 ||
++	   width <= 0 || height <= 0)
++	{
++		return false;
++	}
++	*extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
++	return true;
++}
++
++VkResult OHOSSurfaceKHR::getSurfaceCapabilities(const void *next, VkSurfaceCapabilitiesKHR *caps, void *outNext) const
++{
++	std::lock_guard<std::mutex> lock(mutex);
++	if(!getExtent(&caps->currentExtent)) { return VK_ERROR_SURFACE_LOST_KHR; }
++	caps->minImageExtent = { 1, 1 };
++	caps->maxImageExtent = caps->currentExtent;
++	SetCommonSurfaceCapabilities(next, caps, outNext);
++	return VK_SUCCESS;
++}
++
++VkResult OHOSSurfaceKHR::present(PresentImage *image)
++{
++	std::lock_guard<std::mutex> lock(mutex);
++	VkExtent2D extent;
++	if(!getExtent(&extent)) { return VK_ERROR_SURFACE_LOST_KHR; }
++	const auto *sourceImage = image->getImage();
++	const auto &size = sourceImage->getExtent();
++	if(extent.width != size.width || extent.height != size.height)
++	{
++		return VK_ERROR_OUT_OF_DATE_KHR;
++	}
++	const VkFormat format = sourceImage->getFormat();
++	if(format != VK_FORMAT_B8G8R8A8_UNORM && format != VK_FORMAT_B8G8R8A8_SRGB)
++	{
++		return VK_ERROR_FORMAT_NOT_SUPPORTED;
++	}
++	auto &api = nativeAPI();
++	OHNativeWindowBuffer *buffer = nullptr;
++	int fd = -1;
++	if(api.request(window, &buffer, &fd) != 0 || !buffer)
++	{
++		if(fd >= 0) { close(fd); }
++		return VK_ERROR_SURFACE_LOST_KHR;
++	}
++	const bool signaled = waitFence(fd);
++	if(fd >= 0) { close(fd); }
++	if(!signaled)
++	{
++		api.abort(window, buffer);
++		return VK_ERROR_SURFACE_LOST_KHR;
++	}
++	OH_NativeBuffer *nativeBuffer = nullptr;
++	void *address = nullptr;
++	if(api.fromWindow(buffer, &nativeBuffer) != 0 || !nativeBuffer ||
++	   api.map(nativeBuffer, &address) != 0)
++	{
++		api.abort(window, buffer);
++		return VK_ERROR_SURFACE_LOST_KHR;
++	}
++	OH_NativeBuffer_Config config = {};
++	api.config(nativeBuffer, &config);
++	const bool geometryMatches = config.width > 0 && config.height > 0 &&
++	                            static_cast<uint32_t>(config.width) == size.width &&
++	                            static_cast<uint32_t>(config.height) == size.height;
++	const bool copied = geometryMatches && config.stride > 0 &&
++	                    config.format == NATIVEBUFFER_PIXEL_FMT_RGBA_8888 &&
++	                    CopyBGRA8ToRGBA8(
++	                        static_cast<const uint8_t *>(sourceImage->getTexelPointer(
++	                            { 0, 0, 0 }, { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 })),
++	                        sourceImage->rowPitchBytes(VK_IMAGE_ASPECT_COLOR_BIT, 0),
++	                        static_cast<uint8_t *>(address), static_cast<size_t>(config.stride),
++	                        size.width, size.height);
++	const int unmapResult = api.unmap(nativeBuffer);
++	if(!copied || unmapResult != 0)
++	{
++		api.abort(window, buffer);
++		return geometryMatches ? VK_ERROR_SURFACE_LOST_KHR : VK_ERROR_OUT_OF_DATE_KHR;
++	}
++	// CPU copy has completed; no release fence is needed. An empty Region
++	// asks NativeWindow to mark the entire buffer dirty.
++	if(api.flush(window, buffer, -1, { nullptr, 0 }) != 0)
++	{
++		api.abort(window, buffer);
++		return VK_ERROR_SURFACE_LOST_KHR;
++	}
++	return VK_SUCCESS;
++}
++}  // namespace vk
