@@ -54,3 +54,10 @@ closed, 226 unresolved:
 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/diagnostic-r8-gap-closure-after-profile-proof.json`.
 Neither check claims full module-update or UsageStatistics API behavior, and
 neither turns R8 into a gate pass.
+
+After R8, the three deprecated Sensor heart-rate SDK annotations were corrected
+to the already registered and service-enforced `READ_HEALTH_DATA` permission.
+An exact-source read-only permission re-audit reported zero missing official
+phone permissions (`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/permission-audit-phone-sensor-contract-after-patch.json`).
+This is a source-contract repair for the next package, **not** a result from
+R8; the two original permission findings remain open in R8's 65/291 diagnostic.

@@ -197,6 +197,7 @@ QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_
 QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
 QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh"
 QEMU_ACCESSIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh"
+SENSOR_HEALTH_PERMISSION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/interface/sdk-js/sensor_health_permission/apply.sh"
 NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/native_child_process/apply.sh"
 QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
 LOCATION_NDK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location_ndk/apply.sh"
@@ -2802,6 +2803,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_shared_fence_owner.log"
   bash "${LOCATION_NDK_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_location_ndk_component.log"
+  bash "${SENSOR_HEALTH_PERMISSION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_sensor_health_permission_component.log"
   bash "${ETHERNET_API26_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_api26_component.log"
   bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \

@@ -180,13 +180,39 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                         'sha256': digest(permissions[0]),
                         'verifier': 'complete_actual_AccessToken_definition_policy_and_four_query_boundaries',
                         'not_claimed': 'application_authorization_or_privilege_grant'}
+            if document['device'] == 'phone':
+                boot_path = runtime / 'boot/boot.json'
+                boot = json.loads(boot_path.read_text()) if boot_path.is_file() and not boot_path.is_symlink() else {}
+                package_dir = Path(boot.get('test_environment', {}).get('freshly_extracted_directory', ''))
+                metadata_path = package_dir / 'sensor-health-permission.json'
+                if (boot.get('status') == 'pass' and boot.get('purpose') == 'acceptance' and
+                        boot.get('archive_sha256') == archive_sha and
+                        boot.get('test_environment', {}).get('boot_id') == boot_id and
+                        package_dir.parent == runtime / 'boot/extract' and
+                        not package_dir.is_symlink() and metadata_path.is_file() and
+                        not metadata_path.is_symlink() and
+                        digest(metadata_path) == boot.get('initial_package_file_sha256', {}).get(
+                            'sensor-health-permission.json')):
+                    from verify_sensor_health_resolution import verify as verify_sensor
+                    patch = ROOT / ('patches/common/interface/sdk-js/sensor_health_permission/'
+                                    '0001-document-the-registered-heart-rate-permission.patch')
+                    legacy = verify_sensor(json.loads(metadata_path.read_text()),
+                                           json.loads(definitions.read_text()), raw.read_text(), digest(patch))
+                    for name in legacy:
+                        closed['permission:' + name] = {
+                            'evidence': str(permissions[0]), 'sha256': digest(permissions[0]),
+                            'source_contract_evidence': str(metadata_path),
+                            'source_contract_sha256': digest(metadata_path),
+                            'resolution': 'incorrect_legacy_SDK_permission_annotation_corrected',
+                            'verifier': 'registered_checked_READ_HEALTH_DATA_user_grant_and_exact_three_SDK_overloads',
+                            'not_claimed': 'new_legacy_permission_grant_or_physical_heart_rate_sensor'}
             # The aggregate finding describes absent definitions, not grants.
             for profile_device, baseline in json.loads(LEDGER.read_text())['devices'].items():
                 names = ['permission:' + row['permission'] for row in baseline['permission_registry_gaps']]
                 if document['device'] == profile_device and names and all(name in closed for name in names):
                     closed['behavior:api26-permission-registry-gaps-' + profile_device] = {
                         'evidence': str(permissions[0]), 'sha256': digest(permissions[0]),
-                        'verifier': 'all_original_registry_gaps_resolved_with_actual_source_policy_metadata',
+                        'verifier': 'all_original_permission_findings_resolved_by_registry_or_corrected_SDK_metadata',
                         'not_claimed': 'application_authorization_or_privilege_grant'}
     vibrator = child('vibrator-hdi/result.json')
     if vibrator and actual_modules and actual_modules.get('vibrator', {}).get('cases') == [

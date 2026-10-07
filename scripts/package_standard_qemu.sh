@@ -3035,6 +3035,8 @@ if [ "${DEVICE_TYPE_PROFILE}" = qemu_2in1_full_source ] || [ "${DEVICE_TYPE_PROF
     --resolved-manifest "${PACKAGE_DIR}/resolved-manifest.xml" \
     --evidence "${PACKAGE_DIR}/openharmony-project-heads.json"
   cp "${SCRIPT_DIR}/openharmony_7_0_release_source_lock.json" "${PACKAGE_DIR}/openharmony-project-lock.json"
+  python3 "${SCRIPT_DIR}/../patches/common/interface/sdk-js/sensor_health_permission/verify_source.py" \
+    --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/sensor-health-permission.json"
 fi
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || \
