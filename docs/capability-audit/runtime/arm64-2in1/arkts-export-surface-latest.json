@@ -3,16 +3,17 @@
   "summary": {
     "module_count": 594,
     "loaded": 496,
-    "export_surface_complete": 432,
-    "official_export_surface_missing": 48,
+    "export_surface_complete": 435,
+    "official_export_surface_missing": 45,
     "outside_profile_export_surface_missing": 16,
     "export_probe_failed": 0,
     "module_load_failed": 98,
-    "missing_export_count": 443,
-    "missing_official_export_count": 167,
+    "missing_export_count": 428,
+    "missing_official_export_count": 153,
     "missing_official_public_function_count": 15,
     "missing_official_system_function_count": 23,
-    "static_only_export_count_excluded_from_dynamic_probe": 369
+    "static_only_export_count_excluded_from_dynamic_probe": 369,
+    "compiled_constant_enum_contract_count": 16
   },
   "modules": [
     {
@@ -22,6 +23,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -37,6 +39,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -52,6 +55,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -67,6 +71,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -82,6 +87,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -97,6 +103,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -112,6 +119,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -127,6 +135,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -142,6 +151,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -157,6 +167,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -172,6 +183,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -187,6 +199,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -202,6 +215,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -217,6 +231,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -232,6 +247,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -247,6 +263,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -262,6 +279,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -277,6 +295,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -292,6 +311,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -307,6 +327,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -322,6 +343,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -337,6 +359,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -352,6 +375,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -367,6 +391,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -382,6 +407,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -397,6 +423,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -412,6 +439,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -427,6 +455,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -442,6 +471,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -457,6 +487,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -472,6 +503,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -487,6 +519,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -502,6 +535,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -517,6 +551,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -532,6 +567,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -547,6 +583,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -562,6 +599,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -577,6 +615,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -592,6 +631,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -607,6 +647,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -622,6 +663,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -637,6 +679,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -652,6 +695,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -667,6 +711,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -682,6 +727,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -697,6 +743,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -712,6 +759,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -727,6 +775,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -742,6 +791,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -765,6 +815,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -925,6 +976,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PartnerAgentExtensionAbilityDestroyReason",
@@ -1132,6 +1184,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "RangingConfidence",
@@ -1162,6 +1215,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -1187,6 +1241,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -1212,6 +1267,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -1389,6 +1445,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PiPControlStatus",
@@ -1420,6 +1477,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BY",
@@ -1489,6 +1547,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -1514,6 +1573,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -1542,6 +1602,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -1621,6 +1682,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "attachId",
@@ -1661,6 +1723,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ErrorCode"
@@ -1908,6 +1971,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilityStartSetting",
@@ -2083,6 +2147,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -2271,6 +2336,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccessStatus",
@@ -2343,6 +2409,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -2478,6 +2545,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GrantStatus",
@@ -2570,6 +2638,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AuthStatus",
@@ -3265,6 +3334,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAccessibilityStateChange",
@@ -3548,6 +3618,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GesturePath"
@@ -3584,6 +3655,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GesturePoint"
@@ -4163,6 +4235,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offEnabledAccessibilityExtensionListChange",
@@ -4491,6 +4564,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AppAccountManager",
@@ -4554,6 +4628,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DistributedAccountAbility",
@@ -4979,6 +5054,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccountManager",
@@ -5125,6 +5201,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AdLoader",
@@ -5149,6 +5226,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -5382,6 +5460,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EnrollIntelligentVoiceEngine",
@@ -5681,6 +5760,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DataType",
@@ -5751,6 +5831,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -5791,6 +5872,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SimpleAnimatorOptions",
@@ -5815,6 +5897,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -6011,6 +6094,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CollaborateResult",
@@ -6040,6 +6124,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6065,6 +6150,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6090,6 +6176,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6115,6 +6202,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6140,6 +6228,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6165,6 +6254,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -6182,6 +6272,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6207,6 +6298,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6232,6 +6324,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -6249,6 +6342,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -6266,6 +6360,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -6317,6 +6412,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilityStartFailureCode"
@@ -6370,6 +6466,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FailureCode"
@@ -6391,6 +6488,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -6458,6 +6556,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColorMode",
@@ -6480,6 +6579,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6505,6 +6605,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6530,6 +6631,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6556,6 +6658,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6581,6 +6684,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6604,6 +6708,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6627,6 +6732,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6652,6 +6758,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -6784,6 +6891,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LinkParamCategory",
@@ -7014,6 +7122,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7040,6 +7149,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7065,6 +7175,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -7082,6 +7193,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -7099,6 +7211,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -7117,6 +7230,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7142,6 +7256,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7167,6 +7282,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7192,6 +7308,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7217,6 +7334,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -7234,6 +7352,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7260,6 +7379,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7286,6 +7406,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -7303,6 +7424,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7328,6 +7450,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7353,6 +7476,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -7378,6 +7502,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -7445,6 +7570,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilityLifecycleState",
@@ -7853,6 +7979,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAbilityForegroundState",
@@ -8519,6 +8646,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAbilityFirstFrameStateChange",
@@ -8696,6 +8824,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -8833,6 +8962,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "RestartFlag",
@@ -9038,6 +9168,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AppPreloadType",
@@ -9104,6 +9235,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AutoFillTriggerType",
@@ -9245,6 +9377,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offSystemAutoStartup",
@@ -9305,7 +9438,6 @@
         "isNativeChildProcessSupported",
         "startArkChildProcess",
         "startChildProcess",
-        "StartMode",
         "startNativeChildProcess"
       ],
       "expected_runtime_export_details": [
@@ -9370,21 +9502,6 @@
           "kind": "function"
         },
         {
-          "name": "StartMode",
-          "syscaps": [
-            "SystemCapability.Ability.AbilityRuntime.Core"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": 23,
-          "availability": [
-            "dynamic",
-            "static"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "startNativeChildProcess",
           "syscaps": [
             "SystemCapability.Ability.AbilityRuntime.Core"
@@ -9400,6 +9517,24 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [
+        {
+          "name": "StartMode",
+          "syscaps": [
+            "SystemCapability.Ability.AbilityRuntime.Core"
+          ],
+          "since": 11,
+          "dynamic_since": 11,
+          "static_since": 23,
+          "availability": [
+            "dynamic",
+            "static"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        }
+      ],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -9409,47 +9544,13 @@
         "startChildProcess",
         "startNativeChildProcess"
       ],
-      "missing_runtime_exports": [
-        "StartMode"
-      ],
-      "missing_runtime_export_details": [
-        {
-          "name": "StartMode",
-          "syscaps": [
-            "SystemCapability.Ability.AbilityRuntime.Core"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": 23,
-          "availability": [
-            "dynamic",
-            "static"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
-      "missing_official_runtime_exports": [
-        {
-          "name": "StartMode",
-          "syscaps": [
-            "SystemCapability.Ability.AbilityRuntime.Core"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": 23,
-          "availability": [
-            "dynamic",
-            "static"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
+      "missing_runtime_exports": [],
+      "missing_runtime_export_details": [],
+      "missing_official_runtime_exports": [],
       "unexpected_runtime_exports": [
         "_napiwrapper"
       ],
-      "status": "official_runtime_exports_missing"
+      "status": "runtime_exports_complete"
     },
     {
       "module": "@ohos.app.ability.common",
@@ -9463,6 +9564,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -9562,6 +9664,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AreaMode",
@@ -9633,6 +9736,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offPrepareContinue",
@@ -9749,6 +9853,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "attachId",
@@ -9822,6 +9927,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ResultCode",
@@ -9880,6 +9986,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -10015,6 +10122,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offFreeze",
@@ -10134,6 +10242,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -10223,6 +10332,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AppIntentEntity",
@@ -10407,6 +10517,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DevelopType",
@@ -10505,6 +10616,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -10578,6 +10690,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -10812,6 +10925,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offMission",
@@ -10925,6 +11039,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -10966,6 +11081,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -10991,6 +11107,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -11120,6 +11237,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SOURCE_APP_ABILITY_NAME",
@@ -11374,6 +11492,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "OperationType",
@@ -11475,6 +11594,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -11500,6 +11620,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -11525,6 +11646,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -11568,6 +11690,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AgentCardType"
@@ -11765,6 +11888,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -11797,6 +11921,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -11814,6 +11939,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -11839,6 +11965,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -11946,6 +12073,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -12006,6 +12134,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BusinessType",
@@ -12178,6 +12307,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -12240,6 +12370,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -12265,6 +12396,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -12290,6 +12422,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -12349,6 +12482,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -12390,6 +12524,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -13084,6 +13219,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offChangeSceneAnimationState",
@@ -13515,6 +13651,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColorMode",
@@ -13627,6 +13764,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offCall",
@@ -14218,6 +14356,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -14294,6 +14433,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -14317,6 +14457,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14342,6 +14483,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14367,6 +14509,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -14401,6 +14544,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColorMode",
@@ -14427,6 +14571,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14450,6 +14595,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14473,6 +14619,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14498,6 +14645,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14523,6 +14671,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14548,6 +14697,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14573,6 +14723,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14598,6 +14749,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -14615,6 +14767,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -14687,6 +14840,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilityLifecycleState",
@@ -14758,6 +14912,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilityState",
@@ -14991,6 +15146,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -15040,6 +15196,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -15080,6 +15237,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FormError"
@@ -15356,6 +15514,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -15460,6 +15619,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColorMode",
@@ -15535,6 +15695,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -15716,6 +15877,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -15749,6 +15911,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -15840,6 +16003,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -15865,6 +16029,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArcAlphabetIndexer"
@@ -15978,6 +16143,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArcList",
@@ -16164,6 +16330,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArcScrollBar"
@@ -16291,6 +16458,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArcDirection",
@@ -16332,6 +16500,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BasicPrefetcher"
@@ -16608,6 +16777,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AppStorageV2",
@@ -16767,38 +16937,29 @@
         "ComponentUtils",
         "ContextMenuController",
         "CursorController",
-        "CustomKeyboardContinueFeature",
         "DragController",
         "DynamicSyncScene",
         "FocusController",
         "Font",
         "FrameCallback",
-        "GestureActionPhase",
         "GestureHandlingResolution",
-        "GestureListenerType",
-        "KeyboardAvoidMode",
         "LuminanceSampler",
         "Magnifier",
         "MarqueeDynamicSyncScene",
-        "MarqueeDynamicSyncSceneType",
         "MeasureUtils",
         "MediaQuery",
-        "NodeRenderState",
         "NoneActionProposal",
         "OverlayManager",
         "PageSwitchActionProposal",
         "PromptAction",
         "ResolvedUIContext",
-        "ResolveStrategy",
         "Router",
         "ScrollActionProposal",
         "SelectActionProposal",
         "SmartGestureController",
         "SwiperDynamicSyncScene",
-        "SwiperDynamicSyncSceneType",
         "TargetedGestureProposal",
         "TextMenuController",
-        "TextSelectionClearPolicy",
         "UIContext",
         "UIInspector",
         "UIObserver"
@@ -16903,20 +17064,6 @@
           "kind": "class"
         },
         {
-          "name": "CustomKeyboardContinueFeature",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 23,
-          "dynamic_since": 23,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "DragController",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -16987,20 +17134,6 @@
           "kind": "class"
         },
         {
-          "name": "GestureActionPhase",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "GestureHandlingResolution",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -17013,34 +17146,6 @@
           ],
           "system_api": false,
           "kind": "class"
-        },
-        {
-          "name": "GestureListenerType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "KeyboardAvoidMode",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
         },
         {
           "name": "LuminanceSampler",
@@ -17085,20 +17190,6 @@
           "kind": "class"
         },
         {
-          "name": "MarqueeDynamicSyncSceneType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 14,
-          "dynamic_since": 14,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "MeasureUtils",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -17125,20 +17216,6 @@
           ],
           "system_api": false,
           "kind": "class"
-        },
-        {
-          "name": "NodeRenderState",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
         },
         {
           "name": "NoneActionProposal",
@@ -17211,20 +17288,6 @@
           "kind": "class"
         },
         {
-          "name": "ResolveStrategy",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 22,
-          "dynamic_since": 22,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "Router",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -17295,20 +17358,6 @@
           "kind": "class"
         },
         {
-          "name": "SwiperDynamicSyncSceneType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 12,
-          "dynamic_since": 12,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "TargetedGestureProposal",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -17335,20 +17384,6 @@
           ],
           "system_api": false,
           "kind": "class"
-        },
-        {
-          "name": "TextSelectionClearPolicy",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 26,
-          "dynamic_since": 26,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
         },
         {
           "name": "UIContext",
@@ -17393,6 +17428,143 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [
+        {
+          "name": "CustomKeyboardContinueFeature",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 23,
+          "dynamic_since": 23,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "GestureActionPhase",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 20,
+          "dynamic_since": 20,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "GestureListenerType",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 20,
+          "dynamic_since": 20,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "KeyboardAvoidMode",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 11,
+          "dynamic_since": 11,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "MarqueeDynamicSyncSceneType",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 14,
+          "dynamic_since": 14,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "NodeRenderState",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 20,
+          "dynamic_since": 20,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "ResolveStrategy",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 22,
+          "dynamic_since": 22,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "SwiperDynamicSyncSceneType",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 12,
+          "dynamic_since": 12,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        },
+        {
+          "name": "TextSelectionClearPolicy",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 26,
+          "dynamic_since": 26,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        }
+      ],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AtomicServiceBar",
@@ -17433,74 +17605,9 @@
         "UIObserver"
       ],
       "missing_runtime_exports": [
-        "CustomKeyboardContinueFeature",
-        "GestureActionPhase",
-        "GestureListenerType",
-        "KeyboardAvoidMode",
-        "LuminanceSampler",
-        "MarqueeDynamicSyncSceneType",
-        "NodeRenderState",
-        "ResolveStrategy",
-        "SwiperDynamicSyncSceneType",
-        "TextSelectionClearPolicy"
+        "LuminanceSampler"
       ],
       "missing_runtime_export_details": [
-        {
-          "name": "CustomKeyboardContinueFeature",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 23,
-          "dynamic_since": 23,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "GestureActionPhase",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "GestureListenerType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "KeyboardAvoidMode",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
         {
           "name": "LuminanceSampler",
           "syscaps": [
@@ -17514,136 +17621,10 @@
           ],
           "system_api": true,
           "kind": "class"
-        },
-        {
-          "name": "MarqueeDynamicSyncSceneType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 14,
-          "dynamic_since": 14,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "NodeRenderState",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "ResolveStrategy",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 22,
-          "dynamic_since": 22,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "SwiperDynamicSyncSceneType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 12,
-          "dynamic_since": 12,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "TextSelectionClearPolicy",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 26,
-          "dynamic_since": 26,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
         }
       ],
       "missing_official_runtime_exports": [
         {
-          "name": "CustomKeyboardContinueFeature",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 23,
-          "dynamic_since": 23,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "GestureActionPhase",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "GestureListenerType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "KeyboardAvoidMode",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "LuminanceSampler",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -17656,76 +17637,6 @@
           ],
           "system_api": true,
           "kind": "class"
-        },
-        {
-          "name": "MarqueeDynamicSyncSceneType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 14,
-          "dynamic_since": 14,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "NodeRenderState",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "ResolveStrategy",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 22,
-          "dynamic_since": 22,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "SwiperDynamicSyncSceneType",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 12,
-          "dynamic_since": 12,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "TextSelectionClearPolicy",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 26,
-          "dynamic_since": 26,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
         }
       ],
       "unexpected_runtime_exports": [
@@ -17792,6 +17703,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ReadonlySystemEnvKey",
@@ -17900,6 +17812,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createFromBuilder",
@@ -17964,6 +17877,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getItemsInShapePath",
@@ -18031,6 +17945,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DynamicLayout",
@@ -18161,6 +18076,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArkLazyColumnLayoutComponent",
@@ -18299,6 +18215,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LazyDynamicLayout",
@@ -18444,6 +18361,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArkLazyVWaterFlowLayoutComponent",
@@ -18611,6 +18529,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArkContainerReaderComponent",
@@ -18779,6 +18698,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SelectionContainer",
@@ -18865,9 +18785,6 @@
       "expected_runtime_exports": [
         "createDragAction",
         "DragPreview",
-        "DragSpringLoadingState",
-        "DragStartRequestStatus",
-        "DragStatus",
         "executeDrag",
         "getDragPreview",
         "SpringLoadingContext"
@@ -18900,48 +18817,6 @@
           ],
           "system_api": false,
           "kind": "class"
-        },
-        {
-          "name": "DragSpringLoadingState",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "DragStartRequestStatus",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 18,
-          "dynamic_since": 18,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "DragStatus",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 11,
-          "dynamic_since": 11,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
         },
         {
           "name": "executeDrag",
@@ -18986,21 +18861,7 @@
           "kind": "class"
         }
       ],
-      "static_only_exports_excluded_from_dynamic_probe": [],
-      "actual_runtime_exports": [
-        "DragPreview",
-        "DragStatus",
-        "createDragAction",
-        "executeDrag",
-        "getDragPreview",
-        "interruptFollowHandMorphDropAnimation"
-      ],
-      "missing_runtime_exports": [
-        "DragSpringLoadingState",
-        "DragStartRequestStatus",
-        "SpringLoadingContext"
-      ],
-      "missing_runtime_export_details": [
+      "compiled_constant_enum_contracts": [
         {
           "name": "DragSpringLoadingState",
           "syscaps": [
@@ -19013,7 +18874,8 @@
             "dynamic"
           ],
           "system_api": false,
-          "kind": "enum"
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
         },
         {
           "name": "DragStartRequestStatus",
@@ -19027,8 +18889,38 @@
             "dynamic"
           ],
           "system_api": false,
-          "kind": "enum"
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
         },
+        {
+          "name": "DragStatus",
+          "syscaps": [
+            "SystemCapability.ArkUI.ArkUI.Full"
+          ],
+          "since": 11,
+          "dynamic_since": 11,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        }
+      ],
+      "static_only_exports_excluded_from_dynamic_probe": [],
+      "actual_runtime_exports": [
+        "DragPreview",
+        "DragStatus",
+        "createDragAction",
+        "executeDrag",
+        "getDragPreview",
+        "interruptFollowHandMorphDropAnimation"
+      ],
+      "missing_runtime_exports": [
+        "SpringLoadingContext"
+      ],
+      "missing_runtime_export_details": [
         {
           "name": "SpringLoadingContext",
           "syscaps": [
@@ -19046,34 +18938,6 @@
       ],
       "missing_official_runtime_exports": [
         {
-          "name": "DragSpringLoadingState",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 20,
-          "dynamic_since": 20,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
-          "name": "DragStartRequestStatus",
-          "syscaps": [
-            "SystemCapability.ArkUI.ArkUI.Full"
-          ],
-          "since": 18,
-          "dynamic_since": 18,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "SpringLoadingContext",
           "syscaps": [
             "SystemCapability.ArkUI.ArkUI.Full"
@@ -19089,6 +18953,7 @@
         }
       ],
       "unexpected_runtime_exports": [
+        "DragStatus",
         "interruptFollowHandMorphDropAnimation"
       ],
       "status": "official_runtime_exports_missing"
@@ -19194,6 +19059,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AnimatedDrawableDescriptor",
@@ -19238,6 +19104,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createComponentObserver"
@@ -19394,6 +19261,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "scaleGeneratorDialog",
@@ -19649,6 +19517,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColumnLayoutAlgorithm",
@@ -19676,6 +19545,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LazyCustomLayoutAlgorithm",
@@ -19701,6 +19571,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AlphabetIndexerModifier",
@@ -19908,6 +19779,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BaseNode",
@@ -20132,6 +20004,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GestureActionPhase",
@@ -20354,6 +20227,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ActionType",
@@ -20439,6 +20313,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CircleShape",
@@ -20478,6 +20353,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ThemeControl"
@@ -20531,6 +20407,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EventFlag",
@@ -20721,6 +20598,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ImmersiveMaterial",
@@ -20843,6 +20721,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BackgroundMode",
@@ -20867,6 +20746,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -21201,6 +21081,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BatteryCapacityLevel",
@@ -21341,6 +21222,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ConsumptionType",
@@ -21937,6 +21819,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccessAuthorization",
@@ -22210,6 +22093,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CodecBitRate",
@@ -22539,6 +22423,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offStateChange",
@@ -22667,6 +22552,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getRemoteDeviceBatteryInfo",
@@ -22738,6 +22624,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ConnectionStrategy",
@@ -23153,6 +23040,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AdvertisingState",
@@ -23228,6 +23116,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BluetoothAddressType",
@@ -24144,6 +24033,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offBatteryChange",
@@ -24584,6 +24474,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccessAuthorization",
@@ -24641,6 +24532,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createHfpAgProfile",
@@ -24769,6 +24661,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ErrorReason",
@@ -24811,6 +24704,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createMapMseProfile"
@@ -24892,6 +24786,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createOppServerProfile"
@@ -25018,6 +24913,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createPanProfile"
@@ -25069,6 +24965,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ShareType",
@@ -25331,6 +25228,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SppType",
@@ -25427,6 +25325,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "disableWearDetection",
@@ -26021,6 +25920,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccessAuthorization",
@@ -26184,6 +26084,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getMode",
@@ -26406,6 +26307,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Blob",
@@ -26918,6 +26820,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilitySubType",
@@ -27274,6 +27177,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ComponentType",
@@ -27343,6 +27247,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "queryAssociatedBundleNames",
@@ -29044,6 +28949,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AbilityFlag",
@@ -29199,6 +29105,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAdd",
@@ -29434,6 +29341,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ResourceFlag",
@@ -29622,6 +29530,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ApplicationType",
@@ -29684,6 +29593,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getRemoteAbilityInfo",
@@ -29803,6 +29713,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BundlePackFlag",
@@ -29904,6 +29815,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getAllLauncherAbilityInfos",
@@ -29961,6 +29873,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getBundleInstaller",
@@ -30111,6 +30024,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getAllLauncherAbilityInfo",
@@ -30235,6 +30149,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getOverlayModuleInfo",
@@ -30309,6 +30224,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getAllLocalPluginInfoForSelf",
@@ -30492,6 +30408,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "addDesktopShortcutInfo",
@@ -30612,6 +30529,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SkillInfoFlag",
@@ -30744,6 +30662,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "IntervalType",
@@ -30851,6 +30770,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -31073,6 +30993,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "finishTrace",
@@ -31231,6 +31152,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AttendeeRole",
@@ -31283,6 +31205,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ChargeType"
@@ -31394,6 +31317,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Support",
@@ -31583,6 +31507,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Support",
@@ -31730,6 +31655,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FollowXMode",
@@ -31920,6 +31846,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -32779,6 +32706,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Attribute",
@@ -33166,6 +33094,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ContinuationMode",
@@ -33216,6 +33145,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ConvertXML"
@@ -33467,6 +33397,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offCooperateMessage",
@@ -33799,6 +33730,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "cubicBezier",
@@ -33882,6 +33814,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getChannelId"
@@ -33919,6 +33852,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -33970,6 +33904,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -34163,6 +34098,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -34307,6 +34243,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ErrorCode",
@@ -34370,6 +34307,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AssetStatus"
@@ -34421,6 +34359,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DataAbilityPredicates",
@@ -34587,6 +34526,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ChangeType",
@@ -34632,6 +34572,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DataSharePredicates"
@@ -34819,6 +34760,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Constants",
@@ -34897,6 +34839,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "create",
@@ -35066,6 +35009,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "Constants",
@@ -35209,6 +35153,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ModelVersion",
@@ -35379,6 +35324,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "MAX_KEY_LENGTH",
@@ -35486,6 +35432,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "RdbPredicates",
@@ -36080,6 +36027,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AssetConflictPolicy",
@@ -36248,6 +36196,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "MAX_KEY_LENGTH",
@@ -36302,7 +36251,6 @@
         "UnifiedDataProperties",
         "UnifiedRecord",
         "updateData",
-        "UriPermission",
         "Video",
         "Visibility"
       ],
@@ -36743,21 +36691,6 @@
           "kind": "function"
         },
         {
-          "name": "UriPermission",
-          "syscaps": [
-            "SystemCapability.DistributedDataManager.UDMF.Core"
-          ],
-          "since": 26,
-          "dynamic_since": 26,
-          "static_since": 26,
-          "availability": [
-            "dynamic",
-            "static"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
-        {
           "name": "Video",
           "syscaps": [
             "SystemCapability.DistributedDataManager.UDMF.Core"
@@ -36786,6 +36719,24 @@
           ],
           "system_api": false,
           "kind": "enum"
+        }
+      ],
+      "compiled_constant_enum_contracts": [
+        {
+          "name": "UriPermission",
+          "syscaps": [
+            "SystemCapability.DistributedDataManager.UDMF.Core"
+          ],
+          "since": 26,
+          "dynamic_since": 26,
+          "static_since": 26,
+          "availability": [
+            "dynamic",
+            "static"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
         }
       ],
       "static_only_exports_excluded_from_dynamic_probe": [],
@@ -36822,45 +36773,11 @@
         "setAppShareOptions",
         "updateData"
       ],
-      "missing_runtime_exports": [
-        "UriPermission"
-      ],
-      "missing_runtime_export_details": [
-        {
-          "name": "UriPermission",
-          "syscaps": [
-            "SystemCapability.DistributedDataManager.UDMF.Core"
-          ],
-          "since": 26,
-          "dynamic_since": 26,
-          "static_since": 26,
-          "availability": [
-            "dynamic",
-            "static"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
-      "missing_official_runtime_exports": [
-        {
-          "name": "UriPermission",
-          "syscaps": [
-            "SystemCapability.DistributedDataManager.UDMF.Core"
-          ],
-          "since": 26,
-          "dynamic_since": 26,
-          "static_since": 26,
-          "availability": [
-            "dynamic",
-            "static"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
+      "missing_runtime_exports": [],
+      "missing_runtime_export_details": [],
+      "missing_official_runtime_exports": [],
       "unexpected_runtime_exports": [],
-      "status": "official_runtime_exports_missing"
+      "status": "runtime_exports_complete"
     },
     {
       "module": "@ohos.data.uniformDataStruct",
@@ -36871,6 +36788,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -37034,6 +36952,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "TypeDescriptor",
@@ -37093,6 +37012,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getAttestStatus",
@@ -37820,6 +37740,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DeviceTypes",
@@ -37947,6 +37868,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offDragStateChange",
@@ -38574,6 +38496,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAdd",
@@ -38924,6 +38847,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getRemoteAbilityInfo",
@@ -39010,6 +38934,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DeviceManager",
@@ -39157,6 +39082,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DeviceManager",
@@ -39299,6 +39225,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DistributedHardwareErrorCode",
@@ -39992,6 +39919,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAttachStateChange",
@@ -40312,6 +40240,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offContinueStateChange",
@@ -40846,6 +40775,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offCollaborateEvent",
@@ -41098,6 +41028,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ConnectionState",
@@ -41231,6 +41162,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offChannelStateChange",
@@ -41855,6 +41787,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccountType",
@@ -41948,6 +41881,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DlpFeatureStatus",
@@ -41968,6 +41902,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "choose",
@@ -42132,6 +42067,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BusType",
@@ -42257,6 +42193,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColorPicker",
@@ -42319,6 +42256,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -42526,6 +42464,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "activateOsAccount",
@@ -42996,6 +42935,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AdminType",
@@ -43768,6 +43708,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "KioskFeature",
@@ -44076,6 +44017,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Protocol",
@@ -44232,6 +44174,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getManagedBrowserPolicy",
@@ -44695,6 +44638,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AppDistributionType",
@@ -44789,6 +44733,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ManagedPolicy",
@@ -44857,6 +44802,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "disallowModifyDateTime",
@@ -44970,6 +44916,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Operation",
@@ -45056,6 +45003,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getDeviceInfo",
@@ -45410,6 +45358,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PowerPolicyAction",
@@ -45497,6 +45446,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LocationPolicy",
@@ -46105,6 +46055,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -46509,6 +46460,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FeatureForAccount",
@@ -47019,6 +46971,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ClipboardPolicy",
@@ -47550,6 +47503,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "KeyAction",
@@ -47812,6 +47766,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "activeSim",
@@ -48086,6 +48041,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Descriptor",
@@ -48392,6 +48348,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EapMethod",
@@ -48542,6 +48499,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offEventData",
@@ -48819,6 +48777,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FastBuffer",
@@ -48895,6 +48854,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FaultLogInfo",
@@ -48921,6 +48881,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -49084,6 +49045,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "IncrementalBackupSession",
@@ -49143,6 +49105,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SyncFolder",
@@ -49534,6 +49497,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CloudFileCache",
@@ -49799,6 +49763,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -49949,6 +49914,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getExternalStorageDir",
@@ -50066,6 +50032,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CopyResult",
@@ -50162,6 +50129,7 @@
           "kind": "namespace"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DeviceFlag",
@@ -50223,6 +50191,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FileUri",
@@ -50290,6 +50259,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccessFlagType",
@@ -50508,6 +50478,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "HashStream",
@@ -50549,6 +50520,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "deactivateUserKey"
@@ -52225,6 +52197,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AlbumAttribute",
@@ -53147,6 +53120,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AudioSaveOptions",
@@ -53235,6 +53209,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "add",
@@ -53322,6 +53297,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getSecurityLabel",
@@ -53410,6 +53386,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getFreeSize",
@@ -53722,6 +53699,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getAllExtBundleStats",
@@ -53805,6 +53783,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "completelyDelete",
@@ -54164,6 +54143,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DiskType",
@@ -54208,6 +54188,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Constants",
@@ -54554,6 +54535,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AlbumKey",
@@ -54849,6 +54831,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "OperationMode",
@@ -54952,6 +54935,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getFontByName",
@@ -55022,6 +55006,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -56217,6 +56202,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offBluetoothScanResultChange",
@@ -56995,6 +56981,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GeoLocationErrorCode",
@@ -57078,6 +57065,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CMError",
@@ -57105,6 +57093,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -57140,6 +57129,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "create"
@@ -57929,6 +57919,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BlendMode",
@@ -58072,6 +58063,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "HDRFormat",
@@ -58094,6 +58086,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BoidsSimPlugin",
@@ -58809,6 +58802,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Affinity",
@@ -59015,6 +59009,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Filter",
@@ -59201,6 +59196,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Event",
@@ -59370,6 +59366,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EventType",
@@ -59607,6 +59604,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "HiTraceCommunicationMode",
@@ -59816,6 +59814,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "HiTraceOutputLevel",
@@ -60052,6 +60051,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "RULE_CAUTION_PRINT_LOG",
@@ -60783,6 +60783,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "JsRawHeapTrimLevel",
@@ -61138,6 +61139,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LogLevel",
@@ -61185,6 +61187,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -61210,6 +61213,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -61557,6 +61561,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AppEventPackageHolder",
@@ -61709,6 +61714,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getCurrentConfig",
@@ -61826,6 +61832,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LeakWatcherConfig",
@@ -62638,6 +62645,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AdvancedMeasureFormat",
@@ -62774,6 +62782,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getOAID",
@@ -63194,6 +63203,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AttachFailureReason",
@@ -63242,6 +63252,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -63293,6 +63304,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PanelFlag",
@@ -64145,6 +64157,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CURSOR_DOWN",
@@ -64338,6 +64351,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "InputMethodInputType",
@@ -64395,6 +64409,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "isDoNotDisturbEnabled",
@@ -64508,6 +64523,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Collator",
@@ -64598,6 +64614,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "copy",
@@ -64757,6 +64774,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "identity",
@@ -64986,6 +65004,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -65032,6 +65051,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "matchMediaSync"
@@ -66308,6 +66328,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ActiveDeviceType",
@@ -66624,6 +66645,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AudioHapticManager",
@@ -66702,6 +66724,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AVCastPickerColorMode",
@@ -67043,6 +67066,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -68251,6 +68275,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "castAudioSession",
@@ -69533,6 +69558,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ApertureEffect",
@@ -69786,6 +69812,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CameraPicker",
@@ -69989,6 +70016,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CertificateStatus",
@@ -71422,6 +71450,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "createIncrementalSource",
@@ -72583,6 +72612,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AACProfile",
@@ -72797,6 +72827,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DynamicRangeMode",
@@ -73111,6 +73142,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AudioRendererInfo",
@@ -73217,6 +73249,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -73316,6 +73349,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -73461,6 +73495,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offSteadyStandingDetect",
@@ -73606,6 +73641,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offOperationSubmitMetadata",
@@ -73945,6 +73981,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offHoldingHandChanged",
@@ -74293,6 +74330,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EventType",
@@ -74544,6 +74582,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DistanceRank",
@@ -74744,6 +74783,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offUserAgeGroupDetected",
@@ -74836,6 +74876,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ActionType",
@@ -74904,6 +74945,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getInfraredFrequencies",
@@ -75069,6 +75111,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offHotkeyChange",
@@ -75487,6 +75530,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offChange",
@@ -75662,6 +75706,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EventMsg",
@@ -75687,6 +75732,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -75834,6 +75880,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "createKeyboardController",
@@ -75911,6 +75958,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offFingerprint",
@@ -76287,6 +76335,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "IntentionCode"
@@ -76324,6 +76373,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "KeyCode"
@@ -76361,6 +76411,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action"
@@ -76446,6 +76497,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -77254,6 +77306,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PointerStyle",
@@ -77381,6 +77434,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FingerprintAction",
@@ -77467,6 +77521,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Action",
@@ -77579,6 +77634,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -77718,6 +77774,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -77842,6 +77899,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -78101,6 +78159,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -78480,6 +78539,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -78874,6 +78934,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -79148,6 +79209,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -79317,6 +79379,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -80395,6 +80458,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ConversionProcess",
@@ -80618,6 +80682,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CustomResult",
@@ -80841,6 +80906,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DHCP",
@@ -81167,6 +81233,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AddressFamily",
@@ -81277,6 +81344,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "MdnsError",
@@ -81500,6 +81568,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -81994,6 +82063,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CertType",
@@ -82425,6 +82495,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "LimitAction",
@@ -82698,6 +82769,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SharingIfaceState",
@@ -82882,6 +82954,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "NONE",
@@ -83292,6 +83365,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offNetStatsChange",
@@ -83517,6 +83591,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "VpnConnection",
@@ -83856,6 +83931,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "VpnConnectionExt",
@@ -83995,6 +84071,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "TlsProtocol",
@@ -84126,6 +84203,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -84426,6 +84504,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offNfcStateChange",
@@ -85247,6 +85326,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offReaderMode",
@@ -86557,6 +86637,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ContentType",
@@ -86856,6 +86937,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ContentType",
@@ -88672,6 +88754,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offCheckNotification",
@@ -88985,6 +89068,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ContentType",
@@ -89398,6 +89482,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FileConflictOptions",
@@ -89500,6 +89585,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EventType",
@@ -89846,6 +89932,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DevicePowerMode",
@@ -91106,6 +91193,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "notifyPrintServiceSpoolerCloseForCancelled",
@@ -91566,6 +91654,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offActiveStateChange",
@@ -92036,6 +92125,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ProcessManager",
@@ -92131,6 +92221,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ToastShowMode",
@@ -92373,6 +92464,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CommonController",
@@ -92538,6 +92630,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ActionButtonType",
@@ -92857,6 +92950,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ActionButtonType",
@@ -93455,6 +93549,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ERROR_CANNOT_RESUME",
@@ -93785,6 +93880,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CacheStrategy",
@@ -93964,6 +94060,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ColorMode",
@@ -94166,6 +94263,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PowerSaveMode",
@@ -94671,6 +94769,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offContinuousTaskActive",
@@ -94870,6 +94969,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ResourceType",
@@ -94959,6 +95059,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offSystemLoadChange",
@@ -95301,6 +95402,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GroupType",
@@ -95531,6 +95633,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BatteryStatus",
@@ -95839,6 +95942,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "RouterMode",
@@ -96057,6 +96161,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Ashmem",
@@ -96240,6 +96345,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "RunningLock",
@@ -96614,6 +96720,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offChange",
@@ -97068,6 +97175,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getScreenLockAuthState",
@@ -97280,6 +97388,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DMError",
@@ -97383,6 +97492,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -97473,10 +97583,9 @@
       "loaded": false,
       "audit_status": "compile_time_declaration",
       "official_profile_syscaps": [],
-      "expected_runtime_exports": [
-        "HuksCryptoExtensionResultCode"
-      ],
-      "expected_runtime_export_details": [
+      "expected_runtime_exports": [],
+      "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [
         {
           "name": "HuksCryptoExtensionResultCode",
           "syscaps": [
@@ -97489,30 +97598,14 @@
             "dynamic"
           ],
           "system_api": false,
-          "kind": "enum"
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
         }
       ],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
-      "missing_runtime_exports": [
-        "HuksCryptoExtensionResultCode"
-      ],
-      "missing_runtime_export_details": [
-        {
-          "name": "HuksCryptoExtensionResultCode",
-          "syscaps": [
-            "SystemCapability.Security.Huks.CryptoExtension"
-          ],
-          "since": 22,
-          "dynamic_since": 22,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
+      "missing_runtime_exports": [],
+      "missing_runtime_export_details": [],
       "missing_official_runtime_exports": [],
       "unexpected_runtime_exports": [],
       "status": "module_load_failed"
@@ -98008,6 +98101,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Accessibility",
@@ -98667,6 +98761,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CertItemType",
@@ -99446,6 +99541,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AuthStorageLevel",
@@ -99688,6 +99784,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "CertificateDialogErrorCode",
@@ -100131,6 +100228,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AsyKeyDataItem",
@@ -101230,6 +101328,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "HuksAuthAccessType",
@@ -101527,6 +101626,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -101773,6 +101873,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "scanFile"
@@ -101914,6 +102015,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getModelResult",
@@ -101938,6 +102040,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -101961,6 +102064,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -102002,6 +102106,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PanelType"
@@ -102115,6 +102220,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offSelectionComplete",
@@ -102604,6 +102710,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offAccelerometerChange",
@@ -104227,6 +104334,7 @@
           "kind": "namespace"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "canShowFloating",
@@ -104378,6 +104486,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -104489,6 +104598,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getFreeBytes",
@@ -104584,6 +104694,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ActivityEvent",
@@ -104625,6 +104736,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "querySystemCapabilities"
@@ -104897,6 +105009,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "TimeType",
@@ -104997,6 +105110,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "get",
@@ -105141,6 +105255,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getCurrentTime",
@@ -105297,6 +105412,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "TIMER_TYPE_EXACT",
@@ -105385,6 +105501,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "get",
@@ -105701,6 +105818,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AsyncRunner",
@@ -107470,6 +107588,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AudioDeviceType",
@@ -108172,6 +108291,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DATA_FLOW_TYPE_DORMANT",
@@ -108700,6 +108820,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [
@@ -109325,6 +109446,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offCallStateChange",
@@ -110525,6 +110647,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offImsRegStateChange",
@@ -111999,6 +112122,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AuthType",
@@ -112808,6 +112932,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ATTACHMENT",
@@ -113038,6 +113163,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "VCardType",
@@ -113066,6 +113192,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PerfMetric",
@@ -113206,6 +113333,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ThermalLevel",
@@ -113338,6 +113466,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "DarkMode",
@@ -113363,6 +113492,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [],
       "missing_runtime_exports": [],
@@ -113654,6 +113784,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BusinessSubType",
@@ -113716,6 +113847,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "URI"
@@ -113784,6 +113916,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "URL",
@@ -114212,6 +114345,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ACM",
@@ -115156,6 +115290,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ACM",
@@ -115557,6 +115692,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BaudRates",
@@ -115704,6 +115840,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "BusinessId",
@@ -115750,6 +115887,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FaceAuthManager",
@@ -115806,6 +115944,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AuthTokenType",
@@ -116221,6 +116360,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AuthTrustLevel",
@@ -116671,6 +116811,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ArkTSVM",
@@ -116721,6 +116862,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116746,6 +116888,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116771,6 +116914,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116796,6 +116940,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116821,6 +116966,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116846,6 +116992,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116871,6 +117018,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116896,6 +117044,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116921,6 +117070,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116946,6 +117096,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116971,6 +117122,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -116996,6 +117148,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -117021,6 +117174,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -117046,6 +117200,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -117070,27 +117225,12 @@
         "SystemCapability.Utils.Lang"
       ],
       "expected_runtime_exports": [
-        "BigIntMode",
         "has",
         "parse",
         "remove",
         "stringify"
       ],
       "expected_runtime_export_details": [
-        {
-          "name": "BigIntMode",
-          "syscaps": [
-            "SystemCapability.Utils.Lang"
-          ],
-          "since": 12,
-          "dynamic_since": 12,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        },
         {
           "name": "has",
           "syscaps": [
@@ -117148,6 +117288,23 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [
+        {
+          "name": "BigIntMode",
+          "syscaps": [
+            "SystemCapability.Utils.Lang"
+          ],
+          "since": 12,
+          "dynamic_since": 12,
+          "static_since": null,
+          "availability": [
+            "dynamic"
+          ],
+          "system_api": false,
+          "kind": "const_enum",
+          "status": "compiled_caller_not_verified"
+        }
+      ],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "has",
@@ -117155,43 +117312,11 @@
         "remove",
         "stringify"
       ],
-      "missing_runtime_exports": [
-        "BigIntMode"
-      ],
-      "missing_runtime_export_details": [
-        {
-          "name": "BigIntMode",
-          "syscaps": [
-            "SystemCapability.Utils.Lang"
-          ],
-          "since": 12,
-          "dynamic_since": 12,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
-      "missing_official_runtime_exports": [
-        {
-          "name": "BigIntMode",
-          "syscaps": [
-            "SystemCapability.Utils.Lang"
-          ],
-          "since": 12,
-          "dynamic_since": 12,
-          "static_since": null,
-          "availability": [
-            "dynamic"
-          ],
-          "system_api": false,
-          "kind": "enum"
-        }
-      ],
+      "missing_runtime_exports": [],
+      "missing_runtime_export_details": [],
+      "missing_official_runtime_exports": [],
       "unexpected_runtime_exports": [],
-      "status": "official_runtime_exports_missing"
+      "status": "runtime_exports_complete"
     },
     {
       "module": "@ohos.util.stream",
@@ -117268,6 +117393,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Duplex",
@@ -117558,6 +117684,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offVibratorStateChange",
@@ -118027,6 +118154,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offWallpaperChange",
@@ -118242,6 +118370,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "OperationType",
@@ -118274,6 +118403,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -118299,6 +118429,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "length",
@@ -118341,6 +118472,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "WebNetErrorList"
@@ -118407,6 +118539,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "NmErrorCode",
@@ -119330,6 +119463,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AdsBlockManager",
@@ -120348,6 +120482,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ConnState",
@@ -122118,6 +122253,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offDeviceConfigChange",
@@ -122789,6 +122925,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PowerModel"
@@ -122992,6 +123129,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "PowerModel"
@@ -124093,6 +124231,7 @@
           "kind": "enum"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [
         {
           "name": "offGestureNavigationEnabledChange",
@@ -124380,6 +124519,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FloatViewState",
@@ -124488,6 +124628,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "FloatingBallState",
@@ -124621,6 +124762,7 @@
           "kind": "variable"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Priority",
@@ -124787,6 +124929,7 @@
           "kind": "class"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EventType",
@@ -125161,6 +125304,7 @@
           "kind": "function"
         }
       ],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "Checksum",
@@ -125211,6 +125355,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getInfo",
@@ -125242,6 +125387,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getStatus"
@@ -125261,6 +125407,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "AccessAuthorization",
@@ -125442,6 +125589,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getMode",
@@ -125471,6 +125619,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "aes",
@@ -125494,6 +125643,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getLocale"
@@ -125513,6 +125663,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "getInfo"
@@ -125534,6 +125685,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "fetch"
@@ -125553,6 +125705,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "access",
@@ -125594,6 +125747,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "GeoLocationErrorCode",
@@ -125659,6 +125813,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "matchMediaSync"
@@ -125680,6 +125835,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "_napiwrapper",
@@ -125707,6 +125863,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ContentType",
@@ -125854,6 +126011,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "hasInstalled"
@@ -125875,6 +126033,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ToastShowMode",
@@ -125909,6 +126068,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "ERROR_CANNOT_RESUME",
@@ -126001,6 +126161,7 @@
       ],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "back",
@@ -126036,6 +126197,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "SensorAccuracy",
@@ -126163,6 +126325,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "clear",
@@ -126188,6 +126351,7 @@
       "official_profile_syscaps": [],
       "expected_runtime_exports": [],
       "expected_runtime_export_details": [],
+      "compiled_constant_enum_contracts": [],
       "static_only_exports_excluded_from_dynamic_probe": [],
       "actual_runtime_exports": [
         "EffectId",

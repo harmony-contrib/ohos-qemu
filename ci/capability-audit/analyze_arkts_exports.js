@@ -106,8 +106,11 @@ function declarationNames(statement, output) {
   if (isDefault) return;
   if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement) ||
       ts.isEnumDeclaration(statement)) {
+    const isConstEnum = ts.isEnumDeclaration(statement) && (statement.modifiers || []).some(
+      (modifier) => modifier.kind === ts.SyntaxKind.ConstKeyword
+    );
     const kind = ts.isFunctionDeclaration(statement) ? 'function' :
-      (ts.isClassDeclaration(statement) ? 'class' : 'enum');
+      (ts.isClassDeclaration(statement) ? 'class' : (isConstEnum ? 'const_enum' : 'enum'));
     if (statement.name) addDeclaration(output, statement.name.text, statement, kind);
   } else if (ts.isVariableStatement(statement)) {
     for (const declaration of statement.declarationList.declarations) {
@@ -178,8 +181,16 @@ for (const module of runtime.modules) {
   // of the dynamic contract; excluding them would silently drop inherited or
   // older declarations whose mode is not written on the export itself.
   const expectedDetails = allExpectedDetails.filter(
-    (detail) => detail.availability.length === 0 || detail.availability.includes('dynamic')
+    (detail) => detail.kind !== 'const_enum' &&
+      (detail.availability.length === 0 || detail.availability.includes('dynamic'))
   );
+  // Ambient const enums need not have a NAPI object: a program compiler can
+  // inline their members. Keep the SDK contract visible and pending a real
+  // compiled caller check; absence in Object.keys() is not that check.
+  const compiledConstants = allExpectedDetails.filter(
+    (detail) => detail.kind === 'const_enum' &&
+      (detail.availability.length === 0 || detail.availability.includes('dynamic'))
+  ).map((detail) => ({...detail, status: 'compiled_caller_not_verified'}));
   const staticOnlyDetails = allExpectedDetails.filter(
     (detail) => !detail.availability.includes('dynamic') &&
       detail.availability.includes('static')
@@ -209,6 +220,7 @@ for (const module of runtime.modules) {
     official_profile_syscaps: module.official_profile_syscaps,
     expected_runtime_exports: expected,
     expected_runtime_export_details: expectedDetails,
+    compiled_constant_enum_contracts: compiledConstants,
     static_only_exports_excluded_from_dynamic_probe: staticOnlyDetails,
     actual_runtime_exports: actual,
     missing_runtime_exports: missing,
@@ -247,6 +259,9 @@ const summary = {
   ),
   static_only_export_count_excluded_from_dynamic_probe: rows.reduce(
     (total, row) => total + row.static_only_exports_excluded_from_dynamic_probe.length, 0
+  ),
+  compiled_constant_enum_contract_count: rows.reduce(
+    (total, row) => total + row.compiled_constant_enum_contracts.length, 0
   ),
 };
 const result = {profile: runtime.profile, summary, modules: rows};

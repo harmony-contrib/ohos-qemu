@@ -11,11 +11,11 @@
       "devices": {
         "phone": {
           "status": "partially_broken",
-          "evidence": "GET_ALL_PERMISSIONS and GET_SPM_VERSION return ENOTSUP on ARM64"
+          "evidence": "old ARM64 baseline: mandatory GET_ALL_PERMISSIONS has no Linux 6.6 switch handler; default AppSpawn SetUserId is a weak success stub. Real bitmap/task user ID, common AppSpawn setter before privilege drop and truthful SPM handshake patches are prepared; new packaged-kernel and normal-HAP runtime validation remains pending. Unsupported optional SPM is not alone proof of failure when legacy fallback works; parent-HAP-token mapping still needs closure"
         },
         "2in1": {
           "status": "partially_broken",
-          "evidence": "GET_ALL_PERMISSIONS and GET_SPM_VERSION return ENOTSUP on ARM64"
+          "evidence": "old ARM64 baseline: mandatory GET_ALL_PERMISSIONS has no Linux 6.6 switch handler; default AppSpawn SetUserId is a weak success stub. Real bitmap/task user ID, common AppSpawn setter before privilege drop and truthful SPM handshake patches are prepared; new packaged-kernel and normal-HAP runtime validation remains pending. Unsupported optional SPM is not alone proof of failure when legacy fallback works; parent-HAP-token mapping still needs closure"
         }
       }
     },
@@ -336,12 +336,12 @@
       },
       "devices": {
         "phone": {
-          "status": "runtime_verified_subset",
-          "evidence": "API 26 HAP completes virtual vibrator play/cancel and the vibrator host maps libhdi_product_vibrator_impl.z.so"
+          "status": "partially_broken",
+          "evidence": "old API 26 HAP verifies virtual one-shot play/cancel only. Custom JSON is rejected by all-false haptic capacity; the VDI also rejects upstream zero-duration stop markers and double-counts event durations. Time-delay-only timeline repair is prepared with four sanitizer regressions, but not yet packaged/guest validated. Old bindings tests swallowed native exceptions and are now strict"
         },
         "2in1": {
           "status": "invalid_declaration",
-          "evidence": "outside the official 2in1 profile; the inherited virtual vibrator backend nevertheless completes play/cancel"
+          "evidence": "outside the official 2in1 profile but explicitly requested for QEMU; inherited virtual backend verifies one-shot play/cancel only. Custom JSON/time-delay repair is prepared, not yet packaged/guest validated; HD and intensity/frequency modulation remain unsupported"
         }
       }
     },
@@ -2896,12 +2896,12 @@
       },
       "devices": {
         "phone": {
-          "status": "partially_broken",
-          "evidence": "AccessToken service defaults to com.ohos.permissionmanager.OpenSettingAbility, but the enabled PermissionManager HAP does not declare that ability or extension"
+          "status": "device_restricted_methods",
+          "evidence": "pinned permission definitions have no phone manual_settings permission: openPermissionOnSetting must reject these PC/tablet-only permissions. The missing OpenSettingAbility does not alone prove a supported phone permission is broken; do not add PC permission definitions to phone"
         },
         "2in1": {
           "status": "partially_broken",
-          "evidence": "AccessToken service defaults to com.ohos.permissionmanager.OpenSettingAbility, but the enabled PermissionManager HAP does not declare that ability or extension"
+          "evidence": "enabled PermissionManager lacks the required OpenSettingAbility single-result UI protocol. A separate entry/page and real manual grant/state check with caller-account/BMS identity validation and close/reuse/concurrent-session isolation are prepared; eight model/apply/lifecycle regressions and isolated full-API ArkTS compile pass. Candidate is not in the currently frozen build; new packaged 2in1 UI, grant/deny and security-boundary validation remains pending"
         }
       }
     },
@@ -3257,11 +3257,11 @@
       "devices": {
         "phone": {
           "status": "partially_broken",
-          "evidence": "Associated-domain query calls return, but the app-domain agent cannot perform verification, refresh verified state, or convert verified HTTP/HTTPS implicit Wants because /system/lib64/libapp_domain_verify_extension.z.so is absent; the implementation returns E_EXTENSIONS_LIB_NOT_FOUND."
+          "evidence": "Baseline lacks the optional libapp_domain_verify_extension.z.so. Source recheck found real VerifyTask/VerifyHttpTask verification and refresh fallbacks on E_EXTENSIONS_LIB_NOT_FOUND, so library absence alone does not prove verification failure. ConvertToExplicitWant falls back to an empty TargetInfo; actual HTTP/HTTPS verification, signature checks, refresh and routing remain unvalidated."
         },
         "2in1": {
           "status": "invalid_declaration",
-          "evidence": "The image advertises AppDomainVerify outside the exact 2in1 SDK profile and also omits /system/lib64/libapp_domain_verify_extension.z.so, so verification and verified HTTP/HTTPS implicit-Want conversion cannot run."
+          "evidence": "Baseline advertises AppDomainVerify outside the exact 2in1 SDK profile and lacks the optional extension. Source has real HTTP verification/refresh fallbacks; only Want conversion falls back to an empty TargetInfo. Runtime verification and routing remain unvalidated, not proven broken solely by library absence."
         }
       }
     },

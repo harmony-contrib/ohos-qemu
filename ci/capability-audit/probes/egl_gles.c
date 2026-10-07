@@ -2,7 +2,7 @@
 #include <GLES2/gl2.h>
 #include <stdio.h>
 
-static void probe(int version, EGLint renderable)
+static int probe(int version, EGLint renderable)
 {
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     EGLint major = 0;
@@ -12,7 +12,7 @@ static void probe(int version, EGLint renderable)
     printf("gles%d.egl_get_display=%d initialize=%d error=0x%x version=%d.%d\n",
         version, display != EGL_NO_DISPLAY, initialized, eglGetError(), major, minor);
     if (!initialized) {
-        return;
+        return 1;
     }
     EGLint attributes[] = {
         EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
@@ -25,7 +25,7 @@ static void probe(int version, EGLint renderable)
     printf("gles%d.choose=%d count=%d error=0x%x\n", version, chose, count, eglGetError());
     if (!chose || count == 0) {
         eglTerminate(display);
-        return;
+        return 1;
     }
     EGLint pbufferAttributes[] = {EGL_WIDTH, 16, EGL_HEIGHT, 16, EGL_NONE};
     EGLSurface surface = eglCreatePbufferSurface(display, config, pbufferAttributes);
@@ -40,6 +40,20 @@ static void probe(int version, EGLint renderable)
         current ? (const char *)glGetString(GL_VENDOR) : "",
         current ? (const char *)glGetString(GL_RENDERER) : "",
         current ? (const char *)glGetString(GL_VERSION) : "");
+    int failed = !current;
+    if (current) {
+        unsigned char pixel[4] = {0};
+        glViewport(0, 0, 16, 16);
+        glClearColor(0.2f, 0.4f, 0.6f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+        GLenum error = glGetError();
+        failed = error != GL_NO_ERROR || pixel[0] < 50 || pixel[0] > 52 ||
+            pixel[1] < 101 || pixel[1] > 103 || pixel[2] < 152 || pixel[2] > 154 || pixel[3] != 255;
+        printf("gles%d.readback=%u,%u,%u,%u gl_error=0x%x pass=%d\n", version,
+            pixel[0], pixel[1], pixel[2], pixel[3], error, !failed);
+        eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    }
     if (context != EGL_NO_CONTEXT) {
         eglDestroyContext(display, context);
     }
@@ -47,11 +61,12 @@ static void probe(int version, EGLint renderable)
         eglDestroySurface(display, surface);
     }
     eglTerminate(display);
+    return failed;
 }
 
 int main(void)
 {
-    probe(2, EGL_OPENGL_ES2_BIT);
-    probe(3, 0x0040); /* EGL_OPENGL_ES3_BIT_KHR */
-    return 0;
+    int gles2 = probe(2, EGL_OPENGL_ES2_BIT);
+    int gles3 = probe(3, 0x0040); /* EGL_OPENGL_ES3_BIT_KHR */
+    return gles2 || gles3;
 }

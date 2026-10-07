@@ -34,6 +34,7 @@ mkdir -p \
   "${OHOS_ROOT}/foundation/communication/netmanager_ext/frameworks/vpn_dialog/dialog_ui/vpn_dialog" \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine" \
   "${OHOS_ROOT}/foundation/graphic/graphic_2d/rosen/modules/render_service/core/pipeline/main_thread" \
+  "${OHOS_ROOT}/foundation/graphic/graphic_2d/frameworks/opengl_wrapper/src/EGL" \
   "${OHOS_ROOT}/applications/standard/hap" \
   "${OHOS_ROOT}/build/ohos/images/mkimage" \
   "${OHOS_ROOT}/vendor/ohemu/virt/image_conf" \
@@ -62,6 +63,15 @@ CONFIG_SYSTEM_DATA_VERIFICATION=y
 # CONFIG_FS_VERITY is not set
 EOF
 done
+
+cat >"${OHOS_ROOT}/foundation/graphic/graphic_2d/frameworks/opengl_wrapper/src/EGL/egl_wrapper_display.cpp" <<'EOF'
+void EglWrapperDisplay::UpdateQueryValue(EGLint *major, EGLint *minor)
+{
+    if (hasColorSpaceSupport_ && hasWideColorAndHdrSupport_) {
+        extensionValue_ = extensionValue_ + std::string(WIDE_COLOR_AND_HDR_EXTENSIONS);
+    }
+}
+EOF
 
 cat >"${OHOS_ROOT}/device/qemu/common/virt_full/hardware/gpu/BUILD.gn" <<'EOF'
 virt_gpu_prebuilt_dir = target_cpu

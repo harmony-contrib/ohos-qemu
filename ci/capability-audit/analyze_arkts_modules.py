@@ -15,6 +15,7 @@ LOAD_RE = re.compile(
     r"^module\.load=(.*?)\|status:(\d+)\|exception:(\d+)\|type:(\d+)$"
 )
 EXPORTS_RE = re.compile(r"^module\.exports=(.*?)\|status:(\d+)\|count:(\d+)$")
+COLLECTION_RE = re.compile(r"^module\.export\.collection=(.*?)\|(all_own_string_properties)$")
 EXPORT_RE = re.compile(
     r"^module\.export=(.*?)\|index:(\d+)\|key:(.*?)(?:\|type:(\d+)\|status:(\d+))?$"
 )
@@ -50,8 +51,13 @@ def main() -> int:
     )
     loads = {}
     export_summaries = {}
+    collections = {}
     exports: dict[str, list[tuple[int, str, int | None, int | None]]] = {}
     for line in args.probe_log.read_text(encoding="utf-8").splitlines():
+        match = COLLECTION_RE.match(line)
+        if match:
+            collections[match.group(1)] = match.group(2)
+            continue
         match = LOAD_RE.match(line)
         if match:
             loads[match.group(1)] = {
@@ -122,6 +128,7 @@ def main() -> int:
                 "official_profile_syscaps": official_syscaps,
                 "loaded": loaded,
                 "export_probe_status": export_summary.get("export_probe_status"),
+                "export_collection": collections.get(module, "unknown_legacy_probe"),
                 "export_count": export_summary.get("export_count"),
                 "exports": export_names,
                 "export_values": export_values,
@@ -164,6 +171,7 @@ def main() -> int:
             "exception_pending",
             "value_type",
             "export_probe_status",
+            "export_collection",
             "export_count",
             "exports",
             "audit_status",

@@ -1,0 +1,1816 @@
+# OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
+
+## 当前续修状态（2026-10-07，首包门槛仍未通过）
+
+用户已明确批准 RS 私有对象编码修复。`async_caller_identity` 统一栈新增
+0009：两类 command `sptr` 使用标准 Binder 对象，普通延迟副本及 ashmem
+sidecar 在请求返回前通过标准读写生成自持有 MessageParcel，不对共享字节中的
+cookie/handle/PTR 调用对象读取或 AcquireObject。DBinder PTR/strong pair 校验
+flags/长度/相邻 offset 后作为一个逻辑对象；对象重编码长度变化时重建后续字段。
+FD/FDR、FD 0、部分写入失败和取消均保留单一资源归属。权限、真实内核 PID、
+节点归属、异步调用及公开 API 不变；新六包同步重建，不兼容旧错误私有编码。
+当前14文件 exact 栈在真实固定源码首次/重复应用通过，证据
+`exact-component-stacks-object-05/evidence.json`；前两轮错误源哈希/补丁路径拒绝
+保留，不改只读源码。7项实际新增 C++ 片段的主机 ASan/UBSan、OS FD 和引用
+生命周期测试通过（6.624秒），`host-rs-object-encoding-03.log`；测试的 Parcel/
+对象持有部分是具名 fixture，不是实际 Binder/guest。真实三 ABI 编译第18轮
+发现头文件缺少 IRemoteObject 前置声明，失败证据保留；已修正，第19轮
+10个真实编译单元×三 ABI全部通过。`rs-async-caller-three-abi-19.json` 及同名
+`.logs/` 已保存；30个实际编译日志和component apply日志的复制SHA复核一致。
+首包02已生成新归档；18项实际RS/IPC产品类边界已在该归档通过，见下文。
+这不是完整跨进程、权限或全部图形能力闭环，不能仅据此登记全部对象编码修复完成。
+另用真实三个产品命令补充编译完整 `rs_command_factory.cpp`，验证排除POD sptr
+兜底后所有已注册绘制命令的模板仍可实例化；三ABI全部通过，证据
+`rs-command-factory-three-abi-01.json` 及同名 `.logs/`。它明确标记为补充选择，
+不冒充重复完整编译；与第19轮的component payload SHA完全一致，合计覆盖
+11个真实TU×三ABI的33次编译，复制日志SHA已复核，仍不是链接或guest验收。
+
+正式 M144 依赖 R18 的原生内核及官方 HAP/签名/五库转换复核通过：当前 recipe
+`3c0d5cd7d3302a0fad81b2056f947299c8258897e23a1c2e338a40baefd8b350`，
+ARM64 core manifest SHA-256
+`388b2b1676883be667a51116237a20536fd8cd2fb68e2eaf148ee5a43fa7dfcc`，
+HAP SHA-256 `c09e2f3e2dfd664b307015fee9c66634db2b376b3c1b19e9314001babb37db87`。
+同一 R18 流水线的 ARM64 V8 已完成 4524 个 Ninja 步骤，并通过正式 JSVM artifact
+校验。V8 manifest SHA-256 为
+`af928e8b5c26def7c4e71d34c2c23313ed473cf6cbc0b4a631ea719dfbcabbee`，
+实际 `libv8_shared.so` SHA-256 为
+`c805d8d82fe4b128cb847fcfb35cfc2eb455bb8867dfd481fed014487fb110cc`，
+宿主独立计算与 manifest 一致。SwiftShader 的1192步也已完成并通过正式校验，
+manifest SHA-256 为 `b1ec03a25246b079dba732f0a3222bf243cbd154eb6c0a7b3ec9d77da5f06b0b`，
+实际ICD SHA-256 为 `8284ae0540c98e7db1fa105d0844fe06692e50be4bb80af4e6fe9ae8cefd7591`。
+AVC正式校验随后通过，manifest SHA-256 为
+`94a07c8674931f4dcb7f64da9136458b01ae887a4c8c6a53c1d34d755aa7fe9a`；R18外层依赖命令
+exit_code=0，完整日志为 `m144-dependency-arm64-r18-01.log`。以上不是新 QEMU 包、
+JSVM执行、Vulkan上屏或AVC guest 验收。
+2026-10-07 02:55:36 UTC 已经通过四类依赖的独立preflight并启动仅 ARM64 phone
+首包构建，目标目录
+`/Volumes/PSSD/qemu/packages/first-rs-objects-7.0-release-20261007`，冻结入口
+`/Volumes/PSSD/qemu/build-inputs/phone-pdoJt7`，输入树SHA-256为
+`23ee06099ac8e2123abfd6968cd2d0d899481754d8349bed4bbc29739dd8fce3`。
+本地Docker使用 `ohos-qemu-build-env:7.0-release`、BUILD_JOBS=4、KERNEL_BUILD_JOBS=8，
+只选择PRODUCTS=arm64_virt和DEVICE_TYPE=phone，manifest仍是固定7.0 Release commit。
+构建日志为 `first-rs-objects-arm64-phone-build-01.log`。该次在HB LOAD调用原始
+GN格式化 rust_atty/BUILD.gn 时以SIGILL失败，未进入系统编译、未生成新归档；
+失败构建目录和输入冻结保留。只读复验相同GN和输入，原生及qemu-user各64次
+格式化均成功、结果一致，因此目前仅将宿主翻译不稳定作为推断，不声称已经
+定位具体非法指令，也不能将这些复验计作镜像行为通过。
+新增 `common/build/host_gn_execution` 独立exact组件：两个Python调用点在显式
+启用时使用qemu-x86_64-static -cpu max执行原来的固定GN，保留所有argv和失败
+传播；非GN命令及GN二进制不变。ARM宿主的amd64 Docker入口自动选择此模式，
+本地派生镜像安装执行工具，其他五包使用同一脚本路径。宿主工具修复须通过
+新首包重试验证；02已完成归档及校验和，尚无boot/行为通过结果，
+首包门槛仍为false，其余五包未启动。
+
+宿主修复已用实际固定文件首次和重复应用验证；本地派生镜像
+`ohos-qemu-build-env:7.0-release-gn-qemu-user`（镜像ID
+`8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55`）中
+实际调用修复后的file_utils.write_file执行64次原始GN格式化，全部一致，错误
+语法以exit=1传播，原始GN SHA保持不变。证据为
+`gn-host-caller-runtime-01/evidence.json`和同名.log/.py，仍不是系统包验收。
+第86轮全部763项主机回归通过（102.776秒），日志
+`host-regression-capability-86.log`。2026-10-07 03:21 UTC开始仅ARM64 phone首包
+重试，新的目标目录为
+`/Volumes/PSSD/qemu/packages/first-rs-objects-7.0-release-20261007-r2`；命令保存在
+`run-first-rs-objects-arm64-phone-02.sh`，build/runtime/gate分别使用02日志，
+不覆盖失败的01目录。该命令在新归档完成后立即计算校验和、启动它进行全套
+行为检查并执行严格首包门槛；不会启动剩余五包。
+本次冻结入口 `/Volumes/PSSD/qemu/build-inputs/phone-edFWaW`，输入树SHA-256为
+`8a11e14ea2ab569d08f31f090786ac9bbaca21b63a12fb94797da160f1d7fa36`；
+宿主独立重算当前仓库、冻结树和manifest全部文件相等，证据
+`first-rs-objects-build-inputs-host-validation-03.log`。此输入一致性不是行为验收。
+
+2026-10-07 07:12:23 UTC，02完整ARM64 phone系统编译成功（3:44:01），
+随后离线最终镜像检查和打包成功。首归档为
+`/Volumes/PSSD/qemu/packages/first-rs-objects-7.0-release-20261007-r2/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+864639459字节，SHA-256
+`ee45c3fe022bb390426010f1a7a26910d0d24584551d8925b0a09c08dbf27c93`；
+原始校验和记录 `first-rs-objects-arm64-phone-archive-02.sha256`。本地Docker环境
+与命令仍为上述02脚本和派生镜像，API26 Release SDK来自
+`provider-sdk-26-full/26.0.0`，Python环境 `/tmp/ohos-capability-tests-pvk51rjh`。
+运行命令为 `scripts/validate_packaged_qemu.sh --package-archive <上述新归档>
+--package-directory <同名目录> --evidence-output <r2目录>/first-artifact-behavior.json`，
+随后执行 `scripts/verify_first_artifact_gate.py`（product=arm64_virt，device-type=phone）。
+新归档已全新解压启动，实际运行工作目录
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-97vh58m0`。该次无外部keepalive
+启动及两轮真实默认休眠/实体按键唤醒/合成器检查通过；boot ID为
+`9f7887b9-df52-4d6d-8910-006a87d27cae`。全套随后因锁屏持有10000ms
+PowerMgr override而拒绝覆盖，在应用测试准备阶段失败，保留原始
+`first-artifact-behavior.json`及02 runtime日志。gate命令因set-e未执行；
+不能将两个通过项当作完整验收。此时首包门槛仍为false，其他五包没有启动。
+
+同一02归档另以原始内核、系统库和默认策略启动独立私有HVF诊断，boot ID
+`c0016eb8-8f6e-45a5-abb7-713336e0c7ea`，target `127.0.0.1:60467`。
+`lockscreen-new-package-02-01/boot.json`保存实际QEMU命令、进程及归档SHA。
+普通UITest从真实锁屏节点向上滑动后，系统自行撤销10000ms override，
+base=9000000ms不变，RenderService/Foundation PID及内核UUID未变；实际布局
+从ScreenLockRootComponent切换为SCBDesktop_Flex_Desktop，截图经人工检查。
+证据 `lockscreen-actual-gesture-01/evidence.json`，没有执行PowerMgr restore、
+特权解锁或权限放行。默认套件现先执行此有界普通手势准备；未知override、
+凭据/未知界面、错误节点和服务重启均失败，不兼容强行清除其他客户端状态。
+
+该独立新包诊断的 `rs-objects-new-package-02-01/result.json`实际18项全部通过：
+普通/ashmem、0/65536/900000字节payload、null、FD 0、跨线程消费/取消、
+128轮生命周期及4种损坏sidecar拒绝；实际调用产品DSO，无系统库替换。
+普通账号100新HAP的 `web-new-package-02-01/evidence.json`通过JavaScript/DOM、
+Canvas2D、WebGL1/2全像素读回/错误shader、双向proxy、reload和renderer终止恢复。
+不能仅用WebGL代替独立Vulkan或可见浏览器上屏测试。
+
+独立原生Vulkan设备队列1024-word读回、headless swapchain及OHOS NativeWindow
+10帧/1500像素/尺寸变化边界全部通过，证据
+`vulkan-{device,headless,ohos-surface}-new-package-02-01/result.json`。
+可见窗口第01次native提交/销毁/重建完成，但两张截图仍为启动图，严格像素验证
+失败，原始失败保留。之后 `graphics-new-package-02-diagnosis-02/` 的系统截图
+和QMP物理显示均已出现真正应用及预期色块，物理显示实际核对46110像素；
+未替换库、重启服务或改变图形参数。同一归档的完整窗口复跑
+`vulkan-window-new-package-02-02/verified-result.json`通过两代各46110像素及
+真实销毁/重建。首次失败的精确延迟原因尚未证实，不宣称永久截图故障已修复。
+验证入口现区分queue-present与真正合成器呈现，最多60秒等待实际完整像素，
+保留每次失败截图，畸形布局/尺寸不符立即失败，不放宽颜色或以日志替代截图。
+这些测试入口变更改变冻结输入，下一轮必须重打03新首包并重新执行完整套件；
+02的独立通过不能拼成03完整首包门槛，也没有关闭全部C++/ArkTS1.1审计缺口。
+
+上述入口及负例修正后，第87轮完整776项主机回归通过（106.134秒），证据
+`host-regression-capability-87.log`；真实02归档的已解锁桌面准备也通过
+`application-home-new-package-02-01/evidence.json`，没有新增手势或修改电源策略。
+2026-10-07 08:03:32 UTC启动03代表包，命令
+`run-first-rs-objects-arm64-phone-03.sh`，目标目录
+`/Volumes/PSSD/qemu/packages/first-rs-objects-7.0-release-20261007-r3`。
+新冻结入口 `phone-tJz4BX`，902个输入树SHA-256
+`87a0d5d90822792b9f423167ce39caaddd75a68d98a22f21d0a9fba323845b18`，
+宿主独立重算仓库/冻结树/manifest完全一致。M144 dependency recipe仍为上述
+3c0d5cd7，系统源码、内核、图形实现和依赖不因测试准备时序变化而替换；
+本轮仍只打包ARM64 phone，并自动启动新归档全套验收和严格首包门槛。
+截至该启动记录尚无03归档/SHA/guest结果，其余五包没有启动。
+
+03随后完成系统编译和离线镜像检查，生成新的代表归档
+`/Volumes/PSSD/qemu/packages/first-rs-objects-7.0-release-20261007-r3/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+864664435字节，SHA-256
+`a81bfc82bc1a33262a6be56b7ab0a1f6e5b684f44c85237cf4328a95687196ce`。
+原始记录为 `first-rs-objects-arm64-phone-archive-03.sha256`；实际新解压运行目录
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-blpl6kmj`，boot ID
+`80320a10-ca90-4775-b20b-9b5916e6ebed`，本地macOS ARM64/HVF，API26 SDK、
+Python环境及本地Docker构建命令沿用03脚本，未替换任何客体系统库。
+截至2026-10-07 09:14 UTC，实际新包boot、默认休眠/唤醒、普通桌面准备、
+Native ABI、内核bitmap/user-ID/BPF、Binder身份89项、RS对象18项、AudioSuite、
+UDMF/Pasteboard/AVPlayer退出回归、证书两角色、普通ArkWeb，以及独立Vulkan
+可见窗口销毁/重建的真实像素测试均通过。普通user-ID、i18n、matrix4、factory
+和const enum契约也已通过；套件继续执行contact-sync-mode等后续用例。
+这些结果只证明各自验证范围，不包含全部Provider/虚拟硬件闭环；当时没有
+完整套件或严格首包门槛通过结论，其余五包仍未启动。
+
+03完整套件于09:14:45 UTC在普通contact-sync-mode HAP处失败：安装、普通身份、
+Ability启动均成功，但300秒内没有产生nonce绑定的结果文件；原始失败归档、
+应用、157次结果轮询及enclosing报告保留，没有伪造枚举值或继续矩阵。
+具体是哪个枚举或模块导致应用未完成尚待独立定位，不能凭源文件已打补丁
+宣称这三个运行值已通过。另修复测试基础设施的独立清理问题：QemuGuest.start
+在进入with主体前被KeyboardInterrupt等异常中断时也必须清理自己持有的进程，
+即使写boot证据失败也执行cleanup；11项主机测试通过，证据
+`host-boot-interrupt-cleanup-01.log`，这不是系统能力验收。
+
+后续使用03原归档、原内核/系统库的新私有HVF诊断启动，boot ID
+`df82c195-3349-4a8a-b2c6-52bce3a3aa66`，target `127.0.0.1:55087`。
+`contact-enum-new-package-03-02/diagnostic-02`的真实应用崩溃记录确定为
+公共`photoAccessHelper.FusionAssetType`未定义；原生001已提供numeric 0，
+但固定源码`photoaccesshelperinf.js`没有转发。新增独立002只转发原生对象，
+不补假枚举、不改存储/权限。原生CPP postimage不变，公共JS postimage SHA为
+`b283d47255e633b5ed1b0f0ae27ef98ddc835d69ab60cdd2137e50da55ef1439`。
+首次/重复/已知001前缀/未知修改的4项测试通过
+`host-photo-public-wrapper-01.log`；真实产品Ninja命令生成新的
+photoaccesshelper.abc（50532字节，SHA
+`c9d280045d8a4f41861ae5314411752205a4745d2b35e2cbafa243b3a1db2b4b`），
+证据`photo-public-wrapper-next.7lRPxO/product-01/evidence.json`。
+以上不是新包中公共模块执行成功，必须重打代表包验证。
+
+同一私有03启动的剩余persona诊断不能合并进正式03全套报告。
+`remaining-personas-01`的ThreadWorker、PCM流、AVC编码和AudioSuite效果通过，
+Legacy Worker在旧应用卸载/会话异步关闭时被AppMgr终止；增加只针对专用
+审计bundle的`aa force-stop`及kernel PID/账号100 AA记录两次实际缺席检查后，
+`remaining-personas-03/worker-legacy/evidence.json`通过。停止超时、未知回复、
+错误dump或boot变化均失败，不修改Worker实现或权限，仍须新首包回归。
+
+Camera诊断另发现两层问题。测试使用UIAbility模块context，结果位于
+`haps/entry/files`，不是应用context的`files`；轮询和照片取回现使用同一真实
+模块私有目录，不修改相机实现来掩盖测试路径错误。
+`remaining-personas-05/camera`经过真实PermissionManager Allow后，NDK两轮
+预览生命周期共61项检查通过；ArkTS实际photoProfiles却只有1003/1005的YUV
+规格，没有JPEG=2000，因此拍照仍失败。新增`camera/jpeg_capture`四文件
+组件仅在现有QEMU Vivid开关下广告实际枚举YUYV尺寸可软件编码的JPEG规格，
+不广告JPEG预览/视频；BLOB输出不再无条件要求设备MJPEG输入，实际MJPEG
+支持仍按真实查询选择。原有权限、节点过滤、非QEMU行为不变。
+`camera-jpeg-profile-next.pOiLcA/three-abi-01/evidence.json`证明两个完整TU、
+三个ABI、开关开/关的12次真实产品参数编译；显式候选define不冒充重生成GN。
+同目录`component-source-01/evidence.json`证明固定实际源码首次、重复及前置
+USB组件重复兼容，五个操作全部退出0；4项sanitizer/状态夹具通过
+`host-camera-jpeg-capture-03.log`。它们不是新包拍照或完整Camera验收。
+所有诊断均保留原失败、原包SHA、同一boot及有限测试电源override恢复证据；
+未替换客体系统库或执行shell权限grant。当前六包门槛仍未通过，其余五包未启动。
+
+2026-10-07 10:03:13 UTC启动04代表包，入口
+`run-first-rs-objects-arm64-phone-04.sh`，仍仅ARM64 phone，目标目录
+`/Volumes/PSSD/qemu/packages/first-rs-objects-7.0-release-20261007-r4`。
+冻结输入`phone-Og7eZd`共914文件，树SHA-256
+`42e7a890c5a1281c077cfaca24fb136152a956f331ab44f2571cd4011f92a24e`；
+仓库、冻结副本和manifest独立重算一致。上述公共相册转发、相机JPEG以及
+实际模块context/应用会话清理修正已进入此轮。第89轮完整788项主机回归通过
+（145.703秒），证据`host-regression-capability-89.log`，不是guest能力通过。
+本轮构建和验收期间保持scripts/patches/ci及门槛台账冻结，不启动其余五包。
+
+03私有启动的当前bindings全集第01轮实际跑到全部32模块，Hypium原始结果
+为102个通过用例；但完整driver退出1：XComponent的两个describe分别报告
+`OHOS_REPORT_SUM: 3`和`1`，旧结果校验器只接受单一总数，尽管四个用例的
+全局numtests、逐项成功和最终汇总一致。原失败报告保持fail。独立包外工具
+`bindings-hypium-next-candidate-01/`现在按实际组边界核对各组完成数量，并
+额外要求每个start/pass成对、原源码全部用例顺序及零skip/ignore，6项主机
+回归通过；未修改用户bindings仓库或测试断言，也未修改04冻结验收输入。
+其driver自己的电源cleanup已恢复override=None，外层重复`timeout -r`返回
+failed，二层策略归属仍需正确整理，不能把这个整轮改写为通过。
+更重要的是，该boot随后在第二轮应用重装期间发生真实
+`render_service(pid 554) exit with signal : 11`（客体uptime 4049.847秒），
+原boot证据已更新为fail，监控关闭了自己持有的VM。第二轮driver被明确中断，
+记录`current-native-bindings-02/owned-abort-after-real-RS-crash.json`；不能拼接
+前一轮用例成功成为稳定性/首包门槛通过。原userdata和串口保留用于崩溃取证。
+
+WLAN独立诊断`radio-new-package-03-05/archived-hwsim/evidence.json`首次在真实
+03归档模块上确认ARM64的额外根因：cfg80211装载时缺少rfkill_*内核符号；
+该架构CONFIG_RFKILL=m，但GN/vendor模块安装没有携带rfkill.ko。
+诊断仅向专属诊断VM装载原归档模块，实际cfg80211失败，未替换客体库或模块。
+包外`wlan-next-candidate.A8nJvH/components-02`保留真实hwsim双radio启动，并
+把ARM64 rfkill改为内建；ARMv7a/x86_64原配置已为y。
+`rfkill-source-preflight-02/evidence.json`证明固定真实源码首次/重复应用及
+未知、partial状态拒绝且保留源文件，仍不是内核链接、新包无线或STA/AP/P2P闭环。
+随后仅在旧03归档的独立诊断VM中，从同一产品构建输出取出真实ARM64
+`rfkill.ko`（SHA-256
+`2f3fe5c16e30cdb9902325b2cacf1a123df6c72629eefd8127083749fa17d90e`）
+并按实际SHA推入/加载，然后加载归档内原始四个无线模块；
+`radio-new-package-03-11/archived-hwsim/evidence.json`记录boot ID
+`f29968a6-4001-40fb-b35e-70e23bf2a1c7`，真实网络接口从`eth0,lo`
+变为`eth0,hwsim0,lo,wlan0,wlan1`，两个wlan分别指向不同phy；Foundation
+及RenderService PID前后不变，诊断通过。`/proc/net/wireless`旧WEXT表不存在，
+并非nl80211/hwsim必备条件，诊断器现在只记录该边界。此验证主动修改了
+旧包诊断客体模块状态，不证明04或后续包的自动启动，也没有覆盖Wi-Fi
+STA/AP/P2P、鉴权关联、真实流量、应用权限或全部架构；首包门槛仍未通过。
+
+热管理包外候选另外按API26可选callback契约接受显式undefined，且参数错误
+或远端注销失败仍保留真实监听。`thermal-next-candidate.GP6SFz/optional-callback-01`
+记录新CPP SHA `63da35b900b697d14dbc1f62b7073d47da074edb3b391ccf33111551d97f1dad`，
+三ABI实际产品TU编译、四部件首次/重复八次应用通过；精确候选方法ASan/UBSan
+具名夹具3435项断言通过，覆盖旧/新接口、排队取消、显式undefined与服务失败。
+它们不是真实ArkVM/Binder/热后端验收，未纳入04，不复用旧CPP的DSO链接证明。
+
+第85轮当前完整主机回归757项通过（148.001秒），证据
+`issue-20-20261006/host-regression-capability-85.log`；第84轮754项（277.679秒）、
+第83轮754项、第82轮752项及第81轮748项历史证据保留。
+新包套件增加 `backend-inventory/inventory.json`：在同一真实新包 boot 的应用测试
+设置之后只读记录热温区、实际热配置、网卡和蓝牙设备，原始文本绑定SHA，前后
+核对kernel boot ID。其status明确为diagnostic，不注册任何能力闭环，不计入
+行为通过项；3项host契约验证缺失设备不被误判为pass、boot变化及输出覆盖拒绝。
+热管理源码补查确认：固定 `device/qemu` b017aee8 的 ARM64/x86_64 配置开启
+CONFIG_TEST_POWER，而 ARMv7a 未开启；Linux 6.6 test_power 的温度属性返回26，
+power_supply_core按0.1°C到m°C乘100，注册温区名为test_battery（即2600m°C）。
+固定 thermal HDI 69094b77 的通用配置却选择sim_tz=1并创建9个初值0的模拟温度
+文件，actual组仅寻找soc-thermal/gpu-thermal；热服务dbba4e1d同样使用lya配置。
+这些是适配依据，不是新包运行结果：不能仅给模拟文件写常量作为能力修复，也
+不能将当前ARM64温区的存在推断为其他架构已可用。当前thermal缺口仍未闭环。
+首包02编译期间，在独立目录 `thermal-next-candidate.GP6SFz` 准备下一轮热配置，
+没有修改当前仓库输入、只读源码卷或正在构建的首包。候选将已有内核
+test_battery温区通过HDI的replace属性映射为battery，service使用现有sensor
+cluster/thermallevel action，不伪造CPU/GPU等物理温度或宿主电池值。真实GN的
+具名prebuilt模板fixture已在第03轮验证六种QEMU选择及两个非QEMU选择；
+随后按真实模板的 `output` 属性补上原安装文件名约束，第04轮fixture因GN
+非空列表覆盖而失败；只修正fixture为if/else，第05轮8项全部通过，最新证据
+`thermal-next-candidate.GP6SFz/preflight-05/evidence.json`。它仍不是生产GN图或
+实际安装结果，不将历史失败改写成通过。
+三架构真实Kconfig parser在各自只读6.6.101准备树上规范化独立临时配置，
+TEST_POWER/THERMAL/THERMAL_EMULATION/POWER_SUPPLY均为y，证据
+`kernel-config-02/evidence.json`。早期fixture导入/unused变量失败及使用6.6.0
+覆盖参数的配置01记录保留；只采用从真实Makefile读取版本的配置02结果。
+候选仍需按部件整合、原生解析、内核编译和重新打包后的等级、迟滞、回调、
+撤销/恢复等实测；不计入首包门槛或thermal闭环。
+独立候选新增真实HDI/服务配置类及sensor-cluster调用探针，原生编译第04轮在
+三种产品实际Ninja命令下全部通过，证据
+`thermal-next-candidate.GP6SFz/native-three-abi-04/evidence.json`；probe SHA为
+`e2fffed654753eadd999478c7a8f95ee96daf4319287fa4d203470db3f85898a`。
+它使用真实HDI/SA/libxml生成输入，没有替代解析器或声明；只产生ThinLTO对象，
+尚未链接或运行。01缺HDI头、02查询未选中的v1_0目标、03因实际IDL生成器
+要求输入W_OK而被只读源卷拒绝，三次失败保留。04改用字节相同的独立输入
+副本，真实源卷仍只读。当前首包输入仍为phone-edFWaW，候选未整合入包。
+进一步比对实际API26声明和固定thermal NAPI，发现旧subscribe接口声明为
+AsyncCallback(error,level)，实现却与新register共用单参数回调；unsubscribe
+也先释放监听再校验可选回调参数。这两处需单独修契约和生命周期并用普通
+HAP验证新旧入口、非法参数保留监听、排队事件、自注销、重注册及环境退出；
+backend XML修正不能代替NAPI修复。WLAN补查也确认：三架构配置虽选中
+mac80211_hwsim模块，当前init仅加载cfg80211/mac80211/iwl模块；芯片级HDI
+尚未注册，默认vendor=hardware，default HAL的部分查询仍依赖实体私有ioctl。
+因此不能只加载虚拟无线模块或打开feature就将完整STA/AP/P2P标记闭环。
+热管理独立候选的两个NAPI文件随后通过三架构实际产品编译，证据
+`thermal-next-candidate.GP6SFz/napi-three-abi-01/evidence.json`。同一文件哈希下，
+精确提取候选方法的具名VM/Binder宿主fixture在ASan/UBSan下3388项断言通过，
+覆盖新旧回调、事件值与顺序、非法参数不撤销监听、替换、自注销、环境清理、
+引用/handle归还和四线程投递。证据为 `callback-host-03/evidence.json`；前两轮
+因fixture错误地从工作线程取得thread_local监听对象失败，保留失败输入，修正为
+投递实际已订阅对象后重测，未修改候选实现。它不是真实ArkVM、Binder或客体验收。
+原生客户端另外六处订阅/撤销方法忽略远端返回、仅连接成功就返回true，独立候选
+改为仅ERR_OK返回true，保留公开bool接口、原参数/连接检查和权限路径。三架构实际
+编译通过，证据 `client-three-abi-01/evidence.json`；精确六方法的具名RPC返回fixture
+通过，证据 `client-host-01/evidence.json`，仍不是真实IPC/权限拒绝实测。
+普通ArkTS1.1热管理HAP无申请权限，三种架构构建选择均编译通过，证据
+`hap-{arm64,armv7a,x86_64}-01/evidence.json`。这是纯字节码未签名HAP，不宣称
+native ABI或安装运行通过。上述候选均位于包外，尚未整合、链接或新包验证，
+当前首包输入与thermal未闭环状态不变。
+后续独立热内核对象验证已通过三架构共12个真实ELF对象：test_power、
+power_supply_core、thermal_sysfs与thermal_core。实际GCC、Make/Kconfig、
+归一化配置和对象ABI/SHA记录于 `kernel-objects-three-abi-01.json`；只读源卷
+未改动，使用已停止且有编译证据的内核头准备树，仅向本轮输出目录写入。
+它不包含完整内核链接、打包或启动结果。另保留初版HAP，增加独立
+`boundary-app/`：回调内重注册、不可变订阅编号及具名3500ms排队窗口，分别
+检查原事件值、排队后撤销/替换；宿主必须另外证明真实provider转换发生在
+窗口内，窗口起止本身不能算通过。三个构建选择通过且宿主重算HAP/source
+哈希一致，证据 `hap-boundary-{arm64,armv7a,x86_64}-01/evidence.json`；仍未运行。
+热候选现按HDI配置、服务策略、NAPI契约及客户端reply拆成四个部件，七个
+源文件各自独立patch/apply入口，仅保存在包外 `components-02/`。固定两个
+实际project HEAD及原文件SHA后，首次/重复共8次应用通过，结果与上述编译
+候选完整文件哈希一致；未知修改负例被拒绝且所有文件保留，证据
+`component-source-02/evidence.json`。首轮误把NAPI的构建目标目录当源码目录，
+在复制预检即失败、没有执行任何patch，记录 `component-source-01/` 保留。
+新增资产的None preimage支持目前也仅在包外helper副本中，9项具名宿主测试
+覆盖不存在/空文件区分、partial状态、未知文件、symlink、越界patch及marker
+不授权跳过，证据 `component-assets-host-01/evidence.json`；尚未改仓库helper。
+另在只读生产source/out的独立已完成DSP树克隆中启动真实产品GN/两资产构建
+验证，目录 `/tmp/thermal-product-GN-assets-01`。该轮四个热组件及host-GN组件
+首次/重复共10次应用通过，但生产GN退出255（内层GN返回1），两资产构建未执行；
+失败记录 `product-GN-assets-01.json/.log` 保留，不计为装配通过。直接用相同
+GN/args在该独立副本重现时，父/子进程均等待futex；仅结束已核定身份/目录
+的诊断进程，主构建未动。6分钟限时的单工作线程诊断也超时，证据
+`direct-GN-single-worker-01/evidence.json`。原始同一GN二进制的未显式qemu
+执行对照已返回1，证据 `direct-GN-original-native-01/evidence.json`；实际错误
+是旧DSP验证副本缺少本轮新装入的 `foundation/multimedia/av_codec/qemu_avc`
+目录，不能据此归因于thermal配置或QEMU工具。正在该独立副本中以只读生产
+输入的字节一致副本补齐此目录后，原始GN成功生成完整产品图，实际Ninja
+两个prebuilt目标成功安装原文件名，配置字节分别匹配4483da57与1ba15e29，
+全部7个候选源码postimage保持不变；证据
+`product-GN-assets-repaired-seed-02/evidence.json`。未改主构建，这仍不是新包
+运行或thermal闭环。
+当前首包898个
+冻结输入已再次核对仍为8a11e14e，热候选与新增helper均未装入首包02。
+新包套件另增加18项直接调用产品 RS/IPC DSO 的边界探针及严格 transcript verifier，
+覆盖普通/ashmem、三种payload大小、空对象、FD 0、跨线程消费/取消、128轮生命周期
+及四种损坏sidecar拒绝。只传可执行文件，不替换系统库；它是实际类边界，不能
+替代 Web/Vulkan 的跨进程或UI测试。该项已作为首包独立必需检查；02归档的独立客体18项通过见上文。
+首包02后段构建期间，该探针已用实际产品Ninja编译参数链接当前新建的
+RS/IPC/utils库成功，证据 `rs-object-first-current-product-link-01/build.json`；
+它记录三个产品库与调用程序哈希，不能替代新归档中的运行结果。
+热候选另新增只读 `thermal_service_sample.cpp`：先发现实际SA并检查真实
+GetThermalLevel/GetThermalSrvSensorInfo的IPC回复、battery类型，再读取实际
+客户端查询值，记录nonce、boot ID与采样时间；不注入温度或注册假服务。
+`service-sample-three-abi-01/evidence.json` 记录三架构实际产品参数编译及
+ARM64当前真实产品client/registry/IPC/utils库链接成功。宿主控制器仍须核对
+温区与实际转换，探针编译/链接或一次成功回复均不能关闭热后端缺口。
+包外四项热组件链接预检 `product-component-links-arm64-01/evidence.json`
+触发旧DSP out的13912个依赖动作，已仅结束核定argv/parent/PGID/out目录的
+诊断Ninja组并保留-15失败记录；首个保护检查因实际cwd为Ninja的-C目录
+而拒绝发信号，核定完整命令后才执行。主构建未动，候选完整链接仍待本轮
+完整产品输出后验证，不计为通过。
+随后在只读当前完整产品输出上补做两个候选TU的真实ARM64共享库链接，
+`compiled-product-links-arm64-03/evidence.json`通过客户端与NAPI配套链接。
+仅替换已经三ABI编译验证的候选object，响应参数来自实际Ninja的solink规则
+及目标edge；NAPI链接到候选客户端，保留实际CFI、sysroot和其余依赖，
+输出及LTO cache均在私有/tmp目录。前后图、实际输入及候选哈希未变；
+客户端库SHA为22cd651fdbc04c2740cd847f31298162a52346f7bd9fa574a6077dbc6e4ca08b，
+NAPI库SHA为a906eec444dbedeb76d5b9adffb7a2128046d0ab36b43e400eac5f9125588535，
+复制证据和两库到宿主后重新核对一致。01的Python3.8 hash API错误、02未展开
+response参数的拒绝仍保留；这些是预检工具失败，不隐去失败历史。
+此通过仅为两个候选TU的真实产品命令链接，不是完整四组件Ninja构建、
+三ABI链接或guest能力验收；没有替换任何客体库，03首包冻结输入仍为87a0d5d9。
+包外 `run_thermal_backend_candidate.py` 现准备28个实际provider阈值/回差步骤，
+先拒绝错误归档、外国QEMU/boot、未装入上述固定配置、未知vendor覆盖及
+非默认test_battery温度，仅传递真实client-linked采样可执行文件。
+每步独立核对内核温度和实际SA/client回复，要求跨两个1000ms轮询周期稳定，
+保留非原子多次RPC在转换时的不同读数、不接受其为稳定通过；结束后写入零值
+关闭Linux温度模拟，并复核2600m°C/level 0及服务PID不变。实际6.6内核的
+emul_temp为DEVICE_ATTR_WO，脚本不声称读取初始或最终emul_temp状态。
+7项主机计划/JSON/身份/类型/错误路径负例通过，记录
+`backend-controller-host-01.log`；这是测试控制器预检，尚未执行客体测试，
+不证明温区、HAP回调或thermal缺口闭环，也未装入03首包冻结输入。
+另在包外 `wlan-next-candidate.A8nJvH` 准备virtual WLAN radio bootstrap：
+固定QEMU b017aee8原始init的boot job只加载Intel模块，缺少已配置/打包的
+mac80211_hwsim；候选保留原CRLF，以两个真实hwsim radio取代无对应设备的
+Intel加载，不改权限、不将eth0重命名、不启用vendor chip false-success。
+另用02归档准备两次独立无线bootstrap诊断，均未实际加载模块，不能计作
+WLAN backend通过。第01次先遇到SDK HDC全局临时PID锁，独立端口并不自动
+隔离该锁；在私有临时目录启动独立HDC后可正常checkserver，但客体未完成
+连接，实际一次电源键输入仅记作辅助诊断，物理显示捕获不活跃。
+中断启动上下文发现尚未进入with-body时不会自动关闭VM，已按精确原PID、
+PGID、内核路径及QMP socket仅关闭该孤立客体，原始记录保留。
+第02次在独立HDC就绪后以verbose诊断命令行成功连接root/API26/phone及
+前台账号，但默认休眠后的60秒静默阶段没有自动唤醒，后续boot-ID查询超时；
+实际串口确认sleep，失败boot.json保留，原脚本正常关闭该VM。
+两次记录分别在`wlan-radio-new-package-02-01/`与`wlan-radio-new-package-02-02/`；
+私有HDC也已关闭，用户原有HDC/QEMU未动。尚不能据此定位第01次的精确
+客体离线原因或关闭Wi-Fi缺口；当前首包03正式套件已有独立真实GPIO唤醒验收。
+真实只读源码字节副本上的首次/重复应用、未知状态拒绝保留全部文件、
+三架构源Kconfig的cfg80211/mac80211/hwsim=m及实际init选项传递检查通过，
+证据 `source-preflight-02/evidence.json`。01因checker假设post-fs而失败，实际
+源job为boot，仅修正checker，原失败保留。此候选未进首包，实际PHY/WPA、
+扫描/关联/数据、AP/P2P、MAC/能力协商和普通应用权限边界尚未通过，WLAN
+缺口仍未闭环；不能把源配置m或init patch通过当作无线API可用。
+探针本身已用第19轮真实 helper 的编译参数/完整生成输入完成三ABI编译，目录
+`rs-object-probe-{arm64,armv7a,x86_64}-04/`；当前caller/builder及输出对象SHA
+已独立复核。实际参数开启ThinLTO，输出是LLVM bitcode，不声称已获得三ABI ELF。
+此模式不链接旧产品库，不作运行证据；
+正常首包套件必须重新链接实际新产品DSO再传入新guest。
+定向实际OHOS链接driver复核发现 `-fno-ident` 在object-only链接时会触发
+`-Werror`；已筛选并保留实际ABI/toolchain/LTO参数，三ABI `-###` 选择真实
+ld.lld、musl及目标架构复核通过。该复核不执行链接、不生成guest可执行文件。
+探针随后按实际Parcel语义加固：损坏侧带仅修改自持有buffer中的字段，不调用会
+截断object table的RewindWrite；失败后检查两个真实对象释放。FD 0 场景在复制、
+ashmem解析及消费者执行期间保持stdin关闭，要求实际ReadFileDescriptor返回0，
+检查关闭后再用RAII恢复原stdin，不能只测试会立即被writer复制成正数的输入0。
+这些新边界尚未在实际guest运行。
+源码要求的九分类57规则审查已完成，未检出确定新增问题；报告
+`report/report_rs_object_encoding_20261007_093932.md` 和同名CSV绑定0009及六文件SHA。
+主机回归、静态审查和编译均不是 guest 或新包验收。
+已授权的异步调用身份修复另增加真实PID命名空间探针，保留原有58项，并增加
+自己的CLONE_NEWPID子进程存活/退出两轮，共89项严格运行检查：命名空间PID=1，
+原proc视图TGID及内核sender-info均必须等于宿主真实发送进程ID，异步wire PID
+仍为0，伪造PID/UID不得被采用。探针不mount、不unshare调用者命名空间、不动
+系统Binder上下文；只关闭自己的vndbinder manager并清理自己的正数clone PID。
+三ABI真实C SDK编译及ELF/当前源文件SHA复核通过，证据
+`binder-namespace-three-abi-01/`、`binder-namespace-three-abi-inputs-01.json`。
+5项host verifier回归通过 `host-binder-namespace-verifier-01.log`；旧58项guest
+结果不能被新verifier放行，当前89项尚未在新包运行。
+相机已接入默认新包验收：正常账号100应用仅声明CAMERA，使用真实
+PermissionManager 中针对专用audit应用的可见唯一Allow控件，不通过shell
+直接授予权限。实际源码中的51种本地化文本及61个相关输入文件已绑定SHA，
+证据 `camera-permission-labels-source-01.json`。两轮活跃ArkTS预览要求真实
+UITest节点、同阶段原始日志及compositor PNG独立复核；另检查NDK的61项
+边界/回调、两次重建和4张实际JPEG。生成页、SDK声明/头文件和native源文件
+均绑定nonce。三ABI unsigned HAP实际SDK构建通过，目录
+`camera-sdk-three-abi-02/{arm64,armv7a,x86_64}`，对应3个 `camera-sdk-*-02.log`，
+但没有在guest运行。独立复核另外定位到UITest矩形tuple在JSON后变成list，
+导致真实证据无法精确比较；节点现在返回JSON稳定的list，不改变边界、选择
+或点击策略。新增8项契约复核通过 `host-camera-contract-03.log`。包级闭环只
+对应 `camera-host-backend-missing`，不扩充为全部视频/高级相机API。
+unsigned HAP内容复核发现x86_64库被ArkDown置于完整intermediates子目录，
+并非正常 `libs/x86_64/lib*.so`；编译成功不等于该包可加载。共享测试签名入口
+现调用 `qemu_test_hap_archive.py`，仅修正这个已确认的精确布局并清除ZIP64
+extra，保持全部库字节、代码、资源及权限；未知嵌套、路径冲突、软链接及错误
+ELF ABI直接失败。原始unsigned包不修改，native-bindings signer同样复用该入口。
+实际修正输出/字节SHA证据为 `camera-hap-layout-x86_64-01.json`，5项host边界
+回归通过 `host-hap-native-layout-01.log`。三ABI实际官方code-sign/digest/permission
+验签通过 `camera-signature-{arm64,armv7a,x86_64}-01.log`，签名产物位于
+`camera-signatures-three-abi-01/`，只绑定已记录旧诊断guest的真实UDID，未安装
+或运行；后续新包会重新构建、签名并验证实际加载。生产ArkWeb HAP使用独立
+官方Docker构建链，本修复不改变其打包语义。
+签名后的三ABI另通过实际canonical库路径、ELF类型/架构、当前SDK/生成页契约、
+CAMERA唯一权限及与本轮编译库一致的`.text`内容复核，证据
+`camera-signed-inputs-three-abi-01.log`；仍不是guest加载或预览验收。
+证书查询返回 `undefined` 的根因已经定位到三类 NAPI 数组转换将 count=0
+当作错误；同时空列表 owner 因 child=null 未释放。新增独立
+`base/security/certificate_manager/empty_lists` 部件，只修上述5处条件，
+非空/null、分配失败和权限错误仍失败，非空字段/协议不变。严格完整文件
+状态校验入口已统一接入 Docker patch plan，旧 marker 不掩盖未知源码。
+三个真实产品 `cm_napi_common.o` 复核通过，证据
+`certificate-empty-lists-three-abi-02.json` 及同名 `.logs/`；JSON 保留容器内
+`/tmp/` 原始日志路径，宿主复制按同名文件对应，原始证据未改写。最终源文件
+SHA-256 为 `ff3c3d31531600f836c64e0817532a24147a44e99e21237d961515fef6bb1c20`。
+第03轮再次通过相同三个真实对象，证据 `certificate-empty-lists-three-abi-03.json`
+及同名 `.logs/`，额外绑定验证脚本本身的 SHA，并拒绝覆盖已存在或软链接证据。
+2048轮空/非空释放、重复释放、真实补丁函数转换及未知源码保护的3项 host
+测试通过，不代表真实 NAPI 服务/权限或 guest 已通过。新包套件增加两个
+限定身份 HAP：只有2项文档证书权限的 system_core 应用测试真实空数组、
+promise/callback、自己的PKCS12导入/查询/精确URI删除、边界和64轮空查询；
+无ACL普通应用测试拒绝，保持镜像权限表不变。不卸载全部凭据、不删除任何
+其他证书；原始 `certificate-manager-undefined-result` 保留，只有同一新包
+boot 的两身份完整真实结果才登记闭环。
+当前完整证书调用页的两身份×三ABI unsigned HAP 实际SDK构建均通过，
+目录 `certificate-sdk-three-abi-02/`，对应六个 `certificate-sdk-*-02.log`。
+ARM64两身份的真实 code-sign、digest、permission及提取后的profile验签也
+通过，证据 `certificate-signature-{system,normal}-01.log` 与
+`certificate-signature-01/{system,normal}-signed.signing.json`。签名仅绑定
+已记录旧诊断guest的UDID，没有安装或运行，不能作新包权限验收；新包测试
+仍会重新生成nonce、证书、HAP，并绑定实际新guest身份。
+新增 `factory-objects` 普通 HAP 在 API26 Release SDK 三 ABI 的 unsigned
+构建全部通过，目录 `factory-sdk-three-abi-01/{arm64,armv7a,x86_64}`；
+当前 SDK 声明与生成调用源码的独立校验也通过。它仅针对 ResourceManager
+`Configuration`/`DeviceCapability` 及 TaskPool `TaskInfo`/`ThreadInfo`/`TaskPoolInfo`
+五个无构造入口的返回数据类型，不制造假运行时 class。15行严格结果要求全部
+资源字段的 sync/promise/callback 一致性、返回快照隔离，以及两轮四个真实任务
+的匹配 ID/名称/状态/线程、计算结果和完成清理。默认新包套件已接入；只有同一
+新归档和 boot 的实际结果才能将原始五项标记为 factory-return 契约闭环。
+原始审计项未移除，其余 ResourceManager/TaskPool API 不由此放行。
+三个 unsigned HAP SHA-256：ARM64
+`d5c1e574e3b705efeee62d82b4bd3fd25af47467d2b81f68215cada15fbdebc5`，
+ARMv7a/x86_64（纯 ArkTS，无 native ABI 声明）均为
+`52b10bef211d6a65082858f2c68694d91e8d854b6db78505b13ed1aef2ab556a`。
+编译与8项 synthetic host verifier 回归不是上述能力已在新包通过。
+
+R9 ARM64 phone 已在本地 Docker 完成系统编译和实际打包，路径为
+`/Volumes/PSSD/qemu/packages/first-capability-repair-20261006-r9/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `f23fa7aa29ab88402a0ad72ec44c025ef22764586b4a79b5398635474fd66aa4`。
+它仍使用先前的 ArkWeb/JSVM/SwiftShader/AVC 依赖，仅作诊断，不是统一依赖后的交付包。
+全新解压后 HVF 与 TCG 均曾达到 API26、账号100和 boot completed，随后无保活空闲
+验证失败。verbose 内核证据确认进入 `s2idle`、冻结用户进程，而不是已证明
+RenderService 重启或仅 HVF 特有问题。不得用外部定期输入把该问题计作通过。
+命令、启动环境和失败证据保存在 `issue-20-20261006/boot-r9-*-diagnostic-*`。
+
+进一步的第16轮有限 RTC 诊断已捕获真实第一次休眠：PowerMgr 在约33秒进入
+`SLEEP Reason=TIMEOUT`，约34秒由 `base_host/OS_IPC_0_475` 写入内核休眠。
+启动后的屏幕超时实际上被锁屏策略覆盖为10000ms；不能把早期 AWAKE 快照
+推断成 HDI 在 AWAKE 状态非法休眠。三种 QEMU 内核配置另外都缺少真实
+`/sys/power/wake_lock` 支持，ARM32 还关闭了 suspend 依赖。
+新增独立 `device/qemu/power_wakelocks` 和 `kernel/linux/linux_6_6/qemu_power_button`
+部件，均在画像配置和内核输入遍历之前应用。唤醒源仅限 `linux,dummy-virt`
+平台现有 `poweroff/KEY_POWER` GPIO，不改 timeout、service 权限或其他板卡按键。
+第一次实际唤醒另暴露 virtio GPU 的 fenced control queue 挂起：Linux 6.6 的该
+驱动没有 freeze/restore 回调，而通用 virtio PCI 的 s2idle 恢复重置了 host 队列。
+新独立 `kernel/linux/linux_6_6/qemu_virtio_gpu_s2idle` 只对实际 QEMU、GPU、s2idle
+且驱动没有上述回调的组合保留队列；其他设备、S3、非 QEMU 和真正的
+freeze/thaw/restore 路径不变。三 ABI 的配置及实际相关对象通过，证据
+`power-kernel-three-abi-02.json`。独立完整 ARM64 Image05 链接通过，SHA-256
+`a344933413de38c8fb5db596aaef24e6fb8b6080ab5fca311023060a46f1e887`，
+证据 `power-linked-arm64-05.json`。所有失败尝试保留，不修改只读主源码/构建输出。
+旧 R9 私有替换此候选内核的第19轮诊断已通过六阶段真实 sysfs wakelock 边界和
+两次休眠唤醒；随后独立 compositor 诊断再次通过两个默认策略 s2idle/实体按键
+唤醒周期。每次实际 UITest 窗口和 1280×800 compositor PNG 均有效，RS546、
+Foundation489 和内核 UUID 不变；不改超时、不保活。证据分别为
+`power-runtime-diagnostic-02/evidence.json` 和 `power-compositor-diagnostic-02/evidence.json`。
+它们仍是旧 R9+候选内核诊断，不是新归档，不解除首包门槛；新包默认验证入口已
+强制同样的默认策略休眠/唤醒/上屏闭环，再进行有限应用测试配置。
+
+完整 M144 原生引擎 R7 编译暴露了 API26 SDK15 的 ARM64 静态运行库没有 BTI
+属性。现从 SDK 编译器本身的固定 LLVM commit 重建 libunwind 和 compiler-rt
+全部260个原有对象，保持 C ABI/成员列表、生成真实 BTI 指令；严格 BTI/fatal
+linker warnings 下的真实 libffmpeg 链接通过。R8/R9/R10 的后续阻塞均已记录并
+分别修补。R11完成大部分原生编译，但引擎最终链接失败：NDK wrapper仅在
+libs声明adapter_ndk_stub，缺少GN目标依赖，stub未生成时先链接引擎。失败
+日志和证据保留，仍无合格HAP或新首包运行证据。
+
+HAP 打包前的独立复现另发现隔离 ABI checker 仅复制3个Python文件，而其
+实际导入链还依赖 `verify_runtime_elf_contract.py`，会直接产生
+ModuleNotFoundError。修复前失败 `m144-hap-python-closure-before-01.json`
+保留，修复后宿主及实际Linux Docker隔离执行均通过
+`m144-hap-python-closure-after{-linux,}-01.json`，相关71项主机回归通过
+`host-m144-package-closure-01.log`；这不是 HAP 或 guest 通过。
+打包器现在复制完整4文件闭包，默认M144配方同时纳入实际共享patch helpers、
+snapshot、ELF/ALSA checker及AVC validator，避免这类依赖变化误复用旧cache。
+当前冻结R11仍使用旧配方
+`e0d78a3c7a4944938207d6b75c48dc8168f86a655b7c59e759e0dd436d88c0f5`，
+没有修改其冻结输入或活动源码。HAP隔离导入闭包修正的中间配方为
+`9ba1e06bf51e4db80086c50582fd70f48f8b60b921448ed0d6f7337c1db34528`。
+0007新增wrapper对既有真实stub目标的GN依赖，不改stub/NDK语义、CFI/BTI
+或fatal link检查；固定源码真实补丁预检和8项组件host测试通过。
+R12以当时的统一配方
+`2f566c66f2ec0cbc28d84d4e9d650421793bb189a751e59db8d58bb53360f320`
+重新执行真实原生构建，冻结输入树SHA为
+`82a336ea09c1db990f09771a078bdef69f245269260ee22b5a38b0ee939eaf8f`。
+R12的实际完整GN再次通过29087个target/4222个文件；新Ninja图明确包含
+engine到stub的TOC依赖，3个相关文件SHA保留在
+`m144-stub-link-graph-r12-01.log`。实际stub先链接成功，R12随后完成五个
+实际ARM64 ELF库，`native-build-evidence.json`的exit_code=0、
+failures为空；engine SHA-256为
+`7d2b080dcf817c5984c5b1d5fd28f8cd94ad6761548e934c12dd42b8f97d9c9c`。
+这仅是native构建通过，不是签名HAP或guest通过。R12的HAP追加编译、最终
+链接和官方kernelpermission步骤完成，但OHPM install失败：准备镜像中
+`/root/.ohpm`指向容器内未挂载的`/Volumes/PSSD/qemu/home/.ohpm`。`/root`
+本身存在，不是HOME目录被删除。该轮package-build-evidence exit_code=1，
+失败日志和native/HAP证据均保留，未产出合格core-artifact或启动V8后续阶段。
+仓库新增`prepare_m144_host_cache.py`并接入host准备和Dockerfile复制闭包，
+仅创建所配置`.ohpm`缓存目标并检查可写；不重设HOME、不改链接、不清缓存、
+不改SDK/源码/权限。4项host边界通过 `host-m144-ohpm-cache-02.log`，第01轮
+macOS路径/循环链接fixture失败保留。固定源工具只读的实际Docker复现
+`m144-ohpm-cache-real-before-after-01.json`严格记录before同样ENOENT/exit1、
+after实际OHPM空依赖项目install exit0及未改链接/输入SHA；不是完整HAP通过。
+当前R13使用最终统一配方
+`3fedc12635bcee37654a01987b34c1b79303f1336540fa08fe77a36e7cac9891`
+和全新冻结树`157ea23db20f270485a6fd0008dd0fdaea2873524da091edcb1ba4e30a3b972e`
+重跑代表ABI的native→HAP→V8→SwiftShader→AVC。R13的native命令已以0退出，
+五个实际ARM64 ELF和空failures已记录，实际总构建时间10分36秒。相同配方HAP
+阶段实际OHPM install通过，但随后Hvigor包装器的npm install pnpm失败；
+该轮package-build-evidence exit_code=1且未启动后续依赖阶段。当前异常只保留
+stderr摘要而遮住具体stdout诊断，正在固定工具只读、独立复制项目的容器中
+复现并保存两个输出流。完整HAP及新代表包运行结果仍待验证；
+不得把旧配方 native 证据直接与新配方 HAP 拼接。后续HAP阶段使用其支持的
+最多8个job，不沿用 native 的10-job参数。
+实际独立复现进一步确认：固定Chromium GCS Node 24.11.1包没有npm，原HAP
+包装器却调用该目录的npm。换用Release build项目所选完整Node 18.20.1后，
+原最小环境丢失代理配置；保留环境后，普通镜像源又缺失`@ohos/hvigor`，
+Docker对公共HarmonyOS源仍出现连接重置。第01至05轮失败分别保留，未把
+下载或版本检查记作HAP通过。曾按package-lock下载Linux旧版工具
+缓存，不执行依赖安装脚本；Docker只读挂载并验证缓存完整树SHA
+`fe6bd6c57ab2ea3e0dc68c236e7fb1f9dcb39d7bb8c6b4754666d3f83b772aec`。
+实际固定工具只读的第06、07轮启动原始Hvigor包装器，离线返回2.3.0/exit0；
+第07轮同时验证Release build固定commit及Node/npm真实输入。工具缓存配方
+为`e0e359ca6eae7e15a6e1a73e5ab5ed25d8580e1283818e96017a7cbbbf4a0ef9`。
+HAP/HAR GN仅改用独立完整Node路径，不改Chromium Node；新增7项缓存/锁/
+路径/环境边界通过`host-m144-offline-tools-02.log`，第01轮fixture缩进失败
+保留。真实完整HAP和新包boot仍未通过；新构建必须使用新依赖配方。
+R14已从仓库入口启动代表ARM64依赖链，统一配方为
+`1f73a585812ad01e20f4f676be284651fdb867e6b4f1795700286aa7ec0d5abf`，
+全新冻结输入树为`185fc6e903f65b9120c3fd561b0fc9cf65f0c26bf549935ddc017d1f4447ac71`。
+正式容器中的`hap-host-tools-20261006T220226Z-19754.json`记录原始wrapper
+离线preflight exit0及严格版本2.3.0，随后官方native构建exit0、failures为空，
+五个实际ARM64 ELF均已记录，engine SHA仍为
+`7d2b080dcf817c5984c5b1d5fd28f8cd94ad6761548e934c12dd42b8f97d9c9c`。
+同一配方HAP阶段的主机冻结树也为上述185fc6e9值，但该轮仍失败：实际Hvigor
+exit0后未生成要求的unsigned HAP，Build的缺包检查正确失败，package证据为1，
+未进入V8等后续阶段。实际`.hvigor`报告记录moduleNum=0、metrics/workLog为空；
+原命令在module模式下没有指定模块，导致空任务执行。正在独立副本验证明确
+选择`module=entry@default`及`product=default`。第一轮独立测试实际触发任务，
+但只读SDK被Hvigor拒绝；第二轮私有可写SDK测试确认旧版SDK manager 2.7.0
+不支持原始SDK的metaVersion=3.0.2，不能靠wrapper启动成功判定HAP通过。
+第03至06轮进一步暴露模型、SDK版本格式及previewer工具闭包问题，均保留。
+第07、08轮的私有工具补丁方向虽能实际编译unsigned HAP，但已弃用，不进入
+最终配方；只需要正确项目配置和SDK目录，不应修改SDK manager代码。
+
+最终使用Release build固定commit配置选定的完整command-line-tools归档，
+SHA-256为`83e45209c65662bbeab81d36d691807bf8db56d94d7d15c959600dcc348814c3`。
+Hvigor/plugin为`6.0.0-release-patch-rc.2`、原配SDK manager为2.26.2，
+所有工具代码和SDK原始元数据不改。项目modelVersion统一为6.0.0、
+compileSdkVersion为`26.0.0`，对应私有SDK目录增加同名alias；compatibleSdkVersion
+仍为12。该SDK的原始apiVersion=26、platformVersion=26.0.0由原版工具正确
+解析。补齐第五个previewer工具组件，保留此前私有SDK证据后再更新，不覆盖
+未知别名或元数据。旧版2.3 npm下载入口和实验性SDK-manager补丁已移除，
+历史缓存及失败证据未删除。
+
+原版工具缓存配方为
+`8fa0429b67370b17f35349429fed0360a9b6cab2dfdf1110175cf71d259ca360`，
+完整安装树SHA为
+`317920a39c716c34f22f8b4d74637fa8bb5e856049aa3bede23d9497c7d535da`。
+实际第11轮独立HAP测试使用仓库第0007/0008补丁、生产seed及原版固定缓存，
+完成CompileArkTS与PackageHap，exit0且failures为空；unsigned HAP SHA为
+`08f89b533826e05a7d29a27a52139ef540b5b94fa3af7ff18d30bbb678e57a2d`，
+证据`m144-hvigor-entry-target-real-11/`。它仅确认工具/项目方向，不是官方
+core provenance、签名core、新系统包或guest通过。
+真实生产预检`m144-release-hap-tools-real-preflight-02.json`另确认原版工具版本
+及11项合法/非法SDK版本边界；整数26作为项目版本仍被拒绝，点分26.0.0通过。
+`m144-package-inputs-dot-api26-02/`完成真实源文件补丁及重复检查和Release
+profile签名/验证，正常身份、权限和证书不变。第01轮仅因容器改变绝对alias
+挂载路径导致签名工具缺失而失败，证据保留，第二轮按生产规范挂载后通过。
+HAP组件改为从真实文件内容验证完整顺序补丁栈，支持已知连续prefix升级，
+重叠补丁不再依赖逐条reverse或旧marker跳过；未知非连续状态在源码修改前
+拒绝。native/HAP两阶段工具预检证据都纳入最终core的完整provenance校验。
+其余五个系统包仍未启动，首包运行门槛仍未通过。
+
+R15配方`75e03dfcfb387f7558e4467744f50aa03ccae12f5e36345974ccd8be633e156e`
+使用全新冻结树`cf3415d791b5803d98959a402302da78f5d0ab6893aac1ac69d888a5d06d9f6c`，
+正式原版工具预检和五个ARM64原生ELF构建通过，但正式HAP阶段仍失败。
+官方`build.sh`在prepare前删除项目的派生`hvigor`目录，再复制
+`dependencies/rk/*`；因此修改派生配置的旧0007/0008补丁被复制回2.3，
+完整组件状态检查正确拒绝该非连续状态。没有签名core或新OS包通过。
+修复改为`m144_core_build/0009`修改真正的
+`dependencies/rk/hvigor/hvigor-config.json5`源模板，保留官方删除/复制/prepare
+流程。HAP组件0007/0008不再修改派生配置；其wrapper、dot API26和根项目
+模型修复仍保留。模板重复准备及组件回归27项通过
+`host-m144-prepare-template-01.log`。第73轮完整回归发现新增通讯录测试中
+过宽的断言（把仅改类名的行误判为改构造器）；改为逐行确认构造器不变，
+失败证据保留，重新执行完整回归后才启动新配方。
+
+第74轮完整725项回归通过。真实独立HAP第12轮使用已修复源模板及正常
+复制流程、生产seed和原版固定工具，通过实际CompileArkTS/PackageHap及
+unsigned HAP存在校验，证据`m144-hvigor-template-real-12/`，不是正式core签名
+或guest验收。R16代表ARM64依赖链已从仓库入口启动，配方为
+`1051f5c84fb10d0d6da72c1a2e0e69dbec510147ad6e6993ce834391ef244ff4`；
+旧R15证据和缓存全部保留，未混接其他配方。新OS包仍待构建验证。
+R16 native冻结树为
+`b1b511865cac8c4ed98763a05ea4162183f64a64cd1c37344245bb54896ad95d`。
+实际生产准备后，源模板与派生Hvigor配置均保持modelVersion=6.0.0，未出现
+旧版本回退。R16正式HAP构建、完整ABI检查和真实SDK签名/验签均已通过，
+HAP SHA-256为
+`6ad8c67222f63830e7fbdf96735e96d97023cdee629223b6abaf30edfc746fd2`。
+但core provenance记录失败：旧检查直接把native输出与HAP成员字节相比，
+忽略原版Hvigor的NativeStrip步骤。该失败及R16全部证据保留，不补写成功
+manifest，不将package-build-evidence中的exit0误当完整依赖链成功。
+
+实际原版SDK LLVM15重放已确认五个HAP成员逐字节匹配，证据
+`m144-native-transform-real-01/hap-native-transform.json`及同名log。引擎先从
+本轮输出的自有副本移除kernelpermission，完整SHA确实回到原native证据的
+`7d2b080dcf817c5984c5b1d5fd28f8cd94ad6761548e934c12dd42b8f97d9c9c`，
+再用未修改的官方action/objcopy和encaps输入添加该section，最后由固定原版
+API26 SDK NativeStrip转换。其余四库从原native完整字节直接重放。
+没有改源码/out/SDK、跳过签名或放宽为只比较.text。这是独立诊断，不为R16
+旧配方补发core manifest，也不是guest验证。
+生产脚本现保存五个原native文件，并在打包后对全部五库执行相同完整转换
+重放；工具、输入、原件、重放件与最终HAP完整SHA都绑定证据。unknown修改、
+失败命令、缺文件和stale helper均失败。7项相关主机回归通过
+`host-m144-native-transform-01.log`；正式统一依赖将使用新配方重建，首包门禁
+及其余五个OS包仍未放行。
+
+R17统一依赖由仓库入口重新构建，配方为
+`e52486adb611d7b39c857e0c44b86ae818e0abb76bb46d099000f5e46cf2177e`，
+native冻结树为
+`d57644b6c0b0a35538d6fb42e4079c5a10d51c610ab99a6109395e4281a5030c`。
+五个原生ELF、正式HAP、原版SDK签名/验签及五库完整转换重放均实际通过。
+HAP SHA-256为
+`b79e5e7afb5d88a5c2aa5bd8150d47a6c1510119bb5f22b64e880b4345c32152`，
+完整core manifest SHA为
+`294aa882575ef844231a69313893ddb1ddda5b961ff3ee5a57cdd1def83163e3`。
+生产重放及独立主机core校验分别见本配方的`hap-native-transform.json`与
+`m144-core-r17-host-validation-01.log`。但统一依赖链在随后V8阶段启动前失败：
+macOS Bash3.2的`nounset`拒绝空`hap_tool_mounts`数组。保留原正式core及R17
+失败，不误称V8/SwiftShader/AVC、完整依赖链或新系统包已通过。
+
+仓库入口已对HAP mount及两处可选LFS参数改用原OS runner已有的安全数组
+展开形式；空数组传零参数，非空数组保持原参数及路径空格，不更改构建命令、
+权限或签名。实际执行原入口的六阶段×两种fetch选项mock外部工具回归通过，
+macOS Bash3.2和Linux Bash均通过2项测试，证据
+`host-m144-frontend-arrays-01.log`、`host-m144-frontend-arrays-linux-01.log`。
+这些是入口参数边界测试，不是依赖构建或guest验收。修复改变依赖配方，下一轮
+使用`3c0d5cd7d3302a0fad81b2056f947299c8258897e23a1c2e338a40baefd8b350`
+的新冻结输入/缓存重建，不修改R17旧成功core或旧失败的来源证据。
+第80轮完整741项回归通过后，R18代表ARM64统一依赖链已从原仓库入口启动，
+日志`m144-dependency-arm64-r18-01.log`，native冻结树为
+`6f54813cd2298b84b88fe6ccce3cb35829b4d6f3dcd1c597c78a4b8a54e365e7`。
+新core及其余依赖尚待本轮完成；首包系统归档、启动和完整行为门槛仍未通过。
+
+通讯录另外确认真实SDK26枚举`ContactSyncMode`未注册，未使用声明还存在
+`ContactsSyncMode`及`DEFAULT_SELECT`两处错误名称。新增独立组件
+`applications/standard/contacts_data/sync_mode`，固定项目commit
+`c73bd27daa3fcd8ed6099b17cbffbd7021e3873e`，仅改名称并在Init注册原声明，
+不添加占位DTO构造器，不改变同步实现和权限。修复后完整源文件SHA为
+`1e695abbda171e24ba756d670f635ff5ee3cad748b5cdfe05a29f14002d85303`。
+新鲜/重复/未知部分状态及实际声明的sanitizer主机测试通过
+`host-contact-sync-mode-02.log`。只读实际源码的ARM64完整TU编译通过
+`contact-sync-mode-arm64-03.json`；第01轮查询了整个依赖链而遇到非UTF8命令，
+改用Ninja正式`commands -s`，第02轮ARM32缺少尚未生成的`ibundle_mgr_ext.h`，
+失败记录均保留。不借用别的架构生成物宣称通过。另两ABI完整构建及真实
+公开模块成员值、provider运行验证仍待新包完成，不能凭上述证据关闭缺口。
+
+`contact-sync-mode`已接入默认普通应用验收：零额外权限、账号100真实normal
+身份、每次新nonce，同时读取typed SDK两成员与真正`napi_load_module`的
+own枚举成员。要求14项NAPI操作成功、真实类型正确、无异常，两路均为1/2，
+拒绝仅有空对象/空函数、布尔伪数值、缺成员、旧运行和system身份。完整声明
+由实际SDK TypeScript AST核对，绑定声明/解析器/生成页/native源文件SHA。
+正常反射不再仅凭object类型关闭普通enum缺口，其他未验证枚举仍保留。
+三个ABI的真实SDK unsigned HAP已构建，最终仅依赖acenapi、不携带另一个
+C++运行时，目录`contact-sync-mode-unsigned-{arm64,armv7a,x86_64}-02/`。
+这是验证程序构建，不是guest值、provider、cloud sync或六个OS包验收。
+ARM64完整TU第04轮证据另外明确`all_three_products_checked=false`，不会把单
+架构对象误写成三架构通过。第75轮729项回归只有Worker测试的旧字符串断言
+失败；保留失败证据，更新新增persona断言并增加实际parser的互斥/无写入
+测试后，第76轮730项全部通过。
+
+音频另外确认`DeviceBlockStatus`有真实C++枚举值，但未在公开NAPI初始化中
+注册。新增独立组件`foundation/multimedia/audio_framework/device_block_status`，
+固定commit `6932fa64335b8272ca4a59de7808ab0d6c9eae7a`，仅增加原值
+`UNBLOCKED=0`、`BLOCKED=1`的两成员map及既有注册调用，共五行。
+完整最终源文件SHA为
+`351b8bdb04cfe637c05643a050e8a964c3c4b09252461d3ded19b2d1504d51d0`。
+三个源状态/sanitizer测试通过`host-audio-device-block-status-02.log`。
+实际ARM64完整TU编译通过`audio-device-block-status-arm64-02.json`，明确
+`all_three_products_checked=false`。三ABI编译第01轮因ARM32尚未生成
+`ibundle_mgr_ext.h`失败，完整失败证据保留，不借用ARM64生成头文件。
+补丁接入两个画像、三个ABI的统一源补丁计划，在正式编译遍历之前执行；
+不更改硬件、音频路由、阻塞回调或权限，不凭枚举导出宣称这些后端已修复。
+
+默认普通应用的`contact-sync-mode`验收现同时独立读取上述两个真实枚举，
+typed SDK值和native own-member读取各自必须通过，零额外权限且normal
+account-100身份不变。验证器对两个枚举分别检查14项操作、类型、成员值和
+异常状态，SDK AST和当前编译输入共同绑定。6项结果回归通过
+`host-contact-audio-enum-results-01.log`；三个ABI实际unsigned HAP通过，目录
+`contact-audio-enums-unsigned-{arm64,armv7a,x86_64}-03/`。这些只证明验证程序
+可构建，不是新guest的值观察，更不是通讯录同步或音频后端的闭环证据。
+
+相册`FusionAssetType`同样已有真实C++定义及结果使用，却缺少公开NAPI导出。
+独立组件`foundation/multimedia/media_library/fusion_asset_type`固定commit
+`564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380`，只注册现有`COMPATIBLE_ASSET=0`。
+使用原有checked NAPI模式，不创建持续引用，不改相册存储、访问权限或同步。
+完整最终CPP SHA为
+`4be781efd4c1ab2be368facd0dce7eb66ce1243dcec2f1a5e43f7672fc4c312e`。
+3项fresh/repeat/unknown状态及全部新增NAPI错误边界测试通过
+`host-photo-fusion-asset-type-01.log`；真实ARM64完整TU通过
+`photo-fusion-asset-type-arm64-01.json`，仍明确不是三ABI链接或guest验收。
+首包03实际执行后确认还需002公共JS转发，已在本节开头记录实际崩溃、
+修复及产品ABC编译证据；上述001的源注册/编译成功本身未关闭公共导入问题。
+统一普通应用验收现要求通讯录、音频、相册三个枚举各自typed和native读值
+成功；相册单成员必须是numeric 0，不接受false、缺成员或借用音频结果。
+7项结果测试通过`host-contact-audio-photo-enum-results-01.log`，三个ABI实际
+unsigned HAP通过`contact-audio-photo-enums-unsigned-{arm64,armv7a,x86_64}-04/`。
+保留原通讯录02和通讯录/音频03目录作为历史构建证据，不用于当前输入的
+首包验证。枚举观察不能关闭fusion/storage/provider或其他服务后端缺口。
+
+其中显式 core artifact 路径也新增同一完整依赖配方校验，不只依赖默认目录
+名称；构建器/共享helper发生变化时，旧冻结输入会被拒绝，相关72项主机
+回归通过 `host-m144-package-closure-02.log`。下一轮代表依赖使用该最终配方
+的默认缓存目录，方便随后从仓库矩阵入口复用；不混接R11旧配方证据。
+
+固定 Git 工具源码、DEPS 的六个 GCS 对象、两个 Linux sysroot 已接入仓库构建
+入口。全新独立工具目录中，实际从固定 ancestry/tag 构建 GN 的202个目标通过，
+全部工具校验完成（`m144-clean-tool-bootstrap-01.json`）；没有借旧 GN 二进制。
+这证明工具准备方向，不是六包或完整系统能力通过。其余五个系统包仍未启动。
+
+仓库矩阵入口现默认调用 `scripts/validate_packaged_qemu.sh`，由私有全新 VM
+执行系统 DSO 的24次退出回归、普通 Web/独立 Vulkan WSI与真正上屏测试及全部
+32个当前 bindings 模块。`run_native_bindings_e2e.py` 复制实际未提交源码，
+不改用户仓库，校验零漏测/零跳过/依赖锁不变，并用 OHOS 官方 signer 验证
+实际 code-sign。当前独立源码副本的34个 Rust 示例、main/ohosTest unsigned HAP
+已经重新构建，Cargo/pnpm 锁未变化；尚未在新包运行，不能称 E2E 通过。
+验收证据升级为 schema2，要求实际内部结果、同 archive/boot UUID、完整审计
+基线闭环；旧结构文本或单一绿色样例不能放行。完整 C++/ArkTS1.1 台账仍有
+未注册真实闭环的项目，默认入口会明确失败而不会出具不真实的六包成功结论。
+主机回归 `host-regression-capability-47.log` 为596项通过（105.333秒；该轮之后的新增修改仍需
+重新完整回归），不是镜像验收。第46轮误用缺 Pillow 的系统 Python 的8项错误证据
+保留，第47轮使用已有明确 test venv，未删测试或放宽断言。普通 HAP 验证新增完整 const-enum 真实 SDK 调用：
+16项枚举、53个成员，API26 Release SDK 三 ABI 的 unsigned HAP 均实际编译通过，
+输入保存在 `const-enum-sdk-three-abi-02/`。运行结果必须在新包、普通账号100应用、
+新 nonce 下逐个与 SDK 编译器解析的声明值一致；不能由构建通过认定常量闭环，
+更不代表其相关服务或硬件可用。bindings 的主/测试包设备声明仅在隔离副本中
+补充 2in1，不改原仓库、权限或测试断言。
+
+全新 Serial GN/output 暴露 JSONCPP generator 把 GN 提前创建的空输出目录当成坏树。
+新增独立第二补丁，仅放行已知输出父目录且完全没有文件/链接的骨架；其他 partial
+tree 不覆盖、失败仍非零。真实固定 archive 的只读生成、重复生成、失败保留和
+上游121项测试通过；另一全新无 out seed 的 x86_64 GN→正常 Ninja action 通过，
+无需人工隔离。Serial 授权完成修复的三 ABI 九个真实对象也全部编译通过，76项
+host 回归通过，但授权 UI、真实 USB 字节及 detach/regrant 仍需新包验证。
+
+默认 M144 依赖缓存现按固定源码锁、引擎补丁及 builder 配方 SHA 分目录；不会
+删旧目录或让陈旧 manifest 放行。显式路径仍严格检查。冻结包输入现包含实际
+capability/smoke 验证代码，测试变更不能复用旧包的通过记录。NAPI 导出审计改用
+all-own-string-property 收集以包含 non-enumerable `napi_default`，三 ABI 真实 SDK
+编译通过。第19轮旧诊断 guest 的普通账号100 HAP 已实际完成56个模块收集，54个
+加载成功；phone 画像外的 Serial/NetFirewall 未加载，不能以此宣布2in1修复。
+181项原始导出缺口中17项现在可直接读取，包括 matrix4 七函数、Ethernet 三函数和
+System VPN 七项；其余164项仍待分别验证真实运行导出、factory/worker/DSL 契约。
+不添加假的构造函数，不删除原始审计项。普通 const-enum 同一 guest 的16契约/53成员
+也已实际通过。证据 `ordinary-exports-diagnostic-02/` 和 `ordinary-exports-diagnostic-03/`；
+第01轮清理失败保留为失败，不用后续成功覆盖。均不是新包验收。
+
+最终打包入口新增完整 Native ABI 检查：必须使用固定 SDK-C commit
+`41b00f09528cf514b566553b2503c54e6347786b` 的真实头文件和 NDK manifest，按最终
+system.img 的 SysCaps 检查所有接口，而非单一 symbol。声明或官方画像要求的库
+缺少任何接口都会阻止打包。归档包含 `native-gap-abi-image.json`，独立包验证会重新
+读取实际镜像库、ELF ABI、所有导出及校验和，不要求交付使用者另备源码树。
+R9离线诊断03已通过 Location 12个、AudioSuite 65个完整符号；真实系统 loader
+诊断01实际 dlopen/dlsym/dladdr 通过77个符号且来自对应DSO。四个画像外未声明的
+可选库明确记录为未实现，不伪装成接口已提供。ABI 通过不是普通应用权限或后端数据证明。
+
+同一第19轮 guest 的实际 root 诊断另通过 bitmap24项、user-ID20项、BPF23项、
+Vibrator HDI14项及 AudioSuite 两轮3840样本 PCM。证据分别为
+`bitmap-owned-boot-diagnostic-01/`、`userid-owned-boot-diagnostic-01/`、
+`bpf-owned-boot-diagnostic-01/`、`vibrator-owned-boot-diagnostic-02/` 和
+`audio-suite-owned-boot-diagnostic-01/`。runner 复核原始归档SHA、已完整验证的成员清单、
+实际私有QEMU进程和内核UUID，不再每个小测试重复解压巨大userdata；没有替换系统库。
+这些仍是旧诊断归档，不关闭新包门槛，也不证明NetManager策略、实时音频或HD振动。
+
+普通账号100 AudioRenderer 的新 nonce 诊断实际通过71行完整结果：两轮非零 PCM
+写入/回调、pause/flush/resume/stop/release/destroy/recreate，以及无效状态/声道和
+null 边界。证据 `ordinary-audio-vulkan-diagnostic-01/audio-stream/evidence.json`；
+同一父运行随后因 Vulkan 截图工具环境缺少 Pillow 失败，完整运行仍保留为失败。
+注册的闭环只解决 Renderer 数据路径，不外推到 Capturer、主机扬声器、interrupt、
+haptic 或分布式音频。应用测试只在实际默认休眠/唤醒验证后使用 PowerMgr 现有
+有限 override；默认验证入口记录实际 before/setup/restored 三次查询，任何错误或
+清理失败都不能放行。root 与普通应用 runner 均不使用定期输入保活。
+
+独立 Vulkan 第02轮（正确 Pillow 环境）确实完成两代各五帧，但 compositor PNG
+仍是启动窗口：预期 `(51,102,153,255)`，实际白色。真实 RS 和应用日志证明
+COMMIT_TRANSACTION 的调用 PID=0、command PID=5330，严格身份校验拒绝全部
+应用绘制事务；不是仅 SwiftShader 提交失败。现有异步 Binder 在内核中清零发送方
+PID，GetCallingRealPid 也不能单独修复。用户已批准并实施两个最小独立组件：内核
+仅为真实 one-way 发送任务持有私有 PID 引用，通过既有 sender-info ioctl 提供
+真实 TGID；RS 仅对异步 COMMIT_TRANSACTION 的 wire PID=0 使用可信身份，身份
+缺失/非正数仍拒绝。wire PID=0、async 协议、token/节点归属及全部权限保持不变，
+不信任客户端自报 PID、不跳过校验。两组件均在统一补丁计划内、画像及遍历之前。
+内核三 ABI 对象真实编译通过；新 ARM64 私有候选 Image 完成链接，SHA-256
+`85d57c14da51e3d6b92c73f5bacf17168dee6ab12bcba458bf016f28b1e6d7be`。
+RS 实际 fallback 代码的12800组 ASan/UBSan 身份边界通过；三个 ABI 的真实产品对象
+编译均通过。缺失的生成头文件由实际固定 GN IDL action 在独立输出内生成，记录
+原始命令、IDL/tool/generator 和生成文件 SHA，不写入主源码/out 或旧 GN seed。
+证据 `rs-async-caller-three-abi-05.json`；此前失败尝试保留。这仍不是完整
+RenderService 链接、普通应用上屏或安全 IPC 行为验证。
+第20轮旧 R9 + 私有新内核的 root 真实 Binder 诊断35项通过：同步/异步真实 TGID、
+one-way wire PID仍0、伪造输入PID/UID被忽略、发送方先退出仍正确、畸形异步拒绝、
+有效后续事务和空 ioctl 边界。旧第19轮内核对照仅在两个异步真实PID检查失败，
+完整失败证据保留。诊断使用无人占用的 vndbinder context，已有 manager 时硬拒绝，
+关闭所有自有FD后撤销；不改系统 Binder manager。另两次休眠/已有 PowerMgr override
+引起的诊断失败均保留；通过轮只在观察到睡眠后发送一次真实GPIO key、不改override。
+这些不证明 RS token/foreign-node、普通应用画面或 Vulkan compositor 像素已经闭环。
+证据 `binder-async-three-abi-01.json`、`power-binder-linked-arm64-06.json`、
+`binder-sender-old-kernel-negative-01/`、`binder-sender-private-kernel-diagnostic-03/`，
+以及 `ordinary-vulkan-diagnostic-02/`、
+`vulkan-r9-owned-render-hilog-01.log` 和 `vulkan-r9-async-caller-source-01.log`。
+
+AudioSuite 效果第01轮配置错误也完整保留：官方 SDK 仅允许输入/输出 builder
+设置格式，效果节点继承管线格式。修正调用后第02轮仍失败，实际能力加载器
+找不到 `iMedia_{Eq,Surround,Env}_GetSPECS`，不是已经证明的 namespace 问题。
+现给真实 CPU DSP 补三个固定私有 ABI 能力入口，导出总数19；严格声明可实际处理
+的 stereo/48kHz/S16LE/480帧，不声明 hard realtime、AI 或其他格式。10项主机
+回归含149个实际 ASan/UBSan 信号/边界检查，三个 ABI 的实际产品参数对象编译
+通过；ARM32/x64 旧图中的 AudioSuite stub 仅供取编译参数，不据此宣布新图启用。
+ARM64 完整独立 GN和真实库链接已通过，新库SHA-256
+`9bf04b365580be6ea8af0cccb8945eeeef1a1bde1bdad62892c6969e54f97430`。
+真实 tiny ext2 的19符号、CFI入口、libc/math/ubsan依赖、三路 XML读回通过，移除
+安全runtime的负例正确拒绝；此fixture不是系统包或声音行为。
+36种普通应用效果管线尚未在新包通过。证据
+`ordinary-audio-effects-avc-diagnostic-01/`、`ordinary-audio-effects-avc-diagnostic-02/`
+以及 `audio-suite-dsp-specs-{arm64,armv7a,x86_64}-01.json`、
+`audio-suite-dsp-specs-full-gn-arm64-01.json`、`audio-suite-dsp-specs-image-fixture-arm64-01.json`。
+
+AVC 普通应用第01轮同时设置 bitrate 和 quality，实际 CodecParamChecker 正确
+拒绝该冲突。修正为 CBR/VBR 仅 bitrate、CQ 仅 quality，并保留 CQ 动态 bitrate
+真实拒绝边界后，第02轮全部12次编码配置、真实 SPS/帧/时间戳/IDR/EOS 执行通过。
+但12轮解码均没有像素，完整437行严格验证失败；不能称 AVC 闭环。
+实际 allocator_host 日志捕获 DRM dumb EINVAL，源码确认固定 QEMU gralloc 给 YUV
+申请8-bit，而 Linux virtio GPU 仅接受32-bit。新独立
+`device/qemu/virtio_yuv_buffer` 在画像/产品遍历之前应用：只对真实 virtio_gpu 的
+CPU-accessible YUV 申请32-bit字节存储，保留逻辑YUV格式/尺寸和实际byte stride；
+不声明YUV KMS scanout/protected，不改内核ABI或权限。8192组实际几何计算及
+零尺寸/奇数chroma/溢出/不允许usage的 ASan/UBSan 边界通过，真实三个产品GN参数
+对象编译均通过；未据此声称gralloc整库、真实DMA-buffer映射、像素、服务回归或
+新包验收完成。证据 `qemu-virtio-yuv-{arm64,armv7a,x86_64}-03.json`，以及
+`ordinary-avc-diagnostic-01/`、`ordinary-avc-diagnostic-02/`、
+`avc-r9-owned-codec-hilog-01.log`、`avc-r9-owned-allocator-hilog-01.log`。
+这些均不解除首包门槛，也不代替全新 M144、JSVM、SwiftShader 和六包验收。
+
+Worker 的两个端口现增加真实线程上下文诊断，而不是伪造主线程导出。
+固定 7.0 的 Worker version 在进程中不可混用；两种版本分别使用新的普通账号100
+HAP 进程，无新增权限、native DSO 或 runtime 修改。每种版本创建/正常关闭/重建
+两轮，四个256字节缓冲区真实转移并往返，验证全部256个变换后的 uint32、另一个
+版本端口确实不存在，以及关闭后 legacy 的 silent no-op / ThreadWorker 的10200004
+错误边界。7.0 的分离 ArrayBuffer 长度 getter 会真实抛出 `TypeError: IsDetachedBuffer`，
+创建新 view 也必须被拒绝；记录这些实际结果，不把它伪造成 byteLength=0。
+第01轮旧诊断的测试契约错误保留，第02轮普通应用两种版本均通过，电源原策略
+完整恢复；证据 `ordinary-worker-context-diagnostic-02/`。实际 API26 Release SDK
+ARM64 两种 HAP 和 `worker-{legacy,thread}-sdk-{armv7a,x86_64}-03/` 四个 unsigned
+HAP 均编译通过。9项严格 host 回归检查全部256个字和挑战/身份/源码篡改负例。
+默认新包套件已加入两个独立 persona，注册闭环仅针对 parentPort/workerPort 两项
+上下文导出，不代表 TaskPool、sendable/shared-memory 或全部 Worker API；旧诊断
+仍不能放行新包。第48轮完整605项回归发现一处仅匹配旧 builder 文本的断言；已
+更新为继续要求 const-enum、反射和 Worker 都没有额外权限；随后第49轮完整回归
+605项全部通过（103.652秒），证据 `host-regression-capability-49.log`。保留第48轮
+失败证据；主机回归和旧镜像诊断均不解除新代表包启动/行为验收门槛。
+
+身份修复的扩展稳定性检视另发现 frozen `TF_UPDATE_TXN` 替换旧事务时，需要
+释放新增的内核 sender PID 引用。新增独立第二补丁覆盖该直接销毁路径，普通
+销毁及错误路径仍各自只释放一次，不调用会重复扣减计数的完整事务析构。
+修复后 Binder 源码 SHA-256 为
+`e0d365c6c671b47f054f7d0af1162162a17e6b7d8b3a80a5d97eda8e5565a1cd`，
+三个 ABI 的真实对象编译通过（`binder-async-three-abi-02.json`）。重新完整链接
+ARM64 Image07，SHA-256
+`f1109a98f7c27cf31db3c16026925c25e71a63850e20e2eb199c6e3df7d456c6`，
+证据 `power-binder-linked-arm64-07.json`。第21轮私有启动、旧 R9 系统镜像的实际
+Binder 第06轮诊断58项通过，包括64次冻结更新仅投递首末事务、冻结同步拒绝、
+发送方退出后可信身份、伪造 PID/UID、畸形 offsets、空 ioctl 和恢复后续事务。
+证据 `binder-sender-frozen-kernel-diagnostic-06/evidence.json`；真实运行覆盖该替换
+路径，但没有直接测量内核 PID 引用计数，也未验证 RS 权限或普通应用像素。
+PowerMgr 原有 timeout/override 全程不变，测试后复核相等；仅在实际观察到休眠
+后发送有限实体 GPIO 按键。第04轮拒绝未知 override、第05轮 frozen info bitmask
+契约错误均保留为失败：固定内核会同时置 rejected-sync 与 pending-work 位，
+因此精确期望为3；修正探针后仍严格拒绝0/1/2，而不是放宽为任意非零。
+
+RS 候选现在把已经验证的异步身份限制在私有 thread-local 请求作用域中，并
+恢复嵌套调用的前值；统计归并只在该作用域内、wire PID=0 时使用可信身份。
+不添加 Parcel 身份字段，不改公开 API、token、节点归属或权限。另修复
+复制 Parcel 的 offsets 注入失败处理、ARM32 Binder64 数量乘法溢出、ashmem
+整表偏移/重叠校验与4-byte协议对齐、失败路径所有权，以及 scene/followType
+枚举与读取结果。实际 helper 的 ASan/UBSan 边界和跨两个翻译单元的线程/嵌套
+身份回归通过；mock Parcel 测试不是实际客体 FD 清理证明。第09轮四个真实 RS
+对象在三个 ABI 编译通过，`rs-async-caller-three-abi-09.json`。第06轮缺 libxml
+生成头、第07轮缺 Rust/C++桥接生成头、第08轮 RO 源码 symlink 的路径归属检查
+失败均保留。验证脚本调用固定 GN 的真实 IDL、libxml 与 bridge 生成步骤，
+按词法路径核对 symlink 归属并再校验实际源码哈希；仅写入独立输出，不伪造
+生成头、不修改主源码/out 或 completed seed。
+
+第二轮57规则/9分类复核另发现5个缺口，已形成
+`report/report_binder_rs_identity_revision_20261006_232308.md/.csv`。
+新候选先复制共享 ashmem payload 到 receiver-private malloc，再验证和恢复表；
+FD/FDR 的 sender 数值在发布 offsets 前清成 FD/-1，所有新 dup 均归接收端所有。
+部分恢复或 token 拒绝由 Parcel 清理；成功异步路径 FlushBuffer 后才由 manual
+worker 清理，不漏 FDR，也不重复关闭。合法4-byte offset 使用局部对齐结构和
+字节复制，不收紧协议到8-byte；paired IPC 直接读取/清理路径同步修正。
+FD 0 也纳入清理。SFC/DVSync/节点操作以 move-only 事务投递到主线程，不阻塞
+Binder，并保留 calling-PID-valid 检查。三个 ABI 的5个真实 RS编译单元均通过
+第11轮（15个对象），`rs-async-caller-three-abi-11.json`；IPC两单元通过第03轮
+（6个对象），`binder-object-safety-three-abi-03.json`。补丁生成时丢失尾部 context
+的第10轮/IPC第01轮与 IPC 错误 GN target 的第02轮失败保留，没有修改旧证据。
+新主机回归使用实际 helper 和真实 OS FD，覆盖 FDR、合法4-byte偏移、FD 0
+（仅在隔离子进程关闭 stdin）、部分恢复、任务取消、sender 后续改写映射、
+主线程调度与 SFC invalid-PID 拒绝；并非真实客体 IPC/调度验收。第三轮稳定性
+复核已完成，报告为修复前的冻结快照，见下文；完整共享库链接及新包普通应用
+像素仍待验证。
+
+IPC 新独立 `binder_connector_initialization` 部件消除 GetInstance 的无锁双检
+读取，保持分配/OpenDriver 失败的既有重试。32线程共131072次实际新函数调用
+及失败重试的主机 ASan/UBSan 回归通过；三个 ABI 的真实产品对象编译均通过，
+证据 `binder-connector-three-abi-02.json`。第01轮因 completed seed 被另一个
+活动验证使用而被保护拒绝，失败保留；第02轮直接读取只读产品图，没有绕开
+保护。这不是 TSAN、目标 Binder 驱动或整库验证。组件均在统一补丁计划、
+画像配置与遍历之前应用。完整主机回归第51轮615项、第52轮620项均通过；
+最新第53轮629项通过（70.199秒），证据 `host-regression-capability-53.log`。
+首包门槛仍为 false，其余五个系统包没有启动。
+
+第三轮57规则/9分类审计形成
+`report/report_binder_rs_identity_revision3_20261007_003744.md/.csv`，
+确认10项（1 CRITICAL、6 HIGH、3 MEDIUM），不将四字节对齐、智能指针控制块
+或已有独立锁误报。报告记录的是当时11文件冻结快照，不是后续修复验收。
+
+IPC资源失败候选区分普通FD与内核处理的FDA、私有FDR，只释放真正由内核交付
+的普通FD；覆盖allocator/reply拒绝、ReadAshmem分配失败和真实raw-data FD 0。
+远端raw-data状态改为负哨兵，保留类布局。4项实际片段/OS FD主机ASan/UBSan
+边界通过，三个ABI的6个真实对象通过
+`binder-object-safety-three-abi-04.json`，不是客体驱动交付证明。
+GetSelfTokenID改用当前调用线程的局部变量，保留原私有字段布局，标注
+`[[maybe_unused]]`；256轮双线程成功/失败的确定性隔离及既有singleton回归通过。
+三个ABI对象通过 `binder-connector-three-abi-05.json`，实际依赖表包含修改后的
+自有头文件。第03轮部件路径、第04轮真实Clang unused-private-field失败均保留。
+
+RS候选新增执行线程FD作用域及发布前无等待任务permit，嵌套/提前返回/取消时
+恢复TLS并恰好清账；worker最终析构不再清另一线程TLS。委托命令不重设拒绝
+标记，入队及执行均检查；注册PID核对内核caller，TID和16-bit ID前缀仅作
+路由元数据，不授予权限，不把普通应用接口改为系统专用。FreezeScreen改用
+现有类型检查cast。新 main-thread 队列按真实内核PID和实际接收Parcel字节数
+限制每PID/全局待执行事务，保留异步调用；使用真实 EventHandler 投递返回值，
+失败/取消/执行完成均恰好释放配额。原有 void PostTask 和类布局不变，不将
+此队列预算误称全部RS堆内存上限。29项RS主机回归通过，证据
+`host-rs-boundaries-01.log`。第16轮8个真实编译单元在三个ABI全部通过（24个对象），
+`rs-async-caller-three-abi-16.json`；生成依赖使用真实固定Rust CXX、IDL和JsonCpp。
+`rs-async-caller-three-abi-12.json`记录旧ARM32 GN绝对IDL路径失败，
+第13轮记录completed seed头文件搜索未覆盖修改头的失败；第14轮缺JsonCpp
+生成头、第15轮查询错生成target的失败均保留。三个完整部件现在采用全文件
+exact-state补丁栈：首次应用先在私有副本预检全部补丁，重复应用只接受完整
+最终哈希，过期单补丁marker不授权跳过。实际固定原始源码的三个部件首次/
+重复应用均通过，`exact-component-stacks-01/evidence.json`；未修改只读原源码。
+该轮完整主机第55轮655项通过（76.395秒），
+`host-regression-capability-55.log`。当时内部sptr错误指针编码修复仍等待确认；
+上述RS候选均尚无新包客体验收，不能声称RS完整修复。首包行为门槛仍为 false。
+
+2026-10-07进一步只读复核固定IPC `b8d3e96cfcf382c8fae54502679ac8b3d827b428`：
+`MessageParcel::Append`不能直接替代此修复。其实现逐offset将数据解释成flat对象，
+AcquireObject只处理BINDER/HANDLE/FD，没有完整的长度/对齐预检、FDR/PTR支持，
+FD dup失败也不返回给Append调用者；它不会将共享payload里的跨进程指针变成
+可信Binder引用。`WriteRemoteObject`另维护holders并处理DBinder callback proxy，
+`ReadRemoteObject`走标准对象/offset读取，不能用手填cookie/handle取代。
+当时待批准方案必须让客户端/服务端统一对象编码，在Binder请求返回前保留标准解码的
+强引用，覆盖普通异步私有副本和ashmem sidecar；DBinder可变元数据必须按真实
+格式验证，不能因本地样例不使用它就拒绝合法数据或直接复制源进程指针。
+null/截断/错offset/重复offset/元数据边界、IPC返回后的引用存活、任务取消及
+跨节点权限拒绝均需独立验证。该段记录当时仅完成复核/方案；后续已授权候选
+与验证状态见本文顶部，不是客体通过。
+
+M144 R8 完整 native 构建在26321处发现另一个内部契约编译缺口：Release
+`BufferRequestConfigAdapter` 不含 timestamp 虚函数，但 Chromium 具体 request
+类仍声明 `GetTimestamp() override`。仅将具体 helper 改为 nonvirtual，保留
+getter/setter 及 flush 的真实 PTS，不恢复错误 vtable 槽、不改公开 API。
+真实失败浏览器 TU 使用原 GN/Clang22/SDK26 命令在私有输出编译通过，
+`m144-buffer-request-01/evidence.json`；private-contract 7项主机回归通过。
+R8失败证据保留。R9 native 在14184/22963处因多余的OHOS目标版
+`generate_colors_info` 缺 `_start` 失败；实际 Linux 宿主生成器执行并与真实已有
+生成头逐字节一致，`m144-colors-generator-01/evidence.json`，SHA-256
+`8a6ca528d2b7943f1056820d2c035f8391fd47abe13a8e2fbe449f2f7c7d703a`。
+新GN补丁在OHOS仅声明宿主工具，并将5处原始依赖均指向宿主工具链；保留
+颜色/主题、原有生成动作及单测。R10的真实GN失败暴露第5处单测边，已由0006
+单独修补，失败证据不覆盖。R11的冻结构建输入为
+`54bcb8cb246c94d56b331d808dce9d6aeb4cf466bb097a8753fded9f3f7929b4`，输出
+`/Volumes/PSSD/qemu/artifacts/arkweb-core-release-20261007-r11`。
+该轮固定 dependency recipe 为
+`e0d78a3c7a4944938207d6b75c48dc8168f86a655b7c59e759e0dd436d88c0f5`。
+真实官方GN已生成29087个target；只读检查确认目标工具链不再声明多余的
+colors executable，同时保留实际Linux宿主生成动作，
+`m144-colors-generator-r11-01/evidence.json`。这只是GN方向及宿主工具执行证明。
+签名 HAP、同 recipe V8/SwiftShader/AVC、新完整代表包及运行验证尚未完成。
+
+Matrix4新增普通应用 typed SDK 行为探针，17条有序结果覆盖7个顶层helper、
+矩阵乘法顺序、copy隔离、逆矩阵、平移/缩放/旋转/坐标实值、3类非法参数及
+既有factory对象回归，另有64轮状态恢复。不请求权限，不用native shim补导出。
+三个ABI的实际API26 SDK unsigned HAP均已构建，
+`matrix4-sdk-three-abi-03/{arm64,armv7a,x86_64}/`；01/02编译失败因测试本身的
+namespace-as-object和tuple断言不合法，修正测试写法后通过，未关闭编译器检查。
+默认新包验收已加入该persona；闭环注册仅覆盖这7个helper，不能证明全部ArkUI。
+尚未在新包运行。第56轮完整主机662项中1条旧脚本结构断言需更新；失败证据
+保留。第57轮完整663项通过（125.823秒），`host-regression-capability-57.log`；
+额外AST验证直接执行构建器的权限选择表达式，确保Matrix4/常量/导出/Worker
+纯调用探针均不申请权限。主机测试不是新包验收。
+
+## 历史 R6 首包运行结果（2026-10-06）
+
+实际重新打包并全新解压启动的 ARM64 phone 为
+`/Volumes/PSSD/qemu/packages/first-capability-repair-20261005-r6/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `502b08384576945bab9183281f8c4fe1475d836316354f3b15819962ece6a155`。
+固定 7.0 manifest 不变。macOS ARM64 / QEMU 11.0.3 / HVF，4 vCPU、4 GiB、
+800×500 virtio GPU，独立 HDC 18710 / 5682。诊断使用包外 QMP 每五秒输入保持唤醒；
+不能由此声明默认无人值守启动通过。启动、包校验和命令见 `first-package-evidence.json`。
+
+| R6 实际结果 | 精确范围 |
+| --- | --- |
+| ohos-native-bindings JSVM / QoS / vibrator | 新 main/test HAP 11 / 5 / 2 项通过，18 项零失败；六等级/worker 隔离、虚拟振动 start/cancel/custom 边界，不是调度时延或实体马达证明 |
+| 普通应用 user-ID | 13 项通过，账号 100 与实际 UID 对应，不能自行 retag；不代表 renderer 分叉已正常 |
+| I18n | 8 项通过，数据、numeric 202/401 和错误类型/缺参拒绝；没有放开系统权限 |
+| root Vibrator HDI | R6 TCG 独立启动 14 项通过，真实 timer/preset/取消/错误参数无状态污染；该 VM 已关闭 |
+| Vulkan 可见窗口 | generation 1/2 各五帧、销毁重建执行，但 QMP 与内部 compositor 都保留启动图；预期 `(51,102,153,255)`，实际白色，严格验证失败 |
+| AudioRenderer | 新 normal HAP 两轮 Start=2，39/71 条，零 PCM 回调；AudioPolicy 报 route=1 没有 support pipe，ALSA 修复不是完整闭环 |
+| ArkWeb | renderer 在页面执行前孵化失败：子进程 `SetUserId(100)` 返回 EPERM，StartRenderProcess=22；严格恢复流程未到达，不能继承旧首包 WebGL 通过 |
+
+实际日志为 `r6-hvf-bindings-e2e-01.log`、`r6-hvf-userid-result-01.json`、
+`r6-hvf-i18n-result-01.json`、`r6-hvf-vulkan-result-01.json`、
+`r6-hvf-audio-stream-result-01.json` 和 `r6-hvf-arkweb-spawn-01.log`。
+HVF 锁屏可见、boot completed=true，不等于普通应用首帧可见；TCG 的真实 freeze
+栈另显示 UniRenderThread 正在 softpipe shader 执行，不能据此把 HVF 也归为同一根因。
+当前修复方向仍需纠正 renderer 的身份初始化位置、7.0 音频 route 配置和应用渲染连接，
+不得通过跳过错误、降低像素要求、取消官方能力或扩大权限来关闭问题。
+
+本地回归最新 `host-regression-capability-25.log` 为 365 项通过（41.236 秒），
+设备画像打包测试也通过；这些不是运行验收。Serial 的五个独立部件已接入 2in1
+打包前准备，并加入真实 serial_manager/HDI 画像与固定 c05fbbf 缓存只读挂载；
+服务/授权 UI/实际 enforcing guest 尚待验证。AVC/EOS、DSP、Calendar、Camera/Vivid、
+严格 libjpeg、JSONcpp 等晚期候选均未进入 R6。剩余五包未启动，所有问题尚未修复。
+
+新 `patches/common/vendor/ohemu/audio_policy_7` 候选已补五条现有 pipe 的 NORMAL flag、
+八个设备的 reciprocal stream 映射、schema2.0 和正确 bufferSize；未添加设备/权限。
+固定 pristine 源码双次补丁、reverse-check、真实 ext4 新配置回读、旧配置及未知编辑拒绝
+通过；12 项主机边界通过。构建前强制打补丁，full-source 镜像强制校验 chip_prod 中
+解析器实际优先读取的 XML。此候选尚未进入 R6，不能称 PCM callback 已通过。
+
+早期图形源码诊断另确认 `CreateRenderConnection` 协议不一致：客户端要求成功 bool、remote object、
+非零 token，服务端缺 bool 且成功返回 token0，与 guest hasRemoteObj 错误吻合。
+记录 `render-process-ipc-source-01.log`。随后两个内部服务端点的最小回复修复
+已获用户确认并落入 `render_connection_reply` 部件，保持客户端现有格式与
+公开 API/backend/权限，真实三个 ABI 对象证据为
+`render-connection-reply-three-abi-evidence-03.json`。nwebspawn UID3081 的最小
+当前任务账号 setter 也已获确认并形成候选，不改 seccomp、不向最终 renderer
+或普通应用开放 retag。两者仍需在统一依赖后的新代表包运行回归；后续发现的
+sptr/大事务 ashmem 对象编码也已单独获用户批准，当前候选/测试状态见本文顶部。
+
+## 历史首包运行结果（2026-10-05）
+
+首个实际新包为
+`/Volumes/PSSD/qemu/packages/first-capability-repair-20261005/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `c060979b682568ed747662b9cee7276befa6a06b9cf13b6b4905e8e7f5b2ef22`。
+在 macOS ARM64/HVF、QEMU 11.0.3、独立 HDC 18710/目标 5681 启动，guest 为
+OpenHarmony 7.0.0.39/API 26、phone/aarch64/Linux 6.6.101，账号 100 前台。
+后面的原始审计数字保留历史含义，不据局部通过批量关闭全 API 台账。
+
+| 实际新包测试 | 结果与严格范围 |
+| --- | --- |
+| kernel bitmap / root user-ID | 24 / 20 项通过；不代表普通应用已通过 |
+| kernel BPF | 23 项通过，真实 map 回读/非法访问与 loopback UDP 过滤、替换放行、challenge 比对；root 内核链路，不代表 NetManager/NetFirewall/VPN 服务 |
+| 普通应用 user-ID | 失败，AppSpawn 分配值不等于账号 100；强 common setter 待重包验收 |
+| bindings JSVM / QoS | 普通 HAP 11 / 5 项通过；QoS 覆盖六等级、两个真实 worker 与主线程隔离、reset/重复 reset、非法等级和空输出拒绝；不是调度时延证明 |
+| bindings ArkWeb | 两轮真实 custom 文档、JS/DOM/Canvas/WebGL1/2/Rust proxy 通过，另 5 项 Hypium 边界通过；不是 renderer 恢复 |
+| ArkWeb renderer 恢复 | 失败，renderer 是 PID namespace init，默认 SIGTERM 被忽略；已补显式安全退出 handler，待新包验证 |
+| Vulkan device / NativeWindow queue | device/queue/memory 回读与 10 帧/1500 consumer 像素通过；不等于上屏 |
+| Vulkan XComponent 上屏 | 真实五帧与销毁重建回调完成，但两轮 compositor 截屏和 QMP 显示均黑；失败 |
+| 权限定义 | 973 项与固定源码完全一致：825 启用、148 按 phone 限制缺省；4 项查询边界通过；不是应用授权流程 |
+| AudioSuite PCM | 两轮 pipeline、3840 samples、回调与非法状态边界通过；算法插件/下载/真实音频设备不在此通过范围 |
+| 实时 AudioRenderer | 普通非 system HAP 两次创建后 Start 均返回 2，未执行数据回调；与 AudioSuite 是不同链路，失败 |
+| I18n | 五项数据调用通过；权限错误码字符串 `"202"`、缺参字符串 `"401"`、错误类型静默返回，违反 SDK 数字 BusinessError 契约 |
+| Vibrator | HDI 可连接，但旧首包 time capacity=false / bindings customStart=801；有限计时 VDI 待重包验收 |
+
+黑屏定位为 SceneBoard 已开启却缺统一渲染开关。phone/2in1 窄覆盖层都已设置
+`graphic_2d_feature_rs_enable_uni_render=true`，保留 OpenGL/softpipe 并不启用 Rosen Vulkan；
+当前真实 preloader 确认开关配套，新增编译前契约检查。开关正确仍不是可见呈现通过。
+I18n 修复使用已有 numeric BusinessError helper，补四种 setter 类型校验，不放开权限。
+两类 I18n 对象分别完成三个产品真实 clang 参数编译；未准备 PNG 的 ARM32/x86_64
+只在 scratch 严格展开本产品固定依赖输入，没有借其他 ABI 输出或修改 live source/out。
+实时音频的进一步定位：ES1370 设备和 PCM 节点存在，audio_host 也已注册，但
+固定 ALSA 默认关闭 global config，`hw:0` 无定义；完整配置树未在其编译路径
+`/vendor/etc/audio/alsa/share` 打包。新补丁开启两画像的已有开关，并将上游 79 个
+配置文件安装到 chipset 镜像。三个产品的本地空 `alsa-lib` 条目会盖掉画像设置，
+因此已独立迁移到共享 board inherit；没有放宽通用 local-shadow 检查。
+实际重建此前被该检查拦截，修复后新的 ARM64 phone preloader 配对检查通过。
+普通应用严格探针已在三 ABI 编译；两次 Renderer 创建/销毁、状态、非零 PCM 回调、
+pause/flush/resume 和参数边界必须在新包实测，不能据配置正确判通过。
+原始音频失败证据 `audio-stream-02-result.json`，normal 身份与 UID 20010036 同时保留；
+输出仍使用 QEMU `none` 后端，不声称已验证宿主机扬声器或麦克风。
+当前同一 ARM64 phone 首包继续重打（R6），首包门槛为 false，其余五包未启动。
+证据目录 `/Volumes/PSSD/qemu/validation/first-20261005`，索引 `first-package-evidence.json`。
+完整主机回归最新 302 项通过，包括 ALSA 本地条目迁移、配置树校验、Calendar 源码与
+签名装配保护、BPF/AVC 严格结果校验、AVC EOS 与真实基础 DSP 修复、只读 NOTICE
+输入、Fusion 服务账户保护、Camera 继承/生成配置/Vivid/照片验收边界、Serial 与 DSP 安全 runtime 校验；日志为
+`host-regression-capability-20.log`。这些包含真实补丁 ASan/UBSan、fresh-run/严格结果
+校验，但不是镜像 E2E，也不解除首包门槛。
+
+官方范围内的 AudioSuite 算法、AVC/Vivid、Camera/Wi-Fi/BT/GNSS 虚拟后端、Serial、
+CloudSync 与系统 Provider 等既有缺口仍未获得完整实现/运行证明，不能称“所有问题已修复”。
+
+### 真实软件 AVC 候选（未进入当前 R6）
+
+固定 `av_codec @ e5c525670d1f6622d441c9e5bf975ea0579ea177` 的软件 wrapper
+实际依赖 `libavcenc_ohos.z.so`。原始首包 system.img 离线检查确认该库未打包，
+结果 `avc-backend-original-01.json` 为失败；这不是原始普通 HAP 数据路径测试结果。
+现用已有固定 M144 的 OpenH264 `652bdb7719f30b52b08e506645a7322ff1b2cc6f`
+实现准确 wrapper ABI，不引入 master 或假成功实现。独立依赖构建不改 V8/SwiftShader
+的 Ninja 图，也不修改正在编译的 R6 source/out。
+
+宿主机真实编码/解码回读覆盖 Baseline/Main × CQP/CBR/VBR × 两次创建 × 八帧：
+最新 `avc-backend-host-04.jsonl` 为 520 检查通过、96 帧全部回读，含动态码率上调、
+请求 IDR、EOS、重建、输入/输出容量边界与 canary。Main decoder 有缓冲，按实际
+输出时间戳核对并完整 drain，没有跳过首帧或降低像素阈值。初版动态码率上调及
+旧解码测试的失败记录保留。ASan/UBSan 覆盖 adapter/probe，不能称底层静态 codec
+全部经过 sanitizer，也不能据此宣称严格 CBR 性能达标。
+
+实际 OHOS GN 编译三个 ABI 均通过，当前候选依赖目录为
+`/Volumes/PSSD/qemu/artifacts/avc-m144-final-20261005`：
+
+| ABI | `libavcenc_ohos.z.so` SHA-256 |
+| --- | --- |
+| arm | `0f086a17c7c9e2e4e8c6bef8b1698151a718b02cd672c8a945b3e20468d87c7c` |
+| arm64 | `31bc322c9fc2bf1ecbd60198bfc01af9bdcf3aa3df314e42ec4827ee99eb721a` |
+| x86_64 | `9916eab3e4220fda0d291bd1b4b5d204c4db3918c744478c3d5009b357061f26` |
+
+构建前强制验证源码/ABI header/当前 adapter 哈希、实际 ELF class/machine、准确三个
+导出、SONAME、仅 libc 运行依赖和四个固定许可证文件；过期产物拒绝复用。AVCodec
+独立部件补丁把库、来源记录与 notices 纳入两个画像，并已在 pristine 固定 HEAD
+重复应用两次通过。新 full-source 离线打包检查也强制读取 system.img 实际内容。
+这些校验只证明依赖/装配，不将编译或归档变成运行通过。
+
+进一步确认原固定 wrapper 的 EOS 分支只设置 flag，未更新复用 buffer 的 size/PTS，
+并忽略后端错误。新增独立 `avc_eos` 部件：成功才按真实结果重置 size/PTS，失败
+通过 OnError 保持 ERROR，不再覆盖成 EOS。准确源结构保护、旧/新 EOS branch 的
+ASan/UBSan 模型边界、重复补丁与三个产品真实 clang 参数的 scratch 编译均通过。
+补丁 SHA-256 `45ddd25e70795e75ae68bd910f1045a513f80d31c394ff263792b8c2e2608318`，
+新 wrapper source SHA-256 `6e1b02a272ac78572d5a75edc96f5253366ea53bea716a1c3547f1d5b23fcdad`。
+固定输出 buffer 数为四；普通 HAP 每轮 header+四帧再 EOS，必须覆盖真实复用，
+不是只看标志。成功/失败语义还必须在新首包验证，EOS 候选同样不在 R6。
+
+实际 debugfs 校验器另用三个 ABI 的真实候选库、来源记录和四个 notices 构建 tiny
+ext2 fixture，正向回读/实际 ELF 核对及删除 runtime notice 后拒绝均通过，结果
+`avc-ext2-readback-01.json`。这些不是 QEMU 系统产物或开机验收。
+
+普通 normal/non-system HAP 的公开 AVCodec 测试已完成三个 ABI 的 SDK 26 编译，
+ARM64 HAP 在实际 Linux source signer 签名及验签成功；macOS Java 17 的 ZIP64
+签名失败原始日志保留，没有关闭 code-sign。测试要求 Baseline/Main × 三码率模式 ×
+两次创建、48 帧全部实际 challenged Y-plane 像素/PTS 回读，实际 SPS profile、动态
+码率/IDR、EOS、释放重建和边界，校验器独立核对 437 条完整记录及正常应用 UID。
+本次旧诊断 VM 的 HDC/串口未返回应用结果，QMP running 不等于 guest 数据路径可用；
+挂起的本次客户端已取消，不能记录 AVC 应用通过或把传输超时算作接口结果。
+
+还必须将它纳入同一代表首包重建、启动后以新挑战完成真实普通应用测试。当前 R6
+不含此候选，不启动其余五包，不关闭 AVC 整项，更不声称 HEVC/硬件编码、Vivid 或
+AudioSuite 算法已补齐。
+
+### AudioSuite 三种真实基础 DSP 候选（未进入当前 R6）
+
+固定 `audio_framework @ 6932fa64335b8272ca4a59de7808ab0d6c9eae7a` 的三个基础节点
+依赖未打包的 vendor `libimedia_sws.z.so`。新增独立 `audio_suite_dsp` 部件，从源码
+构建 `libqemu_audio_suite_dsp.z.so`，只改 EQUALIZER/SOUND_FIELD/ENVIRONMENT_EFFECT
+三项 XML 路由，不冒充原厂算法库，不把其他 AI/云算法改成成功或取消官方能力。
+十段均衡器是真实 peaking biquad；四种声场为真实 mid/side 宽度；环境效果使用
+radio/telephone/underwater/phonograph 滤波及受控 soft clipping。它们是 QEMU CPU
+实现，不声称与厂商音效 bit-identical 或声学标定一致。
+
+实际宿主机当前源代码 ASan/UBSan 信号回读 `audio-suite-dsp-host-01.jsonl` 的 146 项
+全部通过：十个频段分别验证左右声道 +6/-6 dB（容差 0.08 dB）、动态归零、参数回读、
+四种声场/环境、满幅双符号饱和、in-place、输出 canary 与无写入拒绝边界。
+测试 binary SHA `680c28d5426be2ae40a14e94d6780c24bdafa77cf9073dc505dcd4ded569e578`，
+log SHA `9bfe39af48e74ad2914a011372c6b27e1d398847342fd02c98322a180d115fcd`。
+实际三个产品 clang 参数的 scratch 对象编译通过（`audio-suite-dsp-*-compile-*.json`）；
+ARM32/x86_64 的既有图关闭了 AudioSuite，采用其实际 framework stub 的参数模板，
+明确不把这次编译当作启用该旧图、完整 GN、库链接或 guest 运行通过。
+GN 实际语法解析与固定 pristine HEAD 重复应用通过，九项主机回归通过；初版
+安装器误检查 macOS `/tmp` 祖先 symlink 的失败保留，修复只检查源码根内路径并新增
+子目录 symlink 无损拒绝测试。安装前后还精确核对 pinned HEAD 的整个 XML/BUILD
+已知变换，不据旧 marker 猜测已应用；未知编辑、配置 symlink 或缺失路由均无损拒绝。
+
+进一步执行隔离的真实 phone preload/load/GN，而非仅语法检查。完整 GN 暴露了
+AudioSuite 对 CFI 的强制要求；新库已使用与该部件一致的 CFI/cross-DSO、UBSan、
+integer overflow 和 boundary 配置，未关闭断言或豁免安全检查。ARM64 完整 GN 和
+实际共享库链接均已通过，`/tmp/audio-dsp-full-gn-arm64-05` 库 SHA-256 为
+`ddf1bb1e3a13f3f3f0c111ee7cd20bab357e05ffc087d2b678519f32d9bbaa0a`。
+ARM32/x86_64 的启用图完整 GN 和实际链接也已通过，库 SHA-256 分别为
+`9f7f5631a60e9585b33b331317f4062e637d962337c0b4fc6db3afe7fb667eb1` 与
+`c24ead0fda47d0f54cf7a23944a7e88c88156b648cff11c5a3853e16bb42603f`。
+ARM32 06 只含 Camera USB0001，x86_64 07 含 USB0001–3、未含后加 Vivid，
+ARM64 05 早于 Camera 修复；均只证明 DSP 启用图/链接。x86_64 首次尝试的
+Camera 未初始化 defines 失败保留，未关闭 Camera 或更换其他 ABI 绕过。早期 scratch 的缺 Python、GN format SIGILL、CFI 断言和
+直接 Ninja 缺上游 `-w dupbuild=warn` 失败均保留，不覆盖成成功。
+
+离线校验已要求真实 16 个算法导出、cross-DSO `__cfi_check`、准确 SONAME/架构专属
+DT_NEEDED，以及镜像内同架构 libc 的 CFI/数学函数和 UBSan minimal 的实际导出。
+真实 ARM32 还需要 libc++ 的两个 ARM EHABI personality 符号，严格检查该原生
+依赖，没有为去掉依赖而关闭安全/展开配置。三个 ABI 的真实库与固定运行依赖 tiny
+ext2 回读均通过，删除安全 runtime 后正确拒绝；日志为
+`audio-suite-dsp-ext2-readback-01.json`、`audio-suite-dsp-arm32-ext2-readback-02.json`、
+`audio-suite-dsp-x86_64-ext2-readback-01.json`。ARM32 初版固定 8MiB fixture 容量失败
+保留，改按实际文件字节计算容量，未 strip 或替换验证输入。这是装配闭包验证，不是新 QEMU 包或 PCM
+pipeline 行为通过。
+
+该候选不在 R6 的冻结输入中，必须纳入下一轮同一首包，验证实际库/配置装配和公开
+AudioSuite pipeline 的真实频响、状态/参数、destroy/recreate，不能只重复本地 adapter
+测试。普通 HAP 已在三 ABI 实际 SDK 26 编译，ARM64 由 Linux source signer 完成
+signCode=1 签名，并验证 actual code-sign/digest/permission 签名（`audio-suite-effects-hap-sign-verify-03.log`）。
+测试只链接公开 OHAudioSuite，要求两轮各 18 个引擎/pipeline/三节点的创建释放、十个
+EQ band 与四种声场/环境，完整 1359 条记录及 36 组 PCM 回读。独立校验器按 fresh nonce
+重新计算输入 waveform energy，再核对双声道输出 energy/dB、边界和普通 UID；不是
+仅核对测试自身的 passed。其五项 synthetic 回归不是 guest 数据路径结果。
+signer runner 已强制实际验签与 `.cer`/`.p7b` 输出、四项成功标记；之前 `.pem` 输出
+导致未执行验签的失败保留，AVC 当前 HAP 已用正确后缀重验（`avc-media-hap-verify-linux-04.log`）。
+降噪、分离、变声、tempo/pitch、spatial/HOA 和云下载仍未修复。
+
+### 只读构建与 Fusion 服务账户候选（未进入当前 R6）
+
+固定 `build @ 5c0623072ed9c2ee93ab909a7a01f428fee95082` 的 NOTICE collector
+读取源码许可证却使用 `O_RDWR | O_CREAT`，实际隔离编译因此在只读 musl COPYRIGHT
+上失败。独立 `build/notice/readonly_input` 补丁仅把输入改为 `O_RDONLY`，保留输出、
+去重和内容行为，不通过复制第三方源码掩盖错误，也不创建缺失许可证。固定源码
+重复应用、四项边界测试和新 DSP 实际只读许可证动作通过；不是镜像运行验收。
+
+固定 FusionConnectivity 的两个 init 配置使用 `fusion_ranging` 与
+`partner_device_agent`，而 init 账户表未注册它们。新增独立 `init/fusion_accounts`
+补丁，分别分配未占用的 6067/6068，保留原服务权限、capability 和 supplementary
+groups，不复用 radio 的 `fusion_host`、不改 root、不开放登录。固定 passwd/group
+与两个完整服务配置的保护、重复应用和真实 `passwd_appender.py` 的 0–6999 输出
+检查通过，日志 `fusion-accounts-passwd-appender-01.log`。新镜像中的启动/SA 调用和
+无线后端尚未验证，不能据账户生成称测距或蓝牙可用。
+
+### Camera VDI/配置装配候选（未进入当前 R6）
+
+固定 QEMU product-local Camera 条目会覆盖整个继承部件，只留下
+`drivers_peripheral_camera_v4l2_emulator=false`；共享板默认 USB=false，匹配 USB
+VDI 的 HCB 又默认关闭。phone 现明确选择真实 USB VDI/匹配 host config 开关，
+不启用 express-camera 私有协议；独立 `vendor/ohemu/camera_profile` 迁移仅已知本地
+条目到 board inherit，未知用户特性和 symlink 无损拒绝，不放宽通用 local-shadow
+保护。2in1 原有官方画像之外的 Camera.Core 收紧保持不变。
+
+独立 peripheral `camera/usb_backend` 补丁保留 USB 关闭时的 x86_64 原条件，只在
+真实 USB 启用时纳入 HAL；完整 x86_64 phone GN 又发现 common adapter 的 defines
+未定义，新增缺失时初始化而不清空已有 emulator list。上游生成 pipeline config
+原本在 GN touch 源码并在 Ninja cp 回源码树，现改为当前产品 gen 的 C/header 和
+显式 generator 依赖，避免不同产品互相覆盖，不再安装仅构建用途的源码 C 文件。
+固定源码重复应用与七项主机测试通过。真实 ARM64 Camera 完整 GN 通过；独立
+Ninja 在输入只读的 param_watcher IDL 被固定工具 W_OK 拒绝，失败保留。重试仅把
+独占 scratch 原始 IDL 物化为同字节副本，保留完整组件目录骨架；不改生产输入，
+不关闭工具检查，也不把完整 GN 当作 Camera 链接通过。
+
+新加三个独立 `vivid_capture` 部件分别处理 Camera VDI opt-in、三内核 defconfig 与
+固定 Linux 6.6 实际 Vivid producer 默认值。驱动和 vb2/TPG 帧生成保持不变，默认
+只有一个 webcam Video Capture 节点，不创建 radio/SDR/VBI/output/meta/touch。
+选择器仅接收真实 `driver/card=vivid`、`bus=platform:vivid-000`，使用每节点 device_caps，
+拒绝非 streaming、output/meta 和仅 multiplanar 节点；保留真正 USB Camera 和原过滤逻辑。
+没有冒充 USB、构造假 Camera ID/帧或放宽 `camera_host:camera_host 0660` 设备权限。
+固定源重复应用两轮通过；实际三架构 Linux olddefconfig 全部 exit0、Vivid/依赖 builtin、
+MAX_DEVS=1。真实 Linux V4L2 头文件下开关开启/关闭两组 ASan/UBSan 各 39 检查通过，
+另七项主机保护测试通过。独立 `camera-vivid-kconfig-compile-07.json` 记录三架构
+实际 targeted make exit0、各 20 个正确 ELF machine 对象及 built-in.a；不是整内核
+链接或帧验收。早期 scratch 缺少固定板准备头文件/不完整上下文的失败保留，未借
+旧 out 头文件。06 的三组实际 make 成功，但验收器误要求主 Makefile 不存在的
+vivid-vb2.o；依据实际 20 个对象清单修正后，在新的 07 scratch 全部重编通过。
+
+普通 Camera C++/ArkTS 1.1 HAP 使用真实 SDK26 编译三 ABI（ARM64/ARM32 02、
+x86_64 修正 UDID 的 03），normal/非系统应用，只请求用户 Camera 权限。ARM64 02
+实际 code-sign/digest/permission/verify-app 全部通过，签包 SHA-256
+`744a58f7cb499c4c39c91a65bba67bd780be4890911f135209859d27e86d3918`。
+首次 SDK 编译揭示的真实 EXCL/CameraInput.release/类型引用错误已修正并保留失败记录；
+没有补造 SDK 声明。验收器另六项 fixture 通过：要求两轮 C++ 预览回调/生命周期、
+两轮 ArkTS 拍照与重建、四张 JPEG 的独立解码像素、实际普通 UID 和新 challenge。
+照片 fixture 不是真实 guest Camera 证据；HAP 尚未在新镜像执行。
+
+以上候选均不在冻结 R6。新内核/VDI 链接、开机节点和 HDI metadata/格式协商，
+普通应用 preview/photo/video 的帧/像素、权限及生命周期闭环仍须验证；不能据配置、
+Kconfig、选择器 sanitizer 或完整 GN 关闭 Camera。
+
+### CalendarData 候选源构建（未进入当前 R6）
+
+进一步确认固定 `calendar_data @ f922427ca0dc20895a0e254ae41382e5b03299a4`
+源码已有 `calendardata_whole` 与 `ReminderCallbackExtAbility`；旧 phone 预编译 HAP
+却没有这些入口。现在按三个部件独立准备源 HAP、撤除旧预编译依赖和精确签名匹配补丁，
+保留五个真实 HAR、lower/whole 权限、token/数据作用域检查和提醒服务授权。
+API 26/model 6 由既有 6.x Hvigor/Node 18.20.1 构建；不需要引入 master 源码。
+生产项目移除未使用的 Hypium dev registry 依赖，不跳过编译器或声明虚构的 SDK SysCap。
+模块保留固定 SDK 的 default/tablet 声明，通过既有明确 BMS compatibility 画像适配
+phone/2in1；强制改成 phone/2in1 在真实 Linux SDK 上失败，已经撤回。
+
+实际固定源码 Linux `build/scripts/compile_app.py` 已完成 release 构建，SDK 为
+26.0.0.39、目标 API 26、最低 API 23、VM ark13.0.1.0；标准 `app_sign.py` 签名成功。
+固定源码 `hap-sign-tool.jar verify-app` 也实际通过 digest/权限签名校验，日志
+`calendar-provider-production-verify-04.log`；这仍不是 BMS 或运行行为通过。
+候选 HAP 不含 Native ELF，源 provider 与 Native calendar_manager 来自同一固定仓库。
+signed HAP SHA-256 `c414d17fcd969b48d46da4be48b53e5bd30c64362ec15a9396a0d4f5f384eaea`，
+路径 `/Volumes/PSSD/qemu/validation/first-20261005/calendar-provider-production-03-signed.hap`。
+现有 system-core OS profile 的三个 ACL 没有扩大；只把该 bundle 的证书声明改成
+与实际平台 leaf 匹配的 8E9386…F30024B5，不接受 wildcard 或无签名安装。
+干净的固定 HEAD 重放又确认 pristine JSON 为 compact/CRLF，与 SceneBoard 的规范化
+格式不同。现先精确校验原证书/两项 privilege/唯一 entry 和 JSON key，再按原值
+规范化并打单个指纹补丁；原始和已整理两种格式、重复应用与未知策略无损拒绝均通过。
+
+这些补丁晚于当前 R6 冻结，不修改正在编译的 source/out；候选 HAP也未手工替换到
+测试 guest。还必须在下一次包含它的新首包中验证 BMS 注册、普通用户授权/拒绝、
+两类 calendar CRUD、归属隔离和提醒/重启生命周期。
+`EditorUIExtensionAbility` 依然缺失，Calendar UI 的关联流程也未验证，不能关闭整项缺口。
+
+## 原始审计与候选实现记录
+
+审计范围：ARM64 phone 与 ARM64 2in1 代表镜像。  
+运行系统：`OpenHarmony-7.0.0.39` / API 26。  
+固定 manifest：`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`。  
+本清单明确排除 ArkTS Static，只统计 Native C/C++ 公共 ABI、ArkTS 1.1 动态模块、
+权限、System Ability、系统 HAP/Provider、运行时插件、内核和 QEMU 虚拟硬件后端。
+
+完整逐项数据见 `docs/capability-audit/native-arkts11-gap-ledger.json`。它由
+`ci/capability-audit/build_native_arkts11_gap_ledger.py` 从运行证据再生。
+该台账来自先前 ARM64 代表镜像，不是六个架构/设备形态的新包验收结果。当前已准备的
+Location API 26 符号、Ethernet API 与 firewall 开关解耦、matrix4 顶层导出补丁，
+NetFirewall/System VPN feature、VPN/Settings bundle 名、DHardware UI 预装路径补丁，
+以及 ArkWeb/Vulkan 图形补丁，只有在新首包启动并完成对应调用后才能从缺口中移除。
+
+2026-09-25 首包构建记录（该轮已失败，后续状态见下文）：ARM64 phone、固定 7.0 manifest、仅这一个产物；
+尚无新包运行结果，其他五个产物未启动。此次重启构建强制重编内核，避免复用旧
+`Image` 后把源码中的 AccessToken ioctl 处理误判为已进入产物。
+第一次启用 System VPN 的增量编译在 `sysvpn_config.cpp` 因未定义的
+`MAX_LOCAL_ADDR_SIZE` 失败；已补地址向量的对称上限和负数/读取失败边界，正重试首包。
+三个全量 QEMU 启动脚本此前均未创建设备，虽然对应内核配置启用了 ES1370；
+现已给启动脚本加入 `es1370` 与确定性的 headless 音频后端。PCM 节点、
+Renderer/Capturer frame 回调和录放数据仍须在新首包验证。
+另外已按部件准备 Backup SA 非法 `CAP_CHMOD`、ModuleUpdate 初始化程序未纳入
+部件产物（并修正 `execv` 参数）、UsageStatistics 陈旧无路径 init 配置，
+及 HUKS init 会执行但未打包的兼容程序四处补丁。首包已在编译早期重启以纳入补丁；
+它们仍须从新包验证启动日志和对应服务状态，不能据补丁存在就将台账项改为通过。
+三架构 QEMU 内核 defconfig 均未启用 `BPF_SYSCALL`、`CGROUP_BPF` 和
+`DMABUF_PROCESS_INFO`，ARM64 还未启用 FTrace；已加入共享内核配置补丁。
+运行时仍要检查 BPF 程序实际加载、NetManager 统计/策略、DMA 进程信息和 tracing。
+`userdata.img` 使用带 quota 特性的 F2FS，而三个内核 defconfig 缺少 VFS v2
+quota 格式支持；内核补丁同时启用 `QFMT_V2`，新包必须使用新生成的 userdata 镜像，
+并验证 F2FS quota 无损挂载、实际配额读写和空间统计。
+
+2026-09-27：首包的下一处实际编译失败已定位到
+`drivers/dma-buf/dma-buf-process-info.c`。固定 Linux 6.6 已有统计实现及
+`get_dma_buf_from_file()` 定义，却缺少 `dma_buf.exp_pid`、`exp_task_comm` 字段和
+对应函数声明。已按 `kernel/linux/linux_6_6/dmabuf_process_info` 部件补齐头文件，
+保留统计功能，不通过关闭配置绕过失败。该修复已经完成内核编译，完整首包仍在重试；
+尚无新包或启动结果，编译通过不等于运行通过。
+I18n 六个 init 目录的属主已从不存在的 `i18n_service` 改为实际注册的 `i18n`；
+三个 `hmos_cust_*_mount` 命令属于未提供的厂商定制覆盖层。2026-10-05 已准备移除
+这三个调用而使用源码实际读取的 OpenHarmony 数据路径，保留 ICU 恢复程序；新增真实
+数据/权限 HAP，必须在纳入新补丁的新包上运行才能将该装配问题移出缺口。
+
+用户已允许收紧官方设备画像外的错误声明。本轮明确收紧 phone NetFirewall，
+以及 phone/2in1 的 VideoProcessingEngine，并撤销 2in1 画像外的五项 CloudSync 声明
+及 rich 继承的 Camera.Core 声明（保留 Camera 部件/库，不修改 phone）；
+phone 文档内 CloudSync 仍需修复真实 Provider，2in1 NetFirewall 仍必须实现。
+JSVM、QoS、Vibrator、ArkWeb、WebGL1/2、Vulkan 七项用户需求独立保护，不能因默认画像
+未列入而撤销。收紧只纠正错误声明，不把真实实现需求转成声明检查。
+AudioSuite 在官方 phone 文档中，不能仅因 SDK 默认列表未列出而删除其修复要求。
+进一步检查发现固定源码已有 AudioSuite engine/pipeline/API 实现，但 QEMU 产品的
+`audio_framework_feature_audiosuite_support=false` 让 Native target 生成占位库。
+已准备 phone 的两个 feature 开关和真实 PCM 数据/状态边界探针；该开关已经进入
+2026-10-05 的 phone-f02tvm 冻结输入，仍须编译、打包和启动验证。算法插件仍缺失，不把整项标为修复。
+保护列表来自审计使用的 7.0 文档固定提交 `9585fb12fa8f977accfd9435d9f5537b14734473`，
+与构建 manifest 独立记录；不要求构建源码包含已省略的 docs 仓库。
+
+实际 load-only 检查暴露了第二个问题：hb 按整个部件覆盖继承项，后加载的
+`virt_common.json` 清掉 NetManager 的产品级设置。现已增加位于最后的窄画像覆盖层，
+保留最终 board 设置，只覆盖明确管理的 feature/SysCap；不移动整个 phone/2in1 画像。
+在真实 phone preloader 的 `features.json`、`syscap.json` 和 `syscap.para` 中已确认
+NetFirewall feature 为 false、两项错误 SysCap 均不再声明。它仍是配置证据，不是运行通过。
+完整构建输入现为只读快照，补丁和脚本的文件哈希随包保留，避免长构建读到后续修改。
+详见 `docs/OHOS_7_PROFILE_CONTRACT_REPAIR.md`。
+正向复核曾发现 ARM64 phone 的九个声明名差异；六个是固定 registry 明确 abandoned、
+SDK `.ts` 无引用的退休名称，对应部件保留且仍需行为审计。三个有效能力 AudioSuite、
+AVInputCast、Window.SessionManager 已联合开启实现 feature 和声明；phone 也启用实际
+SceneBoard（HandsetSmartWindow/non-PC），不只加 SysCap。新的打包/guest 契约检查包含
+窄退休证据约束和七项用户需求，已经进入 phone-f02tvm；不代表调用通过。
+此前完整构建在 sysvpn 两层开关不配套时链接失败；现在 phone/2in1 显式配套 base/ext
+开关，并在当前 preload 后、编译前检查。新首包仍在编译，尚无包或 E2E 结果。
+OHOS Vulkan CPU WSI 候选桥及 loader 的 surface/ICD 分发修复已完成 ARM64 实际编译，
+并加入实际呈现/resize 探针；尚未在新 guest 运行，详见 ArkWeb/Vulkan 独立记录。
+另新增真实 XComponent/截屏/销毁重建测试，已编译而未运行。
+
+ARM32/x86_64 的 M144 SwiftShader ICD 也已实际编译，修复了 OHOS ARM32 Subzero 的
+POSIX LLVM config header 装配问题，三个架构的依赖库均准备好；这不是六个 QEMU 包的
+运行验收。bindings 新增真实同进程页面测试，并修复 custom response 缺 header/finish；
+ARM64 主/测试 HAP 编译通过，18 项相关主机回归通过，但尚无新 guest 页面结果。
+完整 QEMU 主机回归在增加 AccountMgr 最新快照保护后为 141 项通过。所有这些条目仍保持“候选实现、待新包验收”，
+不据编译或测试驱动的 fixture 将原运行台账批量关闭。
+
+2026-10-05 新确认但未完成的依赖闭环：AudioSuite 的 XML/loader 写死 lib64，已新增
+按 ABI 选择 lib/lib64 的部件补丁，并支持 `/system` 指向 `/usr/system` 后的 canonical
+只读路径，保留 realpath/目录白名单；多个算法 `.so` 仍缺失。
+System VPN 的底层协议控制仍依赖未打包的 ipsec/协议工具，base/ext 配套仅修链接。
+软件 AVC wrapper 动态加载 `libavcenc_ohos.z.so`，源码内尚无可用该库产物；
+不能把开启 feature 或 RK 硬件 encoder 广告当作已完成编码适配。
+
+ARM32 对应的 bindings 测试入口原先不接受该架构，现已在独立分支
+`audit/ohos7-qemu-e2e-arm32` 补齐同步、HAP ABI、Hypium、XComponent/Accessibility 驱动，
+安装前要求实际 ELF class/machine。JSVM/QoS/Vibrator ARM32 测试库已使用 API 26 SDK
+交叉编译，九项驱动回归通过；尚无新的 ARM32 包启动及 E2E 结果。
+Hypium 驱动还要求源文件中的所有用例逐项完成、summary 与逐用例记录一致、无忽略用例、
+runner 成功退出；零用例、部分执行和陈旧日志不能算通过。旧 JSVM/QoS/Vibrator 日志
+只用于验证解析兼容性，不计入新包运行验收。
+
+Camera 更细的源码检查：QEMU HCS 引用 `libcamera_host_vdi_impl_1.0.z.so`，但没有相应
+QEMU board VDI 构建；不能仅因 HDF host/interface 产物存在就认为 Camera Host 可用。
+`drivers_peripheral_camera_v4l2_emulator` 分支会包含
+`device/hmos_emulator/hardware/dcodec/include/ParamManager.h` 并使用专用 ioctl，
+不是标准 QEMU/Linux V4L2 后端。因此不直接开启该 flag；修复仍需标准 V4L2 虚拟
+数据源（如 kernel vivid）、对应 host/VDI/pipeline/HCS 与权限配置，以及实际预览/拍照验证。
+
+2in1 Serial 的进一步源码复核：固定 manifest 仅包含 usb_manager，不含提供
+`@ohos.busManager.serial` 的 serial_manager 服务仓库；不能把已编译的
+`@ohos.usbManager.serial` 当成这个不同模块。官方 SIG 源码已只读锁定至
+`c05fbbf156230982aa576373da6ee04378b09ca0`，当前真实服务使用 Serial HDI，缺失 HDI 时
+枚举返回 service error，并非源码记忆文件声称的纯桩实现。QEMU 仍缺该 NAPI/client/SA
+装配、HCS/板载 TTY 权限、授权 system dialog 及真实数据用例；尚未将额外源码纳入
+固定 7.0 build 或声称串口已修复。上游 init 的厂商 `/dev/ttyHW8` 权限、授权缓存删除
+及 dialog bundle 身份也需适配，不能直接照搬为 QEMU 生产配置。
+
+## 判定原则
+
+以下任一条件成立，都不能把 API 标为可用：
+
+1. `canIUse()` 为 true，但模块、动态库、运行导出或权限定义缺失；
+2. 模块或动态库能加载，但调用落入 unsupported、空实现或 false-success；
+3. System Ability 已注册，但继续依赖的 HAP、Ability、UIExtension、DataShare authority
+   或运行时插件缺失；
+4. API 对象能创建，但真实数据路径依赖的内核功能或 QEMU 虚拟设备不存在；
+5. 生命周期 smoke test 只验证 create/release，或把“成功或抛错”都视为通过。
+
+设备官方画像内的能力必须完成真实调用闭环。镜像在官方画像外额外声明的能力，也必须在
+“补齐实现”与“删除错误声明”之间二选一，不能继续保持虚假可用状态。
+
+## 总览
+
+| 层级 | phone | 2in1 |
+| --- | ---: | ---: |
+| Native 库或符号缺口 | 6 | 6 |
+| 其中 SDK 设备画像内 Native 缺口（不含文档额外要求） | 1 | 1 |
+| 官方 ArkTS 1.1 可调用模块整体加载失败 | 0 | 2 |
+| 有官方运行导出缺失的动态模块 | 54 | 47（45 可加载、2 整体缺失） |
+| 缺失 ArkTS 1.1 运行值/导出 | 181 | 152 |
+| const enum 编译调用契约（待验证，非 NAPI 对象缺失） | 16 | 16 |
+| 其中缺失 public/system 函数 | 13 / 35 | 15 / 23 |
+| 官方接口使用、但系统未注册的权限 | 14 | 16 |
+| 已有直接证据的行为/装配缺口 | 86 | 92 |
+| 设备契约内不可用的 Provider 流程 | 44 / 71 | 39 / 71 |
+
+行为缺口不是 API 数量：一个音频后端缺失会传递影响 Renderer、Capturer、录音、通话、
+SoundPool、AVScreenCapture 等许多 API。
+
+**ArkWeb 不能列为整体已通过。** 新的分段探针在旧 ARM64 phone 镜像上已证实页面 JavaScript、
+DOM 和 Canvas 2D 可用，但 WebGL1/2 超时；ARM64 2in1 与另外两种架构仍待同样复验。
+Vulkan 是独立的 Native 图形接口问题，不应把其 ICD 缺失当作 WebGL 的根因。
+
+## Native C/C++ ABI 缺口
+
+审计覆盖 130 个库契约、6,768 个有头文件依据的 C 函数。当前表面缺口如下：
+
+| 能力 | 缺口 | phone 范围 | 2in1 范围 | 初步修复方向 |
+| --- | --- | --- | --- | --- |
+| Location.Core | `liblocation_ndk.so` 缺 `OH_LocationInfo_IsFromMock` | 官方契约 | 镜像额外声明 | 源码误导出为 `OH_Location_IsFromMock`，按 API 声明修正符号 |
+| NetFirewall | 缺 `libnet_trafficfilter.so`，5 个函数 | 镜像额外声明 | 官方契约 | 打开 net firewall/traffic-filter feature，打包库、SA、权限与内核后端 |
+| VideoProcessingEngine | 缺 `libimage_processing.so` 15 个函数和 `libvideo_processing.so` 19 个函数 | 镜像额外声明 | 镜像额外声明 | 构建并打包实际实现；否则删除错误 SysCap |
+| Audio.SuiteEngine | `libohaudiosuite.so` 只是约 5 KiB 占位库，65 个 API 26 符号全缺 | 官方 phone 文档要求 | 未声明 | 开启已有 upstream engine/pipeline feature，实际编译验证所有导出及 PCM 闭环，再适配缺失算法插件；不能删除官方声明 |
+| HUKS.CryptoExtension | 缺 `libhuks_external_crypto.z.so`，11 个函数 | 未声明 | 未声明 | 若纳入 QEMU 契约则构建插件并补行为测试，否则不声明 |
+
+ABI 完整不等于行为完整。已有库仍存在这些关键 Native 行为失败：
+
+- `OH_QoS_SetThreadQoS` 对普通应用 PID 因无授权数据被拒绝；现有 `ohos-native-bindings`
+  用例只覆盖被允许的测试路径，不能代表通用接口闭环。
+
+  此项仍需精确复核调用场景：旧镜像的 bindings 两个 QoS HAP 测试确实通过，
+  其中包括 set/get 断言；不能把独立命令行进程没有 auth 记录简单等同于所有 HAP
+  调用失败。新首包需分别覆盖正常应用、线程/等级切换与授权边界，不放开全局 ioctl。
+- `OH_AudioRenderer_Start` 返回非法状态，0 frame、0 callback；依赖它的音频和媒体管线均不可用。
+- Camera Manager 能创建，但相机枚举返回错误且数量为 0，因为没有 Camera Host。
+- 旧镜像的 Vulkan `vkCreateInstance` 返回 `VK_ERROR_INCOMPATIBLE_DRIVER`；缺 ICD，而不是
+  ArkWeb WebGL 的 EGL 错误。M144 SwiftShader 软件 ICD 在旧 ARM64 phone 镜像的暂存目录中
+  已完成 instance、logical device、mapped buffer 和 headless swapchain 探测，但必须禁用
+  不兼容的 OHOS implicit layers；新打包镜像尚待首包启动验收。
+- 两个被广告的 Rockchip AVC/HEVC encoder 都无法创建实例。
+- Audio Vivid builder 的公开入口存在，但缺 `libAudioVividMetaBuilder.z.so`，实际返回 unsupported。
+- AccessToken API 26 的位图 ioctl 返回 `ENOTSUP`；eBPF、FTrace、DMABUF process info、F2FS quota
+  也分别缺内核支持。2026-10-05 进一步确认旧 inline 补丁没有匹配 Linux 6.6 的 switch
+  dispatcher，只改了头文件；此前“源码已经补齐，只需重编”的判断不成立。现在新增独立
+  内核部件，真实复制锁内权限位图并修复单项查询在解锁后解引用节点的竞态。
+  用户态仅在版本握手成功且协议为 v1 时选用 SPM，否则保留上游 legacy 路径；没有实现的
+  SPM/refcount ioctl 不伪造成功。还实现真实 task user ID，并把 AppSpawn 设置顺序移到
+  降权前、传播失败。进一步发现默认 sandbox 的 SetUserId 是返回 0 的弱符号空实现，
+  现新增真实 common 实现、移除 custom 重复定义（尚未纳入在编首包）。8 项迁移/边界/ASan/UBSan 回归通过；原始位图及新增 user ID/fork/
+  普通 HAP 探针已准备，尚未在新 guest 运行。parent-HAP-token 映射仍缺 kernel handler。
+  已确认 GN 只依赖 kernel 顶层目录，嵌套补丁未必触发重编；现以补丁后输入指纹驱动
+  action，打包核对实际 Image/模块证书。不能再据脚本的“强制重编”变量声称产物已更新。
+
+## ArkTS 1.1 模块整体缺失
+
+phone 官方画像内没有可调用模块整体加载失败。2in1 有两个：
+
+| 模块 | SysCap | 表现 | 修复类型 |
+| --- | --- | --- | --- |
+| `@ohos.busManager.serial` | `SystemCapability.BusManager.Serial` | `canIUse=false`，NAPI status 10 | 部件/模块/画像打包 |
+| `@ohos.net.netFirewall` | `SystemCapability.Communication.NetManager.NetFirewall` | NAPI status 10，Native traffic-filter 库也缺 | feature、模块、库、SA、权限和内核联合适配 |
+
+## ArkTS 1.1 函数导出缺失
+
+下面列出所有缺失函数。其余缺失运行值（enum/class/variable/namespace）完整保存在 JSON 台账中；
+它们同样是 ABI 缺口，不能因为不是函数而忽略。
+
+### 两种设备共同缺失
+
+| 模块 | 缺失函数 | 根因方向 |
+| --- | --- | --- |
+| `@ohos.accessibility.config` | `startBlinking`, `stopBlinking` | 固定 BOM 实现落后于 API 26 声明，需要回移实现并验证服务调用 |
+| `@ohos.arkui.intelligence.imageGeneration` | `closeGeneratorDialog`, `closeGeneratorNodeGraph`, `hideGeneratorDialog`, `hideGeneratorNodeGraph`, `openGeneratorNodeGraph`, `restoreGeneratorDialog`, `restoreGeneratorNodeGraph` | 导出与系统 Provider 同时核对，不能只补空函数 |
+| `@ohos.bluetooth.connection` | `startPairOutOfBand` | 导出缺失；Bluetooth vendor/controller 后端也不可用 |
+| `@ohos.matrix4` | `combine`, `copy`, `invert`, `rotate`, `scale`, `transformPoint`, `translate` | 底层矩阵实现已存在，缺 API 7 兼容顶层导出 |
+| `@ohos.net.ethernet` | `disableEthernetInterface`, `enableEthernetInterface`, `isEthernetEnabled` | 完整实现已在源码，但错误地受 `netmanager_ext_feature_net_firewall` 控制 |
+| `@ohos.net.vpn` | `addSysVpnConfig`, `deleteSysVpnConfig`, `getConnectedSysVpnConfig`, `getConnectedVpnAppInfo`, `getSysVpnConfig`, `getSysVpnConfigList` | QEMU 产品未打开 `netmanager_ext_feature_sysvpn` |
+| `@ohos.net.vpnExtension` | `isAlwaysOnVpnEnabled`, `setAlwaysOnVpnEnabled` | 同上；还必须修复 VpnDialog 包名前缀 |
+
+### phone 额外缺失
+
+| 模块 | 缺失函数 | 根因方向 |
+| --- | --- | --- |
+| `@ohos.geoLocationManager` | public: `getCurrentDistrict`, `getPostProcessingTrack`, `startBluetoothSearch`, `stopBluetoothSearch`; system: `addFusionFence`, `getLocationIconStatus`, `isFusionFenceSupported`, `removeFusionFence` | 固定 BOM 导出落后；GNSS/network location 后端也缺 |
+| `@ohos.telephony.call` | `offReceiveRttMessage`, `offRttErrCause`, `offRttModifyInd`, `onReceiveRttMessage`, `onRttErrCause`, `onRttModifyInd`, `sendRttMessage`, `setRttCapability`, `startRtt`, `stopRtt` | 导出落后；QEMU 无 modem/SIM/RIL 数据路径 |
+| `@ohos.telephony.observer` | `offCommunicationStateChange`, `onCommunicationStateChange` | 导出落后；需虚拟 RIL 状态事件验证 |
+
+### 2in1 额外缺失
+
+| 模块 | 缺失函数 | 根因方向 |
+| --- | --- | --- |
+| `@ohos.busManager.serial` | `getSerialPortList`, `addPortAuthorization` | 整个模块未打包；QEMU serial 设备和授权状态需联合验证 |
+| `@ohos.net.netFirewall` | public: `addNetFirewallRule`, `getNetFirewallPolicy`, `getNetFirewallRule`, `getNetFirewallRules`, `removeNetFirewallRule`, `setNetFirewallPolicy`, `updateNetFirewallRule`; system: `getInterceptedRecords` | 整个模块、Native 库、权限和 firewall 后端都缺 |
+
+### 运行值缺口
+
+除函数外，phone 还缺 51 个 class、62 个普通 enum、19 个 variable 和 1 个 namespace；2in1 缺
+41 个 class、53 个普通 enum、19 个 variable 和 1 个 namespace。主要集中在 ArkUI 新组件、
+PhotoAccessHelper、Accessibility、AbilityRuntime、Bluetooth、Audio、Camera/Image/WebView 等模块。
+这些数量是模块对象与声明的表面不匹配，不等于同样数量的 API 都不可调用。函数需回移
+真实实现；无公开 constructor 的数据类还需检查实际工厂返回对象及属性契约，不能仅凭
+Object.keys() 断言其数据 API 无实现，也不能手写无行为的占位构造器。
+
+2026-10-05 修正 `const enum` 分类：精确使用审计 SDK 提交
+`411d28f767bd6cd2a6905e3c6b15f0992f55b81b` 再生，不改用更旧的构建 SDK。
+每种设备原清单中的 14 个值是常量 enum，不是必须由 NAPI 提供的对象；从运行导出缺口
+移到编译调用契约，真实函数缺口数量完全未变。总计 16 项常量契约单独保留为
+`compiled_caller_not_verified`，仍待实际 ArkTS 1.1 编译调用验证，不能算已修复。
+
+## ArkWeb 执行链：JavaScript 可用，WebGL 仍未验收
+
+phone 和 2in1 的 WebView 探针均记录了 `web.page_begin=true`、`web.page_end=true`、
+`web.title=Example Domain` 和 `web.url=https://example.com/`。这只能证明 Web 组件可启动、
+HTTPS 页面可加载并能读取部分控制器状态，**不能证明页面脚本正常执行**。
+
+原始复合探针在**同一段 JS** 中依次执行 Canvas、WebGL1 和 WebGL2，因此当时无法区分
+V8/回调与图形上下文失败。新增分段探针在旧 ARM64 phone 镜像上取得明确结果：
+`web.js.arithmetic.result=2`、`web.js.dom.result="Example Domain"`、
+`web.canvas.2d.result=true`；WebGL1/2 分别超时。Native EGL 探针进一步证实公共 EGL wrapper
+广告了 `EGL_EXT_create_context_robustness`，而 QEMU 的 Mesa backend 未提供该扩展；ArkWeb
+据此请求 `EGL_CONTEXT_OPENGL_ROBUST_ACCESS_EXT`，Mesa 返回 `EGL_BAD_ATTRIBUTE`。当前新增
+补丁只在 backend 真正支持时广告该扩展，效果还需首个新镜像的启动验证。原始复合证据见
+`docs/capability-audit/runtime/arm64-phone/hap-probe-v9/results.log`、
+`docs/capability-audit/runtime/arm64-2in1/hap-probe-v9/results.log` 与对应设备的
+`hap-probe-v9/web-gpu-hilog.txt`。
+
+| 路径 | 当前结论 | 不能推导出的结论 |
+| --- | --- | --- |
+| `@ohos.web.webview` 模块及页面加载 | 可加载；HTTPS 页面、标题和 URL 通过 | 全部 WebView API 可用 |
+| 页面 JavaScript、DOM 与 `runJavaScript()` 返回值 | 旧 ARM64 phone 分段探针通过 | 其他架构和 2in1 全部通过 |
+| Canvas 2D | 旧 ARM64 phone 分段探针通过 | WebGL/共享 GPU 上下文可用 |
+| WebGL1 / WebGL2 | 旧 ARM64 phone 分段探针超时，EGL robust attribute 失败 | 将 native EGL pbuffer 成功等同于 ArkWeb GPU 成功 |
+| `v8_shared` / Native JSVM | 现有 JSVM 用例通过其覆盖的子集 | JSVM 与 ArkWeb renderer 是同一执行链 |
+
+`ohos-native-bindings` 的 `ark_web` 四个用例调用 `init`、`initAndKeep`、
+`watchLifecycle`、`registerCustomProtocol`、`refreshPage`，旧版统一用 `ranOrThrew()`
+断言；该 helper 忽略调用返回值，对成功或有文字的异常都返回 true，也未断言页面 JS 返回值、JS proxy
+回调、`custom://` 响应或刷新后的实际行为。因此 4/4 pass **不构成 ArkWeb 执行通过**。
+现已收紧为异常即失败、协议注册必须返回 true，并修正 WebviewController 的实际 webTag；
+注册用例仍不构成页面执行证据，主进程 WebView 与独立 Hypium 进程也不能混为同一实例。
+
+Vibrator 原用例同样会吞掉错误：现要求真实 start/customStart/cancel 成功。进一步发现
+Custom JSON 被 VDI 的全部 false capacity 提前拒绝，上游时间序列 stop marker 也被拒绝。
+已准备 time-delay-only 的真实时间轴修复及 4 项 ASan/UBSan 回归，尚未进入新 guest。
+QoS smoke 也已改为精确检查六种 set/get 等级；旧的非空字符串结果不能代表这些切换通过。
+
+下一步在新打包的 ARM64 phone 镜像上复验纯 JS、DOM、Canvas 2D、WebGL1/2，并补
+JS proxy 双向回调、异常/renderer 退出边界；首包通过后再覆盖 2in1、armv7a、x86_64。
+不能只检查 `libv8_shared.so` 或 ArkWebCore HAP 是否存在。
+
+## 权限注册缺口
+
+以下列表是旧镜像审计基线，不是当前设备契约下全部应开启的权限。
+2026-10-05 复核固定 AccessToken 源码：phone 中 12 项缺失是明确限定 PC 的权限，
+不能因 API 使用的广义 SysCap 同时覆盖 phone 就给手机放开它们（例如 diskSN 在非 PC
+设备按 SDK 文档返回空值）。`HEALTH_DATA` / `HEART_RATE` 仅见于 since 8、deprecated
+since 9 的 Sensor 重载注释，当前源码使用 `READ_HEALTH_DATA`；旧重载的权限兼容行为仍待验证，
+不通过追加宽松权限定义伪装修复。
+
+2in1 的 16 项旧缺失在固定源码中均明确支持 2in1。发现构建仍默认
+`target_platform=phone`，AccessToken 按该变量而不是 `device_type` 生成表。
+已准备构建显式传 `target_platform=pc`；表校验要求全部定义及原 APL/ACL/内核权限字段匹配，
+没有修改权限等级。实际 source 的 phone 表 825 enabled/148 disabled 通过；隔离生成的
+PC 表 887 enabled/86 disabled 通过，均包含 973 个源定义。PC 结果不是 2in1 编译、打包或运行证明。
+这项构建修复晚于正在编译的 phone-8fBzhQ；首包 phone 已使用正确默认平台，后续 2in1
+必须用包含新平台参数和表校验的冻结输入。其 16 项 API/权限流程仍需新包正常/系统应用验证。
+权限扫描器现在保留 source 的设备限定证据，并将合法禁用项与真正缺失区分；不把它们标为 API 通过。
+
+两种设备共同缺 11 个官方接口权限：
+
+- `ohos.permission.ACCESS_DISK_PHY_INFO`
+- `ohos.permission.ACQUIRE_LOCAL_ACCOUNT_AUTHORIZATION`
+- `ohos.permission.CONTROL_DEVICE`
+- `ohos.permission.CUSTOM_SCREEN_RECORDING`
+- `ohos.permission.ENTERPRISE_GET_INSTALLED_BUNDLE_LIST`
+- `ohos.permission.GET_ABILITY_INFO`
+- `ohos.permission.MANAGE_APP_KEEP_ALIVE`
+- `ohos.permission.MANAGE_SELF_SKILLS`
+- `ohos.permission.MANAGE_SKILL`
+- `ohos.permission.SET_NET_EXT_ATTRIBUTE`
+- `ohos.permission.kernel.SUPPORT_LOCAL_PLUGIN`
+
+phone 另外缺：
+
+- `ohos.permission.BACKGROUND_MANAGER_POWER_SAVE_MODE`
+- `ohos.permission.HEALTH_DATA`
+- `ohos.permission.HEART_RATE`
+
+2in1 另外缺：
+
+- `ohos.permission.DLP_POLICY_MANAGER`
+- `ohos.permission.ENTERPRISE_ACCESS_DLP_FILE`
+- `ohos.permission.ENTERPRISE_DATA_IDENTIFY_FILE`
+- `ohos.permission.ENTERPRISE_MANAGE_PRINT`
+- `ohos.permission.kernel.TRAFFIC_FILTER`
+
+这里只把权限写进 JSON 不够：还需同步权限定义、ACL、预授权、签名能力白名单和对应 HAP
+签名，否则 API 仍会返回 201/202 或安装失败。
+
+## SysCap / 产品画像缺口
+
+旧 phone 镜像的官方文档/SDK 声明差异（不是九个已确认缺失实现）：
+
+- DistributedFile、HiDumper、DataTransitManager、DeviceAuth、DeviceSecurityLevel、PinAuth：
+  固定 registry 已 abandoned，当前 SDK 无 API 引用；按窄证据处理退休名称，服务保留，行为待审计；
+- Window SessionManager：phone 已准备实际 SceneBoard 数据路径，不仅追加声明；
+- SDK 默认画像中的 AVInputCast 与 phone 文档内 AudioSuite：联合开启实现，仍待真实闭环。
+
+2in1 官方画像需要、镜像却未形成闭环：
+
+- BusManager.Serial：SysCap、模块均缺；
+- NetManager.Eap：模块可加载，但 SysCap 为 false；
+- Audio.DeviceEnhance：manager 可创建，但 SysCap 为 false且路由 unsupported；
+- Window SessionManager：相关窗口实现部分存在，但 SysCap 为 false，FloatingBall/FloatView disabled。
+
+反向问题同样严重：phone 额外声明 61 个、2in1 额外声明 75 个超出官方 SDK 画像的能力。
+其中多项没有后端。最终产物必须明确选择“实现”或“取消声明”。
+
+## 系统 HAP、Provider 与插件缺口
+
+这是 ArkTS 1.1 模块能加载、函数也存在，但调用仍失败的主要来源：
+
+| 能力链路 | 当前缺口 | 适配方向 |
+| --- | --- | --- |
+| Share Picker | 配置引用 `com.ohos.sharepickerdialog`，payload 缺失 | 构建、签名、预装并验证回调，不接受 Promise 先成功后报错 |
+| Distributed Hardware UI | HAP 实际目录与 `install_list.json` 路径不一致 | 修正预装路径 |
+| AV Cast / Media Controller / Desktop Lyric | phone 无 provider；2in1 包名为 `com.hmos.*`，框架硬编码 `com.ohos.*`，入口也不全 | 统一 bundle/entrypoint，补预装和 UIExtension |
+| Photos | 2in1 未注册且签名白名单不匹配；phone 缺三个 API 26 entrypoint | 重签/白名单/预装并补 Ability |
+| Calendar | 2in1 HAP 未注册；两设备 whole authority、编辑和提醒入口不完整 | 修正签名与 DataShare/Ability 装配 |
+| Print | 2in1 PrintSpooler 未注册、无 PrintExtension/远端 provider | 构建 QEMU virtual printer provider 或明确取消能力 |
+| DLP | 2in1 payload 未注册、签名能力不匹配且缺凭据 provider | 修正签名/白名单并提供 QEMU provider |
+| Settings/navigation | `com.ohos.settings` 与源码硬编码 `com.huawei.hmos.settings` 不一致，多个 UIExtension 缺失 | 参数化/改包名并补入口 |
+| PermissionManager | 2in1 缺 `OpenSettingAbility`；phone 无 manual_settings 权限，不应追加 PC 权限 | 已准备独立单项协议入口、真实授权/状态确认及身份/session 边界；8 项主机回归、隔离系统 API ArkTS 编译通过，新包/2in1 UI 仍待验收；不以旧数组授权弹窗代替 |
+| Accessibility | core E2E 可用，但 ScreenReader、Caption、Settings entrypoint 缺失 | 打包最小 QEMU provider 并验证 enable/disable 行为 |
+| VPN authorization | 框架找 `com.huawei.hmos.vpndialog`，镜像是 `com.ohos.vpndialog` | 修正 bundle target，并与 sysvpn 导出一起验证 |
+| Camera/Contacts picker | phone HAP 缺框架硬编码的 picker Ability | 补 Ability 或修正目标 |
+| AppDomainVerify | 可选 extension 缺失，但上游已有 HTTP 验证 fallback；Want conversion fallback 返回空目标 | 测试真实验证/刷新及 HTTP/HTTPS 路由；不能仅凭缺可选库判定验证失败 |
+| ArkUI 文本菜单 | expanded-menu、share、translate、text-analyzer 插件及目标应用缺失 | 打包插件与最小 QEMU handler |
+
+## QEMU 后端缺口
+
+这些问题不能仅靠复制库或增加 SysCap 解决：
+
+| 后端 | 当前状态 | QEMU 可用化要求 |
+| --- | --- | --- |
+| Audio | 无 PCM，`/dev/snd` 只有 timer，未启用 virtio-snd | QEMU audio device + guest kernel/ALSA/HDF + renderer/capturer 数据回环 |
+| Camera | 无 `/dev/video*` 与 Camera Host | virtio/v4l2 或确定性虚拟 Camera HDI，能枚举、预览、拍照 |
+| Wi-Fi | 只有 virtio `eth0`，HDF 寻找 AP6275S | 虚拟 WLAN/受控 mock HDI，状态转换、扫描、连接/AP/P2P 不能 false-success |
+| Bluetooth | 无 controller/vendor library | 虚拟 HCI/vendor backend，至少完成 enable、发现、配对、GATT 基础闭环 |
+| Location | 无 GNSS/network provider | 可注入坐标的 QEMU location provider，支持回调、mock 标记与 geofence |
+| Telephony | 无 modem/SIM/RIL | 虚拟 RIL/SIM 状态机；否则 phone 不得宣告通话/短信/蜂窝数据可用 |
+| Vulkan | 无可用 ICD | 打包 Mesa lavapipe/virtio Vulkan ICD，并验证 instance/device/queue |
+| ArkWeb 图形/执行链 | 页面加载通过；复合 `runJavaScript()` 探针未返回；EGL shared context/SharedImage 失败 | 先隔离纯 JS、DOM、proxy 与 WebGL，再按故障层适配 ArkWeb renderer/V8 或 EGL/虚拟 GPU |
+| Video encoder | 广告 RK encoder，但实例创建失败 | 软件编码器或可用 virtio codec，且能力枚举必须与实例创建一致 |
+| USB gadget | `/sys/class/udc` 为空 | QEMU UDC 后端或取消 gadget/device-mode 声明 |
+| Distributed/SoftBus | user-mode NAT 隔离 guest | 提供 bridge 启动模式和双机 E2E |
+
+内核还需单独补齐并验证 eBPF、ARM64 FTrace、DMABUF process info、F2FS quota、AccessToken ioctl
+和资源调度 cgroup。配置项存在不等于 syscall/文件系统行为通过。
+
+## 现有 `ohos-native-bindings` E2E 的覆盖边界
+
+当前 ARM64 记录为 33 个模块、96 pass。它对 JSVM、vibrator、基础 ArkUI/Input、HUKS、文件、
+图像、网络查询等已覆盖路径很有价值，但不能作为“全部接口可用”的结论：
+
+- Camera 用例验证的是未运行时稳定拒绝，没有枚举/预览/拍照；
+- ArkWeb、NetStack、NetConnection 等多处 `ranOrThrew()` 允许异常也算通过；
+- 多数模块只覆盖 create/release 或一两个 happy path；
+- 没有覆盖上述 48/38 个缺失函数、权限拒绝分支、Provider 入口和大部分虚拟硬件数据路径；
+- WindowManager 的 phone 失败是设备边界，2in1 剩余 visible-layout 数量是 fixture 假设，二者不应
+  与真正 API 缺失混为一谈。
+
+后续验收需要新增一个 Native/ArkTS 1.1 capability gate：表面完整性、权限、真实调用结果和
+后端可观察状态分别断言，禁止用 `ranOrThrew()` 覆盖失败。
+
+## 建议修复顺序
+
+1. **P0 表面与契约**：Native 符号、两个 2in1 模块、48/38 个函数及运行值、权限注册、SysCap
+   画像；先消除固定 BOM 与 OHOS 7 API 26 契约错配。
+2. **P0 可直接装配**：Ethernet/VPN feature、DHardware 路径、HAP 预装/签名、明确的 bundle 与
+   entrypoint 错配、运行时插件。
+3. **P1 执行与通用 QEMU 后端**：先隔离并修复 ArkWeb 页面 JS/proxy 与 WebGL 图形链，随后是
+   Audio、Vulkan、软件视频编码、eBPF/FTrace/quota/DMABUF、QoS 与 AccessToken。这些会同时
+   解锁大量 Native 与 ArkTS API。
+4. **P1 系统 Provider**：Share、Settings、Permission、MediaController、Photos、Calendar、
+   Accessibility、Print、DLP。
+5. **P2 设备模拟**：Camera、Location、Wi-Fi、Bluetooth、Telephony、USB gadget、双机 SoftBus。
+
+完成每一批共同修复后，先构建一个 ARM64 代表包，启动新镜像执行严格行为验证；首包通过后才
+构建其余五个产物。

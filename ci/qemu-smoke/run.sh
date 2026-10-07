@@ -679,6 +679,14 @@ wait_for_account() {
   : >"${account_history_log}"
 
   for attempt in $(seq 1 "${ACCOUNT_WAIT_ATTEMPTS}"); do
+    local previous_param_ready="${param_ready}"
+    local previous_user_present="${user_present}"
+    local previous_foreground="${foreground}"
+    # Readiness must coexist in this current snapshot. Old observations cannot
+    # be latched across a disconnect, a user switch or a service restart.
+    param_ready=0
+    user_present=0
+    foreground=0
     transport_ready=0
     if connect_hdc_target; then
       if "${HDC}" -t "${HDC_TARGET}" shell '
@@ -691,16 +699,18 @@ wait_for_account() {
       printf 'HDC target %s is offline; reconnecting.\n' "${HDC_TARGET}" >"${account_last_log}"
     fi
 
-    if [ "${transport_ready}" = "1" ] && [ "${param_ready}" = "0" ] && grep -Eq 'bootevent\.account\.ready=(true|"true")' "${account_last_log}"; then
-      param_ready=1
+    if [ "${transport_ready}" = "1" ]; then
+      local account_state
+      account_state="$(python3 "${ROOT}/ci/qemu-smoke/account_state.py" "${account_last_log}")"
+      read -r param_ready user_present foreground <<<"${account_state}"
+    fi
+    if [ "${param_ready}" = "1" ] && [ "${previous_param_ready}" = "0" ]; then
       echo "AccountMgr parameter service is ready at attempt ${attempt}."
     fi
-    if [ "${transport_ready}" = "1" ] && [ "${user_present}" = "0" ] && grep -Eq 'ID:[[:space:]]*100([^0-9]|$)' "${account_last_log}"; then
-      user_present=1
+    if [ "${user_present}" = "1" ] && [ "${previous_user_present}" = "0" ]; then
       echo "AccountMgr user 100 exists at attempt ${attempt}."
     fi
-    if [ "${transport_ready}" = "1" ] && [ "${foreground}" = "0" ] && grep -Eq 'isForeground:[[:space:]]*(1|true)([^[:alnum:]]|$)' "${account_last_log}"; then
-      foreground=1
+    if [ "${foreground}" = "1" ] && [ "${previous_foreground}" = "0" ]; then
       echo "AccountMgr user 100 is foreground at attempt ${attempt}."
     fi
 

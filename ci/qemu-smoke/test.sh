@@ -630,6 +630,20 @@ case "${1:-}" in
       echo '[Fail][E001005] Device not found or connected' >&2
       exit 1
     fi
+    case "${FAKE_ACCOUNT_SCENARIO:-normal}" in
+      mixed)
+        printf '%s\n' 'bootevent.account.ready=true' 'ID: 100' 'isForeground: 0' 'ID: 0' 'isForeground: 1'
+        exit 0
+        ;;
+      stale)
+        if [ "$(cat "${FAKE_HDC_STATE}")" -eq 2 ]; then
+          printf '%s\n' 'bootevent.account.ready=false' 'ID: 100' 'isForeground: 1'
+        else
+          printf '%s\n' 'bootevent.account.ready=true' 'ID: 100' 'isForeground: 0' 'ID: 0' 'isForeground: 1'
+        fi
+        exit 0
+        ;;
+    esac
     cat <<'ACCOUNT'
 bootevent.account.ready=true
 ID: 100
@@ -664,6 +678,22 @@ printf '%s\n' "${account_output}" | grep -q 'AccountMgr user 100 is foreground a
 grep -q 'attempt=1/3 transport=0' "${WORK}/account-ready.log"
 grep -q 'attempt=2/3 transport=1' "${WORK}/account-ready.log"
 [ "$(grep -c '^tconn 127.0.0.1:6554$' "${HDC_ARGS}")" -ge 2 ]
+
+for scenario in mixed stale; do
+  printf '%s\n' 1 >"${HDC_STATE}"
+  if RUNNER_TEMP="${TEST_ROOT}" QEMU_SMOKE_HDC_HOST_PORT=6554 \
+    FAKE_ACCOUNT_SCENARIO="${scenario}" \
+    FAKE_HDC_ARGS="${HDC_ARGS}" FAKE_HDC_STATE="${HDC_STATE}" \
+    FAKE_HDC_TARGET=127.0.0.1:6554 PATH="${FAKE_BIN}:${PATH}" \
+    bash "${RUN_SCRIPT}" --package unused.tar.gz --guest-arch x86_64 \
+      --host-platform linux --require-account true --require-kvm false \
+      --run-ohos-runner false --account-wait-attempts 2 --phase wait-account \
+      >"${TEST_ROOT}/account-${scenario}.log" 2>&1; then
+    echo "wait-account accepted ${scenario} foreground-user evidence" >&2
+    exit 1
+  fi
+  grep -Fq 'AccountMgr readiness timed out' "${TEST_ROOT}/account-${scenario}.log"
+done
 
 cat >"${FAKE_BIN}/hdc" <<'EOF'
 #!/usr/bin/env bash

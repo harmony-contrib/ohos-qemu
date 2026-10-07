@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "collected_at_utc": "2026-10-05T16:14:53.382052+00:00",
+  "scope": "static_audit_and_referenced_existing_runtime_only_no_build_package_boot_or_dayu_runtime",
+  "host": {
+    "platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "python": "3.13.7"
+  },
+  "read_only_container": {
+    "name": "ohos-qemu-capability-inspect",
+    "mounts": [
+      {
+        "Type": "bind",
+        "Source": "/Volumes/PSSD/code/ohos-rs/ohos-qemu",
+        "Destination": "/work",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "volume",
+        "Name": "ohos-qemu-7_0-release-source",
+        "Source": "/var/lib/docker/volumes/ohos-qemu-7_0-release-source/_data",
+        "Destination": "/Volumes/PSSD/qemu/openharmony",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "ohos-qemu-7_0-release-out",
+        "Source": "/var/lib/docker/volumes/ohos-qemu-7_0-release-out/_data",
+        "Destination": "/Volumes/PSSD/qemu/openharmony/out",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": false,
+        "Propagation": ""
+      }
+    ]
+  },
+  "commands": {
+    "source_recheck_argv": [
+      "docker",
+      "exec",
+      "-e",
+      "PYTHONDONTWRITEBYTECODE=1",
+      "ohos-qemu-capability-inspect",
+      "python3",
+      "/work/ci/capability-audit/compare_dayu200_config.py",
+      "--source-root",
+      "/Volumes/PSSD/qemu/openharmony",
+      "--qemu-repo",
+      "/work"
+    ],
+    "inventory_argv": [
+      "python3",
+      "ci/capability-audit/inventory_dayu200_patches.py",
+      "--annotations",
+      "docs/capability-audit/dayu200/patch-cause-inventory.json"
+    ]
+  },
+  "verification_program": "from pathlib import Path\nimport ast,hashlib,json,re,platform,subprocess\nfrom datetime import datetime,timezone\nroot=Path.cwd(); base=root/'docs/capability-audit/dayu200'\nfor name in ['compare_dayu200_config.py','inventory_dayu200_patches.py']:\n ast.parse((root/'ci/capability-audit'/name).read_text())\nsource_command=['docker','exec','-e','PYTHONDONTWRITEBYTECODE=1','ohos-qemu-capability-inspect','python3','/work/ci/capability-audit/compare_dayu200_config.py','--source-root','/Volumes/PSSD/qemu/openharmony','--qemu-repo','/work']\nfresh_source=subprocess.check_output(source_command)\nassert fresh_source==(base/'source-comparison.json').read_bytes(),'Source changed; review the new comparison before updating evidence'\nPath('/tmp/dayu200-source-comparison-recheck.json').write_bytes(fresh_source)\nj=json.loads(fresh_source)\nassert j['actual_arm64_phone_source_vs_proposal']['counts']['assignment_differences']==0\nassert j['actual_arm64_phone_source_vs_proposal']['dayu_only_parts']==[]\nassert j['actual_arm64_phone_source_vs_proposal']['qemu_only_parts']==[]\nassert j['actual_arm64_phone_preloader']['feature_mismatches']==[]\nassert j['actual_arm64_phone_preloader']['checked_explicit_feature_count']==97\nfor arch in ['arm64_virt','armv7a_virt','x86_64_virt']:\n for dev in ['phone','2in1']:\n  c=j['comparisons'][arch+'/'+dev]['counts']\n  assert c['dayu_parts']==385\n  assert c['qemu_parts']==(385 if dev=='phone' else 382)\n  assert c['assignment_differences']==(47 if dev=='phone' else 50)+(arch=='x86_64_virt')\ninventory_command=['python3','ci/capability-audit/inventory_dayu200_patches.py','--annotations','docs/capability-audit/dayu200/patch-cause-inventory.json']\nfresh_inventory=subprocess.check_output(inventory_command)\np=json.loads(fresh_inventory)\nps=sorted((root/'patches').rglob('apply.sh'))\nleaves={str(x.parent.relative_to(root/'patches')) for x in ps if not any(y!=x and y.is_relative_to(x.parent) for y in ps)}\nassert leaves=={c['component'] for c in p['components']}\npatches={str(x.relative_to(root)) for x in (root/'patches').rglob('*.patch')}\nassert patches=={x['path'] for c in p['components'] for x in c['patches']}\nassert len(leaves)==74 and len(patches)==129\nassert sum(c['numbered_patch_count'] for c in p['components'])==126\nfor c in p['components']:\n for x in c['patches']:\n  assert hashlib.sha256((root/x['path']).read_bytes()).hexdigest()==x['sha256'],x['path']\nfor path,digest in p['non_patch_file_sha256'].items():\n assert hashlib.sha256((root/path).read_bytes()).hexdigest()==digest,path\nfor f in j['file_comparisons']:\n for side,key in [('dayu_dir','dayu_only'),('qemu_dir','qemu_only')]:\n  paths=f[key]+f['identical']+[x['relative_path'] for x in f['changed']]\n  assert len(paths)==len(set(paths))\n  assert all(f[side]+'/'+path in j['source_file_sha256'] for path in paths)\nreport=root/'docs/OHOS_7_DAYU200_QEMU_COMPARISON.md'; txt=report.read_text()\nids=re.findall(r'^\\| (N\\d+) \\|',txt,re.M)\nassert ids==['N%02d'%i for i in range(1,35)]\nreport_components=re.findall(r'^\\| \\[([^]]+)\\]\\(\\.\\./patches/[^)]+/apply.sh\\) \\|',txt,re.M)\nassert set(report_components)==leaves and len(report_components)==74\nassert all(line==line.rstrip() for line in txt.splitlines()),'Trailing whitespace'\nlinks=[(report.parent/target.split('#',1)[0]).resolve() for target in re.findall(r'\\]\\(([^)]+)\\)',txt) if not target.startswith(('http://','https://','#'))]\nassert all(path.exists() or path==base/'audit-evidence.json' for path in links)\nmounts=json.loads(subprocess.check_output(['docker','inspect','ohos-qemu-capability-inspect','--format','{{json .Mounts}}'],text=True))\nassert len(mounts)==3 and all(not x['RW'] for x in mounts)\nfirst_path=Path('/Volumes/PSSD/qemu/validation/first-20261005/first-package-evidence.json')\nfirst=json.loads(first_path.read_text())\n# Replace the generated ledger only after all collection and verification succeeds.\ntemporary=base/'.patch-cause-inventory.validated.tmp'\ntemporary.write_bytes(fresh_inventory)\ntemporary.replace(base/'patch-cause-inventory.json')\nfiles=[report,root/'ci/capability-audit/compare_dayu200_config.py',root/'ci/capability-audit/inventory_dayu200_patches.py']+[path for path in sorted(base.glob('*.json')) if path.name!='audit-evidence.json']\nchecks={'tool_syntax':'pass','source_recheck_byte_identical':'pass','all_six_profile_counts':'pass','current_arm64_source_matches_generated_selection':'pass','all_97_explicit_features_match_current_preloader':'pass','all_74_patch_leaf_components_covered_in_json_and_report':'pass','all_129_patch_files_covered_and_sha256_match':'pass','all_non_patch_input_sha256_match':'pass','all_scanned_file_hashes_present':'pass','34_unique_capability_items':'pass','no_trailing_whitespace':'pass','all_source_out_and_repo_container_mounts_read_only':'pass'}\nevidence={'schema_version':1,'collected_at_utc':datetime.now(timezone.utc).isoformat(),'scope':'static_audit_and_referenced_existing_runtime_only_no_build_package_boot_or_dayu_runtime','host':{'platform':platform.platform(),'machine':platform.machine(),'python':platform.python_version()},'read_only_container':{'name':'ohos-qemu-capability-inspect','mounts':mounts},'commands':{'source_recheck_argv':source_command,'inventory_argv':inventory_command},'verification_program':Path(__file__).read_text(),'checks':checks,'counts':{'new_or_refined_capability_checks':len(ids),'patch_leaf_components':len(leaves),'numbered_patches':p['numbered_patch_count'],'all_patch_files':len(patches),'non_patch_input_files':len(p['non_patch_file_sha256']),'scanned_file_inventory':{key:sum(len(x[key]) for x in j['file_comparisons']) for key in ['changed','dayu_only','qemu_only','identical']}},'referenced_first_artifact_evidence':{'path':str(first_path),'evidence_sha256':hashlib.sha256(first_path.read_bytes()).hexdigest(),'archive':first['archive'],'archive_sha256':first['archive_sha256'],'first_artifact_behavior_gate_passed':first['first_artifact_behavior_gate_passed'],'remaining_packages_started':first['remaining_packages_started'],'verification_scope':'Existing evidence referenced; no new archive, guest or DAYU200 verification performed'},'audit_file_sha256':{str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest() for f in files},'limitations':['No exact DAYU200 binary package, checksum or physical board runtime provided.','QEMU six profiles are in-memory source selections, not six built packages.','Kernel comparison is explicitly merged inputs before DAYU200 Kconfig.','Patch inventory captures the reviewed working-tree snapshot, including candidates absent from the tested first artifact.']}\nevidence_path=base/'audit-evidence.json'\nevidence_path.write_text(json.dumps(evidence,ensure_ascii=False,indent=2)+'\\n')\nassert all(path.exists() for path in links)\nevidence['checks']['all_document_links_resolve']='pass'\nevidence_path.write_text(json.dumps(evidence,ensure_ascii=False,indent=2)+'\\n')\nprint(json.dumps({'checks':evidence['checks'],'counts':evidence['counts'],'first_artifact_gate':first['first_artifact_behavior_gate_passed']},ensure_ascii=False,indent=2))\n",
+  "checks": {
+    "tool_syntax": "pass",
+    "source_recheck_byte_identical": "pass",
+    "all_six_profile_counts": "pass",
+    "current_arm64_source_matches_generated_selection": "pass",
+    "all_97_explicit_features_match_current_preloader": "pass",
+    "all_74_patch_leaf_components_covered_in_json_and_report": "pass",
+    "all_129_patch_files_covered_and_sha256_match": "pass",
+    "all_non_patch_input_sha256_match": "pass",
+    "all_scanned_file_hashes_present": "pass",
+    "34_unique_capability_items": "pass",
+    "no_trailing_whitespace": "pass",
+    "all_source_out_and_repo_container_mounts_read_only": "pass",
+    "all_document_links_resolve": "pass"
+  },
+  "counts": {
+    "new_or_refined_capability_checks": 34,
+    "patch_leaf_components": 74,
+    "numbered_patches": 126,
+    "all_patch_files": 129,
+    "non_patch_input_files": 163,
+    "scanned_file_inventory": {
+      "changed": 40,
+      "dayu_only": 31,
+      "qemu_only": 32,
+      "identical": 69
+    }
+  },
+  "referenced_first_artifact_evidence": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/first-package-evidence.json",
+    "evidence_sha256": "0c573b2dd6236495c704be58a1be6595fe6de5fe85c4eef8c295a91b72709ef8",
+    "archive": "/Volumes/PSSD/qemu/packages/first-capability-repair-20261005/openharmony-qemu-arm64-arm64_virt-phone.tar.gz",
+    "archive_sha256": "c060979b682568ed747662b9cee7276befa6a06b9cf13b6b4905e8e7f5b2ef22",
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_packages_started": false,
+    "verification_scope": "Existing evidence referenced; no new archive, guest or DAYU200 verification performed"
+  },
+  "audit_file_sha256": {
+    "docs/OHOS_7_DAYU200_QEMU_COMPARISON.md": "06fe96376cb9a32cf41f539bef10915f9e61a650909fa8e7722e53059ec90d56",
+    "ci/capability-audit/compare_dayu200_config.py": "861cd6fdd7301059f7c6193723a6725354e2d9b86b1b5a0b7961b0cacf4cb61d",
+    "ci/capability-audit/inventory_dayu200_patches.py": "eceed2c33bab2ff3d18c36a437903ee781288286189f6f1f3acc28fe49ca4f24",
+    "docs/capability-audit/dayu200/patch-cause-inventory.json": "7f658a84cc402ec0b41cb6df4f85aee9573fb9bdda2d5257bfc3336f0f37f626",
+    "docs/capability-audit/dayu200/preinstall-semantic-diff.json": "ef9fc72698583419e38f00a05ddedbae1a555d9d16678250a40c73b6a092be1c",
+    "docs/capability-audit/dayu200/shared-head-evidence.json": "81125249e1ae11e0434a9c42266f27fd740193effdbebadaa7517be9301f007f",
+    "docs/capability-audit/dayu200/source-comparison.json": "54906797744998625567445a251fd80c7e62602fb8d381b17f549b371bc2c048"
+  },
+  "limitations": [
+    "No exact DAYU200 binary package, checksum or physical board runtime provided.",
+    "QEMU six profiles are in-memory source selections, not six built packages.",
+    "Kernel comparison is explicitly merged inputs before DAYU200 Kconfig.",
+    "Patch inventory captures the reviewed working-tree snapshot, including candidates absent from the tested first artifact."
+  ]
+}

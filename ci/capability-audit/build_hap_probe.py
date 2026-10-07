@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import uuid
 
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -53,7 +54,51 @@ parser.add_argument(
     action="store_true",
     help="Run only provider-backed UI probes so lifecycle deadlines do not hide provider failures",
 )
+parser.add_argument(
+    "--web-only",
+    action="store_true",
+    help="Run only the staged ArkWeb execution probe with no unrelated API imports",
+)
+parser.add_argument("--vulkan-window-only", action="store_true",
+                    help="Present Vulkan frames into a real ArkUI XComponent; requires host screenshot validation")
+parser.add_argument("--i18n-only", action="store_true",
+                    help="Test bundled timezone, locale and phone metadata in a normal application")
+parser.add_argument("--matrix4-only", action="store_true",
+                    help="Test actual typed module-level Matrix4 helpers and existing factory-object arithmetic")
+parser.add_argument("--factory-objects-only", action="store_true",
+                    help="Test real resource and live TaskPool factory-returned SDK types, without constructor shims")
+parser.add_argument("--userid-only", action="store_true",
+                    help="Test real AppSpawn account tagging and ordinary-app ioctl denial")
+parser.add_argument("--audio-stream-only", action="store_true",
+                    help="Test normal-app OHAudio renderer PCM callbacks, states and recreation")
+parser.add_argument("--avc-media-only", action="store_true",
+                    help="Test ordinary-app software AVC encode/decode pixels, timestamps, IDR and EOS")
+parser.add_argument("--audio-suite-effects-only", action="store_true",
+                    help="Test ordinary-app public AudioSuite pipelines and real three-effect PCM responses")
+parser.add_argument("--camera-only", action="store_true",
+                    help="Test ordinary-app public Camera C++/ArkTS preview, photo pixels and recreation")
+parser.add_argument("--const-enum-only", action="store_true",
+                    help="Compile and run every baseline const-enum member using the real API26 SDK")
+parser.add_argument("--arkts-exports-only", action="store_true",
+                    help="Collect real all-own NAPI properties/types for every original export/load gap module")
+parser.add_argument("--contact-sync-mode-only", action="store_true",
+                    help="Read real API26 ContactSyncMode, DeviceBlockStatus and FusionAssetType values through typed/native calls")
+parser.add_argument("--worker-legacy-only", action="store_true",
+                    help="Validate parentPort inside actual legacy Worker threads, in a separate HAP process")
+parser.add_argument("--worker-thread-only", action="store_true",
+                    help="Validate workerPort inside actual ThreadWorker threads, in a separate HAP process")
+parser.add_argument("--probe-run-id", help="Host challenge (32 lowercase hex digits) for a nonce-bearing ordinary HAP")
 args = parser.parse_args()
+worker_only = args.worker_legacy_only or args.worker_thread_only
+if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only) or
+                                     not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
+    parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
+if sum((args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only,
+        args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only)) > 1:
+    parser.error("provider and ordinary probe personas are mutually exclusive")
+minimal_app = args.web_only or args.vulkan_window_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.userid_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only
+if minimal_app:
+    args.restricted_permission = []
 
 root = args.output.resolve()
 root.mkdir(parents=True, exist_ok=True)
@@ -128,7 +173,7 @@ write(
                 {
                     "name": "default",
                     "targetSdkVersion": "7.0.0(26)",
-                    "compatibleSdkVersion": "5.0.5(17)",
+                    "compatibleSdkVersion": "7.0.0(26)" if (args.const_enum_only or args.arkts_exports_only or args.factory_objects_only or worker_only or args.contact_sync_mode_only) else "5.0.5(17)",
                     "runtimeOS": "HarmonyOS",
                 }
             ],
@@ -226,6 +271,33 @@ write(
         }
     },
 )
+if minimal_app:
+    write(
+        "entry/src/main/module.json5",
+        {
+            "module": {
+                "name": "entry",
+                "type": "entry",
+                "mainElement": "EntryAbility",
+                "deviceTypes": ["phone", "2in1"],
+                "deliveryWithInstall": True,
+                "installationFree": False,
+                "pages": "$profile:main_pages",
+                "requestPermissions": ([{"name": "ohos.permission.CAMERA", "reason": "$string:permission_reason",
+                                         "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}}]
+                                       if args.camera_only else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or worker_only or args.contact_sync_mode_only) else [{"name": "ohos.permission.INTERNET"}]),
+                "abilities": [{
+                    "name": "EntryAbility",
+                    "srcEntry": "./ets/entryability/EntryAbility.ets",
+                    "exported": True,
+                    "label": "$string:app_name",
+                    "icon": "$media:icon",
+                    "startWindowIcon": "$media:icon",
+                    "startWindowBackground": "$color:background",
+                }],
+            }
+        },
+    )
 write(
     "entry/src/main/resources/base/element/string.json",
     {"string": [{"name": "permission_reason", "value": "Validate emulator capability behavior"}]},
@@ -1536,15 +1608,191 @@ write(
         "__PUBLIC_SYSCAPS__", json.dumps(public_syscaps)
     ).replace("__BREADTH_PROBE_CALLS__", probe_calls),
 )
+if minimal_app:
+    write(
+        "entry/src/main/ets/entryability/EntryAbility.ets",
+        """import { UIAbility } from '@kit.AbilityKit';
+import window from '@ohos.window';
+
+export default class EntryAbility extends UIAbility {
+  onWindowStageCreate(stage: window.WindowStage): void {
+    stage.loadContent('pages/Index');
+  }
+}
+""",
+    )
+def webgl_render_script(version: int) -> str:
+    vertex = "attribute vec2 position; void main(){gl_Position=vec4(position,0.0,1.0);}"
+    fragment = "precision mediump float; void main(){gl_FragColor=vec4(0.2,0.4,0.6,1.0);}"
+    if version == 2:
+        vertex = "#version 300 es\nin vec2 position; void main(){gl_Position=vec4(position,0.0,1.0);}"
+        fragment = "#version 300 es\nprecision mediump float; out vec4 color; void main(){color=vec4(0.2,0.4,0.6,1.0);}"
+    return """(() => {
+      const canvas = document.createElement('canvas'); canvas.width = 16; canvas.height = 16;
+      const gl = canvas.getContext(__CONTEXT__);
+      if (!gl) return JSON.stringify({pass:false, stage:'context'});
+      const bad = gl.createShader(gl.VERTEX_SHADER); gl.shaderSource(bad, 'void main( {'); gl.compileShader(bad);
+      const invalidShaderRejected = !gl.getShaderParameter(bad, gl.COMPILE_STATUS); gl.deleteShader(bad);
+      function shader(kind, source) {
+        const value = gl.createShader(kind); gl.shaderSource(value, source); gl.compileShader(value);
+        if (!gl.getShaderParameter(value, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(value));
+        return value;
+      }
+      const vs = shader(gl.VERTEX_SHADER, __VERTEX__); const fs = shader(gl.FRAGMENT_SHADER, __FRAGMENT__);
+      const program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+      gl.useProgram(program); const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,3,-1,-1,3]), gl.STATIC_DRAW);
+      const location = gl.getAttribLocation(program, 'position'); gl.enableVertexAttribArray(location);
+      gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0); gl.viewport(0,0,16,16);
+      gl.drawArrays(gl.TRIANGLES, 0, 3); const pixel = new Uint8Array(4);
+      gl.readPixels(8,8,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel); const error = gl.getError();
+      const pass = invalidShaderRejected && error === gl.NO_ERROR && Math.abs(pixel[0]-51) <= 1 &&
+        Math.abs(pixel[1]-102) <= 1 && Math.abs(pixel[2]-153) <= 1 && pixel[3] === 255;
+      gl.deleteBuffer(buffer); gl.deleteProgram(program); gl.deleteShader(vs); gl.deleteShader(fs);
+      return JSON.stringify({pass:pass,pixel:Array.from(pixel),error:error,invalid_shader_rejected:invalidShaderRejected});
+    })()""".replace("__CONTEXT__", json.dumps("webgl" if version == 1 else "webgl2")).replace(
+        "__VERTEX__", json.dumps(vertex)).replace("__FRAGMENT__", json.dumps(fragment))
+
+
 write(
     "entry/src/main/ets/pages/Index.ets",
     """import web_webview from '@ohos.web.webview';
 import probe from 'libcapabilityprobe.so';
 
+class ArkWebAuditProxy {
+  private calls: number = 0;
+
+  roundTrip(value: string): string {
+    this.calls++;
+    probe.append('web.js.proxy.callback=' + value);
+    return 'arkts:' + value;
+  }
+
+  getCallCount(): number {
+    return this.calls;
+  }
+}
+
 @Entry
 @Component
 struct Index {
   private controller: web_webview.WebviewController = new web_webview.WebviewController();
+  private jsProxy: ArkWebAuditProxy = new ArkWebAuditProxy();
+  private webProbeStarted: boolean = false;
+  private navigationPending: number = 0;
+  private expectedRendererExit: boolean = false;
+  private rendererRecoveryComplete: boolean = false;
+
+  private runWebStep(name: string, script: string, next: () => void): void {
+    let settled: boolean = false;
+    probe.append('web.' + name + '.begin=true');
+    setTimeout((): void => {
+      if (!settled) {
+        settled = true;
+        probe.append('web.' + name + '.timeout=true');
+        next();
+      }
+    }, 15000);
+    try {
+      this.controller.runJavaScript(script).then((value: string) => {
+        if (settled) {
+          probe.append('web.' + name + '.late=' + value);
+          return;
+        }
+        settled = true;
+        probe.append('web.' + name + '.result=' + value);
+        next();
+      }).catch((error: object) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        probe.append('web.' + name + '.error=' + error.toString() + ':' + JSON.stringify(error));
+        next();
+      });
+    } catch (error) {
+      if (!settled) {
+        settled = true;
+        probe.append('web.' + name + '.sync_error=' + error.toString() + ':' + JSON.stringify(error));
+        next();
+      }
+    }
+  }
+
+  private runProxyProbe(name: string, next: () => void): void {
+    this.runWebStep(name + '.proxy',
+      "(() => { const reply = qemuAuditProxy.roundTrip('" + name + "'); return JSON.stringify({reply:reply,calls:qemuAuditProxy.getCallCount()}); })()",
+      next);
+  }
+
+  private startRendererRecovery(): void {
+    this.expectedRendererExit = true;
+    setTimeout((): void => {
+      if (!this.rendererRecoveryComplete) {
+        probe.append('web.renderer.recovery.timeout=true');
+      }
+    }, 60000);
+    try {
+      const terminated: boolean = this.controller.terminateRenderProcess();
+      probe.append('web.renderer.terminate.result=' + terminated.toString());
+    } catch (error) {
+      probe.append('web.renderer.terminate.error=' + error.toString());
+    }
+  }
+
+  private startReload(): void {
+    this.navigationPending = 1;
+    setTimeout((): void => {
+      if (this.navigationPending === 1) {
+        probe.append('web.reload.timeout=true');
+      }
+    }, 30000);
+    try {
+      this.controller.refresh();
+    } catch (error) {
+      probe.append('web.reload.error=' + error.toString());
+    }
+  }
+
+  private runWebBoundaryProbe(): void {
+    this.runWebStep('canvas.2d.render',
+      "(() => { const c=document.createElement('canvas'); c.width=4; c.height=4; const ctx=c.getContext('2d'); if (!ctx) return JSON.stringify({pass:false}); ctx.fillStyle='rgb(51,102,153)'; ctx.fillRect(0,0,4,4); const p=Array.from(ctx.getImageData(1,1,1,1).data); return JSON.stringify({pass:p.join(',')==='51,102,153,255',pixel:p}); })()",
+      () => {
+        this.runWebStep('js.exception',
+          "(() => { try { throw new Error('QEMU_WEB_EXPECTED_ERROR'); } catch (e) { return e.name + ':' + e.message; } })()",
+          () => {
+            this.runWebStep('js.after_exception', '6 * 7', () => {
+              this.runProxyProbe('js', () => { this.startReload(); });
+            });
+          });
+      });
+  }
+
+  private runWebExecutionProbe(): void {
+    this.runWebStep('js.arithmetic', '1 + 1', () => {
+      this.runWebStep('js.dom', 'document.title', () => {
+        this.runWebStep('canvas.2d',
+          "(() => { const canvas = document.createElement('canvas'); return !!canvas.getContext('2d'); })()",
+          () => {
+            this.runWebStep('graphics.webgl1',
+              "(() => { const canvas = document.createElement('canvas'); return !!canvas.getContext('webgl'); })()",
+              () => {
+                this.runWebStep('graphics.webgl2',
+                  "(() => { const canvas = document.createElement('canvas'); return !!canvas.getContext('webgl2'); })()",
+                  () => {
+                    this.runWebStep('graphics.webgl1.render', __WEBGL1_RENDER__, () => {
+                      this.runWebStep('graphics.webgl2.render', __WEBGL2_RENDER__, () => {
+                        this.runWebBoundaryProbe();
+                      });
+                    });
+                  });
+              });
+          });
+      });
+    });
+  }
 
   build() {
     Column() {
@@ -1553,21 +1801,35 @@ struct Index {
         .width('100%')
         .height('90%')
         .javaScriptAccess(true)
+        .javaScriptProxy({ object: this.jsProxy, name: 'qemuAuditProxy',
+          methodList: ['roundTrip', 'getCallCount'], controller: this.controller })
         .onPageBegin(() => { probe.append('web.page_begin=true'); })
         .onPageEnd(() => {
           probe.append('web.page_end=true');
           try {
             probe.append('web.title=' + this.controller.getTitle());
             probe.append('web.url=' + this.controller.getUrl());
-            probe.append('web.graphics.begin=true');
-            this.controller.runJavaScript(
-              "(() => { const canvas = document.createElement('canvas'); return JSON.stringify({" +
-              "webgl: !!canvas.getContext('webgl'), webgl2: !!canvas.getContext('webgl2')}); })()"
-            ).then((value: string) => {
-              probe.append('web.graphics=' + value);
-            }).catch((error: object) => {
-              probe.append('web.graphics.error=' + error.toString() + ':' + JSON.stringify(error));
-            });
+            if (!this.webProbeStarted) {
+              this.webProbeStarted = true;
+              this.runWebExecutionProbe();
+            } else if (this.navigationPending === 1) {
+              this.navigationPending = 0;
+              this.runWebStep('reload.dom', 'document.title', () => {
+                this.runProxyProbe('reload', () => { this.startRendererRecovery(); });
+              });
+            } else if (this.navigationPending === 2) {
+              this.navigationPending = 0;
+              this.runWebStep('renderer.recovery.dom', 'document.title', () => {
+                this.runProxyProbe('renderer.recovery', () => {
+                  this.runWebStep('renderer.recovery.webgl1.render', __WEBGL1_RENDER__, () => {
+                    this.runWebStep('renderer.recovery.webgl2.render', __WEBGL2_RENDER__, () => {
+                      this.rendererRecoveryComplete = true;
+                      probe.append('web.execution.complete=true');
+                    });
+                  });
+                });
+              });
+            }
           } catch (error) {
             probe.append('web.controller.error=' + error.toString() + ':' + JSON.stringify(error));
           }
@@ -1575,11 +1837,237 @@ struct Index {
         .onErrorReceive((event) => {
           probe.append('web.load.error=' + event.error.getErrorCode().toString() + ':' + event.error.getErrorInfo());
         })
+        .onRenderExited(() => {
+          if (!this.expectedRendererExit) {
+            probe.append('web.renderer.unexpected.error=true');
+            return;
+          }
+          this.expectedRendererExit = false;
+          this.navigationPending = 2;
+          probe.append('web.renderer.exit.result=true');
+          try {
+            this.controller.refresh();
+          } catch (error) {
+            probe.append('web.renderer.recovery.error=' + error.toString());
+          }
+        })
     }
   }
 }
-""",
+""".replace("__WEBGL1_RENDER__", json.dumps(webgl_render_script(1))).replace(
+        "__WEBGL2_RENDER__", json.dumps(webgl_render_script(2))),
 )
+if args.web_only:
+    web_page = root / "entry/src/main/ets/pages/Index.ets"
+    web_source = web_page.read_text(encoding="utf-8")
+    web_source = web_source.replace(
+        "import probe from 'libcapabilityprobe.so';",
+        """import hilog from '@ohos.hilog';
+import fs from '@ohos.file.fs';
+class ProbeSink {
+  append(line: string): void {
+    hilog.info(0xD003900, 'ArkWebAudit', '%{public}s', line);
+    try {
+      const file = fs.openSync('/data/storage/el2/base/files/capability-results.log',
+        fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.APPEND);
+      fs.writeSync(file.fd, line + '\\n');
+      fs.closeSync(file);
+    } catch (error) {
+      hilog.error(0xD003900, 'ArkWebAudit', 'result write failed: %{public}s', error.toString());
+    }
+  }
+}
+const probe: ProbeSink = new ProbeSink();""",
+    )
+    # Keep the Web graphics contract independent of external network access.
+    web_source = web_source.replace("src: 'https://example.com'", "src: $rawfile('arkweb-audit.html')")
+    write("entry/src/main/resources/rawfile/arkweb-audit.html",
+          "<!doctype html><html><head><title>QEMU ArkWeb Audit</title></head><body>Local Web execution probe</body></html>\n")
+    web_page.write_text(web_source, encoding="utf-8")
+
+if args.vulkan_window_only:
+    write("entry/src/main/ets/pages/Index.ets", """import fs from '@ohos.file.fs';
+import hilog from '@ohos.hilog';
+interface VulkanWindowNative { getStatus: () => string; }
+@Entry
+@Component
+struct Index {
+  @State private surfaceVisible: boolean = true;
+  @State private note: string = 'Waiting for native Vulkan presentation';
+  private nativeContext?: VulkanWindowNative;
+  private timer: number = -1;
+  private expectedGeneration: number = 0;
+
+  private record(value: string): void {
+    hilog.info(0xD003900, 'VulkanWindowAudit', '%{public}s', value);
+    const file = fs.openSync('/data/storage/el2/base/files/vulkan-window-results.log',
+      fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.APPEND);
+    fs.writeSync(file.fd, value + '\\n');
+    fs.closeSync(file);
+  }
+  private watch(destruction: boolean): void {
+    if (this.timer >= 0) { clearInterval(this.timer); }
+    let ticks: number = 0;
+    this.timer = setInterval(() => {
+      ticks++;
+      if (this.nativeContext) {
+        const status: string = this.nativeContext.getStatus();
+        this.note = status;
+        const target: string = destruction ? 'destroyed=1' : 'destroyed=0';
+        if (status.includes('frames=5 ') && status.includes('cleaned=1 ') &&
+            status.includes(target) && status.includes('generation=' + this.expectedGeneration)) {
+          this.record((destruction ? 'vulkan_window.destroyed|' : 'vulkan_window.present|') + status);
+          clearInterval(this.timer);
+          this.timer = -1;
+          return;
+        }
+      }
+      if (ticks >= 150) {
+        this.record('vulkan_window.timeout|' + this.note);
+        clearInterval(this.timer);
+        this.timer = -1;
+      }
+    }, 200);
+  }
+  aboutToDisappear(): void { if (this.timer >= 0) { clearInterval(this.timer); } }
+  build() {
+    Column({ space: 12 }) {
+      Text('QEMU Vulkan compositor audit').fontSize(18)
+      if (this.surfaceVisible) {
+        XComponent({ id: 'qemu-vulkan-surface', type: XComponentType.SURFACE,
+                     libraryname: 'vulkanwindowprobe' })
+          .id('qemu-vulkan-surface').width(320).height(180).backgroundColor(Color.Black)
+          .onLoad((context?: object) => {
+            this.nativeContext = context as VulkanWindowNative;
+            this.expectedGeneration++;
+            this.watch(false);
+          })
+      }
+      Text(this.note).fontSize(12)
+      Button(this.surfaceVisible ? 'Destroy Vulkan surface' : 'Recreate Vulkan surface')
+        .id('qemu-vulkan-lifecycle')
+        .onClick(() => {
+          this.surfaceVisible = !this.surfaceVisible;
+          if (!this.surfaceVisible) { this.watch(true); }
+        })
+    }.width('100%').height('100%').justifyContent(FlexAlign.Center)
+      .backgroundColor(Color.White)
+  }
+}
+""")
+
+if args.arkts_exports_only:
+    from verify_arkts_exports_results import expected_modules
+    from const_enum_contracts import LEDGER, sha256
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    modules = expected_modules()
+    template = Path(__file__).with_name('arkts_exports_probe.ets')
+    page = root / 'entry/src/main/ets/pages/Index.ets'
+    native_probe = Path(__file__).with_name('arkts_exports_hap_probe.cpp').resolve()
+    write('entry/src/main/ets/pages/Index.ets', template.read_text().replace('__RUN__', challenge)
+          .replace('__MODULES__', json.dumps(modules)))
+    write('entry/src/main/cpp/types/libarktsexportsprobe/index.d.ts',
+          'interface Probe { inspect: (names: string[]) => object[]; }\ndeclare const probe: Probe;\nexport default probe;\n')
+    write('arkts-exports-probe-inputs.json', {'schema_version': 1, 'run_id': challenge, 'arch': args.arch,
+          'role': 'ordinary_app', 'scope': 'actual_all_own_exports_collection_only', 'modules': modules,
+          'audit_baseline_sha256': sha256(LEDGER), 'native_source': str(native_probe),
+          'native_source_sha256': sha256(native_probe), 'generated_source': str(page),
+          'generated_source_sha256': sha256(page), 'template': str(template), 'template_sha256': sha256(template)})
+if worker_only:
+    from const_enum_contracts import sha256
+    from worker_contracts import MODES, generated
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    mode = 'legacy' if args.worker_legacy_only else 'thread'
+    constructor, port, _, _, _ = MODES[mode]
+    sources, hashes = generated(mode, challenge)
+    for destination, content in sources.items():
+        write(destination, content)
+    write('worker-' + mode + '-probe-inputs.json', {'schema_version': 1, 'run_id': challenge,
+        'arch': args.arch, 'role': 'ordinary_app', 'mode': mode, 'worker_class': constructor,
+        'port_name': port, 'scope': 'worker_context_ports_and_transfer_lifecycle_only', 'source_sha256': hashes,
+        'sdk_worker_declaration': str(args.sdk / 'ets/api/@ohos.worker.d.ts'),
+        'sdk_worker_declaration_sha256': sha256(args.sdk / 'ets/api/@ohos.worker.d.ts')})
+if args.contact_sync_mode_only:
+    from contact_sync_mode_contract import TEMPLATE, inputs as contact_sync_inputs
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/pages/Index.ets', TEMPLATE.read_text().replace('__RUN__', challenge))
+    write('entry/src/main/cpp/types/libcontactsyncmodeprobe/index.d.ts',
+          'interface NativeModes { values: number[]; statuses: number[]; types: number[]; own: boolean[]; exception: boolean; }\n'
+          'interface Probe { inspect: () => NativeModes; inspectAudio: () => NativeModes; inspectPhoto: () => NativeModes; }\ndeclare const probe: Probe;\nexport default probe;\n')
+    write('contact-sync-mode-probe-inputs.json', contact_sync_inputs(root, args.sdk, args.arch, challenge))
+if args.const_enum_only:
+    from const_enum_contracts import LEDGER, expected_contracts, generate, sha256
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    contracts = expected_contracts(args.sdk)
+    page = root / 'entry/src/main/ets/pages/Index.ets'
+    write('entry/src/main/ets/pages/Index.ets', generate(contracts, challenge))
+    write('const-enum-probe-inputs.json', {'schema_version': 1, 'run_id': challenge,
+          'arch': args.arch, 'role': 'ordinary_app', 'scope': 'compiled_const_enum_contracts_only',
+          'sdk': str(args.sdk.resolve()), 'contracts': contracts,
+          'audit_baseline_sha256': sha256(LEDGER), 'generated_source': str(page),
+          'generated_source_sha256': sha256(page), 'typescript_sha256': sha256(
+              args.sdk / 'ets/build-tools/ets-loader/node_modules/typescript/lib/typescript.js')})
+if args.factory_objects_only:
+    from run_root_probe import digest
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    template = Path(__file__).with_name('factory_objects_probe.ets')
+    page = root / 'entry/src/main/ets/pages/Index.ets'
+    write('entry/src/main/ets/pages/Index.ets', template.read_text().replace('__FACTORY_RUN_ID__', challenge))
+    declarations = {name: {'path': str((args.sdk / 'ets/api' / name).resolve()),
+                          'sha256': digest(args.sdk / 'ets/api' / name)}
+                    for name in ('@ohos.resourceManager.d.ts', '@ohos.taskpool.d.ts')}
+    write('factory-objects-probe-inputs.json', {'schema_version': 1, 'run_id': challenge, 'arch': args.arch,
+          'role': 'ordinary_app', 'scope': 'five_real_factory_returned_types_only', 'request_permissions': [],
+          'template_sha256': digest(template), 'generated_source': str(page),
+          'generated_source_sha256': digest(page), 'sdk_declarations': declarations})
+if args.matrix4_only:
+    from run_root_probe import digest
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    template = Path(__file__).with_name('matrix4_probe.ets')
+    page = root / 'entry/src/main/ets/pages/Index.ets'
+    declaration = args.sdk / 'ets/api/@ohos.matrix4.d.ts'
+    write('entry/src/main/ets/pages/Index.ets', template.read_text().replace('__MATRIX_RUN_ID__', challenge))
+    write('matrix4-probe-inputs.json', {'schema_version': 1, 'run_id': challenge, 'arch': args.arch,
+          'role': 'ordinary_app', 'scope': 'real_typed_matrix4_helpers_only', 'request_permissions': [],
+          'template_sha256': digest(template), 'generated_source': str(page),
+          'generated_source_sha256': digest(page), 'sdk_declaration': str(declaration.resolve()),
+          'sdk_declaration_sha256': digest(declaration)})
+if args.i18n_only:
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write("entry/src/main/ets/pages/Index.ets",
+          Path(__file__).with_name("i18n_data_probe.ets").read_text().replace("__I18N_RUN_ID__", challenge))
+    write("i18n-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
+                                   "arch": args.arch, "role": "ordinary_app"})
+if args.userid_only:
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write("entry/src/main/ets/pages/Index.ets",
+          Path(__file__).with_name("userid_probe.ets").read_text().replace("__USERID_RUN_ID__", challenge))
+    write("userid-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
+                                     "arch": args.arch, "role": "ordinary_app"})
+if args.audio_stream_only:
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write("entry/src/main/ets/pages/Index.ets",
+          Path(__file__).with_name("audio_stream_probe.ets").read_text().replace("__AUDIO_RUN_ID__", challenge))
+    write("audio-stream-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
+                                           "arch": args.arch, "role": "ordinary_app"})
+if args.audio_suite_effects_only:
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write("entry/src/main/ets/pages/Index.ets",
+          Path(__file__).with_name("audio_suite_effects_probe.ets").read_text().replace("__AUDIO_SUITE_EFFECTS_RUN_ID__", challenge))
+    write("audio-suite-effects-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
+                                                  "arch": args.arch, "role": "ordinary_app"})
+if args.camera_only:
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write("entry/src/main/ets/pages/Index.ets",
+          Path(__file__).with_name("camera_probe.ets").read_text().replace("__CAMERA_RUN_ID__", challenge))
+    from camera_probe_contract import inputs as camera_inputs
+    write("camera-probe-inputs.json", camera_inputs(root, args.sdk, args.arch, challenge))
+if args.avc_media_only:
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write("entry/src/main/ets/pages/Index.ets",
+          Path(__file__).with_name("avc_media_probe.ets").read_text().replace("__AVC_RUN_ID__", challenge))
+    write("avc-media-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
+                                        "arch": args.arch, "role": "ordinary_app"})
 
 libs = root / "entry/libs" / abi
 libs.mkdir(parents=True, exist_ok=True)
@@ -1621,10 +2109,73 @@ command = [
     "-o",
     str(libs / "libcapabilityprobe.so"),
 ]
+if args.vulkan_window_only:
+    command = [str(native / "llvm/bin/clang"), "--target=" + triple,
+               "--sysroot=" + str(native / "sysroot"), "-std=c11", "-shared", "-fPIC",
+               "-O2", "-Wall", "-Wextra", "-Werror",
+               str(Path(__file__).with_name("vulkan_window_probe.c").resolve()),
+               "-lvulkan", "-lnative_window", "-lace_ndk.z", "-lace_napi.z",
+               "-o", str(libs / "libvulkanwindowprobe.so")]
 if args.arch == "armv7a":
     command[1:1] = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"]
-subprocess.run(command, check=True)
-shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")
+if args.userid_only:
+    core = root / "userid-core.o"
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    subprocess.run([str(native / "llvm/bin/clang"), "--target=" + triple,
+                    "--sysroot=" + str(native / "sysroot"), *flags, "-std=gnu11", "-fPIC", "-O2",
+                    "-Wall", "-Wextra", "-Werror", "-DACCESS_TOKEN_USERID_LIBRARY", "-c",
+                    str(Path(__file__).with_name("probes") / "access_token_userid.c"), "-o", str(core)], check=True)
+    command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
+               "--sysroot=" + str(native / "sysroot"), *flags, "-std=c++17", "-shared", "-fPIC", "-O2",
+               "-Wall", "-Wextra", "-Werror", str(Path(__file__).with_name("userid_hap_probe.cpp")),
+               str(core), "-lace_napi.z", "-o", str(libs / "libuseridprobe.so")]
+if args.audio_stream_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
+               "--sysroot=" + str(native / "sysroot"), *flags, "-std=c++17", "-shared", "-fPIC", "-O2",
+               "-Wall", "-Wextra", "-Werror", str(Path(__file__).with_name("audio_stream_hap_probe.cpp")),
+               str(Path(__file__).with_name("probes") / "audio_stream.cpp"), "-lace_napi.z", "-lohaudio",
+               "-o", str(libs / "libaudiostreamprobe.so")]
+if args.avc_media_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
+               "--sysroot=" + str(native / "sysroot"), *flags, "-std=c++17", "-shared", "-fPIC", "-O2",
+               "-Wall", "-Wextra", "-Werror", str(Path(__file__).with_name("avc_media_hap_probe.cpp")),
+               str(Path(__file__).with_name("probes") / "avc_media.cpp"), "-lace_napi.z",
+               "-lnative_media_venc", "-lnative_media_vdec", "-lnative_media_codecbase", "-lnative_media_core",
+               "-o", str(libs / "libavcmediaprobe.so")]
+if args.audio_suite_effects_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
+               "--sysroot=" + str(native / "sysroot"), *flags, "-std=c++17", "-shared", "-fPIC", "-O2",
+               "-Wall", "-Wextra", "-Werror", str(Path(__file__).with_name("audio_suite_effects_hap_probe.cpp")),
+               str(Path(__file__).with_name("probes") / "audio_suite_effects.cpp"), "-lace_napi.z", "-lohaudiosuite",
+               "-o", str(libs / "libaudiosuiteeffectsprobe.so")]
+if args.camera_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
+               "--sysroot=" + str(native / "sysroot"), *flags, "-std=c++17", "-shared", "-fPIC", "-O2",
+               "-Wall", "-Wextra", "-Werror", str(Path(__file__).with_name("camera_hap_probe.cpp")),
+               str(Path(__file__).with_name("probes") / "camera_public.cpp"), "-lace_napi.z", "-lohcamera",
+               "-o", str(libs / "libcamerapublicprobe.so")]
+if args.arkts_exports_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / 'llvm/bin/clang++'), '--target=' + triple, '--sysroot=' + str(native / 'sysroot'),
+               *flags, '-std=c++17', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
+               '-fno-exceptions', '-fno-rtti', '-nostdlib++',
+               str(Path(__file__).with_name('arkts_exports_hap_probe.cpp')), '-lace_napi.z',
+               '-o', str(libs / 'libarktsexportsprobe.so')]
+if args.contact_sync_mode_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / 'llvm/bin/clang++'), '--target=' + triple, '--sysroot=' + str(native / 'sysroot'),
+               *flags, '-std=c++17', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
+               '-fno-exceptions', '-fno-rtti', '-nostdlib++',
+               str(Path(__file__).with_name('contact_sync_mode_hap_probe.cpp')), '-lace_napi.z',
+               '-o', str(libs / 'libcontactsyncmodeprobe.so')]
+if not (args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.const_enum_only or worker_only):
+    subprocess.run(command, check=True)
+    if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only):
+        shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")
 
 environment = dict(os.environ, OHOS_SDK_HOME=str(args.sdk))
 subprocess.run(
@@ -1634,6 +2185,11 @@ subprocess.run(
     check=True,
 )
 output = root / "entry/build/default/outputs/default"
+if minimal_app:
+    # The Rust signing helper does not emit the code-sign block required by
+    # the OHOS 7 guest. Sign this unsigned HAP with sign_web_probe.py instead.
+    print(output / "entry-default-unsigned.hap")
+    raise SystemExit(0)
 sign_command = [
     args.hap_sign,
     "sign",

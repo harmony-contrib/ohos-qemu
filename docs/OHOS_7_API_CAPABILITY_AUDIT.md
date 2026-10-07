@@ -8,6 +8,12 @@
 “能力可用”。phone 和 2in1 都存在声明、权限、API 表面、服务配置、内核以及虚拟硬件后端
 不一致的问题。
 
+特别是 ArkWeb 不能因页面加载或 Native JSVM 用例通过就判为整体可用。后续分段探针
+已在旧 ARM64 phone 包上证实页面 JS、DOM 和 Canvas 2D 可执行，而 WebGL1/2 超时，
+并定位到 EGL wrapper 错误广告 backend 不支持的 robustness 扩展。Vulkan ICD 缺失是
+**独立问题**，不能作为 ArkWeb WebGL 的解释。修复与各架构验收门槛见
+`docs/OHOS_7_ARKWEB_VULKAN_REPAIR.md`。
+
 本轮修正了此前审计的七个根本缺口：
 
 1. 旧解析器只为“方法段落自己重复写了 SysCap”的条目建账。OHOS 7 大量 Native 文档只在
@@ -162,9 +168,10 @@ phone 和 2in1 的 `image-syscap.json` 均直接从本轮运行的 guest
   `-1`、unsupported 或空操作。镜像也没有 Browser、Calendar、Maps、SuperDevice 等映射目标，
   `search`、`appdetail`、`sendData` action 没有启用的 handler。
 - **AppDomainVerify（phone 合同内，2in1 也错误声明）**：查询接口可以返回，但两个镜像均缺
-  `libapp_domain_verify_extension.z.so`。Agent 因而返回 `E_EXTENSIONS_LIB_NOT_FOUND`，无法执行真实
-  域名校验、刷新已验证状态或把 HTTP/HTTPS 隐式 Want 转成已验证应用目标。查询空状态成功不能
-  证明域名验证链路可用。
+  `libapp_domain_verify_extension.z.so`。进一步源码复核纠正此前推断：该库是可选 extension，
+  `E_EXTENSIONS_LIB_NOT_FOUND` 会触发内置 VerifyTask/VerifyHttpTask，验证及刷新并非直接失败。
+  但 Want conversion 的 fallback 返回空 TargetInfo；真实 HTTP/HTTPS 验证、刷新、签名校验和
+  路由仍需运行测试，不能把缺可选库或查询成功单独作为失败/通过证明。
 - **Audio Vivid 元数据（两种设备）**：API 26 在 `libnative_media_core.so` 中公开
   `OH_AudioVividMetaBuilder_*`，两个镜像却都没有 `libAudioVividMetaBuilder.z.so`。源码和单元测试
   明确显示 `Create`/`CreateEmptyBuilder` 在该库缺失时返回 `AV_ERR_UNSUPPORT`；因此
@@ -270,7 +277,10 @@ DataTransitManager、DeviceAuth、DeviceSecurityLevel、PinAuth、Window Session
 - **Location**：没有 GNSS/location provider；定位回调为 0。
 - **Telephony**：没有 modem、SIM 或 radio transport；查询框架存在，但电话、短信和蜂窝数据
   无法完成。
-- **Vulkan**：`vkCreateInstance` 返回 `VK_ERROR_INCOMPATIBLE_DRIVER`。
+- **Vulkan**：旧包无可用 ICD，`vkCreateInstance` 返回 `VK_ERROR_INCOMPATIBLE_DRIVER`；
+  OHOS swapchain implicit layer 还要求 `VK_OHOS_native_buffer`。临时注入的 M144
+  SwiftShader 在 ARM64 phone 上通过 core/headless WSI 探针，但新包及 OHOS
+  native-window WSI 尚未验收，详见独立修复记录。
 - **ArkGraphics3D**：模块和 3D 库完整打包，但 `Scene.load()` 返回
   `Creating scene manager failed`，因此不能因模块可加载而标为可用。
 - **VideoEncoder**：运行时枚举出 `OMX.rk.video_encoder.avc` 与
@@ -360,9 +370,12 @@ DataTransitManager、DeviceAuth、DeviceSecurityLevel、PinAuth、Window Session
 两种设备均完成 594 个入口加载，496 成功、98 失败。98 项中包含 48 个 `@kit.*` 聚合入口和
 30 个纯声明入口；需要运行模块的失败已按设备画像单独计算。
 
-修正动态/静态限定符后，phone 官方画像仍有 57 个模块缺运行导出，涉及 13 个公开函数和
-35 个 system API 函数；2in1 为 48 个模块、15 个公开函数和 23 个 system API 函数。369 个
-只属于静态 ArkTS 的导出不再被误报为动态 NAPI 缺失。
+修正动态/静态限定符及 const enum 分类后，phone 官方画像仍有 54 个模块存在运行导出
+不匹配，涉及 13 个公开函数和 35 个 system API 函数；2in1 为 45 个可加载模块（另外
+2 个整体缺失）、15 个公开函数和 23 个 system API 函数。369 个只属于静态 ArkTS 的
+导出不再被误报为动态 NAPI 缺失。16 项 const enum 契约单列为编译调用待验证，未宣告
+通过。无公开 constructor 的数据类还需验证实际工厂返回值，不能把所有表面不匹配都
+直接理解为 API 不可调用。
 
 ### 静态 ArkTS
 
@@ -447,6 +460,7 @@ HAP、Native 或 XTS 用例，并在修改产物后遵循“先验证一个 ARM6
 - `docs/capability-audit/runtime/arm64-phone/permission-audit.json`
 - `docs/capability-audit/runtime/arm64-2in1/permission-audit.json`
 - `docs/capability-audit/runtime/arm64-2in1/native-ohostest-summary.json`
+- `docs/capability-audit/native-arkts11-gap-ledger.json`
 - `ci/capability-audit/known-findings.json`
 
 严格校验命令和再生顺序见 `ci/capability-audit/README.md`。

@@ -1,0 +1,2 @@
+# Screenshot readback checks only; install into a task-specific virtualenv.
+Pillow==12.3.0

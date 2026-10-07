@@ -463,11 +463,17 @@ napi_value Append(napi_env env, napi_callback_info info)
 void ReportModuleExports(napi_env env, const char *name, napi_value module)
 {
     napi_value propertyNames = nullptr;
-    napi_status status = napi_get_property_names(env, module, &propertyNames);
+    // NAPI exports commonly use napi_default (non-enumerable). Enumeration
+    // restricted to enumerable keys is not evidence that an SDK value is
+    // missing. Include every own string property, without inherited values.
+    napi_status status = napi_get_all_property_names(env, module, napi_key_own_only,
+        static_cast<napi_key_filter>(napi_key_all_properties | napi_key_skip_symbols),
+        napi_key_numbers_to_strings, &propertyNames);
     uint32_t count = 0;
     if (status == napi_ok) {
         status = napi_get_array_length(env, propertyNames, &count);
     }
+    Report("module.export.collection=%s|all_own_string_properties", name);
     Report("module.exports=%s|status:%d|count:%u", name, status, count);
     if (status != napi_ok) {
         return;

@@ -16,8 +16,8 @@ PROFILE_COMPONENT="${REPO_ROOT}/patches/2in1/product_profile/apply.sh"
 PHONE_PROFILE_COMPONENT="${REPO_ROOT}/patches/phone/product_profile/apply.sh"
 BUILD_STANDARD="${REPO_ROOT}/scripts/build_standard_qemu_in_docker.sh"
 MUSL_SDK_COMPONENT="${REPO_ROOT}/patches/common/third_party/musl/cortex_m_sdk/apply.sh"
-SCENEBOARD_2IN1_RUNTIME="${REPO_ROOT}/scripts/configure_2in1_runtime.py"
-SCENEBOARD_RUNTIME_COMPONENT="${REPO_ROOT}/patches/2in1/sceneboard_runtime/apply.py"
+SCENEBOARD_2IN1_RUNTIME="${REPO_ROOT}/scripts/configure_sceneboard_runtime.py"
+SCENEBOARD_RUNTIME_COMPONENT="${REPO_ROOT}/patches/lib/sceneboard_assets.py"
 
 if [ ! -x "${REPACKAGE}" ] || [ ! -x "${VERIFY}" ] || \
    [ ! -x "${PROFILE_COMPONENT}" ] || [ ! -x "${PHONE_PROFILE_COMPONENT}" ] || \
@@ -90,8 +90,7 @@ printf '%s\n' "${ARMV7A_PARAM_STAT}" | grep -Eq 'User:[[:space:]]+0[[:space:]]+G
 printf '%s\n' "${ARMV7A_PARAM_STAT}" | grep -Fq 'security.selinux'
 
 # Rewriting an ARMv7a 2in1 package maps DISPLAY_TYPE=none to a private VNC
-# scanout so the guest creates a DRM connector. The phone profile retains the
-# normal -display none behavior.
+# scanout so the guest creates a DRM connector, for both SceneBoard profiles.
 for profile in qemu_2in1_full_source qemu_phone_full_source; do
   launcher_package="${WORKDIR}/launcher-${profile}"
   mkdir -p "${launcher_package}/launch" "${launcher_package}/images"
@@ -140,8 +139,8 @@ two_in_one = headless("qemu_2in1_full_source")
 phone = headless("qemu_phone_full_source")
 assert '-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}' in two_in_one
 assert "-display none" not in two_in_one
-assert "-display none" in phone
-assert "-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}" not in phone
+assert "-display none" not in phone
+assert "-vnc 127.0.0.1:${QEMU_VNC_DISPLAY}" in phone
 PY
 
 # Ubuntu invokes musl's no-shebang porting action with dash. Verify the
@@ -205,7 +204,13 @@ required = [
     ("arkui", "ui_appearance"),
     ("bundlemanager", "bundle_framework"),
     ("communication", "t2stack"),
+    ("communication", "netmanager_base"),
+    ("communication", "netmanager_ext"),
+    ("graphic", "graphic_2d"),
+    ("multimedia", "media_foundation"),
     ("filemanagement", "storage_service"),
+    ("filemanagement", "dfs_service"),
+    ("distributeddatamgr", "relational_store"),
     ("hdf", "drivers_peripheral_input"),
     ("multimodalinput", "input"),
     ("security", "dlp_permission_service"),
@@ -234,6 +239,11 @@ phone_required = [
     ("arkui", "ui_appearance"),
     ("bundlemanager", "bundle_framework"),
     ("contacts_data", "contacts_data"),
+    ("graphic", "graphic_2d"),
+    ("communication", "netmanager_base"),
+    ("communication", "netmanager_ext"),
+    ("multimedia", "media_foundation"),
+    ("multimedia", "av_session"),
     ("hdf", "drivers_peripheral_display"),
     ("multimodalinput", "input"),
     ("telephony", "core_service"),
@@ -244,6 +254,7 @@ phone_subsystems = [
     for subsystem, component in phone_required
 ]
 phone_subsystems.extend([
+    {"subsystem": "multimedia", "components": [{"component": "audio_framework", "features": []}]},
     {"subsystem": "hdf", "components": [{"component": "drivers_interface_display", "features": []}]},
     {"subsystem": "thirdparty", "components": [
         {"component": "eudev", "features": []},
@@ -262,8 +273,22 @@ phone_subsystems.extend([
             "drivers_interface_display_community = true",
             "drivers_interface_display_vdi_default = true",
         ],
+    }]}, {"subsystem": "multimedia", "components": [{
+        "component": "camera_framework", "features": ["board_camera_feature = true"],
     }]}],
 }) + "\n")
+sdk_profiles = root / "interface/sdk-js/api/device-define"
+sdk_profiles.mkdir(parents=True)
+(sdk_profiles / "default.json").write_text(json.dumps({"SysCaps": [
+    "SystemCapability.Multimedia.AVSession.AVInputCast"
+]}))
+(sdk_profiles / "2in1.json").write_text(json.dumps({"SysCaps": [
+    "SystemCapability.Communication.NetManager.NetFirewall"
+]}))
+(root / "productdefine/common/inherit/chipset_common.json").write_text("{}\n")
+(root / "vendor/ohemu/virt/virt_common.json").write_text(json.dumps({"subsystems": [{
+    "subsystem": "communication", "components": [{"component": "netmanager_ext", "features": []}]
+}]}))
 for directory in [
     "qemu_arm64_linux_full", "qemu_x86_64_linux_full", "qemu_armv7a_linux_full"
 ]:
@@ -344,6 +369,8 @@ group("hap") {
         CommonEventData commonEventData;
         int32_t publishResult = CommonEvent::GetInstance()->PublishCommonEventAsUser(
             commonEventData, publishInfo, nullptr, cmdInfo.userId);
+        if (publishResult == ERR_OK) {
+        }
 ''')
 PY
 
@@ -381,6 +408,27 @@ effective = "vendor/ohemu/virt/virt_2in1_full.json"
 assert config["inherit"].index(effective) == config["inherit"].index(
     "productdefine/common/inherit/rich.json"
 ) + 1
+assert config["inherit"][-1] == "vendor/ohemu/virt/virt_2in1_contract_arm64_virt.json"
+overlay = json.loads((root / config["inherit"][-1]).read_text())
+net = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "netmanager_ext")
+assert "netmanager_ext_feature_net_firewall = true" in net["features"]
+assert "netmanager_ext_feature_sysvpn = true" in net["features"]
+base = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "netmanager_base")
+assert "netmanager_base_enable_feature_sysvpn = true" in base["features"]
+assert "netmanager_base_enable_feature_net_firewall = true" in base["features"]
+graphic = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "graphic_2d")
+assert "graphic_2d_feature_rs_enable_uni_render = true" in graphic["features"]
+alsa = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "alsa-lib")
+assert "alsa_lib_feature_config_enable = true" in alsa["features"]
+cloud = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "relational_store")
+assert "SystemCapability.DistributedDataManager.CloudSync.Client = false" in cloud["syscap"]
+dfs = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "dfs_service")
+assert "SystemCapability.FileManagement.DistributedFileService.CloudSyncManager = false" in dfs["syscap"]
+camera = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "camera_framework")
+assert "SystemCapability.Multimedia.Camera.Core = false" in camera["syscap"]
+assert "board_camera_feature = true" in camera["features"]
+assert "SystemCapability.Multimedia.Camera.Core" not in metadata["required_official_syscaps"]
+assert "SystemCapability.Communication.NetManager.NetFirewall = false" not in net.get("syscap", [])
 parts = {
     (subsystem["subsystem"], component["component"]): component.get("features", [])
     for subsystem in profile["subsystems"]
@@ -391,6 +439,7 @@ assert ("thirdparty", "libsnd") not in parts
 assert ("wukong", "wukong") not in parts
 assert ("ostest", "wukong") in parts
 assert ("applications", "prebuilt_hap") in parts
+assert "board_camera_feature = true" in parts[("multimedia", "camera_framework")]
 assert "drivers_interface_display_vdi_default = true" in parts[
     ("hdf", "drivers_interface_display")
 ]
@@ -434,11 +483,11 @@ assert any(entry.get("bundleName") == "com.ohos.sceneboard" and
            entry.get("allowAppUsePrivilegeExtension") and
            entry.get("app_signature") == ["8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"]
            for entry in capabilities["install_list"])
-boot_unlock = json.loads((root / "vendor/ohemu/virt/etc/qemu_2in1_unlock.cfg").read_text())
+boot_unlock = json.loads((root / "vendor/ohemu/virt/etc/qemu_sceneboard_unlock.cfg").read_text())
 assert boot_unlock["jobs"] == [{
     "name": "param:bootevent.boot.completed=true",
     "condition": "bootevent.boot.completed=true",
-    "cmds": ["start qemu_2in1_user_unlock", "start qemu_2in1_unlock"],
+    "cmds": ["start qemu_sceneboard_user_unlock", "start qemu_sceneboard_unlock"],
 }]
 common_service = {
     "uid": "system",
@@ -455,18 +504,18 @@ common_service = {
 assert boot_unlock["services"] == [
     {
         **common_service,
-        "name": "qemu_2in1_user_unlock",
+        "name": "qemu_sceneboard_user_unlock",
         "path": ["/system/bin/cem", "publish", "-e", "usual.event.USER_UNLOCKED", "-c", "100"],
     },
     {
         **common_service,
-        "name": "qemu_2in1_unlock",
+        "name": "qemu_sceneboard_unlock",
         "path": ["/system/bin/cem", "publish", "-e", "usual.event.SCREEN_UNLOCKED", "-u", "100"],
     },
 ]
 etc_build = (root / "vendor/ohemu/virt/etc/BUILD.gn").read_text()
-assert etc_build.count('ohos_prebuilt_etc("qemu_2in1_unlock_cfg")') == 1
-assert etc_build.count('":qemu_2in1_unlock_cfg"') == 1
+assert etc_build.count('ohos_prebuilt_etc("qemu_sceneboard_unlock_cfg")') == 1
+assert etc_build.count('":qemu_sceneboard_unlock_cfg"') == 1
 PY
 
 bash "${PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
@@ -503,8 +552,8 @@ assert all(entry.get("bundleName") != "com.ohos.sceneboard" for entry in capabil
 PY
 grep -Fq 'if (!window_manager_use_sceneboard)' \
   "${FIXTURE_ROOT}/foundation/window/window_manager/etc/BUILD.gn"
-test ! -e "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/qemu_2in1_unlock.cfg"
-if grep -Fq 'qemu_2in1_unlock' \
+test ! -e "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/qemu_sceneboard_unlock.cfg"
+if grep -Fq 'qemu_sceneboard_unlock' \
   "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/BUILD.gn"
 then
   echo "2in1 boot unlock publisher was not removed on disable" >&2
@@ -531,6 +580,24 @@ effective = "vendor/ohemu/virt/virt_phone_full.json"
 assert config["inherit"].index(effective) == config["inherit"].index(
     "productdefine/common/inherit/rich.json"
 ) + 1
+assert config["inherit"][-1] == "vendor/ohemu/virt/virt_phone_contract_arm64_virt.json"
+overlay = json.loads((root / config["inherit"][-1]).read_text())
+net = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "netmanager_ext")
+assert "netmanager_ext_feature_net_firewall = false" in net["features"]
+assert "netmanager_ext_feature_sysvpn = true" in net["features"]
+base = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "netmanager_base")
+assert "netmanager_base_enable_feature_sysvpn = true" in base["features"]
+assert "netmanager_base_enable_feature_net_firewall = false" in base["features"]
+assert "SystemCapability.Communication.NetManager.NetFirewall = false" in net["syscap"]
+audio = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "audio_framework")
+assert "audio_framework_feature_audiosuite_support = true" in audio["features"]
+assert "audio_framework_feature_audiosuite_format_convert_support = true" in audio["features"]
+assert "SystemCapability.Multimedia.Audio.SuiteEngine = true" in audio["syscap"]
+assert "SystemCapability.Multimedia.Camera.Core" in metadata["required_official_syscaps"]
+assert "SystemCapability.Multimedia.Camera.Core" not in metadata["excluded_unsupported_syscaps"]
+assert all("SystemCapability.Multimedia.Camera.Core = false" not in c.get("syscap", [])
+           for s in overlay["subsystems"] for c in s["components"])
+assert not any("virt_2in1" in path for path in config["inherit"])
 parts = {
     (subsystem["subsystem"], component["component"]): component.get("features", [])
     for subsystem in profile["subsystems"]
@@ -552,11 +619,27 @@ assert "applications:contacts->contacts_data:contacts_data" in metadata[
 assert metadata["app_compatibility_parameter"] == (
     "const.bms.supportAppTypes=2in1,phone,default,tablet"
 )
-assert "const.window.multiWindowUIType=" not in (
-    root / "vendor/ohemu/virt/etc/param/product_virt.para"
-).read_text()
+params = (root / "vendor/ohemu/virt/etc/param/product_virt.para").read_text()
+assert "const.window.multiWindowUIType=HandsetSmartWindow" in params
+assert "persist.sceneboard.ispcmode=false" in params
+assert "FreeFormMultiWindow" not in params
+assert "persist.sceneboard.ispcmode=true" not in params
+assert (root / "foundation/window/window_manager/etc/sceneboard.config").read_text() == "ENABLED\n"
+wm = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "window_manager")
+assert "window_manager_use_sceneboard = true" in wm["features"]
+graphic = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "graphic_2d")
+assert "graphic_2d_feature_rs_enable_uni_render = true" in graphic["features"]
+alsa = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "alsa-lib")
+assert "alsa_lib_feature_config_enable = true" in alsa["features"]
+assert "SystemCapability.Window.SessionManager = true" in wm["syscap"]
+av = next(c for s in overlay["subsystems"] for c in s["components"] if c["component"] == "av_session")
+assert "av_session_enable_input_redistribute = true" in av["features"]
+assert "SystemCapability.Multimedia.AVSession.AVInputCast = true" in av["syscap"]
+assert (root / "vendor/ohemu/virt/etc/qemu_sceneboard_unlock.cfg").is_file()
 PY
 bash "${PHONE_PROFILE_COMPONENT}" --source-root "${FIXTURE_ROOT}" --product arm64_virt --disable
+test "$(cat "${FIXTURE_ROOT}/foundation/window/window_manager/etc/sceneboard.config")" = DISABLED
+test ! -e "${FIXTURE_ROOT}/vendor/ohemu/virt/etc/qemu_sceneboard_unlock.cfg"
 python3 -c 'import json,sys; assert "vendor/ohemu/virt/virt_phone_full.json" not in json.load(open(sys.argv[1]))["inherit"]' \
   "${FIXTURE_ROOT}/vendor/ohemu/qemu_arm64_linux_full/config.json"
 if grep -q '^const\.bms\.supportAppTypes=' \
@@ -612,6 +695,13 @@ cat > "${INPUT_PKG}/manifest.json" <<'EOF'
   "qemu_windows": "qemu-system-aarch64.exe",
   "display_default": "none",
   "network_default": "user",
+  "validation": {
+    "capability_flags_scope": "static_packaging_contract_only",
+    "new_package_boot_tested": false,
+    "runtime_behavior_tested": false,
+    "first_artifact_behavior_gate_passed": false,
+    "runtime_evidence_location": "external_report_bound_to_archive_sha256"
+  },
   "capabilities": {
     "standard_vpn": false
   }
@@ -834,10 +924,16 @@ required = [
     },
 }, indent=2) + "\n")
 PY
-bash "${VERIFY}" \
-  --package "${OUT_PKG}" \
-  --expect-device-type 2in1 \
-  --require-full-2in1 | grep -q "RESULT: PASS (full source-built 2in1 profile)"
+# These fixtures exercise the original runtime markers, not real signed
+# SceneBoard assets. They must no longer pass the complete full-profile gate.
+bash "${VERIFY}" --package "${OUT_PKG}" --expect-device-type 2in1 | grep -q 'RESULT: PASS'
+if bash "${VERIFY}" --package "${OUT_PKG}" --expect-device-type 2in1 \
+    --require-full-2in1 >"${WORKDIR}/missing-scene-2in1.log" 2>&1; then
+  echo "full 2in1 verifier accepted a package without SceneBoard evidence" >&2
+  exit 1
+fi
+grep -q 'PASS: full 2in1 runtime artifacts' "${WORKDIR}/missing-scene-2in1.log"
+grep -q 'FAIL: SceneBoard WindowManager capability' "${WORKDIR}/missing-scene-2in1.log"
 
 # The full phone profile has distinct provenance and runtime requirements.
 PHONE_PKG="${WORKDIR}/openharmony-qemu-arm64-arm64_virt-phone"
@@ -911,10 +1007,15 @@ required = [
     },
 }, indent=2) + "\n")
 PY
-bash "${VERIFY}" \
-  --package "${PHONE_PKG}" \
-  --expect-device-type phone \
-  --require-full-phone | grep -q "RESULT: PASS (full source-built phone profile)"
+bash "${VERIFY}" --package "${PHONE_PKG}" --expect-device-type phone | grep -q 'RESULT: PASS'
+if bash "${VERIFY}" --package "${PHONE_PKG}" --expect-device-type phone \
+    --require-full-phone >"${WORKDIR}/missing-scene-phone.log" 2>&1; then
+  echo "full phone verifier accepted a package without SceneBoard evidence" >&2
+  exit 1
+fi
+grep -q 'PASS: full phone runtime artifacts' "${WORKDIR}/missing-scene-phone.log"
+grep -q 'FAIL: SceneBoard WindowManager capability' "${WORKDIR}/missing-scene-phone.log"
+grep -q 'FAIL: full phone source package lacks real AudioSuite DSP closure' "${WORKDIR}/missing-scene-phone.log"
 
 # Refuse dirty userdata by default: enlarge compressible image with random data.
 DIRTY_PKG="${WORKDIR}/openharmony-qemu-arm64-arm64_virt-dirty"

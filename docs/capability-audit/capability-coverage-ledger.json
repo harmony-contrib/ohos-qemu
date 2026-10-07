@@ -580,22 +580,6 @@
                 "dynamic",
                 "static"
               ],
-              "dynamic_since": 11,
-              "kind": "enum",
-              "module": "@ohos.app.ability.childProcessManager",
-              "name": "StartMode",
-              "since": 11,
-              "static_since": 23,
-              "syscaps": [
-                "SystemCapability.Ability.AbilityRuntime.Core"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic",
-                "static"
-              ],
               "dynamic_since": 23,
               "kind": "enum",
               "module": "@ohos.app.ability.insightIntentDriver",
@@ -738,7 +722,6 @@
             "arkts_export_missing:@ohos.app.ability.InsightIntentDecorator:InsightIntentFunctionMethod",
             "arkts_export_missing:@ohos.app.ability.InsightIntentDecorator:InsightIntentLink",
             "arkts_export_missing:@ohos.app.ability.InsightIntentDecorator:InsightIntentPage",
-            "arkts_export_missing:@ohos.app.ability.childProcessManager:StartMode",
             "arkts_export_missing:@ohos.app.ability.insightIntentDriver:ExecuteModeForConfiguration"
           ],
           "surface_state": "surface_failure",
@@ -864,22 +847,6 @@
               "name": "InsightIntentPage",
               "since": 20,
               "static_since": null,
-              "syscaps": [
-                "SystemCapability.Ability.AbilityRuntime.Core"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic",
-                "static"
-              ],
-              "dynamic_since": 11,
-              "kind": "enum",
-              "module": "@ohos.app.ability.childProcessManager",
-              "name": "StartMode",
-              "since": 11,
-              "static_since": 23,
               "syscaps": [
                 "SystemCapability.Ability.AbilityRuntime.Core"
               ],
@@ -1032,7 +999,6 @@
             "arkts_export_missing:@ohos.app.ability.InsightIntentDecorator:InsightIntentFunctionMethod",
             "arkts_export_missing:@ohos.app.ability.InsightIntentDecorator:InsightIntentLink",
             "arkts_export_missing:@ohos.app.ability.InsightIntentDecorator:InsightIntentPage",
-            "arkts_export_missing:@ohos.app.ability.childProcessManager:StartMode",
             "arkts_export_missing:@ohos.app.ability.insightIntentDriver:ExecuteModeForConfiguration"
           ],
           "surface_state": "surface_failure",
@@ -3811,66 +3777,6 @@
                 "dynamic"
               ],
               "dynamic_since": 23,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "CustomKeyboardContinueFeature",
-              "since": 23,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "GestureActionPhase",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "GestureListenerType",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 11,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "KeyboardAvoidMode",
-              "since": 11,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 23,
               "kind": "class",
               "module": "@ohos.arkui.UIContext",
               "name": "LuminanceSampler",
@@ -3880,81 +3786,6 @@
                 "SystemCapability.ArkUI.ArkUI.Full"
               ],
               "system_api": true
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 14,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "MarqueeDynamicSyncSceneType",
-              "since": 14,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "NodeRenderState",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 22,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "ResolveStrategy",
-              "since": 22,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 12,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "SwiperDynamicSyncSceneType",
-              "since": 12,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 26,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "TextSelectionClearPolicy",
-              "since": 26,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
             },
             {
               "availability": [
@@ -4160,36 +3991,6 @@
               "module": "@ohos.arkui.components.SelectionContainer",
               "name": "SelectionContainerInstance",
               "since": 26,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.dragController",
-              "name": "DragSpringLoadingState",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 18,
-              "kind": "enum",
-              "module": "@ohos.arkui.dragController",
-              "name": "DragStartRequestStatus",
-              "since": 18,
               "static_since": null,
               "syscaps": [
                 "SystemCapability.ArkUI.ArkUI.Full"
@@ -4585,16 +4386,7 @@
             "arkts_export_missing:@ohos.arkui.StateManagement:ConnectOptions",
             "arkts_export_missing:@ohos.arkui.StateManagement:ConnectOptionsCollections",
             "arkts_export_missing:@ohos.arkui.StateManagement:MutableBinding",
-            "arkts_export_missing:@ohos.arkui.UIContext:CustomKeyboardContinueFeature",
-            "arkts_export_missing:@ohos.arkui.UIContext:GestureActionPhase",
-            "arkts_export_missing:@ohos.arkui.UIContext:GestureListenerType",
-            "arkts_export_missing:@ohos.arkui.UIContext:KeyboardAvoidMode",
             "arkts_export_missing:@ohos.arkui.UIContext:LuminanceSampler",
-            "arkts_export_missing:@ohos.arkui.UIContext:MarqueeDynamicSyncSceneType",
-            "arkts_export_missing:@ohos.arkui.UIContext:NodeRenderState",
-            "arkts_export_missing:@ohos.arkui.UIContext:ResolveStrategy",
-            "arkts_export_missing:@ohos.arkui.UIContext:SwiperDynamicSyncSceneType",
-            "arkts_export_missing:@ohos.arkui.UIContext:TextSelectionClearPolicy",
             "arkts_export_missing:@ohos.arkui.WithEnv:WithEnvInstance",
             "arkts_export_missing:@ohos.arkui.components.ArkDynamicLayout:DynamicLayoutAttribute",
             "arkts_export_missing:@ohos.arkui.components.ArkDynamicLayout:DynamicLayoutInstance",
@@ -4609,8 +4401,6 @@
             "arkts_export_missing:@ohos.arkui.components.ContainerReader:ContainerReaderInstance",
             "arkts_export_missing:@ohos.arkui.components.SelectionContainer:SelectionContainerAttribute",
             "arkts_export_missing:@ohos.arkui.components.SelectionContainer:SelectionContainerInstance",
-            "arkts_export_missing:@ohos.arkui.dragController:DragSpringLoadingState",
-            "arkts_export_missing:@ohos.arkui.dragController:DragStartRequestStatus",
             "arkts_export_missing:@ohos.arkui.dragController:SpringLoadingContext",
             "arkts_export_missing:@ohos.arkui.intelligence.imageGeneration:closeGeneratorDialog",
             "arkts_export_missing:@ohos.arkui.intelligence.imageGeneration:closeGeneratorNodeGraph",
@@ -4704,66 +4494,6 @@
                 "dynamic"
               ],
               "dynamic_since": 23,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "CustomKeyboardContinueFeature",
-              "since": 23,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "GestureActionPhase",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "GestureListenerType",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 11,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "KeyboardAvoidMode",
-              "since": 11,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 23,
               "kind": "class",
               "module": "@ohos.arkui.UIContext",
               "name": "LuminanceSampler",
@@ -4773,81 +4503,6 @@
                 "SystemCapability.ArkUI.ArkUI.Full"
               ],
               "system_api": true
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 14,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "MarqueeDynamicSyncSceneType",
-              "since": 14,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "NodeRenderState",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 22,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "ResolveStrategy",
-              "since": 22,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 12,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "SwiperDynamicSyncSceneType",
-              "since": 12,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 26,
-              "kind": "enum",
-              "module": "@ohos.arkui.UIContext",
-              "name": "TextSelectionClearPolicy",
-              "since": 26,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
             },
             {
               "availability": [
@@ -5053,36 +4708,6 @@
               "module": "@ohos.arkui.components.SelectionContainer",
               "name": "SelectionContainerInstance",
               "since": 26,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 20,
-              "kind": "enum",
-              "module": "@ohos.arkui.dragController",
-              "name": "DragSpringLoadingState",
-              "since": 20,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.ArkUI.ArkUI.Full"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 18,
-              "kind": "enum",
-              "module": "@ohos.arkui.dragController",
-              "name": "DragStartRequestStatus",
-              "since": 18,
               "static_since": null,
               "syscaps": [
                 "SystemCapability.ArkUI.ArkUI.Full"
@@ -5478,16 +5103,7 @@
             "arkts_export_missing:@ohos.arkui.StateManagement:ConnectOptions",
             "arkts_export_missing:@ohos.arkui.StateManagement:ConnectOptionsCollections",
             "arkts_export_missing:@ohos.arkui.StateManagement:MutableBinding",
-            "arkts_export_missing:@ohos.arkui.UIContext:CustomKeyboardContinueFeature",
-            "arkts_export_missing:@ohos.arkui.UIContext:GestureActionPhase",
-            "arkts_export_missing:@ohos.arkui.UIContext:GestureListenerType",
-            "arkts_export_missing:@ohos.arkui.UIContext:KeyboardAvoidMode",
             "arkts_export_missing:@ohos.arkui.UIContext:LuminanceSampler",
-            "arkts_export_missing:@ohos.arkui.UIContext:MarqueeDynamicSyncSceneType",
-            "arkts_export_missing:@ohos.arkui.UIContext:NodeRenderState",
-            "arkts_export_missing:@ohos.arkui.UIContext:ResolveStrategy",
-            "arkts_export_missing:@ohos.arkui.UIContext:SwiperDynamicSyncSceneType",
-            "arkts_export_missing:@ohos.arkui.UIContext:TextSelectionClearPolicy",
             "arkts_export_missing:@ohos.arkui.WithEnv:WithEnvInstance",
             "arkts_export_missing:@ohos.arkui.components.ArkDynamicLayout:DynamicLayoutAttribute",
             "arkts_export_missing:@ohos.arkui.components.ArkDynamicLayout:DynamicLayoutInstance",
@@ -5502,8 +5118,6 @@
             "arkts_export_missing:@ohos.arkui.components.ContainerReader:ContainerReaderInstance",
             "arkts_export_missing:@ohos.arkui.components.SelectionContainer:SelectionContainerAttribute",
             "arkts_export_missing:@ohos.arkui.components.SelectionContainer:SelectionContainerInstance",
-            "arkts_export_missing:@ohos.arkui.dragController:DragSpringLoadingState",
-            "arkts_export_missing:@ohos.arkui.dragController:DragStartRequestStatus",
             "arkts_export_missing:@ohos.arkui.dragController:SpringLoadingContext",
             "arkts_export_missing:@ohos.arkui.intelligence.imageGeneration:closeGeneratorDialog",
             "arkts_export_missing:@ohos.arkui.intelligence.imageGeneration:closeGeneratorNodeGraph",
@@ -12631,24 +12245,7 @@
         "2in1": {
           "arkts_loaded_runtime_module_count": 2,
           "arkts_missing_public_function_count": 0,
-          "arkts_missing_runtime_exports": [
-            {
-              "availability": [
-                "dynamic",
-                "static"
-              ],
-              "dynamic_since": 26,
-              "kind": "enum",
-              "module": "@ohos.data.unifiedDataChannel",
-              "name": "UriPermission",
-              "since": 26,
-              "static_since": 26,
-              "syscaps": [
-                "SystemCapability.DistributedDataManager.UDMF.Core"
-              ],
-              "system_api": false
-            }
-          ],
+          "arkts_missing_runtime_exports": [],
           "arkts_missing_system_function_count": 0,
           "arkts_modules": [
             "@ohos.data.unifiedDataChannel",
@@ -12680,33 +12277,14 @@
           "missing_runtime_permissions": [],
           "official_sdk_profile": true,
           "profile_source_status": "matches",
-          "surface_problems": [
-            "arkts_export_missing:@ohos.data.unifiedDataChannel:UriPermission"
-          ],
-          "surface_state": "surface_failure",
+          "surface_problems": [],
+          "surface_state": "surface_present",
           "syscap_runtime_status": "enabled_contract_capability"
         },
         "phone": {
           "arkts_loaded_runtime_module_count": 2,
           "arkts_missing_public_function_count": 0,
-          "arkts_missing_runtime_exports": [
-            {
-              "availability": [
-                "dynamic",
-                "static"
-              ],
-              "dynamic_since": 26,
-              "kind": "enum",
-              "module": "@ohos.data.unifiedDataChannel",
-              "name": "UriPermission",
-              "since": 26,
-              "static_since": 26,
-              "syscaps": [
-                "SystemCapability.DistributedDataManager.UDMF.Core"
-              ],
-              "system_api": false
-            }
-          ],
+          "arkts_missing_runtime_exports": [],
           "arkts_missing_system_function_count": 0,
           "arkts_modules": [
             "@ohos.data.unifiedDataChannel",
@@ -12738,10 +12316,8 @@
           "missing_runtime_permissions": [],
           "official_sdk_profile": true,
           "profile_source_status": "matches",
-          "surface_problems": [
-            "arkts_export_missing:@ohos.data.unifiedDataChannel:UriPermission"
-          ],
-          "surface_state": "surface_failure",
+          "surface_problems": [],
+          "surface_state": "surface_present",
           "syscap_runtime_status": "enabled_contract_capability"
         }
       },
@@ -33127,21 +32703,6 @@
               "availability": [
                 "dynamic"
               ],
-              "dynamic_since": 12,
-              "kind": "enum",
-              "module": "@ohos.util.json",
-              "name": "BigIntMode",
-              "since": 12,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.Utils.Lang"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
               "dynamic_since": 7,
               "kind": "variable",
               "module": "@ohos.worker",
@@ -33228,7 +32789,6 @@
             "arkts_export_missing:@ohos.taskpool:TaskInfo",
             "arkts_export_missing:@ohos.taskpool:TaskPoolInfo",
             "arkts_export_missing:@ohos.taskpool:ThreadInfo",
-            "arkts_export_missing:@ohos.util.json:BigIntMode",
             "arkts_export_missing:@ohos.worker:parentPort",
             "arkts_export_missing:@ohos.worker:workerPort"
           ],
@@ -33278,21 +32838,6 @@
               "module": "@ohos.taskpool",
               "name": "ThreadInfo",
               "since": 10,
-              "static_since": null,
-              "syscaps": [
-                "SystemCapability.Utils.Lang"
-              ],
-              "system_api": false
-            },
-            {
-              "availability": [
-                "dynamic"
-              ],
-              "dynamic_since": 12,
-              "kind": "enum",
-              "module": "@ohos.util.json",
-              "name": "BigIntMode",
-              "since": 12,
               "static_since": null,
               "syscaps": [
                 "SystemCapability.Utils.Lang"
@@ -33389,7 +32934,6 @@
             "arkts_export_missing:@ohos.taskpool:TaskInfo",
             "arkts_export_missing:@ohos.taskpool:TaskPoolInfo",
             "arkts_export_missing:@ohos.taskpool:ThreadInfo",
-            "arkts_export_missing:@ohos.util.json:BigIntMode",
             "arkts_export_missing:@ohos.worker:parentPort",
             "arkts_export_missing:@ohos.worker:workerPort"
           ],
@@ -34036,8 +33580,8 @@
         "contract_surface_state_counts": {
           "compile_time_only": 7,
           "no_public_runtime_surface": 7,
-          "surface_failure": 30,
-          "surface_present": 177
+          "surface_failure": 29,
+          "surface_present": 178
         },
         "declared_count": 293,
         "declared_outside_official_profile": 75,
@@ -34075,8 +33619,8 @@
         "contract_surface_state_counts": {
           "compile_time_only": 7,
           "no_public_runtime_surface": 14,
-          "surface_failure": 40,
-          "surface_present": 181
+          "surface_failure": 39,
+          "surface_present": 182
         },
         "declared_count": 292,
         "declared_outside_official_profile": 61,
