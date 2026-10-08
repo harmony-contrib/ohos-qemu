@@ -67,6 +67,8 @@ parser.add_argument("--matrix4-only", action="store_true",
                     help="Test actual typed module-level Matrix4 helpers and existing factory-object arithmetic")
 parser.add_argument("--factory-objects-only", action="store_true",
                     help="Test real resource and live TaskPool factory-returned SDK types, without constructor shims")
+parser.add_argument("--web-factory-only", action="store_true",
+                    help="Test real ArkWeb body streams, response handlers and native media callback objects")
 parser.add_argument("--userid-only", action="store_true",
                     help="Test real AppSpawn account tagging and ordinary-app ioctl denial")
 parser.add_argument("--audio-stream-only", action="store_true",
@@ -83,6 +85,9 @@ parser.add_argument("--arkts-exports-only", action="store_true",
                     help="Collect real all-own NAPI properties/types for every original export/load gap module")
 parser.add_argument("--contact-sync-mode-only", action="store_true",
                     help="Read real API26 ContactSyncMode, DeviceBlockStatus and FusionAssetType values through typed/native calls")
+parser.add_argument("--runtime-enum-only", action="store_true",
+                    help="Collect all original regular enums using typed and independent actual NAPI member reads")
+parser.add_argument("--enum-device", choices=('phone', '2in1'), default='phone')
 parser.add_argument("--worker-legacy-only", action="store_true",
                     help="Validate parentPort inside actual legacy Worker threads, in a separate HAP process")
 parser.add_argument("--worker-thread-only", action="store_true",
@@ -90,13 +95,13 @@ parser.add_argument("--worker-thread-only", action="store_true",
 parser.add_argument("--probe-run-id", help="Host challenge (32 lowercase hex digits) for a nonce-bearing ordinary HAP")
 args = parser.parse_args()
 worker_only = args.worker_legacy_only or args.worker_thread_only
-if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only) or
+if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only) or
                                      not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
     parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
-if sum((args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only,
-        args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only)) > 1:
+if sum((args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
+        args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only)) > 1:
     parser.error("provider and ordinary probe personas are mutually exclusive")
-minimal_app = args.web_only or args.vulkan_window_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.userid_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only
+minimal_app = args.web_only or args.vulkan_window_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.userid_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only
 if minimal_app:
     args.restricted_permission = []
 
@@ -173,7 +178,7 @@ write(
                 {
                     "name": "default",
                     "targetSdkVersion": "7.0.0(26)",
-                    "compatibleSdkVersion": "7.0.0(26)" if (args.const_enum_only or args.arkts_exports_only or args.factory_objects_only or worker_only or args.contact_sync_mode_only) else "5.0.5(17)",
+                    "compatibleSdkVersion": "7.0.0(26)" if (args.const_enum_only or args.arkts_exports_only or args.factory_objects_only or args.web_factory_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only) else "5.0.5(17)",
                     "runtimeOS": "HarmonyOS",
                 }
             ],
@@ -285,7 +290,7 @@ if minimal_app:
                 "pages": "$profile:main_pages",
                 "requestPermissions": ([{"name": "ohos.permission.CAMERA", "reason": "$string:permission_reason",
                                          "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}}]
-                                       if args.camera_only else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or worker_only or args.contact_sync_mode_only) else [{"name": "ohos.permission.INTERNET"}]),
+                                       if args.camera_only else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only) else [{"name": "ohos.permission.INTERNET"}]),
                 "abilities": [{
                     "name": "EntryAbility",
                     "srcEntry": "./ets/entryability/EntryAbility.ets",
@@ -1995,6 +2000,15 @@ if args.contact_sync_mode_only:
           'interface NativeModes { values: number[]; statuses: number[]; types: number[]; own: boolean[]; exception: boolean; }\n'
           'interface Probe { inspect: () => NativeModes; inspectAudio: () => NativeModes; inspectPhoto: () => NativeModes; }\ndeclare const probe: Probe;\nexport default probe;\n')
     write('contact-sync-mode-probe-inputs.json', contact_sync_inputs(root, args.sdk, args.arch, challenge))
+if args.runtime_enum_only:
+    from runtime_enum_contracts import expected, generate, inputs as runtime_enum_inputs
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    contracts = expected(args.sdk, args.enum_device)['contracts']
+    write('entry/src/main/ets/pages/Index.ets', generate(contracts, challenge))
+    write('entry/src/main/cpp/types/libruntimeenumprobe/index.d.ts',
+          'interface NativeEnum { values: (number | string)[]; statuses: number[]; types: number[]; own: boolean[]; exception: boolean; }\n'
+          'interface Probe { inspect: (module: string, name: string, members: string[]) => NativeEnum; }\ndeclare const probe: Probe;\nexport default probe;\n')
+    write('runtime-enum-probe-inputs.json', runtime_enum_inputs(root, args.sdk, args.arch, args.enum_device, challenge))
 if args.const_enum_only:
     from const_enum_contracts import LEDGER, expected_contracts, generate, sha256
     challenge = args.probe_run_id or uuid.uuid4().hex
@@ -2020,6 +2034,18 @@ if args.factory_objects_only:
           'role': 'ordinary_app', 'scope': 'five_real_factory_returned_types_only', 'request_permissions': [],
           'template_sha256': digest(template), 'generated_source': str(page),
           'generated_source_sha256': digest(page), 'sdk_declarations': declarations})
+if args.web_factory_only:
+    from run_root_probe import digest
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    template = Path(__file__).with_name('web_factory_probe.ets')
+    page = root / 'entry/src/main/ets/pages/Index.ets'
+    write('entry/src/main/ets/pages/Index.ets', template.read_text().replace('__WEB_FACTORY_RUN_ID__', challenge))
+    declaration = args.sdk / 'ets/api/@ohos.web.webview.d.ts'
+    write('web-factory-probe-inputs.json', {'schema_version': 1, 'run_id': challenge, 'arch': args.arch,
+          'role': 'ordinary_app', 'scope': 'four_ArkWeb_factory_and_callback_types_NOT_native_media_decoding',
+          'request_permissions': [], 'template_sha256': digest(template), 'generated_source': str(page),
+          'generated_source_sha256': digest(page), 'sdk_declaration': str(declaration.resolve()),
+          'sdk_declaration_sha256': digest(declaration)})
 if args.matrix4_only:
     from run_root_probe import digest
     challenge = args.probe_run_id or uuid.uuid4().hex
@@ -2172,9 +2198,16 @@ if args.contact_sync_mode_only:
                '-fno-exceptions', '-fno-rtti', '-nostdlib++',
                str(Path(__file__).with_name('contact_sync_mode_hap_probe.cpp')), '-lace_napi.z',
                '-o', str(libs / 'libcontactsyncmodeprobe.so')]
-if not (args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.const_enum_only or worker_only):
+if args.runtime_enum_only:
+    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
+    command = [str(native / 'llvm/bin/clang++'), '--target=' + triple, '--sysroot=' + str(native / 'sysroot'),
+               *flags, '-std=c++17', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
+               '-fno-exceptions', '-fno-rtti', '-nostdlib++',
+               str(Path(__file__).with_name('runtime_enum_hap_probe.cpp')), '-lace_napi.z',
+               '-o', str(libs / 'libruntimeenumprobe.so')]
+if not (args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only):
     subprocess.run(command, check=True)
-    if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only):
+    if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only or args.runtime_enum_only):
         shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")
 
 environment = dict(os.environ, OHOS_SDK_HOME=str(args.sdk))

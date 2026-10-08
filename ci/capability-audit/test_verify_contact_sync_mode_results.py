@@ -112,7 +112,7 @@ class ContactSyncModeResultTests(unittest.TestCase):
         self.assertIn('typed_and_native_public_enum_own_members_and_exact_values', closure)
         self.assertNotIn("kind in ('enum', 'namespace')", closure)
         builder = (HERE / 'build_hap_probe.py').read_text()
-        self.assertIn('worker_only or args.contact_sync_mode_only) else [{', builder)
+        self.assertIn('worker_only or args.contact_sync_mode_only or args.runtime_enum_only) else [{', builder)
         self.assertIn('libcontactsyncmodeprobe.so', builder)
 
     def test_audio_typed_native_values_and_actual_sdk_kind_are_separately_required(self):

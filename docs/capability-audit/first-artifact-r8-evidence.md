@@ -61,3 +61,70 @@ An exact-source read-only permission re-audit reported zero missing official
 phone permissions (`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/permission-audit-phone-sensor-contract-after-patch.json`).
 This is a source-contract repair for the next package, **not** a result from
 R8; the two original permission findings remain open in R8's 65/291 diagnostic.
+
+The next ordinary-app diagnostic exercised the actual ArkWeb custom-scheme
+POST body stream, response handler, and two native-media factory callbacks.
+Both generations returned the exact nonce-bearing bytes/title; the callbacks
+had distinct real SurfaceIDs and both were released. Initial media rectangles
+were legitimately zero before an external player supplied metadata. This is
+**not** evidence of native video decoding or visible video frames. The strict
+boundary check failed: `WebHttpBodyStream.read(-1)` rejected with string
+`"401"` instead of the documented numeric BusinessError code. The source repair
+now creates a real Error with numeric `code` and `name=BusinessError` in the
+shared synchronous error helper. It preserves parameter, lifecycle and
+permission checks; it has not yet been observed in a newly packaged guest.
+
+Diagnostic environment: a separate fresh R8 extraction, ARM64 phone/HVF,
+HDC `127.0.0.1:51793`, under
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/web-factory-r8-20261008d/`.
+Command: `python ci/capability-audit/run_owned_hap_diagnostic.py --boot <that
+directory>/boot/boot.json --output <that directory>/owned-web-factory-05 --sdk
+/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0
+--persona web-factory`. The wrapper confirms the owned process/archive/boot
+identity and restores its finite development screen-timeout override. The
+diagnostic purpose cannot authorize package acceptance or the other five builds.
+
+The complete regular-enum diagnostic (`--persona runtime-enum`, output
+`owned-runtime-enums-02` in the same directory) compiled the actual API26 typed
+caller and independently read every native own member. It covered 60 original
+phone enums; six passed and 54 remained unresolved. `Curve` has no
+compiler-resolved ambient values and FA-only `particleAbility.ErrorCode`
+cannot be compiled in this Stage caller: both remain explicit requirements,
+not exclusions from the baseline. A particularly important newly confirmed
+failure is `SysVpnType.IKEV2_IPSEC_MSCHAPV2`: the enum object exists, but this
+member is undefined in both typed and native reads. The source exports the
+incorrect mixed-case spelling. Both VPN modules now use the public spelling,
+without changing their native protocol values or authorization checks.
+
+The next-package source plan also registers Ethernet `DeviceConnectionType`,
+Radio `NrOptionMode`, SIM `DsdsMode`, and SMS `SmsShortCodeType` using their
+existing native constants. Components each own their patch and apply script;
+the shared Docker patch plan applies them before traversal for both profiles.
+This does not implement a modem, SMS delivery, or networking backend by itself.
+Real product-command object checks passed Web BusinessError and Ethernet for
+all three ABIs, and Radio/SIM/SMS for all three ABIs (nine additional objects).
+Evidence directories under `issue-20-20261006/` are
+`web-business-error-three-arch-01`, `ethernet-enum-three-arch-02`, and the three
+passed child directories in `api26-enums-three-arch-01`. That last aggregate
+check did **not** pass: the ARMv7 cached VPN graph was missing its real generated
+IDL header, and its system-VPN feature flags also require refresh before those
+branches can be attested. No stub header is used to make it compile.
+
+After these changes, the full host test command above passed 825 tests in
+111.214 seconds; log `capability-host-tests-20261008-enum-closure-02.log` under
+`issue-20-20261006/`. Tests and object compilation are not first-package boot
+acceptance. No remaining-package matrix has started; the original 229-gap
+request is still not complete, and no six-package delivery is claimed.
+
+The actual VPN IDL generators then ran successfully for ARMv7 and x86_64
+(`api26-vpn-real-idl-03`). The tools demand writable *input* files; only the two
+byte-identical pinned IDL sources were staged privately, and the real tools
+generated the headers. The next compile check (`api26-enums-three-arch-02`)
+passed Radio, SIM, SMS, and primary VPN for all three ABIs (12 objects). VPN
+checks explicitly activate `SUPPORT_SYSVPN` where the stale cached product
+command omits it, recording both commands. That proves the candidate branch
+compiles, **not** that a refreshed product GN graph selects it. The extension
+check still encounters other unprepared generated dependencies in the ARMv7
+cache; neither attempt is a complete build or an all-three-products pass.
+The final host rerun including IDL-action confinement fixtures passed 828 tests
+in 112.092 seconds (`capability-host-tests-20261008-enum-closure-03.log`).

@@ -33,9 +33,13 @@ PERSONAS = {
     'matrix4': ('--matrix4-only', 'matrix4-{run}-results.log', '"summary"', 'verify_matrix4_results.py'),
     'factory-objects': ('--factory-objects-only', 'factory-objects-{run}-results.log', '"summary"',
                         'verify_factory_objects_results.py'),
+    'web-factory': ('--web-factory-only', 'web-factory-{run}-results.log', '"summary"',
+                    'verify_web_factory_results.py'),
     'const-enum': ('--const-enum-only', 'const-enum-{run}-results.log', '"summary"', 'verify_const_enum_results.py'),
     'contact-sync-mode': ('--contact-sync-mode-only', 'contact-sync-mode-{run}-results.log', '"native"',
                           'verify_contact_sync_mode_results.py'),
+    'runtime-enum': ('--runtime-enum-only', 'runtime-enum-{run}-results.log', '"summary"',
+                     'verify_runtime_enum_results.py'),
     'arkts-exports': ('--arkts-exports-only', 'arkts-exports-{run}-results.log',
                       '"export_collection_complete":true', 'verify_arkts_exports_results.py'),
     'audio-stream': ('--audio-stream-only', 'audio-stream-{run}-results.log', '"summary"', 'verify_audio_stream_results.py'),
@@ -117,9 +121,9 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
     if persona == 'userid':
         arguments += ['--arch', arch, '--mode', 'unprivileged', '--expected-user-id', '100',
                       '--app-context', '--probe-exit-code', '0']
-    if persona in ('const-enum', 'arkts-exports', 'matrix4', 'factory-objects', 'camera', 'contact-sync-mode'):
+    if persona in ('const-enum', 'arkts-exports', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum'):
         arguments += ['--arch', arch]
-    if persona in ('audio-stream', 'avc-media', 'audio-suite-effects', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'camera', 'contact-sync-mode'):
+    if persona in ('audio-stream', 'avc-media', 'audio-suite-effects', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum'):
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
@@ -200,6 +204,8 @@ def run(args):
                  '--arch', args.arch, '--sdk', args.sdk, '--udid', args.udid, '--output', project]
         if args.persona not in ('web', 'vulkan-window'):
             build += ['--probe-run-id', challenge]
+        if args.persona == 'runtime-enum':
+            build += ['--enum-device', args.device]
         command(build, 'build-fresh-hap', timeout=1800)
         unsigned = project / 'entry/build/default/outputs/default/entry-default-unsigned.hap'
         signed = args.output / 'ordinary-probe-signed.hap'
@@ -310,7 +316,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'contact-sync-mode'):
+        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]

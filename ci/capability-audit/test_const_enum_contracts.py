@@ -107,7 +107,7 @@ export const enum Text { VALUE="real" }
         source = (HERE / 'build_hap_probe.py').read_text()
         self.assertIn("contracts = expected_contracts(args.sdk)", source)
         self.assertIn("generate(contracts, challenge)", source)
-        self.assertIn('else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or worker_only or args.contact_sync_mode_only)', source)
+        self.assertIn('else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only)', source)
 
 
 if __name__ == '__main__':

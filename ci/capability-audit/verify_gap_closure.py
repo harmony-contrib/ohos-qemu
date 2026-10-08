@@ -370,6 +370,36 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                         permitted = {6}
                     if value in permitted:
                         closed['arkts_export:' + module['module'] + ':' + requirement['name']] = proof
+    enum_members = child('runtime-enum/evidence.json')
+    if enum_members and enum_members[1].get('persona') == 'runtime-enum':
+        document = enum_members[1]
+        raw = enum_members[0].parent / 'results.log'
+        identity = enum_members[0].parent / 'application-identity.json'
+        inputs = Path(document.get('compiled_contract_inputs', ''))
+        result = Path(document.get('result', ''))
+        if all(path.is_file() and not path.is_symlink() and digest(path) == document.get(key)
+               for path, key in ((raw, 'raw_results_sha256'), (identity, 'ordinary_identity_sha256'),
+                                 (inputs, 'compiled_contract_inputs_sha256'), (result, 'result_sha256'))):
+            from runtime_enum_contracts import SCOPE, verify_inputs
+            from verify_runtime_enum_results import verify
+            frozen = json.loads(inputs.read_text())
+            if frozen.get('device') != device_type:
+                raise ValueError('enum caller does not match actual package profile')
+            contracts = verify_inputs(frozen, document['run_id'], document['arch'])
+            actual = verify(raw.read_text(), contracts, document['run_id'], identity.read_text())
+            verification = json.loads(result.read_text())
+            if (verification.get('status') != 'pass' or verification.get('results') != actual or
+                    verification.get('run_id') != document['run_id'] or
+                    verification.get('arch') != document['arch'] or verification.get('scope') != SCOPE or
+                    verification.get('archive_sha256') != archive_sha or
+                    verification.get('inputs_sha256') != digest(inputs) or
+                    verification.get('results_sha256') != digest(raw) or
+                    verification.get('application_identity_sha256') != digest(identity)):
+                raise ValueError('enum closure differs from actual complete typed/native member observations')
+            for row in actual['closed']:
+                closed[row['contract']] = {'evidence': str(enum_members[0]), 'sha256': digest(enum_members[0]),
+                    'verifier': 'ordinary_API26_all_original_regular_enum_members_typed_plus_independent_NAPI',
+                    'member_count': row['member_count'], 'not_claimed': actual['not_claimed']}
     matrix = child('matrix4/evidence.json')
     if matrix and matrix[1].get('persona') == 'matrix4':
         document = matrix[1]
@@ -427,6 +457,34 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                         'verifier': 'ordinary_typed_sync_promise_callback_snapshot_and_two_live_task_generations',
                         'resolution': 'factory_return_contract_verified_NOT_runtime_constructor',
                         'not_claimed': 'runtime_constructor_export_or_all_resource_and_TaskPool_APIs'}
+    web_factories = child('web-factory/evidence.json')
+    if web_factories and web_factories[1].get('persona') == 'web-factory':
+        document = web_factories[1]
+        raw = web_factories[0].parent / 'results.log'
+        identity = web_factories[0].parent / 'application-identity.json'
+        inputs = Path(document.get('compiled_contract_inputs', ''))
+        result = Path(document.get('result', ''))
+        if all(path.is_file() and not path.is_symlink() and digest(path) == document.get(key)
+               for path, key in ((raw, 'raw_results_sha256'), (identity, 'ordinary_identity_sha256'),
+                                 (inputs, 'compiled_contract_inputs_sha256'), (result, 'result_sha256'))):
+            from verify_web_factory_results import CONTRACTS, SCOPE, verify_inputs, verify
+            verify_inputs(json.loads(inputs.read_text()), document['run_id'], document['arch'])
+            actual = verify(raw.read_text(), document['run_id'], identity.read_text())
+            verification = json.loads(result.read_text())
+            if (verification.get('status') != 'pass' or verification.get('results') != actual or
+                    verification.get('run_id') != document['run_id'] or
+                    verification.get('arch') != document['arch'] or verification.get('scope') != SCOPE or
+                    verification.get('archive_sha256') != archive_sha or
+                    verification.get('inputs_sha256') != digest(inputs) or
+                    verification.get('results_sha256') != digest(raw) or
+                    verification.get('application_identity_sha256') != digest(identity)):
+                raise ValueError('ArkWeb factory closure differs from actual stream/renderer/callback observations')
+            for name in CONTRACTS:
+                closed['arkts_export:@ohos.web.webview:' + name] = {
+                    'evidence': str(web_factories[0]), 'sha256': digest(web_factories[0]),
+                    'verifier': 'ordinary_API26_custom_scheme_POST_stream_response_roundtrip_two_media_callbacks',
+                    'resolution': 'factory_callback_contract_verified_NOT_runtime_constructor',
+                    'not_claimed': 'native_media_decoding_playback_visible_surface_or_all_ArkWeb_API_behavior'}
     camera = child('camera/evidence.json')
     if camera:
         from verify_camera_results import verify_evidence as verify_camera_evidence

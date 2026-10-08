@@ -268,7 +268,7 @@ def run(args):
         check('certificate-manager', work / 'certificate-manager/evidence.json', [certificate_record])
         same_guest('after-certificate-both-roles')
         normal_results = {}
-        for persona in ('web', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'const-enum', 'contact-sync-mode', 'arkts-exports',
+        for persona in ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                         'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera'):
             record = command([sys.executable, Path(__file__).with_name('run_normal_hap_probe.py'),
                 '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
