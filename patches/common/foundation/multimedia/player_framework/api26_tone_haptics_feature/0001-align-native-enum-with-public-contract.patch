@@ -1,0 +1,41 @@
+diff --git a/foundation/multimedia/player_framework/frameworks/js/system_sound_manager/src/system_sound_manager_napi.cpp b/foundation/multimedia/player_framework/frameworks/js/system_sound_manager/src/system_sound_manager_napi.cpp
+--- a/foundation/multimedia/player_framework/frameworks/js/system_sound_manager/src/system_sound_manager_napi.cpp
++++ b/foundation/multimedia/player_framework/frameworks/js/system_sound_manager/src/system_sound_manager_napi.cpp
+@@ -25,2 +25,3 @@
+ #include "system_sound_log.h"
++#include "system_tone_player.h"
+ #include "tokenid_kit.h"
+@@ -431,2 +432,25 @@
++static napi_status RegisterToneHapticsFeature(napi_env env, napi_value exports)
++{
++    const ToneHapticsFeature features[] = {ToneHapticsFeature::STANDARD, ToneHapticsFeature::GENTLE};
++    const char *names[] = {"STANDARD", "GENTLE"};
++    napi_value result = nullptr;
++    napi_status status = napi_create_object(env, &result);
++    if (status != napi_ok) {
++        return status;
++    }
++    for (size_t index = 0; index < sizeof(features) / sizeof(features[0]); ++index) {
++        napi_value member = nullptr;
++        status = napi_create_int32(env, static_cast<int32_t>(features[index]), &member);
++        if (status != napi_ok) {
++            return status;
++        }
++        status = napi_set_named_property(env, result, names[index], member);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_set_named_property(env, exports, "ToneHapticsFeature", result);
++}
++
+ napi_status SystemSoundManagerNapi::DefineStaticProperties(napi_env env, napi_value exports)
+ {
+@@ -452,2 +476,6 @@
+-    return napi_define_properties(env, exports, sizeof(static_prop) / sizeof(static_prop[0]), static_prop);
++    napi_status status = napi_define_properties(env, exports, sizeof(static_prop) / sizeof(static_prop[0]), static_prop);
++    if (status != napi_ok) {
++        return status;
++    }
++    return RegisterToneHapticsFeature(env, exports);
+ }

@@ -205,6 +205,11 @@ LOCATION_NDK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location_ndk/a
 ETHERNET_API26_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_api26/apply.sh"
 TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/core_service/api26_enums/apply.sh"
 TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/sms_mms/api26_enums/apply.sh"
+TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_enums/apply.sh"
+SCREENLOCK_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/theme/screenlock_mgr/api26_enums/apply.sh"
+I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api26_suggestion_type/apply.sh"
+DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
+SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_tone_haptics_feature/apply.sh"
 NETMANAGER_API26_FEATURES_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/api26_features/apply.sh"
 VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_dialog_bundle/apply.sh"
 DHW_UI_PREINSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/dhardware_preinstall/apply.sh"
@@ -2816,6 +2821,16 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_core_enums_component.log"
   bash "${TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_sms_enums_component.log"
+  bash "${TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_call_enums_component.log"
+  bash "${SCREENLOCK_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_screenlock_enums_component.log"
+  bash "${I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_i18n_suggestion_type_component.log"
+  bash "${DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_device_manager_auth_form_component.log"
+  bash "${SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_system_sound_tone_feature_component.log"
   bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_netmanager_api26_features_component.log"
   bash "${VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

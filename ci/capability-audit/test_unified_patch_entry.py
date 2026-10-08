@@ -66,6 +66,9 @@ class UnifiedPatchEntryTests(unittest.TestCase):
         plan = builder.split("apply_qemu_capability_patch_plan() {", 1)[1].split("\n}\n", 1)[0]
         for component in ("core_hap_source", "RENDER_CONNECTION_REPLY_SCRIPT", "SHARED_FENCE_OWNER_SCRIPT",
                 "LOCATION_NDK_COMPONENT_SCRIPT", "ETHERNET_API26_COMPONENT_SCRIPT", "PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT",
+                "TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT", "SCREENLOCK_ENUMS_COMPONENT_SCRIPT",
+                "I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT", "DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT",
+                "SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT",
                 "AUDIO_SUITE_DSP_COMPONENT_SCRIPT", "CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT", "QEMU_CAMERA_JPEG_COMPONENT_SCRIPT",
                 "ACCESS_TOKEN_ABI_COMPONENT_SCRIPT", "VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT", "apply_qemu_serial_components"):
             self.assertIn(component, plan)

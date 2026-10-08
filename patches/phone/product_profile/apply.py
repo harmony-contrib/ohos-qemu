@@ -185,6 +185,17 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # Selecting only the HDI leaves no dynamically loaded VDI/config closure.
     add_component(effective, "hdf", "drivers_peripheral_camera")
 
+    # These parts are already selected by the QEMU rich base, not newly
+    # introduced phone capabilities. Carry their exact rich settings so the
+    # later phone/board contract overlay can remove only false declarations.
+    for owner in (("systemabilitymgr", "selectionfwk"), ("print", "print_fwk")):
+        if owner not in component_map(effective):
+            inherited = component_map(rich).get(owner)
+            if inherited is None:
+                die("rich contract owner missing: " + ":".join(owner))
+            add_component(effective, *owner)
+            component_map(effective)[owner].update(json.loads(json.dumps(inherited)))
+
     # The generic phone profile clears the display-interface features. QEMU's
     # community VDI is a board requirement, so retain the rich values.
     effective_components = component_map(effective)
@@ -214,6 +225,22 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
                 "multimedia", "media_foundation",
                 "Not in the official phone contract; public processing libraries are not packaged.",
             ),
+            "SystemCapability.SelectionInput.Selection": (
+                "systemabilitymgr", "selectionfwk",
+                "Officially 2in1-only; do not advertise the PC selection framework on phone.",
+            ),
+            "SystemCapability.FileManagement.File.Environment.FolderObtain": (
+                "filemanagement", "file_api",
+                "Outside the official phone contract; the phone API correctly returns unsupported.",
+            ),
+            "SystemCapability.USB.USBManager.Serial": (
+                "usb", "usb_manager",
+                "Outside the official phone contract; keep the required 2in1 serial implementation unchanged.",
+            ),
+            "SystemCapability.Print.PrintFramework": (
+                "print", "print_fwk",
+                "Outside the official phone contract; no phone printer extension is provided.",
+            ),
         },
         {
             # Both ends of the native IPC ABI must use the same switches.
@@ -234,6 +261,10 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
                 "audio_framework_feature_audiosuite_format_convert_support": True,
             },
             ("multimedia", "av_session"): {"av_session_enable_input_redistribute": True},
+            # Enable the existing RTT implementation on both IPC endpoints.
+            # This does not fabricate a modem/IMS network or success callback.
+            ("telephony", "call_manager"): {"call_manager_feature_support_rtt": True},
+            ("telephony", "cellular_call"): {"cellular_call_support_rtt": True},
             ("window", "window_manager"): {"window_manager_use_sceneboard": True},
             # SceneBoard publishes logical displays/shadow surfaces. The
             # legacy non-unified renderer leaves that tree unprepared and

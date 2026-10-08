@@ -1,0 +1,150 @@
+diff --git a/base/theme/screenlock_mgr/interfaces/inner_api/include/screenlock_common.h b/base/theme/screenlock_mgr/interfaces/inner_api/include/screenlock_common.h
+--- a/base/theme/screenlock_mgr/interfaces/inner_api/include/screenlock_common.h
++++ b/base/theme/screenlock_mgr/interfaces/inner_api/include/screenlock_common.h
+@@ -104,6 +104,27 @@
+     UNLOCKSCREEN,
+ };
+ 
++// Shared native values: moving the definition from the service header keeps
++// the existing numeric ABI while allowing the NAPI boundary to use it safely.
++enum class AuthState : int32_t {
++    UNAUTH = 0,
++    PRE_AUTHED_BY_CREDENTIAL = 1,
++    PRE_AUTHED_BY_FINGERPRINT = 2,
++    PRE_AUTHED_BY_FACE = 3,
++    AUTHED_BY_CREDENTIAL = 4,
++    AUTHED_BY_FINGERPRINT = 5,
++    AUTHED_BY_FACE = 6,
++    PRE_AUTHED_RESULT_BY_CREDENTIAL = 7,
++    PRE_AUTHED_RESULT_BY_FINGERPRINT = 8,
++    PRE_AUTHED_RESULT_BY_FACE = 9,
++};
++
++enum class UnlockPolicy : int32_t {
++    DEFAULT = 0,
++    EXTENDED_AUTH_ONLY = 1,
++    EXTENDED_AUTH_AND_SYSTEM = 2,
++};
++
+ enum class StrongAuthReasonFlags : int32_t {
+     NONE = 0x00000000,
+     AFTER_BOOT = 0x00000001,
+diff --git a/base/theme/screenlock_mgr/services/include/screenlock_system_ability.h b/base/theme/screenlock_mgr/services/include/screenlock_system_ability.h
+--- a/base/theme/screenlock_mgr/services/include/screenlock_system_ability.h
++++ b/base/theme/screenlock_mgr/services/include/screenlock_system_ability.h
+@@ -29,5 +29,6 @@
+ #include "iremote_object.h"
+ #include "screenlock_callback_interface.h"
++#include "screenlock_common.h"
+ #include "screenlock_manager_stub.h"
+ #include "screenlock_system_ability_interface.h"
+ #include "system_ability.h"
+@@ -120,15 +121,2 @@
+-enum class AuthState : int32_t {
+-    UNAUTH = 0,
+-    PRE_AUTHED_BY_CREDENTIAL = 1,
+-    PRE_AUTHED_BY_FINGERPRINT = 2,
+-    PRE_AUTHED_BY_FACE = 3,
+-    AUTHED_BY_CREDENTIAL = 4,
+-    AUTHED_BY_FINGERPRINT = 5,
+-    AUTHED_BY_FACE = 6,
+-    PRE_AUTHED_RESULT_BY_CREDENTIAL = 7,
+-    PRE_AUTHED_RESULT_BY_FINGERPRINT = 8,
+-    PRE_AUTHED_RESULT_BY_FACE = 9,
+-};
+-
+ class ScreenLockSystemAbility : public SystemAbility, public ScreenLockManagerStub {
+     DECLARE_SYSTEM_ABILITY(ScreenLockSystemAbility);
+diff --git a/base/theme/screenlock_mgr/frameworks/js/napi/src/napi_screenlock_ability.cpp b/base/theme/screenlock_mgr/frameworks/js/napi/src/napi_screenlock_ability.cpp
+--- a/base/theme/screenlock_mgr/frameworks/js/napi/src/napi_screenlock_ability.cpp
++++ b/base/theme/screenlock_mgr/frameworks/js/napi/src/napi_screenlock_ability.cpp
+@@ -61,6 +61,68 @@
+     { JsErrorCode::ERR_USER_ID_INVALID, USER_ID_INVALID },
+ };
+ 
++struct PublicScreenLockEnumMember {
++    const char *name;
++    int32_t value;
++};
++
++template<size_t Count>
++static napi_status RegisterPublicScreenLockEnum(napi_env env, napi_value exports, const char *name,
++    const PublicScreenLockEnumMember (&members)[Count])
++{
++    napi_value enumeration = nullptr;
++    napi_status status = napi_create_object(env, &enumeration);
++    if (status != napi_ok) {
++        return status;
++    }
++    for (const auto &member : members) {
++        napi_value value = nullptr;
++        status = napi_create_int32(env, member.value, &value);
++        if (status != napi_ok) {
++            return status;
++        }
++        status = napi_set_named_property(env, enumeration, member.name, value);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_set_named_property(env, exports, name, enumeration);
++}
++
++static napi_status RegisterPublicScreenLockEnums(napi_env env, napi_value exports)
++{
++    const PublicScreenLockEnumMember strong[] = {
++        {"NONE", static_cast<int32_t>(StrongAuthReasonFlags::NONE)},
++        {"AFTER_BOOT", static_cast<int32_t>(StrongAuthReasonFlags::AFTER_BOOT)},
++        {"AFTER_TIMEOUT", static_cast<int32_t>(StrongAuthReasonFlags::AFTER_TIMEOUT)},
++        {"ACTIVE_REQUEST", static_cast<int32_t>(StrongAuthReasonFlags::ACTIVE_REQUEST)},
++        {"POLICY_RESTRICTION", static_cast<int32_t>(StrongAuthReasonFlags::DPM_RESTRICT)},
++    };
++    const PublicScreenLockEnumMember auth[] = {
++        {"NOT_AUTHED", static_cast<int32_t>(AuthState::UNAUTH)},
++        {"PRE_AUTHED_BY_CREDENTIAL", static_cast<int32_t>(AuthState::PRE_AUTHED_BY_CREDENTIAL)},
++        {"PRE_AUTHED_BY_FINGERPRINT", static_cast<int32_t>(AuthState::PRE_AUTHED_BY_FINGERPRINT)},
++        {"PRE_AUTHED_BY_FACE", static_cast<int32_t>(AuthState::PRE_AUTHED_BY_FACE)},
++        {"AUTHED_BY_CREDENTIAL", static_cast<int32_t>(AuthState::AUTHED_BY_CREDENTIAL)},
++        {"AUTHED_BY_FINGERPRINT", static_cast<int32_t>(AuthState::AUTHED_BY_FINGERPRINT)},
++        {"AUTHED_BY_FACE", static_cast<int32_t>(AuthState::AUTHED_BY_FACE)},
++    };
++    const PublicScreenLockEnumMember policy[] = {
++        {"DEFAULT", static_cast<int32_t>(UnlockPolicy::DEFAULT)},
++        {"EXTENDED_AUTH_ONLY", static_cast<int32_t>(UnlockPolicy::EXTENDED_AUTH_ONLY)},
++        {"EXTENDED_AUTH_AND_SYSTEM", static_cast<int32_t>(UnlockPolicy::EXTENDED_AUTH_AND_SYSTEM)},
++    };
++    napi_status status = RegisterPublicScreenLockEnum(env, exports, "StrongAuthReasonFlags", strong);
++    if (status != napi_ok) {
++        return status;
++    }
++    status = RegisterPublicScreenLockEnum(env, exports, "AuthState", auth);
++    if (status != napi_ok) {
++        return status;
++    }
++    return RegisterPublicScreenLockEnum(env, exports, "UnlockPolicy", policy);
++}
++
+ napi_status Init(napi_env env, napi_value exports)
+ {
+     napi_property_descriptor exportFuncs[] = {
+@@ -84,7 +146,10 @@
+         DECLARE_NAPI_FUNCTION("getUnlockPolicy", OHOS::ScreenLock::NAPI_GetUnlockPolicy),
+     };
+-    napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
+-    return napi_ok;
++    napi_status status = napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
++    if (status != napi_ok) {
++        return status;
++    }
++    return RegisterPublicScreenLockEnums(env, exports);
+ }
+ 
+ napi_status IsValidEvent(const std::string &type)
+@@ -837,6 +902,7 @@ static napi_value ScreenlockInit(napi_env env, napi_value exports)
+     napi_status ret = Init(env, exports);
+     if (ret != napi_ok) {
+         SCLOCK_HILOGE("ModuleInit failed!");
++        return nullptr;
+     }
+     return exports;
+ }
