@@ -8,7 +8,8 @@ from test_access_token_kernel import compile_run, patch_sections, write_preimage
 
 ROOT=Path(__file__).resolve().parents[2]
 COMPONENT=ROOT/'patches/common/base/telephony/call_manager/api26_enums'
-PATCH=next(COMPONENT.glob('*.patch'))
+PATCH=COMPONENT/'0001-register-public-call-state-and-rtt-enums.patch'
+RTT_PATCH=COMPONENT/'0002-use-existing-IMS-RTT-history-accessor.patch'
 
 class CallPublicEnumsTests(unittest.TestCase):
     def test_exact_registration_all_values_failures_and_both_feature_variants(self):
@@ -83,13 +84,14 @@ int main(){
     def test_component_apply_twice_keeps_original_enum_names_and_callbacks(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
-            write_preimages(root,PATCH)
+            for patch in sorted(COMPONENT.glob('*.patch')):
+                write_preimages(root,patch)
             fixture=root/'fixture'
             shutil.copytree(COMPONENT,fixture/COMPONENT.relative_to(ROOT))
             shutil.copytree(ROOT/'patches/lib',fixture/'patches/lib')
             argv=['bash',str(fixture/COMPONENT.relative_to(ROOT)/'apply.sh'),'--source-root',str(root)]
             subprocess.run(argv,check=True,capture_output=True)
-            paths=list(patch_sections(PATCH))
+            paths=[name for patch in sorted(COMPONENT.glob('*.patch')) for name in patch_sections(patch)]
             before={name:(root/name).read_bytes() for name in paths}
             subprocess.run(argv,check=True,capture_output=True)
             self.assertEqual(before,{name:(root/name).read_bytes() for name in paths})
@@ -98,6 +100,63 @@ int main(){
             self.assertIn('     RegisterCallBack();',text)
             self.assertNotIn('-    Init();',text)
             self.assertNotIn('CheckPermission',text)
+
+    def test_real_RTT_history_accessor_propagates_both_states_and_keeps_non_IMS(self):
+        hunks=next(iter(patch_sections(RTT_PATCH).values()))
+        function='\n'.join(line for hunk in hunks for line in hunk[2])
+        source=r'''
+#include <cassert>
+enum class CallType { TYPE_IMS=1, TYPE_CS=2 };
+class CallBase {
+public:
+ virtual ~CallBase()=default;
+ virtual CallType GetCallType() const {return CallType::TYPE_CS;}
+};
+class IMSCall:public CallBase {
+public:
+ bool previous=false;
+ CallType GetCallType() const override {return CallType::TYPE_IMS;}
+ bool IsPrevRtt() {return previous;}
+};
+template<class T> class sptr {
+ T* pointer;
+public:
+ sptr(T* value):pointer(value){}
+ T* operator->() const {return pointer;}
+ T* GetRefPtr() const {return pointer;}
+};
+struct CallAttributeInfo {bool isPrevRtt=false;};
+class CallRecordsManager {
+public:
+#ifdef SUPPORT_RTT_CALL
+ void RefreshRttFlag(sptr<CallBase>&,CallAttributeInfo&);
+#endif
+};
+'''
+        main=r'''
+int main() {
+#ifdef SUPPORT_RTT_CALL
+ CallRecordsManager manager;
+ IMSCall ims;CallBase circuit;
+ sptr<CallBase> imsCall(&ims),csCall(&circuit);
+ for(unsigned repeat=0;repeat<2048;++repeat) {
+  for(bool previous:{false,true}) {
+   for(bool oldValue:{false,true}) {
+    ims.previous=previous;
+    CallAttributeInfo info;info.isPrevRtt=oldValue;
+    manager.RefreshRttFlag(imsCall,info);assert(info.isPrevRtt==previous);
+    assert(imsCall.GetRefPtr()==&ims && ims.previous==previous);
+    info.isPrevRtt=oldValue;
+    manager.RefreshRttFlag(csCall,info);assert(info.isPrevRtt==oldValue);
+   }
+  }
+ }
+#endif
+}
+'''
+        for flag in ('','#define SUPPORT_RTT_CALL\n'):
+            with self.subTest(feature=bool(flag)):
+                compile_run(flag+'#include <initializer_list>\n'+source+function+main,language='c++')
 
     def test_phone_features_enable_both_real_endpoints_only(self):
         text=(ROOT/'patches/phone/product_profile/apply.py').read_text()
