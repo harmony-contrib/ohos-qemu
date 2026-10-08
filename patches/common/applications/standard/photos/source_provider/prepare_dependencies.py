@@ -115,7 +115,7 @@ def fetch(cache, name, url, checksum):
     with tempfile.TemporaryDirectory(prefix='photos-dependency-', dir=cache) as scratch:
         downloaded = Path(scratch) / name
         subprocess.run(['curl', '-fL', '--proto', '=https', '--proto-redir', '=https',
-                        '--retry', '2', '--connect-timeout', '30', '--max-time', '300',
+                        '--retry', '2', '--retry-all-errors', '--connect-timeout', '30', '--max-time', '300',
                         '--output', str(downloaded), url], check=True)
         if sha(downloaded) != checksum:
             raise ValueError('pinned Photos dependency checksum mismatch: ' + name)
