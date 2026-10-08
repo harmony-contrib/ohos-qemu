@@ -254,8 +254,10 @@ class QemuGuest:
             launcher = self.directory / ('launch/macos.command' if host == 'Darwin' else 'launch/linux.sh')
             argv = ['bash', str(launcher), '--headless', '--a11y', '--hdc-port', str(args.hdc_port),
                     '--qmp-socket', str(self.qmp_path), '--accel', args.accel, '--resolution', args.resolution]
-            if args.purpose == 'acceptance':
-                argv += ['--kernel-log-level', '7']
+            # Both purposes need the actual suspend entry/exit observations
+            # before the finite power-key case below. Logging is read-only;
+            # diagnostic purpose remains ineligible for package acceptance.
+            argv += ['--kernel-log-level', '7']
             # A real independent USB-serial device, not the kernel console.
             # QEMU's default always-plugged=off maps host socket OPEN/CLOSE to
             # actual USB attach/detach. The test runner alone owns this private
@@ -397,10 +399,13 @@ class QemuGuest:
                     'reply': self.qmp('system_powerdown'), 'count': 1,
                     'scope': 'actual_GPIO_key_after_observed_sleep_NOT_default_boot_acceptance'}
                 time.sleep(3)
-            elif args.purpose == 'acceptance':
+            elif args.purpose in ('acceptance', 'diagnostic'):
                 # A phone can legitimately sleep during a no-input interval.
                 # One actual power-key wake is a regression case, not periodic
-                # keepalive. Never send a power key to an observably awake VM.
+                # keepalive. This is also legitimate setup for a diagnostic
+                # boot; its purpose and frozen-input mismatch still prohibit
+                # using it as first-artifact acceptance. Never send a power
+                # key to an observably awake VM.
                 sleep_log = (args.output / 'qemu.log').read_text(errors='replace')
                 if kernel_sleeping(sleep_log):
                     cycle = {'scope': 'one_real_power_key_after_observed_s2idle',

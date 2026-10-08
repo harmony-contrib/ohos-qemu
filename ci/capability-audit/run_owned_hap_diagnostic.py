@@ -114,6 +114,14 @@ def run(args):
                 time.sleep(0.25)
         command([args.hdc, 'tconn', env['target']], 'connect-original-owned-forward')
         same_boot('before')
+        if getattr(args, 'prepare_home', False):
+            if preserve_policy or not args.persona:
+                raise ValueError('ordinary home setup is available only for HAP diagnostics')
+            from guest_ui import GuestUi
+            from run_application_home_probe import prepare
+            home = {'boot_id': env['boot_id'], 'scope': 'diagnostic_ordinary_home_setup_NOT_acceptance'}
+            prepare(GuestUi(command, args.hdc, env['target'], args.output / 'home-ui'), home)
+            report['ordinary_home_setup'] = home
         report['power_states'] = {'before': power_timeout(shell('hidumper -s 3301 -a "-a"', 'power-before'))}
         report['preserve_power_policy'] = preserve_policy
         if not preserve_policy:
@@ -196,6 +204,8 @@ def main():
     parser.add_argument('--root-probe', nargs=2, action='append', default=[], metavar=('KIND', 'PROBE'))
     parser.add_argument('--preserve-power-policy', action='store_true',
                         help='one short root diagnostic only: do not alter any PowerMgr timeout/override')
+    parser.add_argument('--prepare-home', action='store_true',
+                        help='HAP diagnosis: one real default-lock swipe, never credential/security bypass')
     args = parser.parse_args()
     if len(args.persona) != len(set(args.persona)):
         parser.error('duplicate diagnostic persona')

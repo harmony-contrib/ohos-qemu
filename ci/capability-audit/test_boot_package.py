@@ -155,6 +155,19 @@ class FreshPackageBootTests(unittest.TestCase):
         self.assertTrue(kernel_sleeping(entry + '\n' + exit_ + '\n' + entry))
         self.assertFalse(kernel_sleeping('PM: suspend entry (deep)'))
 
+    def test_diagnostic_logging_and_observed_sleep_key_do_not_expand_acceptance(self):
+        source = Path(__file__).with_name('boot_package.py').read_text()
+        self.assertIn("argv += ['--kernel-log-level', '7']", source)
+        begin = source.index("elif args.purpose in ('acceptance', 'diagnostic'):")
+        end = source.index("self.command([args.hdc, 'tconn', self.target], 'reconnect-owned-forward-after-quiet-stability')", begin)
+        finite = source[begin:end]
+        self.assertEqual(finite.count("self.qmp('system_powerdown')"), 1)
+        self.assertLess(finite.index('if kernel_sleeping(sleep_log):'), finite.index("self.qmp('system_powerdown')"))
+        self.assertIn("'count': 1", finite)
+        self.assertNotIn('self.qmp', finite.split('while time.monotonic()', 1)[1])
+        self.assertIn("if args.purpose == 'acceptance':", source)
+        self.assertIn("acceptance boot requires the current exact frozen scripts/patches", source)
+
 
 if __name__ == '__main__':
     unittest.main()

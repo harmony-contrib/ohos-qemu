@@ -67,6 +67,16 @@ class OwnedHapDiagnosticTests(unittest.TestCase):
             self.assertFalse(report['screen_timeout_restore_attempted'])
             self.assertEqual(json.loads((args.output / 'evidence.json').read_text()), report)
 
+    def test_home_setup_uses_existing_real_gesture_and_cannot_override_root_policy(self):
+        source = Path(__file__).with_name('run_owned_hap_diagnostic.py').read_text()
+        home = source.split("if getattr(args, 'prepare_home', False):", 1)[1].split("report['power_states'] =", 1)[0]
+        self.assertIn('if preserve_policy or not args.persona:', home)
+        self.assertIn('from run_application_home_probe import prepare', home)
+        self.assertIn("'diagnostic_ordinary_home_setup_NOT_acceptance'", home)
+        self.assertIn('prepare(GuestUi(', home)
+        for forbidden in ('power-shell', 'setenforce', 'param set', 'grantPermission', 'status='):
+            self.assertNotIn(forbidden, home)
+
 
 if __name__ == '__main__':
     unittest.main()
