@@ -1,0 +1,24 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_module.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_module.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_module.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_module.cpp
+@@ -47,7 +47,7 @@
+ constexpr const char *GET_SYS_VPN_CONFIG = "getSysVpnConfig";
+ constexpr const char *GET_CONNECTED_SYS_VPN_CONFIG = "getConnectedSysVpnConfig";
+ constexpr const char *ENUM_SYSVPN_TYPE = "SysVpnType";
+-constexpr const char *IKEV2_IPSEC_MSCHAPv2_TYPE = "IKEV2_IPSEC_MSCHAPv2";
++constexpr const char *IKEV2_IPSEC_MSCHAPv2_TYPE = "IKEV2_IPSEC_MSCHAPV2";
+ constexpr const char *IKEV2_IPSEC_PSK_TYPE = "IKEV2_IPSEC_PSK";
+ constexpr const char *IKEV2_IPSEC_RSA_TYPE = "IKEV2_IPSEC_RSA";
+ constexpr const char *L2TP_IPSEC_PSK_TYPE = "L2TP_IPSEC_PSK";
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp
+@@ -46,7 +46,7 @@
+ constexpr int32_t PARAM_ONE = 1;
+ #ifdef SUPPORT_SYSVPN
+ constexpr const char *ENUM_SYSVPN_TYPE = "SysVpnType";
+-constexpr const char *IKEV2_IPSEC_MSCHAPv2_TYPE = "IKEV2_IPSEC_MSCHAPv2";
++constexpr const char *IKEV2_IPSEC_MSCHAPv2_TYPE = "IKEV2_IPSEC_MSCHAPV2";
+ constexpr const char *IKEV2_IPSEC_PSK_TYPE = "IKEV2_IPSEC_PSK";
+ constexpr const char *IKEV2_IPSEC_RSA_TYPE = "IKEV2_IPSEC_RSA";
+ constexpr const char *L2TP_IPSEC_PSK_TYPE = "L2TP_IPSEC_PSK";
