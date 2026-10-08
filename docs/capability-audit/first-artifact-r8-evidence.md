@@ -1,5 +1,20 @@
 # 7.0 representative package R8: build and behavior evidence
 
+R10 first build attempt did not produce an archive. Its newly refreshed phone
+GN graph actually compiled `SUPPORT_RTT_CALL` in both endpoints, revealing a
+stale caller in `call_records_manager.cpp`: the fixed IMSCall interface defines
+`IsPrevRtt()`, not `GetIsPrevRtt()`. The source correction is owned by the existing
+call-manager component and preserves actual true/false RTT history and the
+non-IMS path. Exact function fixtures passed with RTT both enabled and disabled,
+including 2048 repeated true/false/non-IMS transitions. No modem, IMS transport
+or actual telephony result is implied. The original failed build log is
+`first-media-document-arm64-phone-build-10.log` under `issue-20-20261006`;
+frozen input tree SHA-256 was
+`0b9115ee775769dece8d6407c6ad2813355388d03ed6f4438c7bb913ca8d5dec`.
+The representative-only retry uses the same package destination, fresh frozen
+inputs and `first-media-document-arm64-phone-build-10b.log`. The remaining five
+packages have not been built or authorized by a first-artifact gate pass.
+
 Latest follow-up (2026-10-08): the current-document custom-media full M144
 ARM64 native build and signed HAP build both completed successfully. The
 dependency recipe is `549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d`;
