@@ -1,0 +1,28 @@
+diff --git a/device/qemu/common/virt_full/hardware/gpu/build_qemu_mesa.py b/device/qemu/common/virt_full/hardware/gpu/build_qemu_mesa.py
+--- a/device/qemu/common/virt_full/hardware/gpu/build_qemu_mesa.py
++++ b/device/qemu/common/virt_full/hardware/gpu/build_qemu_mesa.py
+@@ -267,6 +267,10 @@
+     prepare_qemu_mesa_source(mesa_repo, source_dir)
+     # Reapply and validate even when a cached extracted source tree is reused.
+     backport_ohos_logger_fixes(source_dir)
++    subprocess.run(
++        [sys.executable, str(root / "device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/apply_mesa_kms_mapping.py"),
++         "--source-root", str(source_dir)], check=True,
++    )
+     write_cross_file(cross_file, root, sysroot, target)
+     write_pkg_config_files(mesa_repo, root, product, pkg_config_dir)
+     meson = shutil.which("meson")
+diff --git a/device/qemu/common/virt_full/hardware/gpu/BUILD.gn b/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
+--- a/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
++++ b/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
+@@ -27,6 +27,10 @@
+ # that fix and crashes RenderService while eglInitialize() selects virtio_gpu.
+ action("qemu_mesa_build") {
+   script = "build_qemu_mesa.py"
++  inputs = [
++    "mesa_kms_mapping/apply_mesa_kms_mapping.py",
++    "mesa_kms_mapping/0001-serialize-displaytarget-mapping.patch",
++  ]
+   deps = [
+     "//third_party/expat:expat",
+     "//third_party/libdrm:libdrm",

@@ -565,3 +565,51 @@ remaining foreground. The normal lock gesture and bounded cleanup of only
 unlock, policy clear or fabricated home result was used. The old RS crash has
 not recurred in these rounds and is **not closed** by their success. The normal
 representative rebuild and remaining-five matrix have not started.
+
+## Unified historical Mesa mapping repair (2026-10-08)
+
+The actual QEMU driver is built from Mesa 21.3.3, not the release checkout's
+Mesa 25 tree. Its unprotected map/unmap functions have a deterministically
+reproduced independent defect: while a new caller is about to increment the
+mapping count, an existing caller can unmap the buffer, causing the new map
+to return `MAP_FAILED`. The host regression executes the complete original
+native functions and a controlled thread interleaving; it does not replace
+the algorithm with a fabricated equivalent.
+
+`third_party/mesa3d/kms_mapping_synchronization` backports upstream
+`d318d65b798275bd62bfab41f57a7d03d13852da` mapping serialization, extended to
+initialize both created and PRIME-imported targets, check init failures,
+release initialized mutexes on failure/final cleanup, and capture the return
+pointer before unlocking. Failed maps are not silently turned into successful
+draws. Public APIs, permissions, caller identity and render backends are intact.
+
+The numbered historical patch and exact before/after source helper are
+installed once into the QEMU source tree. The separate QEMU recipe component
+invokes the same helper in both builder implementations after extraction and
+logger repair, including cached source reuse. Separate device and Mesa GN
+components track both payloads as action inputs. This common pre-traversal
+plan covers all three ABIs and both profiles. Exact known-state guards
+preserve unknown source edits, including when the base installer refreshes
+only the common Python builder payload.
+
+Seven targeted host regressions passed, including the original negative
+interleaving, 64 repaired interleavings, map-ioctl/mmap failure unlocks, shared
+read-only/read-write mapping lifetime, duplicate unmap, complete-file guards,
+repeat application and unknown sibling preservation. Actual read-only source
+checks applied the three recipe patches in private scratch twice, matched
+the complete native functions against the real historical sources, and
+compiled the repaired complete KMS source through each actual cached Meson
+command. All three target ELF machines passed, with unchanged real compiler
+flags and ARMv7 softfp/NEON/Thumb options. Evidence:
+`mesa-kms-three-abi-real-20261008-02`. The first check honestly failed on an
+inspector source-root depth error, fixed before the passing retry; it was not
+a driver compile or guest pass. The complete host suite passed **928 tests
+in 144.893 seconds** (`mesa-kms-unified-integrated-host-20261008-01.log`).
+
+These results establish an actual separate mapping race and its narrow
+repair, **not** that R11b's RS null-transfer crash has been resolved. Normal
+representative packaging and actual boot/rendering/exit/boundary/stability
+tests remain mandatory. The owned tile diagnostic QEMU was closed through
+its verified original QMP socket after its wrapper was no longer present;
+archive, runtime evidence and userdata remain preserved. No remaining-five
+matrix or six-package delivery has happened.

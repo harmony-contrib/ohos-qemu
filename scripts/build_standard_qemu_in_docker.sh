@@ -253,6 +253,9 @@ HUKS_COMPATIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/huks/com
 QEMU_KERNEL_CAPABILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/kernel_capability/apply.sh"
 QEMU_HOST_GN_EXECUTION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/host_gn_execution/apply.sh"
 IDL_COMMON_TYPE_OUTPUTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/idl_common_type_outputs/apply.sh"
+MESA_KMS_MAPPING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/mesa3d/kms_mapping_synchronization/apply.sh"
+QEMU_KMS_MESA_BUILD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/kms_mesa_build/apply.sh"
+MESA_KMS_MAPPING_BUILD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/mesa3d/kms_mapping_build/apply.sh"
 QEMU_POWER_WAKELOCKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/power_wakelocks/apply.sh"
 QEMU_POWER_BUTTON_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_power_button/apply.sh"
 QEMU_VIRTIO_GPU_S2IDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_virtio_gpu_s2idle/apply.sh"
@@ -2820,6 +2823,12 @@ apply_qemu_capability_patch_plan() {
   apply_sdk_cortex_m_component
   apply_qemu_audio_component
   apply_standard_vpn_component
+  bash "${MESA_KMS_MAPPING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_kms_mapping_component.log"
+  bash "${QEMU_KMS_MESA_BUILD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_kms_mesa_build_component.log"
+  bash "${MESA_KMS_MAPPING_BUILD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_kms_mapping_build_component.log"
   apply_qemu_vulkan_component
   bash "${RENDER_CONNECTION_REPLY_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_render_connection_reply.log"
