@@ -230,3 +230,46 @@ graphs select or generate the current action. No fake header or ABI stub is
 used. Narrow Fusion/I18n image-plus-init verifiers and four negative fixture
 tests are also staged privately, not yet executed in a packaged guest or
 registered as ledger closure. None of these candidates is part of R9.
+
+## Post-R9 repairs and rebuild (not package acceptance)
+
+The subsequent native/public-enum repairs are now repository components in
+the single pre-traversal patch plan, not private scripts: commits `eab0626`
+and `2f904e5` cover I18n, DeviceManager, system sound, Call, ScreenLock,
+Audio and UIEffect. The original gap ledger is unchanged. Audio/UIEffect's
+six actual cached-product translation-unit commands passed for all three
+ABIs, with source/output volumes mounted read-only and no flag, generated
+header or provider substitution (`audio-filter-public-enums-three-arch-01`).
+This remains object compilation, not fresh product GN/link or guest proof.
+
+Commit `42b86eb` adds a document-scoped M144 custom-media creation candidate
+and synchronizes the typed test with actual create/release callbacks rather
+than title timing. A rejected current-document factory is not retried through
+an old-document pipe. Existing browser origin/permission/cookie checks and
+the decoder/CDM cache are unchanged. Native build, HAP packaging and the
+locked-source patch-context checker all use the same component.
+
+The rebuilt ARM64 full native core completed successfully through the normal
+local Docker entry under dependency recipe
+`549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d`.
+Its `libarkweb_engine.so` SHA-256 is
+`d0a07815552c06f92c3dfe3caa6fab7de8a4a8449ac7f1d57c5baf868f8f6080`.
+All five real-ABI native libraries were archived by the builder; exact inputs,
+commands, source graph and hashes are under
+`/Volumes/PSSD/qemu/artifacts/arkweb-m144-7.0/549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d/arm64`.
+Command: `M144_SKIP_FETCH=1 M144_CORE_SKIP_APT=1 M144_CORE_BUILD_JOBS=4
+DOCKER_IMAGE=ohos-qemu-m144-build-env:7.0-release
+bash scripts/run_m144_release_build_docker.sh native arm64`.
+The paired `hap arm64` stage is running. This is **not** a QEMU archive,
+first-package runtime pass or delivery of any remaining architecture.
+
+Commit `e9a286d` adds package/image/init evidence for the narrow original
+Fusion-account and I18n-init findings. Its ledger closure rechecks the exact
+system image, captured account/config/stat files and same-boot init trace;
+I18n additionally needs the fresh ordinary data/permission/error probe.
+Initialization alone cannot close I18n data behavior or Fusion hardware/peer
+ranging. Seven negative/positive host fixtures passed; actual newly packaged
+guest execution is pending. The complete host batch passed 854 tests in
+120.924 seconds (`capability-host-tests-20261008-next-public-enums-04.log`).
+No remaining-five package build has started and all unresolved findings
+remain mandatory at the representative gate.
