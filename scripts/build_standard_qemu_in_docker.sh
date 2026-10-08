@@ -211,6 +211,8 @@ I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api
 DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
 SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_tone_haptics_feature/apply.sh"
 METADATA_FETCH_RESULT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_fetch_result/apply.sh"
+INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_insight_configuration_mode/apply.sh"
+CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
 AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/api26_public_enums/apply.sh"
 UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/ui_effect/api26_public_modes/apply.sh"
 BLUETOOTH_CONTROL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_control_enums/apply.sh"
@@ -250,6 +252,7 @@ USAGE_STATS_INIT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourcesched
 HUKS_COMPATIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/huks/compatibility_bin/apply.sh"
 QEMU_KERNEL_CAPABILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/kernel_capability/apply.sh"
 QEMU_HOST_GN_EXECUTION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/host_gn_execution/apply.sh"
+IDL_COMMON_TYPE_OUTPUTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/idl_common_type_outputs/apply.sh"
 QEMU_POWER_WAKELOCKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/power_wakelocks/apply.sh"
 QEMU_POWER_BUTTON_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_power_button/apply.sh"
 QEMU_VIRTIO_GPU_S2IDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_virtio_gpu_s2idle/apply.sh"
@@ -2734,6 +2737,8 @@ prepare_source_and_sdk() {
 apply_qemu_capability_patch_plan() {
   bash "${QEMU_HOST_GN_EXECUTION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_host_gn_execution_component.log"
+  bash "${IDL_COMMON_TYPE_OUTPUTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_idl_common_type_outputs_component.log"
   if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ]; then
     test -x /usr/bin/qemu-x86_64-static
     sha256sum "${OHOS_ROOT}/prebuilts/build-tools/linux-x86/bin/gn" /usr/bin/qemu-x86_64-static
@@ -2920,6 +2925,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_public_enums_component.log"
   bash "${METADATA_FETCH_RESULT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_metadata_fetch_result_component.log"
+  bash "${INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_insight_configuration_mode_component.log"
+  bash "${CLI_SESSION_STATUS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_cli_session_status_component.log"
   bash "${ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_alsa_config_install_component.log"
   bash "${CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

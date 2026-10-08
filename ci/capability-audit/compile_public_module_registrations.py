@@ -14,6 +14,12 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTS = {'arm64_virt': 'aarch64-linux-ohos', 'armv7a_virt': 'arm-linux-ohos',
             'x86_64_virt': 'x86_64-linux-ohos'}
 PLAN = (
+    ('cli-session-status', 'foundation/ability/ability_runtime/api26_cli_session_status',
+     'foundation/ability/ability_runtime/cli_tool_framework/frameworks/js/napi/cli_tool_manager/src/js_cli_manager.cpp',
+     'obj/foundation/ability/ability_runtime/cli_tool_framework/frameworks/js/napi/cli_tool_manager/src/climanager_napi/js_cli_manager.o'),
+    ('insight-configuration-mode', 'foundation/ability/ability_runtime/api26_insight_configuration_mode',
+     'foundation/ability/ability_runtime/frameworks/js/napi/insight_intent/insight_intent_driver/js_insight_intent_driver.cpp',
+     'obj/foundation/ability/ability_runtime/frameworks/js/napi/insight_intent/insight_intent_driver/insightintentdriver_napi/js_insight_intent_driver.o'),
     ('metadata-fetch-result', 'foundation/multimedia/player_framework/api26_fetch_result',
      'foundation/multimedia/player_framework/frameworks/js/media/media_enum_napi.cpp',
      'obj/foundation/multimedia/player_framework/frameworks/js/media/media/media_enum_napi.o'),

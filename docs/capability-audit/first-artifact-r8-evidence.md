@@ -511,3 +511,57 @@ records its diagnostic-only purpose and single DSO replacement. **It is not
 a deliverable, normal rebuild or acceptance pass.** The original R11b
 archive and its failure result are retained. The remaining-five matrix has
 not started.
+
+## Insight/CLI public contracts and shared IDL dependency repair (2026-10-08)
+
+`api26_insight_configuration_mode` exports only the existing native foreground
+and background execution values as `ExecuteModeForConfiguration`; extension
+execution modes are not configuration values. Its initializer checks all new
+NAPI steps and leaves the existing functions, dispatch, errors and permissions
+unchanged. `api26_cli_session_status` similarly exports the three real server
+session strings (`running`, `completed`, `failed`) before wrapper ownership is
+established. It does not replace CLI execution, callbacks or session providers.
+
+Both exact helpers passed repeated host sanitizer/error tests and marker-free
+LF/CRLF application. Six actual translation units passed, one per component
+and ABI, with unchanged real cached-product compiler flags and source/output
+mounted read-only: `insight-configuration-mode-three-abis-tu-20261008-02` and
+`cli-session-status-three-abis-tu-20261008-03`. These are object checks, not
+fresh product graph/link or packaged execution proof.
+
+The initial ARMv7 CLI check failed because its stale output graph had not
+generated the real CLI headers. Running the original cached producer actions
+for ARMv7a/x86_64 generated their byte-identical actual IDL inputs, without
+invented headers. This exposed a separate current shared GN defect: it declared
+`iicli_tool_data.h`, although the actual emitter and consumer use
+`icli_tool_data.h`. `build/idl_common_type_outputs` removes only the redundant
+common-type prefix branch. Interface/callback names, IDL types and service
+protocols stay unchanged. Complete pinned before/after hashes protect edits.
+
+The actual fixed-version GN executed the original and repaired common naming
+fragments in private minimal graphs, including initial-I, non-I, acronym and
+nested paths. It reproduced the old wrong output and confirmed the repaired
+names. The real ARM64 IDL binary separately generated the actual CLI headers
+and C++ sources in private output; the corrected common outputs existed and
+the old wrong header did not. Commands/hashes/results are recorded in
+`idl-common-type-output-real-20261008-01`. This is a GN fragment/emitter check,
+not a complete product build. Four new fail-closed/idempotence host fixtures
+passed. The combined complete host batch passed **921 tests in 142.598 seconds**
+(`insight-cli-idl-integrated-host-20261008-01.log`). The original gap ledger
+remains unchanged; newly packaged public-contract and provider tests are pending.
+
+The second private Mesa diagnostic archive adds transfer/tile-map failure
+logging without altering rendering behavior:
+`/Volumes/PSSD/qemu/packages/diagnostic-only-mesa-map-tile-7.0-release-20261008-r11b/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`,
+SHA-256 `2986c6f73a74ab4853bcca730139e903dad340f4f7cd49b559a7c0babfdadf70`.
+Its owned ARM64/HVF diagnostic boot passed two actual default-policy
+suspend/wake cycles before home setup, and ordinary Web/Web-factory, Vulkan
+window, Curve, Binding and runtime-enum probes. A later round also passed
+the three real native Vulkan probes. All are diagnostics on the modified R11b
+archive, not first-package acceptance. Two intervening attempts honestly
+failed on an existing lock-screen timeout override and the prior test app
+remaining foreground. The normal lock gesture and bounded cleanup of only
+`org.harmonycontrib.capabilityaudit` allowed the subsequent round; no security
+unlock, policy clear or fabricated home result was used. The old RS crash has
+not recurred in these rounds and is **not closed** by their success. The normal
+representative rebuild and remaining-five matrix have not started.

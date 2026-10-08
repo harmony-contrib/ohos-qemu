@@ -1,0 +1,37 @@
+diff --git a/foundation/ability/ability_runtime/frameworks/js/napi/insight_intent/insight_intent_driver/js_insight_intent_driver.cpp b/foundation/ability/ability_runtime/frameworks/js/napi/insight_intent/insight_intent_driver/js_insight_intent_driver.cpp
+--- a/foundation/ability/ability_runtime/frameworks/js/napi/insight_intent/insight_intent_driver/js_insight_intent_driver.cpp
++++ b/foundation/ability/ability_runtime/frameworks/js/napi/insight_intent/insight_intent_driver/js_insight_intent_driver.cpp
+@@ -621,6 +621,18 @@
+     return handleEscape.Escape(napiObject);
+ }
+ 
++static napi_value InitExecuteModeForConfigurationObject(napi_env env)
++{
++    HandleEscape handleEscape(env);
++    napi_value napiObject = nullptr;
++    NAPI_CALL(env, napi_create_object(env, &napiObject));
++    NAPI_CALL(env, SetEnumItem(
++        env, napiObject, "FOREGROUND", ExecuteMode::UI_ABILITY_FOREGROUND));
++    NAPI_CALL(env, SetEnumItem(
++        env, napiObject, "BACKGROUND", ExecuteMode::UI_ABILITY_BACKGROUND));
++    return handleEscape.Escape(napiObject);
++}
++
+ napi_value JsInsightIntentDriverInit(napi_env env, napi_value exportObj)
+ {
+     TAG_LOGD(AAFwkTag::INTENT, "called");
+@@ -652,11 +664,14 @@
+     napi_value intentDevelopType = InitIntentDevelopTypeObject(env);
+     NAPI_ASSERT(env, intentDevelopType != nullptr, "failed to create develop type object");
++    napi_value executeModeForConfiguration = InitExecuteModeForConfigurationObject(env);
++    NAPI_ASSERT(env, executeModeForConfiguration != nullptr, "failed to create configuration execute mode object");
+ 
+     napi_property_descriptor exportObjs[] = {
+         DECLARE_NAPI_PROPERTY("GetInsightIntentFlag", getInsightIntentFlag),
+         DECLARE_NAPI_PROPERTY("InsightIntentType", insightIntentType),
+         DECLARE_NAPI_PROPERTY("DevelopType", intentDevelopType),
++        DECLARE_NAPI_PROPERTY("ExecuteModeForConfiguration", executeModeForConfiguration),
+     };
+     napi_status status = napi_define_properties(env, exportObj, sizeof(exportObjs) / sizeof(exportObjs[0]), exportObjs);
+     NAPI_ASSERT(env, status == napi_ok, "failed to define properties for exportObj");
+     return CreateJsUndefined(env);
