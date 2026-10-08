@@ -136,6 +136,37 @@ def tree(path):
     return result
 
 
+def install_tree(source, destination):
+    """Copy verified assets across mounts, then atomically install on source FS."""
+    owned(destination)
+    if destination.exists():
+        raise ValueError('Photos native source appeared during preparation')
+    with tempfile.TemporaryDirectory(prefix='.qemu-photos-source-', dir=destination.parent) as temporary:
+        staged = Path(temporary) / 'source'
+        shutil.copytree(source, staged)
+        if tree(staged) != tree(source):
+            raise ValueError('Photos dependency changed during source installation')
+        owned(destination)
+        if destination.exists():
+            raise ValueError('Photos native source appeared during installation')
+        staged.rename(destination)
+
+
+def install_profile(source, destination):
+    """Never rename a cache-volume profile directly into the source volume."""
+    owned(destination)
+    with tempfile.TemporaryDirectory(prefix='.qemu-photos-profile-', dir=destination.parent) as temporary:
+        staged = Path(temporary) / 'photos.p7b'
+        shutil.copy2(source, staged)
+        if sha(staged) != sha(source):
+            raise ValueError('Photos signed profile changed during installation')
+        owned(destination)
+        if sha(destination) != PROFILE_SHA:
+            raise ValueError('Photos original profile changed during preparation')
+        shutil.copymode(destination, staged)
+        staged.replace(destination)
+
+
 def unpack_jsoncpp(archive, destination):
     prefix = 'jsoncpp-' + JSONCPP_COMMIT
     with tarfile.open(archive, 'r:gz') as source:
@@ -231,9 +262,9 @@ def prepare(root, cache):
         if not lottie.exists():
             shutil.copy2(archives[lottie.name], lottie)
         if not native_source.exists():
-            source.rename(native_source)
+            install_tree(source, native_source)
         if pristine:
-            signed.replace(profile_path)
+            install_profile(signed, profile_path)
     return {'status': 'pass', 'scope': 'fixed_Photos_source_dependencies_and_OS_profile_NOT_HAP_or_guest_acceptance',
             'first_artifact_behavior_gate_passed': False, 'source_revision': REVISION,
             'assets_sha256': {name: values[1] for name, values in ASSETS.items()},
