@@ -127,6 +127,40 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed['behavior:module-update-initializer-missing'] = proof
             closed['behavior:usage-statistics-stale-init-profile'] = proof
 
+    service_init = child('service-init-contracts/evidence.json')
+    if service_init and service_init[1].get('persona') == 'service-init-contracts':
+        from verify_service_init_contracts import verify_evidence
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('service init closure requires the original acceptance boot evidence')
+        verify_evidence(service_init[1], service_init[0].parent, json.loads(boot_path.read_text()),
+                        archive_sha, boot_id)
+        proof = {'evidence': str(service_init[0]), 'sha256': digest(service_init[0]),
+                 'verifier': 'actual_package_accounts_configs_directory_stat_and_same_boot_init_exec',
+                 'not_claimed': 'Fusion_hardware_peer_ranging_or_OEM_customization_updates'}
+        closed['behavior:fusion-connectivity-init-accounts'] = proof
+        i18n = child('i18n/evidence.json')
+        if i18n and i18n[1].get('persona') == 'i18n':
+            from verify_i18n_data import verify as verify_i18n
+            from run_normal_hap_probe import require_normal_identity
+            document = i18n[1]
+            raw, identity = i18n[0].parent / 'results.log', i18n[0].parent / 'application-identity.json'
+            result = Path(document.get('result', ''))
+            if all(path.is_file() and not path.is_symlink() and digest(path) == document.get(key)
+                   for path, key in ((raw, 'raw_results_sha256'), (identity, 'ordinary_identity_sha256'),
+                                     (result, 'result_sha256'))):
+                require_normal_identity(identity.read_text())
+                actual = verify_i18n(raw.read_text(), document['run_id'])
+                verification = json.loads(result.read_text())
+                if (verification.get('status') != 'pass' or verification.get('results') != actual or
+                        verification.get('archive_sha256') != archive_sha or
+                        verification.get('run_id') != document['run_id'] or
+                        verification.get('results_sha256') != digest(raw)):
+                    raise ValueError('I18n closure differs from actual fresh ordinary data/permission results')
+                closed['behavior:i18n-core-and-customization-paths'] = dict(proof,
+                    ordinary_data_evidence=str(i18n[0]), ordinary_data_sha256=digest(i18n[0]),
+                    verifier='actual_init_paths_plus_ordinary_timezone_phone_locale_and_error_boundaries')
+
     web = child('web/evidence.json')
     if web and web[1].get('persona') == 'web':
         verification = Path(web[1].get('result', ''))

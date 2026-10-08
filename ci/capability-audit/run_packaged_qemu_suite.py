@@ -284,6 +284,13 @@ def run(args):
             if persona == 'web':
                 check('arkweb', path, [record])
             same_guest('after-' + persona)
+        service_init_record = command([sys.executable,
+            Path(__file__).with_name('run_service_init_contract_probe.py'),
+            '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
+            '--output', work / 'service-init-contracts', '--hdc', hdc,
+            '--docker-image', docker_image], 'actual-Fusion-accounts-and-I18n-init-paths', timeout=900)
+        check('service-init-contracts', work / 'service-init-contracts/evidence.json', [service_init_record])
+        same_guest('after-service-init-contracts')
         # Native Vulkan queue/memory, OHOS WSI resize/readback and actual
         # compositor UI are independent tests, not browser/WebGL substitutes.
         graphics = work / 'graphics-probes'

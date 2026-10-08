@@ -95,6 +95,7 @@ class PackagedSuiteTests(unittest.TestCase):
         self.assertIn('guest.close()', text)
         self.assertIn("'verify_gap_closure.py'", text)
         self.assertIn("'run_native_bindings_e2e.py'", text)
+        self.assertIn("'run_service_init_contract_probe.py'", text)
         for forbidden in ('--candidate-surface', '--candidate-fence', 'setenforce', 'server -k', 'system_wakeup'):
             self.assertNotIn(forbidden, text)
 
