@@ -1,7 +1,7 @@
 """Compiler relocation confinement, not native compilation evidence."""
 from pathlib import Path
 import unittest
-from compile_public_module_registrations import COMPONENTS, PLAN, ROOT, relocate
+from compile_public_module_registrations import COMPONENTS, PATCH_ONLY_SOURCES, PLAN, ROOT, relocate
 import re
 
 
@@ -12,7 +12,8 @@ class RegistrationCompilerTests(unittest.TestCase):
         for component in COMPONENTS:
             paths = (ROOT / 'patches/common' / component).glob('*.patch')
             actual = {name for path in paths for name in re.findall(r'^\+\+\+ b/(.+)$', path.read_text(), re.M)}
-            self.assertEqual(actual, {row[2] for row in PLAN if row[1] == component})
+            self.assertEqual(actual, {row[2] for row in PLAN if row[1] == component} |
+                             set(PATCH_ONLY_SOURCES.get(component, ())))
 
     def fixture(self):
         root=Path('/readonly/source')

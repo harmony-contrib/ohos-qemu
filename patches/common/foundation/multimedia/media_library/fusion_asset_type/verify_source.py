@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
-from exact_source_states import validate_component
+from exact_source_states import digest, validate_component
 
 PROJECT = 'foundation/multimedia/media_library'
 REVISION = '564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380'
@@ -15,13 +15,43 @@ FILES = (('frameworks/js/src/media_library_napi.cpp',
          ('frameworks/js/src/photoaccesshelperinf.js',
           '804aea4300b31167be5a2fed86f0870c95f605ac689ea906f128ecc03dc37127',
           'b283d47255e633b5ed1b0f0ae27ef98ddc835d69ab60cdd2137e50da55ef1439'))
+COMPOSED_NATIVE_SHA = 'c45cb3a1a9b65df3dddd37a816660309b82c5c40af4605d63932b5d338335b30'
+COMPOSED_WRAPPER_SHA = '5e5035b8b3913f49bc568798ebf83e737e627bec154331f2177db20dba519b4c'
+COMPOSED_COVER_FILE = ('frameworks/js/src/photo_album_napi.cpp',
+    'ff44f5e8a2cfb8d22c8f3291233e37dcf01a3739111f98360991eed04ba501f2',
+    'e24265bb5563eddd384c7c11181ca53697b075f7f3df8c4484178daac7a6535c')
 
 
 def validate(root, require_patched=False):
     # Recognize only the pristine source, the exact 0001 prefix already used
     # by prior builds, or the complete native + public-wrapper stack. No marker
     # file, reverse hunk or unrelated source edit can authorize a transition.
-    states = tuple(validate_component(root, PROJECT, REVISION, (entry,)) for entry in FILES)
+    root = Path(root).resolve()
+    native = root / PROJECT / FILES[0][0]
+    cursor = native
+    while cursor != root:
+        if cursor.is_symlink():
+            raise ValueError('component input contains a symlink: ' + FILES[0][0])
+        cursor = cursor.parent
+    composed = digest(native.read_bytes()) == COMPOSED_NATIVE_SHA
+    files = ((FILES[0][0], FILES[0][1], COMPOSED_NATIVE_SHA), FILES[1]) if composed else FILES
+    if composed:
+        wrapper = root / PROJECT / FILES[1][0]
+        cursor = wrapper
+        while cursor != root:
+            if cursor.is_symlink():
+                raise ValueError('component input contains a symlink: ' + FILES[1][0])
+            cursor = cursor.parent
+        if digest(wrapper.read_bytes()) == COMPOSED_WRAPPER_SHA:
+            files = (files[0], (FILES[1][0], FILES[1][1], COMPOSED_WRAPPER_SHA))
+    states = tuple(validate_component(root, PROJECT, REVISION, (entry,)) for entry in files)
+    if composed:
+        # Recognize only the exact FULL Fusion+Photo native source together
+        # with its actual cover getter and complete public Fusion wrapper.
+        # Unknown sibling edits and partial compositions remain fatal.
+        validate_component(root, PROJECT, REVISION, (COMPOSED_COVER_FILE,), require_patched=True)
+        if states != (True, True):
+            raise ValueError('incomplete composed Photo/Fusion stack; preserving source')
     if states not in ((False, False), (True, False), (True, True)):
         raise ValueError('noncontiguous FusionAssetType component state; preserving source')
     complete = states == (True, True)

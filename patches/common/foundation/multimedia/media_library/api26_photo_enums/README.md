@@ -12,6 +12,9 @@ CoverUriSource exposes DEFAULT_COVER=0 and MANUAL_COVER=1; normalize the native
 local/cloud/pending manual distinctions only at the existing JS getter.
 Native storage, IPC, system-app authorization, Photo operations and unknown
 stored values are unchanged. ThumbnailVisibility uses its native definitions.
+The public JS wrapper already forwards the other four enums, but also needs
+explicit CoverUriSource/ThumbnailVisibility forwarding; 0002 preserves the
+real native object identity and does not construct replacement enum values.
 
 Applied by the common phone/2in1 pre-traversal plan, before fresh GN generation.
 Host sanitizer fixtures and real product TU checks do not demonstrate new

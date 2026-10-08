@@ -11,6 +11,11 @@ leaves album access, providers, permissions and sync behavior unchanged.
 The exact component validates the fixed project commit and complete before/
 after source hashes, then supports fresh/repeated application and the exact
 known 0001 prefix. Unknown or noncontiguous edits fail before source writes.
+The later Photo component runs after Fusion. Repeated builds additionally
+recognize only its exact native composition, real cover getter and either
+exact public-wrapper prefix or final forwarding; unknown/partial sibling
+edits still fail. These complete hashes are reproduced from the fixed HEAD
+plus both component patch stacks, not taken as authority from the dirty source.
 Both profiles and all ABIs use the
 common patch plan before product compilation/traversal.
 

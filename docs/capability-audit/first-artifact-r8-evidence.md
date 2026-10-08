@@ -1,5 +1,30 @@
 # 7.0 representative package R8: build and behavior evidence
 
+R11 first attempt was stopped before GN/package creation by the strict existing
+FusionAssetType source check: new Photo native registrations changed its exact
+source hash. Frozen inputs were `phone-tRDwKQ`, tree SHA-256
+`38851ed1561fad04372c01cfa434f593e4dc898a60262763016dc4e3eb7210b7`;
+log `first-public-contracts-migration-arm64-phone-build-11.log`.
+The repair runs Fusion before Photo and recognizes only their reproduced exact
+complete source composition, cover getter and known public-wrapper prefixes.
+Complete source is not re-patched using obsolete reverse-hunk context. Unknown
+edits, incomplete sibling state and symlinks still fail without source writes.
+Inspection also found the public JS wrapper must forward CoverUriSource and
+ThumbnailVisibility; the other four enums were already forwarded. New Photo
+patch 0002 forwards the actual objects, never replacement enum values.
+Actual fixed-HEAD scratch composition evidence is
+`photo-fusion-real-fixed-source-composition-20261008-01.log` and
+`photo-fusion-real-fixed-source-composition-20261008-02.log` in the existing
+evidence directory. Neither result is a new archive or guest pass.
+The final fixed-HEAD reproduction with both Photo wrapper forwards and repeat
+application passed in `photo-fusion-real-fixed-source-composition-20261008-03.log`;
+all original source inputs remained unchanged. The integrated full host suite
+then passed 884 tests in 127 seconds, recorded in
+`unified-public-enums-HUKS-composition-host-20261008-10.log`.
+R11's representative-only retry will use fresh frozen inputs and
+`first-public-contracts-migration-arm64-phone-build-11b.log`; no remaining-five
+build starts before real new-archive behavior and complete audit closure pass.
+
 The next representative recipe includes seven additional component scripts in
 the common phone/2in1 **pre-traversal** plan: OPP enums, Photo enums and public
 cover-source normalization, EffectKit light-degree, mission ContinueState,

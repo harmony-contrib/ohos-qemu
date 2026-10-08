@@ -11,5 +11,12 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "${SOURCE_ROOT}" ] || { echo 'usage: apply.sh --source-root ROOT' >&2; exit 2; }
 python3 "${COMPONENT_DIR}/verify_source.py" --source-root "${SOURCE_ROOT}"
+# Exact complete source may also contain the separately verified Photo stack.
+# Its inserted helper changes reverse-hunk context; do not reapply a patch
+# which the full source hashes have already proven complete.
+if python3 "${COMPONENT_DIR}/verify_source.py" --source-root "${SOURCE_ROOT}" --require-patched >/dev/null 2>&1; then
+  echo 'verified complete exact FusionAssetType component (including known Photo composition)'
+  exit 0
+fi
 python3 "${PATCH_ROOT}/lib/apply_component_stack.py" --component-dir "${COMPONENT_DIR}" --source-root "${SOURCE_ROOT}"
 python3 "${COMPONENT_DIR}/verify_source.py" --source-root "${SOURCE_ROOT}" --require-patched

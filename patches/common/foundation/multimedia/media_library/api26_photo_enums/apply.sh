@@ -12,3 +12,4 @@ done
 [ -n "${SOURCE_ROOT}" ] || { echo "--source-root is required" >&2; exit 2; }
 bash "${PATCH_ROOT}/lib/apply_component_dir.sh" "${COMPONENT_DIR}" --source-root "${SOURCE_ROOT}"
 git -C "${SOURCE_ROOT}" apply --check --reverse "${COMPONENT_DIR}/0001-register-public-photo-enums-and-normalize-cover-source.patch"
+git -C "${SOURCE_ROOT}" apply --check --reverse "${COMPONENT_DIR}/0002-forward-public-cover-and-thumbnail-enums.patch"

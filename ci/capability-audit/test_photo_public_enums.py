@@ -8,6 +8,7 @@ from test_access_token_kernel import compile_run, patch_sections, write_preimage
 ROOT = Path(__file__).resolve().parents[2]
 COMPONENT = ROOT / 'patches/common/foundation/multimedia/media_library/api26_photo_enums'
 PATCH = COMPONENT / '0001-register-public-photo-enums-and-normalize-cover-source.patch'
+WRAPPER_PATCH = COMPONENT / '0002-forward-public-cover-and-thumbnail-enums.patch'
 
 
 def function(name):
@@ -20,6 +21,27 @@ def function(name):
 
 
 class PhotoPublicEnumTests(unittest.TestCase):
+    def test_public_wrapper_forwards_real_native_objects_and_never_synthesizes_members(self):
+        added = [line[1:] for line in WRAPPER_PATCH.read_text().splitlines()
+                 if line.startswith('+') and not line.startswith('+++')]
+        self.assertEqual(added, ['  CoverUriSource: photoAccessHelper.CoverUriSource,',
+                                 '  ThumbnailVisibility: photoAccessHelper.ThumbnailVisibility,'])
+        script = r'''
+const assert=require('node:assert/strict');
+const forward=new Function('photoAccessHelper','return ({'+process.argv[1]+'});');
+for(let i=0;i<128;i++) {
+ const native={CoverUriSource:{DEFAULT_COVER:i,MANUAL_COVER:i+1},ThumbnailVisibility:{INVISIBLE:i,VISIBLE:i+1}};
+ const actual=forward(native);
+ assert.equal(actual.CoverUriSource,native.CoverUriSource);
+ assert.equal(actual.ThumbnailVisibility,native.ThumbnailVisibility);
+ assert.equal(actual.CoverUriSource.DEFAULT_COVER,i);
+ assert.equal(actual.ThumbnailVisibility.VISIBLE,i+1);
+}
+assert.equal(forward({}).CoverUriSource,undefined);
+assert.equal(forward({}).ThumbnailVisibility,undefined);
+'''
+        subprocess.run(['node', '-e', script, '\n'.join(added)], capture_output=True, check=True)
+
     def test_every_member_every_napi_failure_and_repeated_initialization(self):
         source = r"""
 #include <cassert>
@@ -105,10 +127,12 @@ int main() {
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             write_preimages(root, PATCH)
+            write_preimages(root, WRAPPER_PATCH)
             for _ in range(2):
                 subprocess.run(['bash', str(COMPONENT / 'apply.sh'), '--source-root', str(root)],
                                check=True, capture_output=True)
             subprocess.run(['git', '-C', str(root), 'apply', '--check', '--reverse', str(PATCH)], check=True)
+            subprocess.run(['git', '-C', str(root), 'apply', '--check', '--reverse', str(WRAPPER_PATCH)], check=True)
         self.assertIn('if (RegisterPublicPhotoEnums(env, exports) != napi_ok) {\n+        return nullptr;', PATCH.read_text())
 
 

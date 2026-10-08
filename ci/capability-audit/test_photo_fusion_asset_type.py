@@ -17,6 +17,62 @@ WRAPPER = 'foundation/multimedia/media_library/frameworks/js/src/photoaccesshelp
 
 
 class PhotoFusionAssetTypeTests(unittest.TestCase):
+    def test_exact_full_photo_composition_repeats_but_unknown_or_partial_composition_does_not(self):
+        composed_source = b'host fixture: exact Fusion and Photo native composition\n'
+        getter = b'host fixture: exact Photo public getter\n'
+        wrapper = b'host fixture: exact Fusion public wrapper\n'
+        final_wrapper = b'host fixture: exact Fusion and Photo public wrapper\n'
+        original_wrapper = b'host fixture: original public wrapper\n'
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = root / 'fixture-repository'
+            component = fixture / COMPONENT.relative_to(ROOT)
+            shutil.copytree(COMPONENT, component)
+            shutil.copytree(ROOT / 'patches/lib', fixture / 'patches/lib')
+            verifier = component / 'verify_source.py'
+            text = verifier.read_text()
+            for actual, synthetic in (
+                ('c45cb3a1a9b65df3dddd37a816660309b82c5c40af4605d63932b5d338335b30', composed_source),
+                ('e24265bb5563eddd384c7c11181ca53697b075f7f3df8c4484178daac7a6535c', getter),
+                ('b283d47255e633b5ed1b0f0ae27ef98ddc835d69ab60cdd2137e50da55ef1439', wrapper),
+                ('5e5035b8b3913f49bc568798ebf83e737e627bec154331f2177db20dba519b4c', final_wrapper),
+                ('804aea4300b31167be5a2fed86f0870c95f605ac689ea906f128ecc03dc37127', original_wrapper)):
+                text = text.replace(actual, hashlib.sha256(synthetic).hexdigest())
+            verifier.write_text(text)
+            values = {SOURCE: composed_source, WRAPPER: wrapper,
+                      'foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp': getter}
+            for name, value in values.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(value)
+            command = ['bash', str(component / 'apply.sh'), '--source-root', str(root)]
+            for _ in range(2):
+                subprocess.run(command, capture_output=True, check=True)
+                self.assertEqual({name: (root / name).read_bytes() for name in values}, values)
+            values[WRAPPER] = final_wrapper
+            (root / WRAPPER).write_bytes(final_wrapper)
+            for _ in range(2):
+                subprocess.run(command, capture_output=True, check=True)
+                self.assertEqual({name: (root / name).read_bytes() for name in values}, values)
+            (root / WRAPPER).write_bytes(original_wrapper)
+            self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            self.assertEqual((root / WRAPPER).read_bytes(), original_wrapper)
+            for corrupted in values:
+                for name, value in values.items():
+                    (root / name).write_bytes(value)
+                (root / corrupted).write_bytes(values[corrupted] + b'unknown edit\n')
+                before = {name: (root / name).read_bytes() for name in values}
+                self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
+                self.assertEqual({name: (root / name).read_bytes() for name in values}, before)
+            for name, value in values.items():
+                (root / name).write_bytes(value)
+            outside = root / 'outside'
+            outside.write_bytes(composed_source)
+            (root / SOURCE).unlink()
+            (root / SOURCE).symlink_to(outside)
+            self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            self.assertEqual(outside.read_bytes(), composed_source)
+
     def test_actual_helper_checks_all_napi_failures_and_exports_only_the_real_cpp_value(self):
         sections = patch_sections(PATCH)
         self.assertEqual(set(sections), {SOURCE})
@@ -158,6 +214,8 @@ assert.equal(forward({}).FusionAssetType, undefined);
         self.assertEqual(plan.count(invocation), 1)
         patch_plan = plan.split('apply_qemu_capability_patch_plan() {', 1)[1].split('\nmain() {', 1)[0]
         self.assertIn(invocation, patch_plan)
+        self.assertLess(patch_plan.index(invocation),
+                        patch_plan.index('bash "${PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT}"'))
         main = plan.split('\nmain() {', 1)[1]
         self.assertLess(main.index('  apply_qemu_capability_patch_plan\n'),
                         main.index('    build_product "${product}"'))

@@ -2852,8 +2852,6 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_camera_depth_contracts_component.log"
   bash "${BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_opp_enums_component.log"
-  bash "${PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_public_enums_component.log"
   bash "${EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_effect_light_degree_component.log"
   bash "${MISSION_STATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -2916,6 +2914,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_device_block_status_component.log"
   bash "${PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_fusion_asset_type_component.log"
+  bash "${PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_public_enums_component.log"
   bash "${ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_alsa_config_install_component.log"
   bash "${CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

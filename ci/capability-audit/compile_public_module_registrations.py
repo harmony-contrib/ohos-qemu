@@ -52,6 +52,10 @@ PLAN = (
      'obj/base/location/location/frameworks/js/napi/source/geolocationmanager/location_napi_entry.o'),
 )
 COMPONENTS = tuple(dict.fromkeys(row[1] for row in PLAN))
+PATCH_ONLY_SOURCES = {
+    'foundation/multimedia/media_library/api26_photo_enums':
+        ('foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js',),
+}
 
 
 def digest(path):
@@ -98,7 +102,9 @@ def main():
         inputs += [component / 'apply.sh', *sorted(component.glob('*.patch'))]
         for patch in component.glob('*.patch'):
             targets.update(re.findall(r'^\+\+\+ b/(.+)$', patch.read_text(), re.M))
-    if targets != {row[2] for row in plan}:
+    expected_targets = {row[2] for row in plan} | {
+        name for component in args.components for name in PATCH_ONLY_SOURCES.get(component, ())}
+    if targets != expected_targets:
         raise ValueError('unexpected registration patch target')
     before = {str(path): digest(path) for path in inputs}
     source_before = {name: digest(root / name) for name in targets}

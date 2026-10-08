@@ -1,0 +1,12 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+--- a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
++++ b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+@@ -1561,6 +1561,8 @@ export default {
+   CompleteButtonText: CompleteButtonText,
+   ImageFileType: photoAccessHelper.ImageFileType,
+   PhotoRiskStatus: photoAccessHelper.PhotoRiskStatus,
++  CoverUriSource: photoAccessHelper.CoverUriSource,
++  ThumbnailVisibility: photoAccessHelper.ThumbnailVisibility,
+   CloudEnhancement: photoAccessHelper.CloudEnhancement,
+   CloudEnhancementTaskStage: photoAccessHelper.CloudEnhancementTaskStage,
+   CloudEnhancementState: photoAccessHelper.CloudEnhancementState,
