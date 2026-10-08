@@ -29,7 +29,29 @@ PLAN = (
     ('camera-depth-data', 'foundation/multimedia/camera_framework/api26_depth_contracts',
      'foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp',
      'obj/foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/camera_napi_ex/depth_data_napi.o'),
+    ('bluetooth-opp', 'foundation/communication/bluetooth/api26_opp_enums',
+     'foundation/communication/bluetooth/frameworks/js/napi/src/opp/native_module_opp.cpp',
+     'obj/foundation/communication/bluetooth/frameworks/js/napi/src/opp/opp/native_module_opp.o'),
+    ('photo-enums', 'foundation/multimedia/media_library/api26_photo_enums',
+     'foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp',
+     'obj/foundation/multimedia/media_library/frameworks/js/src/medialibrary_nutils/media_library_napi.o'),
+    ('photo-cover-source', 'foundation/multimedia/media_library/api26_photo_enums',
+     'foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp',
+     'obj/foundation/multimedia/media_library/frameworks/js/src/medialibrary_nutils/photo_album_napi.o'),
+    ('effect-light-degree', 'foundation/graphic/graphic_2d/effect_kit/api26_light_degree',
+     'foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/native_module_ohos_effect.cpp',
+     'obj/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/effectkit/native_module_ohos_effect.o'),
+    ('mission-continue-state', 'foundation/ability/ability_runtime/api26_mission_state',
+     'foundation/ability/ability_runtime/frameworks/js/napi/mission_manager/distributed_mission_manager.cpp',
+     'obj/foundation/ability/ability_runtime/frameworks/js/napi/mission_manager/distributedmissionmanager/distributed_mission_manager.o'),
+    ('curve-enum', 'foundation/arkui/ace_engine/api26_curve_enum',
+     'foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/modules/jsi_curves_module.cpp',
+     'obj/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/modules/declarative_js_engine_bridge_ark_ohos/jsi_curves_module.o'),
+    ('location-enums', 'base/location/location/api26_public_enums',
+     'base/location/location/frameworks/js/napi/source/location_napi_entry.cpp',
+     'obj/base/location/location/frameworks/js/napi/source/geolocationmanager/location_napi_entry.o'),
 )
+COMPONENTS = tuple(dict.fromkeys(row[1] for row in PLAN))
 
 
 def digest(path):
@@ -57,9 +79,13 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--products', choices=tuple(PRODUCTS), nargs='+', default=list(PRODUCTS))
+    parser.add_argument('--components', choices=COMPONENTS, nargs='+', default=list(COMPONENTS))
     args = parser.parse_args()
     if len(args.products) != len(set(args.products)):
         parser.error('duplicate requested product')
+    if len(args.components) != len(set(args.components)):
+        parser.error('duplicate requested component')
+    plan = tuple(row for row in PLAN if row[1] in args.components)
     root = args.source_root.resolve()
     if not all(os.statvfs(path).f_flag & os.ST_RDONLY for path in (root, root / 'out')):
         raise ValueError('source and output mounts must both be read-only')
@@ -67,19 +93,19 @@ def main():
     inputs = [Path(__file__), ROOT / 'patches/lib/apply_patch.sh',
               ROOT / 'patches/lib/apply_component_dir.sh']
     targets = set()
-    for _, relative, _, _ in PLAN:
+    for _, relative, _, _ in plan:
         component = ROOT / 'patches/common' / relative
         inputs += [component / 'apply.sh', *sorted(component.glob('*.patch'))]
         for patch in component.glob('*.patch'):
             targets.update(re.findall(r'^\+\+\+ b/(.+)$', patch.read_text(), re.M))
-    if targets != {row[2] for row in PLAN}:
+    if targets != {row[2] for row in plan}:
         raise ValueError('unexpected registration patch target')
     before = {str(path): digest(path) for path in inputs}
     source_before = {name: digest(root / name) for name in targets}
     report = {'status': 'fail', 'scope': 'actual_cached_product_registration_TUs_NOT_fresh_GN_link_guest',
               'first_artifact_behavior_gate_passed': False, 'objects': [], 'failures': [],
               'recipe_sha256': before, 'source_sha256_before': source_before,
-              'requested_products': args.products}
+              'requested_products': args.products, 'requested_components': args.components}
     try:
         with tempfile.TemporaryDirectory(prefix='public-module-registration-') as temporary:
             staged = Path(temporary)
@@ -87,7 +113,7 @@ def main():
                 destination = staged / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes((root / name).read_bytes())
-            for label, relative, source, target in PLAN:
+            for label, relative, source, target in plan:
                 component = ROOT / 'patches/common' / relative
                 for attempt in (1, 2):
                     log = args.output / (label + '-apply-' + str(attempt) + '.log')

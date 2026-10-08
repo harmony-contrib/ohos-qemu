@@ -1,0 +1,72 @@
+diff --git a/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp b/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
+--- a/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
+@@ -15,5 +15,7 @@
+ 
++#include <cstring>
++
+ #include "constant_definition.h"
+ #include "napi_util.h"
+ #include "location_log.h"
+ #include "location_napi_adapter.h"
+@@ -306,3 +306,60 @@
++// Values belong to the fixed SDK geoLocationManager enum contract, not backend state.
++static napi_status RegisterPublicLocationEnums(napi_env env, napi_value exports)
++{
++    const struct {
++        const char* enumeration;
++        const char* member;
++        int32_t value;
++    } members[] = {
++        { "LocationIconStatus", "LOCATING_NOT_STARTED", 0 },
++        { "LocationIconStatus", "LOCATING_STARTED", 1 },
++        { "LocationIconStatus", "HD_LOCATING_STARTED", 2 },
++        { "GnssFenceType", "POLYGON", 1 },
++        { "GnssFenceType", "CIRCULAR", 2 },
++        { "WifiFingerprintType", "SEMANTIC", 1 },
++        { "WifiFingerprintType", "LOCATION", 2 },
++        { "FusionFenceType", "GNSS", 1 },
++        { "FusionFenceType", "CELLULAR", 2 },
++        { "FusionFenceType", "WIFI", 4 },
++        { "FusionFenceType", "BLUETOOTH", 8 },
++        { "FusionFenceScene", "AIRPORT", 1 },
++        { "FusionFenceScene", "TRAIN_STATION", 2 },
++        { "FusionFenceScene", "SUBWAY", 3 },
++        { "FusionFenceScene", "SHOP", 4 },
++    };
++    const char* current = nullptr;
++    napi_value object = nullptr;
++    for (const auto& item : members) {
++        napi_status status;
++        if (current == nullptr || std::strcmp(current, item.enumeration) != 0) {
++            if (current != nullptr) {
++                status = napi_set_named_property(env, exports, current, object);
++                if (status != napi_ok) {
++                    return status;
++                }
++            }
++            current = item.enumeration;
++            status = napi_create_object(env, &object);
++            if (status != napi_ok) {
++                return status;
++            }
++        }
++        napi_value value = nullptr;
++        status = napi_create_int32(env, item.value, &value);
++        if (status != napi_ok) {
++            return status;
++        }
++        status = napi_set_named_property(env, object, item.member, value);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_set_named_property(env, exports, current, object);
++}
++
+ static napi_value InitManager(napi_env env, napi_value exports)
+ {
++    if (RegisterPublicLocationEnums(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     LBSLOGD(LOCATION_NAPI, "Init, location_napi_manager_entry");

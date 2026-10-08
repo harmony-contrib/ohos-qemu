@@ -127,6 +127,18 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed['behavior:module-update-initializer-missing'] = proof
             closed['behavior:usage-statistics-stale-init-profile'] = proof
 
+    huks = child('huks-compatibility/evidence.json')
+    if huks and huks[1].get('persona') == 'huks-compatibility':
+        from verify_huks_compatibility_results import verify_evidence
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('HUKS closure requires original acceptance boot evidence')
+        verify_evidence(huks[1], huks[0].parent, json.loads(boot_path.read_text()), archive_sha, boot_id)
+        closed['behavior:huks-compatibility-helper-missing'] = {
+            'evidence': str(huks[0]), 'sha256': digest(huks[0]),
+            'verifier': 'actual_package_helper_init_and_owned_legacy_UID_mode_migration',
+            'not_claimed': 'legacy_encrypted_key_conversion_TEE_or_OEM_attestation'}
+
     service_init = child('service-init-contracts/evidence.json')
     if service_init and service_init[1].get('persona') == 'service-init-contracts':
         from verify_service_init_contracts import verify_evidence

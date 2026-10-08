@@ -190,6 +190,13 @@ def run(args):
         source_volume = os.environ.get('DOCKER_SOURCE_VOLUME', 'ohos-qemu-7_0-release-source')
         docker_image = os.environ.get('QEMU_TEST_DOCKER_IMAGE', 'ohos-qemu-m144-build-env:7.0-release')
         child_env = dict(os.environ, OHOS_SDK=str(sdk / 'native'), HDC=hdc)
+        same_guest('before-HUKS-compatibility')
+        huks_record = command([sys.executable, Path(__file__).with_name('run_huks_compatibility_probe.py'),
+            '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
+            '--output', work / 'huks-compatibility', '--hdc', hdc, '--docker-image', docker_image],
+            'actual-HUKS-init-and-owned-legacy-migration', timeout=300, env=child_env)
+        check('huks-compatibility', work / 'huks-compatibility/evidence.json', [huks_record])
+        same_guest('after-HUKS-compatibility')
         kernel_probes = work / 'kernel-probes'
         command(['bash', Path(__file__).with_name('build_access_token_probe.sh'),
                  '--arch', arch, '--output', kernel_probes],

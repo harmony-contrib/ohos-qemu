@@ -214,6 +214,13 @@ AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/
 UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/ui_effect/api26_public_modes/apply.sh"
 BLUETOOTH_CONTROL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_control_enums/apply.sh"
 CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/camera_framework/api26_depth_contracts/apply.sh"
+BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_opp_enums/apply.sh"
+PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_enums/apply.sh"
+EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/effect_kit/api26_light_degree/apply.sh"
+MISSION_STATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_mission_state/apply.sh"
+CLOUD_FLAG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/relational_store/api26_cloud_flag/apply.sh"
+CURVE_ENUM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/api26_curve_enum/apply.sh"
+LOCATION_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location/api26_public_enums/apply.sh"
 NETMANAGER_API26_FEATURES_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/api26_features/apply.sh"
 VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_dialog_bundle/apply.sh"
 DHW_UI_PREINSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/dhardware_preinstall/apply.sh"
@@ -2843,6 +2850,20 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_control_enums_component.log"
   bash "${CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_camera_depth_contracts_component.log"
+  bash "${BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_opp_enums_component.log"
+  bash "${PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_public_enums_component.log"
+  bash "${EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_effect_light_degree_component.log"
+  bash "${MISSION_STATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mission_state_component.log"
+  bash "${CLOUD_FLAG_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_cloud_flag_component.log"
+  bash "${CURVE_ENUM_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_curve_enum_component.log"
+  bash "${LOCATION_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_location_public_enums_component.log"
   bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_netmanager_api26_features_component.log"
   bash "${VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

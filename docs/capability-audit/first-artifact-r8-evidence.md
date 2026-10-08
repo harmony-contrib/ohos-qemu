@@ -1,5 +1,54 @@
 # 7.0 representative package R8: build and behavior evidence
 
+The next representative recipe includes seven additional component scripts in
+the common phone/2in1 **pre-traversal** plan: OPP enums, Photo enums and public
+cover-source normalization, EffectKit light-degree, mission ContinueState,
+CloudExtension Flag, dynamic Curve strings and the five declared location enums.
+The patches are separate component-owned files; no legacy entry is introduced.
+They restore public contracts only, not simulated radio/cloud/geofence providers.
+The generic read-only TU preflight now includes every affected C++ source and
+allows explicit complete-component and product selection without substituting
+missing generated headers or ABI tools.
+
+Preflight evidence under
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`:
+
+- `bluetooth-opp-public-enums-three-arch-01/evidence.json`: three actual ABI TUs.
+- `photo-public-enums-three-arch-02/evidence.json`: six actual ABI TUs, including
+  the original cover-source getter. Unknown stored values and native storage
+  remain unchanged; only known manual variants become the public MANUAL_COVER.
+- `effect-mission-public-enums-three-arch-02/evidence.json`: six actual ABI TUs.
+- `curve-export-real-TU-three-abi-01/evidence.json`: three actual ABI TUs. All
+  thirteen values use existing native DOM string identifiers, not numeric enum
+  positions. A separate fresh-app interpolation/member proof is still required.
+- `location-export-real-TU-arm64-03/evidence.json`: one actual ARM64 TU. The
+  earlier ARMv7/x64 attempts failed on missing real generated IDL headers; they
+  are not three-ABI passes and require normal refreshed GN builds.
+- `cloud-flag-real-bytecode-arm64-04/evidence.json`: actual ARM64 Ark bytecode
+  plus isolated host evaluation of the actual JS module. Other ABI cached
+  frontend binaries were missing; no replacement frontend was used.
+- `huks-next-EujTSZQE/three-abi-03/evidence.json`: three actual C objects;
+  `real-posix-result-03.json`: nine real Linux filesystem cases, including
+  repeated migration, symlink/hardlink/FIFO rejection and depth/error bounds.
+
+HUKS migration is now component-owned and descriptor-relative, preserves real
+payload/root metadata, rejects unsafe links/special files and returns failures.
+The normal packaged suite captures the actual image/config/accounts and
+boot-time helper completion, then runs an exclusive nonce legacy fixture,
+validates UID/modes/payload and removes only that fixture. Its verifier replays
+the exact raw captures and guest exit challenges against the unchanged fresh
+acceptance image/boot. It may close only the original missing-helper finding,
+not legacy encrypted-key conversion, TEE or OEM attestation. Init exec is
+asynchronous; invocation order is not a claim of completion before SA startup.
+All of the above is **preflight, not new-image closure or a matrix gate pass**.
+The original audit ledger and complete behavior gate are unchanged.
+The integrated host suite passed 882 tests in 129 seconds; the final HUKS
+replay/ledger tests also passed seven tests independently. Commands were
+`/tmp/ohos-capability-tests-pvk51rjh/bin/python -m unittest discover -s
+ci/capability-audit -p 'test_*.py' -q` and the same command with
+`-p 'test_*huks*' -v`. The full log is
+`unified-public-enums-HUKS-host-20261008-08.log` in that evidence directory.
+
 R10 first build attempt did not produce an archive. Its newly refreshed phone
 GN graph actually compiled `SUPPORT_RTT_CALL` in both endpoints, revealing a
 stale caller in `call_records_manager.cpp`: the fixed IMSCall interface defines
