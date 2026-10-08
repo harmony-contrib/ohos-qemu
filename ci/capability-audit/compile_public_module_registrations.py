@@ -23,6 +23,12 @@ PLAN = (
     ('bluetooth-control', 'foundation/communication/bluetooth/api26_control_enums',
      'foundation/communication/bluetooth/frameworks/js/napi/src/connection/native_module_connection.cpp',
      'obj/foundation/communication/bluetooth/frameworks/js/napi/src/connection/connection/native_module_connection.o'),
+    ('camera-depth', 'foundation/multimedia/camera_framework/api26_depth_contracts',
+     'foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp',
+     'obj/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/camera_napi/native_module_ohos_camera.o'),
+    ('camera-depth-data', 'foundation/multimedia/camera_framework/api26_depth_contracts',
+     'foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp',
+     'obj/foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/camera_napi_ex/depth_data_napi.o'),
 )
 
 
@@ -50,7 +56,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--products', choices=tuple(PRODUCTS), nargs='+', default=list(PRODUCTS))
     args = parser.parse_args()
+    if len(args.products) != len(set(args.products)):
+        parser.error('duplicate requested product')
     root = args.source_root.resolve()
     if not all(os.statvfs(path).f_flag & os.ST_RDONLY for path in (root, root / 'out')):
         raise ValueError('source and output mounts must both be read-only')
@@ -69,7 +78,8 @@ def main():
     source_before = {name: digest(root / name) for name in targets}
     report = {'status': 'fail', 'scope': 'actual_cached_product_registration_TUs_NOT_fresh_GN_link_guest',
               'first_artifact_behavior_gate_passed': False, 'objects': [], 'failures': [],
-              'recipe_sha256': before, 'source_sha256_before': source_before}
+              'recipe_sha256': before, 'source_sha256_before': source_before,
+              'requested_products': args.products}
     try:
         with tempfile.TemporaryDirectory(prefix='public-module-registration-') as temporary:
             staged = Path(temporary)
@@ -84,7 +94,8 @@ def main():
                     with log.open('x') as stream:
                         subprocess.run(['bash', str(component / 'apply.sh'), '--source-root', str(staged)],
                                        stdout=stream, stderr=subprocess.STDOUT, check=True)
-                for product, triple in PRODUCTS.items():
+                for product in args.products:
+                    triple = PRODUCTS[product]
                     cwd = root / 'out' / product
                     query = subprocess.run([str(root / 'prebuilts/build-tools/linux-x86/bin/ninja'),
                         '-w', 'dupbuild=warn', '-C', str(cwd), '-t', 'commands', '-s', target],

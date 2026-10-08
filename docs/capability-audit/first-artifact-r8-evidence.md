@@ -1,5 +1,40 @@
 # 7.0 representative package R8: build and behavior evidence
 
+Latest follow-up (2026-10-08): the current-document custom-media full M144
+ARM64 native build and signed HAP build both completed successfully. The
+dependency recipe is `549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d`;
+the HAP SHA-256 is
+`7d6728e4721a5185604689fef0713793278197a0cb688bdf5b41d7742ec9322c`.
+`m144_core_artifacts.py --artifact-root /Volumes/PSSD/qemu/artifacts/arkweb-m144-7.0/549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d --arch arm64`
+verified the complete fixed source graph, native/HAP pairing, SDK ABI and
+signature provenance. ARM64 V8, SwiftShader and AVC were rebuilt/recorded
+through the same repository runner and recipe. This is dependency evidence,
+**not** a Web media behavior pass or first-package gate pass.
+
+The unified phone/2in1 pre-traversal plan now also applies the Bluetooth
+ControlObject/ControlType/ControlTypeValue exports from actual native constants
+and the Camera DepthDataAccuracy/DepthDataQualityLevel exports. Camera's
+misspelled `dataAccurary` getter is corrected to `dataAccuracy`, using the same
+real per-object getter; no depth stream, metadata or hardware is synthesized.
+Exact registration/member values, every new NAPI failure and repeated patch
+application passed host fixtures. The read-only actual cached product compiler
+check passed all nine Audio/UIEffect/Bluetooth objects across three ABIs
+(`audio-filter-bluetooth-public-enums-three-arch-02/evidence.json` under the
+existing `issue-20-20261006` evidence directory). The larger camera-inclusive
+three-ABI attempt failed after ten objects: the stale ARMv7 cached graph lacks
+the actual generated `istream_metadata.h`. No replacement header was invented.
+An explicitly ARM64-only rerun passed five objects, including both camera
+registration and real depth-data getter translation units
+(`camera-depth-contracts-arm64-real-objects-04/evidence.json`). A refreshed GN
+graph, link and new guest remain necessary; this is **not** an all-three-ABI
+camera compilation pass.
+
+The two closed R9 acceptance/diagnostic VM image extraction copies were removed
+to reclaim about 9.4 GiB. Their original archive, checksum, serial logs and
+captured evidence remain. Original images can be re-extracted; their exact
+mutated runtime userdata cannot be recovered. Those removed-image diagnostics
+cannot now be replayed as unchanged-image evidence and never passed the gate.
+
 R8 is a newly built and booted first artifact. Its narrow regressions passed, but
 the complete C++/ArkTS 1.1 audit gate failed. This package does **not** authorize
 building the remaining five packages or claiming all API 26 capabilities work.
