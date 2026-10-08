@@ -240,6 +240,7 @@ QEMU_CAMERA_VIVID_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/came
 QEMU_CAMERA_JPEG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/jpeg_rotation/apply.sh"
 QEMU_CAMERA_JPEG_CAPTURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/jpeg_capture/apply.sh"
 QEMU_CAMERA_FORK_TIMESTAMP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/fork_timestamp/apply.sh"
+QEMU_CAMERA_CAPTURE_END_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/capture_end/apply.sh"
 QEMU_THERMAL_HDI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/thermal/qemu_backend/apply.sh"
 QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/qemu_backend/apply.sh"
 QEMU_THERMAL_CLIENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/client_reply/apply.sh"
@@ -287,6 +288,10 @@ ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/
 CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/source_provider/apply.sh"
 CALENDAR_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/calendar_provider/apply.sh"
 CALENDAR_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/calendar_provider/apply.sh"
+PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/photos/source_provider/apply.sh"
+PHOTOS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/photos_provider/apply.sh"
+PHOTOS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/photos_provider/apply.sh"
+PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_facard/apply.sh"
 SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
 QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
@@ -2775,6 +2780,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_jpeg_capture_component.log"
   bash "${QEMU_CAMERA_FORK_TIMESTAMP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_fork_timestamp_component.log"
+  bash "${QEMU_CAMERA_CAPTURE_END_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_capture_end_component.log"
   bash "${QEMU_THERMAL_HDI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_hdi_component.log"
   bash "${QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -2960,6 +2967,18 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_signing_component.log"
   python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_calendar_source_provider.log"
+  bash "${PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_source_provider_component.log"
+  python3 "${PATCH_ROOT}/common/applications/standard/photos/source_provider/prepare_dependencies.py" \
+    --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/photos-source-dependencies" \
+    --evidence "${CACHE_ROOT}/logs/photos-source-preparation.json" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_photos_source_dependencies.log"
+  bash "${PHOTOS_PREBUILT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_prebuilt_component.log"
+  bash "${PHOTOS_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_signing_component.log"
+  bash "${PHOTOS_FACARD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_eos_component.log"
   avc_component_args=(--source-root "${OHOS_ROOT}" --artifact-root "${QEMU_AVC_ARTIFACTS}")

@@ -1,0 +1,14 @@
+{
+  "name": "@ohos/browsercommon",
+  "version": "1.0.18",
+  "description": "a ohpm package which contains browsercommon function",
+  "main": "index.ets",
+  "author": "photoshsp",
+  "dependencies": {
+    "@ohos/tools": "file:../tools",
+    "@ohos/common": "file:../common",
+    "@ohos/privacy": "file:../feature/privacy",
+    "@ohos/lottie": "2.0.19",
+    "@oh-image-editor/editor-common": "file:../imageEditor/common"
+  }
+}

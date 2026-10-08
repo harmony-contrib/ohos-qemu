@@ -1,0 +1,9 @@
+diff --git a/applications/standard/photos/feature/faCard/src/main/ets/formability/FACardServiceStub.ets b/applications/standard/photos/feature/faCard/src/main/ets/formability/FACardServiceStub.ets
+--- a/applications/standard/photos/feature/faCard/src/main/ets/formability/FACardServiceStub.ets
++++ b/applications/standard/photos/feature/faCard/src/main/ets/formability/FACardServiceStub.ets
+@@ -100,4 +100,4 @@
+   private async initRdbStoreAndTrashAlbum() : Promise<void> {
+-    if (!this.initialized) {
++    if (this.initialized) {
+       return;
+     }

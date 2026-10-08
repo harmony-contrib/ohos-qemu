@@ -1,0 +1,11 @@
+{
+  "modelVersion": "26.0.0",
+  "dependencies": {
+    //    "@ohos/hypium-plugin": "2.0.2-rc4",
+    //    "@ohos/hvigor-ohos-online-sign-plugin": "4.0.2",
+    "json5": "2.2.3"
+  },
+  "debugging": {
+    "stacktrace": true
+  }
+}

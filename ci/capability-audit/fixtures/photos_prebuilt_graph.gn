@@ -1,0 +1,514 @@
+# Copyright (c) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+hap_src_dir = ""
+if (window_manager_use_sceneboard) {
+  hap_src_dir = "sceneboard/"
+}
+
+ohos_prebuilt_etc("launcher_hap") {
+  source = "Launcher.hap"
+  module_install_dir = "app/com.ohos.launcher"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("launcher_settings_hap") {
+  source = "Launcher_Settings.hap"
+  module_install_dir = "app/com.ohos.launcher"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("settings_hap") {
+  source = hap_src_dir + "Settings.hap"
+  module_install_dir = "app/com.ohos.settings"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("note_hap") {
+  source = "Note.hap"
+  module_install_dir = "app/com.ohos.note"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("settingsData_hap") {
+  source = "SettingsData.hap"
+  module_install_dir = "app/com.ohos.settingsdata"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("navigationBar_hap") {
+  source = "SystemUI-NavigationBar.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("statusBar_hap") {
+  source = "SystemUI-StatusBar.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("screenLock_hap") {
+  source = "SystemUI-ScreenLock.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("notificationManagement_hap") {
+  source = "SystemUI-NotificationManagement.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("volumePanel_hap") {
+  source = "SystemUI-VolumePanel.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("dropdownPanel_hap") {
+  source = "SystemUI-DropdownPanel.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("systemui_hap") {
+  source = "SystemUI.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("systemDialog_hap") {
+  source = "SystemUI-SystemDialog.hap"
+  module_install_dir = "app/com.ohos.systemui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("screen_shot_hap") {
+  source = "ScreenShot.hap"
+  module_install_dir = "app/com.ohos.screenshot"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("clock_demo_hap") {
+  source = hap_src_dir + "Clock_Demo.hap"
+  module_install_dir = "app/ohos.samples.clock"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("calc_demo_hap") {
+  source = hap_src_dir + "Calc_Demo.hap"
+  module_install_dir = "app/com.example.distributedcalc"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("photos_hap") {
+  source = hap_src_dir + "Photos.hap"
+  module_install_dir = "app/com.ohos.photos"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("music_demo_hap") {
+  source = "Music_Demo.hap"
+  module_install_dir = "app/com.ohos.distributedmusicplayer"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("demo.wav") {
+  source = "resources/demo.wav"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("dynamic.wav") {
+  source = "resources/dynamic.wav"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("camera_hap") {
+  source = hap_src_dir + "Camera.hap"
+  module_install_dir = "app/com.ohos.camera"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("capture.ogg") {
+  source = "resources/capture.ogg"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("kika_input_hap") {
+  source = "kikaInput.hap"
+  module_install_dir = "app/com.example.kikakeyboard"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("media_library_hap") {
+  source = "Media_Library.hap"
+  module_install_dir = "app/com.ohos.medialibrary.MediaLibraryDataA"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("media_scanner_hap") {
+  source = "Media_Scanner.hap"
+  module_install_dir = "app/com.ohos.medialibrary.MediaScannerAbilityA"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("callUI_hap") {
+  source = hap_src_dir + "CallUI.hap"
+  module_install_dir = "app/com.ohos.callui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("mobileDataSettings_hap") {
+  source = "MobileDataSettings.hap"
+  module_install_dir = "app/com.ohos.callui"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("CallSetting_hap") {
+  source = hap_src_dir + "CallSetting.hap"
+  module_install_dir = "app/com.ohos.callsetting"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("EmergencyCommunication_hap") {
+  source = hap_src_dir + "EmergencyCommunication.hap"
+  module_install_dir = "app/com.ohos.emergencycommunication"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("CommunicationSetting_hap") {
+  source = hap_src_dir + "CommunicationSetting.hap"
+  module_install_dir = "app/com.ohos.communicationsetting"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("CallRecorder_hap") {
+  source = hap_src_dir + "CallRecorder.hap"
+  module_install_dir = "app/com.ohos.callrecorder"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("mms_hap") {
+  source = hap_src_dir + "Mms.hap"
+  module_install_dir = "app/com.ohos.mms"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("contacts_hap") {
+  source = hap_src_dir + "Contacts.hap"
+  module_install_dir = "app/com.ohos.contacts"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("settings_faceauth_hap") {
+  source = "Settings_FaceAuth.hap"
+  module_install_dir = "app/com.ohos.settings.faceauth"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("filepicker_hap") {
+  source = "FilePicker.hap"
+  module_install_dir = "app/com.ohos.filepicker"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("securityPrivacyCenter_hap") {
+  source = hap_src_dir + "SecurityPrivacyCenter.hap"
+  module_install_dir = "app/com.ohos.security.privacycenter"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("updateapp_hap") {
+  source = "UpdateApp.hap"
+  module_install_dir = "app/com.ohos.updateapp"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("printspooler_hap") {
+  source = hap_src_dir + "PrintSpooler.hap"
+  module_install_dir = "app/com.ohos.spooler"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("calendarData_hap") {
+  source = hap_src_dir + "CalendarData.hap"
+  module_install_dir = "app/com.ohos.calendardata"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("ringtone_extension_hap") {
+  source = "Ringtone_Library_Ext.hap"
+  module_install_dir = "app/com.ohos.ringtonelibrary.RingtoneLibraryData"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("audiopicker_hap") {
+  source = "AudioPicker.hap"
+  module_install_dir = "app/com.ohos.filepicker"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("filemanager_hap") {
+  source = hap_src_dir + "FileManager.hap"
+  module_install_dir = "app/com.ohos.filemanager"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("sceneboard_notificationManagement_hap") {
+  source = hap_src_dir + "NotificationManagement.hap"
+  module_install_dir = "app/SceneBoard"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("themeservice_hap") {
+  source = hap_src_dir + "ThemeService.hap"
+  module_install_dir = "app/SceneBoard"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("themecomponent_hap") {
+  source = hap_src_dir + "ThemeComponent.hap"
+  module_install_dir = "app/SceneBoard"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("sceneboard_hap") {
+  source = hap_src_dir + "SceneBoard.hap"
+  module_install_dir = "app/SceneBoard"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("cameraPicker_hap") {
+  source = hap_src_dir + "cameraPicker.hap"
+  module_install_dir = "app/com.ohos.camera"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("Floatingnavigation_hap") {
+  source = hap_src_dir + "Floatingnavigation.hap"
+  module_install_dir = "app/com.ohos.floatingnavigation"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("Intelligent_Scene_hap") {
+  source = hap_src_dir + "Intelligent_Scene.hap"
+  module_install_dir = "app/com.ohos.intelligentscene"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("PortalLogin_hap") {
+  source = hap_src_dir + "PortalLogin.hap"
+  module_install_dir = "app/com.wifiservice.portallogin"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("mediacontroller_hap") {
+  source = hap_src_dir + "mediacontroller.hap"
+  module_install_dir = "app/com.hmos.mediacontroller"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("calendar_hap") {
+  source = hap_src_dir + "Calendar.hap"
+  module_install_dir = "app/com.ohos.calendar"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("simcardmanagement_hap") {
+  source = hap_src_dir + "simcardmanagement.hap"
+  module_install_dir = "app/com.ohos.simcardmanagement"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("soundRecorder_hap") {
+  source = hap_src_dir + "SoundRecorder.hap"
+  module_install_dir = "app/com.ohos.soundrecorder"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("startup_guide_hap") {
+  source = hap_src_dir + "Startup_guide.hap"
+  module_install_dir = "app/com.ohos.startup_guide"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+ohos_prebuilt_etc("tips_hap") {
+  source = hap_src_dir + "Tips.hap"
+  module_install_dir = "app/com.ohos.tips"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+}
+
+group("hap") {
+  deps = [
+    ":audiopicker_hap",
+    ":calendarData_hap",
+    ":printspooler_hap",
+    ":securityPrivacyCenter_hap",
+    ":systemDialog_hap",
+    ":updateapp_hap",
+    "//applications/standard/hap:calc_demo_hap",
+    "//applications/standard/hap:callUI_hap",
+    "//applications/standard/hap:camera_hap",
+    "//applications/standard/hap:capture.ogg",
+    "//applications/standard/hap:clock_demo_hap",
+    "//applications/standard/hap:contacts_hap",
+    "//applications/standard/hap:demo.wav",
+    "//applications/standard/hap:dropdownPanel_hap",
+    "//applications/standard/hap:dynamic.wav",
+    "//applications/standard/hap:filepicker_hap",
+    "//applications/standard/hap:kika_input_hap",
+    "//applications/standard/hap:launcher_hap",
+    "//applications/standard/hap:launcher_settings_hap",
+    "//applications/standard/hap:mms_hap",
+    "//applications/standard/hap:mobileDataSettings_hap",
+    "//applications/standard/hap:music_demo_hap",
+    "//applications/standard/hap:navigationBar_hap",
+    "//applications/standard/hap:note_hap",
+    "//applications/standard/hap:notificationManagement_hap",
+    "//applications/standard/hap:photos_hap",
+    "//applications/standard/hap:screenLock_hap",
+    "//applications/standard/hap:screen_shot_hap",
+    "//applications/standard/hap:settingsData_hap",
+    "//applications/standard/hap:settings_faceauth_hap",
+    "//applications/standard/hap:settings_hap",
+    "//applications/standard/hap:statusBar_hap",
+    "//applications/standard/hap:systemui_hap",
+    "//applications/standard/hap:volumePanel_hap",
+  ]
+
+  if (window_manager_use_sceneboard) {
+    deps -= [
+      "//applications/standard/hap:mobileDataSettings_hap",
+    ]
+    deps += [
+      "//applications/standard/hap:CallSetting_hap",
+      "//applications/standard/hap:EmergencyCommunication_hap",
+      "//applications/standard/hap:CommunicationSetting_hap",
+      "//applications/standard/hap:CallRecorder_hap",
+      "//applications/standard/hap:cameraPicker_hap",
+
+      "//applications/standard/hap:filemanager_hap",
+      "//applications/standard/hap:sceneboard_hap",
+      "//applications/standard/hap:sceneboard_notificationManagement_hap",
+      "//applications/standard/hap:themeservice_hap",
+      "//applications/standard/hap:themecomponent_hap",
+      "//applications/standard/hap:Floatingnavigation_hap",
+      "//applications/standard/hap:Intelligent_Scene_hap",
+      "//applications/standard/hap:PortalLogin_hap",
+      "//applications/standard/hap:mediacontroller_hap",
+      "//applications/standard/hap:calendar_hap",
+      "//applications/standard/hap:simcardmanagement_hap",
+      "//applications/standard/hap:soundRecorder_hap",
+      "//applications/standard/hap:startup_guide_hap",
+      "//applications/standard/hap:tips_hap",
+    ]
+  }
+
+  if (defined(product_name) && product_name == "watchos") {
+    deps -= [
+      ":calendarData_hap",
+      ":printspooler_hap",
+      ":securityPrivacyCenter_hap",
+      ":systemDialog_hap",
+      ":updateapp_hap",
+      "//applications/standard/hap:calc_demo_hap",
+      "//applications/standard/hap:callUI_hap",
+      "//applications/standard/hap:camera_hap",
+      "//applications/standard/hap:capture.ogg",
+      "//applications/standard/hap:contacts_hap",
+      "//applications/standard/hap:demo.wav",
+      "//applications/standard/hap:dropdownPanel_hap",
+      "//applications/standard/hap:dynamic.wav",
+      "//applications/standard/hap:kika_input_hap",
+      "//applications/standard/hap:mms_hap",
+      "//applications/standard/hap:mobileDataSettings_hap",
+      "//applications/standard/hap:music_demo_hap",
+      "//applications/standard/hap:navigationBar_hap",
+      "//applications/standard/hap:notificationManagement_hap",
+      "//applications/standard/hap:photos_hap",
+      "//applications/standard/hap:screenLock_hap",
+      "//applications/standard/hap:screen_shot_hap",
+      "//applications/standard/hap:settingsData_hap",
+      "//applications/standard/hap:settings_faceauth_hap",
+      "//applications/standard/hap:settings_hap",
+      "//applications/standard/hap:statusBar_hap",
+      "//applications/standard/hap:systemui_hap",
+      "//applications/standard/hap:volumePanel_hap",
+    ]
+  } else if (defined(product_name) && product_name == "rk3568") {
+    deps +=
+        [ "//applications/standard/admin_provisioning:adminprovisioning_hap" ]
+  } else if (defined(product_name) && product_name == "ohos-arm64") {
+    deps +=
+        [ "//applications/standard/admin_provisioning:adminprovisioning_hap" ]
+  }
+}

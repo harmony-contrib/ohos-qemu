@@ -49,6 +49,7 @@ LEGACY_COMPONENTS = {
 
 REQUIRED_2IN1_PARTS = {
     "applications:prebuilt_hap",
+    "applications:photos",
     "applications:dlp_manager",
     "arkui:ui_appearance",
     "bundlemanager:bundle_framework",
@@ -167,6 +168,9 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # still needs those system applications to finish the first-user switch,
     # so keep their owning part explicit in the effective profile.
     add_component(effective, "applications", "prebuilt_hap")
+    # Recent/PhotoInfo/album-name providers are real source extensions, not
+    # phone camera hardware. Their owning part must also be built on 2in1.
+    add_component(effective, "applications", "photos")
     add_component(effective, "thirdparty", "alsa-lib")
     # The release manifest omits the Serial SIG repository. Its fixed source
     # is imported before profile generation; select the real service and HDI

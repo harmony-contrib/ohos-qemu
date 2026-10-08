@@ -1,0 +1,148 @@
+--- a/drivers/peripheral/camera/vdi_base/v4l2/src/stream_operator/capture_message.cpp
++++ b/drivers/peripheral/camera/vdi_base/v4l2/src/stream_operator/capture_message.cpp
+@@ -13,6 +13,7 @@
+  * limitations under the License.
+  */
+ #include "capture_message.h"
++#include <algorithm>
+ 
+ namespace OHOS::Camera {
+ ICaptureMessage::ICaptureMessage(int32_t streamId, int32_t captureId, uint64_t time, uint32_t count)
+@@ -71,6 +72,13 @@
+ {
+     if (message == nullptr) {
+         CAMERA_LOGE("message is nullptr");
++        return;
++    }
++
++    if (message->GetPeerMessageCount() == 0 || message->GetCaptureId() < 0 ||
++        message->GetStreamId() < 0 || message->GetMessageType() <= CAPTURE_MESSAGE_TYPE_INVALID ||
++        message->GetMessageType() >= CAPTURE_MESSAGE_TYPE_MAX) {
++        CAMERA_LOGE("invalid capture message");
+         return;
+     }
+ 
+@@ -94,8 +102,17 @@
+                 CAMERA_LOGE("unknown error, message is null");
+                 continue;
+             }
+-            if (message->GetTimestamp() == mit[0]->GetTimestamp() &&
+-                message->GetMessageType() == mit[0]->GetMessageType()) {
++            if (message->GetCaptureId() == mit[0]->GetCaptureId() &&
++                message->GetTimestamp() == mit[0]->GetTimestamp() &&
++                message->GetMessageType() == mit[0]->GetMessageType() &&
++                message->GetPeerMessageCount() == mit[0]->GetPeerMessageCount()) {
++                auto peer = std::find_if(mit.begin(), mit.end(), [&message](const auto& queued) {
++                    return queued != nullptr && queued->GetStreamId() == message->GetStreamId();
++                });
++                if (peer != mit.end()) {
++                    isPeerMessage = true;
++                    break;
++                }
+                 mit.emplace_back(message);
+                 if (mit.size() == mit[0]->GetPeerMessageCount()) {
+                     wakeup_ = true;
+--- a/drivers/peripheral/camera/vdi_base/v4l2/src/stream_operator/capture_request.cpp
++++ b/drivers/peripheral/camera/vdi_base/v4l2/src/stream_operator/capture_request.cpp
+@@ -96,6 +96,15 @@
+     return RC_OK;
+ }
+ 
++bool CaptureRequest::TryMarkCaptureEnded(int32_t streamId)
++{
++    std::lock_guard<std::mutex> l(lock_);
++    if (owners_.find(streamId) == owners_.end()) {
++        return false;
++    }
++    return endedStreams_.insert(streamId).second;
++}
++
+ uint64_t CaptureRequest::GetBeginTime() const
+ {
+     return semp_->timestamp_;
+--- a/drivers/peripheral/camera/vdi_base/v4l2/include/stream_operator/capture_request.h
++++ b/drivers/peripheral/camera/vdi_base/v4l2/include/stream_operator/capture_request.h
+@@ -23,6 +23,7 @@
+ #include <condition_variable>
+ #include <map>
+ #include <memory>
++#include <set>
+ 
+ namespace OHOS::Camera {
+ class IStream;
+@@ -49,6 +50,7 @@
+     void SetFirstRequest(bool b);
+     bool IsFirstOne() const;
+     CaptureMeta GetCaptureSetting() const;
++    bool TryMarkCaptureEnded(int32_t streamId);
+ 
+ private:
+     class RequestSemaphore final {
+@@ -73,6 +75,7 @@
+     int32_t captureId_ = -1;
+     std::mutex lock_ = {};
+     std::map<int32_t, std::weak_ptr<IStream>> owners_ = {};
++    std::set<int32_t> endedStreams_ = {};
+     std::unique_ptr<RequestSemaphore> semp_ = nullptr;
+     std::unique_ptr<RequestSemaphore> semr_ = nullptr;
+     CaptureMeta settings_;
+--- a/drivers/peripheral/camera/vdi_base/v4l2/src/stream_operator/stream_base.cpp
++++ b/drivers/peripheral/camera/vdi_base/v4l2/src/stream_operator/stream_base.cpp
+@@ -210,7 +210,8 @@
+     rc = pipeline_->Stop({streamId_});
+     CHECK_IF_NOT_EQUAL_RETURN_VALUE(rc, RC_OK, RC_ERROR);
+ 
+-    if (lastRequest_ != nullptr && lastRequest_->IsContinous() && !inTransitList_.empty() && messenger_ != nullptr) {
++    if (lastRequest_ != nullptr && lastRequest_->IsContinous() && !inTransitList_.empty() && messenger_ != nullptr &&
++        lastRequest_->TryMarkCaptureEnded(streamId_)) {
+         std::shared_ptr<ICaptureMessage> endMessage =
+             std::make_shared<CaptureEndedMessage>(streamId_, lastRequest_->GetCaptureId(),
+             lastRequest_->GetEndTime(), lastRequest_->GetOwnerCount(), tunnel_->GetFrameCount());
+@@ -269,7 +270,7 @@
+         // may be this is the last request
+         std::unique_lock<std::mutex> tl(tsLock_);
+         auto it = std::find(inTransitList_.begin(), inTransitList_.end(), request);
+-        if (it == inTransitList_.end()) {
++        if (it == inTransitList_.end() && request->TryMarkCaptureEnded(streamId_)) {
+             std::shared_ptr<ICaptureMessage> endMessage =
+                 std::make_shared<CaptureEndedMessage>(streamId_, request->GetCaptureId(), request->GetEndTime(),
+                                                       request->GetOwnerCount(), tunnel_->GetFrameCount());
+@@ -440,6 +441,7 @@
+     CHECK_IF_PTR_NULL_RETURN_VALUE(messenger_, RC_ERROR);
+     auto buffer = request->GetAttachedBuffer();
+     CameraBufferStatus status = buffer->GetBufferStatus();
++    bool isDropped = status == CAMERA_BUFFER_STATUS_DROP;
+     if (status != CAMERA_BUFFER_STATUS_OK) {
+         if (status != CAMERA_BUFFER_STATUS_DROP) {
+             std::shared_ptr<ICaptureMessage> errorMessage =
+@@ -449,16 +451,16 @@
+         } else {
+             CAMERA_LOGE("stream [id:%{public}d] drop buffer index:%{public}d, status:%{public}d",
+                 streamId_, buffer->GetIndex(), buffer->GetBufferStatus());
+-            ReceiveBuffer(buffer);
+-            return RC_OK;
+         }
+     }
+     CAMERA_LOGI("stream = [%{public}d] OnFrame and NeedCancel = [%{public}d]", buffer->GetStreamId(),
+         request->NeedCancel() ? 1 : 0);
+-    request->NeedCancel() ? buffer->SetBufferStatus(CAMERA_BUFFER_STATUS_DROP) :
+-                            buffer->SetBufferStatus(CAMERA_BUFFER_STATUS_OK);
++    if (!isDropped) {
++        request->NeedCancel() ? buffer->SetBufferStatus(CAMERA_BUFFER_STATUS_DROP) :
++                                buffer->SetBufferStatus(CAMERA_BUFFER_STATUS_OK);
++    }
+     ReceiveBuffer(buffer);
+-    if (request->NeedShutterCallback()) {
++    if (!isDropped && request->NeedShutterCallback()) {
+         std::shared_ptr<ICaptureMessage> shutterMessage = std::make_shared<FrameShutterMessage>(
+             streamId_, request->GetCaptureId(), request->GetEndTime(), request->GetOwnerCount());
+         messenger_->SendMessage(shutterMessage);
+@@ -476,7 +478,7 @@
+         if (isEnded) {
+             // if this is the last request of capture, send CaptureEndedMessage.
+             auto it = std::find(inTransitList_.begin(), inTransitList_.end(), request);
+-            if (it == inTransitList_.end()) {
++            if (it == inTransitList_.end() && request->TryMarkCaptureEnded(streamId_)) {
+                 std::shared_ptr<ICaptureMessage> endMessage =
+                     std::make_shared<CaptureEndedMessage>(streamId_, request->GetCaptureId(), request->GetEndTime(),
+                                                           request->GetOwnerCount(), tunnel_->GetFrameCount());

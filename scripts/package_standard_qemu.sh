@@ -3102,6 +3102,9 @@ PY
     python3 "${SCRIPT_DIR}/verify_shared_fence_owner.py" \
       --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
       --output "${PACKAGE_DIR}/shared-fence-owner-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_photos_provider_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
+      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/photos-provider-evidence.json"
   fi
   write_full_device_profile_evidence \
     "${SOURCE_ROOT}" \
