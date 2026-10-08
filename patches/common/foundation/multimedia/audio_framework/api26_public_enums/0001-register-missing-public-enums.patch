@@ -1,0 +1,65 @@
+diff --git a/foundation/multimedia/audio_framework/frameworks/js/napi/common/napi_audio_entry.cpp b/foundation/multimedia/audio_framework/frameworks/js/napi/common/napi_audio_entry.cpp
+--- a/foundation/multimedia/audio_framework/frameworks/js/napi/common/napi_audio_entry.cpp
++++ b/foundation/multimedia/audio_framework/frameworks/js/napi/common/napi_audio_entry.cpp
+@@ -15,3 +15,6 @@
+ #include "napi/native_api.h"
+ #include "napi/native_node_api.h"
++#include "audio_info.h"
++#include "audio_stream_info.h"
++#include "audio_device_info.h"
+ #include "napi_audio_enum.h"
+@@ -35,7 +38,54 @@
+ namespace OHOS {
+ namespace AudioStandard {
++static napi_status RegisterPublicAudioEnums(napi_env env, napi_value exports)
++{
++    struct Member { const char *name; int32_t value; };
++    static const Member select[] = {
++        {"SELECT_STRATEGY_DEFAULT", SELECT_STRATEGY_DEFAULT},
++        {"SELECT_STRATEGY_INDEPENDENT", SELECT_STRATEGY_INDEPENDENT},
++    };
++    static const Member spatial[] = {
++        {"SPATIAL_AUDIO_SOURCE_TYPE_STEREO", SPATIAL_AUDIO_SOURCE_TYPE_STEREO},
++        {"SPATIAL_AUDIO_SOURCE_TYPE_AUDIO_VIVID", SPATIAL_AUDIO_SOURCE_TYPE_AUDIO_VIVID},
++        {"SPATIAL_AUDIO_SOURCE_TYPE_MULTI_CHANNEL", SPATIAL_AUDIO_SOURCE_TYPE_MULTI_CHANNEL},
++    };
++    static const Member volume[] = {{"FLAG_SHOW_SYSTEM_UI", FLAG_SHOW_SYSTEM_UI}};
++    struct Enum { const char *name; const Member *members; size_t count; };
++    static const Enum enums[] = {
++        {"AudioDevcieSelectStrategy", select, sizeof(select) / sizeof(select[0])},
++        {"SpatialAudioSourceType", spatial, sizeof(spatial) / sizeof(spatial[0])},
++        {"VolumeFlag", volume, sizeof(volume) / sizeof(volume[0])},
++    };
++    for (const auto &entry : enums) {
++        napi_value object = nullptr;
++        napi_status status = napi_create_object(env, &object);
++        if (status != napi_ok) {
++            return status;
++        }
++        for (size_t index = 0; index < entry.count; ++index) {
++            napi_value value = nullptr;
++            status = napi_create_int32(env, entry.members[index].value, &value);
++            if (status != napi_ok) {
++                return status;
++            }
++            status = napi_set_named_property(env, object, entry.members[index].name, value);
++            if (status != napi_ok) {
++                return status;
++            }
++        }
++        status = napi_set_named_property(env, exports, entry.name, object);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_ok;
++}
++
+ static napi_value Init(napi_env env, napi_value exports)
+ {
++    if (RegisterPublicAudioEnums(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     /* 各模块新增Init接口添加 */
+     NapiAudioEnum::Init(env, exports);
+     NapiAudioRenderer::Init(env, exports);

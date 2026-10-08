@@ -210,6 +210,8 @@ SCREENLOCK_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/theme/screenlock_mg
 I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api26_suggestion_type/apply.sh"
 DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
 SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_tone_haptics_feature/apply.sh"
+AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/api26_public_enums/apply.sh"
+UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/ui_effect/api26_public_modes/apply.sh"
 NETMANAGER_API26_FEATURES_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/api26_features/apply.sh"
 VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_dialog_bundle/apply.sh"
 DHW_UI_PREINSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/dhardware_preinstall/apply.sh"
@@ -2831,6 +2833,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_device_manager_auth_form_component.log"
   bash "${SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_system_sound_tone_feature_component.log"
+  bash "${AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_public_enums_component.log"
+  bash "${UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ui_effect_public_modes_component.log"
   bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_netmanager_api26_features_component.log"
   bash "${VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
