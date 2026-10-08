@@ -14,6 +14,12 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTS = {'arm64_virt': 'aarch64-linux-ohos', 'armv7a_virt': 'arm-linux-ohos',
             'x86_64_virt': 'x86_64-linux-ohos'}
 PLAN = (
+    ('metadata-fetch-result', 'foundation/multimedia/player_framework/api26_fetch_result',
+     'foundation/multimedia/player_framework/frameworks/js/media/media_enum_napi.cpp',
+     'obj/foundation/multimedia/player_framework/frameworks/js/media/media/media_enum_napi.o'),
+    ('media-native-entry', 'foundation/multimedia/player_framework/api26_fetch_result',
+     'foundation/multimedia/player_framework/frameworks/js/media/native_module_ohos_media.cpp',
+     'obj/foundation/multimedia/player_framework/frameworks/js/media/media/native_module_ohos_media.o'),
     ('audio', 'foundation/multimedia/audio_framework/api26_public_enums',
      'foundation/multimedia/audio_framework/frameworks/js/napi/common/napi_audio_entry.cpp',
      'obj/foundation/multimedia/audio_framework/frameworks/js/napi/common/audio/napi_audio_entry.o'),

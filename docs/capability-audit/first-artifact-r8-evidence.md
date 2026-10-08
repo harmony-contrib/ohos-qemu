@@ -471,3 +471,43 @@ guest execution is pending. The complete host batch passed 854 tests in
 120.924 seconds (`capability-host-tests-20261008-next-public-enums-04.log`).
 No remaining-five package build has started and all unresolved findings
 remain mandatory at the representative gate.
+
+## Public metadata enum and R11b map-failure investigation (2026-10-08)
+
+`player_framework/api26_fetch_result` adds the actual public `FetchResult`
+object to the native `media` entry, using the existing metadata server and
+callback values (failure 0, success 1, cancellation 2). All eight new NAPI
+steps are checked; a failed registration stops module initialization before
+other feature exports. No player feature, metadata operation, callback,
+permission or server protocol is replaced. The common pre-traversal plan
+applies this component to both device profiles.
+
+The exact new registration ran through every NAPI failure and 128 repetitions
+under host ASAN/UBSAN. Applying the component twice, without marker shortcuts,
+passed for LF and CRLF preimages. The complete host batch passed 909 tests
+in 135.627 seconds (`metadata-fetch-result-integrated-host-20261008-01.log`).
+Six actual cached-product translation units passed across ARM64, ARMv7a and
+x86_64, using read-only source/output mounts and unchanged compiler flags:
+`metadata-fetch-result-tu-20261008-01` and
+`metadata-fetch-result-other-abis-tu-20261008-01`. These are **not** fresh
+GN/link, packaged enum, metadata-fetch or six-architecture behavior proof.
+The original gap ledger remains unchanged.
+
+Read-only extraction of R11b's crashed F2FS userdata recovered the actual
+`cppcrash-620-1791441973558.json`. Its null dereference is in the packaged
+Mesa 21.3.3 `sp_find_cached_tile`: a one-layer surface has a null layer-zero
+transfer while RS builds a cached drawing image. The fault stack is not
+Binder identity/Parcel decoding. Mapping failure, allocation failure or
+resource lifetime still requires runtime diagnosis; the available memory
+and FD snapshot do not establish an OOM or FD-exhaustion cause.
+
+An isolated local Docker build adds only map/allocation failure diagnostics
+to the historical Mesa source actually used by R11b. The private diagnostic
+archive is
+`/Volumes/PSSD/qemu/packages/diagnostic-only-mesa-map-7.0-release-20261008-r11b/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`,
+SHA-256 `057b36572893b3605e762cb8c4b58e522f1bc7a9470231ce31a2c498446f68ad`.
+It preserves the original DSO mode, UID/GID and SELinux label, and explicitly
+records its diagnostic-only purpose and single DSO replacement. **It is not
+a deliverable, normal rebuild or acceptance pass.** The original R11b
+archive and its failure result are retained. The remaining-five matrix has
+not started.
