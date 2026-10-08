@@ -1,0 +1,15 @@
+diff --git a/base/telephony/call_manager/frameworks/js/napi/src/call.js b/base/telephony/call_manager/frameworks/js/napi/src/call.js
+--- a/base/telephony/call_manager/frameworks/js/napi/src/call.js
++++ b/base/telephony/call_manager/frameworks/js/napi/src/call.js
+@@ -221,6 +221,11 @@
+     formatPhoneNumber: call.formatPhoneNumber,
+     formatPhoneNumberToE164: call.formatPhoneNumberToE164,
+     CallState: call.CallState,
++    CCallState: call.CCallState,
++    TelCallState: call.TelCallState,
++    RttState: call.RttState,
++    ImsRttMode: call.ImsRttMode,
++    XCallType: call.XCallType,
+     EmergencyNumberOptions: call.EmergencyNumberOptions,
+     NumberFormatOptions: call.NumberFormatOptions,
+     startRtt: call.startRtt,

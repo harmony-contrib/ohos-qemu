@@ -275,12 +275,15 @@ def run(args):
         check('certificate-manager', work / 'certificate-manager/evidence.json', [certificate_record])
         same_guest('after-certificate-both-roles')
         normal_results = {}
-        for persona in ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
-                        'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera'):
+        personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
+                    'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera')
+        if device == 'phone':
+            personas += ('optional-phone-profile',)
+        for persona in personas:
             record = command([sys.executable, Path(__file__).with_name('run_normal_hap_probe.py'),
                 '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
                 '--persona', persona, '--arch', arch, '--device', device, '--target', target,
-                '--hdc', hdc, '--boot-id', environment['boot_id'], '--output', work / persona,
+                '--hdc', hdc, '--boot-id', environment['boot_id'], '--boot', work / 'boot/boot.json', '--output', work / persona,
                 '--source-volume', source_volume, '--docker-image', docker_image],
                 'ordinary-' + persona, timeout=2400, env=child_env)
             path = work / persona / 'evidence.json'

@@ -95,6 +95,25 @@ class NormalHapRunnerTests(unittest.TestCase):
         for persona in ('avc-media', 'audio-suite-effects', 'audio-stream'):
             self.assertEqual(PERSONAS[persona][2], '"summary"')
 
+    def test_real_factories_and_phone_discovery_use_one_normal_runner_and_strict_inputs(self):
+        runner = Path(__file__).with_name('run_normal_hap_probe.py').read_text()
+        builder = Path(__file__).with_name('build_hap_probe.py').read_text()
+        suite = Path(__file__).with_name('run_packaged_qemu_suite.py').read_text()
+        for persona in ('curve', 'binding', 'optional-phone-profile'):
+            self.assertEqual(PERSONAS[persona][0], '--' + persona + '-only')
+            self.assertEqual(PERSONAS[persona][2], '"summary"')
+            argv = verifier_arguments(persona, Path('/archive'), Path('/raw'), Path('/identity'),
+                'a' * 32, 'arm64', Path('/result'))
+            for flag in ('--archive', '--application-identity', '--arch', '--run-id'): self.assertIn(flag, argv)
+        self.assertIn("args.device != 'phone'", runner)
+        self.assertIn("'--boot', str(args.boot), '--boot-id', boot_id", runner)
+        self.assertIn("if device == 'phone':", suite)
+        self.assertIn("personas += ('optional-phone-profile',)", suite)
+        self.assertIn("if args.runtime_enum_only or args.curve_only:", builder)
+        self.assertIn('or args.binding_only or args.optional_phone_profile_only):', builder)
+        self.assertNotIn('build_curve_hap_probe.py', runner)
+        self.assertNotIn('build_binding_hap_probe.py', runner)
+
     def test_camera_uses_real_permission_UI_two_live_captures_and_private_photos(self):
         source = Path(__file__).with_name('run_normal_hap_probe.py').read_text()
         suite = Path(__file__).with_name('run_packaged_qemu_suite.py').read_text()

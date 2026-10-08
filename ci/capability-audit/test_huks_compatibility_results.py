@@ -127,6 +127,15 @@ class HuksCompatibilityTests(unittest.TestCase):
         self.assertTrue(result['legacy_crypto_not_claimed'])
         self.assertEqual(result['normal_service_pids'],[201])
 
+    def test_upstream_six_field_cloud_row_is_not_ignored_to_pass_huks(self):
+        args = fixture()
+        args[2] += 'cloud_disk_service:x:6161:6161::/bin/false\n'
+        with self.assertRaisesRegex(ValueError, 'malformed packaged HUKS account table'):
+            verify(*args)
+        args[2] = args[2].replace('cloud_disk_service:x:6161:6161::/bin/false',
+                                'cloud_disk_service:x:6161:6161:::/bin/false')
+        self.assertTrue(verify(*args)['actual_owned_payload_preserved'])
+
     def test_wrong_binary_account_job_service_or_boot_fails(self):
         for kind in ('binary','uid','gid','alias','job','exec-order','service-root','service-pid',
                      'helper-failure','helper-duplicate','helper-missing','helper-uid','helper-no-directory'):

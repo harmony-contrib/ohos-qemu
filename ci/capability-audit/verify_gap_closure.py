@@ -139,6 +139,34 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'verifier': 'actual_package_helper_init_and_owned_legacy_UID_mode_migration',
             'not_claimed': 'legacy_encrypted_key_conversion_TEE_or_OEM_attestation'}
 
+    for persona in ('curve', 'binding'):
+        proof = child(persona + '/evidence.json')
+        if proof and proof[1].get('persona') == persona:
+            if persona == 'curve':
+                from verify_curve_results import verify_evidence
+            else:
+                from verify_binding_results import verify_evidence
+            result = verify_evidence(proof[1], proof[0].parent, archive_sha, boot_id)
+            for identifier in result['closed']:
+                closed[identifier] = {'evidence': str(proof[0]), 'sha256': digest(proof[0]),
+                    'verifier': 'actual_typed_public_factories_and_original_input_replay',
+                    'resolution': 'factory_member_contract_NOT_injected_constructor',
+                    'not_claimed': result['not_claimed']}
+
+    discovery = child('optional-phone-profile/evidence.json')
+    if device_type == 'phone' and discovery and discovery[1].get('persona') == 'optional-phone-profile':
+        from verify_optional_phone_profile_results import verify_evidence
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('phone discovery requires the original acceptance boot evidence')
+        result = verify_evidence(discovery[1], discovery[0].parent,
+            json.loads(boot_path.read_text()), archive_sha, boot_id)
+        for identifier in result['closed']:
+            closed[identifier] = {'evidence': str(discovery[0]), 'sha256': digest(discovery[0]),
+                'verifier': 'actual_immutable_phone_image_AND_ordinary_dynamic_discovery',
+                'resolution': 'outside_official_phone_false_declaration_removed',
+                'not_claimed': result['not_claimed']}
+
     service_init = child('service-init-contracts/evidence.json')
     if service_init and service_init[1].get('persona') == 'service-init-contracts':
         from verify_service_init_contracts import verify_evidence

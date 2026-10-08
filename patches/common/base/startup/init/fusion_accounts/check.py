@@ -53,7 +53,14 @@ def main():
             cursor = cursor.parent
         original = subprocess.check_output(['git', '-C', str(init), 'show', 'HEAD:services/etc/' + kind])
         expected = repaired(original, kind)
-        accepted = (expected,) if args.require_patched else (original, expected)
+        # The separate account-table component repairs exactly one upstream
+        # missing passwd field after this component. Recognize that complete
+        # known composition on reruns, never arbitrary table edits.
+        def formatted(value):
+            return value.replace(b'cloud_disk_service:x:6161:6161::/bin/false',
+                                 b'cloud_disk_service:x:6161:6161:::/bin/false') if kind == 'passwd' else value
+        accepted = (expected, formatted(expected)) if args.require_patched else (
+            original, expected, formatted(original), formatted(expected))
         if target.read_bytes() not in accepted:
             raise SystemExit('unknown account table edit; preserving source')
     print('distinct non-root fusion account registration checked (runtime pending)')

@@ -40,6 +40,10 @@ PERSONAS = {
                           'verify_contact_sync_mode_results.py'),
     'runtime-enum': ('--runtime-enum-only', 'runtime-enum-{run}-results.log', '"summary"',
                      'verify_runtime_enum_results.py'),
+    'curve': ('--curve-only', 'curve-{run}-results.log', '"summary"', 'verify_curve_results.py'),
+    'binding': ('--binding-only', 'binding-{run}-results.log', '"summary"', 'verify_binding_results.py'),
+    'optional-phone-profile': ('--optional-phone-profile-only', 'optional-phone-profile-{run}-results.log',
+                               '"summary"', 'verify_optional_phone_profile_results.py'),
     'arkts-exports': ('--arkts-exports-only', 'arkts-exports-{run}-results.log',
                       '"export_collection_complete":true', 'verify_arkts_exports_results.py'),
     'audio-stream': ('--audio-stream-only', 'audio-stream-{run}-results.log', '"summary"', 'verify_audio_stream_results.py'),
@@ -121,9 +125,9 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
     if persona == 'userid':
         arguments += ['--arch', arch, '--mode', 'unprivileged', '--expected-user-id', '100',
                       '--app-context', '--probe-exit-code', '0']
-    if persona in ('const-enum', 'arkts-exports', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum'):
+    if persona in ('const-enum', 'arkts-exports', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile'):
         arguments += ['--arch', arch]
-    if persona in ('audio-stream', 'avc-media', 'audio-suite-effects', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum'):
+    if persona in ('audio-stream', 'avc-media', 'audio-suite-effects', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile'):
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
@@ -175,6 +179,9 @@ def run(args):
         return command([args.hdc, '-t', args.target, 'shell', script], label, accepted_failure=accepted_failure)
 
     try:
+        if args.persona == 'optional-phone-profile' and (
+                args.device != 'phone' or getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
+            raise ValueError('optional phone discovery requires the actual enclosing acceptance boot; never 2in1')
         report['archive_sha256'] = checksum(args.archive)
         report['test_sdk_components'] = {}
         for name in ('native', 'ets'):
@@ -204,7 +211,7 @@ def run(args):
                  '--arch', args.arch, '--sdk', args.sdk, '--udid', args.udid, '--output', project]
         if args.persona not in ('web', 'vulkan-window'):
             build += ['--probe-run-id', challenge]
-        if args.persona == 'runtime-enum':
+        if args.persona in ('runtime-enum', 'optional-phone-profile'):
             build += ['--enum-device', args.device]
         command(build, 'build-fresh-hap', timeout=1800)
         unsigned = project / 'entry/build/default/outputs/default/entry-default-unsigned.hap'
@@ -316,12 +323,14 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum'):
+        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]
             if args.persona in ('worker-legacy', 'worker-thread'):
                 ui_arguments += ['--arch', args.arch]
+        if args.persona == 'optional-phone-profile':
+            ui_arguments += ['--boot', str(args.boot), '--boot-id', boot_id, '--docker-image', args.docker_image]
         command([sys.executable, str(Path(__file__).with_name(verifier)),
                  *verifier_arguments(args.persona, args.archive, results, application_identity,
                      challenge, args.arch, verification), *ui_arguments], 'strict-behavior-verification')
@@ -361,6 +370,7 @@ def main():
     parser.add_argument('--device', choices=('phone', '2in1'), required=True)
     parser.add_argument('--target', required=True)
     parser.add_argument('--boot-id', help='actual boot ID supplied by the enclosing owned-VM suite')
+    parser.add_argument('--boot', type=Path, help='original enclosing acceptance boot evidence for image-bound discovery')
     parser.add_argument('--hdc', default='hdc')
     parser.add_argument('--source-volume', default='ohos-qemu-7_0-release-source')
     parser.add_argument('--docker-image', default='ohos-qemu-m144-build-env:7.0-release')

@@ -5,6 +5,11 @@ Use the existing detailed/application/RTT native values where defined;
 public-only constants do not manufacture call events or change internal ABI.
 Old DetailedCallState/CallState exports remain intact.
 
+The public `call.js` wrapper forwards those same five native objects. Native
+registration alone does not make an enum visible through the ArkTS public
+module. Do not duplicate enum members in JS or replace absent native exports
+with synthetic values. Rebuild its ABC and validate the packaged public module.
+
 RTT methods require BOTH upstream call-manager and cellular-call product
 features. Enabling those implementations is separate from registering pure
 protocol constants and does not itself provide an IMS/modem peer.

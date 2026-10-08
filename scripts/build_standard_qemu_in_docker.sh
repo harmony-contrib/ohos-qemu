@@ -290,6 +290,7 @@ SERIAL_DIALOG_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/usb/usb_manager/serial_d
 SERIAL_DEVICES_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/startup/init/serial_devices/apply.sh"
 SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/device/qemu/serial_usb_endpoint/apply.sh"
 FUSION_ACCOUNTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/fusion_accounts/apply.sh"
+ACCOUNT_TABLE_FORMAT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/account_table_format/apply.sh"
 VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/vulkan-loader/ohos_surface_dispatch/apply.sh"
 RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
 SDK_CORTEX_M_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/musl/cortex_m_sdk/apply.sh"
@@ -2946,6 +2947,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_jsoncpp_generated_source_component.log"
   bash "${FUSION_ACCOUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_accounts_component.log"
+  bash "${ACCOUNT_TABLE_FORMAT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_account_table_format_component.log"
   bash "${VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vulkan_ohos_surface_component.log"
   apply_qemu_absolute_pointer_component

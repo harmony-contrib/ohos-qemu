@@ -148,7 +148,8 @@ def run(args):
             report['power_states']['after-' + persona] = power_timeout(
                 shell('hidumper -s 3301 -a "-a"', 'power-after-' + persona))
         for kind, probe in getattr(args, 'root_probe', []):
-            if kind not in ('binder-sender', 'bitmap', 'userid', 'bpf', 'audio-suite', 'vibrator-hdi'):
+            if kind not in ('binder-sender', 'bitmap', 'userid', 'bpf', 'audio-suite', 'vibrator-hdi',
+                            'vulkan-device', 'vulkan-headless', 'vulkan-ohos-surface'):
                 raise ValueError('unsupported owned root diagnostic')
             label = 'root-' + kind
             if label in report['results']:

@@ -114,7 +114,7 @@ class WorkerVerifierTests(unittest.TestCase):
             self.assertEqual(arguments[arguments.index('--mode') + 1], mode)
             self.assertEqual(arguments[arguments.index('--run-id') + 1], RUN)
         builder = Path(__file__).with_name('build_hap_probe.py').read_text()
-        self.assertIn('args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only)) > 1:', builder)
+        self.assertIn('args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.optional_phone_profile_only)) > 1:', builder)
         runner = Path(__file__).with_name('run_normal_hap_probe.py').read_text()
         self.assertIn("'uninstall', BUNDLE", runner)
         self.assertIn("compiled_contract_inputs_sha256=checksum(inputs)", runner)

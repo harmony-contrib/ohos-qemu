@@ -1,0 +1,12 @@
+diff --git a/base/startup/init/services/etc/passwd b/base/startup/init/services/etc/passwd
+--- a/base/startup/init/services/etc/passwd
++++ b/base/startup/init/services/etc/passwd
+@@ -177,7 +177,7 @@
+ mechbody:x:7811:7811:::/bin/false
+ ufs:x:1020:1020:::/bin/false
+ compatibility_config_center:x:6703:6703:::/bin/false
+-cloud_disk_service:x:6161:6161::/bin/false
++cloud_disk_service:x:6161:6161:::/bin/false
+ object_editor_service:x:7061:7061:::/bin/false
+ midi_server:x:1044:1044:::/bin/false
+ aimgr:x:3092:3092:::/bin/false

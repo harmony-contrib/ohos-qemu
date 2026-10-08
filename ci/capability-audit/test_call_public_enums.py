@@ -11,8 +11,33 @@ COMPONENT=ROOT/'patches/common/base/telephony/call_manager/api26_enums'
 PATCH=COMPONENT/'0001-register-public-call-state-and-rtt-enums.patch'
 RTT_PATCH=COMPONENT/'0002-use-existing-IMS-RTT-history-accessor.patch'
 RTT_ICU_PATCH=COMPONENT/'0003-link-existing-ICU-provider-for-RTT.patch'
+WRAPPER_PATCH=COMPONENT/'0004-forward-public-state-and-rtt-enums.patch'
 
 class CallPublicEnumsTests(unittest.TestCase):
+    def test_public_wrapper_preserves_real_native_object_identity_and_missing_exports(self):
+        names=['CCallState','TelCallState','RttState','ImsRttMode','XCallType']
+        added=[line[1:] for line in WRAPPER_PATCH.read_text().splitlines()
+               if line.startswith('+') and not line.startswith('+++')]
+        self.assertEqual(added,[f'    {name}: call.{name},' for name in names])
+        script=r'''
+const assert=require('node:assert/strict');
+const names=JSON.parse(process.argv[2]);
+const forward=new Function('call','return ({'+process.argv[1]+'});');
+for(let repeat=0;repeat<128;repeat++) {
+ const native=Object.fromEntries(names.map((name,index)=>[name,{value:repeat+index}]));
+ const result=forward(native);
+ assert.deepEqual(Object.keys(result),names);
+ for(const name of names) {
+  assert.equal(result[name],native[name]);
+  assert.deepEqual(result[name],native[name]);
+ }
+}
+for(const name of names) assert.equal(forward({})[name],undefined);
+'''
+        import json
+        subprocess.run(['node','-e',script,'\n'.join(added),json.dumps(names)],
+                       check=True,capture_output=True)
+
     def test_exact_registration_all_values_failures_and_both_feature_variants(self):
         section=next(iter(patch_sections(PATCH).values()))
         added=[line for hunk in section for line in hunk[2]]

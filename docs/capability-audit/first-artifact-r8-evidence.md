@@ -1,5 +1,70 @@
 # 7.0 representative package R8: build and behavior evidence
 
+R11b was separately extracted and booted for explicitly **diagnostic**,
+not acceptance, execution after the first suite failure. Evidence root:
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r11b-independent-diagnostics-20261008`.
+The archive/SHA below is unchanged. Ordinary Web DOM/Canvas/WebGL and both
+Web-factory generations passed; the factory checked scheme response bodies,
+real surface callbacks and the numeric 401 boundary. Independent Vulkan
+ordinary-window compositor pixels passed in two generations. Three separately
+built Native Vulkan probes passed device/queue/memory, headless readback and
+OHOS-surface resize/readback. Eight real UDMF/Pasteboard/AVPlayer link orders
+passed three exit repetitions each (24 runs); this does not attest UDMF CRUD.
+The repository's new ordinary Curve and UIUtils binding callers passed their
+narrow factory/value proofs. The regular-enum collection found 44 closed and
+16 unresolved numeric/string enum contracts; collection completion is not
+complete system capability closure.
+
+After that enum child completed, RenderService PID620 crashed with SIGSEGV at
+guest uptime 634.732277. The enclosing diagnostic round failed, and its owned
+VM was closed by the fatal guard. The crash remains a required repair, not a
+pass masked by restart. Read-only inspection of that diagnostic F2FS userdata
+recovered `/data/log/faultlog/temp/cppcrash-620-1791441973558.json` from inode
+3685. Raw extracted evidence is `r11b-offline-render-service-crash-20261008-brief.json`
+in the parent evidence directory. Its actual stack and ARM64 instruction show
+`sp_find_cached_tile+324` dereferencing null `tc->transfer[0]` in the packaged
+Mesa driver, while flushing an RS cache surface. Layer zero and one mapped
+layer are confirmed; the reason the underlying mapping failed is not yet
+established. This is not evidence against the earlier Binder object fix.
+Both generic and OHOS `dump.f2fs` attempts failed on other inode/root paths;
+those tool failures are preserved, not reported as successful filesystem tests.
+
+The common pre-traversal account-table component now repairs the exact
+six-field cloud-service passwd record without changing UID/GID, shell,
+permissions or cloud provider semantics. Its strict composition checks and
+the existing HUKS image precheck remain enabled. The main HAP builder/runner
+and original-ledger replay now include dedicated Curve, Binding/MutableBinding
+and phone-only dynamic discovery proofs. The latter can close only four
+approved out-of-profile declarations and additionally requires the actual
+acceptance image; it has not run on a new acceptance image yet. A separate
+call patch forwards the five genuine native enum objects from `call.js`.
+The integrated host suite passed 905 tests in 132.865 seconds, recorded in
+`public-factories-account-profile-integrated-host-20261008-04.log`; native-to-JS
+call forwarding and repeat application also passed six tests. Neither result
+clears the failed first-archive gate. Remaining-five builds are still blocked
+by real first-archive behavior and the unchanged complete original ledger.
+
+R11b normal ARM64 phone GN/link/package completed (6820/6820), including the
+real RTT shared-ICU backend link and all newly integrated public registrations.
+Archive: `/Volumes/PSSD/qemu/packages/first-public-contracts-migration-7.0-release-20261008-r11/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`;
+SHA-256 `c503f361e55437a0bd602e174766990b8553d3439a907046f9ea555b371b6bdb`.
+Frozen inputs are `phone-YAHYCO`, tree
+`2f97878960a307dd9d7f3d81e8e9b15f96d57325868ffe592832945ea78079a0`.
+The repository full validator actually extracted and booted this archive on
+macOS ARM64/HVF, HDC `127.0.0.1:54726`, boot ID
+`fb1aa2b1-d67c-4a5f-b56f-d9fb7034d017`, without external keepalive.
+Boot, backup init, profile, real suspend/wake, home and the whole Native ABI
+passed. The suite then failed the strict HUKS image-account precheck because
+the upstream `cloud_disk_service` passwd record has six fields. No owned
+legacy fixture was created, and subsequent probes were not run. The serial
+trace does contain the successful real boot helper and isolated UID3510 SA;
+it does not make the unrun fixture or complete behavior gate pass.
+This failure is preserved in R11's `first-artifact-behavior.json` and runtime
+root `openharmony-qemu-arm64-arm64_virt-phone-runtime-fl_xfcv7`.
+The source repair adds only the missing empty home field; the strict account
+check remains unchanged. A new frozen recipe and freshly rebuilt/booted first
+archive are required. No remaining-five matrix has started.
+
 R11 first attempt was stopped before GN/package creation by the strict existing
 FusionAssetType source check: new Photo native registrations changed its exact
 source hash. Frozen inputs were `phone-tRDwKQ`, tree SHA-256

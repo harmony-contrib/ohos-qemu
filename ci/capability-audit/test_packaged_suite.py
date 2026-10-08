@@ -98,7 +98,7 @@ class PackagedSuiteTests(unittest.TestCase):
         self.assertIn("'run_service_init_contract_probe.py'", text)
         self.assertIn("'run_huks_compatibility_probe.py'", text)
         self.assertLess(text.index("'actual-HUKS-init-and-owned-legacy-migration'"),
-                        text.index("for persona in ('web'"))
+                        text.index("personas = ('web'"))
         for forbidden in ('--candidate-surface', '--candidate-fence', 'setenforce', 'server -k', 'system_wakeup'):
             self.assertNotIn(forbidden, text)
 
