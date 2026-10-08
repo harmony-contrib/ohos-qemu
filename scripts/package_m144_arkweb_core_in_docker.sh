@@ -79,7 +79,7 @@ FROZEN="${OUTPUT}/hap-build-inputs"
 mkdir "${FROZEN}"
 mkdir -p "${FROZEN}/patches/common/web/arkweb"
 cp -a "${NATIVE_FROZEN}/patches/lib" "${FROZEN}/patches/lib"
-for component in m144_v8_shared m144_core_build m144_webrtc_thread_id m144_window_contract m144_private_contract m144_angle_includes m144_adapter_header_format m144_core_package; do
+for component in m144_v8_shared m144_core_build m144_webrtc_thread_id m144_media_document_binding m144_window_contract m144_private_contract m144_angle_includes m144_adapter_header_format m144_core_package; do
   cp -a "${NATIVE_FROZEN}/patches/common/web/arkweb/${component}" "${FROZEN}/patches/common/web/arkweb/"
 done
 cp -a "${NATIVE_FROZEN}/scripts/verify_arkweb_core_image.py" "${NATIVE_FROZEN}/scripts/verify_alsa_config_image.py" \

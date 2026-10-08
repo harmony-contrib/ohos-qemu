@@ -28,7 +28,7 @@ def main():
     projects = sorted(data["projects"], key=lambda p: len(p["path"]), reverse=True)
     component_root = ROOT / "patches/common/web/arkweb"
     components = ("m144_v8_shared", "m144_core_build", "m144_webrtc_thread_id", "m144_angle_includes",
-                  "m144_adapter_header_format",
+                  "m144_adapter_header_format", "m144_media_document_binding",
                   "m144_window_contract", "m144_private_contract", "m144_core_package",
                   "m144_swiftshader", "m144_avc_encoder")
     patches = [path for name in components for path in sorted((component_root / name).glob("[0-9]*.patch"))]

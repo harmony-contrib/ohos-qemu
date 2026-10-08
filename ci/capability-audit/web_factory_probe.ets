@@ -41,6 +41,8 @@ struct Index {
   private finished: boolean = false;
   private failures: number = 0;
   private pageChecking: boolean = false;
+  private mediaCreated: boolean[] = [false, false];
+  private mediaReleased: boolean[] = [false, false];
   private record(name: string, text: string = '', values: number[] = [], error: string = ''): void {
     const row: Observation = { name, runId: this.runId, text, values, error };
     const file = fs.openSync(this.path, fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.APPEND);
@@ -122,15 +124,21 @@ struct Index {
     this.controller.setWebSchemeHandler('auditweb', this.scheme);
     this.controller.onCreateNativeMediaPlayer((_handler: webview.NativeMediaPlayerHandler,
       info: webview.MediaInfo): webview.NativeMediaPlayerBridge => {
-      const generation = this.generation;
       const source: webview.MediaSourceInfo = info.mediaSrcList[0];
       const surface: webview.NativeMediaPlayerSurfaceInfo = info.surfaceInfo;
+      // Attribute asynchronous native callbacks to their real source, not the
+      // mutable next-navigation counter. Never manufacture a missing callback.
+      const generation: number = source.source === 'auditweb://audit.local/media-0.mp4' ? 0 :
+        source.source === 'auditweb://audit.local/media-1.mp4' ? 1 : -1;
+      if (generation < 0) { throw new Error('unexpected actual native media source'); }
       this.record('media.' + generation + '.source', source.source + '|' + source.format,
         [source.type, info.mediaType, info.mediaSrcList.length]);
       this.record('media.' + generation + '.surface', surface.id,
         [surface.rect.x, surface.rect.y, surface.rect.width, surface.rect.height]);
+      this.mediaCreated[generation] = true;
       return new MediaObserver((name: string, values: number[]) => {
         this.record('media.' + generation + '.' + name, '', values);
+        if (name === 'release') { this.mediaReleased[generation] = true; }
       });
     });
     this.record('setup');
@@ -141,28 +149,39 @@ struct Index {
   private async checkPage(): Promise<void> {
     if (this.pageChecking || this.finished) { return; }
     this.pageChecking = true;
+    const generation: number = this.generation;
     try {
-      const expected: string = 'OK-' + this.runId + ':' + this.generation + ':stream-body';
+      const expected: string = 'OK-' + this.runId + ':' + generation + ':stream-body';
       let title: string = '';
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 400; i++) {
+        if (this.finished) { return; }
         // This title is produced by the document's own fetch roundtrip. The
         // synchronous getter avoids testing an unrelated runJavaScript API
         // while native-media initialization intentionally awaits a decoder.
         title = this.controller.getTitle();
-        if (title === expected || title.includes('ERROR-')) { break; }
+        if ((title === expected && this.mediaCreated[generation]) || title.includes('ERROR-')) { break; }
         await new Promise<void>((resolve) => { setTimeout(resolve, 50); });
       }
-      this.record('page.' + this.generation + '.title', title);
+      this.record('page.' + generation + '.title', title);
       if (title !== expected) { throw new Error('custom response did not reach the renderer'); }
-      if (this.generation === 0) {
+      if (!this.mediaCreated[generation]) { throw new Error('actual native media callback did not arrive'); }
+      if (generation === 0) {
         this.generation = 1; this.pageChecking = false;
         this.controller.loadUrl('auditweb://audit.local/main?generation=1');
         setTimeout(() => { this.checkPage(); }, 250);
       } else {
-        this.finished = true; this.controller.loadUrl('about:blank');
-        setTimeout(() => { this.record('summary', '', [2, this.failures]); }, 1000);
+        this.controller.loadUrl('about:blank');
+        for (let i = 0; i < 200 && !this.mediaReleased.every((released: boolean) => released); i++) {
+          if (this.finished) { return; }
+          await new Promise<void>((resolve) => { setTimeout(resolve, 50); });
+        }
+        if (!this.mediaReleased.every((released: boolean) => released)) {
+          throw new Error('actual native media release callbacks did not arrive');
+        }
+        this.finished = true; this.record('summary', '', [2, this.failures]);
       }
     } catch (error) {
+      if (this.finished) { return; }
       this.failures++; this.record('page.failed', '', [], (error as BusinessError).message || 'exception');
       this.finished = true; this.record('summary', '', [2, this.failures]);
     }
