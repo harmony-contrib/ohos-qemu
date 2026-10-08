@@ -20,6 +20,9 @@ PLAN = (
     ('uieffect', 'foundation/graphic/graphic_2d/ui_effect/api26_public_modes',
      'foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/ui_effect/src/native_module_ohos_ui_effect.cpp',
      'obj/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/ui_effect/src/uieffect_napi/native_module_ohos_ui_effect.o'),
+    ('bluetooth-control', 'foundation/communication/bluetooth/api26_control_enums',
+     'foundation/communication/bluetooth/frameworks/js/napi/src/connection/native_module_connection.cpp',
+     'obj/foundation/communication/bluetooth/frameworks/js/napi/src/connection/connection/native_module_connection.o'),
 )
 
 
@@ -64,7 +67,7 @@ def main():
         raise ValueError('unexpected registration patch target')
     before = {str(path): digest(path) for path in inputs}
     source_before = {name: digest(root / name) for name in targets}
-    report = {'status': 'fail', 'scope': 'six_actual_cached_product_registration_TUs_NOT_fresh_GN_link_guest',
+    report = {'status': 'fail', 'scope': 'actual_cached_product_registration_TUs_NOT_fresh_GN_link_guest',
               'first_artifact_behavior_gate_passed': False, 'objects': [], 'failures': [],
               'recipe_sha256': before, 'source_sha256_before': source_before}
     try:
