@@ -14,6 +14,12 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTS = {'arm64_virt': 'aarch64-linux-ohos', 'armv7a_virt': 'arm-linux-ohos',
             'x86_64_virt': 'x86_64-linux-ohos'}
 PLAN = (
+    ('image-partial-type', 'foundation/arkui/ace_engine/api26_image_partial_type',
+     'foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp',
+     'obj/foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/imagegeneration_static_ohos/js_image_generation.o'),
+    ('accessibility-blink-enums', 'foundation/barrierfree/accessibility/api26_blink_enums',
+     'foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp',
+     'obj/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/config_napi/native_module.o'),
     ('cli-session-status', 'foundation/ability/ability_runtime/api26_cli_session_status',
      'foundation/ability/ability_runtime/cli_tool_framework/frameworks/js/napi/cli_tool_manager/src/js_cli_manager.cpp',
      'obj/foundation/ability/ability_runtime/cli_tool_framework/frameworks/js/napi/cli_tool_manager/src/climanager_napi/js_cli_manager.o'),
@@ -50,6 +56,9 @@ PLAN = (
     ('photo-cover-source', 'foundation/multimedia/media_library/api26_photo_enums',
      'foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp',
      'obj/foundation/multimedia/media_library/frameworks/js/src/medialibrary_nutils/photo_album_napi.o'),
+    ('photo-source-search-enums', 'foundation/multimedia/media_library/api26_photo_search_enums',
+     'foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp',
+     'obj/foundation/multimedia/media_library/frameworks/js/src/medialibrary_nutils/media_library_napi.o'),
     ('effect-light-degree', 'foundation/graphic/graphic_2d/effect_kit/api26_light_degree',
      'foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/native_module_ohos_effect.cpp',
      'obj/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/effectkit/native_module_ohos_effect.o'),
@@ -66,6 +75,8 @@ PLAN = (
 COMPONENTS = tuple(dict.fromkeys(row[1] for row in PLAN))
 PATCH_ONLY_SOURCES = {
     'foundation/multimedia/media_library/api26_photo_enums':
+        ('foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js',),
+    'foundation/multimedia/media_library/api26_photo_search_enums':
         ('foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js',),
 }
 
@@ -107,11 +118,14 @@ def main():
         raise ValueError('source and output mounts must both be read-only')
     args.output.mkdir(exist_ok=False)
     inputs = [Path(__file__), ROOT / 'patches/lib/apply_patch.sh',
-              ROOT / 'patches/lib/apply_component_dir.sh']
+              ROOT / 'patches/lib/apply_component_dir.sh', ROOT / 'patches/lib/apply_exact_component.py',
+              ROOT / 'patches/lib/exact_source_states.py']
     targets = set()
     for _, relative, _, _ in plan:
         component = ROOT / 'patches/common' / relative
         inputs += [component / 'apply.sh', *sorted(component.glob('*.patch'))]
+        if (component / 'verify_source.py').is_file():
+            inputs.append(component / 'verify_source.py')
         for patch in component.glob('*.patch'):
             targets.update(re.findall(r'^\+\+\+ b/(.+)$', patch.read_text(), re.M))
     expected_targets = {row[2] for row in plan} | {
@@ -154,7 +168,16 @@ def main():
                         subprocess.run(argv, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT, check=True)
                     report['objects'].append({'component': label, 'product': product, 'triple': triple,
                         'original_command': original, 'executed_command': argv, 'object_sha256': digest(obj),
+                        'compiled_source_sha256': digest(staged / source),
                         'dependency_sha256': digest(dep), 'query_sha256': digest(query_log), 'log_sha256': digest(log)})
+            # Earlier patches can overlap a later overlay. Replaying the
+            # complete selected stack must recognize its exact final state.
+            for relative in args.components:
+                component = ROOT / 'patches/common' / relative
+                log = args.output / (relative.replace('/', '-') + '-complete-stack-replay.log')
+                with log.open('x') as stream:
+                    subprocess.run(['bash', str(component / 'apply.sh'), '--source-root', str(staged)],
+                                   stdout=stream, stderr=subprocess.STDOUT, check=True)
         if (before != {str(path): digest(path) for path in inputs} or
                 source_before != {name: digest(root / name) for name in targets}):
             raise ValueError('actual source or patch inputs changed during the check')

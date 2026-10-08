@@ -17,6 +17,8 @@ FILES = (('frameworks/js/src/media_library_napi.cpp',
           'b283d47255e633b5ed1b0f0ae27ef98ddc835d69ab60cdd2137e50da55ef1439'))
 COMPOSED_NATIVE_SHA = 'c45cb3a1a9b65df3dddd37a816660309b82c5c40af4605d63932b5d338335b30'
 COMPOSED_WRAPPER_SHA = '5e5035b8b3913f49bc568798ebf83e737e627bec154331f2177db20dba519b4c'
+SEARCH_NATIVE_SHA = 'b05869e1ab9a777c2a03b4cb114d161eccc6381ada8992d71984b2516ab43af0'
+SEARCH_WRAPPER_SHA = '2488397b285f55dd5b78f5aa0393a67f2c4a4a758867c5b0fbb5d315bb1fce5e'
 COMPOSED_COVER_FILE = ('frameworks/js/src/photo_album_napi.cpp',
     'ff44f5e8a2cfb8d22c8f3291233e37dcf01a3739111f98360991eed04ba501f2',
     'e24265bb5563eddd384c7c11181ca53697b075f7f3df8c4484178daac7a6535c')
@@ -33,8 +35,10 @@ def validate(root, require_patched=False):
         if cursor.is_symlink():
             raise ValueError('component input contains a symlink: ' + FILES[0][0])
         cursor = cursor.parent
-    composed = digest(native.read_bytes()) == COMPOSED_NATIVE_SHA
-    files = ((FILES[0][0], FILES[0][1], COMPOSED_NATIVE_SHA), FILES[1]) if composed else FILES
+    native_sha = digest(native.read_bytes())
+    search_composed = native_sha == SEARCH_NATIVE_SHA
+    composed = search_composed or native_sha == COMPOSED_NATIVE_SHA
+    files = ((FILES[0][0], FILES[0][1], native_sha), FILES[1]) if composed else FILES
     if composed:
         wrapper = root / PROJECT / FILES[1][0]
         cursor = wrapper
@@ -42,8 +46,12 @@ def validate(root, require_patched=False):
             if cursor.is_symlink():
                 raise ValueError('component input contains a symlink: ' + FILES[1][0])
             cursor = cursor.parent
-        if digest(wrapper.read_bytes()) == COMPOSED_WRAPPER_SHA:
-            files = (files[0], (FILES[1][0], FILES[1][1], COMPOSED_WRAPPER_SHA))
+        wrapper_sha = digest(wrapper.read_bytes())
+        if search_composed and wrapper_sha != SEARCH_WRAPPER_SHA:
+            raise ValueError('incomplete source/search Photo composition; preserving source')
+        expected_wrapper = SEARCH_WRAPPER_SHA if search_composed else COMPOSED_WRAPPER_SHA
+        if wrapper_sha == expected_wrapper:
+            files = (files[0], (FILES[1][0], FILES[1][1], expected_wrapper))
     states = tuple(validate_component(root, PROJECT, REVISION, (entry,)) for entry in files)
     if composed:
         # Recognize only the exact FULL Fusion+Photo native source together

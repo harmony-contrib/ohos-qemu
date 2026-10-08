@@ -613,3 +613,67 @@ tests remain mandatory. The owned tile diagnostic QEMU was closed through
 its verified original QMP socket after its wrapper was no longer present;
 archive, runtime evidence and userdata remain preserved. No remaining-five
 matrix or six-package delivery has happened.
+
+### R12 normal-build failure and remaining regular-enum overlays (2026-10-08)
+
+The normal representative R12 build used frozen inputs
+`/Volumes/PSSD/qemu/build-inputs/phone-sMRIw3`, tree SHA256
+`68ba2ffda2e008a0eef5531fb947c4d285451d019e707ed733c7b354e3f78651`.
+It failed at the real `qemu_mesa_build` action, before creating any archive:
+the extracted historical source lives inside the release Mesa Git checkout,
+and Git silently filtered out the patch paths while returning exit code 0.
+The full-file post-check correctly rejected the unchanged historical source.
+The parent Mesa 25 KMS source was not modified. Build evidence remains in
+`first-kms-mapping-arm64-phone-build-r12.log`; the R12 package directory is empty.
+
+The helper now patches in an isolated, Git-discovery-bounded scratch tree,
+verifies the complete repaired file, and atomically publishes only that file
+to the historical source. The installer upgrades only the exact previous
+helper bytes and rejects unknown sibling assets before any writes. Nine host
+tests passed (`mesa-kms-nested-git-host-20261008-01.log`), including a real
+nested-Git fixture that first reproduces exit-0/no-application and then verifies
+repair, repeated execution and unchanged parent sources. The actual historical
+KMS source again compiled for all three ABIs using unchanged cached Meson
+commands (`mesa-kms-nested-git-three-abi-real-20261008-01`). This remains compile
+evidence, not a new archive or RS crash-closure result.
+
+Three separately guarded components restore the remaining eight regular-enum
+exports: ImageGeneration `PartialResultType`; accessibility `BlinkingMode`,
+`BlinkingScenario`, `BlinkResultCode`; PhotoAccessHelper `AssetSourceType`,
+`FieldType`, `RankingMethod`, `SearchSuggestionType`. The photo public wrapper
+forwards the real native objects; source flags use the existing database
+discriminator. Full-file guards recognize only the complete known Photo/Fusion
+composition and its unchanged cover getter, including later source/search
+overlays. The single pre-traversal plan applies these for both profiles and
+all three ABIs. No provider, permission, callback, wire protocol or SDK contract
+is changed, and the original audit ledger is unchanged.
+
+Six targeted enum tests passed (`final-regular-enum-host-20261008-02.log`),
+covering all values, every registration-failure position, repeated initialization,
+unknown/partial/symlink preservation, native-discriminator use and identity-only
+wrapper forwarding. The first fixture failed because its function-name template
+accidentally replaced the actual `CALL` enum expectation; only the fixture was
+corrected. Five Photo/Fusion composition tests passed
+(`photo-fusion-search-composition-host-20261008-01.log`). Nine actual full
+registration TUs passed through the real three-ABI cached product commands
+(`final-regular-enum-three-abi-tu-20261008-01`). These enum exports do not close
+the still-missing blinking/image-generation/photo providers, nor do they satisfy
+the first freshly packaged guest gate. A repaired representative rebuild and
+its real runtime checks are still required before the remaining-five matrix.
+
+The integrated host suite passed **936 tests in 146.348 seconds** using the
+existing runtime-validation Python environment
+`/tmp/ohos-capability-tests-pvk51rjh`
+(`final-enums-mesa-nested-integrated-host-20261008-02.log`). The first invocation
+used plain host Python without Pillow and failed test-module imports
+(`final-enums-mesa-nested-integrated-host-20261008-01.log`); it is preserved as
+an environment failure, not reported as a passing or guest run.
+
+The complete Photo overlay stack was additionally applied, compiled and
+replayed: **15 actual full TUs passed across the three ABIs**, including the
+old cover getter and the later source/search overlay, with complete-stack
+reapplication accepted only for the exact final files
+(`final-regular-enum-complete-stack-three-abi-tu-20261008-02`). The installer
+regression now uses a checksum-pinned historical fixture instead of requiring
+Git history, so frozen-source/shallow workspaces can run the same check; nine
+targeted tests passed again (`mesa-kms-nested-git-host-20261008-02.log`).

@@ -54,13 +54,38 @@ def apply(root, patch):
             target = staged / RELATIVE
             target.parent.mkdir(parents=True)
             shutil.copy2(source, target)
+            environment = os.environ.copy()
+            for variable in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR'):
+                environment.pop(variable, None)
+            environment['GIT_CEILING_DIRECTORIES'] = str(staged.parent)
             for operation in ('--check', '--whitespace=nowarn'):
-                subprocess.run(['git', '-C', str(staged), 'apply', operation, str(patch)], check=True)
+                subprocess.run(['git', '-C', str(staged), 'apply', operation, str(patch)],
+                               env=environment, check=True)
             if digest(target) != REPAIRED_SHA:
                 raise ValueError('historical mapping patch produced an unexpected complete file')
-        if digest(source) != ORIGINAL_SHA:
-            raise ValueError('historical mapping source changed before patch application')
-        subprocess.run(['git', '-C', str(root), 'apply', '--whitespace=nowarn', str(patch)], check=True)
+            # Extracted build sources live inside the Mesa 25 checkout. Git
+            # discovers that outer repository and silently skips these paths.
+            # Publish only the verified historical file, atomically, rather
+            # than applying a patch in an unrelated parent Git worktree.
+            replacement_name = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=source.parent, prefix='.ohos-qemu-kms-mapping-',
+                                                 delete=False) as replacement:
+                    replacement_name = Path(replacement.name)
+                    with target.open('rb') as repaired:
+                        shutil.copyfileobj(repaired, replacement)
+                    os.fchmod(replacement.fileno(), source.stat().st_mode & 0o777)
+                    replacement.flush()
+                    os.fsync(replacement.fileno())
+                if digest(replacement_name) != REPAIRED_SHA:
+                    raise ValueError('verified historical mapping copy differs')
+                check_path(source, root)
+                if digest(source) != ORIGINAL_SHA:
+                    raise ValueError('historical mapping source changed before atomic publication')
+                os.replace(replacement_name, source)
+            finally:
+                if replacement_name is not None:
+                    replacement_name.unlink(missing_ok=True)
         if digest(source) != REPAIRED_SHA:
             raise ValueError('historical mapping source is incomplete after application')
 

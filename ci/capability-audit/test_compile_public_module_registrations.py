@@ -8,7 +8,9 @@ import re
 class RegistrationCompilerTests(unittest.TestCase):
     def test_each_component_keeps_its_complete_real_patch_target_set(self):
         self.assertEqual(len(PLAN), len({row[0] for row in PLAN}))
-        self.assertEqual(len(PLAN), len({row[2] for row in PLAN}))
+        # Independent overlays can change the same TU; each complete component
+        # is applied and compiled separately in its declared stack order.
+        self.assertEqual(len(PLAN), len({(row[1], row[2]) for row in PLAN}))
         for component in COMPONENTS:
             paths = (ROOT / 'patches/common' / component).glob('*.patch')
             actual = {name for path in paths for name in re.findall(r'^\+\+\+ b/(.+)$', path.read_text(), re.M)}

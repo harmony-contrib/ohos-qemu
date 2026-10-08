@@ -222,6 +222,75 @@ class MesaKmsMappingTests(unittest.TestCase):
             self.assertEqual(plan.count(invocation), 1)
             self.assertLess(plan.index('apply_standard_vpn_component'), plan.index(invocation))
 
+    def test_extracted_historical_source_inside_parent_git_is_repaired_not_silently_skipped(self):
+        spec = importlib.util.spec_from_file_location('kms_nested_git', COMPONENT / 'files/apply_mesa_kms_mapping.py')
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            subprocess.run(['git', '-C', str(parent), 'init', '-q'], check=True)
+            unrelated = parent / helper.RELATIVE
+            unrelated.parent.mkdir(parents=True)
+            unrelated.write_bytes(b'parent Mesa 25 source must not be changed\n')
+            extracted = parent / 'build-ohos-qemu-source-21.3.3-fixed'
+            write_preimages(extracted, PATCH)
+            (extracted / 'VERSION').write_text('21.3.3\n')
+            source = extracted / helper.RELATIVE
+            before = source.read_bytes()
+            # This was the real normal-build failure: exit 0, no application.
+            subprocess.run(['git', '-C', str(extracted), 'apply', str(PATCH)],
+                           check=True, capture_output=True)
+            self.assertEqual(source.read_bytes(), before)
+            with tempfile.TemporaryDirectory() as scratch:
+                private = Path(scratch)
+                write_preimages(private, PATCH)
+                subprocess.run(['git', '-C', str(private), 'apply', str(PATCH)], check=True)
+                repaired = (private / helper.RELATIVE).read_bytes()
+            with patch.object(helper, 'ORIGINAL_SHA', hashlib.sha256(before).hexdigest()), \
+                    patch.object(helper, 'REPAIRED_SHA', hashlib.sha256(repaired).hexdigest()):
+                helper.apply(extracted, PATCH)
+                helper.apply(extracted, PATCH)
+            self.assertEqual(source.read_bytes(), repaired)
+            self.assertEqual(unrelated.read_bytes(), b'parent Mesa 25 source must not be changed\n')
+            self.assertFalse(list(source.parent.glob('.ohos-qemu-kms-mapping-*')))
+
+    def test_installer_upgrades_only_exact_previous_helper_and_preserves_unknown_sibling(self):
+        spec = importlib.util.spec_from_file_location('kms_install', COMPONENT / 'install_backport.py')
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        previous = (Path(__file__).with_name('fixtures') / 'previous_mesa_kms_mapping_helper.py').read_bytes()
+        self.assertEqual(hashlib.sha256(previous).hexdigest(), helper.PREVIOUS_HELPER_SHA)
+        original = b'fixture original historical source'
+
+        def query(argv, **kwargs):
+            if argv[-1] == 'HEAD':
+                return (helper.MESA_HEAD if argv[2].endswith('third_party/mesa3d') else helper.QEMU_HEAD) + '\n'
+            if argv[-1].endswith(':VERSION'):
+                return '21.3.3\n'
+            return original
+
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(helper.subprocess, 'check_output', side_effect=query), \
+                patch.object(helper, 'ORIGINAL_SHA', hashlib.sha256(original).hexdigest()):
+            root = Path(directory)
+            destination = root / helper.DESTINATION
+            destination.mkdir(parents=True)
+            target = destination / 'apply_mesa_kms_mapping.py'
+            target.write_bytes(previous)
+            sibling = destination / PATCH.name
+            sibling.write_bytes(b'unknown user patch')
+            with self.assertRaises(ValueError):
+                helper.install(root)
+            self.assertEqual(target.read_bytes(), previous)
+            self.assertEqual(sibling.read_bytes(), b'unknown user patch')
+            sibling.write_bytes(PATCH.read_bytes())
+            helper.install(root)
+            helper.install(root)
+            self.assertEqual(target.read_bytes(), (COMPONENT / 'files/apply_mesa_kms_mapping.py').read_bytes())
+            self.assertEqual(target.stat().st_mode & 0o777, 0o755)
+            self.assertEqual(sibling.read_bytes(), PATCH.read_bytes())
+            self.assertFalse(list(destination.glob('.mapping-recipe-*')))
+
     def test_device_recipes_fail_before_mutating_siblings_with_unknown_input(self):
         component = ROOT / 'patches/common/device/qemu/kms_mesa_build'
         spec = importlib.util.spec_from_file_location('kms_recipe', component / 'apply_recipe.py')

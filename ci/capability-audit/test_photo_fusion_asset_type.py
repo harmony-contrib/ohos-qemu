@@ -22,6 +22,8 @@ class PhotoFusionAssetTypeTests(unittest.TestCase):
         getter = b'host fixture: exact Photo public getter\n'
         wrapper = b'host fixture: exact Fusion public wrapper\n'
         final_wrapper = b'host fixture: exact Fusion and Photo public wrapper\n'
+        search_native = b'host fixture: exact Fusion Photo and search native composition\n'
+        search_wrapper = b'host fixture: exact Fusion Photo and search public wrapper\n'
         original_wrapper = b'host fixture: original public wrapper\n'
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -36,6 +38,8 @@ class PhotoFusionAssetTypeTests(unittest.TestCase):
                 ('e24265bb5563eddd384c7c11181ca53697b075f7f3df8c4484178daac7a6535c', getter),
                 ('b283d47255e633b5ed1b0f0ae27ef98ddc835d69ab60cdd2137e50da55ef1439', wrapper),
                 ('5e5035b8b3913f49bc568798ebf83e737e627bec154331f2177db20dba519b4c', final_wrapper),
+                ('b05869e1ab9a777c2a03b4cb114d161eccc6381ada8992d71984b2516ab43af0', search_native),
+                ('2488397b285f55dd5b78f5aa0393a67f2c4a4a758867c5b0fbb5d315bb1fce5e', search_wrapper),
                 ('804aea4300b31167be5a2fed86f0870c95f605ac689ea906f128ecc03dc37127', original_wrapper)):
                 text = text.replace(actual, hashlib.sha256(synthetic).hexdigest())
             verifier.write_text(text)
@@ -54,6 +58,17 @@ class PhotoFusionAssetTypeTests(unittest.TestCase):
             for _ in range(2):
                 subprocess.run(command, capture_output=True, check=True)
                 self.assertEqual({name: (root / name).read_bytes() for name in values}, values)
+            (root / SOURCE).write_bytes(search_native)
+            (root / WRAPPER).write_bytes(search_wrapper)
+            for _ in range(2):
+                subprocess.run(command, capture_output=True, check=True)
+                self.assertEqual((root / SOURCE).read_bytes(), search_native)
+                self.assertEqual((root / WRAPPER).read_bytes(), search_wrapper)
+            (root / WRAPPER).write_bytes(final_wrapper)
+            self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            self.assertEqual((root / SOURCE).read_bytes(), search_native)
+            self.assertEqual((root / WRAPPER).read_bytes(), final_wrapper)
+            (root / SOURCE).write_bytes(composed_source)
             (root / WRAPPER).write_bytes(original_wrapper)
             self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
             self.assertEqual((root / WRAPPER).read_bytes(), original_wrapper)
