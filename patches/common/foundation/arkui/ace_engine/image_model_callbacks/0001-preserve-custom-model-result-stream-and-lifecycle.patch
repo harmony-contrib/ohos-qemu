@@ -1,0 +1,133 @@
+diff --git a/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/image_generator_dialog_project/general/utils/AIGenerateImpl.js b/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/image_generator_dialog_project/general/utils/AIGenerateImpl.js
+--- a/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/image_generator_dialog_project/general/utils/AIGenerateImpl.js
++++ b/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/image_generator_dialog_project/general/utils/AIGenerateImpl.js
+@@ -120,7 +120,8 @@
+     async ImageAIGenerate(callback) {
+         let retSessionId = this.sessionId;
+         this.sessionId++;
+-        let getResultFromAIGenerate;
++        let getResultFromAIGenerate = [];
++        let completed = false;
+         if (this.ImageModal !== undefined) {
+             console.info(TAG, `Complete the image generation task using a user-defined model.`);
+             let taskParams = {
+@@ -132,17 +133,22 @@
+                 imageSize: AIGenerateOptions.getInstance().resolution,
+             };
+             let userImageModalCallback = (ret) => {
+-                if (ret.partialFail !== undefined) {
++                if (completed || this.currentImageSessionId !== retSessionId) {
++                    return;
++                }
++                if (ret.type === imageGeneration.PartialResultType.PARTIAL_FAIL || ret.partialFail !== undefined) {
+                     console.error(TAG, `Error in requestImageGeneration: ${ret.partialFail}.`);
+                     callback.onError();
+                 }
+                 else {
+                     if (ret.type === imageGeneration.PartialResultType.PARTIAL) {
+                         console.info(TAG, `The image generation task returns an image.`);
+-                        getResultFromAIGenerate.push(ret.imageData);
++                        if (ret.imageData !== undefined) {
++                            getResultFromAIGenerate.push(ret.imageData);
++                        }
+                     }
+                     else if (ret.type === imageGeneration.PartialResultType.COMPLETED) {
+-                        getResultFromAIGenerate.push(ret.imageData);
++                        completed = true;
+                         console.info(TAG, `The task of generating the image has been completed.`);
+                         if (callback.onComplete) {
+                             callback.onComplete(getResultFromAIGenerate);
+@@ -151,8 +157,8 @@
+                 }
+             };
+             this.currentImageSessionId = retSessionId;
+-            this.ImageModal.requestImageGeneration(retSessionId, taskParams, userImageModalCallback);
+             callback.onReady();
++            this.ImageModal.requestImageGeneration(retSessionId, taskParams, userImageModalCallback);
+         }
+         else {
+             console.info(TAG, `Complete the image generation task using Celia model.`);
+@@ -184,6 +190,9 @@
+     ;
+     async cancelImageGenerateTask(sessionId) {
+         console.info(TAG, `Image task sessionId: ${sessionId} cancel.`);
++        if (this.currentImageSessionId === sessionId) {
++            this.currentImageSessionId = -1;
++        }
+         if (this.ImageModal !== undefined) {
+             this.ImageModal.cancelImageGeneration(Number(sessionId));
+         }
+diff --git a/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/source/image_generator_dialog_project/image_generator_dialog/src/main/ets/general/utils/AIGenerateImpl.ets b/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/source/image_generator_dialog_project/image_generator_dialog/src/main/ets/general/utils/AIGenerateImpl.ets
+--- a/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/source/image_generator_dialog_project/image_generator_dialog/src/main/ets/general/utils/AIGenerateImpl.ets
++++ b/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/source/image_generator_dialog_project/image_generator_dialog/src/main/ets/general/utils/AIGenerateImpl.ets
+@@ -139,7 +139,8 @@
+     let retSessionId: number = this.sessionId;
+     this.sessionId++;
+ 
+-    let getResultFromAIGenerate: string[];
++    let getResultFromAIGenerate: string[] = [];
++    let completed: boolean = false;
+ 
+     if (this.ImageModal !== undefined) {
+       console.info(TAG, `Complete the image generation task using a user-defined model.`);
+@@ -154,15 +155,20 @@
+       }
+ 
+       let userImageModalCallback: Callback<imageGeneration.GenerateImageTaskPartialResult> = (ret: imageGeneration.GenerateImageTaskPartialResult) => {
+-        if (ret.partialFail !== undefined) {
++        if (completed || this.currentImageSessionId !== retSessionId) {
++          return;
++        }
++        if (ret.type === imageGeneration.PartialResultType.PARTIAL_FAIL || ret.partialFail !== undefined) {
+           console.error(TAG, `Error in requestImageGeneration: ${ret.partialFail}.`);
+           callback.onError();  // TODO Add error enumeration
+         } else {
+           if (ret.type === imageGeneration.PartialResultType.PARTIAL) {
+             console.info(TAG, `The image generation task returns an image.`);
+-            getResultFromAIGenerate.push(ret.imageData!);
++            if (ret.imageData !== undefined) {
++              getResultFromAIGenerate.push(ret.imageData);
++            }
+           } else if (ret.type === imageGeneration.PartialResultType.COMPLETED) {
+-            getResultFromAIGenerate.push(ret.imageData!);
++            completed = true;
+             console.info(TAG, `The task of generating the image has been completed.`);
+             if (callback.onComplete) {
+               callback.onComplete(getResultFromAIGenerate);
+@@ -171,8 +177,8 @@
+         }
+       }
+       this.currentImageSessionId = retSessionId;
+-      this.ImageModal.requestImageGeneration(retSessionId, taskParams, userImageModalCallback);
+       callback.onReady();
++      this.ImageModal.requestImageGeneration(retSessionId, taskParams, userImageModalCallback);
+     } else {
+       console.info(TAG, `Complete the image generation task using Celia model.`);
+       callback.onReady();
+@@ -204,10 +210,13 @@
+ 
+   public async cancelImageGenerateTask(sessionId: number): Promise<void> {
+     console.info(TAG, `Image task sessionId: ${sessionId} cancel.`);
++    if (this.currentImageSessionId === sessionId) {
++      this.currentImageSessionId = -1;
++    }
+     if (this.ImageModal !== undefined) {
+       this.ImageModal.cancelImageGeneration(Number(sessionId));
+     } else {
+       // TODO
+     }
+   };
+-}
+\ No newline at end of file
++}
+diff --git a/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/BUILD.gn b/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/BUILD.gn
+--- a/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/BUILD.gn
++++ b/foundation/arkui/ace_engine/advanced_ui_component/imageGeneratorDialog/interfaces/BUILD.gn
+@@ -21,6 +21,7 @@
+ 
+   inputs = [
+     rebase_path("image_generator_dialog_project/general/components/Main.js"),
++    rebase_path("image_generator_dialog_project/general/utils/AIGenerateImpl.js"),
+   ]
+ 
+   outputs = [
