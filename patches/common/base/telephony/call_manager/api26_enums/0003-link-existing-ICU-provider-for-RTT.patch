@@ -1,0 +1,22 @@
+diff --git a/base/telephony/call_manager/callmanager.gni b/base/telephony/call_manager/callmanager.gni
+--- a/base/telephony/call_manager/callmanager.gni
++++ b/base/telephony/call_manager/callmanager.gni
+@@ -350,6 +350,7 @@
+ if (call_manager_feature_support_rtt) {
+   call_manager_defines += [ "SUPPORT_RTT_CALL" ]
++  call_manager_external_deps += [ "icu:shared_icuuc" ]
+ 
+   call_manager_include_dirs += [
+     "${call_manager_path}/services/rtt_call/include"
+   ]
+diff --git a/base/telephony/call_manager/bundle.json b/base/telephony/call_manager/bundle.json
+--- a/base/telephony/call_manager/bundle.json
++++ b/base/telephony/call_manager/bundle.json
+@@ -72,6 +72,7 @@
+                 "hicollie",
+                 "hisysevent",
+                 "hitrace",
++                "icu",
+                 "init",
+                 "ipc",
+                 "audio_framework",

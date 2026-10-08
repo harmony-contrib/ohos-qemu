@@ -14,6 +14,12 @@ actually declared/implemented by the fixed release. Correct the stale
 GetIsPrevRtt() caller without changing the detailed/application call state,
 RTT history value, non-IMS path, permissions or provider protocol.
 
+The enabled RTT implementation uses ICU UnicodeString/ByteSink. Declare its
+existing shared ICU provider in that same feature branch and in the component
+dependency manifest. Do not depend on accidental transitive linkage, embed a
+second static ICU, disable RTT or replace the UTF-8 implementation. The normal
+GN/link and actual new-image behavior remain required separately.
+
 The shared pre-traversal patch plan applies this component to all products.
 Object and fixture checks are not new-archive guest or actual telephony
 behavior evidence; RTT has to be validated against the real provider separately.

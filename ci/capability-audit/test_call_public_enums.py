@@ -10,6 +10,7 @@ ROOT=Path(__file__).resolve().parents[2]
 COMPONENT=ROOT/'patches/common/base/telephony/call_manager/api26_enums'
 PATCH=COMPONENT/'0001-register-public-call-state-and-rtt-enums.patch'
 RTT_PATCH=COMPONENT/'0002-use-existing-IMS-RTT-history-accessor.patch'
+RTT_ICU_PATCH=COMPONENT/'0003-link-existing-ICU-provider-for-RTT.patch'
 
 class CallPublicEnumsTests(unittest.TestCase):
     def test_exact_registration_all_values_failures_and_both_feature_variants(self):
@@ -165,6 +166,24 @@ int main() {
         two=(ROOT/'patches/2in1/product_profile/apply.py').read_text()
         self.assertNotIn('"call_manager_feature_support_rtt": True',two)
         self.assertNotIn('"cellular_call_support_rtt": True',two)
+
+    def test_RTT_uses_existing_shared_ICU_only_in_the_real_feature_branch(self):
+        sections=patch_sections(RTT_ICU_PATCH)
+        self.assertEqual(set(sections),{
+            'base/telephony/call_manager/callmanager.gni',
+            'base/telephony/call_manager/bundle.json'})
+        gn='\n'.join(line for _,_,lines in sections['base/telephony/call_manager/callmanager.gni']
+                     for line in lines)
+        self.assertIn('if (call_manager_feature_support_rtt) {\n'
+                      '  call_manager_defines += [ "SUPPORT_RTT_CALL" ]\n'
+                      '  call_manager_external_deps += [ "icu:shared_icuuc" ]',gn)
+        self.assertEqual(gn.count('icu:shared_icuuc'),1)
+        text=RTT_ICU_PATCH.read_text()
+        added=[line for line in text.splitlines() if line.startswith('+') and not line.startswith('+++')]
+        self.assertEqual(added,['+  call_manager_external_deps += [ "icu:shared_icuuc" ]',
+                                '+                "icu",'])
+        self.assertFalse(any(line.startswith('-') and not line.startswith('---') for line in text.splitlines()))
+        self.assertNotIn('ims_rtt_manager.cpp',sections)
 
 if __name__=='__main__':
     unittest.main()

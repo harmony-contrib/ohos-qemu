@@ -12,8 +12,17 @@ or actual telephony result is implied. The original failed build log is
 frozen input tree SHA-256 was
 `0b9115ee775769dece8d6407c6ad2813355388d03ed6f4438c7bb913ca8d5dec`.
 The representative-only retry uses the same package destination, fresh frozen
-inputs and `first-media-document-arm64-phone-build-10b.log`. The remaining five
-packages have not been built or authorized by a first-artifact gate pass.
+inputs and `first-media-document-arm64-phone-build-10b.log`. That retry also
+failed before creating an archive: the real tel_call_manager shared link at
+5512/6712 tasks could not resolve ICU UnicodeString/ByteSink used by
+ims_rtt_manager.cpp. Its frozen input directory was
+`/Volumes/PSSD/qemu/build-inputs/phone-KJplxF`, tree SHA-256
+`7c583863e30bc835d766a3c342e9f6e6a416e1a88589d65eab5bdf63eb085209`.
+New component patch 0003 declares the existing `icu:shared_icuuc` dependency
+inside the actual RTT feature branch and records ICU in bundle.json. RTT is
+not disabled, Unicode conversion is unchanged, and no second static ICU is
+introduced. A new normal GN/link/package and guest are still required.
+The remaining five packages have not been built or authorized by a gate pass.
 
 Latest follow-up (2026-10-08): the current-document custom-media full M144
 ARM64 native build and signed HAP build both completed successfully. The
