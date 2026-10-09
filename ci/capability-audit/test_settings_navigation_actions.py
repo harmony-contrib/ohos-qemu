@@ -4,12 +4,13 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 
 from PIL import Image, ImageDraw
 from guest_ui import select_node
 from run_root_probe import digest
 from settings_navigation_evidence import CALLER, embedded_title, provider_binding
-from settings_navigation_ui import verify_actions
+from settings_navigation_ui import capture_provider, verify_actions
 from test_settings_navigation_evidence import DUMP, node
 
 
@@ -84,6 +85,36 @@ class SettingsActionsTests(unittest.TestCase):
         page['screenshot_sha256'] = digest(path)
         with self.assertRaises(ValueError):
             verify_actions(self.actions, self.methods, 20010038)
+
+    def test_capture_waits_for_real_paint_without_another_click(self):
+        page = self.actions['pages'][0]
+        blank = self.root / 'not-yet-painted.png'
+        Image.new('RGB', (1280, 800), 'white').save(blank)
+        ui = Mock()
+        ui.screenshot.side_effect = [blank, Path(page['screenshot'])]
+        with patch('settings_navigation_ui.wait_node', return_value=page['provider']) as wait:
+            provider, screen, attempts = capture_provider(ui, ['输入法'], 20010011, 20010038, 'input',
+                clock=Mock(side_effect=[0, 1, 2]), sleep=Mock())
+        self.assertEqual(screen, Path(page['screenshot']))
+        self.assertEqual(provider, page['provider'])
+        self.assertEqual(len(attempts), 2)
+        self.assertIn('not painted', attempts[0]['error'])
+        self.assertEqual(attempts[1]['status'], 'painted')
+        self.assertEqual(wait.call_count, 2)
+        ui.click.assert_not_called()
+        ui.shell.assert_not_called()
+
+    def test_persistent_blank_frame_still_fails(self):
+        page = self.actions['pages'][0]
+        blank = self.root / 'never-painted.png'
+        Image.new('RGB', (1280, 800), 'white').save(blank)
+        ui = Mock()
+        ui.screenshot.return_value = blank
+        with patch('settings_navigation_ui.wait_node', return_value=page['provider']):
+            with self.assertRaisesRegex(ValueError, 'never painted'):
+                capture_provider(ui, ['输入法'], 20010011, 20010038, 'input',
+                    clock=Mock(side_effect=[0, 1, 61]), sleep=Mock())
+        ui.click.assert_not_called()
 
 
 if __name__ == '__main__':

@@ -27,6 +27,28 @@ R22 构建未产包：GN 父子进程多次观察 CPU 时间不再增长，子�
 这是宿主工具停滞，尚未证明具体根因；不记为系统编译或 FA 修复验证通过。
 下一次仅重试代表包，使用新的冻结输入和输出目录，保留失败日志与旧输入。
 
+R23 代表包重试使用 `phone-mdDSOe`，冻结树
+`9bcd3f05ba09834a8d186c7f49ffe1c24e5cea141ce462c026ec27e5ec3af27f`，
+输出 `first-fa-settings-7.0-release-20261010-r23`，日志
+`first-fa-settings-arm64-phone-build-r23-01.log`。自动继续入口
+`r23-validation-scripts/after-build.py` 仅等待此次容器，成功产包后验证 FA 与
+Settings，再对同一归档运行完整 Stage/native 回归；无六包矩阵启动权限。
+
+额外 R21 复测 `r21-settings-network-display-runtime-01` 在输入页前置验证失败：
+第四次 UI 树已出现真实 Provider，但紧随截图仍为调用者页面。前三张截图已
+显示实际设置页；第四张没有，因此原验证正确拒绝，而不是将 void 返回计为通过。
+保留失败结果和四张原图。测试入口新增最多 60 秒的实际绘制等待，每次重读
+Provider/UI 树并重新截图，不重复点击、不调整权限或放宽最终像素检查；
+持续空白仍失败。新增延迟绘制/持续空白边界，17 项 Settings 测试通过；
+这不是对失败旧结果的修订，也不证明新的等待已通过客体验证。
+
+新增仓库 `run_fa_particle_probe.py` 候选入口，从官方 hvigor 构建新 nonce 的
+零权限 FA HAP、按 FA 模型签名、核对普通应用及真实 page/service UID，检查
+常量与已有 Promise/callback/context 调用。独立检查 archive/boot 绑定；
+不授予权限、不替换 guest 库、不将 FA 单测当作 Stage 回归。10 项 FA 结果及
+进程边界测试通过，实际新包验证和正式门禁接入仍待完成。上述后续测试入口
+变更不在 R23 冻结输入中。
+
 ## 2026-10-09 用户确认的交付范围调整
 
 用户明确答复 CloudSync 与 imageGeneration「这两个不用实现」。两项标记为

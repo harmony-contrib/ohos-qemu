@@ -8,8 +8,8 @@ from run_root_probe import digest
 from settings_navigation_evidence import CALLER, embedded_title, provider_binding
 
 
-def wait_node(ui, identifier=None, titles=None, settings_uid=None, caller_uid=None, label='settings'):
-    deadline = time.monotonic() + 60
+def wait_node(ui, identifier=None, titles=None, settings_uid=None, caller_uid=None, label='settings', deadline=None):
+    deadline = time.monotonic() + 60 if deadline is None else deadline
     while time.monotonic() < deadline:
         try:
             layout, path = ui.layout(label=label)
@@ -42,6 +42,40 @@ def wait_node(ui, identifier=None, titles=None, settings_uid=None, caller_uid=No
     raise ValueError('actual Settings/caller node and provider binding not ready: ' + label)
 
 
+def require_painted_title(path, node):
+    from PIL import Image
+    with Image.open(path) as image:
+        image.load()
+        if image.format != 'PNG' or min(image.size) < 100:
+            raise ValueError('actual Settings compositor PNG required')
+        left, top, width, height = node['rect']
+        if left + width > image.width or top + height > image.height:
+            raise ValueError('Settings title is outside the captured compositor')
+        crop = image.convert('RGB').crop((left, top, left + width, top + height))
+        if max(high - low for low, high in crop.getextrema()) < 32:
+            raise ValueError('Settings title was not painted in the actual compositor capture')
+
+
+def capture_provider(ui, titles, settings_uid, caller_uid, route, *, clock=time.monotonic, sleep=time.sleep):
+    deadline = clock() + 60
+    attempts = []
+    while clock() < deadline:
+        provider = wait_node(ui, titles=titles, settings_uid=settings_uid, caller_uid=caller_uid,
+                             label='settings-' + route + '-provider', deadline=deadline)
+        screen = ui.screenshot(label='settings-' + route + '-compositor')
+        attempt = {'provider': provider, 'screenshot': str(screen), 'screenshot_sha256': digest(screen)}
+        attempts.append(attempt)
+        try:
+            require_painted_title(screen, provider['node'])
+        except ValueError as error:
+            attempt['error'] = str(error)
+            sleep(0.25)
+            continue
+        attempt['status'] = 'painted'
+        return provider, screen, attempts
+    raise ValueError('Settings page never painted before the bounded capture deadline')
+
+
 def exercise(ui, poll, run_id, caller_uid):
     from verify_settings_navigation_results import verify_rows, settings_identity
     raw_identity = ui.shell('bm dump -n com.ohos.settings', 'installed-settings-identity')
@@ -58,14 +92,12 @@ def exercise(ui, poll, run_id, caller_uid):
         for route, titles in (('input', ['Input methods', '输入法']), ('detail', [ime.get('label') or ime['name']])):
             request = ui.click(CALLER, identifier='settings-probe-' + route, label='settings-' + route + '-request')
             request['layout_sha256'] = digest(Path(request['layout']))
-            provider = wait_node(ui, titles=titles, settings_uid=settings_uid, caller_uid=caller_uid,
-                                 label='settings-' + route + '-provider')
-            screen = ui.screenshot(label='settings-' + route + '-compositor')
+            provider, screen, attempts = capture_provider(ui, titles, settings_uid, caller_uid, route)
             ui.shell('uitest uiInput keyEvent Back', 'settings-' + route + '-back')
             returned = wait_node(ui, identifier='settings-probe-input', label='settings-returned-caller')
             actions['pages'].append({'cycle': cycle, 'route': route, 'request': request, 'provider': provider,
                                      'screenshot': str(screen), 'screenshot_sha256': digest(screen),
-                                     'returned': returned})
+                                     'returned': returned, 'capture_attempts': attempts})
     return actions
 
 
@@ -77,7 +109,6 @@ def checked_path(record, key):
 
 
 def verify_actions(actions, methods, caller_uid):
-    from PIL import Image
     from verify_settings_navigation_results import settings_identity
     settings_uid = settings_identity(checked_path(actions, 'settings_identity').read_text())
     if actions.get('settings_uid') != settings_uid or actions.get('caller_uid') != caller_uid:
@@ -104,14 +135,5 @@ def verify_actions(actions, methods, caller_uid):
                            identifier='settings-probe-input')
         if node != returned.get('node'):
             raise ValueError('Back did not return to the original caller')
-        with Image.open(checked_path(row, 'screenshot')) as image:
-            image.load()
-            if image.format != 'PNG' or min(image.size) < 100:
-                raise ValueError('actual Settings compositor PNG required')
-            left, top, width, height = provider['node']['rect']
-            if left + width > image.width or top + height > image.height:
-                raise ValueError('Settings title is outside the captured compositor')
-            crop = image.convert('RGB').crop((left, top, left + width, top + height))
-            if max(high - low for low, high in crop.getextrema()) < 32:
-                raise ValueError('Settings title was not painted in the actual compositor capture')
+        require_painted_title(checked_path(row, 'screenshot'), provider['node'])
     return {'pages': 4, 'cycles': 2}
