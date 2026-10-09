@@ -79,6 +79,47 @@ def verify(text, run_id, identity):
             'not_claimed': ['unselected gallery browsing', 'FA card', 'cloud provider', 'all Photos capabilities']}
 
 
+def verify_evidence(document, archive_sha, boot_id, arch):
+    """Recompute the full asset/UI proof, not a stored outer success flag."""
+    if (document.get('status') != 'pass' or document.get('persona') != 'photos-asset' or
+            document.get('archive_sha256') != archive_sha or document.get('boot_id') != boot_id or
+            document.get('arch') != arch or document.get('failures') != [] or
+            document.get('first_artifact_behavior_gate_passed') is not False):
+        raise ValueError('Photos asset evidence must belong to this actual package and boot')
+    result_path = Path(document.get('result', ''))
+    root = result_path.parent
+    if not result_path.is_absolute() or result_path.name != 'verified-result.json':
+        raise ValueError('explicit Photos verifier result required')
+    paths = {'result': result_path, 'raw_results': root / 'results.log',
+             'ordinary_identity': root / 'application-identity.json',
+             'compiled_contract_inputs': root / 'project/photos-asset-probe-inputs.json',
+             'photos_asset_actions': root / 'photos-asset-actions.json',
+             'hap': root / 'ordinary-probe-signed.hap'}
+    for key, path in paths.items():
+        if (not path.is_file() or any(parent.is_symlink() for parent in (path, *path.parents)) or
+                digest(path) != document.get(key + '_sha256')):
+            raise ValueError('Photos raw caller/asset/UI evidence missing or changed: ' + key)
+    for key in ('compiled_contract_inputs', 'photos_asset_actions'):
+        if document.get(key) != str(paths[key]):
+            raise ValueError('Photos input/action path is not the actual sibling evidence')
+    value = json.loads(result_path.read_text())
+    expected_hashes = {'results_sha256': 'raw_results', 'application_identity_sha256': 'ordinary_identity',
+                       'compiled_inputs_sha256': 'compiled_contract_inputs', 'actions_sha256': 'photos_asset_actions'}
+    if (value.get('status') != 'pass' or value.get('scope') != SCOPE or value.get('failures') != [] or
+            value.get('archive_sha256') != archive_sha or value.get('run_id') != document.get('run_id') or
+            value.get('arch') != arch or value.get('first_artifact_behavior_gate_passed') is not False or
+            value.get('verifier_sha256') != digest(Path(__file__)) or
+            value.get('ui_verifier_sha256') != digest(Path(__file__).with_name('photos_asset_ui.py')) or
+            any(value.get(key) != digest(paths[source]) for key, source in expected_hashes.items())):
+        raise ValueError('Photos verification does not bind the actual current raw proof and verifier')
+    verify_inputs(json.loads(paths['compiled_contract_inputs'].read_text()), document['run_id'], arch)
+    verify_actions(json.loads(paths['photos_asset_actions'].read_text()), BUNDLE)
+    actual = verify(paths['raw_results'].read_text(), document['run_id'], paths['ordinary_identity'].read_text())
+    if actual != value.get('result'):
+        raise ValueError('Photos success differs from the actual asset/pixel observations')
+    return actual
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('archive', 'results', 'inputs', 'application-identity', 'actions', 'output'):
