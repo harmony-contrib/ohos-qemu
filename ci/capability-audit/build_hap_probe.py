@@ -91,6 +91,8 @@ parser.add_argument('--curve-only', action='store_true',
                     help='Verify actual ambient Curve strings and real factory interpolation')
 parser.add_argument('--binding-only', action='store_true',
                     help='Verify actual public UIUtils Binding/MutableBinding factory returns and exceptions')
+parser.add_argument('--photos-recent-only', action='store_true',
+                    help='Verify actual Photos metadata defaults, immutable options and picker parameter rejection')
 parser.add_argument('--optional-phone-profile-only', action='store_true',
                     help='Verify ordinary dynamic discovery of four outside-official-phone false declarations')
 parser.add_argument("--enum-device", choices=('phone', '2in1'), default='phone')
@@ -102,12 +104,12 @@ parser.add_argument("--probe-run-id", help="Host challenge (32 lowercase hex dig
 args = parser.parse_args()
 args.sdk = args.sdk.resolve()
 worker_only = args.worker_legacy_only or args.worker_thread_only
-dedicated_contract_only = args.curve_only or args.binding_only or args.optional_phone_profile_only
+dedicated_contract_only = args.curve_only or args.binding_only or args.optional_phone_profile_only or args.photos_recent_only
 if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only or dedicated_contract_only) or
                                      not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
     parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
 if sum((args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
-        args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.optional_phone_profile_only)) > 1:
+        args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.optional_phone_profile_only, args.photos_recent_only)) > 1:
     parser.error("provider and ordinary probe personas are mutually exclusive")
 minimal_app = args.web_only or args.vulkan_window_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.userid_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only or dedicated_contract_only
 if args.optional_phone_profile_only and args.enum_device != 'phone':
@@ -2029,6 +2031,11 @@ if args.binding_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write('entry/src/main/ets/pages/Index.ets', TEMPLATE.read_text().replace('__BINDING_RUN_ID__', challenge))
     write('binding-probe-inputs.json', binding_inputs(root, args.sdk, args.arch, challenge))
+if args.photos_recent_only:
+    from photos_recent_contract import TEMPLATE, inputs as photos_inputs
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/pages/Index.ets', TEMPLATE.read_text().replace('__PHOTO_RUN__', challenge))
+    write('photos-recent-probe-inputs.json', photos_inputs(root, args.sdk, args.arch, challenge))
 if args.optional_phone_profile_only:
     from optional_phone_profile_contract import TEMPLATE, inputs as profile_inputs
     challenge = args.probe_run_id or uuid.uuid4().hex
@@ -2230,7 +2237,7 @@ if args.runtime_enum_only or args.curve_only:
                '-fno-exceptions', '-fno-rtti', '-nostdlib++',
                str(Path(__file__).with_name('runtime_enum_hap_probe.cpp')), '-lace_napi.z',
                '-o', str(libs / 'libruntimeenumprobe.so')]
-if not (args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.optional_phone_profile_only):
+if not (args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.optional_phone_profile_only or args.photos_recent_only):
     subprocess.run(command, check=True)
     if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only or args.runtime_enum_only or args.curve_only):
         shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 import tempfile
 from run_root_probe import digest
-from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_evidence
+from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_evidence,verify_load_results
 
 def fixture():
     passwd='i18n:x:3013:3013:::/bin/false\n'
@@ -17,7 +17,7 @@ def fixture():
         passwd+=f'{name}:x:{uid}:{uid}:::/bin/false\n'
         group+=f'{name}:x:{uid}:\n'
         configs[FUSION_CFG[name]]=json.dumps({'services':[{'name':name,'uid':name,'gid':[name,'shell'],
-            'path':['/system/bin/sa_main','/system/profile/'+name+'.json'],'ondemand':True}]})
+            'path':['/system/bin/sa_main','/system/profile/'+name+'.json'],'ondemand':True,'secon':'u:r:'+name+':s0'}]})
         ownership['/data/service/el1/public/'+name]=f'{uid}:{uid}:711:directory'
         pid=1234+index
         serial+=f'[pid=1] ServiceStart started info {name}(pid {pid} uid {uid})\n'
@@ -55,13 +55,51 @@ def evidence_fixture(directory):
         doc['ownership_files'][name]={'file':str(path),'sha256':digest(path)}
     path=root/'serial.log';path.write_text(serial)
     doc.update(serial=str(path),serial_sha256=digest(path))
+    loader=root/'loader';loader.mkdir()
+    binary=loader/'service-load';binary.write_bytes(b'explicit host fixture, not an executable')
+    build=loader/'build.json'
+    build.write_text(json.dumps({'status':'pass','scope':'actual_product_SAMGR_caller_build_NOT_guest',
+        'arch':'arm64','probe_sha256':digest(binary),
+        'source_sha256':digest(Path(__file__).with_name('probes')/'service_load.cpp')}))
+    rows=[{'ability':ability,'round':round,'loaded':True} for round in (1,2) for _,_,ability in FUSION]
+    raw=root/'samgr-load.log';raw.write_text('\n'.join(map(json.dumps,rows))+'\nLOAD_EXIT=0\n')
+    doc['samgr_load']={'build':str(build),'build_sha256':digest(build),'binary':str(binary),
+        'binary_sha256':digest(binary),'results':rows,'file':str(raw),'sha256':digest(raw)}
     boot={'status':'pass','purpose':'acceptance','archive_sha256':'archive',
           'initial_package_file_sha256':{'images/system.img':digest(image)},
-          'test_environment':{'boot_id':'boot','external_keepalive':False,
+          'test_environment':{'boot_id':'boot','external_keepalive':False,'guest_arch':'arm64',
                               'freshly_extracted_directory':str(image.parent.parent)}}
     return doc,root,boot
 
 class ServiceInitContractTests(unittest.TestCase):
+    def test_loader_requires_two_real_rounds_and_successful_exit(self):
+        rows=[{'ability':ability,'round':round,'loaded':True} for round in (1,2) for _,_,ability in FUSION]
+        value='\n'.join(map(json.dumps,rows))+'\nLOAD_EXIT=0\n'
+        self.assertEqual(verify_load_results(value),rows)
+        for bad in (value.replace('LOAD_EXIT=0','LOAD_EXIT=1'),value.replace('8631','9999'),
+                    value.replace('true','false',1),value.split('\n',1)[1],value+'extra\n'):
+            with self.assertRaises(ValueError):verify_load_results(bad)
+
+    def test_loader_tampering_and_missing_real_artifact_are_rejected(self):
+        for change in ('missing','binary','build','results','raw','ABI','source','domain'):
+            with self.subTest(change=change),tempfile.TemporaryDirectory() as directory:
+                doc,root,boot=evidence_fixture(directory)
+                if change=='missing':doc.pop('samgr_load')
+                elif change=='binary':Path(doc['samgr_load']['binary']).write_bytes(b'changed')
+                elif change=='build':Path(doc['samgr_load']['build']).write_text('{}')
+                elif change=='results':doc['samgr_load']['results'].pop()
+                elif change=='raw':Path(doc['samgr_load']['file']).write_text('LOAD_EXIT=0\n')
+                elif change=='ABI':boot['test_environment']['guest_arch']='x86_64'
+                elif change=='source':
+                    path=Path(doc['samgr_load']['build']);data=json.loads(path.read_text())
+                    data['source_sha256']='stale';path.write_text(json.dumps(data))
+                    doc['samgr_load']['build_sha256']=digest(path)
+                elif change=='domain':
+                    row=doc['image_contract_files'][FUSION_CFG['fusion_ranging']]
+                    path=Path(row['file']);data=json.loads(path.read_text())
+                    data['services'][0]['secon']='u:r:init:s0';path.write_text(json.dumps(data));row['sha256']=digest(path)
+                with self.assertRaises(ValueError):verify_evidence(doc,root,boot,'archive','boot')
+
     def test_evidence_rechecks_original_image_stat_and_init_payload(self):
         with tempfile.TemporaryDirectory() as directory:
             doc,root,boot=evidence_fixture(directory)

@@ -1,5 +1,45 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-09 R14 实测与下一首包候选
+
+R14 完整归档为
+`/Volumes/PSSD/qemu/packages/first-camera-photos-source-7.0-release-20261009-r14/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `96a6cb1184febc91052aeae0fba553121c7149fc19bad5ec0559f770c55ae5ab`。
+固定 manifest 仍为 `f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`；
+构建输入 `phone-IqYr74`，树 SHA-256
+`f492633e8b10a4f52479b0c5b9e120fedadaaa1549136dc9d40337cbbe46507d`。
+
+在本地 macOS/ARM64 QEMU 新启动的 phone 镜像执行
+`scripts/validate_packaged_qemu.sh --package-archive <上述归档> --package-directory <同名解包目录> --evidence-output <R14目录>/first-artifact-behavior.json`。
+使用实际 API26 SDK `provider-sdk-26-full/26.0.0` 和普通签名应用。
+原样 Camera 用例通过，包括两轮真实 JPEG/preview/capture-end；完整门槛仍失败，
+未运行到 native-bindings 和完整缺口台账，不能报告全部修复或开始剩余五包。
+
+失败及新增诊断证据位于
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/`：
+
+- `first-camera-photos-source-arm64-phone-runtime-r14-01.log`：完整门槛停在 Fusion init。
+- `r14-fusion-real-samgr-load-01/`：用实际产品 SAMGR API 请求 SA 8631，init 在
+  `setcon(u:r:fusion_ranging:s0)` 返回 EINVAL 后、exec 前退出。两个服务配置引用的
+  SELinux domain 均未定义。原探针的 Android 式 `ctl.start` 只写入惰性参数，
+  已改为真实 `LoadSystemAbility`，保留 init 身份、token 和权限链。
+- `r14-photos-source-diagnostic-03/`：默认相册名通过；省略 RecentPhotoOptions 返回401，
+  显式 options 被修改，picker 非整数上限错误返回13900020。新增完整 JS 精确补丁修复
+  默认参数/调用者对象保留、异步 RPC 连接所有权/期限、标准401与callback重载。
+- `photos-recent-wrapper-arm64-r15-01/`：固定产品实际 es2abc 编译通过；
+  主机完整 JS 130项边界通过，但均不是新镜像运行证明。统一门槛增加普通应用
+  `photos-recent`，只验证元数据和参数契约，不把空图库当作正向资产、FA卡或云服务证明。
+- `r14-photos-source-diagnostic-01/` 的截图超时保留为失败；02曾被中断，
+  其错误的旧诊断pass已由同目录 `INVALIDATED.json` 明确作废，不能用于验收。
+
+下一首包候选还加入独立 Fusion 服务 domain/SA 注册策略，没有放宽SELinux模式、
+白名单、token或UID。需经过完整策略编译与新包启动验证后才能登记修复。
+现有原始缺口清单保持不变；本节不更新未经完整重跑的剩余数量。
+
+历史资源清理记录：`/Volumes/PSSD/qemu/validation/cleanup-duplicates-20261009.json`。
+删除151个与保留归档逐字节一致且未打开的重复镜像，约63.8GiB已分配空间；
+保留全部归档、诊断userdata、日志与元数据，可按证据记录从归档恢复。
+
 ## 当前续修状态（2026-10-07，首包门槛仍未通过）
 
 用户已明确批准 RS 私有对象编码修复。`async_caller_identity` 统一栈新增

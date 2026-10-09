@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
-from exact_source_states import validate_component
+from exact_source_states import digest, validate_component
 
 PROJECT = 'foundation/multimedia/media_library'
 REVISION = '564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380'
@@ -17,7 +17,12 @@ FILES = (('frameworks/js/src/media_library_napi.cpp',
           '2488397b285f55dd5b78f5aa0393a67f2c4a4a758867c5b0fbb5d315bb1fce5e'))
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    wrapper = Path(root) / PROJECT / FILES[1][0]
+    recent_sha = '7a8dd9dd99d77b5657cb57bc8cb65d60d681254586f4690919e2870650578a9c'
+    files = FILES
+    if wrapper.is_file() and digest(wrapper.read_bytes()) == recent_sha:
+        files = (FILES[0], (FILES[1][0], FILES[1][1], recent_sha))
+    return validate_component(root, PROJECT, REVISION, files, require_patched)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)

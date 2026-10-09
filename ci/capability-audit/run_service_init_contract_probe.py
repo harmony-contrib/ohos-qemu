@@ -5,12 +5,15 @@ import json
 import os
 from pathlib import Path
 import signal
+import secrets
 import subprocess
 import time
 
 from boot_package import FATAL
 from run_root_probe import digest,validate_identity
-from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify
+from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_load_results
+
+ROOT=Path(__file__).resolve().parents[2]
 
 def run(args):
     args.output.mkdir(parents=True,exist_ok=False)
@@ -83,11 +86,37 @@ def run(args):
         same_boot('before')
         configs={path:packaged(path) for path in (*FUSION_CFG.values(),I18N_CFG)}
         passwd,group=packaged('/etc/passwd'),packaged('/etc/group')
-        # Ask the existing init control interface to exercise its own cfg,
-        # UID/GID resolution, capability/token setup and exec. Never run the
-        # service binary as root, patch its identity or bypass its permissions.
-        for name,_,_ in FUSION:
-            shell('param set ctl.start '+name,'request-real-init-'+name)
+        # Use the actual SAMGR API. Setting an Android-style "ctl.start"
+        # parameter merely stores an inert value on this Release. A direct
+        # sa_main invocation would bypass the init identity being verified.
+        source_path='/Volumes/PSSD/qemu/openharmony'
+        command(['docker','run','--rm','--platform','linux/amd64',
+            '--mount','type=volume,src='+args.source_volume+',dst='+source_path+',readonly',
+            '--mount','type=volume,src='+args.out_volume+',dst='+source_path+'/out,readonly',
+            '--mount','type=bind,src='+str(ROOT)+',dst=/work,readonly',
+            '--mount','type=bind,src='+str(args.output.resolve())+',dst=/probe',
+            args.docker_image,'python3','/work/ci/capability-audit/build_service_load_probe.py',
+            '--source-root',source_path,'--arch',env['guest_arch'],'--output','/probe/loader'],
+            'build-actual-product-SAMGR-caller',timeout=300)
+        binary=args.output/'loader/service-load'
+        build_path=args.output/'loader/build.json'
+        build=json.loads(build_path.read_text())
+        if build.get('status')!='pass' or build.get('probe_sha256')!=digest(binary):
+            raise ValueError('actual SAMGR caller build was not verified')
+        remote='/data/local/tmp/qemu-fusion-service-load-'+secrets.token_hex(16)
+        if shell('if test -e '+remote+'; then echo STALE; else echo ABSENT; fi','fresh-loader-path').strip()!='ABSENT':
+            raise ValueError('stale guest loader path')
+        command([args.hdc,'-t',env['target'],'file','send',binary,remote],'send-SAMGR-caller')
+        shell('chmod 700 '+remote,'caller-mode')
+        result=shell(remote+'; task_loader_rc=$?; printf "\\nLOAD_EXIT=%s\\n" "$task_loader_rc"',
+                     'request-real-SAMGR-load')
+        if not result.strip().endswith('LOAD_EXIT=0'):
+            raise ValueError('actual SAMGR load failed; init/permission/service errors must be repaired')
+        rows=verify_load_results(result)
+        observation=report['commands'][-1]
+        report['samgr_load']={'build':str(build_path),'build_sha256':digest(build_path),
+            'binary':str(binary),'binary_sha256':digest(binary),'results':rows,
+            'file':observation['log'],'sha256':observation['sha256']}
         deadline=time.monotonic()+30
         while not all('SAFWK: Publish SA:'+str(ability)+' result:0' in serial.read_text(errors='replace')
                       for _,_,ability in FUSION):
@@ -125,6 +154,8 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--hdc',default='hdc')
     parser.add_argument('--docker-image',default='ohos-qemu-m144-build-env:7.0-release')
+    parser.add_argument('--source-volume',default=os.environ.get('DOCKER_SOURCE_VOLUME','ohos-qemu-7_0-release-source'))
+    parser.add_argument('--out-volume',default=os.environ.get('DOCKER_OUT_VOLUME','ohos-qemu-7_0-release-out'))
     result=run(parser.parse_args())
     print(json.dumps({key:result[key] for key in ('status','scope','failures')}))
     return 0 if result['status']=='pass' else 1

@@ -276,7 +276,7 @@ def run(args):
         same_guest('after-certificate-both-roles')
         normal_results = {}
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
-                    'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera')
+                    'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'photos-recent')
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
@@ -298,7 +298,8 @@ def run(args):
             Path(__file__).with_name('run_service_init_contract_probe.py'),
             '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
             '--output', work / 'service-init-contracts', '--hdc', hdc,
-            '--docker-image', docker_image], 'actual-Fusion-accounts-and-I18n-init-paths', timeout=900)
+            '--source-volume', source_volume,
+            '--docker-image', docker_image], 'actual-Fusion-accounts-and-I18n-init-paths', timeout=900, env=child_env)
         check('service-init-contracts', work / 'service-init-contracts/evidence.json', [service_init_record])
         same_guest('after-service-init-contracts')
         # Native Vulkan queue/memory, OHOS WSI resize/readback and actual

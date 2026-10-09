@@ -110,7 +110,7 @@ class NormalHapRunnerTests(unittest.TestCase):
         self.assertIn("if device == 'phone':", suite)
         self.assertIn("personas += ('optional-phone-profile',)", suite)
         self.assertIn("if args.runtime_enum_only or args.curve_only:", builder)
-        self.assertIn('or args.binding_only or args.optional_phone_profile_only):', builder)
+        self.assertIn('or args.binding_only or args.optional_phone_profile_only or args.photos_recent_only):', builder)
         self.assertNotIn('build_curve_hap_probe.py', runner)
         self.assertNotIn('build_binding_hap_probe.py', runner)
 
@@ -122,7 +122,7 @@ class NormalHapRunnerTests(unittest.TestCase):
         for required in ('allow_camera(ui, labels', 'live_captures(ui, shell', 'receive_photos(command',
                          "'--native-results'", "'--captures'", "'--photo-root'", 'verify_inputs('):
             self.assertIn(required, source)
-        self.assertIn("'audio-suite-effects', 'camera')", suite)
+        self.assertIn("'audio-suite-effects', 'camera', 'photos-recent')", suite)
 
     def test_vulkan_builder_does_not_receive_an_unsupported_nonce_flag(self):
         source = Path(__file__).with_name('run_normal_hap_probe.py').read_text()

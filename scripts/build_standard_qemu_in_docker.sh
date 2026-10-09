@@ -223,6 +223,7 @@ CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multime
 BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_opp_enums/apply.sh"
 PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_enums/apply.sh"
 PHOTO_SEARCH_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_search_enums/apply.sh"
+PHOTOS_RECENT_INFO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_recent_info/apply.sh"
 EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/effect_kit/api26_light_degree/apply.sh"
 MISSION_STATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_mission_state/apply.sh"
 CLOUD_FLAG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/relational_store/api26_cloud_flag/apply.sh"
@@ -306,6 +307,7 @@ SERIAL_DIALOG_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/usb/usb_manager/serial_d
 SERIAL_DEVICES_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/startup/init/serial_devices/apply.sh"
 SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/device/qemu/serial_usb_endpoint/apply.sh"
 FUSION_ACCOUNTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/fusion_accounts/apply.sh"
+FUSION_SERVICE_DOMAINS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/selinux_adapter/fusion_service_domains/apply.sh"
 ACCOUNT_TABLE_FORMAT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/account_table_format/apply.sh"
 VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/vulkan-loader/ohos_surface_dispatch/apply.sh"
 RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
@@ -2945,6 +2947,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_public_enums_component.log"
   bash "${PHOTO_SEARCH_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_search_enums_component.log"
+  bash "${PHOTOS_RECENT_INFO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_recent_info_component.log"
   bash "${METADATA_FETCH_RESULT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_metadata_fetch_result_component.log"
   bash "${INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -2999,6 +3003,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_jsoncpp_generated_source_component.log"
   bash "${FUSION_ACCOUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_accounts_component.log"
+  bash "${FUSION_SERVICE_DOMAINS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_service_domains_component.log"
   bash "${ACCOUNT_TABLE_FORMAT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_account_table_format_component.log"
   bash "${VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

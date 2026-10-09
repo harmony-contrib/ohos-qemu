@@ -8,6 +8,16 @@ I18N_CFG='/etc/init/i18n_service.cfg'
 FUSION_CFG={'fusion_ranging':'/etc/init/fusion_ranging.cfg',
             'partner_device_agent':'/etc/init/fusion_connectivity.cfg'}
 
+def verify_load_results(text):
+    lines=[line for line in text.replace('\r','').splitlines() if line.strip()]
+    if len(lines)!=5 or lines[-1]!='LOAD_EXIT=0':
+        raise ValueError('bounded actual SAMGR caller did not complete exactly four load checks')
+    rows=[json.loads(line) for line in lines[:-1]]
+    expected=[{'ability':ability,'round':round,'loaded':True} for round in (1,2) for _,_,ability in FUSION]
+    if rows!=expected:
+        raise ValueError('actual SAMGR load results differ from the two isolated service requests')
+    return rows
+
 def account_tables(passwd,group):
     users={}
     groups={}
@@ -48,6 +58,7 @@ def verify(passwd,group,configs,ownership,serial):
         cfg,row=service(configs[FUSION_CFG[name]],name)
         if (row.get('uid')!=name or row.get('gid')!=[name,'shell'] or
             row.get('path')!=['/system/bin/sa_main','/system/profile/'+name+'.json'] or
+            row.get('secon')!='u:r:'+name+':s0' or
             row.get('ondemand') is not True):
             raise ValueError('Fusion init is not using its real isolated identity')
         path='/data/service/el1/public/'+name
@@ -113,6 +124,23 @@ def verify_evidence(document,root,boot,archive_sha,boot_id):
             digest(path)!=record.get('sha256')):
             raise ValueError('init evidence file escaped, changed or disappeared')
         return path.read_text(errors='replace')
+    loader=document.get('samgr_load',{})
+    loader_root=root/'loader'
+    build_path=loader_root/'build.json'
+    binary=loader_root/'service-load'
+    if (loader_root.is_symlink() or loader.get('build')!=str(build_path) or
+        loader.get('binary')!=str(binary) or not build_path.is_file() or not binary.is_file() or
+        build_path.is_symlink() or binary.is_symlink() or digest(build_path)!=loader.get('build_sha256') or
+        digest(binary)!=loader.get('binary_sha256')):
+        raise ValueError('actual product SAMGR caller build/binary is missing or changed')
+    build=json.loads(build_path.read_text())
+    if (build.get('status')!='pass' or build.get('scope')!='actual_product_SAMGR_caller_build_NOT_guest' or
+        build.get('arch')!=env.get('guest_arch') or build.get('probe_sha256')!=digest(binary) or
+        build.get('source_sha256')!=digest(Path(__file__).with_name('probes')/'service_load.cpp')):
+        raise ValueError('SAMGR caller does not match the actual probe source and package ABI')
+    loaded=verify_load_results(captured(loader))
+    if loaded!=loader.get('results'):
+        raise ValueError('reported Fusion load observations differ from captured caller output')
     records=document.get('image_contract_files',{})
     required={'/etc/passwd','/etc/group',I18N_CFG,*FUSION_CFG.values()}
     if set(records)!=required:
