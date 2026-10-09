@@ -226,6 +226,7 @@ PHOTO_SEARCH_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/
 PHOTOS_RECENT_INFO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_recent_info/apply.sh"
 EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/effect_kit/api26_light_degree/apply.sh"
 MISSION_STATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_mission_state/apply.sh"
+PARTICLE_ERROR_CODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/particle_error_code/apply.sh"
 CLOUD_FLAG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/relational_store/api26_cloud_flag/apply.sh"
 CURVE_ENUM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/api26_curve_enum/apply.sh"
 LOCATION_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location/api26_public_enums/apply.sh"
@@ -2894,6 +2895,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_effect_light_degree_component.log"
   bash "${MISSION_STATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mission_state_component.log"
+  bash "${PARTICLE_ERROR_CODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_particle_error_code_component.log"
   bash "${CLOUD_FLAG_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_cloud_flag_component.log"
   bash "${CURVE_ENUM_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

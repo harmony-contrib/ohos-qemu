@@ -14,6 +14,9 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTS = {'arm64_virt': 'aarch64-linux-ohos', 'armv7a_virt': 'arm-linux-ohos',
             'x86_64_virt': 'x86_64-linux-ohos'}
 PLAN = (
+    ('particle-error-code', 'foundation/ability/ability_runtime/particle_error_code',
+     'foundation/ability/ability_runtime/frameworks/js/napi/particleAbility/native_module.cpp',
+     'obj/foundation/ability/ability_runtime/frameworks/js/napi/particleAbility/particleability/native_module.o'),
     ('image-partial-type', 'foundation/arkui/ace_engine/api26_image_partial_type',
      'foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp',
      'obj/foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/imagegeneration_static_ohos/js_image_generation.o'),

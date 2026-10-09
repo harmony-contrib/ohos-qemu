@@ -17,6 +17,26 @@ phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### 已批准的 particleAbility 最小常量补齐（客体验证待完成）
+
+新增独立部件 `foundation/ability/ability_runtime/particle_error_code`，接入两个画像
+共用构建入口。仅导出API26 SDK明确声明的FA常量
+`ErrorCode.INVALID_PARAMETER = -1`，不复制featureAbility的其他常量，不修改
+已有错误值、Stage的401、生命周期、权限、IPC或服务实现。NAPI分配/属性注册
+失败时返回失败，不发布半成品对象。已完整阅读组件维护规则及兼容性头文件，
+用户已明确批准修改FA兼容代码。
+
+实际固定源码副本重复打补丁通过；三ABI真实注册翻译单元编译通过，原source/out
+只读且源哈希未变，证据 `particle-registration-three-abi-r21-01/evidence.json`。
+新增3项主机测试覆盖LF/CRLF、重复应用、既有初始化保留、全部4处NAPI失败、
+128轮ASan/UBSan注册边界；完整1126项通过，`host-regression-r21-05.log`。
+这些不等同于完整链接或FA运行时证明；R21冻结输入没有混入这个后续修改。
+
+普通FA调用器已通过本机官方hvigor的legacyAppTasks/legacyHapTasks实际编译：
+`fa-particle-caller-r21-05`，使用API26 SDK、兼容API8、零额外权限。保留此前
+工具入口/目录配置失败记录，不用Stage构建冒充FA。尚待后续新镜像真实启动，
+验证常量、FA上下文和既有调用，并执行Stage回归；此缺口仍未关闭。
+
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
 R20新归档：
