@@ -58,6 +58,15 @@ class FaParticleResultTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.run_rows(rows)
 
+    def test_unrelated_ordinary_app_identity_rejected(self):
+        identity = json.loads(self.identity)
+        identity['applicationInfo']['bundleName'] = 'another.ordinary.application'
+        with self.assertRaises(ValueError):
+            self.run_rows(self.rows, identity=json.dumps(identity))
+        del identity['applicationInfo']['bundleName']
+        with self.assertRaises(ValueError):
+            self.run_rows(self.rows, identity=json.dumps(identity))
+
     def test_builder_requires_real_legacy_tasks_and_inspects_actual_hap(self):
         source = Path(__file__).with_name('build_fa_particle_probe.py').read_text()
         for expected in ('legacyAppTasks', 'legacyHapTasks', "'apiType': 'faMode'",

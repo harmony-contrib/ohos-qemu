@@ -11,6 +11,9 @@ NAMES = ('particle.invalid_parameter', 'actual.fa.context', 'particle.context',
 
 def verify(text, nonce, identity):
     require_normal_identity(identity, BUNDLE)
+    package = json.loads(identity.removeprefix(BUNDLE + ':\n'))
+    if package['applicationInfo'].get('bundleName') != BUNDLE:
+        raise ValueError('actual ordinary identity must belong to the FA caller')
     if not isinstance(nonce, str) or re.fullmatch('[0-9a-f]{32}', nonce) is None:
         raise ValueError('fresh FA caller nonce required')
     rows = []
