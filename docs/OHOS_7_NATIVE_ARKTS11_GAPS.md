@@ -1,5 +1,32 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R23 完整回归结果与项目配额候选
+
+R23 再次完整回归 `r23-full-web-observed-02`（boot
+`a8e73dfd-e667-4d67-bb27-ea39bfdfcc35`）已结束。此次 Web/窗口 Vulkan/Settings/
+Camera/媒体等既有窄项通过，ohos-native-bindings **32 模块、102 项通过，0 失败**。
+完整首包门禁仍失败在 `complete-Cxx-ArkTS11-gap-closure`：281 项要求中
+145 项有注册闭环，136 项未闭环。未用重试成功删除原 Web 间歇失败记录。
+
+R24 仅 ARM64 phone 代表包已开始本地 Docker 构建，输入 `phone-teUjOr`，
+提交 `d8546c1`，树 `c986d923040a75607e0e73c86988d496e4cc39eb0562096b678beed5fe5c8782`，
+输出 `first-screen-modes-7.0-release-20261010-r24`。该冻结树的宿主回归
+`host-regression-r24-03.log`：1184 项通过（206.887 秒）。产包后仅继续本代表包的
+实际刷新率读回/UI/权限与完整回归；没有安排其余五包。
+
+另在 R23 新诊断客体进行只读 `quotactl`：用户/组 Q_GETFMT=4，Q_GETQUOTA
+返回真实非零数据，但项目配额 Q_GETFMT/Q_GETQUOTA 均为 ESRCH。证据
+`r23-web-lifecycle-stress-04/readonly-actual-quota.txt`。实际源码确认：QEMU 的
+userdata 格式遗漏 `--prjquota`；F2FS 仅凭 quota inode 自动启用统计，限额执行
+还需要 usrquota/grpquota/prjquota 挂载选项。不能把用户配额查询成功扩展成
+项目统计或限额执行成功。
+
+新增后续候选 `vendor/ohemu/f2fs_quota` 及统一 launcher/镜像特征位校验，
+保持 nosuid/nodev/noatime、权限与实际服务不变。该候选**不在 R24 冻结树中**，
+未应用到运行客体，也未重写旧镜像；仍须后续新包真实配额与 Storage API 验证。
+候选宿主回归 `host-regression-quota-r24-01.log`：1190 项通过（230.115 秒），
+包含格式特征位拒绝、三个设备磁盘名的启动参数、补丁顺序与重复应用检查。
+
 ## 2026-10-10 刷新率新包验证入口
 
 新增仓库 `run_settings_refresh_diagnostic.py`：自行启动指定新归档，构建普通

@@ -187,6 +187,7 @@ PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
 PATCH_ROOT="${SCRIPT_DIR}/../patches"
 ARMV7A_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/armv7a_product/apply.sh"
 VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/apply.sh"
+F2FS_QUOTA_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/f2fs_quota/apply.sh"
 QEMU_VULKAN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/components/qemu_vulkan/apply.sh"
 QEMU_2IN1_PROFILE_SCRIPT="${PATCH_ROOT}/2in1/product_profile/apply.sh"
 SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/sceneboard_runtime/apply.sh"
@@ -2849,6 +2850,8 @@ apply_qemu_capability_patch_plan() {
   apply_sdk_cortex_m_component
   apply_qemu_audio_component
   apply_standard_vpn_component
+  bash "${F2FS_QUOTA_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_f2fs_quota_component.log"
   bash "${MESA_KMS_MAPPING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_kms_mapping_component.log"
   bash "${QEMU_KMS_MESA_BUILD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

@@ -431,7 +431,7 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${file}"
   # Do not consume the trailing backslash that escapes the closing quote in
   # the ARM launchers' QEMU_CMD string.
-  sed_in_place_extended 's|(ohos\.required_mount\.data=/dev/block/[^ @]+@/data)@ext4@[^ @"]+@wait[^ "\\]*|\1@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600|g' "${file}"
+  sed_in_place_extended 's#(ohos\.required_mount\.data=/dev/block/[^ @]+@/data)@(ext4|f2fs)@[^ @"]+@wait[^ "\\]*#\1@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600#g' "${file}"
   if ! grep -q 'oemmode=rd' "${file}"; then
     sed_in_place_extended 's|-append \\"[[:space:]]*|-append \\"oemmode=rd |' "${file}"
     sed_in_place_extended 's|-append "[[:space:]]*|-append "oemmode=rd |' "${file}"
@@ -1194,7 +1194,7 @@ switch (\$DisplayType) {
   }
 }
 
-\$KernelBootArgs = "oemmode=rd loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime@wait,required,reservedsize=104857600"
+\$KernelBootArgs = "oemmode=rd loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600"
 
 \$ArgsList = @(
   "-machine", "q35",
@@ -2293,15 +2293,16 @@ require_f2fs_verity() {
   fi
 
   # f2fs_super_block starts at byte 1024. Its little-endian feature field is
-  # at offset 2180, and F2FS_FEATURE_VERITY is bit 0x0400.
+  # at offset 2180. Require VERITY (0x0400), QUOTA_INO (0x0080),
+  # PRJQUOTA (0x0010), and EXTRA_ATTR (0x0008), not just launcher flags.
   local feature_hex
   feature_hex="$(od -An -tx4 -j 3204 -N 4 "${image}" | tr -d '[:space:]')"
-  if [ -z "${feature_hex}" ] || (( (16#${feature_hex} & 16#0400) == 0 )); then
-    echo "${description} is missing F2FS verity feature: ${image}" >&2
+  if [ -z "${feature_hex}" ] || (( (16#${feature_hex} & 16#0498) != 16#0498 )); then
+    echo "${description} is missing F2FS verity or quota inode features: ${image}" >&2
     echo "F2FS feature bits: ${feature_hex:-unavailable}" >&2
     exit 1
   fi
-  printf 'standard VPN filesystem feature: %s -> f2fs+verity\n' \
+  printf 'userdata filesystem features: %s -> f2fs+verity+quota+project_quota\n' \
     "${description}"
 }
 
@@ -2401,6 +2402,7 @@ verify_standard_vpn_capability() {
     CONFIG_F2FS_FS_POSIX_ACL \
     CONFIG_F2FS_FS_SECURITY \
     CONFIG_QUOTA \
+    CONFIG_QFMT_V2 \
     CONFIG_QUOTACTL
   do
     require_kernel_config_bool "${kernel_config}" "${option}"
