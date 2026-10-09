@@ -1,5 +1,19 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 FA 原始证据复核与正式门禁候选
+
+新增 `verify_fa_particle_results.verify_evidence`，重新核对同包/同 boot/架构、
+普通 FA 应用身份与 page/service UID、原始调用记录、nonce、实际编译的 FA
+HAP/源码/签名包和命令日志哈希；不接受已改写的成功汇总。正式本地验收脚本
+增加必需的 `fa-particle` 检查，并保留同一包的原 Stage/native 全部测试。
+官方 hvigor/Node 可通过 `QEMU_TEST_HVIGOR_HOME` / `QEMU_TEST_NODE_HOME`
+指定；默认使用本机 DevEco 工具。不会向测试应用授予额外权限。
+
+16 项 FA 测试及 7 项首包门禁测试通过；这些是宿主拒绝路径测试，不是客体
+证明。之前完整回归 `host-regression-r23-03.log` 的 1159 项通过
+（196.198 秒）。R23 仍在构建，此门禁变更不在其冻结树内；其已排定的新包
+FA 诊断保持独立测试输入和证据，不追溯修改构建输入或提前启动剩余五包。
+
 ## 2026-10-10 Settings 2in1 输入页路由候选
 
 固定 Settings 源码的 `supportedPageForPCList` 缺少两个公开输入法页面，

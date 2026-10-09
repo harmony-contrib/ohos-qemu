@@ -274,6 +274,19 @@ def run(args):
             'certificate-real-empty-import-cleanup-and-ordinary-denial', timeout=4800, env=child_env)
         check('certificate-manager', work / 'certificate-manager/evidence.json', [certificate_record])
         same_guest('after-certificate-both-roles')
+        # The FA compatibility API requires a real FA service, not a Stage
+        # caller impersonating one. Both models run on this unchanged archive.
+        fa_record = command([sys.executable, Path(__file__).with_name('run_fa_particle_probe.py'),
+            '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
+            '--output', work / 'fa-particle', '--sdk', sdk, '--hdc', hdc,
+            '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+            '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                '/Applications/DevEco-Studio.app/Contents/tools/node'),
+            '--source-volume', source_volume, '--docker-image', docker_image],
+            'ordinary-FA-service-constant-and-existing-calls', timeout=2400, env=child_env)
+        check('fa-particle', work / 'fa-particle/evidence.json', [fa_record])
+        same_guest('after-FA-service')
         normal_results = {}
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                     'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset')
