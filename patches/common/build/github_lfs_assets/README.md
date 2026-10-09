@@ -9,3 +9,11 @@ traversal and verifies their size, SHA-256 identity, and archive format.
 The host cache is populated concurrently by
 `scripts/prepare_ohos_7_0_release_lfs_cache.sh`. The map is tied to manifest
 commit `f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549` and does not follow master.
+
+The map includes the exact Simplified Chinese and compatible color emoji font
+objects from `global_system_resources` revision
+`8cb84b3f3dd2142826e3f09cf2c171a421a06c14`. Their 213-byte explanatory pointers
+otherwise pass compilation and appear as broken text in the packaged system.
+`verify_font_assets_image.py` checks every packaged font directory entry, real
+SFNT table bounds, and the two exact object hashes. Text rendering still needs
+a newly packaged guest test; static font validation alone is not acceptance.

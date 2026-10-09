@@ -2,6 +2,20 @@
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+R16后续记录：`b446c92` 的1008项主机回归通过，但完整构建在SELinux域清单检查处
+失败，尚未生成归档。两个新增sadomain已通过真实策略/上下文编译，却未登记到
+`domain_baseline.json`；现只补充这两个名字的分类登记，不修改独立权限豁免清单、
+neverallow或检查器。使用固定Release实际策略及脚本重跑全部SELinux检查通过，
+证据 `ohos-fusion-full-policy-check-r17-01.log`；仍需新包运行验证。
+
+同时从R14真实保存弹窗截图发现缺字，直接提取system.img确认
+`HarmonyOS_Sans_SC.ttf` 和 `HMOSColorEmojiCompat.ttf` 均为213字节LFS占位文本，
+不是可加载字体。现补齐固定 `global_system_resources` 提交
+`8cb84b3f3dd2142826e3f09cf2c171a421a06c14` 的两个精确对象（约20.6MB和16.8MB），
+LFS清单由77项增至79项，SHA/大小核对通过。打包新增实际镜像字体目录、SFNT表边界、
+两对象哈希校验；它已拒绝旧R14镜像。14个真实字体及2份配置的候选对象检查通过，
+但不冒充新镜像文字渲染通过。字体证据保留在同一issue-20证据目录。
+
 补充：`13c6c3e` 的1003项主机回归通过，Photos普通调用探针三ABI均通过实际API26
 编译。R15候选在本地Docker进入GN后主动以SIGTERM停止（退出143），尚未生成包：
 并行的R14真实保存诊断05发现预装权限文件仍使用旧Photos证书，用户点击允许后

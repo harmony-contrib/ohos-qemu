@@ -1,6 +1,7 @@
 """Exact policy transitions and narrow grants; not guest runtime evidence."""
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -26,6 +27,9 @@ class FusionServiceDomainsTests(unittest.TestCase):
         target = self.root / baseline.PROJECT / relative
         target.parent.mkdir(parents=True)
         shutil.copy2(original, target)
+        self.inventory = self.root / baseline.PROJECT / 'sepolicy/whitelist/flex/domain_baseline.json'
+        self.inventory.parent.mkdir(parents=True)
+        shutil.copy2(HERE / 'fixtures/fusion_service_domains/domain_baseline.json', self.inventory)
 
     def apply(self):
         return subprocess.run(['bash', str(COMPONENT / 'apply.sh'), '--source-root', str(self.root)],
@@ -93,6 +97,24 @@ class FusionServiceDomainsTests(unittest.TestCase):
         self.assertEqual(recipe.count(marker), 1)
         self.assertLess(recipe.index('bash "${FUSION_ACCOUNTS_COMPONENT_SCRIPT}"'), recipe.index(marker))
         self.assertLess(recipe.index(marker), recipe.index('  write_source_preparation_metadata\n}'))
+
+    def test_inventory_adds_only_the_two_real_domains_without_checker_exemptions(self):
+        before = json.loads(self.inventory.read_text())
+        self.assertEqual(self.apply().returncode, 0)
+        after = json.loads(self.inventory.read_text())
+        self.assertEqual(after['user']['sadomain'][:2], ['fusion_ranging', 'partner_device_agent'])
+        del after['user']['sadomain'][:2]
+        self.assertEqual(after, before)
+        data = self.inventory.read_bytes()
+        self.assertEqual(self.apply().returncode, 0)
+        self.assertEqual(self.inventory.read_bytes(), data)
+
+    def test_unknown_inventory_prevents_all_domain_mutations(self):
+        self.inventory.write_bytes(self.inventory.read_bytes() + b'\n')
+        before, inventory = self.snapshot(), self.inventory.read_bytes()
+        self.assertNotEqual(self.apply().returncode, 0)
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(self.inventory.read_bytes(), inventory)
 
 
 if __name__ == '__main__':
