@@ -2,6 +2,33 @@
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### R18 新归档与真实 Photos 正向验证
+
+归档 `/Volumes/PSSD/qemu/packages/first-boot-assets-7.0-release-20261009-r18/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `4fa58c2be20a0c52736d045ec18f7b428c249b6bf931e9eed5b4d0de5f722298`。
+冻结输入 `phone-IExnAy` / `d796783`，树SHA
+`99734737af271779123fa14c80bd7637783a9c16fa5bb419e3ebcdb160211461`。
+本地Docker完整编译成功（43分40秒），实际镜像Photos两份预装策略、14个字体及
+2个配置、两项开机资源、Native ABI静态门禁均通过。额外只读扫描18373个装配文件及
+82个ZIP/HAP中的25886个条目，未发现LFS占位文本；不是运行时能力证明。
+
+在macOS/ARM64 QEMU中新解包启动该归档，使用API26 SDK和普通应用UID 20010037，执行
+`photos-positive-probe-r18/run-runtime.py --output <新的证据目录> --archive <上述归档> --frozen-root /Volumes/PSSD/qemu/build-inputs/phone-IExnAy`。
+真实系统保存弹窗确认、写入图片、查询对应最近照片、选择器确认返回同一URI、重新打开
+并解码64×64 JPEG均已通过：中心RGBA为37/149/212/255（断言目标37/149/211/255，
+JPEG误差界限保持8）。省略RecentPhotoOptions、保持输入对象不变、非法选择数401、
+真实取消选择器也通过。新保存弹窗截图中文字已正常显示。证据
+`issue-20-20261006/r18-photos-asset-diagnostic-03/`，19项观察全通过，超时覆盖已恢复。
+
+01为首次检查真实完成控件而主动停止，未标为成功；02保留失败：探针给RGBA字节但未设
+srcPixelFormat，而SDK声明源格式默认BGRA。03仅显式设置源RGBA格式，像素断言未放宽，
+系统归档未改变。private探针、实际编译源及unsigned HAP已归档到`photos-positive-probe-r18/`。
+以上仍不证明无预选图库浏览、FA卡、云设置或完整Photos能力；未关闭原始整项缺口。
+完整首包验收正在执行 `scripts/validate_packaged_qemu.sh`，记录
+`first-boot-assets-arm64-phone-runtime-r18-01.log`；在完整门槛通过前不开始余下五包。
+
+### 首包修复过程与保留失败
+
 R17后续：`0e8aec4` 的1019项主机回归通过。全分区 staging 占位文件扫描又发现
 `system/etc/graphic/bootpic.zip`、`bootvideo.mp4` 为LFS文本，已主动停止R17构建，
 未生成归档。补齐固定graphic_2d提交`81cc9ca9509bccd86c435064136fe45591d29eeb`
