@@ -123,6 +123,38 @@ class CameraCaptureEnd(unittest.TestCase):
         self.assertEqual(recipe.count(call), 1)
         self.assertLess(recipe.index(call), recipe.index('  write_source_preparation_metadata\n}'))
 
+    def test_original_capture_publication_race_is_reproduced(self):
+        self.assertEqual(self.apply().returncode, 0)
+        self.run_publication_case((FIXTURE / 'stream_base.before.cpp').read_text(), repaired=False)
+
+    def run_publication_case(self, source, repaired):
+        work = Path(self.temporary.name) / ('publication-repaired' if repaired else 'publication-original')
+        shutil.copytree(FIXTURE, work)
+        (work / 'real').mkdir()
+        for (relative, _, _), name in zip(baseline.FILES,
+                ('capture_message.cpp', 'real/capture_request.cpp', 'real/capture_request.h', 'real/stream_base.cpp')):
+            shutil.copy2(self.source / baseline.PROJECT / relative, work / name)
+        pairs = [('RetCode StreamBase::Capture(', 'RetCode StreamBase::OnFrame('),
+                 ('RetCode StreamBase::CancelRequest(', 'void StreamBase::HandleRequest()'),
+                 ('RetCode StreamBase::OnFrame(', 'RetCode StreamBase::ReceiveBuffer(')]
+        methods = '\n\n'.join(source[source.index(begin):source.index(end)].strip()
+                              for begin, end in pairs)
+        (work / 'publication_stream_methods.inc').write_text(methods + '\n')
+        compiler = shutil.which('clang++') or shutil.which('c++')
+        self.assertIsNotNone(compiler)
+        executable = work / 'publication'
+        environment = dict(os.environ, ASAN_OPTIONS='detect_leaks=0:halt_on_error=1',
+                           UBSAN_OPTIONS='halt_on_error=1')
+        result = subprocess.run([compiler, '-std=c++17', '-Wall', '-Wextra', '-Werror', '-pthread',
+                                 '-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-I', str(work),
+                                 str(work / 'capture_message.cpp'), str(work / 'real/capture_request.cpp'),
+                                 str(work / 'test_capture_publication.cpp'), '-o', str(executable)],
+                                capture_output=True, text=True, timeout=120, env=environment)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run([str(executable), *(['--repaired'] if repaired else [])],
+                                capture_output=True, text=True, timeout=30, env=environment)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

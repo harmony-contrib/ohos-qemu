@@ -242,6 +242,7 @@ QEMU_CAMERA_JPEG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camer
 QEMU_CAMERA_JPEG_CAPTURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/jpeg_capture/apply.sh"
 QEMU_CAMERA_FORK_TIMESTAMP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/fork_timestamp/apply.sh"
 QEMU_CAMERA_CAPTURE_END_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/capture_end/apply.sh"
+QEMU_CAMERA_CAPTURE_PUBLICATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/camera/capture_publication/apply.sh"
 QEMU_THERMAL_HDI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/thermal/qemu_backend/apply.sh"
 QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/qemu_backend/apply.sh"
 QEMU_THERMAL_CLIENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/client_reply/apply.sh"
@@ -2784,6 +2785,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_fork_timestamp_component.log"
   bash "${QEMU_CAMERA_CAPTURE_END_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_capture_end_component.log"
+  bash "${QEMU_CAMERA_CAPTURE_PUBLICATION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_capture_publication_component.log"
   bash "${QEMU_THERMAL_HDI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_hdi_component.log"
   bash "${QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

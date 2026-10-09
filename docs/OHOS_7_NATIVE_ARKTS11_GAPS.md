@@ -24,8 +24,25 @@ JPEG误差界限保持8）。省略RecentPhotoOptions、保持输入对象不变
 srcPixelFormat，而SDK声明源格式默认BGRA。03仅显式设置源RGBA格式，像素断言未放宽，
 系统归档未改变。private探针、实际编译源及unsigned HAP已归档到`photos-positive-probe-r18/`。
 以上仍不证明无预选图库浏览、FA卡、云设置或完整Photos能力；未关闭原始整项缺口。
-完整首包验收正在执行 `scripts/validate_packaged_qemu.sh`，记录
+完整首包验收 `scripts/validate_packaged_qemu.sh` 已在Camera第二轮预览结束处失败，记录
 `first-boot-assets-arm64-phone-runtime-r18-01.log`；在完整门槛通过前不开始余下五包。
+
+### R18 Camera失败与R19提交顺序候选
+
+失败证据位于R18包目录的`openharmony-qemu-arm64-arm64_virt-phone-runtime-d0l763bs/camera/`。
+第二轮ArkTS预览`session.stop()`后原有1000ms窗口内`preview_frame_end=0`；
+四张JPEG内容和61项NDK检查仍通过。完整门禁为失败，不以这两个子结果替代。
+实际hilog显示18:47:59.262缓冲区已加入pool，59.272返回INVALID并被归还，
+而pipeline Capture与inTransit请求登记直到59.290才发生。请求留下没有对应缓冲区的
+待完成记录，取消后无法发出结束事件；释放流时的迟到事件不能满足原验收。
+
+新增独立`camera/capture_publication`部件：先取得但不发布缓冲区，在取消/停止检查后
+登记待完成请求，准备pipeline和开始通知，最后才AddBuffer。配置失败回滚当前请求和
+未发布缓冲区，不删除更早的在途请求；取缓冲区期间不占用请求锁。
+原`capture_end`部件仅识别这套精确完整组合，未知修改和部分组合仍拒绝应用。
+主机测试使用实际Capture/HandleResult/OnFrame/CancelRequest方法复现旧版遗漏，
+并覆盖即时跨线程返回、连续100帧、单拍、取buffer期间取消/停止、配置失败及旧请求保留。
+ASan/UBSan检查不等于新包验证；ArkTS原有等待和断言未修改，仍需R19重新打包启动验收。
 
 ### 首包修复过程与保留失败
 

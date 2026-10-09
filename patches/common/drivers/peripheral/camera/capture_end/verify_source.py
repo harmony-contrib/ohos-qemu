@@ -26,4 +26,11 @@ FILES = (
 
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    try:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    except ValueError:
+        # The later publication repair composes with this entire exact stack.
+        # Accept only its pinned final file AND all three repaired siblings.
+        composed = FILES[:-1] + ((FILES[-1][0], FILES[-1][1],
+            '7cb465950888f5075fe4436c82e556ed92567cb7d6b5777152c363c6a66c065a'),)
+        return validate_component(root, PROJECT, REVISION, composed, require_patched=True)
