@@ -107,6 +107,21 @@ SHA-256 `2b0c9db848390c1b7aaa4ddc9b0fc73dd1a0cbe178258a41040fa9ffd472bb26`。
 相同Pillow 12.3.0后执行`04`复验；不修改归档、权限或既有断言来规避环境故障。
 其余五包仍未开始，完整首包能力门禁尚未通过。
 
+`r21-settings-navigation-runtime-04/diagnostic.json`随后真实通过：同一R21归档
+全新启动，boot ID `afc0c19d-3241-45fa-badb-1fafef054d85`、HDC
+`127.0.0.1:50889`。输入法列表/已安装IME详情各2轮，共4次实际provider上屏、
+4次Back回到调用方和8条应用观察全部通过，系统记录的Settings UID 20010011
+与普通调用方UID 20010038及双向PID关系一致；保留4张合成器截图并实际检查
+输入法列表和kikaInput详情画面。有限测试电源覆盖已恢复，私有VM已关闭。
+这是输入法导航子集通过，不等同于全部Settings或完整首包门禁。
+
+同一guest内FA负对照也真实通过其预期：5条观察中仅常量为null，既有上下文、
+Promise/callback getAbilityInfo和getAbilityName全部正常；两个进程同属普通
+应用UID，独立于Settings进程。证据`04/fa-baseline.json`，状态明确为
+`expected_missing_constant_confirmed_in_real_FA`，不计为FA常量修复成功。
+在保留R21不变的前提下，下一代表包纳入已批准的常量补丁再做正向及Stage回归；
+不会由这个负对照直接放行剩余五包。
+
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
 R20新归档：
