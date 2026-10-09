@@ -17,3 +17,8 @@ otherwise pass compilation and appear as broken text in the packaged system.
 `verify_font_assets_image.py` checks every packaged font directory entry, real
 SFNT table bounds, and the two exact object hashes. Text rendering still needs
 a newly packaged guest test; static font validation alone is not acceptance.
+
+The boot picture ZIP and boot video are also pinned to graphic_2d revision
+`81cc9ca9509bccd86c435064136fe45591d29eeb`. Packaging verifies both exact
+objects extracted from system.img and rejects LFS placeholders in every staged
+partition. This checks resource integrity, not successful guest playback.

@@ -3107,6 +3107,9 @@ PY
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/photos-provider-evidence.json"
     python3 "${SCRIPT_DIR}/verify_font_assets_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --output "${PACKAGE_DIR}/font-assets-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_boot_assets_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --staging-root "$(dirname "${IMAGE_DIR}")" \
+      --output "${PACKAGE_DIR}/boot-assets-evidence.json"
   fi
   write_full_device_profile_evidence \
     "${SOURCE_ROOT}" \
