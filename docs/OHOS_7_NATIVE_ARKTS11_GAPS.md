@@ -9,6 +9,23 @@ R17后续：`0e8aec4` 的1019项主机回归通过。全分区 staging 占位文
 并从实际system.img提取两资源验证SHA/大小及ZIP完整性/MP4头。真实缓存对象检查
 和8项新增回归通过，但不代表开机动画已播放或新首包行为门禁通过。继续单首包重建。
 
+`d796783` 后完整1027项主机回归通过，记录 `ohos-capability-host-r18-01.log`。
+R18首包输入冻结为 `phone-IExnAy`，仅构建ARM64 phone，尚不启动余下五包。
+又清理两次已关闭Photos资产诊断中的10个归档精确副本，释放5,511,127,040字节，
+保留userdata、日志和R14归档，可从归档恢复；记录
+`cleanup-r14-closed-asset-duplicates-20261009.json`。
+
+继续核对固定ace_engine提交 `e55e178228b9f6388b15d3024e8caf125fa293d7`：
+`interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp` 只注册show/scale，
+SDK26声明的close/hide/restore及四个NodeGraph操作没有对应导出；show成功分支仍resolve
+undefined而非结果数组，省略options传入空napi句柄。`interfaces/run_rollup.py` 的creator
+错误拒绝instanceId=0，并直接改写调用者options.content。
+`image_generator_dialog_project/general/utils/AIGenerateImpl.js` 的默认文本路径仍生成
+mockThink/mockResult，默认图片路径延迟返回输入图片；两个自定义模型setter在该组件中
+没有调用点。不能把枚举导出、空结果或这些模拟路径计为生成能力闭环。
+证据 `image-generation-fixed-release-source-audit-r18-01.log` 保存实际源码哈希及定位。
+已询问真实默认模型和phone CloudSync服务来源；不擅自接入收费服务，也不将模拟结果作为修复。
+
 R16后续记录：`b446c92` 的1008项主机回归通过，但完整构建在SELinux域清单检查处
 失败，尚未生成归档。两个新增sadomain已通过真实策略/上下文编译，却未登记到
 `domain_baseline.json`；现只补充这两个名字的分类登记，不修改独立权限豁免清单、
