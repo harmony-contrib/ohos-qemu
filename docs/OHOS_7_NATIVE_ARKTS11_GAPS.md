@@ -45,6 +45,7 @@ phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其
 新增5项验证器边界与相邻3项注册测试均通过，
 `fa-particle-host-boundaries-r21-01.log`。验证器要求真实上下文与既有调用身份一致，
 不接受最终complete掩盖前序失败；单独FA通过也不自动关闭缺口或代替Stage回归。
+完整1131项主机回归通过，`host-regression-r21-06.log`。
 
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
@@ -154,6 +155,10 @@ checksum不能通过。新增6项门禁边界测试。旧04报告是实施方向
 userdata及不同于归档的镜像未删；分别记录
 `cleanup-r20-rust-intermediates-20261009.json`、
 `cleanup-r20-photos-completed-run-duplicates-20261009.json`。
+另复核RS R7/R8两轮各32个已保留测试库及通过记录后，删除已结束的Rust中间
+缓存各2,753,900,544字节；源码、锁、签名HAP与运行证据不变。记录
+`cleanup-rs-r7-rust-intermediates-20261009.json` 和
+`cleanup-rs-r8-rust-intermediates-20261009.json`，可按原构建命令恢复。
 
 将R18已实测的普通应用流程整理为 `run_normal_hap_probe.py --persona photos-asset`：
 新nonce、零额外权限、真实取消选择器、确认只保存一张测试JPEG、查询唯一标题对应的
