@@ -2,6 +2,27 @@
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### Photos 真实资产回读流程纳入仓库独立测试候选
+
+将R18已实测的普通应用流程整理为 `run_normal_hap_probe.py --persona photos-asset`：
+新nonce、零额外权限、真实取消选择器、确认只保存一张测试JPEG、查询唯一标题对应的
+recent identifier、预选同一URI后确认选择、打开返回URI并解码64×64 RGBA。
+真实源像素格式显式为RGBA；三通道容差仍为8，不放宽原检查。
+UI驱动只点击实际唯一可见且可用控件，验证授权提示、选择计数、控件所属bundle及
+Button祖先；保存布局、截图及校验值，验证器重新读取原始观察和UI文件。
+
+ARM64 API26实际编译产物 `issue-20-20261006/photos-asset-formal-compile-r20-01/entry/build/default/outputs/default/entry-default-unsigned.hap`，
+SHA-256 `cedd006aad4353a90f2cf0536e27a9525f8bbaa26188bbe75e481218e6aa610f`。
+12项专用主机单测覆盖失败/旧nonce/乱序、不同资产、错误像素、假成功、权限身份、
+UI归属/禁用/歧义、布局或截图篡改，以及新探针与旧探针的CLI互斥。
+完整1084项主机回归通过，`host-regression-r20-09.log`；前一轮保留两个旧硬编码
+探针列表未包含新模式的测试失败，更新列表后重跑，不移除互斥或权限断言。
+
+新验证器还能重验R18保留的19项实际观察和三个真实弹窗布局，记录
+`photos-asset-verifier-replay-r18-r20.json`，明确不是R20运行证明。
+当前仅增加独立测试模式，尚未将其加入完整首包编排，须先在新归档上验证此模式。
+不据此关闭完整Photos、无预选图库、FA卡或CloudSync缺口；原始台账和metadata测试保留。
+
 ### Settings 输入法公开入口候选（未激活预装）
 
 进一步确认固定 Settings 源码包含真实 `InputSettings`、`OtherInputDetailSettings`

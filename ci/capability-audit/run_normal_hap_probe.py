@@ -43,6 +43,7 @@ PERSONAS = {
     'curve': ('--curve-only', 'curve-{run}-results.log', '"summary"', 'verify_curve_results.py'),
     'binding': ('--binding-only', 'binding-{run}-results.log', '"summary"', 'verify_binding_results.py'),
     'photos-recent': ('--photos-recent-only', 'photos-recent-{run}-results.log', '"summary"', 'verify_photos_recent_results.py'),
+    'photos-asset': ('--photos-asset-only', 'photos-asset-{run}-results.log', '"asset.readback"', 'verify_photos_asset_results.py'),
     'optional-phone-profile': ('--optional-phone-profile-only', 'optional-phone-profile-{run}-results.log',
                                '"summary"', 'verify_optional_phone_profile_results.py'),
     'arkts-exports': ('--arkts-exports-only', 'arkts-exports-{run}-results.log',
@@ -132,7 +133,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona == 'photos-recent':
+    if persona in ('photos-recent', 'photos-asset'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -268,6 +269,14 @@ def run(args):
             raise ValueError('actual application regression did not complete before timeout')
 
         ui_arguments = []
+        if args.persona == 'photos-asset':
+            from photos_asset_ui import exercise
+            ui = GuestUi(command, args.hdc, args.target, args.output / 'ui')
+            actions = exercise(ui, BUNDLE, poll_result, challenge)
+            actions_path = args.output / 'photos-asset-actions.json'
+            actions_path.write_text(json.dumps(actions, indent=2) + '\n')
+            report.update(photos_asset_actions=str(actions_path), photos_asset_actions_sha256=checksum(actions_path))
+            ui_arguments += ['--actions', str(actions_path)]
         if args.persona == 'camera':
             from camera_package_capture import allow_camera, live_captures, receive_photos
             from camera_probe_contract import verify_inputs
@@ -326,7 +335,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent'):
+        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]
