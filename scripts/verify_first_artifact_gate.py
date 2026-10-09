@@ -18,7 +18,7 @@ from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects",
-                             "application-home", "photos-asset", "settings-navigation", "fa-particle"))
+                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 
 
@@ -227,23 +227,23 @@ def verified_payload(name, path, identity, environment):
                 if (nested.is_symlink() or not nested.is_file() or checksum(nested) != row.get('sha256') or
                         json.loads(nested.read_text()).get('status') != 'pass'):
                     raise ValueError('actual Vulkan child result missing or changed: ' + kind)
-        elif name == 'rs-objects':
+        elif name in ('rs-objects', 'screen-modes'):
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))
-            from verify_rs_object_results import verify as verify_objects
+            from run_root_probe import verify_result
             raw = path.parent / 'stdout.jsonl'
-            if (payload.get('kind') != 'rs-objects' or
+            if (payload.get('kind') != name or
                     payload.get('scope') != 'isolated_root_probe_only_not_normal_app_or_full_capability_gate' or
                     payload.get('archive_binding') != 'actual_live_owned_boot_and_initial_full_archive_inventory' or
                     payload.get('arch') != environment['guest_arch'] or payload.get('device') != environment['device_type'] or
                     payload.get('target') != environment['target'] or payload.get('kernel_boot_id_unchanged') is not True or
                     payload.get('first_artifact_behavior_gate_passed') is not False or
                     raw.is_symlink() or not raw.is_file() or checksum(raw) != payload.get('log_sha256')):
-                raise ValueError('real newly packaged RS object boundary evidence required')
-            result = verify_objects(raw.read_text(), environment['guest_arch'], payload.get('run_id'),
-                                    payload.get('probe_exit_code'))
+                raise ValueError('real newly packaged root-probe evidence required: ' + name)
+            result = verify_result(name, raw.read_text(), environment['guest_arch'], payload.get('run_id'),
+                                   payload.get('probe_exit_code'))
             if result != payload.get('result'):
-                raise ValueError('RS object boundary result differs from its actual process transcript')
+                raise ValueError('root-probe result differs from its actual process transcript: ' + name)
         elif name == 'certificate-manager':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

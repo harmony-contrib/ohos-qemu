@@ -247,6 +247,25 @@ def run(args):
             '--output', work / 'rs-objects'], 'actual-packaged-RS-object-boundaries', env=child_env)
         check('rs-objects', work / 'rs-objects/result.json', [rs_build, rs_runtime])
         same_guest('after-RS-object-boundaries')
+        screen_probes = work / 'screen-mode-probes'
+        screen_probes.mkdir()
+        screen_build = command(['docker', 'run', '--rm', '--platform', 'linux/amd64',
+            '--mount', 'type=volume,src=' + source_volume + ',dst=/ohos,readonly',
+            '--mount', 'type=volume,src=' + os.environ.get('DOCKER_OUT_VOLUME', 'ohos-qemu-7_0-release-out') +
+                       ',dst=/ohos/out,readonly',
+            '--mount', 'type=bind,src=' + str(ROOT) + ',dst=/work,readonly',
+            '--mount', 'type=bind,src=' + str(screen_probes) + ',dst=/probe',
+            docker_image, 'python3', '/work/ci/capability-audit/build_screen_modes_probe.py',
+            '--source-root', '/ohos', '--arch', arch, '--output', '/probe/build'],
+            'compile-readonly-real-display-service-caller', env=child_env)
+        screen_runtime = command([sys.executable, Path(__file__).with_name('run_root_probe.py'),
+            '--kind', 'screen-modes', '--archive', args.package_archive,
+            '--probe', screen_probes / 'build/screen-modes-readback',
+            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+            '--boot-id', environment['boot_id'], '--boot-evidence', work / 'boot/boot.json',
+            '--output', work / 'screen-modes'], 'actual-packaged-display-mode-readback', env=child_env)
+        check('screen-modes', work / 'screen-modes/result.json', [screen_build, screen_runtime])
+        same_guest('after-display-mode-readback')
         audio_suite_probes = work / 'audio-suite-probes'
         command(['bash', Path(__file__).with_name('build_audio_suite_probe.sh'), arch, audio_suite_probes],
                 'build-actual-public-AudioSuite-PCM-probe', env=child_env)

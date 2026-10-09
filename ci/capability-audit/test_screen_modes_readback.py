@@ -52,6 +52,25 @@ class ScreenModesReadbackTests(unittest.TestCase):
         self.assertNotIn('SetScreenActiveMode', source)
         self.assertNotIn('SetMode', source)
 
+    def test_root_runner_requires_real_success_and_keeps_readonly_scope(self):
+        from run_root_probe import probe_command, verify_result
+        raw = 'QEMU_SCREEN_MODES:' + json.dumps(self.value)
+        self.assertEqual(verify_result('screen-modes', raw, 'arm64', 'nonce', 0), self.check(self.value))
+        for code in (1, 143, None, False):
+            with self.assertRaises(ValueError):
+                verify_result('screen-modes', raw, 'arm64', 'nonce', code)
+        command = probe_command('screen-modes', '/data/local/tmp/test', 'nonce')
+        self.assertIn('unset LD_LIBRARY_PATH LD_PRELOAD;', command)
+        self.assertNotIn('--privileged', command)
+
+    def test_future_package_gate_requires_actual_modes(self):
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
+        from verify_first_artifact_gate import REQUIRED_CHECKS
+        self.assertIn('screen-modes', REQUIRED_CHECKS)
+        suite = Path(__file__).with_name('run_packaged_qemu_suite.py').read_text()
+        self.assertIn("check('screen-modes', work / 'screen-modes/result.json'", suite)
+
 
 if __name__ == '__main__':
     unittest.main()

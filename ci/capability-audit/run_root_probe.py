@@ -30,6 +30,7 @@ from verify_audio_suite_results import verify as verify_audio_suite
 from verify_bpf_results import verify as verify_bpf
 from verify_binder_sender_results import verify as verify_binder_sender
 from verify_rs_object_results import verify as verify_rs_objects
+from verify_screen_modes import verify as verify_screen_modes
 from verify_native_gap_abi_results import validate_definitions as validate_native_abi, verify as verify_native_abi
 
 ARCHES = {"arm64": (2, 183, "aarch64"), "armv7a": (1, 40, "armv7l"),
@@ -125,7 +126,7 @@ def parse_exit(output, run_id):
 
 
 def probe_command(kind, remote, run_id):
-    arguments = ([] if kind in GRAPHICS_KINDS or kind == "audio-suite" else
+    arguments = ([] if kind in GRAPHICS_KINDS or kind in ("audio-suite", "screen-modes") else
                  {"bitmap": ["--privileged", run_id], "userid": ["--privileged", run_id, "0"],
                   "vibrator-hdi": [run_id],
                   "bpf": [run_id],
@@ -141,6 +142,10 @@ def probe_command(kind, remote, run_id):
 
 
 def verify_result(kind, log, arch, run_id, code, definitions=None, device=None):
+    if kind == 'screen-modes':
+        if type(code) is not int or code != 0:
+            raise ValueError('actual display readback process failed')
+        return verify_screen_modes(log)
     if kind in GRAPHICS_KINDS:
         return verify_graphics(kind, log, code)
     if kind == "vibrator-hdi":
@@ -288,7 +293,7 @@ def run_probe(args, runner=subprocess.run):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kind", choices=("bitmap", "userid", "vibrator-hdi", "permission-registry", "audio-suite", "bpf", "binder-sender", "rs-objects", "native-gap-abi", *GRAPHICS_KINDS), required=True)
+    parser.add_argument("--kind", choices=("bitmap", "userid", "vibrator-hdi", "permission-registry", "audio-suite", "bpf", "binder-sender", "rs-objects", "screen-modes", "native-gap-abi", *GRAPHICS_KINDS), required=True)
     parser.add_argument("--definitions", type=Path, help="source permission definitions or actual final-image Native ABI table")
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--probe", type=Path, required=True)
