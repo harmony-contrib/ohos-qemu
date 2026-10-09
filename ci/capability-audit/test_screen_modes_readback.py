@@ -9,7 +9,7 @@ from verify_screen_modes import verify
 class ScreenModesReadbackTests(unittest.TestCase):
     def setUp(self):
         self.value = {'scope': 'root_readonly_actual_display_service', 'screens': [
-            {'id': 2, 'sourceMode': 0, 'activeModeIndex': 7, 'modes': [
+            {'id': 2, 'sourceMode': 0, 'activeModeIndex': 0, 'modes': [
                 {'id': 7, 'width': 1280, 'height': 800, 'refreshRate': 60},
                 {'id': 11, 'width': 1280, 'height': 800, 'refreshRate': 75},
                 {'id': 20, 'width': 640, 'height': 480, 'refreshRate': 60}]}]}
@@ -20,18 +20,27 @@ class ScreenModesReadbackTests(unittest.TestCase):
     def test_actual_mode_ids_and_resolution_are_preserved(self):
         result = self.check(self.value)
         self.assertEqual([mode['id'] for mode in result['refresh_choices']], [7, 11])
-        self.assertEqual(result['main_screen']['activeModeIndex'], 7)
+        self.assertEqual(result['main_screen']['activeModeIndex'], 0)
+        self.assertEqual(result['active_mode']['id'], 7)
         self.assertEqual(result['closed'], [])
 
     def test_empty_duplicate_ambiguous_and_invalid_main_rejected(self):
         for screens in ([], self.value['screens'] * 2,
                         [dict(self.value['screens'][0], sourceMode=3)],
-                        [dict(self.value['screens'][0], activeModeIndex=1)],
+                        [dict(self.value['screens'][0], activeModeIndex=3)],
                         [dict(self.value['screens'][0], id=True)]):
             value = copy.deepcopy(self.value)
             value['screens'] = screens
             with self.assertRaises(ValueError):
                 self.check(value)
+
+    def test_descending_ids_do_not_change_array_index_meaning(self):
+        value = copy.deepcopy(self.value)
+        value['screens'][0]['modes'].reverse()
+        value['screens'][0]['activeModeIndex'] = 2
+        result = self.check(value)
+        self.assertEqual(result['active_mode']['id'], 7)
+        self.assertEqual([item['id'] for item in result['refresh_choices']], [11, 7])
 
     def test_invalid_or_missing_modes_rejected(self):
         for modes in ([], self.value['screens'][0]['modes'] * 2,

@@ -1,0 +1,58 @@
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets
+@@ -14,12 +14,13 @@
+     }
+     ids.push(mode.id);
+   }
+-  if (!ids.includes(current.activeModeIndex)) throw new Error('Active screen mode is not reported');
++  if (!Number.isInteger(current.activeModeIndex) || current.activeModeIndex < 0 ||
++    current.activeModeIndex >= current.supportedModeInfo.length) throw new Error('Invalid active screen mode index');
+   return current;
+ }
+ 
+ export function refreshChoices(current: screen.Screen): screen.ScreenModeInfo[] {
+-  const active = current.supportedModeInfo.find((mode: screen.ScreenModeInfo) => mode.id === current.activeModeIndex);
++  const active = current.supportedModeInfo[current.activeModeIndex];
+   if (active === undefined) throw new Error('Missing actual active mode');
+   // A refresh-rate page must never implicitly change the resolution.
+   return current.supportedModeInfo.filter((mode: screen.ScreenModeInfo) =>
+@@ -42,10 +43,11 @@
+         (mode: screen.ScreenModeInfo) => mode.id === modeId)) {
+         throw new Error('Requested refresh mode is not supported at the current resolution');
+       }
+-      if (before.activeModeIndex === modeId) return before;
+-      await before.setScreenActiveMode(modeId);
++      const modeIndex = before.supportedModeInfo.findIndex((mode: screen.ScreenModeInfo) => mode.id === modeId);
++      if (before.activeModeIndex === modeIndex) return before;
++      await before.setScreenActiveMode(modeIndex);
+       const after = await this.read();
+-      if (after.id !== before.id || after.activeModeIndex !== modeId) {
++      if (after.id !== before.id || after.supportedModeInfo[after.activeModeIndex].id !== modeId) {
+         throw new Error('Display service did not apply the requested refresh mode');
+       }
+       return after;
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets
+@@ -22,7 +22,7 @@
+       const current = modeId === undefined ? await this.controller.read() : await this.controller.change(modeId);
+       if (generation !== this.generation) return;
+       this.modes = refreshChoices(current);
+-      this.activeMode = current.activeModeIndex;
++      this.activeMode = current.supportedModeInfo[current.activeModeIndex].id;
+     } catch (error) {
+       if (generation === this.generation) {
+         this.failure = 'Display service: ' + String(error);
+diff --git a/applications/standard/settings/product/phone/build-profile.json5 b/applications/standard/settings/product/phone/build-profile.json5
+--- a/applications/standard/settings/product/phone/build-profile.json5
++++ b/applications/standard/settings/product/phone/build-profile.json5
+@@ -88,6 +88,7 @@
+           "./src/main/ets/Setting/Display/DisplaySettingsPage.ets",
+           "./src/main/ets/Setting/Display/DarkModeSettingPage.ets",
+           "./src/main/ets/Setting/Display/ScreenZoomSettingPage.ets",
++          "./src/main/ets/Setting/Display/QemuRefreshRatePage.ets",
+           "./src/main/ets/Setting/Display/LandscapeStartSettingPage.ets",
+           // 情景模式
+           "./src/main/ets/Setting/System/SystemNavigationPage.ets",
+

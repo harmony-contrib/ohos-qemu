@@ -27,7 +27,7 @@ def verify_caller(text, nonce):
 
 def controls(layout, readback):
     expected = {mode['id']: mode for mode in readback['refresh_choices']}
-    active = readback['main_screen']['activeModeIndex']
+    active = readback['active_mode']['id']
     if not expected or active not in expected:
         raise ValueError('actual current-resolution modes required')
     pending = [(root, '', None, 0) for root in (layout if isinstance(layout, list) else [layout])]

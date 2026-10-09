@@ -15,7 +15,8 @@ class RefreshUiTests(unittest.TestCase):
     def setUp(self):
         self.modes = [{'id': 4, 'width': 1280, 'height': 800, 'refreshRate': 60},
                       {'id': 17, 'width': 1280, 'height': 800, 'refreshRate': 75}]
-        self.readback = {'main_screen': {'activeModeIndex': 17}, 'refresh_choices': self.modes}
+        self.readback = {'main_screen': {'activeModeIndex': 1}, 'active_mode': self.modes[1],
+                         'refresh_choices': self.modes}
         self.tree = node('root', [node('Row', [
             node('Text', id='qemu-refresh-rate-' + str(mode['id']), text=str(mode['refreshRate']) + ' Hz'),
             node('Radio', checked=str(mode['id'] == 17).lower())]) for mode in self.modes], bundleName=BUNDLE)

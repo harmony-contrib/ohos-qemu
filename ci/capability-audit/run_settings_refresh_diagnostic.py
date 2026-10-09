@@ -77,6 +77,9 @@ def run(args):
 
         original = read_modes()
         report['original_modes'] = original
+        requested = tuple(map(int, args.resolution.split('x')))
+        if (original['active_mode']['width'], original['active_mode']['height']) != requested:
+            raise ValueError('actual active mode differs from requested QEMU resolution')
         command([sys.executable, ROOT / 'ci/capability-audit/run_normal_hap_probe.py',
             '--archive', args.archive, '--sdk', args.sdk, '--udid', guest.udid,
             '--persona', 'settings-navigation', '--arch', env['guest_arch'], '--device', env['device_type'],
@@ -96,7 +99,7 @@ def run(args):
                     actual = read_modes()
                     if (actual['main_screen']['id'] != original['main_screen']['id'] or
                             actual['refresh_choices'] != original['refresh_choices'] or
-                            actual['main_screen']['activeModeIndex'] != expected):
+                            actual['active_mode']['id'] != expected):
                         raise ValueError('actual display mode did not match requested choice')
                     layout, path = ui.layout(label='refresh-page')
                     matched = controls(layout, actual)
@@ -110,7 +113,7 @@ def run(args):
                     time.sleep(0.5)
             raise ValueError('actual Settings refresh page did not become ready: ' + last_error)
 
-        active = original['main_screen']['activeModeIndex']
+        active = original['active_mode']['id']
         report['initial_page'] = ready(active)
         alternatives = [mode for mode in original['refresh_choices'] if mode['id'] != active]
         if args.require_mode_change and not alternatives:

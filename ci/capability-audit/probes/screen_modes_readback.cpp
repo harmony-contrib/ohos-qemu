@@ -27,7 +27,7 @@ int main()
             if (mode == nullptr || mode->width_ == 0 || mode->height_ == 0 || mode->refreshRate_ == 0 ||
                 !modes.insert(mode->id_).second) return 3;
         }
-        if (modes.count(screen->GetModeId()) != 1) return 4;
+        if (screen->GetModeId() >= screen->GetSupportedModes().size()) return 4;
     }
     std::printf("QEMU_SCREEN_MODES:{\"scope\":\"root_readonly_actual_display_service\",\"screens\":[");
     bool firstScreen = true;

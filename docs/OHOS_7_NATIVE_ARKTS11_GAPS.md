@@ -1,5 +1,40 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R24 归档验证恢复
+
+代表包已生成：
+`/Volumes/PSSD/qemu/packages/first-screen-modes-7.0-release-20261010-r24/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
+SHA-256：`bb161601d6a033605a35580ae737d2a6e9c4228dd76d132732e06b69a917a369`。
+`gzip -t` 通过，包内冻结输入树仍为
+`c986d923040a75607e0e73c86988d496e4cc39eb0562096b678beed5fe5c8782`。
+原宿主构建日志与等待器未记录最终退出状态，构建容器已移除，原等待器也不再运行；
+不补造成功退出码。`recover-validation-r24-02.py` 从已有归档恢复校验，保留旧报告，
+新证据写入 `r24-recovered-validation-02.json`，先执行真实屏幕读回及两种分辨率的
+Settings UI 诊断，然后才运行同归档完整回归。归档存在/完整不等于首包行为门禁通过；
+其余五包仍未启动。R24 不包含后续提交的项目配额修复。
+
+R24 新包 `r24-refresh-1280x800-runtime-01` 未通过：普通调用者实际发送了
+`screen_refresh_rate_entry`，Settings 尝试动态导入，但 HAP 的 ABC 中只有路径
+字符串，没有新页面/控制器代码。根因是遗漏 phone 构建配置的
+`arkOptions.runtimeOnly.sources`，而非导航调用成功就可视为页面已实现。
+同时实际读回 26 种模式，`activeModeIndex=25` 对应数组第 26 项（ID 0，
+1280×800/75 Hz），原候选及其宿主夹具错误地把索引当作模式 ID。按 SDK 与
+真实 Screen 实现修正页面、原生读回校验、UI 驱动及宿主边界；新增稀疏/逆序
+模式 ID 与旧候选精确升级测试。诊断失败后恢复电源策略并关闭客体，未继续
+1920×1080、完整回归或剩余五包。保留失败证据，不覆盖为成功。
+
+修正后的独立 Settings HAP 编译使用只读系统源码副本，冻结输入
+`settings-refresh-candidate-inputs-r25-01`，树
+`e4b1bc582c094c8246f4fd6127cfb2fdd1c475ce2c9b1b579d161f10dd2d1cec`。
+系统源码/out 和 R24 归档未修改；仍须重新打包启动验证。
+本轮完整宿主回归 `host-regression-r25-01.log`：1197 项通过（213.325 秒）；
+随后刷新率/读回相关 17 项再次通过。独立 HAP 编译退出 0（5 分 14 秒），
+`settings-refresh-hap-compile-r25-01/.../phone-default-unsigned.hap` SHA-256 为
+`02908d960797935ed2bd2a978b35893f71757a19659cbcbe6cd5d753635551e9`。
+其 `ets/modules.abc` 现在包含页面与控制器的真实模块记录及索引检查代码，
+而不再仅有动态导入路径字符串。此结果只证明新页面已编入 HAP，尚不能证明
+新镜像的 UI/实际模式切换成功。
+
 ## 2026-10-10 R23 完整回归结果与项目配额候选
 
 R23 再次完整回归 `r23-full-web-observed-02`（boot

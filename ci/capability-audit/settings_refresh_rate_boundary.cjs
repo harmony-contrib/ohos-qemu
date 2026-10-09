@@ -8,7 +8,7 @@ const source = fs.readFileSync(process.argv[2], 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: {
   module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }, reportDiagnostics: true });
 assert.equal((compiled.diagnostics || []).filter(x => x.category === ts.DiagnosticCategory.Error).length, 0);
-let active = 7;
+let active = 0;
 let calls = [];
 let behavior = 'apply';
 let finish;
@@ -37,12 +37,15 @@ let cases = 0;
 function check(action) { action(); cases++; }
 async function reject(action) { await assert.rejects(action); cases++; }
 (async () => {
-  check(() => assert.equal(mainScreen([current()]).activeModeIndex, 7));
+  check(() => assert.equal(mainScreen([current()]).activeModeIndex, 0));
   check(() => assert.deepEqual(Array.from(refreshChoices(current()), x => x.id), [7, 11]));
   for (const screens of [[], [current(), current()], [{...current(), sourceMode: 1}],
       [{...current(), activeModeIndex: 99}], [{...current(), supportedModeInfo: []}],
       [{...current(), supportedModeInfo: [modes[0], modes[0]]}]]) {
     check(() => assert.throws(() => mainScreen(screens)));
+  }
+  for (const index of [-1, 3, 7, 0.5, NaN, '0']) {
+    check(() => assert.throws(() => mainScreen([{...current(), activeModeIndex: index}])));
   }
   for (const key of ['id', 'width', 'height', 'refreshRate']) {
     for (const value of [-1, NaN, 1.5]) {
@@ -56,8 +59,8 @@ async function reject(action) { await assert.rejects(action); cases++; }
   for (const value of [19, 999, -1, 7.5, '11']) await reject(() => controller.change(value));
   check(() => assert.equal(calls.length, 0));
   const changed = await controller.change(11);
-  check(() => assert.equal(changed.activeModeIndex, 11));
-  check(() => assert.deepEqual(calls, [11]));
+  check(() => assert.equal(changed.activeModeIndex, 1));
+  check(() => assert.deepEqual(calls, [1]));
   behavior = 'reject';
   await reject(() => controller.change(7));
   behavior = 'ignore';
@@ -69,7 +72,7 @@ async function reject(action) { await assert.rejects(action); cases++; }
   finish();
   check(() => assert.equal(calls.length, 4));
   const completed = await pending;
-  check(() => assert.equal(completed.activeModeIndex, 7));
+  check(() => assert.equal(completed.activeModeIndex, 0));
   behavior = 'apply';
   check(() => assert.equal(refreshChoices({...current(), supportedModeInfo: [modes[0]]}).length, 1));
   console.log(JSON.stringify({status: 'pass', cases, scope: 'host_actual_controller_boundaries_NOT_guest'}));

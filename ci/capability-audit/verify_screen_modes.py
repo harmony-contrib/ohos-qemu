@@ -31,13 +31,13 @@ def verify(text):
                     min(mode['width'], mode['height'], mode['refreshRate']) <= 0 or mode['id'] in mode_ids):
                 raise ValueError('valid distinct actual modes required')
             mode_ids.add(mode['id'])
-        if screen['activeModeIndex'] not in mode_ids:
-            raise ValueError('active mode is not among actual supported modes')
+        if screen['activeModeIndex'] >= len(modes):
+            raise ValueError('active mode index is outside actual supported modes')
         if screen['sourceMode'] == 0:  # Actual pinned ScreenSourceMode::SCREEN_MAIN.
             main.append(screen)
     if len(main) != 1:
         raise ValueError('exactly one real main screen required')
-    active = next(mode for mode in main[0]['modes'] if mode['id'] == main[0]['activeModeIndex'])
-    return {'main_screen': main[0], 'refresh_choices': [mode for mode in main[0]['modes']
+    active = main[0]['modes'][main[0]['activeModeIndex']]
+    return {'main_screen': main[0], 'active_mode': active, 'refresh_choices': [mode for mode in main[0]['modes']
             if (mode['width'], mode['height']) == (active['width'], active['height'])],
             'scope': 'root_readonly_modes_NOT_ordinary_permission_or_UI', 'closed': []}

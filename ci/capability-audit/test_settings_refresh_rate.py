@@ -28,6 +28,12 @@ class SettingsRefreshRateTests(unittest.TestCase):
         data = fixture.read_bytes()[:-1]
         self.assertEqual(hashlib.sha256(data).hexdigest(), baseline.FILES[0][1])
         self.route.write_bytes(data)
+        self.profile = self.project / 'product/phone/build-profile.json5'
+        profile = (fixture.parent / 'build-profile.json5').read_bytes()
+        if hashlib.sha256(profile).hexdigest() != baseline.FILES[3][1]:
+            profile = profile[:-1]
+        self.assertEqual(hashlib.sha256(profile).hexdigest(), baseline.FILES[3][1])
+        self.profile.write_bytes(profile)
 
     def apply(self):
         return subprocess.run(['bash', str(COMPONENT / 'apply.sh'), '--source-root', str(self.root)],
@@ -39,7 +45,7 @@ class SettingsRefreshRateTests(unittest.TestCase):
             result = self.apply()
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue(baseline.validate(self.root, require_patched=True))
-        target = self.project / baseline.FILES[-1][0]
+        target = self.project / baseline.FILES[2][0]
         target.unlink()
         before = self.route.read_bytes()
         self.assertNotEqual(self.apply().returncode, 0)
@@ -51,7 +57,31 @@ class SettingsRefreshRateTests(unittest.TestCase):
         before = self.route.read_bytes()
         self.assertNotEqual(self.apply().returncode, 0)
         self.assertEqual(self.route.read_bytes(), before)
-        self.assertFalse((self.project / baseline.FILES[-1][0]).exists())
+        self.assertFalse((self.project / baseline.FILES[2][0]).exists())
+
+    def test_known_previous_state_upgrades_and_unknown_edits_are_preserved(self):
+        patch = COMPONENT / '0001-route-to-actual-screen-refresh-modes.patch'
+        subprocess.run(['git', '-C', str(self.root), 'apply', str(patch)], check=True)
+        previous = {str(path): path.read_bytes() for path in
+                    (self.project / row[0] for row in baseline.PREVIOUS)}
+        controller = self.project / baseline.FILES[1][0]
+        controller.write_bytes(controller.read_bytes() + b'// unknown edit\n')
+        unknown = controller.read_bytes()
+        self.assertNotEqual(self.apply().returncode, 0)
+        self.assertEqual(controller.read_bytes(), unknown)
+        for path, data in previous.items():
+            if Path(path) != controller:
+                self.assertEqual(Path(path).read_bytes(), data)
+        controller.write_bytes(previous[str(controller)])
+        self.assertEqual(self.apply().returncode, 0)
+        self.assertTrue(baseline.validate(self.root, require_patched=True))
+        self.assertEqual(self.apply().returncode, 0)
+
+    def test_dynamic_page_is_explicitly_in_compiler_runtime_sources(self):
+        self.assertEqual(self.apply().returncode, 0)
+        self.assertIn('"runtimeOnly"', self.profile.read_text())
+        self.assertEqual(self.profile.read_text().count(
+            '"./src/main/ets/Setting/Display/QemuRefreshRatePage.ets"'), 1)
 
     def test_actual_controller_boundaries(self):
         sdk = Path(os.environ.get('QEMU_TEST_SDK_HOME',
