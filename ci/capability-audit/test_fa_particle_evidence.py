@@ -108,6 +108,22 @@ class FaEvidenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.check(changed)
 
+    def test_fa_alone_cannot_close_gap_without_same_package_stage_regression(self):
+        from verify_gap_closure import behavior_results
+        path = self.root / 'fa-particle/evidence.json'
+        path.parent.mkdir()
+        path.write_text(json.dumps(self.doc))
+        self.assertNotIn('arkts_export:@ohos.ability.particleAbility:ErrorCode',
+                         behavior_results(self.root, 'test-boot', 'a' * 64, 'phone'))
+        stage = self.root / 'settings-navigation/evidence.json'
+        stage.parent.mkdir()
+        stage.write_text(json.dumps(dict(status='pass', boot_id='another-boot', archive_sha256='a' * 64)))
+        self.assertNotIn('arkts_export:@ohos.ability.particleAbility:ErrorCode',
+                         behavior_results(self.root, 'test-boot', 'a' * 64, 'phone'))
+        stage.write_text(json.dumps(dict(status='pass', boot_id='test-boot', archive_sha256='a' * 64)))
+        with self.assertRaisesRegex(ValueError, 'original new-package boot'):
+            behavior_results(self.root, 'test-boot', 'a' * 64, 'phone')
+
 
 if __name__ == '__main__':
     unittest.main()

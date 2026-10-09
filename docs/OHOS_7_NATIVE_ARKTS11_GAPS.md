@@ -10,8 +10,24 @@ SHA-256 `f58c5346d6db78422c8ce85eec595f712be988f0e8da92958dcf05609b32961d`。
 仓库 FA runner 新建的普通 FA HAP（nonce `0c1118e67e7e0bb49e05790e56aba4c2`）。
 实际 page/service PID 3519/3706、普通 UID 20010039，五项常量/context/既有调用
 均通过；当前严格 `verify_evidence` 对原始证据独立复核通过。有限电源设置恢复、
-诊断 VM 关闭。同归档完整 Stage/native 回归正在另一个新 VM 运行，尚未
-通过完整首包门禁，剩余五包没有开始。此次归档不含后来新增的刷新率候选。
+诊断 VM 关闭。同归档完整回归在 boot
+`8f480ad7-01db-40bf-9884-79a49792f4ce` 未通过：普通 Web 的页面、JS、Canvas、
+WebGL 与 reload 通过，但 terminateRenderProcess 后未观察到退出回调，恢复
+超时。最终进程表中原 renderer 4490 已不存在，因此不能把原因直接归为
+SIGTERM 未生效。失败证据保留在代表包目录的
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-tz422104/web/evidence.json`；
+后续 Stage/native 全套未执行，完整首包门禁未放行，剩余五包没有开始。
+此次归档不含后来新增的刷新率和显示模式修复候选。
+
+缺口闭环校验新增严格 FA + 同包同 boot 普通 Stage 导航联合条件，仅允许关闭
+`particleAbility:ErrorCode`，不推导全部 FA 生命周期或 Stage API 已通过。
+单独 FA、另一 boot 的 Stage、缺失原始启动证据均不能关闭该项。此登记不改变
+当前已完成全套证据的缺口统计。此前宿主回归 1174 项通过（192.746 秒）。
+加入联合闭环拒绝测试后的全量宿主回归 `host-regression-r23-06.log`：
+1175 项通过（198.503 秒）。独立 Web 诊断
+`r23-web-lifecycle-runtime-01`（boot `b2be3ad7-1677-4f53-8228-3ca14bab7b4e`）
+在同一未修改 R23 归档中通过退出恢复；这不是间歇失败已修复的证据，原完整
+测试序列正在重现，失败记录与首包阻断状态保留。
 
 `r21-display-service-diagnostic-02` 确认根因：客体 DRM 和 RenderService 均报告
 26 个真实模式，主屏模式 ID 0 为 1280x800/75 Hz；ScreenInfo 只接受最多 20 个，

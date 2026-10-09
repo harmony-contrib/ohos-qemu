@@ -76,6 +76,30 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             return None
         return path, result
 
+    fa = child('fa-particle/evidence.json')
+    stage = child('settings-navigation/evidence.json')
+    if fa and stage:
+        from verify_fa_particle_results import verify_evidence as verify_fa
+        from verify_settings_navigation_results import verify_evidence as verify_stage
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('FA/Stage closure requires original new-package boot evidence')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or
+                environment.get('device_type') != device_type):
+            raise ValueError('FA and Stage must run on the same fresh acceptance package')
+        arch = environment['guest_arch']
+        verify_fa(fa[1], archive_sha, boot_id, arch)
+        verify_stage(stage[1], archive_sha, boot_id, arch)
+        closed['arkts_export:@ohos.ability.particleAbility:ErrorCode'] = {
+            'evidence': str(fa[0]), 'sha256': digest(fa[0]),
+            'stage_evidence': str(stage[0]), 'stage_sha256': digest(stage[0]),
+            'verifier': 'real_FA_service_constant_existing_calls_AND_same_package_ordinary_Stage_navigation',
+            'not_claimed': 'all_FA_lifecycle_or_all_Stage_API_behavior'}
+
     backup = child('backup-init/evidence.json')
     if backup and backup[1].get('persona') == 'backup-init':
         document = backup[1]
