@@ -29,6 +29,13 @@ class PhotosProviderIntegration(unittest.TestCase):
             {'bundleName': 'com.ohos.unrelated', 'app_signature': ['unchanged'],
              'allowAppDesktopIconHide': False}]}
         self.policy.write_text(json.dumps(self.document))
+        self.permissions = self.policy.with_name('install_list_permissions.json')
+        self.permission_document = [{'bundleName': 'com.ohos.photos', 'app_signature': [ORIGINAL],
+            'permissions': [{'name': 'ohos.permission.' + name, 'userCancellable': False} for name in
+                ('READ_IMAGEVIDEO', 'WRITE_IMAGEVIDEO', 'READ_MEDIA', 'WRITE_MEDIA',
+                 'MEDIA_LOCATION', 'DISTRIBUTED_DATASYNC')]},
+            {'bundleName': 'com.ohos.unrelated', 'app_signature': ['unchanged'], 'permissions': []}]
+        self.permissions.write_text(json.dumps(self.permission_document))
 
     def apply(self, component):
         return subprocess.run(['bash', str(component / 'apply.sh'), '--source-root', str(self.root)],
@@ -70,9 +77,43 @@ class PhotosProviderIntegration(unittest.TestCase):
         expected = json.loads(json.dumps(self.document))
         expected['install_list'][0]['app_signature'] = [SIGNATURE]
         self.assertEqual(json.loads(self.policy.read_text()), expected)
+        grants = json.loads(json.dumps(self.permission_document))
+        grants[0]['app_signature'] = [SIGNATURE]
+        self.assertEqual(json.loads(self.permissions.read_text()), grants)
         before = self.policy.read_bytes()
+        before_grants = self.permissions.read_bytes()
         self.assertEqual(self.apply(POLICY_COMPONENT).returncode, 0)
         self.assertEqual(before, self.policy.read_bytes())
+        self.assertEqual(before_grants, self.permissions.read_bytes())
+
+    def test_changed_grants_rejected_before_either_policy_is_normalized(self):
+        for mutation in ('unknown-signer', 'extra-grant', 'cancellable', 'duplicate-bundle'):
+            grants = json.loads(json.dumps(self.permission_document))
+            if mutation == 'unknown-signer': grants[0]['app_signature'] = ['*']
+            elif mutation == 'extra-grant': grants[0]['permissions'].append({'name': 'ohos.permission.CAMERA', 'userCancellable': False})
+            elif mutation == 'cancellable': grants[0]['permissions'][0]['userCancellable'] = True
+            else: grants.append(grants[0])
+            self.permissions.write_text(json.dumps(grants))
+            before = self.policy.read_bytes(), self.permissions.read_bytes()
+            self.assertNotEqual(self.apply(POLICY_COMPONENT).returncode, 0)
+            self.assertEqual(before, (self.policy.read_bytes(), self.permissions.read_bytes()))
+
+    def test_redirected_grants_rejected_before_capability_normalization(self):
+        preserved = self.permissions.with_suffix('.preserved')
+        self.permissions.rename(preserved)
+        self.permissions.symlink_to(preserved)
+        before = self.policy.read_bytes(), preserved.read_bytes()
+        self.assertNotEqual(self.apply(POLICY_COMPONENT).returncode, 0)
+        self.assertEqual(before, (self.policy.read_bytes(), preserved.read_bytes()))
+
+    def test_existing_capability_signer_migrates_missing_grant_signer(self):
+        policy = json.loads(json.dumps(self.document))
+        policy['install_list'][0]['app_signature'] = [SIGNATURE]
+        self.policy.write_text(json.dumps(policy))
+        result = self.apply(POLICY_COMPONENT)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(self.permissions.read_text())[0]['app_signature'], [SIGNATURE])
+        self.assertEqual(json.loads(self.permissions.read_text())[0]['permissions'], self.permission_document[0]['permissions'])
 
     def test_unknown_or_wildcard_policy_preserved(self):
         for signature in ('*', 'unexpected future certificate'):

@@ -147,6 +147,44 @@ class PhotosImageBoundary(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         provider.verify_signature(self.hap, source, scratch)
 
+    def policy_fixture(self):
+        source = Path(self.temporary.name).resolve() / 'policy-source'
+        directory = source / 'vendor/ohemu/virt/preinstall-config'
+        directory.mkdir(parents=True)
+        capability = {'install_list': [{'bundleName': 'com.ohos.photos', 'app_signature': [provider.SIGNATURE],
+            'allowAppUsePrivilegeExtension': True, 'allowFormVisibleNotify': True}]}
+        grants = [{'bundleName': 'com.ohos.photos', 'app_signature': [provider.SIGNATURE],
+            'permissions': [{'name': 'ohos.permission.' + name, 'userCancellable': False} for name in
+                ('READ_IMAGEVIDEO', 'WRITE_IMAGEVIDEO', 'READ_MEDIA', 'WRITE_MEDIA', 'MEDIA_LOCATION', 'DISTRIBUTED_DATASYNC')]}]
+        (directory / 'install_list_capability.json').write_text(json.dumps(capability))
+        (directory / 'install_list_permissions.json').write_text(json.dumps(grants))
+        return source, directory, grants
+
+    def test_source_checks_both_capability_and_existing_permission_signer(self):
+        source, directory, grants = self.policy_fixture()
+        result = provider.verify_preinstall_policies(source)
+        self.assertEqual(set(result), {'install_list_capability.json', 'install_list_permissions.json'})
+        grants[0]['app_signature'] = ['9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED']
+        (directory / 'install_list_permissions.json').write_text(json.dumps(grants))
+        with self.assertRaises(ValueError): provider.verify_preinstall_policies(source)
+
+    def test_image_cannot_retain_old_grant_signer_when_source_is_fixed(self):
+        source, directory, grants = self.policy_fixture()
+        scratch = Path(self.temporary.name).resolve() / 'policy-image'
+        scratch.mkdir()
+        def extracted(image, candidates, destination, executable):
+            name = Path(candidates[0]).name
+            contents = (directory / name).read_text()
+            if name == 'install_list_permissions.json':
+                contents = contents.replace(provider.SIGNATURE, '9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED')
+            target = destination / 'actual-file'
+            target.write_text(contents)
+            return target, {'image_path': candidates[0], 'image_inode': 5}
+        with patch.object(provider, 'dump_unique_file', side_effect=extracted), \
+                patch.object(provider, 'debugfs_path', return_value='/host-fixture/debugfs'):
+            with self.assertRaises(ValueError):
+                provider.verify_preinstall_policies(source, Path('/host-fixture/system.img'), scratch)
+
 
 if __name__ == '__main__':
     unittest.main()

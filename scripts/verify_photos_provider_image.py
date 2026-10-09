@@ -118,6 +118,30 @@ def verify_source(source):
     return guard.REVISION
 
 
+def verify_preinstall_policies(source, image=None, scratch=None):
+    """Check both certificate pins, including the actual image's grant file."""
+    component = Path(__file__).resolve().parents[1] / 'patches/common/vendor/ohemu/virt/photos_provider/prepare.py'
+    spec = importlib.util.spec_from_file_location('photos_preinstall_guard', component)
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    result = {}
+    for name, permissions in (('install_list_capability.json', False), ('install_list_permissions.json', True)):
+        path = source / 'vendor/ohemu/virt/preinstall-config' / name
+        canonical = guard.prepare(path, require_patched=True, permissions=permissions)
+        item = {'source_sha256': file_sha256(path), 'application_signer_sha256': SIGNATURE}
+        if image is not None:
+            directory = scratch / name
+            directory.mkdir()
+            actual, identity = dump_unique_file(image, ('/etc/app/' + name, '/system/etc/app/' + name),
+                                               directory, debugfs_path())
+            if guard.prepare(actual, require_patched=True, permissions=permissions) != canonical:
+                raise ValueError('actual packaged Photos preinstall policy differs from validated source: ' + name)
+            item.update(identity)
+            item['image_file_sha256'] = file_sha256(actual)
+        result[name] = item
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
@@ -143,6 +167,7 @@ def main():
                 result['system_image_sha256'] = file_sha256(args.system_image)
             result.update(inspect_hap(hap))
             result.update(verify_signature(hap, args.source_root, scratch))
+            result['preinstall_policies'] = verify_preinstall_policies(args.source_root, args.system_image, scratch)
         result['status'] = 'pass'
     except (OSError, ValueError, KeyError, TypeError, struct.error, zipfile.BadZipFile,
             subprocess.SubprocessError) as error:

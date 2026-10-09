@@ -2,6 +2,21 @@
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+补充：`13c6c3e` 的1003项主机回归通过，Photos普通调用探针三ABI均通过实际API26
+编译。R15候选在本地Docker进入GN后主动以SIGTERM停止（退出143），尚未生成包：
+并行的R14真实保存诊断05发现预装权限文件仍使用旧Photos证书，用户点击允许后
+MediaLibrary API10007因WRITE_IMAGEVIDEO缺失返回201，Photos错误返回空URI集合。
+不能把确认弹窗出现或空相册结果视为成功。
+
+已将 `photos_provider` 扩展为两个独立补丁：能力身份和预装权限均绑定实际源码HAP
+证书 `8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5`。
+六项已有预装权限及userCancellable值完全不变，不给普通调用应用新增权限。
+打包验证同时检查实际system.img内的两份策略，不再仅验证源码能力文件。
+24项Photos策略/镜像边界测试通过；新的包与真实保存/读取结果仍待验证。
+R14诊断04/05中的真实picker取消返回空列表通过，但不代表正向选择、保存、FA卡
+或云服务能力闭环。额外清理20个已关闭诊断的归档精确副本（约10.3GiB），记录
+`issue-20-20261006/cleanup-r14-closed-diagnostic-duplicates-20261009.json`；userdata保留。
+
 R14 完整归档为
 `/Volumes/PSSD/qemu/packages/first-camera-photos-source-7.0-release-20261009-r14/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
 SHA-256 `96a6cb1184febc91052aeae0fba553121c7149fc19bad5ec0559f770c55ae5ab`。
