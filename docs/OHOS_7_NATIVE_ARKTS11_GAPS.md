@@ -2,6 +2,27 @@
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### R19 新归档相机严格三轮复测通过
+
+代表包 `/Volumes/PSSD/qemu/packages/first-camera-publication-7.0-release-20261009-r19/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `d3c224bcb7f0323168a461186029d8922e3ad89381d9c586e1aa9d29033fce79`。
+冻结输入 `phone-MerpQo` / `d543b63`，树SHA
+`dbf87f1522fc399626332ab01d05d7828c8e63ac9f497a472d9cd8f844d65a5a`。
+本地 Docker 编译成功（1小时19分06秒），实际镜像检查和归档成功。
+
+macOS ARM64、QEMU HVF、4核4GiB、1280×800，从该归档重新解包启动；boot ID
+`4b452c6e-a848-465e-aaaf-75e6f41216b1`，HDC `127.0.0.1:57973`。
+连续运行冻结脚本 `ci/capability-audit/run_normal_hap_probe.py --persona camera` 三次，
+每次均使用独立新输出、原始未放宽的 Camera 探针、API26 SDK 和普通应用身份。
+原1000ms结束事件检查、JPEG内容及NDK生命周期检查均由原验证器保留；三次退出码均0，
+三个 evidence.json 均为pass。测试电源超时覆盖已恢复，私有VM已关闭。
+
+记录 `issue-20-20261006/r19-camera-publication-runtime-01/diagnostic.json`，含归档校验值、
+环境、精确命令、探针源哈希、子结果与状态恢复。原始Camera失败证据没有删除或改写。
+这里只确认相机请求发布顺序修复的方向，不是全部229项或六包完成；
+`first_artifact_behavior_gate_passed` 仍为false。R19不含之后提交的Fusion参数权限及
+Settings TTS修复，因此下一轮仍重建ARM64 phone代表包，不启动余下五包。
+
 ### R18 新归档与真实 Photos 正向验证
 
 归档 `/Volumes/PSSD/qemu/packages/first-boot-assets-7.0-release-20261009-r18/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
