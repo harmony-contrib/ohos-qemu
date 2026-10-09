@@ -110,7 +110,7 @@ class NormalHapRunnerTests(unittest.TestCase):
         self.assertIn("if device == 'phone':", suite)
         self.assertIn("personas += ('optional-phone-profile',)", suite)
         self.assertIn("if args.runtime_enum_only or args.curve_only:", builder)
-        self.assertIn('or args.binding_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only):', builder)
+        self.assertIn('or args.binding_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):', builder)
         self.assertNotIn('build_curve_hap_probe.py', runner)
         self.assertNotIn('build_binding_hap_probe.py', runner)
 

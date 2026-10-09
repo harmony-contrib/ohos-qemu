@@ -17,6 +17,49 @@ phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### R20完整回归结果与R21准备（未通过完整交付门禁）
+
+R20新归档：
+`/Volumes/PSSD/qemu/packages/first-fusion-tts-7.0-release-20261009-r20/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `5dc605b8e1a80574aef082e5e9ba9fa2ec71d2488fbad315a2278cb8a89e37d6`。
+冻结构建输入 `phone-SvX3p0`，tree
+`045ac45c432f9cab63831482440ebeb1406651bbbb88a9ad7f2cd52ed7150648`。
+以原冻结 `scripts/validate_packaged_qemu.sh --package-archive <上述归档>
+--package-directory <同名目录> --evidence-output <包根目录>/first-artifact-runtime.json`
+执行完整回归；macOS/HVF ARM64 phone、API26 SDK、真实guest
+`127.0.0.1:59508`、boot ID `9be504b8-e4d9-4d00-a4ab-638be84c8045`。
+原始环境、每条命令、返回值、原始观察和校验值均在该报告与
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-qh4s4u9t` 内。
+
+真实通过项目包含首启/桌面/默认休眠唤醒、RS对象、ArkWeb、UDMF相关issue20、
+Vulkan设备/headless/OHOS窗口、完整权限注册表、Fusion启动及实际参数权限、
+TTS真实导出、严格Camera与已有音视频回归。
+**原仓库bindings全部32模块、102用例通过**，源码和依赖锁未改。
+最终有限测试电源覆盖已恢复，私有VM已关闭。
+但是完整台账门禁仍失败：原范围291个phone契约只有147个获得登记的完整证明，
+144个未闭环；故 `first_artifact_behavior_gate_passed=false`，没有开始其余五包。
+
+使用新批准范围另行重验同一份原始证据，报告
+`issue-20-20261006/r20-approved-scope-gap-closure-01.json`：原始291、明确排除10、
+范围内281、已证实145、未闭环136。两个被排除项目已有表面契约证明也不再计入
+交付修复数量。这是诊断重验，不覆盖原失败报告，不作为当前脚本的首包门禁。
+“未闭环”包含尚缺真实行为证明的项目，不能直接等同于136个尚未实现的独立功能。
+
+Settings实际普通调用候选新增 `build_hap_probe.py --settings-navigation-only`，零额外权限，
+使用真实安装IME身份、空参数错误16900010、输入法列表/详情、网络和显示设置公开API。
+void返回明确不是上屏证明，仍须单独验证实际Settings页面、用户返回及重复生命周期。
+API26实际编译产物 `issue-20-20261006/settings-navigation-caller-r21-01/entry/build/default/outputs/default/entry-default-unsigned.hap`，
+SHA-256 `b144d77d565f939480a7cdb765c39f2b886fd30c9432be50124bcff090206748`。
+其SDK、源码、模块与nonce记录于同项目inputs文件；未加入闭环验证器或全量门禁。
+新增CLI互斥检查保留所有旧模式，完整1112项主机回归通过，`host-regression-r21-01.log`。
+R21只构建ARM64 phone代表包，Settings修复须在其新归档上验证后才能宣称修复。
+
+本轮还删除已结束R18的Rust中间缓存2,754,760,704字节，已复核并保留32个实际测试库，
+可按保留的源快照/锁/命令重建；删除R11/R13/R14的22个精确归档镜像副本
+10,183,475,200字节，均可从保留归档恢复。原始日志、userdata和不同于归档的可写镜像
+均保留；完整删除/校验记录为 `cleanup-r18-rust-intermediates-20261009.json` 与
+`cleanup-r11-r13-r14-duplicates-20261009.json`，未触及用户其他VM或仓库。
+
 ### Settings 最小授权获批并接入下一首包构建
 
 用户已批准仅对 `com.ohos.settings` 与固定OS应用签名
