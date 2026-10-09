@@ -5,8 +5,26 @@ import re
 FUSION=(('fusion_ranging',6067,8631),('partner_device_agent',6068,8630))
 I18N_DIRECTORIES=('','timezone','libphonenumber','taboo','global','icu')
 I18N_CFG='/etc/init/i18n_service.cfg'
+PARAMETER_CONTEXTS='/etc/selinux/targeted/contexts/parameter_contexts'
+PARTNER_PARAMETER='persist.fusion_connectivity.enable_partner_agent'
 FUSION_CFG={'fusion_ranging':'/etc/init/fusion_ranging.cfg',
             'partner_device_agent':'/etc/init/fusion_connectivity.cfg'}
+
+PARAMETER_DOMAINS=(('init',True),('partner_device_agent',True),('fusion_ranging',False),
+                   ('samgr',False),('normal_hap',False),('system_basic_hap',False),('system_core_hap',False))
+
+def verify_parameter_access(text):
+    lines=[line for line in text.replace('\r','').splitlines() if line.strip()]
+    if len(lines)!=len(PARAMETER_DOMAINS)+1 or lines[-1]!='POLICY_EXIT=0':
+        raise ValueError('loaded-kernel parameter access-vector probe is incomplete or failed')
+    rows=[json.loads(line) for line in lines[:-1]]
+    for row,(domain,allowed) in zip(rows,PARAMETER_DOMAINS):
+        if (set(row)!={'domain','compute_rc','errno','allowed','expected'} or row['domain']!=domain or
+            type(row['compute_rc']) is not int or row['compute_rc']!=0 or
+            type(row['errno']) is not int or row['errno']<0 or
+            row['allowed'] is not allowed or row['expected'] is not allowed):
+            raise ValueError('loaded policy does not grant only the two intended parameter writers')
+    return rows
 
 def verify_load_results(text):
     lines=[line for line in text.replace('\r','').splitlines() if line.strip()]
@@ -76,6 +94,13 @@ def verify_fusion_execution(serial,hilog):
 
 def verify(passwd,group,configs,ownership,serial,hilog):
     account_tables(passwd,group)
+    mappings=[line.split() for line in configs.get(PARAMETER_CONTEXTS,'').splitlines()
+              if line.strip() and not line.lstrip().startswith('#')]
+    selected=[row for row in mappings if row[0]==PARTNER_PARAMETER]
+    if selected!=[[PARTNER_PARAMETER,'u:object_r:fusion_partner_enable_param:s0']]:
+        raise ValueError('packaged PartnerAgent lifecycle parameter has no unique dedicated label')
+    if re.search(r'avc:\s+denied[^\n]*parameter='+re.escape(PARTNER_PARAMETER)+r'(?:\s|$)',serial+'\n'+hilog):
+        raise ValueError('actual PartnerAgent lifecycle parameter still produces a MAC denial')
     result={'fusion':{},'i18n':{}}
     for name,number,ability in FUSION:
         cfg,row=service(configs[FUSION_CFG[name]],name)
@@ -153,8 +178,28 @@ def verify_evidence(document,root,boot,archive_sha,boot_id):
     loaded=verify_load_results(captured(loader))
     if loaded!=loader.get('results'):
         raise ValueError('reported Fusion load observations differ from captured caller output')
+    parameter=document.get('parameter_access',{})
+    parameter_root=root/'parameter-loader'
+    parameter_build=parameter_root/'build.json'
+    parameter_binary=parameter_root/'fusion-parameter-access'
+    if (parameter_root.is_symlink() or parameter.get('build')!=str(parameter_build) or
+        parameter.get('binary')!=str(parameter_binary) or not parameter_build.is_file() or
+        not parameter_binary.is_file() or parameter_build.is_symlink() or parameter_binary.is_symlink() or
+        digest(parameter_build)!=parameter.get('build_sha256') or
+        digest(parameter_binary)!=parameter.get('binary_sha256') or
+        parameter.get('scope')!='kernel_allowed_bits_NOT_permissive_AVC_return_or_identity_change'):
+        raise ValueError('actual loaded-kernel parameter caller evidence is missing or changed')
+    parameter_metadata=json.loads(parameter_build.read_text())
+    if (parameter_metadata.get('status')!='pass' or
+        parameter_metadata.get('scope')!='actual_product_Fusion_parameter_AV_caller_build_NOT_guest' or
+        parameter_metadata.get('arch')!=env.get('guest_arch') or
+        parameter_metadata.get('probe_sha256')!=digest(parameter_binary) or
+        parameter_metadata.get('source_sha256')!=digest(Path(__file__).with_name('probes')/'fusion_parameter_access.cpp')):
+        raise ValueError('loaded-policy caller does not match its actual source and package ABI')
+    if verify_parameter_access(captured(parameter))!=parameter.get('results'):
+        raise ValueError('reported parameter access differs from the captured kernel access vectors')
     records=document.get('image_contract_files',{})
-    required={'/etc/passwd','/etc/group',I18N_CFG,*FUSION_CFG.values()}
+    required={'/etc/passwd','/etc/group',I18N_CFG,PARAMETER_CONTEXTS,*FUSION_CFG.values()}
     if set(records)!=required:
         raise ValueError('complete packaged accounts and init configs required')
     files={name:captured(record) for name,record in records.items()}

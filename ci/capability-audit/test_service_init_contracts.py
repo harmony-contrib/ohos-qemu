@@ -5,12 +5,13 @@ import unittest
 from pathlib import Path
 import tempfile
 from run_root_probe import digest
-from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_evidence,verify_load_results
+from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_evidence,verify_load_results,verify_parameter_access,PARAMETER_DOMAINS,PARAMETER_CONTEXTS,PARTNER_PARAMETER
 
 def fixture():
     passwd='i18n:x:3013:3013:::/bin/false\n'
     group='i18n:x:3013:\n'
     configs={}
+    configs[PARAMETER_CONTEXTS]=PARTNER_PARAMETER+' u:object_r:fusion_partner_enable_param:s0\n'
     ownership={}
     serial=''
     hilog=''
@@ -69,6 +70,22 @@ def evidence_fixture(directory):
     raw=root/'samgr-load.log';raw.write_text('\n'.join(map(json.dumps,rows))+'\nLOAD_EXIT=0\n')
     doc['samgr_load']={'build':str(build),'build_sha256':digest(build),'binary':str(binary),
         'binary_sha256':digest(binary),'results':rows,'file':str(raw),'sha256':digest(raw)}
+    parameter_root=root/'parameter-loader';parameter_root.mkdir()
+    parameter_binary=parameter_root/'fusion-parameter-access'
+    parameter_binary.write_bytes(b'host fixture NOT loaded kernel proof')
+    parameter_build=parameter_root/'build.json'
+    parameter_build.write_text(json.dumps({'status':'pass',
+        'scope':'actual_product_Fusion_parameter_AV_caller_build_NOT_guest','arch':'arm64',
+        'probe_sha256':digest(parameter_binary),
+        'source_sha256':digest(Path(__file__).with_name('probes')/'fusion_parameter_access.cpp')}))
+    parameter_rows=[{'domain':domain,'compute_rc':0,'errno':0,'allowed':allowed,'expected':allowed}
+                    for domain,allowed in PARAMETER_DOMAINS]
+    parameter_raw=root/'parameter-access.log'
+    parameter_raw.write_text('\n'.join(map(json.dumps,parameter_rows))+'\nPOLICY_EXIT=0\n')
+    doc['parameter_access']={'scope':'kernel_allowed_bits_NOT_permissive_AVC_return_or_identity_change',
+        'build':str(parameter_build),'build_sha256':digest(parameter_build),
+        'binary':str(parameter_binary),'binary_sha256':digest(parameter_binary),
+        'results':parameter_rows,'file':str(parameter_raw),'sha256':digest(parameter_raw)}
     boot={'status':'pass','purpose':'acceptance','archive_sha256':'archive',
           'initial_package_file_sha256':{'images/system.img':digest(image)},
           'test_environment':{'boot_id':'boot','external_keepalive':False,'guest_arch':'arm64',
@@ -76,6 +93,47 @@ def evidence_fixture(directory):
     return doc,root,boot
 
 class ServiceInitContractTests(unittest.TestCase):
+    def test_parameter_label_and_actual_denials_are_not_waived(self):
+        for value in ('',PARTNER_PARAMETER+' u:object_r:persist_param:s0\n',
+                      2*(PARTNER_PARAMETER+' u:object_r:fusion_partner_enable_param:s0\n')):
+            args=fixture();args[2][PARAMETER_CONTEXTS]=value
+            with self.assertRaises(ValueError):verify(*args)
+        for index in (4,5):
+            args=fixture();args[index]+='avc:  denied  { set } for parameter='+PARTNER_PARAMETER+' pid=1235\n'
+            with self.assertRaises(ValueError):verify(*args)
+
+    def test_parameter_build_and_AV_evidence_cannot_be_replaced(self):
+        for change in ('missing','binary','source','ABI','results','raw','scope'):
+            with self.subTest(change=change),tempfile.TemporaryDirectory() as directory:
+                doc,root,boot=evidence_fixture(directory)
+                row=doc['parameter_access']
+                if change=='missing':doc.pop('parameter_access')
+                elif change=='binary':Path(row['binary']).write_bytes(b'changed')
+                elif change in ('source','ABI'):
+                    path=Path(row['build']);data=json.loads(path.read_text())
+                    data['source_sha256' if change=='source' else 'arch']='wrong'
+                    path.write_text(json.dumps(data));row['build_sha256']=digest(path)
+                elif change=='results':row['results'][2]['allowed']=True
+                elif change=='raw':
+                    path=Path(row['file']);path.write_text('POLICY_EXIT=0\n');row['sha256']=digest(path)
+                elif change=='scope':row['scope']='permissive_WRAPPER_only'
+                with self.assertRaises(ValueError):verify_evidence(doc,root,boot,'archive','boot')
+
+    def test_parameter_AV_requires_actual_success_and_all_negative_domains(self):
+        rows=[{'domain':domain,'compute_rc':0,'errno':0,'allowed':allowed,'expected':allowed}
+              for domain,allowed in PARAMETER_DOMAINS]
+        render=lambda data:'\n'.join(map(json.dumps,data))+'\nPOLICY_EXIT=0\n'
+        self.assertEqual(verify_parameter_access(render(rows)),rows)
+        for index in range(len(rows)):
+            for key,value in (('compute_rc',-1),('allowed',not rows[index]['allowed']),
+                              ('domain','unrelated'),('expected',not rows[index]['expected']),
+                              ('compute_rc',False)):
+                bad=deepcopy(rows);bad[index][key]=value
+                with self.subTest(index=index,key=key),self.assertRaises(ValueError):
+                    verify_parameter_access(render(bad))
+        for text in (render(rows[:-1]),render(rows+[rows[0]]),render(rows).replace('POLICY_EXIT=0','POLICY_EXIT=1')):
+            with self.assertRaises(ValueError):verify_parameter_access(text)
+
     def test_loader_requires_two_real_rounds_and_successful_exit(self):
         rows=[{'ability':ability,'round':round,'loaded':True} for round in (1,2) for _,_,ability in FUSION]
         value='\n'.join(map(json.dumps,rows))+'\nLOAD_EXIT=0\n'

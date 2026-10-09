@@ -16,12 +16,17 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--arch', choices=PRODUCTS, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--parameter-policy', action='store_true',
+                        help='build the read-only loaded-kernel Fusion parameter access-vector probe')
     args = parser.parse_args()
     root = args.source_root.resolve()
     cwd = root/'out'/PRODUCTS[args.arch]
     args.output.mkdir(parents=True, exist_ok=False)
-    source = Path(__file__).with_name('probes')/'service_load.cpp'
-    report = {'status':'fail', 'scope':'actual_product_SAMGR_caller_build_NOT_guest',
+    name = 'fusion-parameter-access' if args.parameter_policy else 'service-load'
+    source = Path(__file__).with_name('probes')/('fusion_parameter_access.cpp' if args.parameter_policy else 'service_load.cpp')
+    scope = ('actual_product_Fusion_parameter_AV_caller_build_NOT_guest' if args.parameter_policy
+             else 'actual_product_SAMGR_caller_build_NOT_guest')
+    report = {'status':'fail', 'scope':scope,
               'arch':args.arch, 'source_sha256':sha(source), 'commands':[],
               'first_artifact_behavior_gate_passed':False}
     def run(argv, label):
@@ -44,15 +49,19 @@ def main():
         report['query_sha256'] = sha(args.output/'query.log')
         report['samgr_revision'] = subprocess.check_output(['git','-C',str(root/'foundation/systemabilitymgr/samgr'),
                                                           'rev-parse','HEAD'],text=True).strip()
-        obj = args.output/'service-load.o'
+        obj = args.output/(name+'.o')
         command = compiler_arguments(command,source,obj)
+        if args.parameter_policy:
+            command += ['-I'+str(root/'third_party/selinux/libselinux/include')]
         run(command,'compile')
         innerkits = cwd/'innerkits'/('ohos-'+{'armv7a':'arm'}.get(args.arch,args.arch))
         libraries = [cwd/'systemabilitymgr/samgr/libsamgr_proxy.z.so',
                      innerkits/'ipc/ipc_core/libipc_single.z.so',cwd/'commonlibrary/c_utils/libutils.z.so']
+        if args.parameter_policy:
+            libraries = [cwd/'thirdparty/selinux/libselinux.z.so']
         if any(not path.is_file() for path in libraries):
             raise ValueError('actual product SAMGR/IPC libraries missing')
-        binary = args.output/'service-load'
+        binary = args.output/name
         run([command[0],*linker_arguments(command),str(obj),*map(str,libraries),
              '-Wl,--allow-shlib-undefined','-o',str(binary)],'link')
         report['linked_product_libraries_sha256'] = {str(path):sha(path) for path in libraries}

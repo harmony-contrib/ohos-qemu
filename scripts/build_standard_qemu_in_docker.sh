@@ -309,6 +309,7 @@ SERIAL_DEVICES_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/base/startup/init/serial_dev
 SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/device/qemu/serial_usb_endpoint/apply.sh"
 FUSION_ACCOUNTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/fusion_accounts/apply.sh"
 FUSION_SERVICE_DOMAINS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/selinux_adapter/fusion_service_domains/apply.sh"
+FUSION_PARTNER_PARAMETER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/selinux_adapter/fusion_partner_parameter/apply.sh"
 ACCOUNT_TABLE_FORMAT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/startup/init/account_table_format/apply.sh"
 VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/vulkan-loader/ohos_surface_dispatch/apply.sh"
 RELEASE_HAP_DEPENDENCIES_SCRIPT="${PATCH_ROOT}/common/build/compile_app/release_dependencies/apply.sh"
@@ -3008,6 +3009,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_accounts_component.log"
   bash "${FUSION_SERVICE_DOMAINS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_service_domains_component.log"
+  bash "${FUSION_PARTNER_PARAMETER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_fusion_partner_parameter_component.log"
   bash "${ACCOUNT_TABLE_FORMAT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_account_table_format_component.log"
   bash "${VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

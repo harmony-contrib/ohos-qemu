@@ -46,7 +46,10 @@ ASan/UBSan检查不等于新包验证；ArkTS原有等待和断言未修改，�
 
 `d543b63`已提交该候选，1037项主机回归通过；R19继续只构建ARM64 phone。
 R18独立诊断`r18-native-bindings-diagnostic-01/`中的原生Vulkan device、headless、
-OHOS surface三个探针均通过；完整native-bindings E2E已开始，尚未完成。
+OHOS surface三个探针均通过；完整native-bindings E2E的32模块、102用例全部通过，
+包含ArkWeb、UDMF、JSVM、QoS、vibrator。原始测试仓库和依赖锁均未改变。
+此轮boot ID为`a687fb95-ea5a-4660-98c8-a11d9205d65c`，最终测试超时覆盖已由嵌套用例
+恢复并经外层复核。归档、测试环境、命令、完整原始结果保存在同一诊断目录。
 这不是R19或六包验收。R18原完整运行的部分证据重放结果为291个展开的phone契约中
 133个有完整登记证明，158个尚无；原始台账不变，不等同于158个均未实现。
 记录`r18-partial-gap-closure-01.json`，仍为fail。
@@ -58,7 +61,18 @@ Fusion诊断01保留测试休眠超时；02使用既有有限开发超时并恢�
 新验证器在`r18-native-bindings-diagnostic-01/service-init-contracts/`通过完整镜像、
 账号、目录ownership和实际启动检查；错PID、错SA、失败返回或缺任一日志均被拒绝。
 另外发现PartnerDeviceAgent生命周期参数的SELinux set拒绝（当前eng模式仅记录），
-正在补专属参数标签与最小规则，尚不能宣告完整Fusion服务已修复。
+已补`fusion_partner_parameter`独立候选部件，仅为该完整参数名添加系统内部标签，
+允许PartnerAgent和负责装载默认值的init写入；SAMGR仅可读，应用和FusionRanging不可写。
+未开放整个persist域，未添加检查豁免或修改neverallow。普通/开发策略、上下文及完整
+SELinux检查通过，记录`fusion-partner-contexts-and-policy-check-r20-04.log`，实际编译结果
+保存在`fusion-partner-policy-r20/`。前三次诊断保留工具工作目录/输出目录末尾斜杠错误，
+未改动检查器来通过。
+
+另补实际产品链接的只读内核AV探针，ARM64编译通过；它读取实际allowed位，不接受
+permissive包装器返回成功作为授权证明，不切换进程标签/全局执行模式或写参数。
+新的正式init验收要求镜像中精确标签、两个允许写入角色和五个拒绝角色、同PID发布及
+无该参数的真实MAC拒绝。R18的旧init正向证据仍保留为当时的较窄结果，不满足新增检查。
+R19已冻结构建输入，尚不含此后新增参数候选；相机方向确认后须再重建代表包验证该策略。
 
 ### 首包修复过程与保留失败
 

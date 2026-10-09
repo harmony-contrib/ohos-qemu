@@ -11,7 +11,7 @@ import time
 
 from boot_package import FATAL
 from run_root_probe import digest,validate_identity
-from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_load_results,verify_fusion_execution
+from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_load_results,verify_fusion_execution,verify_parameter_access,PARAMETER_CONTEXTS
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -84,7 +84,7 @@ def run(args):
             report.setdefault('image_contract_files',{})[path]={'sha256':digest(target),'file':str(target)}
             return result.stdout
         same_boot('before')
-        configs={path:packaged(path) for path in (*FUSION_CFG.values(),I18N_CFG)}
+        configs={path:packaged(path) for path in (*FUSION_CFG.values(),I18N_CFG,PARAMETER_CONTEXTS)}
         passwd,group=packaged('/etc/passwd'),packaged('/etc/group')
         # Use the actual SAMGR API. Setting an Android-style "ctl.start"
         # parameter merely stores an inert value on this Release. A direct
@@ -117,6 +117,33 @@ def run(args):
         report['samgr_load']={'build':str(build_path),'build_sha256':digest(build_path),
             'binary':str(binary),'binary_sha256':digest(binary),'results':rows,
             'file':observation['log'],'sha256':observation['sha256']}
+        command(['docker','run','--rm','--platform','linux/amd64',
+            '--mount','type=volume,src='+args.source_volume+',dst='+source_path+',readonly',
+            '--mount','type=volume,src='+args.out_volume+',dst='+source_path+'/out,readonly',
+            '--mount','type=bind,src='+str(ROOT)+',dst=/work,readonly',
+            '--mount','type=bind,src='+str(args.output.resolve())+',dst=/probe',
+            args.docker_image,'python3','/work/ci/capability-audit/build_service_load_probe.py',
+            '--source-root',source_path,'--arch',env['guest_arch'],'--output','/probe/parameter-loader',
+            '--parameter-policy'], 'build-loaded-kernel-parameter-AV-caller',timeout=300)
+        parameter_binary=args.output/'parameter-loader/fusion-parameter-access'
+        parameter_build=args.output/'parameter-loader/build.json'
+        built=json.loads(parameter_build.read_text())
+        if built.get('status')!='pass' or built.get('probe_sha256')!=digest(parameter_binary):
+            raise ValueError('actual loaded-policy caller build was not verified')
+        parameter_remote='/data/local/tmp/qemu-fusion-parameter-AV-'+secrets.token_hex(16)
+        if shell('if test -e '+parameter_remote+'; then echo STALE; else echo ABSENT; fi',
+                 'fresh-parameter-AV-path').strip()!='ABSENT':
+            raise ValueError('stale loaded-policy caller path')
+        command([args.hdc,'-t',env['target'],'file','send',parameter_binary,parameter_remote],'send-parameter-AV-caller')
+        shell('chmod 700 '+parameter_remote,'parameter-AV-mode')
+        parameter_result=shell(parameter_remote+'; task_policy_rc=$?; printf "\\nPOLICY_EXIT=%s\\n" "$task_policy_rc"',
+                               'actual-loaded-kernel-parameter-access-vectors')
+        parameter_rows=verify_parameter_access(parameter_result)
+        observation=report['commands'][-1]
+        report['parameter_access']={'build':str(parameter_build),'build_sha256':digest(parameter_build),
+            'binary':str(parameter_binary),'binary_sha256':digest(parameter_binary),
+            'results':parameter_rows,'file':observation['log'],'sha256':observation['sha256'],
+            'scope':'kernel_allowed_bits_NOT_permissive_AVC_return_or_identity_change'}
         deadline=time.monotonic()+30
         while True:
             publication_hilog=shell('hilog -x','actual-Fusion-publication-hilog')
