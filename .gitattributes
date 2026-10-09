@@ -1,0 +1,4 @@
+# Exact upstream CRLF bytes are part of this component's SHA-256 contract.
+ci/capability-audit/fixtures/settings_tts_namespace/napi_settings_init.cpp -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# A blank unified-diff context line contains one intentional space.
+patches/common/applications/standard/settings/tts_namespace/0001-export-sdk-TTS-namespace.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
