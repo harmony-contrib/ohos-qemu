@@ -8,6 +8,17 @@ import re
 from const_enum_contracts import LEDGER, sha256
 
 A11Y_ENUMS = frozenset(('AccessibilitySourceType', 'FocusMoveResultCode', 'OperateVirtualNodeResult'))
+SETTINGS_TTS_VALUES = ['settings.tts.default_tts_pitch', 'settings.tts.default_tts_rate',
+                       'settings.tts.default_tts_synth', 'settings.tts.enabled_tts_plugins']
+
+
+def settings_tts_verified(module, value):
+    """A native class-backed namespace is valid only with all real constant values."""
+    return (module == '@ohos.settings' and value.get('name') == 'TTS' and
+            value.get('read_status') == 0 and value.get('read_exception') is False and
+            value.get('value_type') in (6, 7) and
+            value.get('settings_tts_values') == SETTINGS_TTS_VALUES and
+            value.get('settings_tts_alias_equal') is True)
 
 
 def expected_modules():
@@ -25,6 +36,8 @@ def verify(text, inputs, run_id, arch):
     for key, path_key in (('native_source_sha256', 'native_source'), ('generated_source_sha256', 'generated_source')):
         if sha256(inputs[path_key]) != inputs[key]:
             raise ValueError('actual export collector source changed')
+    if sha256(inputs['native_source']) != sha256(Path(__file__).with_name('arkts_exports_hap_probe.cpp')):
+        raise ValueError('export collector must use the current full native observations')
     template = Path(inputs['template'])
     if (inputs.get('role') != 'ordinary_app' or inputs.get('scope') != 'actual_all_own_exports_collection_only'
             or sha256(template) != inputs['template_sha256'] or
@@ -53,13 +66,20 @@ def verify(text, inputs, run_id, arch):
         names = set()
         for value in row['properties']:
             if (not isinstance(value, dict) or set(value) != {'name', 'read_status', 'value_type', 'read_exception',
-                                                               'enum_contract_applicable', 'enum_contract_valid'}
+                                                               'enum_contract_applicable', 'enum_contract_valid',
+                                                               'settings_tts_values', 'settings_tts_alias_equal'}
                     or not isinstance(value['name'], str) or value['name'] in names or
                     type(value['read_status']) is not int or value['read_status'] < 0 or
                     type(value['value_type']) is not int or not 0 <= value['value_type'] <= 9 or
                     type(value['read_exception']) is not bool or
                     type(value['enum_contract_applicable']) is not bool or
                     type(value['enum_contract_valid']) is not bool or
+                    type(value['settings_tts_alias_equal']) is not bool or
+                    not isinstance(value['settings_tts_values'], list) or
+                    len(value['settings_tts_values']) > 4 or
+                    any(not isinstance(item, str) for item in value['settings_tts_values']) or
+                    ((row['module'] != '@ohos.settings' or value['name'] != 'TTS') and
+                     (value['settings_tts_values'] or value['settings_tts_alias_equal'])) or
                     value['enum_contract_applicable'] !=
                     (row['module'] == '@ohos.accessibility' and value['name'] in A11Y_ENUMS) or
                     (value['enum_contract_valid'] and

@@ -89,6 +89,38 @@ bool IsAccessibilityEnum(const char *module, const char *name)
         std::strcmp(name, "OperateVirtualNodeResult") == 0);
 }
 
+void ReadSettingsTts(napi_env env, napi_value module, napi_value value, napi_value property, bool applicable)
+{
+    napi_value values = nullptr;
+    napi_create_array(env, &values);
+    bool same = false;
+    if (applicable) {
+        static constexpr const char *members[] = {
+            "DEFAULT_TTS_PITCH", "DEFAULT_TTS_RATE", "DEFAULT_TTS_SYNTH", "ENABLED_TTS_PLUGINS",
+        };
+        for (uint32_t i = 0; i < sizeof(members) / sizeof(members[0]); ++i) {
+            napi_value key = nullptr, member = nullptr;
+            napi_valuetype type = napi_undefined;
+            bool own = false;
+            if (napi_create_string_utf8(env, members[i], NAPI_AUTO_LENGTH, &key) != napi_ok ||
+                napi_has_own_property(env, value, key, &own) != napi_ok || !own ||
+                napi_get_property(env, value, key, &member) != napi_ok ||
+                napi_typeof(env, member, &type) != napi_ok || type != napi_string) {
+                Exception(env);
+                break;
+            }
+            napi_set_element(env, values, i, member);
+        }
+        napi_value alias = nullptr;
+        if (napi_get_named_property(env, module, "tts", &alias) == napi_ok) {
+            napi_strict_equals(env, alias, value, &same);
+        }
+        Exception(env);
+    }
+    napi_set_named_property(env, property, "settings_tts_values", values);
+    Boolean(env, property, "settings_tts_alias_equal", same);
+}
+
 napi_value Inspect(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
@@ -158,6 +190,10 @@ napi_value Inspect(napi_env env, napi_callback_info info)
                 Boolean(env, property, "read_exception", readException);
                 Boolean(env, property, "enum_contract_applicable", enumApplicable);
                 Boolean(env, property, "enum_contract_valid", enumValid);
+                ReadSettingsTts(env, module, value, property,
+                    named && std::strcmp(moduleName, "@ohos.settings") == 0 &&
+                    std::strcmp(propertyName, "TTS") == 0 && status == napi_ok && !readException &&
+                    (valueType == napi_object || valueType == napi_function));
                 napi_set_element(env, properties, offset, property);
             }
         }

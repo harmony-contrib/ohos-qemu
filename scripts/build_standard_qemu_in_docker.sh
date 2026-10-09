@@ -251,6 +251,7 @@ QEMU_VIVID_KERNEL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/vivid_captu
 QEMU_WLAN_RADIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_radio/apply.sh"
 VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/vivid_capture/apply.sh"
 SETTINGS_NAVIGATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/network_navigation/apply.sh"
+SETTINGS_TTS_NAMESPACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/tts_namespace/apply.sh"
 PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/permission_manager/open_setting/apply.sh"
 MATRIX4_EXPORTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/matrix4_exports/apply.sh"
 BACKUP_INIT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/filemanagement/app_file_service/backup_init/apply.sh"
@@ -2905,6 +2906,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_device_component.log"
   bash "${SETTINGS_NAVIGATION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_navigation_component.log"
+  bash "${SETTINGS_TTS_NAMESPACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_tts_namespace_component.log"
   bash "${PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_permission_open_setting_component.log"
   bash "${MATRIX4_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

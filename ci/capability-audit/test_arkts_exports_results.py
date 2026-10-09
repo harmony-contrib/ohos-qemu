@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from const_enum_contracts import LEDGER, sha256
-from verify_arkts_exports_results import expected_modules, verify
+from verify_arkts_exports_results import expected_modules, verify, settings_tts_verified, SETTINGS_TTS_VALUES
 
 HERE = Path(__file__).resolve().parent
 RUN = 'b' * 32
@@ -47,7 +47,8 @@ class ArktsExportsResultsTests(unittest.TestCase):
             reject(dict(self.report, **{key: value}))
         row = self.report['modules'][0]
         row['properties'] = [{'name': 'call', 'read_status': 0, 'value_type': 7, 'read_exception': False,
-                              'enum_contract_applicable': False, 'enum_contract_valid': False}]
+                              'enum_contract_applicable': False, 'enum_contract_valid': False,
+                              'settings_tts_values': [], 'settings_tts_alias_equal': False}]
         verify(json.dumps(self.report), self.inputs, RUN, 'arm64')
         row['properties'] *= 2
         reject(self.report)
@@ -62,7 +63,8 @@ class ArktsExportsResultsTests(unittest.TestCase):
         row = next(row for row in self.report['modules'] if row['module'] == '@ohos.accessibility')
         row['properties'] = [{'name': 'FocusMoveResultCode', 'read_status': 0, 'value_type': 6,
                               'read_exception': False, 'enum_contract_applicable': True,
-                              'enum_contract_valid': True}]
+                              'enum_contract_valid': True, 'settings_tts_values': [],
+                              'settings_tts_alias_equal': False}]
         verify(json.dumps(self.report), self.inputs, RUN, 'arm64')
         row['properties'][0]['enum_contract_applicable'] = False
         with self.assertRaises(ValueError):
@@ -82,6 +84,20 @@ class ArktsExportsResultsTests(unittest.TestCase):
         self.inputs['generated_source_sha256'] = sha256(page)
         with self.assertRaises(ValueError):
             verify(json.dumps(self.report), self.inputs, RUN, 'arm64')
+
+    def test_settings_namespace_requires_actual_keys_and_same_legacy_object(self):
+        row = next(row for row in self.report['modules'] if row['module'] == '@ohos.settings')
+        value = {'name': 'TTS', 'read_status': 0, 'value_type': 7, 'read_exception': False,
+                 'enum_contract_applicable': False, 'enum_contract_valid': False,
+                 'settings_tts_values': SETTINGS_TTS_VALUES, 'settings_tts_alias_equal': True}
+        row['properties'] = [value]
+        verify(json.dumps(self.report), self.inputs, RUN, 'arm64')
+        self.assertTrue(settings_tts_verified(row['module'], value))
+        for name, changed in [('settings_tts_values', []), ('settings_tts_values', SETTINGS_TTS_VALUES[:-1]),
+                              ('settings_tts_values', ['wrong'] * 4), ('settings_tts_alias_equal', False),
+                              ('read_exception', True), ('read_status', 1), ('value_type', 0)]:
+            self.assertFalse(settings_tts_verified(row['module'], dict(value, **{name: changed})))
+        self.assertFalse(settings_tts_verified('@ohos.other', value))
 
     def test_real_public_NAPI_collection_has_no_privilege_or_fake_export_fallback(self):
         native = (HERE / 'arkts_exports_hap_probe.cpp').read_text()

@@ -416,7 +416,7 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                 inputs.is_file() and not inputs.is_symlink() and
                 digest(inputs) == document.get('compiled_contract_inputs_sha256') and
                 result.is_file() and not result.is_symlink() and digest(result) == document.get('result_sha256')):
-            from verify_arkts_exports_results import verify
+            from verify_arkts_exports_results import verify, settings_tts_verified
             actual = verify(raw.read_text(), json.loads(inputs.read_text()), document['run_id'], document['arch'])
             if actual != json.loads(result.read_text()).get('modules'):
                 raise ValueError('export collection differs from complete actual ordinary-app reflection')
@@ -442,6 +442,9 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                     if (kind == 'enum' and properties.get(requirement['name'], {}).get('enum_contract_applicable') and
                             properties[requirement['name']].get('enum_contract_valid')):
                         permitted = {6}
+                    if module['module'] == '@ohos.settings' and requirement['name'] == 'TTS':
+                        permitted = {6, 7} if settings_tts_verified(module['module'],
+                            properties.get('TTS', {})) else set()
                     if value in permitted:
                         closed['arkts_export:' + module['module'] + ':' + requirement['name']] = proof
     enum_members = child('runtime-enum/evidence.json')
