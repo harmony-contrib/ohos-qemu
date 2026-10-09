@@ -2,6 +2,31 @@
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### Settings 输入法公开入口候选（未激活预装）
+
+进一步确认固定 Settings 源码包含真实 `InputSettings`、`OtherInputDetailSettings`
+及其输入法服务调用，但未声明 NAPI 指向的 `ExternalCommonUIExtensionAbility`。
+新增独立 `settings/external_input` 部件，只允许 `set_input` 与
+`other_input_detail_settings` 两种外部路由。详情参数按现有 NAPI 的
+`pushParam` / `isParamJsonObject` 协议解析，检查大小、类型及实际已安装的输入法身份，
+仅复制核验后的身份和服务返回的标题，不接收任意 Settings 页面或配置。
+页面复用原有三个输入法组件和控制器；入口本身不启用、切换输入法或放开权限。
+每个 instance 的内容使用会话 LocalStorage，拒绝并行替换，结束/加载失败释放 context。
+
+实际扩展源码经 SDK TypeScript 转译后通过31项隔离请求/会话边界测试；它不是guest证明。
+实际源项目经API26工具链完整编译成功，最终第二轮59秒，无新增页面的编译警告。
+原上游 ResetFactoryController 跨模块引用警告等仍保留，不以编译成功关闭其行为缺口。
+未签名候选 `issue-20-20261006/settings-external-input-candidate-r20/Settings-external-input-unsigned.hap`
+SHA-256 `c1f9fe4c0230dd272401192230a8c98f5ed5907015e5b4ae386648107d501603`。
+静态复核43个扩展、三ABI共6个真实ELF；旧42个扩展、应用身份与请求权限完全保留。
+编译记录 `settings-external-input-compile-r20-02.log`，候选目录保存边界测试和静态复核结果。
+
+该部件与 `source_provider` 一样尚未接入主构建：Settings 精确证书绑定的最小预装
+扩展授权仍待用户确认，未改BMS、APL、ACL或其他应用权限。必须另行重新签名、装配并
+从新归档启动验证实际页面与取消/错误路径；不能把候选计入已闭环项。
+当前R20只包含已经提交的Camera、Fusion参数和TTS修复；首包自动继续脚本仅运行
+`phone-SvX3p0/scripts/validate_packaged_qemu.sh`，不启动其余五包。
+
 ### R19 新归档相机严格三轮复测通过
 
 代表包 `/Volumes/PSSD/qemu/packages/first-camera-publication-7.0-release-20261009-r19/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
