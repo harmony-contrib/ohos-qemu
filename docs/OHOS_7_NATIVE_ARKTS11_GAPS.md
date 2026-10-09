@@ -1,5 +1,20 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-09 用户确认的交付范围调整
+
+用户明确答复 CloudSync 与 imageGeneration「这两个不用实现」。两项标记为
+`excluded_by_user_not_fixed_not_validated`，不计为已修复或已验证。
+原始 `native-arkts11-gap-ledger.json` 保持不变，SHA-256
+`ac9426982dff3d7cb80050a6815eae92afb8f77c027b2d4319bc8d9423d6e93c`。
+
+`ci/capability-audit/release_scope.py` 列出精确排除项：两画像的8个imageGeneration
+导出契约及cloud-provider行为项，另有phone的cloudExtension.Flag。
+phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其他Provider或
+包含多个子系统的 `api26-runtime-export-mismatches-phone` 行为契约。
+闭环报告保留原始总数、实际交付范围总数、精确排除列表及策略校验值，首包门禁
+独立重算并核对；缺失其他任何契约、扩大排除或把排除项计入修复均拒绝通过。
+这不是运行验收证明，也不追溯修改旧归档/旧测试的失败记录。
+
 ## 2026-10-09 R14 实测与下一首包候选
 
 ### Photos 真实资产回读流程纳入仓库独立测试候选

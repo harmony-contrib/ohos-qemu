@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from run_root_probe import digest
+from release_scope import SCOPE, exclusion_record
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / 'docs/capability-audit/native-arkts11-gap-ledger.json'
@@ -631,6 +632,9 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
 def run(args):
     baseline = json.loads(LEDGER.read_text())
     expected = requirements(baseline['devices'][args.device])
+    original_count = len(expected)
+    exclusions = exclusion_record(args.device, expected)
+    expected = {key: row for key, row in expected.items() if key not in exclusions['ids']}
     boot = json.loads(args.boot.read_text())
     environment = boot.get('test_environment', {})
     archive_sha = digest(args.archive)
@@ -643,12 +647,13 @@ def run(args):
     unresolved = [{'id': key, 'requirement': row,
                    'reason': 'no complete registered new-package behavior/ABI/permission proof'}
                   for key, row in expected.items() if key not in closed]
-    result = {'schema_version': 1, 'scope': 'complete_audited_Cxx_ArkTS11_gap_closure',
+    result = {'schema_version': 2, 'scope': SCOPE,
         'status': 'fail' if unresolved else 'pass', 'device': args.device,
         'archive': str(args.archive.resolve()), 'archive_sha256': archive_sha,
         'boot_id': environment['boot_id'], 'audit_baseline': str(LEDGER), 'audit_baseline_sha256': digest(LEDGER),
         'expected_count': len(expected), 'closed_count': len(closed), 'closed': closed,
-        'unresolved': unresolved, 'excluded': ['ArkTS Static'],
+        'unresolved': unresolved, 'excluded': ['ArkTS Static', 'CloudSync', 'imageGeneration'],
+        'original_expected_count': original_count, 'release_exclusions': exclusions,
         'first_artifact_behavior_gate_passed': False}
     args.output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
     return result
