@@ -49,6 +49,45 @@ Provider/UI 树并重新截图，不重复点击、不调整权限或放宽最�
 进程边界测试通过，实际新包验证和正式门禁接入仍待完成。上述后续测试入口
 变更不在 R23 冻结输入中。
 
+绘制等待修复已在另一个全新 R21 客体上通过仓库入口及独立复核：
+`r21-settings-network-display-runtime-02`，boot
+`8ea9a738-5ebb-4d5c-9e93-1a42e5803af7`；8 条调用记录、四次输入页呈现及返回
+均通过。另实测显示设置与网络设置页面，保留实际截图、AMS 身份及调用结果；
+网络关闭后 Promise 返回 true。未操作网络开关、密码或其他系统设置。
+对应冻结测试树 `011b6a27974f0835300258a4d5e6193604f7f164cc56e746ab764904de0a14c6`，
+完整主机回归 `host-regression-r23-01.log` 1156 项通过（231.822 秒）。
+
+进一步扩展普通调用器，`r21-settings-all-pages-runtime-01`（boot
+`f0caa56b-e0ef-45de-af4e-49e2e4deb3bf`，测试树
+`7b6bf7047c4bfdbb145e49727ceadbedf78d69eada1af08e8cc562bf7f923228`）实测：
+移动网络、声音和振动、生物识别和密码、关于本机、调用者自身应用详情均显示
+真实页面并返回；仅验证页面导航，不声称完成蜂窝通信、生物识别录入等后端。
+刷新率接口却返回 void 成功并打开空白目的页：固定 Settings native 路由存在，
+`PageRouteController` 没有对应页面注册，已确认不能将此接口算作可用。
+NFC 调用保持调用方页面，native 另有真实 NFC SysCap/不支持标记检查，未据此
+声称 NFC 导航或硬件已修复，也未删除检查来强行打开页面。
+
+新增独立 `settings/refresh_rate_page` 候选：使用原 Settings PageLoader 路由和
+真实 `screen.getAllScreens()`，仅呈现实际主屏报告的模式，只允许同分辨率下
+的刷新率选择，调用原显示服务并读回 activeModeIndex；拒绝未知模式、并发请求、
+服务失败或未生效结果，不编造 90/120 Hz、不新增权限或改变显示后端。
+3 项主机测试通过，覆盖完整源哈希/幂等/未知与部分编辑拒绝，以及实际控制器
+的服务边界。独立只读 source 的 Docker 副本正在编译完整 Settings HAP：
+`settings-refresh-hap-compile-r23-01.log`，冻结候选树
+`8223b7f6eb02c027494f7dea8087a4374971a22329ce6465e98be3db64359ebb`。
+原系统构建 source/out 与 R23 冻结输入未修改；此候选仍需后续新包实际启动、
+页面/模式读回与权限回归，通过之前不关闭缺口。
+
+该独立 Docker 完整 HAP 编译已成功（5 分 25 秒），未签名产物
+`settings-refresh-hap-compile-r23-01/source/applications/standard/settings/product/phone/build/default/outputs/default/phone-default-unsigned.hap`，
+SHA-256 `d9c61490db28837de3851a982ef7c951ce21eba3d8c5413ac40b3b0c5db88af5`。
+包含 ARMv7a、ARM64、x86_64 的实际 native 依赖；这仍是编译证明，不是三架构
+客体行为证明。`host-regression-r23-02.log` 全量 1159 项通过（222.076 秒）。
+之后普通调用器另加 `screen.getAllScreens()` 的 202 拒绝分支按钮并绑定该 SDK
+声明哈希，17 项 Settings 测试通过；该权限分支还未在客体执行，不能记为通过。
+R23 产包后 FA 自动步骤已改用冻结树 `011b6a...14c6` 的仓库入口，构建全新
+nonce 调用器；没有替换 R23 镜像或在其冻结输入中混入后续刷新率页面。
+
 ## 2026-10-09 用户确认的交付范围调整
 
 用户明确答复 CloudSync 与 imageGeneration「这两个不用实现」。两项标记为

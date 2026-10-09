@@ -1,6 +1,7 @@
 // Ordinary public callers only. A void return does NOT prove that a page rendered.
 import settings from '@ohos.settings';
 import inputMethod from '@ohos.inputMethod';
+import screen from '@ohos.screen';
 import fs from '@ohos.file.fs';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -82,13 +83,57 @@ struct Index {
     } catch (error) { this.record('display.request-returned', false, JSON.stringify(error)); }
   }
 
+  private openExtra(route: string): void {
+    try {
+      if (route === 'mobile') settings.openMobileNetworkSettingsPage(this.context);
+      else if (route === 'refresh') settings.openScreenRefreshRateSettingsPage(this.context);
+      else if (route === 'sound') settings.openSoundSettingsPage(this.context);
+      else if (route === 'biometrics') settings.openBiometricsSettingsPage(this.context);
+      else if (route === 'about') settings.openAboutDeviceSettingsPage(this.context);
+      else if (route === 'nfc') settings.openNfcSettingsPage(this.context);
+      else if (route === 'app-detail') settings.openAppDetailSettingsPage(this.context,
+        'org.harmonycontrib.capabilityaudit');
+      else throw new Error('Unknown diagnostic route');
+      this.record(route + '.request-returned', true, 'void-return-only-not-render-proof');
+    } catch (error) { this.record(route + '.request-returned', false, JSON.stringify(error)); }
+  }
+
+  private async checkScreenPermission(): Promise<void> {
+    try {
+      await screen.getAllScreens();
+      this.record('screen.ordinary-denial', false, 'Unexpected system API access');
+    } catch (error) {
+      this.record('screen.ordinary-denial', (error as BusinessError).code === 202, JSON.stringify(error));
+    }
+  }
+
   build() {
     Column({ space: 16 }) {
       Text(this.note).id('settings-probe-state')
-      Button('Input settings').id('settings-probe-input').onClick(() => this.openInput())
-      Button('Installed input detail').id('settings-probe-detail').onClick(() => this.openDetail())
-      Button('Network settings').id('settings-probe-network').onClick(() => { this.openNetwork(); })
-      Button('Display settings').id('settings-probe-display').onClick(() => this.openDisplay())
+      Row({ space: 16 }) {
+        Button('Input settings').id('settings-probe-input').onClick(() => this.openInput())
+        Button('Installed input detail').id('settings-probe-detail').onClick(() => this.openDetail())
+      }
+      Row({ space: 16 }) {
+        Button('Network settings').id('settings-probe-network').onClick(() => { this.openNetwork(); })
+        Button('Display settings').id('settings-probe-display').onClick(() => this.openDisplay())
+      }
+      Row({ space: 16 }) {
+        Button('Mobile network').id('settings-probe-mobile').onClick(() => this.openExtra('mobile'))
+        Button('Refresh rate').id('settings-probe-refresh').onClick(() => this.openExtra('refresh'))
+      }
+      Row({ space: 16 }) {
+        Button('Sound').id('settings-probe-sound').onClick(() => this.openExtra('sound'))
+        Button('Biometrics').id('settings-probe-biometrics').onClick(() => this.openExtra('biometrics'))
+      }
+      Row({ space: 16 }) {
+        Button('About device').id('settings-probe-about').onClick(() => this.openExtra('about'))
+        Button('NFC').id('settings-probe-nfc').onClick(() => this.openExtra('nfc'))
+      }
+      Row({ space: 16 }) {
+        Button('Own app details').id('settings-probe-app-detail').onClick(() => this.openExtra('app-detail'))
+        Button('Screen API boundary').id('settings-probe-screen-denial').onClick(() => { this.checkScreenPermission(); })
+      }
     }.width('100%').height('100%').justifyContent(FlexAlign.Center).backgroundColor(Color.White)
   }
 }

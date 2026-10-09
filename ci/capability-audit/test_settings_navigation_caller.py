@@ -13,11 +13,15 @@ class SettingsNavigationCaller(unittest.TestCase):
     def test_public_calls_require_separate_render_proof(self):
         source = (HERE / 'settings_navigation_probe.ets').read_text()
         for call in ('openInputMethodSettings', 'openInputMethodDetail', 'openNetworkManagerSettings',
-                     'openDisplaySettingsPage', 'getAllInputMethodsSync'):
+                     'openDisplaySettingsPage', 'getAllInputMethodsSync', 'openMobileNetworkSettingsPage',
+                     'openScreenRefreshRateSettingsPage', 'openSoundSettingsPage', 'openBiometricsSettingsPage',
+                     'openAboutDeviceSettingsPage', 'openNfcSettingsPage', 'openAppDetailSettingsPage'):
             self.assertIn(call + '(', source)
         self.assertIn('void-return-only-not-render-proof', source)
         self.assertIn('16900010', source)
         self.assertIn('ime.name, ime.id', source)
+        self.assertIn('await screen.getAllScreens()', source)
+        self.assertIn('code === 202', source)
         self.assertNotIn('grantUserGrantedPermission', source)
         self.assertNotIn('startServiceExtensionAbility', source)
         self.assertNotIn('first_artifact_behavior_gate_passed', source)
@@ -42,6 +46,7 @@ class SettingsNavigationCaller(unittest.TestCase):
         block = source[source.index('if args.settings_navigation_only:'):source.index('if args.arkts_exports_only:')]
         for phrase in ('ordinary_Settings_public_calls_NOT_UI_acceptance', "'request_permissions': []",
                        "digest(api_dir / '@ohos.settings.d.ts')", "digest(api_dir / '@ohos.inputMethod.d.ts')",
+                       "digest(api_dir / '@ohos.screen.d.ts')",
                        'digest(template)', 'digest(page)'):
             self.assertIn(phrase, block)
 

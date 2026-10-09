@@ -62,7 +62,8 @@ def verify_inputs(path, run_id, arch, sdk):
             page.read_text() != template.read_text().replace('__SETTINGS_RUN__', run_id) or
             json.loads(module.read_text())['module'].get('requestPermissions', []) != []):
         raise ValueError('actual compiled zero-permission Settings caller does not match its contract')
-    for name, key in (('settings', 'settings_declarations_sha256'), ('inputMethod', 'input_method_declarations_sha256')):
+    for name, key in (('settings', 'settings_declarations_sha256'), ('inputMethod', 'input_method_declarations_sha256'),
+                      ('screen', 'screen_declarations_sha256')):
         if inputs.get(key) != digest(sdk / 'ets/api' / ('@ohos.' + name + '.d.ts')):
             raise ValueError('Settings caller SDK declarations changed')
 

@@ -1989,7 +1989,8 @@ if args.settings_navigation_only:
         'template_sha256': digest(template), 'generated_source_sha256': digest(page),
         'module_sha256': digest(root / 'entry/src/main/module.json5'),
         'settings_declarations_sha256': digest(api_dir / '@ohos.settings.d.ts'),
-        'input_method_declarations_sha256': digest(api_dir / '@ohos.inputMethod.d.ts')})
+        'input_method_declarations_sha256': digest(api_dir / '@ohos.inputMethod.d.ts'),
+        'screen_declarations_sha256': digest(api_dir / '@ohos.screen.d.ts')})
 
 if args.arkts_exports_only:
     from verify_arkts_exports_results import expected_modules
