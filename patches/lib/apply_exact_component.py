@@ -30,6 +30,21 @@ def prepare_stack(root, component, baseline, temporary):
     for original in sorted(component.glob('[0-9][0-9][0-9][0-9]-*.patch')):
         copied = temporary / original.name
         shutil.copy2(original, copied)
+        # Keep reviewable LF patch files while preserving explicitly pinned
+        # CRLF source bytes. Exact pre/post hashes still govern every file.
+        crlf_files = set(getattr(baseline, 'CRLF_FILES', ()))
+        if not crlf_files.issubset(allowed):
+            raise ValueError('CRLF patch target outside exact component baseline')
+        if crlf_files:
+            lines = copied.read_bytes().splitlines(keepends=True)
+            target = None
+            for index, line in enumerate(lines):
+                if line.startswith(b'+++ b/'):
+                    target = line[len(b'+++ b/'):].rstrip(b'\r\n').decode()
+                if (target in crlf_files and line[:1] in (b' ', b'+', b'-') and
+                        not line.startswith((b'+++ ', b'--- '))):
+                    lines[index] = line.rstrip(b'\r\n') + b'\r\n'
+            copied.write_bytes(b''.join(lines))
         statistics = subprocess.check_output(['git', 'apply', '--numstat', str(copied)], text=True)
         if not statistics.strip() or any(line.split('\t')[-1] not in allowed
                                          for line in statistics.splitlines()):

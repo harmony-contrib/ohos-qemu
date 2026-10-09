@@ -14,6 +14,15 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTS = {'arm64_virt': 'aarch64-linux-ohos', 'armv7a_virt': 'arm-linux-ohos',
             'x86_64_virt': 'x86_64-linux-ohos'}
 PLAN = (
+    ('screen-mode-parcel', 'foundation/window/window_manager/screen_modes',
+     'foundation/window/window_manager/utils/src/screen_info.cpp',
+     'obj/foundation/window/window_manager/utils/src/libwmutil/screen_info.o'),
+    ('screen-mode-proxy', 'foundation/window/window_manager/screen_modes',
+     'foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_proxy.cpp',
+     'obj/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/libdm/screen_session_manager_proxy.o'),
+    ('screen-mode-stub', 'foundation/window/window_manager/screen_modes',
+     'foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_stub.cpp',
+     'obj/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager/screen_session_manager_stub.o'),
     ('particle-error-code', 'foundation/ability/ability_runtime/particle_error_code',
      'foundation/ability/ability_runtime/frameworks/js/napi/particleAbility/native_module.cpp',
      'obj/foundation/ability/ability_runtime/frameworks/js/napi/particleAbility/particleability/native_module.o'),
@@ -77,6 +86,8 @@ PLAN = (
 )
 COMPONENTS = tuple(dict.fromkeys(row[1] for row in PLAN))
 PATCH_ONLY_SOURCES = {
+    'foundation/window/window_manager/screen_modes':
+        ('foundation/window/window_manager/utils/include/screen_info.h',),
     'foundation/multimedia/media_library/api26_photo_enums':
         ('foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js',),
     'foundation/multimedia/media_library/api26_photo_search_enums':
@@ -166,6 +177,9 @@ def main():
                     obj, dep = staged / (label + '-' + product + '.o'), staged / (label + '-' + product + '.d')
                     original, argv = relocate(shlex.split(query.stdout.splitlines()[-1]),
                                              cwd, root, source, staged, obj, dep, triple)
+                    if relative == 'foundation/window/window_manager/screen_modes':
+                        from compile_render_connection_reply import overlay_patched_include_directories
+                        argv = overlay_patched_include_directories(argv, cwd, root, staged)
                     log = args.output / (label + '-' + product + '-compile.log')
                     with log.open('x') as stream:
                         subprocess.run(argv, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT, check=True)

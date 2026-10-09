@@ -1,5 +1,31 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R23 新包 FA 正向实测与显示模式修复候选
+
+R23 本地 Docker 构建成功，代表归档：
+`/Volumes/PSSD/qemu/packages/first-fa-settings-7.0-release-20261010-r23/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `f58c5346d6db78422c8ce85eec595f712be988f0e8da92958dcf05609b32961d`。
+`r23-settings-fa-positive-runtime-01` 的新包 boot
+`f7fe9125-6ddb-452e-bcd3-eb6f0d55e9ff` 已通过两轮 Settings 输入导航，以及
+仓库 FA runner 新建的普通 FA HAP（nonce `0c1118e67e7e0bb49e05790e56aba4c2`）。
+实际 page/service PID 3519/3706、普通 UID 20010039，五项常量/context/既有调用
+均通过；当前严格 `verify_evidence` 对原始证据独立复核通过。有限电源设置恢复、
+诊断 VM 关闭。同归档完整 Stage/native 回归正在另一个新 VM 运行，尚未
+通过完整首包门禁，剩余五包没有开始。此次归档不含后来新增的刷新率候选。
+
+`r21-display-service-diagnostic-02` 确认根因：客体 DRM 和 RenderService 均报告
+26 个真实模式，主屏模式 ID 0 为 1280x800/75 Hz；ScreenInfo 只接受最多 20 个，
+故服务端序列化失败，而 SceneBoard stub/proxy 没有正确传播此错误。此前诊断
+01 的 3308 是显示电源服务；02 改为真实 DMS 4607，原失败诊断保留。
+
+新增独立 `window_manager/screen_modes` 部件，将上限有限扩展为 256，编码前
+拒绝过量或空对象，解码前同时检查上限与剩余数据长度；服务端传播编码失败，
+客户端只发布完整解码结果，保留已有业务错误。不删真实模式、不硬编码刷新率、
+不改 API/权限/身份/后端。五项宿主测试覆盖精确补丁、实际序列化算法和代理
+错误路径（ASan/UBSan）；九个真实翻译单元（三文件 × 三 ABI）编译通过，
+证据 `screen-mode-three-abi-r23-01/evidence.json`，原 source/out 只读且未更改。
+这些不是客体修复证明，仍须下一完整代表包读回、上屏和权限回归。
+
 ## 2026-10-10 显示模式读回新增阻断证据
 
 新增只读 `screen_modes_readback.cpp`，使用真实产品 ScreenManager 头文件、
