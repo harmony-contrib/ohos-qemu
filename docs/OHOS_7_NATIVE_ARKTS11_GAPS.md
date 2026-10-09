@@ -33,6 +33,12 @@ UID 65534 写入，验证 EDQUOT、删除后的统计下降、解除限额后 4 
 也不以此关闭 Storage 应用 API 缺口。
 新增测试后的完整宿主回归 `host-regression-quota-r24-02.log`：1194 项通过
 （212.683 秒）；测试原生源码的三 ABI 编译证据单独保存，不混作客体行为结果。
+旧 R23 归档负对照 `r23-quota-negative-control-02`：使用其原冻结启动器，新开
+boot `9d3a37f0-31c1-4949-a191-ca80f5411930`（macOS ARM64/HVF、phone），
+如预期在真实 `/proc/mounts` 检查拒绝缺失限额挂载选项，尚未执行配额修改，
+随后关闭独占客体。`negative-control.json` 保存校验器输入哈希，
+`expected_failure_observed=true` **不是修复包通过**。首次负对照 `-01` 被冻结
+输入一致性检查更早拒绝，未启动客体；该记录同样保留，不混作挂载结果。
 
 ## 2026-10-10 刷新率新包验证入口
 
