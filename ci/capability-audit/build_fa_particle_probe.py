@@ -47,7 +47,9 @@ write('entry/src/main/config.json', {
         'distro': {'deliveryWithInstall': True, 'moduleName': 'entry', 'moduleType': 'entry', 'installationFree': False},
         'abilities': [{'name': '.MainAbility', 'visible': True, 'srcPath': 'MainAbility', 'srcLanguage': 'js',
             'icon': '$media:icon', 'label': '$string:app_name', 'type': 'page', 'launchType': 'singleton',
-            'skills': [{'entities': ['entity.system.home'], 'actions': ['action.system.home']}]}],
+            'skills': [{'entities': ['entity.system.home'], 'actions': ['action.system.home']}]},
+            {'name': '.ParticleService', 'visible': True, 'srcPath': 'ParticleService',
+             'srcLanguage': 'js', 'icon': '$media:icon', 'label': '$string:app_name', 'type': 'service'}],
         'js': [{'name': '.MainAbility', 'pages': ['pages/index/index']}]}})
 write('entry/src/main/resources/base/element/string.json', {'string': [{'name': 'app_name', 'value': 'FA particle probe'}]})
 write('entry/src/main/resources/base/media/icon.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#227799"/></svg>')
@@ -55,23 +57,30 @@ write('entry/src/main/js/MainAbility/app.js', 'export default { onCreate() {}, o
 write('entry/src/main/js/MainAbility/pages/index/index.hml', '<div class="page"><text>FA particle registration probe</text></div>\n')
 write('entry/src/main/js/MainAbility/pages/index/index.css', '.page { flex-direction: column; align-items: center; justify-content: center; }\n')
 source = '''import particleAbility from '@ohos.ability.particleAbility';
-import featureAbility from '@ohos.ability.featureAbility';
 const nonce = '__NONCE__';
 function report(name, status, value) {
   console.info('QEMU_FA_PARTICLE:' + JSON.stringify({nonce: nonce, name: name, status: status, value: value}));
 }
 export default {
-  async onInit() {
+  async onStart() {
     try {
       const errorCode = particleAbility.ErrorCode;
       const keys = errorCode === undefined ? [] : Object.keys(errorCode);
       report('particle.invalid_parameter', keys.length === 1 && keys[0] === 'INVALID_PARAMETER' &&
         errorCode.INVALID_PARAMETER === -1 ? 'pass' : 'fail', errorCode === undefined ? null : errorCode);
-      const info = await featureAbility.getContext().getAbilityInfo();
-      report('actual.fa.context', info.bundleName === '__BUNDLE__' ? 'pass' : 'fail', info);
-      report('particle.context', particleAbility.getContext() !== undefined ? 'pass' : 'fail', 'context');
+      const context = particleAbility.getContext();
+      const info = await particleAbility.getAbilityInfo();
+      report('actual.fa.context', context !== null && typeof context === 'object' &&
+        info.bundleName === '__BUNDLE__' && info.type === 2 ? 'pass' : 'fail',
+        {bundleName: info.bundleName, name: info.name, type: info.type,
+         contextPresent: context !== null && typeof context === 'object'});
+      const abilityInfo = await new Promise((resolve, reject) => {
+        particleAbility.getAbilityInfo((error, value) => error ? reject(error) : resolve(value));
+      });
+      report('particle.context', abilityInfo.bundleName === info.bundleName && abilityInfo.name === info.name &&
+        abilityInfo.type === 2 ? 'pass' : 'fail', abilityInfo);
       const name = await particleAbility.getAbilityName();
-      report('particle.ability_name', name.endsWith('MainAbility') ? 'pass' : 'fail', name);
+      report('particle.ability_name', name.endsWith('ParticleService') ? 'pass' : 'fail', name);
       report('complete', 'pass', 'FA');
     } catch (error) {
       report('exception', 'fail', {code: error.code, message: error.message});
@@ -79,10 +88,29 @@ export default {
   }
 };
 '''.replace('__NONCE__', nonce).replace('__BUNDLE__', bundle)
-write('entry/src/main/js/MainAbility/pages/index/index.js', source)
+page_source = '''import featureAbility from '@ohos.ability.featureAbility';
+export default {
+  data: { started: false },
+  async onShow() {
+    if (this.started) { return; }
+    this.started = true;
+    try {
+      await featureAbility.startAbility({ want: { bundleName: '__BUNDLE__',
+        abilityName: '__BUNDLE__.ParticleService' } });
+      console.info('QEMU_FA_PAGE:' + JSON.stringify({ nonce: '__NONCE__', status: 'pass' }));
+    } catch (error) {
+      console.info('QEMU_FA_PAGE:' + JSON.stringify({ nonce: '__NONCE__', status: 'fail',
+        code: error.code, message: error.message }));
+    }
+  }
+};
+'''.replace('__NONCE__', nonce).replace('__BUNDLE__', bundle)
+write('entry/src/main/js/MainAbility/pages/index/index.js', page_source)
+write('entry/src/main/js/ParticleService/service.js', source)
 write('caller-inputs.json', {'status': 'not_run', 'scope': 'FA_compile_candidate_NOT_guest_evidence',
     'bundle': bundle, 'nonce': nonce, 'source_sha256': hashlib.sha256(source.encode()).hexdigest(),
-    'model': 'FA', 'request_permissions': []})
+    'page_source_sha256': hashlib.sha256(page_source.encode()).hexdigest(),
+    'model': 'FA', 'ability_kind': 'service', 'request_permissions': []})
 plugin = str(hvigor / 'hvigor-ohos-plugin')
 write('hvigorfile.ts', "import { legacyAppTasks } from '" + plugin + "';\nexport default { system: legacyAppTasks, plugins: [] };\n")
 write('entry/hvigorfile.ts', "import { legacyHapTasks } from '" + plugin + "';\nexport default { system: legacyHapTasks, plugins: [] };\n")
@@ -102,6 +130,10 @@ with zipfile.ZipFile(outputs[0]) as archive:
         raise ValueError('not the expected actual FA package')
     if config['module'].get('reqPermissions', []):
         raise ValueError('ordinary FA probe must not request extra permissions')
+    for member in ('assets/js/ParticleService/service.abc',
+                   'assets/js/MainAbility/pages/index/index.abc'):
+        if not archive.read(member):
+            raise ValueError('actual compiled FA page and service are required')
 inputs = json.loads((root / 'caller-inputs.json').read_text())
 inputs.update(unsigned_hap=str(outputs[0]),
               unsigned_hap_sha256=hashlib.sha256(outputs[0].read_bytes()).hexdigest(),

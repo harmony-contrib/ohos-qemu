@@ -29,9 +29,13 @@ def verify(text, nonce, identity):
         raise ValueError('exact SDK particle ErrorCode member required')
     info = rows[1]['value']
     if (not isinstance(info, dict) or info.get('bundleName') != BUNDLE or
-            not isinstance(info.get('name'), str) or not info['name'].endswith('MainAbility')):
+            info.get('type') != 2 or type(info.get('type')) is not int or info.get('contextPresent') is not True or
+            not isinstance(info.get('name'), str) or info['name'] != BUNDLE + '.ParticleService'):
         raise ValueError('actual FA context must identify this caller')
-    if (rows[2]['value'] != 'context' or rows[3]['value'] != info['name'] or
+    second = rows[2]['value']
+    if (not isinstance(second, dict) or second.get('bundleName') != BUNDLE or
+            second.get('name') != info['name'] or type(second.get('type')) is not int or second['type'] != 2 or
+            rows[3]['value'] != info['name'] or
             rows[4]['value'] != 'FA'):
         raise ValueError('FA context and existing particle call disagree')
     return {'status': 'pass', 'observations': len(rows), 'scope': 'FA_particle_constant_and_context_only',

@@ -12,8 +12,9 @@ class FaParticleResultTests(unittest.TestCase):
         self.identity = json.dumps({'applicationInfo': {
             'bundleName': BUNDLE, 'uid': 20010043, 'isSystemApp': False, 'appPrivilegeLevel': 'normal'}})
         self.rows = [dict(nonce=NONCE, name=name, status='pass', value=value) for name, value in zip(NAMES, (
-            {'INVALID_PARAMETER': -1}, {'bundleName': BUNDLE, 'name': BUNDLE + '.MainAbility'},
-            'context', BUNDLE + '.MainAbility', 'FA'))]
+            {'INVALID_PARAMETER': -1}, {'bundleName': BUNDLE, 'name': BUNDLE + '.ParticleService', 'type': 2,
+                                      'contextPresent': True},
+            {'bundleName': BUNDLE, 'name': BUNDLE + '.ParticleService', 'type': 2}, BUNDLE + '.ParticleService', 'FA'))]
 
     def run_rows(self, rows, nonce=NONCE, identity=None):
         return verify('\n'.join('log QEMU_FA_PARTICLE:' + json.dumps(row) for row in rows),
@@ -62,6 +63,17 @@ class FaParticleResultTests(unittest.TestCase):
         for expected in ('legacyAppTasks', 'legacyHapTasks', "'apiType': 'faMode'",
                          "archive.read('config.json')", "config['module'].get('reqPermissions', [])"):
             self.assertIn(expected, source)
+
+    def test_page_context_and_null_particle_context_cannot_substitute_for_service(self):
+        for index, value in ((1, {'bundleName': BUNDLE, 'name': BUNDLE + '.MainAbility', 'type': 1}),
+                             (1, {'bundleName': BUNDLE, 'name': BUNDLE + '.ParticleService', 'type': 2,
+                                  'contextPresent': False}),
+                             (2, None), (2, 'context'), (2, {'bundleName': BUNDLE,
+                              'name': BUNDLE + '.ParticleService', 'type': True})):
+            rows = copy.deepcopy(self.rows)
+            rows[index]['value'] = value
+            with self.assertRaises(ValueError):
+                self.run_rows(rows)
 
 
 if __name__ == '__main__':

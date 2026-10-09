@@ -47,6 +47,32 @@ phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其
 不接受最终complete掩盖前序失败；单独FA通过也不自动关闭缺口或代替Stage回归。
 完整1131项主机回归通过，`host-regression-r21-06.log`。
 
+FA调用器随后按官方XTS的ServiceAbility模型调整为普通page启动自身service；
+保留`r20-fa-negative-control-01`至`06`全部失败记录。实测page直接调用
+particle上下文不成立；shell直接启动service被正常拒绝；普通page启动自身
+service成功，但page和service实际使用同UID的两个PID，不能只读取page日志。
+`06/fa-system-hilog.log`已看到service的真实`onStart`及缺失常量null。
+另一个测试误用了未在公开particle SDK声明的
+`particleAbility.getContext().getAbilityInfo()`组合，固定源码对此走PAGE类型
+检查并返回-105；不修改类型检查，也不把这个失败记录改写为通过。
+调用器改为检查上下文对象非null、既有particle直接getAbilityInfo的Promise/
+callback两条路径与getAbilityName一致，完整新镜像验证仍待完成。
+
+`fa-particle-caller-r21-09`经官方legacy构建成功，实际包含page与service两个
+非空ABC，unsigned HAP SHA-256
+`7d20f1dd42d3b3f8525f4641f94ccad317d3f8cabec24ea0b200d5946f42cf6d`。
+这仍是测试调用器构建证据，不是常量修复通过。运行采集改为逐个验证实际同UID
+进程并读取其日志，避免遗漏service，也不使用其他应用输出补齐观察。
+
+签名工具对FA不产生Stage专用permission-sign块（固定源码SignProvider明确
+按module.json判断）。测试签名入口新增显式`--fa-no-permissions`，仅接受
+上述固定bundle、零请求权限、一个page与一个service的FA包；拒绝Stage、其他
+bundle、重复配置/ZIP成员，且仍要求真实code-sign、digest、证书链、profile
+和verify-app成功。普通Stage校验仍要求原4项marker，未改变镜像签名策略。
+实际FA签名、normal非system安装在`04`至`06`通过；主机1134/1135项回归分别
+见`host-regression-r21-07.log`/`08.log`/`09.log`，最后的调用器上下文调整后
+6项FA验证器与5项签名边界测试通过，尚不宣称最新全量回归或客体门禁通过。
+
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
 R20新归档：
