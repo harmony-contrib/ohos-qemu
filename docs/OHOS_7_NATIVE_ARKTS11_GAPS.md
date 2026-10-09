@@ -1,5 +1,25 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 Settings 2in1 输入页路由候选
+
+固定 Settings 源码的 `supportedPageForPCList` 缺少两个公开输入法页面，
+导致 2in1 在参数校验之前静默返回，不会拉起已打包的真实 Settings Provider。
+独立部件 `settings/input_2in1_navigation` 仅增加 `set_input` 和
+`other_input_detail_settings`，接入两个画像共用构建脚本；不伪造设备类型、
+改变权限、打开其他设备路由或替换页面为占位实现。
+
+3 项主机测试通过：完整源哈希、重复应用、未知编辑拒绝且保持原样，以及
+编译执行实际 C++ 路由表，逐项比较 6 种设备标识 × 13 个页面标识，确认仅
+2in1 的上述两项由拒绝变为允许。测试 fixture 仅比原始源码多一个末尾换行，
+测试重建原始无换行字节后先核对固定 SHA-256，不能借规范化接受未知源码。
+仍需真实 2in1 新包的 Settings 导航门禁；phone 或主机测试不是该运行证明。
+此候选不在正在构建的 R22 `phone-SymNve` 冻结输入内，不追溯修改 R22 证据。
+
+Settings 必测项加入后，全量主机回归 `host-regression-r22-02.log` 中两处
+旧测试仍匹配旧 persona 列表而失败；仅更新对应列表断言后，
+`host-regression-r22-03.log` 的 1147 项全部通过。失败记录保留，不能计为
+镜像运行问题或直接改写为通过。上述三项新路由测试单独通过，完整回归继续。
+
 ## 2026-10-09 用户确认的交付范围调整
 
 用户明确答复 CloudSync 与 imageGeneration「这两个不用实现」。两项标记为

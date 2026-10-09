@@ -77,7 +77,7 @@ class PhotosMetadataVerificationTests(unittest.TestCase):
         for flag, value in (('--run-id', RUN), ('--application-identity', '/identity'), ('--arch', 'arm64')):
             self.assertEqual(args[args.index(flag) + 1], value)
         suite = Path(__file__).with_name('run_packaged_qemu_suite.py').read_text()
-        self.assertIn("'camera', 'photos-recent'", suite)
+        self.assertIn("'camera', 'settings-navigation', 'photos-recent'", suite)
 
 
 if __name__ == '__main__':
