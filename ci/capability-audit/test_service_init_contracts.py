@@ -13,6 +13,7 @@ def fixture():
     configs={}
     ownership={}
     serial=''
+    hilog=''
     for index,(name,uid,sa) in enumerate(FUSION):
         passwd+=f'{name}:x:{uid}:{uid}:::/bin/false\n'
         group+=f'{name}:x:{uid}:\n'
@@ -22,7 +23,8 @@ def fixture():
         pid=1234+index
         serial+=f'[pid=1] ServiceStart started info {name}(pid {pid} uid {uid})\n'
         serial+=f'[pid={pid}] ServiceExec {name}\nSAMGR: Start dynamic proc:{name},{sa},0_4ms\n'
-        serial+=f'SAFWK: Publish SA:{sa} result:0,spend:1ms\n'
+        serial+=f'SAMGR: insert SA:{sa}_{107+index}\n'
+        hilog+=f'10-09 19:10:56.772  {pid}  2740 I C01810/SAFWK: Publish SA:{sa} result:0,spend:1ms\n'
     cmds=[]
     for leaf in I18N_DIRECTORIES:
         path='/data/service/el1/public/i18n/'+leaf
@@ -33,20 +35,20 @@ def fixture():
     configs[I18N_CFG]=json.dumps({'jobs':[{'name':'boot','cmds':cmds}],
         'services':[{'name':'i18n_service','uid':'i18n','gid':['i18n','shell']}]})
     serial+='ServiceStart started info i18n_service(pid 4567 uid 3013)\n'
-    return [passwd,group,configs,ownership,serial]
+    return [passwd,group,configs,ownership,serial,hilog]
 
 def evidence_fixture(directory):
     runtime=Path(directory)
     root=runtime/'service-init-contracts';root.mkdir()
     image=runtime/'boot/extract/package/images/system.img'
     image.parent.mkdir(parents=True);image.write_bytes(b'host fixture NOT guest image')
-    passwd,group,configs,ownership,serial=fixture()
+    passwd,group,configs,ownership,serial,hilog=fixture()
     doc={'status':'pass','persona':'service-init-contracts',
         'scope':'Fusion_init_accounts_and_I18n_init_paths_only','archive_sha256':'archive','boot_id':'boot',
         'verifier_sha256':digest(Path(__file__).with_name('verify_service_init_contracts.py')),
         'system_image':str(image),'system_image_sha256':digest(image),
         'ownership':ownership,'image_contract_files':{},'ownership_files':{},
-        'result':verify(passwd,group,configs,ownership,serial)}
+        'result':verify(passwd,group,configs,ownership,serial,hilog)}
     for index,(name,value) in enumerate({'/etc/passwd':passwd,'/etc/group':group,**configs}.items()):
         path=root/('image-'+str(index));path.write_text(value)
         doc['image_contract_files'][name]={'file':str(path),'sha256':digest(path)}
@@ -55,6 +57,8 @@ def evidence_fixture(directory):
         doc['ownership_files'][name]={'file':str(path),'sha256':digest(path)}
     path=root/'serial.log';path.write_text(serial)
     doc.update(serial=str(path),serial_sha256=digest(path))
+    path=root/'publication-hilog.log';path.write_text(hilog)
+    doc.update(publication_hilog=str(path),publication_hilog_sha256=digest(path))
     loader=root/'loader';loader.mkdir()
     binary=loader/'service-load';binary.write_bytes(b'explicit host fixture, not an executable')
     build=loader/'build.json'
@@ -114,7 +118,7 @@ class ServiceInitContractTests(unittest.TestCase):
 
     def test_stale_image_or_boot_unrecorded_stat_and_changed_payload_fail(self):
         for change in ('archive','boot','diagnostic','keepalive','image','verifier','stat','serial',
-                       'config','reported-stat','reported-result','missing-config','missing-stat'):
+                       'config','reported-stat','reported-result','missing-config','missing-stat','hilog','hilog-path'):
             with self.subTest(change=change),tempfile.TemporaryDirectory() as directory:
                 doc,root,boot=evidence_fixture(directory)
                 if change=='archive':doc['archive_sha256']='stale'
@@ -125,6 +129,8 @@ class ServiceInitContractTests(unittest.TestCase):
                 elif change=='verifier':doc['verifier_sha256']='stale'
                 elif change=='stat':Path(next(iter(doc['ownership_files'].values()))['file']).write_text('0:0:777:directory')
                 elif change=='serial':(root/'serial.log').write_text('stale')
+                elif change=='hilog':(root/'publication-hilog.log').write_text('stale')
+                elif change=='hilog-path':doc['publication_hilog']=str(root/'serial.log')
                 elif change=='config':Path(doc['image_contract_files'][I18N_CFG]['file']).write_text('{}')
                 elif change=='reported-stat':doc['ownership'][next(iter(doc['ownership']))]='0:0:777:directory'
                 elif change=='reported-result':doc['result']['fusion'].clear()
@@ -179,11 +185,17 @@ class ServiceInitContractTests(unittest.TestCase):
 
     def test_actual_init_identity_execution_and_publication_required(self):
         for old,new in (('uid 6067','uid 0'),('[pid=1234] ServiceExec','[pid=5555] ServiceExec'),
-                        ('Publish SA:8630 result:0','Publish SA:8630 result:1'),
+                        ('insert SA:8630_108','insert SA:8639_108'),
                         ('SAMGR: Start dynamic proc:partner_device_agent,8630,','SAMGR: wrong process,'),
                         ('i18n_service(pid 4567 uid 3013)','i18n_service(pid 4567 uid 0)')):
             args=fixture();args[4]=args[4].replace(old,new)
             with self.subTest(old=old),self.assertRaises(ValueError):verify(*args)
+        for old,new in (('  1234  2740','  9999  2740'),('result:0','result:1'),
+                        ('C01810/SAFWK:','C01800/SAMGR:'),('Publish SA:8630','Publish SA:8639')):
+            args=fixture();args[5]=args[5].replace(old,new)
+            with self.subTest(hilog=old),self.assertRaises(ValueError):verify(*args)
+        args=fixture();args[4]+=args[5];args[5]=''
+        with self.assertRaises(ValueError):verify(*args)
         for path in fixture()[3]:
             args=fixture();args[3][path]='0:0:777:directory'
             with self.subTest(path=path),self.assertRaises(ValueError):verify(*args)

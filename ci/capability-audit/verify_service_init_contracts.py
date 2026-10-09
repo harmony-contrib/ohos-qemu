@@ -51,7 +51,30 @@ def service(cfg,name):
         raise ValueError('missing/duplicate packaged init service: '+name)
     return value,rows[0]
 
-def verify(passwd,group,configs,ownership,serial):
+def verify_fusion_execution(serial,hilog):
+    """Init/SAMGR use the kernel console; SAFWK publication uses HiLog.
+
+    The publication must come from the same PID that init executed under the
+    dedicated UID. A bare success string or another process is insufficient.
+    """
+    result={}
+    for name,number,ability in FUSION:
+        start=re.findall(r'ServiceStart started info '+re.escape(name)+r'\(pid (\d+) uid '+str(number)+r'\)',serial)
+        verified=[]
+        for pid in start:
+            publication=(r'^\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\s+'
+                +pid+r'\s+\d+\s+I\s+C01810/SAFWK: Publish SA:'+str(ability)+r' result:0(?:,|\s|$)')
+            if (re.search(r'\[pid='+pid+r'\].*ServiceExec '+re.escape(name)+r'\b',serial) and
+                re.search(r'SAMGR: Start dynamic proc:'+re.escape(name)+','+str(ability)+r',',serial) and
+                re.search(r'SAMGR: insert SA:'+str(ability)+r'_\d+\b',serial) and
+                re.search(publication,hilog,re.M)):
+                verified.append(int(pid))
+        if not verified:
+            raise ValueError('Fusion account could not execute/register/publish its actual service: '+name)
+        result[name]={'uid':number,'gid':number,'ability':ability,'executed_pids':verified}
+    return result
+
+def verify(passwd,group,configs,ownership,serial,hilog):
     account_tables(passwd,group)
     result={'fusion':{},'i18n':{}}
     for name,number,ability in FUSION:
@@ -65,18 +88,7 @@ def verify(passwd,group,configs,ownership,serial):
         expected=f'{number}:{number}:711:directory'
         if ownership.get(path)!=expected:
             raise ValueError('Fusion init directory ownership differs: '+name)
-        start=re.findall(r'ServiceStart started info '+re.escape(name)+r'\(pid (\d+) uid '+str(number)+r'\)',serial)
-        if not start:
-            raise ValueError('no real Fusion service started under its packaged account: '+name)
-        verified=[]
-        for pid in start:
-            if (re.search(r'\[pid='+pid+r'\].*ServiceExec '+re.escape(name)+r'\b',serial) and
-                re.search(r'SAMGR: Start dynamic proc:'+re.escape(name)+','+str(ability)+r',',serial) and
-                re.search(r'SAFWK: Publish SA:'+str(ability)+r' result:0\b',serial)):
-                verified.append(int(pid))
-        if not verified:
-            raise ValueError('Fusion account could not execute/publish its actual service: '+name)
-        result['fusion'][name]={'uid':number,'gid':number,'ability':ability,'executed_pids':verified}
+    result['fusion']=verify_fusion_execution(serial,hilog)
     cfg,row=service(configs[I18N_CFG],'i18n_service')
     if row.get('uid')!='i18n' or row.get('gid')!=['i18n','shell']:
         raise ValueError('I18n service uses an unregistered owner')
@@ -158,8 +170,12 @@ def verify_evidence(document,root,boot,archive_sha,boot_id):
     if document.get('serial')!=str(serial_path):
         raise ValueError('init serial file is not the owned captured trace')
     serial=captured({'file':str(serial_path),'sha256':document.get('serial_sha256')})
+    hilog_path=root/'publication-hilog.log'
+    if document.get('publication_hilog')!=str(hilog_path):
+        raise ValueError('Fusion publication HiLog is not the owned captured trace')
+    hilog=captured({'file':str(hilog_path),'sha256':document.get('publication_hilog_sha256')})
     actual=verify(files['/etc/passwd'],files['/etc/group'],
-                  {name:files[name] for name in required-{'/etc/passwd','/etc/group'}},ownership,serial)
+                  {name:files[name] for name in required-{'/etc/passwd','/etc/group'}},ownership,serial,hilog)
     if actual!=document.get('result'):
         raise ValueError('reported init result differs from actual captured inputs')
     return actual

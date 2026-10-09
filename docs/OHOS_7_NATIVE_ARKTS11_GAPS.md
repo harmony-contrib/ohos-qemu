@@ -44,6 +44,22 @@ srcPixelFormat，而SDK声明源格式默认BGRA。03仅显式设置源RGBA格�
 并覆盖即时跨线程返回、连续100帧、单拍、取buffer期间取消/停止、配置失败及旧请求保留。
 ASan/UBSan检查不等于新包验证；ArkTS原有等待和断言未修改，仍需R19重新打包启动验收。
 
+`d543b63`已提交该候选，1037项主机回归通过；R19继续只构建ARM64 phone。
+R18独立诊断`r18-native-bindings-diagnostic-01/`中的原生Vulkan device、headless、
+OHOS surface三个探针均通过；完整native-bindings E2E已开始，尚未完成。
+这不是R19或六包验收。R18原完整运行的部分证据重放结果为291个展开的phone契约中
+133个有完整登记证明，158个尚无；原始台账不变，不等同于158个均未实现。
+记录`r18-partial-gap-closure-01.json`，仍为fail。
+
+Fusion诊断01保留测试休眠超时；02使用既有有限开发超时并恢复后，两轮实际SAMGR
+加载均成功，但验收错误地在内核串口寻找SAFWK的HiLog消息。现分开捕获两种日志：
+必须同时有专属UID的init启动、同PID的exec、SAMGR动态启动和SA注册，以及来自同一
+实际服务PID的HiLog发布成功事件，仍保留两轮真实LoadSystemAbility调用。
+新验证器在`r18-native-bindings-diagnostic-01/service-init-contracts/`通过完整镜像、
+账号、目录ownership和实际启动检查；错PID、错SA、失败返回或缺任一日志均被拒绝。
+另外发现PartnerDeviceAgent生命周期参数的SELinux set拒绝（当前eng模式仅记录），
+正在补专属参数标签与最小规则，尚不能宣告完整Fusion服务已修复。
+
 ### 首包修复过程与保留失败
 
 R17后续：`0e8aec4` 的1019项主机回归通过。全分区 staging 占位文件扫描又发现

@@ -11,7 +11,7 @@ import time
 
 from boot_package import FATAL
 from run_root_probe import digest,validate_identity
-from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_load_results
+from verify_service_init_contracts import FUSION,FUSION_CFG,I18N_CFG,I18N_DIRECTORIES,verify,verify_load_results,verify_fusion_execution
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -118,11 +118,18 @@ def run(args):
             'binary':str(binary),'binary_sha256':digest(binary),'results':rows,
             'file':observation['log'],'sha256':observation['sha256']}
         deadline=time.monotonic()+30
-        while not all('SAFWK: Publish SA:'+str(ability)+' result:0' in serial.read_text(errors='replace')
-                      for _,_,ability in FUSION):
-            if time.monotonic()>=deadline:
-                raise ValueError('real Fusion init service did not publish within deadline')
-            time.sleep(0.2)
+        while True:
+            publication_hilog=shell('hilog -x','actual-Fusion-publication-hilog')
+            try:
+                verify_fusion_execution(serial.read_text(errors='replace'),publication_hilog)
+                break
+            except ValueError:
+                if time.monotonic()>=deadline:
+                    raise ValueError('real Fusion init service did not publish from its actual init PID within deadline')
+                time.sleep(0.2)
+        hilog_path=args.output/'publication-hilog.log'
+        hilog_path.write_text(publication_hilog)
+        report.update(publication_hilog=str(hilog_path),publication_hilog_sha256=digest(hilog_path))
         paths=['/data/service/el1/public/'+name for name,_,_ in FUSION]+[
                ('/data/service/el1/public/i18n/'+leaf).rstrip('/') for leaf in I18N_DIRECTORIES]
         ownership={}
@@ -133,7 +140,7 @@ def run(args):
             report['ownership_files'][path]={'file':observation['log'],'sha256':observation['sha256']}
         captured=args.output/'serial.log'
         captured.write_bytes(serial.read_bytes())
-        report['result']=verify(passwd,group,configs,ownership,captured.read_text(errors='replace'))
+        report['result']=verify(passwd,group,configs,ownership,captured.read_text(errors='replace'),publication_hilog)
         report['serial_sha256']=digest(captured)
         report['serial']=str(captured)
         report['ownership']=ownership
