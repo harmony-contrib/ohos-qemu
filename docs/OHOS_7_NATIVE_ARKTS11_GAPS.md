@@ -37,6 +37,15 @@ phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其
 工具入口/目录配置失败记录，不用Stage构建冒充FA。尚待后续新镜像真实启动，
 验证常量、FA上下文和既有调用，并执行Stage回归；此缺口仍未关闭。
 
+已整理独立仓库入口 `ci/capability-audit/build_fa_particle_probe.py --output <新目录>
+--sdk <API26 SDK> --hvigor-home <官方hvigor目录> --node-home <Node目录>`。
+该入口实际编译 `fa-particle-caller-r21-06` 成功，unsigned HAP SHA-256
+`6acb70629fb717c68249b42097430eb27601d6891c99332906a3f15daf8fb888`；
+确认打包的是FA的config.json且无额外权限，并记录源码、SDK、构建器及产物校验值。
+新增5项验证器边界与相邻3项注册测试均通过，
+`fa-particle-host-boundaries-r21-01.log`。验证器要求真实上下文与既有调用身份一致，
+不接受最终complete掩盖前序失败；单独FA通过也不自动关闭缺口或代替Stage回归。
+
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
 R20新归档：
