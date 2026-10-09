@@ -73,6 +73,40 @@ bundle、重复配置/ZIP成员，且仍要求真实code-sign、digest、证书�
 见`host-regression-r21-07.log`/`08.log`/`09.log`，最后的调用器上下文调整后
 6项FA验证器与5项签名边界测试通过，尚不宣称最新全量回归或客体门禁通过。
 
+### 2026-10-10 R21首包已打包，运行验收未放行
+
+归档 `/Volumes/PSSD/qemu/packages/first-settings-source-7.0-release-20261009-r21/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `30b448fa8376eb42234150efdb1c77073d18733df71b24c799ac66fd7cc06389`。
+冻结输入`phone-1n55Zn`（5dd98d1，tree
+`893f0a4302e4bca5e56147fbeebf0c044203279be3dcac89c4a94893a8239a6c`），
+本地Docker实际构建退出0，约1小时36分；镜像内Settings源码/ABI/签名检查通过。
+**R21没有后续FA常量补丁，不是该补丁的正向验收包。**
+
+首次实际启动为macOS ARM64/HVF、arm64_virt phone，boot ID
+`339d6ccc-7c27-4a3c-8570-8f999fff624f`、HDC `127.0.0.1:52028`。
+运行`python /tmp/ohos-settings-r21-validation-8nHjf3/run-settings-r21.py`，
+脚本副本、每条实际命令、参数、校验值与结果保存于
+`r21-settings-navigation-runtime-01/`。默认稳定性和桌面验证通过，Settings实际
+以system_basic预装；零额外权限调用器的已安装IME查询与两个非法参数拒绝通过。
+输入法页面真实生成，但UITest把嵌入的UIExtension节点归入调用方窗口，原先按
+独立Settings bundle查找的断言超时；该次诊断保留fail，不能作为首包通过。
+
+新增独立测试验证器要求实际可见的UIExtension子树标题，并同时核对AMS中的
+Settings扩展、正常调用方、互相引用的PID、各自真实UID及前台状态；不能用
+调用方自己的同名文本代替provider。3项主机边界覆盖错UID/宿主/状态、重复
+provider以及伪造在扩展外的标题，均通过。仍须重新启动同一归档实测。
+
+FA对照已确认Service真实上下文和Promise getAbilityInfo可用、常量缺失；
+旧FA callback以`{code:0}`表示成功，测试适配这个既有协议并继续严格核对
+回调结果，不修改系统错误码。调用器`fa-particle-caller-r21-10`实际编译通过，
+SHA-256 `2b0c9db848390c1b7aaa4ddc9b0fc73dd1a0cbe178258a41040fa9ffd472bb26`。
+完整1135项主机回归`host-regression-r21-10.log`通过（此后新增的3项单测另计）。
+
+`02.log`/`03.log`记录主机临时venv文件缺失导致的导入失败，两次均未启动guest。
+保留失败环境与日志，另建证据目录下的`host-validation-venv-r21-01`，实际安装
+相同Pillow 12.3.0后执行`04`复验；不修改归档、权限或既有断言来规避环境故障。
+其余五包仍未开始，完整首包能力门禁尚未通过。
+
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
 R20新归档：

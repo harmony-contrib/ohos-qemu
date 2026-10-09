@@ -75,7 +75,8 @@ export default {
         {bundleName: info.bundleName, name: info.name, type: info.type,
          contextPresent: context !== null && typeof context === 'object'});
       const abilityInfo = await new Promise((resolve, reject) => {
-        particleAbility.getAbilityInfo((error, value) => error ? reject(error) : resolve(value));
+        particleAbility.getAbilityInfo((error, value) =>
+          error && error.code !== 0 ? reject(error) : resolve(value));
       });
       report('particle.context', abilityInfo.bundleName === info.bundleName && abilityInfo.name === info.name &&
         abilityInfo.type === 2 ? 'pass' : 'fail', abilityInfo);
