@@ -1,5 +1,26 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 显示模式读回新增阻断证据
+
+新增只读 `screen_modes_readback.cpp`，使用真实产品 ScreenManager 头文件、
+Ninja 编译参数及 libdm/libutils 链接，不设置模式、不向普通应用授权。ARM64
+实际编译链接通过：`screen-modes-readback-build-r23-01/build.json`。
+ARMv7a / x86_64 的尝试因现有 out 缺少对应实际产品库而明确失败，保留各自
+`screen-modes-readback-build-r23-{armv7a,x86_64}-01`；不能算三 ABI 构建通过。
+
+新 R21 客体 `r21-settings-screen-boundary-runtime-01`，boot
+`d27077ab-6677-4bc0-9c5a-cfaa40652c90`，测试输入树
+`aa998d42b6c49183338f7717423458f5e64404134d8a711493ce0aa266b53a3f`：
+原输入 Settings 导航通过；零权限普通调用者 `screen.getAllScreens()` 实际
+返回 202，权限负向边界通过。但独立 root 只读 GetAllScreens 返回 DM_OK 和
+空列表，诊断整体为失败。正在进一步核对真实显示服务、模式与 IPC 数据链路，
+尚不能认定具体原因，更不能把刷新率页面候选或刷新率能力算作修复完成。
+电源有限测试设置已恢复，诊断 VM 已关闭，失败原始证据保留。
+
+新增模式读回解析的四项主机边界测试通过，只允许实际主屏、实际模式 ID 和
+当前分辨率，不推导 UI 呈现或普通应用权限。此前全量主机回归
+`host-regression-r23-04.log` 的 1165 项通过（199.403 秒）。
+
 ## 2026-10-10 FA 原始证据复核与正式门禁候选
 
 新增 `verify_fa_particle_results.verify_evidence`，重新核对同包/同 boot/架构、
