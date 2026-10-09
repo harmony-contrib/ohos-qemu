@@ -91,6 +91,32 @@ R19已冻结构建输入，尚不含此后新增参数候选；相机方向确�
 namespace，不能用一个同名函数、空对象或错误常量关闭缺口。
 本候选尚不在冻结的 R19 中，必须随下一代表包启动验收；未启动其他五包。
 
+### Settings 完整源码应用候选（预装授权待确认，尚未启用）
+
+同一固定提交还包含旧 phone 预编译 HAP 缺失的真实 Settings 扩展实现。
+`settings/source_provider` 已准备独立源码构建补丁、三个 ABI、固定 HAR 依赖和签名配置
+准备脚本；目前未接入公共构建配方，也未替换镜像中的旧 HAP。构建工具未使用的
+fs-extra/execa 声明已移除（所有源码构建脚本无引用），不再触发用户 npmrc 配置错误。
+
+本地 Docker 隔离编译通过（3分40秒），代码签名、摘要、权限签名和完整 HAP 验签通过。
+候选保存在 `issue-20-20261006/settings-source-candidate-r20/Settings-source-candidate.hap`，
+SHA-256 `b5de32dbec789a2b10245a01a3f3528d462c816f43f498a961284d06e65e44ae`。
+`inspection.json` 检查三种 ABI 的六个 ELF 库及42个扩展入口；包括
+SettingsExtService、IgnoreRepeatClickExtService、OpenNetworkUIExtensionAbility。
+两个无障碍 service 的 ACCESS_SYSTEM_SETTINGS 调用权限未改。
+来源、命令与编译结果见 `settings-source-provider-compile-r20-03.log`，验签结果见
+`settings-source-signature-r20-01.log`；01保留OHPM TLS下载失败，02保留首次构建诊断。
+依赖通过原版本官方 HAR 下载并固定 SHA-256，未使用任意最新版本。
+
+原源码 profile 的 APL 为 system_basic。准备脚本只更新过期 profile 的 OS 证书和
+有限有效期，不改变 bundle、APL、ACL、请求权限或添加特权；实际CMS和工具验签均通过，
+再次准备保持相同结果。原有完整权限内容的比较保存在候选检查证据中。
+但当前 QEMU 启用 USE_PRE_BUNDLE_PROFILE，且没有 Settings 的预装 capability 条目；
+BMS 对 SERVICE 扩展要求 allowAppUsePrivilegeExtension。该最小、绑定具体 bundle 和
+OS 证书的预装授权已单独请求确认，未提前启用。缺失的 ExternalCommonUIExtensionAbility、
+页面实际运行、服务调用、回归与各设备画像仍需后续修复/验收，不能以该 HAP 编译和签名
+结果关闭整个 Settings、无障碍、网络或全部缺口。
+
 ### 首包修复过程与保留失败
 
 R17后续：`0e8aec4` 的1019项主机回归通过。全分区 staging 占位文件扫描又发现
