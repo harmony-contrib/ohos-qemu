@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import time
 
-from guest_ui import bounds, select_node
+from guest_ui import LayoutNotReady, bounds, select_node
 from run_root_probe import digest
 
 
@@ -52,6 +52,26 @@ def dialog_control(layout, bundle, kind):
     raise ValueError('unknown Photos test dialog')
 
 
+def await_dialog_control(ui, bundle, kind, *, timeout=30, clock=time.monotonic, sleep=time.sleep):
+    """Wait for the real dialog during transitions, never accept a failed dump."""
+    deadline = clock() + timeout
+    last_error = None
+    while clock() < deadline:
+        try:
+            layout, path = ui.layout(label='photos-' + kind)
+        except LayoutNotReady as error:
+            # The raw failed command is retained by the enclosing runner.
+            # Other command, transport, nonce or JSON errors are not retried.
+            last_error = error
+        else:
+            try:
+                return path, dialog_control(layout, bundle, kind)
+            except ValueError as error:
+                last_error = error
+        sleep(0.5)
+    raise ValueError('real Photos dialog did not become uniquely usable before deadline: ' + kind) from last_error
+
+
 def exercise(ui, bundle, poll, run_id):
     actions = []
 
@@ -68,16 +88,7 @@ def exercise(ui, bundle, poll, run_id):
         actions.append(action)
 
     def dialog(kind):
-        deadline = time.monotonic() + 30
-        while True:
-            layout, path = ui.layout(label='photos-' + kind)
-            try:
-                node = dialog_control(layout, bundle, kind)
-                break
-            except ValueError:
-                if time.monotonic() >= deadline:
-                    raise
-                time.sleep(0.5)
+        path, node = await_dialog_control(ui, bundle, kind)
         screen = ui.screenshot(label='photos-' + kind)
         left, top, width, height = node['rect']
         ui.shell('uitest uiInput click ' + str(left + width // 2) + ' ' + str(top + height // 2),

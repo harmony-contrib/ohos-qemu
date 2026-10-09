@@ -11,6 +11,17 @@ import secrets
 import shlex
 
 
+class GuestUiCommandError(ValueError):
+    def __init__(self, label, exit_code, output):
+        super().__init__('packaged UITest operation failed or lost its guest exit status: ' + label)
+        self.exit_code = exit_code
+        self.output = output
+
+
+class LayoutNotReady(ValueError):
+    """Exact packaged UITest window-enumeration failure; never a valid layout."""
+
+
 def bounds(value):
     match = re.fullmatch(r'\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]', value or '')
     if not match:
@@ -69,7 +80,8 @@ class GuestUi:
             script + '; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"'], label)
         match = re.search(r'(?:^|\n)' + re.escape(marker) + r'(\d+)\s*$', result.replace('\r', ''))
         if not match or match.group(1) != '0' or '[Fail]' in result:
-            raise ValueError('packaged UITest operation failed or lost its guest exit status: ' + label)
+            raise GuestUiCommandError(label, int(match.group(1)) if match else None,
+                                      result[:match.start()].strip() if match else result)
         return result[:match.start()].rstrip('\n')
 
     def remote(self, suffix):
@@ -81,7 +93,12 @@ class GuestUi:
         script = 'test ! -e ' + shlex.quote(remote) + ' && uitest dumpLayout -p ' + shlex.quote(remote)
         if bundle:
             script += ' -b ' + shlex.quote(bundle)
-        self.shell(script, label + '-dump')
+        try:
+            self.shell(script, label + '-dump')
+        except GuestUiCommandError as error:
+            if error.exit_code == 1 and error.output == 'DumpLayout failed:Get window nodes failed':
+                raise LayoutNotReady(error.output) from error
+            raise
         text = self.shell('cat ' + shlex.quote(remote), label + '-read')
         layout = json.loads(text)
         local = self.output / (str(self.sequence).zfill(3) + '-' + label + '.json')

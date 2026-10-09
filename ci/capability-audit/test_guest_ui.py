@@ -3,8 +3,9 @@ import unittest
 import subprocess
 import tempfile
 import json
+import re
 
-from guest_ui import GuestUi, bounds, select_node
+from guest_ui import GuestUi, GuestUiCommandError, LayoutNotReady, bounds, select_node
 
 
 def node(identifier, *, bundle='', children=None, visible='true', **extra):
@@ -14,6 +15,23 @@ def node(identifier, *, bundle='', children=None, visible='true', **extra):
 
 
 class GuestUiTests(unittest.TestCase):
+    def test_only_exact_window_enumeration_error_is_classified_as_not_ready(self):
+        with tempfile.TemporaryDirectory() as work:
+            for code, text, expected in (
+                (1, 'DumpLayout failed:Get window nodes failed', LayoutNotReady),
+                (2, 'DumpLayout failed:Get window nodes failed', GuestUiCommandError),
+                (1, 'DumpLayout failed:permission denied', GuestUiCommandError),
+                (1, '[Fail] connection lost', GuestUiCommandError)):
+                def command(argv, label):
+                    marker = re.search(r'(__UITEST_EXIT_[0-9a-f]+__=)', argv[-1])[1]
+                    return text + '\n\n' + marker + str(code) + '\n'
+                ui = GuestUi(command, 'fixture', 'fixture', work)
+                with self.subTest(code=code, text=text), self.assertRaises(expected):
+                    ui.layout()
+            ui = GuestUi(lambda argv, label: 'DumpLayout failed:Get window nodes failed\n',
+                         'fixture', 'fixture', work)
+            with self.assertRaises(GuestUiCommandError): ui.layout()
+
     def test_real_window_bundle_is_inherited_and_exact_id_is_required(self):
         layout = node('', children=[node('', bundle='org.example', children=[node('surface')]),
                                     node('surface', bundle='org.other')])
