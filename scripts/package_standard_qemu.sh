@@ -3105,6 +3105,9 @@ PY
     python3 "${SCRIPT_DIR}/verify_photos_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/photos-provider-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_settings_provider_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
+      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/settings-provider-evidence.json"
     python3 "${SCRIPT_DIR}/verify_font_assets_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --output "${PACKAGE_DIR}/font-assets-evidence.json"
     python3 "${SCRIPT_DIR}/verify_boot_assets_image.py" \

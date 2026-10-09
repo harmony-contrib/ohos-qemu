@@ -294,6 +294,10 @@ CALENDAR_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/calend
 PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/photos/source_provider/apply.sh"
 PHOTOS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/photos_provider/apply.sh"
 PHOTOS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/photos_provider/apply.sh"
+SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/source_provider/apply.sh"
+SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/external_input/apply.sh"
+SETTINGS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/settings_provider/apply.sh"
+SETTINGS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/settings_provider/apply.sh"
 PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_facard/apply.sh"
 SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
@@ -2988,6 +2992,18 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_prebuilt_component.log"
   bash "${PHOTOS_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_signing_component.log"
+  bash "${SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_source_provider_component.log"
+  bash "${SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_external_input_component.log"
+  python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
+    --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/settings-source-dependencies" \
+    --evidence "${CACHE_ROOT}/logs/settings-source-preparation.json" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_settings_source_dependencies.log"
+  bash "${SETTINGS_PREBUILT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_prebuilt_component.log"
+  bash "${SETTINGS_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_signing_component.log"
   bash "${PHOTOS_FACARD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

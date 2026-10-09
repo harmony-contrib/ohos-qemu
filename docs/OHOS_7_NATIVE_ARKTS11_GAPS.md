@@ -17,6 +17,33 @@ phone排除10项，2in1排除9项；不排除整个ArkUI、分布式存储、其
 
 ## 2026-10-09 R14 实测与下一首包候选
 
+### Settings 最小授权获批并接入下一首包构建
+
+用户已批准仅对 `com.ohos.settings` 与固定OS应用签名
+`8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5`
+启用 `allowAppUsePrivilegeExtension`。主脚本在部件遍历之前应用真实源码构建、
+受限输入法UI入口及依赖准备，移除旧 `Settings.hap` 预编译目标，并同步该应用
+原有GET_INSTALLED_BUNDLE_LIST授权的签名；不增加该权限、不改变其他应用配置。
+`Launcher_Settings.hap`、SettingsData及其他Settings相关包保留。
+未修改BMS、`system_basic`、原始ACL、服务权限或全局扩展授权规则。
+
+新增 `verify_settings_provider_image.py` 在实际system.img中核对唯一Settings HAP、
+43个扩展、三个ABI的6个ELF、真实签名与嵌入profile、两个实际预装策略文件。
+profile校验从固定源码原始CMS重建允许差异，只接受OS证书与既定有限到期时间变更；
+原ACL/权限/APL及profile签发者必须保持一致。
+SettingsExtService/IgnoreRepeatClickExtService仍要求ACCESS_SYSTEM_SETTINGS，
+输入法外部扩展保持独立instance会话。
+
+隔离源码实际签名候选
+`issue-20-20261006/settings-external-input-candidate-r20/Settings-external-input-signed.hap`，
+SHA-256 `ae71d84a3cc0647443e09b23f4cd71d59583a98f0e1610c9ddeb51c62d64725c`。
+实际运行 `verify_settings_provider_image.py --hap ... --source-root ... --arch arm64` 通过，
+证据为同目录 `settings-provider-evidence.json`。对实际预装配置副本重复应用两次通过；
+39项Settings主机回归通过，包含未知签名/额外权限/符号链接拒绝及服务权限、会话、
+profile不变性检查。以上均非guest验收，不关闭Settings行为缺口。
+正在验证的R20归档仍使用此前冻结输入，不包含这一批Settings改动；须重打下一首包
+并从归档启动验证BMS安装、真实页面、取消及权限拒绝路径后才能认定修复。
+
 ### Photos 真实资产回读流程纳入仓库独立测试候选
 
 将R18已实测的普通应用流程整理为 `run_normal_hap_probe.py --persona photos-asset`：
