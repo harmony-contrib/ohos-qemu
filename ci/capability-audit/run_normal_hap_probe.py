@@ -92,6 +92,15 @@ def result_directory(persona):
     return APP_BASE + 'haps/entry/files/' if persona == 'camera' else APP_FILES
 
 
+def reject_terminal_web_failure(persona, text):
+    """Capture the real failure promptly, before the system log ring rolls over."""
+    if persona != 'web':
+        return
+    for line in text.splitlines():
+        if line in ('web.reload.timeout=true', 'web.renderer.recovery.timeout=true'):
+            raise ValueError('actual Web terminal failure: ' + line)
+
+
 def stop_previous_probe(shell, *, clock=time.monotonic, sleep=time.sleep):
     """Drain our previous test application before replacing its HAP."""
     reply = shell('aa force-stop ' + BUNDLE, 'stop-own-previous-audit-app', accepted_failure=True).strip()
@@ -265,6 +274,12 @@ def run(args):
             deadline = time.monotonic() + args.wait_seconds
             while time.monotonic() < deadline:
                 value = shell('cat ' + shlex.quote(remote) + ' 2>/dev/null', 'poll-own-result', accepted_failure=True)
+                if args.persona == 'web':
+                    # The application and core log rings have different
+                    # retention. Preserve lifecycle evidence while it exists;
+                    # this read-only diagnostic never determines a pass.
+                    shell('hilog -x -D 0xD001311', 'web-lifecycle-appmgr', accepted_failure=True)
+                reject_terminal_web_failure(args.persona, value)
                 if marker in value and value.endswith('\n'):
                     return value
                 time.sleep(2)

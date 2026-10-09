@@ -7,10 +7,24 @@ import tempfile
 import unittest
 
 from run_normal_hap_probe import (BUNDLE, PERSONAS, previous_probe_absent, require_normal_identity, result_directory,
-                                  run, stop_previous_probe, verifier_arguments)
+                                  reject_terminal_web_failure, run, stop_previous_probe, verifier_arguments)
 
 
 class NormalHapRunnerTests(unittest.TestCase):
+    def test_terminal_web_timeout_fails_even_if_completion_arrives_later(self):
+        for marker in ('web.reload.timeout=true', 'web.renderer.recovery.timeout=true'):
+            for suffix in ('', '\nweb.execution.complete=true\n'):
+                with self.subTest(marker=marker), self.assertRaisesRegex(ValueError, 'Web terminal failure'):
+                    reject_terminal_web_failure('web', marker + suffix)
+
+    def test_web_diagnostic_does_not_decide_pass_or_reject_other_personas(self):
+        for text in ('', 'web.renderer.terminate.result=true\n',
+                     'web.js.exception.result=Error:QEMU_WEB_EXPECTED_ERROR\n'):
+            self.assertIsNone(reject_terminal_web_failure('web', text))
+        self.assertIsNone(reject_terminal_web_failure('web-factory', 'web.reload.timeout=true'))
+        source = Path(__file__).with_name('run_normal_hap_probe.py').read_text()
+        self.assertIn("shell('hilog -x -D 0xD001311', 'web-lifecycle-appmgr'", source)
+
     def test_camera_uses_actual_module_context_private_results_and_photos(self):
         self.assertEqual(result_directory('camera'), '/data/app/el2/100/base/' + BUNDLE + '/haps/entry/files/')
         for persona in PERSONAS:
