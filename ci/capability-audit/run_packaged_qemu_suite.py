@@ -276,7 +276,7 @@ def run(args):
         same_guest('after-certificate-both-roles')
         normal_results = {}
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
-                    'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'photos-recent', 'photos-asset')
+                    'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset')
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
@@ -295,6 +295,8 @@ def run(args):
                 check('arkweb', path, [record])
             if persona == 'photos-asset':
                 check('photos-asset', path, [record])
+            if persona == 'settings-navigation':
+                check('settings-navigation', path, [record])
             same_guest('after-' + persona)
         service_init_record = command([sys.executable,
             Path(__file__).with_name('run_service_init_contract_probe.py'),

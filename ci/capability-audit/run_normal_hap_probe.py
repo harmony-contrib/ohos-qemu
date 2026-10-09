@@ -44,6 +44,8 @@ PERSONAS = {
     'binding': ('--binding-only', 'binding-{run}-results.log', '"summary"', 'verify_binding_results.py'),
     'photos-recent': ('--photos-recent-only', 'photos-recent-{run}-results.log', '"summary"', 'verify_photos_recent_results.py'),
     'photos-asset': ('--photos-asset-only', 'photos-asset-{run}-results.log', '"asset.readback"', 'verify_photos_asset_results.py'),
+    'settings-navigation': ('--settings-navigation-only', 'settings-navigation-{run}-results.log',
+                            '"sequence":8', 'verify_settings_navigation_results.py'),
     'optional-phone-profile': ('--optional-phone-profile-only', 'optional-phone-profile-{run}-results.log',
                                '"summary"', 'verify_optional_phone_profile_results.py'),
     'arkts-exports': ('--arkts-exports-only', 'arkts-exports-{run}-results.log',
@@ -133,7 +135,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('photos-recent', 'photos-asset'):
+    if persona in ('photos-recent', 'photos-asset', 'settings-navigation'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -269,6 +271,17 @@ def run(args):
             raise ValueError('actual application regression did not complete before timeout')
 
         ui_arguments = []
+        if args.persona == 'settings-navigation':
+            from settings_navigation_ui import exercise
+            ui = GuestUi(command, args.hdc, args.target, args.output / 'ui')
+            actions = exercise(ui, poll_result, challenge, report['ordinary_uid'])
+            actions_path = args.output / 'settings-navigation-actions.json'
+            actions_path.write_text(json.dumps(actions, indent=2) + '\n')
+            inputs = project / 'settings-navigation-probe-inputs.json'
+            report.update(settings_navigation_actions=str(actions_path),
+                          settings_navigation_actions_sha256=checksum(actions_path),
+                          compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
+            ui_arguments += ['--actions', str(actions_path), '--inputs', str(inputs), '--sdk', str(args.sdk)]
         if args.persona == 'photos-asset':
             from photos_asset_ui import exercise
             ui = GuestUi(command, args.hdc, args.target, args.output / 'ui')

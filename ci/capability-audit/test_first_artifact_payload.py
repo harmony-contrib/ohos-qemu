@@ -25,7 +25,7 @@ class FirstArtifactPayloadTests(unittest.TestCase):
 
     def test_generic_text_or_pass_document_cannot_satisfy_any_required_behavior(self):
         for name in ('boot', 'arkweb', 'vulkan', 'native-bindings-e2e', 'cxx-arkts11-gaps',
-                     'issue20-library-exit', 'power-suspend', 'serial', 'certificate-manager', 'rs-objects', 'application-home', 'photos-asset'):
+                     'issue20-library-exit', 'power-suspend', 'serial', 'certificate-manager', 'rs-objects', 'application-home', 'photos-asset', 'settings-navigation'):
             self.reject(name, {'status': 'pass'})
         self.path.write_text('a command printed success; no actual behavior proof')
         with self.assertRaises(ValueError):

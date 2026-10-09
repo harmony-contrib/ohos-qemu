@@ -122,6 +122,41 @@ Promise/callback getAbilityInfo和getAbilityName全部正常；两个进程同�
 在保留R21不变的前提下，下一代表包纳入已批准的常量补丁再做正向及Stage回归；
 不会由这个负对照直接放行剩余五包。
 
+### R22构建与仓库Settings验收入口统一
+
+已启动单一R22 ARM64 phone本地Docker构建，加入批准的FA常量补丁。
+输入`phone-SymNve`（3b07b4f），tree
+`351d163eeff7d6280b97f5ef8fb3295ca299561200cc62d4a45bf91e22a062e3`；
+构建记录`first-fa-constant-arm64-phone-build-r22-01.log`，计划归档目录
+`/Volumes/PSSD/qemu/packages/first-fa-constant-7.0-release-20261010-r22/`。
+后续只对该归档启动FA正向/Settings复验，再执行同归档的完整Stage/native回归；
+链路状态`r22-build-then-validation.json`，没有启动剩余五包。
+最新1138项主机回归已通过，`host-regression-r21-11.log`。
+
+新增仓库入口`run_normal_hap_probe.py --persona settings-navigation`，复用统一
+新调用器构建、普通签名、独立安装、boot ID校验与原始证据记录。输入法列表与
+真实已安装IME详情各执行2轮，参数拒绝、8条观察、实际可见标题、4次Back返回、
+Settings/宿主双向PID与UID、合成器标题区域均单独断言；离线验证器重新读取
+原始文件并校验hash，不接受仅返回void或外层pass。
+
+`r21-settings-repository-runtime-01`在启动前因使用不同冻结脚本被拒绝，保留fail；
+没有放宽启动门禁。`02`改用R21原冻结启动器，另外记录测试入口的冻结输入
+`settings-runner-inputs-r22-01`，tree
+`5aee2a77a1852f5c2e23f97b81089b24793480108bba2792610437e7e691761f`。
+新guest boot ID `1eaafa08-1613-40a9-9178-1f2d63b9f5ec`、HDC
+`127.0.0.1:52044`、新调用器nonce `7e457d04c4f51d142f5a56654c5fb084`；
+真实运行和独立原始证据复核均通过，电源设置恢复，VM关闭。
+首包与归档SHA仍为上面的R21值；这证明统一测试入口，不将旧包算作FA正向修复。
+
+据此把Settings输入法导航加入两个画像的完整suite和独立首包必测集合。
+15项相关边界测试及10项首包门禁测试通过；此前1143项全量主机回归见
+`host-regression-r22-01.log`（后续新增的截图/门禁测试另计）。
+新增测试明确拒绝相同标题出现在非扩展子树、后台/错UID/不互相绑定的进程、
+重复或缺失观察、篡改/空白标题截图。该子集仍`closed: []`，不关闭整个Settings
+缺口，也不宣称network/display或输入法开关操作已验收。
+正在构建的R22冻结输入早于此次测试入口提升，不追改其构建记录；最终六包
+仍必须来自包含最新必测项的统一仓库脚本并通过各自验收。
+
 ### R20完整回归结果与R21准备（未通过完整交付门禁）
 
 R20新归档：
