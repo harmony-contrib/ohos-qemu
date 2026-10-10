@@ -122,6 +122,21 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'not_claimed': 'hot_transitions_or_real_physical_temperature'}
 
     quota = child('project-quota/result.json')
+    hitrace = child('hitrace/diagnostic.json')
+    if hitrace:
+        from verify_hitrace_evidence import verify_evidence as verify_hitrace
+        boot_path = runtime / 'boot/boot.json'
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (hitrace[1].get('enclosing_boot') != str(boot_path.resolve()) or
+                environment.get('device_type') != device_type):
+            raise ValueError('HiTrace closure requires this exact suite-owned acceptance guest')
+        actual = verify_hitrace(hitrace[1], archive_sha, boot_id, environment['guest_arch'])
+        for identifier in actual['closed']:
+            closed[identifier] = {'evidence': str(hitrace[0]), 'sha256': digest(hitrace[0]),
+                'verifier': 'ordinary_public_Cxx_ArkTS_calls_matched_to_real_kernel_trace_and_restored_policy',
+                'not_claimed': actual['not_claimed']}
+
     storage = child('storage-stats/evidence.json')
     if quota and storage:
         from verify_storage_quota_closure import verify as verify_storage_quota

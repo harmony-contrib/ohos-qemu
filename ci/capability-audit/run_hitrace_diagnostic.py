@@ -17,7 +17,10 @@ parser = argparse.ArgumentParser(description=__doc__)
 for name in ('archive', 'output', 'sdk', 'hdc'):
     parser.add_argument('--' + name, type=Path, required=True)
 parser.add_argument('--owned-child', action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('--boot', type=Path, help='Use the enclosing acceptance guest; do not boot, stop or change its power policy')
 args = parser.parse_args()
+if args.boot and not args.owned_child:
+    parser.error('--boot requires the enclosing suite transport (--owned-child)')
 ARCHIVE, OUTPUT, SDK, HDC = args.archive.resolve(), args.output.resolve(), args.sdk.resolve(), args.hdc.resolve()
 BASE = OUTPUT.parent
 BOOT_INPUTS = ROOT  # Acceptance boot verifies this checkout matches the packaged frozen inputs.
@@ -41,9 +44,13 @@ OUTPUT.mkdir(exist_ok=False)
 with socket.socket() as reservation:
     reservation.bind(('127.0.0.1', 0))
     port = reservation.getsockname()[1]
-guest = QemuGuest(argparse.Namespace(archive=ARCHIVE, output=OUTPUT / 'boot', hdc=str(HDC),
-    hdc_port=port, accel='auto', resolution='1280x800', purpose='acceptance', wait_seconds=1800,
-    stable_seconds=60, kernel_diagnostic=None, power_diagnostic_wakeup=False, hold=False))
+if args.boot:
+    from enclosing_acceptance_guest import EnclosingAcceptanceGuest
+    guest = EnclosingAcceptanceGuest(args.boot, ARCHIVE, HDC, OUTPUT / 'guest-commands')
+else:
+    guest = QemuGuest(argparse.Namespace(archive=ARCHIVE, output=OUTPUT / 'boot', hdc=str(HDC),
+        hdc_port=port, accel='auto', resolution='1280x800', purpose='acceptance', wait_seconds=1800,
+        stable_seconds=60, kernel_diagnostic=None, power_diagnostic_wakeup=False, hold=False))
 nonce = secrets.token_hex(16)
 report = dict(status='fail', scope='fresh_archive_ordinary_Cxx_ArkTS_kernel_trace_NOT_all_API_or_full_gate',
     run_id=nonce, archive=str(ARCHIVE), archive_sha256=checksum(ARCHIVE), runner_sha256=checksum(Path(__file__)),
@@ -72,14 +79,22 @@ try:
     guest.start()
     env = guest.report['test_environment']
     report['test_environment'] = env
-    command([sys.executable, BOOT_INPUTS / 'ci/capability-audit/run_application_home_probe.py',
-        '--boot', OUTPUT / 'boot/boot.json', '--output', OUTPUT / 'home', '--hdc', HDC], 'actual-home')
+    report.update(boot_id=env['boot_id'], arch=env['guest_arch'], device=env['device_type'])
+    if not args.boot:
+        command([sys.executable, BOOT_INPUTS / 'ci/capability-audit/run_application_home_probe.py',
+            '--boot', OUTPUT / 'boot/boot.json', '--output', OUTPUT / 'home', '--hdc', HDC], 'actual-home')
+    else:
+        report.update(enclosing_boot=str(args.boot.resolve()), enclosing_boot_sha256=checksum(args.boot))
     before = power_timeout(guest.shell('hidumper -s 3301 -a "-a"', 'power-before'))
-    assert before['override_ms'] is None
-    override = True
-    assert guest.shell('power-shell timeout -o 86400000', 'power-setup').strip() == 'Override screen off time to 86400000'
-    setup = power_timeout(guest.shell('hidumper -s 3301 -a "-a"', 'power-confirm'))
-    assert setup == dict(before, override_ms=86400000)
+    if not args.boot:
+        assert before['override_ms'] is None
+        override = True
+        assert guest.shell('power-shell timeout -o 86400000', 'power-setup').strip() == 'Override screen off time to 86400000'
+        setup = power_timeout(guest.shell('hidumper -s 3301 -a "-a"', 'power-confirm'))
+        assert setup == dict(before, override_ms=86400000)
+    packages = guest.shell('bm dump -a', 'installed-packages-before')
+    if re.search(r'(?<![A-Za-z0-9_.])' + re.escape(BUNDLE) + r'(?![A-Za-z0-9_.])', packages):
+        raise ValueError('dedicated trace caller already installed; refuse to overwrite')
     command([sys.executable, ROOT / 'ci/capability-audit/build_hitrace_app_probe.py', '--sdk', SDK,
         '--arch', env['guest_arch'], '--run-id', nonce, '--arkdown', os.environ.get('ARKDOWN', 'arkdown'),
         '--output', OUTPUT / 'project'], 'build-actual-SDK-callers')
@@ -160,8 +175,22 @@ finally:
             report['power_restoration'] = verify_restoration(reply, before, setup, restored)
         except Exception as error:
             report['failures'].append('power restoration: ' + str(error))
+    if args.boot and before is not None:
+        try:
+            restored = power_timeout(guest.shell('hidumper -s 3301 -a "-a"', 'enclosing-power-unchanged'))
+            if restored != before:
+                raise ValueError('enclosing power policy changed')
+            if guest.shell('cat /proc/sys/kernel/random/boot_id', 'enclosing-final-boot').strip() != env['boot_id']:
+                raise ValueError('enclosing guest changed during restoration')
+            report.update(power_before=before, power_after=restored, power_restoration='unchanged_enclosing_policy')
+        except Exception as error:
+            report['failures'].append('enclosing guest restoration: ' + str(error))
     guest.close()
-    report['disposable_guest_closed'] = guest.process is None or guest.process.poll() is not None
+    if args.boot:
+        report['enclosing_guest_preserved'] = True
+        report['guest_commands'] = guest.report['commands']
+    else:
+        report['disposable_guest_closed'] = guest.process is None or guest.process.poll() is not None
     if report['failures']:
         report['status'] = 'fail'
     (OUTPUT / 'diagnostic.json').write_text(json.dumps(report, indent=2) + '\n')

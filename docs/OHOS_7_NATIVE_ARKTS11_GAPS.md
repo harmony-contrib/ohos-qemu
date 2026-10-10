@@ -1,5 +1,33 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 同客体验证接入（R31 构建期间）
+
+R30 原始归档未替换内核、库或系统镜像，补充验证得到：
+
+- `r30-router-observer-runtime-02/diagnostic.json` 通过，证据 SHA-256
+  `4534769f28eb1a2ba7b1774e4fb83a5245770388f312b0999362f64b4ca52201`。
+  修正 UIContext 引用相等的错误断言后，两轮真实页面生命周期及两种退订均通过；
+  不据此声称构造器导出、density 或 breakpoint 可用。
+- `r30-hitrace-enclosing-runtime-01/hitrace/diagnostic.json` 通过，boot
+  `6977d6bf-8f33-4d20-b5e6-06a54bef7879`，证据 SHA-256
+  `509d761079cb66e23e9dfeed6d7d790a0ab8b820be1642f06aac381592dc674b`。
+  C++/ArkTS 公共调用匹配 36 条真实内核记录；子检查复用拥有者客体，不重启、
+  不关闭客体、不改变拥有者的电源策略，并恢复 trace 配置。
+
+证据根目录与下节相同；环境仍为 macOS arm64/HVF、API26 Release SDK，
+精确构建、签名及客体命令在上述报告及 `r30-hitrace-enclosing-deferred-01.json`。
+新增重放校验覆盖实际签名 HAP 与编译负载、普通应用 UID/PID/TID、内核原始记录、
+同次启动身份及策略恢复；只登记原审计的 `behavior:hitrace-arm64-kernel` 后端缺口，
+不代表 HiTrace 全 API 或其他架构已验证。当前脚本将该检查接入完整套件和首包门禁。
+`host-regression-hitrace-gate-r31-01.log`：1366 项通过、1 项跳过，218.395 秒；
+重放上述实际客体证据也通过。主机夹具测试不替代新归档完整验收。
+
+正在构建的 R31 使用冻结输入 `phone-PGsn0J`、commit `0fd9517`，包含 display
+content rect 初始化及 Meta+I 保留表修复；冻结主机回归 1354 项通过、1 项跳过。
+**本节新增的同客体 HiTrace 门禁不在 R31 冻结输入中**，后续最终冻结必须包含它。
+首包完整验收尚未通过，剩余五包未启动；完整账本仍维持 R28 的 149 闭环、132 未闭环，
+不把补充单项结果写成全量验收成功。
+
 ## 2026-10-10 R30 实包验证与下一轮修复
 
 代表归档为
@@ -51,7 +79,7 @@ API26 Release SDK；精确命令及结果见 `r30-build-then-validation-01.json`
    `jsUIContext.js::__getUIContext__` 每次返回 `new UIContext(instanceId)`，
    该引用相等断言不属于接口承诺。测试改为读取回调上下文的真实 host 应用身份、
    filesDir 及可用 router；保留所有生命周期、页面 ID、订阅移除校验。
-   原失败记录不覆盖，arm64 API26 重新编译通过，**需新运行验证**。
+   原失败记录不覆盖，三种 ABI 的 API26 编译通过，后续 R30 第二次实测通过（见上节）。
 
 `host-regression-display-init-r31-01.log`：1353 项通过、1 项平台夹具跳过，
 201.903 秒（后续 reservation/context 调整另行补回归）。稳定性工具 registry

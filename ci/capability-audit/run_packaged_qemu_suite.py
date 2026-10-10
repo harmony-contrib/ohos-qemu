@@ -353,6 +353,12 @@ def run(args):
             if persona == 'network-accounting':
                 check('network-accounting', path, [record])
             same_guest('after-' + persona)
+        hitrace_record = command([sys.executable, Path(__file__).with_name('run_hitrace_diagnostic.py'),
+            '--archive', args.package_archive, '--sdk', sdk, '--hdc', hdc,
+            '--boot', work / 'boot/boot.json', '--owned-child', '--output', work / 'hitrace'],
+            'ordinary-public-HiTrace-real-kernel-records', timeout=2400, env=child_env)
+        check('hitrace', work / 'hitrace/diagnostic.json', [hitrace_record])
+        same_guest('after-public-HiTrace-kernel-records')
         service_init_record = command([sys.executable,
             Path(__file__).with_name('run_service_init_contract_probe.py'),
             '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
