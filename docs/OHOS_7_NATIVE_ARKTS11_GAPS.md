@@ -34,6 +34,26 @@ boot ID `aac171ec-cb5b-407e-b15c-c8f40927e501`：
 
 **完整首包门禁未通过，其余五包未启动。完整账本仍采用 R28：281 项中 149 闭环、132 未闭环。**
 
+同归档后续独立回归（`run-r32-independent-followups-01.py`，仍使用冻结输入）均通过：
+
+- `r32-shortkey-runtime-01/diagnostic.json` SHA
+  `8a27a7447851c2d360c103e48f08a6b98699b102106f0c3d76f7c2fd9df1d32b`：
+  两轮真实键盘短按/错误修饰键不触发、长按打开 Settings 和返回。不是 duration API 完整验收。
+- `r32-wifi-runtime-01/diagnostic.json` SHA
+  `5678a98359346c5ef3b19fe95520c5c1155917c6438c3199c630c689bf57b8d4`：
+  实际 WPA 扫描及频段通过，不包含关联、热点、P2P 或 PNO。
+- `r32-hitrace-runtime-01/diagnostic.json` SHA
+  `e890248d0c31d6bb9a2f26605c5cb0c0ce990632351924698bdd2c1cdcc171bd`：
+  HiTrace 独立新包诊断通过，不替代完整能力验收。
+
+三者均恢复电源策略并关闭临时客体。`retired-r32-passed-disks-01.json` 记录仅回收
+已关闭且通过的快捷键/Wi-Fi 两套扩展磁盘，归档及全部原始测试证据保留。
+`diagnose-r32-navigation-freeze-02.py` 增加只读堆栈观察后复现原导航测试，本次通过，
+报告 SHA `d102a41957c1e32c2b4c7dd2cdf20000abb80dc4ff7387232bfa3ba742b814b9`；
+未触发五秒迟滞采样，**不能证明原间歇阻塞已修复**。
+另启 `diagnose-r32-navigation-stress-03.py` 在同一客体最多八轮运行原冻结普通应用
+Settings 导航测试，失败立即停止并保留现场；该诊断不启动其他五包、不覆盖原失败记录。
+
 ## 2026-10-10 热点超时状态校正及历史临时磁盘回收
 
 R31 的实际失败还暴露 phone Settings 显示缺陷：五秒 watchdog 只上报超时，
