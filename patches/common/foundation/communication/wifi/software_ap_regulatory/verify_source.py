@@ -11,7 +11,7 @@ PREFIX = 'wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/'
 FILES = [
     ('wifi/bundle.json',
      'b4f898dee44d3511dc9a3ff538555e24e7c94d4db97b00259a56399a5b042663',
-     '36b52d373716c64320fb80c0b41717a124aeed84cafdb1629787650b2504ea87'),
+     'e332c36c87abbb4dedbf13cfce874a308bd78c8798d5e9485e3bbbad6fd98572'),
     (PREFIX + 'BUILD.gn',
      '6bac12cbcd000dd3f6b4c8818915b3a4190e985a568c2ceef30643f8c327f499',
      '58296eadc02493d94be6e92a7369c3f85aaf9bc4195655cdae38ce76cf89766d'),

@@ -1,14 +1,14 @@
 diff --git a/foundation/communication/wifi/wifi/bundle.json b/foundation/communication/wifi/wifi/bundle.json
 --- a/foundation/communication/wifi/wifi/bundle.json
 +++ b/foundation/communication/wifi/wifi/bundle.json
-@@ -143,6 +143,7 @@
-             ],
-             "third_party": [
-                 "googletest",
+@@ -121,6 +121,7 @@
+                 "image_framework",
+                 "init",
+                 "ipc",
 +                "libnl",
-                 "wpa_supplicant"
-             ]
-         },
+                 "napi",
+                 "netmanager_base",
+                 "netmanager_ext",
 diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn
 --- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn
 +++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn

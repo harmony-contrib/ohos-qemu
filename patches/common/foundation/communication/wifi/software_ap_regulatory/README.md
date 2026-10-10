@@ -26,3 +26,8 @@ representative archive and ordinary Settings regression before closure.
 The component pins complete source states (including the bundle's original
 missing EOF newline) and rejects partial edits. New libnl dependency is applied
 before dependency traversal through the shared local Docker build entry.
+`libnl` must be in `component.deps.components`: the real OHOS external-dependency
+checker does not consult `third_party` for `libnl:libnl_share`. R33 caught the
+initial incorrect classification before packaging. The corrected declaration is
+tested with the actual checker, including rejection of the previous metadata;
+no dependency whitelist or checking bypass is added.

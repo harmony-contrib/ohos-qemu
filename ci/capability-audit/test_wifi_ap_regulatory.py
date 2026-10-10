@@ -1,5 +1,6 @@
 """Candidate guard/callback tests; not Wi-Fi identity, AP or regulatory acceptance."""
 from pathlib import Path
+import json
 import subprocess
 import tempfile
 import unittest
@@ -16,6 +17,22 @@ def added_header():
 
 
 class WifiApRegulatoryTests(unittest.TestCase):
+    def test_libnl_external_dependency_is_a_component_not_third_party_metadata(self):
+        # The real OHOS external-deps checker consults deps.components only.
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'foundation/communication/wifi/wifi/bundle.json'
+            target.parent.mkdir(parents=True)
+            value = {'component': {'deps': {'components': [
+                'image_framework', 'init', 'ipc', 'napi', 'netmanager_base', 'netmanager_ext', 'netstack'],
+                'third_party': ['googletest', 'wpa_supplicant']}}}
+            target.write_text(json.dumps(value, indent=4))
+            subprocess.run(['git', '-C', directory, 'apply',
+                '--include=foundation/communication/wifi/wifi/bundle.json', str(PATCH)],
+                capture_output=True, text=True, check=True)
+            deps = json.loads(target.read_text())['component']['deps']
+            self.assertEqual(deps['components'].count('libnl'), 1)
+            self.assertNotIn('libnl', deps['third_party'])
+
     def test_only_software_wpa_branch_gains_backend_and_dependency(self):
         patch = PATCH.read_text()
         self.assertIn('+    } else if (wifi_feature_with_hdi_wpa_supported) {', patch)
