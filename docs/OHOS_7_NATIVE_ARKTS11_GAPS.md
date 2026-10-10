@@ -1,5 +1,28 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 图形内存统计解析修复（待新实包）
+
+固定 Hiview `graphic_memory.cpp::CreateDmaInfo` 有两个独立缺陷：
+
+- `%llu` 的 64 位目标与 `uint32_t pid` 不匹配，且只检查扫描结果等于 0，
+  导致截断行、表头和部分解析失败仍可能进入 inode 去重表。
+- 更新去重 inode 的归属 PID 时没有同步归属进程名。若先看到 composer、再看到
+  普通应用、最后看到 RS，旧的 composer 名称会使 RS 覆盖应用 PID；统计依赖枚举顺序。
+
+新增独立部件 `common/base/hiviewdfx/hiview/dmabuf_parser`，两个独立补丁分别
+按真实 32/64 位宽解析十进制字段并拒绝无效行，以及同步去重所有者的名称与 PID。
+不改变图形缓冲分配、公开接口、权限或内核统计来源；不生成虚构内存计数。
+共享 Docker 构建入口已接入，适用六种组合；正在运行的 R31 冻结包不含此修复。
+
+只读源文件 SHA-256 `9e730cafb54435d0141d931c55f071343a302db76ad509596f25c391aaed04a8`。
+`hiview-dmabuf-parser-compile-r31-03/evidence.json` 保存实际源码摘取的解析器、
+ASan/UBSan 边界运行及三 ABI SDK 目标对象编译证据；包括完整/截断记录、负数、
+溢出、64 位 inode、重复 FD，以及 composer/RS/应用六种枚举顺序。
+该结果不等于 HiDebug 公共接口实测成功，`behavior:hidebug-dmabuf-kernel` 仍未闭环；
+后续必须在新归档普通 HAP 上验证真实分配/释放前后的 C++/ArkTS 统计及内核记录。
+`host-regression-dmabuf-r31-01.log`：1370 项通过、1 项跳过，206.841 秒；
+最终枚举顺序边界又以独立实源码编译运行和定向主机测试复核通过。
+
 ## 2026-10-10 同客体验证接入（R31 构建期间）
 
 R30 原始归档未替换内核、库或系统镜像，补充验证得到：
