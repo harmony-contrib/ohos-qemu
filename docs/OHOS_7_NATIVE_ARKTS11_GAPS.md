@@ -35,7 +35,7 @@ API26 Release SDK 实际编译通过；旧包在后端读回阶段失败，未�
 01–03 的关闭/未启动临时 images 已清理，归档和所有证据保留，
 详见 `retired-thermal-images-cleanup-r26-01.json`。
 
-## 2026-10-10 R27：截图预算及回调类首包重建中
+## 2026-10-10 R27：截图预算及回调类首包已打包，运行验证中
 
 仍仅 ARM64 phone。输入冻结为 `ac556ca`、目录
 `/Volumes/PSSD/qemu/build-inputs/phone-9WIVCw`，树 SHA-256
@@ -46,7 +46,13 @@ API26 Release SDK 实际编译通过；旧包在后端读回阶段失败，未�
 固定 7.0 Release manifest 和依赖不变，先应用全部部件补丁再执行配置遍历；
 实际日志已确认 `capture_budget` 与 `completion_handler` 整体精确状态通过。
 冻结输入的 1242 项宿主检查通过（`host-regression-r27-frozen-01.log`）。
-构建尚未完成，不记录归档校验和或声明修复通过。
+本地编译成功，编译阶段耗时 46 分 53 秒；容器退出 0，归档完成：
+`/Volumes/PSSD/qemu/packages/first-capture-completion-7.0-release-20261010-r27/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `ea64ca3c5ed95a705f343ae33809238f20e5c88bd248e20ce9fb896da0edcd62`。
+离线最终镜像完整 Native 缺口 ABI 检查、画像和权限装配检查通过；
+实际 GN 已选择 `WM_QEMU_SOFTWARE_CAPTURE` 并链接 `libscreen_session_manager.z.so`，
+实际只读 screen caller 也已编译通过。现开始新归档运行验证，不声明行为修复通过。
+温控修复不在此归档内，仍须下一代表包；不能把 R27 当作最终交付包。
 
 `first-capture-completion-arm64-phone-build-r27-01.log` 记录构建；
 `r27-build-then-validation-01.json` 的等待器只在精确容器退出 0、归档完成及
