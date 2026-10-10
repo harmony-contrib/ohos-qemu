@@ -26,6 +26,24 @@ R28 root/HDC 命名空间读回固定路径为 ENOENT；**这尚不能证明 net
 服务未加载**，还需核对服务自己的挂载命名空间和实际流量。
 这些诊断新增文件不在冻结 R29 中，不修改 R29 生产输入，不关闭网络统计缺口。
 
+后续 R28 同归档的新 boot `23ba4969-4b60-4ed2-9e65-a9d8511d1743` 已确认
+这确实是挂载命名空间差异：netsysnative（实际 UID 1098）自己的 bpffs/
+cgroup2 挂载存在。只对独立的只读诊断子进程使用已有 `nsenter -m`，
+不改变服务、init 配置或任何权限后，读到 map ID 2，UID 0 的计数为
+Rx 209 包/28996 字节、Tx 159 包/34924 字节；实际进程退出 0。
+root 观察者的同一路径仍为 ENOENT，两个事实不冲突。
+
+`r28-netstats-readonly-runtime-02/boot/032-actual-netsys-mount-namespace.log`
+SHA-256 `aecdc8dcd80aa367b1fe1166cbfc28e2d2755aeb7095541408762a5b1152ffa0`；
+`033-service-namespace-map-readback.log` SHA-256
+`3cc6413c86031a527663bc7a746286d5ebd125e4e76602846ed411fb2b366cb9`。
+采集器新增同时记录观察者与服务挂载命名空间、真实服务身份、服务根目录下
+的统计表路径；仅做只读观察，4 项采集器回归通过。该非零快照仍不代替
+受控流量增量、公开 API 返回值、权限拒绝及策略变化的端到端验证。
+命名空间采集修正后的整仓主机回归为 1304 项（220.141 秒，macOS 跳过
+1 项已在 Docker 验证的 Linux 专用夹具），记录
+`host-regression-netstats-namespace-r29-01.log`。
+
 ## 2026-10-10 R28 全套运行结果与 R29 单包构建
 
 R28 独立完整运行已结束，实际归档 SHA-256

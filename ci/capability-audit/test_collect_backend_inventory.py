@@ -37,8 +37,8 @@ class BackendInventoryTests(unittest.TestCase):
             self.assertEqual(actual['status'], 'diagnostic_NOT_behavior_pass')
             self.assertFalse(actual['first_artifact_behavior_gate_passed'])
             self.assertTrue(actual['kernel_boot_id_unchanged'])
-            self.assertEqual(len(actual['observations']), 4)
-            self.assertEqual(len(guest.calls), 6)
+            self.assertEqual(len(actual['observations']), 5)
+            self.assertEqual(len(guest.calls), 7)
             self.assertEqual(behavior_results(root, BOOT, '0' * 64), {})
             for row in actual['observations']:
                 raw = Path(row['raw'])
@@ -66,12 +66,22 @@ class BackendInventoryTests(unittest.TestCase):
                               'setenforce', 'hidumper', '>>', 'rm ', 'kill ', 'mkdir '):
                 self.assertNotIn(forbidden, text)
             for path in ('/sys/class/thermal/', '/sys/class/net/', '/sys/class/bluetooth',
-                         '/vendor/etc/thermal_config/', '/system/etc/thermal_config/'):
+                         '/vendor/etc/thermal_config/', '/system/etc/thermal_config/',
+                         '/proc/$service_pid/root/sys/fs/bpf/netsys/maps'):
                 self.assertIn(path, text)
             suite = Path(__file__).with_name('run_packaged_qemu_suite.py').read_text()
             self.assertIn("collect_backend_inventory(guest, work / 'backend-inventory'", suite)
             self.assertLess(suite.index('collect_backend_inventory(guest,'),
                             suite.index("'build-actual-whole-Native-ABI-caller'"))
+
+    def test_bpf_observation_distinguishes_service_and_observer_namespaces(self):
+        script = dict(QUERIES)['netmanager-bpf-namespace']
+        for required in ('/proc/self/ns/mnt', '/proc/$service_pid/ns/mnt',
+                         '/proc/$service_pid/mountinfo', 'pidof netsysnative',
+                         '= netsysnative', '*[!0-9]*', 'NO_NETSYSNATIVE_PROCESS'):
+            self.assertIn(required, script)
+        self.assertNotIn('nsenter', script)
+        self.assertNotIn('mount -', script)
 
 
 if __name__ == '__main__':

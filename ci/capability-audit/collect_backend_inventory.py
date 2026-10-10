@@ -41,6 +41,22 @@ done'''),
 else
   printf 'ABSENT\n'
 fi'''),
+    ('netmanager-bpf-namespace', '''printf 'observer_mount_namespace='
+readlink /proc/self/ns/mnt
+printf 'observer_bpf_maps\n'
+ls -ld /sys/fs/bpf/netsys/maps 2>&1
+found=0
+for service_pid in $(pidof netsysnative); do
+  case "$service_pid" in ''|*[!0-9]*) continue ;; esac
+  [ "$(cat /proc/$service_pid/comm 2>/dev/null)" = netsysnative ] || continue
+  found=1
+  printf 'netsysnative_pid=%s\nservice_mount_namespace=' "$service_pid"
+  readlink /proc/$service_pid/ns/mnt
+  cat /proc/$service_pid/status /proc/$service_pid/mountinfo 2>&1
+  printf 'service_bpf_maps\n'
+  ls -l /proc/$service_pid/root/sys/fs/bpf/netsys/maps 2>&1
+done
+if [ "$found" = 0 ]; then printf 'NO_NETSYSNATIVE_PROCESS\n'; fi'''),
 )
 
 
