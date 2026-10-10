@@ -52,6 +52,12 @@ C++ 空指针边界返回 401。ArkTS `graph` 五次仍是 BigInt，故整体明
 `host-regression-graphics-gate-r31-01.log`：运行 1390 项、整体成功，其中 1 项跳过，
 208.292 秒。**新图形内存门禁尚无通过的新归档实测，当前账本不减少未闭环数。**
 
+R31 原冻结输入早于这些已证实的 HiDebug 修复，因此保留其新包显示、快捷键、
+Wi-Fi 与 HiTrace 定向回归，完整当前门禁移到随后重新构建的代表包。
+观察任务改为 `r31-focused-validation-02.json`；旧观察任务在尚未启动任何客体验证时，
+仅停止其 `docker wait` 客户端，**构建容器没有停止，归档没有被替换**。
+`superseded-r31-waiter-01.json` 留存该调度调整。定向测试通过也不会放行其余五包。
+
 ## 2026-10-10 图形内存统计解析修复（待新实包）
 
 固定 Hiview `graphic_memory.cpp::CreateDmaInfo` 有两个独立缺陷：
