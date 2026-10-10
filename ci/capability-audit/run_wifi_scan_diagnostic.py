@@ -14,8 +14,24 @@ import time
 from boot_package import QemuGuest
 from power_test_policy import power_timeout, verify_restoration
 from run_root_probe import digest, validate_elf
+from run_normal_hap_probe import save_command_output
+from hdc_transport import failed as hdc_failed
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def capture_hilog(hdc, target, output, label):
+    """Hilog is opaque diagnostic data, never a scan-result acceptance input."""
+    if label not in ('wifi-hilog', 'failure-hilog') or not target:
+        raise ValueError('owned target and bounded diagnostic label required')
+    argv = [str(hdc), '-t', target, 'shell', 'hilog -x']
+    result = subprocess.run(argv, capture_output=True, text=False, timeout=30)
+    path = Path(output) / (label + '.log')
+    stdout, stderr, metadata = save_command_output(path, result.stdout, result.stderr, diagnostic_bytes=True)
+    record = dict(argv=argv, log=str(path), exit_code=result.returncode, **metadata)
+    if result.returncode or hdc_failed(stdout, stderr):
+        raise ValueError('HDC failed to collect owned diagnostic hilog; raw streams retained')
+    return record
 
 
 def active_state(text):
@@ -125,7 +141,7 @@ def run(args):
             capture('disable-' + str(cycle), 'svc wifi disable')
             wait_state(False, 'disabled-' + str(cycle))
             radio_owned = False
-        capture('wifi-hilog', 'hilog -x')
+        report['observations'].append(capture_hilog(args.hdc, guest.target, args.output, 'wifi-hilog'))
         if capture('final-boot-id', 'cat /proc/sys/kernel/random/boot_id').strip() != env['boot_id']:
             raise ValueError('guest rebooted during the scan diagnostic')
         guest.healthy()
@@ -134,7 +150,7 @@ def run(args):
         report['failures'].append(type(error).__name__ + ': ' + str(error))
         if guest is not None:
             try:
-                capture('failure-hilog', 'hilog -x')
+                report['observations'].append(capture_hilog(args.hdc, guest.target, args.output, 'failure-hilog'))
             except Exception as capture_error:
                 report['capture_error'] = str(capture_error)
     finally:
