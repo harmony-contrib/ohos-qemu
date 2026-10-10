@@ -1,5 +1,50 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 HiTrace 普通应用到真实内核的补充验证
+
+现有三产品实际 `.config` 都已开启 FTRACE/TRACING/EVENT_TRACING，不能
+继续仅引用原审计的 ARM64 关闭配置断言当前仍不可用；但静态配置也不是
+运行证据。新增 `build_hitrace_app_probe.py`，从真实 API26 Release SDK
+构建无权限普通 HAP，同时调用 C++ NDK 和 ArkTS 公共 HiTrace API。
+两轮覆盖嵌套同步事件、相同名字不同 task ID 的交错异步完成，以及
+`-2147483649 / 0 / 2147483648` 计数边界；不直接写 trace_marker。
+
+`hitrace-typed-{arm64,armv7a,x86_64}-r30-02` 三 ABI 编译通过。
+实际 R29 原归档（SHA-256
+`ab720999e6fc6224b88fd780654116b4043562a7eec12347238f2a85ee58c601`）
+独立诊断 `r29-hitrace-runtime-03` 通过，boot
+`d1a8f6e8-7f35-4072-ac35-34aeee426560`，普通 UID 20010038，
+PID/TID 2589，共 36 条精确内核记录；核对真实 `/proc/PID/task/TID/status`，
+不是把返回 void 或 enabled=true 当作追踪成功。启停使用系统 hitrace
+调试工具，不改变应用身份、权限、trace_marker 访问模式或镜像库。
+
+证据 `diagnostic.json` SHA-256
+`4d79bdd6cd74d05e2653eee6b360cc8fbbc58c8d52c958bddd3ceb1a39ab17fa`，
+实际内核记录 SHA-256
+`25f5d7cab3d5ff65ea7fa37a997b348563ae4c099ee5c6758297cf9538edd7b5`，
+严格解析器 SHA-256
+`23e0970d8f81913d6915b3d9da0801bb884afc0258546fdae5ffcdd503e77f80`。
+追踪开关、tracer、clock、tags、PID 和原请求容量均已恢复，电源设置
+恢复后关闭客体。Linux 6.6 采用页负载长度向上取整，原请求 1408 KiB
+在 4096 字节页、4080 字节负载下显示 1410 KiB；验证器精确核对源码
+公式及实际页大小，不将任意容量差异视为恢复成功。
+
+保留两次采集器失败：01 未识别内核懒分配的 `7 (expanded: 1408)`；
+02 未识别 trace 的 `(-------)` TGID 占位和缓冲区页取整。02 原始内核
+数据经修正解析器独立回放通过，但原失败报告没有改写。03 才是重新启动、
+完整测试与恢复全部成功。三个已关闭测试客体的展开镜像已回收，保留
+原归档、原始追踪、普通应用身份、HAP、命令及失败/成功记录；测试
+userdata 的临时安装状态不保留。
+
+**这是原 R29 的补充验证，非 R30 首包或三架构运行通过。** 解析器仍返回
+`closed=[]`，尚未接入统一交付门禁；不关闭完整 HiTrace API、disabled
+过滤、链路/监听接口或剩余矩阵的缺口。四个旧打包目录 R24–R27 的
+pristine images 另经原归档逐文件哈希复核后回收，记录
+`retired-pristine-packages-cleanup-r30-01.json`，回收 7,867,584,512 字节，
+其原归档和全部测试证据仍保留。
+最终整仓主机回归 `host-regression-hitrace-caller-r30-03.log`：1343 项通过，
+199.965 秒，macOS 跳过同一 Linux 专用夹具。
+
 ## 2026-10-10 路由观察者真实回调测试（尚待客体验证）
 
 `RouterPageInfo` 在固定源码
