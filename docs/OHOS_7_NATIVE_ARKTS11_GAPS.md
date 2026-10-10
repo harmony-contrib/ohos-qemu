@@ -1,5 +1,48 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R31 显示复验、图片错误类型修复与 R32 重建
+
+R31 代表包完成本地 Docker 构建与打包：
+`/Volumes/PSSD/qemu/packages/first-display-init-shortkey-7.0-release-20261010-r31/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `31a337a61fbadf8db72a31e34abca8b7fbd662216f5750e34be8e10aeada61ce`。
+环境为 macOS arm64/HVF、ARM64 phone、API26 Release SDK；完整命令见证据根目录
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`。
+
+- `r31-refresh-1920x1080-runtime-01/diagnostic.json` **通过**，SHA-256
+  `3137fa50db26f93861708c023024a934ef7500369b849337ee6e2a69a309d88d`，
+  boot `a0eb9864-0b6d-4bd7-999f-ccf71ec1e208`。实际 Settings 控件完成
+  1920×1080 的 75→50→75 Hz 切换，公开只读调用与内核模式一致、标题实际绘制，
+  返回普通调用方后未授权屏幕操作仍返回 202。电源策略恢复，客体关闭。
+- `r31-shortkey-runtime-01` 已注册真正的 Meta+I 系统快捷键，短按/错误修饰键未启动
+  Settings，长按后实际启动 Settings；但验收失败于按文本唯一定位标题：真实布局
+  `026-shortcut-settings-0.json` 同时包含标签“设置”的 TitleBar 与其 Text 子节点。
+  修正验证器只选 `__NavigationField__Text__MainTitle__`，仍要求正确 bundle、Text 类型、
+  可见性、标题内容、唯一节点及真实合成截图。9 项定向主机测试通过；尚不声称完整键盘回归通过。
+- 用新验证器快照直接复测 R31 的 `r31-shortkey-runtime-02` 在启动前被冻结输入一致性
+  门禁拒绝，未启动 QEMU、未发送键盘命令。保留此失败证据，不改写为通过，不放宽启动门禁；
+  最新修正随 R32 重建后再验收。R31 的 Wi-Fi/HiTrace 后续定向步骤未运行。
+
+用户已批准图片框架的最小错误类型修复。`6343151` 仅将
+`ReadImageMetadataByType` 已有参数失败分支切换至现有 BusinessError 数字编码，
+保留错误值 7700204、消息、解析器、权限、其他接口与 C++ ABI。共享独立部件
+`image_framework/metadata_error_type` 已接入；DNG/TIFF/AVIS 的成功、负索引/末尾越界、
+失败后重读成为完整新包门禁的必需项。旧 R27 实际字符串错误仍被当前验证器拒绝。
+对应 XTS HAP 已定位，尚未运行；知识文档、跨语言核查与审查边界见该部件 README。
+`host-regression-image-error-r32-01.log`：1400 项整体成功、1 项跳过，209.886 秒。
+标题选择修正提交 `5223e47`；`host-regression-shortkey-selector-r32-01.log`：
+1401 项整体成功、1 项跳过，204.439 秒。以上不替代新镜像实测。
+
+R32 仅重建 ARM64 phone 代表包，包含 HiDebug/Hiview、图片错误类型及验证器修正。
+冻结目录 `phone-NxCZJG`，提交 `5223e476a9d4720329951d6f2d2953113c90ba2b`，
+输入树 SHA-256 `1b22f9c38c0f6d06836ea4aee6dbe7b8f7de41eb16a149f4f61f7643e236a245`。
+构建日志 `first-hiview-hidebug-arm64-phone-build-r32-01.log`，当前观察记录
+`r32-build-then-validation-03.json`，计划先跑该新归档的定向回归再执行仓库完整验收。
+R32 尚未完成打包/运行验收，**其余五包未启动，完整首包门禁未通过，未闭环账本不减项**。
+
+为磁盘腾出约 9 GB，仅回收未启动的 R31 第二次快捷键试验扩展镜像，以及 R30/R31
+与原归档逐文件一致的冗余打包镜像目录。`retired-r31-unstarted-and-pristine-01.json`
+保存原归档校验、全部文件哈希、无进程/文件句柄检查与删除记录；原始归档、日志和失败证据保留。
+
 ## 2026-10-10 HiDebug 普通应用实测新增失败
 
 在未替换内核或库的 R30 归档上，新增 C++/ArkTS 普通、零权限 HAP 试验，
