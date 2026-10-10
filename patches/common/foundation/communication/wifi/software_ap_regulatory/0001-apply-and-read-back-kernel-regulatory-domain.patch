@@ -20,7 +20,7 @@ diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_fram
 +      defines += [ "WIFI_SOFTWARE_AP_REGULATORY_BACKEND" ]
 +      external_deps += [ "libnl:libnl_share" ]
      }
- 
+
      cflags = memory_optimization_cflags
 diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp
 --- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp
@@ -32,7 +32,7 @@ diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_fram
 +#ifdef WIFI_SOFTWARE_AP_REGULATORY_BACKEND
 +#include "wifi_software_regulatory.h"
 +#endif
- 
+
  #undef LOG_TAG
  #define LOG_TAG "WifiApHalInterface"
 @@ -192,6 +195,8 @@
