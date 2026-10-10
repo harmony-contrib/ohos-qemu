@@ -1,14 +1,24 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
-## 2026-10-10 R26 代表包重建中
+## 2026-10-10 R26 代表包：低分辨率验证通过，高分辨率首次截图失败
 
 仅启动 ARM64 phone，输入冻结为提交 `c9de875`、目录
 `/Volumes/PSSD/qemu/build-inputs/phone-9x1nCX`，树
 `cb28e1fb7f7683fd5b69a4751ceca390a897477377846a5006214997d203b5ca`。
 本地 Docker 容器 ID
 `d5fec5c264876954d078359d225485bb6eb0b96f74dec2f9e44e6b62b14e17ce`，
-目标目录 `first-display-modes-7.0-release-20261010-r26`；构建尚未完成时
-不记录归档校验和或宣称修复通过。构建与顺序验证记录位于既有 evidence 根目录的
+目标目录 `first-display-modes-7.0-release-20261010-r26`；本地容器正常退出 0，
+归档 `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` 已完成，SHA-256：
+`f21bb14194ae781485780b4722a9e613261e524c142bab02c7326bdd4d5be8fd`。
+只读模式探针编译通过。1280×800 新 boot
+`f2f26b46-5fe5-4d72-a69f-ee481810ac9d` 的 Settings 页面、26 个真实模式、
+内核 75 Hz 读回、普通应用 202 拒绝与返回验证通过；该分辨率没有真实备用
+刷新率，因此不声明切换成功。1920×1080 新 boot
+`7bbd61cb-5759-4065-910d-f17d7508621c` 在首次桌面截图明确返回
+`Failed to get display pixelMap`，尚未进入刷新率切换。两个客体均已关闭。
+等待器保持 fail，未执行后续配额和完整回归；显示模式切换方向仍须新包验证，
+不能把低分辨率成功或归档生成作为首包总门禁通过。
+构建与顺序验证记录位于既有 evidence 根目录的
 `first-display-modes-arm64-phone-build-r26-01.log`、
 `r26-build-then-validation-01.json`。冻结版本宿主 1208 项检查通过。
 等待器仅验证该包：1280×800 页面、1920×1080 切换及真实内核 DRM 读回、
