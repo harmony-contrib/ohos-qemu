@@ -54,6 +54,27 @@ SHA-256 `ea64ca3c5ed95a705f343ae33809238f20e5c88bd248e20ce9fb896da0edcd62`。
 实际只读 screen caller 也已编译通过。现开始新归档运行验证，不声明行为修复通过。
 温控修复不在此归档内，仍须下一代表包；不能把 R27 当作最终交付包。
 
+同一 R27 归档的两次独立新启动已通过显示窄诊断：1280×800 boot
+`fcb60270-1a5a-4114-b8b6-0557abc5f38b`、1920×1080 boot
+`de14d38f-04fe-4328-9c54-4e9f5c09b968`。后者首次桌面截图成功，实际
+Settings UI 选择刷新率后，内核 DRM CRTC 33 / connector 34 读回
+75 Hz → 50 Hz → 75 Hz（像素时钟 217140 → 148500 → 217140 kHz），
+不是只检查 DMS 缓存；普通应用直接设置的 202 拒绝与返回也通过。
+前者只有真实 75 Hz 选项，不声称完成切换。两份 `diagnostic.json` SHA-256
+分别 `14b23fb3abd090d071c61744e52d24dd01d2e78a4448e04ab34ec2200f5556a6`、
+`9aa07ac60c243d5888f0a358f2e23094bbef305a55c1409cfb8e6227b7634ac7`。
+
+`r27-completion-handler-runtime-01` 新 boot
+`9e3449cc-fb11-4c85-acfa-3ce8c4ce9705` 的真实普通 UID `20010038`
+通过 API26 typed HAP 构造/字段契约：8 条有序观察、67 个实例，覆盖可选字段、
+回调参数、隔离、清空、继承与既有错误码。它证明旧包缺失的命名类现在可用，
+不证明组件启动服务回调或 IPC。诊断 SHA-256
+`76d35bc24ce14f36b156740a63d949647fa4b7115ec7c3e4650262c29435d2bb`。
+以上三个测试均恢复原电源策略并关闭客体；仍不是同次启动完整总门禁。
+两份显示诊断与 R26 thermal-04 的临时 images 已清理，原始归档、截图和所有
+证据保留，可重新解包；回收 15112335360 字节，见
+`retired-diagnostic-images-cleanup-r27-01.json`。
+
 `first-capture-completion-arm64-phone-build-r27-01.log` 记录构建；
 `r27-build-then-validation-01.json` 的等待器只在精确容器退出 0、归档完成及
 空间检查通过后，顺序执行该归档的 1280×800、1920×1080 实际模式切换、
