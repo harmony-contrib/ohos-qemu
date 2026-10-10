@@ -32,7 +32,10 @@ def verify(text, run_id, identity):
             raise ValueError('actual private file lengths do not match the owned writes')
         if any(len(values) != 3 or values[0] <= 0 for values in (before, occupied, restored)):
             raise ValueError('real installed-app and separate data/cache statistics required')
-        for index, byte_count in ((1, cache_bytes), (2, data_bytes)):
+        # dataSize excludes installation files, not cache files. The pinned
+        # Installd GetBundleStats uses UID quota for local data and separately
+        # reports cache as a subset; do not double-count or subtract it here.
+        for index, byte_count in ((1, cache_bytes), (2, data_bytes + cache_bytes)):
             if not byte_count <= occupied[index] - before[index] <= byte_count + 262144:
                 raise ValueError('statistics did not account for the actual file writes')
             if (not byte_count - 65536 <= occupied[index] - restored[index] <= byte_count + 262144 or
@@ -41,7 +44,7 @@ def verify(text, run_id, identity):
     if rows[-2]['values'] != [202] or rows[-1]['values'] != [1, 1]:
         raise ValueError('ordinary caller isolation and owned-file cleanup must remain enforced')
     return {'closed': [], 'generations': 2, 'promise_and_callback': True,
-        'data_cache_growth_and_release': True, 'other_bundle_denial': 202,
+        'data_cache_growth_and_release': True, 'cache_is_subset_of_data': True, 'other_bundle_denial': 202,
         'not_claimed': 'kernel_quota_limits_privileged_Storage_APIs_or_complete_gap_closure'}
 
 

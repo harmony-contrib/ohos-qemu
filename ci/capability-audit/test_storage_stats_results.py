@@ -16,7 +16,7 @@ def fixture():
         data, cache = (generation + 1) * 4 * 1024**2, (generation + 1) * 2 * 1024**2
         for name, values in (
             ('before', [900000, 4096, 16384]), ('written', [data, cache]),
-            ('occupied', [900000, 4096 + cache, 16384 + data]),
+            ('occupied', [900000, 4096 + cache, 16384 + data + cache]),
             ('restored', [900000, 4096, 20480])):
             rows.append({'runId': RUN, 'name': name + '.' + str(generation),
                          'values': values, 'error': ''})
@@ -34,6 +34,16 @@ class StorageStatisticsTests(unittest.TestCase):
         result = verify(text(fixture()), RUN, IDENTITY)
         self.assertEqual(result['closed'], [])
         self.assertTrue(result['data_cache_growth_and_release'])
+        self.assertTrue(result['cache_is_subset_of_data'])
+
+    def test_data_must_include_cache_once_not_omit_or_double_count_it(self):
+        for generation in range(2):
+            cache = (generation + 1) * 2 * 1024**2
+            for delta in (-cache, cache):
+                rows = fixture()
+                rows[generation * 4 + 2]['values'][2] += delta
+                with self.subTest(generation=generation, delta=delta), self.assertRaises(ValueError):
+                    verify(text(rows), RUN, IDENTITY)
 
     def test_every_row_identity_order_and_error_is_required(self):
         for index in range(10):

@@ -55,7 +55,8 @@ struct Index {
     this.record('written.' + index, [fs.statSync(this.dataPath).size, fs.statSync(this.cachePath).size]);
     let occupied = await this.callbackStats();
     for (let retry = 0; retry < 40 &&
-      (occupied.dataSize - before.dataSize < dataBytes || occupied.cacheSize - before.cacheSize < cacheBytes); retry++) {
+      (occupied.dataSize - before.dataSize < dataBytes + cacheBytes ||
+       occupied.cacheSize - before.cacheSize < cacheBytes); retry++) {
       await new Promise<void>((resolve) => { setTimeout(resolve, 250); });
       occupied = await this.callbackStats();
     }
@@ -63,7 +64,7 @@ struct Index {
     fs.unlinkSync(this.dataPath); fs.unlinkSync(this.cachePath);
     let restored = await storage.getCurrentBundleStats();
     for (let retry = 0; retry < 40 &&
-      (occupied.dataSize - restored.dataSize < dataBytes - 65536 ||
+      (occupied.dataSize - restored.dataSize < dataBytes + cacheBytes - 65536 ||
        occupied.cacheSize - restored.cacheSize < cacheBytes - 65536); retry++) {
       await new Promise<void>((resolve) => { setTimeout(resolve, 250); });
       restored = await storage.getCurrentBundleStats();
