@@ -28,6 +28,21 @@ R27 原归档的独立启动 `1514f2e6-a01d-41d4-9f0c-14320d3ebe4c`，通过新�
 补齐打包及加载路径，并在新包验证。不得关闭签名检查、硬编码放开信道，
 也不能把服务层国家码当作内核监管域已生效。
 
+后续 `wlan_regulatory` 候选部件已接入公共构建：复用固定源树的数据库和
+签名，验证固定哈希、二进制 CMS 及签名者 DER 与 Linux 6.6 内置 wens
+证书完全一致，三架构继续强制签名校验。数据库安装在 system/lib/firmware，
+独立 vendor pre-init 配置在 boot 加载 cfg80211 前选择该固件目录。
+私有副本两次应用和损坏数据库拒绝检查通过，
+`wlan-regulatory-check-r28-01/check.json` SHA-256
+`523b16d6573dad2953ee6f8cd69f107aa1ffb995d89cc0d42e67c6fde5820df3`。
+整仓宿主回归 `host-regression-regdb-r28-01.log` 1296 项通过（200.390 秒）。
+尚未进入新包运行，不能据此关闭监管数据库或 WLAN 行为缺口。
+
+R28 后续 1920×1080 检查在 UI 用例开始前失败：串口显示 GPIO 唤醒后约
+2 秒又进入 s2idle，HDC reconnect 明确失败；独立 HDC 服务本身仍在运行。
+保留 `r28-refresh-1920x1080-runtime-01/boot` 和专属 transport 证据，
+没有忽略连接失败、循环保活或启动其余五包。正在独立诊断实际电源事件。
+
 ## 2026-10-10 扫描生命周期与软件 PNO 补充修复
 
 扫描路由接通后的生命周期检查发现两个独立问题：ScanService 先注册回调，

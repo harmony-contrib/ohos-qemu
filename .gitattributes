@@ -5,3 +5,4 @@ patches/common/applications/standard/settings/tts_namespace/0001-export-sdk-TTS-
 patches/common/foundation/communication/wifi/wpa_scan/0001-route-non-chip-scans-through-wpa.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/wifi/wpa_scan_lifecycle/0001-retire-scan-monitor-on-every-destruction-path.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/wifi/wpa_software_pno/0001-use-software-pno-without-chip-offload.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/device/qemu/wlan_regulatory/0001-package-signed-regulatory-database.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
