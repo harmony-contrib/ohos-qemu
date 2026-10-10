@@ -262,6 +262,7 @@ QEMU_WPA_SOFTWARE_PNO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communic
 QEMU_SOFTWARE_AP_REGULATORY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/software_ap_regulatory/apply.sh"
 VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/vivid_capture/apply.sh"
 SETTINGS_NAVIGATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/network_navigation/apply.sh"
+SETTINGS_HOTSPOT_STATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/hotspot_state_reconciliation/apply.sh"
 SETTINGS_TTS_NAMESPACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/tts_namespace/apply.sh"
 PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/permission_manager/open_setting/apply.sh"
 MATRIX4_EXPORTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/matrix4_exports/apply.sh"
@@ -2959,6 +2960,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_device_component.log"
   bash "${SETTINGS_NAVIGATION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_navigation_component.log"
+  bash "${SETTINGS_HOTSPOT_STATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_hotspot_state_component.log"
   bash "${SETTINGS_TTS_NAMESPACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_tts_namespace_component.log"
   bash "${PERMISSION_OPEN_SETTING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

@@ -1,0 +1,20 @@
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/MobileNetwork/HotSpot/controller/HotspotSwitchController.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/MobileNetwork/HotSpot/controller/HotspotSwitchController.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/MobileNetwork/HotSpot/controller/HotspotSwitchController.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/MobileNetwork/HotSpot/controller/HotspotSwitchController.ets
+@@ -345,9 +345,15 @@
+   setStateChangeTimeoutTimer(): void {
+     this.stateChangeTimeoutId = setTimeout(() => {
++      this.stateChangeTimeoutId = null;
+       try {
+-        if (this.isHotspotOn === wifiManager?.isHotspotActive()) {
++        const active: boolean = wifiManager.isHotspotActive();
++        if (this.isHotspotOn === active && this.getChecked() === active) {
++          this.isWaitingLastActionDone = false;
+           return;
+         }
++        this.isWaitingLastActionDone = false;
++        this.isHotspotOn = active;
++        this.updateStatus();
+       } catch (error) {
+         LogUtil.error(`${TAG} get isHotspotActive fail`);
+       }
