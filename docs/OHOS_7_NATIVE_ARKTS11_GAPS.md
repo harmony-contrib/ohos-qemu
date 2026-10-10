@@ -1,5 +1,25 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R32 冻结主机回归及独立热点诊断
+
+`phone-NxCZJG` 冻结输入的首次主机回归因误用系统 Clang、不支持
+`-Wvla-cxx-extension` 而失败；没有修改冻结源码或删除失败记录。
+使用 Homebrew Clang 21.1.2 重跑全部 1401 项，成功、跳过 1 项，212.121 秒。
+`host-regression-r32-frozen-02.log` SHA-256 为
+`95902ddbc5f8e2d9503b412d5c822a6ef652eec50c3358ca72c54429787c84b0`；
+两次尝试关系及原始失败字节校验保存在 `r32-frozen-host-test-attempts.json`。
+这只是宿主回归，不替代 R32 新归档的客体门禁。
+
+R32 编译期间，在未替换库/内核的 R31 独立客体运行真实 Settings 热点 UI 诊断。
+`r31-hotspot-ui-runtime-02/diagnostic.json` 完成观察、恢复开关和电源策略并关闭客体，
+但**不是能力通过**：实际点击开关后 `startSharing` 返回成功，8 次服务读取仍为
+`WiFi hotspot active state: inactive`，Settings 同时报告状态变化超时。
+原始 UI、服务 dump 和 hilog 保留；未证明 AP、关联、DHCP 或数据路径，不关闭 WLAN 缺口。
+首次诊断 `runtime-01` 因日志辅助函数标签不合规导致收尾失败，保留其失败记录；
+第二次修正诊断标签、把日志采集与开关恢复拆开，不修改客体实现或权限。
+已仅删除首次已关闭客体约 5 GB 的扩展镜像；归档与原始证据保留，
+临时运行磁盘状态不保留，清理记录为 `retired-r31-hotspot-images-01.json`。
+
 ## 2026-10-10 R31 显示复验、图片错误类型修复与 R32 重建
 
 R31 代表包完成本地 Docker 构建与打包：
