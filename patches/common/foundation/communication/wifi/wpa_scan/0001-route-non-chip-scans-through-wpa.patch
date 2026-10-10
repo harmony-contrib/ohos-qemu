@@ -1,0 +1,113 @@
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_supplicant_hal_interface.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_supplicant_hal_interface.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_supplicant_hal_interface.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_supplicant_hal_interface.cpp
+@@ -73,4 +73,4 @@
+ WifiErrorNo WifiSupplicantHalInterface::RegisterSupplicantEventCallback(SupplicantEventCallback &callback)
+ {
+-#ifdef HDI_CHIP_INTERFACE_SUPPORT
++#if defined(HDI_CHIP_INTERFACE_SUPPORT) || defined(HDI_WPA_INTERFACE_SUPPORT)
+     std::lock_guard<std::mutex> lock(mSupplicantHalMutex);
+@@ -83,4 +83,4 @@
+ WifiErrorNo WifiSupplicantHalInterface::UnRegisterSupplicantEventCallback(void)
+ {
+-#ifdef HDI_CHIP_INTERFACE_SUPPORT
++#if defined(HDI_CHIP_INTERFACE_SUPPORT) || defined(HDI_WPA_INTERFACE_SUPPORT)
+     std::lock_guard<std::mutex> lock(mSupplicantHalMutex);
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp
+@@ -211,5 +211,11 @@
+     }
+     return WIFI_HAL_OPT_OK;
++#elif defined(HDI_WPA_INTERFACE_SUPPORT)
++    CHECK_NULL_AND_RETURN(mHdiWpaClient, WIFI_HAL_OPT_FAILED);
++    if (ifaceName != WifiConfigCenter::GetInstance().GetStaIfaceName(INSTID_WLAN0)) {
++        return WIFI_HAL_OPT_NOT_SUPPORT;
++    }
++    return mHdiWpaClient->Scan(scanParam);
+ #endif
+     return WIFI_HAL_OPT_FAILED;
+ }
+@@ -329,5 +329,11 @@
+     ParseScanInfo(scanResultsInfo, scanInfos);
+     return WIFI_HAL_OPT_OK;
++#elif defined(HDI_WPA_INTERFACE_SUPPORT)
++    CHECK_NULL_AND_RETURN(mHdiWpaClient, WIFI_HAL_OPT_FAILED);
++    if (ifaceName != WifiConfigCenter::GetInstance().GetStaIfaceName(INSTID_WLAN0)) {
++        return WIFI_HAL_OPT_NOT_SUPPORT;
++    }
++    return mHdiWpaClient->QueryScanInfos(scanInfos);
+ #endif
+     return WIFI_HAL_OPT_FAILED;
+ }
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_callback.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_callback.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_callback.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_callback.cpp
+@@ -404,9 +404,6 @@
+ 
+-    const OHOS::Wifi::SupplicantEventCallback &cbk =
+-        OHOS::Wifi::WifiSupplicantHalInterface::GetInstance().GetCallbackInst();
+-    if (cbk.onScanNotify) {
+-        cbk.onScanNotify(HAL_SINGLE_SCAN_OVER_OK);
+-    }
++    // Serialize delivery with unregister: ScanMonitor callbacks capture their owner.
++    OHOS::Wifi::WifiSupplicantHalInterface::GetInstance().NotifyScanResultEvent(HAL_CMD_NEW_SCAN_RESULTS);
+     return 0;
+ }
+ 
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp
+@@ -128,6 +128,51 @@
+ WifiErrorNo WifiHdiWpaClient::Scan(const WifiHalScanParam &scanParam)
+ {
+-    return HdiWpaStaScan();
++    // WPA's control protocol supports an ordinary active scan, not chip-specific
++    // scheduling hints. Do not silently drop an unsupported scan style.
++    if (scanParam.scanStyle != 0) {
++        return WIFI_HAL_OPT_NOT_SUPPORT;
++    }
++    constexpr size_t maxCommandLength = 1024;
++    constexpr size_t maxSsidLength = 32;
++    constexpr size_t maxFrequencyCount = 256;
++    constexpr size_t maxSsidCount = 16;
++    if (scanParam.scanFreqs.size() > maxFrequencyCount ||
++        scanParam.hiddenNetworkSsid.size() > maxSsidCount) {
++        return WIFI_HAL_OPT_INVALID_PARAM;
++    }
++    std::string command = "SCAN";
++    for (size_t index = 0; index < scanParam.scanFreqs.size(); ++index) {
++        const int frequency = scanParam.scanFreqs[index];
++        if (frequency <= 0) {
++            return WIFI_HAL_OPT_INVALID_PARAM;
++        }
++        command += (index == 0 ? " freq=" : ",");
++        command += std::to_string(frequency);
++    }
++    constexpr char hex[] = "0123456789abcdef";
++    for (const auto &ssid : scanParam.hiddenNetworkSsid) {
++        if (ssid.empty() || ssid.size() > maxSsidLength) {
++            return WIFI_HAL_OPT_INVALID_PARAM;
++        }
++        command += " ssid ";
++        for (unsigned char byte : ssid) {
++            command += hex[byte >> 4];
++            command += hex[byte & 0x0f];
++        }
++    }
++    if (command.size() > maxCommandLength) {
++        return WIFI_HAL_OPT_INVALID_PARAM;
++    }
++    // This existing helper uses IWpaInterface::GetWpaStaData, the generic
++    // request/reply control interface. STA_SHELL does not support SCAN.
++    // Keep both the HDI error and the actual supplicant reply authoritative.
++    char reply[2048] = {0};
++    const char *ifaceName = GetHdiStaIfaceName(INSTID_WLAN0);
++    if (HdiWpaGetMloLinkedInfo(ifaceName, command.c_str(), reply, sizeof(reply)) != WIFI_HAL_OPT_OK) {
++        return WIFI_HAL_OPT_FAILED;
++    }
++    return strcmp(reply, "OK\n") == 0 || strcmp(reply, "OK") == 0 ?
++        WIFI_HAL_OPT_OK : WIFI_HAL_OPT_FAILED;
+ }
+ 
+ WifiErrorNo WifiHdiWpaClient::QueryScanInfos(std::vector<InterScanInfo> &scanInfos)

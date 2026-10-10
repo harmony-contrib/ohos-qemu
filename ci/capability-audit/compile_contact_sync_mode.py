@@ -28,7 +28,8 @@ def digest(path):
 
 
 def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=None, candidate_defines=(),
-        overlay_component_headers=False, prepare_component_idl=False, prepare_component_hdi=False):
+        overlay_component_headers=False, prepare_component_idl=False, prepare_component_hdi=False,
+        prepare_component_wifi_hdi=False):
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
     if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',)):
@@ -59,6 +60,9 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
         inputs.append(Path(caller).resolve())
     if prepare_component_hdi:
         inputs.append(ROOT / 'ci/capability-audit/prepare_display_hdi.py')
+    if prepare_component_wifi_hdi:
+        inputs.extend([ROOT / 'ci/capability-audit/prepare_wifi_hdi.py',
+                       ROOT / 'ci/capability-audit/prepare_display_hdi.py'])
     before = {str(path): digest(path) for path in inputs}
     products = args.product or list(PRODUCTS)
     if len(set(products)) != len(products):
@@ -137,6 +141,10 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
             if prepare_component_hdi:
                 from prepare_display_hdi import prepare
                 argv, hdi_inputs = prepare(root, cwd, argv, logs / (product + '-hdi-generated'))
+                generated_inputs += hdi_inputs
+            if prepare_component_wifi_hdi:
+                from prepare_wifi_hdi import prepare
+                argv, hdi_inputs = prepare(root, cwd, argv, logs / (product + '-wifi-hdi-generated'))
                 generated_inputs += hdi_inputs
             compile_log = logs / (product + '-compile.log')
             with compile_log.open('x') as stream:

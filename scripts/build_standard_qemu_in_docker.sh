@@ -251,6 +251,7 @@ QEMU_THERMAL_CLIENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal
 QEMU_THERMAL_NAPI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/napi_contract/apply.sh"
 QEMU_VIVID_KERNEL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/vivid_capture/apply.sh"
 QEMU_WLAN_RADIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_radio/apply.sh"
+QEMU_WPA_SCAN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_scan/apply.sh"
 VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/vivid_capture/apply.sh"
 SETTINGS_NAVIGATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/network_navigation/apply.sh"
 SETTINGS_TTS_NAMESPACE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/tts_namespace/apply.sh"
@@ -2813,6 +2814,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_vivid_kernel_component.log"
   bash "${QEMU_WLAN_RADIO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wlan_radio_component.log"
+  bash "${QEMU_WPA_SCAN_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wpa_scan_component.log"
   bash "${VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vivid_capture_defaults_component.log"
   bash "${QEMU_POWER_WAKELOCKS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

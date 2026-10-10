@@ -1,5 +1,53 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 Wi-Fi：真实 WPA 启动后，扫描服务仍被芯片条件编译截断
+
+R27 原归档的新启动 `e9f08aa5-4cab-4567-9c25-e1421d6c02af` 使用预装
+`svc wifi enable/disable`：SA 1120 从 inactive 变为 activated，再回到 inactive；
+真实 `wpa_host` / nl80211 初始化成功。但 `RegisterSupplicantEventCallback`
+只在 `HDI_CHIP_INTERFACE_SUPPORT` 下注册，QEMU 实际配置关闭 chip HDI、
+启用 WPA HDI，因此 `ScanMonitor` 注册失败、扫描服务初始化失败。
+`WifiStaHalInterface::Scan/QueryScanInfos` 也只有 chip 路径。
+不能将开关命令成功或“activated”作为扫描、连接、AP/P2P 已可用的证据。
+
+证据 `r27-wlan-service-runtime-01/diagnostic.json` SHA-256
+`d29062020450d27e940cfd41ff70587dc71f468a2c0dff7d35591d837e8bf5da`；
+实际 hilog SHA-256 `7bcfa9833cdbd0d3f548c6421b53d0966956a6e5c9192ef1dc889224794b50c7`。
+测试未替换客体库、配置或内核；恢复电源策略后关闭客体及专属 HDC。
+镜像没有 `ip` 命令，相关 shell 输出不能作为 link 状态读回，后续改用 sysfs。
+
+独立候选部件 `common/foundation/communication/wifi/wpa_scan` 固定 Wi-Fi
+`367605c52dfaf5f09bd690f16d9ee9a301cfc98a`，保留 chip 路由，补 non-chip
+WPA 扫描/结果路由及回调注册。WPA 完成回调改用已有同步派发方法，与注销
+共享锁，避免直接读取可并发清空的回调引用。扫描参数经有界十进制频率和
+十六进制 SSID 编码送入现有 `GetWpaStaData` 请求/回复通道；不把不支持
+SCAN 的 `STA_SHELL` 当通用执行器，不忽略 HDI 失败或 WPA `FAIL-BUSY`。
+现阶段非默认扫描调度样式明确返回 NOT_SUPPORT，不能据此关闭低功耗/PNO
+或完整 WLAN 缺口。接口名必须匹配实际主 STA，不能默默扫描另一网卡。
+
+四个宿主单元检查通过，包含真实补丁函数体的 ASan/UBSan 参数/回复边界。
+`wpa-callback-boundaries-r28-02.json` 的四种宏配置及注销并发检查通过，
+SHA-256 `293ddd7e26b2df18d637062b62856889186bd4e87d437609ad7cbfa3624dff6b`。
+它们使用明确隔离的宿主 fixture，不是 HDI IPC 或客体行为验收。
+`wpa-scan-compile-r28-04.json` 记录三架构四个完整 TU、共 12 个对象编译通过，
+均核验真实产品启用 WPA、未启用 chip。生成头文件由各产品真实 HDI action
+在私有目录生成；不改正在构建的源卷，也不借用其他架构的生成头文件。
+01 保留缺失生成头文件、02 保留历史构建绝对根目录不匹配、03 保留候选
+验证脚本变更触发完整性拒绝的记录；04 使用稳定输入重新执行全部检查。
+独立部件已接入公共打包脚本，适用于两个画像、三个架构。
+普通应用新增 `wifi-scan` 诊断 persona，仅申请 GET_WIFI_INFO/SET_WIFI_INFO，
+要求实际启用状态、缺少定位权限时旧 scan 的数字 201 拒绝、两次真实扫描
+完成回调及注销后无回调；不修改服务状态或代授权限。
+`wifi-scan-typed-{arm64,armv7a,x86_64}-r28-01` 的 API26 typed HAP 均编译通过。
+六项 verifier/构建权限边界检查明确拒绝旧 nonce、字符串错误码、回调失败、
+重复/漏行及特权调用者。空列表与非空数量均不证明目标 SSID、关联或 AP/P2P；
+该诊断的 `closed` 始终为空，尚未运行新包实测，也未纳入完整 WLAN 闭环。
+整仓宿主回归 `host-regression-wpa-r28-03.log` 为 1287 项通过（201.057 秒）。
+02 保留新增 persona 后两处旧测试 namespace 缺新 flag 的失败；只补 fixture
+默认 false，仍保留纯调用者零权限断言，并新增 Wi-Fi 的精确两权限断言。
+此候选不在 R28 冻结构建中，仍需新包的真实扫描结果、关联/数据传输及
+权限/重复开关验证；没有减少完整缺口计数，余下五包尚未启动。
+
 ## 2026-10-10 图片元数据：真实读取成功，但错误类型仍不符合 SDK
 
 R27 原始归档的新启动 `1e80acc1-66c6-4531-aba8-b1ba6d4ddee6`，普通 UID
