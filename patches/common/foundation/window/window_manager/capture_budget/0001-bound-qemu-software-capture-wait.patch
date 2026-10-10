@@ -1,9 +1,7 @@
 diff --git a/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn b/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn
 --- a/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn
 +++ b/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn
-@@ -151,6 +151,10 @@
-   ]
- 
+@@ -153,4 +153,8 @@
    defines = []
 +  if (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
 +      product_name == "x86_64_virt") {
