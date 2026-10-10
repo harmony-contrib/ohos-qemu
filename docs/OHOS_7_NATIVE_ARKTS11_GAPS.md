@@ -126,6 +126,16 @@ R29 仅构建 ARM64 phone，包含 WPA 扫描/生命周期/软件 PNO/实时信�
 `packages/first-wpa-backend-7.0-release-20261010-r29`；
 `after-build-r29-01.py` 仅等待这一包，随后核验真实 GN 宏选择、两轮无线
 启停/普通应用扫描、1920×1080 模式切换及完整运行套件。
+R29 于 16:28 CST 完成归档，路径
+`/Volumes/PSSD/qemu/packages/first-wpa-backend-7.0-release-20261010-r29/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `ab720999e6fc6224b88fd780654116b4043562a7eec12347238f2a85ee58c601`。
+源码系统编译耗时 55 分 03 秒。真实 Ninja 编译命令核验 channel helper、
+scan state machine 含 `WIFI_SOFTWARE_SCAN_BACKEND`，STA HAL 含
+`HDI_WPA_INTERFACE_SUPPORT` 且不含 chip 分支；三份原始命令记录为
+`r29-real-gn-{channels,pno,sta}-01.log`。单包 watcher 已开始从该归档启动
+`run_wifi_scan_diagnostic.py`，使用 API26 Release SDK、macOS ARM64/HVF
+和独占 HDC 连接；路径、命令和结果持续写入
+`r29-build-then-validation-01.json` 及 `r29-wifi-runtime-01`。
 **当前尚未取得 R29 客体通过证据，其余五包未启动。**
 
 ## 2026-10-10 WPA 实时频段查询候选与可重复首包诊断
