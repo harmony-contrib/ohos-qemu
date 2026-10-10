@@ -38,4 +38,5 @@ def verify_samples(samples, pid, allocation_kib):
     if [sizes[first], sizes[second]] != [n * 1024 for n in allocation_kib]:
         raise ValueError('kernel buffer byte sizes differ from actual public allocation geometry')
     return dict(pid=pid, inodes=[first, second], bytes=[sizes[first], sizes[second]],
-                baseline_inodes=sorted(baseline), observed_allocation_counts=[len(state) for state in states], closed=[])
+                baseline_inodes=sorted(baseline), baseline_bytes=sum(sizes[inode] for inode in baseline),
+                observed_allocation_counts=[len(state) for state in states], closed=[])

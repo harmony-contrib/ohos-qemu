@@ -359,6 +359,12 @@ def run(args):
             'ordinary-public-HiTrace-real-kernel-records', timeout=2400, env=child_env)
         check('hitrace', work / 'hitrace/diagnostic.json', [hitrace_record])
         same_guest('after-public-HiTrace-kernel-records')
+        graphics_memory_record = command([sys.executable, Path(__file__).with_name('run_graphics_memory_diagnostic.py'),
+            '--archive', args.package_archive, '--sdk', sdk, '--hdc', hdc,
+            '--boot', work / 'boot/boot.json', '--owned-child', '--output', work / 'graphics-memory'],
+            'ordinary-public-graphics-memory-real-buffer-lifecycle', timeout=2400, env=child_env)
+        check('graphics-memory', work / 'graphics-memory/diagnostic.json', [graphics_memory_record])
+        same_guest('after-public-graphics-memory')
         service_init_record = command([sys.executable,
             Path(__file__).with_name('run_service_init_contract_probe.py'),
             '--archive', args.package_archive, '--boot', work / 'boot/boot.json',

@@ -44,6 +44,14 @@ C++ 空指针边界返回 401。ArkTS `graph` 五次仍是 BigInt，故整体明
 最终主机回归 `host-regression-hidebug-types-r31-03.log`：运行 1384 项、整体成功，
 其中 1 项跳过，207.827 秒。包含内核 inode 生命周期检查，但不替代新实包运行。
 
+随后把 `graphics-memory` 接入完整套件与六组合共用首包门禁：必须在同一真实
+验收客体上，重放编译/普通签名负载、C++/ArkTS 数字类型及数值、两次分配/释放、
+内核 inode/字节数/普通进程 UID，以及电源策略恢复。只有全通过才允许登记
+`behavior:hidebug-dmabuf-kernel`，不登记所有 HiDebug API。签名负载校验与 HiTrace
+共用一个只读验证器；既有 R30 HiTrace 原始证据重放仍通过。
+`host-regression-graphics-gate-r31-01.log`：运行 1390 项、整体成功，其中 1 项跳过，
+208.292 秒。**新图形内存门禁尚无通过的新归档实测，当前账本不减少未闭环数。**
+
 ## 2026-10-10 图形内存统计解析修复（待新实包）
 
 固定 Hiview `graphic_memory.cpp::CreateDmaInfo` 有两个独立缺陷：

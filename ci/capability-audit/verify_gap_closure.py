@@ -138,6 +138,20 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                 'not_claimed': actual['not_claimed']}
 
     storage = child('storage-stats/evidence.json')
+    graphics_memory = child('graphics-memory/diagnostic.json')
+    if graphics_memory:
+        from verify_graphics_memory_evidence import verify_evidence as verify_graphics_memory
+        boot_path = runtime / 'boot/boot.json'
+        environment = json.loads(boot_path.read_text()).get('test_environment', {})
+        if (graphics_memory[1].get('enclosing_boot') != str(boot_path.resolve()) or
+                environment.get('device_type') != device_type):
+            raise ValueError('graphics memory closure requires this exact suite-owned acceptance guest')
+        actual = verify_graphics_memory(graphics_memory[1], archive_sha, boot_id, environment['guest_arch'])
+        for identifier in actual['closed']:
+            closed[identifier] = {'evidence': str(graphics_memory[0]), 'sha256': digest(graphics_memory[0]),
+                'verifier': 'ordinary_public_Cxx_ArkTS_allocations_matched_to_real_kernel_inodes_and_releases',
+                'not_claimed': actual['not_claimed']}
+
     if quota and storage:
         from verify_storage_quota_closure import verify as verify_storage_quota
         closed.update(verify_storage_quota(runtime, archive_sha, boot_id, device_type))

@@ -33,6 +33,7 @@ nonce = secrets.token_hex(16)
 report = dict(status='fail', scope='ordinary_public_graphics_memory_NOT_kernel_gap_or_full_gate',
     archive_sha256=digest(args.archive), runner_sha256=digest(Path(__file__)),
     verifier_sha256=digest(Path(__file__).with_name('verify_graphics_memory_results.py')),
+    kernel_verifier_sha256=digest(Path(__file__).with_name('graphics_memory_kernel_contract.py')),
     run_id=nonce, commands=[], failures=[], closed=[], first_artifact_behavior_gate_passed=False)
 before = None
 
@@ -97,6 +98,8 @@ try:
     report['result'] = verify(result, nonce, uid)
     pid = report['result']['pid']
     report['kernel_result'] = verify_samples(kernel_samples, pid, report['result']['allocation_kib'])
+    if report['kernel_result']['baseline_bytes'] != report['result']['graph_kib'][0] * 1024:
+        raise ValueError('public accounting baseline differs from actual kernel buffers')
     status = guest.shell('cat /proc/' + str(pid) + '/status', 'actual-process-identity')
     if re.findall(r'^Uid:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$', status, re.M) != [(str(uid),) * 4]:
         raise ValueError('results do not belong to the actual ordinary process')
