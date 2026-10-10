@@ -1,5 +1,31 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 NetManager eBPF 统计表只读诊断
+
+新增 `build_bpf_netstats_readback.py` 和实际 C 调用者，固定读取
+`/sys/fs/bpf/netsys/maps/app_uid_stats_map`，以 `BPF_F_RDONLY` 打开，
+核验实际 HASH/8 字节 UID/32 字节计数 ABI，区分缺失 UID 和已有零值，
+以十进制字符串保留完整 uint64 计数。不创建/修改 map、不挂载、不附加
+程序或改变策略，也不将存在统计表等同于真实流量计数/公开 API 验收。
+
+API26 SDK 三 ABI 编译记录 `bpf-netstats-readback-build-r29-01/build.json`；
+ARM64 二进制 SHA-256
+`8e1aceef3f8d2073472da1b34c35235c1b3919df3fd0e3476cd225dafa7e9576`。
+Linux Docker 中直接包含实际 C 源码的 syscall 边界夹具验证只读打开、
+错误 map ABI、缺失 UID、系统调用失败、参数溢出/非法 nonce、普通 UID
+拒绝、uint64 无损输出、描述符关闭失败；不以夹具替代客体内核。
+记录 `bpf-netstats-readback-host-r29-01.log`，可运行：
+
+```sh
+python3 -m unittest discover -s ci/capability-audit -p test_bpf_netstats_readback.py -v
+```
+
+整仓宿主测试 `host-regression-bpf-readback-r29-01.log`：1303 项，
+254.595 秒，1 项 Linux 专用夹具在 macOS 跳过（已在上述 Docker 独立通过）。
+R28 root/HDC 命名空间读回固定路径为 ENOENT；**这尚不能证明 netsysnative
+服务未加载**，还需核对服务自己的挂载命名空间和实际流量。
+这些诊断新增文件不在冻结 R29 中，不修改 R29 生产输入，不关闭网络统计缺口。
+
 ## 2026-10-10 R28 全套运行结果与 R29 单包构建
 
 R28 独立完整运行已结束，实际归档 SHA-256
