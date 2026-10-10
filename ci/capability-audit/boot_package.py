@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 sys.path.insert(0, str(ROOT / 'ci/qemu-smoke'))
 from account_state import parse_snapshot
 from run_root_probe import ARCHES, validate_identity
+from hdc_transport import failed as hdc_failed
 from snapshot_build_inputs import digest_files
 from verify_first_artifact_gate import checksum
 
@@ -131,7 +132,7 @@ class QemuGuest:
         if result.returncode and not allow_failure:
             raise ValueError('boot command failed: ' + label)
         if (argv[0] == str(self.args.hdc) and not allow_failure and
-                re.search(r'\[Fail\]|Device not found or connected', result.stdout)):
+                hdc_failed(result.stdout, result.stderr)):
             raise ValueError('HDC transport/operation failed: ' + label)
         return result.stdout.replace('\r', '')
 

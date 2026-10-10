@@ -21,6 +21,6 @@ main() {
   fi
   "${python}" -m pip install --disable-pip-version-check \
     -r "${script_dir}/../ci/capability-audit/requirements-test.txt"
-  exec "${python}" "${script_dir}/../ci/capability-audit/run_packaged_qemu_suite.py" "$@"
+  exec "${python}" "${script_dir}/../ci/capability-audit/run_with_owned_hdc.py" "$@"
 }
 main "$@"

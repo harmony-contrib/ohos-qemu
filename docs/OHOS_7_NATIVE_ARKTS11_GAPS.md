@@ -1,5 +1,27 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R27 完整回归中断：宿主 HDC 握手，不是枚举结果
+
+同一 R27 原始归档的完整启动 `f6a9d000-59c4-4b3f-9af8-2a9a7a913e7f`
+在 `ordinary-const-enum` 的首条身份命令中得到 stderr `Connect server failed`，
+HDC 却返回 0。原始日志 SHA-256
+`239db9cb0f1555fed2e9ec0672eb764d0514d2c8af1804f8d462c6d782f5e360`。
+枚举 HAP 尚未编译或执行，不能认定枚举失败，也不能将部分成功当作完整验收。
+套件已恢复电源策略并关闭客体；完整缺口统计仍为上次 R23，未合并不同启动结果。
+
+固定源码 `developtools/hdc/src/host/client.cpp` 的 `CommandWorker` 在等待
+host server handshake 超时后打印该错误；这不证明客体接口失败，也尚不能证明
+宿主为何短时未响应。现修正 boot/ordinary runner 对 stdout 与 stderr 的错误检测，
+不会重试应用命令或忽略失败。统一 `validate_packaged_qemu.sh` 改用专属前台
+HDC：随机回环端口及独立 TMPDIR（HDC 单实例 PID 锁不随端口变化），继承到
+整个套件；只关闭自己创建的进程，不重启共享服务器。保留 `.hdc/transport.json`、
+服务日志和私有临时目录用于诊断，记录与客体能力证明分开。
+
+`owned-hdc-smoke-r28-01`、`owned-hdc-stress-r28-01` 实际执行 SDK HDC，
+100 次四并发连接通过；`owned-hdc-child-failure-r28-01` 保留真实子进程退出 7，
+均确认专属服务关闭。11 项宿主边界检查覆盖 stderr/退出 0、未知锁归属、
+失败传递和只清理自有进程。它们仅证明测试连接隔离实现，不替代新包完整回归。
+
 ## 2026-10-10 温控实测发现配置错配，待下一代表包验证
 
 R26 原始归档 SHA-256 `f21bb14194ae781485780b4722a9e613261e524c142bab02c7326bdd4d5be8fd`

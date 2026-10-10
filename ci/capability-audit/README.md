@@ -635,7 +635,9 @@ python3 ci/capability-audit/run_root_probe.py --kind bitmap \
 # Repeat with --kind userid / --kind vibrator-hdi and their respective executables.
 # Use a PRIVATE foreground HDC server; do not reset a shared user's server.
 # hdc -s 18710 -m
-# Prefix each command with OHOS_HDC_SERVER_PORT=18710 if using that server.
+# For standalone commands only, prefix with OHOS_HDC_SERVER_PORT=18710 if using that server.
+# validate_packaged_qemu.sh instead owns an isolated foreground server and TMPDIR,
+# records <evidence-output>.hdc/transport.json, and never restarts a shared server.
 # Graphics kinds: vulkan-device / vulkan-headless / vulkan-ohos-surface / gles.
 python3 ci/capability-audit/run_root_probe.py --kind permission-registry \
   --definitions /path/to/pinned-permission-definitions.json \

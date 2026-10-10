@@ -18,6 +18,7 @@ import time
 
 from guest_ui import GuestUi, select_node
 from vulkan_frame_capture import capture_presented_frame
+from hdc_transport import failed as hdc_failed
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -187,8 +188,7 @@ def run(args):
             record['sha256'] = checksum(path)
             if process.returncode and not accepted_failure:
                 raise ValueError('command failed: ' + label)
-            if argv[0] == str(args.hdc) and not accepted_failure and re.search(
-                    r'\[Fail\]|Device not found or connected', stdout):
+            if argv[0] == str(args.hdc) and not accepted_failure and hdc_failed(stdout, stderr):
                 raise ValueError('HDC did not execute the requested operation: ' + label)
             return stdout.replace('\r', '')
         except OSError as error:
