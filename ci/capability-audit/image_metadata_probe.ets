@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Public typed factory results, never invented metadata constructors.
+// Real typed factory values plus the SDK's public AvisMetadata constructor.
 import image from '@ohos.multimedia.image';
 import fs from '@ohos.file.fs';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -61,6 +61,11 @@ struct Index {
     } finally { await source.release(); }
   }
   private async avisTest(): Promise<void> {
+    const first: image.AvisMetadata = new image.AvisMetadata();
+    const second: image.AvisMetadata = new image.AvisMetadata();
+    this.record('avis.constructor', [first instanceof image.AvisMetadata ? 1 : 0,
+      second instanceof image.AvisMetadata ? 1 : 0, first !== second ? 1 : 0,
+      first.delayTime === undefined ? 1 : 0, second.delayTime === undefined ? 1 : 0]);
     const source: image.ImageSource = await this.source('bird_8bit_I420_599x359_fps10.avif');
     try {
       this.record('avis.frames', [await source.getFrameCount()]);
@@ -68,12 +73,17 @@ struct Index {
         const metadata: image.ImageMetadata = await source.readImageMetadataByType([image.MetadataType.AVIS_METADATA], index);
         const value: image.AvisMetadata | undefined = metadata.avisMetadata;
         this.record('avis.frame.' + index, [value?.delayTime ?? -1]);
+        this.record('avis.instance.' + index, [value instanceof image.AvisMetadata ? 1 : 0]);
       }
       await this.invalid(source, image.MetadataType.AVIS_METADATA, 'avis.negative', -1);
       await this.invalid(source, image.MetadataType.AVIS_METADATA, 'avis.end', 90);
       const metadata: image.ImageMetadata = await source.readImageMetadataByType([image.MetadataType.AVIS_METADATA], 0);
       const value: image.AvisMetadata | undefined = metadata.avisMetadata;
       this.record('avis.after-invalid', [value?.delayTime ?? -1]);
+      const fresh: image.AvisMetadata = new image.AvisMetadata();
+      this.record('avis.constructor-after-read', [fresh.delayTime === undefined ? 1 : 0,
+        fresh !== value ? 1 : 0, first.delayTime === undefined ? 1 : 0,
+        second.delayTime === undefined ? 1 : 0]);
     } finally { await source.release(); }
   }
   private async run(): Promise<void> {
@@ -86,7 +96,7 @@ struct Index {
     try { await this.avisTest(); } catch (error) {
       this.failures++; this.record('avis.failed', [(error as BusinessError).code], '', (error as BusinessError).message);
     }
-    this.record('summary', [16, this.failures]);
+    this.record('summary', [21, this.failures]);
   }
   aboutToAppear(): void {
     const file = fs.openSync(this.path, fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);

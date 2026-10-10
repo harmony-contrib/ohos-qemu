@@ -8,7 +8,7 @@ from image_metadata_fixtures import FIXTURES, verify as verify_fixtures
 from run_normal_hap_probe import require_normal_identity
 from run_root_probe import digest
 
-SCOPE = 'real_typed_image_metadata_factory_values_NOT_public_constructors_or_full_gate'
+SCOPE = 'real_image_metadata_and_Avis_constructor_NOT_Dng_Tiff_constructors_or_full_gate'
 EXPECTED = {
     'dng.selected': ([1, 4, 0, 0], 'FakeCamera ModelX'),
     'dng.default': ([1, 4, 0, 0], 'FakeCamera ModelX'),
@@ -19,14 +19,19 @@ EXPECTED = {
     'tiff.negative': ([-1, 7700204], ''),
     'tiff.end': ([1, 7700204], ''),
     'tiff.after-invalid': ([1, 2, 1, 72, 72, 2], ''),
+    'avis.constructor': ([1, 1, 1, 1, 1], ''),
     'avis.frames': ([90], ''),
     'avis.frame.0': ([100], ''),
+    'avis.instance.0': ([1], ''),
     'avis.frame.45': ([100], ''),
+    'avis.instance.45': ([1], ''),
     'avis.frame.89': ([100], ''),
+    'avis.instance.89': ([1], ''),
     'avis.negative': ([-1, 7700204], ''),
     'avis.end': ([90, 7700204], ''),
     'avis.after-invalid': ([100], ''),
-    'summary': ([16, 0], ''),
+    'avis.constructor-after-read': ([1, 1, 1, 1], ''),
+    'summary': ([21, 0], ''),
 }
 
 

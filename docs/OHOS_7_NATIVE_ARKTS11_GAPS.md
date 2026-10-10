@@ -6,10 +6,30 @@
 `CreateAvisMetadata` 在工厂读取路径按需调用；但 `native_module_ohos_image.cpp`
 公开模块初始化只注册到 `InitPngMetadata`，漏掉 Avis 初始化。这解释了真实 AVIS
 读取通过而模块公开 `AvisMetadata` 仍缺失，两项不能互相替代。
-已读 `api-binding-surface.md` 和 `metadata-picture-model.md`，按模块维护规则另行请求
-仅注册现有类的确认，尚未修改该绑定。固定 XTS 的动态 image 测试中未检出三个
+已读 `api-binding-surface.md` 和 `metadata-picture-model.md`；用户已明确批准仅注册现有类。
+新增 `image_framework/avis_class_export` 只在原有模块初始化分支补调既有 initializer，
+完整文件固定原始与修复哈希，应用两次验证幂等。固定 XTS 的动态 image 测试中未检出三个
 metadata 类构造或 instanceof 用例；目前只检出 static ImageMetadata 测试，不作为
 ArkTS 1.1 证明。Tiff/Dng 当前仍创建普通对象，不能套用 Avis 的已有类注册修复。
+
+`avis-class-export-full-tu-r34-01/evidence.json` SHA
+`9983f9f3ff0a7923c073cf85e36ba03a62e7b28458566862a22bb1ba3636133f`：
+三个实际产品的完整模块初始化翻译单元均编译通过，只读源/输出挂载并用 VFS 叠加候选，
+确认编译器实际消费修复文件；不代表链接或客体通过。
+扩展原有 image-metadata 普通应用测试为 22 条观测，保留三种格式、越界与失败后重读，
+新增 Avis 公开构造、实际工厂 instanceof、读取前后独立对象和未设置字段检查。
+真实 SDK 构建 unsigned HAP SHA
+`3fa2423d212875c351ce2a4f948df17e6039fabe476ae117818873633c93f164`，
+位置 `avis-constructor-hap-build-r34-01/entry/build/default/outputs/default/entry-default-unsigned.hap`。
+尚未在包含修复的新包执行，R34 冻结输入没有本修复；不关闭任何新的运行缺口。
+本轮宿主回归 `host-regression-avis-class-r34-01.log`：1415 项、1 项跳过，365.424 秒，
+SHA `e0655ab2ca472c42b1208563efd692d9462b3b614d29f814061163244e23384a`。
+未执行 XTS/物理设备验证，没有 push，也没有将宿主替身测试算作客体通过。
+
+用户确认后续按批次推进：同一轮集中修复、共享冻结输入、一次代表包完整回归，
+汇总失败项后再开展下一轮；不为 Avis 这一单项立即启动新构建。
+当前 R34 保留为运行诊断基线，最终仍必须由包含本轮全部修复的新代表包通过门禁，
+才能启动其余五包。批量收集失败不改变失败状态或交付条件。
 
 SDK 26 的真实 `ets-loader/lib/userIntents_parser/parseUserIntents.js` 中，
 `detectInsightIntent` 会处理意图元数据并调用 `removeDecorator`；原生

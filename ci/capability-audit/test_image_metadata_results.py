@@ -17,9 +17,19 @@ class ImageMetadataResultsTests(unittest.TestCase):
         return verify('\n'.join(json.dumps(row) for row in (self.rows if rows is None else rows)),
                       self.nonce, self.identity)
 
-    def test_real_factory_contract_does_not_claim_constructor_or_full_closure(self):
+    def test_narrow_contract_does_not_claim_complete_release_closure(self):
         self.assertEqual(self.check()['closed'], [])
-        self.assertEqual(self.check()['observations'], 17)
+        self.assertEqual(self.check()['observations'], 22)
+
+    def test_missing_class_wrong_factory_prototype_or_shared_defaults_fail(self):
+        for index, original in enumerate(self.rows):
+            if not original['name'].startswith(('avis.constructor', 'avis.instance.')):
+                continue
+            for position in range(len(original['values'])):
+                rows = copy.deepcopy(self.rows)
+                rows[index]['values'][position] = 0
+                with self.subTest(name=original['name'], position=position), self.assertRaises(ValueError):
+                    self.check(rows)
 
     def test_each_missing_or_duplicate_record_fails(self):
         for index in range(len(self.rows)):

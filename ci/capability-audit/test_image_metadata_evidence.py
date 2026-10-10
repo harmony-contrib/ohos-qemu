@@ -66,7 +66,7 @@ class ImageMetadataEvidenceTests(unittest.TestCase):
 
     def test_bound_raw_contract_remains_narrow(self):
         self.assertEqual(self.check()['closed'], [])
-        self.assertEqual(self.check()['observations'], 17)
+        self.assertEqual(self.check()['observations'], 22)
 
     def test_every_recorded_file_rejects_unrecorded_changes(self):
         for key, path in self.files.items():
