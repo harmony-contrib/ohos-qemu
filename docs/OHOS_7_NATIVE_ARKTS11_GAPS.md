@@ -31,6 +31,17 @@ SHA `e0655ab2ca472c42b1208563efd692d9462b3b614d29f814061163244e23384a`。
 当前 R34 保留为运行诊断基线，最终仍必须由包含本轮全部修复的新代表包通过门禁，
 才能启动其余五包。批量收集失败不改变失败状态或交付条件。
 
+首步调整完整回归的普通应用 persona 循环：`batch_probe_policy.py` 保留每个失败与原始
+命令证据，在同一启动身份/客体健康检查通过后继续其它独立 persona，避免再因单个
+factory-objects 失败而完全漏测后续应用。子进程超时无法确认清理、明确清理失败或客体
+健康检查失败仍立即退出；不重试失败用例，不扩大超时，不改子验证器。Vulkan 窗口失败
+不会因其它 Vulkan 测试通过而变成聚合通过。最终 `failures` 非空仍禁止通过首包门禁。
+底层启动、依赖准备和其余非独立阶段目前仍保留遇错停止，不能声称已收齐未执行用例。
+R34 使用冻结旧流程，这项编排调整将进入下一批冻结输入。
+`host-regression-batch-policy-r34-01.log`：1420 项、1 项跳过，366.107 秒，SHA
+`77e7727ea87f3062a1dc2c9d73121595070def08dabe3c77e787ea15f51bff6d`。
+仅属宿主编排回归，尚未用新流程运行新包。
+
 SDK 26 的真实 `ets-loader/lib/userIntents_parser/parseUserIntents.js` 中，
 `detectInsightIntent` 会处理意图元数据并调用 `removeDecorator`；原生
 InsightIntentDecorator 模块仅注册 LinkParamCategory。说明七个装饰器还需要检查

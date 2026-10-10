@@ -20,6 +20,7 @@ import sys
 import tempfile
 
 from boot_package import QemuGuest
+from batch_probe_policy import independent_probe
 from collect_backend_inventory import collect as collect_backend_inventory
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -328,34 +329,45 @@ def run(args):
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
-            record = command([sys.executable, Path(__file__).with_name('run_normal_hap_probe.py'),
-                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
-                '--persona', persona, '--arch', arch, '--device', device, '--target', target,
-                '--hdc', hdc, '--boot-id', environment['boot_id'], '--boot', work / 'boot/boot.json', '--output', work / persona,
-                '--source-volume', source_volume, '--docker-image', docker_image],
-                'ordinary-' + persona, timeout=2400, env=child_env)
             path = work / persona / 'evidence.json'
-            document = json.loads(path.read_text())
-            if document.get('status') != 'pass' or document.get('boot_id') != environment['boot_id']:
-                raise ValueError('normal-app behavior result is failed or from another boot: ' + persona)
-            normal_results[persona] = {'evidence': str(path), 'sha256': checksum(path), 'command': record}
-            if persona == 'web':
-                check('arkweb', path, [record])
-            if persona == 'photos-asset':
-                check('photos-asset', path, [record])
-            if persona == 'settings-navigation':
-                check('settings-navigation', path, [record])
-            if persona == 'storage-stats':
-                check('storage-stats', path, [record])
-            if persona == 'completion-handler':
-                check('completion-handler', path, [record])
-            if persona == 'image-metadata':
-                check('image-metadata', path, [record])
-            if persona == 'thermal':
-                check('thermal', path, [record])
-            if persona == 'network-accounting':
-                check('network-accounting', path, [record])
-            same_guest('after-' + persona)
+
+            def normal_batch_health(label):
+                same_guest(label)
+                if label.startswith('after-'):
+                    if report['commands'][-1].get('timed_out'):
+                        raise ValueError('timed-out child cleanup is not certified; stop batch')
+                    if path.is_file():
+                        child = json.loads(path.read_text())
+                        if any('cleanup failed' in str(value) for value in child.get('failures', [])):
+                            raise ValueError('owned child cleanup failed; stop batch')
+
+            with independent_probe(report, 'ordinary-' + persona, normal_batch_health, save):
+                record = command([sys.executable, Path(__file__).with_name('run_normal_hap_probe.py'),
+                    '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                    '--persona', persona, '--arch', arch, '--device', device, '--target', target,
+                    '--hdc', hdc, '--boot-id', environment['boot_id'], '--boot', work / 'boot/boot.json', '--output', work / persona,
+                    '--source-volume', source_volume, '--docker-image', docker_image],
+                    'ordinary-' + persona, timeout=2400, env=child_env)
+                document = json.loads(path.read_text())
+                if document.get('status') != 'pass' or document.get('boot_id') != environment['boot_id']:
+                    raise ValueError('normal-app behavior result is failed or from another boot: ' + persona)
+                normal_results[persona] = {'evidence': str(path), 'sha256': checksum(path), 'command': record}
+                if persona == 'web':
+                    check('arkweb', path, [record])
+                if persona == 'photos-asset':
+                    check('photos-asset', path, [record])
+                if persona == 'settings-navigation':
+                    check('settings-navigation', path, [record])
+                if persona == 'storage-stats':
+                    check('storage-stats', path, [record])
+                if persona == 'completion-handler':
+                    check('completion-handler', path, [record])
+                if persona == 'image-metadata':
+                    check('image-metadata', path, [record])
+                if persona == 'thermal':
+                    check('thermal', path, [record])
+                if persona == 'network-accounting':
+                    check('network-accounting', path, [record])
         hitrace_record = command([sys.executable, Path(__file__).with_name('run_hitrace_diagnostic.py'),
             '--archive', args.package_archive, '--sdk', sdk, '--hdc', hdc,
             '--boot', work / 'boot/boot.json', '--owned-child', '--output', work / 'hitrace'],
@@ -396,14 +408,21 @@ def run(args):
                 raise ValueError('native Vulkan verification failed: ' + kind)
             graphics_results[kind] = {'evidence': str(path), 'sha256': checksum(path), 'command': record}
             same_guest('after-' + kind)
-        graphics_results['vulkan-window'] = normal_results['vulkan-window']
-        graphics_report = {'schema_version': 1, 'status': 'pass',
+        if 'vulkan-window' in normal_results:
+            graphics_results['vulkan-window'] = normal_results['vulkan-window']
+        graphics_report = {'schema_version': 1, 'status': 'pass' if 'vulkan-window' in normal_results else 'fail',
             'scope': 'independent_Vulkan_native_WSI_resize_and_compositor_regressions',
             'archive_sha256': report['package']['sha256'], 'boot_id': environment['boot_id'],
             'results': graphics_results}
         graphics_path = work / 'vulkan.json'
         graphics_path.write_text(json.dumps(graphics_report, indent=2) + '\n')
-        check('vulkan', graphics_path, [row['command'] for row in graphics_results.values()])
+        if graphics_report['status'] == 'pass':
+            check('vulkan', graphics_path, [row['command'] for row in graphics_results.values()])
+        else:
+            report['checks']['vulkan'] = {'status': 'fail', 'evidence': str(graphics_path),
+                'sha256': checksum(graphics_path), 'reason': 'ordinary Vulkan window proof failed or missing'}
+            report['failures'].append('Vulkan aggregate missing ordinary window proof')
+            save()
         permission_probes = work / 'permission-probes'
         permission_probes.mkdir()
         permission_build = command(['docker', 'run', '--rm', '--platform', 'linux/amd64',

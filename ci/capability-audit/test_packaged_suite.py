@@ -113,6 +113,15 @@ class PackagedSuiteTests(unittest.TestCase):
         self.assertLess(text.index("'actual-virtual-Vibrator-HDI-boundaries'"),
                         text.index("'complete-Cxx-ArkTS11-gap-closure'"))
 
+    def test_independent_app_failures_are_collected_but_never_grant_acceptance(self):
+        text = Path(__file__).with_name('run_packaged_qemu_suite.py').read_text()
+        self.assertIn("with independent_probe(report, 'ordinary-' + persona, normal_batch_health, save):", text)
+        self.assertIn("timed-out child cleanup is not certified; stop batch", text)
+        self.assertIn("owned child cleanup failed; stop batch", text)
+        self.assertIn("if checks_complete and not report['failures']:", text)
+        self.assertIn("'status': 'pass' if 'vulkan-window' in normal_results else 'fail'", text)
+        self.assertIn("Vulkan aggregate missing ordinary window proof", text)
+
 
 if __name__ == '__main__':
     unittest.main()
