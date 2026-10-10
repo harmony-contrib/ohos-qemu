@@ -301,6 +301,7 @@ SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/stan
 SETTINGS_INPUT_2IN1_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/input_2in1_navigation/apply.sh"
 SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/refresh_rate_page/apply.sh"
 SCREEN_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/window/window_manager/screen_modes/apply.sh"
+QEMU_DISPLAY_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/display_modes/apply.sh"
 SETTINGS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/settings_provider/apply.sh"
 SETTINGS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/settings_provider/apply.sh"
 PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_facard/apply.sh"
@@ -3009,6 +3010,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_input_2in1_component.log"
   bash "${SCREEN_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_screen_modes_component.log"
+  bash "${QEMU_DISPLAY_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
   bash "${SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_refresh_rate_component.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \

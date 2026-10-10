@@ -9,8 +9,9 @@
 `/Volumes/PSSD/qemu/packages/first-refresh-quota-7.0-release-20261010-r25/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
 构建容器与等待命令均正常退出 0，归档 SHA-256：
 `297c213658bc270cc55f3f40251ab092b150fd24f09102a55b86cea7774e8895`。
-新归档的独立内核配额实测已通过（详见下文），Settings 刷新率正在验证；
-尚不能视为完整行为门禁通过，其余五包未开始。
+新归档的独立内核配额与普通应用存储统计实测通过（详见下文），
+1280×800 Settings 刷新率页面通过，但 1920×1080 截图/模式切换失败；
+完整行为门禁未通过，其余五包未开始。
 该冻结输入包含 Settings 动态页面/模式索引与 F2FS 项目配额修复，
 **不包含**本节后述的 AppMgr 候选。
 
@@ -36,8 +37,54 @@
 失败客体 01–03 已停止，其展开 `images` 删除回收约 14 GiB；原归档、
 日志和报告保留，临时 userdata 不保留，记录
 `retired-quota-images-cleanup-r25-01.json`。
-只读屏幕探针构建 `screen-modes-readback-build-r25-01` 通过，正在执行
-`r25-refresh-1280x800-runtime-01`；1920×1080 与完整回归尚未开始。
+只读屏幕探针构建 `screen-modes-readback-build-r25-01` 通过。
+`r25-refresh-1280x800-runtime-01`（boot `d122abc1-73d9-4868-860a-d3e15ac30e58`）
+实际动态页面、75 Hz 选中状态、合成器截图、返回及 normal 调用者 202 通过。
+该分辨率只有一个真实选项，不声称覆盖切换。
+
+`r25-refresh-1920x1080-runtime-01` 在截图处失败，DMS 等待 RS 像素图 2000 ms
+超时；`-02` 保持同样断言，仅增加关闭前延后采集，仍出现截图超时，并在页面
+实际请求 50 Hz 后定位独立缺陷：JS 正确传入索引 12，RS 正确转换为模式 ID 13，
+但 QEMU `DrmCrtc::SetActivieMode` 硬编码拒绝非 0，composer 报错，真实模式仍为
+75 Hz。不把后续截图成功抹去首次超时；两次失败都保留，完整回归没有开始。
+两客体均恢复电源设置并关闭。额外只读 DRM 采集尝试发生在客体退出之后，
+返回 Device not found，不作为任何成功证据。
+
+新增 `device/qemu/display_modes`，仅允许连接器公布的非负有效模式，拒绝溢出/
+未知 ID；原子模式请求使用 RAII，分配/属性/blob/提交失败保留失败及重试状态。
+接入下一代表包的统一预构建补丁阶段，**不在 R25 内，也尚无新包成功证据**。
+`display-modes-r25-01/host-boundaries-03.log`：真实函数提取的 ASan/UBSan
+300 次切换、重复设置、非法 ID、空对象与 7 类 DRM 失败边界通过，原版负对照
+确认拒绝有效非零模式，正向/重复应用和未知/部分状态保留检查通过。
+`three-abi-compile-03.json`：3 个完整生产 TU × 3 ABI 共 9 个对象通过；01/02
+的缺失 HDI 头文件失败保留，使用各产品实际 GN IDL 命令在隔离目录生成，
+没有替代声明、修改系统源码/out 或注入运行库。仍需新包 UI 与内核实际模式读回。
+该补丁不修复独立截图超时。
+补丁空白上下文格式整理后再次通过正反应用；三份最终生产文件 SHA-256
+未改变。新增内核 DRM 读回要求：只有 active/enabled CRTC 及其连接器的实际
+分辨率/刷新率与显示服务一致才接受页面状态，不把缓存模式 ID 变化视为硬件成功。
+3 项解析器边界通过，实际 R25 `r25-drm-readback-runtime-01` 中读取的内核状态
+也通过解析（1920×1080、75 Hz、217140 kHz）；该客体随后桌面截图再次超时，
+整体诊断仍为失败，未执行延迟采样。`-02` 单独调查截图耗时，不改变截图超时、
+权限或任何验收结果；原失败保留。清理三个已停止失败客体的展开 images
+回收约 14 GiB，原归档/日志/报告保留，临时 userdata 删除，见
+`retired-diagnostic-images-cleanup-r25-02.json`。
+
+普通 Storage `r25-storage-stats-runtime-01` 被错误测试口径拒绝：固定 Installd
+源码的 LOCAL 是 UID quota 总量，cache 单独统计为其子集，`dataSize` 不排除
+cache；[官方 API 说明](https://developer.huawei.com/consumer/cn/doc/doccenter-capabilities/api/js-apis-file-storage-statistics)
+也只排除安装文件。修正测试，要求 data 增长等于 data 文件加 cache 文件，
+保留增长/回收上界；新增遗漏/双计缓存拒绝检查，6 项通过，不修改系统 API。
+重新构建并在独立 boot `a9151c28-65b3-4400-9060-9735f575e757` 执行
+`r25-storage-stats-runtime-02` 通过，两轮实际文件、Promise/callback、删除恢复
+和普通应用跨 bundle 202 均验证。01 失败未覆盖；两个 runner 源码分别保存，
+SHA-256 与各报告一致（第二次执行命令仍使用当时的 01 路径，执行源码归档为 02）。
+这只是独立诊断，`closed` 仍为空，不放行完整矩阵。
+
+截至加入显示驱动候选和 Storage 口径修正**之前**，完整宿主回归
+`host-regression-r25-06.log`：1204 项通过（217.703 秒）。
+随后 `host-regression-r25-07.log` 完整 1205 项通过（206.012 秒），新内核读回
+检查在其后加入，并另跑屏幕与刷新率相邻检查；不把宿主通过当成新包通过。
 
 新增 `render_attach_registration` **未接入打包的候选组件**：可信 PID 的绑定
 查询等待 nwebspawn 返回与 RenderRecord 登记完成；timeout 先登记再允许绑定

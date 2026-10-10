@@ -22,6 +22,7 @@ from run_root_probe import digest, validate_elf
 from settings_navigation_ui import require_painted_title, wait_node
 from settings_refresh_ui import controls, verify_caller
 from verify_screen_modes import verify as verify_modes
+from verify_kernel_screen_mode import verify as verify_kernel_mode
 from verify_settings_navigation_results import verify_evidence as verify_navigation
 
 
@@ -73,7 +74,10 @@ def run(args):
         ui.shell('chmod 700 ' + remote, 'readonly-caller-mode')
 
         def read_modes():
-            return verify_modes(ui.shell('unset LD_LIBRARY_PATH LD_PRELOAD; ' + remote, 'actual-screen-modes'))
+            actual = verify_modes(ui.shell('unset LD_LIBRARY_PATH LD_PRELOAD; ' + remote, 'actual-screen-modes'))
+            actual['kernel_mode'] = verify_kernel_mode(
+                ui.shell('cat /sys/kernel/debug/dri/0/state', 'actual-kernel-screen-mode'), actual['active_mode'])
+            return actual
 
         original = read_modes()
         report['original_modes'] = original
