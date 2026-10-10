@@ -1,5 +1,36 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 路由观察者真实回调测试（尚待客体验证）
+
+`RouterPageInfo` 在固定源码
+`foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.cpp:1587`
+由 `CreateRouterPageInfoObj` 创建并通过真实路由回调传给应用；不能只因
+模块没有独立构造器而认定此类完全不可用。已按 ace_engine 的 KB-first
+规则查询 observer/router、阅读范式说明并核对实际 NAPI 与 PagePattern，
+没有修改 SDK、引擎源码或放宽审计基线。
+
+新增普通、无权限的 `router-observer` persona，用实际 SDK 类型接收
+两个真实路由页面产生的回调，重复注册两个监听、仅移除其中一个、再
+移除全部监听；核验生命周期、页面 ID、上下文身份、计数及取消订阅后
+静默。测试不构造替代对象，也不把 DensityInfo/断点观察能力算作通过。
+结果验证器目前返回 `closed=[]`，尚未接入缺口关闭条件。
+
+三个 ABI 的真实 API26 HAP 编译通过，记录
+`router-observer-typed-{arm64,armv7a,x86_64}-r30-01`；整仓主机回归
+`host-regression-router-observer-r30-01.log`：1338 项通过，202.316 秒，
+同一 Linux 专用夹具在 macOS 跳过。首次使用不含 Pillow 的系统 Python
+运行独立测试遇到依赖导入失败，改用已有验证虚拟环境后 5 项独立测试
+和整仓测试通过；没有修改测试以跳过图像依赖。
+
+`after-r30-router-observer-01.py` 等待 R30 已安排的首包测试与键盘诊断
+结束，随后仅启动同一归档的独立普通应用诊断，使用归档原冻结启动验证器，
+不修改运行中的冻结构建输入、不运行其余五包。当前仍无此 persona 的
+客体通过证据，完整缺口计数不变。
+
+磁盘回收记录 `retired-r29-packaging-images-cleanup-01.json`：只移除逐项
+SHA-256 核对通过的 R29 打包 images 副本，回收 1,973,633,024 字节；
+保留原归档、SHA256SUMS、构建记录及全部失败证据，删除内容可从归档恢复。
+
 ## 2026-10-10 R30 代表包重建与快捷键输入诊断
 
 R30 仅重建 ARM64 phone，冻结输入 `build-inputs/phone-waHkww`，提交
