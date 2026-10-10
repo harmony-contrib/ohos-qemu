@@ -1,5 +1,40 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 扫描生命周期与软件 PNO 补充修复
+
+扫描路由接通后的生命周期检查发现两个独立问题：ScanService 先注册回调，
+再设置回调所用状态机指针；后续初始化失败会直接析构 ScanMonitor，原析构
+不注销回调。新 `wpa_scan_lifecycle` 部件将指针设置移到注册前，析构时先
+注销回调再销毁状态机；记录自身是否成功注册，防止失败初始化、重复 UnInit
+或已退休对象析构时注销新对象的回调。未改变权限、公开 API 或消息队列协议。
+
+真实补丁 ScanMonitor 方法的隔离宿主 fixture 覆盖立即到达事件、注册失败、
+无显式 UnInit 的销毁、重复注销、旧对象不影响新对象，以及 100 轮创建/销毁；
+ASan/UBSan 通过。`wpa-scan-monitor-boundaries-r28-02.json` SHA-256
+`83b0b4a4b38d4f0e20b9ef582b5c2e45ba5c4bc88db3472be1f83a3aa5ba097b`。
+两个实际完整 TU × 三架构编译通过，`wpa-scan-lifecycle-compile-r28-02.json`
+SHA-256 `a973c845657b063f5fabf82700ac3694c926e17952290a30e5a20c9d7c2aad1b`。
+01 曾被候选头文件依赖检查拒绝：未修改的 scan_service.h 用引号包含同目录
+旧 scan_monitor.h，普通 -I 无法覆盖。现用精确 Clang VFS 文件映射，六个
+对象均确认实际消费补丁头文件；没有放宽依赖断言或把旧布局算作通过。
+整仓 `host-regression-wpa-lifecycle-r28-01.log` 1290 项通过（204.089 秒）。
+
+另确认默认配置 `supportHwPnoFlag=true` 会选中 QEMU 没有的芯片 PNO 卸载，
+WPA HDI 本身没有对应卸载实现。`wpa_software_pno` 在关闭 chip HDI 的标准
+产品选择已有的定时软件 PNO 状态机；芯片产品继续遵循原配置。软件扫描仍
+经过真实 WPA/内核扫描及结果查询，不伪造结果，也不声称硬件节能卸载可用。
+`wpa-software-pno-compile-r28-01.json` 记录三架构、软件候选/原分支共六个
+完整 TU 编译，SHA-256 `5e6594d6af45fca42713999c83efb8b5a07c1778ee39fe13e2d0b1f9da622e3b`。
+软件分支为显式隔离候选宏，**尚不证明新包真实 GN 选择或后台扫描行为**；
+需要下一代表包核验宏、保存网络后的周期扫描/重连、停止与失败分支。
+`host-regression-wpa-pno-r28-01.log` 整仓 1293 项通过（208.558 秒），含
+软件分支不读取硬件配置、原分支保持 true/false 配置的 ASan/UBSan 检查。
+
+三个独立 Wi-Fi 部件都已接入公共打包脚本，但都不在仍在构建的 R28 冻结包内。
+进一步源码检查仍有未闭环项：非 chip 的信道表查询为空，会影响分频段扫描；
+非默认扫描调度样式、关联与数据链路、AP/P2P 仍待适配/实测。不能用开关、
+空列表、软件候选编译或上述宿主生命周期检查关闭完整 WLAN 缺口。
+
 ## 2026-10-10 Wi-Fi：真实 WPA 启动后，扫描服务仍被芯片条件编译截断
 
 R27 原归档的新启动 `e9f08aa5-4cab-4567-9c25-e1421d6c02af` 使用预装

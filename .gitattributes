@@ -3,3 +3,5 @@ ci/capability-audit/fixtures/settings_tts_namespace/napi_settings_init.cpp -text
 # A blank unified-diff context line contains one intentional space.
 patches/common/applications/standard/settings/tts_namespace/0001-export-sdk-TTS-namespace.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/wifi/wpa_scan/0001-route-non-chip-scans-through-wpa.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_scan_lifecycle/0001-retire-scan-monitor-on-every-destruction-path.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_software_pno/0001-use-software-pno-without-chip-offload.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

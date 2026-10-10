@@ -32,7 +32,8 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
         prepare_component_wifi_hdi=False):
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
-    if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',)):
+    if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',),
+                                 ('WIFI_SOFTWARE_SCAN_BACKEND',)):
         raise ValueError('only explicit reviewed QEMU candidate features can be selected')
     if args.output.exists() or args.output.is_symlink():
         raise ValueError('fresh exact-component compilation evidence path required')
@@ -118,6 +119,7 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
             dependency_path = staged / (product + '.d')
             argv[argv.index('-o') + 1] = str(object_path)
             argv[argv.index('-MF') + 1] = str(dependency_path)
+            header_overlay = None
             if overlay_component_headers:
                 # Only exact component-owned directories precede real includes;
                 # retain every original include and the TU's quoted-header path.
@@ -131,6 +133,17 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
                                 revised.append('-I' + str(overlay))
                     revised.append(token)
                 argv = revised + ['-iquote', str(source.parent)]
+                # An unchanged header may quote a patched sibling. Its own
+                # directory wins over every -I overlay, so map that exact
+                # original file as well; never accept compiling the old layout.
+                mapped_headers = [{'type': 'file', 'name': str(root / relative),
+                                   'external-contents': str(staged / relative),
+                                   'use-external-name': True}
+                                  for relative in originals if Path(relative).suffix in ('.h', '.hpp')]
+                if mapped_headers:
+                    header_overlay = logs / (product + '-header-overlay.json')
+                    header_overlay.write_text(json.dumps({'version': 0, 'roots': mapped_headers}) + '\n')
+                    argv += ['-ivfsoverlay', str(header_overlay)]
             generated_inputs = []
             if prepare_component_idl:
                 from compile_render_connection_reply import prepare_missing_idl
@@ -165,6 +178,8 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
                 'compile_log': str(compile_log), 'compile_log_sha256': digest(compile_log),
                 'executed_argv': argv, 'source_sha256': digest(candidate),
                 'actual_owned_idl_generation': generated_inputs,
+                'candidate_header_overlay': str(header_overlay) if header_overlay else None,
+                'candidate_header_overlay_sha256': digest(header_overlay) if header_overlay else None,
                 'used_candidate_headers': used_candidate_headers})
     if ({name: digest(root / name) for name in originals} != originals or
             {str(path): digest(path) for path in inputs} != before):
