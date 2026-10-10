@@ -1,5 +1,42 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R32 完整验收新增失败与 R33 依赖检查修正
+
+`r32-independent-full-runtime-01.json` 已结束，SHA
+`150efbe0728e529bffdfcaca515bf1374020dcf7835b0b0db074379173ca03df`。
+结果失败，停止于 `ordinary-factory-objects` 的严格校验；这不是完整账本已重新完成。
+实际 `getTaskPoolInfo()` 启动快照出现 `{tid:0, priority:1, taskIds:[]}`，
+验证器正确拒绝 `invalid actual ThreadInfo fields`。失败前同客体 ArkWeb 工厂和 Vulkan
+窗口测试通过，但不代表其它能力或架构通过。电源覆盖已恢复，临时客体已关闭。
+另启的只读导航观察器启动时完整流程已经结束，没有采样，不产生导航闭环证据。
+
+固定源码 `commonlibrary/ets_utils@37cafe4c6d96858e976107d41d4f723adfde4a61`
+先填充 `workerEnv_`，稍后才设置 TID，旧快照用非空环境指针判断初始化完成；
+且任务 ID 向量的读侧未持有写侧互斥锁，运行期 priority 也非原子。
+候选 `commonlibrary/ets_utils/thread_info_snapshot` 在现有 worker-created 通知时 release
+发布 ready，快照 acquire 后读取真实 TID；用原有任务 ID mutex 复制向量，priority 改原子。
+没有生成虚拟 TID、不放宽验证器、不等待或重试，不修改调度或公开 ArkTS 字段。
+该候选不在已冻结 R33 中，尚未新归档运行验收。
+
+`taskpool-thread-info-full-tu-r33-01/evidence.json` SHA
+`3a41e9db2448f3ab692d24e30b6ddc8dc76d367e58b6be4257f9e702603ef764`：
+只读真实 product 编译命令、Clang VFS 叠加候选源码，ARM64/ARMv7/x86_64 的
+task_manager 和 worker 六个完整翻译单元均通过；不冒充六产物、链接或客体验收。
+定向宿主测试执行真实补丁的快照/发布方法体，覆盖未初始化、已创建环境但尚无 TID、
+发布后可见、并发任务 ID 修改和空闲回归；其它 NAPI/调度对象是明确的测试替身。
+
+R33 编译未打包即失败于真实 `wifi_native__check`：`libnl:libnl_share` 对应的部件依赖
+必须声明在 `deps.components`，初版误放 `third_party`。现已修正补丁及整文件哈希，
+新增分类回归；`verify-r34-ap-dependency-check-01.log` 使用实际 OHOS 检查器，
+重现旧声明失败且确认新声明通过，未修改白名单。构建观察器因此停止，没有启动新包客体。
+`revert-owned-r33-ap-candidate-01.log` 记录仅在严格验证四个文件均是本次旧补丁状态后，
+用保留的 R33 冻结补丁反向恢复为原状态，以便新脚本重新应用；其它源码未重置。
+移除的生成头文件可从冻结补丁恢复。完整首包门禁仍未通过，剩余五包仍未启动。
+
+合并候选宿主回归 `host-regression-taskpool-deps-r34-01.log`：1412 项成功，1 项跳过，
+231.185 秒。补丁空白规范化后重新用原始源码验证精确字节应用和幂等，两者通过；
+候选生成源码哈希与三 ABI 编译证据一致。必须重建新代表包验证，不对旧 R32 动态换库。
+
 ## 2026-10-10 R33 仅热点候选代表包重建
 
 `build-r33-software-ap-representative-01.py` 启动本地 Docker 单独 ARM64 phone 构建，

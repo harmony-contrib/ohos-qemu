@@ -260,6 +260,7 @@ QEMU_WPA_SCAN_EVENTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/wpa_supp
 QEMU_WPA_SCAN_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_scan_lifecycle/apply.sh"
 QEMU_WPA_SOFTWARE_PNO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_software_pno/apply.sh"
 QEMU_SOFTWARE_AP_REGULATORY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/software_ap_regulatory/apply.sh"
+TASKPOOL_THREAD_INFO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/commonlibrary/ets_utils/thread_info_snapshot/apply.sh"
 VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/vivid_capture/apply.sh"
 SETTINGS_NAVIGATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/network_navigation/apply.sh"
 SETTINGS_HOTSPOT_STATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/hotspot_state_reconciliation/apply.sh"
@@ -2944,6 +2945,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mission_state_component.log"
   bash "${PARTICLE_ERROR_CODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_particle_error_code_component.log"
+  bash "${TASKPOOL_THREAD_INFO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_taskpool_thread_info_component.log"
   bash "${CLOUD_FLAG_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_cloud_flag_component.log"
   bash "${CURVE_ENUM_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
