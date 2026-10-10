@@ -43,9 +43,21 @@ static int writer(int directory, int expectQuota)
 {
     struct __user_cap_header_struct header = { .version = _LINUX_CAPABILITY_VERSION_3 };
     struct __user_cap_data_struct caps[2] = {{0}, {0}};
-    if (setgroups(0, NULL) || setgid(65534) || setuid(65534) ||
-        syscall(SYS_capget, &header, caps) || getuid() != 65534 || geteuid() != 65534 ||
-        caps[0].effective || caps[1].effective || caps[0].permitted || caps[1].permitted) return 10;
+    if (setgroups(0, NULL)) { perror("quota writer setgroups"); return 10; }
+    if (setgid(65534)) { perror("quota writer setgid"); return 10; }
+    if (setuid(65534)) { perror("quota writer setuid"); return 10; }
+    /* OHOS init may lock NO_SETUID_FIXUP/KEEP_CAPS. Drop the inherited sets
+     * explicitly in this disposable child, never alter init or HDC policy. */
+    if (syscall(SYS_capset, &header, caps)) { perror("quota writer capset zero"); return 10; }
+    if (syscall(SYS_capget, &header, caps)) { perror("quota writer capget"); return 10; }
+    if (getuid() != 65534 || geteuid() != 65534 || getgid() != 65534 || getegid() != 65534 ||
+        getgroups(0, NULL) != 0 || caps[0].effective || caps[1].effective ||
+        caps[0].permitted || caps[1].permitted || caps[0].inheritable || caps[1].inheritable) {
+        fprintf(stderr, "quota writer identity: uid=%d euid=%d effective=%x:%x permitted=%x:%x\n",
+            (int)getuid(), (int)geteuid(), caps[1].effective, caps[0].effective,
+            caps[1].permitted, caps[0].permitted);
+        return 10;
+    }
     int fd = openat(directory, "payload", O_CREAT | O_EXCL | O_WRONLY | O_NOFOLLOW | O_CLOEXEC, 0600);
     if (fd < 0) return 11;
     struct fsxattr actual = {0};
@@ -78,6 +90,10 @@ static int run_writer(int directory, int expectQuota)
     int status = 0;
     pid_t result;
     do { result = waitpid(child, &status, 0); } while (result < 0 && errno == EINTR);
+    if (result != child || !WIFEXITED(status) || WEXITSTATUS(status)) {
+        fprintf(stderr, "quota writer failed: limited=%d wait=%d status=%d errno=%d\n",
+            expectQuota, (int)result, status, errno);
+    }
     return result == child && WIFEXITED(status) && WEXITSTATUS(status) == 0 ? 0 : -1;
 }
 
@@ -103,39 +119,48 @@ int main(int argc, char **argv)
     close(randomFd);
     if (received != sizeof(randomId)) return 5;
     project = (int)(0x60000000U | (randomId & 0x0fffffffU));
-    struct dqblk saved, measured;
+    struct dqblk saved = {0}, measured = {0};
     if (query(&saved) || !unused(&saved)) return 6;
 
     char path[] = "/data/local/tmp/qemu-project-quota-XXXXXX";
     if (!mkdtemp(path)) return 7;
     int directory = open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
     int failed = 1, changed = 0;
+    const char *stage = "read-directory-project";
     uint64_t grown = 0, recovered = 0;
     struct fsxattr original = {0}, assigned = {0};
     if (directory < 0 || ioctl(directory, FS_IOC_FSGETXATTR, &original)) goto cleanup;
     assigned = original;
     assigned.fsx_projid = (unsigned)project;
     assigned.fsx_xflags |= FS_XFLAG_PROJINHERIT;
+    stage = "assign-directory-project";
     if (ioctl(directory, FS_IOC_FSSETXATTR, &assigned)) goto cleanup;
+    stage = "assign-directory-owner";
     if (fchown(directory, 65534, 65534) || fchmod(directory, 0700)) goto cleanup;
     struct dqblk limits = { .dqb_bhardlimit = HARD_KIB, .dqb_valid = QIF_BLIMITS };
+    stage = "set-owned-hard-limit";
     if (quotactl(QCMD(Q_SETQUOTA, PROJECT_QUOTA), device, project, (char *)&limits)) goto cleanup;
     changed = 1;
+    stage = "limited-writer-and-accounting";
     if (run_writer(directory, 1) || query(&measured) || !measured.dqb_curspace ||
         measured.dqb_bhardlimit != HARD_KIB) goto cleanup;
     grown = measured.dqb_curspace;
+    stage = "delete-and-release";
     if (unlinkat(directory, "payload", 0) || syncfs(directory) || query(&measured) ||
         measured.dqb_curspace >= grown) goto cleanup;
     /* Restore only limits we changed; never write kernel usage counters. */
     saved.dqb_valid = QIF_BLIMITS;
+    stage = "restore-owned-hard-limit";
     if (quotactl(QCMD(Q_SETQUOTA, PROJECT_QUOTA), device, project, (char *)&saved)) goto cleanup;
     changed = 0;
+    stage = "unlimited-writer-and-accounting";
     if (run_writer(directory, 0) || query(&measured) ||
         measured.dqb_curspace < 4 * 1024 * 1024 || measured.dqb_bhardlimit) goto cleanup;
     recovered = measured.dqb_curspace;
     failed = 0;
 
 cleanup:
+    if (failed) fprintf(stderr, "quota pre-cleanup failure: stage=%s errno=%d\n", stage, errno);
     if (directory >= 0) {
         if (unlinkat(directory, "payload", 0) && errno != ENOENT) failed = 1;
         if (syncfs(directory)) failed = 1;
@@ -145,7 +170,14 @@ cleanup:
         }
         if (close(directory)) failed = 1;
     }
-    if (rmdir(path) || query(&measured) || !unused(&measured)) failed = 1;
+    if (rmdir(path) || query(&measured) || !unused(&measured)) {
+        fprintf(stderr, "quota cleanup failure: errno=%d bytes=%" PRIu64 " inodes=%" PRIu64
+            " hard=%" PRIu64 " btime=%" PRIu64 " itime=%" PRIu64 "\n", errno,
+            (uint64_t)measured.dqb_curspace, (uint64_t)measured.dqb_curinodes,
+            (uint64_t)measured.dqb_bhardlimit, (uint64_t)measured.dqb_btime,
+            (uint64_t)measured.dqb_itime);
+        failed = 1;
+    }
     if (failed) {
         fprintf(stderr, "project quota runtime failed; owned project=%d path=%s\n", project, path);
         return 8;

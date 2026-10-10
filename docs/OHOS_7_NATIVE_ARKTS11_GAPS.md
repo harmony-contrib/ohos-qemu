@@ -2,12 +2,15 @@
 
 ## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
 
-仅 ARM64 phone 代表包正在本地 Docker 构建，冻结提交 `3824311`，输入
+仅 ARM64 phone 代表包已完成本地 Docker 构建与打包，冻结提交 `3824311`，输入
 `/Volumes/PSSD/qemu/build-inputs/phone-ILPEK6`，树
 `51d2d9e41864dd855e5680c8ac9c8f948f4de593ea0a5d17805f6c1c09fdb64b`。
 目标归档：
 `/Volumes/PSSD/qemu/packages/first-refresh-quota-7.0-release-20261010-r25/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
-尚未产包/启动验证，不能提供成功校验和或视为门禁通过；其余五包未开始。
+构建容器与等待命令均正常退出 0，归档 SHA-256：
+`297c213658bc270cc55f3f40251ab092b150fd24f09102a55b86cea7774e8895`。
+新归档的独立内核配额实测已通过（详见下文），Settings 刷新率正在验证；
+尚不能视为完整行为门禁通过，其余五包未开始。
 该冻结输入包含 Settings 动态页面/模式索引与 F2FS 项目配额修复，
 **不包含**本节后述的 AppMgr 候选。
 
@@ -16,6 +19,25 @@
 才执行同归档完整回归。原等待器在产包前因选错不含 Pillow 的宿主 Python
 被替换；保留 `r25-build-then-validation.json` 的 superseded 原因，不伪造测试
 结果。新等待器使用已验证 Pillow 12.3.0 的现有虚拟环境。
+
+等待器实际停止在 `r25-quota-runtime-01` 的失败，未执行后续测试，也未覆盖为成功。
+`-02` 增加失败阶段，`-03` 确认测试子进程 UID 已为 65534，但 effective/permitted
+仍为 `1ff:ffffffff`：OHOS init 的 securebits 保留能力，旧测试错误假设 setuid
+自动清空。仅修改一次性测试子进程，显式 capset 清空后 capget 检查三组能力，
+同时核验 UID/GID/补充组；不改 init/HDC 权限，也不放宽限额断言。
+`r25-quota-runtime-04` 在同一新归档的独立 boot
+`4dbeab46-9d41-479d-8b14-6363ac8010f1`（macOS ARM64/HVF、phone）通过：
+真实限额 2,097,152 字节、无特权 EDQUOT、删除回收、恢复不限额后统计
+4,198,400 字节（4 MiB 文件及目录），清理通过；探针 SHA-256
+`f4b94736cfd6193d4f74234f94312280ad562a3d6cfb33ce7071021150731fca`。
+三 ABI 探针编译及配额宿主 10 项检查通过，后续仅补充诊断变量初始化，
+不将该窄项视为普通 Storage API 或完整缺口闭环。所有命令、实际挂载、
+归档/探针校验和与环境保存在上述 diagnostic.json 及构建报告。
+失败客体 01–03 已停止，其展开 `images` 删除回收约 14 GiB；原归档、
+日志和报告保留，临时 userdata 不保留，记录
+`retired-quota-images-cleanup-r25-01.json`。
+只读屏幕探针构建 `screen-modes-readback-build-r25-01` 通过，正在执行
+`r25-refresh-1280x800-runtime-01`；1920×1080 与完整回归尚未开始。
 
 新增 `render_attach_registration` **未接入打包的候选组件**：可信 PID 的绑定
 查询等待 nwebspawn 返回与 RenderRecord 登记完成；timeout 先登记再允许绑定
