@@ -1,5 +1,43 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R29 首包发现的扫描事件与错误码缺陷
+
+R29 首包在普通 Wi-Fi 扫描门禁失败，后续屏幕/完整套件和其余五包均未启动。
+实际启用无线、2.4/5 GHz 查询正常，但普通应用收到失败回调；不能以服务
+已启动或空扫描列表作为成功。独立同归档复现 `r29-wifi-runtime-03`，
+boot `1d2e273f-9447-47d2-8292-78e93249afa4`，记录真实 WPA 于
+16:38:02.767 收到扫描结果（0 BSS），上层 16:38:03.002 仍等到超时。
+对应固定 WPA 源码的普通扫描和 scan-only 两条完成路径，均只在
+`IsUpdaterMode()` 时发送 HDI `WPA_EVENT_RECV_SCAN_RESULT`；正常系统
+因此收不到真实完成事件。
+
+新增独立 `third_party/wpa_supplicant/scan_events` 候选：仅三个 QEMU 产品
+在真实 libwpa GN 目标开启事件路由，保留非 QEMU 的 updater/chip 原行为，
+保留事件产生位置、scan ID、HDI 接口、调用者权限与真实扫描数据。
+四个完成分支（两条路径各含有/无 ID）仅调整路由条件，不制造完成回调。
+新包还必须验证实际 GN 选择，隔离编译显式宏不算产品选择证据。
+
+同时确认普通应用收到的同步权限错误码是字符串 `"201"`，而不是 SDK
+要求的数字。独立 `wifi/business_error` 候选改用源码已有的
+`napi_throw_business_error`，不改变错误码映射、消息、成功路径或权限拒绝。
+四个 NAPI 变体 × 三 ABI 的真实完整 TU 编译均通过：
+`wifi-business-error-r29-01.json` SHA-256
+`38605455a6d6c8861841a19282e3997a454ec7719ebac107f69daf153547fae5`。
+两条 WPA 路径 × 原/QEMU 分支 × 三 ABI 共 12 个完整 TU 编译通过：
+`wpa-scan-events-r29-01.json` SHA-256
+`1b76ae75e1dfbf3dec09580a3c9dc6d54779dd6c757a4305f3a2a85941c40724`。
+
+首次失败诊断还暴露 hilog 含非 UTF-8 字节导致采集器解码中断。已只对
+失败日志增加无损 stdout/stderr 二进制保存，替换解码文本仅供诊断，
+不用于行为判定。03 实际原始 stdout SHA-256
+`686285ddf61e6f84ad8ed71f22cee53190a6d47622cf9b992c96e3f36478614d`。
+02 保留因错误使用当前工作树 boot verifier 而在启动前拒绝的记录；03
+使用归档原冻结 boot verifier，未绕过输入绑定，外层仅使用新版诊断采集器。
+01/03 均恢复电源及无线状态后关闭客体，失败结果没有覆盖成 pass。
+以上生产候选尚未进入新包验收，不关闭完整 WLAN 缺口。
+整仓主机回归 `host-regression-wpa-events-r29-01.log`：1330 项通过，
+200.120 秒，macOS 跳过 1 项已另在 Docker 验证的 Linux 专用夹具。
+
 ## 2026-10-10 QEMU 全局快捷键配置候选
 
 固定 MMI 源码 `64a0e42f22c9c6739651bf79b33746c500788322` 中，
@@ -136,7 +174,7 @@ scan state machine 含 `WIFI_SOFTWARE_SCAN_BACKEND`，STA HAL 含
 `run_wifi_scan_diagnostic.py`，使用 API26 Release SDK、macOS ARM64/HVF
 和独占 HDC 连接；路径、命令和结果持续写入
 `r29-build-then-validation-01.json` 及 `r29-wifi-runtime-01`。
-**当前尚未取得 R29 客体通过证据，其余五包未启动。**
+**R29 实际扫描门禁失败；原因和修复候选见本文开头，其余五包未启动。**
 
 ## 2026-10-10 WPA 实时频段查询候选与可重复首包诊断
 

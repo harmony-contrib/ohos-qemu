@@ -255,6 +255,8 @@ QEMU_WLAN_RADIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_radio/ap
 QEMU_WLAN_REGULATORY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_regulatory/apply.sh"
 QEMU_WPA_CHANNELS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_channels/apply.sh"
 QEMU_WPA_SCAN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_scan/apply.sh"
+QEMU_WIFI_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/business_error/apply.sh"
+QEMU_WPA_SCAN_EVENTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/wpa_supplicant/scan_events/apply.sh"
 QEMU_WPA_SCAN_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_scan_lifecycle/apply.sh"
 QEMU_WPA_SOFTWARE_PNO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_software_pno/apply.sh"
 VIVID_CAPTURE_DEFAULTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/vivid_capture/apply.sh"
@@ -2823,6 +2825,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wlan_regulatory_component.log"
   bash "${QEMU_WPA_SCAN_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wpa_scan_component.log"
+  bash "${QEMU_WIFI_BUSINESS_ERROR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wifi_business_error_component.log"
+  bash "${QEMU_WPA_SCAN_EVENTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wpa_scan_events_component.log"
   bash "${QEMU_WPA_CHANNELS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wpa_channels_component.log"
   bash "${QEMU_WPA_SCAN_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

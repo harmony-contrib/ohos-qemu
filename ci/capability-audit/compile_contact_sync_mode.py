@@ -33,7 +33,7 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
     if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',),
-                                 ('WIFI_SOFTWARE_SCAN_BACKEND',)):
+                                 ('WIFI_SOFTWARE_SCAN_BACKEND',), ('CONFIG_QEMU_WPA_SCAN_EVENTS',)):
         raise ValueError('only explicit reviewed QEMU candidate features can be selected')
     if args.output.exists() or args.output.is_symlink():
         raise ValueError('fresh exact-component compilation evidence path required')
@@ -103,7 +103,8 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
             argv = shlex.split(queried.stdout.splitlines()[-1])
             if Path(argv[0]).name == 'ccache':
                 argv.pop(0)
-            if (Path(argv[0]).name != 'clang++' or any(token in argv for token in ('&&', ';', '|'))
+            expected_compiler = 'clang' if source_file.suffix == '.c' else 'clang++'
+            if (Path(argv[0]).name != expected_compiler or any(token in argv for token in ('&&', ';', '|'))
                     or '--target=' + triple not in argv or argv.count('-c') != 1 or argv.count('-o') != 1
                     or argv.count('-MF') != 1 or (cwd / argv[argv.index('-c') + 1]).resolve() != source):
                 raise ValueError('unexpected actual component compile command for ' + product)
