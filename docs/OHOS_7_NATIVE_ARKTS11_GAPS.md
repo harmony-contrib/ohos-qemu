@@ -35,6 +35,26 @@ boot ID 绑定的临时客体；读取 `/proc/mounts` 验证安全挂载及三�
 保留原始归档、manifest、截图、探针和全部证明，临时 userdata 不保留，
 详见 `retired-positive-images-cleanup-r25-03.json`。
 
+新增入口在 R25 的同一新启动 `d74fc16a-c339-49e1-b3dd-f44f2cb81601`
+实测通过：`r25-storage-quota-unified-runtime-03` 保留内核真实 EDQUOT/恢复、
+普通应用两轮文件统计/回收与 202 拒绝；电源策略恢复、客体关闭。
+外层复用冻结启动 helper 时导入缓存仍是旧门禁，故另外用独立新进程执行
+当前严格门禁，`strict-current-gate-replay.json` 通过；不把旧 helper 的泛化
+状态检查当作当前门禁。新关闭规则同时重放两类原始证据、绑定实际编译的
+无能力配额探针、ABI/归档/boot，才关闭 `behavior:storage-quota-not-mounted`。
+窄诊断的 `quota-only-gap-closure.json` 仅关闭这一项，其余 280 项没有在这次
+窄诊断中运行，因此报告整体仍失败，不与 R23 不同 boot 的结果拼接成全量成功。
+新增 5 项关闭规则边界独立通过，完整 1224 项回归通过；独立运行测试时补充
+显式 scripts 搜索路径，避免依赖其他测试导入顺序，修正后单独 5 项通过。
+
+截图只读异步探针由真实产品头文件/库编译，位于
+`capture-latency-r26-01`；只传输可执行文件，不替换系统库。
+`r25-direct-capture-latency-runtime-01` 新启动
+`f8d6d4d5-fb33-4732-8375-e6cd3724e2b9` 的 1920×1080 首次回调 1,958,803 微秒，
+后续五次约 117–119 毫秒，均得到真实尺寸像素图；同期有 R26 构建和宿主检查，
+不是空载性能基准。该结果显示冷调用接近 2 秒上限，但仍不证明历史超时已修复，
+报告保持 `observations_collected_NOT_pass`，继续独立新启动复测。
+
 ## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
 
 仅 ARM64 phone 代表包已完成本地 Docker 构建与打包，冻结提交 `3824311`，输入

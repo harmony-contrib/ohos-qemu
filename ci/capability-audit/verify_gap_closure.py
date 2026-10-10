@@ -76,6 +76,12 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             return None
         return path, result
 
+    quota = child('project-quota/result.json')
+    storage = child('storage-stats/evidence.json')
+    if quota and storage:
+        from verify_storage_quota_closure import verify as verify_storage_quota
+        closed.update(verify_storage_quota(runtime, archive_sha, boot_id, device_type))
+
     fa = child('fa-particle/evidence.json')
     stage = child('settings-navigation/evidence.json')
     if fa and stage:
