@@ -64,6 +64,41 @@ def verify_inputs(path, run_id, arch):
     verify_fixtures(root / 'entry/src/main/resources/rawfile')
 
 
+def verify_evidence(document, archive_sha, boot_id, arch):
+    if (document.get('status') != 'pass' or document.get('persona') != 'image-metadata' or
+            document.get('archive_sha256') != archive_sha or document.get('boot_id') != boot_id or
+            document.get('arch') != arch or document.get('failures') != [] or
+            document.get('first_artifact_behavior_gate_passed') is not False):
+        raise ValueError('image metadata evidence must belong to the actual package/boot/architecture')
+    result_path = Path(document.get('result', ''))
+    if not result_path.is_absolute() or result_path.name != 'verified-result.json':
+        raise ValueError('explicit image metadata result required')
+    root = result_path.parent
+    files = {'result': result_path, 'raw_results': root / 'results.log',
+             'ordinary_identity': root / 'application-identity.json', 'hap': root / 'ordinary-probe-signed.hap',
+             'compiled_contract_inputs': root / 'project/image-metadata-probe-inputs.json'}
+    for key, path in files.items():
+        if path.is_symlink() or not path.is_file() or digest(path) != document.get(key + '_sha256'):
+            raise ValueError('actual image metadata evidence changed: ' + key)
+    value = json.loads(result_path.read_text())
+    if (value.get('status') != 'pass' or value.get('scope') != SCOPE or value.get('failures') != [] or
+            value.get('archive_sha256') != archive_sha or value.get('arch') != arch or
+            value.get('run_id') != document.get('run_id') or
+            value.get('first_artifact_behavior_gate_passed') is not False or
+            value.get('verifier_sha256') != digest(Path(__file__))):
+        raise ValueError('image metadata summary is stale or from another run')
+    for field, key in (('results_sha256', 'raw_results'), ('application_identity_sha256', 'ordinary_identity'),
+                       ('inputs_sha256', 'compiled_contract_inputs')):
+        if value.get(field) != digest(files[key]):
+            raise ValueError('image metadata verifier did not consume the captured evidence')
+    verify_inputs(files['compiled_contract_inputs'], document['run_id'], arch)
+    identity = files['ordinary_identity'].read_text()
+    actual = verify(files['raw_results'].read_text(), document['run_id'], identity)
+    if actual != value.get('result') or require_normal_identity(identity) != document.get('ordinary_uid'):
+        raise ValueError('image metadata summary differs from actual ordinary-app observations')
+    return actual
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('archive', 'results', 'inputs', 'application-identity', 'output'):

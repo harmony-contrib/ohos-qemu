@@ -288,6 +288,7 @@ RENDER_CONNECTION_REPLY_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_
 DISPLAY_CONTENT_INIT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/display_content_init/apply.sh"
 HIVIEW_DMABUF_PARSER_SCRIPT="${PATCH_ROOT}/common/base/hiviewdfx/hiview/dmabuf_parser/apply.sh"
 HIDEBUG_GRAPHICS_TYPES_SCRIPT="${PATCH_ROOT}/common/developtools/profiler/hidebug/graphics_memory_types/apply.sh"
+IMAGE_METADATA_ERROR_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/metadata_error_type/apply.sh"
 RS_YUV_CPU_FALLBACK_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/yuv_cpu_fallback/apply.sh"
 SHARED_FENCE_OWNER_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_surface/shared_fence_owner/apply.sh"
 ACCESS_TOKEN_SPM_HANDSHAKE_SCRIPT="${PATCH_ROOT}/common/base/security/access_token/kernel_spm_handshake/apply.sh"
@@ -2895,6 +2896,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_hiview_dmabuf_parser.log"
   bash "${HIDEBUG_GRAPHICS_TYPES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_hidebug_graphics_types.log"
+  bash "${IMAGE_METADATA_ERROR_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_image_metadata_error.log"
   bash "${RS_YUV_CPU_FALLBACK_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_yuv_cpu_fallback.log"
   bash "${SHARED_FENCE_OWNER_SCRIPT}" --source-root "${OHOS_ROOT}" \
