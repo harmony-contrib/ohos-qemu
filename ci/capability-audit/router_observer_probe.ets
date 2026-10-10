@@ -2,6 +2,7 @@
 // Observe actual routed pages. No synthetic observer objects or constructor shim.
 import observer from '@ohos.arkui.observer';
 import fs from '@ohos.file.fs';
+import { UIContext } from '@ohos.arkui.UIContext';
 
 interface Row {
   runId: string; name: string; listener: string; generation: number;
@@ -30,9 +31,17 @@ struct Index {
   }
   private callback(listener: string, slot: number, info: observer.RouterPageInfo): void {
     this.counts[slot]++;
+    // The engine returns a new UIContext wrapper on every getUIContext call.
+    // Validate its real host and usable router, not JS wrapper reference identity.
+    const context = info.context as UIContext;
+    const host = context.getHostContext();
+    const ownHost = this.getUIContext().getHostContext();
+    const contextMatches = host !== undefined && ownHost !== undefined &&
+      host.applicationInfo.name === ownHost.applicationInfo.name && host.filesDir === ownHost.filesDir &&
+      Number(context.getRouter().getLength()) >= 1;
     this.record({ runId: '__RUN__', name: 'event', listener, generation: this.generation,
       phase: this.phase, index: info.index, pageName: info.name, path: info.path,
-      state: info.state, pageId: info.pageId, contextMatches: info.context === this.getUIContext(),
+      state: info.state, pageId: info.pageId, contextMatches: contextMatches,
       counts: [this.counts[0], this.counts[1]] });
   }
   private delay(ms: number): Promise<void> {

@@ -1,5 +1,64 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R30 实包验证与下一轮修复
+
+代表归档为
+`/Volumes/PSSD/qemu/packages/first-wpa-events-7.0-release-20261010-r30/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA-256 `ea00649ce4088a545035fe047658520607f01053a30a638b3c4ac71ad2e01ceb`。
+冻结输入 `phone-waHkww`，commit `4820675bd3adba68ac3cf8b897db23ed560468b3`。
+本地 Docker 构建完成；实际 Ninja 命令核验五个 Wi-Fi/WPA 编译开关。
+以下证据均位于 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`。
+
+- `r30-wifi-runtime-01/diagnostic.json` 通过，两轮 radio 启停、四次真实扫描、
+  频段查询、legacy 数字错误码 201 均通过；boot
+  `f4a33d1a-a5b9-4a77-b12e-3386fc1af777`，普通 UID 20010038。
+  证据 SHA-256 `dd084a97874bcc3e3a27a1ede5edb137954c943a0d137b4194ebd81a8a5d3e44`。
+  不代表 association/AP/P2P 已验证。
+- `r30-hitrace-runtime-01/diagnostic.json` 通过，C++/ArkTS 两轮公共调用对应
+  36 条真实内核记录，含交错异步结束及有符号 64 位边界。boot
+  `8a5a80cb-fedd-4345-a74e-06a8b3935ea9`，PID/TID 2634。
+  证据 SHA-256 `792025406b933cdc89986f047b2d1a892698e321b181695b21b3120eb6f1045d`，
+  原始 trace SHA-256 `e60013a111a3db17b56fa85b6294a3689ec670b808a2326c559dac06bf58599b`。
+  两项测试均恢复测试策略并关闭客体，成功测试的展开镜像已清理，归档与原始证据保留。
+
+首包总门禁**仍未通过**，其余五包未启动。R30 全量回归尚未执行，最新完整
+缺口账本仍是 R28 的 149/281 闭环、132 未闭环，不用上述单项结果改写总账。
+运行环境为 macOS arm64、QEMU HVF、4 核/4 GiB、独立 HDC server，
+API26 Release SDK；精确命令及结果见 `r30-build-then-validation-01.json`、
+`r30-hitrace-deferred-01.json` 及各诊断报告。
+
+新失败及对应修复方向：
+
+1. 1920×1080 测试完成普通解锁后，UITest 截图失败。
+   `r30-refresh-1920x1080-runtime-01/boot/019-refresh-failure-hilog.log`
+   明确显示 RS 把 display content rect 当作 **64×65535**，不是分辨率
+   查询失败或 HDC 丢失。`RSLogicalDisplayRenderNode` 的私有 `Rect contentRect_`
+   未初始化，构造函数未赋值；`surface_type.h` 的 Rect 是无默认成员值的聚合。
+   截图及渲染参数同步直接读取该成员，且尺寸为正时覆盖实际屏幕尺寸。
+   `display_content_init` 独立补丁仅零初始化该成员，与同组件
+   `RSLogicalDisplayRenderParams` 的既有初始化一致；不改结构布局、公开 API、
+   IPC 编码、权限或显式 SetDisplayContentRect 行为。真实源树 patch check
+   通过，四项幂等/漂移/构建接入测试通过，**仍需重建实包复验**。
+2. Meta+I 三次实测未启动 Settings；第三次实际 `hidumper -s 3101 -a "-k"`
+   给出 `ShortcutKey: count = 0`，虚拟键盘已被 MMI 枚举。
+   源码 `KeyConfigParser::ParseShortcutKeys` 调用 `RegisterSystemKey`，后者拒绝
+   不在 `SystemKeys` 中的组合；原补丁只增加 launch 配置，漏掉保留表。
+   新增 `0002-reserve-qemu-settings-shortcut.patch`，仅保留 Meta+I；不绕过
+   注册检查，不改应用权限。主机测试验证原有保留项不变和标记后的漂移拒绝。
+   诊断新增实际注册数量核验、键后原始日志留存，**等待新包两轮真实按键验证**。
+3. Router observer 已实际收到完整两轮页面生命周期与 off 行为，但测试错误地
+   要求 `info.context === this.getUIContext()`。固定源码
+   `jsUIContext.js::__getUIContext__` 每次返回 `new UIContext(instanceId)`，
+   该引用相等断言不属于接口承诺。测试改为读取回调上下文的真实 host 应用身份、
+   filesDir 及可用 router；保留所有生命周期、页面 ID、订阅移除校验。
+   原失败记录不覆盖，arm64 API26 重新编译通过，**需新运行验证**。
+
+`host-regression-display-init-r31-01.log`：1353 项通过、1 项平台夹具跳过，
+201.903 秒（后续 reservation/context 调整另行补回归）。稳定性工具 registry
+最新 0.1.1 已在隔离临时目录检查，其 CLI 是 skill 安装器，不是自动扫描器；
+没有把安装成功算作完整 57 规则检视。当前完成初始化数据流与布局的人工窄范围
+检查，完整专项检视未声称通过，也未 push。
+
 ## 2026-10-10 扫描诊断收尾日志无损采集
 
 复核发现 R30 冻结的 `run_wifi_scan_diagnostic.py` 在成功收尾与失败诊断

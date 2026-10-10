@@ -13,6 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
 bash "${PATCH_ROOT}/lib/apply_patch.sh" "${SOURCE_ROOT}" \
   "${SCRIPT_DIR}/0001-register-qemu-settings-shortcut.patch"
+bash "${PATCH_ROOT}/lib/apply_patch.sh" "${SOURCE_ROOT}" \
+  "${SCRIPT_DIR}/0002-reserve-qemu-settings-shortcut.patch"
 python3 - "${SOURCE_ROOT}" <<'PY'
 import json
 from pathlib import Path
@@ -24,4 +26,7 @@ expected = dict(businessId='qemu.settings', preKey=[2076], finalKey=2025,
     ability=dict(bundleName='com.ohos.settings', abilityName='com.ohos.settings.MainAbility'))
 if value['Shortkeys'] != [expected]:
     raise SystemExit('QEMU Settings shortcut profile changed; review actual routing before build')
+reserved = json.loads((root / 'foundation/multimodalinput/input/etc/system_keys_config.json').read_text())
+if reserved['SystemKeys'].count(dict(preKeys=[2076], finalKey=2025)) != 1:
+    raise SystemExit('QEMU Settings shortcut must be reserved for the existing system-key manager')
 PY

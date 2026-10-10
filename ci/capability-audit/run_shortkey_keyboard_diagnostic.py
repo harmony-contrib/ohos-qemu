@@ -2,6 +2,7 @@
 """Real packaged keyboard routing; does not prove privileged duration APIs."""
 import argparse
 import json
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -13,6 +14,7 @@ from guest_ui import GuestUi, LayoutNotReady, select_node
 from power_test_policy import power_timeout, verify_restoration
 from run_application_home_probe import system_screen
 from run_root_probe import digest
+from run_wifi_scan_diagnostic import capture_hilog
 from settings_navigation_ui import require_painted_title
 from verify_settings_navigation_results import settings_identity
 
@@ -86,6 +88,10 @@ def run(args):
         if config.get('Shortkeys') != [SHORTCUT]:
             raise ValueError('new package does not contain the real expected shortcut')
         report['settings_uid'] = settings_identity(ui.shell('bm dump -n com.ohos.settings', 'settings-identity'))
+        registered = ui.shell('hidumper -s 3101 -a "-k"', 'registered-input-shortcuts')
+        if re.findall(r'ShortcutKey: count = (\d+)', registered) != ['1']:
+            raise ValueError('MMI did not register the packaged system shortcut')
+        ui.shell('hidumper -s 3101 -a "-l"', 'registered-input-devices')
         schema = guest.qmp('query-qmp-schema')
         schema_path = args.output / 'qmp-schema.json'
         schema_path.write_text(json.dumps(schema, indent=2) + '\n')
@@ -99,6 +105,9 @@ def run(args):
             report['keys'].append(dict(execute='send-key', arguments=arguments,
                 reply=guest.qmp('send-key', arguments)))
             time.sleep((duration + 300) / 1000)
+            diagnostic = args.output / ('key-diagnostic-' + str(len(report['keys'])))
+            diagnostic.mkdir()
+            report['keys'][-1]['hilog'] = capture_hilog(args.hdc, guest.target, diagnostic, 'failure-hilog')
 
         def home(label):
             layout, path = ui.layout(label=label)
@@ -140,6 +149,15 @@ def run(args):
         report['status'] = 'pass'
     except Exception as error:
         report['failures'].append(type(error).__name__ + ': ' + str(error))
+        if guest is not None:
+            try:
+                report['failure_hilog'] = capture_hilog(args.hdc, guest.target, args.output, 'failure-hilog')
+                command([args.hdc, '-t', guest.target, 'shell',
+                    'hidumper -s 3101 -a "-h"'], 'failure-input-help', timeout=30)
+                command([args.hdc, '-t', guest.target, 'shell',
+                    'cat /proc/bus/input/devices'], 'failure-input-devices', timeout=30)
+            except Exception as diagnostic_error:
+                report['failures'].append('failure diagnostics: ' + str(diagnostic_error))
     finally:
         if guest is not None:
             if override:

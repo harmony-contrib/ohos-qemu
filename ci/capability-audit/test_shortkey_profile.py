@@ -36,6 +36,16 @@ class ShortkeyProfileTests(unittest.TestCase):
         self.path = self.source / RELATIVE
         self.path.parent.mkdir(parents=True)
         self.path.write_text(ORIGINAL)
+        self.reserved = self.path.with_name('system_keys_config.json')
+        self.reserved.write_text('''{
+    "SystemKeys": [
+        {
+            "preKeys": [ 2076 ],
+            "finalKey": -1
+        }
+    ]
+}
+''')
 
     def apply(self):
         return subprocess.run(['bash', str(COMPONENT / 'apply.sh'), '--source-root', str(self.source)],
@@ -56,6 +66,13 @@ class ShortkeyProfileTests(unittest.TestCase):
         self.assertEqual((key['trigger'], key['keyDownDuration']), ('key_down', 500))
         self.assertEqual(key['ability'], dict(bundleName='com.ohos.settings',
                                             abilityName='com.ohos.settings.MainAbility'))
+        self.assertEqual(json.loads(self.reserved.read_text())['SystemKeys'],
+                         [dict(preKeys=[2076], finalKey=2025), dict(preKeys=[2076], finalKey=-1)])
+
+    def test_stale_marker_rechecks_system_reservation(self):
+        self.assertEqual(self.apply().returncode, 0)
+        self.reserved.write_text(self.reserved.read_text().replace('2025', '2026'))
+        self.assertNotEqual(self.apply().returncode, 0)
 
     def test_existing_unknown_profile_is_not_overwritten(self):
         self.path.write_text(ORIGINAL.replace('"Shortkeys": [\n', '"Shortkeys": [{"businessId":"user"}\n'))
