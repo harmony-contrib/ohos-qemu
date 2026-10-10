@@ -6,3 +6,7 @@ patches/common/foundation/communication/wifi/wpa_scan/0001-route-non-chip-scans-
 patches/common/foundation/communication/wifi/wpa_scan_lifecycle/0001-retire-scan-monitor-on-every-destruction-path.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/wifi/wpa_software_pno/0001-use-software-pno-without-chip-offload.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/device/qemu/wlan_regulatory/0001-package-signed-regulatory-database.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_scan/0002-query-real-wpa-frequency-capabilities.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_channels/0001-use-real-WPA-scan-channel-table.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+# The captured WPA document ends with the protocol's empty mode separator.
+ci/capability-audit/fixtures/wpa_frequency_capabilities.txt -text whitespace=-blank-at-eof

@@ -1,5 +1,37 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 WPA 实时频段查询候选与可重复首包诊断
+
+`wpa_scan` 第二份补丁补齐实际 GET_CAPABILITY freq 解析和 non-chip HAL
+路由，依据 R27 原始读回格式，保留 B/G 去重、空模式块、DFS 分类和 NO_IR
+监管限制；不把 6/60 GHz 混入 5 GHz。无效频段、错误/截断回复不覆盖原输出。
+配套 `wpa_channels` 读取真实 WPA 信道表，失败清除旧表、拒绝空频段转成
+全频扫描；getter 加锁前刷新，覆盖单例早于 WPA 启动及异步监管更新的情况。
+原 chip 路由保留，未调整公开权限、国家码或内核监管检查。
+
+`wpa-frequency-compile-r28-01.json` 为四个完整 TU × 三架构 12 个对象通过，
+SHA-256 `6e16e29a24619e1d3aa1332c3c36f054c99f45ebd7d42ecaae24e6cba16f557d`。
+`wpa-channels-compile-r28-02.json` 为刷新修复后的完整 TU、软件候选/原分支
+× 三架构六个对象通过，SHA-256
+`9cbad3b05baeb31a478fa1a2414e9ff876c36ff33565670775bdb603d5230326`。
+后者宏为隔离候选，真实 GN 选择仍须在新包构建核验。实际补丁函数体的
+ASan/UBSan 测试覆盖六类频段、重复、NO_IR/DFS、空表、错误回复、超长、
+越界和失败后再次成功；不是射频、关联、后台 PNO 或 AP/P2P 验收。
+
+普通应用 wifi-scan persona 新增实际 2.4/5 GHz 支持查询，仍只请求原有
+GET_WIFI_INFO/SET_WIFI_INFO，不降低旧 scan 缺定位权限时应有的 201 拒绝。
+`wifi-bands-typed-{arm64,armv7a,x86_64}-r28-02` 三 ABI API26 typed HAP
+编译通过；01 保留命令 nonce 长度校验拒绝记录，没有跳过 nonce 检查。
+`host-regression-wpa-frequencies-r28-02.log` 为 1301 项通过（200.281 秒）。
+
+仓库新增 `run_wifi_scan_diagnostic.py`，用于后续冻结代表包：验证真实预装
+监管文件哈希/加载路径、两轮启停、每轮普通应用真实频段和两次扫描回调、
+只读 WPA 原始频率表、同一 boot ID 以及无线/电源状态恢复。该诊断明确
+不关闭完整 WLAN，不替代受控 SSID、关联与传输、AP/P2P/PNO 的验证。
+加入诊断后的整仓 `host-regression-wpa-frequencies-r28-03.log` 1302 项通过
+（211.289 秒）。
+这些修复均不在 R28 归档中，尚未启动其余五包。
+
 ## 2026-10-10 R28 温控首包与 WPA 信道表读回
 
 R28 新包 `first-thermal-backend-7.0-release-20261010-r28/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`

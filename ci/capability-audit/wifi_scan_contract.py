@@ -19,7 +19,7 @@ def inputs(project, sdk, arch, run_id):
     if json.loads(module.read_text())['module'].get('requestPermissions') != [{'name': name} for name in PERMISSIONS]:
         raise ValueError('Wi-Fi scan caller must request only normal scan/read permissions')
     text = declaration.read_text()
-    for name in ('isWifiActive', 'scan', 'startScan', 'getScanInfoList', 'on', 'off'):
+    for name in ('isWifiActive', 'isBandTypeSupported', 'scan', 'startScan', 'getScanInfoList', 'on', 'off'):
         if 'function ' + name + '(' not in text:
             raise ValueError('actual SDK Wi-Fi contract changed: ' + name)
     return {'schema_version': 1, 'scope': SCOPE, 'role': 'ordinary_app', 'request_permissions': PERMISSIONS,

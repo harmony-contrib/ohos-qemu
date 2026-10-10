@@ -9,7 +9,7 @@ from run_normal_hap_probe import require_normal_identity
 from run_root_probe import digest
 from wifi_scan_contract import SCOPE, verify_inputs
 
-NAMES = ('active', 'legacy-location-denial', 'generation0', 'generation1', 'retired', 'summary')
+NAMES = ('active', 'live-bands', 'legacy-location-denial', 'generation0', 'generation1', 'retired', 'summary')
 
 
 def verify(text, run_id, identity):
@@ -24,16 +24,18 @@ def verify(text, run_id, identity):
                 row['runId'] != run_id or row['name'] != name or row['error'] != '' or
                 not isinstance(row['values'], list) or any(type(value) is not int for value in row['values'])):
             raise ValueError('failed, stale, reordered or malformed scan observation: ' + name)
-    if rows[0]['values'] != [1] or rows[1]['values'] != [201] or rows[-1]['values'] != [5, 0]:
+    if (rows[0]['values'] != [1] or rows[1]['values'] != [1, 1] or
+            rows[2]['values'] != [201] or rows[-1]['values'] != [6, 0]):
         raise ValueError('actual active radio, permission denial and completion required')
-    for row in rows[2:4]:
+    for row in rows[3:5]:
         values = row['values']
         if len(values) != 3 or values[0] != 1 or values[1] != 1 or values[2] < 0:
             raise ValueError('real successful one-shot callback and scan result count required')
-    if rows[4]['values'] != [1, 1]:
+    if rows[5]['values'] != [1, 1]:
         raise ValueError('retired callback was invoked after unregister')
     return dict(closed=[], scope=SCOPE, observations=len(rows), callback_generations=2,
-                visible_result_counts=[row['values'][2] for row in rows[2:4]],
+                available_bands_24_and_5_verified=True,
+                visible_result_counts=[row['values'][2] for row in rows[3:5]],
                 association_proven=False, controlled_ssid_proven=False)
 
 

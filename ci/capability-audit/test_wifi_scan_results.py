@@ -12,7 +12,7 @@ from wifi_scan_contract import PERMISSIONS
 
 
 def fixture():
-    values = ([1], [201], [1, 1, 0], [1, 1, 0], [1, 1], [5, 0])
+    values = ([1], [1, 1], [201], [1, 1, 0], [1, 1, 0], [1, 1], [6, 0])
     return [dict(runId=RUN, name=name, values=list(value), error='') for name, value in zip(NAMES, values)]
 
 
@@ -41,7 +41,7 @@ class WifiScanResultTests(unittest.TestCase):
 
     def test_nonempty_scan_counts_still_do_not_prove_a_controlled_ssid(self):
         rows = fixture()
-        rows[2]['values'][2], rows[3]['values'][2] = 2, 3
+        rows[3]['values'][2], rows[4]['values'][2] = 2, 3
         result = verify(text(rows), RUN, IDENTITY)
         self.assertEqual(result['visible_result_counts'], [2, 3])
         self.assertEqual(result['closed'], [])
@@ -55,8 +55,8 @@ class WifiScanResultTests(unittest.TestCase):
                     rows[index]['values'][position] = value
                     with self.subTest(index=index, position=position, value=value), self.assertRaises(ValueError):
                         verify(text(rows), RUN, IDENTITY)
-        for index, value in ((0, [0]), (1, [0]), (2, [0, 1, 0]), (2, [1, 2, 0]),
-                             (4, [2, 1]), (4, []), (5, [4, 0])):
+        for index, value in ((0, [0]), (1, [0, 1]), (1, [1, 0]), (2, [0]),
+                             (3, [0, 1, 0]), (3, [1, 2, 0]), (5, [2, 1]), (5, []), (6, [5, 0])):
             rows = fixture()
             rows[index]['values'] = value
             with self.assertRaises(ValueError): verify(text(rows), RUN, IDENTITY)

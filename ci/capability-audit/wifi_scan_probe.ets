@@ -52,6 +52,8 @@ struct Index {
     let completed = 0;
     try {
       this.record('active', [wifi.isWifiActive() ? 1 : 0]); completed++;
+      this.record('live-bands', [wifi.isBandTypeSupported(wifi.WifiBandType.WIFI_BAND_2G) ? 1 : 0,
+        wifi.isBandTypeSupported(wifi.WifiBandType.WIFI_BAND_5G) ? 1 : 0]); completed++;
       let denied: number = 0;
       try { wifi.scan(); } catch (error) { denied = (error as BusinessError).code; }
       this.record('legacy-location-denial', [denied]); completed++;
@@ -71,7 +73,7 @@ struct Index {
     } catch (error) {
       this.record('failed', [], (error as Error).message || 'Wi-Fi scan failure');
     }
-    this.record('summary', [completed, completed === 5 ? 0 : 1]);
+    this.record('summary', [completed, completed === 6 ? 0 : 1]);
   }
   aboutToAppear(): void {
     const file = fs.openSync(this.logPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
