@@ -136,7 +136,7 @@ class NormalHapRunnerTests(unittest.TestCase):
         for required in ('allow_camera(ui, labels', 'live_captures(ui, shell', 'receive_photos(command',
                          "'--native-results'", "'--captures'", "'--photo-root'", 'verify_inputs('):
             self.assertIn(required, source)
-        self.assertIn("'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset')", suite)
+        self.assertIn("'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset', 'storage-stats')", suite)
 
     def test_vulkan_builder_does_not_receive_an_unsupported_nonce_flag(self):
         source = Path(__file__).with_name('run_normal_hap_probe.py').read_text()

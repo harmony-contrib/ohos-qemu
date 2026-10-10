@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R26 代表包重建中
+
+仅启动 ARM64 phone，输入冻结为提交 `c9de875`、目录
+`/Volumes/PSSD/qemu/build-inputs/phone-9x1nCX`，树
+`cb28e1fb7f7683fd5b69a4751ceca390a897477377846a5006214997d203b5ca`。
+本地 Docker 容器 ID
+`d5fec5c264876954d078359d225485bb6eb0b96f74dec2f9e44e6b62b14e17ce`，
+目标目录 `first-display-modes-7.0-release-20261010-r26`；构建尚未完成时
+不记录归档校验和或宣称修复通过。构建与顺序验证记录位于既有 evidence 根目录的
+`first-display-modes-arm64-phone-build-r26-01.log`、
+`r26-build-then-validation-01.json`。冻结版本宿主 1208 项检查通过。
+等待器仅验证该包：1280×800 页面、1920×1080 切换及真实内核 DRM 读回、
+无能力子进程项目配额、完整回归；失败即停止，不启动其余五包。
+
+当前工作树另将 `storage-stats` 纳入两个画像的统一 suite 和强制交付门禁，
+重放原始文件增长/回收、202 拒绝、普通 UID、编译输入及逐文件哈希。
+该新增门禁不在已冻结 R26 输入中，不能把 R26 等待器的结果解释为已经执行它；
+需用对应最终冻结脚本重新验证。13 项 Storage 宿主边界检查通过，均非客体证据。
+完整回归 `host-regression-storage-gate-r26-02.log` 首次因两处写死旧 persona
+列表的测试断言失败；补上 Storage 列表项后，`-03.log` 的 1215 项全部通过，
+没有改动原有行为断言或覆盖失败记录。
+R25 独立截图耗时采样 6 次均成功（约 0.27–0.75 秒），但只说明部分调用正常，
+此前首次截图超时依然未关闭，不能以重试成功代替修复。
+
 ## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
 
 仅 ARM64 phone 代表包已完成本地 Docker 构建与打包，冻结提交 `3824311`，输入

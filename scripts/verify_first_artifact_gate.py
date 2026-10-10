@@ -18,7 +18,7 @@ from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects",
-                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes"))
+                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 
 
@@ -258,6 +258,11 @@ def verified_payload(name, path, identity, environment):
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))
             from verify_settings_navigation_results import verify_evidence
+            verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'])
+        elif name == 'storage-stats':
+            audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
+            sys.path.insert(0, str(audit))
+            from verify_storage_stats_results import verify_evidence
             verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'])
         elif name == 'fa-particle':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'

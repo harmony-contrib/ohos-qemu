@@ -117,7 +117,7 @@ class PhotosAssetGateTests(unittest.TestCase):
     def test_both_profile_suites_and_independent_gate_require_the_asset_probe(self):
         root = Path(__file__).resolve().parents[2]
         suite = (root / 'ci/capability-audit/run_packaged_qemu_suite.py').read_text()
-        self.assertIn("'photos-recent', 'photos-asset')", suite)
+        self.assertIn("'photos-recent', 'photos-asset', 'storage-stats')", suite)
         self.assertIn("check('photos-asset', path, [record])", suite)
         from verify_first_artifact_gate import REQUIRED_CHECKS
         self.assertIn('photos-asset', REQUIRED_CHECKS)
