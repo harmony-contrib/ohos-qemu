@@ -27,6 +27,8 @@ BUNDLE = 'org.harmonycontrib.capabilityaudit'
 APP_BASE = '/data/app/el2/100/base/' + BUNDLE + '/'
 APP_FILES = APP_BASE + 'files/'
 PERSONAS = {
+    'completion-handler': ('--completion-handler-only', 'completion-handler-{run}-results.log', '"summary"',
+                           'verify_completion_handler_results.py'),
     'web': ('--web-only', 'capability-results.log', 'web.execution.complete=true', 'verify_web_results.py'),
     'userid': ('--userid-only', 'userid-results.log', '"native_result"', 'verify_userid_results.py'),
     'i18n': ('--i18n-only', 'i18n-data-{run}-results.log', '"parameter.missing"', 'verify_i18n_data.py'),
@@ -146,7 +148,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -365,7 +367,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
+        if args.persona in ('completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]

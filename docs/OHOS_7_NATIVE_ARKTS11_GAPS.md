@@ -86,6 +86,42 @@ latency-03/04/05 展开 images 分两批删除，保留归档、日志、探针�
 记录 `retired-latency-images-cleanup-r25-04.json`、`-05.json`；临时 userdata
 不保留，基础 images 可从原归档恢复。其余五包仍未启动。
 
+### CompletionHandler 命名类导出
+
+已确认 `@ohos.app.ability.CompletionHandlerForAbilityStartCallback` 的 SDK
+公开类缺失：固定源码模块只注册 `AbilityStartFailureCode`。候选补齐真实
+NAPI 构造函数，两个可选回调保持普通实例字段，不引入原生所有权或服务身份；
+不改变已有枚举、启动/生命周期、权限和 IPC。已阅读 ability_runtime 的
+AGENTS/CLAUDE、公共错误码边界和模块注册/现有回调消费实现，修改范围仅为
+该缺失绑定。`JsUIExtensionCallback` 仍按原有字段读取两个回调。
+
+证据目录 `completion-handler-r26-01.1hYP0l`：三个实际产品完整模块源文件
+编译通过（`three-abi-compile-02.json`）；宿主真实 Node N-API 执行原样
+构造函数，覆盖 new-only、可选字段、实例隔离、继承及 10,000 次分配/回收
+（`host-napi-01.json`）；17 项宿主错误路径、原始结果、归档/boot/普通身份、
+篡改拒绝及窄关闭规则检查通过（`host-boundaries-03.log`）。首次补丁 hunk
+行数错误在应用前被拒绝，修正后重新检查；不作为生产源码编译错误隐藏。
+`typed-caller-build-01.log` 记录真实 API26 Release ArkTS 调用者编译成功。
+
+同一调用者在原 R25 新 boot `b0cddb51-fa5f-40e0-ac50-6c419d4ae363`
+复现真实导入失败：普通 UID 20010038 的应用崩溃记录明确指出请求模块没有
+`CompletionHandlerForAbilityStartCallback` 命名导出。记录位于
+`r25-completion-handler-baseline-01/actual-own-app-jscrash.log`，没有替换系统库。
+该失败保留，不把成功编译或宿主 Node 测试算作 ArkTS 客体通过。
+
+工作树已将候选接入共同打包前补丁和两个画像的普通 HAP suite/强制门禁。
+关闭规则只能在同一新归档、真实 acceptance boot、ABI、普通 UID 和实际
+编译输入均匹配且原始八组观察重新校验通过时关闭这一项导出；明确不声明
+真实组件启动回调送达或服务 IPC 已由该构造测试证明。当前冻结 R26 不含该
+候选，下一代表包仍须真实启动验证；其余五包不能提前开始。
+最终补丁上下文整理后 `three-abi-compile-03.json` 再次三架构通过，生成源码
+SHA-256 不变；`host-regression-completion-final-r26-09.log` 1242 项全部通过。
+旧包基线诊断最终保持 fail（未完成应用观察），其真实缺失导出崩溃单独留存
+并绑定 `missing-export-proof.json`；测试电源策略恢复、客体关闭。
+latency-06 与该基线已关闭的展开 images 回收约 9.96 GB，基础镜像仍可从
+原 R25 归档恢复，临时 userdata 丢弃，其余证据不删；记录
+`retired-diagnostics-images-cleanup-r25-06.json`。
+
 ## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
 
 仅 ARM64 phone 代表包已完成本地 Docker 构建与打包，冻结提交 `3824311`，输入

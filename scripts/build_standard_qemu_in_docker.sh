@@ -302,6 +302,7 @@ SETTINGS_INPUT_2IN1_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard
 SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/refresh_rate_page/apply.sh"
 SCREEN_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/window/window_manager/screen_modes/apply.sh"
 QEMU_CAPTURE_BUDGET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/window/window_manager/capture_budget/apply.sh"
+COMPLETION_HANDLER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/completion_handler/apply.sh"
 QEMU_DISPLAY_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/display_modes/apply.sh"
 SETTINGS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/settings_provider/apply.sh"
 SETTINGS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/settings_provider/apply.sh"
@@ -3013,6 +3014,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_screen_modes_component.log"
   bash "${QEMU_CAPTURE_BUDGET_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_capture_budget_component.log"
+  bash "${COMPLETION_HANDLER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_completion_handler_component.log"
   bash "${QEMU_DISPLAY_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
   bash "${SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

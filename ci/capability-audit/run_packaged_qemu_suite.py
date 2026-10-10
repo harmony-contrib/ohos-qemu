@@ -321,6 +321,7 @@ def run(args):
         normal_results = {}
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                     'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset', 'storage-stats')
+        personas += ('completion-handler',)
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
@@ -343,6 +344,8 @@ def run(args):
                 check('settings-navigation', path, [record])
             if persona == 'storage-stats':
                 check('storage-stats', path, [record])
+            if persona == 'completion-handler':
+                check('completion-handler', path, [record])
             same_guest('after-' + persona)
         service_init_record = command([sys.executable,
             Path(__file__).with_name('run_service_init_contract_probe.py'),

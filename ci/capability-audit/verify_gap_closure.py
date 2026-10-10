@@ -76,6 +76,29 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             return None
         return path, result
 
+    completion = child('completion-handler/evidence.json')
+    if completion:
+        from verify_completion_handler_results import verify_evidence as verify_completion
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('constructor closure requires actual new-package boot evidence')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or
+                environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('constructor proof requires this unchanged acceptance package')
+        verify_completion(completion[1], archive_sha, boot_id, environment['guest_arch'])
+        closed['arkts_export:@ohos.app.ability.CompletionHandlerForAbilityStartCallback:'
+               'CompletionHandlerForAbilityStartCallback'] = {
+            'evidence': str(completion[0]), 'sha256': digest(completion[0]),
+            'verifier': 'ordinary_typed_ArkTS_constructor_optional_callbacks_isolation_subclass_and_existing_enum',
+            'not_claimed': 'component_start_callback_delivery_or_service_IPC'}
+
     quota = child('project-quota/result.json')
     storage = child('storage-stats/evidence.json')
     if quota and storage:
