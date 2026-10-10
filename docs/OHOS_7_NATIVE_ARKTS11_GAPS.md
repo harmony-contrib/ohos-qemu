@@ -1,5 +1,33 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R28 温控首包与 WPA 信道表读回
+
+R28 新包 `first-thermal-backend-7.0-release-20261010-r28/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`
+SHA-256 `9e7ee9bd842402265665793b1462d0ab174365a1d21d9caf617926a7b6e0efc9`，
+使用冻结脚本 `phone-Z6yzih/ci/capability-audit/run_thermal_diagnostic.py`，
+API26 Release SDK、macOS ARM64/HVF 和独立 HDC，实际启动
+`0533fdb0-4283-433e-a1a3-b3fd668800be`。`r28-thermal-runtime-01/diagnostic.json`
+记录命令、配置和普通应用证据：内核 battery 与 SA 3303 均读回 2600，
+普通应用现代/旧接口各两代初始回调通过，恢复电源策略并关闭客体。
+这是原归档的低温路径验证，不证明高温状态转换或完整首包门禁；后续屏幕和
+完整回归仍需通过。R28 不含后续 Wi-Fi 修复，不能据此启动余下五包。
+
+R27 原归档的独立启动 `1514f2e6-a01d-41d4-9f0c-14320d3ebe4c`，通过新增
+只读 `wpa_frequency_readback.c` 查询真实 WPA `GET_CAPABILITY freq`，没有
+替换镜像库或配置。结果 1184 字节，包含 B/G 重复、空 Mode[A] 块、
+2.4/5 GHz、NO_IR 和 DFS 标记；当前实际结果可放入现有 2048 字节 HDI 缓冲区。
+`r27-wpa-capabilities-runtime-01/actual-wpa-frequency-capabilities.txt` SHA-256
+`a7ddc07a3719c7937b31dc1b6cc858872b52dd0b5e07e8445cb5940d72f0da5a`。
+诊断已关闭客体并恢复电源策略；它不是普通应用扫描或 WLAN 验收。
+`build_wpa_frequency_readback.py` 用固定 API26 Release SDK 重现三架构只读
+调用者，`wpa-frequency-readback-build-r28-02/build.json` 保存输入和命令，
+与实际运行的 01 构建逐字节一致。
+
+同时确认内核启动报 regulatory.db 缺失。固定 manifest 的 unisoc 源码中
+已有数据库与签名，二进制 CMS 校验通过；仍需校验签名者与内核内置信任键、
+补齐打包及加载路径，并在新包验证。不得关闭签名检查、硬编码放开信道，
+也不能把服务层国家码当作内核监管域已生效。
+
 ## 2026-10-10 扫描生命周期与软件 PNO 补充修复
 
 扫描路由接通后的生命周期检查发现两个独立问题：ScanService 先注册回调，
