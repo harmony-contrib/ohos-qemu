@@ -28,6 +28,8 @@ BUNDLE = 'org.harmonycontrib.capabilityaudit'
 APP_BASE = '/data/app/el2/100/base/' + BUNDLE + '/'
 APP_FILES = APP_BASE + 'files/'
 PERSONAS = {
+    'image-metadata': ('--image-metadata-only', 'image-metadata-{run}-results.log', '"summary"',
+                       'verify_image_metadata_results.py'),
     'thermal': ('--thermal-only', 'thermal-{run}-results.log', '"summary"', 'verify_thermal_results.py'),
     'completion-handler': ('--completion-handler-only', 'completion-handler-{run}-results.log', '"summary"',
                            'verify_completion_handler_results.py'),
@@ -150,7 +152,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -232,6 +234,14 @@ def run(args):
         project = args.output / 'project'
         build = [sys.executable, str(Path(__file__).with_name('build_hap_probe.py')), flag,
                  '--arch', args.arch, '--sdk', args.sdk, '--udid', args.udid, '--output', project]
+        if args.persona == 'image-metadata':
+            command(['docker', 'run', '--rm', '--platform', 'linux/amd64',
+                '--mount', 'type=volume,src=' + args.source_volume + ',dst=/ohos,readonly',
+                '--mount', 'type=bind,src=' + str(ROOT) + ',dst=/work,readonly',
+                '--mount', 'type=bind,src=' + str(args.output.resolve()) + ',dst=/probe',
+                args.docker_image, 'python3', '/work/ci/capability-audit/image_metadata_fixtures.py',
+                '--source-root', '/ohos', '--output', '/probe/fixtures'], 'export-pinned-image-fixtures', timeout=120)
+            build += ['--image-metadata-fixtures', args.output / 'fixtures']
         if args.persona not in ('web', 'vulkan-window'):
             build += ['--probe-run-id', challenge]
         if args.persona in ('runtime-enum', 'optional-phone-profile'):
@@ -371,7 +381,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
+        if args.persona in ('image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]

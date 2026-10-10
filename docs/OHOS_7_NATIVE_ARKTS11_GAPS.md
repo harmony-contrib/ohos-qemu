@@ -1,5 +1,37 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 图片元数据：真实读取成功，但错误类型仍不符合 SDK
+
+R27 原始归档的新启动 `1e80acc1-66c6-4531-aba8-b1ba6d4ddee6`，普通 UID
+`20010038` 使用 API26 typed HAP 读取固定 image_framework
+`711db218c8d1c4d6546b28d8cf466059644dfa77` 的三份原始测试资源。
+DNG 返回版本 `[1,4,0,0]` 和 fixture 模型 `FakeCamera ModelX`；TIFF 返回
+实际压缩/色彩/方向/分辨率；AVIS 返回 90 帧及首、中、末帧 100 ms 延时。
+它们是解析固定文件的工厂结果，不是伪造公有构造类或物理相机数据。
+
+严格诊断仍然失败：负索引和边界索引抛出 `code: "7700204"` 字符串，
+而公开 `BusinessError.code` 声明是 number。探针没有 Number/parseInt 转换，
+失败后再次读取仍成功。直接原因是 `ReadImageMetadataByType` 参数失败分支
+调用 `ThrowExceptionError` 时沿用 `codeAsNumber=false`，进入 `napi_throw_error`；
+同一工具已有数值 BusinessError 路径。尚未修改该公开绑定；按框架维护规则
+请求仅此参数分支的最小类型修复，保留数值、解析器和其他 API。
+
+`r27-image-metadata-runtime-01` / `diagnostic.json` SHA-256
+`22a7d74e1e6aaa266345aae0232b919f468afcb36845643a782dbaf173218fca`；
+原始 results SHA-256 `88dc9eb06c157e684ca47c6cdaa31b20f4e0ef24de90130eb186b6e2786e1f57`。
+客体使用 R27 冻结启动 helper，新增 caller 单独标识，原镜像未替换文件；
+电源策略已恢复、客体与专属 HDC 已关闭。不关闭三项 metadata 缺口，不纳入
+R28 冻结套件，也不声称完整图片格式/XTS/硬件验证。新增探针的三个 ABI
+typed HAP 编译通过，记录在 `image-metadata-typed*-build-r28-01.log`。
+完整宿主回归 1277 项通过（208.590 秒），见
+`host-regression-image-metadata-r28-02.log`。01 保留新模式缺参数检查先于
+互斥检查导致的单项失败；只调整检查顺序，未修改测试断言。
+XTS 已定位 `test/xts/acts` 固定 `12ed38d7aec9c680ed1510a77a96efcc7b101489`
+的 `image_exif_get_modify_hap` / `ActsImageExifGetModifyTest`，其中
+`SUB_MULTIMEDIA_IMAGE_READIMAGEMETADATABYTYPE_PROMISE_ERROR_0100/0200`
+覆盖负索引/越界，但 `handleError` 使用 `==`，不能发现字符串与数字差异。
+尚未执行该完整 XTS HAP；本仓测试明确拒绝字符串错误码及隐式类型转换。
+
 ## 2026-10-10 R28：重建温控代表包，尚未完成客体验收
 
 仅构建 ARM64 phone，输入提交 `31ed764`，冻结目录
