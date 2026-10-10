@@ -45,6 +45,17 @@ pristine images 另经原归档逐文件哈希复核后回收，记录
 最终整仓主机回归 `host-regression-hitrace-caller-r30-03.log`：1343 项通过，
 199.965 秒，macOS 跳过同一 Linux 专用夹具。
 
+已进一步整理为仓库脚本 `ci/capability-audit/run_hitrace_diagnostic.py`，
+接受单个 archive/output/sdk/hdc，独占 HDC transport，正常执行原有归档
+冻结输入校验、真实桌面、普通应用签名安装、内核采集与状态恢复；不构建
+其余镜像，不放宽权限。第四次客体验证 `r29-hitrace-repo-runtime-04`
+也通过（boot `cfee0e78-a0e2-407a-841a-60f5a0d30828`，PID/TID 2550，
+36 条内核记录），通过外层实验入口加载原 R29 冻结启动验证器，复验
+当前仓库脚本；没有把旧归档伪装成匹配当前工作树。脚本现在在判定应用
+结果之前保存真实内核记录，失败时也不会丢失关键记录。
+`host-regression-hitrace-runner-r30-01.log`：1346 项通过，200.569 秒，
+同一 Linux 专用夹具跳过。仍未将旧包补充结果直接用于新包缺口关闭。
+
 ## 2026-10-10 路由观察者真实回调测试（尚待客体验证）
 
 `RouterPageInfo` 在固定源码
