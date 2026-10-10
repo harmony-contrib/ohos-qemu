@@ -34,6 +34,19 @@ SHA `8afd136ce41b938d4583d3233e95c2ca3358d0b1f58b5d77e72f395c54ead574`。
 对同一归档补充完整验收，输出 `r32-independent-full-runtime-01.json` 及同名 `.log`；
 独立结果不覆盖之前顺序门禁的失败，也不授权剩余五包构建。
 
+只读补充检查确认 `/dev/bbox` 是真实 `hievent` 字符设备（509:0，
+`/sys/devices/virtual/bbox/bbox`），不是文件或空设备。当前固定内核
+`drivers/staging/hievent/hievent_driver.c` 的 `hievent_fops` 仅有 read/poll/write_iter，
+没有 ioctl；框架 `dfx_kernel_stack.cpp` 请求 `_IO(0xAB, 9/10)`，与失败现场
+`DfxGetKernelStack` 的 ENOTTY 对应。该诊断回退路径尚未适配，不能用 userspace
+BlackBox 已安装或其它 HiDebug 测试通过代替；**也未证明它导致窗口连接阻塞**。
+证据 `r32-full-guest-readonly-bbox-01.log` SHA
+`b1dfd4654b1b5c0ef1f1ce68972b129dad783b3b7cd6b16fcdc5958a76bb6adb`，
+`r32-full-guest-readonly-bbox-02.log` SHA
+`2403b46c4f40e603256ea321c9094d638e645272cf9a5bfe7f533639bdd2e2a9`，
+采自完整验收客体 boot `6056720d-cb41-4038-9a0f-845160ced360`，没有改权限或驱动。
+后续方案必须验证内核支持、三种 ABI、真实栈数据与跨进程访问控制；不能简单把 ENOTTY 改为成功。
+
 ## 2026-10-10 R32 新归档实测：图片/图形内存通过，完整门禁仍失败
 
 代表包已经由本地 Docker 完成构建（编译耗时 1:22:44），归档：
