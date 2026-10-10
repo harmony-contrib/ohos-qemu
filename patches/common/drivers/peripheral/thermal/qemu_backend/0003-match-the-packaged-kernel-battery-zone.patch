@@ -1,0 +1,10 @@
+diff --git a/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml b/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml
+--- a/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml
++++ b/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml
+@@ -7,5 +7,5 @@
+     <polling name="thermal">
+         <group name="actual" interval="1000">
+-            <thermal_zone type="test_battery" replace="battery"/>
++            <thermal_zone type="battery" replace="battery"/>
+         </group>
+     </polling>

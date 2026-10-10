@@ -1,5 +1,40 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 温控实测发现配置错配，待下一代表包验证
+
+R26 原始归档 SHA-256 `f21bb14194ae781485780b4722a9e613261e524c142bab02c7326bdd4d5be8fd`
+的新启动 `515bc728-36ef-4112-a82e-092ca1b16df0` 实测发现：内核
+`thermal_zone0` 的类型为 `battery`、原始读数 `2600`；打包 HDI 配置却查找
+`test_battery`，`hidumper -s 3303 -a "-t"` 没有任何温度记录。因此该缺口
+仍是真实故障，不能以 `thermal.getLevel()` 返回 0 判定通过。
+`r26-thermal-readonly-runtime-04` 使用 R26 冻结启动 helper 和原始镜像，
+无客体库或内核替换；真实桌面解锁后才设置本测试的有限超时，最后恢复并关闭。
+诊断 SHA-256 `990bd302be842ab061b466583d5dd0feaa4f9d3343a25f1f68004de771e475dd`；
+内核观察 `c6bc911cc3f5befbdab6b225bb4b8f426edb91f95a5d33dc85a1b3f55f37f090`；
+服务观察 `b954cea97b478a319f9bcac70ef45ffef261930d9dcd552c27d5c240f4f21f51`。
+
+三个架构的实际 kernel 构建树均由共同 `power.patch` 将供应器和温度区改名为
+`battery`，见 `thermal-three-kernel-source-names-r27-01.log`。新增独立
+`qemu_backend/0003-match-the-packaged-kernel-battery-zone.patch` 与精确旧状态升级；
+只改 HDI 对真实节点的匹配，不模拟读数、不改阈值或权限。
+`thermal-backend-exact-r27-01.json` 的七次应用/升级/幂等/未知改动/部分状态/
+符号链接边界检查通过；这是只读源码加私有 scratch 验证，不是新包运行证明。
+
+新增公开 SDK 编译的普通应用探针，要求两轮新回调及两轮旧回调的真实首次通知、
+退订回调、可选 undefined、旧订阅不再回调和等级一致。单独的回调成功仍不关闭
+缺口：统一 suite/交付门禁还必须重放同次启动前后的非零内核/服务读数、
+实际配置、普通 UID、签名 HAP、SDK/源码输入、随机挑战和全部原始文件哈希。
+只允许关闭 `behavior:thermal-backend-zero-data`，不声称高温状态转换或真实物理温度。
+API26 Release SDK 实际编译通过；旧包在后端读回阶段失败，未执行这些应用回调。
+新增 18 项温控解析/门禁/关闭边界检查通过，完整宿主回归 1260 项通过，
+记录于 `host-regression-thermal-gate-r27-03.log`；均不替代新镜像测试。
+本修复及新增门禁不在已经冻结的 R27 输入中，必须重建代表包后验证。
+
+初次诊断 01 被 frozen-input 校验拒绝；02 因锁屏持有超时策略主动拒绝，
+03 被桌面测试的非 acceptance 启动检查拒绝，均保留失败记录而未放宽门禁。
+01–03 的关闭/未启动临时 images 已清理，归档和所有证据保留，
+详见 `retired-thermal-images-cleanup-r26-01.json`。
+
 ## 2026-10-10 R27：截图预算及回调类首包重建中
 
 仍仅 ARM64 phone。输入冻结为 `ac556ca`、目录

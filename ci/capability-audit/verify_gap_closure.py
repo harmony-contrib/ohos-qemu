@@ -99,6 +99,28 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'verifier': 'ordinary_typed_ArkTS_constructor_optional_callbacks_isolation_subclass_and_existing_enum',
             'not_claimed': 'component_start_callback_delivery_or_service_IPC'}
 
+    thermal = child('thermal/evidence.json')
+    if thermal:
+        from verify_thermal_results import verify_evidence as verify_thermal
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('thermal closure requires actual new-package boot evidence')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or
+                environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('thermal proof requires this unchanged acceptance package')
+        verify_thermal(thermal[1], archive_sha, boot_id, environment['guest_arch'])
+        closed['behavior:thermal-backend-zero-data'] = {
+            'evidence': str(thermal[0]), 'sha256': digest(thermal[0]),
+            'verifier': 'actual_nonzero_kernel_service_readback_and_four_ordinary_thermal_callback_lifetimes',
+            'not_claimed': 'hot_transitions_or_real_physical_temperature'}
+
     quota = child('project-quota/result.json')
     storage = child('storage-stats/evidence.json')
     if quota and storage:

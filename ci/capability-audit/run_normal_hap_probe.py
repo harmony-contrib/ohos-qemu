@@ -27,6 +27,7 @@ BUNDLE = 'org.harmonycontrib.capabilityaudit'
 APP_BASE = '/data/app/el2/100/base/' + BUNDLE + '/'
 APP_FILES = APP_BASE + 'files/'
 PERSONAS = {
+    'thermal': ('--thermal-only', 'thermal-{run}-results.log', '"summary"', 'verify_thermal_results.py'),
     'completion-handler': ('--completion-handler-only', 'completion-handler-{run}-results.log', '"summary"',
                            'verify_completion_handler_results.py'),
     'web': ('--web-only', 'capability-results.log', 'web.execution.complete=true', 'verify_web_results.py'),
@@ -148,7 +149,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -224,6 +225,9 @@ def run(args):
         if getattr(args, 'boot_id', None) is not None and args.boot_id != boot_id:
             raise ValueError('ordinary probe is not connected to the enclosing fresh VM')
         report['boot_id'] = boot_id
+        if args.persona == 'thermal':
+            import verify_thermal_backend as thermal_backend
+            thermal_before = thermal_backend.capture(shell, args.output, 'before')
         flag, filename, completion, verifier = PERSONAS[args.persona]
         project = args.output / 'project'
         build = [sys.executable, str(Path(__file__).with_name('build_hap_probe.py')), flag,
@@ -367,7 +371,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
+        if args.persona in ('thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]
@@ -375,6 +379,14 @@ def run(args):
                 ui_arguments += ['--arch', args.arch]
         if args.persona == 'optional-phone-profile':
             ui_arguments += ['--boot', str(args.boot), '--boot-id', boot_id, '--docker-image', args.docker_image]
+        if args.persona == 'thermal':
+            thermal_after = thermal_backend.capture(shell, args.output, 'after')
+            backend = args.output / 'thermal-backend.json'
+            backend.write_text(json.dumps({'archive_sha256': report['archive_sha256'], 'boot_id': boot_id,
+                'run_id': challenge, 'before': thermal_before, 'after': thermal_after,
+                'verifier_sha256': checksum(Path(thermal_backend.__file__))}, indent=2) + '\n')
+            report.update(thermal_backend=str(backend), thermal_backend_sha256=checksum(backend))
+            ui_arguments += ['--backend', str(backend), '--boot-id', boot_id]
         command([sys.executable, str(Path(__file__).with_name(verifier)),
                  *verifier_arguments(args.persona, args.archive, results, application_identity,
                      challenge, args.arch, verification), *ui_arguments], 'strict-behavior-verification')
