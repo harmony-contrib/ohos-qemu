@@ -1,5 +1,38 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 热点监管域真实阻断与下一代表包候选
+
+R31 第三次独立诊断在实际开关点击后立即采集日志，确认异步热点启动到达
+`ApService::EnableHotspot`，随后因 `SetCountry` 的 HK 设置失败而退出。
+固定源码的 `WifiApHalInterface::SetWifiCountryCode` 在没有芯片 HDI 时直接返回失败；
+不是 standalone hostapd 缺失已经被证明，也不能把 `startSharing` promise 完成解释为 AP 已启用。
+`r31-hotspot-ui-runtime-03/diagnostic.json` SHA-256：
+`bf3ba7aa1196fca8667fb64adf8af9cb59867cf00d251ccb116b3cc9d8fa3cf6`。
+
+新增共享独立部件 `wifi/software_ap_regulatory`：仅在无 chip HDI、有 WPA HDI 的
+standard 构建中，使用现有 libnl 提交真实 cfg80211 请求，要求内核 ACK 与监管域读回一致。
+保留芯片路径、监管数据库、现有权限和 Wi-Fi 服务 CAP_NET_ADMIN；错误、超时、非法参数和
+非内核回复均失败，不使用 shell 或固定成功结果。依赖声明在遍历前由公共构建脚本应用。
+
+- 包外算法调用者在三 ABI SDK 下编译成功，`regulatory-candidate-compile-r32-01`。
+- 原 R31 的第四次独立客体使用 root 诊断调用者验证 HK 设置/读回、重复调用成功，
+  小写/超长国家码及不存在网卡失败；不代表 Wi-Fi 服务身份或热点功能通过。
+  `r31-hotspot-ui-runtime-04/diagnostic.json` SHA-256：
+  `b1c62a668960d699eac050a258a8ff18f7518feb006e892319134d460214d841`。
+- 实际新增头文件和完整 AP HAL TU 使用三个产品的真实编译命令检查，幂等打补丁两次、
+  ARM64/ARMv7/x86_64 均成功。候选显式增加宏与头文件路径，**不是 GN 重生成或服务链接证明**。
+  `wifi-ap-regulatory-full-tu-r32-02/evidence.json` SHA-256：
+  `f1a2b392ad099fb197fb7193c3a22554e6cc28f8ec905d3cbd80e1b03341f341`。
+- 四项新增宿主测试含实际回调函数体的 ASan/UBSan 畸形回复和错误源检查；使用测试替身，
+  不冒充真实内核协议验收。全量 1405 项成功、1 项跳过，219.075 秒，
+  `host-regression-ap-regulatory-r32-01.log` SHA-256：
+  `4704fdc616ab9b81e035cec9d4445c8faed0b359f7bb9244ba2a77a20d75f153`。
+
+诊断客体均关闭、开关/电源恢复。第 02/03 次诊断扩展磁盘各回收约 5 GB，
+原始归档与证据保留；清理记录 `retired-r31-hotspot-images-02.json`、`03.json`。
+**R32 已冻结，不包含本部件；必须随后重建代表包并验证服务身份、AP 与数据路径。
+不关闭 WLAN 缺口、不减少完整未闭环计数、不启动其余五包。**
+
 ## 2026-10-10 R32 冻结主机回归及独立热点诊断
 
 `phone-NxCZJG` 冻结输入的首次主机回归因误用系统 Clang、不支持
