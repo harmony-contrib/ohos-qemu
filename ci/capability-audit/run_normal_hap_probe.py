@@ -160,6 +160,24 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
     return arguments
 
 
+def save_command_output(path, stdout, stderr, diagnostic_bytes=False):
+    """Keep diagnostic bytes losslessly; lossy text is never behavior input."""
+    metadata = {}
+    if diagnostic_bytes:
+        if not isinstance(stdout, bytes) or not isinstance(stderr, bytes):
+            raise ValueError('raw diagnostic streams required')
+        for name, data in (('stdout', stdout), ('stderr', stderr)):
+            raw = path.with_suffix('.' + name + '.bin')
+            raw.write_bytes(data)
+            metadata[name + '_raw'] = str(raw)
+            metadata[name + '_raw_sha256'] = checksum(raw)
+        stdout, stderr = stdout.decode('utf-8', errors='replace'), stderr.decode('utf-8', errors='replace')
+        metadata['decoded_text_scope'] = 'diagnostic_only_NOT_behavior_acceptance'
+    path.write_text(stdout + stderr)
+    metadata['sha256'] = checksum(path)
+    return stdout, stderr, metadata
+
+
 def run(args):
     args.output.mkdir(parents=True, exist_ok=False)
     challenge = secrets.token_hex(16)
@@ -169,14 +187,14 @@ def run(args):
         'target': args.target, 'arch': args.arch, 'commands': [], 'failures': [],
         'boot_binding': 'requires_enclosing_fresh_VM_suite', 'first_artifact_behavior_gate_passed': False}
 
-    def command(argv, label, timeout=60, accepted_failure=False):
+    def command(argv, label, timeout=60, accepted_failure=False, diagnostic_bytes=False):
         argv = list(map(str, argv))
         path = args.output / (str(len(report['commands'])).zfill(3) + '-' + label + '.log')
         record = {'argv': argv, 'log': str(path), 'exit_code': None}
         report['commands'].append(record)
         try:
             process = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                text=True, stdin=subprocess.DEVNULL, start_new_session=True)
+                text=not diagnostic_bytes, stdin=subprocess.DEVNULL, start_new_session=True)
             try:
                 stdout, stderr = process.communicate(timeout=timeout)
             except subprocess.TimeoutExpired:
@@ -186,12 +204,12 @@ def run(args):
                 except subprocess.TimeoutExpired:
                     os.killpg(process.pid, signal.SIGKILL)
                     stdout, stderr = process.communicate()
-                path.write_text(stdout + stderr)
-                record.update(timed_out=True, sha256=checksum(path))
+                stdout, stderr, saved = save_command_output(path, stdout, stderr, diagnostic_bytes)
+                record.update(saved, timed_out=True)
                 raise ValueError('command timed out: ' + label)
             record['exit_code'] = process.returncode
-            path.write_text(stdout + stderr)
-            record['sha256'] = checksum(path)
+            stdout, stderr, saved = save_command_output(path, stdout, stderr, diagnostic_bytes)
+            record.update(saved)
             if process.returncode and not accepted_failure:
                 raise ValueError('command failed: ' + label)
             if argv[0] == str(args.hdc) and not accepted_failure and hdc_failed(stdout, stderr):
@@ -428,7 +446,8 @@ def run(args):
             try:
                 if shell('cat /proc/sys/kernel/random/boot_id', 'failure-capture-boot-id').strip() != report['boot_id']:
                     raise ValueError('failure diagnostics refused a changed guest kernel')
-                shell('hilog -x', 'failure-actual-hilog')
+                command([args.hdc, '-t', args.target, 'shell', 'hilog -x'],
+                        'failure-actual-hilog', diagnostic_bytes=True)
                 shell('ps -ef', 'failure-actual-processes')
                 report['same_boot_failure_diagnostics_captured'] = True
             except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as capture_error:

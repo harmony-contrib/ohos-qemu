@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 
-from run_normal_hap_probe import (BUNDLE, PERSONAS, previous_probe_absent, require_normal_identity, result_directory,
+from run_normal_hap_probe import (BUNDLE, PERSONAS, previous_probe_absent, require_normal_identity, result_directory, save_command_output,
                                   reject_terminal_web_failure, run, stop_previous_probe, verifier_arguments)
 
 
@@ -181,12 +181,28 @@ class NormalHapRunnerTests(unittest.TestCase):
     def test_failure_diagnostics_check_the_original_boot_and_never_clear_guest_logs(self):
         source = Path(__file__).with_name('run_normal_hap_probe.py').read_text()
         capture = source.split("if 'boot_id' in report:", 1)[1].split('\n    finally:', 1)[0]
-        self.assertLess(capture.index("'failure-capture-boot-id'"), capture.index("shell('hilog -x'"))
+        self.assertLess(capture.index("'failure-capture-boot-id'"), capture.index("'hilog -x'"))
+        self.assertIn('diagnostic_bytes=True', capture)
         self.assertIn("!= report['boot_id']", capture)
         self.assertIn("shell('ps -ef'", capture)
         self.assertIn("report['failure_diagnostics_error']", capture)
         for forbidden in ('hilog -r', 'hilog -b', 'status=', 'status =', 'power-shell', 'uninstall', 'setenforce'):
             self.assertNotIn(forbidden, capture)
+
+    def test_binary_diagnostics_preserve_exact_streams_without_changing_acceptance(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'hilog.log'
+            stdout, stderr, record = save_command_output(path, b'prefix\xf8\n', b'error\xff\n', True)
+            self.assertEqual(Path(record['stdout_raw']).read_bytes(), b'prefix\xf8\n')
+            self.assertEqual(Path(record['stderr_raw']).read_bytes(), b'error\xff\n')
+            self.assertEqual(path.read_text(), stdout + stderr)
+            self.assertIn('\ufffd', stdout)
+            self.assertEqual(record['decoded_text_scope'], 'diagnostic_only_NOT_behavior_acceptance')
+            stdout, stderr, record = save_command_output(Path(directory) / 'strict.log', 'actual', 'error')
+            self.assertEqual((stdout, stderr), ('actual', 'error'))
+            self.assertNotIn('decoded_text_scope', record)
+            with self.assertRaises(ValueError):
+                save_command_output(path, 'not raw', '', True)
 
 
 if __name__ == '__main__':
