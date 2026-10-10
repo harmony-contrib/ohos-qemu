@@ -1,5 +1,49 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 HiDebug 普通应用实测新增失败
+
+在未替换内核或库的 R30 归档上，新增 C++/ArkTS 普通、零权限 HAP 试验，
+准备依次分配两个 2048×2048 RGBA DMA 缓冲并释放，比较每阶段两套公开接口的
+真实统计，同时保留 `/proc/process_dmabuf_info`。三 ABI 调用者均完成实际 API26
+SDK 构建：`graphics-memory-{arm64,armv7a,x86_64}-build-r31-04`。
+
+实测在第一个统计结果便失败，尚未进入缓冲分配：
+`r30-graphics-memory-runtime-01/graphics-memory/actual-results.log` 报告
+`cannot serialize a BigInt`，boot `5ebd5e7a-0b8a-4acd-a5b0-c2798518c376`。
+结果 SHA-256 `e4915f047a730cee1d7207c2805c14923aba65a0149c720c0fb5acf1989044cc`，
+诊断 SHA-256 `8e40b989115aa87112fbca1c6f14e3a4c03bab22e17e3e4197d22f664b85daaa`。
+固定源码 `GraphicsMemorySummaryAsyncTask::Done` 将 `graph` 用
+`napi_create_bigint_uint64` 编码，而 API26 `GraphicsMemorySummary.graph` 明确为
+`number`；内部 `gl`、`graph` 均为 `uint32_t`，其中 `gl` 还错误地转为有符号数。
+
+新增独立部件 `common/developtools/profiler/hidebug/graphics_memory_types`，
+两字段统一用 `napi_create_uint32`，保持真实数值、缓存、统计后端及错误路径不变。
+不在应用端偷偷转型以掩盖错误公开类型。源树 patch check、幂等/漂移测试及
+0、INT32_MAX、INT32_MAX+1、UINT32_MAX 编码边界通过；共享构建入口已接入。
+该修复不在正在构建的 R31 冻结输入中，必须由后续新归档复验。
+
+失败客体已恢复电源策略并关闭，证据与失败镜像保留；不更新缺口闭环数。
+新增图形内存结果验证器严格拒绝固定零值、无分配变化、泄漏、身份改变和错误类型；
+其结果仍为 `closed=[]`，不冒充完整 HiDebug 或内核 inode 归属闭环。
+此前新增调用者/验证器主机回归运行 1375 项、整体成功，其中 1 项跳过，205.905 秒，
+`host-regression-graphics-memory-r31-01.log`；类型修复后的全量回归另行记录。
+
+第二次独立实测 `r30-graphics-memory-runtime-02` 没有偷偷将 BigInt 转为合格数值：
+记录真实 `typeof` 和诊断字符串，错误类型仍用 -1 标示并被验证器拒绝，但继续
+分配/释放以观察独立底层路径。boot `48245a03-fa17-4023-bf82-1e6a5b659adf`，
+普通 PID 2585、UID 20010038。NDK 实际 graph KiB 序列为
+**0 → 16384 → 32768 → 16384 → 0**，两次释放均验证保留的数据及成功返回；
+C++ 空指针边界返回 401。ArkTS `graph` 五次仍是 BigInt，故整体明确失败，
+并非后端固定零值冒充成功。原始内核记录随每次轮询保存。
+结果 SHA-256 `64c08abd2522a888d07bd9048d2cae329a898ae7e2838b6fb44d69077a2c0f71`，
+诊断 SHA-256 `d8a0aa1ccafd99a1e31d7548897f058b20ddb00fc422bed982aa5dffad84b904`。
+经逐日志 SHA 与客体成功状态核验，真实内核 inode 25、26 各 16777216 字节，
+持有序列 0 → 1 → 2 → 1 → 0，与 NDK 计数和释放顺序对应；此窄范围复核仍为 `closed=[]`。
+增强后的调用者三 ABI 构建均通过（`graphics-memory-*-build-r31-05`）。
+两次失败证据都保留；必须在修复后的新归档上让原类型检查和真实计数检查同时通过。
+最终主机回归 `host-regression-hidebug-types-r31-03.log`：运行 1384 项、整体成功，
+其中 1 项跳过，207.827 秒。包含内核 inode 生命周期检查，但不替代新实包运行。
+
 ## 2026-10-10 图形内存统计解析修复（待新实包）
 
 固定 Hiview `graphic_memory.cpp::CreateDmaInfo` 有两个独立缺陷：
@@ -20,7 +64,7 @@ ASan/UBSan 边界运行及三 ABI SDK 目标对象编译证据；包括完整/�
 溢出、64 位 inode、重复 FD，以及 composer/RS/应用六种枚举顺序。
 该结果不等于 HiDebug 公共接口实测成功，`behavior:hidebug-dmabuf-kernel` 仍未闭环；
 后续必须在新归档普通 HAP 上验证真实分配/释放前后的 C++/ArkTS 统计及内核记录。
-`host-regression-dmabuf-r31-01.log`：1370 项通过、1 项跳过，206.841 秒；
+`host-regression-dmabuf-r31-01.log`：运行 1370 项、整体成功，其中 1 项跳过，206.841 秒；
 最终枚举顺序边界又以独立实源码编译运行和定向主机测试复核通过。
 
 ## 2026-10-10 同客体验证接入（R31 构建期间）
@@ -42,7 +86,7 @@ R30 原始归档未替换内核、库或系统镜像，补充验证得到：
 新增重放校验覆盖实际签名 HAP 与编译负载、普通应用 UID/PID/TID、内核原始记录、
 同次启动身份及策略恢复；只登记原审计的 `behavior:hitrace-arm64-kernel` 后端缺口，
 不代表 HiTrace 全 API 或其他架构已验证。当前脚本将该检查接入完整套件和首包门禁。
-`host-regression-hitrace-gate-r31-01.log`：1366 项通过、1 项跳过，218.395 秒；
+`host-regression-hitrace-gate-r31-01.log`：运行 1366 项、整体成功，其中 1 项跳过，218.395 秒；
 重放上述实际客体证据也通过。主机夹具测试不替代新归档完整验收。
 
 正在构建的 R31 使用冻结输入 `phone-PGsn0J`、commit `0fd9517`，包含 display
