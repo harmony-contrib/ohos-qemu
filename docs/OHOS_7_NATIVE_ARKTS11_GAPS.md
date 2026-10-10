@@ -28,6 +28,13 @@ API26 SDK 三 ABI typed HAP 编译记录为
 后重跑，没有降低权限断言。新测试尚未包含在冻结 R29 构建输入中，
 上述 R28 验证也不替代 R29 首包门禁；完整账本仍为 149 闭环/132 未闭环。
 
+后续统一套件和交付门禁已把 `network-accounting` 设为两个设备画像的必验项，
+新增证据重放会重新验证原始数据、HTTP 三次交换、真实身份、编译输入和哈希，
+不信任单独的 pass 字段。R28 原始证据重放通过，记录
+`network-accounting-evidence-replay-r29-01.log`；整仓主机回归
+`host-regression-network-gate-r29-01.log` 为 1320 项通过（204.350 秒，
+同一 Linux 专用夹具在 macOS 跳过）。这些门禁更新没有改写冻结 R29 输入。
+
 ## 2026-10-10 NetManager eBPF 统计表只读诊断
 
 新增 `build_bpf_netstats_readback.py` 和实际 C 调用者，固定读取
