@@ -1,5 +1,22 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 继续核查：图片类导出与编译期装饰器（未关闭缺口）
+
+固定 image_framework 的 `metadata_napi.cpp` 已实现 `InitAvisMetadata`，并由
+`CreateAvisMetadata` 在工厂读取路径按需调用；但 `native_module_ohos_image.cpp`
+公开模块初始化只注册到 `InitPngMetadata`，漏掉 Avis 初始化。这解释了真实 AVIS
+读取通过而模块公开 `AvisMetadata` 仍缺失，两项不能互相替代。
+已读 `api-binding-surface.md` 和 `metadata-picture-model.md`，按模块维护规则另行请求
+仅注册现有类的确认，尚未修改该绑定。固定 XTS 的动态 image 测试中未检出三个
+metadata 类构造或 instanceof 用例；目前只检出 static ImageMetadata 测试，不作为
+ArkTS 1.1 证明。Tiff/Dng 当前仍创建普通对象，不能套用 Avis 的已有类注册修复。
+
+SDK 26 的真实 `ets-loader/lib/userIntents_parser/parseUserIntents.js` 中，
+`detectInsightIntent` 会处理意图元数据并调用 `removeDecorator`；原生
+InsightIntentDecorator 模块仅注册 LinkParamCategory。说明七个装饰器还需要检查
+编译器生成元数据与真正意图执行契约，而非添加无操作 JS 函数。尚未取得完整编译与
+客体执行证据，不修改审计分类、预期 ID 或已关闭数量。
+
 ## 2026-10-10 R34 仅修正后的代表包重建
 
 依赖分类修正提交 `3b9f732`，taskpool 快照修正提交
