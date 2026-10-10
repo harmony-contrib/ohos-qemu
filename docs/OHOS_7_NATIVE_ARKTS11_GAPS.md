@@ -11,12 +11,19 @@
 输入元数据 SHA `aedd8bc06e146f32aaea73dd5d3078e1933ca1c6cc2fea1e88ae5850c249eeb9`。
 构建容器 ID `faa07c79f5790a1b2d43cd6f268ff617990b34673e8e8df2e6fcd32d60027d08`。
 `host-regression-r34-frozen-01.log`：1412 项成功、1 项跳过，255.545 秒。
+日志 SHA `20b21ddbf0624ebcc6b43e1710feb991f408e6678d6501270aad3eec8b92e043`。
 
 `after-r34-first-fixes-01.py` 仅等待该代表包：先在新客体运行四轮原冻结普通应用
 factory-objects 严格验证，再使用真实预装 Settings 热点页面，要求系统服务连续两次
 确实处于 activated、UI 状态一致，关闭后服务确实 inactive。控制器不会把单独 UI 勾选、
 请求提交成功、或观测脚本正常退出当作热点启动成功；也不声称关联/DHCP/数据通路通过。
 目前尚未得到 R34 归档和运行结果，完整首包门禁仍未通过，没有启动剩余五包。
+
+`after-r34-targeted-full-01.py` 仅在上述两个新包定向检查均通过后，重新校验归档 SHA，
+从同一冻结输入运行仓库 `scripts/validate_packaged_qemu.sh` 完整回归，包含指定
+`ohos-native-bindings` 工作区。输出 `r34-independent-full-runtime-01.json`；
+任何失败保持首包门禁未通过。该控制器不触发其它架构或画像构建，也不会把命令退出成功
+自动视为六包授权；仍需审查实际能力账本和行为证据。
 
 `retired-r32-passed-disks-03.json` 回收已关闭且通过的图片/图形内存与导航压力临时磁盘；
 `retired-r31-hotspot-images-04.json` 回收已结束的历史监管域诊断磁盘 5037264896 字节。
