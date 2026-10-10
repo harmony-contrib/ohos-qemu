@@ -25,6 +25,15 @@ SHA `8afd136ce41b938d4583d3233e95c2ca3358d0b1f58b5d77e72f395c54ead574`。
 `retired-r32-passed-disks-02.json` 仅回收已关闭且通过的 HiTrace、导航第 02 次临时磁盘；
 原归档、报告及原第 01 次失败 userdata 均保留。临时运行态不保留，初始磁盘可从归档恢复。
 
+导航第 04 次压力诊断完成：同一 R32 客体八轮、每轮两种页面各往返两次，共 32 次页面
+导航通过；电源策略恢复、客体关闭，没有触发五秒迟滞的额外采样。
+`r32-navigation-stress-runtime-04/diagnostic.json` SHA
+`c3ba0fba624c28d8cf6b485a6372bf88fcb534bbdb661be188374fc44a5d6847`。
+没有修改窗口/IPC 代码，故仍不把原失败归因为已修复。
+另外从 R32 冻结输入 `phone-NxCZJG` 运行原仓库 `scripts/validate_packaged_qemu.sh`，
+对同一归档补充完整验收，输出 `r32-independent-full-runtime-01.json` 及同名 `.log`；
+独立结果不覆盖之前顺序门禁的失败，也不授权剩余五包构建。
+
 ## 2026-10-10 R32 新归档实测：图片/图形内存通过，完整门禁仍失败
 
 代表包已经由本地 Docker 完成构建（编译耗时 1:22:44），归档：
