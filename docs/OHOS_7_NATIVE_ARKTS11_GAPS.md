@@ -1,5 +1,30 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R33 仅热点候选代表包重建
+
+`build-r33-software-ap-representative-01.py` 启动本地 Docker 单独 ARM64 phone 构建，
+产物目录 `/Volumes/PSSD/qemu/packages/first-software-ap-7.0-release-20261010-r33`。
+仅包含已提交的热点监管域与 Settings 状态校正等当前仓库修复，**没有声称解决 R32 间歇导航阻塞**。
+冻结输入 `/Volumes/PSSD/qemu/build-inputs/phone-4lVpON`，提交
+`73d8228476d58c90af72475af579da6b2ef0ebd6`，树 SHA
+`acfad3c47c1ff1aad3377a9a2a770dd12692c0a2da0c864b90930e090149679e`，
+`build-inputs.json` SHA `7c23f5c048b06bfdc4fa7f666a2afd008b49b84eccdb78522fda232e4e040ec2`。
+构建容器 ID `c349e3f4bc9c5c786e669b3ac2d595f3041e20e965d97bff1ca3c8b4accf599a`。
+
+冻结宿主回归 `host-regression-r33-frozen-01.log`：1408 项成功、1 项跳过，228.345 秒；
+SHA `8afd136ce41b938d4583d3233e95c2ca3358d0b1f58b5d77e72f395c54ead574`。
+`r33-representative-build-01.json` 和 `first-software-ap-arm64-phone-build-r33-01.log`
+保存构建过程；当前尚无已验证的新归档。构建完成后
+`after-r33-hotspot-observation-01.py` 只启动该新包的真实 Settings 热点观测，
+不把 UI 勾选或观测程序退出成功当作服务启动、关联数据通路或完整能力门禁通过。
+其余五包没有构建命令。
+
+导航压力诊断第 03 次在开始导航前，正确拒绝锁屏已有的 10000ms 电源覆盖，未覆盖该策略，
+临时客体已关闭。第 04 次增加原冻结显示诊断同样的真实桌面/解锁前置条件，再检查电源策略，
+没有直接清除他人覆盖值；保留两次独立报告，不将前置条件失败归因为导航能力。
+`retired-r32-passed-disks-02.json` 仅回收已关闭且通过的 HiTrace、导航第 02 次临时磁盘；
+原归档、报告及原第 01 次失败 userdata 均保留。临时运行态不保留，初始磁盘可从归档恢复。
+
 ## 2026-10-10 R32 新归档实测：图片/图形内存通过，完整门禁仍失败
 
 代表包已经由本地 Docker 完成构建（编译耗时 1:22:44），归档：
