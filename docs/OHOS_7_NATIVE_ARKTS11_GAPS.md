@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-11 同批联系人数据类候选（尚未新包运行）
+
+固定 ContactsData `c73bd27daa3fcd8ed6099b17cbffbd7021e3873e` 的 `contact.js`
+已经转发九个数据类，原生侧却只初始化带常量的类。新增 `contacts_data/record_classes`
+注册 ContactAttributes、Group、Holder、Name、NickName、Note、Organization、Portrait、Website，
+复用现有 Contact/Email 使用的真实 NAPI 数据对象构造器；Holder 使用 SDK 声明的默认
+bundleName 与已有 CONTACT_PACKAGE_NAME 常量。没有伪造数据库内容或成功状态，数据库、
+权限、查询、字段转换、枚举和已有 C++ 布局不改。新增头文件和模块入口不覆盖旧
+ContactSyncMode 补丁文件，分别重复应用仍幂等。
+
+`contact-record-classes-full-tu-r34-02/evidence.json` SHA
+`c8320cd64a8bd2933b01b3cf40b5ad0c0d58743fb9c0d57bfab5c4804c8f5d79`：
+三种 ABI 的真实完整模块编译命令均通过，VFS 候选源与新头文件均出现在编译依赖中。
+首次编译工具查询使用了错误的 GN target 路径而未开始编译，已按实际 ninja 目标修正，
+未改构建目标或放宽验证。
+`contact-record-classes-hap-build-r34-01/entry/build/default/outputs/default/entry-default-unsigned.hap`
+SHA `2546611f1b17edc3b5fbebb12da8d31105443a74b41254b01697f1909f25f1f3`。
+真实 SDK 已编译九类、每类两个实例的 typed new/instanceof、属性读写和隔离用例，
+与原有联系人/音频/照片枚举断言一起验收；明确不替代联系人数据库及权限测试。
+R34 没有这些新增修复，不为这十个类另起逐项构建；继续纳入同一轮批量修复。
+定向宿主回归 `host-contact-record-classes-r34-01.log`：13 项通过，5.307 秒，SHA
+`975181e58fbcc264c9135730fbb8eb4f6b28994b60e342feec1489a7c82c32b9`。
+完整宿主回归留到这一批修复汇总后统一执行；这里不宣称整批或新客体已通过。
+
 ## 继续核查：图片类导出与编译期装饰器（未关闭缺口）
 
 固定 image_framework 的 `metadata_napi.cpp` 已实现 `InitAvisMetadata`，并由

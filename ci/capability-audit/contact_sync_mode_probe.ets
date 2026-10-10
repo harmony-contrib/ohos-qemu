@@ -14,6 +14,51 @@ interface NativeModes {
 interface Observation {
   runId: string; values: number[]; native: NativeModes; audioValues: number[]; audioNative: NativeModes;
   photoValues: number[]; photoNative: NativeModes;
+  records: ContactRecordObservation[];
+}
+
+interface ContactRecordObservation { name: string; first: string; second: string; flags: boolean[]; }
+
+function contactRecords(runId: string): ContactRecordObservation[] {
+  const a0 = new contact.ContactAttributes(); const b0 = new contact.ContactAttributes();
+  a0.attributes = [contact.Attribute.ATTR_EMAIL]; b0.attributes = [contact.Attribute.ATTR_NAME];
+  a0.attributes.push(contact.Attribute.ATTR_PHONE);
+  const a1 = new contact.Group(); const b1 = new contact.Group();
+  a1.title = runId + '-Group'; b1.title = runId + '-second-Group'; a1.title += '-changed';
+  const a2 = new contact.Holder(); const b2 = new contact.Holder();
+  a2.holderId = 17; b2.holderId = 29;
+  const a3 = new contact.Name(); const b3 = new contact.Name();
+  a3.fullName = runId + '-Name'; b3.fullName = runId + '-second-Name'; a3.fullName += '-changed';
+  const a4 = new contact.NickName(); const b4 = new contact.NickName();
+  a4.nickName = runId + '-NickName'; b4.nickName = runId + '-second-NickName'; a4.nickName += '-changed';
+  const a5 = new contact.Note(); const b5 = new contact.Note();
+  a5.noteContent = runId + '-Note'; b5.noteContent = runId + '-second-Note'; a5.noteContent += '-changed';
+  const a6 = new contact.Organization(); const b6 = new contact.Organization();
+  a6.name = runId + '-Organization'; b6.name = runId + '-second-Organization'; a6.name += '-changed';
+  const a7 = new contact.Portrait(); const b7 = new contact.Portrait();
+  a7.uri = runId + '-Portrait'; b7.uri = runId + '-second-Portrait'; a7.uri += '-changed';
+  const a8 = new contact.Website(); const b8 = new contact.Website();
+  a8.website = runId + '-Website'; b8.website = runId + '-second-Website'; a8.website += '-changed';
+  return [
+    { name: 'ContactAttributes', first: JSON.stringify(a0.attributes), second: JSON.stringify(b0.attributes),
+      flags: [a0 instanceof contact.ContactAttributes, b0 instanceof contact.ContactAttributes, a0 !== b0] },
+    { name: 'Group', first: a1.title, second: b1.title,
+      flags: [a1 instanceof contact.Group, b1 instanceof contact.Group, a1 !== b1] },
+    { name: 'Holder', first: a2.bundleName + ':' + a2.holderId, second: b2.bundleName + ':' + b2.holderId,
+      flags: [a2 instanceof contact.Holder, b2 instanceof contact.Holder, a2 !== b2] },
+    { name: 'Name', first: a3.fullName, second: b3.fullName,
+      flags: [a3 instanceof contact.Name, b3 instanceof contact.Name, a3 !== b3] },
+    { name: 'NickName', first: a4.nickName, second: b4.nickName,
+      flags: [a4 instanceof contact.NickName, b4 instanceof contact.NickName, a4 !== b4] },
+    { name: 'Note', first: a5.noteContent, second: b5.noteContent,
+      flags: [a5 instanceof contact.Note, b5 instanceof contact.Note, a5 !== b5] },
+    { name: 'Organization', first: a6.name, second: b6.name,
+      flags: [a6 instanceof contact.Organization, b6 instanceof contact.Organization, a6 !== b6] },
+    { name: 'Portrait', first: a7.uri, second: b7.uri,
+      flags: [a7 instanceof contact.Portrait, b7 instanceof contact.Portrait, a7 !== b7] },
+    { name: 'Website', first: a8.website, second: b8.website,
+      flags: [a8 instanceof contact.Website, b8 instanceof contact.Website, a8 !== b8] }
+  ];
 }
 
 @Entry
@@ -31,7 +76,8 @@ struct Index {
       audioValues: [audio.DeviceBlockStatus.UNBLOCKED, audio.DeviceBlockStatus.BLOCKED],
       audioNative: modeProbe.inspectAudio(),
       photoValues: [photoAccessHelper.FusionAssetType.COMPATIBLE_ASSET],
-      photoNative: modeProbe.inspectPhoto()
+      photoNative: modeProbe.inspectPhoto(),
+      records: contactRecords(this.runId)
     };
     const file = fs.openSync('/data/storage/el2/base/files/contact-sync-mode-__RUN__-results.log',
       fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);

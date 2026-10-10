@@ -1,5 +1,6 @@
 """Strict typed/native enum fixtures, not a packaged guest pass."""
 import json
+import copy
 import os
 from pathlib import Path
 import shutil
@@ -7,7 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
-from contact_sync_mode_contract import HERE, TEMPLATE, expected, expected_audio, expected_photo, inputs, sha256, verify_inputs
+from contact_sync_mode_contract import HERE, TEMPLATE, RECORD_CLASSES, expected, expected_audio, expected_photo, inputs, sha256, verify_inputs
 from verify_contact_sync_mode_results import verify
 
 RUN = 'a' * 32
@@ -18,12 +19,34 @@ TS = Path(os.environ.get('OHOS_AUDIT_TYPESCRIPT',
 
 class ContactSyncModeResultTests(unittest.TestCase):
     def observed(self):
+        records = []
+        for name in RECORD_CLASSES:
+            first, second = RUN + '-' + name + '-changed', RUN + '-second-' + name
+            if name == 'ContactAttributes':
+                first, second = '[1,8]', '[4]'
+            elif name == 'Holder':
+                first, second = 'com.ohos.contacts:17', 'com.ohos.contacts:29'
+            records.append(dict(name=name, first=first, second=second, flags=[True, True, True]))
         return {'runId': RUN, 'values': [1, 2], 'native': {'values': [1, 2], 'statuses': [0] * 14,
                 'types': [6, 7, 3, 3], 'own': [True, True, True], 'exception': False},
                 'audioValues': [0, 1], 'audioNative': {'values': [0, 1], 'statuses': [0] * 14,
                 'types': [6, 6, 3, 3], 'own': [True, True, True], 'exception': False},
                 'photoValues': [0], 'photoNative': {'values': [0], 'statuses': [0] * 10,
-                'types': [6, 6, 3], 'own': [True, True], 'exception': False}}
+                'types': [6, 6, 3], 'own': [True, True], 'exception': False}, 'records': records}
+
+    def test_record_constructor_prototypes_properties_and_isolation_cannot_be_missing(self):
+        row = self.observed()
+        self.assertEqual(verify(json.dumps(row), RUN, IDENTITY)['record_classes'], list(RECORD_CLASSES))
+        for index in range(len(RECORD_CLASSES)):
+            for field, value in (('name', 'fake'), ('first', 'wrong'), ('second', 'shared'),
+                                 ('flags', [True, True, False]), ('flags', [1, 1, 1])):
+                changed = copy.deepcopy(row)
+                changed['records'][index][field] = value
+                with self.subTest(index=index, field=field), self.assertRaises(ValueError):
+                    verify(json.dumps(changed), RUN, IDENTITY)
+        for records in (row['records'][:-1], row['records'] * 2, list(reversed(row['records']))):
+            with self.assertRaises(ValueError):
+                verify(json.dumps(dict(row, records=records)), RUN, IDENTITY)
 
     def test_exact_values_actual_native_own_reads_and_ordinary_identity(self):
         row = self.observed()

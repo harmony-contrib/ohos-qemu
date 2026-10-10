@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import re
 
-from contact_sync_mode_contract import CONTRACT, AUDIO_CONTRACT, PHOTO_CONTRACT, SCOPE, sha256, verify_inputs
+from contact_sync_mode_contract import CONTRACT, AUDIO_CONTRACT, PHOTO_CONTRACT, RECORD_CLASSES, SCOPE, sha256, verify_inputs
 
 
 def verify(text, run_id, identity):
@@ -18,7 +18,7 @@ def verify(text, run_id, identity):
         raise ValueError('one complete actual enum observation required')
     row = json.loads(lines[0])
     if (not isinstance(row, dict) or set(row) != {'runId', 'values', 'native', 'audioValues', 'audioNative',
-            'photoValues', 'photoNative'} or row['runId'] != run_id or
+            'photoValues', 'photoNative', 'records'} or row['runId'] != run_id or
             row['values'] != [1, 2] or any(type(value) is not int for value in row['values'])):
         raise ValueError('typed public SDK enum values absent, wrong, malformed or stale')
     if row['audioValues'] != [0, 1] or any(type(value) is not int for value in row['audioValues']):
@@ -38,8 +38,22 @@ def verify(text, run_id, identity):
             native['own'] != [True] * (1 + count) or any(type(value) is not bool for value in native['own']) or
             native['exception'] is not False):
             raise ValueError('actual public NAPI module/enum/own-member reads must succeed with all values: ' + key)
+    records = row['records']
+    if not isinstance(records, list) or len(records) != len(RECORD_CLASSES):
+        raise ValueError('all nine actual contact record classes are required')
+    for actual, name in zip(records, RECORD_CLASSES):
+        first, second = run_id + '-' + name + '-changed', run_id + '-second-' + name
+        if name == 'ContactAttributes':
+            first, second = '[1,8]', '[4]'
+        elif name == 'Holder':
+            first, second = 'com.ohos.contacts:17', 'com.ohos.contacts:29'
+        if (not isinstance(actual, dict) or set(actual) != {'name', 'first', 'second', 'flags'} or
+                actual['name'] != name or actual['first'] != first or actual['second'] != second or
+                actual['flags'] != [True, True, True] or
+                any(type(flag) is not bool for flag in actual['flags'])):
+            raise ValueError('actual typed contact construction/properties/isolation failed: ' + name)
     return {'contract': CONTRACT, 'member_count': 2, 'audio_contract': AUDIO_CONTRACT, 'audio_member_count': 2,
-            'photo_contract': PHOTO_CONTRACT, 'photo_member_count': 1,
+            'photo_contract': PHOTO_CONTRACT, 'photo_member_count': 1, 'record_classes': list(RECORD_CLASSES),
             'not_claimed': 'cloud_sync_storage_permissions_contacts_or_fusion_provider_or_microphone_blocking_behavior'}
 
 

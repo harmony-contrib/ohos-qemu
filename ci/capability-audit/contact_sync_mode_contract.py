@@ -12,7 +12,9 @@ NATIVE = HERE / 'contact_sync_mode_hap_probe.cpp'
 CONTRACT = 'arkts_export:@ohos.contact:ContactSyncMode'
 AUDIO_CONTRACT = 'arkts_export:@ohos.multimedia.audio:DeviceBlockStatus'
 PHOTO_CONTRACT = 'arkts_export:@ohos.file.photoAccessHelper:FusionAssetType'
-SCOPE = 'actual_public_contact_audio_photo_enum_values_only'
+SCOPE = 'actual_contact_record_constructors_and_contact_audio_photo_enums_NOT_provider_behavior'
+RECORD_CLASSES = ('ContactAttributes', 'Group', 'Holder', 'Name', 'NickName', 'Note',
+                  'Organization', 'Portrait', 'Website')
 
 
 def expected_enum(sdk, module, name, members):
@@ -56,6 +58,7 @@ def inputs(project, sdk, arch, run_id):
             'audit_baseline_sha256': sha256(LEDGER), 'generated_source': str(page),
             'generated_source_sha256': sha256(page), 'template_sha256': sha256(TEMPLATE),
             'native_source_sha256': sha256(NATIVE), 'resolver_sha256': sha256(HERE / 'extract_const_enum_contracts.cjs'),
+            'contact_declaration_sha256': sha256(sdk / 'ets/api/@ohos.contact.d.ts'),
             'typescript_sha256': sha256(sdk / 'ets/build-tools/ets-loader/node_modules/typescript/lib/typescript.js')}
 
 
@@ -69,6 +72,7 @@ def verify_inputs(value, run_id, arch):
             page.read_text() != TEMPLATE.read_text().replace('__RUN__', run_id) or
             sha256(TEMPLATE) != value.get('template_sha256') or sha256(NATIVE) != value.get('native_source_sha256') or
             sha256(HERE / 'extract_const_enum_contracts.cjs') != value.get('resolver_sha256') or
+            sha256(Path(value['sdk']) / 'ets/api/@ohos.contact.d.ts') != value.get('contact_declaration_sha256') or
             sha256(Path(value['sdk']) / 'ets/build-tools/ets-loader/node_modules/typescript/lib/typescript.js') !=
             value.get('typescript_sha256') or expected(value['sdk']) != value.get('contract') or
             expected_audio(value['sdk']) != value.get('audio_contract') or

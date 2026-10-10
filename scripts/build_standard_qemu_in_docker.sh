@@ -303,6 +303,7 @@ I18N_BUILTIN_DATA_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/builti
 I18N_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/business_error/apply.sh"
 CERTIFICATE_EMPTY_LISTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/security/certificate_manager/empty_lists/apply.sh"
 CONTACT_SYNC_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/contacts_data/sync_mode/apply.sh"
+CONTACT_RECORD_CLASSES_SCRIPT="${PATCH_ROOT}/common/applications/standard/contacts_data/record_classes/apply.sh"
 AUDIO_DEVICE_BLOCK_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/device_block_status/apply.sh"
 PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/fusion_asset_type/apply.sh"
 ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/config_install/apply.sh"
@@ -3008,6 +3009,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_certificate_empty_lists_component.log"
   bash "${CONTACT_SYNC_MODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_contact_sync_mode_component.log"
+  bash "${CONTACT_RECORD_CLASSES_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_contact_record_classes.log"
   bash "${AUDIO_DEVICE_BLOCK_STATUS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_device_block_status_component.log"
   bash "${PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
