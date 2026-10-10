@@ -55,6 +55,37 @@ boot ID 绑定的临时客体；读取 `/proc/mounts` 验证安全挂载及三�
 不是空载性能基准。该结果显示冷调用接近 2 秒上限，但仍不证明历史超时已修复，
 报告保持 `observations_collected_NOT_pass`，继续独立新启动复测。
 
+后续独立启动保留所有失败：`r25-direct-capture-latency-runtime-02` 被默认
+10 秒电源休眠中断，不能推断回调丢失；`-03` 恢复有限测试电源策略后首回调
+525,039 微秒。`-04` 启动真实 Settings 后三个公共 DMS 截图均约 2.08 秒失败，
+晚到 PixelMap 日志约在请求后 3.53/2.75 秒出现；后续暖调用成功没有覆盖失败。
+`-05` 原始 hilog 含非法 UTF-8 导致诊断收集器失败，未执行后续公共截图。
+`-06` 改为按原始字节保存日志，新 boot
+`27569011-9a3f-4d33-9ae7-18cb21e3919f` 的真实异步 RS 回调实测
+4,489,856 微秒、单次回调且真实 1920×1080 像素图，明确超过 DMS 2 秒预算。
+两者均为原始 R25 库，不替换系统库、不改变异步协议，报告仍是观察而非修复通过。
+
+因此另准备 `window_manager/capture_budget` 候选，仅三个 QEMU 产品设置
+有界 10 秒预算，硬件产品保持 2 秒，不重试、不绕过权限、不接受空图。
+实际 Future/DropLock 的延迟、空值、错误、HDR、释放全局锁及有限超时边界，
+真实 GN 条件的三个 QEMU/三个非 QEMU 选择，以及补丁状态保护检查已通过。
+记录 `screen-capture-budget-r26-01.3FFokm/boundaries-01.json`；这些宿主检查
+不代表 IPC/新包通过。首次三架构编译在 ARMv7a 的旧
+`/openharmony` 绝对路径处失败，保留失败输出；改用双只读路径挂载继续检查，
+不更改现有源码/out，也不通过伪造生成头文件规避错误。
+第二次在 x86_64 的另一原始路径处失败；按各架构原始路径分别只读挂载后，
+`armv7a-compile-03.json` 与 `arm64-x86-compile-03.json` 三个完整 DMS
+源文件编译全部通过，实际生成缺失 IDL 头而非替身。1224 项宿主回归通过
+（`host-regression-capture-budget-r26-06.log`）。随后接入两个画像的共同
+打包前补丁序列，不改变已经冻结的 R26；仍需下一版新归档冷启动验证，
+不能把三架构对象编译或现有归档暖调用成功算作新包修复完成。
+接入后 `host-regression-capture-wired-r26-07.log` 的 1225 项检查全部通过。
+
+已关闭的 latency-01/02、同 boot Storage/quota-03 展开 images，以及
+latency-03/04/05 展开 images 分两批删除，保留归档、日志、探针和全部证明。
+记录 `retired-latency-images-cleanup-r25-04.json`、`-05.json`；临时 userdata
+不保留，基础 images 可从原归档恢复。其余五包仍未启动。
+
 ## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
 
 仅 ARM64 phone 代表包已完成本地 Docker 构建与打包，冻结提交 `3824311`，输入

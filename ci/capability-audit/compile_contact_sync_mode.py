@@ -31,8 +31,8 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
         overlay_component_headers=False, prepare_component_idl=False, prepare_component_hdi=False):
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
-    if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',)):
-        raise ValueError('only the explicit QEMU Camera candidate feature can be selected')
+    if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',)):
+        raise ValueError('only explicit reviewed QEMU candidate features can be selected')
     if args.output.exists() or args.output.is_symlink():
         raise ValueError('fresh exact-component compilation evidence path required')
     root = args.source_root.resolve()
