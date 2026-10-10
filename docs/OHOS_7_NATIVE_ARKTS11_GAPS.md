@@ -1,5 +1,34 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R28 全套运行结果与 R29 单包构建
+
+R28 独立完整运行已结束，实际归档 SHA-256
+`9e7ee9bd842402265665793b1462d0ab174365a1d21d9caf617926a7b6e0efc9`，
+boot ID `539fabbf-5840-460e-9284-9d2df5e5190b`。
+`ohos-native-bindings` 的全部 32 个当前测试模块为 **102 pass / 0 fail**。
+同包严格缺口账本为 **281 项应验、149 项闭环、132 项未闭环**；
+完整门禁仍为失败，不能以 native-bindings 通过代替系统全部能力验收。
+相较 R23 新闭环 CompletionHandler 导出、FA ErrorCode、温控真实读回与
+回调、项目配额及普通应用存储计量；未闭环项不等同于全部尚未实现。
+
+证据均位于 `validation/first-20261005/issue-20-20261006`：
+`r28-independent-full-runtime-01.json` SHA-256
+`a3121c31532b90849a74f22d70b62cb75b76e2bf9723a8e4a7fb752a85c8584f`；
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-49f7h05t/cxx-arkts11-gaps.json`
+SHA-256 `0a2cac365fdc0de18883591fc7145a5100322c9fecd8aa82b9b39b566ec0d1b0`。
+该次成功的普通运行/休眠测试不消除此前 R28 1920×1080 测试中唤醒约两秒后
+重新进入 s2idle、HDC 连接失败的独立记录；仍需定位其根因。
+
+R29 仅构建 ARM64 phone，包含 WPA 扫描/生命周期/软件 PNO/实时信道及
+签名监管数据库修复。冻结目录 `build-inputs/phone-enur20`，源码提交
+`963d0a7622834eab2ea4df0b4a53f5b2e4a7fedf`，输入树 SHA-256
+`6a7f8b2046da8568d09044260be6626116e0df2da4e9ee20648f18e1bd926108`。
+冻结主机测试 1302 项通过（217.116 秒）。计划产物目录
+`packages/first-wpa-backend-7.0-release-20261010-r29`；
+`after-build-r29-01.py` 仅等待这一包，随后核验真实 GN 宏选择、两轮无线
+启停/普通应用扫描、1920×1080 模式切换及完整运行套件。
+**当前尚未取得 R29 客体通过证据，其余五包未启动。**
+
 ## 2026-10-10 WPA 实时频段查询候选与可重复首包诊断
 
 `wpa_scan` 第二份补丁补齐实际 GET_CAPABILITY freq 解析和 non-chip HAL
