@@ -1,5 +1,39 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R32 新归档实测：图片/图形内存通过，完整门禁仍失败
+
+代表包已经由本地 Docker 完成构建（编译耗时 1:22:44），归档：
+`/Volumes/PSSD/qemu/packages/first-hiview-hidebug-7.0-release-20261010-r32/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
+SHA-256：`eb54b4d97fd50c871b42dbe8941e62491b7985cdb14b4c45376d87efd5d9aac4`。
+冻结输入 `phone-NxCZJG`，源码提交 `5223e476a9d4720329951d6f2d2953113c90ba2b`；
+不含本页后续软件 AP 与热点开关状态候选补丁。测试主机 macOS ARM64，客体 ARM64 phone，HVF。
+
+证据根目录为 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`。
+原顺序执行器 `after-build-r32-03.py` 的 `r32-build-then-validation-03.json`
+（SHA `4473819e712e90f07ca3c40a37becb55a5a406726d83a0c345baf94a74836b87`）
+保留失败：1920×1080 Settings 重复导航的第四次详情页 UI dump 超时。
+`r32-refresh-1920x1080-runtime-01/diagnostic.json`
+SHA `6c2fb4de1f8ead79618d67e455830d179a430bf5f224b32327da66866f082c65`，
+boot ID `328b09d3-c81d-440e-890a-30c12ab6a7d8`；电源策略已恢复、客体已关闭。
+只读提取该失败 userdata 的冻结堆栈，显示 Settings UIExtension 主线程阻塞于
+`WindowSessionImpl::Connect` 的同步 Binder 请求；另有 distributeddata `UpdateEx`
+超时。二者是否同一根因尚未证明，不通过延长超时或忽略失败进行验收。
+`r32-freeze-forensics-01` 保留提取文件；原失败 userdata 保留，Docker 绑定只读。
+
+独立执行命令：`host-validation-venv-r21-01/bin/python run-r32-graphics-metadata-standalone-01.py`，
+使用相同冻结脚本、相同新归档、独立 HDC，未替换镜像内库。
+`r32-graphics-metadata-runtime-01/diagnostic.json` 为 PASS，
+SHA `9ceb1732657fdef094861a2aaebd2761375ff5faad01b6b7056613157ec9c427`，
+boot ID `aac171ec-cb5b-407e-b15c-c8f40927e501`：
+
+- 图片 DNG/TIFF/AVIS 的 17 个实际观测通过，包含成功读取、数字错误码 7700204、
+  越界和失败后重读。仅证明实际工厂返回对象和已授权错误类型修复，不代表公开构造函数补齐。
+- 图形内存严格校验通过，实际两次 16384 KiB 分配及释放，内核 inode 25/26，
+  C++/ArkTS 数值类型一致。该检查闭环 `behavior:hidebug-dmabuf-kernel`，不是全部 HiDebug 能力。
+- 电源策略恢复、临时客体关闭。保留原门禁失败，独立成功不覆盖它。
+
+**完整首包门禁未通过，其余五包未启动。完整账本仍采用 R28：281 项中 149 闭环、132 未闭环。**
+
 ## 2026-10-10 热点超时状态校正及历史临时磁盘回收
 
 R31 的实际失败还暴露 phone Settings 显示缺陷：五秒 watchdog 只上报超时，
