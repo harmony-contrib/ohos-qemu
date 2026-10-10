@@ -1,5 +1,27 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R30 代表包重建与快捷键输入诊断
+
+R30 仅重建 ARM64 phone，冻结输入 `build-inputs/phone-waHkww`，提交
+`4820675bd3adba68ac3cf8b897db23ed560468b3`，输入树 SHA-256
+`24edda868c8fc47710a9066fde66bc80eb0473502e30b3189c1924d726d53814`。
+冻结目录本身运行 1330 项主机回归通过（202.782 秒，macOS 跳过 1 项
+Linux 专用夹具），记录 `host-regression-r30-frozen-01.log`。
+产物目标 `packages/first-wpa-events-7.0-release-20261010-r30`；
+`after-build-r30-01.py` 只等待此包，并增加对实际 `events.c`/`scan.c`
+编译命令中 `CONFIG_QEMU_WPA_SCAN_EVENTS` 的核验，然后依次跑扫描、
+1920×1080 模式切换和完整套件。不启动六包矩阵，当前尚无 R30 归档通过证据。
+
+另外新增 `run_shortkey_keyboard_diagnostic.py`，从实际归档启动，在真实
+桌面上验证左 Meta+I 短按取消、Ctrl+I 不触发、长按出现 Settings 的可见
+标题和实际合成器像素，以及普通 Back 返回桌面，两轮重复。测试仅使用
+本次客体的 QMP 及真实键盘输入，保留有限电源设置/恢复；不直接启动
+Settings，不修改镜像快捷键配置，也不冒充 privileged duration API 验收。
+本机 QEMU 的实际 QMP schema 已确认 send-key、hold-time、meta_l 支持。
+新诊断尚未运行于客体，也不包含在冻结 R30 中；整仓主机回归
+`host-regression-shortkey-diagnostic-r30-01.log` 为 1333 项通过（203.922 秒，
+同一 Linux 专用夹具跳过），不能据此关闭快捷键完整缺口。
+
 ## 2026-10-10 R29 首包发现的扫描事件与错误码缺陷
 
 R29 首包在普通 Wi-Fi 扫描门禁失败，后续屏幕/完整套件和其余五包均未启动。
