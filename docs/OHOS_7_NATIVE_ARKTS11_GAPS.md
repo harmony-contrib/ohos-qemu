@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R28：重建温控代表包，尚未完成客体验收
+
+仅构建 ARM64 phone，输入提交 `31ed764`，冻结目录
+`/Volumes/PSSD/qemu/build-inputs/phone-Z6yzih`，树 SHA-256
+`b230fd3d21b99787f0f584c632ca6d7a0c83cb92869fda88134bc98f766c8299`。
+本地容器 `6e14d2afd4261c5c88c4be8f37e4017ee078e45ded9c1e1e7986a49da354c978`，
+产物目标目录 `first-thermal-backend-7.0-release-20261010-r28`；
+7.0 Release manifest、M144 依赖版本与源卷不变。
+正常部件脚本已将 thermal XML 精确升级为
+`31231293c6e337a0e2942584742d1808acae66e2f97c8289ae4e265432d833a8`，
+无客体临时配置或库替换。构建日志 `first-thermal-backend-arm64-phone-build-r28-01.log`。
+
+`host-regression-r28-frozen-03.log` 记录冻结输入 1271 项检查通过（202.369 秒）。
+此前 frozen-01 使用了 macOS 不支持的 C.UTF-8 以及较旧的系统 clang，
+frozen-02 仅纠正 locale，故都保留为环境错误失败记录；03 明确使用
+`LC_ALL=LC_CTYPE=LANG=en_US.UTF-8`、`/opt/homebrew/opt/llvm/bin` 优先的 PATH，
+没有删除测试或放宽断言。旧的两名等待器仅停止其 docker wait 客户端，不中断构建。
+有效等待器 `after-build-r28-03.py` / `r28-build-then-validation-03.json` 只处理
+上述精确容器和单一代表包，依次运行专属 HDC 下的温控新包诊断、1920×1080
+真实模式切换、完整统一套件；失败则保留证据，不启动余下五包。
+
+另清理两份已关闭 R27 构造类/配额诊断的展开 images，回收 10076704768 字节；
+原归档与全部证据保留，见 `retired-diagnostic-images-cleanup-r28-01.json`。
+
 ## 2026-10-10 R27 完整回归中断：宿主 HDC 握手，不是枚举结果
 
 同一 R27 原始归档的完整启动 `f6a9d000-59c4-4b3f-9af8-2a9a7a913e7f`
