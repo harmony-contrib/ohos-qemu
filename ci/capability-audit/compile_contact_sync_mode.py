@@ -27,7 +27,8 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=None, candidate_defines=()):
+def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=None, candidate_defines=(),
+        overlay_component_headers=False, prepare_component_idl=False):
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
     if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',)):
@@ -111,15 +112,46 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
             dependency_path = staged / (product + '.d')
             argv[argv.index('-o') + 1] = str(object_path)
             argv[argv.index('-MF') + 1] = str(dependency_path)
+            if overlay_component_headers:
+                # Only exact component-owned directories precede real includes;
+                # retain every original include and the TU's quoted-header path.
+                revised = []
+                for token in argv:
+                    if token.startswith('-I') and len(token) > 2:
+                        original = (cwd / token[2:]).resolve()
+                        if original.is_relative_to(root):
+                            overlay = staged / original.relative_to(root)
+                            if overlay.is_dir():
+                                revised.append('-I' + str(overlay))
+                    revised.append(token)
+                argv = revised + ['-iquote', str(source.parent)]
+            generated_inputs = []
+            if prepare_component_idl:
+                from compile_render_connection_reply import prepare_missing_idl
+                owned_generated = logs / (product + '-generated')
+                owned_generated.mkdir(exist_ok=False)
+                argv, generated_inputs = prepare_missing_idl(
+                    root, cwd, argv, owned_generated, copy_readonly_inputs=True)
             compile_log = logs / (product + '-compile.log')
             with compile_log.open('x') as stream:
                 subprocess.run(argv, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT, check=True)
+            used_candidate_headers = []
+            if overlay_component_headers:
+                dependency_text = dependency_path.read_text()
+                for relative in originals:
+                    header = staged / relative
+                    if header.suffix in ('.h', '.hpp'):
+                        if str(header) not in dependency_text:
+                            raise ValueError('actual compiler did not consume candidate header: ' + relative)
+                        used_candidate_headers.append(relative)
             report['objects'].append({'product': product, 'triple': triple,
                 'object_sha256': digest(object_path), 'dependency_sha256': digest(dependency_path),
                 'queried_command_sha256': hashlib.sha256(json.dumps(original_command).encode()).hexdigest(),
                 'query_log': str(query_log), 'query_log_sha256': digest(query_log),
                 'compile_log': str(compile_log), 'compile_log_sha256': digest(compile_log),
-                'executed_argv': argv, 'source_sha256': digest(candidate)})
+                'executed_argv': argv, 'source_sha256': digest(candidate),
+                'actual_owned_idl_generation': generated_inputs,
+                'used_candidate_headers': used_candidate_headers})
     if ({name: digest(root / name) for name in originals} != originals or
             {str(path): digest(path) for path in inputs} != before):
         raise ValueError('read-only source or component recipe changed during compilation')

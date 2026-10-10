@@ -1,5 +1,57 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
+
+仅 ARM64 phone 代表包正在本地 Docker 构建，冻结提交 `3824311`，输入
+`/Volumes/PSSD/qemu/build-inputs/phone-ILPEK6`，树
+`51d2d9e41864dd855e5680c8ac9c8f948f4de593ea0a5d17805f6c1c09fdb64b`。
+目标归档：
+`/Volumes/PSSD/qemu/packages/first-refresh-quota-7.0-release-20261010-r25/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
+尚未产包/启动验证，不能提供成功校验和或视为门禁通过；其余五包未开始。
+该冻结输入包含 Settings 动态页面/模式索引与 F2FS 项目配额修复，
+**不包含**本节后述的 AppMgr 候选。
+
+自动验证记录 `r25-build-then-validation-02.json`：等待精确构建容器退出，
+再执行独立新包配额、1280×800 与 1920×1080 刷新率 UI 诊断，全部通过后
+才执行同归档完整回归。原等待器在产包前因选错不含 Pillow 的宿主 Python
+被替换；保留 `r25-build-then-validation.json` 的 superseded 原因，不伪造测试
+结果。新等待器使用已验证 Pillow 12.3.0 的现有虚拟环境。
+
+新增 `render_attach_registration` **未接入打包的候选组件**：可信 PID 的绑定
+查询等待 nwebspawn 返回与 RenderRecord 登记完成；timeout 先登记再允许绑定
+取消，释放互斥锁后才进行 observer/renderer 回调，不变更 SDK、IPC、身份、
+沙箱、权限或 UID 分配。源码可证明存在先绑定后登记的顺序缺陷，但不能据此
+认定它就是 R23 间歇 Web 退出回调丢失的原因；原失败仍未关闭。
+
+`render-registration-r25-01/host-order-check-06.log`：提取真实原版与候选关键
+代码，ASan/UBSan 宿主调度替身各运行 400 个确定性竞争场景（成功/失败、
+renderer/GPU），旧版丢失早到绑定、候选阻塞到登记完成；覆盖无 scheduler、
+无 manager/app/record、无 event handler、无效 PID 与失败后锁释放，保留原版
+完整 observer enqueue/timeout 尾部，确认旧版遗留超时与候选及时取消的区别。
+正向及重复应用、未知修改和部分应用状态保留检查通过。补丁文件仅统一 diff
+空行格式，最终两个生产源文件 SHA-256 与上述实际编译输入完全相同；格式整理
+中的一次 hunk 计数错误在检查时被拒绝并修正，未进入系统源卷或构建。
+这是关键区测试，**不是** FFRT/Binder/AppMgr 单测或新包 Web 通过证据。
+实际三 ABI 完整 AppMgr TU 均编译通过，依赖文件确认实际消费候选头文件：
+`two-arm-abi-compile-05.json`（ARM64/ARMv7，SHA-256
+`0fce848329f5e516915ae610b4cb3c813668fcd04b3bb55b328e35f38a548f7a`）与
+`x86-abi-compile-06.json`（x86_64，SHA-256
+`0c7045f1e07a61462659913c383a48bf3efa0e28c2d2841b449e22da921a6193`）。
+两份记录各自明确仅覆盖指定架构，不把任一单份视为三架构门禁。
+此前 01–04 检查中的缺失生成文件、历史 GN 绝对路径与只读输入失败记录均保留。
+未完成完整 libappms 链接、AppMgr 相关单测及新包客体回归，候选仍不接入打包。
+检查中缺失的头文件由真实 IDL
+生成器生成到独立目录。固定版本工具要求输入具备 W_OK，因此复制原始 IDL
+及导入同目录声明到独立目录并记录哈希，不放开系统源卷写权限或编造头文件。
+
+`host-regression-r25-02.log`：1197 项通过（326.458 秒）；后续新增 IDL 隔离
+边界 2 项单独通过。为后续验证释放空间，仅删除 R23 完整重跑、R23 四十轮
+Web 与 R24 刷新率失败这三个已停止客体的 `boot/extract/.../images`，约 14 GiB。
+对应 R23/R24 原归档 SHA-256 重新核对一致，全部日志、报告、冻结输入保留；
+原始镜像可从归档恢复，临时 userdata 改动不保留。清理记录
+`retired-runtime-images-cleanup-r25-01.json`；复查依赖镜像的旧报告时须先恢复
+对应原始文件，不将清理或重试当作新验收。
+
 ## 2026-10-10 R24 归档验证恢复
 
 代表包已生成：

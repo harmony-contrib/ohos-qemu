@@ -95,7 +95,7 @@ def prepare_missing_rust_cxx(root, cwd, argv, output, index, line):
             "generated_sha256": {str(path): sha(path) for path in destinations}}
 
 
-def prepare_missing_idl(root, cwd, command, output):
+def prepare_missing_idl(root, cwd, command, output, copy_readonly_inputs=False):
     """Run real GN IDL actions into owned output, never a completed seed."""
     includes = [token[2:] for token in command if token.startswith(("-Igen/foundation/", "-Igen/base/"))]
     definitions = {}
@@ -144,17 +144,42 @@ def prepare_missing_idl(root, cwd, command, output):
             relative = Path(path).relative_to(cwd.parents[1])
             if sha(Path(path)) != sha(root / relative):
                 raise ValueError("completed scratch IDL source differs from the current pinned source")
+        copied_idl_hashes = {}
+        if copy_readonly_inputs:
+            # The pinned generator's File::CheckValid requires W_OK even for
+            # input IDL. Copy real declarations/import siblings into owned
+            # scratch; never make the production source writable or use stubs.
+            for source_path in source_paths:
+                for source_idl in Path(source_path).parent.rglob('*.idl'):
+                    relative = source_idl.relative_to(cwd.parents[1])
+                    destination = output / 'idl-inputs' / relative
+                    original_sha = sha(source_idl)
+                    if original_sha != sha(root / relative):
+                        raise ValueError('IDL import differs from pinned current source')
+                    if destination.exists():
+                        if sha(destination) != original_sha:
+                            raise ValueError('owned IDL copy differs from original input')
+                    else:
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copyfile(source_idl, destination)
+                    copied_idl_hashes[str(destination)] = original_sha
+            argv[argv.index('--src-idl') + 1] = ','.join(str(output / 'idl-inputs' /
+                Path(path).relative_to(cwd.parents[1])) for path in source_paths)
         tool = Path(argv[argv.index("--idl-tool-path") + 1]) / "idl"
         log = output / ("idl-" + str(index) + ".log")
         with log.open("x") as stream:
             generated = subprocess.run(argv, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT)
         record = {"actual_gn_command": line, "owned_command": argv, "exit_code": generated.returncode,
                   "idl_source_sha256": source_hashes, "tool_sha256": sha(tool),
+                  "owned_actual_idl_input_sha256": copied_idl_hashes,
                   "generator_sha256": sha(generator),
                   "log": str(log), "log_sha256": sha(log)}
         records.append(record)
         if generated.returncode or any(not path.is_file() for path in destinations):
             raise RuntimeError("actual isolated RS IDL generation failed")
+        if any(sha(Path(path)) != value for path, value in
+               {**source_hashes, **copied_idl_hashes}.items()):
+            raise ValueError('actual IDL inputs changed during generation')
         record["generated_sha256"] = {str(path): sha(path) for path in destinations}
     revised = []
     for token in command:
