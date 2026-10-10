@@ -3,6 +3,17 @@ import json
 import re
 
 
+def data_device(text):
+    rows = [line.split() for line in text.splitlines() if len(line.split()) == 6 and line.split()[1] == '/data']
+    if (len(rows) != 1 or rows[0][2] != 'f2fs' or
+            not re.fullmatch(r'/dev/block/vd[a-z]+[0-9]*', rows[0][0])):
+        raise ValueError('one actual QEMU F2FS /data block device required')
+    options = set(rows[0][3].split(','))
+    if not {'rw', 'nosuid', 'nodev', 'usrquota', 'grpquota', 'prjquota'} <= options:
+        raise ValueError('actual secure mount with all quota enforcement options required')
+    return rows[0][0]
+
+
 def verify(text, nonce):
     if not re.fullmatch('[0-9a-f]{32}', nonce):
         raise ValueError('fresh 32-hex nonce required')

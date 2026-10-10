@@ -266,6 +266,18 @@ def run(args):
             '--output', work / 'screen-modes'], 'actual-packaged-display-mode-readback', env=child_env)
         check('screen-modes', work / 'screen-modes/result.json', [screen_build, screen_runtime])
         same_guest('after-display-mode-readback')
+        quota_probes = work / 'project-quota-probes'
+        quota_build = command([sys.executable, Path(__file__).with_name('build_project_quota_probe.py'),
+            '--sdk', sdk / 'native', '--arch', arch, '--output', quota_probes],
+            'compile-actual-SDK-project-quota-probe', env=child_env)
+        quota_runtime = command([sys.executable, Path(__file__).with_name('run_root_probe.py'),
+            '--kind', 'project-quota', '--archive', args.package_archive,
+            '--probe', quota_probes / 'project-quota-runtime',
+            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+            '--boot-id', environment['boot_id'], '--boot-evidence', work / 'boot/boot.json',
+            '--output', work / 'project-quota'], 'actual-packaged-unprivileged-EDQUOT-and-recovery', env=child_env)
+        check('project-quota', work / 'project-quota/result.json', [quota_build, quota_runtime])
+        same_guest('after-project-quota')
         audio_suite_probes = work / 'audio-suite-probes'
         command(['bash', Path(__file__).with_name('build_audio_suite_probe.sh'), arch, audio_suite_probes],
                 'build-actual-public-AudioSuite-PCM-probe', env=child_env)

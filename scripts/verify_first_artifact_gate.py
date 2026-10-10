@@ -18,7 +18,7 @@ from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects",
-                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats"))
+                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 
 
@@ -227,7 +227,7 @@ def verified_payload(name, path, identity, environment):
                 if (nested.is_symlink() or not nested.is_file() or checksum(nested) != row.get('sha256') or
                         json.loads(nested.read_text()).get('status') != 'pass'):
                     raise ValueError('actual Vulkan child result missing or changed: ' + kind)
-        elif name in ('rs-objects', 'screen-modes'):
+        elif name in ('rs-objects', 'screen-modes', 'project-quota'):
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))
             from run_root_probe import verify_result
@@ -244,6 +244,13 @@ def verified_payload(name, path, identity, environment):
                                    payload.get('probe_exit_code'))
             if result != payload.get('result'):
                 raise ValueError('root-probe result differs from its actual process transcript: ' + name)
+            if name == 'project-quota':
+                from verify_project_quota import data_device
+                mounts = path.parent / 'actual-mounts.log'
+                if (mounts.is_symlink() or not mounts.is_file() or
+                        checksum(mounts) != payload.get('actual_mounts_sha256') or
+                        data_device(mounts.read_text()) != payload.get('quota_device')):
+                    raise ValueError('actual secure userdata mount with quota enforcement required')
         elif name == 'certificate-manager':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

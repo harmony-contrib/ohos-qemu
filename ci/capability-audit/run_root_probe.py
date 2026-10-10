@@ -31,6 +31,7 @@ from verify_bpf_results import verify as verify_bpf
 from verify_binder_sender_results import verify as verify_binder_sender
 from verify_rs_object_results import verify as verify_rs_objects
 from verify_screen_modes import verify as verify_screen_modes
+from verify_project_quota import data_device, verify as verify_project_quota
 from verify_native_gap_abi_results import validate_definitions as validate_native_abi, verify as verify_native_abi
 
 ARCHES = {"arm64": (2, 183, "aarch64"), "armv7a": (1, 40, "armv7l"),
@@ -125,8 +126,13 @@ def parse_exit(output, run_id):
     return int(match[1])
 
 
-def probe_command(kind, remote, run_id):
-    arguments = ([] if kind in GRAPHICS_KINDS or kind in ("audio-suite", "screen-modes") else
+def probe_command(kind, remote, run_id, quota_device=None):
+    if kind == 'project-quota':
+        if not isinstance(quota_device, str) or not re.fullmatch(r'/dev/block/vd[a-z]+[0-9]*', quota_device):
+            raise ValueError('project quota requires the validated actual userdata device')
+        arguments = ['--disposable-guest', quota_device, run_id]
+    else:
+        arguments = ([] if kind in GRAPHICS_KINDS or kind in ("audio-suite", "screen-modes") else
                  {"bitmap": ["--privileged", run_id], "userid": ["--privileged", run_id, "0"],
                   "vibrator-hdi": [run_id],
                   "bpf": [run_id],
@@ -142,6 +148,10 @@ def probe_command(kind, remote, run_id):
 
 
 def verify_result(kind, log, arch, run_id, code, definitions=None, device=None):
+    if kind == 'project-quota':
+        if type(code) is not int or code != 0:
+            raise ValueError('actual kernel quota process failed')
+        return verify_project_quota(log, run_id)
     if kind == 'screen-modes':
         if type(code) is not int or code != 0:
             raise ValueError('actual display readback process failed')
@@ -201,6 +211,8 @@ def run_probe(args, runner=subprocess.run):
         return command([args.hdc, "-t", args.target, "shell", script], timeout)
 
     try:
+        if args.kind == 'project-quota' and not getattr(args, 'boot_evidence', None):
+            raise ValueError('quota tests require an enclosing live owned disposable package boot')
         definitions = None
         if args.kind == "permission-registry":
             if not getattr(args, "definitions", None):
@@ -231,6 +243,10 @@ def run_probe(args, runner=subprocess.run):
             manifest, boot = validate_boot_archive(args.boot_evidence, evidence['archive_sha256'],
                 args.arch, args.device, args.target, getattr(args, 'boot_id', None))
             env = boot['test_environment']
+            if args.kind == 'project-quota' and (boot.get('purpose') != 'acceptance' or
+                    any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                        'diagnostic_assistance', 'diagnostic_power_button'))):
+                raise ValueError('quota enforcement must use the original unmodified packaged kernel')
             current = command(['ps', '-p', str(env['qemu_pid']), '-o', 'command=']).strip()
             if current != env['qemu_command'] or env['qmp_socket'] not in current:
                 raise ValueError('actual host process no longer owns the original private QMP VM')
@@ -270,7 +286,14 @@ def run_probe(args, runner=subprocess.run):
             observed = shell("sha256sum " + shlex.quote(remote + "/permission-names.txt")).split()
             if observed != [evidence["names_sha256"], remote + "/permission-names.txt"]:
                 raise ValueError("guest permission name input differs from source definitions")
-        code = parse_exit(shell(probe_command(args.kind, remote, run_id), timeout=90), run_id)
+        quota_device = None
+        if args.kind == 'project-quota':
+            mounts = shell('cat /proc/mounts')
+            quota_device = data_device(mounts)
+            mounts_path = args.output / 'actual-mounts.log'
+            mounts_path.write_text(mounts)
+            evidence.update(quota_device=quota_device, actual_mounts_sha256=digest(mounts_path))
+        code = parse_exit(shell(probe_command(args.kind, remote, run_id, quota_device), timeout=90), run_id)
         evidence["probe_exit_code"] = code
         for name in ("stdout.jsonl", "stderr.txt"):
             # These generated test artifacts are preserved even on probe failure.
@@ -293,7 +316,7 @@ def run_probe(args, runner=subprocess.run):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kind", choices=("bitmap", "userid", "vibrator-hdi", "permission-registry", "audio-suite", "bpf", "binder-sender", "rs-objects", "screen-modes", "native-gap-abi", *GRAPHICS_KINDS), required=True)
+    parser.add_argument("--kind", choices=("bitmap", "userid", "vibrator-hdi", "permission-registry", "audio-suite", "bpf", "binder-sender", "rs-objects", "screen-modes", "project-quota", "native-gap-abi", *GRAPHICS_KINDS), required=True)
     parser.add_argument("--definitions", type=Path, help="source permission definitions or actual final-image Native ABI table")
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--probe", type=Path, required=True)

@@ -24,6 +24,17 @@
 R25 独立截图耗时采样 6 次均成功（约 0.27–0.75 秒），但只说明部分调用正常，
 此前首次截图超时依然未关闭，不能以重试成功代替修复。
 
+后续工作树也将 `project-quota` 纳入两个画像的统一 suite 和强制交付门禁：
+使用实际架构 SDK 编译探针，只接受有完整归档清单、真实宿主 QEMU 进程和
+boot ID 绑定的临时客体；读取 `/proc/mounts` 验证安全挂载及三类 quota，
+验证实际进程退出码、无能力写入 EDQUOT、恢复与清理。该项与普通 Storage
+同一次启动执行，但各自仍返回 `closed: []`，不冒充所有特权 Storage API。
+`host-regression-quota-gate-r26-04.log` 1219 项通过；新增入口本身尚待客体实测，
+同样不属于已冻结的 R26 构建输入。R25 已关闭的 quota-04、storage-02、
+1280×800 refresh-01 展开 images 已移除，回收 15,113,461,760 字节；
+保留原始归档、manifest、截图、探针和全部证明，临时 userdata 不保留，
+详见 `retired-positive-images-cleanup-r25-03.json`。
+
 ## 2026-10-10 R25 代表包与 AppMgr 登记顺序候选
 
 仅 ARM64 phone 代表包已完成本地 Docker 构建与打包，冻结提交 `3824311`，输入
