@@ -1,5 +1,25 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R27：截图预算及回调类首包重建中
+
+仍仅 ARM64 phone。输入冻结为 `ac556ca`、目录
+`/Volumes/PSSD/qemu/build-inputs/phone-9WIVCw`，树 SHA-256
+`ec212de64a68e4b5fa1d827f19f6f142d554e8f3af4017ec6292199d4346cfdd`。
+本地 Docker 容器
+`d7ccefaa1d685a17480b76281dfb4d3dad8003e336b87ceee4d502250126ce1e`，
+目标目录 `first-capture-completion-7.0-release-20261010-r27`。
+固定 7.0 Release manifest 和依赖不变，先应用全部部件补丁再执行配置遍历；
+实际日志已确认 `capture_budget` 与 `completion_handler` 整体精确状态通过。
+冻结输入的 1242 项宿主检查通过（`host-regression-r27-frozen-01.log`）。
+构建尚未完成，不记录归档校验和或声明修复通过。
+
+`first-capture-completion-arm64-phone-build-r27-01.log` 记录构建；
+`r27-build-then-validation-01.json` 的等待器只在精确容器退出 0、归档完成及
+空间检查通过后，顺序执行该归档的 1280×800、1920×1080 实际模式切换、
+普通 ArkTS 构造类、无能力项目配额和完整回归。构造类窄诊断也只使用冻结
+脚本，完整 suite 另在同一次启动执行 Storage 和该类的原始证据强制校验。
+任何失败即保留失败并停止该序列，不启动其他五个产物。
+
 ## 2026-10-10 R26 代表包：低分辨率验证通过，高分辨率首次截图失败
 
 仅启动 ARM64 phone，输入冻结为提交 `c9de875`、目录
