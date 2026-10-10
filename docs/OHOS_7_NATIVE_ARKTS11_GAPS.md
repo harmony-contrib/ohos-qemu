@@ -53,6 +53,18 @@ Web 与 R24 刷新率失败这三个已停止客体的 `boot/extract/.../images`
 `retired-runtime-images-cleanup-r25-01.json`；复查依赖镜像的旧报告时须先恢复
 对应原始文件，不将清理或重试当作新验收。
 
+补充普通应用 `storage-stats` 诊断（不在 R25 冻结输入内，尚未新包运行）：
+两轮实际私有 data/cache 文件写入、fsync、大小检查与删除，分别经 promise/
+callback 查询公开 `getCurrentBundleStats`，核对增长/回收而不是零值成功；
+同一无权限 normal 应用查询其他 bundle 必须保持 202，清理仅限 nonce 私有文件。
+`storage-stats-hap-compile-r25-01` 已用真实 API 26 Release SDK 编译 unsigned HAP，
+SHA-256 `fa6224e7668476157b892a8cb58f7ba70a4bbdcda961b75132d3d379c5285b44`；
+5 项宿主校验边界通过。该诊断的 `closed` 明确为空，不凭编译或统计 API 窄项
+代替内核限额执行、特权 Storage API 或完整缺口验收。
+`host-regression-r25-04.log` 的两个失败是既有测试写死 persona 列表、遗漏新增
+模式；补齐仍要求全部隔离/互斥成员的断言，保留失败记录。随后
+`host-regression-r25-05.log` 完整 **1204 项通过（302.829 秒）**。
+
 ## 2026-10-10 R24 归档验证恢复
 
 代表包已生成：

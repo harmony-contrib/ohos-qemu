@@ -42,6 +42,8 @@ PERSONAS = {
                      'verify_runtime_enum_results.py'),
     'curve': ('--curve-only', 'curve-{run}-results.log', '"summary"', 'verify_curve_results.py'),
     'binding': ('--binding-only', 'binding-{run}-results.log', '"summary"', 'verify_binding_results.py'),
+    'storage-stats': ('--storage-stats-only', 'storage-stats-{run}-results.log', '"summary"',
+                      'verify_storage_stats_results.py'),
     'photos-recent': ('--photos-recent-only', 'photos-recent-{run}-results.log', '"summary"', 'verify_photos_recent_results.py'),
     'photos-asset': ('--photos-asset-only', 'photos-asset-{run}-results.log', '"asset.readback"', 'verify_photos_asset_results.py'),
     'settings-navigation': ('--settings-navigation-only', 'settings-navigation-{run}-results.log',
@@ -144,7 +146,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('photos-recent', 'photos-asset', 'settings-navigation'):
+    if persona in ('photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -363,7 +365,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset'):
+        if args.persona in ('const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]
