@@ -1,5 +1,33 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 普通应用真实网络计量验证
+
+新增 `network-accounting` 普通 HAP persona，只申请 INTERNET，不申请
+GET_NETWORK_STATS、ACL 或系统应用身份。受控本机 HTTP 服务校验随机
+nonce 和每个字节，普通应用分别收发 128 KiB、256 KiB，使用 Promise
+读取之前计数、callback 读取之后计数，并验证查询 UID 0 返回 201。
+验证器绑定归档、编译输入、真实应用 UID、HTTP 服务记录与实现哈希；
+失败时也关闭本次独占的回环监听，不将网络策略控制算作通过。
+
+R28 原归档 SHA-256
+`9e7ee9bd842402265665793b1462d0ab174365a1d21d9caf617926a7b6e0efc9`
+上实际普通 UID 20010038 验证通过，两代 Rx/Tx 增量分别为
+135516/132630、270388/264022 字节；两次越权查询均返回 201。
+证据目录 `r28-network-accounting-runtime-01`，`ordinary/evidence.json`
+SHA-256 `59407f7e24809de74facaa18f3a895bd7cbebcad4da3cfc22680ad671d2b0d0e`；
+验证器 SHA-256
+`29f2872af7c761f6ddf7463255620516789ff8838a9c33fda4d984822f3bdeca`。
+`diagnostic.json` 记录同包启动、测试命令、电源策略恢复和客体关闭。
+这证明自 UID 统计后端可用，不关闭仍缺策略变化验证的完整网络缺口。
+
+API26 SDK 三 ABI typed HAP 编译记录为
+`network-accounting-typed-{arm64,armv7a,x86_64}-r29-01`。
+整仓主机回归 `host-regression-network-accounting-r29-02.log`：
+1312 项通过，204.986 秒，macOS 跳过 1 项已另在 Docker 验证的 Linux
+夹具。01 保留两处旧测试 fixture 缺新增 flag 的错误，02 只补 fixture
+后重跑，没有降低权限断言。新测试尚未包含在冻结 R29 构建输入中，
+上述 R28 验证也不替代 R29 首包门禁；完整账本仍为 149 闭环/132 未闭环。
+
 ## 2026-10-10 NetManager eBPF 统计表只读诊断
 
 新增 `build_bpf_netstats_readback.py` 和实际 C 调用者，固定读取

@@ -114,7 +114,8 @@ class Matrix4VerifierTests(unittest.TestCase):
         flags = ('camera_only', 'const_enum_only', 'arkts_exports_only', 'matrix4_only',
                  'factory_objects_only', 'web_factory_only', 'contact_sync_mode_only', 'runtime_enum_only')
         for name in (*flags[1:], 'worker_only'):
-            args = SimpleNamespace(wifi_scan_only=False, **{flag: flag == name for flag in flags})
+            args = SimpleNamespace(network_accounting_only=False, wifi_scan_only=False,
+                                   **{flag: flag == name for flag in flags})
             self.assertEqual(eval(expression, {'args': args, 'worker_only': name == 'worker_only'}), [])
 
     def test_registered_closure_is_only_seven_helpers_bound_to_new_archive_boot(self):

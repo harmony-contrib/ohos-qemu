@@ -162,7 +162,8 @@ class FactoryObjectsTests(unittest.TestCase):
                        and isinstance(value, ast.IfExp)]
         self.assertEqual(len(expressions), 1)
         flags = ('camera_only', 'const_enum_only', 'arkts_exports_only', 'matrix4_only', 'factory_objects_only')
-        args = SimpleNamespace(wifi_scan_only=False, **{flag: flag == 'factory_objects_only' for flag in flags})
+        args = SimpleNamespace(network_accounting_only=False, wifi_scan_only=False,
+                               **{flag: flag == 'factory_objects_only' for flag in flags})
         expression = compile(ast.Expression(expressions[0]), 'actual-builder-permissions', 'eval')
         self.assertEqual(eval(expression, {'args': args, 'worker_only': False}), [])
 

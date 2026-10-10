@@ -29,6 +29,8 @@ APP_BASE = '/data/app/el2/100/base/' + BUNDLE + '/'
 APP_FILES = APP_BASE + 'files/'
 PERSONAS = {
     'wifi-scan': ('--wifi-scan-only', 'wifi-scan-{run}-results.log', '"summary"', 'verify_wifi_scan_results.py'),
+    'network-accounting': ('--network-accounting-only', 'network-accounting-{run}-results.log',
+                           '"summary"', 'verify_network_accounting_results.py'),
     'image-metadata': ('--image-metadata-only', 'image-metadata-{run}-results.log', '"summary"',
                        'verify_image_metadata_results.py'),
     'thermal': ('--thermal-only', 'thermal-{run}-results.log', '"summary"', 'verify_thermal_results.py'),
@@ -153,7 +155,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -161,6 +163,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
 def run(args):
     args.output.mkdir(parents=True, exist_ok=False)
     challenge = secrets.token_hex(16)
+    network_peer = None
     report = {'schema_version': 1, 'status': 'fail', 'scope': 'one_fresh_ordinary_HAP_regression_NOT_full_gate',
         'persona': args.persona, 'run_id': challenge, 'archive': str(args.archive.resolve()),
         'target': args.target, 'arch': args.arch, 'commands': [], 'failures': [],
@@ -235,6 +238,10 @@ def run(args):
         project = args.output / 'project'
         build = [sys.executable, str(Path(__file__).with_name('build_hap_probe.py')), flag,
                  '--arch', args.arch, '--sdk', args.sdk, '--udid', args.udid, '--output', project]
+        if args.persona == 'network-accounting':
+            from network_accounting_endpoint import Endpoint
+            network_peer = Endpoint(challenge)
+            build += ['--network-accounting-endpoint', network_peer.endpoint]
         if args.persona == 'image-metadata':
             command(['docker', 'run', '--rm', '--platform', 'linux/amd64',
                 '--mount', 'type=volume,src=' + args.source_volume + ',dst=/ohos,readonly',
@@ -382,12 +389,17 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
+        if args.persona in ('network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]
             if args.persona in ('worker-legacy', 'worker-thread'):
                 ui_arguments += ['--arch', args.arch]
+        if network_peer is not None:
+            peer_path = args.output / 'http-peer.json'
+            network_peer.finish(peer_path)
+            report.update(http_peer=str(peer_path), http_peer_sha256=checksum(peer_path))
+            ui_arguments += ['--http-peer', str(peer_path)]
         if args.persona == 'optional-phone-profile':
             ui_arguments += ['--boot', str(args.boot), '--boot-id', boot_id, '--docker-image', args.docker_image]
         if args.persona == 'thermal':
@@ -422,6 +434,12 @@ def run(args):
             except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as capture_error:
                 report['failure_diagnostics_error'] = str(capture_error)
     finally:
+        if network_peer is not None and not network_peer.closed:
+            try:
+                network_peer.finish(args.output / 'http-peer.json')
+            except Exception as error:
+                report['status'] = 'fail'
+                report['failures'].append('owned HTTP peer cleanup failed: ' + str(error))
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 
