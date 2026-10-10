@@ -33,15 +33,13 @@ def key_request(modifier, hold_ms):
 
 
 def title_node(layout):
-    found = []
-    for title in ('设置', 'Settings'):
-        try:
-            found.append(select_node(layout, 'com.ohos.settings', text=title))
-        except ValueError:
-            continue
-    if len(found) != 1:
-        raise ValueError('one actual visible preinstalled Settings title required')
-    return found[0]
+    # ArkUI exposes the same label on the TitleBar container and its Text child.
+    # Select the actual painted title by its unique observed navigation ID,
+    # rather than treating those two different nodes as duplicate titles.
+    node = select_node(layout, 'com.ohos.settings', identifier='__NavigationField__Text__MainTitle__')
+    if node['attributes'].get('type') != 'Text' or node['attributes'].get('text') not in ('设置', 'Settings'):
+        raise ValueError('actual preinstalled Settings navigation title Text required')
+    return node
 
 
 def run(args):

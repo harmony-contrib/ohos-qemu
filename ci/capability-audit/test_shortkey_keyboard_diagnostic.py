@@ -17,12 +17,27 @@ class ShortkeyKeyboardDiagnosticTests(unittest.TestCase):
 
     def test_actual_settings_bundle_and_visible_title_required(self):
         node = {'attributes': {'bundleName': 'com.ohos.settings', 'text': '设置',
+            'type': 'Text', 'id': '__NavigationField__Text__MainTitle__',
             'visible': 'true', 'enabled': 'true', 'bounds': '[0,0][100,40]'}, 'children': []}
         self.assertEqual(title_node(node)['bundle'], 'com.ohos.settings')
-        for field, value in (('bundleName', 'org.test'), ('visible', 'false'), ('text', 'not Settings')):
+        for field, value in (('bundleName', 'org.test'), ('visible', 'false'), ('text', 'not Settings'),
+                             ('type', 'TitleBar'), ('id', 'other')):
             changed = {'attributes': dict(node['attributes'], **{field: value}), 'children': []}
             with self.subTest(field=field), self.assertRaises(ValueError): title_node(changed)
         with self.assertRaises(ValueError): title_node([node, node])
+
+    def test_titlebar_and_text_share_label_without_ambiguity(self):
+        child = {'attributes': {'text': '设置', 'type': 'Text', 'visible': 'true',
+            'id': '__NavigationField__Text__MainTitle__', 'bounds': '[18,133][75,166]'}, 'children': []}
+        layout = {'attributes': {'bundleName': 'com.ohos.settings', 'text': '设置',
+            'type': 'TitleBar', 'id': '', 'visible': 'true', 'bounds': '[3,71][513,176]'},
+            'children': [child]}
+        selected = title_node(layout)
+        self.assertEqual(selected['rect'], [18, 133, 57, 33])
+        self.assertEqual(selected['attributes']['type'], 'Text')
+        layout['children'].append(child)
+        with self.assertRaises(ValueError):
+            title_node(layout)
 
     def test_does_not_claim_duration_API_or_all_gap_closure(self):
         self.assertIn('NOT_duration_API_or_full_gate', SCOPE)
