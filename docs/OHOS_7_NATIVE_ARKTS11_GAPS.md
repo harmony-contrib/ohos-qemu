@@ -1,5 +1,25 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 QEMU 全局快捷键配置候选
+
+固定 MMI 源码 `64a0e42f22c9c6739651bf79b33746c500788322` 中，
+`setKeyDownDuration` 只接受已在配置注册的 businessId；SDK 明确要求
+调用前查询真实 ID。因此原审计直接传入字面值 `businessId` 返回 401，
+不能单独认定接口实现错误。但产品的 Shortkeys 确实为空，仍没有可用实例。
+
+独立 `input/shortkey_profile` 部件新增 `qemu.settings`，左 Meta + I
+按住 500 ms 打开已预装 `com.ohos.settings.MainAbility`，两个画像共享
+同一真实配置，保留原 Sequences/RepeatKeys；不修改 NAPI、系统应用限制、
+参数校验、输入分发或应用启动权限。构建入口在源码准备阶段应用补丁，
+且即便旧 marker 存在，也重验实际目标配置，避免把已漂移的配置当作成功。
+
+已读取 MMI 的仓库约束、输入流水线与板侧验证说明。固定源码只读
+`git apply --check`、shell 语法检查及四项主机配置边界测试通过。
+整仓回归 `host-regression-shortkey-profile-r29-01.log`：1324 项通过，
+202.731 秒，macOS 跳过 1 项已另在 Docker 验证的 Linux 专用夹具。
+**尚未构建进 R29；尚未取得新包按键触发、取消、延时设置、重启持久化、
+普通应用拒绝的运行证据，不关闭 `shortkey-empty-launch-config`。**
+
 ## 2026-10-10 普通应用真实网络计量验证
 
 新增 `network-accounting` 普通 HAP persona，只申请 INTERNET，不申请

@@ -194,6 +194,7 @@ SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/sceneboard_runtime/apply
 PHONE_SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/phone/sceneboard_runtime/apply.sh"
 QEMU_PHONE_PROFILE_SCRIPT="${PATCH_ROOT}/phone/product_profile/apply.sh"
 QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
+QEMU_SHORTKEY_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/shortkey_profile/apply.sh"
 QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh"
 QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
 QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh"
@@ -3074,6 +3075,8 @@ apply_qemu_capability_patch_plan() {
   bash "${VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vulkan_ohos_surface_component.log"
   apply_qemu_absolute_pointer_component
+  bash "${QEMU_SHORTKEY_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_shortkey_profile_component.log"
   fix_case_insensitive_selinux_version_header
   fix_case_insensitive_xmp_endian_header
   fix_case_insensitive_iptables_variants
