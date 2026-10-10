@@ -1,5 +1,28 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 2026-10-10 R34 仅修正后的代表包重建
+
+依赖分类修正提交 `3b9f732`，taskpool 快照修正提交
+`f3fe614366326807a4a455af93643e8ba4e9f30b`。
+`build-r34-taskpool-software-ap-representative-01.py` 已启动本地 Docker 单个 ARM64 phone 构建，
+目录 `/Volumes/PSSD/qemu/packages/first-taskpool-software-ap-7.0-release-20261010-r34`。
+冻结输入 `/Volumes/PSSD/qemu/build-inputs/phone-LPuNr7`，树 SHA
+`6ab43a3c2a01fad208c09bed0292c05cccc4a2b980676ee317c2bbf23cc933e0`，
+输入元数据 SHA `aedd8bc06e146f32aaea73dd5d3078e1933ca1c6cc2fea1e88ae5850c249eeb9`。
+构建容器 ID `faa07c79f5790a1b2d43cd6f268ff617990b34673e8e8df2e6fcd32d60027d08`。
+`host-regression-r34-frozen-01.log`：1412 项成功、1 项跳过，255.545 秒。
+
+`after-r34-first-fixes-01.py` 仅等待该代表包：先在新客体运行四轮原冻结普通应用
+factory-objects 严格验证，再使用真实预装 Settings 热点页面，要求系统服务连续两次
+确实处于 activated、UI 状态一致，关闭后服务确实 inactive。控制器不会把单独 UI 勾选、
+请求提交成功、或观测脚本正常退出当作热点启动成功；也不声称关联/DHCP/数据通路通过。
+目前尚未得到 R34 归档和运行结果，完整首包门禁仍未通过，没有启动剩余五包。
+
+`retired-r32-passed-disks-03.json` 回收已关闭且通过的图片/图形内存与导航压力临时磁盘；
+`retired-r31-hotspot-images-04.json` 回收已结束的历史监管域诊断磁盘 5037264896 字节。
+均逐文件验证哈希和无打开句柄，归档、报告和原始证据保留。临时修改后的磁盘状态不保留，
+初始磁盘可从归档恢复；R32 原始导航失败 userdata 仍保留。
+
 ## R32 完整验收新增失败与 R33 依赖检查修正
 
 `r32-independent-full-runtime-01.json` 已结束，SHA
