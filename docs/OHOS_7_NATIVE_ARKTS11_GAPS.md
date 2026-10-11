@@ -1,5 +1,26 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R37 候选批次：亮度错误类型修复，尚未重打包验证
+
+用户确认继续上述最小修复后，新增公共组件
+`patches/common/foundation/arkui/ace_engine/luminance_numeric_error/`。
+仅替换亮度模块自身的异常构造：保持错误码数值、原消息映射、已有待处理异常，
+使用数字 `BusinessError.code`；不修改共享 `NapiThrow`、解析器、权限或 C++ ABI。
+phone / 2in1 共用入口统一应用，固定项目提交和文件前后哈希，保留原源码 CRLF。
+私有副本首次和重复应用均通过，实际源码/构建输出保持只读。
+
+本地 Docker 使用三种产品的真实 Ninja 编译命令，两个实际 TU × 三 ABI 共 6 个对象通过；
+不是链接或新包行为证明。`luminance-numeric-tu-r37-01/evidence.json` SHA256：
+`c626a1b32fc4136389f441d6b614b228032e50b1db39a5fa8fc4c77a74216501`。
+实际补丁辅助函数的 ASan/UBSan 注入测试覆盖数字、消息、已有异常和五个 NAPI 失败步骤。
+未降低运行验证器对数字错误码、真实明暗回调及注销行为的要求。
+严格统计仍为 R36 的 154 / 281 闭环、127 项未闭环；不放行其余五包。
+
+另以已提交测试版本 `89523d2` 启动 R36 闪屏专项，显式绑定旧归档与测试树，
+不混入本轮产品候选，也不宣称已验证亮度修复。控制器
+`run-r36-focused-blink-06.py` / `r36-focused-blink-06-controller.json`。
+保留原停止残留失败，在确认画面恢复后收集后续用例；尚待完成。
+
 ## R36 集中回归完成：154 / 281 闭环，剩余 127，未放行六包
 
 冻结测试提交 `6425e3b2068b642696f6e208ca1ba917dd24d88c`，树 SHA256
