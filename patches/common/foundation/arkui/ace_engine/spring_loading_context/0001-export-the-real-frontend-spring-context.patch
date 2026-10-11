@@ -1,0 +1,40 @@
+diff --git a/foundation/arkui/ace_engine/interfaces/napi/kits/drag_controller/js_drag_controller.cpp b/foundation/arkui/ace_engine/interfaces/napi/kits/drag_controller/js_drag_controller.cpp
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/drag_controller/js_drag_controller.cpp
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/drag_controller/js_drag_controller.cpp
+@@ -2278,6 +2278,27 @@
+     return thisArg;
+ }
+ 
++// Use the frontend's real class, also used to create spring-loading callbacks.
++// Resolve in the calling environment, without pinning another UI/worker env.
++// An import before frontend registration must not break other drag exports.
++static napi_value GetSpringLoadingContext(napi_env env, napi_callback_info info)
++{
++    napi_value global = nullptr;
++    napi_value constructor = nullptr;
++    napi_valuetype type = napi_undefined;
++    NAPI_CALL(env, napi_get_global(env, &global));
++    NAPI_CALL(env, napi_get_named_property(env, global, "SpringLoadingContext", &constructor));
++    NAPI_CALL(env, napi_typeof(env, constructor, &type));
++    if (type == napi_undefined) {
++        return constructor;
++    }
++    if (type != napi_function) {
++        napi_throw_type_error(env, nullptr, "SpringLoadingContext is not an ArkUI constructor");
++        return nullptr;
++    }
++    return constructor;
++}
++
+ static napi_value DragControllerExport(napi_env env, napi_value exports)
+ {
+     napi_value dragStatus = nullptr;
+@@ -2303,6 +2324,8 @@
+         DECLARE_NAPI_FUNCTION("interruptFollowHandMorphDropAnimation", JSInterruptFollowHandMorphDropAnimation),
+         DECLARE_NAPI_PROPERTY("DragStatus", dragStatus),
+         DECLARE_NAPI_PROPERTY("DragPreview", classDragPreview),
++        { "SpringLoadingContext", nullptr, nullptr, GetSpringLoadingContext, nullptr, nullptr,
++            napi_enumerable, nullptr },
+     };
+     NAPI_CALL(env, napi_define_properties(
+         env, exports, sizeof(dragControllerDesc) / sizeof(dragControllerDesc[0]), dragControllerDesc));

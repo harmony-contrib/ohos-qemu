@@ -1,5 +1,36 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R38 批次候选：真实 SpringLoadingContext 和三处 SDK 边界
+
+R37 仍只构建已冻结的 ARM64 phone，不追改该构建输入，不放行其余五包。
+新候选为三个独立部件：`spring_loading_context`、`spring_loading_lifecycle`、
+`spring_loading_semantics`。动态 frontend 已有真实类和回调实例；模块新增只读
+访问器，复用当前 env 的真实构造器，不伪造类或拷贝 native state。
+
+用户已授权三处最小 SDK 契约修复：abort 取消计时并静默结束当前悬停，复用现有
+完成态的边界内抑制/离开重置，不通知 CANCEL/END；updateConfiguration 只在
+BEGIN 生效；CANCEL 的 dragInfos/currentConfig 返回 undefined。
+不新增对象布局字段、公开签名、状态数值、权限、UDMF 或后端。
+
+5 项 ASan/UBSan 主机测试通过，执行实际访问器、六个动态 context 方法和
+abort helper，覆盖 env 隔离、NAPI 失败恢复、配置默认值/截断、取消数据省略及
+停止计时；不是实际拖拽后端证明。真实 TU 编译：导出 3 个对象、BEGIN/UPDATE
+及真实候选头 6 个对象、两种动态 frontend 6 个对象，覆盖三个 ABI。
+报告 SHA256：
+
+- `spring-loading-context-tu-r38-02.json`：`d02a1fb0ae366b9011ebdecefe992449d989402e2cc526bedca7012a8cd85f8b`。
+- `spring-loading-lifecycle-tu-r38-01.json`：`fbaa54cdcbc603a346fb3092c92d525134a5871bf88405cd9c79de2fd559f559`。
+- `spring-loading-semantics-tu-r38-02.json`：`a0c6de3f7c59bd0a1adba950c4d6c5c286c54a65bf6bc93593d7d95d80fa2a46`。
+
+首次导出编译缺少隔离源的原目录 quoted-header 路径，失败保留；改为真实头覆盖后
+通过。首次 semantics 编译期间仅扩展补丁上下文用于执行完整方法，输入一致性检查
+正确拒绝该次记录；固定配方重跑通过，旧日志保留，不追改失败。
+普通无权限 ArkTS 1.1 真输入探针 SDK 编译通过，未签名 HAP SHA256
+`85ffb9b1b6250997a4fda96b307b20c8bbdd0ef83668f0c6046ad7639b65c6b5`。
+探针只记录真实拖拽回调，不自己调用 callback；目前真输入运行器/严格新包证明
+尚未完成，不以构造或编译成功消除 SpringLoadingContext 契约。
+统计仍是 R36 的 154 / 281 闭环、127 项未闭环，没有六包交付。
+
 ## R37 合并批次已冻结预检，代表包构建中
 
 提交 `a72eddc716d6542274ff7e8bfa5bb9e7aebfc43b`，包含亮度数字错误、DNG/TIFF
