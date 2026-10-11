@@ -69,7 +69,7 @@ def reflection_closes_contract(module, requirement, value):
     if requirement['kind'] == 'enum':
         return (type(value.get('value_type')) is int and value['value_type'] == 6 and
                 value.get('enum_contract_applicable') is True and value.get('enum_contract_valid') is True)
-    if module == '@ohos.settings' and requirement['name'] == 'TTS':
+    if module == '@ohos.settings' and requirement['name'] == 'TTS' and requirement['kind'] == 'namespace':
         # This is the exact constant-key namespace plus identity with its
         # existing legacy alias, not a callable or settings provider claim.
         from verify_arkts_exports_results import settings_tts_verified

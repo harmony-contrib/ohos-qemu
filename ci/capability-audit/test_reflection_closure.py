@@ -29,6 +29,8 @@ class ReflectionClosureTests(unittest.TestCase):
         requirement = dict(name='TTS', kind='namespace')
         self.assertTrue(reflection_closes_contract('@ohos.settings', requirement, row))
         self.assertFalse(reflection_closes_contract('@ohos.other', requirement, row))
+        for kind in ('function', 'class', 'variable'):
+            self.assertFalse(reflection_closes_contract('@ohos.settings', dict(requirement, kind=kind), row))
         self.assertFalse(reflection_closes_contract('@ohos.settings', requirement,
                                                    dict(row, settings_tts_alias_equal=False)))
 

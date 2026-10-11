@@ -1,5 +1,30 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 同批无障碍闪屏候选（尚未关闭两项运行缺口）
+
+`accessibility/screen_blink` 将公开同步调用接入真实 NAPI → client → 新增末尾 IDL →
+AAMS → WM/RS 窗口。保留系统应用、WRITE_ACCESSIBILITY_CONFIG 与窗口/RS 原校验；
+PID/token 只取自服务端同步 Binder，没有自报身份、跳过检查或新增生产权限。
+读取实际闪烁总开关，pidfd 跟踪调用者退出，专用串行线程处理窗口、低频单次/连续模式，
+停止/开关关闭/显示改变/账号切换/服务停止清理。不是 camera torch 的模拟成功实现。
+
+- 三 ABI 的 NAPI、两个客户端 TU、AAMS、真实新生成 proxy/stub 共 18 个 TU 通过，
+  `screen-blink-recipe-tu-r35-01.json` SHA256
+  `0e08bb7fceb3d744c40afb0e5f0f631e218451df92c27fa028e9a0fa7b796301`。
+- 屏幕 worker 使用真实 aams_ext 图形编译参数，三个 ABI 分别通过，
+  `screen-blink-final-backend-tu-r35-01/evidence.json` SHA256
+  `ac64da02b2a752bc326d896c2860aa89a46ed913cb8e454955319198c384e624`。
+  这不是新的主 AAMS GN/link 或窗口成功证明。
+- ASan/UBSan 主机生命周期和精确补丁重放 3 项通过，`host-screen-blink-recipe-r35-02.log`。
+  延迟设置读取测试先复现已超时请求仍创建窗口；修复取消检查后通过，失败与重跑日志
+  `screen-blink-backend-timeout-host-r35-01.log` / `-02.log` 均保留。
+- 系统角色 API26 SDK 测试 HAP 编译通过，`screen-blink-hap-r35-02`，SHA256
+  `bae0b2359e548ba3fcadaf0c1e36d493ef274334987ed4280a4b42b90bda4361`。
+  普通/系统拒绝/授权三角色签名约束只作用于测试 HAP；尚未获得三角色新包运行结论。
+
+仍须新包实际像素、权限、调用者退出及恢复验证，不因导出/编译/主机替身关闭缺口。
+当前严格计数仍是下节的 **134 / 281，剩余 147**。
+
 ## R35 完整回归结束：严格行为复核为 134 / 281，剩余 147
 
 R35 原样新包、boot `40b219a0-3121-4c09-a72b-106825de9be9` 的
