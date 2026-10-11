@@ -53,6 +53,13 @@ SHA256 `2d8678ba4e0c423337e134066faae7bc0d4e9828905564b4d4b8a7d895cb6bb6`。
 编译失败，移除两个匿名 namespace 的死 helper 后重跑；未关闭告警，失败记录保留。
 其他 ABI 系统配置、extension Ability、连接隧道和实际包仍待验收，台账不变。
 
+前缀提交 `8c8e9ebb0116b8b7b0bb7935244fc7002ff0330b` 的冻结全量主机回归
+`host-r39-frozen-batch-10.json`：**1608 项、跳过 1 项、301.200 秒，其余通过**，
+输入不变；树 SHA256 `3cc351fc8f2a5131828ae92705fc840b97f7980a9a782733fdcb5c2b97658a68`，
+日志 SHA256 `043a76022951d2d5d064d0853e553a3b75f7a6e42862783b95d0f0ba3a96a5bf`，
+报告 SHA256 `cd2d8ef7a2ada15690b9a2ab1c7126f44885b2014a3e6dcc8c22612b4fafdf78`。
+主机回归不代表新首包、其余 ABI 系统配置或六产物验收，首包门槛仍未通过。
+
 ## R39 全宽网络端口候选（未计入闭环）
 
 新增 `netmanager_base/inet_addr_port` 精确部件，在 GN 前与 VPN `0006` 配套应用。
