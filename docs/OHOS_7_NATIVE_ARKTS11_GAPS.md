@@ -1,5 +1,23 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R37 合并批次已冻结预检，代表包构建中
+
+提交 `a72eddc716d6542274ff7e8bfa5bb9e7aebfc43b`，包含亮度数字错误、DNG/TIFF
+类与解析实例、observer 真实类和密度 UIContext。
+冻结 `/Volumes/PSSD/qemu/build-inputs/r37-combined-batch-g9tr3f3x`，树 SHA256
+`e367bea798c3ab44cd9bd00aeea68d45a1c200fff8c1662dfe6d153c78b38165`。
+集中主机回归 1497 项、跳过 1 项，242.046 秒，其余通过，输入复核未变化；
+日志 SHA256 `2110c88bb3e3be75ac72b57869355b7477691ec473955fbca47ceb09a72b602a`。
+构建独立冻结 `/Volumes/PSSD/qemu/build-inputs/phone-fiGUQO`，内容树与已通过主机批次相同。
+只启动 ARM64 phone 本地 Docker；预期归档为
+`/Volumes/PSSD/qemu/packages/first-api26-metadata-observer-7.0-release-20261011-r37/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
+目前仍在构建，不能提供不存在的归档校验和，也不放行其余五包。
+
+清理已停机 R34 `_562b0zu`、R35 `px9c57k7` 的 images 副本；原归档、全部运行
+证据、最新 R36 及无关 zig-napi guest 保留。旧运行 userdata 不可恢复，原始镜像可
+重新解压。清理后可用空间 109 GiB，收据 `old-r34-r35-runtime-image-cleanup-20261011.json`。
+统计仍使用实际 R36 证据：154 / 281 闭环，余 127；主机通过不提前消除缺口。
+
 ## R37 批次追加：observer 实例和密度上下文（待新包）
 
 固定 ace_engine `e55e178228b9f6388b15d3024e8caf125fa293d7` 未导出两个 SDK class，
@@ -11,7 +29,7 @@ dispatcher 从当前 frontend 取得真实 UIContext，与已有 routerPageUpdat
 本地 Docker 实际三个 TU × 三 ABI 共 9 个对象通过；
 `observer-info-classes-tu-r37-01.json` SHA256
 `13a45b30c62e925be0c6308a128c183e28444d1751777e15ee47970fddcbd43e`。
-9 项主机回归覆盖真实补丁的构造器生命周期及原始证据篡改/注销边界。
+10 项主机回归覆盖真实补丁的构造器生命周期及原始证据篡改/注销边界。
 SDK HAP 首次错误使用 observer.on 注册仅在 UIObserver 声明的断点事件，失败保留；
 改为公开 UIContext.getUIObserver().on/off，未改 SDK 或关闭类型检查。
 最终 `observer-info-hap-r37-03` HAP SHA256
