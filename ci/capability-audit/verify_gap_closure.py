@@ -721,6 +721,25 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'evidence': str(certificates[0]), 'sha256': digest(certificates[0]),
             'verifier': 'two_real_HAP_roles_empty_callback_own_import_query_cleanup_64_repeats_and_denial',
             'not_claimed': 'certificate_dialog_UI_ukey_or_all_certificate_API_behavior'}
+    vpn = child('vpn-policy/evidence.json')
+    if vpn:
+        from verify_always_on_vpn_results import verify_evidence as verify_vpn
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('VPN closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('VPN policy proof requires unchanged acceptance package')
+        for contract in verify_vpn(vpn[1], archive_sha, boot_id, environment['guest_arch'], device_type):
+            closed[contract] = {'evidence': str(vpn[0]), 'sha256': digest(vpn[0]),
+                'verifier': 'three_real_HAP_roles_policy_persistence_restart_readback_cleanup_and_numeric_denials',
+                'not_claimed': 'VPN_tunnel_server_traffic_or_all_VPN_configuration_APIs'}
     native = child('native-gap-abi/result.json')
     if native and native[1].get('kind') == 'native-gap-abi':
         document = native[1]

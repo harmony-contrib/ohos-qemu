@@ -1,5 +1,30 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R35 构建期间的下一批 VPN 候选（未关闭运行缺口）
+
+`always_on_vpn` 补上两个 SDK 已声明的 Promise API，经真实客户端/生成 IPC 到服务端，
+保留 system-app / MANAGE_VPN 检查；读写真实 SettingsData，写入后回读，区分“无记录”
+与 provider/查询故障。独立 `optional_settings_read` 不修改旧 Query/Update 语义。
+统一打包脚本顺序为 system-VPN feature → VPN dialog → optional read → always-on VPN。
+
+- 真实产品命令重新生成 IPC，并编译三 ABI 的 18 个主体/代理 TU 与 3 个服务端 stub TU，均通过。
+  证据位于本地 `issue-20-20261006/always-on-vpn-tu-r35-01/evidence.json`
+  （SHA256 `29fa614964a5334a7629048e2cc173abd6f2b1a74c9bfbc99cee51d118d08b98`）
+  和 `always-on-vpn-stub-tu-r35-01/evidence.json`
+  （`73d5bbb571a1a3edaadb26b5fe2f5641ae5262eafb76e2a6ae1393dc22f4d748`）。源树/out 只读。
+- 真实 API26 SDK 编译 `vpn-policy-hap-r35-01` 通过，未签名 HAP SHA256
+  `1cfd68975354b405843c34282f53bb3f3207e1f13cbe543dd5487c6ae3bf943d`。
+  三角色测试覆盖普通调用拒绝、系统无权限拒绝、授权策略读写/清理和不同 PID 的重启回读；
+  不声称 VPN 隧道、远端服务或流量验证。后续包自动调用该 runner；策略清理失败必须停下检查。
+- `host-vpn-batch-r35-01.log`：1439 项主机测试通过，1 项跳过；后加证据重放用例的
+  VPN 定向测试 9 项通过。不是 guest 验收，也不将原始导出检查替代真实行为。
+- 磁盘清理仅删除 R2/R3/R7/R8/R9 五个早期压缩归档，释放 4,323,319,808 分配字节。
+  所有既存诊断目录和日志保留；R32/R34 及正在构建的 R35 保留。
+  删除列表、原 SHA256 和可恢复性见 `retired-superseded-early-archives-r35-01.json`。
+
+这些新增 VPN 修改**不在已经冻结的 R35 输入内**，将随下一轮批量修复验证。
+R35 仍在构建，尚无新包完整行为通过结果，不能启动其余五包或增加关闭计数。
+
 ## R35 批量代表包已启动（尚未通过运行门禁）
 
 候选提交 `c0c5423ebe1f32404b9973918d921d12fb88dab2`，合并九个联系人数据类、

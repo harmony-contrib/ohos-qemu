@@ -306,6 +306,16 @@ def run(args):
             'certificate-real-empty-import-cleanup-and-ordinary-denial', timeout=4800, env=child_env)
         check('certificate-manager', work / 'certificate-manager/evidence.json', [certificate_record])
         same_guest('after-certificate-both-roles')
+        # Policy mutation requires verified cleanup; failure cannot be treated
+        # as independent from later networking probes.
+        vpn_record = command([sys.executable, Path(__file__).with_name('run_always_on_vpn_probe.py'),
+            '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+            '--boot-id', environment['boot_id'], '--output', work / 'vpn-policy',
+            '--source-volume', source_volume, '--docker-image', docker_image],
+            'vpn-policy-three-roles-and-caller-restart', timeout=6000, env=child_env)
+        check('vpn-policy', work / 'vpn-policy/evidence.json', [vpn_record])
+        same_guest('after-vpn-policy-cleanup')
         # The FA compatibility API requires a real FA service, not a Stage
         # caller impersonating one. Both models run on this unchanged archive.
         fa_record = command([sys.executable, Path(__file__).with_name('run_fa_particle_probe.py'),

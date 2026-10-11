@@ -41,13 +41,8 @@ def configure_profile(profile, role, udid, module):
     return profile
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('signer-dist', 'jar', 'unsigned', 'output'):
-        parser.add_argument('--' + name, type=Path, required=True)
-    parser.add_argument('--role', choices=('normal', 'system'), required=True)
-    parser.add_argument('--udid', required=True)
-    args = parser.parse_args()
+def sign(args, configure=configure_profile):
+    """Shared signing mechanics; each caller supplies an exact role contract."""
     receipt = args.output.with_suffix('.signing.json')
     if (args.output.exists() or args.output.is_symlink() or args.unsigned.is_symlink() or
             not args.unsigned.is_file() or receipt.exists() or receipt.is_symlink()):
@@ -56,7 +51,7 @@ def main():
     dist = args.signer_dist.resolve()
     with zipfile.ZipFile(args.unsigned) as archive:
         module = json.loads(archive.read('module.json'))
-    profile = configure_profile(json.loads((dist / 'UnsgnedDebugProfileTemplate.json').read_text()),
+    profile = configure(json.loads((dist / 'UnsgnedDebugProfileTemplate.json').read_text()),
                                 args.role, args.udid, module)
     now = int(time.time())
     profile['uuid'] = str(uuid.uuid4())
@@ -92,6 +87,15 @@ def main():
             'role': args.role, 'unsigned_sha256': original_sha256, 'signed_sha256': digest(args.output),
             'verified_profile': profile}, indent=2) + '\n')
     print(args.output.resolve())
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ('signer-dist', 'jar', 'unsigned', 'output'):
+        parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--role', choices=('normal', 'system'), required=True)
+    parser.add_argument('--udid', required=True)
+    sign(parser.parse_args())
 
 
 if __name__ == '__main__':
