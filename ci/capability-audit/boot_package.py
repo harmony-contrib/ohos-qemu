@@ -28,6 +28,7 @@ from run_root_probe import ARCHES, validate_identity
 from hdc_transport import failed as hdc_failed
 from snapshot_build_inputs import digest_files
 from verify_first_artifact_gate import checksum
+from validation_input_binding import verify_update
 
 FATAL = re.compile(r'Kernel panic - not syncing|critical service crashed|ExecReboot panic|'
                    r'sysrq: Trigger a crash|(composer_host|render_service).*exit with signal\s*:\s*11', re.I)
@@ -246,7 +247,11 @@ class QemuGuest:
                 files = digest_files(ROOT)
                 if (inputs.get('files_sha256') != files or inputs.get('tree_sha256') !=
                         hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()):
-                    raise ValueError('acceptance boot requires the current exact frozen scripts/patches')
+                    update = os.environ.get('QEMU_VALIDATION_INPUT_UPDATE')
+                    if not update:
+                        raise ValueError('acceptance boot requires the current exact frozen scripts/patches')
+                    self.report['validation_input_update'] = verify_update(
+                        inputs, files, self.report['archive_sha256'], update)
             host = platform.system()
             if host not in ('Darwin', 'Linux'):
                 raise ValueError('this local boot runner supports macOS/Linux only')
