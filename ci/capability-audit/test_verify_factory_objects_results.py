@@ -161,7 +161,7 @@ class FactoryObjectsTests(unittest.TestCase):
                        if isinstance(key, ast.Constant) and key.value == 'requestPermissions'
                        and isinstance(value, ast.IfExp)]
         self.assertEqual(len(expressions), 1)
-        flags = ('camera_only', 'const_enum_only', 'arkts_exports_only', 'matrix4_only', 'factory_objects_only')
+        flags = ('camera_only', 'avc_media_only', 'const_enum_only', 'arkts_exports_only', 'matrix4_only', 'factory_objects_only')
         args = SimpleNamespace(router_observer_only=False, network_accounting_only=False, wifi_scan_only=False,
                                **{flag: flag == 'factory_objects_only' for flag in flags})
         expression = compile(ast.Expression(expressions[0]), 'actual-builder-permissions', 'eval')

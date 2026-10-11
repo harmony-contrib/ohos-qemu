@@ -10,17 +10,25 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
 
-from avc_media_contract import ABIS, HEADERS, SCOPE, inputs, source, sha
+from avc_media_contract import ABIS, HEADERS, SCOPE, inputs, source, sha, runtime_identity
 from test_verify_avc_media_results import RUN, UID, IDENTITY, rows, render
 import verify_avc_media_results as verifier
 
 
 def elf(arch='arm64'):
     _, _, machine, class_ = ABIS[arch]
-    data = bytearray(64)
+    header, entry = (64, 56) if class_ == 2 else (52, 32)
+    data = bytearray(header + entry)
     data[:6] = b'\x7fELF' + bytes((class_, 1))
     struct.pack_into('<HH', data, 16, 3, machine)
-    return bytes(data) + b'Synthetic fixture, not executable or compiler proof.'
+    data.extend(b'Synthetic fixture, not executable or compiler proof.')
+    struct.pack_into('<Q' if class_ == 2 else '<I', data, 32 if class_ == 2 else 28, header)
+    struct.pack_into('<HHH', data, 52 if class_ == 2 else 40, header, entry, 1)
+    if class_ == 2:
+        struct.pack_into('<IIQQQQQQ', data, header, 1, 5, 0, 4096, 4096, len(data), len(data), 4096)
+    else:
+        struct.pack_into('<IIIIIIII', data, header, 1, 0, 4096, 4096, len(data), len(data), 5, 4096)
+    return bytes(data)
 
 
 class AvcMediaGateTests(unittest.TestCase):
@@ -100,11 +108,43 @@ class AvcMediaGateTests(unittest.TestCase):
 
     def test_rehashed_wrong_binary_or_wrong_HAP_ABI_is_not_proof(self):
         for data, name in ((elf('x86_64'), 'libs/arm64-v8a/libavcmediaprobe.so'),
-                           (elf() + b'wrong code', 'libs/arm64-v8a/libavcmediaprobe.so'),
+                           (elf()[:-1] + b'X', 'libs/arm64-v8a/libavcmediaprobe.so'),
                            (elf(), 'libs/x86_64/libavcmediaprobe.so')):
             self.hap(data, name)
             self.rehash()
             with self.subTest(name=name, data=data[-10:]), self.assertRaises(ValueError): self.check()
+
+    def test_only_nonloaded_section_table_metadata_may_differ_after_stripping(self):
+        original = elf()
+        changed = bytearray(original)
+        struct.pack_into('<Q', changed, 40, len(original))
+        struct.pack_into('<HHH', changed, 58, 64, 3, 2)
+        changed.extend(b'nonloaded static/debug symbol metadata')
+        self.assertEqual(runtime_identity(original, 'arm64'), runtime_identity(bytes(changed), 'arm64'))
+        self.hap(bytes(changed))
+        self.rehash()
+        self.check()
+        changed[125] ^= 1
+        self.assertNotEqual(runtime_identity(original, 'arm64'), runtime_identity(bytes(changed), 'arm64'))
+
+    def test_invalid_program_header_and_load_segment_bounds_rejected(self):
+        for offset, format_, value in ((32, '<Q', 999999), (54, '<H', 0), (56, '<H', 257),
+                                      (64 + 32, '<Q', 999999)):
+            changed = bytearray(elf())
+            struct.pack_into(format_, changed, offset, value)
+            with self.subTest(offset=offset), self.assertRaises(ValueError):
+                runtime_identity(bytes(changed), 'arm64')
+
+    def test_each_real_ABI_parser_binds_code_but_not_stripped_section_metadata(self):
+        for arch in ABIS:
+            original = elf(arch)
+            changed = bytearray(original)
+            wide = ABIS[arch][3] == 2
+            struct.pack_into('<Q' if wide else '<I', changed, 40 if wide else 32, len(original))
+            struct.pack_into('<HHH', changed, 58 if wide else 46, 64 if wide else 40, 3, 2)
+            self.assertEqual(runtime_identity(original, arch), runtime_identity(bytes(changed), arch))
+            changed[-1] ^= 1
+            self.assertNotEqual(runtime_identity(original, arch), runtime_identity(bytes(changed), arch))
 
     def test_rehashed_raw_advertisement_or_creation_path_failure_rejected(self):
         for name in ('avc_encoder_default_is_software', 'hevc_encoder_unadvertised',

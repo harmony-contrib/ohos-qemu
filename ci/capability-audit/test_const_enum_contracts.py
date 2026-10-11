@@ -107,7 +107,22 @@ export const enum Text { VALUE="real" }
         source = (HERE / 'build_hap_probe.py').read_text()
         self.assertIn("contracts = expected_contracts(args.sdk)", source)
         self.assertIn("generate(contracts, challenge)", source)
-        self.assertIn('else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only)', source)
+        # Check the actual permission expression instead of a brittle source
+        # substring whose first flag changes when another pure caller is added.
+        import ast
+        from types import SimpleNamespace
+        tree = ast.parse(source)
+        expressions = [value for node in ast.walk(tree) if isinstance(node, ast.Dict)
+                       for key, value in zip(node.keys, node.values)
+                       if isinstance(key, ast.Constant) and key.value == 'requestPermissions'
+                       and isinstance(value, ast.IfExp)]
+        self.assertEqual(len(expressions), 1)
+        flags = {node.attr for node in ast.walk(expressions[0]) if isinstance(node, ast.Attribute)
+                 and isinstance(node.value, ast.Name) and node.value.id == 'args'}
+        arguments = SimpleNamespace(**{name: name == 'const_enum_only' for name in flags})
+        expression = compile(ast.Expression(expressions[0]), 'actual-const-enum-permissions', 'eval')
+        self.assertEqual(eval(expression, {'args': arguments, 'worker_only': False,
+                                           'dedicated_contract_only': False}), [])
 
 
 if __name__ == '__main__':

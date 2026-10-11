@@ -31,6 +31,23 @@ bitrate mode 各两轮，第一轮 CreateByMime、第二轮默认能力名 Creat
 新包通过后最多关闭原“已广告 video encoder 创建失败”，不关闭 codec 全枚举、
 HEVC 编码或录制/录屏/转码管线；目前没有关闭任何台账项。
 
+冻结 `64b0b779df58301d6bd8b9635c5d17b9ec1ec0dc` / 树
+`061f818c7f3d5b80d5905735d59bd248a5fd194fc23e4e68c1ee0610dfc30918` 的
+`host-r40-frozen-batch-02` 跑完 1668 项、321.232 秒：1 失败、2 错误、1 跳过，
+原输入不变。三处都是测试夹具未跟随新增 AVC 零权限 selector：两个 SimpleNamespace
+缺 avc_media_only，另一个依赖 permission expression 的旧文本子串。已补夹具并改为
+直接执行实际 AST 权限表达式，三个相关测试模块 19 项通过；不放宽实际镜像/能力校验。
+
+同树 `avc-default-compilation-r40-01` 实际 ARM64 SDK/native/HAP 编译成功，但后续
+整文件 binary 校验失败：打包裁剪了非加载的 debug/static symbol sections。
+诊断读取真实编译库 51,120 字节与 HAP 内库 34,416 字节，实际 ELF header（仅归一化
+section table 的位置/大小/索引）、所有 program headers 和 PT_LOAD code/data 内容
+一致，runtime SHA256 `69d5a6b080af3de5bef71ee63789d03f8e56aa38080628ae09eb3d362ca68230`。
+调整校验只容许该非加载元数据裁剪；实际动态符号/重定位、代码、常量、初始化数据、
+全部 program headers 和 ABI 仍精确绑定，原编译整文件 hash 仍保留。三个 ELF ABI、
+代码篡改、header/load 边界与签名 HAP 错配纳入 11 项严格主机回归，均通过。
+原失败报告与归档保留，等待新的冻结整批回归/三 ABI HAP 和新代表包运行。
+
 ## R40 媒体 ResultSet 下一批候选（未入 R39、未计入闭环）
 
 固定 MediaLibrary `564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380` 的真实

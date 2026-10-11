@@ -48,6 +48,52 @@ def verify_elf(data, arch):
         raise ValueError('actual AVC shared caller ELF ABI differs from this packaged architecture')
 
 
+def runtime_identity(data, arch):
+    """Compare actual loaded code/data, allowing only nonloaded ELF stripping.
+
+    Arkdown strips debug/static symbols in the HAP. Section-table location,
+    size and indices in the ELF header are the only normalized loaded bytes;
+    the rest of the header, every program header and every PT_LOAD byte (code,
+    dynamic symbols/relocations, constants and initialized data) remain bound.
+    """
+    verify_elf(data, arch)
+    wide = data[4] == 2
+    header_size, entry_size = (64, 56) if wide else (52, 32)
+    if len(data) < header_size or len(data) > 64 * 1024 * 1024:
+        raise ValueError('invalid AVC ELF size')
+    offset = struct.unpack_from('<Q' if wide else '<I', data, 32 if wide else 28)[0]
+    ehsize, phsize, count = struct.unpack_from('<HHH', data, 52 if wide else 40)
+    if (ehsize != header_size or phsize != entry_size or not 1 <= count <= 256 or
+            offset < header_size or offset + phsize * count > len(data)):
+        raise ValueError('invalid AVC ELF program-header bounds')
+    normalized = bytearray(data)
+    section_offset, section_bytes = (40, 8) if wide else (32, 4)
+    normalized[section_offset:section_offset + section_bytes] = b'\x00' * section_bytes
+    section_sizes = 58 if wide else 46
+    normalized[section_sizes:section_sizes + 6] = b'\x00' * 6
+    loads = []
+    for index in range(count):
+        fields = struct.unpack_from('<IIQQQQQQ' if wide else '<IIIIIIII', data, offset + index * phsize)
+        if wide:
+            type_, flags, file_offset, virtual, physical, file_size, memory_size, align = fields
+        else:
+            type_, file_offset, virtual, physical, file_size, memory_size, flags, align = fields
+        if type_ != 1:
+            continue
+        if file_size > memory_size or file_offset + file_size > len(data):
+            raise ValueError('invalid AVC ELF load-segment bounds')
+        loads.append({'flags': flags, 'offset': file_offset, 'virtual': virtual, 'physical': physical,
+                      'file_size': file_size, 'memory_size': memory_size, 'align': align,
+                      'sha256': hashlib.sha256(normalized[file_offset:file_offset + file_size]).hexdigest()})
+    if (not loads or not any(row['flags'] & 1 for row in loads) or
+            not any(row['offset'] == 0 and row['file_size'] >= header_size for row in loads)):
+        raise ValueError('AVC ELF lacks actual loaded header or executable code')
+    value = {'header': bytes(normalized[:header_size]).hex(),
+             'program_headers_sha256': hashlib.sha256(data[offset:offset + phsize * count]).hexdigest(),
+             'loads': loads}
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
 def inputs(project, sdk, arch, run):
     source(run)
     if arch not in ABIS:
@@ -75,7 +121,7 @@ def inputs(project, sdk, arch, run):
             'module_sha256': sha(module), 'generated_source_sha256': sha(page),
             'sdk_files_sha256': {str(path): sha(path) for path in paths},
             'native_compile_command': compile_command(project, sdk, arch),
-            'native_library_sha256': sha(binary)}
+            'native_library_sha256': sha(binary), 'native_runtime_sha256': runtime_identity(binary.read_bytes(), arch)}
 
 
 def verify_inputs(value, run, arch):
@@ -92,5 +138,5 @@ def verify_hap(path, value, arch):
             raise ValueError('actual signed HAP must contain one exact AVC caller binary')
         data = archive.read(name)
         verify_elf(data, arch)
-        if hashlib.sha256(data).hexdigest() != value['native_library_sha256']:
-            raise ValueError('signed HAP AVC binary differs from actual compiled caller')
+        if runtime_identity(data, arch) != value['native_runtime_sha256']:
+            raise ValueError('HAP loaded AVC code/data differs from the actual compiled caller')

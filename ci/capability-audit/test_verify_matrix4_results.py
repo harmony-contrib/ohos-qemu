@@ -111,7 +111,7 @@ class Matrix4VerifierTests(unittest.TestCase):
                        and isinstance(value, ast.IfExp)]
         self.assertEqual(len(expressions), 1)
         expression = compile(ast.Expression(expressions[0]), 'actual-builder-permissions', 'eval')
-        flags = ('camera_only', 'const_enum_only', 'arkts_exports_only', 'matrix4_only',
+        flags = ('camera_only', 'avc_media_only', 'const_enum_only', 'arkts_exports_only', 'matrix4_only',
                  'factory_objects_only', 'web_factory_only', 'contact_sync_mode_only', 'runtime_enum_only')
         for name in (*flags[1:], 'worker_only'):
             args = SimpleNamespace(router_observer_only=False, network_accounting_only=False, wifi_scan_only=False,
