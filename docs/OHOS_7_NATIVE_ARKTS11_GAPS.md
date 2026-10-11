@@ -60,6 +60,32 @@ HAP 编译通过，报告 `candidate-haps-r39-02.json` SHA256
 `cd4c189eaa55e386cdc0248d1240fb6157213927bc64a6589b2128e70bfe398e`。
 所有 HAP 编译和主机检查不是新包证明；此批尚未启动新的代表包或其余五包。
 
+本轮已提交 `23976609b1759165c92e5e364bd2aadcdb497971`，上下文字节维护提交
+`6f5fc44638896394da4f5e4d14679ec0ee187838`。冻结主机集中回归
+`host-r39-frozen-batch-02.json`：**1554 项、跳过 1 项、245.986 秒，其余通过**，
+输入保持不变；树 SHA256
+`24f3d45356e808633bd5f7971ba8f09fb4cf39cb249629fd14afdde1d05e61bf`，
+日志 SHA256 `c4728100b603426459daba84620cdfa3ac2975c3164a0d20799d2d2021a47cc3`。
+此通过批次不包含下一段追加的 V2/早期失败捕获，追加配方须重新冻结验证。
+
+隔离诊断 `r39-arc-startup-diagnostic-03` 的真实 loadContent callback 成功，
+页面 ready 和实际启动点击完成，但组件布局未出现，仍失败。固定 SDK 与动态
+源码都将真实 Row/ColumnLayoutAlgorithm 标为 `@ObservedV2`；探针却将它放入
+V1 `@State`。下一批改用 `@ComponentV2`/`@Local`，不修改原生类或真实布局断言。
+捕获阶段同时读取真实 native journal，构造失败即失败；失败后保留该日志。
+修正早期签名/编译失败时诊断引用未初始化路径的错误，不掩盖原失败。
+两项新主机回归和原相邻回归通过；实际 typed API26 V2 HAP 编译通过，
+`arc-startup-hap-r39-02.json`，未签名 HAP SHA256
+`cb2d6a6c44bdd2d4a41eda15f07b6993fd6469b8c2fe7787ea09e7e169a630ee`。
+以上仍非组件通过；新的诊断及完整新包待实际结果。
+
+清理仅限两个已关闭、尚未进入应用验证的诊断解压 `images`：
+`r39-arc-startup-diagnostic-01` 和 `r39-arc-startup-diagnostic-02`，约 9.38 GiB
+逻辑文件；保留 R38 归档、原始 boot/失败记录、实际组件失败 guest 和所有当前
+候选。可重新解包取得镜像，但不会恢复已丢弃诊断 guest 的临时运行状态。
+收据 `r39-unused-diagnostic-images-cleanup-20261012.json`，删除前逐一验证路径、
+文件、归档校验和与 QEMU PID 不存在，没有停止或移除无关运行器。
+
 ## R39 网络候选批次：VPN 数组和持久化（未计入闭环）
 
 R38 仍使用冻结输入只构建 ARM64 phone；以下追加候选不会注入该构建或改写

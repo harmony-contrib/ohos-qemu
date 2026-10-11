@@ -4,13 +4,48 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from run_normal_hap_probe import (BUNDLE, PERSONAS, previous_probe_absent, require_normal_identity, result_directory, save_command_output,
                                   reject_terminal_web_failure, run, stop_previous_probe, verifier_arguments)
 
 
 class NormalHapRunnerTests(unittest.TestCase):
+    def test_early_arc_build_failure_preserves_cause_without_uninitialized_app_paths(self):
+        # Simulated orchestration only. No fake SDK/guest is a capability pass.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / 'NOT-an-archive'; archive.write_text('synthetic')
+            sdk = root / 'sdk'
+            for name in ('native', 'ets'):
+                folder = sdk / name; folder.mkdir(parents=True)
+                (folder / 'oh-uni-package.json').write_text(json.dumps(dict(
+                    apiVersion='26', platformVersion='26.0.0', releaseType='Release', version='26.0.0.0')))
+            boot_id = '12345678-1234-1234-1234-123456789abc'
+            calls = []
+            def popen(argv, **kwargs):
+                calls.append(argv)
+                if 'build_hap_probe.py' in str(argv):
+                    return SimpleNamespace(returncode=1, communicate=lambda timeout: ('original build failure', ''))
+                value = ('0\nphone\naarch64\n' if argv[-1] ==
+                         'id -u; param get const.product.devicetype; uname -m' else
+                         boot_id + '\n' if argv[-1] == 'cat /proc/sys/kernel/random/boot_id' else '')
+                return SimpleNamespace(returncode=0, communicate=lambda timeout:
+                    (value, '') if kwargs['text'] else (value.encode(), b''))
+            args = argparse.Namespace(output=root / 'attempt', archive=archive, sdk=sdk, hdc='hdc',
+                persona='arkui-components', target='owned', arch='arm64', device='phone',
+                udid='a' * 64, source_volume='readonly', docker_image='synthetic')
+            with patch('run_normal_hap_probe.subprocess.Popen', side_effect=popen):
+                result = run(args)
+            self.assertEqual(result['status'], 'fail')
+            self.assertEqual(result['failures'], ['command failed: build-fresh-hap'])
+            self.assertTrue(result['same_boot_failure_diagnostics_captured'])
+            self.assertNotIn('failure_diagnostics_error', result)
+            self.assertNotIn('ordinary_result_directory', result)
+            self.assertFalse(any(argv[0] == 'hdc' and argv[-1].startswith('cat /data/app/') for argv in calls))
+
     def test_terminal_web_timeout_fails_even_if_completion_arrives_later(self):
         for marker in ('web.reload.timeout=true', 'web.renderer.recovery.timeout=true'):
             for suffix in ('', '\nweb.execution.complete=true\n'):

@@ -51,11 +51,13 @@ class DynamicModifier implements AttributeModifier<DynamicLayoutAttribute> {
 }
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
-  @State private phase: number = 0;
-  @State private counter: number = 0;
-  @State private algorithm: LayoutAlgorithm | undefined = undefined;
+  @Local private phase: number = 0;
+  @Local private counter: number = 0;
+  // The SDK's real layout algorithms are @ObservedV2 objects. A V1 @State
+  // wrapper is not a valid caller of these V2 objects.
+  @Local private algorithm: LayoutAlgorithm | undefined = undefined;
   private readonly scroller: Scroller = new Scroller();
   private readonly listModifier: ListModifier = new ListModifier();
   private readonly itemModifier: ItemModifier = new ItemModifier();

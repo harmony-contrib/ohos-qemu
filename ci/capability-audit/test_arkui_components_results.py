@@ -109,6 +109,9 @@ class ArkuiComponentTests(unittest.TestCase):
     def test_real_constructor_failure_is_observable_and_ability_is_input_bound(self):
         page = source(NONCE)
         self.assertIn('LayoutAlgorithm | undefined = undefined', page)
+        self.assertIn('@ComponentV2', page)
+        self.assertIn('@Local private algorithm:', page)
+        self.assertNotIn('@State private algorithm:', page)
         self.assertIn('this.algorithm = new RowLayoutAlgorithm();', page)
         self.assertIn("Capture.record('failed', false, [], String(error))", page)
         self.assertNotIn('as LayoutAlgorithm', page)
@@ -169,6 +172,32 @@ class ArkuiComponentTests(unittest.TestCase):
             row = fixture()[0]; row['error'] = 'synthetic native failure'
             with self.assertRaises(ValueError): exercise(UI(), lambda: text([row]), NONCE, 1, path)
             self.assertEqual(json.loads(path.read_text())['captures'], [])
+
+    def test_terminal_constructor_failure_after_real_start_does_not_wait_for_geometry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / 'actions.json'
+            layout = node('components-start', [20, 20, 150, 30])
+            click_path = root / 'actual-fixture-click.json'
+            click_path.write_text(json.dumps(layout))
+            class UI:
+                output = root
+                def click(self, bundle, **kwargs):
+                    return dict(layout=str(click_path), selected_node=select_node(
+                        layout, BUNDLE, identifier='components-start', clickable=True))
+                def layout(self, **kwargs):
+                    raise AssertionError('terminal native failure must not poll geometry')
+            failed = dict(fixture()[0], name='failed', chained=False, error='synthetic actual-constructor failure')
+            observations = iter((text(fixture()[:1]), text([fixture()[0], failed])))
+            with self.assertRaisesRegex(ValueError, 'factory/caller failed: layout'):
+                exercise(UI(), lambda: next(observations), NONCE, 1, path)
+            actions = json.loads(path.read_text())
+            self.assertEqual(len(actions['clicks']), 1)
+            self.assertEqual(actions['captures'], [])
+        with tempfile.TemporaryDirectory() as directory:
+            class UI: output = Path(directory)
+            with self.assertRaises(ValueError):
+                exercise(UI(), lambda: '[]\n', NONCE, 1, Path(directory) / 'actions.json')
 
     def test_factory_compilation_inputs_cannot_disable_sdk_checker_or_add_permissions(self):
         with tempfile.TemporaryDirectory() as directory:

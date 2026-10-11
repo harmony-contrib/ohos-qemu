@@ -484,8 +484,12 @@ def run(args):
                 command([args.hdc, '-t', args.target, 'shell', 'hilog -x'],
                         'failure-actual-hilog', diagnostic_bytes=True)
                 shell('ps -ef', 'failure-actual-processes')
-                if args.persona == 'arkui-components':
-                    startup = app_files + 'arkui-components-' + challenge + '-startup.log'
+                if args.persona == 'arkui-components' and 'ordinary_result_directory' in report:
+                    component_base = report['ordinary_result_directory']
+                    native = component_base + 'arkui-components-' + report['run_id'] + '-results.log'
+                    shell('cat ' + shlex.quote(native) + ' 2>/dev/null',
+                          'failure-actual-component-native', accepted_failure=True)
+                    startup = component_base + 'arkui-components-' + report['run_id'] + '-startup.log'
                     shell('cat ' + shlex.quote(startup) + ' 2>/dev/null',
                           'failure-actual-component-startup', accepted_failure=True)
                 report['same_boot_failure_diagnostics_captured'] = True

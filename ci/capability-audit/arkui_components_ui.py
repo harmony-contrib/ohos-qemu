@@ -74,14 +74,20 @@ def exercise(ui, read_result, run_id, timeout=60, evidence_path=None):
         if evidence_path is not None:
             Path(evidence_path).write_text(json.dumps(actions, indent=2) + '\n')
     save()
+    def checked_rows(text, label):
+        if not text.endswith('\n'):
+            return []
+        rows = [json.loads(line) for line in text.splitlines()]
+        if any(not isinstance(row, dict) or row.get('runId') != run_id or
+               row.get('error') != '' or row.get('chained') is not True for row in rows):
+            raise ValueError('real component factory/caller failed: ' + label)
+        return rows
     def wait_raw(predicate, label):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             text = read_result()
             if text.endswith('\n'):
-                rows = [json.loads(line) for line in text.splitlines()]
-                if any(row.get('runId') != run_id or row.get('error') != '' or row.get('chained') is not True for row in rows):
-                    raise ValueError('real component factory/caller failed: ' + label)
+                rows = checked_rows(text, label)
                 if predicate(rows): return text
             time.sleep(0.1)
         raise ValueError('actual component event timed out: ' + label)
@@ -94,6 +100,9 @@ def exercise(ui, read_result, run_id, timeout=60, evidence_path=None):
         deadline = time.monotonic() + timeout
         last = ''
         while time.monotonic() < deadline:
+            # A factory/algorithm failure after the click is terminal. Preserve
+            # it before unrelated system activity rolls the diagnostic ring.
+            checked_rows(read_result(), f'layout-{phase}-{counter}')
             row = dict(phase=phase, counter=counter)
             actions['attempts'].append(row)
             try:
