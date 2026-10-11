@@ -387,6 +387,7 @@ def run(args):
         personas += ('thermal',)
         personas += ('network-accounting',)
         personas += ('router-observer',)
+        personas += ('observer-info',)
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
@@ -425,6 +426,8 @@ def run(args):
                     check('completion-handler', path, [record])
                 if persona == 'image-metadata':
                     check('image-metadata', path, [record])
+                if persona == 'observer-info':
+                    check('observer-info', path, [record])
                 if persona == 'thermal':
                     check('thermal', path, [record])
                 if persona == 'network-accounting':

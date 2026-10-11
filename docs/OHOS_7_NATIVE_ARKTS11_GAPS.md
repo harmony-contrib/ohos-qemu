@@ -1,5 +1,27 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R37 批次追加：observer 实例和密度上下文（待新包）
+
+固定 ace_engine `e55e178228b9f6388b15d3024e8caf125fa293d7` 未导出两个 SDK class，
+且密度回调只写 density，缺少必需的 UIContext。
+独立组件 `observer_info_classes` 补公开构造、环境隔离/清理及实际回调实例；
+dispatcher 从当前 frontend 取得真实 UIContext，与已有 routerPageUpdate 路径一致。
+不造上下文或密度，不改权限、节点归属、注册/注销和 mutation-safe 分发。
+
+本地 Docker 实际三个 TU × 三 ABI 共 9 个对象通过；
+`observer-info-classes-tu-r37-01.json` SHA256
+`13a45b30c62e925be0c6308a128c183e28444d1751777e15ee47970fddcbd43e`。
+9 项主机回归覆盖真实补丁的构造器生命周期及原始证据篡改/注销边界。
+SDK HAP 首次错误使用 observer.on 注册仅在 UIObserver 声明的断点事件，失败保留；
+改为公开 UIContext.getUIObserver().on/off，未改 SDK 或关闭类型检查。
+最终 `observer-info-hap-r37-03` HAP SHA256
+`de351bf0b9437b61994346ea7240e3332a3d5ce21208bee04f384a46ab3ca556`。
+
+新普通应用探针仅改变自己的 WindowStage：0.5 / 4 的真实密度边界、必需上下文、
+真实断点/getter、两个回调的特定/全部注销、两轮重注册和初始密度恢复。
+首包门禁新增必需 observer-info 运行项；台账只在新归档严格证据通过后记两个 class。
+这些不代表已在 guest 验证；闭环统计仍为 154 / 281，余 127，未启动其余五包。
+
 ## R37 批次追加：DNG / TIFF 类导出和真实解析实例（待新包）
 
 固定 image_framework `711db218c8d1c4d6546b28d8cf466059644dfa77` 的 API 26

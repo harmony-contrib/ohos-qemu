@@ -219,6 +219,7 @@ INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/abi
 CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
 IMAGE_PARTIAL_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/api26_image_partial_type/apply.sh"
 LUMINANCE_NUMERIC_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/luminance_numeric_error/apply.sh"
+OBSERVER_INFO_CLASSES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/observer_info_classes/apply.sh"
 IMAGE_MODEL_CALLBACKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/image_model_callbacks/apply.sh"
 ACCESSIBILITY_BLINK_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/api26_blink_enums/apply.sh"
 ACCESSIBILITY_SCREEN_BLINK_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/screen_blink/apply.sh"
@@ -3052,6 +3053,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_partial_type_component.log"
   bash "${LUMINANCE_NUMERIC_ERROR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_luminance_numeric_error_component.log"
+  bash "${OBSERVER_INFO_CLASSES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_observer_info_classes_component.log"
   bash "${IMAGE_MODEL_CALLBACKS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_model_callbacks_component.log"
   bash "${ACCESSIBILITY_BLINK_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

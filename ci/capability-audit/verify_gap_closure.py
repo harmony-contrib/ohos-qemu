@@ -522,6 +522,26 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'evidence': str(worker[0]), 'sha256': digest(worker[0]),
             'verifier': 'ordinary_worker_context_two_generations_256_actual_words_and_closed_buffer_boundaries',
             'not_claimed': 'main_thread_port_export_TaskPool_sendable_shared_memory_or_all_Worker_APIs'}
+    observer_info = child('observer-info/evidence.json')
+    if observer_info:
+        from verify_observer_info_results import verify_evidence as verify_info
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('observer info closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('observer info proof requires unchanged acceptance package')
+        actual = verify_info(observer_info[1], archive_sha, boot_id, environment['guest_arch'])
+        for contract in actual['closed']:
+            closed[contract] = {'evidence': str(observer_info[0]), 'sha256': digest(observer_info[0]),
+                'verifier': 'ordinary_real_density_context_and_breakpoint_constructor_instances_two_unsubscription_modes',
+                'not_claimed': 'all_observer_ArkUI_APIs_or_other_windows'}
     routed = child('router-observer/evidence.json')
     if routed:
         from verify_router_observer_results import verify_evidence as verify_routed
