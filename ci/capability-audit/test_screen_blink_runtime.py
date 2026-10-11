@@ -14,7 +14,7 @@ import test_screen_blink_results as fixtures
 
 class RuntimeTests(unittest.TestCase):
     def execute(self, directory, *, cleanup_fail=False, stale_repeat=False, caller_exit=False, splash=False,
-                permanent_splash=False):
+                permanent_splash=False, stop_residual=False):
         actual = fixtures.BlinkResultTests().observations()
         nonce = 'a' * 32
         state = dict(active=False, enabled=False, sequence=0, clock=0., single=0)
@@ -62,6 +62,9 @@ class RuntimeTests(unittest.TestCase):
             def screenshot(self, *, label):
                 state['sequence'] += 1
                 on = state['active'] and state['sequence'] % 2 == 0
+                if stop_residual and label == 'stopped' and not state.get('residual_seen'):
+                    on = True
+                    state['residual_seen'] = True
                 if state['single']:
                     on = True
                     state['single'] = 0
@@ -119,6 +122,17 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(result['status'], 'fail')
             self.assertNotIn('master.enabled-control', [p['name'] for p in result['phases']])
             self.assertTrue(any('baseline never' in error for error in result['failures']))
+
+    def test_stop_failure_stays_failed_while_later_cases_run_after_proven_off(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.execute(directory, stop_residual=True, caller_exit=True)
+            self.assertEqual(result['status'], 'fail')
+            self.assertTrue(any(error.startswith('stopped:') for error in result['failures']))
+            phases = [phase['name'] for phase in result['phases']]
+            self.assertIn('stopped-recovery', phases)
+            self.assertIn('single-auto-clear', phases)
+            self.assertIn('caller_exit', result)
+            self.assertTrue(result['cleanup_verified'])
 
     def test_cleanup_failure_cannot_pass(self):
         with tempfile.TemporaryDirectory() as directory:

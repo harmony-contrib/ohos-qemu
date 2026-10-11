@@ -53,7 +53,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
         report['phases'].append(dict(name=name + '-control', selection=selected))
         return observe(name, values, text)
 
-    def capture(name, rect, mode, seconds=5):
+    def capture(name, rect, mode, seconds=5, *, continue_after_restored=False):
         frames = []
         deadline = time.monotonic() + seconds
         while len(frames) < 3 or time.monotonic() < deadline:
@@ -66,7 +66,16 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             time.sleep(.08)
         record = dict(name=name, rect=rect, mode=mode, frames=frames)
         report['phases'].append(record)
-        record['observed'] = verify_frames(frames, rect, mode)
+        try:
+            record['observed'] = verify_frames(frames, rect, mode)
+        except ValueError as error:
+            if not continue_after_restored:
+                raise
+            # Keep the original stop failure red. Only a separate strict off
+            # sequence permits collecting the remaining independent cases.
+            record['failure'] = str(error)
+            report['failures'].append(name + ': ' + str(error))
+            capture(name + '-recovery', rect, 'off', 1)
 
     try:
         initial = observe('ready', [1])
@@ -112,7 +121,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             click('blink-wrong-stop', 'wrong.stop', [2, 0, 1])
             capture('wrong-stop-retains-owner', rect, 'continuous')
             click('blink-stop', 'continuous.stop', [0, 0, 1])
-            capture('stopped', rect, 'off', 1)
+            capture('stopped', rect, 'off', 1, continue_after_restored=True)
             click('blink-stop', 'continuous.stop', [0, 0, 1])
             # Capture immediately after the public single start. A missed pulse
             # is a failed test, not grounds to accept only a return code.
