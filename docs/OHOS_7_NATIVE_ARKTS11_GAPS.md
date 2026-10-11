@@ -44,7 +44,17 @@ RDB/container 在这些主机夹具中明确是替身，不是图库/provider �
 与 release。只修改测试签名角色，不修改镜像权限或数据库；未使用反射成功、伪 provider、
 DB 写操作或原型替换。ARM64 类型调用方 `photo-resultset-hap-r40-02` 已真实编译；01 因
 调用方误用不存在的 ProcessManager.getUid 编译失败，修正为 SDK 已有 uid/euid/pid；
-这两份是编译诊断，随后冻结源码的三 ABI/三角色编译和新包运行仍待完成。
+这两份是编译诊断。随后提交 `fdf3c5fd634939aab24c81cf0cbfeec5786b71d4`
+冻结树 `118b03241b425a234b06fd1b189f1bdcae42d9d89cf38f57ab054d7fb924ccb9`
+的三 ABI/三角色共 9 个真实 API26 HAP 编译均通过，输入不变；报告
+`photo-result-set-compilation-r40-02/evidence.json` SHA256
+`9cf7908239f5781827d18e0f107a2589bdf716227a6ac446e5bc20a53aad12ae`。
+01 控制器在读到冻结主机报告前启动，未进行任何 HAP 编译，启动失败证据保留。
+同冻结树完整主机回归 1656 项、跳过 1 项、325.167 秒，其余通过，输入不变；
+报告 `host-r40-frozen-batch-01.json` SHA256
+`200b3892730d5f55a9a6a3b57cc6154a9b47e5e9d06f65303aaaf533d918f689`，日志
+SHA256 `9b59495e1323f3f766245d621a867b297d251635ef020a96de041b301e0c225b`。
+这些 HAP 尚未签名和运行，新包真实查询验收仍待完成。
 严格重放原始日志、源码/SDK/模块/签名/角色/nonce/archive/boot/ABI，最多关闭 ResultSet，
 不关闭 KnowledgeContent、语义分析、云同步或其他媒体能力。当前尚未关闭该台账项。
 
