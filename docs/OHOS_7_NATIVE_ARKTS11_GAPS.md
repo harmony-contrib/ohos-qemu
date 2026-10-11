@@ -16,6 +16,11 @@
   ARMv7/x86_64 仍待自身完整产品构建，不沿用 ARM64 编译结论。
 - 真实 API26 SDK HAP 编译通过，`photo-context-hap-r35-01`，未签名 HAP SHA256
   `d60527609e0734670bd6154010920b68022161d5bccfd920d28c4ef3f6d549e1`。
+- 提交 `d1de9fe9560d091834a177d05ce4eae8e966f484` 的冻结整批主机回归通过：
+  1444 项、跳过 1 项，242.227 秒；`host-photo-context-frozen-r35-01.json`。
+  冻结树 SHA256 `737c84325c929ffe4e8d6d181624ea32d85ec4b6f6c9e34c89c94b0943a10047`，
+  日志 SHA256 `848390835df09579d0c66d45ee23c0defa76832ef202ab28b64065e671967145`。
+  包含此前 VPN 错误分配修复，不替代新包运行验收。
 - 清理 R13/R14/R18/R19/R20/R24 六个过期压缩归档，释放 5,317,599,232 分配字节；
   这些归档不可本地恢复，日志与既存诊断树保留。原哈希和列表位于
   `retired-superseded-middle-archives-r35-01.json`。R32/R34/R35 未动。
