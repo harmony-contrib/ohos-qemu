@@ -316,14 +316,22 @@ def run(args):
             'vpn-policy-three-roles-and-caller-restart', timeout=6000, env=child_env)
         check('vpn-policy', work / 'vpn-policy/evidence.json', [vpn_record])
         same_guest('after-vpn-policy-cleanup')
-        blink_record = command([sys.executable, Path(__file__).with_name('run_screen_blink_probe.py'),
-            '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
-            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
-            '--boot-id', environment['boot_id'], '--output', work / 'screen-blink',
-            '--source-volume', source_volume, '--docker-image', docker_image],
-            'screen-blink-three-roles-real-pixels-and-cleanup', timeout=6000, env=child_env)
-        check('screen-blink', work / 'screen-blink/evidence.json', [blink_record])
-        same_guest('after-screen-blink-cleanup')
+        def blink_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'screen-blink/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or child.get('cleanup_verified') is not True):
+                    raise ValueError('blink caller/window/settings cleanup unproven; stop batch')
+
+        with independent_probe(report, 'screen-blink', blink_batch_health, save):
+            blink_record = command([sys.executable, Path(__file__).with_name('run_screen_blink_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'screen-blink',
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'screen-blink-three-roles-real-pixels-and-cleanup', timeout=6000, env=child_env)
+            check('screen-blink', work / 'screen-blink/evidence.json', [blink_record])
         def luminance_batch_health(label):
             same_guest(label)
             if label.startswith('after-'):

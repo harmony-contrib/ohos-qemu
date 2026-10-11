@@ -13,7 +13,7 @@ import time
 from build_screen_blink_probe import BUNDLE
 from guest_ui import select_node
 from run_root_probe import digest
-from verify_screen_blink_results import rows, verify_background_restored, verify_frames, verify_initial
+from verify_screen_blink_results import classify_pixels, rows, verify_background_restored, verify_frames, verify_initial
 
 
 def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds=90, *, background=None):
@@ -76,6 +76,31 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             layout, path = ui.layout(bundle=BUNDLE, label='blink-baseline')
             rect = select_node(layout, BUNDLE, identifier='blink-pixel-surface')['rect']
             report['surface'] = dict(layout=str(path), sha256=digest(path), rect=rect)
+            # ArkUI publishes its tree before the starting window disappears.
+            # Establish the real baseline before testing any blink operation;
+            # retain every precondition frame, including the starting window.
+            readiness = dict(name='baseline-readiness', frames=[])
+            report['phases'].append(readiness)
+            deadline = time.monotonic() + wait_seconds
+            consecutive = []
+            while time.monotonic() < deadline:
+                before = time.monotonic()
+                path = ui.screenshot(label='baseline-readiness')
+                frame = dict(path=str(path), sha256=digest(path), before=before, after=time.monotonic())
+                readiness['frames'].append(frame)
+                try:
+                    kind = classify_pixels(path, rect)
+                except ValueError as error:
+                    kind = 'not-baseline'
+                    frame['precondition_error'] = str(error)
+                frame['kind'] = kind
+                consecutive = (consecutive + [frame]) if kind == 'off' else []
+                if len(consecutive) == 3:
+                    verify_frames(consecutive, rect, 'off')
+                    break
+                time.sleep(.1)
+            else:
+                raise ValueError('actual baseline never became stable before blink actions')
             capture('disabled-baseline', rect, 'off', 1)
             click('blink-enable', 'master.enabled', [1], '1')
             # Public settings notification is asynchronous; do not reinterpret

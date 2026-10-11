@@ -6,9 +6,36 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import run_packaged_screen_blink_probe as runner
+import run_screen_blink_probe as child_runner
 
 
 class PackagedBlinkTests(unittest.TestCase):
+    def test_failed_probe_can_only_continue_after_real_state_and_caller_cleanup(self):
+        for restored, stop_error, boot_error, expected in (
+                (True, None, None, True), (False, None, None, False),
+                (True, ValueError('caller still alive'), None, False),
+                (True, None, ValueError('boot changed'), False)):
+            with self.subTest(restored=restored, stop_error=stop_error, boot_error=boot_error):
+                report = dict(status='fail', failures=['original pixel failure'])
+                health = MagicMock(side_effect=boot_error)
+                with patch.object(child_runner, 'stop_previous_probe', side_effect=stop_error,
+                                  return_value={'kernel_process_absent': True}) as stop:
+                    child_runner.finish_cleanup(report, MagicMock(), health, True, restored)
+                    stop.assert_called_once()
+                self.assertEqual(report['cleanup_verified'], expected)
+                self.assertEqual(report['status'], 'fail')
+                self.assertIn('original pixel failure', report['failures'])
+
+    def test_preinstall_failure_does_not_stop_an_unrelated_previous_caller(self):
+        report = dict(status='fail', failures=['build failed'])
+        health = MagicMock()
+        with patch.object(child_runner, 'stop_previous_probe') as stop:
+            child_runner.finish_cleanup(report, MagicMock(), health, False, True)
+            stop.assert_not_called()
+        health.assert_called_once()
+        self.assertTrue(report['cleanup_verified'])
+        self.assertEqual(report['status'], 'fail')
+
     def execute(self, directory, *, failed_probe=False, failed_restore=False):
         guest = MagicMock()
         guest.arch, guest.device, guest.target, guest.udid = 'arm64', 'phone', 'owned', 'a' * 64

@@ -19,11 +19,26 @@ import zipfile
 
 from build_screen_blink_probe import BUNDLE, ROLES, module
 from guest_ui import GuestUi
-from run_normal_hap_probe import APP_FILES, ROOT
+from run_normal_hap_probe import APP_FILES, ROOT, stop_previous_probe
 from run_root_probe import digest
 from screen_blink_runtime import exercise
 from sign_screen_blink_probe import configure_profile
 from verify_screen_blink_results import identity, verify_inputs
+
+
+def finish_cleanup(report, shell, same_guest, installation_attempted, state_restored):
+    report['cleanup_verified'] = False
+    try:
+        if installation_attempted:
+            report['caller_cleanup'] = stop_previous_probe(
+                lambda script, label, accepted_failure=False: shell(script, label, accepted_failure))
+        same_guest('cleanup-boot-identity')
+        if not state_restored:
+            raise ValueError('screen window/settings restoration is unproven')
+        report['cleanup_verified'] = True
+    except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        report['status'] = 'fail'
+        report['failures'].append('owned blink caller cleanup failed: ' + str(error))
 
 
 def run(args):
@@ -33,6 +48,8 @@ def run(args):
                   udid=args.udid, roles={}, commands=[], failures=[],
                   scope='three_roles_actual_screen_pixels_NOT_complete_lifecycle_or_full_gate',
                   first_artifact_behavior_gate_passed=False)
+    installation_attempted = False
+    state_restored = True
 
     def command(argv, label, timeout=90, allow_failure=False):
         argv = list(map(str, argv))
@@ -107,6 +124,7 @@ def run(args):
             verify_inputs(json.loads(inputs.read_text()), nonce, args.arch, role)
             same_guest(role + '-boot')
             command([args.hdc, '-t', args.target, 'uninstall', BUNDLE], role + '-uninstall-own', allow_failure=True)
+            installation_attempted = True
             installed = command([args.hdc, '-t', args.target, 'install', signed], role + '-install')
             if not re.search('success', installed, re.I) or re.search('failed to install', installed, re.I):
                 raise ValueError('blink test installation failed')
@@ -129,6 +147,8 @@ def run(args):
                 time.sleep(2)
                 baseline = ui.screenshot(label='before-owned-caller')
                 background = dict(path=str(baseline), sha256=digest(baseline))
+            if role == 'system':
+                state_restored = False
             if 'start ability successfully' not in shell('aa start -a EntryAbility -b ' + BUNDLE,
                     role + '-launch').lower():
                 raise ValueError('blink caller did not launch')
@@ -143,6 +163,9 @@ def run(args):
                               identity_path.read_text(), args.wait_seconds, background=background)
             evidence = output / 'runtime/evidence.json'
             record.update(status=result['status'], runtime=str(evidence), runtime_sha256=digest(evidence))
+            record['cleanup_verified'] = result['cleanup_verified']
+            if role == 'system':
+                state_restored = result['cleanup_verified'] is True
             if result['status'] != 'pass' or not result['cleanup_verified']:
                 raise ValueError('blink role failed or cleanup is unproven: ' + role)
             shell('aa force-stop ' + BUNDLE, role + '-stop-owned-caller')
@@ -153,6 +176,7 @@ def run(args):
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
         report['failures'].append(str(error))
     finally:
+        finish_cleanup(report, shell, same_guest, installation_attempted, state_restored)
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 

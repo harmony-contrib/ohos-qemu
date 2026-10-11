@@ -13,7 +13,8 @@ import test_screen_blink_results as fixtures
 
 
 class RuntimeTests(unittest.TestCase):
-    def execute(self, directory, *, cleanup_fail=False, stale_repeat=False, caller_exit=False):
+    def execute(self, directory, *, cleanup_fail=False, stale_repeat=False, caller_exit=False, splash=False,
+                permanent_splash=False):
         actual = fixtures.BlinkResultTests().observations()
         nonce = 'a' * 32
         state = dict(active=False, enabled=False, sequence=0, clock=0., single=0)
@@ -65,7 +66,10 @@ class RuntimeTests(unittest.TestCase):
                     on = True
                     state['single'] = 0
                 path = Path(directory) / f"frame-{state['sequence']}.png"
-                Image.new('RGB', (200, 200), (130, 140, 36) if on else (32, 48, 64)).save(path)
+                color = (130, 140, 36) if on else (32, 48, 64)
+                if permanent_splash or (splash and state['sequence'] == 1):
+                    color = (255, 255, 255)
+                Image.new('RGB', (200, 200), color).save(path)
                 return path
 
         def clock():
@@ -101,6 +105,20 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(result['status'], 'pass', result['failures'])
             self.assertTrue(result['cleanup_verified'])
             self.assertFalse(result['first_artifact_behavior_gate_passed'])
+
+    def test_starting_window_wait_is_only_a_precondition_and_is_recorded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.execute(directory, splash=True)
+            self.assertEqual(result['status'], 'pass', result['failures'])
+            readiness = next(p for p in result['phases'] if p['name'] == 'baseline-readiness')
+            self.assertEqual([f['kind'] for f in readiness['frames']], ['not-baseline', 'off', 'off', 'off'])
+
+    def test_permanent_starting_window_cannot_pass_or_start_blinking(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.execute(directory, permanent_splash=True)
+            self.assertEqual(result['status'], 'fail')
+            self.assertNotIn('master.enabled-control', [p['name'] for p in result['phases']])
+            self.assertTrue(any('baseline never' in error for error in result['failures']))
 
     def test_cleanup_failure_cannot_pass(self):
         with tempfile.TemporaryDirectory() as directory:
