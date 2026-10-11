@@ -1,5 +1,28 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R35 代表归档已生成，完整新包回归进行中
+
+仅 ARM64 phone，冻结提交 `c0c5423ebe1f32404b9973918d921d12fb88dab2`：
+
+`/Volumes/PSSD/qemu/packages/first-batch-data-classes-7.0-release-20261011-r35/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`
+
+SHA256 `bee48716792251eccb050c47020231c13e4f78c46d11beb64263b54a5b086a8a`。
+`r35-representative-build-01.json` 确认本地 Docker 构建与打包返回 0；镜像离线 ABI 检查
+通过，但这不是运行门禁。完整回归控制器已核对新归档哈希与冻结主机结果，从
+`/Volumes/PSSD/qemu/build-inputs/phone-HFRwT9` 执行：
+
+```sh
+bash scripts/validate_packaged_qemu.sh \
+  --package-archive /Volumes/PSSD/qemu/packages/first-batch-data-classes-7.0-release-20261011-r35/openharmony-qemu-arm64-arm64_virt-phone.tar.gz \
+  --package-directory /Volumes/PSSD/qemu/packages/first-batch-data-classes-7.0-release-20261011-r35/openharmony-qemu-arm64-arm64_virt-phone \
+  --evidence-output /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r35-independent-full-runtime-01.json
+```
+
+沿用 API26 Release SDK `provider-sdk-26-full/26.0.0` 和既有测试 venv；实际启动命令、
+QEMU/guest 身份、boot ID 与各项结果由该新运行记录。当前状态仍为进行中，
+`first_artifact_behavior_gate_passed=false`。**其余五包未启动，不能以离线检查放行。**
+R35 不含后续 VPN 和六个照片记录候选；也没有把这些候选提前计入关闭数量。
+
 ## 同批补充 ContextRecoveryInfo（未关闭运行缺口）
 
 公开 photoAccessHelper 未导出 SDK 声明的 `ContextRecoveryInfo`。在照片数据类组件中
