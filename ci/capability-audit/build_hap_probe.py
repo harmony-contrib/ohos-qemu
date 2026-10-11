@@ -108,6 +108,12 @@ parser.add_argument('--observer-info-only', action='store_true',
                     help='Observe actual density UIContext and layout breakpoint class instances')
 parser.add_argument('--spring-loading-only', action='store_true',
                     help='Build ordinary real-input spring context lifecycle caller; needs a physical-input runner')
+parser.add_argument('--arkui-components-only', action='store_true',
+                    help='Build actual typed Arc and dynamic-layout factories; requires real UI/compositor proof')
+parser.add_argument('--hvigor-home', type=Path, default=Path(os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor')))
+parser.add_argument('--node-home', type=Path, default=Path(os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node')))
 parser.add_argument('--image-metadata-only', action='store_true',
                     help='Read actual DNG/TIFF/AVIS factory metadata from pinned upstream fixtures')
 parser.add_argument('--image-metadata-fixtures', type=Path)
@@ -132,11 +138,11 @@ dedicated_contract_only = args.curve_only or args.binding_only or args.storage_s
 dedicated_contract_only = dedicated_contract_only or args.completion_handler_only or args.thermal_only
 dedicated_contract_only = dedicated_contract_only or args.image_metadata_only or args.wifi_scan_only or args.network_accounting_only
 dedicated_contract_only = dedicated_contract_only or args.router_observer_only or args.observer_info_only
-dedicated_contract_only = dedicated_contract_only or args.spring_loading_only
+dedicated_contract_only = dedicated_contract_only or args.spring_loading_only or args.arkui_components_only
 if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only or dedicated_contract_only) or
                                      not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
     parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
-if sum((args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
+if sum((args.arkui_components_only, args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
         args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.storage_stats_only, args.optional_phone_profile_only, args.photos_recent_only, args.photos_asset_only, args.settings_navigation_only)) > 1:
     parser.error("provider and ordinary probe personas are mutually exclusive")
 if args.image_metadata_only and args.image_metadata_fixtures is None:
@@ -2101,6 +2107,32 @@ if args.spring_loading_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write('entry/src/main/ets/pages/Index.ets', spring_source(challenge))
     write('spring-loading-probe-inputs.json', spring_inputs(root, args.sdk, args.arch, challenge))
+if args.arkui_components_only:
+    from arkui_components_contract import source as components_source, inputs as components_inputs
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/pages/Index.ets', components_source(challenge))
+    # Imported @uicomponent factories require the official API26 UI transform.
+    # Do not bypass the checker or replace these components with fake aliases.
+    hvigor = args.hvigor_home.resolve()
+    if not (hvigor / 'bin/hvigorw').is_file() or not (args.node_home / 'bin/node').is_file():
+        raise ValueError('actual official Hvigor/Node required for imported ArkUI components')
+    write('build-profile.json5', {'app': {'products': [{'name': 'default',
+        'compileSdkVersion': '26.0.0', 'targetSdkVersion': '26.0.0', 'compatibleSdkVersion': '26.0.0',
+        'runtimeOS': 'OpenHarmony'}], 'buildModeSet': [{'name': 'debug'}, {'name': 'release'}]},
+        'modules': [{'name': 'entry', 'srcPath': './entry',
+                     'targets': [{'name': 'default', 'applyToProducts': ['default']}]}]})
+    plugin = str(hvigor / 'hvigor-ohos-plugin')
+    write('hvigorfile.ts', "import { appTasks } from '" + plugin + "';\nexport default { system: appTasks, plugins: [] };\n")
+    write('entry/hvigorfile.ts', "import { hapTasks } from '" + plugin + "';\nexport default { system: hapTasks, plugins: [] };\n")
+    write('hvigor/hvigor-config.json5', {'modelVersion': '6.0.0', 'dependencies': {},
+        'execution': {'daemon': False, 'parallel': False}, 'logging': {'level': 'info'}})
+    write('local.properties', 'sdk.dir=' + str(args.sdk.parent) + '\n')
+    ordinary_module = json.loads((root / 'entry/src/main/module.json5').read_text())
+    # OpenHarmony's official SDK uses default (standard devices), not the
+    # HarmonyOS-only phone profile spelling. Do not alter SDK SysCaps.
+    ordinary_module['module']['deviceTypes'] = ['default']
+    write('entry/src/main/module.json5', ordinary_module)
+    write('arkui-components-probe-inputs.json', components_inputs(root, args.sdk, args.arch, challenge))
 if args.storage_stats_only:
     from storage_stats_contract import TEMPLATE, inputs as storage_inputs
     challenge = args.probe_run_id or uuid.uuid4().hex
@@ -2356,18 +2388,23 @@ if args.runtime_enum_only or args.curve_only:
                '-fno-exceptions', '-fno-rtti', '-nostdlib++',
                str(Path(__file__).with_name('runtime_enum_hap_probe.cpp')), '-lace_napi.z',
                '-o', str(libs / 'libruntimeenumprobe.so')]
-if not (args.spring_loading_only or args.observer_info_only or args.router_observer_only or args.network_accounting_only or args.wifi_scan_only or args.image_metadata_only or args.thermal_only or args.completion_handler_only or args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):
+if not (args.arkui_components_only or args.spring_loading_only or args.observer_info_only or args.router_observer_only or args.network_accounting_only or args.wifi_scan_only or args.image_metadata_only or args.thermal_only or args.completion_handler_only or args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):
     subprocess.run(command, check=True)
     if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only or args.runtime_enum_only or args.curve_only):
         shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")
 
 environment = dict(os.environ, OHOS_SDK_HOME=str(args.sdk))
-subprocess.run(
-    [args.arkdown, "build", "--project", str(root), "--target", "hap", "--mode", "debug"],
-    cwd=root,
-    env=environment,
-    check=True,
-)
+if args.arkui_components_only:
+    subprocess.run([str(hvigor / 'bin/hvigorw'), 'assembleHap', '--no-daemon',
+                   '-p', 'product=default', '-p', 'buildMode=debug'], cwd=root,
+        env=dict(environment, OHOS_SDK_HOME=str(args.sdk.parent), NODE_HOME=str(args.node_home.resolve())), check=True)
+else:
+    subprocess.run(
+        [args.arkdown, "build", "--project", str(root), "--target", "hap", "--mode", "debug"],
+        cwd=root,
+        env=environment,
+        check=True,
+    )
 output = root / "entry/build/default/outputs/default"
 if minimal_app:
     # The Rust signing helper does not emit the code-sign block required by

@@ -389,6 +389,7 @@ def run(args):
         personas += ('router-observer',)
         personas += ('observer-info',)
         personas += ('spring-loading',)
+        personas += ('arkui-components',)
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
@@ -431,6 +432,8 @@ def run(args):
                     check('observer-info', path, [record])
                 if persona == 'spring-loading':
                     check('spring-loading', path, [record])
+                if persona == 'arkui-components':
+                    check('arkui-components', path, [record])
                 if persona == 'thermal':
                     check('thermal', path, [record])
                 if persona == 'network-accounting':

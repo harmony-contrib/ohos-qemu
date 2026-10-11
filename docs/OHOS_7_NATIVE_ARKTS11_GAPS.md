@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R38 追加：SDK 组件工厂、真实滚动和动态布局严格回归（未闭环）
+
+ArcList/ArcListItem、ArcScrollBar、DynamicLayout 的 Attribute/Instance 在 SDK
+中描述组件工厂的属性类型，不能用伪造同名构造器修复。新增普通无权限、真实
+API 26 ArkTS 1.1 调用，使用四种 AttributeModifier 的真实实例链式属性、
+ArcList 滚动到最后项、RowLayoutAlgorithm 切换 ColumnLayoutAlgorithm，
+要求两次真实子节点点击的计数和公开 FrameNode 身份不变。UITest 节点几何与
+真实 compositor PNG 同时验证颜色、滚动项、滚动条及横向/纵向布局；保存每次
+尝试和原始回调前缀，失败也保留部分动作证据。首包门禁和台账独立重放文件、
+普通身份、SDK/源输入、归档/boot/ABI/画像绑定，不接受汇总代替实际证明。
+
+早期编译暴露 ArkTS 不支持 typeof Instance 注解、Arkdown 不支持导入组件的
+官方 UI transform、SDK API26 版本必须使用 26.0.0、OpenHarmony 标准设备
+使用 default 画像。四次失败保留；改用官方 Hvigor 6.26.4 标准 appTasks/hapTasks，
+没有修改 SDK、关闭检查器或新增权限。`arkui-components-hap-r38-06` 编译成功，
+未签名 HAP SHA256 `1345b2c3a061ae32c31bcc124a7742f3824598afb306dd3aa68756abb092b0c3`。
+7 项新增主机拒绝夹具通过，不是 guest 行为证据；八项候选契约仍未消除。
+
+完整 Spring 冻结主机批次 `host-r38-frozen-batch-03`：1514 项、跳过 1 项通过，
+源提交 `b24bf6e16aa4fd3c84e21c921fc7705b45c3d3ad`，树 SHA256
+`09e7b9f0604c9b73a2062663c6b469f36407c68f8bb3d9872af10cf0e19b2f7c`，
+日志 SHA256 `277664b8a48c187d96acbd6f53c8b89fe4ae5015193206b6261f54ff5212723b`。
+该通过批次不包含本节新组件测试；追加批次需重新冻结回归。
+
 ## R38 批次候选：真实 SpringLoadingContext 和三处 SDK 边界
 
 R37 仍只构建已冻结的 ARM64 phone，不追改该构建输入，不放行其余五包。
@@ -52,7 +76,7 @@ abort helper，覆盖 env 隔离、NAPI 失败恢复、配置默认值/截断、
 HAP 编译或主机成功消除 SpringLoadingContext 契约。
 统计仍是 R36 的 154 / 281 闭环、127 项未闭环，没有六包交付。
 
-## R37 合并批次已冻结预检，代表包构建中
+## R37 合并批次已冻结预检，代表包已打包并启动完整验证
 
 提交 `a72eddc716d6542274ff7e8bfa5bb9e7aebfc43b`，包含亮度数字错误、DNG/TIFF
 类与解析实例、observer 真实类和密度 UIContext。
@@ -61,9 +85,18 @@ HAP 编译或主机成功消除 SpringLoadingContext 契约。
 集中主机回归 1497 项、跳过 1 项，242.046 秒，其余通过，输入复核未变化；
 日志 SHA256 `2110c88bb3e3be75ac72b57869355b7477691ec473955fbca47ceb09a72b602a`。
 构建独立冻结 `/Volumes/PSSD/qemu/build-inputs/phone-fiGUQO`，内容树与已通过主机批次相同。
-只启动 ARM64 phone 本地 Docker；预期归档为
+只构建 ARM64 phone 本地 Docker；实际归档为
 `/Volumes/PSSD/qemu/packages/first-api26-metadata-observer-7.0-release-20261011-r37/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
-目前仍在构建，不能提供不存在的归档校验和，也不放行其余五包。
+构建完成、归档 SHA256
+`5c365c5fffbeecf8e36773b78c504f965003b1a375c84139a68e16d4ba2c5ebd`。
+使用冻结配方运行 `scripts/validate_packaged_qemu.sh --package-archive` 和上述路径、
+`--package-directory` 指向对应解压目录、`--evidence-output` 指向
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r37-bound-full-runtime-01.json`。
+当前新启动 acceptance guest 为 ARM64/HVF、phone、API26 Release SDK，
+boot ID `23f1dd8a-62ff-4585-97d6-26fd2172158b`，HDC `127.0.0.1:54383`。
+完整回归仍在执行：ArkWeb 和 Vulkan 窗口呈现已通过；Blink system 清理证明及
+Luminance UI 节点验证失败，等待本批结束后集中诊断。不能以单项通过宣布首包门槛
+或整个画像通过；其余五包不放行。R38 Spring 不在此归档。
 
 清理已停机 R34 `_562b0zu`、R35 `px9c57k7` 的 images 副本；原归档、全部运行
 证据、最新 R36 及无关 zig-napi guest 保留。旧运行 userdata 不可恢复，原始镜像可

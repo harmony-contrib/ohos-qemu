@@ -563,6 +563,28 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(spring[0]), 'sha256': digest(spring[0]),
                 'verifier': 'ordinary_real_class_and_four_QMP_hover_cycles_config_abort_cancel_and_reentry',
                 'not_claimed': 'full_drag_MSDP_or_cross_app_UDMF_backend'}
+    components = child('arkui-components/evidence.json')
+    if components:
+        from verify_arkui_components_results import verify_evidence as verify_components
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('component closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('component proof requires unchanged actual acceptance package')
+        actual = verify_components(components[1], archive_sha, boot_id, environment['guest_arch'],
+                                   device_type, environment.get('target'))
+        for contract in actual['closed']:
+            closed[contract] = {'evidence': str(components[0]), 'sha256': digest(components[0]),
+                'verifier': 'ordinary_typed_native_Arc_factories_scroll_and_painted_dynamic_layout_preserved_frames',
+                'resolution': actual['resolution'],
+                'not_claimed': actual['not_claimed']}
     routed = child('router-observer/evidence.json')
     if routed:
         from verify_router_observer_results import verify_evidence as verify_routed
