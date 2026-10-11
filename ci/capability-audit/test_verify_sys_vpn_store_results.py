@@ -122,7 +122,8 @@ class VerifySysVpnStoreTests(unittest.TestCase):
         for role in ('normal', 'system-denied'):
             value = rows(role, 'denial'); value[1]['values'] = [0, 0, 0]
             with self.assertRaises(ValueError): self.check(value, role, 'denial')
-        for key, changed in ((name, changed) for name in ('invalid.prefix', 'invalid.route.0', 'invalid.route.1')
+        for key, changed in ((name, changed) for name in ('invalid.prefix', 'invalid.route.0', 'invalid.route.1',
+                                 'invalid.family.0', 'invalid.family.1', 'invalid.family.2', 'invalid.family.3')
                              for changed in ([0, 0, 0], [1, '401', 1])):
             value = rows('system', 'seed'); next(row for row in value if row['name'] == key)['values'] = changed
             with self.assertRaises(ValueError): self.check(value)
@@ -135,6 +136,16 @@ class VerifySysVpnStoreTests(unittest.TestCase):
         seed, restarted = rows('system', 'seed'), rows('system', 'restart')
         with self.assertRaises(ValueError): verify_restart(seed, restarted)
         restarted[0]['values'][2] += 1; verify_restart(seed, restarted)
+
+    def test_default_and_undefined_families_require_real_readback_and_both_optional_paths(self):
+        source = page(RUN, 'system')
+        self.assertIn('await this.defaultFamily(false)', source)
+        self.assertIn('await this.defaultFamily(true)', source)
+        for name in ('default-family.get.0', 'default-family.list.0', 'undefined-family.get.0', 'undefined-family.list.0'):
+            value = rows('system', 'seed'); target = next(row for row in value if row['name'] == name)
+            config = json.loads(target['config']); config['addresses'][0]['address']['family'] = 0
+            target['config'] = json.dumps(config)
+            with self.subTest(name=name), self.assertRaises(ValueError): self.check(value)
 
     def test_missing_reordered_failed_foreign_root_and_extra_observations_fail_closed(self):
         value = rows('system', 'seed')

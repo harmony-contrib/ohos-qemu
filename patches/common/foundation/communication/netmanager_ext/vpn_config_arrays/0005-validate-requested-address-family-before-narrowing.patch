@@ -1,0 +1,485 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/context/setup_context.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/context/setup_context.cpp
+index 518ba34..3ebc394 100644
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/context/setup_context.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/context/setup_context.cpp
+@@ -1,31 +1,32 @@
+ /*
+  * Copyright (c) 2023 Huawei Device Co., Ltd.
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *     http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+ 
+ #include "setup_context.h"
+ 
++#include <cmath>
+ #include <new>
+ #include <string>
+ #include <vector>
+ 
+ #include "inet_addr.h"
+ #include "napi_utils.h"
+ #include "net_manager_constants.h"
+ #include "netmanager_base_common_utils.h"
+ #include "netmgr_ext_log_wrapper.h"
+ #include "route.h"
+ #ifdef SUPPORT_SYSVPN
+ #include "sysvpn_config.h"
+ #include "vpn_config_utils.h"
+ #endif // SUPPORT_SYSVPN
+@@ -174,18 +175,33 @@ bool SetUpContext::ParseVpnConfig(napi_value *params)
+ 
+ static bool ParseAddressFamily(napi_env env, napi_value netAddress, uint8_t &family)
+ {
+-    // The value is 1 for IPv4 and 2 for IPv6. The default value is 1.
+-    if (!NapiUtils::HasNamedProperty(env, netAddress, NET_FAMILY)) {
++    // Validate the SDK number before narrowing; 257/258 are not IPv4/IPv6.
++    bool present = false;
++    if (napi_has_named_property(env, netAddress, NET_FAMILY, &present) != napi_ok) {
++        return false;
++    }
++    if (!present) {
+         family = NET_FAMILY_IPV4;
+         return true;
+     }
+-    GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, family);
+-    if (family == NET_FAMILY_IPV4 || family == NET_FAMILY_IPV6) {
++    napi_value value = nullptr;
++    napi_valuetype type = napi_undefined;
++    if (napi_get_named_property(env, netAddress, NET_FAMILY, &value) != napi_ok ||
++        napi_typeof(env, value, &type) != napi_ok) {
++        return false;
++    }
++    if (type == napi_undefined) {
++        family = NET_FAMILY_IPV4;
+         return true;
+-    } else {
+-        NETMGR_EXT_LOG_E("family %{public}u is mismatch", family);
++    }
++    double requested = 0;
++    if (type != napi_number || napi_get_value_double(env, value, &requested) != napi_ok ||
++        !std::isfinite(requested) || std::trunc(requested) != requested ||
++        (requested != NET_FAMILY_IPV4 && requested != NET_FAMILY_IPV6)) {
+         return false;
+     }
++    family = static_cast<uint8_t>(requested);
++    return true;
+ }
+ 
+ static bool ParseAddress(napi_env env, napi_value address, struct INetAddr &iNetAddr)
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+index 357ccb0..80a016f 100644
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+@@ -285,55 +285,89 @@ sptr<OpenvpnConfig> CreateAndParseOpenvpnConf(napi_env env, napi_value config)
+     return openvpnConfig;
+ }
+ 
++static bool ParseAddressFamily(napi_env env, napi_value netAddress, uint8_t &family)
++{
++    // Validate the SDK number before narrowing; 257/258 are not IPv4/IPv6.
++    bool present = false;
++    if (napi_has_named_property(env, netAddress, NET_FAMILY, &present) != napi_ok) {
++        return false;
++    }
++    if (!present) {
++        family = 1;
++        return true;
++    }
++    napi_value value = nullptr;
++    napi_valuetype type = napi_undefined;
++    if (napi_get_named_property(env, netAddress, NET_FAMILY, &value) != napi_ok ||
++        napi_typeof(env, value, &type) != napi_ok) {
++        return false;
++    }
++    if (type == napi_undefined) {
++        family = 1;
++        return true;
++    }
++    double requested = 0;
++    if (type != napi_number || napi_get_value_double(env, value, &requested) != napi_ok ||
++        !std::isfinite(requested) || std::trunc(requested) != requested ||
++        (requested != 1 && requested != 2)) {
++        return false;
++    }
++    family = static_cast<uint8_t>(requested);
++    return true;
++}
++
+ bool ParseAddress(napi_env env, napi_value address, struct INetAddr &iNetAddr)
+ {
+     napi_value netAddress = NapiUtils::GetNamedProperty(env, address, NET_ADDRESS);
+     if (NapiUtils::GetValueType(env, netAddress) != napi_object) {
+         NETMGR_EXT_LOG_E("param address type is mismatch");
+         return false;
+     }
+ 
+     if (!GetStringFromJsMandatoryItem(env, netAddress, NET_ADDRESS, iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("get address-address failed");
+         return false;
+     }
+ 
++    if (!ParseAddressFamily(env, netAddress, iNetAddr.family_)) {
++        return false;
++    }
++
+     bool isIpv6 = CommonUtils::IsValidIPV6(iNetAddr.address_);
+     if (!isIpv6) {
+         if (!CommonUtils::IsValidIPV4(iNetAddr.address_)) {
+             NETMGR_EXT_LOG_W("invalid ip address, might be a domain");
+             GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+             return true;
+         }
+     }
+ 
+-    GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, iNetAddr.family_);
+     GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+ 
+     if (NapiUtils::GetValueType(env, NapiUtils::GetNamedProperty(env, address, NET_PREFIXLENGTH)) != napi_number) {
+         NETMGR_EXT_LOG_E("param NET_PREFIXLENGTH type is mismatch");
+         return false;
+     }
+     double prefixValue = 0;
+     if (napi_get_value_double(env, NapiUtils::GetNamedProperty(env, address, NET_PREFIXLENGTH),
+         &prefixValue) != napi_ok || !std::isfinite(prefixValue) || std::trunc(prefixValue) != prefixValue ||
+         prefixValue <= 0 || prefixValue >= (isIpv6 ? IPV6_NET_PREFIX_MAX_LENGTH : NET_MASK_MAX_LENGTH)) {
+         NETMGR_EXT_LOG_E("prefixlen_ error");
+         return false;
+     }
+     // The prefix describes the network, not the bits of the IPv6 host address.
+     // Validate the original number before narrowing it to the native field.
+     uint32_t prefix = static_cast<uint32_t>(prefixValue);
+     iNetAddr.prefixlen_ = static_cast<uint8_t>(prefix);
+     if (!isIpv6) {
+         uint32_t maskUint = (0xFFFFFFFF << (NET_MASK_MAX_LENGTH - prefix));
+         uint32_t ipAddrUint = CommonUtils::ConvertIpv4Address(iNetAddr.address_);
+         uint32_t subNetAddress = ipAddrUint & maskUint;
+         uint32_t boardcastAddress = subNetAddress | (~maskUint);
+         if ((ipAddrUint == subNetAddress) || (ipAddrUint == boardcastAddress)) {
+             NETMGR_EXT_LOG_E("invalid ip address");
+             return false;
+         }
+     }
+     return true;
+ }
+@@ -341,40 +375,42 @@ bool ParseAddress(napi_env env, napi_value address, struct INetAddr &iNetAddr)
+ bool ParseDestination(napi_env env, napi_value jsRoute, struct INetAddr &iNetAddr)
+ {
+     napi_value destination = NapiUtils::GetNamedProperty(env, jsRoute, NET_DESTINATION);
+     if (NapiUtils::GetValueType(env, destination) != napi_object) {
+         NETMGR_EXT_LOG_E("param destination type is mismatch");
+         return false;
+     }
+ 
+     napi_value netAddress = NapiUtils::GetNamedProperty(env, destination, NET_ADDRESS);
+     if (NapiUtils::GetValueType(env, netAddress) != napi_object) {
+         NETMGR_EXT_LOG_E("param address type is mismatch");
+         return false;
+     }
+ 
+     if (!GetStringFromJsMandatoryItem(env, netAddress, NET_ADDRESS, iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("get destination-address failed");
+         return false;
+     }
+ 
+     if (!CommonUtils::IsValidIPV4(iNetAddr.address_) && !CommonUtils::IsValidIPV6(iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("invalid ip address");
+         return false;
+     }
+ 
+-    GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, iNetAddr.family_);
++    if (!ParseAddressFamily(env, netAddress, iNetAddr.family_)) {
++        return false;
++    }
+     GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+     napi_value prefix = NapiUtils::GetNamedProperty(env, destination, NET_PREFIXLENGTH);
+     double requestedPrefix = 0;
+     const int32_t maxPrefix = CommonUtils::IsValidIPV6(iNetAddr.address_)
+         ? IPV6_NET_PREFIX_MAX_LENGTH : NET_MASK_MAX_LENGTH;
+     if (NapiUtils::GetValueType(env, prefix) != napi_number ||
+         napi_get_value_double(env, prefix, &requestedPrefix) != napi_ok ||
+         !std::isfinite(requestedPrefix) || std::trunc(requestedPrefix) != requestedPrefix ||
+         requestedPrefix < 0 || requestedPrefix > maxPrefix) {
+         NETMGR_EXT_LOG_E("invalid route prefixLength");
+         return false;
+     }
+     iNetAddr.prefixlen_ = static_cast<uint8_t>(requestedPrefix);
+     return true;
+ }
+@@ -382,17 +418,19 @@ bool ParseDestination(napi_env env, napi_value jsRoute, struct INetAddr &iNetAdd
+ bool ParseGateway(napi_env env, napi_value jsRoute, struct INetAddr &iNetAddr)
+ {
+     napi_value gateway = NapiUtils::GetNamedProperty(env, jsRoute, NET_GATEWAY);
+     if (NapiUtils::GetValueType(env, gateway) != napi_object) {
+         NETMGR_EXT_LOG_E("param gateway type is mismatch");
+         return false;
+     }
+ 
+     if (!GetStringFromJsMandatoryItem(env, gateway, NET_ADDRESS, iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("get gateway-address failed");
+         return false;
+     }
+ 
+-    GetUint8FromJsOptionItem(env, gateway, NET_FAMILY, iNetAddr.family_);
++    if (!ParseAddressFamily(env, gateway, iNetAddr.family_)) {
++        return false;
++    }
+     GetUint8FromJsOptionItem(env, gateway, NET_PORT, iNetAddr.port_);
+     return true;
+ }
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/context/setup_context_ext.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/context/setup_context_ext.cpp
+index ceb1943..de9d3cf 100644
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/context/setup_context_ext.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/context/setup_context_ext.cpp
+@@ -1,27 +1,28 @@
+ /*
+  * Copyright (c) 2023 Huawei Device Co., Ltd.
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *     http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+ 
+ #include "setup_context_ext.h"
+ 
++#include <cmath>
+ #include <new>
+ #include <string>
+ #include <vector>
+ 
+ #include "inet_addr.h"
+ #include "napi_utils.h"
+ #include "net_manager_constants.h"
+ #include "netmanager_base_common_utils.h"
+ #include "netmgr_ext_log_wrapper.h"
+ #include "vpn_config_utils_ext.h"
+@@ -182,18 +183,33 @@ bool SetUpContext::ParseVpnConfig(napi_value *params)
+ 
+ static bool ParseAddressFamily(napi_env env, napi_value netAddress, uint8_t &family)
+ {
+-    // The value is 1 for IPv4 and 2 for IPv6. The default value is 1.
+-    if (!NapiUtils::HasNamedProperty(env, netAddress, NET_FAMILY)) {
++    // Validate the SDK number before narrowing; 257/258 are not IPv4/IPv6.
++    bool present = false;
++    if (napi_has_named_property(env, netAddress, NET_FAMILY, &present) != napi_ok) {
++        return false;
++    }
++    if (!present) {
+         family = NET_FAMILY_IPV4;
+         return true;
+     }
+-    GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, family);
+-    if (family == NET_FAMILY_IPV4 || family == NET_FAMILY_IPV6) {
++    napi_value value = nullptr;
++    napi_valuetype type = napi_undefined;
++    if (napi_get_named_property(env, netAddress, NET_FAMILY, &value) != napi_ok ||
++        napi_typeof(env, value, &type) != napi_ok) {
++        return false;
++    }
++    if (type == napi_undefined) {
++        family = NET_FAMILY_IPV4;
+         return true;
+-    } else {
+-        NETMGR_EXT_LOG_E("family %{public}u is mismatch", family);
++    }
++    double requested = 0;
++    if (type != napi_number || napi_get_value_double(env, value, &requested) != napi_ok ||
++        !std::isfinite(requested) || std::trunc(requested) != requested ||
++        (requested != NET_FAMILY_IPV4 && requested != NET_FAMILY_IPV6)) {
+         return false;
+     }
++    family = static_cast<uint8_t>(requested);
++    return true;
+ }
+ 
+ static bool ParseAddress(napi_env env, napi_value address, struct INetAddr &iNetAddr)
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_config_utils_ext.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_config_utils_ext.cpp
+index edc2224..498dc2f 100644
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_config_utils_ext.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_config_utils_ext.cpp
+@@ -1,22 +1,24 @@
+ /*
+  * Copyright (c) 2025 Huawei Device Co., Ltd.
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *     http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+ 
+ #include "vpn_config_utils_ext.h"
+ 
++#include <cmath>
++
+ #include "napi_utils.h"
+ #include "inet_addr.h"
+ #include "net_manager_constants.h"
+ #include "netmanager_base_common_utils.h"
+ #include "netmgr_ext_log_wrapper.h"
+@@ -317,55 +319,89 @@ bool GetU8VectorFromJsOptionItem(const napi_env env, const napi_value config, co
+     return true;
+ }
+ 
++static bool ParseAddressFamily(napi_env env, napi_value netAddress, uint8_t &family)
++{
++    // Validate the SDK number before narrowing; 257/258 are not IPv4/IPv6.
++    bool present = false;
++    if (napi_has_named_property(env, netAddress, NET_FAMILY, &present) != napi_ok) {
++        return false;
++    }
++    if (!present) {
++        family = 1;
++        return true;
++    }
++    napi_value value = nullptr;
++    napi_valuetype type = napi_undefined;
++    if (napi_get_named_property(env, netAddress, NET_FAMILY, &value) != napi_ok ||
++        napi_typeof(env, value, &type) != napi_ok) {
++        return false;
++    }
++    if (type == napi_undefined) {
++        family = 1;
++        return true;
++    }
++    double requested = 0;
++    if (type != napi_number || napi_get_value_double(env, value, &requested) != napi_ok ||
++        !std::isfinite(requested) || std::trunc(requested) != requested ||
++        (requested != 1 && requested != 2)) {
++        return false;
++    }
++    family = static_cast<uint8_t>(requested);
++    return true;
++}
++
+ bool ParseAddress(napi_env env, napi_value address, struct INetAddr &iNetAddr)
+ {
+     napi_value netAddress = NapiUtils::GetNamedProperty(env, address, NET_ADDRESS);
+     if (NapiUtils::GetValueType(env, netAddress) != napi_object) {
+         NETMGR_EXT_LOG_E("param address type is mismatch");
+         return false;
+     }
+ 
+     if (!GetStringFromJsMandatoryItem(env, netAddress, NET_ADDRESS, iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("get address-address failed");
+         return false;
+     }
+ 
++    if (!ParseAddressFamily(env, netAddress, iNetAddr.family_)) {
++        return false;
++    }
++
+     bool isIpv6 = CommonUtils::IsValidIPV6(iNetAddr.address_);
+     if (!isIpv6) {
+         if (!CommonUtils::IsValidIPV4(iNetAddr.address_)) {
+             NETMGR_EXT_LOG_W("invalid ip address, might be a domain");
+             GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+             return true;
+         }
+     }
+ 
+-    GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, iNetAddr.family_);
+     GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+ 
+     if (NapiUtils::GetValueType(env, NapiUtils::GetNamedProperty(env, address, NET_PREFIXLENGTH)) != napi_number) {
+         NETMGR_EXT_LOG_E("param NET_PREFIXLENGTH type is mismatch");
+         return false;
+     }
+     if (!isIpv6) {
+         iNetAddr.prefixlen_ = static_cast<uint8_t>(NapiUtils::GetUint32Property(env, address, NET_PREFIXLENGTH));
+     } else {
+         iNetAddr.prefixlen_ = CommonUtils::Ipv6PrefixLen(iNetAddr.address_);
+     }
+ 
+     uint32_t prefix = iNetAddr.prefixlen_;
+     if (prefix == 0 || prefix > (isIpv6 ? IPV6_NET_PREFIX_MAX_LENGTH : NET_MASK_MAX_LENGTH)) {
+         NETMGR_EXT_LOG_E("prefixlen_ error");
+         return false;
+     }
+     if (!isIpv6) {
+         uint32_t maskUint = (0xFFFFFFFF << (NET_MASK_MAX_LENGTH - prefix));
+         uint32_t ipAddrUint = CommonUtils::ConvertIpv4Address(iNetAddr.address_);
+         uint32_t subNetAddress = ipAddrUint & maskUint;
+         uint32_t boardcastAddress = subNetAddress | (~maskUint);
+         if ((ipAddrUint == subNetAddress) || (ipAddrUint == boardcastAddress)) {
+             NETMGR_EXT_LOG_E("invalid ip address");
+             return false;
+         }
+     }
+     return true;
+ }
+@@ -373,29 +409,31 @@ bool ParseAddress(napi_env env, napi_value address, struct INetAddr &iNetAddr)
+ bool ParseDestination(napi_env env, napi_value jsRoute, struct INetAddr &iNetAddr)
+ {
+     napi_value destination = NapiUtils::GetNamedProperty(env, jsRoute, NET_DESTINATION);
+     if (NapiUtils::GetValueType(env, destination) != napi_object) {
+         NETMGR_EXT_LOG_E("param destination type is mismatch");
+         return false;
+     }
+ 
+     napi_value netAddress = NapiUtils::GetNamedProperty(env, destination, NET_ADDRESS);
+     if (NapiUtils::GetValueType(env, netAddress) != napi_object) {
+         NETMGR_EXT_LOG_E("param address type is mismatch");
+         return false;
+     }
+ 
+     if (!GetStringFromJsMandatoryItem(env, netAddress, NET_ADDRESS, iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("get destination-address failed");
+         return false;
+     }
+ 
+     if (!CommonUtils::IsValidIPV4(iNetAddr.address_) && !CommonUtils::IsValidIPV6(iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("invalid ip address");
+         return false;
+     }
+ 
+-    GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, iNetAddr.family_);
++    if (!ParseAddressFamily(env, netAddress, iNetAddr.family_)) {
++        return false;
++    }
+     GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+     GetUint8FromJsOptionItem(env, destination, NET_PREFIXLENGTH, iNetAddr.prefixlen_);
+     return true;
+ }
+@@ -403,18 +441,20 @@ bool ParseDestination(napi_env env, napi_value jsRoute, struct INetAddr &iNetAdd
+ bool ParseGateway(napi_env env, napi_value jsRoute, struct INetAddr &iNetAddr)
+ {
+     napi_value gateway = NapiUtils::GetNamedProperty(env, jsRoute, NET_GATEWAY);
+     if (NapiUtils::GetValueType(env, gateway) != napi_object) {
+         NETMGR_EXT_LOG_E("param gateway type is mismatch");
+         return false;
+     }
+ 
+     if (NapiUtils::GetValueType(env, NapiUtils::GetNamedProperty(env, gateway, NET_ADDRESS)) != napi_string) {
+         NETMGR_EXT_LOG_E("get gateway-address failed");
+         return false;
+     }
+     iNetAddr.address_ = NapiUtils::GetStringPropertyUtf8(env, gateway, NET_ADDRESS);
+ 
+-    GetUint8FromJsOptionItem(env, gateway, NET_FAMILY, iNetAddr.family_);
++    if (!ParseAddressFamily(env, gateway, iNetAddr.family_)) {
++        return false;
++    }
+     GetUint8FromJsOptionItem(env, gateway, NET_PORT, iNetAddr.port_);
+     return true;
+ }

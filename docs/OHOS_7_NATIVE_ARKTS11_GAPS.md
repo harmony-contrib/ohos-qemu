@@ -32,6 +32,29 @@ Arc 下一批将真实算法构造延后至启动动作并记录异常，增加�
   SHA256 `1b1050414c319a77fd6e2815488af0856cc32480be0849e4a97190a59b6bc093`。
 - 同目录 `cxx-arkts11-gaps.json` SHA256 `34cd52412e2e16a2f2bf8bcd9b1fcf4adec8eb86a0b2f3b1bcc0982c2c02b87e`。
 
+## R39 VPN 地址族四路径候选（未计入闭环）
+
+`vpn_config_arrays/0005` 同步修复 standard/extension 的 setup 与系统配置四个
+真实 TU：在 uint8 窄化前检查有限整数 1/2，拒绝 257/258、分数、非有限数、
+错误类型与 NAPI 失败；缺失或显式 undefined 使用 SDK 默认 IPv4=1。系统配置的
+hostname 分支也不能绕过验证。公开签名、布局、Parcel、权限与 hostname 支持不变。
+这不是端口宽度、其他 prefix 路径、VPN 隧道或六包可用性修复证明。
+
+30 项 VPN 相邻主机回归通过，含四个完整实际 helper 的 ASan/UBSan 边界、
+系统地址/hostname/目的/网关路径，以及旧实现接受 257 的实际失败回归。
+实际 ARM64 四个完整 TU 编译通过，`vpn-family-tu-r39-03/evidence.json`
+SHA256 `3b7385e2edccde745ea2e94934fa6df7da2aba1a1aff513056d0ed87a15dce20`；
+ARMv7a/x86_64 的两个 setup TU 共四个对象通过，`vpn-family-tu-r39-04/evidence.json`
+SHA256 `2b21b12ad732cbbf8e4e4a552d1854581286471a420d1f4226a293104f771ee6`。
+其余两 ABI 的系统配置 TU 尚无新 GN 目标证明。01/02 的未使用常量编译失败保留，
+修复为使用既有 NET_FAMILY，不关闭告警、不伪造宏或头文件。以上均不是链接/来宾证明。
+
+三角色真实 API26 typed HAP 编译通过，输入不变，`vpn-family-haps-r39-01.json`
+SHA256 `4480d2c2bfe835d89929ddff7631f667ea3a77ef76544a83b865ebce57173cf7`。
+新探针要求四个地址字段的缺省/undefined 真实 get/list 读回、32 次非法 family
+更新返回数字 401，失败后原配置不变；原 CRUD、双栈、路由、重启、拒绝与清理不减。
+仍须新包集中行为验收，台账仍为 **158 / 281 闭环、123 未闭环**。
+
 ## R39 Ethernet 真实全局开关候选（未计入闭环）
 
 新增独立 `netmanager_ext/ethernet_control` 部件，统一入口在 GN 生成前应用。

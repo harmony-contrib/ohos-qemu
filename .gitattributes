@@ -16,3 +16,4 @@ patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0002-pa
 patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0003-return-stored-network-fields-and-preserve-excluded-routes.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0004-validate-route-prefix-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_ext/ethernet_control/0001-commit-real-interface-and-settings-state-before-success.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0005-validate-requested-address-family-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

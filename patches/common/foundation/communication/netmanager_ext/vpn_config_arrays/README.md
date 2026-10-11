@@ -31,6 +31,16 @@ existing `Route::isExcludedRoute_` member as the SDK's optional
 Optional empty routes/application arrays remain omitted. No certificate or
 credential fields are added by this network-field serializer.
 
+Validate the actual optional address-family number in all four standard and
+extension setup/system-config sources before narrowing. Only integral finite
+1/2 values are valid; 257/258, fractions, wrong types and NAPI failures are not
+legitimate families. Absent/undefined family uses the SDK's IPv4 default 1.
+Address, route destination and gateway paths share the same validation within
+each TU. OpenVPN hostname handling is preserved but cannot bypass family
+validation. Do not change the uint8 field, public signature, Parcel or rights.
+This family repair does not claim to repair the separate remaining extension
+prefix conversions or the native uint8 port-width problem.
+
 This does not change the public signature, native data layout, permissions or
 VPN IPC. It does **not** fix the separate database conversion that stores only
 one entry and loses the prefix. A successful serializer/compile check alone

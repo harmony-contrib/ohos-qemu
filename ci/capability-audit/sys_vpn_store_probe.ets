@@ -90,6 +90,24 @@ struct Index {
     if (owned.length !== 1) { throw new Error('owned config is missing/duplicated in native list'); }
     this.record(phase + '.list.' + index, [revision], JSON.stringify(owned[0]));
   }
+  private async defaultFamily(explicitUndefined: boolean): Promise<void> {
+    const config = this.config(0, 1);
+    if (config.localAddresses === undefined || config.routes === undefined) {
+      throw new Error('real local addresses and routes required');
+    }
+    config.addresses[0].address = { address: '198.18.0.2', port: 0 };
+    config.localAddresses[0].address = { address: '198.18.0.6', port: 0 };
+    config.routes[0].destination.address = { address: '198.18.1.0', port: 0 };
+    config.routes[0].gateway = { address: '198.18.0.1', port: 0 };
+    if (explicitUndefined) {
+      config.addresses[0].address.family = undefined;
+      config.localAddresses[0].address.family = undefined;
+      config.routes[0].destination.address.family = undefined;
+      config.routes[0].gateway.family = undefined;
+    }
+    await vpn.addSysVpnConfig(config);
+    await this.roundTrip(0, 1, explicitUndefined ? 'undefined-family' : 'default-family');
+  }
   private async cleanup(): Promise<void> {
     for (let index = 0; index < 3; index++) { await vpn.deleteSysVpnConfig(this.ownedVpnId(index)); }
     const remaining = (await vpn.getSysVpnConfigList()).filter((item: vpn.SysVpnConfig) =>
@@ -122,6 +140,21 @@ struct Index {
           await this.roundTrip(index, 0, 'seed');
           await vpn.addSysVpnConfig(this.config(index, 1));
           await this.roundTrip(index, 1, 'replace');
+        }
+        await this.defaultFamily(false);
+        await this.defaultFamily(true);
+        for (let field = 0; field < 4; field++) {
+          for (const family of [-1, 0, 3, 257, 258, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+            const invalid = this.config(0, 1);
+            if (invalid.localAddresses === undefined || invalid.routes === undefined) {
+              throw new Error('real local addresses and routes required');
+            }
+            if (field === 0) { invalid.addresses[0].address.family = family; }
+            else if (field === 1) { invalid.localAddresses[0].address.family = family; }
+            else if (field === 2) { invalid.routes[0].destination.address.family = family; }
+            else { invalid.routes[0].gateway.family = family; }
+            this.record('invalid.family.' + field, await this.rejected(0, invalid, this.ownedVpnId(0)));
+          }
         }
         for (const prefix of [-1, 0, 257, 2.5, Number.NaN, Number.POSITIVE_INFINITY]) {
           const invalid = this.config(0, 1); invalid.addresses[0].prefixLength = prefix;

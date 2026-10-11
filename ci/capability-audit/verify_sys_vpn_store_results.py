@@ -94,6 +94,10 @@ def expected(role, phase):
         for index in range(3):
             snapshots('seed', index, 0)
             snapshots('replace', index, 1)
+        snapshots('default-family', 0, 1)
+        snapshots('undefined-family', 0, 1)
+        for field in range(4):
+            rows += [('invalid.family.' + str(field), [1, 401, 1], None)] * 8
         rows += [('invalid.prefix', [1, 401, 1], None)] * 6
         for family in range(2):
             rows += [('invalid.route.' + str(family), [1, 401, 1], None)] * 6
