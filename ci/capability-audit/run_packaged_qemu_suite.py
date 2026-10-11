@@ -409,6 +409,7 @@ def run(args):
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                     'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset', 'storage-stats')
         personas += ('completion-handler',)
+        personas += ('rpc-runtime',)
         personas += ('image-metadata',)
         personas += ('thermal',)
         personas += ('network-accounting',)
@@ -452,6 +453,8 @@ def run(args):
                     check('storage-stats', path, [record])
                 if persona == 'completion-handler':
                     check('completion-handler', path, [record])
+                if persona == 'rpc-runtime':
+                    check('rpc-runtime', path, [record])
                 if persona == 'image-metadata':
                     check('image-metadata', path, [record])
                 if persona == 'observer-info':

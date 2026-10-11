@@ -95,6 +95,8 @@ parser.add_argument('--storage-stats-only', action='store_true',
                     help='Verify ordinary private data/cache statistics and privileged-query denial')
 parser.add_argument('--completion-handler-only', action='store_true',
                     help='Verify the actual SDK completion handler constructor and callback fields')
+parser.add_argument('--rpc-runtime-only', action='store_true',
+                    help='Verify native RPC base, actual object round-trips and local request completions')
 parser.add_argument('--thermal-only', action='store_true',
                     help='Observe real thermal initial callbacks and four subscription lifetimes; no heat emulation')
 parser.add_argument('--wifi-scan-only', action='store_true',
@@ -135,14 +137,14 @@ args = parser.parse_args()
 args.sdk = args.sdk.resolve()
 worker_only = args.worker_legacy_only or args.worker_thread_only
 dedicated_contract_only = args.curve_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only
-dedicated_contract_only = dedicated_contract_only or args.completion_handler_only or args.thermal_only
+dedicated_contract_only = dedicated_contract_only or args.completion_handler_only or args.thermal_only or args.rpc_runtime_only
 dedicated_contract_only = dedicated_contract_only or args.image_metadata_only or args.wifi_scan_only or args.network_accounting_only
 dedicated_contract_only = dedicated_contract_only or args.router_observer_only or args.observer_info_only
 dedicated_contract_only = dedicated_contract_only or args.spring_loading_only or args.arkui_components_only
 if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only or dedicated_contract_only) or
                                      not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
     parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
-if sum((args.arkui_components_only, args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
+if sum((args.rpc_runtime_only, args.arkui_components_only, args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
         args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.storage_stats_only, args.optional_phone_profile_only, args.photos_recent_only, args.photos_asset_only, args.settings_navigation_only)) > 1:
     parser.error("provider and ordinary probe personas are mutually exclusive")
 if args.image_metadata_only and args.image_metadata_fixtures is None:
@@ -2107,6 +2109,11 @@ if args.spring_loading_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write('entry/src/main/ets/pages/Index.ets', spring_source(challenge))
     write('spring-loading-probe-inputs.json', spring_inputs(root, args.sdk, args.arch, challenge))
+if args.rpc_runtime_only:
+    from rpc_runtime_contract import source as rpc_source, inputs as rpc_inputs
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/pages/Index.ets', rpc_source(challenge))
+    write('rpc-runtime-probe-inputs.json', rpc_inputs(root, args.sdk, args.arch, challenge))
 if args.arkui_components_only:
     from arkui_components_contract import (source as components_source, ability_source as components_ability,
                                            inputs as components_inputs)
@@ -2390,7 +2397,7 @@ if args.runtime_enum_only or args.curve_only:
                '-fno-exceptions', '-fno-rtti', '-nostdlib++',
                str(Path(__file__).with_name('runtime_enum_hap_probe.cpp')), '-lace_napi.z',
                '-o', str(libs / 'libruntimeenumprobe.so')]
-if not (args.arkui_components_only or args.spring_loading_only or args.observer_info_only or args.router_observer_only or args.network_accounting_only or args.wifi_scan_only or args.image_metadata_only or args.thermal_only or args.completion_handler_only or args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):
+if not (args.rpc_runtime_only or args.arkui_components_only or args.spring_loading_only or args.observer_info_only or args.router_observer_only or args.network_accounting_only or args.wifi_scan_only or args.image_metadata_only or args.thermal_only or args.completion_handler_only or args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):
     subprocess.run(command, check=True)
     if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only or args.runtime_enum_only or args.curve_only):
         shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")

@@ -542,6 +542,26 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(observer_info[0]), 'sha256': digest(observer_info[0]),
                 'verifier': 'ordinary_real_density_context_and_breakpoint_constructor_instances_two_unsubscription_modes',
                 'not_claimed': 'all_observer_ArkUI_APIs_or_other_windows'}
+    rpc_runtime = child('rpc-runtime/evidence.json')
+    if rpc_runtime:
+        from verify_rpc_runtime_results import verify_evidence as verify_rpc
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('RPC closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('RPC proof requires unchanged acceptance package')
+        actual = verify_rpc(rpc_runtime[1], archive_sha, boot_id, environment['guest_arch'])
+        for contract in actual['closed']:
+            closed[contract] = {'evidence': str(rpc_runtime[0]), 'sha256': digest(rpc_runtime[0]),
+                'verifier': 'ordinary_native_base_objects_parcel_roundtrips_and_actual_request_completions',
+                'not_claimed': actual['not_claimed']}
     spring = child('spring-loading/evidence.json')
     if spring:
         from verify_spring_loading_results import verify_evidence as verify_spring

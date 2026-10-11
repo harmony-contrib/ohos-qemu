@@ -25,3 +25,12 @@ Both concrete prototypes and constructor parents are linked and read back.
 No public C/C++ header, SDK signature, token, permission or Binder protocol is
 changed. All product consumers must be rebuilt together. Compiler results,
 isolated objects and host fixtures are not guest or six-package validation.
+
+The second patch fixes the same component's existing request completions: the
+SDK requires `(BusinessError | null, result)`, but both concrete paths passed a
+single result argument. Success now supplies null and the original result;
+communication failure supplies the existing 1900007 BusinessError and undefined
+data. Legacy and MessageSequence callbacks share this SDK convention; Promise
+behavior and transport error values are unchanged. Existing BusinessError
+codes are numeric as declared by the SDK, with unchanged values/messages.
+Only an internal helper declaration is added; no struct layout changes.

@@ -39,6 +39,51 @@ DLL 生命周期 C++ 回调，不持有环境内 JS 引用或可被提前 GC 的
 
 没有关闭原台账项，没有改写 R38 首包失败或放行其余五包。
 
+### RPC 请求契约与新包验证入口
+
+追加同一精确部件的第二个独立补丁：现有 stub/proxy 完成回调仅传一个结果，
+不符合固定 SDK 的 `(BusinessError | null, result)`；成功改为 null 与原结果，
+通信失败使用既有 1900007 错误并省略结果。旧 MessageParcel 与 MessageSequence
+回调同样按 SDK 契约修复，Promise 和底层传输结果不变。该模块的既有
+BusinessError.code 原为字符串，改为数字，保持错误码数值与消息。仅新增内部
+helper 声明，不改 struct 布局、公开签名、权限或 Binder 协议。
+
+已加入普通、无权限 RPC 调用方，检查独立基类/具体类/真实工厂 proxy、单个及
+数组 Binder 对象的 MessageSequence/MessageParcel 往返、Promise、成功/失败
+callback、旧 API callback、重建及回调计数。调用真实 sendMessageRequest/sendRequest，
+不主动调用 server callback、替换实现或补原型。首包和两画像交付门槛均必须消费
+同 boot/archive/ABI/HAP/nonce 的原始日志与编译输入，并重新严格重放；台账只
+允许关闭 IRemoteObject，不借此声称跨进程请求、真实 remote death 或 DBinder。
+ARM64 调用方已真实编译为 `rpc-runtime-hap-r39-01`，不是来宾运行通过。
+
+第二补丁后的四份完整 TU 三 ABI 编译共 12 个对象通过；只读源输入不变，
+holder/proxy 编译命令明确消费补丁后的内部头文件，完整命令和依赖见以下报告：
+
+- `rpc-interface-holder-tu-r39-06.json` SHA256
+  `4c8d55567029e89422d52b4f360188d0bb28d77522607edd743c74b5d1afa81a`。
+- `rpc-interface-proxy-tu-r39-06.json` SHA256
+  `56b7c110111c13f56031f393fed585b51cc9949d08e23ebf3072de66843b4ed3`。
+- `rpc-interface-error-tu-r39-06.json` SHA256
+  `f55854628c047746d4394d9c513c1b03e2cc9daeb1ca6b2d6e174e2d1a7fa7d9`。
+- `rpc-interface-module-tu-r39-06.json` SHA256
+  `55b0b7a58555725c4bdf732afed3ada539a5c05a6ed6cecdfab797ac4f19e9a8`。
+
+最终 holder SHA256 `c0b9c5a213dd815870ff894b8700c4eba264835cf23cbb10fa8c42cee85730e1`，
+proxy `9d08a15d910766b17f4522cf08288059147628620d5dd977110c2d43f46a3605`，
+error `5473671e3fe169bda40491d85e13c694550c8a5a3620d7462c28e9b84dff0e2b`，
+内部 header `3f781d87cf9e1baebcd0d0b6b9224ddbb388760488b629f2ed16cef021742091`；
+module 不变。05 证据保留，但不代表第二补丁。RPC 20 项针对性主机回归通过，
+包括从真实补丁提取错误/回调 helper 在真实 Node NAPI 上的 320 次成功/失败
+调用；该主机 adapter 仅按 Node 要求使用明确 receiver，固定 OHOS NAPI 接受
+空 receiver，产品调用未改。transport/error mapping 的替身边界仍明确保留。
+
+冻结提交 `7da6657b5eb98f9c01c40114d6d92eaa1c5cf8d9` 的集中主机回归
+`host-r39-frozen-batch-13.json`：1630 项、跳过 1 项、309.081 秒，其余通过，
+输入不变；树 SHA256 `265c56e3abd9d417462122f75fc6eab4a57277bde4946292fbbf8a23fa9639f5`，
+日志 `e4a26d67784243f0b3bc167c56c5932544124fbb6d1c312f2d1aeeb3506423a1`，
+报告 `738ccc3221552308e2bdb3631ec7c7960bdfec379e8d29d97b45c8e6c6ca9520`。
+该批不包含随后追加的请求契约或运行入口，下一批冻结后集中回归。
+
 ## R39 鼠标与无障碍输入路由候选（未计入闭环）
 
 批准的 SpringLoading 三项契约修复仍保留。真实 Column 调用方在原 R38 归档上
