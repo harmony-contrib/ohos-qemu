@@ -44,6 +44,7 @@ struct Index {
     this.running = true;
     let sampler: LuminanceSampler | undefined = undefined;
     let complete = false;
+    let boundariesOk = true;
     const file = fs.openSync(this.path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
     fs.closeSync(file);
     try {
@@ -63,7 +64,9 @@ struct Index {
           numeric = typeof code === 'number' ? 1 : 0;
         }
         this.record('invalid.bright.' + invalid.toString(), [code, numeric]);
-        if (code !== 100001 || numeric !== 1) { throw new Error('threshold boundary differs'); }
+        // Preserve the failed boundary observation but still exercise the
+        // independent real rendering path in this batch. Never turn it green.
+        if (code !== 100001 || numeric !== 1) { boundariesOk = false; }
       }
       sampler.setBackgroundLuminanceSamplingConfigs({ samplingInterval: 180, darkThreshold: 50, brightThreshold: 200 });
       for (let cycle = 0; cycle < 2; cycle++) {
@@ -91,7 +94,7 @@ struct Index {
         if (stopped !== this.samples.length) { throw new Error('removed callback still delivered'); }
         sampler.offBackgroundLuminanceChange();
       }
-      complete = true;
+      complete = boundariesOk;
     } catch (error) {
       this.record('failed', [], (error as Error).message || 'luminance failure');
     } finally {

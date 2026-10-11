@@ -69,6 +69,9 @@ class LuminanceTests(unittest.TestCase):
         text = page(self.nonce, 'system')
         self.assertIn('context.getLuminanceSampler', text)
         self.assertNotIn('new LuminanceSampler', text)
+        self.assertIn('complete = boundariesOk;', text)
+        self.assertIn('boundariesOk = false;', text)
+        self.assertNotIn("throw new Error('threshold boundary differs')", text)
         bad = module('system', compiled=True)
         bad['module']['requestPermissions'].append({'name': 'ohos.permission.MANAGE_SECURE_SETTINGS'})
         with self.assertRaises(ValueError):
