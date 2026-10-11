@@ -77,7 +77,30 @@ V1 `@State`。下一批改用 `@ComponentV2`/`@Local`，不修改原生类或真
 两项新主机回归和原相邻回归通过；实际 typed API26 V2 HAP 编译通过，
 `arc-startup-hap-r39-02.json`，未签名 HAP SHA256
 `cb2d6a6c44bdd2d4a41eda15f07b6993fd6469b8c2fe7787ea09e7e169a630ee`。
-以上仍非组件通过；新的诊断及完整新包待实际结果。
+上述编译本身不是组件通过；当时新的诊断及完整新包尚待实际结果，后续实测见下段。
+
+后续 `r39-arc-startup-diagnostic-04` **实际诊断通过**：原 R38 归档未改动，
+ARM64/HVF phone、普通 UID `20010038`，boot
+`99829962-bd5e-4678-8cb1-8d3197f7f17e`，HDC `127.0.0.1:50914`。
+运行控制器 `run-arc-startup-diagnostic-r39-04.py` 使用独占 HDC、重新解包、
+有限普通锁屏手势和完整恢复的测试电源覆盖。四次实际 compositor 捕获、末项
+滚动、Row→Column 几何、两个布局中的真实子节点点击与计数/FrameNode 身份保留
+全部通过；严格 factory/属性链式验证不变。冻结诊断输入复核不变，树 SHA256
+`99c77d681ae648e530bb35f2abd8bad9760d3049833d973a779f435f0ad010b6`。
+父诊断收据 SHA256 `1c11a9c5cf1445b57b684b3231ade7f632087d63bd6dd2f7101eea33dd7117d1`，
+实际 `arkui-components/evidence.json` SHA256
+`e65aa8075d4733b417de6ffd1340bdd9801b3c2246d57fe57182ef9ac266b051`。
+该通过证明有效 V2 调用方式下组件确实可用，不是伪造导出或修改原生布局。
+明确保留 diagnostic 目的，不能用它重新标绿 R38 原完整失败批次、消除八项台账
+或放行剩余五包；仍须下一轮完整新代表包的同配方验收。
+
+提交 `39638ae91c021dcdae9d5151cf2c3e7c246116cb` 的追加冻结全量主机回归
+`host-r39-frozen-batch-03.json` 通过：**1556 项、跳过 1 项、235.570 秒，其余通过**；
+包括 V2 探针、点击后失败及时捕获和早期编译失败路径，冻结输入保持不变。
+树 SHA256 `6c97f711c415af0a632ed35bad02d33baf29b6fffe08a67be2d184cce5e622fd`，
+日志 SHA256 `d07b303dcdda88009cd58c5298d6f28e920e611fc8d967f173638356add3a62f`，
+报告 SHA256 `6314040722f7ce7d9fbab64d78b6fe8861f84d263e69a7b6e9ae124b541150e9`。
+这一批不含未授权的亮度 GL/CPU 回退；没有启动新代表包或剩余五包。
 
 清理仅限两个已关闭、尚未进入应用验证的诊断解压 `images`：
 `r39-arc-startup-diagnostic-01` 和 `r39-arc-startup-diagnostic-02`，约 9.38 GiB
