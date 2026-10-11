@@ -1,5 +1,34 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R36 第一次实际运行：VPN 通过，闪屏尚未执行到开启
+
+测试输入绑定版本 `6dcb7d38c13d48636d6231d9cf647955f797d432` 的冻结主机回归
+1476 项、跳过 1 项、225.331 秒，其余通过。日志
+`host-batched-runtime-frozen-r36-03.log` SHA256
+`4fb1c4ece1c36d58eed232d2c86ebb5e32cd9dbbc057525fe7a8bf936d3f4b7d`。
+冻结树 `888df49fef9f05cbec8c09777a87f1b4b21da98fb4fe2fc8eba6bfb051f9b492`。
+
+实际未改动 R36 新归档运行目录 `openharmony-qemu-arm64-arm64_virt-phone-runtime-37x0l_f2`，
+boot `2a18c333-f5d8-4a9a-8a4b-f309ad6c174c`，Darwin ARM64 / QEMU HVF。
+启动、默认休眠唤醒、桌面、RS 对象、Native ABI、配额、屏幕模式、HUKS、证书和库退出检查通过。
+VPN 三角色以及授权调用者重启后持久化、最终恢复通过；`vpn-policy/evidence.json`
+SHA256 `9d63b440a35309f30d38a188678812a6ba6f01e2b05b86911dbd3ba4695fb814`。
+这不等于 VPN 隧道流量或完整 VPN 缺口关闭。
+
+闪屏普通应用/无权限系统应用拒绝通过，授权角色初始 API 检查通过。
+首个 baseline 截图实际仍是启动窗口，后两帧已是正确测试背景，故像素验证失败；
+没有执行 master enable/start，不是已证明的闪屏实现失败，也绝不是闪屏通过。
+恢复 master=0、stop 和三帧 off 均通过，`system/runtime/evidence.json` SHA256
+`abcf987fee8d52591ab9da4e8862428b32f4ee9ec16e32419bae8b05376df1e2`。
+整批当时停止，后续亮度、Wi-Fi、联系人及 native-bindings 等尚未执行，不能沿用 R35 通过结论。
+套件已退出并关闭自己拥有的 VM。
+
+提交 `6425e3b2068b642696f6e208ca1ba917dd24d88c` 增加限时连续三帧实际背景就绪，
+保留每张过渡画面证据；不放宽闪烁阶段像素断言。另在窗口/设置恢复、调用进程实际退出、
+同次启动检查均确认后才允许收集闪屏失败并继续其它独立测试。19 项闪屏相关主机回归通过。
+`run-r36-frozen-retest-05.py` 正在冻结全套主机验证，随后重新启动同一归档执行集中回归。
+没有重打镜像、没有启动其余五包；严格未闭环数量暂不调整。
+
 ## R36 已归档，集中回归启动前发现测试输入版本不一致
 
 本地 Docker 构建退出码 0，代表归档：
