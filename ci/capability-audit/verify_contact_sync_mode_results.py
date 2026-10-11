@@ -60,9 +60,10 @@ def verify(text, run_id, identity):
     photo = row['photoRecords']
     expected = [(run_id + '-cover-changed', run_id + '-cover-second'), ('image/*', 'video/*'), ('17', '29'),
                 (run_id + '-info-changed', run_id + '-info-second'),
-                (json.dumps([run_id + '-first', run_id + '-second'], separators=(',', ':')), '[]')]
+                (json.dumps([run_id + '-first', run_id + '-second'], separators=(',', ':')), '[]'),
+                (run_id + '-context-changed', run_id + '-context-second')]
     if not isinstance(photo, list) or len(photo) != len(PHOTO_RECORD_CLASSES):
-        raise ValueError('all five photo record classes required')
+        raise ValueError('all six photo record classes required')
     for actual, name, (first, second) in zip(photo, PHOTO_RECORD_CLASSES, expected):
         if (not isinstance(actual, dict) or set(actual) != {'name', 'first', 'second', 'flags'} or
                 actual['name'] != name or actual['first'] != first or actual['second'] != second or

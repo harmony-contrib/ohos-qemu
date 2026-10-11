@@ -15,7 +15,7 @@ PHOTO_CONTRACT = 'arkts_export:@ohos.file.photoAccessHelper:FusionAssetType'
 SCOPE = 'actual_contact_state_photo_record_constructors_and_enums_NOT_provider_or_persistence_behavior'
 STATE_RECORD_CLASSES = ('ConnectOptions', 'ConnectOptionsCollections')
 PHOTO_RECORD_CLASSES = ('DefaultCoverOrderInfo', 'PhotoViewMimeTypeFileSizeFilter', 'RecentPhotoOptions',
-                        'RecentPhotoInfo', 'RequestReadPermissionResult')
+                        'RecentPhotoInfo', 'RequestReadPermissionResult', 'ContextRecoveryInfo')
 RECORD_CLASSES = ('ContactAttributes', 'Group', 'Holder', 'Name', 'NickName', 'Note',
                   'Organization', 'Portrait', 'Website')
 

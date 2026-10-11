@@ -39,7 +39,8 @@ class ContactSyncModeResultTests(unittest.TestCase):
                     for name, (first, second) in zip(PHOTO_RECORD_CLASSES, [
                         (RUN + '-cover-changed', RUN + '-cover-second'), ('image/*', 'video/*'), ('17', '29'),
                         (RUN + '-info-changed', RUN + '-info-second'),
-                        (json.dumps([RUN + '-first', RUN + '-second'], separators=(',', ':')), '[]')])]}
+                        (json.dumps([RUN + '-first', RUN + '-second'], separators=(',', ':')), '[]'),
+                        (RUN + '-context-changed', RUN + '-context-second')])]}
 
     def test_record_constructor_prototypes_properties_and_isolation_cannot_be_missing(self):
         row = self.observed()
@@ -83,7 +84,7 @@ class ContactSyncModeResultTests(unittest.TestCase):
             path = child / 'evidence.json'
             path.write_text(json.dumps(evidence))
             closed = behavior_results(root, 'test-boot', 'a' * 64, 'phone')
-            self.assertEqual(len(closed), 19)
+            self.assertEqual(len(closed), 20)
             for name in PHOTO_RECORD_CLASSES:
                 self.assertIn('arkts_export:@ohos.file.photoAccessHelper:' + name, closed)
             for name in ('ConnectOptions', 'ConnectOptionsCollections'):
@@ -114,6 +115,11 @@ class ContactSyncModeResultTests(unittest.TestCase):
 
     def test_photo_records_require_all_real_constructors_and_independent_fields(self):
         for index in range(len(PHOTO_RECORD_CLASSES)):
+            for flag_index in range(4):
+                row = self.observed()
+                row['photoRecords'][index]['flags'][flag_index] = False
+                with self.subTest(index=index, flag=flag_index), self.assertRaises(ValueError):
+                    verify(json.dumps(row), RUN, IDENTITY)
             for field, value in (('flags', [True, True, False, True]), ('flags', [1] * 4),
                                  ('first', 'wrong'), ('second', 'shared'), ('name', 'other')):
                 row = self.observed()

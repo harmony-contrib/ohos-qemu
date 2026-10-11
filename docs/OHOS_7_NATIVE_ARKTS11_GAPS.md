@@ -1,5 +1,27 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 同批补充 ContextRecoveryInfo（未关闭运行缺口）
+
+公开 photoAccessHelper 未导出 SDK 声明的 `ContextRecoveryInfo`。在照片数据类组件中
+补齐构造器，只初始化 SDK 明确规定的七个默认字段；version/gridLevel 没有文档默认值，
+仍由调用方设置，不伪造 provider 协议版本，不改变 PhotoSelectResult 原有返回对象。
+普通集中 HAP 增加实际 typed new、instanceof、七个默认值、独立修改和版本字段检查。
+验证器逐个拒绝缺失/错误的构造、默认值、隔离标记，不把构造器成功当作 picker 恢复成功。
+
+- 新 JS SHA256 `7843fe2799ab30bb78aae887196b06bcb96471cdc9c6bb0fb5017aab772bcce2`；
+  旧照片补丁的完整精确重放、旧 wrapper 行为及新增记录测试共 20 项通过，
+  `host-photo-context-r35-02.log`。
+- ARM64 实际产品 ABC 规则通过，`photo-context-abc-r35-01/evidence.json`，SHA256
+  `c51a8b5ac3487491f22c5a0985844f86d3189e25c4941ec26bd764c364a9f169`。
+  ARMv7/x86_64 仍待自身完整产品构建，不沿用 ARM64 编译结论。
+- 真实 API26 SDK HAP 编译通过，`photo-context-hap-r35-01`，未签名 HAP SHA256
+  `d60527609e0734670bd6154010920b68022161d5bccfd920d28c4ef3f6d549e1`。
+- 清理 R13/R14/R18/R19/R20/R24 六个过期压缩归档，释放 5,317,599,232 分配字节；
+  这些归档不可本地恢复，日志与既存诊断树保留。原哈希和列表位于
+  `retired-superseded-middle-archives-r35-01.json`。R32/R34/R35 未动。
+
+这批候选不在冻结 R35 中；仍需后续新包启动验证，运行关闭计数不变。
+
 ## 下一批 VPN 错误分配边界与冻结回归
 
 VPN Promise 完成阶段原先只尝试创建一次错误对象；NAPI 返回失败但不产生异常时，

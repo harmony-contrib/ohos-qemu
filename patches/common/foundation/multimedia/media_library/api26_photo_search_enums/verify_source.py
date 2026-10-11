@@ -19,7 +19,7 @@ FILES = (('frameworks/js/src/media_library_napi.cpp',
 def validate(root, require_patched=False):
     wrapper = Path(root) / PROJECT / FILES[1][0]
     recent_sha = '7a8dd9dd99d77b5657cb57bc8cb65d60d681254586f4690919e2870650578a9c'
-    records_sha = '992b87e1cef32bf50fda7ac9893de60762ebdf6f1ea29da9fee18cf7cafe2ed1'
+    records_sha = '7843fe2799ab30bb78aae887196b06bcb96471cdc9c6bb0fb5017aab772bcce2'
     files = FILES
     wrapper_sha = digest(wrapper.read_bytes()) if wrapper.is_file() else None
     if wrapper_sha in (recent_sha, records_sha):

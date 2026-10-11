@@ -51,6 +51,12 @@ function stateRecords(runId: string): StateRecordObservation {
 
 interface ContactRecordObservation { name: string; first: string; second: string; flags: boolean[]; }
 
+function contextRecordDefaults(value: photoAccessHelper.ContextRecoveryInfo): boolean {
+  return value.albumUri === '' && value.time === 0 && value.displayName === '' &&
+    value.recommendationType === 0 && value.selectedRecommendationType === 0 &&
+    value.sortRule === '' && value.fileSize === 0 && value.version === undefined && value.gridLevel === undefined;
+}
+
 function photoRecords(runId: string): ContactRecordObservation[] {
   const a0 = new photoAccessHelper.DefaultCoverOrderInfo(); const b0 = new photoAccessHelper.DefaultCoverOrderInfo();
   const empty0 = a0.albumType === undefined && a0.albumSubtype === undefined && a0.orderKey === undefined &&
@@ -69,6 +75,13 @@ function photoRecords(runId: string): ContactRecordObservation[] {
   const a4 = new photoAccessHelper.RequestReadPermissionResult(); const b4 = new photoAccessHelper.RequestReadPermissionResult();
   const empty4 = a4.authorizedUris === undefined && a4.invalidUris === undefined;
   a4.authorizedUris = [runId + '-first']; b4.authorizedUris = []; a4.authorizedUris.push(runId + '-second');
+  const a5 = new photoAccessHelper.ContextRecoveryInfo(); const b5 = new photoAccessHelper.ContextRecoveryInfo();
+  const empty5 = contextRecordDefaults(a5) && contextRecordDefaults(b5);
+  a5.albumUri = runId + '-context-changed'; a5.time = 17; a5.version = 1;
+  a5.displayName = runId + '.jpg'; a5.sortRule = runId + '-sort'; a5.fileSize = 29;
+  a5.recommendationType = 1; a5.selectedRecommendationType = 2;
+  const isolated5 = contextRecordDefaults(b5);
+  b5.albumUri = runId + '-context-second'; b5.time = 29; b5.version = 2;
   return [
     { name: 'DefaultCoverOrderInfo', first: a0.lpath, second: b0.lpath,
       flags: [a0 instanceof photoAccessHelper.DefaultCoverOrderInfo, b0 instanceof photoAccessHelper.DefaultCoverOrderInfo,
@@ -84,7 +97,12 @@ function photoRecords(runId: string): ContactRecordObservation[] {
         a3 !== b3, empty3] },
     { name: 'RequestReadPermissionResult', first: JSON.stringify(a4.authorizedUris), second: JSON.stringify(b4.authorizedUris),
       flags: [a4 instanceof photoAccessHelper.RequestReadPermissionResult,
-        b4 instanceof photoAccessHelper.RequestReadPermissionResult, a4 !== b4, empty4] }
+        b4 instanceof photoAccessHelper.RequestReadPermissionResult, a4 !== b4, empty4] },
+    { name: 'ContextRecoveryInfo', first: a5.albumUri, second: b5.albumUri,
+      flags: [a5 instanceof photoAccessHelper.ContextRecoveryInfo, b5 instanceof photoAccessHelper.ContextRecoveryInfo,
+        a5 !== b5 && isolated5 && a5.time === 17 && b5.time === 29 && a5.version === 1 && b5.version === 2 &&
+        a5.displayName === runId + '.jpg' && a5.sortRule === runId + '-sort' && a5.fileSize === 29 &&
+        a5.recommendationType === 1 && a5.selectedRecommendationType === 2, empty5] }
   ];
 }
 

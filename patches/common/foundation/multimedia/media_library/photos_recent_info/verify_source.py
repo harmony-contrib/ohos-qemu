@@ -27,7 +27,7 @@ def validate(root, require_patched=False):
     # The later public-record component preserves this complete implementation.
     # Recognize only its exact final bytes so replaying the shared patch plan is
     # idempotent; unknown edits still fail the original validator below.
-    successor = '992b87e1cef32bf50fda7ac9893de60762ebdf6f1ea29da9fee18cf7cafe2ed1'
+    successor = '7843fe2799ab30bb78aae887196b06bcb96471cdc9c6bb0fb5017aab772bcce2'
     try:
         return validate_component(root, PROJECT, REVISION,
                                   ((FILES[0][0], successor, successor),), require_patched=True)

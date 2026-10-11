@@ -29,9 +29,23 @@ for (const Constructor of [DefaultCoverOrderInfo, PhotoViewMimeTypeFileSizeFilte
     assert.throws(() => Constructor(), TypeError);
   }
 }
+for (let repeat = 0; repeat < 256; repeat++) {
+  const first = new ContextRecoveryInfo(), second = new ContextRecoveryInfo();
+  const defaults = {albumUri: '', time: 0, displayName: '', recommendationType: 0,
+                    selectedRecommendationType: 0, sortRule: '', fileSize: 0};
+  assert(first instanceof ContextRecoveryInfo && second instanceof ContextRecoveryInfo && first !== second);
+  assert.deepEqual({...first}, defaults); assert.deepEqual({...second}, defaults);
+  assert.equal(first.version, undefined); assert.equal(first.gridLevel, undefined);
+  first.albumUri = 'allPhotos'; first.time = 17; first.version = 1;
+  first.displayName = 'caller.jpg'; first.sortRule = 'caller-sort'; first.fileSize = 29;
+  first.recommendationType = 1; first.selectedRecommendationType = 2;
+  assert.deepEqual({...second}, defaults); assert.equal(second.version, undefined);
+  assert.deepEqual(JSON.parse(JSON.stringify(first)), {...first});
+  assert.throws(() => ContextRecoveryInfo(), TypeError);
+}
 '''], check=True, capture_output=True, text=True)
         for name in ('DefaultCoverOrderInfo', 'PhotoViewMimeTypeFileSizeFilter', 'RecentPhotoOptions',
-                     'RecentPhotoInfo', 'RequestReadPermissionResult'):
+                     'RecentPhotoInfo', 'RequestReadPermissionResult', 'ContextRecoveryInfo'):
             self.assertIn('  ' + name + ',', body)
 
     def test_shared_recipe_orders_after_existing_photo_source_patches(self):
