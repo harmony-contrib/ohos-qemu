@@ -21,6 +21,8 @@ def metadata():
         relative = 'pages/Index' if name == 'AuditPage' else 'intents/' + filename
         rows.append(dict(intentName=name, decoratorType='@InsightIntent' + kind,
             bundleName=BUNDLE, moduleName='entry', domain='LocalDomain', intentVersion='1.0.0',
+            decoratorClass='Index' if name == 'AuditPage' else filename,
+            displayName='Audit ' + name.removeprefix('Audit').lower(),
             decoratorFile=PREFIX + relative + '&'))
     rows[0].update(abilityName='EntryAbility', executeMode=['background'], parameters={
         'type': 'object', 'properties': {'value': {'type': 'string'},
@@ -92,6 +94,14 @@ class InsightDecoratorCompilationTests(unittest.TestCase):
             else: del document['extractInsightIntents'][0]['entities'][0][key]
             with self.subTest(key=key), self.assertRaises(ValueError):
                 verify_metadata(document, NONCE)
+
+    def test_reject_missing_native_profile_required_identity_and_display(self):
+        for index in range(len(NAMES)):
+            for key in ('decoratorClass', 'displayName', 'domain', 'intentVersion'):
+                document = metadata()
+                del document['extractInsightIntents'][index][key]
+                with self.subTest(index=index, key=key), self.assertRaises(ValueError):
+                    verify_metadata(document, NONCE)
 
     def test_reject_wrong_mode_form_method_nonce_and_page(self):
         for index, key, value in ((0, 'executeMode', ['foreground']), (1, 'formName', 'absent'),

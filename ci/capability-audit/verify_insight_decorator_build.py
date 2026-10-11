@@ -28,9 +28,13 @@ def verify_metadata(document, nonce):
     require([row.get('intentName') for row in rows if isinstance(row, dict)] == list(NAMES),
             'duplicate/missing/reordered intent records')
     for row, name, kind in zip(rows, NAMES, TYPES):
+        actual_class = 'Index' if name == 'AuditPage' else (
+            'AuditFunctions' if name == 'AuditFunction' else name)
+        display = 'Audit ' + name.removeprefix('Audit').lower()
         require(row.get('decoratorType') == '@InsightIntent' + kind and
                 row.get('bundleName') == BUNDLE and row.get('moduleName') == 'entry' and
-                row.get('domain') == 'LocalDomain' and row.get('intentVersion') == '1.0.0',
+                row.get('domain') == 'LocalDomain' and row.get('intentVersion') == '1.0.0' and
+                row.get('decoratorClass') == actual_class and row.get('displayName') == display,
                 'intent identity/type differs: ' + name)
         filename = 'AuditFunctions' if name == 'AuditFunction' else name
         relative = 'pages/Index' if name == 'AuditPage' else 'intents/' + filename

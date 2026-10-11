@@ -56,6 +56,23 @@ Ethernet、导出分类共 **34 项通过**。没有更改旧导出审计或闭�
 这些结果只能证明编译与归档配置路径，不证明 BMS 注册、意图调度、页面路由、
 Form 创建或 QEMU 后端；这些仍须新首包真实行为验证。
 
+提交 `a1a3c33bc8c8a2b9011b70fb5a9db716779e2471` 的冻结全量主机回归
+`host-r39-frozen-batch-11.json`：**1617 项、跳过 1 项、305.726 秒，其余通过**，
+输入不变；树 SHA256 `28e73092bbf6c57a7c8066b45317037a95d7cc9a6bbacd2f20cfc2202f03ee2e`，
+日志 SHA256 `24e3f7e87dd206157be7e73e86032445da9aebeb15fac687f90b8e1a0135d2d7`，
+报告 SHA256 `5be491794067e77442ffd06b53528005db63ed0fb0b1dd5328b3aa8f07f0d581`。
+随后对照固定原生 profile 校验补强五条意图的必需 class/display 字段，新增缺失
+字段拒绝夹具；**35 项相邻回归通过**，七次真实编译/拒绝重新通过，
+`insight-decorator-build-batch-r39-03/evidence.json` SHA256
+`4e47c27860d3626d6d033dd2a99199b7cdd40186906e822a4ace5f9c92106822`。
+该追加检查不混入此前冻结回归，未变更固件、权限、旧首包失败或缺口计数。
+
+清理已结束的 Spring 诊断 01/02 的八个镜像文件副本，约 9.42 GiB；删除前核对
+确切路径、无符号链接、失败终态及无打开文件，保留原 R38 归档、原始日志、
+source snapshot 和校验记录，不触及运行中的 03。清理收据
+`r39-spring-unused-images-cleanup-20261012.json`；原始镜像可从归档恢复，但删除
+副本的临时 userdata 状态不可恢复。删除后磁盘可用约 40 GiB。
+
 ## R39 剩余三条 VPN 前缀候选（未计入闭环）
 
 `vpn_config_arrays/0007` 覆盖 standard/extension 普通 setup 及 extension 配置的
