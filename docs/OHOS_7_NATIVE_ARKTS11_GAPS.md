@@ -1,5 +1,46 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R36 集中回归完成：154 / 281 闭环，剩余 127，未放行六包
+
+冻结测试提交 `6425e3b2068b642696f6e208ca1ba917dd24d88c`，树 SHA256
+`cb200ac3927a9322c2acc48e5e7429205ca19a6211ab9ea109e7f43bbc180b79`。
+1480 项主机回归、跳过 1 项、230.031 秒，其余通过；
+`host-batched-runtime-frozen-r36-05.log` SHA256
+`58c9b43ede3e2cd91d060da6608561d93025f5a6bc63d02f038a2cd1ab4cdd7f`。
+
+同一未改动 R36 归档，实际新启动 `c36b93f4-8cae-46b7-bdab-d9663f10eb6b`，
+目录 `openharmony-qemu-arm64-arm64_virt-phone-runtime-s_zxgujs`。运行记录
+`r36-bound-full-runtime-05.json`，启动命令、环境及输入更新收据见
+`r36-frozen-retest-05.json` / `r36-validation-input-update-05.json`。
+完整套件退出码 1，电源策略已确认恢复，自己拥有的 QEMU 已关闭；不是验收通过。
+
+- ohos-native-bindings：**32 个模块 / 102 个用例全部通过**，原测试仓库和依赖锁未修改。
+  `native-bindings/evidence.json` SHA256
+  `5d57b7edd21dfa0df3e99b5007232ea6645666a323a73a286aeeec64d0674110`。
+- ArkWeb、Vulkan 窗口及原生路径、相机、联系人同步模式、对象工厂、照片资产、
+  Settings 导航、路由回调、网络计量、Wi-Fi 扫描、VPN 三角色/重启持久化等本轮用例通过。
+  各证明仍限定于实际验证契约，不外推成整个子系统全部可用。
+- 严格总表：**154 项闭环、127 项未闭环**，替代 R35 的 134 / 147 计数。
+  `cxx-arkts11-gaps.json` SHA256
+  `bd3d34f283f52bb5b59208e6d80e89a70ad7dce05335b6087772ffe9c9627110`。
+
+两项运行失败保留：
+1. 闪屏连续模式真实交替、重复启动/错误场景停止返回值通过，但 stop 后第一张截图仍为 on，
+   后两张 off；从第一张捕获开始计，off 捕获区间为 0.615–1.210 秒及 1.294–1.486 秒。
+   尚未确认这是应修的停止时序还是测试要求超过异步合成契约；不改判通过。
+   设置/窗口/调用者清理均通过，后续独立测试正常继续。
+2. LuminanceSampler 实际错误码是字符串 `"100001"`，不是 SDK BusinessError 的数字。
+   ace_engine `e55e178228b9f6388b15d3024e8caf125fa293d7` 的
+   `interfaces/napi/kits/utils/napi_utils.cpp:54` 将整数转字符串传给 `napi_create_error`。
+   已读维护规则、执行 KB 查询并完整读取 SDK API KB；该公开异常类型修复已向用户确认，
+   **未修改产品源码**，不允许顺带改变其他模块共用错误处理。
+
+已提交下一批测试准备（不追改本轮冻结结果）：`c5f70b2` 在保留边界失败的同时收集真实
+亮度回调；API26 HAP 编译通过，SHA256
+`777491c451042c4180774bf7a28ec9481410c767af0eb3e049130723917b621f`。
+`e57939c` 保留 stop 原失败，在另一次严格 off 序列确认恢复后才继续单次闪烁/退出用例；
+7 项相关主机测试通过。不放宽断言、不把恢复成功当成原用例成功。两项准备尚未经新来宾执行。
+
 ## R36 第一次实际运行：VPN 通过，闪屏尚未执行到开启
 
 测试输入绑定版本 `6dcb7d38c13d48636d6231d9cf647955f797d432` 的冻结主机回归
