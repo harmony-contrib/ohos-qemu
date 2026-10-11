@@ -87,7 +87,9 @@ class LuminanceTests(unittest.TestCase):
                 record.update({name: str(path), name + '_sha256': digest(path)})
             document = dict(status='pass', scope='real_factory_RS_callbacks_and_unsubscription_NOT_full_gate',
                 archive_sha256='archive', boot_id='boot', arch='arm64', device='phone', failures=[],
-                udid='b' * 64, roles={'system': record})
+                udid='b' * 64, roles={'system': record}, cleanup_verified=True,
+                caller_cleanup=dict(kernel_process_absent=True, ability_process_records_absent=True,
+                                    consecutive_absent_observations=2))
             self.assertEqual(verify_evidence(document, 'archive', 'boot', 'arm64', 'phone'),
                              ['arkts_export:@ohos.arkui.UIContext:LuminanceSampler'])
             bad = copy.deepcopy(document)
@@ -95,6 +97,12 @@ class LuminanceTests(unittest.TestCase):
             with self.assertRaises(ValueError): verify_evidence(bad, 'archive', 'boot', 'arm64', 'phone')
             with self.assertRaises(ValueError): verify_evidence(document, 'older', 'boot', 'arm64', 'phone')
             with self.assertRaises(ValueError): verify_evidence(document, 'archive', 'older', 'arm64', 'phone')
+            bad = copy.deepcopy(document)
+            bad['cleanup_verified'] = False
+            with self.assertRaises(ValueError): verify_evidence(bad, 'archive', 'boot', 'arm64', 'phone')
+            bad = copy.deepcopy(document)
+            bad['caller_cleanup']['consecutive_absent_observations'] = 0
+            with self.assertRaises(ValueError): verify_evidence(bad, 'archive', 'boot', 'arm64', 'phone')
             paths['raw_results'].write_text('unverified')
             with self.assertRaises(ValueError): verify_evidence(document, 'archive', 'boot', 'arm64', 'phone')
 

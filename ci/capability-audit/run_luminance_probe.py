@@ -19,7 +19,7 @@ import zipfile
 
 from build_luminance_probe import BUNDLE, ROLES, module
 from guest_ui import GuestUi
-from run_normal_hap_probe import APP_FILES, ROOT
+from run_normal_hap_probe import APP_FILES, ROOT, stop_previous_probe
 from run_root_probe import digest
 from sign_luminance_probe import configure_profile
 from verify_luminance_results import verify, verify_inputs
@@ -33,6 +33,7 @@ def run(args):
                   udid=args.udid, roles={}, commands=[], failures=[],
                   scope='real_factory_RS_callbacks_and_unsubscription_NOT_full_gate',
                   first_artifact_behavior_gate_passed=False)
+    installation_attempted = False
 
     def command(argv, label, timeout=90, allow_failure=False):
         argv = list(map(str, argv))
@@ -107,6 +108,7 @@ def run(args):
             verify_inputs(json.loads(inputs.read_text()), nonce, args.arch)
             same_guest(role + '-boot')
             command([args.hdc, '-t', args.target, 'uninstall', BUNDLE], role + '-uninstall-own', allow_failure=True)
+            installation_attempted = True
             installed = command([args.hdc, '-t', args.target, 'install', signed], role + '-install')
             if not re.search('success', installed, re.I) or re.search('failed to install', installed, re.I):
                 raise ValueError('luminance test installation failed')
@@ -151,6 +153,15 @@ def run(args):
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
         report['failures'].append(str(error))
     finally:
+        report['cleanup_verified'] = not installation_attempted
+        if installation_attempted:
+            try:
+                report['caller_cleanup'] = stop_previous_probe(
+                    lambda script, label, accepted_failure=False: shell(script, label, accepted_failure))
+                report['cleanup_verified'] = True
+            except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
+                report['status'] = 'fail'
+                report['failures'].append('owned luminance caller cleanup failed: ' + str(error))
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 

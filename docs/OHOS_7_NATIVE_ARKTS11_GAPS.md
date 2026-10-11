@@ -17,6 +17,8 @@ API26 `@ohos.arkui.UIContext.d.ts:768` 明确要求先调用 `UIContext.getLumin
 API26 HAP `luminance-factory-hap-r36-01` 已编译，SHA256
 `97eb08a29ecddc86ade34fbab0b55bd7241acaa8447f585a37f9897756f6af81`。
 三项相关主机验证测试通过；实际来宾回调尚未运行，不从剩余缺口数量中扣除。
+整批调度只在确认测试进程及 Ability 记录连续两次消失后，才允许收集本项失败并继续其他测试；
+缺失清理记录、换包、换 boot 或来宾健康失败都会停止复用该 VM，不掩盖失败。
 
 ## R36 同包补充验证准备
 

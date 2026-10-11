@@ -324,14 +324,23 @@ def run(args):
             'screen-blink-three-roles-real-pixels-and-cleanup', timeout=6000, env=child_env)
         check('screen-blink', work / 'screen-blink/evidence.json', [blink_record])
         same_guest('after-screen-blink-cleanup')
-        luminance_record = command([sys.executable, Path(__file__).with_name('run_luminance_probe.py'),
-            '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
-            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
-            '--boot-id', environment['boot_id'], '--output', work / 'luminance-sampler',
-            '--source-volume', source_volume, '--docker-image', docker_image],
-            'luminance-real-factory-RS-callbacks-and-unsubscription', timeout=3000, env=child_env)
-        check('luminance-sampler', work / 'luminance-sampler/evidence.json', [luminance_record])
-        same_guest('after-luminance-callback-cleanup')
+        def luminance_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                path = work / 'luminance-sampler/evidence.json'
+                child = json.loads(path.read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or child.get('cleanup_verified') is not True):
+                    raise ValueError('luminance caller cleanup unproven; stop batch')
+
+        with independent_probe(report, 'luminance-sampler', luminance_batch_health, save):
+            luminance_record = command([sys.executable, Path(__file__).with_name('run_luminance_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'luminance-sampler',
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'luminance-real-factory-RS-callbacks-and-unsubscription', timeout=3000, env=child_env)
+            check('luminance-sampler', work / 'luminance-sampler/evidence.json', [luminance_record])
         # The FA compatibility API requires a real FA service, not a Stage
         # caller impersonating one. Both models run on this unchanged archive.
         fa_record = command([sys.executable, Path(__file__).with_name('run_fa_particle_probe.py'),

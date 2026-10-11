@@ -83,9 +83,15 @@ def verify_evidence(document, archive_sha, boot_id, arch, device):
             'real_factory_RS_callbacks_and_unsubscription_NOT_full_gate' or
             document.get('archive_sha256') != archive_sha or document.get('boot_id') != boot_id or
             document.get('arch') != arch or document.get('device') != device or document.get('failures') != [] or
+            document.get('cleanup_verified') is not True or
             set(document.get('roles', {})) != {'system'} or
             re.fullmatch('[0-9a-fA-F]{64}', document.get('udid', '')) is None):
         raise ValueError('actual luminance factory observations on this new package required')
+    cleanup = document.get('caller_cleanup', {})
+    if (cleanup.get('kernel_process_absent') is not True or cleanup.get('ability_process_records_absent') is not True or
+            type(cleanup.get('consecutive_absent_observations')) is not int or
+            cleanup['consecutive_absent_observations'] < 2):
+        raise ValueError('luminance caller must actually terminate after callback cleanup')
     record = document['roles']['system']
     paths = {}
     for field in ('inputs', 'application_identity', 'signed_hap', 'unsigned_hap', 'signing_receipt', 'raw_results'):
