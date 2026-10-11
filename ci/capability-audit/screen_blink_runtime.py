@@ -2,7 +2,8 @@
 
 The owning packaged-guest runner supplies logged shell/UI operations. This
 module never signs callers, grants permissions, modifies an image or closes an
-audit gap by itself. Caller death/competing tokens require additional evidence.
+audit gap by itself. Caller death requires the optional pre-launch background;
+competing tokens and account/service lifecycle still require additional evidence.
 """
 import json
 from pathlib import Path
@@ -12,10 +13,10 @@ import time
 from build_screen_blink_probe import BUNDLE
 from guest_ui import select_node
 from run_root_probe import digest
-from verify_screen_blink_results import rows, verify_frames, verify_initial
+from verify_screen_blink_results import rows, verify_background_restored, verify_frames, verify_initial
 
 
-def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds=90):
+def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds=90, *, background=None):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
     report = dict(status='fail', role=role, run_id=nonce, phases=[], failures=[],
@@ -24,6 +25,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
     ready = False
     cleaned = role != 'system'
     observed = []
+    process_stopped = False
 
     def observe(name, expected=None, text=''):
         nonlocal observed
@@ -96,12 +98,60 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             time.sleep(1)
             capture('disabled-clears', rect, 'off', 1)
             click('blink-start', 'continuous.start', [5, 0, 1])
+            if background is not None:
+                original_pid = rows(initial, nonce, role)[0]['values'][2]
+                click('blink-enable', 'master.enabled', [1], '1')
+                time.sleep(1)
+                click('blink-start', 'continuous.start', [0, 0, 1])
+                capture('before-caller-exit', rect, 'continuous')
+                process_stopped = True  # Cleanup also retries a lost stop reply.
+                shell('aa force-stop ' + BUNDLE, 'blink-stop-own-process-with-active-window')
+                deadline = time.monotonic() + wait_seconds
+                while time.monotonic() < deadline:
+                    if shell('if test -d /proc/' + str(original_pid) +
+                             '; then echo PRESENT; else echo ABSENT; fi', 'blink-owner-exit').strip() == 'ABSENT':
+                        break
+                    time.sleep(.1)
+                else:
+                    raise ValueError('owned blink caller did not actually exit')
+                time.sleep(2)
+                frames = []
+                for index in range(3):
+                    before = time.monotonic()
+                    path = ui.screenshot(label='caller-exit-' + str(index))
+                    frames.append(dict(path=str(path), sha256=digest(path), before=before, after=time.monotonic()))
+                    time.sleep(.8)
+                report['caller_exit'] = dict(pid=original_pid, baseline=background, frames=frames)
+                verify_background_restored(background, frames)
+                if 'start ability successfully' not in shell('aa start -a EntryAbility -b ' + BUNDLE,
+                                                            'blink-restart-owned-caller').lower():
+                    raise ValueError('owned blink caller did not restart')
+                # Only this explicit process-generation boundary permits the
+                # nonce-scoped HAP to replace its previous observation file.
+                observed = []
+                time.sleep(1)
+                restarted = observe('ready', [1])
+                restart_rows = verify_initial(restarted, nonce, role, identity_text, restarted=True)
+                process_stopped = False
+                new_pid = restart_rows[0]['values'][2]
+                if new_pid == original_pid:
+                    raise ValueError('caller restart did not produce a new process identity')
+                report['caller_exit']['restarted_pid'] = new_pid
+                report['scope'] = 'actual_calls_pixels_and_caller_exit_NOT_competing_token_or_account_switch_proof'
+                capture('restarted-initial-stop', rect, 'off', 1)
         report['status'] = 'pass'
     except (ValueError, OSError, KeyError, TypeError) as error:
         report['failures'].append(str(error))
     finally:
         if role == 'system' and ready:
             try:
+                if process_stopped:
+                    if 'start ability successfully' not in shell('aa start -a EntryAbility -b ' + BUNDLE,
+                                                                'blink-cleanup-restart').lower():
+                        raise ValueError('cannot restart owned caller for policy restoration')
+                    time.sleep(1)
+                    observed = []
+                    verify_initial(observe('ready', [1]), nonce, role, identity_text, restarted=True)
                 raw = click('blink-restore', 'cleanup.master', [1], '0')
                 actual = rows(raw, nonce, role)
                 if (len(actual) < 2 or actual[-2]['name'] != 'cleanup.stop' or

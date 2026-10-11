@@ -7,7 +7,7 @@ import unittest
 
 from PIL import Image
 from run_root_probe import digest
-from verify_screen_blink_results import rows, verify_frames, verify_initial
+from verify_screen_blink_results import rows, verify_background_restored, verify_frames, verify_initial
 
 
 class BlinkResultTests(unittest.TestCase):
@@ -79,6 +79,13 @@ class BlinkResultTests(unittest.TestCase):
             self.assertEqual(verify_frames(frames, rect, 'continuous'), ['on', 'off'] * 3)
             verify_frames([frames[0], frames[1], frames[3]], rect, 'single')
             verify_frames(frames[1::2], rect, 'off')
+            baseline = dict(path=frames[1]['path'], sha256=frames[1]['sha256'])
+            extra = Path(directory) / 'last-off.png'
+            Image.new('RGB', (200, 200), (32, 48, 64)).save(extra)
+            restored = [frames[3], frames[5], dict(path=str(extra), sha256=digest(extra), before=6, after=6.1)]
+            verify_background_restored(baseline, restored)
+            with self.assertRaises(ValueError): verify_background_restored(baseline, frames[::2])
+            with self.assertRaises(ValueError): verify_background_restored(baseline, frames[1::2])
             for mutate in ('hash', 'duplicate', 'nan', 'infinity', 'overlap', 'slow', 'unknown'):
                 bad = copy.deepcopy(frames)
                 if mutate == 'hash': bad[0]['sha256'] = '0' * 64

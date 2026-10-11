@@ -8,11 +8,12 @@ from unittest.mock import patch
 from PIL import Image
 from build_screen_blink_probe import BUNDLE
 from screen_blink_runtime import exercise
+from run_root_probe import digest
 import test_screen_blink_results as fixtures
 
 
 class RuntimeTests(unittest.TestCase):
-    def execute(self, directory, *, cleanup_fail=False, stale_repeat=False):
+    def execute(self, directory, *, cleanup_fail=False, stale_repeat=False, caller_exit=False):
         actual = fixtures.BlinkResultTests().observations()
         nonce = 'a' * 32
         state = dict(active=False, enabled=False, sequence=0, clock=0., single=0)
@@ -71,11 +72,28 @@ class RuntimeTests(unittest.TestCase):
             state['clock'] += .15
             return state['clock']
 
+        def shell(command, label):
+            if command.startswith('aa force-stop '):
+                state['active'] = False
+                return 'stopped'
+            if command.startswith('if test -d /proc/'):
+                return 'ABSENT'
+            if command.startswith('aa start '):
+                actual[:] = fixtures.BlinkResultTests().observations(restarted=True)
+                actual[0]['values'][2] = 456
+                return 'start ability successfully'
+            return fixtures.BlinkResultTests.encode(actual)
+
         identity = json.dumps({'applicationInfo': dict(appPrivilegeLevel='system_core',
                               isSystemApp=True, uid=20000001)})
+        background = None
+        if caller_exit:
+            path = Path(directory) / 'before-launch.png'
+            Image.new('RGB', (200, 200), (32, 48, 64)).save(path)
+            background = dict(path=str(path), sha256=digest(path))
         with patch('screen_blink_runtime.time.monotonic', clock), patch('screen_blink_runtime.time.sleep'):
-            return exercise(Ui(), lambda *args: fixtures.BlinkResultTests.encode(actual), '/owned/result',
-                Path(directory) / 'result', nonce, 'system', identity, wait_seconds=2)
+            return exercise(Ui(), shell, '/owned/result', Path(directory) / 'result', nonce, 'system', identity,
+                            wait_seconds=2, background=background)
 
     def test_full_sequence_and_cleanup(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -89,6 +107,14 @@ class RuntimeTests(unittest.TestCase):
             result = self.execute(directory, cleanup_fail=True)
             self.assertEqual(result['status'], 'fail')
             self.assertFalse(result['cleanup_verified'])
+
+    def test_caller_exit_and_new_generation_restore(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.execute(directory, caller_exit=True)
+            self.assertEqual(result['status'], 'pass', result['failures'])
+            self.assertEqual(result['caller_exit']['pid'], 123)
+            self.assertEqual(result['caller_exit']['restarted_pid'], 456)
+            self.assertTrue(result['cleanup_verified'])
 
     def test_repeated_action_cannot_reuse_previous_observation(self):
         with tempfile.TemporaryDirectory() as directory:

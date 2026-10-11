@@ -120,3 +120,39 @@ def verify_frames(frames, rect, mode):
     if mode == 'off' and any(kind != 'off' for kind in kinds):
         raise ValueError('stopped/disabled/dead caller left visible screen pulse')
     return kinds
+
+
+def verify_background_restored(baseline, frames):
+    """Caller exit returns to the actual pre-launch compositor, not an assumed UI."""
+    from PIL import Image
+    if len(frames) < 3:
+        raise ValueError('caller exit requires multiple real background frames')
+    path = Path(baseline['path'])
+    if path.is_symlink() or digest(path) != baseline['sha256']:
+        raise ValueError('pre-launch background changed')
+    with Image.open(path) as image:
+        if image.format != 'PNG' or min(image.size) < 100:
+            raise ValueError('actual pre-launch PNG required')
+        size = image.size
+        rect = (size[0] // 4, size[1] // 4, size[0] * 3 // 4, size[1] * 3 // 4)
+        expected = list(image.convert('RGB').crop(rect).getdata())
+    seen = {str(path)}
+    previous = -1.
+    for frame in frames:
+        path = Path(frame['path'])
+        before, after = frame['before'], frame['after']
+        if (path.is_symlink() or str(path) in seen or digest(path) != frame['sha256'] or
+                type(before) not in (float, int) or type(after) not in (float, int) or
+                not math.isfinite(before) or not math.isfinite(after) or
+                before < previous or after < before or after - before > 3):
+            raise ValueError('invalid caller-exit compositor capture')
+        seen.add(str(path))
+        previous = after
+        with Image.open(path) as image:
+            if image.format != 'PNG' or image.size != size:
+                raise ValueError('caller-exit display changed')
+            actual = list(image.convert('RGB').crop(rect).getdata())
+        same = sum(all(abs(a - b) <= 10 for a, b in zip(pixel, wanted))
+                   for pixel, wanted in zip(actual, expected))
+        if same / len(expected) < .97:
+            raise ValueError('caller exit did not restore actual pre-launch background')

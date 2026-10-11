@@ -123,6 +123,12 @@ def run(args):
                      role + '-absence').strip() != 'ABSENT':
                 raise ValueError('stale blink observations')
             shell('power-shell wakeup', role + '-wake')
+            ui = GuestUi(command, args.hdc, args.target, output / 'ui')
+            background = None
+            if role == 'system':
+                time.sleep(2)
+                baseline = ui.screenshot(label='before-owned-caller')
+                background = dict(path=str(baseline), sha256=digest(baseline))
             if 'start ability successfully' not in shell('aa start -a EntryAbility -b ' + BUNDLE,
                     role + '-launch').lower():
                 raise ValueError('blink caller did not launch')
@@ -133,9 +139,8 @@ def run(args):
                 time.sleep(.2)
             else:
                 raise ValueError('blink caller did not produce observations')
-            ui = GuestUi(command, args.hdc, args.target, output / 'ui')
             result = exercise(ui, shell, remote, output / 'runtime', nonce, role,
-                              identity_path.read_text(), args.wait_seconds)
+                              identity_path.read_text(), args.wait_seconds, background=background)
             evidence = output / 'runtime/evidence.json'
             record.update(status=result['status'], runtime=str(evidence), runtime_sha256=digest(evidence))
             if result['status'] != 'pass' or not result['cleanup_verified']:
