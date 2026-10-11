@@ -62,6 +62,21 @@ def requirements(device):
     return rows
 
 
+def reflection_closes_contract(module, requirement, value):
+    """Presence is discovery, not a callable/class/provider behavior proof."""
+    if value.get('read_status') != 0 or value.get('read_exception') is not False:
+        return False
+    if requirement['kind'] == 'enum':
+        return (type(value.get('value_type')) is int and value['value_type'] == 6 and
+                value.get('enum_contract_applicable') is True and value.get('enum_contract_valid') is True)
+    if module == '@ohos.settings' and requirement['name'] == 'TTS':
+        # This is the exact constant-key namespace plus identity with its
+        # existing legacy alias, not a callable or settings provider claim.
+        from verify_arkts_exports_results import settings_tts_verified
+        return settings_tts_verified(module, value)
+    return False
+
+
 def behavior_results(runtime, boot_id, archive_sha, device_type=None):
     closed = {}
     actual_modules = None
@@ -560,7 +575,7 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                 inputs.is_file() and not inputs.is_symlink() and
                 digest(inputs) == document.get('compiled_contract_inputs_sha256') and
                 result.is_file() and not result.is_symlink() and digest(result) == document.get('result_sha256')):
-            from verify_arkts_exports_results import verify, settings_tts_verified
+            from verify_arkts_exports_results import verify
             actual = verify(raw.read_text(), json.loads(inputs.read_text()), document['run_id'], document['arch'])
             if actual != json.loads(result.read_text()).get('modules'):
                 raise ValueError('export collection differs from complete actual ordinary-app reflection')
@@ -579,18 +594,11 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                 properties = {row['name']: row for row in module['properties']
                               if row['read_status'] == 0 and not row['read_exception']}
                 for requirement in expected.get(module['module'], []):
-                    value = properties.get(requirement['name'], {}).get('value_type')
-                    kind = requirement['kind']
-                    permitted = ({7} if kind in ('function', 'class') else {6} if kind == 'namespace'
-                                 else set(range(2, 10)) if kind == 'variable' else set())
-                    if (kind == 'enum' and properties.get(requirement['name'], {}).get('enum_contract_applicable') and
-                            properties[requirement['name']].get('enum_contract_valid')):
-                        permitted = {6}
-                    if module['module'] == '@ohos.settings' and requirement['name'] == 'TTS':
-                        permitted = {6, 7} if settings_tts_verified(module['module'],
-                            properties.get('TTS', {})) else set()
-                    if value in permitted:
-                        closed['arkts_export:' + module['module'] + ':' + requirement['name']] = proof
+                    value = properties.get(requirement['name'], {})
+                    if reflection_closes_contract(module['module'], requirement, value):
+                        # Never replace a previously verified constructor or
+                        # behavior result with weaker reflection evidence.
+                        closed.setdefault('arkts_export:' + module['module'] + ':' + requirement['name'], proof)
     enum_members = child('runtime-enum/evidence.json')
     if enum_members and enum_members[1].get('persona') == 'runtime-enum':
         document = enum_members[1]

@@ -1,5 +1,26 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R35 完整回归结束：严格行为复核为 134 / 281，剩余 147
+
+R35 原样新包、boot `40b219a0-3121-4c09-a72b-106825de9be9` 的
+ohos-native-bindings E2E **32 个模块、102 个用例全部通过**。
+`runtime-px9c57k7/native-bindings/evidence.json` SHA256
+`677a6e170bc8cff2c0d08f45af1af328eff6e7523cf5ecdcf88d14c3f741e8c7`。
+独立回归中 ContactAttributes 严格测试失败，其它已执行独立探针继续完成，
+最终完整清单门禁失败；没有放行其它五包。
+
+冻结 R35 旧验证器报告 `164 / 281`，但复核发现它把仅通过 NAPI 属性反射的函数、
+类和变量计为行为关闭，并覆盖先前更严格的构造器证据。已修正：这些类型必须有专用
+行为验证；只有完整枚举值、精确 TTS 常量命名空间及实际模块加载可由对应反射证明，
+且不得覆盖较强证据。联系人失败不能再被其导出存在掩盖。
+
+对同一 R35 原始证据只读重验后，**134 项关闭、147 项未闭环**。这替代旧口径，
+不是新增了 30 个运行失败，更不是声明剩余项目都未实现；其中包括尚未取得有效行为证明的候选。
+新报告 `r35-strict-behavior-closure-01.json` SHA256
+`821c121377c62fa289a34c445fd5c410945358501a26eb1fbc80390551b6a544`；
+旧 `cxx-arkts11-gaps.json`、失败日志和冻结脚本原样保留。
+反射关闭规则新增三项拒绝回归测试通过；整个六包门禁仍未通过。
+
 ## R35 实测拦截 Contact Attribute 映射错误，后续批次修复候选
 
 R35 新包 `runtime-px9c57k7/contact-sync-mode` 严格验证失败：真实
@@ -28,7 +49,7 @@ typed HAP 和独立 native 导出读取都增加全部 14 个值，预期绑定�
 **以上不是新包运行证明，也不证明 provider 查询/更新已验收。R35 门禁未通过，
 其它独立回归继续收集，不启动其余五包。**
 
-## R35 代表归档已生成，完整新包回归进行中
+## R35 代表归档与本轮完整回归命令
 
 仅 ARM64 phone，冻结提交 `c0c5423ebe1f32404b9973918d921d12fb88dab2`：
 
@@ -47,7 +68,7 @@ bash scripts/validate_packaged_qemu.sh \
 ```
 
 沿用 API26 Release SDK `provider-sdk-26-full/26.0.0` 和既有测试 venv；实际启动命令、
-QEMU/guest 身份、boot ID 与各项结果由该新运行记录。当前状态仍为进行中，
+QEMU/guest 身份、boot ID 与各项结果由该新运行记录。本轮已结束，结果如上，
 `first_artifact_behavior_gate_passed=false`。**其余五包未启动，不能以离线检查放行。**
 R35 不含后续 VPN 和六个照片记录候选；也没有把这些候选提前计入关闭数量。
 
