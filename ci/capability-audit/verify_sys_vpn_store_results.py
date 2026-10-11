@@ -34,10 +34,14 @@ def expected_config(run_id, index, revision, account=100):
         mtu=1400 + revision, isIPv4Accepted=True, isIPv6Accepted=True, isLegacy=False, isBlocking=True,
         trustedApplications=['org.harmonycontrib.capabilityaudit', 'org.harmonycontrib.other'] if revision == 0 else [],
         blockedApplications=['org.harmonycontrib.blocked', 'org.harmonycontrib.blocked2'] if revision == 1 else [],
-        routes=[dict(interface='vpn-tun', destination=link('198.18.1.0', 1, 24),
-            gateway=address('198.18.0.1', 1), hasGateway=True, isDefaultRoute=False, isExcludedRoute=False),
-            dict(interface='vpn-tun', destination=link('2001:db8:2::', 2, 64),
-            gateway=address('2001:db8::1', 2), hasGateway=False, isDefaultRoute=False, isExcludedRoute=True)])
+        routes=[dict(interface='vpn-tun', destination=link('198.18.1.0', 1,
+            (0 if revision == 0 else 32) if index == 0 else 24),
+            gateway=address('198.18.0.1', 1), hasGateway=True,
+            isDefaultRoute=index == 0 and revision == 0, isExcludedRoute=False),
+            dict(interface='vpn-tun', destination=link('2001:db8:2::', 2,
+                (0 if revision == 0 else 128) if index == 0 else 64),
+            gateway=address('2001:db8::1', 2), hasGateway=False,
+            isDefaultRoute=index == 0 and revision == 0, isExcludedRoute=True)])
     if index == 0:
         value.update(ovpnPort='1194', ovpnProtocol=0, ovpnAuthType=0,
                      ovpnConfig='audit-config-' + run_id, askpass='synthetic-askpass-' + run_id)
@@ -91,6 +95,8 @@ def expected(role, phase):
             snapshots('seed', index, 0)
             snapshots('replace', index, 1)
         rows += [('invalid.prefix', [1, 401, 1], None)] * 6
+        for family in range(2):
+            rows += [('invalid.route.' + str(family), [1, 401, 1], None)] * 6
         snapshots('after-invalid', 0, 1)
     else:
         for index in range(3):

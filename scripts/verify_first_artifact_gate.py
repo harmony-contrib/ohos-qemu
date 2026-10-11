@@ -18,7 +18,7 @@ from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects",
-                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store"))
+                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 
 
@@ -298,6 +298,18 @@ def verified_payload(name, path, identity, environment):
             from verify_arkui_components_results import verify_evidence
             verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
                             environment['device_type'], environment['target'])
+        elif name == 'screen-blink':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_screen_blink_evidence import verify_evidence as verify_blink
+            verify_blink(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                         environment['device_type'], environment['target'])
+        elif name == 'luminance-sampler':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_luminance_results import verify_evidence as verify_luminance
+            if payload.get('target') != environment['target']:
+                raise ValueError('luminance caller belongs to another packaged guest')
+            verify_luminance(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                             environment['device_type'])
         elif name == 'sys-vpn-store':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

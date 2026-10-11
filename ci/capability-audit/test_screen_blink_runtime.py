@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from PIL import Image
 from build_screen_blink_probe import BUNDLE
+from guest_ui import select_node
 from screen_blink_runtime import exercise
 from run_root_probe import digest
 import test_screen_blink_results as fixtures
@@ -17,7 +18,7 @@ class RuntimeTests(unittest.TestCase):
                 permanent_splash=False, stop_residual=False, missed_single=False):
         actual = fixtures.BlinkResultTests().observations()
         nonce = 'a' * 32
-        state = dict(active=False, enabled=False, sequence=0, clock=0., single=0)
+        state = dict(active=False, enabled=False, sequence=0, clock=0., single=0, click_sequence=0)
 
         def row(name, values, text=''):
             actual.append(dict(runId=nonce, role='system', name=name, values=values, text=text))
@@ -31,6 +32,13 @@ class RuntimeTests(unittest.TestCase):
                 return value, path
 
             def click(self, bundle, *, identifier, label):
+                state['click_sequence'] += 1
+                value = dict(attributes=dict(bundleName=BUNDLE, id=identifier, visible='true',
+                    enabled='true', clickable='true', bounds='[0,0][20,20]'), children=[])
+                path = Path(directory) / ('click-' + str(state['click_sequence']) + '.json')
+                path.write_text(json.dumps(value))
+                selection = dict(layout=str(path), selected_node=select_node(value, bundle,
+                    identifier=identifier, clickable=True))
                 if identifier == 'blink-enable':
                     state['enabled'] = True
                     row('master.enabled', [1], '1')
@@ -40,7 +48,7 @@ class RuntimeTests(unittest.TestCase):
                 elif identifier == 'blink-start':
                     value = 5 if not state['enabled'] else 1 if state['active'] else 0
                     if value == 1 and stale_repeat:
-                        return {}
+                        return selection
                     state['active'] = state['enabled']
                     row('continuous.start', [value, 0, 1])
                 elif identifier == 'blink-wrong-stop':
@@ -57,7 +65,7 @@ class RuntimeTests(unittest.TestCase):
                     row('cleanup.master', [0 if cleanup_fail else 1], '1' if cleanup_fail else '0')
                 else:
                     raise AssertionError(identifier)
-                return {}
+                return selection
 
             def screenshot(self, *, label):
                 state['sequence'] += 1

@@ -122,7 +122,8 @@ class VerifySysVpnStoreTests(unittest.TestCase):
         for role in ('normal', 'system-denied'):
             value = rows(role, 'denial'); value[1]['values'] = [0, 0, 0]
             with self.assertRaises(ValueError): self.check(value, role, 'denial')
-        for key, changed in (('invalid.prefix', [0, 0, 0]), ('invalid.prefix', [1, '401', 1])):
+        for key, changed in ((name, changed) for name in ('invalid.prefix', 'invalid.route.0', 'invalid.route.1')
+                             for changed in ([0, 0, 0], [1, '401', 1])):
             value = rows('system', 'seed'); next(row for row in value if row['name'] == key)['values'] = changed
             with self.assertRaises(ValueError): self.check(value)
         value = rows('system', 'seed'); target = next(row for row in value if row['name'] == 'after-invalid.get.0')

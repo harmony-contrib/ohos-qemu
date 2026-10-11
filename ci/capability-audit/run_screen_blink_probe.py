@@ -24,6 +24,7 @@ from run_root_probe import digest
 from screen_blink_runtime import exercise
 from sign_screen_blink_probe import configure_profile
 from verify_screen_blink_results import identity, verify_inputs
+from verify_screen_blink_evidence import verify_evidence
 
 
 def finish_cleanup(report, shell, same_guest, installation_attempted, state_restored):
@@ -177,6 +178,13 @@ def run(args):
         report['failures'].append(str(error))
     finally:
         finish_cleanup(report, shell, same_guest, installation_attempted, state_restored)
+        if report['status'] == 'pass':
+            try:
+                report['verified_contracts'] = verify_evidence(report, report['archive_sha256'],
+                    args.boot_id, args.arch, args.device, args.target)
+            except (ValueError, OSError, KeyError, TypeError, zipfile.BadZipFile) as error:
+                report['status'] = 'fail'
+                report['failures'].append('strict screen blink replay failed: ' + str(error))
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 

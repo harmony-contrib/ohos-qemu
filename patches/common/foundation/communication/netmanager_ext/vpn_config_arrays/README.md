@@ -16,6 +16,13 @@ before narrowing. Keep the existing nonzero/less-than-address-width and IPv4
 subnet/broadcast restrictions. This patch does not claim support for `/0`,
 IPv4 `/31`/`/32`, IPv6 `/128`, or wider native port values.
 
+Routes have a different contract: destination prefixes include the default
+route `/0` and host routes `/32` (IPv4) or `/128` (IPv6). Validate the required
+numeric `prefixLength` before narrowing, using the actual destination address
+family. Reject negative, fractional, non-finite, missing, wrong-type and
+out-of-family-range values rather than silently wrapping or defaulting them.
+This does not relax the separate interface-address restrictions above.
+
 Get and list also omitted stored routes, MTU, IPv4/IPv6 acceptance, legacy and
 blocking flags, trusted/blocked applications and service-selected user ID.
 Serialize those actual native fields for every variant. Parse and return the

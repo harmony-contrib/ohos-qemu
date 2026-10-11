@@ -52,6 +52,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
 
     def click(identifier, name, values, text=''):
         selected = ui.click(BUNDLE, identifier=identifier, label=name)
+        selected['layout_sha256'] = digest(Path(selected['layout']))
         report['phases'].append(dict(name=name + '-control', selection=selected))
         return observe(name, values, text)
 

@@ -46,13 +46,15 @@ struct Index {
       trustedApplications: revision === 0 ? ['org.harmonycontrib.capabilityaudit', 'org.harmonycontrib.other'] : [],
       blockedApplications: revision === 1 ? ['org.harmonycontrib.blocked', 'org.harmonycontrib.blocked2'] : [],
       routes: [{ interface: 'vpn-tun', destination: {
-        address: { address: '198.18.1.0', family: 1, port: 0 }, prefixLength: 24 },
+        address: { address: '198.18.1.0', family: 1, port: 0 },
+        prefixLength: index === 0 ? (revision === 0 ? 0 : 32) : 24 },
         gateway: { address: '198.18.0.1', family: 1, port: 0 },
-        hasGateway: true, isDefaultRoute: false, isExcludedRoute: false },
+        hasGateway: true, isDefaultRoute: index === 0 && revision === 0, isExcludedRoute: false },
         { interface: 'vpn-tun', destination: {
-          address: { address: '2001:db8:2::', family: 2, port: 0 }, prefixLength: 64 },
+          address: { address: '2001:db8:2::', family: 2, port: 0 },
+          prefixLength: index === 0 ? (revision === 0 ? 0 : 128) : 64 },
           gateway: { address: '2001:db8::1', family: 2, port: 0 },
-          hasGateway: false, isDefaultRoute: false, isExcludedRoute: true }]
+          hasGateway: false, isDefaultRoute: index === 0 && revision === 0, isExcludedRoute: true }]
     };
     if (index === 0) {
       const open = config as vpn.OpenVpnConfig;
@@ -124,6 +126,16 @@ struct Index {
         for (const prefix of [-1, 0, 257, 2.5, Number.NaN, Number.POSITIVE_INFINITY]) {
           const invalid = this.config(0, 1); invalid.addresses[0].prefixLength = prefix;
           this.record('invalid.prefix', await this.rejected(0, invalid, this.ownedVpnId(0)));
+        }
+        for (let family = 0; family < 2; family++) {
+          const invalidPrefixes: number[] = [-1, family === 0 ? 33 : 129, 257, 2.5,
+            Number.NaN, Number.POSITIVE_INFINITY];
+          for (const prefix of invalidPrefixes) {
+            const invalid = this.config(0, 1);
+            if (invalid.routes === undefined) { throw new Error('real routes required'); }
+            invalid.routes[family].destination.prefixLength = prefix;
+            this.record('invalid.route.' + family, await this.rejected(0, invalid, this.ownedVpnId(0)));
+          }
         }
         await this.roundTrip(0, 1, 'after-invalid');
         const marker = fs.openSync(this.marker, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY);
