@@ -18,4 +18,5 @@ patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0004-va
 patches/common/foundation/communication/netmanager_ext/ethernet_control/0001-commit-real-interface-and-settings-state-before-success.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0005-validate-requested-address-family-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0006-preserve-and-validate-full-sdk-port-at-every-vpn-input.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0007-validate-remaining-setup-and-extension-prefixes.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_base/inet_addr_port/0001-preserve-full-sdk-port-and-validate-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

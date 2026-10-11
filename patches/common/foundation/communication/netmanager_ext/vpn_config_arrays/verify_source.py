@@ -13,13 +13,13 @@ FILES = (
      'd90168fc7ba43ecfa1c9fe0e6bb63c397d4814794ac5c68bbe9bd2e0d256cbfe'),
     ('frameworks/js/napi/vpn/src/context/setup_context.cpp',
      '4f39d7d6493e484f4f81d8e28d24dafe486605a85088496218e6f4d3aff92b2c',
-     '27bbc5dadf3aad40e158e27b9b00f2492f06d683ea036fb4ae319917f6558c7c'),
+     '74740e61aa8bb7dcb0fc6965c5aaf355a664a82d075424ca66be132e43722a80'),
     ('frameworks/js/napi/vpnext/src/vpn_config_utils_ext.cpp',
      '00b8e25c99f54866f3d746fe7240f847e5e6cf8afcb1f1ca5894d0d0460c5bdf',
-     '7999ff4510cac17ae6bc0ded81f3b838d81a081f9415fba936213ad4e32bba04'),
+     'e1dbdf174800b3a90d675f138b8b9072b4d9d4b417dc18d6dba525efa26586e9'),
     ('frameworks/js/napi/vpnext/src/context/setup_context_ext.cpp',
      'fbcfb639481dd687cc1d91bbe65772e8d172d1aef7476bdb7fec30263ddc0074',
-     '297aff0727166eb0924734c5da5d09ea2e25829d4c48c3431fd8662c7b0c459f'),
+     'e160be816a14b1e927d8ba71be8b25c2b05b8eb3e104e4b3be508d1401860796'),
 )
 
 

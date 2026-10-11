@@ -14,7 +14,8 @@ validation (`257` became `1`). Read the actual requested prefix for both
 families; reject non-finite, fractional, out-of-range numbers and NAPI failures
 before narrowing. Keep the existing nonzero/less-than-address-width and IPv4
 subnet/broadcast restrictions. This patch does not claim support for `/0`,
-IPv4 `/31`/`/32`, IPv6 `/128`, or wider native port values.
+IPv4 `/31`/`/32`, or IPv6 `/128` in the standard system-config address path.
+The paired port repair below supplies the full native port range separately.
 
 Routes have a different contract: destination prefixes include the default
 route `/0` and host routes `/32` (IPv4) or `/128` (IPv6). Validate the required
@@ -48,6 +49,17 @@ netmanager_base/inet_addr_port component and uniformly rebuild native storage,
 Parcel, NAPI utility and every image-side consumer. This changes the internal
 port field type, not public SDK signatures or permissions; do not mix old wide-
 port-truncating receivers with newly compiled users.
+
+The final prefix repair covers the other three duplicated address/destination
+parsers (ordinary standard setup, ordinary extension setup, extension config).
+Validate the original finite integer before uint8 conversion; use the requested
+IPv6 prefix, never infer it from the bits of a host address or silently turn
+zero into a different prefix. Preserve these callers' existing nonzero address
+prefix limit and IPv4 subnet/broadcast checks; ordinary setup's existing host
+address /32 exception remains. Routes accept /0..32 and /0..128 based on the
+actual destination IP. Missing/wrong-type/NAPI-failed route prefixes cannot
+silently default to zero. This does not broaden existing interface-address
+policies or claim connected/tunnel/extension-ability guest behavior.
 
 The array/family/prefix repairs do not change public signatures, native layout,
 permissions or VPN IPC; the paired port repair widens the internal port field.

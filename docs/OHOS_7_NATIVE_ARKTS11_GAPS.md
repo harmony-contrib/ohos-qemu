@@ -32,6 +32,27 @@ Arc 下一批将真实算法构造延后至启动动作并记录异常，增加�
   SHA256 `1b1050414c319a77fd6e2815488af0856cc32480be0849e4a97190a59b6bc093`。
 - 同目录 `cxx-arkts11-gaps.json` SHA256 `34cd52412e2e16a2f2bf8bcd9b1fcf4adec8eb86a0b2f3b1bcc0982c2c02b87e`。
 
+## R39 剩余三条 VPN 前缀候选（未计入闭环）
+
+`vpn_config_arrays/0007` 覆盖 standard/extension 普通 setup 及 extension 配置的
+完整地址和目的解析：窄化前拒绝越界、分数、非有限数、缺失、类型不符和读取失败，
+读取真实 IPv6 请求前缀，不从 host 位推算、不把 0 改为其他前缀。保留各调用方
+原有非零地址范围、IPv4 子网/广播检查，以及普通 setup 的现有 `/32` 主机例外。
+目的路由独立允许 IPv4 `/0..32`、IPv6 `/0..128`。不扩宽既有地址策略、不改 SDK、
+权限或 ABI，不以标准系统配置的已有探针冒充 extension/隧道验证。
+
+53 项相邻主机测试通过，包含三路径真实完整方法、特定 prefix NAPI 读取失败、
+双栈前缀、默认/主机路由、旧 wrapping 失败回归及既有 IPv4 地址策略。
+`vpn-prefix-duplicates-host-r39-02.json` SHA256
+`03e6b04aaee997ab0a4d63bff1403b723ed5b0c9ce2d7ec78af8c039495996ae`，输入不变。
+实际 ARM64 四个完整 VPN TU 编译通过，`vpn-prefix-duplicates-tu-r39-03/evidence.json`
+SHA256 `ba55454698f08f3352bec4adddc52eb1f295b788dce74d97411cca8013889838`；
+ARMv7a/x86_64 普通 setup 各两个 TU 通过，`vpn-prefix-duplicates-tu-r39-04/evidence.json`
+SHA256 `2d8678ba4e0c423337e134066faae7bc0d4e9828905564b4d4b8a7d895cb6bb6`。
+所有对象实际消费候选宽端口和 NAPI 头。初次 01/02 因旧窄化 helper 已无人调用而
+编译失败，移除两个匿名 namespace 的死 helper 后重跑；未关闭告警，失败记录保留。
+其他 ABI 系统配置、extension Ability、连接隧道和实际包仍待验收，台账不变。
+
 ## R39 全宽网络端口候选（未计入闭环）
 
 新增 `netmanager_base/inet_addr_port` 精确部件，在 GN 前与 VPN `0006` 配套应用。
@@ -67,9 +88,18 @@ SHA256 `658f47bb8fb0c461fa9a01a62fd653b2cb2283e9e5994995a4c7185d5d10e7e9`，
 四个字段的缺省/undefined=0、28 次非法更新数字 401 及失败后原数据不变。
 追加三种 connection 实际完整 ParseParams 的主机夹具，验证宽端口不截断、
 非法端口在 parse-success/callback 前返回原有 401；重跑 **45 项全部通过**，
-`network-port-host-r39-04.json`，输入不变。该夹具仍不是来宾 addNetworkRoute/VLAN
+`network-port-host-r39-04.json` SHA256
+`5f75b58dea573eb1bf9a1828da629590381303f7667938facd716011b3b63682`，
+输入不变。该夹具仍不是来宾 addNetworkRoute/VLAN
 后端、权限或连接成功证明。
 上述编译与模型不是新包验收，台账仍 **158 / 281 闭环、123 未闭环**。
+
+端口提交 `4229d4fb539d32242ca2f92214477193ca0017a7` 的冻结全量主机回归
+`host-r39-frozen-batch-09.json`：**1600 项、跳过 1 项、279.855 秒，其余通过**，
+输入不变；树 SHA256 `546cf2585ee7725b709170cf3cb738e79ce37962e1c6d0d0c7eef7983fcb1c2c`，
+日志 SHA256 `cf55acafa18d637f9e6d1536ba0d4c02ecf07c8f3afa4873930ecad05d70d598`，
+报告 SHA256 `076e8397b7546cd34e8e3101d934a8d42fd2df20e6760cd43d5db440e53a70c3`。
+这不包含后续重复前缀候选，不追改冻结输入或 R38 首包失败状态。
 
 ## R39 VPN 地址族四路径候选（未计入闭环）
 

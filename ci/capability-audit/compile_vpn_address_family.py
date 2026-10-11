@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import subprocess
 from compile_contact_sync_mode import ROOT, PRODUCTS, run
 from compile_network_port import PORT, HEADERS
 
@@ -43,7 +44,9 @@ if __name__ == '__main__':
             report['objects_count'] += child['objects_count']
         report['status'] = 'pass'
     except Exception as error:
-        report['failures'].append(type(error).__name__ + ': ' + str(error))
+        report['failures'].append(type(error).__name__ + ': ' +
+            ('actual compilation failed; inspect retained per-TU logs' if isinstance(error, subprocess.CalledProcessError)
+             else str(error)))
     finally:
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(dict(status=report['status'], objects_count=report['objects_count'],
