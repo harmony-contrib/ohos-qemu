@@ -19,6 +19,8 @@ completion.
 This shared component is applied before software-backend packaging for both
 profiles/all native ABIs. The source guard accepts only pristine fixed HEAD
 or the complete earlier EOS repair or this complete two-patch repair. Partial
-new input changes, unknown edits and linked inputs are rejected. Compile and
+new input changes, unknown edits and linked inputs are rejected. The complete
+remaining stack is validated in scratch before source changes; legacy markers
+do not determine the applied state. Compile and
 new-package callback/packet/EOS/input-boundary tests remain
 required; source inspection or a flag alone is not media API acceptance.

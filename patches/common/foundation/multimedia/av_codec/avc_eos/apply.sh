@@ -11,5 +11,5 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "${SOURCE_ROOT}" ] || { echo "usage: apply.sh --source-root ROOT" >&2; exit 2; }
 python3 "${COMPONENT_DIR}/verify_source.py" --source-root "${SOURCE_ROOT}"
-bash "${PATCH_ROOT}/lib/apply_component_dir.sh" "${COMPONENT_DIR}" --source-root "${SOURCE_ROOT}"
+python3 "${PATCH_ROOT}/lib/apply_component_stack.py" --component-dir "${COMPONENT_DIR}" --source-root "${SOURCE_ROOT}"
 python3 "${COMPONENT_DIR}/verify_source.py" --source-root "${SOURCE_ROOT}" --require-patched

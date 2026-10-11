@@ -24,7 +24,26 @@ RGBA 帧，要求真实异步 UNKNOWN 错误、销毁后仍没有任何编码输
 两个 profile/三个 bitrate mode 各新增 RGBA 编解码轮次，共 18 轮/72 帧；继续要求
 实际 SPS/IDR/EOS、完整挑战解码像素和错误恢复。严格重放保留全部源、SDK、native、
 签名 HAP、零权限角色、nonce、归档、boot/ABI 绑定。不声称 surface 输入、HEVC
-编码或录制/录屏/转码管线通过；这些新调用方尚待冻结编译和新代表包运行。
+编码或录制/录屏/转码管线通过；新代表包运行仍待完成。
+
+提交 `3a20c9dc3081a7458e34c36b44c1aa8e9e940f85` 冻结树
+`8e76a6d5f95576b5725d17e2d7f4dcabe2604cff8a2f7292ec48dc8af7f91bc5`
+完整主机回归 1674 项、跳过 1 项、336.704 秒，其余通过，输入不变；
+`host-r40-frozen-batch-04.json` SHA256
+`8eea21f2e73426b4bc7b501ca32ea040fd37c4b87cc8dab655badbce0c111a5c`，日志
+SHA256 `5a84ba84b1c80fe2bde1aad09708dccbf0b9aad29950098ce7a79beda21bb60e`。
+同树三个 ABI 的实际 native/类型 HAP 编译及 unsigned 归档加载字节校验通过，输入不变；
+`avc-default-compilation-r40-04/evidence.json` SHA256
+`167477b35c4af618ec7581a3043ae60390b9afab461008b8775efb2e4ff0132a`。
+未签名安装、未运行或关闭任何台账项。
+
+随后将该组件切换为已有的完整 stack applicator，保留精确前/后源守卫。
+新增完整固定 wrapper 字节夹具，原版、旧 EOS prefix、完整修复分别应用两次；
+两份过期 applied marker 不影响源状态判断，第二补丁失效时第一补丁也不会写入。
+4 项主机回归通过。只读 Docker 的三个真实 TU 对象再次编译通过，刻意过期标记
+被忽略、实际源/配方不变；`avc-input-wrapper-tu-r40-02.json` SHA256
+`120e4e626f03adf08e4be5728c739b265e2cf68b8a34ff083a87fa6a6ebb67cc`。
+这次只改变应用方式，不改变上述实际修复源和测试调用方；仍不替代新包门槛。
 
 ## R40 默认视频编码器下一批候选（未入 R39、未计入闭环）
 

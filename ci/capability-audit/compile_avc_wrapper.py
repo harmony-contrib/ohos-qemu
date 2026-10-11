@@ -41,8 +41,7 @@ def run(args):
                                         baseline.REVISION + ':' + baseline.FILE])
     expected = baseline.repaired_source(original.decode()).encode()
     inputs = [Path(__file__), *sorted(COMPONENT.glob('*.patch')), COMPONENT / 'apply.sh',
-              COMPONENT / 'verify_source.py', ROOT / 'patches/lib/apply_component_dir.sh',
-              ROOT / 'patches/lib/apply_patch.sh', source]
+              COMPONENT / 'verify_source.py', ROOT / 'patches/lib/apply_component_stack.py', source]
     before = {str(path): sha(path) for path in inputs}
     products = args.product or list(PRODUCTS)
     if len(products) != len(set(products)):
@@ -67,6 +66,12 @@ def run(args):
             candidate = project / baseline.FILE
             if candidate.read_bytes() != original:
                 raise ValueError('owned checkout must contain the exact fixed original')
+            # Deliberately stale old markers must not skip either patch.
+            markers = staged / '.ohos-qemu-patches'
+            markers.mkdir()
+            for numbered in COMPONENT.glob('*.patch'):
+                (markers / (sha(numbered) + '.applied')).write_text('stale fixture marker\n')
+            report['stale_legacy_markers_ignored'] = True
             for attempt in (1, 2):
                 with (logs / ('apply-' + str(attempt) + '.log')).open('x') as stream:
                     subprocess.run(['bash', str(COMPONENT / 'apply.sh'), '--source-root', str(staged)],
