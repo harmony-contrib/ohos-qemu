@@ -15,6 +15,7 @@ interface NativeModes {
 interface Observation {
   runId: string; values: number[]; native: NativeModes; audioValues: number[]; audioNative: NativeModes;
   photoValues: number[]; photoNative: NativeModes;
+  attributeValues: number[]; attributeNative: NativeModes;
   records: ContactRecordObservation[];
   stateRecords: StateRecordObservation;
   photoRecords: ContactRecordObservation[];
@@ -164,6 +165,12 @@ struct Index {
       audioNative: modeProbe.inspectAudio(),
       photoValues: [photoAccessHelper.FusionAssetType.COMPATIBLE_ASSET],
       photoNative: modeProbe.inspectPhoto(),
+      attributeValues: [contact.Attribute.ATTR_CONTACT_EVENT, contact.Attribute.ATTR_EMAIL,
+        contact.Attribute.ATTR_GROUP_MEMBERSHIP, contact.Attribute.ATTR_IM, contact.Attribute.ATTR_NAME,
+        contact.Attribute.ATTR_NICKNAME, contact.Attribute.ATTR_NOTE, contact.Attribute.ATTR_ORGANIZATION,
+        contact.Attribute.ATTR_PHONE, contact.Attribute.ATTR_PORTRAIT, contact.Attribute.ATTR_POSTAL_ADDRESS,
+        contact.Attribute.ATTR_RELATION, contact.Attribute.ATTR_SIP_ADDRESS, contact.Attribute.ATTR_WEBSITE],
+      attributeNative: modeProbe.inspectAttributes(),
       records: contactRecords(this.runId),
       stateRecords: stateRecords(this.runId),
       photoRecords: photoRecords(this.runId)

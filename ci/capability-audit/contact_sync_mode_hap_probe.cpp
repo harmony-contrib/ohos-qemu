@@ -80,14 +80,22 @@ napi_value InspectPhoto(napi_env env, napi_callback_info)
     const char *names[] = {"COMPATIBLE_ASSET"};
     return InspectEnum(env, "@ohos.file.photoAccessHelper", "FusionAssetType", names);
 }
+napi_value InspectAttributes(napi_env env, napi_callback_info)
+{
+    const char *names[] = {"ATTR_CONTACT_EVENT", "ATTR_EMAIL", "ATTR_GROUP_MEMBERSHIP", "ATTR_IM",
+        "ATTR_NAME", "ATTR_NICKNAME", "ATTR_NOTE", "ATTR_ORGANIZATION", "ATTR_PHONE", "ATTR_PORTRAIT",
+        "ATTR_POSTAL_ADDRESS", "ATTR_RELATION", "ATTR_SIP_ADDRESS", "ATTR_WEBSITE"};
+    return InspectEnum(env, "@ohos.contact", "Attribute", names);
+}
 napi_value Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor methods[] = {
         {"inspect", nullptr, Inspect, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"inspectAudio", nullptr, InspectAudio, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"inspectPhoto", nullptr, InspectPhoto, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"inspectAttributes", nullptr, InspectAttributes, nullptr, nullptr, nullptr, napi_default, nullptr},
     };
-    napi_define_properties(env, exports, 3, methods);
+    napi_define_properties(env, exports, 4, methods);
     return exports;
 }
 napi_module MODULE = {1, 0, nullptr, Init, "contactsyncmodeprobe", nullptr, {0}};

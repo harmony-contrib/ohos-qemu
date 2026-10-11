@@ -18,14 +18,17 @@ def verify(text, run_id, identity):
         raise ValueError('one complete actual enum observation required')
     row = json.loads(lines[0])
     if (not isinstance(row, dict) or set(row) != {'runId', 'values', 'native', 'audioValues', 'audioNative',
-            'photoValues', 'photoNative', 'records', 'stateRecords', 'photoRecords'} or row['runId'] != run_id or
+            'photoValues', 'photoNative', 'attributeValues', 'attributeNative', 'records', 'stateRecords', 'photoRecords'} or row['runId'] != run_id or
             row['values'] != [1, 2] or any(type(value) is not int for value in row['values'])):
         raise ValueError('typed public SDK enum values absent, wrong, malformed or stale')
     if row['audioValues'] != [0, 1] or any(type(value) is not int for value in row['audioValues']):
         raise ValueError('typed SDK DeviceBlockStatus values must be exactly 0/1')
     if row['photoValues'] != [0] or any(type(value) is not int for value in row['photoValues']):
         raise ValueError('typed SDK FusionAssetType value must be exactly numeric zero')
-    for key, wanted in (('native', [1, 2]), ('audioNative', [0, 1]), ('photoNative', [0])):
+    if row['attributeValues'] != list(range(14)) or any(type(value) is not int for value in row['attributeValues']):
+        raise ValueError('all fourteen typed SDK Attribute values must match')
+    for key, wanted in (('native', [1, 2]), ('audioNative', [0, 1]), ('photoNative', [0]),
+                        ('attributeNative', list(range(14)))):
         native = row[key]
         count = len(wanted)
         if (not isinstance(native, dict) or set(native) != {'values', 'statuses', 'types', 'own', 'exception'} or

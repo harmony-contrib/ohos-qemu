@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
-from contact_sync_mode_contract import HERE, TEMPLATE, RECORD_CLASSES, PHOTO_RECORD_CLASSES, expected, expected_audio, expected_photo, inputs, sha256, verify_inputs
+from contact_sync_mode_contract import HERE, TEMPLATE, RECORD_CLASSES, PHOTO_RECORD_CLASSES, ATTRIBUTE_MEMBERS, expected, expected_audio, expected_photo, expected_attributes, inputs, sha256, verify_inputs
 from verify_contact_sync_mode_results import verify
 
 RUN = 'a' * 32
@@ -18,6 +18,24 @@ TS = Path(os.environ.get('OHOS_AUDIT_TYPESCRIPT',
 
 
 class ContactSyncModeResultTests(unittest.TestCase):
+    def test_all_attribute_values_and_native_reads_are_strict(self):
+        row = self.observed()
+        verify(json.dumps(row), RUN, IDENTITY)
+        for index in range(14):
+            for key in ('attributeValues', 'attributeNative'):
+                changed = copy.deepcopy(row)
+                target = changed[key] if key == 'attributeValues' else changed[key]['values']
+                target[index] = 99
+                with self.subTest(index=index, key=key), self.assertRaises(ValueError):
+                    verify(json.dumps(changed), RUN, IDENTITY)
+        with tempfile.TemporaryDirectory() as directory:
+            sdk = self.sdk(Path(directory))
+            self.assertEqual([item['value'] for item in expected_attributes(sdk)['members']], list(range(14)))
+            api = sdk / 'ets/api/@ohos.contact.d.ts'
+            api.write_text(api.read_text().replace('ATTR_PHONE=8', 'ATTR_PHONE=5'))
+            with self.assertRaises(ValueError):
+                expected_attributes(sdk)
+
     def observed(self):
         records = []
         for name in RECORD_CLASSES:
@@ -33,6 +51,8 @@ class ContactSyncModeResultTests(unittest.TestCase):
                 'types': [6, 6, 3, 3], 'own': [True, True, True], 'exception': False},
                 'photoValues': [0], 'photoNative': {'values': [0], 'statuses': [0] * 10,
                 'types': [6, 6, 3], 'own': [True, True], 'exception': False}, 'records': records,
+                'attributeValues': list(range(14)), 'attributeNative': {'values': list(range(14)),
+                    'statuses': [0] * 62, 'types': [6, 7] + [3] * 14, 'own': [True] * 15, 'exception': False},
                 'stateRecords': {'flags': [True] * 12, 'values': [RUN + suffix for suffix in
                     ('-first-changed', '-second', '-collection', '-other')]},
                 'photoRecords': [dict(name=name, first=first, second=second, flags=[True] * 4)
@@ -158,7 +178,8 @@ class ContactSyncModeResultTests(unittest.TestCase):
         api = root / 'ets/api'
         api.mkdir(parents=True)
         (api / '@ohos.contact.d.ts').write_text(
-            'declare namespace contact { enum ContactSyncMode { MODE_INCREMENTAL=1, MODE_CLOUD_BASED=2 } }\n'
+            'declare namespace contact { enum ContactSyncMode { MODE_INCREMENTAL=1, MODE_CLOUD_BASED=2 }\n'
+            'enum Attribute { ' + ','.join(name + '=' + str(index) for index, name in enumerate(ATTRIBUTE_MEMBERS)) + ' } }\n'
             'export default contact;\n')
         (api / '@ohos.arkui.StateManagement.d.ts').write_text('export class ConnectOptions {}\n')
         (api / '@ohos.multimedia.audio.d.ts').write_text(

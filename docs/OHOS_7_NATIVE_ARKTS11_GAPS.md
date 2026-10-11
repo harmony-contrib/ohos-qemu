@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R35 实测拦截 Contact Attribute 映射错误，后续批次修复候选
+
+R35 新包 `runtime-px9c57k7/contact-sync-mode` 严格验证失败：真实
+ContactAttributes 为 `[1,5]` / `[6]`，固定 API26 SDK 要求 `[1,8]` / `[4]`。
+没有修改预期来放行。源码进一步确认 native Attribute 误用了数据库 type_id；
+GetContactAttributes 又直接把公开值传入查询和更新路径，并丢弃合法的事件值 0。
+
+新增独立 `contacts_data/attribute_mapping` 组件，统一构建脚本应用于两个画像和三个 ABI：
+公开 14 个值与 SDK 对齐，在唯一 NAPI 输入边界映射回原数据库类型。数据库常量、
+持久化内容、权限及内部谓词不变；无效非空字段选择保留不匹配标记，不降级成全部字段。
+typed HAP 和独立 native 导出读取都增加全部 14 个值，预期绑定真实 SDK AST。
+
+候选验证（证据根仍为 `issue-20-20261006`）：
+
+- 主机映射/精确重放/未知部分状态测试 3 项，以及严格结果验证 12 项通过。
+- `contact-attribute-tu-r35-03.json` 三个真实产品的完整 contacts_build TU 编译通过，
+  消费修复后的头文件；SHA256 `a8011848f42a63f7ca73872122a60d696e762f4952f7b7c8fca0cf9d8ca5eda5`。
+  `-01` 的补丁 EOF 格式失败日志保留；`-02` 编译完成但检查脚本漏写报告，已修复脚本并重跑 `-03`。
+- 真实 SDK HAP `contact-attribute-hap-r35-01` 编译通过，SHA256
+  `be68c438a0f346165dcf448556ab0d0efd097ef0544ef7244d21ec1ee8a74bf2`。
+
+**以上不是新包运行证明，也不证明 provider 查询/更新已验收。R35 门禁未通过，
+其它独立回归继续收集，不启动其余五包。**
+
 ## R35 代表归档已生成，完整新包回归进行中
 
 仅 ARM64 phone，冻结提交 `c0c5423ebe1f32404b9973918d921d12fb88dab2`：

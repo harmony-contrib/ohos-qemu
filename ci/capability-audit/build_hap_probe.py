@@ -2057,7 +2057,7 @@ if args.contact_sync_mode_only:
     write('entry/src/main/ets/pages/Index.ets', TEMPLATE.read_text().replace('__RUN__', challenge))
     write('entry/src/main/cpp/types/libcontactsyncmodeprobe/index.d.ts',
           'interface NativeModes { values: number[]; statuses: number[]; types: number[]; own: boolean[]; exception: boolean; }\n'
-          'interface Probe { inspect: () => NativeModes; inspectAudio: () => NativeModes; inspectPhoto: () => NativeModes; }\ndeclare const probe: Probe;\nexport default probe;\n')
+          'interface Probe { inspect: () => NativeModes; inspectAudio: () => NativeModes; inspectPhoto: () => NativeModes; inspectAttributes: () => NativeModes; }\ndeclare const probe: Probe;\nexport default probe;\n')
     write('contact-sync-mode-probe-inputs.json', contact_sync_inputs(root, args.sdk, args.arch, challenge))
 if args.runtime_enum_only or args.curve_only:
     from runtime_enum_contracts import expected, generate, inputs as runtime_enum_inputs

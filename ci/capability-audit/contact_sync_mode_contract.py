@@ -18,6 +18,14 @@ PHOTO_RECORD_CLASSES = ('DefaultCoverOrderInfo', 'PhotoViewMimeTypeFileSizeFilte
                         'RecentPhotoInfo', 'RequestReadPermissionResult', 'ContextRecoveryInfo')
 RECORD_CLASSES = ('ContactAttributes', 'Group', 'Holder', 'Name', 'NickName', 'Note',
                   'Organization', 'Portrait', 'Website')
+ATTRIBUTE_MEMBERS = ('ATTR_CONTACT_EVENT', 'ATTR_EMAIL', 'ATTR_GROUP_MEMBERSHIP', 'ATTR_IM',
+                     'ATTR_NAME', 'ATTR_NICKNAME', 'ATTR_NOTE', 'ATTR_ORGANIZATION', 'ATTR_PHONE',
+                     'ATTR_PORTRAIT', 'ATTR_POSTAL_ADDRESS', 'ATTR_RELATION', 'ATTR_SIP_ADDRESS', 'ATTR_WEBSITE')
+
+
+def expected_attributes(sdk):
+    return expected_enum(sdk, '@ohos.contact', 'Attribute',
+                         [{'name': name, 'value': index} for index, name in enumerate(ATTRIBUTE_MEMBERS)])
 
 
 def expected_enum(sdk, module, name, members):
@@ -58,6 +66,7 @@ def inputs(project, sdk, arch, run_id):
     return {'schema_version': 1, 'role': 'ordinary_app', 'scope': SCOPE,
             'run_id': run_id, 'arch': arch, 'request_permissions': [], 'sdk': str(sdk),
             'contract': expected(sdk), 'audio_contract': expected_audio(sdk), 'photo_contract': expected_photo(sdk),
+            'attribute_contract': expected_attributes(sdk),
             'audit_baseline_sha256': sha256(LEDGER), 'generated_source': str(page),
             'generated_source_sha256': sha256(page), 'template_sha256': sha256(TEMPLATE),
             'native_source_sha256': sha256(NATIVE), 'resolver_sha256': sha256(HERE / 'extract_const_enum_contracts.cjs'),
@@ -83,5 +92,6 @@ def verify_inputs(value, run_id, arch):
             sha256(Path(value['sdk']) / 'ets/build-tools/ets-loader/node_modules/typescript/lib/typescript.js') !=
             value.get('typescript_sha256') or expected(value['sdk']) != value.get('contract') or
             expected_audio(value['sdk']) != value.get('audio_contract') or
-            expected_photo(value['sdk']) != value.get('photo_contract')):
+            expected_photo(value['sdk']) != value.get('photo_contract') or
+            expected_attributes(value['sdk']) != value.get('attribute_contract')):
         raise ValueError('ContactSyncMode caller/compiler/SDK must match current actual inputs')

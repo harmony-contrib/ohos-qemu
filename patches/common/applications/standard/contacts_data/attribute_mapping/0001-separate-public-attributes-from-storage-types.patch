@@ -1,0 +1,147 @@
+diff --git a/applications/standard/contacts_data/contacts/include/contacts_napi_object.h b/applications/standard/contacts_data/contacts/include/contacts_napi_object.h
+--- a/applications/standard/contacts_data/contacts/include/contacts_napi_object.h
++++ b/applications/standard/contacts_data/contacts/include/contacts_napi_object.h
+@@ -133,67 +133,67 @@
+     /**
+      * Indicates the instant messaging (IM) address.
+      */
+-    ATTR_IM,
++    ATTR_IM = 3,
+ 
+     /**
+      * Indicates the nickname.
+      */
+-    ATTR_NICKNAME,
++    ATTR_NICKNAME = 5,
+ 
+     /**
+      * Indicates the organization.
+      */
+-    ATTR_ORGANIZATION,
++    ATTR_ORGANIZATION = 7,
+ 
+     /**
+      * Indicates the phone number.
+      */
+-    ATTR_PHONE,
++    ATTR_PHONE = 8,
+ 
+     /**
+      * Indicates the name.
+      */
+-    ATTR_NAME,
++    ATTR_NAME = 4,
+ 
+     /**
+      * Indicates the postal address.
+      */
+-    ATTR_POSTAL_ADDRESS,
++    ATTR_POSTAL_ADDRESS = 10,
+ 
+     /**
+      * Indicates the portrait.
+      */
+-    ATTR_PORTRAIT,
++    ATTR_PORTRAIT = 9,
+ 
+     /**
+      * Indicates the contact group.
+      */
+-    ATTR_GROUP_MEMBERSHIP,
++    ATTR_GROUP_MEMBERSHIP = 2,
+ 
+     /**
+      * Indicates the note.
+      */
+-    ATTR_NOTE,
++    ATTR_NOTE = 6,
+ 
+     /**
+      * Indicates the contact event.
+      */
+-    ATTR_CONTACT_EVENT,
++    ATTR_CONTACT_EVENT = 0,
+ 
+     /**
+      * Indicates the website.
+      */
+-    ATTR_WEBSITE,
++    ATTR_WEBSITE = 13,
+ 
+     /**
+      * Indicates the relation.
+      */
+-    ATTR_RELATION,
++    ATTR_RELATION = 11,
+ 
+     /**
+      * Indicates the Session Initiation Protocol (SIP) address.
+      */
+-    ATTR_SIP_ADDRESS = 17
++    ATTR_SIP_ADDRESS = 12
+ };
+ 
+ /**
+diff --git a/applications/standard/contacts_data/contacts/src/contacts_build.cpp b/applications/standard/contacts_data/contacts/src/contacts_build.cpp
+--- a/applications/standard/contacts_data/contacts/src/contacts_build.cpp
++++ b/applications/standard/contacts_data/contacts/src/contacts_build.cpp
+@@ -1226,6 +1226,30 @@
+     return holder;
+ }
+ 
++// Public Attribute values are SDK identifiers, not contactsData type_id values.
++// Translate once at the input boundary; database predicates and writes retain
++// their existing internal identifiers. Unknown input must not mean all fields.
++static int AttributeToDataType(int64_t attribute)
++{
++    switch (attribute) {
++        case static_cast<int64_t>(Attribute::ATTR_CONTACT_EVENT): return CONTACT_EVENT;
++        case static_cast<int64_t>(Attribute::ATTR_EMAIL): return EMAIL;
++        case static_cast<int64_t>(Attribute::ATTR_GROUP_MEMBERSHIP): return GROUP_MEMBERSHIP;
++        case static_cast<int64_t>(Attribute::ATTR_IM): return IM;
++        case static_cast<int64_t>(Attribute::ATTR_NAME): return NAME;
++        case static_cast<int64_t>(Attribute::ATTR_NICKNAME): return NICKNAME;
++        case static_cast<int64_t>(Attribute::ATTR_NOTE): return NOTE;
++        case static_cast<int64_t>(Attribute::ATTR_ORGANIZATION): return ORGANIZATION;
++        case static_cast<int64_t>(Attribute::ATTR_PHONE): return PHONE;
++        case static_cast<int64_t>(Attribute::ATTR_PORTRAIT): return PHOTO;
++        case static_cast<int64_t>(Attribute::ATTR_POSTAL_ADDRESS): return POSTAL_ADDRESS;
++        case static_cast<int64_t>(Attribute::ATTR_RELATION): return RELATION;
++        case static_cast<int64_t>(Attribute::ATTR_SIP_ADDRESS): return SIP_ADDRESS;
++        case static_cast<int64_t>(Attribute::ATTR_WEBSITE): return WEBSITE;
++        default: return -1;
++    }
++}
++
+ ContactAttributes ContactsBuild::GetContactAttributes(napi_env env, napi_value object)
+ {
+     ContactAttributes contactAttributes;
+@@ -1238,13 +1262,14 @@
+     uint32_t size = 0;
+     napi_get_array_length(env, napiValueAttr, &size);
+     for (uint32_t i = 0; i < size; i++) {
+-        napi_value intValue;
+-        napi_get_element(env, napiValueAttr, i, &intValue);
+-        int64_t intNapiValue;
+-        napi_get_value_int64(env, intValue, &intNapiValue);
+-        if (intNapiValue != 0) {
+-            attrVector.push_back(intNapiValue);
+-        }
++        napi_value intValue = nullptr;
++        int64_t intNapiValue = -1;
++        if (napi_get_element(env, napiValueAttr, i, &intValue) != napi_ok ||
++            napi_get_value_int64(env, intValue, &intNapiValue) != napi_ok) {
++            attrVector.push_back(-1);
++            continue;
++        }
++        attrVector.push_back(AttributeToDataType(intNapiValue));
+     }
+     contactAttributes.attributes = attrVector;
+     return contactAttributes;
+@@ -1267,4 +1292,4 @@
+     return resultValue;
+ }
+ } // namespace ContactsApi
+-} // namespace OHOS
+\ No newline at end of file
++} // namespace OHOS
