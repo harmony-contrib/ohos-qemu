@@ -39,7 +39,8 @@ def build(args):
         '@ohos.net.vpnExtension.d.ts')
 
 
-def build_application(args, generated_page, template, receipt_name, scope, declaration_name):
+def build_application(args, generated_page, template, receipt_name, scope, declaration_name,
+                      module_factory=None):
     """Reuse the actual typed three-role app build, never override image policy."""
     root, sdk = args.output.resolve(), args.sdk.resolve()
     if args.role not in ROLES or re.fullmatch('[0-9a-f]{32}', args.run_id) is None:
@@ -50,6 +51,12 @@ def build_application(args, generated_page, template, receipt_name, scope, decla
                 ('apiVersion', '26'), ('releaseType', 'Release'), ('platformVersion', '26.0.0'))):
             raise ValueError('actual API26 Release SDK required')
     root.mkdir(parents=True, exist_ok=False)
+    application_module = (module_factory or module)(args.role)
+    requests = application_module['module']['requestPermissions']
+    if (not isinstance(requests, list) or any(not isinstance(row, dict) or
+            set(row) != {'name'} or not isinstance(row['name'], str) for row in requests) or
+            len({row['name'] for row in requests}) != len(requests)):
+        raise ValueError('exact distinct application permission requests required')
 
     def write(name, value):
         path = root / name
@@ -69,7 +76,7 @@ def build_application(args, generated_page, template, receipt_name, scope, decla
     write('entry/build-profile.json5', {'apiType': 'stageMode', 'buildOption': {'externalNativeOptions': {
         'abiFilters': [{'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}[args.arch]]}},
         'targets': [{'name': 'default'}]})
-    write('entry/src/main/module.json5', module(args.role))
+    write('entry/src/main/module.json5', application_module)
     write('entry/src/main/resources/base/element/color.json', {'color': [{'name': 'background', 'value': '#ffffff'}]})
     write('entry/src/main/resources/base/profile/main_pages.json', {'src': ['pages/Index']})
     write('entry/src/main/ets/entryability/EntryAbility.ets', """import UIAbility from '@ohos.app.ability.UIAbility';
@@ -83,7 +90,7 @@ export default class EntryAbility extends UIAbility {
     declaration = sdk / 'ets/api' / declaration_name
     write(receipt_name, {'schema_version': 1, 'run_id': args.run_id, 'role': args.role,
         'arch': args.arch, 'scope': scope,
-        'request_permissions': [PERMISSION] if args.role == 'system' else [],
+        'request_permissions': [row['name'] for row in requests],
         'template_sha256': digest(template), 'generated_source': str(generated),
         'generated_source_sha256': digest(generated), 'sdk_declaration': str(declaration),
         'sdk_declaration_sha256': digest(declaration)})

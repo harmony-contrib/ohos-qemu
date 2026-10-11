@@ -18,7 +18,7 @@ from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects",
-                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler"))
+                             "application-home", "photos-asset", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler", "ethernet-control"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 
 
@@ -310,6 +310,11 @@ def verified_payload(name, path, identity, environment):
                 raise ValueError('luminance caller belongs to another packaged guest')
             verify_luminance(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
                              environment['device_type'])
+        elif name == 'ethernet-control':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_ethernet_control_results import verify_evidence as verify_ethernet
+            verify_ethernet(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                            environment['device_type'], environment['target'])
         elif name == 'sys-vpn-store':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

@@ -859,6 +859,26 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(vpn_store[0]), 'sha256': digest(vpn_store[0]),
                 'verifier': 'three_real_HAP_roles_three_variants_complete_network_CRUD_replace_caller_restart_and_denials',
                 'not_claimed': 'connected_tunnel_traffic_PKCS12_legacy_DB_migration_or_all_VPN_options'}
+    ethernet = child('ethernet-control/evidence.json')
+    if ethernet:
+        from verify_ethernet_control_results import verify_evidence as verify_ethernet
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('Ethernet control closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('Ethernet controls require this unchanged acceptance package')
+        for contract in verify_ethernet(ethernet[1], archive_sha, boot_id, environment['guest_arch'],
+                                        device_type, environment['target']):
+            closed[contract] = {'evidence': str(ethernet[0]), 'sha256': digest(ethernet[0]),
+                'verifier': 'three_actual_HAP_roles_repeated_public_controls_real_kernel_flags_and_caller_restart',
+                'not_claimed': 'traffic_hotplug_service_restart_errors_or_all_Ethernet_APIs'}
     blink = child('screen-blink/evidence.json')
     if blink:
         from verify_screen_blink_evidence import verify_evidence as verify_blink

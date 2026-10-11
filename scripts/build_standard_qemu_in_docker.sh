@@ -205,6 +205,7 @@ NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/a
 QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
 LOCATION_NDK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location_ndk/apply.sh"
 ETHERNET_API26_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_api26/apply.sh"
+ETHERNET_CONTROL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_control/apply.sh"
 OPTIONAL_SETTINGS_READ_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/optional_settings_read/apply.sh"
 ALWAYS_ON_VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/always_on_vpn/apply.sh"
 VPN_CONFIG_ARRAYS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_config_arrays/apply.sh"
@@ -2936,6 +2937,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkweb_business_error_component.log"
   bash "${ETHERNET_API26_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_api26_component.log"
+  bash "${ETHERNET_CONTROL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_control_component.log"
   bash "${TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_core_enums_component.log"
   bash "${TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

@@ -332,6 +332,16 @@ def run(args):
                 '--source-volume', source_volume, '--docker-image', docker_image],
                 'system-VPN-three-variant-CRUD-replacement-boundaries-restart-and-denials', timeout=6000, env=child_env)
             check('sys-vpn-store', work / 'sys-vpn-store/evidence.json', [vpn_store_record])
+        # Actual global controls can briefly drop TCP HDC. Recovery must happen
+        # inside the same permission-checked application, never a root override.
+        ethernet_record = command([sys.executable, Path(__file__).with_name('run_ethernet_control_probe.py'),
+            '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+            '--boot-id', environment['boot_id'], '--output', work / 'ethernet-control',
+            '--source-volume', source_volume, '--docker-image', docker_image],
+            'Ethernet-three-roles-real-kernel-flags-repeated-control-and-caller-restart', timeout=6000, env=child_env)
+        check('ethernet-control', work / 'ethernet-control/evidence.json', [ethernet_record])
+        same_guest('after-Ethernet-policy-cleanup')
         def blink_batch_health(label):
             same_guest(label)
             if label.startswith('after-'):
