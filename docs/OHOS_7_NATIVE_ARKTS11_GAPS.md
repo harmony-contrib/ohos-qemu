@@ -20,6 +20,10 @@ typed HAP 和独立 native 导出读取都增加全部 14 个值，预期绑定�
   `-01` 的补丁 EOF 格式失败日志保留；`-02` 编译完成但检查脚本漏写报告，已修复脚本并重跑 `-03`。
 - 真实 SDK HAP `contact-attribute-hap-r35-01` 编译通过，SHA256
   `be68c438a0f346165dcf448556ab0d0efd097ef0544ef7244d21ec1ee8a74bf2`。
+- 提交 `8688eff4267ccbd76a9dfdccca0f1211f7d8a6fa` 的冻结整批主机回归通过：
+  1448 项、跳过 1 项、238.053 秒；`host-contact-attribute-frozen-r35-01.json`。
+  冻结树 SHA256 `cbde9330260f32f0d77bbb245d9330e0ccd2321792c6603e6c3dbd2d9d7b310c`，
+  日志 SHA256 `3f15e1c96ede3cbd03d7505ec6bf45f8f980adfb095a49002e54a040ca556006`。
 
 **以上不是新包运行证明，也不证明 provider 查询/更新已验收。R35 门禁未通过，
 其它独立回归继续收集，不启动其余五包。**
