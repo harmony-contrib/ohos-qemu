@@ -1,5 +1,36 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 下一批 VPN 错误分配边界与冻结回归
+
+VPN Promise 完成阶段原先只尝试创建一次错误对象；NAPI 返回失败但不产生异常时，
+请求可能一直 pending。现于发布 Promise 前强引用一个内部 BusinessError；完成阶段
+优先取真实错误/引擎异常，分配失败时使用预留错误，结束后释放引用。初始化失败、
+取消和正常完成均释放资源，不增加权限，不把 provider 故障转换为成功。
+
+- 实际头文件 sanitizer 测试覆盖四个错误创建步骤分别失败、有/无 pending exception，
+  以及原有参数、IPC、初始化失败和取消路径。VPN 定向回归 10 项通过，
+  `host-vpn-error-reserve-r35-02.log`；首次误用系统 Python 缺 PIL 的失败记录保留，
+  第二次使用既有验证 venv，没有跳过相关用例。
+- 新头文件 SHA256 `916d6db2e88b830febe5033bb8d32466d4c18ee2c72f4c379728e7955aa99d72`。
+  实际产品 NAPI 翻译单元三 ABI 均通过，证据
+  `always-on-vpn-error-reserve-r35-01/evidence.json`，SHA256
+  `65f0535457c178e4df75e8080c90ad559b6e67ee4fdd2f520bde720539a411b6`。
+  这是编译与主机边界证据，不是 guest 运行验收。
+- 此前提交 `592cb632cdffb79f4a636d066ee492e4f67abe3f` 的完整冻结主机测试
+  `host-next-batch-frozen-r35-01.json` 通过：1444 项、跳过 1 项。
+  冻结树 SHA256 `4611949b7efc7e5fb6205cd416e6e54bec929aac292dc9e82e5e3c0ff398480f`，
+  日志 SHA256 `7ec29b1a1d366bc7c5798168c946e0c50a291cc4a2ee1a4794f80b96e4e76b03`。
+  本次错误分配修复另行冻结完整主机回归 1444 项通过、跳过 1 项，236.808 秒：
+  `host-vpn-reserve-frozen-r35-01.json`，冻结树 SHA256
+  `b6ca81a2b6c6f0ef47403e373dc647de39be99527ca5e697e49fc891e7e1cbf4`，
+  日志 SHA256 `fccabbb0b36ec842197d6e8e28d3151a603046b7c6686b1bb0857b2a7a9b6a98`。
+  快照包含当时未提交的错误分配修复，以文件树哈希而非基线 commit 识别。
+- R23/R27 两个已停止测试现场的 userdata 经 qcow2 无损压缩、check、逐字节 compare
+  和原始哈希复核后移除原始副本，净释放 3,958,935,552 分配字节；压缩备份保留，
+  原 SHA256、恢复命令见 `compacted-old-userdata-r35-01.json`。R32/R34 现场不动。
+
+以上仍不在冻结 R35 中。R35 代表包尚在构建，未启动其余五包，运行关闭计数不变。
+
 ## R35 构建期间的下一批照片数据类（未关闭运行缺口）
 
 补齐 `DefaultCoverOrderInfo`、`PhotoViewMimeTypeFileSizeFilter`、`RecentPhotoOptions`、

@@ -2,7 +2,7 @@ diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/i
 new file mode 100644
 --- /dev/null
 +++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/include/vpn_always_on_napi.h
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,181 @@
 +// SPDX-License-Identifier: Apache-2.0
 +#ifndef OHOS_QEMU_VPN_ALWAYS_ON_NAPI_H
 +#define OHOS_QEMU_VPN_ALWAYS_ON_NAPI_H
@@ -22,6 +22,7 @@ new file mode 100644
 +struct Request {
 +    napi_async_work work = nullptr;
 +    napi_deferred deferred = nullptr;
++    napi_ref fallbackError = nullptr;
 +    std::string bundle;
 +    bool write = false;
 +    bool enabled = false;
@@ -52,7 +53,7 @@ new file mode 100644
 +        client.IsAlwaysOnVpnEnabled(request->bundle, request->enabled);
 +}
 +
-+inline void Reject(napi_env env, napi_deferred deferred, int32_t code)
++inline void Reject(napi_env env, Request *request, int32_t code)
 +{
 +    napi_value error = nullptr;
 +    bool pending = false;
@@ -62,8 +63,20 @@ new file mode 100644
 +    if (error == nullptr) {
 +        error = Error(env, code);
 +    }
++    // Error construction itself may fail, with or without a pending exception.
++    // Reserve an internal BusinessError before exposing the Promise so this
++    // path does not need another allocation in order to settle the request.
++    if (error == nullptr) {
++        pending = false;
++        if (napi_is_exception_pending(env, &pending) == napi_ok && pending) {
++            napi_get_and_clear_last_exception(env, &error);
++        }
++        if (error == nullptr) {
++            napi_get_reference_value(env, request->fallbackError, &error);
++        }
++    }
 +    if (error != nullptr) {
-+        napi_reject_deferred(env, deferred, error);
++        napi_reject_deferred(env, request->deferred, error);
 +    }
 +}
 +
@@ -80,11 +93,12 @@ new file mode 100644
 +        if (created == napi_ok) {
 +            napi_resolve_deferred(env, request->deferred, value);
 +        } else {
-+            Reject(env, request->deferred, NETMANAGER_ERR_INTERNAL);
++            Reject(env, request.get(), NETMANAGER_ERR_INTERNAL);
 +        }
 +    } else {
-+        Reject(env, request->deferred, request->result);
++        Reject(env, request.get(), request->result);
 +    }
++    napi_delete_reference(env, request->fallbackError);
 +    napi_delete_async_work(env, request->work);
 +}
 +
@@ -128,8 +142,18 @@ new file mode 100644
 +    request->bundle = std::move(bundle);
 +    request->write = Write;
 +    request->enabled = enabled;
++    napi_value fallback = Error(env, NETMANAGER_ERR_INTERNAL);
++    if (fallback == nullptr ||
++        napi_create_reference(env, fallback, 1, &request->fallbackError) != napi_ok) {
++        bool pending = false;
++        if (napi_is_exception_pending(env, &pending) == napi_ok && !pending) {
++            napi_throw_business_error(env, NETMANAGER_ERR_INTERNAL, "Unable to prepare VPN request");
++        }
++        return nullptr;
++    }
 +    napi_value promise = nullptr;
 +    if (napi_create_promise(env, &request->deferred, &promise) != napi_ok) {
++        napi_delete_reference(env, request->fallbackError);
 +        return nullptr;
 +    }
 +    napi_value name = nullptr;
@@ -137,7 +161,8 @@ new file mode 100644
 +            NAPI_AUTO_LENGTH, &name) != napi_ok ||
 +        napi_create_async_work(env, nullptr, name, Execute, Complete, request.get(), &request->work) != napi_ok ||
 +        napi_queue_async_work(env, request->work) != napi_ok) {
-+        Reject(env, request->deferred, NETMANAGER_ERR_INTERNAL);
++        Reject(env, request.get(), NETMANAGER_ERR_INTERNAL);
++        napi_delete_reference(env, request->fallbackError);
 +        if (request->work != nullptr) {
 +            napi_delete_async_work(env, request->work);
 +        }

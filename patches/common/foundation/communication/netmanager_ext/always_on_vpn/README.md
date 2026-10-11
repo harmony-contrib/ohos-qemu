@@ -14,6 +14,10 @@ The getter distinguishes an absent setting from a provider/query failure.
 Missing providers must reject, not report a fabricated disabled/success state.
 Each request owns its async work through completion or cancellation. Business
 errors carry numeric codes; invalid arguments do not submit IPC work.
+Before publishing a Promise, a strongly referenced internal BusinessError is
+reserved. If constructing a later error fails, completion clears a pending
+engine exception or uses that reserve rather than leaving the Promise pending.
+The reference is released on setup failure, completion, and cancellation.
 
 Apply with `bash apply.sh --source-root <root>`. Both pristine and already
 patched states are checked byte-for-byte. Existing system-VPN and dialog
