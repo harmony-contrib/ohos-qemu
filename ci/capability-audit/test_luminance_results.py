@@ -10,11 +10,27 @@ from build_luminance_probe import TEMPLATE, module, page
 from run_root_probe import digest
 from sign_luminance_probe import configure_profile
 from verify_luminance_results import SCOPE, verify, verify_evidence
+from run_luminance_probe import observations_complete
 
 
 class LuminanceTests(unittest.TestCase):
     nonce = 'a' * 32
     identity = json.dumps({'applicationInfo': dict(appPrivilegeLevel='system_core', isSystemApp=True, uid=20000001)})
+
+    def test_real_jsonl_termination_not_literal_backslash_n(self):
+        row = dict(runId=self.nonce, name='summary', values=[1], error='')
+        raw = json.dumps(row)
+        self.assertTrue(observations_complete(raw + '\n', self.nonce))
+        self.assertTrue(observations_complete(raw + '\r\n', self.nonce))
+        for incomplete in (raw, raw + '\\n', raw[:-1] + '\n', '\n', 'null\n'):
+            self.assertFalse(observations_complete(incomplete, self.nonce))
+        self.assertFalse(observations_complete(raw + '\n', 'b' * 32))
+        row.update(name='failed', error='summary')
+        self.assertFalse(observations_complete(json.dumps(row) + '\n', self.nonce))
+        row.update(name='summary', values=[0], error='')
+        self.assertTrue(observations_complete(json.dumps(row) + '\n', self.nonce))
+        with self.assertRaises(ValueError):
+            verify(json.dumps(row) + '\n', self.nonce, self.identity)
 
     def observations(self):
         data = [('identity', [20000001, 20000001, 123]), ('factory', [1, 1, 1]),

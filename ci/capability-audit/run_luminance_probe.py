@@ -26,6 +26,17 @@ from verify_luminance_results import verify, verify_inputs
 from verify_certificate_results import identity
 
 
+def observations_complete(raw, nonce):
+    """A complete final JSONL row, including a failed summary, ends polling."""
+    if not raw.endswith('\n'):
+        return False
+    try:
+        final = json.loads(raw.splitlines()[-1])
+    except (ValueError, IndexError):
+        return False
+    return isinstance(final, dict) and final.get('runId') == nonce and final.get('name') == 'summary'
+
+
 def run(args):
     args.output.mkdir(parents=True, exist_ok=False)
     report = dict(status='fail', archive=str(args.archive), archive_sha256=digest(args.archive),
@@ -135,7 +146,7 @@ def run(args):
             deadline = time.monotonic() + args.wait_seconds
             while time.monotonic() < deadline:
                 raw = shell('cat ' + shlex.quote(remote) + ' 2>/dev/null', 'luminance-poll', True)
-                if '"summary"' in raw and raw.endswith('\\n'):
+                if observations_complete(raw, nonce):
                     break
                 time.sleep(.2)
             else:
