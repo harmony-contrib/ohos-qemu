@@ -160,7 +160,7 @@ class NormalHapRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             args = argparse.Namespace(output=root / 'attempt', archive=root / 'missing.tar.gz',
-                persona='web', target='127.0.0.1:5555', arch='arm64')
+                persona='web', target='127.0.0.1:5555', arch='arm64', device='phone')
             result = run(args)
             self.assertEqual(result['status'], 'fail')
             self.assertFalse(result['first_artifact_behavior_gate_passed'])
