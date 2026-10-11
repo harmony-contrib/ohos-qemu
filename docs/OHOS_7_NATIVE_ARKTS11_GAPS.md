@@ -1,5 +1,26 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R36 已归档，集中回归启动前发现测试输入版本不一致
+
+本地 Docker 构建退出码 0，代表归档：
+`/Volumes/PSSD/qemu/packages/first-blink-contact-vpn-photo-7.0-release-20261011-r36/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA256 `201f914c14eb16ce5970c1a32ad8449e601428ebf6747f7796740b905fed6a97`。
+离线完整 Native ABI 检查通过；这些都不是来宾行为通过证明。
+`r36-consolidated-full-runtime-03.json` 在启动 VM 前拒绝了冻结测试版本差异，
+报 `acceptance boot requires the current exact frozen scripts/patches`。失败记录保留。
+
+提交 `6dcb7d3` 增加显式测试输入绑定：默认仍要求完全相同；仅在提供精确归档、
+构建树、验证树和逐文件变化收据时，允许枚举内的已审阅测试文件更新。
+产品补丁、构建脚本、启动器、缺口台账及未列入的文件变化、文件删除一律拒绝，
+绑定记录保存到 boot 证据。不修改归档或原构建输入，不修改最终
+`verify_first_artifact_gate.py` 对完整当前冻结输入的放行要求。
+4 项新边界测试及 12 项启动相邻测试通过；冻结全套主机回归正在执行。
+
+当前有效控制器为 `run-r36-bound-batch-04.py`，等待这轮冻结主机通过，再从同一个
+未修改 R36 归档运行集中行为验证，输出 `r36-bound-full-runtime-04.json`。
+它不启动其余五包，也不把测试更新当成最终六包放行；最终修复批次仍需用对应
+完整冻结输入重建并实测。下方旧排程均已取消或已失败退出。
+
 ## 当前有效调度：R36 单轮完整回归
 
 为避免同包重复执行旧套件、单独闪屏、最新套件三轮，在 R36 尚未产出归档、
