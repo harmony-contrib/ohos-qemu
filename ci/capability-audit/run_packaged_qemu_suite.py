@@ -361,6 +361,7 @@ def run(args):
         personas += ('image-metadata',)
         personas += ('thermal',)
         personas += ('network-accounting',)
+        personas += ('router-observer',)
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:

@@ -1,5 +1,14 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 路由回调接入后续整批回归
+
+此前 R30 的真实 `RouterPageInfo` 回调诊断已通过，但该 persona 未加入完整包运行列表，
+也不能拿 R30 结果替代新包验收。现将现有两页/两监听/两轮退订测试加入普通应用批量列表，
+增加包、boot、架构、HAP、原始回调、编译输入与验证器哈希的重放绑定。
+只在对应新包实测全部通过后，才按回调返回对象契约关闭 `RouterPageInfo`；
+不补伪造构造器，不关闭 DensityInfo/断点/全部 observer。六项定向主机测试通过，
+R36 冻结运行列表仍保留原样；新包路由回调证据尚未生成，缺口计数不变。
+
 ## LuminanceSampler：按 SDK 工厂契约验证，仍未关闭缺口
 
 API26 `@ohos.arkui.UIContext.d.ts:768` 明确要求先调用 `UIContext.getLuminanceSampler`，

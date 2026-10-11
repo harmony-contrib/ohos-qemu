@@ -520,6 +520,27 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'evidence': str(worker[0]), 'sha256': digest(worker[0]),
             'verifier': 'ordinary_worker_context_two_generations_256_actual_words_and_closed_buffer_boundaries',
             'not_claimed': 'main_thread_port_export_TaskPool_sendable_shared_memory_or_all_Worker_APIs'}
+    routed = child('router-observer/evidence.json')
+    if routed:
+        from verify_router_observer_results import verify_evidence as verify_routed
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('router callback closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('router callback proof requires unchanged acceptance package')
+        verify_routed(routed[1], archive_sha, boot_id, environment['guest_arch'])
+        closed['arkts_export:@ohos.arkui.observer:RouterPageInfo'] = {
+            'evidence': str(routed[0]), 'sha256': digest(routed[0]),
+            'verifier': 'ordinary_typed_four_real_routed_pages_two_listeners_and_two_unsubscription_modes',
+            'resolution': 'callback_return_contract_verified_NOT_runtime_constructor',
+            'not_claimed': 'constructor_export_density_breakpoints_or_all_observer_APIs'}
     modes = child('contact-sync-mode/evidence.json')
     if modes and modes[1].get('persona') == 'contact-sync-mode':
         document = modes[1]

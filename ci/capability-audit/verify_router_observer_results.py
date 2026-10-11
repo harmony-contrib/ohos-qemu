@@ -88,6 +88,42 @@ def verify(text, run_id, identity):
         not_claimed='constructor_exports_density_breakpoints_or_full_gate')
 
 
+def verify_evidence(document, archive_sha, boot_id, arch):
+    if (document.get('status') != 'pass' or document.get('persona') != 'router-observer' or
+            document.get('archive_sha256') != archive_sha or document.get('boot_id') != boot_id or
+            document.get('arch') != arch or document.get('failures') != [] or
+            document.get('first_artifact_behavior_gate_passed') is not False):
+        raise ValueError('router callback evidence must belong to this actual package/boot/architecture')
+    result_path = Path(document.get('result', ''))
+    if not result_path.is_absolute() or result_path.name != 'verified-result.json':
+        raise ValueError('explicit router callback result required')
+    root = result_path.parent
+    files = {'result': result_path, 'raw_results': root / 'results.log',
+             'ordinary_identity': root / 'application-identity.json', 'hap': root / 'ordinary-probe-signed.hap',
+             'compiled_contract_inputs': root / 'project/router-observer-probe-inputs.json'}
+    for key, path in files.items():
+        if path.is_symlink() or not path.is_file() or digest(path) != document.get(key + '_sha256'):
+            raise ValueError('actual router callback evidence changed: ' + key)
+    value = json.loads(result_path.read_text())
+    if (value.get('status') != 'pass' or value.get('scope') != SCOPE or value.get('failures') != [] or
+            value.get('archive_sha256') != archive_sha or value.get('arch') != arch or
+            value.get('run_id') != document.get('run_id') or
+            value.get('first_artifact_behavior_gate_passed') is not False or
+            value.get('verifier_sha256') != digest(Path(__file__))):
+        raise ValueError('router callback summary is stale or belongs to another run')
+    for field, key in (('results_sha256', 'raw_results'), ('application_identity_sha256', 'ordinary_identity'),
+                       ('compiled_inputs_sha256', 'compiled_contract_inputs')):
+        if value.get(field) != digest(files[key]):
+            raise ValueError('router callback verifier did not consume captured evidence')
+    verify_inputs(json.loads(files['compiled_contract_inputs'].read_text()), document['run_id'], arch)
+    identity = files['ordinary_identity'].read_text()
+    actual = verify(files['raw_results'].read_text(), document['run_id'], identity)
+    if actual != value.get('result') or require_normal_identity(identity) != document.get('ordinary_uid'):
+        raise ValueError('router callback summary differs from raw ordinary-app observations')
+    return actual
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('archive', 'results', 'inputs', 'application-identity', 'output'):
