@@ -156,6 +156,26 @@ def verify_runtime(document, nonce, role, identity_text, commands):
         if (len(pids) != 2 or pids[0] == pids[1] or exit_.get('pid') != pids[0] or
                 exit_.get('restarted_pid') != pids[1]):
             raise ValueError('actual screen blink caller death/new PID required')
+        lifecycle = {
+            label: [(index, command) for index, command in enumerate(commands)
+                    if Path(command['log']).name.endswith('-' + label + '.log')]
+            for label in ('blink-stop-own-process-with-active-window', 'blink-owner-exit',
+                          'blink-restart-owned-caller')}
+        stopped, exited, restarted = (lifecycle[label] for label in lifecycle)
+        if len(stopped) != 1 or not exited or len(restarted) != 1:
+            raise ValueError('actual caller stop/absence/restart commands required')
+        stop_index, stop = stopped[0]
+        restart_index, restart = restarted[0]
+        absence = 'if test -d /proc/' + str(pids[0]) + '; then echo PRESENT; else echo ABSENT; fi'
+        if (stop['argv'][3:] != ['shell', 'aa force-stop ' + BUNDLE] or stop['exit_code'] != 0 or
+                stop['output'].strip() != 'force stop process successfully.' or
+                restart['argv'][3:] != ['shell', 'aa start -a EntryAbility -b ' + BUNDLE] or
+                restart['exit_code'] != 0 or restart['output'].strip() != 'start ability successfully.' or
+                any(not stop_index < index < restart_index or command['exit_code'] != 0 or
+                    command['argv'][3:] != ['shell', absence] or command['output'].strip() not in
+                    ('PRESENT', 'ABSENT') for index, command in exited) or
+                exited[-1][1]['output'].strip() != 'ABSENT'):
+            raise ValueError('actual old caller kernel absence before new caller launch is unproven')
         verify_background_restored(exit_.get('baseline', {}), exit_.get('frames', []))
     return pids
 

@@ -64,6 +64,18 @@ hash 回放，不修改任何原始收据、日志或截图。该记录明确 di
 任何台账，不重新标绿 R38、不构成新包门禁。台账仍是 **158 / 281、123 未闭环**。
 亮度 GL/CPU 回退仍未授权，没有启动 R39 新代表包或其他五包。
 
+上述候选提交 `e1122bf6bba8e366aa413651fd0e0b44c0fdc718` 的冻结全量主机
+回归 `host-r39-frozen-batch-04.json`：**1563 项、跳过 1 项、256.185 秒，其余
+通过**，输入保持不变；树 SHA256
+`fd474e8579f69c6afcd9d0a4ed702d0c636be1cc1ac8efc82f1552fd354960d3`，
+日志 SHA256 `f17eecf714cb73d831eaf8637313e7ae549b8b411e25684992fd39efb84df7d6`，
+报告 SHA256 `bc80f8d86bfd1c8570b67a148ac41941144efebc7aa3504e649ce47c3fe12e1d`。
+后续追加调用方退出强化：不能只用新 PID 和背景恢复推定旧进程死亡；必须重放
+按序成功的 force-stop、针对真实旧 PID 的 `/proc` ABSENT 和重新启动原始命令。
+新拒绝夹具确保 PRESENT/空回复/混合回复/缺少任一步都失败。相邻 24 项主机
+回归通过，实际旧三角色只读派生诊断 `blink-replay-diagnostic-r39-02.json` 通过，
+不修改原始证据，不作为新包或台账闭环；此强化须单独冻结全量回归。
+
 在原 VPN 精确部件中增加两个独立补丁：解析调用方请求的 IPv6 前缀，IPv4/IPv6
 在窄化前拒绝非整数、越界、NaN/Inf；返回真实 routes、MTU、IPv4/IPv6、legacy、
 blocking、用户和可信/阻止应用字段，保留真实 excluded route。没有扩大旧前缀

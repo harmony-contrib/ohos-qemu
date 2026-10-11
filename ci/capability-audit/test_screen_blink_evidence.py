@@ -27,8 +27,8 @@ def fixture(root):
             ability_process_records_absent=True, consecutive_absent_observations=2))
     def json_file(path, value):
         path.write_text(json.dumps(value)); return str(path), digest(path)
-    def command(directory, argv, output):
-        path = directory / (str(len(doc['commands'])) + '-command.log'); path.write_text(output)
+    def command(directory, argv, output, label='command'):
+        path = directory / (str(len(doc['commands'])) + '-' + label + '.log'); path.write_text(output)
         doc['commands'].append(dict(argv=argv, exit_code=0, log=str(path), sha256=digest(path)))
     for number, role in enumerate(('normal', 'system-denied', 'system')):
         directory = root / role; directory.mkdir()
@@ -82,6 +82,15 @@ def fixture(root):
             phase = dict(name=name)
             if kind in ('ready', 'results'):
                 if kind == 'ready':
+                    if generation != 0:
+                        command(directory, ['hdc', '-t', TARGET, 'shell', 'aa force-stop org.harmonycontrib.capabilityaudit'],
+                            'force stop process successfully.\n', 'blink-stop-own-process-with-active-window')
+                        command(directory, ['hdc', '-t', TARGET, 'shell',
+                            'if test -d /proc/123; then echo PRESENT; else echo ABSENT; fi'],
+                            'ABSENT\n', 'blink-owner-exit')
+                        command(directory, ['hdc', '-t', TARGET, 'shell',
+                            'aa start -a EntryAbility -b org.harmonycontrib.capabilityaudit'],
+                            'start ability successfully.\n', 'blink-restart-owned-caller')
                     rows = result_fixtures.BlinkResultTests().observations(role, restarted=generation != 0)
                     for row in rows: row['runId'] = nonce
                     rows[0]['values'] = [uid, uid, 123 + generation]
@@ -185,6 +194,20 @@ class ScreenBlinkEvidenceTests(unittest.TestCase):
             path.write_text(json.dumps(original)); record['runtime_sha256'] = digest(path)
             doc['commands'] = [row for row in doc['commands'] if row['argv'][0] != 'hdc']
             with self.assertRaises(ValueError): self.verify(doc)
+
+    def test_new_pid_or_background_alone_cannot_replace_kernel_absence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            doc = fixture(Path(directory)); self.verify(doc)
+            owner = next(row for row in doc['commands'] if row['log'].endswith('-blink-owner-exit.log'))
+            raw = Path(owner['log']); original = raw.read_text()
+            for reply in ('PRESENT\n', '', 'ABSENT\nPRESENT\n'):
+                raw.write_text(reply); owner['sha256'] = digest(raw)
+                with self.subTest(reply=reply), self.assertRaises(ValueError): self.verify(doc)
+            raw.write_text(original); owner['sha256'] = digest(raw)
+            for label in ('blink-stop-own-process-with-active-window', 'blink-owner-exit', 'blink-restart-owned-caller'):
+                changed = copy.deepcopy(doc)
+                changed['commands'] = [row for row in changed['commands'] if not row['log'].endswith('-' + label + '.log')]
+                with self.subTest(label=label), self.assertRaises(ValueError): self.verify(changed)
 
     def test_delivery_and_closure_replay_blink_and_luminance_not_outer_pass(self):
         root = Path(__file__).resolve().parents[2]
