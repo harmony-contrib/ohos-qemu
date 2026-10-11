@@ -1,5 +1,23 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R35 批量代表包已启动（尚未通过运行门禁）
+
+候选提交 `c0c5423ebe1f32404b9973918d921d12fb88dab2`，合并九个联系人数据类、
+AvisMetadata、EffectSuggestionStatus、两个 StateManagement 数据类及批量回归编排。
+仅本地 Docker ARM64 phone，目录
+`/Volumes/PSSD/qemu/packages/first-batch-data-classes-7.0-release-20261011-r35`。
+冻结 `/Volumes/PSSD/qemu/build-inputs/phone-HFRwT9`，树 SHA
+`a3f05d5a3e11c9d663c0bf9592ae50f7f7d518f7562c3859a0b7ff66a8b6fbe3`。
+`build-r35-batch-data-classes-representative-01.py` 保存构建命令环境与后续归档哈希；
+`after-r35-batch-full-01.py` 等待该归档及冻结宿主测试成功后，一次性运行冻结仓库的
+`scripts/validate_packaged_qemu.sh` 完整批量回归，不再为各数据类单独启动/打包。
+控制器不启动其它五包，不能把已执行用例通过当作最终能力账本通过。
+
+冻结输入宿主 `host-r35-frozen-batch-01.log`：1430 项、跳过 1 项，287.993 秒，SHA
+`39212227a98a770c4f27b29e43a2720000f8267d70abc8e9efbcb09e46b9ef1f`。
+R35 运行证据计划为 `r35-independent-full-runtime-01.json`，仍待生成；最终关闭数仍以
+R34 的 151/281 为已知基线。VPN 常开配置后续候选不在本次冻结输入中。
+
 ## 同批追加相机与状态管理数据类（新包验证待执行）
 
 Camera `a421fc5b11593deb06a1b3928ebdf81b2655870b` 漏注册 SDK 的
