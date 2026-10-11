@@ -228,6 +228,7 @@ SPRING_LOADING_CONTEXT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/a
 SPRING_LOADING_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/spring_loading_lifecycle/apply.sh"
 SPRING_LOADING_SEMANTICS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/spring_loading_semantics/apply.sh"
 MOUSE_PRESSED_BUTTONS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/mouse_pressed_buttons/apply.sh"
+RPC_INTERFACE_BASE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/ipc/remote_interface_base/apply.sh"
 IMAGE_MODEL_CALLBACKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/image_model_callbacks/apply.sh"
 ACCESSIBILITY_BLINK_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/api26_blink_enums/apply.sh"
 ACCESSIBILITY_SCREEN_BLINK_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/screen_blink/apply.sh"
@@ -3079,6 +3080,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_spring_loading_semantics_component.log"
   bash "${MOUSE_PRESSED_BUTTONS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mouse_pressed_buttons_component.log"
+  bash "${RPC_INTERFACE_BASE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_rpc_interface_base_component.log"
   bash "${IMAGE_MODEL_CALLBACKS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_model_callbacks_component.log"
   bash "${ACCESSIBILITY_BLINK_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

@@ -1,5 +1,44 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R39 RPC 原生抽象基类候选（未计入闭环）
+
+固定 API26 Release SDK 的 `IRemoteObject` 是抽象类，真实编译允许类型引用、
+`instanceof` 和派生类，但直接构造被 TS2511 拒绝。固定 IPC
+`b8d3e96cfcf382c8fae54502679ac8b3d827b428` 只导出两个具体类，不能用具体类
+别名或反射存在性补齐此契约。新增精确 `remote_interface_base` 部件，GN 前
+统一应用于两画像和三 ABI；实现独立原生基类、真实现有 Binder/JS holder、
+具体类的实例及构造器继承链，以及 11 个方法向现有 C++ 回调的真实分派。
+不改公开 SDK/C++ 签名、权限、token 或 Binder 协议。
+
+固定 NAPI 引擎把 type tag 放在可观察的 JS 属性中，不能据此直接解包。
+候选使用按 holder 分桶的原生登记、环境和真实对象弱引用身份校验；复制标签、
+原型、同一 holder 指针或跨环境包装对象不能授权访问。方法记录只包含不可变的
+DLL 生命周期 C++ 回调，不持有环境内 JS 引用或可被提前 GC 的堆回调数据。
+从基类调用具体类的 JS 方法会触发 V8 receiver branding，已改用原有 C++ 回调，
+保留参数、错误码和传输检查。真实来宾调用与完整入包验证仍待完成。
+
+证据根目录同下：
+
+- `rpc-compilation-diagnostic-r39-01/evidence.json` SHA256
+  `510ea0bf065a8ea1d0384a5c489f0dc4faa8af91a429122ab56ad9fe94efcca2`：
+  真实 SDK 构建三 ABI 的类型调用、ARM64 的 instanceof 和派生类共五个 HAP；
+  抽象类直接构造失败且没有 HAP。此报告只是编译诊断，输入保持不变。
+- `rpc-interface-holder-tu-r39-05.json` SHA256
+  `f90d78f36a53334ca71e053ab195a9a894876142a038fb2153051dc056d428d4`；
+  `rpc-interface-module-tu-r39-05.json` SHA256
+  `90fa260e79bac68d07868362ae0a180c0421efbd2968b7305686c5cd71b75f23`：
+  本地 Docker 只读 source/out，`compile_rpc_interface_base.py --source-root
+  /Volumes/PSSD/qemu/openharmony --tu holder|module --output /evidence/上述文件`，
+  两份完整真实 TU 均以实际三 ABI 产品命令编译通过，源输入未改。
+  最终 holder SHA256 `ec544cb78def0dc7717a2cc25aba0185def889a1417289382fddc7288984800d`，
+  module SHA256 `593406695a92b74b387013dec667ffc64305158981b5181c1c14e15e5e31eebe`。
+- `python -m unittest discover -s ci/capability-audit -p 'test_rpc*.py' -v`：
+  6 项通过；真实 Node 24.14.1 NAPI/GC 回归覆盖三类对象、11 方法、参数数目、
+  复制标签/包装指针、跨 Worker 环境、提取方法和对象回收。Binder/holder 在该
+  主机夹具中明确是替身，不把它当作 OHOS IPC、链接、新包或六包证据。
+
+没有关闭原台账项，没有改写 R38 首包失败或放行其余五包。
+
 ## R39 鼠标与无障碍输入路由候选（未计入闭环）
 
 批准的 SpringLoading 三项契约修复仍保留。真实 Column 调用方在原 R38 归档上
