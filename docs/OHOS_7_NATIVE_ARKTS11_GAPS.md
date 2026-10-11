@@ -1,5 +1,22 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R36 后续同包整批验证排程（尚未通过来宾门禁）
+
+提交 `0d5e35e2dcb63e25ca72827c7af9d793d67727c3` 的冻结主机回归完成：
+1471 项、跳过 1 项、231.260 秒，其余通过。记录
+`host-batched-runtime-frozen-r36-01.json`，日志 SHA256
+`2ac57ec716d9b650125d84615d4b7a4d86927fade2085e31d8d40ee9878747ea`。
+冻结目录 `/Volumes/PSSD/qemu/build-inputs/host-batched-runtime-zxm1_dsd`，树 SHA256
+`bdd48fb1b4285a29eea3fe4ea861a8362b567a439316e88d7e3885c92f7e1f73`。
+
+本地 `after-r36-latest-batch-01.py` 等待原冻结整批回归和独立闪屏实例均退出后，
+核对同一个 R36 新归档哈希，再以这份冻结测试树启动完整回归；包含亮度工厂、
+路由回调和复用实例的 Wi-Fi 扫描。不因测试脚本更新重新打系统镜像，不修改正在
+运行的冻结输入，不并发操作前一个测试 VM。结果写 `r36-latest-full-runtime-01.json`。
+前置运行器无退出记录时不会擅自继续；该控制器不会启动其余五包，也不会自动放行门禁。
+控制器及上述报告均在 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`。
+这些是排程与主机验证证据，不是运行通过结论，严格剩余计数仍为 147。
+
 ## Wi-Fi 扫描复用新包整批实例
 
 现有 `run_wifi_scan_diagnostic.py` 支持传入已验证的 `--boot`，在套件拥有的同一实例上
