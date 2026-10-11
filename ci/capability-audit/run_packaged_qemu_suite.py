@@ -316,6 +316,14 @@ def run(args):
             'vpn-policy-three-roles-and-caller-restart', timeout=6000, env=child_env)
         check('vpn-policy', work / 'vpn-policy/evidence.json', [vpn_record])
         same_guest('after-vpn-policy-cleanup')
+        blink_record = command([sys.executable, Path(__file__).with_name('run_screen_blink_probe.py'),
+            '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+            '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+            '--boot-id', environment['boot_id'], '--output', work / 'screen-blink',
+            '--source-volume', source_volume, '--docker-image', docker_image],
+            'screen-blink-three-roles-real-pixels-and-cleanup', timeout=6000, env=child_env)
+        check('screen-blink', work / 'screen-blink/evidence.json', [blink_record])
+        same_guest('after-screen-blink-cleanup')
         # The FA compatibility API requires a real FA service, not a Stage
         # caller impersonating one. Both models run on this unchanged archive.
         fa_record = command([sys.executable, Path(__file__).with_name('run_fa_particle_probe.py'),

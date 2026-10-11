@@ -79,7 +79,9 @@ export default class EntryAbility extends UIAbility {
         'request_permissions': list(PERMISSIONS) if args.role == 'system' else [],
         'template_sha256': digest(TEMPLATE), 'generated_source': str(generated),
         'generated_source_sha256': digest(generated), 'sdk_declaration': str(declaration),
-        'sdk_declaration_sha256': digest(declaration)})
+        'sdk_declaration_sha256': digest(declaration),
+        'settings_declaration': str(sdk / 'ets/api/@ohos.settings.d.ts'),
+        'settings_declaration_sha256': digest(sdk / 'ets/api/@ohos.settings.d.ts')})
     subprocess.run([args.arkdown, 'build', '--project', root, '--target', 'hap', '--mode', 'debug'],
                    cwd=root, env=dict(os.environ, OHOS_SDK_HOME=str(sdk)), check=True)
 

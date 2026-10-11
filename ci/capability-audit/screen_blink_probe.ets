@@ -16,6 +16,7 @@ struct Index {
   private readonly runId: string = '__BLINK_RUN__';
   private readonly role: string = '__BLINK_ROLE__';
   private readonly path: string = '/data/storage/el2/base/files/screen-blink-__BLINK_RUN__-results.log';
+  private readonly restorePath: string = '/data/storage/el2/base/files/screen-blink-__BLINK_RUN__-restore';
   private readonly settingKey: string = 'accessibility_flash_reminder_switch';
   private original: string = '';
 
@@ -50,6 +51,9 @@ struct Index {
       const written = settings.setValueSync(context, this.settingKey, value, settings.domainName.USER_SECURITY);
       const read = settings.getValueSync(context, this.settingKey, '__missing__', settings.domainName.USER_SECURITY);
       this.record(name, [written ? 1 : 0], read);
+      if (name === 'cleanup.master' && written && read === '0' && fs.accessSync(this.restorePath)) {
+        fs.unlinkSync(this.restorePath);
+      }
     } catch (error) {
       this.record('settings.failed', [], (error as Error).message);
     }
@@ -68,6 +72,17 @@ struct Index {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       this.original = settings.getValueSync(context, this.settingKey, '__missing__', settings.domainName.USER_SECURITY);
       this.record('initial.master', [], this.original);
+      const seed = fs.accessSync(this.restorePath) ? fs.readTextSync(this.restorePath) : '';
+      if (seed === this.runId + ':0' && this.original === '1') {
+        // The runner restarts only this exact nonce-scoped test caller after
+        // proving its original disabled setting and its own enabled write.
+        this.original = '0';
+      } else if (this.original === '0' && seed === '') {
+        const saved = fs.openSync(this.restorePath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY);
+        try { fs.writeSync(saved.fd, this.runId + ':0'); } finally { fs.closeSync(saved); }
+      } else if (seed !== '') {
+        this.record('unexpected.restore.seed', [], seed); return;
+      }
       // A newly packaged disposable guest must start disabled. Never take
       // ownership of an existing enabled user setting.
       if (this.original !== '0') { this.record('unexpected.initial', [], this.original); return; }
