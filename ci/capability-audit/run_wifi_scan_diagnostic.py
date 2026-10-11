@@ -12,9 +12,10 @@ import sys
 import time
 
 from boot_package import QemuGuest
+from enclosing_acceptance_guest import EnclosingAcceptanceGuest
 from power_test_policy import power_timeout, verify_restoration
 from run_root_probe import digest, validate_elf
-from run_normal_hap_probe import save_command_output
+from run_normal_hap_probe import save_command_output, stop_previous_probe
 from hdc_transport import failed as hdc_failed
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,6 +51,9 @@ def run(args):
     guest = None
     override = False
     radio_owned = False
+    enclosing = getattr(args, 'boot', None) is not None
+    boot_path = args.boot if enclosing else args.output / 'boot/boot.json'
+    report['radio_restored'] = False
 
     def command(argv, label):
         argv = list(map(str, argv))
@@ -62,7 +66,7 @@ def run(args):
             raise ValueError('actual Wi-Fi diagnostic command failed: ' + label)
 
     def capture(label, script):
-        value = guest.shell(script, label)
+        value = guest.shell(script, label.replace('.', '-'))
         path = args.output / (label + '.log')
         path.write_text(value)
         report['observations'].append(dict(shell=script, log=str(path), sha256=digest(path)))
@@ -76,28 +80,36 @@ def run(args):
         raise ValueError('actual Wi-Fi state did not reach requested state')
 
     try:
-        with socket.socket() as reservation:
-            reservation.bind(('127.0.0.1', 0))
-            port = reservation.getsockname()[1]
-        guest = QemuGuest(argparse.Namespace(archive=args.archive, output=args.output / 'boot',
-            hdc=args.hdc, hdc_port=port, accel='auto', resolution='1280x800', purpose='acceptance',
-            wait_seconds=1800, stable_seconds=60, kernel_diagnostic=None,
-            power_diagnostic_wakeup=False, hold=False)).start()
+        if enclosing:
+            guest = EnclosingAcceptanceGuest(boot_path, args.archive, args.hdc, args.output / 'guest-commands').start()
+            report.update(enclosing_boot=str(boot_path), enclosing_boot_sha256=digest(boot_path))
+        else:
+            with socket.socket() as reservation:
+                reservation.bind(('127.0.0.1', 0))
+                port = reservation.getsockname()[1]
+            guest = QemuGuest(argparse.Namespace(archive=args.archive, output=args.output / 'boot',
+                hdc=args.hdc, hdc_port=port, accel='auto', resolution='1280x800', purpose='acceptance',
+                wait_seconds=1800, stable_seconds=60, kernel_diagnostic=None,
+                power_diagnostic_wakeup=False, hold=False)).start()
         env = guest.report['test_environment']
         report['test_environment'] = env
-        command([sys.executable, ROOT / 'ci/capability-audit/run_application_home_probe.py',
-            '--boot', args.output / 'boot/boot.json', '--output', args.output / 'home', '--hdc', args.hdc], 'home')
+        report['boot_id'] = env['boot_id']
+        if not enclosing:
+            command([sys.executable, ROOT / 'ci/capability-audit/run_application_home_probe.py',
+                '--boot', boot_path, '--output', args.output / 'home', '--hdc', args.hdc], 'home')
         before = power_timeout(capture('power-before', 'hidumper -s 3301 -a "-a"'))
-        if before['override_ms'] is not None:
-            raise ValueError('preexisting power override is not owned by this diagnostic')
-        override = True
-        if capture('power-setup', 'power-shell timeout -o 86400000').strip() != 'Override screen off time to 86400000':
-            raise ValueError('finite application-test power setup failed')
-        setup = power_timeout(capture('power-confirm', 'hidumper -s 3301 -a "-a"'))
-        if setup != dict(before, override_ms=86400000):
-            raise ValueError('unexpected power policy change')
+        if not enclosing:
+            if before['override_ms'] is not None:
+                raise ValueError('preexisting power override is not owned by this diagnostic')
+            override = True
+            if capture('power-setup', 'power-shell timeout -o 86400000').strip() != 'Override screen off time to 86400000':
+                raise ValueError('finite application-test power setup failed')
+            setup = power_timeout(capture('power-confirm', 'hidumper -s 3301 -a "-a"'))
+            if setup != dict(before, override_ms=86400000):
+                raise ValueError('unexpected power policy change')
         if active_state(capture('wifi-before', 'hidumper -s 1120')):
             raise ValueError('requires a fresh default-disabled Wi-Fi image; preserve existing state')
+        report['radio_restored'] = True
         # Read the very same pinned assets as the build recipe, from the guest.
         spec = importlib.util.spec_from_file_location('qemu_regdb_assets',
             ROOT / 'patches/common/device/qemu/wlan_regulatory/verify_assets.py')
@@ -110,7 +122,7 @@ def run(args):
                 raise ValueError('packaged signed regulatory asset differs from the pinned input')
         if capture('firmware-search-path', 'cat /sys/module/firmware_class/parameters/path').strip() != '/system/lib/firmware':
             raise ValueError('actual firmware loader did not receive the preinstalled search path')
-        serial = (args.output / 'boot/qemu.log').read_text(errors='replace')
+        serial = (boot_path.parent / 'qemu.log').read_text(errors='replace')
         if re.search(r'(?:failed|invalid|malformed).*regulatory\.db|regulatory\.db.*(?:failed|invalid|malformed)',
                      serial, re.I):
             raise ValueError('actual kernel reported regulatory database rejection/load failure')
@@ -125,6 +137,7 @@ def run(args):
         capture('readonly-caller-mode', 'chmod 700 ' + remote)
         for cycle in range(2):
             radio_owned = True
+            report['radio_restored'] = False
             capture('enable-' + str(cycle), 'svc wifi enable')
             wait_state(True, 'enabled-' + str(cycle))
             # SA activation alone is not accepted: the ordinary HAP must get
@@ -133,7 +146,7 @@ def run(args):
                 '--archive', args.archive, '--sdk', args.sdk, '--udid', guest.udid,
                 '--persona', 'wifi-scan', '--arch', env['guest_arch'], '--device', env['device_type'],
                 '--target', env['target'], '--hdc', args.hdc, '--boot-id', env['boot_id'],
-                '--boot', args.output / 'boot/boot.json', '--output', args.output / ('scan-' + str(cycle)),
+                '--boot', boot_path, '--output', args.output / ('scan-' + str(cycle)),
                 '--source-volume', args.source_volume, '--docker-image', args.docker_image], 'ordinary-scan-' + str(cycle))
             document = capture('real-frequency-table-' + str(cycle), remote)
             if not document.startswith('Mode[') or not document.endswith('\n\n') or len(document.encode()) >= 2047:
@@ -141,6 +154,7 @@ def run(args):
             capture('disable-' + str(cycle), 'svc wifi disable')
             wait_state(False, 'disabled-' + str(cycle))
             radio_owned = False
+            report['radio_restored'] = True
         report['observations'].append(capture_hilog(args.hdc, guest.target, args.output, 'wifi-hilog'))
         if capture('final-boot-id', 'cat /proc/sys/kernel/random/boot_id').strip() != env['boot_id']:
             raise ValueError('guest rebooted during the scan diagnostic')
@@ -159,6 +173,7 @@ def run(args):
                 try:
                     capture('restore-wifi-disabled', 'svc wifi disable')
                     wait_state(False, 'restored-wifi-disabled')
+                    report['radio_restored'] = True
                 except Exception as error:
                     report['failures'].append('radio restoration: ' + str(error))
             if override:
@@ -168,8 +183,23 @@ def run(args):
                     report['power_restoration'] = verify_restoration(reply, before, setup, restored)
                 except Exception as error:
                     report['failures'].append('power restoration: ' + str(error))
-            guest.close()
-            report['disposable_guest_closed'] = guest.process is None or guest.process.poll() is not None
+            if enclosing:
+                try:
+                    after = power_timeout(capture('enclosing-power-after', 'hidumper -s 3301 -a "-a"'))
+                    if after != before:
+                        raise ValueError('enclosing power policy changed')
+                    if capture('enclosing-boot-after', 'cat /proc/sys/kernel/random/boot_id').strip() != env['boot_id']:
+                        raise ValueError('enclosing guest changed')
+                    report['caller_cleanup'] = stop_previous_probe(
+                        lambda script, label, accepted_failure=False: guest.shell(script, label))
+                    report.update(power_restoration='unchanged_enclosing_policy', enclosing_guest_preserved=True,
+                                  cleanup_verified=report['radio_restored'])
+                except Exception as error:
+                    report['cleanup_verified'] = False
+                    report['failures'].append('enclosing guest cleanup: ' + str(error))
+            else:
+                guest.close()
+                report['disposable_guest_closed'] = guest.process is None or guest.process.poll() is not None
         if report['failures']:
             report['status'] = 'fail'
         (args.output / 'diagnostic.json').write_text(json.dumps(report, indent=2) + '\n')
@@ -181,6 +211,7 @@ if __name__ == '__main__':
     for name in ('archive', 'sdk', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--hdc', required=True)
+    parser.add_argument('--boot', type=Path, help='Use the enclosing acceptance guest without changing its power policy')
     parser.add_argument('--source-volume', default='ohos-qemu-7_0-release-source')
     parser.add_argument('--docker-image', default='ohos-qemu-m144-build-env:7.0-release')
     result = run(parser.parse_args())

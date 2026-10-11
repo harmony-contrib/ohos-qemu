@@ -341,6 +341,23 @@ def run(args):
                 '--source-volume', source_volume, '--docker-image', docker_image],
                 'luminance-real-factory-RS-callbacks-and-unsubscription', timeout=3000, env=child_env)
             check('luminance-sampler', work / 'luminance-sampler/evidence.json', [luminance_record])
+        def wifi_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'wifi-scan/diagnostic.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or child.get('cleanup_verified') is not True or
+                        child.get('radio_restored') is not True or child.get('enclosing_guest_preserved') is not True or
+                        child.get('power_restoration') != 'unchanged_enclosing_policy'):
+                    raise ValueError('Wi-Fi radio/caller/power restoration unproven; stop batch')
+
+        with independent_probe(report, 'wifi-scan', wifi_batch_health, save):
+            wifi_record = command([sys.executable, Path(__file__).with_name('run_wifi_scan_diagnostic.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--boot', work / 'boot/boot.json',
+                '--output', work / 'wifi-scan', '--hdc', hdc,
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'ordinary-WPA-radio-cycles-scans-and-real-bands', timeout=6000, env=child_env)
+            check('wifi-scan', work / 'wifi-scan/diagnostic.json', [wifi_record])
         # The FA compatibility API requires a real FA service, not a Stage
         # caller impersonating one. Both models run on this unchanged archive.
         fa_record = command([sys.executable, Path(__file__).with_name('run_fa_particle_probe.py'),
