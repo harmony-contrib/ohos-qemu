@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R37 批次追加：DNG / TIFF 类导出和真实解析实例（待新包）
+
+固定 image_framework `711db218c8d1c4d6546b28d8cf466059644dfa77` 的 API 26
+动态绑定未导出 `DngMetadata`、`TiffMetadata`，解析工厂返回普通对象。
+新增独立组件 `tiff_dng_class_exports`，由两画像共用构建入口应用；按 NAPI env
+缓存构造器、清理引用，空记录没有共享解析状态，现有解析器填充真实类实例。
+不改字段、解析器、权限、错误码或公开 C++ ABI，也不改 Static 绑定。
+通过已有 Avis 初始化入口调用，不与 Avis 补丁重叠修改模块入口文件。
+
+本地 Docker 的真实 metadata TU × ARM32 / ARM64 / x86_64 编译通过，
+`tiff-dng-classes-tu-r37-02.json` SHA256
+`e467d68d5f61099463094042b1bf1a4036f98bd93a1e38b66fe0b2f607d10e12`。
+首次 target 拼写错误的失败记录保留。副本首次/重复应用通过；ASan/UBSan 测试执行
+实际补丁中的构造/缓存代码，覆盖两 env 隔离、地址重用、清理和 NAPI 失败恢复。
+固定 XTS image 动态用例中没有找到这两类的直接构造/instanceof 用例；新增严格测试。
+18 项 metadata 与 2 项 Avis 回归通过，两个新组件测试通过。
+
+API 26 ARM64 HAP 编译通过，`tiff-dng-record-hap-r37-01` 的未签名 HAP SHA256
+`02ea09c502a61a854e792f0e279945543c75ed0bdcae1117a283761e8338bf9d`。
+要求普通应用的三个公开类构造、独立空对象、真实 DNG/TIFF/AVIS 读取、工厂 instanceof、
+非法索引数字错误码与失败后再次读取；全部 31 项行为满足后才计入三个窄导出契约。
+这些是编译/主机证明，不是新镜像运行证明；闭环统计仍为 154 / 281，余 127。
+本批次尚未打出新包，未启动其余五包矩阵。
+
 ## R37 批次准备与 R36 专项：不等同六包完成
 
 产品候选提交 `136b00b`；测试后续提交 `2372e17`、`c984ccd`、`f24daf1`。

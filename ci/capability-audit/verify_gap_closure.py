@@ -116,7 +116,8 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
 
     metadata = child('image-metadata/evidence.json')
     if metadata:
-        from verify_image_metadata_results import verify_evidence as verify_metadata, AVIS_CONTRACT
+        from verify_image_metadata_results import (
+            verify_evidence as verify_metadata, AVIS_CONTRACT, RECORD_CONTRACTS)
         boot_path = runtime / 'boot/boot.json'
         if not boot_path.is_file() or boot_path.is_symlink():
             raise ValueError('image constructor closure requires actual acceptance boot')
@@ -131,12 +132,13 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                     'diagnostic_assistance', 'diagnostic_power_button'))):
             raise ValueError('image constructor proof requires unchanged acceptance package')
         actual = verify_metadata(metadata[1], archive_sha, boot_id, environment['guest_arch'])
-        if actual['closed'] != [AVIS_CONTRACT]:
-            raise ValueError('image constructor proof must close only the verified Avis class')
-        closed[AVIS_CONTRACT] = {
-            'evidence': str(metadata[0]), 'sha256': digest(metadata[0]),
-            'verifier': 'ordinary_typed_constructor_isolation_and_real_AVIS_factory_instances',
-            'not_claimed': 'Dng_Tiff_constructors_or_other_image_APIs'}
+        if actual['closed'] != [AVIS_CONTRACT, *RECORD_CONTRACTS]:
+            raise ValueError('image constructor proof must match all three actual typed contracts')
+        for contract in actual['closed']:
+            closed[contract] = {
+                'evidence': str(metadata[0]), 'sha256': digest(metadata[0]),
+                'verifier': 'ordinary_typed_constructor_isolation_and_real_DNG_TIFF_AVIS_factory_instances',
+                'not_claimed': 'other_image_APIs'}
 
     thermal = child('thermal/evidence.json')
     if thermal:

@@ -8,18 +8,30 @@ from image_metadata_fixtures import FIXTURES, verify as verify_fixtures
 from run_normal_hap_probe import require_normal_identity
 from run_root_probe import digest
 
-SCOPE = 'real_image_metadata_and_Avis_constructor_NOT_Dng_Tiff_constructors_or_full_gate'
+SCOPE = 'real_Dng_Tiff_Avis_metadata_constructors_and_parsed_instances'
 AVIS_CONTRACT = 'arkts_export:@ohos.multimedia.image:AvisMetadata'
+RECORD_CONTRACTS = ['arkts_export:@ohos.multimedia.image:DngMetadata',
+                    'arkts_export:@ohos.multimedia.image:TiffMetadata']
 EXPECTED = {
+    'dng.constructor': ([1, 1, 1, 1, 1], ''),
     'dng.selected': ([1, 4, 0, 0], 'FakeCamera ModelX'),
+    'dng.selected.instance': ([1], ''),
     'dng.default': ([1, 4, 0, 0], 'FakeCamera ModelX'),
+    'dng.default.instance': ([1], ''),
     'dng.negative': ([-1, 7700204], ''),
     'dng.after-invalid': ([1, 4, 0, 0], 'FakeCamera ModelX'),
+    'dng.after-invalid.instance': ([1], ''),
+    'dng.constructor-after-read': ([1, 1, 1, 1], ''),
+    'tiff.constructor': ([1, 1, 1, 1, 1], ''),
     'tiff.selected': ([1, 2, 1, 72, 72, 2], ''),
+    'tiff.selected.instance': ([1], ''),
     'tiff.default': ([1, 2, 1, 72, 72, 2], ''),
+    'tiff.default.instance': ([1], ''),
     'tiff.negative': ([-1, 7700204], ''),
     'tiff.end': ([1, 7700204], ''),
     'tiff.after-invalid': ([1, 2, 1, 72, 72, 2], ''),
+    'tiff.after-invalid.instance': ([1], ''),
+    'tiff.constructor-after-read': ([1, 1, 1, 1], ''),
     'avis.constructor': ([1, 1, 1, 1, 1], ''),
     'avis.frames': ([90], ''),
     'avis.frame.0': ([100], ''),
@@ -32,7 +44,7 @@ EXPECTED = {
     'avis.end': ([90, 7700204], ''),
     'avis.after-invalid': ([100], ''),
     'avis.constructor-after-read': ([1, 1, 1, 1], ''),
-    'summary': ([21, 0], ''),
+    'summary': ([31, 0], ''),
 }
 
 
@@ -49,7 +61,8 @@ def verify(text, run_id, identity):
                 not isinstance(row['values'], list) or any(type(item) is not int for item in row['values']) or
                 row['text'] != text or row['error'] != ''):
             raise ValueError('failed, stale or malformed image metadata observation: ' + name)
-    return dict(closed=[AVIS_CONTRACT], scope=SCOPE, observations=len(rows), formats=['DNG', 'TIFF', 'AVIS'])
+    return dict(closed=[AVIS_CONTRACT, *RECORD_CONTRACTS], scope=SCOPE,
+                observations=len(rows), formats=['DNG', 'TIFF', 'AVIS'])
 
 
 def verify_inputs(path, run_id, arch):

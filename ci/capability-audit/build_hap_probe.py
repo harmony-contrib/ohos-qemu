@@ -2103,7 +2103,7 @@ if args.image_metadata_only:
     for name in files:
         shutil.copy2(args.image_metadata_fixtures / name, assets / name)
     write('image-metadata-probe-inputs.json', {'schema_version': 1, 'run_id': challenge, 'arch': args.arch,
-        'scope': 'real_image_metadata_and_Avis_constructor_NOT_Dng_Tiff_constructors_or_full_gate',
+        'scope': 'real_Dng_Tiff_Avis_metadata_constructors_and_parsed_instances',
         'fixtures': files, 'template_sha256': digest(template),
         'generated_source_sha256': digest(root / 'entry/src/main/ets/pages/Index.ets'),
         'sdk_declaration_sha256': digest(api_dir / '@ohos.multimedia.image.d.ts'),

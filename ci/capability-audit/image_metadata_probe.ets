@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Real typed factory values plus the SDK's public AvisMetadata constructor.
+// Real typed factory values and the SDK's public metadata constructors.
 import image from '@ohos.multimedia.image';
 import fs from '@ohos.file.fs';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -33,6 +33,7 @@ struct Index {
     const value: image.DngMetadata | undefined = metadata.dngMetadata;
     if (value === undefined) { this.record(name, [], '', 'DngMetadata absent'); return; }
     this.record(name, value.dngVersion || [], value.uniqueCameraModel || '');
+    this.record(name + '.instance', [value instanceof image.DngMetadata ? 1 : 0]);
   }
   private tiff(name: string, metadata: image.ImageMetadata): void {
     const value: image.TiffMetadata | undefined = metadata.tiffMetadata;
@@ -40,24 +41,47 @@ struct Index {
     this.record(name, [value.compression ?? -1, value.photometricInterpretation ?? -1,
       value.orientation ?? -1, value.xResolution ?? -1, value.yResolution ?? -1,
       value.resolutionUnit ?? -1]);
+    this.record(name + '.instance', [value instanceof image.TiffMetadata ? 1 : 0]);
   }
   private async dngTest(): Promise<void> {
+    const first: image.DngMetadata = new image.DngMetadata();
+    const second: image.DngMetadata = new image.DngMetadata();
+    this.record('dng.constructor', [first instanceof image.DngMetadata ? 1 : 0,
+      second instanceof image.DngMetadata ? 1 : 0, first !== second ? 1 : 0,
+      first.dngVersion === undefined ? 1 : 0, second.uniqueCameraModel === undefined ? 1 : 0]);
     const source: image.ImageSource = await this.source('test_dng_mock.dng');
     try {
-      this.dng('dng.selected', await source.readImageMetadataByType([image.MetadataType.DNG_METADATA], 0));
+      const selected: image.ImageMetadata =
+        await source.readImageMetadataByType([image.MetadataType.DNG_METADATA], 0);
+      this.dng('dng.selected', selected);
       this.dng('dng.default', await source.readImageMetadataByType());
       await this.invalid(source, image.MetadataType.DNG_METADATA, 'dng.negative', -1);
       this.dng('dng.after-invalid', await source.readImageMetadataByType([image.MetadataType.DNG_METADATA], 0));
+      const fresh: image.DngMetadata = new image.DngMetadata();
+      this.record('dng.constructor-after-read', [fresh.dngVersion === undefined ? 1 : 0,
+        fresh !== selected.dngMetadata ? 1 : 0, first.dngVersion === undefined ? 1 : 0,
+        second.uniqueCameraModel === undefined ? 1 : 0]);
     } finally { await source.release(); }
   }
   private async tiffTest(): Promise<void> {
+    const first: image.TiffMetadata = new image.TiffMetadata();
+    const second: image.TiffMetadata = new image.TiffMetadata();
+    this.record('tiff.constructor', [first instanceof image.TiffMetadata ? 1 : 0,
+      second instanceof image.TiffMetadata ? 1 : 0, first !== second ? 1 : 0,
+      first.compression === undefined ? 1 : 0, second.orientation === undefined ? 1 : 0]);
     const source: image.ImageSource = await this.source('read_test.tiff');
     try {
-      this.tiff('tiff.selected', await source.readImageMetadataByType([image.MetadataType.TIFF_METADATA], 0));
+      const selected: image.ImageMetadata =
+        await source.readImageMetadataByType([image.MetadataType.TIFF_METADATA], 0);
+      this.tiff('tiff.selected', selected);
       this.tiff('tiff.default', await source.readImageMetadataByType());
       await this.invalid(source, image.MetadataType.TIFF_METADATA, 'tiff.negative', -1);
       await this.invalid(source, image.MetadataType.TIFF_METADATA, 'tiff.end', 1);
       this.tiff('tiff.after-invalid', await source.readImageMetadataByType([image.MetadataType.TIFF_METADATA], 0));
+      const fresh: image.TiffMetadata = new image.TiffMetadata();
+      this.record('tiff.constructor-after-read', [fresh.compression === undefined ? 1 : 0,
+        fresh !== selected.tiffMetadata ? 1 : 0, first.compression === undefined ? 1 : 0,
+        second.orientation === undefined ? 1 : 0]);
     } finally { await source.release(); }
   }
   private async avisTest(): Promise<void> {
@@ -96,7 +120,7 @@ struct Index {
     try { await this.avisTest(); } catch (error) {
       this.failures++; this.record('avis.failed', [(error as BusinessError).code], '', (error as BusinessError).message);
     }
-    this.record('summary', [21, this.failures]);
+    this.record('summary', [31, this.failures]);
   }
   aboutToAppear(): void {
     const file = fs.openSync(this.path, fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);

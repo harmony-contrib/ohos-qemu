@@ -299,6 +299,7 @@ HIVIEW_DMABUF_PARSER_SCRIPT="${PATCH_ROOT}/common/base/hiviewdfx/hiview/dmabuf_p
 HIDEBUG_GRAPHICS_TYPES_SCRIPT="${PATCH_ROOT}/common/developtools/profiler/hidebug/graphics_memory_types/apply.sh"
 IMAGE_METADATA_ERROR_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/metadata_error_type/apply.sh"
 IMAGE_AVIS_CLASS_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/avis_class_export/apply.sh"
+IMAGE_RECORD_CLASSES_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/tiff_dng_class_exports/apply.sh"
 RS_YUV_CPU_FALLBACK_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/yuv_cpu_fallback/apply.sh"
 SHARED_FENCE_OWNER_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_surface/shared_fence_owner/apply.sh"
 ACCESS_TOKEN_SPM_HANDSHAKE_SCRIPT="${PATCH_ROOT}/common/base/security/access_token/kernel_spm_handshake/apply.sh"
@@ -2915,6 +2916,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_metadata_error.log"
   bash "${IMAGE_AVIS_CLASS_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_avis_class.log"
+  bash "${IMAGE_RECORD_CLASSES_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_image_record_classes.log"
   bash "${RS_YUV_CPU_FALLBACK_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_yuv_cpu_fallback.log"
   bash "${SHARED_FENCE_OWNER_SCRIPT}" --source-root "${OHOS_ROOT}" \

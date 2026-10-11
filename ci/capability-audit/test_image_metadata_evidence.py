@@ -65,8 +65,8 @@ class ImageMetadataEvidenceTests(unittest.TestCase):
                                         self.archive, self.boot, 'arm64')
 
     def test_bound_raw_contract_remains_narrow(self):
-        self.assertEqual(self.check()['closed'], ['arkts_export:@ohos.multimedia.image:AvisMetadata'])
-        self.assertEqual(self.check()['observations'], 22)
+        self.assertEqual(self.check()['closed'], [verifier.AVIS_CONTRACT, *verifier.RECORD_CONTRACTS])
+        self.assertEqual(self.check()['observations'], 32)
 
     def test_ledger_replays_actual_evidence_and_rejects_diagnostic_boot(self):
         from verify_gap_closure import behavior_results
@@ -81,7 +81,7 @@ class ImageMetadataEvidenceTests(unittest.TestCase):
         boot_path = runtime / 'boot/boot.json'
         boot_path.write_text(json.dumps(boot))
         check = lambda: behavior_results(runtime, self.boot, self.archive, 'phone')
-        self.assertEqual(set(check()), {verifier.AVIS_CONTRACT})
+        self.assertEqual(set(check()), {verifier.AVIS_CONTRACT, *verifier.RECORD_CONTRACTS})
         boot_path.write_text(json.dumps(dict(boot, purpose='diagnostic')))
         with self.assertRaises(ValueError):
             check()
@@ -106,7 +106,7 @@ class ImageMetadataEvidenceTests(unittest.TestCase):
 
     def test_rehashed_string_code_still_fails(self):
         rows = copy.deepcopy(self.rows)
-        rows[2]['values'][1] = '7700204'
+        next(row for row in rows if row['name'] == 'dng.negative')['values'][1] = '7700204'
         self.files['raw_results'].write_text('\n'.join(map(json.dumps, rows)))
         self.inner['results_sha256'] = digest(self.files['raw_results'])
         self.files['result'].write_text(json.dumps(self.inner))

@@ -48,8 +48,8 @@ int main() {
         probe = (ROOT / 'ci/capability-audit/image_metadata_probe.ets').read_text()
         self.assertEqual(probe.count('new image.AvisMetadata()'), 3)
         self.assertIn('value instanceof image.AvisMetadata', probe)
-        self.assertNotIn('new image.DngMetadata', probe)
-        self.assertNotIn('new image.TiffMetadata', probe)
+        self.assertIn('new image.DngMetadata', probe)
+        self.assertIn('new image.TiffMetadata', probe)
 
 
 if __name__ == '__main__':

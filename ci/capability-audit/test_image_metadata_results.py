@@ -2,7 +2,7 @@ import copy
 import json
 import unittest
 
-from verify_image_metadata_results import EXPECTED, verify
+from verify_image_metadata_results import AVIS_CONTRACT, EXPECTED, RECORD_CONTRACTS, verify
 
 
 class ImageMetadataResultsTests(unittest.TestCase):
@@ -18,12 +18,12 @@ class ImageMetadataResultsTests(unittest.TestCase):
                       self.nonce, self.identity)
 
     def test_narrow_contract_does_not_claim_complete_release_closure(self):
-        self.assertEqual(self.check()['closed'], ['arkts_export:@ohos.multimedia.image:AvisMetadata'])
-        self.assertEqual(self.check()['observations'], 22)
+        self.assertEqual(self.check()['closed'], [AVIS_CONTRACT, *RECORD_CONTRACTS])
+        self.assertEqual(self.check()['observations'], 32)
 
     def test_missing_class_wrong_factory_prototype_or_shared_defaults_fail(self):
         for index, original in enumerate(self.rows):
-            if not original['name'].startswith(('avis.constructor', 'avis.instance.')):
+            if '.instance' not in original['name'] and 'constructor' not in original['name']:
                 continue
             for position in range(len(original['values'])):
                 rows = copy.deepcopy(self.rows)
@@ -56,7 +56,7 @@ class ImageMetadataResultsTests(unittest.TestCase):
 
     def test_actual_string_error_code_regression_is_not_normalized(self):
         rows = copy.deepcopy(self.rows)
-        rows[2]['values'][1] = '7700204'
+        next(row for row in rows if row['name'] == 'dng.negative')['values'][1] = '7700204'
         with self.assertRaises(ValueError):
             self.check(rows)
 
