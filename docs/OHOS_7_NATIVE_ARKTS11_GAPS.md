@@ -1,5 +1,36 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R37 完整新包验证结论，R38 Spring 代表包构建中
+
+R37 归档 SHA256 `5c365c5fffbeecf8e36773b78c504f965003b1a375c84139a68e16d4ba2c5ebd`，
+实际 ARM64/HVF phone boot `23f1dd8a-62ff-4585-97d6-26fd2172158b`。
+完整本地运行于 2026-10-11 15:23:58 UTC 结束：ArkWeb、Vulkan 窗口、
+metadata 三种解析/类及 observer-info 通过；ohos-native-bindings 全部 32 模块、
+102 用例通过，用户源码保持不变。台账新增 DngMetadata、TiffMetadata、DensityInfo、
+WindowSizeLayoutBreakpointInfo 四项实际证明，当前 **158 / 281 闭环、123 未闭环**。
+完整首包门槛仍失败：闪屏旧首帧、亮度空树、完整缺口台账未闭合；不启动其余五包。
+证据 SHA256：
+
+- `r37-bound-full-runtime-01.json`：`3a4fa2fb8a7c69aa406a00e3eb2608fff985df12ef044cda81b0cac01daa4e91`。
+- `openharmony-qemu-arm64-arm64_virt-phone-runtime-pj0vdgq6/native-bindings/evidence.json`：
+  `c6eba9c2b64ec13fdef01c6c2283d1fb2848281d27fdb428154972ea119977ac`。
+- 同目录 `cxx-arkts11-gaps.json`：`ec49c6813b5f3056b89db453974078b387340420080b3db90a89170f06ad939d`。
+
+追加配方 `a2497a19a625e38f0657b5167e6a50e8f56d784f` 冻结主机批次
+`host-r38-frozen-batch-05.json`：1526 项、跳过 1 项，其余通过，输入保持不变。
+树 SHA256 `b344ca02c9be519b8f5b1864ed38f49389bc22468dbf32ba7b0f236096cc9b96`，
+日志 SHA256 `6bd05edf8ec4f83c9a799bbca64c4dc788dfd92b65d59a8ae2da622fcfd246fd`。
+尝试用追加配方重新启动 R37 时，严格 acceptance 检查正确拒绝不同脚本/补丁输入，
+未启动任何 guest。这次失败保留，不降为 diagnostic 冒充验收、不解除配方检查。
+
+只启动 R38 ARM64 phone 本地 Docker。实际 `/work:ro` 输入
+`/Volumes/PSSD/qemu/build-inputs/phone-pJoBGD` 与通过的冻结树相同。
+构建记录 `r38-representative-build-02.json`，待产出
+`/Volumes/PSSD/qemu/packages/first-spring-ui-7.0-release-20261011-r38/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
+目前归档不存在，不能提供校验和。完成后用相同冻结输入启动完整新包回归，包含
+真实 Spring 悬停/abort/CANCEL/重入、Arc/DynamicLayout UI 以及原全部回归。
+R37 没有 Spring 修复，不能用旧包通过替代此新包证明。
+
 ## R38 集中回归失败分析与同归档补充测试准备
 
 R37 新包的 metadata 和 observer-info 已实际通过，原始完整批次仍保留失败。
