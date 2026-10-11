@@ -79,6 +79,22 @@ Ethernet 主提交 `de172b3836a8568275c3cd92998571e7992089be` 的冻结集中主
 不变，SHA256 `cf45edf7191ec0ef78525b8a074da52253894af9d48b428d0a74f2e21d3a37f6`。
 这一追加不追改 `06` 的冻结输入，后续集中批次须包含高位边界修正。
 
+高位修正提交 `95dd42c7692c1e3f9c0d9405f0debeb2a7645ee9` 重新冻结回归
+`host-r39-frozen-batch-07.json`：**1580 项、跳过 1 项、252.921 秒，其余通过**，
+输入保持不变；树 SHA256
+`48590586e5b06d2d7cdaa1a7287101d031bf567a199aa6aa56c8d7a35c1e0fc2`，
+日志 SHA256 `5575c64f36eaf2640e0fc3439e966835dd1e5b413ed351b0505ea38fc181c108`，
+报告 SHA256 `78f3097f3609f8875ad37e6d507f5870c3c6b28f7c5f978147a6b24df6fa0b66`。
+这些不是新首包行为、其余 ABI 分支通过或六包交付证据。
+
+后续网络边界只读复核也确认：`NetAddress.port` SDK 范围为 0..65535，而
+`netmanager_base/interfaces/innerkits/include/inet_addr.h` 的 `port_` 及其 Parcel
+仍为 uint8，VPN 多处读取同样窄化；当前配置探针使用 port=0，不能证明宽端口。
+另外 standard/extension `setup_context*.cpp` 的 family 验证在 uint8 窄化之后，
+不能拒绝 257/258；SysVPN utils 还直接读取 family，缺少可确认的 SDK 默认值与
+严格验证。这些仍属于未闭环的 VPN/网络字段契约，尚未修改其实现或 ABI，不能用
+本轮 Ethernet 的通过消除它们。下一批需同步审计全部读取/编码路径及实际读回。
+
 ## R39 追加网络/边界与集中验证入口（候选，未计入闭环）
 
 追加路由前缀候选：地址前缀与路由前缀是两个不同契约，不能复用地址的
