@@ -14,7 +14,7 @@ import test_screen_blink_results as fixtures
 
 class RuntimeTests(unittest.TestCase):
     def execute(self, directory, *, cleanup_fail=False, stale_repeat=False, caller_exit=False, splash=False,
-                permanent_splash=False, stop_residual=False):
+                permanent_splash=False, stop_residual=False, missed_single=False):
         actual = fixtures.BlinkResultTests().observations()
         nonce = 'a' * 32
         state = dict(active=False, enabled=False, sequence=0, clock=0., single=0)
@@ -66,7 +66,7 @@ class RuntimeTests(unittest.TestCase):
                     on = True
                     state['residual_seen'] = True
                 if state['single']:
-                    on = True
+                    on = not missed_single
                     state['single'] = 0
                 path = Path(directory) / f"frame-{state['sequence']}.png"
                 color = (130, 140, 36) if on else (32, 48, 64)
@@ -139,6 +139,16 @@ class RuntimeTests(unittest.TestCase):
             result = self.execute(directory, cleanup_fail=True)
             self.assertEqual(result['status'], 'fail')
             self.assertFalse(result['cleanup_verified'])
+
+    def test_missing_single_pulse_stays_failed_but_restored_later_cases_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.execute(directory, missed_single=True, caller_exit=True)
+            self.assertEqual(result['status'], 'fail')
+            self.assertTrue(any(error.startswith('single-auto-clear:') for error in result['failures']))
+            self.assertIn('single-auto-clear-recovery', [p['name'] for p in result['phases']])
+            self.assertIn('disabled-clears', [p['name'] for p in result['phases']])
+            self.assertIn('caller_exit', result)
+            self.assertTrue(result['cleanup_verified'])
 
     def test_caller_exit_and_new_generation_restore(self):
         with tempfile.TemporaryDirectory() as directory:

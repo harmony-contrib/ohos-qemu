@@ -71,7 +71,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
         except ValueError as error:
             if not continue_after_restored:
                 raise
-            # Keep the original stop failure red. Only a separate strict off
+            # Keep the original rendering failure red. Only a separate strict off
             # sequence permits collecting the remaining independent cases.
             record['failure'] = str(error)
             report['failures'].append(name + ': ' + str(error))
@@ -126,7 +126,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             # Capture immediately after the public single start. A missed pulse
             # is a failed test, not grounds to accept only a return code.
             click('blink-single', 'single.start', [0, 0, 1])
-            capture('single-auto-clear', rect, 'single', 3)
+            capture('single-auto-clear', rect, 'single', 3, continue_after_restored=True)
             click('blink-start', 'continuous.start', [0, 0, 1])
             click('blink-disable', 'master.disabled', [1], '0')
             time.sleep(1)
