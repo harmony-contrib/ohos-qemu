@@ -40,7 +40,7 @@ def build(args):
 
 
 def build_application(args, generated_page, template, receipt_name, scope, declaration_name,
-                      module_factory=None):
+                      module_factory=None, extra_files=None, strict_mode=None):
     """Reuse the actual typed three-role app build, never override image policy."""
     root, sdk = args.output.resolve(), args.sdk.resolve()
     if args.role not in ROLES or re.fullmatch('[0-9a-f]{32}', args.run_id) is None:
@@ -74,7 +74,8 @@ def build_application(args, generated_page, template, receipt_name, scope, decla
     for name in ('oh-package.json5', 'entry/oh-package.json5'):
         write(name, {'modelVersion': '6.0.0', 'name': 'vpn-policy-probe', 'version': '1.0.0', 'dependencies': {}})
     write('entry/build-profile.json5', {'apiType': 'stageMode', 'buildOption': {'externalNativeOptions': {
-        'abiFilters': [{'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}[args.arch]]}},
+        'abiFilters': [{'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}[args.arch]]},
+        **({'strictMode': strict_mode} if strict_mode else {})},
         'targets': [{'name': 'default'}]})
     write('entry/src/main/module.json5', application_module)
     write('entry/src/main/resources/base/element/color.json', {'color': [{'name': 'background', 'value': '#ffffff'}]})
@@ -87,13 +88,21 @@ export default class EntryAbility extends UIAbility {
 """)
     generated = root / 'entry/src/main/ets/pages/Index.ets'
     write('entry/src/main/ets/pages/Index.ets', generated_page)
+    additional_inputs = {}
+    for name, value in (extra_files or {}).items():
+        relative = Path(name)
+        if relative.is_absolute() or '..' in relative.parts or (root / relative).exists():
+            raise ValueError('additional build input must be a new relative project file')
+        write(name, value)
+        additional_inputs[name] = digest(root / relative)
     declaration = sdk / 'ets/api' / declaration_name
     write(receipt_name, {'schema_version': 1, 'run_id': args.run_id, 'role': args.role,
         'arch': args.arch, 'scope': scope,
         'request_permissions': [row['name'] for row in requests],
         'template_sha256': digest(template), 'generated_source': str(generated),
         'generated_source_sha256': digest(generated), 'sdk_declaration': str(declaration),
-        'sdk_declaration_sha256': digest(declaration)})
+        'sdk_declaration_sha256': digest(declaration), 'additional_input_sha256': additional_inputs,
+        'strict_mode': strict_mode or {}})
     subprocess.run([args.arkdown, 'build', '--project', root, '--target', 'hap', '--mode', 'debug'],
                    cwd=root, env=dict(os.environ, OHOS_SDK_HOME=str(sdk)), check=True)
 

@@ -32,6 +32,30 @@ Arc 下一批将真实算法构造延后至启动动作并记录异常，增加�
   SHA256 `1b1050414c319a77fd6e2815488af0856cc32480be0849e4a97190a59b6bc093`。
 - 同目录 `cxx-arkts11-gaps.json` SHA256 `34cd52412e2e16a2f2bf8bcd9b1fcf4adec8eb86a0b2f3b1bcc0982c2c02b87e`。
 
+## R39 意图装饰器真实编译边界（未计入闭环）
+
+新增独立 `build_insight_decorator_probe.py` 与实际源模板，覆盖动态 ArkTS 1.1 的
+Link、Page、Function/FunctionMethod、Entry、Form、Entity 七种装饰器。不补无操作
+NAPI 导出、不修改 AbilityRuntime、SDK、公开接口或权限。普通应用不请求权限，
+Form 声明非导出，真实 profile 绑定与 normalized OHM URL 在调用方显式配置。
+
+集中控制器 `check_insight_decorator_compilation.py` 使用本地 API26 Release SDK
+和实际 Arkdown 编译器，三种 ABI 的完整未签名 HAP 均通过；直接读归档核对五条
+意图记录、Entry 所携 Entity schema/query 信息、Function 类与静态方法、页面
+和 URI 新 nonce，核对 `hasInsightIntent` 与实际 ABC。实际转换后的六个源码均
+移除了装饰器及其模块导入，而不是把它们作为运行时函数调用。
+四个独立非法调用方分别因重复意图名、孤立方法装饰器、无效页面路径、无效
+Form 名被真实编译器拒绝（10110012/10110013/10110017/10110023），未生成 HAP；
+未跳过 checker，失败日志保留。早期模板的接口继承、显式结果类型与编译配置
+失败也保留，不改为通过。
+
+证据 `insight-decorator-build-batch-r39-02/evidence.json` 位于前述验证目录，
+SHA256 `13c575422ef8d69d3f4d74542cdc3ca64711badd081289c071362c915ef8dfd9`，
+七次实际构建/拒绝检查通过且输入不变；九项新增主机验证夹具及相邻 VPN、
+Ethernet、导出分类共 **34 项通过**。没有更改旧导出审计或闭环计数。
+这些结果只能证明编译与归档配置路径，不证明 BMS 注册、意图调度、页面路由、
+Form 创建或 QEMU 后端；这些仍须新首包真实行为验证。
+
 ## R39 剩余三条 VPN 前缀候选（未计入闭环）
 
 `vpn_config_arrays/0007` 覆盖 standard/extension 普通 setup 及 extension 配置的
