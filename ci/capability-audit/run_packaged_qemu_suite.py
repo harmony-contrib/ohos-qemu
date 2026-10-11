@@ -388,6 +388,7 @@ def run(args):
         personas += ('network-accounting',)
         personas += ('router-observer',)
         personas += ('observer-info',)
+        personas += ('spring-loading',)
         if device == 'phone':
             personas += ('optional-phone-profile',)
         for persona in personas:
@@ -428,6 +429,8 @@ def run(args):
                     check('image-metadata', path, [record])
                 if persona == 'observer-info':
                     check('observer-info', path, [record])
+                if persona == 'spring-loading':
+                    check('spring-loading', path, [record])
                 if persona == 'thermal':
                     check('thermal', path, [record])
                 if persona == 'network-accounting':

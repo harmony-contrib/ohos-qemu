@@ -28,6 +28,8 @@ BUNDLE = 'org.harmonycontrib.capabilityaudit'
 APP_BASE = '/data/app/el2/100/base/' + BUNDLE + '/'
 APP_FILES = APP_BASE + 'files/'
 PERSONAS = {
+    'spring-loading': ('--spring-loading-only', 'spring-loading-{run}-results.log',
+                       '"quiet.end"', 'verify_spring_loading_results.py'),
     'observer-info': ('--observer-info-only', 'observer-info-{run}-results.log',
                       '"summary"', 'verify_observer_info_results.py'),
     'router-observer': ('--router-observer-only', 'router-observer-{run}-results.log',
@@ -159,7 +161,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -188,7 +190,7 @@ def run(args):
     network_peer = None
     report = {'schema_version': 1, 'status': 'fail', 'scope': 'one_fresh_ordinary_HAP_regression_NOT_full_gate',
         'persona': args.persona, 'run_id': challenge, 'archive': str(args.archive.resolve()),
-        'target': args.target, 'arch': args.arch, 'commands': [], 'failures': [],
+        'target': args.target, 'arch': args.arch, 'device': args.device, 'commands': [], 'failures': [],
         'boot_binding': 'requires_enclosing_fresh_VM_suite', 'first_artifact_behavior_gate_passed': False}
 
     def command(argv, label, timeout=60, accepted_failure=False, diagnostic_bytes=False):
@@ -227,6 +229,9 @@ def run(args):
         return command([args.hdc, '-t', args.target, 'shell', script], label, accepted_failure=accepted_failure)
 
     try:
+        if args.persona == 'spring-loading' and (
+                getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
+            raise ValueError('spring physical input requires the actual enclosing package-owned boot')
         if args.persona == 'optional-phone-profile' and (
                 args.device != 'phone' or getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
             raise ValueError('optional phone discovery requires the actual enclosing acceptance boot; never 2in1')
@@ -334,6 +339,18 @@ def run(args):
             raise ValueError('actual application regression did not complete before timeout')
 
         ui_arguments = []
+        spring_result = None
+        if args.persona == 'spring-loading':
+            from spring_loading_input import OwnedPointer, exercise
+            ui = GuestUi(command, args.hdc, args.target, args.output / 'ui')
+            pointer = OwnedPointer(command, args.boot, args.output / 'pointer', report['archive_sha256'],
+                boot_id, args.arch, args.device, args.target)
+            actions_path, spring_result = exercise(ui, pointer,
+                lambda: shell('cat ' + shlex.quote(remote) + ' 2>/dev/null', 'actual-spring-native-prefix',
+                              accepted_failure=True), challenge, min(args.wait_seconds, 60))
+            report.update(spring_loading_actions=str(actions_path), spring_loading_actions_sha256=checksum(actions_path))
+            ui_arguments += ['--actions', str(actions_path), '--boot-id', boot_id,
+                             '--device', args.device, '--target', args.target]
         if args.persona == 'settings-navigation':
             from settings_navigation_ui import exercise
             ui = GuestUi(command, args.hdc, args.target, args.output / 'ui')
@@ -385,7 +402,7 @@ def run(args):
             report['camera_native_results_sha256'] = checksum(native_results)
             # Photos only exist after the complete ArkTS sequence, below.
             ui_arguments += ['--native-results', str(native_results), '--captures', str(capture_file)]
-        result = poll_result(completion)
+        result = spring_result if spring_result is not None else poll_result(completion)
         if args.persona == 'camera':
             photo_root = receive_photos(command, args.hdc, args.target, app_files, args.output, challenge)
             ui_arguments += ['--photo-root', str(photo_root)]
@@ -411,7 +428,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
+        if args.persona in ('spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]

@@ -6,7 +6,7 @@ import fs from '@ohos.file.fs';
 interface Row {
   runId: string; name: string; generation: number; state: number; sequence: number;
   instance: boolean; config: number[]; summarySize: number; count: number;
-  time: number; error: string;
+  time: number; error: string; infosOmitted: boolean;
 }
 
 @Entry
@@ -19,9 +19,9 @@ struct Index {
   private started: boolean = false;
   private readonly path: string = '/data/storage/el2/base/files/spring-loading-__RUN__-results.log';
   private record(name: string, state: number = -1, sequence: number = -1, instance: boolean = true,
-    config: number[] = [], summarySize: number = -1, error: string = ''): void {
+    config: number[] = [], summarySize: number = -1, error: string = '', infosOmitted: boolean = false): void {
     const row: Row = { runId: '__RUN__', name, generation: this.generation, state, sequence, instance,
-      config, summarySize, count: this.count, time: Date.now(), error };
+      config, summarySize, count: this.count, time: Date.now(), error, infosOmitted };
     const file = fs.openSync(this.path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
     try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
   }
@@ -34,26 +34,28 @@ struct Index {
   private callback(context: drag.SpringLoadingContext): void {
     this.count++;
     try {
-      const size = context.dragInfos?.dataSummary?.totalSize ?? -1;
+      const infos = context.dragInfos;
+      const size = infos?.dataSummary?.totalSize ?? -1;
+      const omitted = infos === undefined;
       this.record('callback', context.state, context.currentNotifySequence,
-        context instanceof drag.SpringLoadingContext, this.config(context), size);
+        context instanceof drag.SpringLoadingContext, this.config(context), size, '', omitted);
       if (context.state === drag.DragSpringLoadingState.BEGIN) {
         if (this.mode === 2) {
           context.abort();
           this.record('abort.called', context.state, context.currentNotifySequence,
-            context instanceof drag.SpringLoadingContext, this.config(context), size);
+            context instanceof drag.SpringLoadingContext, this.config(context), size, '', omitted);
         } else if (this.mode === 1) {
           context.updateConfiguration({ stillTimeLimit: 150, updateInterval: 200,
             updateNotifyCount: 2, updateToFinishInterval: 200 });
           this.record('begin.updated', context.state, context.currentNotifySequence,
-            context instanceof drag.SpringLoadingContext, this.config(context), size);
+            context instanceof drag.SpringLoadingContext, this.config(context), size, '', omitted);
         }
       } else {
         // SDK requires this call to have no effect outside BEGIN.
         context.updateConfiguration({ stillTimeLimit: 0, updateInterval: 0,
           updateNotifyCount: 0, updateToFinishInterval: 0 });
         this.record('outside-begin.ignored', context.state, context.currentNotifySequence,
-          context instanceof drag.SpringLoadingContext, this.config(context), size);
+          context instanceof drag.SpringLoadingContext, this.config(context), size, '', omitted);
       }
     } catch (error) { this.record('failed', -1, -1, false, [], -1, String(error)); }
   }
