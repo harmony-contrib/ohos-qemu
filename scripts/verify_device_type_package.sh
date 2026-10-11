@@ -283,9 +283,11 @@ PY
   fi
   if [ ! -f "${PACKAGE}/launch/linux.sh" ] || \
      ! grep -q -- '--a11y' "${PACKAGE}/launch/linux.sh" || \
-     ! grep -q 'virtio-multitouch-pci' "${PACKAGE}/launch/linux.sh" || \
+     ! grep -q '^QEMU_A11Y_INPUT_ARGS=' "${PACKAGE}/launch/qemu_run.sh" || \
+     ! grep -Fq '${QEMU_A11Y_INPUT_ARGS} -device' "${PACKAGE}/launch/qemu_run.sh" || \
+     ! grep -q 'virtio-multitouch-pci' "${PACKAGE}/launch/qemu_run.sh" || \
      ! grep -q -- '-qmp' "${PACKAGE}/launch/linux.sh"; then
-    echo "FAIL: full ${REQUIRE_FULL_DEVICE} package lacks the --a11y multitouch/QMP launcher" >&2
+    echo "FAIL: full ${REQUIRE_FULL_DEVICE} package lacks ordered --a11y multitouch/pointer/QMP routing" >&2
     FAIL=1
   else
     echo "PASS: accessibility capability is paired with --a11y multitouch/QMP"

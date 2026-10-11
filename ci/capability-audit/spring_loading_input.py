@@ -76,12 +76,15 @@ def button_arguments(down):
 def protocol(schema, mice):
     if (not isinstance(schema, list) or not all(isinstance(row, dict) for row in schema) or
             not all(any(row.get('name') == name and row.get('meta-type') == 'command' for row in schema)
-                    for name in ('input-send-event', 'query-mice', 'query-status')) or
+                    for name in ('input-send-event', 'query-mice', 'query-status', 'human-monitor-command')) or
             not isinstance(mice, list)):
         raise ValueError('actual QEMU pointer command schema required')
     current = [mouse for mouse in mice if isinstance(mouse, dict) and mouse.get('current') is True]
-    if len(current) != 1 or current[0].get('absolute') is not True:
+    if (len(current) != 1 or current[0].get('absolute') is not True or
+            type(current[0].get('index')) is not int or current[0]['index'] <= 0 or
+            not isinstance(current[0].get('name'), str) or not current[0]['name']):
         raise ValueError('actual current QEMU pointer must be absolute; no guessed relative scaling')
+    return current[0]
 
 
 class OwnedPointer:
@@ -101,9 +104,17 @@ class OwnedPointer:
         self.healthy('pointer-owner-before')
         schema = self.qmp('query-qmp-schema', 'actual-schema')
         mice = self.qmp('query-mice', 'actual-absolute-pointer')
-        protocol(schema, mice)
+        current = protocol(schema, mice)
         if self.qmp('query-status', 'actual-running-state').get('running') is not True:
             raise ValueError('owned QEMU is not running')
+        # query-mice ignores MTT-only handlers, even though they can intercept
+        # BTN events. Activate the actual selected tablet (not a guessed ID)
+        # so both button and motion use the same real device in this owned VM.
+        if self.qmp('human-monitor-command', 'actual-pointer-activate',
+                    {'command-line': 'mouse_set ' + str(current['index'])}) != '':
+            raise ValueError('actual pointer activation failed')
+        if protocol(schema, self.qmp('query-mice', 'actual-pointer-after-activate')) != current:
+            raise ValueError('actual selected pointer changed during activation')
 
     def healthy(self, label):
         text = self.command(['ps', '-p', str(self.env['qemu_pid']), '-o', 'pid=,pgid=,command='], label)
@@ -166,7 +177,7 @@ class OwnedPointer:
         return path
 
 
-def exercise(ui, pointer, read_results, run_id, timeout=60):
+def exercise(ui, pointer, read_results, run_id, timeout=60, capture_after_drag=None):
     """Four real drags, including held abort nudges and physical boundary re-entry."""
     def observed(predicate, label):
         deadline = time.monotonic() + timeout
@@ -179,7 +190,7 @@ def exercise(ui, pointer, read_results, run_id, timeout=60):
                     raise ValueError('real spring caller failed or reported a foreign context')
                 if predicate(rows):
                     return text, rows
-            time.sleep(0.05)
+            time.sleep(0.25)
         raise ValueError('actual physical spring action did not complete: ' + label)
 
     def selected(identifier, label, clickable=False):
@@ -235,6 +246,8 @@ def exercise(ui, pointer, read_results, run_id, timeout=60):
                 point = [a + (b - a) * step // 8 for a, b in zip(start, finish)]
                 pointer.move(point, prefix + '.drag.step.' + str(step))
                 time.sleep(0.02)
+            if capture_after_drag is not None:
+                capture_after_drag(prefix)
             text, _ = observed(lambda rows: has(rows, generation, 'callback', 0), prefix + '-real-BEGIN')
             checkpoint(cycle, 'begin', text)
             if mode == 'normal':
@@ -301,7 +314,7 @@ def verify_actions(actions, raw_text, run_id, archive_sha, boot_id, arch, device
                   *(f'g{generation}-pointer-owner' for generation in range(1, 5))):
         require_process(checked_path(actions.get(label, {}), 'process').read_text(), env)
     requests = actions.get('requests')
-    if not isinstance(requests, list) or len(requests) < 3:
+    if not isinstance(requests, list) or len(requests) < 5:
         raise ValueError('actual QMP replies and owned pointer inputs required')
     previous = 0
     for row in requests:
@@ -314,10 +327,17 @@ def verify_actions(actions, raw_text, run_id, archive_sha, boot_id, arch, device
                                ('actual-schema', 'actual-absolute-pointer', 'actual-running-state')):
         if row['execute'] != name or row['label'] != label or row['arguments'] is not None:
             raise ValueError('actual QMP protocol/device setup missing')
-    protocol(requests[0]['reply'], requests[1]['reply'])
+    current = protocol(requests[0]['reply'], requests[1]['reply'])
     if requests[2]['reply'].get('running') is not True:
         raise ValueError('physical input did not use a running owned QEMU')
-    cursor = 3
+    activate, readback = requests[3:5]
+    if (activate['execute'] != 'human-monitor-command' or activate['label'] != 'actual-pointer-activate' or
+            activate['arguments'] != {'command-line': 'mouse_set ' + str(current['index'])} or
+            activate['reply'] != '' or readback['execute'] != 'query-mice' or
+            readback['label'] != 'actual-pointer-after-activate' or readback['arguments'] is not None or
+            protocol(requests[0]['reply'], readback['reply']) != current):
+        raise ValueError('actual same-device button/motion activation and readback required')
+    cursor = 5
     previous_checkpoint = 0
     previous_prefix = ''
 

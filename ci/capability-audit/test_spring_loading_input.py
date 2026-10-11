@@ -44,10 +44,13 @@ def evidence(root):
         clock += 1000
         actions['requests'].append(row)
     schema = [dict(name=name, **{'meta-type': 'command'})
-              for name in ('input-send-event', 'query-mice', 'query-status')]
+              for name in ('input-send-event', 'query-mice', 'query-status', 'human-monitor-command')]
     request('query-qmp-schema', 'actual-schema', reply=schema)
-    request('query-mice', 'actual-absolute-pointer', reply=[dict(current=True, absolute=True)])
+    mice = [dict(current=True, absolute=True, index=1, name='QEMU Virtio Tablet')]
+    request('query-mice', 'actual-absolute-pointer', reply=mice)
     request('query-status', 'actual-running-state', reply=dict(running=True))
+    request('human-monitor-command', 'actual-pointer-activate', {'command-line': 'mouse_set 1'}, reply='')
+    request('query-mice', 'actual-pointer-after-activate', reply=copy.deepcopy(mice))
     all_rows = fixture()
     raw = ''.join(json.dumps(row) + '\n' for row in all_rows)
     nodes = {}
@@ -145,7 +148,7 @@ class SpringLoadingInputTests(unittest.TestCase):
     def test_every_missing_failed_duplicate_or_changed_input_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             actions, raw = evidence(Path(directory))
-            for index in range(3, len(actions['requests'])):
+            for index in range(5, len(actions['requests'])):
                 for mutation in ('missing', 'duplicate', 'failed', 'changed'):
                     changed = copy.deepcopy(actions)
                     if mutation == 'missing': del changed['requests'][index]
@@ -185,6 +188,24 @@ class SpringLoadingInputTests(unittest.TestCase):
                 path.write_bytes(original)
             with self.assertRaises(ValueError): check(actions, raw + '{}\n')
             with self.assertRaises(ValueError): check(actions, raw.replace('abort.called', 'fabricated'))
+
+    def test_real_pointer_activation_is_required_bound_and_not_a_guessed_index(self):
+        with tempfile.TemporaryDirectory() as directory:
+            actions, raw = evidence(Path(directory))
+            for index in (3, 4):
+                changed = copy.deepcopy(actions); del changed['requests'][index]
+                with self.subTest(index=index), self.assertRaises(ValueError): check(changed, raw)
+            for key, value in (('arguments', {'command-line': 'mouse_set 2'}),
+                               ('reply', 'Mouse not found'), ('execute', 'input-send-event')):
+                changed = copy.deepcopy(actions); changed['requests'][3][key] = value
+                with self.subTest(key=key), self.assertRaises(ValueError): check(changed, raw)
+            for key, value in (('index', 2), ('name', 'another pointer'), ('absolute', False), ('current', False)):
+                changed = copy.deepcopy(actions); changed['requests'][4]['reply'][0][key] = value
+                with self.subTest(key=key), self.assertRaises(ValueError): check(changed, raw)
+            changed = copy.deepcopy(actions)
+            changed['requests'][0]['reply'] = [row for row in changed['requests'][0]['reply']
+                                               if row['name'] != 'human-monitor-command']
+            with self.assertRaises(ValueError): check(changed, raw)
 
 
 if __name__ == '__main__': unittest.main()

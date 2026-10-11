@@ -9,6 +9,12 @@ interface Row {
   time: number; error: string; infosOmitted: boolean;
 }
 
+interface PointerRow {
+  runId: string; generation: number; action: number; button: number;
+  displayX: number; displayY: number; windowX: number; windowY: number; time: number;
+  pressedButtons: number[];
+}
+
 @Entry
 @Component
 struct Index {
@@ -18,6 +24,25 @@ struct Index {
   private count: number = 0;
   private started: boolean = false;
   private readonly path: string = '/data/storage/el2/base/files/spring-loading-__RUN__-results.log';
+  private dragInput(name: string): void {
+    const file = fs.openSync('/data/storage/el2/base/files/spring-loading-__RUN__-pointer.log',
+      fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
+    try {
+      fs.writeSync(file.fd, JSON.stringify({ runId: '__RUN__', generation: this.generation,
+        name, time: Date.now() }) + '\n');
+    } finally { fs.closeSync(file); }
+  }
+  private pointer(event: MouseEvent): void {
+    // Passive public-event journal only: do not consume events or initiate a
+    // gesture. This separates missing physical input from drag recognition.
+    const row: PointerRow = { runId: '__RUN__', generation: this.generation,
+      action: event.action, button: event.button, displayX: event.displayX,
+      displayY: event.displayY, windowX: event.windowX, windowY: event.windowY, time: Date.now(),
+      pressedButtons: event.pressedButtons ?? [] };
+    const file = fs.openSync('/data/storage/el2/base/files/spring-loading-__RUN__-pointer.log',
+      fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
+    try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
+  }
   private record(name: string, state: number = -1, sequence: number = -1, instance: boolean = true,
     config: number[] = [], summarySize: number = -1, error: string = '', infosOmitted: boolean = false): void {
     const row: Row = { runId: '__RUN__', name, generation: this.generation, state, sequence, instance,
@@ -103,11 +128,14 @@ struct Index {
         .onDragEnd(() => { this.record('drag.ended'); })
       Text('Hold inside this real target').id('spring-target').width('80%').height(160)
         .backgroundColor('#804020')
+        .onDragEnter(() => { this.dragInput('target.entered'); })
+        .onDragMove(() => { this.dragInput('target.moved'); })
+        .onDragLeave(() => { this.dragInput('target.left'); })
         .onDrop(() => { this.record('drop'); })
         .onDragSpringLoading((context: drag.SpringLoadingContext) => { this.callback(context); },
           { stillTimeLimit: 150, updateInterval: this.mode === 3 ? 10000 : 100,
             updateNotifyCount: 2, updateToFinishInterval: 100 })
       Button('Check quiet interval').id('spring-quiet').onClick(() => { this.quiet(); })
-    }.width('100%').height('100%').padding(12)
+    }.width('100%').height('100%').padding(12).onMouse((event: MouseEvent) => { this.pointer(event); })
   }
 }

@@ -1,0 +1,19 @@
+diff --git a/foundation/arkui/ace_engine/adapter/ohos/entrance/mmi_event_convertor.cpp b/foundation/arkui/ace_engine/adapter/ohos/entrance/mmi_event_convertor.cpp
+--- a/foundation/arkui/ace_engine/adapter/ohos/entrance/mmi_event_convertor.cpp
++++ b/foundation/arkui/ace_engine/adapter/ohos/entrance/mmi_event_convertor.cpp
+@@ -602,12 +602,12 @@ void ConvertMouseEvent(
+     std::set<int32_t> pressedSet = pointerEvent->GetPressedButtons();
+     uint32_t pressedButtons = 0;
+     if (pressedSet.find(OHOS::MMI::PointerEvent::MOUSE_BUTTON_LEFT) != pressedSet.end()) {
+-        pressedButtons &= static_cast<uint32_t>(MouseButton::LEFT_BUTTON);
++        pressedButtons |= static_cast<uint32_t>(MouseButton::LEFT_BUTTON);
+     }
+     if (pressedSet.find(OHOS::MMI::PointerEvent::MOUSE_BUTTON_RIGHT) != pressedSet.end()) {
+-        pressedButtons &= static_cast<uint32_t>(MouseButton::RIGHT_BUTTON);
++        pressedButtons |= static_cast<uint32_t>(MouseButton::RIGHT_BUTTON);
+     }
+     if (pressedSet.find(OHOS::MMI::PointerEvent::MOUSE_BUTTON_MIDDLE) != pressedSet.end()) {
+-        pressedButtons &= static_cast<uint32_t>(MouseButton::MIDDLE_BUTTON);
++        pressedButtons |= static_cast<uint32_t>(MouseButton::MIDDLE_BUTTON);
+     }
+     events.pressedButtons = static_cast<int32_t>(pressedButtons);

@@ -508,6 +508,36 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   sed_in_place_extended \
     "s/virtio-(mouse|tablet)-pci/${pointer_device}/g" \
     "${file}"
+  # Multitouch also advertises BTN handling. Register it before the pointer,
+  # otherwise QEMU sends buttons to multitouch but absolute motion to tablet.
+  # Do not merge those independent devices or invent a guest pressed state.
+  if ! grep -q '^QEMU_A11Y_INPUT_ARGS=' "${file}"; then
+    local tmp_a11y_input
+    tmp_a11y_input="$(mktemp)"
+    awk '
+      { print }
+      /^QEMU_EXTRA_ARGS=/ && !done {
+        print "QEMU_A11Y_INPUT_ARGS=\"\""
+        print "case \"${QEMU_ACCESSIBILITY:-0}\" in"
+        print "  0) ;;"
+        print "  1) QEMU_A11Y_INPUT_ARGS=\"-device virtio-multitouch-pci\" ;;"
+        print "  *) echo \"QEMU_ACCESSIBILITY must be 0 or 1\" >&2; exit 2 ;;"
+        print "esac"
+        done = 1
+      }
+      END { if (!done) exit 42 }
+    ' "${file}" >"${tmp_a11y_input}" || {
+      rm -f "${tmp_a11y_input}"
+      echo "unable to wire accessibility input before the pointer" >&2
+      exit 1
+    }
+    mv "${tmp_a11y_input}" "${file}"
+  fi
+  if ! grep -Fq '${QEMU_A11Y_INPUT_ARGS} -device' "${file}"; then
+    sed_in_place_extended \
+      "s|-device ${pointer_device}|\${QEMU_A11Y_INPUT_ARGS} -device ${pointer_device}|g" \
+      "${file}"
+  fi
   # Collapse accidental double xres/yres annotations and duplicate device lines.
   sed_in_place_extended \
     's/virtio-gpu-pci,xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\},xres=\$\{QEMU_XRES\},yres=\$\{QEMU_YRES\}/virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}/g' \
@@ -1010,10 +1040,7 @@ esac
 
 if [ "\${QEMU_ACCESSIBILITY}" = "1" ]; then
   QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-/tmp/openharmony-qemu-a11y-\${QEMU_HDC_HOST_PORT}.sock}"
-  case " \${QEMU_EXTRA_ARGS} " in
-    *" virtio-multitouch-pci "*) ;;
-    *) QEMU_EXTRA_ARGS="-device virtio-multitouch-pci\${QEMU_EXTRA_ARGS:+ \${QEMU_EXTRA_ARGS}}" ;;
-  esac
+  # qemu_run.sh registers virtio-multitouch-pci before the absolute pointer.
 fi
 
 if [ -n "\${QEMU_QMP_SOCKET}" ]; then
@@ -1196,6 +1223,12 @@ switch (\$DisplayType) {
 
 \$KernelBootArgs = "oemmode=rd loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600"
 
+\$AccessibilityEnabled = if (\$env:QEMU_ACCESSIBILITY) { \$env:QEMU_ACCESSIBILITY } else { "0" }
+if (\$AccessibilityEnabled -notin @("0", "1")) {
+  throw "QEMU_ACCESSIBILITY must be 0 or 1, got: \$AccessibilityEnabled"
+}
+\$A11yInputArgs = if (\$AccessibilityEnabled -eq "1") { @("-device", "virtio-multitouch-pci") } else { @() }
+
 \$ArgsList = @(
   "-machine", "q35",
   \$AccelArgs,
@@ -1205,6 +1238,7 @@ switch (\$DisplayType) {
   "-kernel", (Join-Path \$Img "bzImage"),
   "-initrd", (Join-Path \$Img "ramdisk.img"),
   \$DisplayArgs,
+  \$A11yInputArgs,
   "-device", "${pointer_device}",
   "-device", "virtio-keyboard-pci",
   "-netdev", "user,id=net0,hostfwd=tcp::\${HdcHostPort}-:5555",
@@ -1228,17 +1262,10 @@ if (\$env:QEMU_SERIAL_PORT) {
   \$ArgsList += @("-serial", "telnet:127.0.0.1:\$(\$env:QEMU_SERIAL_PORT),server,nowait")
   Write-Host "Serial telnet console: 127.0.0.1:\$(\$env:QEMU_SERIAL_PORT)"
 }
-\$AccessibilityEnabled = if (\$env:QEMU_ACCESSIBILITY) { \$env:QEMU_ACCESSIBILITY } else { "0" }
-if (\$AccessibilityEnabled -notin @("0", "1")) {
-  throw "QEMU_ACCESSIBILITY must be 0 or 1, got: \$AccessibilityEnabled"
-}
 \$QmpPortValue = if (\$env:QEMU_QMP_PORT) { [int]\$env:QEMU_QMP_PORT } elseif (\$AccessibilityEnabled -eq "1") { 4445 } else { 0 }
 if ((\$AccessibilityEnabled -eq "1" -or \$env:QEMU_QMP_PORT) -and
     (\$QmpPortValue -lt 1 -or \$QmpPortValue -gt 65535)) {
   throw "QMP port must be between 1 and 65535"
-}
-if (\$AccessibilityEnabled -eq "1") {
-  \$ArgsList += @("-device", "virtio-multitouch-pci")
 }
 if (\$QmpPortValue -gt 0) {
   \$ArgsList += @("-qmp", "tcp:127.0.0.1:\${QmpPortValue},server=on,wait=off")
@@ -1327,8 +1354,10 @@ QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
 \`QEMU_ACCEL=auto|hvf|kvm|tcg\` (and \`whpx\` on Windows) selects acceleration;
 \`auto\` probes host support and falls back to TCG when needed.
 \`--a11y\` adds a virtio multitouch device and starts a QMP server for
-accessibility gesture injection (QEMU 8.1 or newer). The socket path is
-deterministic from the HDC port when \`--qmp-socket\` is omitted. On Windows, use
+accessibility gesture injection (QEMU 8.1 or newer).
+The multitouch device is registered before the pointer so mouse buttons and
+absolute motion stay on the same tablet; touch-slot input remains independent.
+The socket path is deterministic from the HDC port when \`--qmp-socket\` is omitted. On Windows, use
 \`.\\launch\\windows.ps1 -A11y -QmpPort 4445\`.
 
 After installing a HAP with an \`AccessibilityExtensionAbility\`, enable that
@@ -1443,6 +1472,11 @@ write_full_product_launchers() {
        { ! grep -q 'virtio-tablet-pci' "${launch_out}/qemu_run.sh" || \
          grep -q 'virtio-mouse-pci' "${launch_out}/qemu_run.sh"; }; then
       echo "absolute-pointer guest requires an exclusive virtio-tablet launcher" >&2
+      exit 1
+    fi
+    if ! grep -q '^QEMU_A11Y_INPUT_ARGS=' "${launch_out}/qemu_run.sh" || \
+       ! grep -Fq '${QEMU_A11Y_INPUT_ARGS} -device' "${launch_out}/qemu_run.sh"; then
+      echo "accessibility input must be registered before the pointer device" >&2
       exit 1
     fi
     if ! bash -n "${launch_out}/qemu_run.sh"; then

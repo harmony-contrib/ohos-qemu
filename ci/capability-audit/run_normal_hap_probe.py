@@ -360,7 +360,9 @@ def run(args):
                 boot_id, args.arch, args.device, args.target)
             actions_path, spring_result = exercise(ui, pointer,
                 lambda: shell('cat ' + shlex.quote(remote) + ' 2>/dev/null', 'actual-spring-native-prefix',
-                              accepted_failure=True), challenge, min(args.wait_seconds, 60))
+                              accepted_failure=True), challenge, min(args.wait_seconds, 60),
+                capture_after_drag=lambda prefix: command([args.hdc, '-t', args.target, 'shell', 'hilog -x'],
+                    prefix + '-after-physical-spring-drag', diagnostic_bytes=True))
             report.update(spring_loading_actions=str(actions_path), spring_loading_actions_sha256=checksum(actions_path))
             ui_arguments += ['--actions', str(actions_path), '--boot-id', boot_id,
                              '--device', args.device, '--target', args.target]
@@ -484,6 +486,11 @@ def run(args):
                 command([args.hdc, '-t', args.target, 'shell', 'hilog -x'],
                         'failure-actual-hilog', diagnostic_bytes=True)
                 shell('ps -ef', 'failure-actual-processes')
+                if args.persona == 'spring-loading' and 'ordinary_result_directory' in report:
+                    pointer_journal = (report['ordinary_result_directory'] + 'spring-loading-' +
+                                       report['run_id'] + '-pointer.log')
+                    shell('cat ' + shlex.quote(pointer_journal) + ' 2>/dev/null',
+                          'failure-actual-spring-pointer', accepted_failure=True)
                 if args.persona == 'arkui-components' and 'ordinary_result_directory' in report:
                     component_base = report['ordinary_result_directory']
                     native = component_base + 'arkui-components-' + report['run_id'] + '-results.log'

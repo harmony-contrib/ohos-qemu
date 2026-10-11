@@ -1,5 +1,53 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R39 鼠标与无障碍输入路由候选（未计入闭环）
+
+批准的 SpringLoading 三项契约修复仍保留。真实 Column 调用方在原 R38 归档上
+继续定位，不能替换 R38 新包失败，也不能放行其余五包。03、04、05 均未进入
+BEGIN；04/05 的被动公开 MouseEvent 日志确认坐标确实送达，但真实按下后
+各次移动的 button=0，05 的 pressedButtons 也为空，不是丢失移动坐标。
+
+确认 `--a11y` 把 multitouch 设备放在默认 tablet 后面。实际 QEMU 11.0.3
+按事件类别选择第一个匹配 handler，而 query-mice 只报告 REL/ABS handler，
+因此显示 tablet 为 current 不代表按钮也发往它；multitouch 同时接收 BTN。
+依据 [实际版本输入路由源码](https://github.com/qemu/qemu/blob/v11.0.3/ui/input.c)
+和 [设备 handler 定义](https://github.com/qemu/qemu/blob/v11.0.3/hw/input/virtio-input-hid.c)，
+打包脚本将 multitouch 注册移到 pointer 之前，保留独立触摸槽、鼠标和其他设备。
+Unix CLI/环境变量/直接核心脚本均覆盖，Windows 生成参数也调整顺序；Windows
+当前只有源码顺序验证，未声称已运行 PowerShell。离线打包校验新增顺序接线检查。
+
+物理 Spring 输入还显式激活 query-mice 返回的真实 current index，再重新查询，
+严格重放两次请求与读回；拒绝猜测 index、失败回复、换设备、缺失/替换请求。
+06 由此首次真实触发 drag.started，移动时 button=1、pressedButtons=[1]，但仍未
+进入 BEGIN，完整诊断依然失败。继续定位真实目标 ENTER/MOVE 与服务初始化链，
+不直接调用回调、不放宽 abort/CANCEL/重入或配置断言。
+
+独立发现固定 ArkUI converter 从零按位 AND 累积按钮 mask，必然为零。
+新增精确 `mouse_pressed_buttons` 部件，仅三处 AND 改 OR，GN 前应用于两画像、
+三 ABI；不改 dispatch 策略、权限、公开 ABI、设备分类或坐标，不把此独立修复
+当作已解决全部 Spring 问题。ASan/UBSan 执行真实补丁块的八种组合、移动、部分
+释放、完全释放及旧零值失败回归通过；真实完整 converter TU 三 ABI 编译通过，
+原始只读输入不变。已增加六画像/ABI 的真实生成启动命令夹具，非六包构建。
+
+证据均在 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`：
+
+- `r39-spring-loading-diagnostic-04/evidence.json` SHA256
+  `992367822ccb5492a211a2acc42d9f024d37918a4ed1c859c1eccafa079c1ad4`。
+- `r39-spring-loading-diagnostic-05/evidence.json` SHA256
+  `9179daf0ec064e031c33a8fb28030ed234b0b8dd97489c2039ab9c8a1d5cdb72`。
+- `r39-spring-loading-diagnostic-06/evidence.json` SHA256
+  `4a1a9f9ce281f2646e1d8f07d6c91692e00a0ba33dfab671d37e349bce800716`，
+  boot `929443ed-bf46-4495-b1f0-10917d3155b3`、ARM64/HVF phone、HDC
+  `127.0.0.1:52095`。上述归档 SHA256 均为原 R38 `f49f3b...8fe8bf`。
+- 三 ABI 完整编译命令见 `compile_mouse_pressed_buttons.py`，实际本地 Docker
+  只读挂载 source/out、运行 `--source-root /Volumes/PSSD/qemu/openharmony
+  --output /evidence/mouse-pressed-buttons-tu-r39-01.json`，报告 SHA256
+  `832b8600f2f799f2e10472bf9d8d22c9999f1eb9d558f233c62d79a657d6ec03`。
+
+上述旧包诊断均使用真正构建原包的冻结 `phone-pJoBGD` boot 实现，而新调用方独立
+冻结。没有伪造 acceptance receipt、改旧 recipe、改归档或追改台账；源 snapshot、
+原始失败、私有 QMP 动作、日志与电源恢复记录保留，拥有的 VM 已关闭。
+
 ## R38 实际首包回归结束：门槛未通过，下一轮批量修复
 
 首包归档：
