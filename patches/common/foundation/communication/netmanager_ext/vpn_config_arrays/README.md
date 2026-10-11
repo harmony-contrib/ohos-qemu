@@ -39,10 +39,19 @@ Address, route destination and gateway paths share the same validation within
 each TU. OpenVPN hostname handling is preserved but cannot bypass family
 validation. Do not change the uint8 field, public signature, Parcel or rights.
 This family repair does not claim to repair the separate remaining extension
-prefix conversions or the native uint8 port-width problem.
+prefix conversions. The subsequent port repair depends on inet_addr_port.
 
-This does not change the public signature, native data layout, permissions or
-VPN IPC. It does **not** fix the separate database conversion that stores only
+Use the shared strict uint16 helper for all four VPN address, destination,
+gateway and hostname paths. Keep 0..65535 intact; missing/undefined is 0 and
+invalid original values fail before narrowing or sending IPC. Apply the paired
+netmanager_base/inet_addr_port component and uniformly rebuild native storage,
+Parcel, NAPI utility and every image-side consumer. This changes the internal
+port field type, not public SDK signatures or permissions; do not mix old wide-
+port-truncating receivers with newly compiled users.
+
+The array/family/prefix repairs do not change public signatures, native layout,
+permissions or VPN IPC; the paired port repair widens the internal port field.
+This component does **not** fix the separate database conversion that stores only
 one entry and loses the prefix. A successful serializer/compile check alone
 must not close CRUD, connected-VPN or tunnel/traffic gaps. Actual new-package
 round trips, restart, denied callers and a connected tunnel remain required.

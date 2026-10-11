@@ -41,7 +41,7 @@ def candidate_headers(files, overlay, selected):
 
 def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=None, candidate_defines=(),
         overlay_component_headers=False, prepare_component_idl=False, prepare_component_hdi=False,
-        prepare_component_wifi_hdi=False, required_candidate_headers=None):
+        prepare_component_wifi_hdi=False, required_candidate_headers=None, additional_components=()):
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
     if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',),
@@ -52,25 +52,36 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
     root = args.source_root.resolve()
     if not os.statvfs(root).f_flag & os.ST_RDONLY:
         raise ValueError('actual component source must be mounted read-only')
-    spec = importlib.util.spec_from_file_location('exact_component_baseline', component / 'verify_source.py')
-    baseline = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(baseline)
+    components = (component, *(Path(item) for item in additional_components))
+    if len({item.resolve() for item in components}) != len(components):
+        raise ValueError('distinct exact components required')
+    baselines, originals = [], {}
+    for index, selected in enumerate(components):
+        spec = importlib.util.spec_from_file_location('exact_component_baseline_' + str(index),
+                                                     selected / 'verify_source.py')
+        selected_baseline = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(selected_baseline)
+        selected_baseline.validate(root)
+        for relative, original_sha, _ in selected_baseline.FILES:
+            name = str(Path(selected_baseline.PROJECT) / relative)
+            if name in originals:
+                raise ValueError('isolated component inputs must not overlap')
+            originals[name] = digest(root / name) if (root / name).exists() else None
+            if originals[name] != original_sha:
+                raise ValueError('requires pristine pinned components for isolated compilation')
+        baselines.append(selected_baseline)
+    baseline = baselines[0]
     if source_file not in {Path(baseline.PROJECT) / entry[0] for entry in baseline.FILES}:
         raise ValueError('isolated full-TU check must match the exact component source')
-    baseline.validate(root)
-    originals = {str(Path(baseline.PROJECT) / entry[0]): (
-        digest(root / baseline.PROJECT / entry[0]) if (root / baseline.PROJECT / entry[0]).exists() else None)
-                 for entry in baseline.FILES}
-    if any(originals[str(Path(baseline.PROJECT) / entry[0])] != entry[1] for entry in baseline.FILES):
-        raise ValueError('requires pristine pinned component for isolated candidate compilation')
     required_headers = candidate_headers(originals, overlay_component_headers, required_candidate_headers)
     head = subprocess.check_output(['git', '-C', str(root / baseline.PROJECT), 'rev-parse', 'HEAD'],
                                    text=True).strip()
     source = root / source_file
-    inputs = [Path(__file__).resolve(), *(sorted(component.glob('*.patch'))),
-              component / 'apply.sh', component / 'verify_source.py',
+    inputs = [Path(__file__).resolve(),
               ROOT / 'patches/lib/apply_exact_component.py', ROOT / 'patches/lib/apply_component_stack.py',
               ROOT / 'patches/lib/exact_source_states.py']
+    for selected in components:
+        inputs.extend([*sorted(selected.glob('*.patch')), selected / 'apply.sh', selected / 'verify_source.py'])
     if caller is not None:
         inputs.append(Path(caller).resolve())
     if prepare_component_hdi:
@@ -89,6 +100,7 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
               'candidate_GN_feature_selection_verified': False if candidate_defines else None,
               'requested_products': products, 'all_three_products_checked': set(products) == set(PRODUCTS),
               'component': str(component.relative_to(ROOT)),
+              'additional_components': [str(item.relative_to(ROOT)) for item in components[1:]],
               'required_candidate_headers': list(required_headers),
               'component_inputs_sha256': before, 'first_artifact_behavior_gate_passed': False}
     logs = args.output.with_suffix('.logs')
@@ -101,11 +113,13 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
             destination.parent.mkdir(parents=True, exist_ok=True)
             if originals[relative] is not None:
                 shutil.copy2(root / relative, destination)
-        for attempt in (1, 2):
-            with (logs / ('apply-' + str(attempt) + '.log')).open('x') as stream:
-                subprocess.run(['bash', str(component / 'apply.sh'), '--source-root', str(staged)],
-                               stdout=stream, stderr=subprocess.STDOUT, check=True)
-        baseline.validate(staged, require_patched=True)
+        for index, (selected, selected_baseline) in enumerate(zip(components, baselines)):
+            for attempt in (1, 2):
+                name = ('apply-' if index == 0 else 'additional-' + str(index) + '-apply-') + str(attempt) + '.log'
+                with (logs / name).open('x') as stream:
+                    subprocess.run(['bash', str(selected / 'apply.sh'), '--source-root', str(staged)],
+                                   stdout=stream, stderr=subprocess.STDOUT, check=True)
+            selected_baseline.validate(staged, require_patched=True)
         report['source_final_sha256'] = digest(candidate)
         report['component_source_final_sha256'] = {name: digest(staged / name) for name in originals}
         for product in products:

@@ -32,6 +32,45 @@ Arc 下一批将真实算法构造延后至启动动作并记录异常，增加�
   SHA256 `1b1050414c319a77fd6e2815488af0856cc32480be0849e4a97190a59b6bc093`。
 - 同目录 `cxx-arkts11-gaps.json` SHA256 `34cd52412e2e16a2f2bf8bcd9b1fcf4adec8eb86a0b2f3b1bcc0982c2c02b87e`。
 
+## R39 全宽网络端口候选（未计入闭环）
+
+新增 `netmanager_base/inet_addr_port` 精确部件，在 GN 前与 VPN `0006` 配套应用。
+SDK port=0..65535 的 innerkit 存储由 uint8 改为 uint16；两个 Parcel writer 保留
+固定 c_utils 的四字节 padded 槽，reader 读取完整 uint32 并拒绝超过 65535 的
+畸形值。公开 SDK C ABI、权限及 prefix/family 策略不改；所有镜像内消费者统一
+重建，不把旧接收端的宽端口截断行为当作兼容。不能只替换 NAPI 库或旧镜像局部库。
+
+既有 NapiUtils 增加严格可选 uint16 helper，用于 addNetworkRoute、add/delete
+VLAN，以及 standard/extension setup/系统配置的地址、目的、网关和 hostname。
+缺省/undefined=0；有限整数范围在窄化前检查，NAPI 失败、错误类型、分数、
+负值、65536/65537 与大数不能静默包装。公开参数错误/权限检查保持既有路径。
+
+23 个真实完整对象编译通过：ARM64 九个 TU，ARMv7a/x86_64 各七个 TU；都核对
+实际依赖文件消费候选 inet_addr/napi_utils 头。`network-port-tu-r39-01/evidence.json`
+SHA256 `658f47bb8fb0c461fa9a01a62fd653b2cb2283e9e5994995a4c7185d5d10e7e9`，
+`network-port-tu-r39-02/evidence.json` SHA256
+`b008c15d20011082dfa7477e175058003efac5a998d71124dc49f298cb592ceb`。
+这不包括另外两 ABI 的系统配置 TU、链接、存储服务或来宾证明。
+随后用真实宽端口头重编 ARM64 的 VPN parcel、service-bean、database 和 NAPI
+四个完整 TU 通过，`network-port-store-tu-r39-01.json` SHA256
+`207ceedf70626f6737238b529fcdf7e379a515e5ba7e3a7bdd6fda66e0940c95`。
+其余两 ABI 和实际 NativeRdb/HKS 行为仍待新构建/来宾证明。
+
+44 项相邻主机回归通过，`network-port-host-r39-03.json` SHA256
+`7b7675de72f63e29ac10fb046c968649c99083205292b000409bb3ef216f8e7d`；
+包含实际两个 writer/reader 的高端口、后续槽、截断/畸形值和写失败边界，实际
+旧 uint8 codec 的失败回归、四个 VPN 前端及 hostname 的边界。夹具的 NAPI
+前向声明/日志宏最初缺失，修正夹具后重跑，未关闭告警或改变 native 修复。
+三角色真实 API26 typed HAP 编译通过，`network-port-haps-r39-01.json` SHA256
+`397f8f174a2eb736f4baf3162908950a1fce401327ea1908a36e6286cb6f2469`，输入不变。
+新包探针要求 255/256/8080/65535 的真实 get/list、替换、换 PID 后读回，
+四个字段的缺省/undefined=0、28 次非法更新数字 401 及失败后原数据不变。
+追加三种 connection 实际完整 ParseParams 的主机夹具，验证宽端口不截断、
+非法端口在 parse-success/callback 前返回原有 401；重跑 **45 项全部通过**，
+`network-port-host-r39-04.json`，输入不变。该夹具仍不是来宾 addNetworkRoute/VLAN
+后端、权限或连接成功证明。
+上述编译与模型不是新包验收，台账仍 **158 / 281 闭环、123 未闭环**。
+
 ## R39 VPN 地址族四路径候选（未计入闭环）
 
 `vpn_config_arrays/0005` 同步修复 standard/extension 的 setup 与系统配置四个
@@ -54,6 +93,13 @@ SHA256 `4480d2c2bfe835d89929ddff7631f667ea3a77ef76544a83b865ebce57173cf7`。
 新探针要求四个地址字段的缺省/undefined 真实 get/list 读回、32 次非法 family
 更新返回数字 401，失败后原配置不变；原 CRUD、双栈、路由、重启、拒绝与清理不减。
 仍须新包集中行为验收，台账仍为 **158 / 281 闭环、123 未闭环**。
+
+地址族提交 `1a383b1d24755e4e1fb748251728ce4e3c7b9a22` 的冻结集中回归
+`host-r39-frozen-batch-08.json`：**1588 项、跳过 1 项、274.528 秒，其余通过**，
+输入不变；树 SHA256 `5788eefeb461467fa438e903c41da2ad11c74762f71acc16135a3a196499a89e`，
+日志 SHA256 `51259d646b3fd888b1d7d4e224862f6f9c3162621e05eba45ad1ad2846de950d`，
+报告 SHA256 `6da8eb349ffa5e963e40c59889c7f8188d0570cbadc97612098528f71f903db9`。
+此冻结回归不包含后续端口候选，不追改其输入或门禁状态。
 
 ## R39 Ethernet 真实全局开关候选（未计入闭环）
 

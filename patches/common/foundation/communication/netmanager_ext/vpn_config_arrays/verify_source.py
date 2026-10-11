@@ -10,16 +10,16 @@ REVISION = '8c41289750820fb2ddb347b1205cee9a7b527388'
 FILES = (
     ('frameworks/js/napi/vpn/src/vpn_config_utils.cpp',
      '622d6eb21e9fedbbcd5cc79f8f9b32ff150d20fd999d39fe7db66431e711eeb6',
-     '4ffe715444186e09114377f8cca05295806ada38650856f1d96f82986a908006'),
+     'd90168fc7ba43ecfa1c9fe0e6bb63c397d4814794ac5c68bbe9bd2e0d256cbfe'),
     ('frameworks/js/napi/vpn/src/context/setup_context.cpp',
      '4f39d7d6493e484f4f81d8e28d24dafe486605a85088496218e6f4d3aff92b2c',
-     'd429840667b8b1ec036fbb5efb9b1cb1cf6677004b3f76cf82198dcb158d0e92'),
+     '27bbc5dadf3aad40e158e27b9b00f2492f06d683ea036fb4ae319917f6558c7c'),
     ('frameworks/js/napi/vpnext/src/vpn_config_utils_ext.cpp',
      '00b8e25c99f54866f3d746fe7240f847e5e6cf8afcb1f1ca5894d0d0460c5bdf',
-     '51dead3bb0ad6a65ea2926834e60110216bdd8ab670a760797493174813ca5ec'),
+     '7999ff4510cac17ae6bc0ded81f3b838d81a081f9415fba936213ad4e32bba04'),
     ('frameworks/js/napi/vpnext/src/context/setup_context_ext.cpp',
      'fbcfb639481dd687cc1d91bbe65772e8d172d1aef7476bdb7fec30263ddc0074',
-     'bde27a6ea229b39acb2893ed6075dd6627175069cae30c4a91329128aff85973'),
+     '297aff0727166eb0924734c5da5d09ea2e25829d4c48c3431fd8662c7b0c459f'),
 )
 
 

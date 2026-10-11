@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from compile_contact_sync_mode import ROOT, PRODUCTS, run
+from compile_network_port import PORT, HEADERS
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
@@ -15,7 +16,9 @@ if __name__ == '__main__':
     report = run(args,
         component=ROOT / 'patches/common/foundation/communication/netmanager_ext/vpn_config_arrays',
         source_file=Path(folder + 'src/vpn_config_utils.cpp'),
-        target='obj/' + folder + 'src/vpn/vpn_config_utils.o', caller=__file__)
+        target='obj/' + folder + 'src/vpn/vpn_config_utils.o', caller=__file__,
+        overlay_component_headers=True, required_candidate_headers=HEADERS,
+        additional_components=(PORT,))
     args.output.write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(dict(status=report['status'], objects_count=report['objects_count'],
                          first_artifact_behavior_gate_passed=False)))

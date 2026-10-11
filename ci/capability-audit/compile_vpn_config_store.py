@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from compile_contact_sync_mode import ROOT, PRODUCTS, run
+from compile_network_port import PORT, INET_HEADER
 
 PROJECT = 'foundation/communication/netmanager_ext/'
 INCLUDE = PROJECT + 'interfaces/innerkits/netvpnclient/include/'
@@ -40,7 +41,8 @@ if __name__ == '__main__':
             result = run(selected,
                 component=ROOT / 'patches/common/foundation/communication/netmanager_ext/vpn_config_store',
                 source_file=Path(PROJECT + source), target='obj/' + PROJECT + target, caller=__file__,
-                overlay_component_headers=headers is not None, required_candidate_headers=headers)
+                overlay_component_headers=True,
+                required_candidate_headers=(*(headers or ()), INET_HEADER), additional_components=(PORT,))
             selected.output.write_text(json.dumps(result, indent=2) + '\n')
             reports.append(result)
         summary.update(status='pass', objects_count=sum(result['objects_count'] for result in reports),

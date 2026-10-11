@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from compile_contact_sync_mode import ROOT, PRODUCTS, run
+from compile_network_port import PORT, HEADERS
 
 COMPONENT = ROOT / 'patches/common/foundation/communication/netmanager_ext/vpn_config_arrays'
 PREFIX = 'foundation/communication/netmanager_ext/frameworks/js/napi/'
@@ -34,7 +35,9 @@ if __name__ == '__main__':
             child_args = argparse.Namespace(source_root=args.source_root,
                 output=args.output / (name + '.json'), product=args.product)
             child = run(child_args, component=COMPONENT, source_file=Path(PREFIX + source),
-                        target='obj/' + PREFIX + target, caller=__file__)
+                        target='obj/' + PREFIX + target, caller=__file__,
+                        overlay_component_headers=True, required_candidate_headers=HEADERS,
+                        additional_components=(PORT,))
             child_args.output.write_text(json.dumps(child, indent=2) + '\n')
             report['objects'].extend(dict(tu=name, **item) for item in child['objects'])
             report['objects_count'] += child['objects_count']

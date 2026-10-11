@@ -14,20 +14,20 @@ EVIDENCE_SCOPE = 'three_real_VPN_store_roles_and_caller_restart_NOT_tunnel_or_fu
 METHODS = ('addSysVpnConfig', 'getSysVpnConfig', 'getSysVpnConfigList', 'deleteSysVpnConfig')
 
 
-def expected_config(run_id, index, revision, account=100):
+def expected_config(run_id, index, revision, account=100, zero_ports=False):
     if (re.fullmatch('[a-f0-9]{32}', run_id or '') is None or type(index) is not int or
             index not in range(3) or type(revision) is not int or revision not in (0, 1)):
         raise ValueError('exact fresh VPN config variant/revision required')
-    def address(ip, family):
-        return dict(address=ip, family=family, port=0)
-    def link(ip, family, prefix):
-        return dict(address=address(ip, family), prefixLength=prefix)
+    def address(ip, family, ports):
+        return dict(address=ip, family=family, port=ports[revision])
+    def link(ip, family, prefix, ports):
+        return dict(address=address(ip, family, ports), prefixLength=prefix)
     value = dict(vpnId=str(uuid.UUID(run_id[:31] + str(index))),
         vpnName='audit-' + run_id + '-' + str(revision), vpnType=(9, 2, 4)[index],
         userName='audit-' + run_id, password='synthetic-' + run_id, saveLogin=True, userId=account,
         forwardingRoutes='198.18.0.0/24',
-        addresses=[link('198.18.0.2', 1, 24), link('2001:db8::2', 2, 64)],
-        localAddresses=[link('198.18.0.6', 1, 28), link('2001:db8::6', 2, 96)],
+        addresses=[link('198.18.0.2', 1, 24, (8080, 65535)), link('2001:db8::2', 2, 64, (65535, 256))],
+        localAddresses=[link('198.18.0.6', 1, 28, (256, 8080)), link('2001:db8::6', 2, 96, (255, 0))],
         remoteAddresses=['198.19.0.1', '2001:db8:1::1'],
         dnsAddresses=['198.18.0.53', '2001:db8::53'],
         searchDomains=['a.' + run_id + '.invalid', 'b.' + run_id + '.invalid'],
@@ -35,12 +35,12 @@ def expected_config(run_id, index, revision, account=100):
         trustedApplications=['org.harmonycontrib.capabilityaudit', 'org.harmonycontrib.other'] if revision == 0 else [],
         blockedApplications=['org.harmonycontrib.blocked', 'org.harmonycontrib.blocked2'] if revision == 1 else [],
         routes=[dict(interface='vpn-tun', destination=link('198.18.1.0', 1,
-            (0 if revision == 0 else 32) if index == 0 else 24),
-            gateway=address('198.18.0.1', 1), hasGateway=True,
+            (0 if revision == 0 else 32) if index == 0 else 24, (65535, 8080)),
+            gateway=address('198.18.0.1', 1, (8080, 65535)), hasGateway=True,
             isDefaultRoute=index == 0 and revision == 0, isExcludedRoute=False),
             dict(interface='vpn-tun', destination=link('2001:db8:2::', 2,
-                (0 if revision == 0 else 128) if index == 0 else 64),
-            gateway=address('2001:db8::1', 2), hasGateway=False,
+                (0 if revision == 0 else 128) if index == 0 else 64, (256, 65535)),
+            gateway=address('2001:db8::1', 2, (65535, 255)), hasGateway=False,
             isDefaultRoute=index == 0 and revision == 0, isExcludedRoute=True)])
     if index == 0:
         value.update(ovpnPort='1194', ovpnProtocol=0, ovpnAuthType=0,
@@ -49,6 +49,11 @@ def expected_config(run_id, index, revision, account=100):
         value.update(ipsecPreSharedKey='synthetic-psk-' + run_id, ipsecIdentifier='audit-identifier')
         if index == 2:
             value['l2tpSharedKey'] = 'synthetic-l2tp-' + run_id
+    if zero_ports:
+        value['addresses'][0]['address']['port'] = 0
+        value['localAddresses'][0]['address']['port'] = 0
+        value['routes'][0]['destination']['address']['port'] = 0
+        value['routes'][0]['gateway']['port'] = 0
     return value
 
 
@@ -63,11 +68,11 @@ def exact(actual, expected):
     return actual == expected
 
 
-def verify_config(text, run_id, index, revision, account):
+def verify_config(text, run_id, index, revision, account, zero_ports=False):
     value = json.loads(text)
     if not isinstance(value, dict):
         raise ValueError('actual VPN config must be an object')
-    expected = expected_config(run_id, index, revision, account)
+    expected = expected_config(run_id, index, revision, account, zero_ports)
     # Optional empty arrays retain the existing documented omission behavior.
     for key in ('trustedApplications', 'blockedApplications'):
         if not expected[key] and key not in value:
@@ -96,8 +101,13 @@ def expected(role, phase):
             snapshots('replace', index, 1)
         snapshots('default-family', 0, 1)
         snapshots('undefined-family', 0, 1)
+        snapshots('default-port', 0, 1)
+        snapshots('undefined-port', 0, 1)
+        snapshots('ports-restored', 0, 1)
         for field in range(4):
             rows += [('invalid.family.' + str(field), [1, 401, 1], None)] * 8
+        for field in range(4):
+            rows += [('invalid.port.' + str(field), [1, 401, 1], None)] * 7
         rows += [('invalid.prefix', [1, 401, 1], None)] * 6
         for family in range(2):
             rows += [('invalid.route.' + str(family), [1, 401, 1], None)] * 6
@@ -132,7 +142,8 @@ def verify(text, run_id, role, phase, identity_text):
             if row['config'] != '':
                 raise ValueError('unexpected VPN config payload: ' + name)
         else:
-            verify_config(row['config'], run_id, *config, uid // 200000)
+            verify_config(row['config'], run_id, *config, uid // 200000,
+                zero_ports=name.startswith(('default-port.', 'undefined-port.')))
     return rows
 
 

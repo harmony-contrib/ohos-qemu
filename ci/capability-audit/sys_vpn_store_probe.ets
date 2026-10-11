@@ -35,10 +35,10 @@ struct Index {
       vpnId: this.ownedVpnId(index), vpnName: 'audit-' + this.nonce + '-' + revision,
       vpnType: this.types[index], userName: 'audit-' + this.nonce, password: 'synthetic-' + this.nonce,
       saveLogin: true, forwardingRoutes: '198.18.0.0/24',
-      addresses: [{ address: { address: '198.18.0.2', family: 1, port: 0 }, prefixLength: 24 },
-        { address: { address: '2001:db8::2', family: 2, port: 0 }, prefixLength: 64 }],
-      localAddresses: [{ address: { address: '198.18.0.6', family: 1, port: 0 }, prefixLength: 28 },
-        { address: { address: '2001:db8::6', family: 2, port: 0 }, prefixLength: 96 }],
+      addresses: [{ address: { address: '198.18.0.2', family: 1, port: revision === 0 ? 8080 : 65535 }, prefixLength: 24 },
+        { address: { address: '2001:db8::2', family: 2, port: revision === 0 ? 65535 : 256 }, prefixLength: 64 }],
+      localAddresses: [{ address: { address: '198.18.0.6', family: 1, port: revision === 0 ? 256 : 8080 }, prefixLength: 28 },
+        { address: { address: '2001:db8::6', family: 2, port: revision === 0 ? 255 : 0 }, prefixLength: 96 }],
       remoteAddresses: ['198.19.0.1', '2001:db8:1::1'],
       dnsAddresses: ['198.18.0.53', '2001:db8::53'],
       searchDomains: ['a.' + this.nonce + '.invalid', 'b.' + this.nonce + '.invalid'],
@@ -46,14 +46,14 @@ struct Index {
       trustedApplications: revision === 0 ? ['org.harmonycontrib.capabilityaudit', 'org.harmonycontrib.other'] : [],
       blockedApplications: revision === 1 ? ['org.harmonycontrib.blocked', 'org.harmonycontrib.blocked2'] : [],
       routes: [{ interface: 'vpn-tun', destination: {
-        address: { address: '198.18.1.0', family: 1, port: 0 },
+        address: { address: '198.18.1.0', family: 1, port: revision === 0 ? 65535 : 8080 },
         prefixLength: index === 0 ? (revision === 0 ? 0 : 32) : 24 },
-        gateway: { address: '198.18.0.1', family: 1, port: 0 },
+        gateway: { address: '198.18.0.1', family: 1, port: revision === 0 ? 8080 : 65535 },
         hasGateway: true, isDefaultRoute: index === 0 && revision === 0, isExcludedRoute: false },
         { interface: 'vpn-tun', destination: {
-          address: { address: '2001:db8:2::', family: 2, port: 0 },
+          address: { address: '2001:db8:2::', family: 2, port: revision === 0 ? 256 : 65535 },
           prefixLength: index === 0 ? (revision === 0 ? 0 : 128) : 64 },
-          gateway: { address: '2001:db8::1', family: 2, port: 0 },
+          gateway: { address: '2001:db8::1', family: 2, port: revision === 0 ? 65535 : 255 },
           hasGateway: false, isDefaultRoute: index === 0 && revision === 0, isExcludedRoute: true }]
     };
     if (index === 0) {
@@ -95,10 +95,10 @@ struct Index {
     if (config.localAddresses === undefined || config.routes === undefined) {
       throw new Error('real local addresses and routes required');
     }
-    config.addresses[0].address = { address: '198.18.0.2', port: 0 };
-    config.localAddresses[0].address = { address: '198.18.0.6', port: 0 };
-    config.routes[0].destination.address = { address: '198.18.1.0', port: 0 };
-    config.routes[0].gateway = { address: '198.18.0.1', port: 0 };
+    config.addresses[0].address = { address: '198.18.0.2', port: 65535 };
+    config.localAddresses[0].address = { address: '198.18.0.6', port: 8080 };
+    config.routes[0].destination.address = { address: '198.18.1.0', port: 8080 };
+    config.routes[0].gateway = { address: '198.18.0.1', port: 65535 };
     if (explicitUndefined) {
       config.addresses[0].address.family = undefined;
       config.localAddresses[0].address.family = undefined;
@@ -115,6 +115,24 @@ struct Index {
     this.record('cleanup', [remaining.length]);
     if (remaining.length !== 0) { throw new Error('owned configuration cleanup failed'); }
     if (fs.accessSync(this.marker)) { fs.unlinkSync(this.marker); }
+  }
+  private async defaultPort(explicitUndefined: boolean): Promise<void> {
+    const config = this.config(0, 1);
+    if (config.localAddresses === undefined || config.routes === undefined) {
+      throw new Error('real local addresses and routes required');
+    }
+    config.addresses[0].address = { address: '198.18.0.2', family: 1 };
+    config.localAddresses[0].address = { address: '198.18.0.6', family: 1 };
+    config.routes[0].destination.address = { address: '198.18.1.0', family: 1 };
+    config.routes[0].gateway = { address: '198.18.0.1', family: 1 };
+    if (explicitUndefined) {
+      config.addresses[0].address.port = undefined;
+      config.localAddresses[0].address.port = undefined;
+      config.routes[0].destination.address.port = undefined;
+      config.routes[0].gateway.port = undefined;
+    }
+    await vpn.addSysVpnConfig(config);
+    await this.roundTrip(0, 1, explicitUndefined ? 'undefined-port' : 'default-port');
   }
   private async run(): Promise<void> {
     let seeded = false;
@@ -143,6 +161,10 @@ struct Index {
         }
         await this.defaultFamily(false);
         await this.defaultFamily(true);
+        await this.defaultPort(false);
+        await this.defaultPort(true);
+        await vpn.addSysVpnConfig(this.config(0, 1));
+        await this.roundTrip(0, 1, 'ports-restored');
         for (let field = 0; field < 4; field++) {
           for (const family of [-1, 0, 3, 257, 258, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
             const invalid = this.config(0, 1);
@@ -154,6 +176,19 @@ struct Index {
             else if (field === 2) { invalid.routes[0].destination.address.family = family; }
             else { invalid.routes[0].gateway.family = family; }
             this.record('invalid.family.' + field, await this.rejected(0, invalid, this.ownedVpnId(0)));
+          }
+        }
+        for (let field = 0; field < 4; field++) {
+          for (const port of [-1, 65536, 65537, 8080.5, 4294967297, Number.NaN, Number.POSITIVE_INFINITY]) {
+            const invalid = this.config(0, 1);
+            if (invalid.localAddresses === undefined || invalid.routes === undefined) {
+              throw new Error('real local addresses and routes required');
+            }
+            if (field === 0) { invalid.addresses[0].address.port = port; }
+            else if (field === 1) { invalid.localAddresses[0].address.port = port; }
+            else if (field === 2) { invalid.routes[0].destination.address.port = port; }
+            else { invalid.routes[0].gateway.port = port; }
+            this.record('invalid.port.' + field, await this.rejected(0, invalid, this.ownedVpnId(0)));
           }
         }
         for (const prefix of [-1, 0, 257, 2.5, Number.NaN, Number.POSITIVE_INFINITY]) {

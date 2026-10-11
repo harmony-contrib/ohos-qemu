@@ -16,7 +16,8 @@ from run_root_probe import digest
 
 def rows(role, phase, nonce=RUN, pid=123):
     return [dict(runId=nonce, role=role, name=name, values=values if values is not None else [UID, UID, pid],
-        config='' if config is None else json.dumps(expected_config(nonce, *config, UID // 200000)), error='')
+        config='' if config is None else json.dumps(expected_config(nonce, *config, UID // 200000,
+            zero_ports=name.startswith(('default-port.', 'undefined-port.')))), error='')
         for name, values, config in expected(role, phase)]
 
 
@@ -123,7 +124,8 @@ class VerifySysVpnStoreTests(unittest.TestCase):
             value = rows(role, 'denial'); value[1]['values'] = [0, 0, 0]
             with self.assertRaises(ValueError): self.check(value, role, 'denial')
         for key, changed in ((name, changed) for name in ('invalid.prefix', 'invalid.route.0', 'invalid.route.1',
-                                 'invalid.family.0', 'invalid.family.1', 'invalid.family.2', 'invalid.family.3')
+                                 'invalid.family.0', 'invalid.family.1', 'invalid.family.2', 'invalid.family.3',
+                                 'invalid.port.0', 'invalid.port.1', 'invalid.port.2', 'invalid.port.3')
                              for changed in ([0, 0, 0], [1, '401', 1])):
             value = rows('system', 'seed'); next(row for row in value if row['name'] == key)['values'] = changed
             with self.assertRaises(ValueError): self.check(value)
@@ -144,6 +146,27 @@ class VerifySysVpnStoreTests(unittest.TestCase):
         for name in ('default-family.get.0', 'default-family.list.0', 'undefined-family.get.0', 'undefined-family.list.0'):
             value = rows('system', 'seed'); target = next(row for row in value if row['name'] == name)
             config = json.loads(target['config']); config['addresses'][0]['address']['family'] = 0
+            target['config'] = json.dumps(config)
+            with self.subTest(name=name), self.assertRaises(ValueError): self.check(value)
+
+    def test_full_width_ports_zero_defaults_and_restart_are_required_not_accepted_truncation(self):
+        source = page(RUN, 'system')
+        self.assertIn('await this.defaultPort(false)', source)
+        self.assertIn('await this.defaultPort(true)', source)
+        for phase in ('seed', 'restart'):
+            value = rows('system', phase)
+            target = next(row for row in value if row['config'] and not row['name'].startswith(('default-port.', 'undefined-port.')))
+            config = json.loads(target['config'])
+            for field in (config['addresses'][0]['address'], config['localAddresses'][0]['address'],
+                          config['routes'][0]['destination']['address'], config['routes'][0]['gateway']):
+                original = field['port']; field['port'] = original & 255
+                if original != field['port']:
+                    target['config'] = json.dumps(config)
+                    with self.subTest(phase=phase, port=original), self.assertRaises(ValueError): self.check(value, phase=phase)
+                field['port'] = original
+        for name in ('default-port.get.0', 'default-port.list.0', 'undefined-port.get.0', 'undefined-port.list.0'):
+            value = rows('system', 'seed'); target = next(row for row in value if row['name'] == name)
+            config = json.loads(target['config']); config['addresses'][0]['address']['port'] = 17
             target['config'] = json.dumps(config)
             with self.subTest(name=name), self.assertRaises(ValueError): self.check(value)
 
