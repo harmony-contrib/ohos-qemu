@@ -10,3 +10,7 @@ patches/common/foundation/communication/wifi/wpa_scan/0002-query-real-wpa-freque
 patches/common/foundation/communication/wifi/wpa_channels/0001-use-real-WPA-scan-channel-table.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 # The captured WPA document ends with the protocol's empty mode separator.
 ci/capability-audit/fixtures/wpa_frequency_capabilities.txt -text whitespace=-blank-at-eof
+# These exact native diffs intentionally contain blank context lines, including
+# the final native context line in the network-field patch. Preserve their bytes.
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0002-parse-the-requested-network-prefix-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0003-return-stored-network-fields-and-preserve-excluded-routes.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
