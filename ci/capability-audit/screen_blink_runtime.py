@@ -13,7 +13,8 @@ import time
 from build_screen_blink_probe import BUNDLE
 from guest_ui import select_node
 from run_root_probe import digest
-from verify_screen_blink_results import classify_pixels, rows, verify_background_restored, verify_frames, verify_initial
+from verify_screen_blink_results import (
+    classify_pixels, optical_sequence, rows, verify_background_restored, verify_frames, verify_initial)
 
 
 def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds=90, *, background=None):
@@ -61,6 +62,11 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             path = ui.screenshot(label=name)
             after = time.monotonic()
             frames.append(dict(path=str(path), sha256=digest(path), before=before, after=after))
+            if 'optical_marker' in report:
+                # Retain every frame in the original assertion, even stale ones.
+                # This records evidence for diagnosis, not a relaxed stop gate.
+                frames[-1]['optical_sequence'] = optical_sequence(path, report['optical_marker'])
+                frames[-1]['expected_sequence'] = len(observed) % 256
             if after > deadline + 10:
                 raise ValueError('screen capture too slow to establish blink sequence')
             time.sleep(.08)
@@ -85,6 +91,10 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             layout, path = ui.layout(bundle=BUNDLE, label='blink-baseline')
             rect = select_node(layout, BUNDLE, identifier='blink-pixel-surface')['rect']
             report['surface'] = dict(layout=str(path), sha256=digest(path), rect=rect)
+            try:
+                report['optical_marker'] = select_node(layout, BUNDLE, identifier='blink-frame-marker')['rect']
+            except ValueError:
+                report['optical_marker_unavailable'] = True
             # ArkUI publishes its tree before the starting window disappears.
             # Establish the real baseline before testing any blink operation;
             # retain every precondition frame, including the starting window.

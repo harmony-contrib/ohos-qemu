@@ -73,6 +73,34 @@ def verify_initial(text, run_id, role, identity_text, *, restarted=False, allow_
     return actual[:len(expected)]
 
 
+def optical_sequence(path, rect):
+    """Diagnostic frame freshness only; never accepts or discards pulse frames."""
+    from PIL import Image
+    if (not isinstance(rect, list) or len(rect) != 4 or
+            any(type(value) is not int for value in rect) or
+            min(rect[:2]) < 0 or rect[2] < 32 or rect[3] < 4):
+        raise ValueError('invalid optical marker rectangle')
+    left, top, width, height = rect
+    with Image.open(path) as image:
+        if left + width > image.width or top + height > image.height:
+            raise ValueError('optical marker outside captured image')
+        rgb = image.convert('RGB')
+        value = 0
+        for bit in range(8):
+            x0 = left + int(width * (bit + .3) / 8)
+            x1 = left + int(width * (bit + .7) / 8)
+            pixels = list(rgb.crop((x0, top + height // 3, max(x0 + 1, x1),
+                                    top + 2 * height // 3)).getdata())
+            # Black/white remain distinguishable under the real yellow overlay.
+            zeros = sum(r < 160 and g < 160 and abs(r - g) < 30 for r, g, _ in pixels)
+            ones = sum(r > 220 and g > 220 and abs(r - g) < 30 for r, g, _ in pixels)
+            if ones / len(pixels) >= .97:
+                value |= 1 << bit
+            elif zeros / len(pixels) < .97:
+                return None
+        return value
+
+
 def classify_pixels(path, rect):
     from PIL import Image
     if (not isinstance(rect, list) or len(rect) != 4 or any(type(value) is not int for value in rect) or

@@ -7,7 +7,7 @@ import unittest
 
 from PIL import Image
 from run_root_probe import digest
-from verify_screen_blink_results import rows, verify_background_restored, verify_frames, verify_initial
+from verify_screen_blink_results import optical_sequence, rows, verify_background_restored, verify_frames, verify_initial
 
 
 class BlinkResultTests(unittest.TestCase):
@@ -109,6 +109,22 @@ class BlinkResultTests(unittest.TestCase):
                 with self.assertRaises(ValueError): verify_frames(frames, rect, mode)
             for bad_rect in ([0, 0, 79, 200], [-1, 0, 200, 200], [0, 0, 201, 200]):
                 with self.assertRaises(ValueError): verify_frames(frames, bad_rect, 'continuous')
+
+    def test_diagnostic_sequence_under_real_overlay_colors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'marker.png'
+            for zero, one in (((0, 0, 0), (255, 255, 255)), ((112, 112, 0), (255, 255, 143))):
+                for value in (0, 1, 2, 37, 128, 254, 255):
+                    image = Image.new('RGB', (160, 20))
+                    for bit in range(8):
+                        image.paste(one if value & (1 << bit) else zero, (bit * 20, 0, (bit + 1) * 20, 20))
+                    image.save(path)
+                    self.assertEqual(optical_sequence(path, [0, 0, 160, 20]), value)
+            Image.new('RGB', (160, 20), (200, 200, 200)).save(path)
+            self.assertIsNone(optical_sequence(path, [0, 0, 160, 20]))
+            for rect in ([-1, 0, 160, 20], [0, 0, 200, 20], [0, 0, 8, 20]):
+                with self.assertRaises(ValueError):
+                    optical_sequence(path, rect)
 
 
 if __name__ == '__main__':

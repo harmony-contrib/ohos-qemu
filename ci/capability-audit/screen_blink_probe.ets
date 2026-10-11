@@ -13,6 +13,7 @@ interface BlinkRow { runId: string; role: string; name: string; values: number[]
 @Component
 struct Index {
   @State private note: string = 'Screen blink regression';
+  @State private frameSerial: number = 0;
   private readonly runId: string = '__BLINK_RUN__';
   private readonly role: string = '__BLINK_ROLE__';
   private readonly path: string = '/data/storage/el2/base/files/screen-blink-__BLINK_RUN__-results.log';
@@ -26,6 +27,7 @@ struct Index {
     const file = fs.openSync(this.path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
     try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
     this.note = name;
+    this.frameSerial++;
   }
 
   private invoke(start: boolean, mode: config.BlinkingMode, scenario: config.BlinkingScenario): number[] {
@@ -118,6 +120,13 @@ struct Index {
   build() {
     Column({ space: 8 }) {
       Text(this.note).fontColor('#ffffff')
+      // Optical sequence marker only; never substitutes for the pulse surface.
+      Row({ space: 0 }) {
+        ForEach([0, 1, 2, 3, 4, 5, 6, 7], (bit: number) => {
+          Column().width(20).height(20)
+            .backgroundColor((this.frameSerial & (1 << bit)) !== 0 ? '#ffffff' : '#000000')
+        })
+      }.id('blink-frame-marker').width(160).height(20)
       Row({ space: 8 }) {
         Button('Enable').id('blink-enable').onClick(() => this.master('1', 'master.enabled'))
         Button('Disable').id('blink-disable').onClick(() => this.master('0', 'master.disabled'))
