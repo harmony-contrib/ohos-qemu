@@ -76,6 +76,15 @@ hash 回放，不修改任何原始收据、日志或截图。该记录明确 di
 回归通过，实际旧三角色只读派生诊断 `blink-replay-diagnostic-r39-02.json` 通过，
 不修改原始证据，不作为新包或台账闭环；此强化须单独冻结全量回归。
 
+强化提交 `810ece9690028e3faf87d1ae1d9a8164b6a15926` 随后已重新冻结并完成
+全量主机回归 `host-r39-frozen-batch-05.json`：**1564 项、跳过 1 项、273.188 秒，
+其余通过**，包含旧进程 ABSENT 拒绝测试，输入保持不变；树 SHA256
+`746a0b0191727b642c388c6f30c4d29ce99336d4945351c3fcbda57b74df6e78`，
+日志 SHA256 `ebf8749fc9ac30da67f6e4ed928dadb0ebea69ded2ad78efec9a791dc2967fd3`，
+报告 SHA256 `d9f6f61ca4f68b27b205529f5657a37a8260433a10e88e2209c306ab662adb3e`。
+最新候选全部是主机/编译/开发诊断证据，不是六包验收。仍需亮度最小 GL/CPU
+真实采样回退授权、后续剩余缺口实现，以及完整新首包启动与行为验收。
+
 在原 VPN 精确部件中增加两个独立补丁：解析调用方请求的 IPv6 前缀，IPv4/IPv6
 在窄化前拒绝非整数、越界、NaN/Inf；返回真实 routes、MTU、IPv4/IPv6、legacy、
 blocking、用户和可信/阻止应用字段，保留真实 excluded route。没有扩大旧前缀
