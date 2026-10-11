@@ -122,8 +122,8 @@ def classify_pixels(path, rect):
     raise ValueError('actual test surface is neither its baseline nor the translucent yellow screen pulse')
 
 
-def verify_frames(frames, rect, mode):
-    if mode not in ('continuous', 'single', 'armed-single', 'off') or not isinstance(frames, list) or len(frames) < 3:
+def frame_kinds(frames, rect):
+    if not isinstance(frames, list) or len(frames) < 3:
         raise ValueError('complete real compositor frame sequence required')
     previous = -1.0
     kinds = []
@@ -139,6 +139,13 @@ def verify_frames(frames, rect, mode):
         paths.add(str(path))
         previous = after
         kinds.append(classify_pixels(path, rect))
+    return kinds
+
+
+def verify_frames(frames, rect, mode):
+    if mode not in ('continuous', 'single', 'armed-single', 'off'):
+        raise ValueError('unknown real compositor frame assertion')
+    kinds = frame_kinds(frames, rect)
     transitions = sum(a != b for a, b in zip(kinds, kinds[1:]))
     if mode == 'continuous' and (kinds.count('on') < 2 or kinds.count('off') < 2 or transitions < 2):
         raise ValueError('continuous mode must really alternate rendered on/off pixels')
@@ -151,6 +158,40 @@ def verify_frames(frames, rect, mode):
     if mode == 'off' and any(kind != 'off' for kind in kinds):
         raise ValueError('stopped/disabled/dead caller left visible screen pulse')
     return kinds
+
+
+def verify_committed_stop(frames, rect, marker, sequence, started):
+    """Keep every frame; distinguish a bounded prior frame from a new-frame pulse.
+
+    SDK returns a synchronous service result, not a compositor-present fence.
+    The caller's optical serial changes only after that public return. Require
+    the new serial within 1.5s and no pulse from that frame onward for >=1.5s.
+    Old frames remain in evidence and cannot occur again after the new serial.
+    """
+    if (type(sequence) is not int or not 0 <= sequence < 256 or type(started) not in (int, float) or
+            not math.isfinite(started)):
+        raise ValueError('exact native stop serial and observed return time required')
+    kinds = frame_kinds(frames, rect)
+    committed = None
+    for index, (frame, kind) in enumerate(zip(frames, kinds)):
+        if frame['before'] < started:
+            raise ValueError('stop compositor capture predates actual native return')
+        serial = optical_sequence(frame['path'], marker)
+        if serial == sequence:
+            if committed is None:
+                if frame['after'] - started > 1.5:
+                    raise ValueError('stop did not reach actual compositor within 1.5 seconds')
+                committed = index
+            if kind != 'off':
+                raise ValueError('native stop committed but screen pulse remains visible')
+        elif committed is not None or serial != (sequence - 1) % 256 or frame['after'] - started > 1.5:
+            raise ValueError('stop compositor serial is foreign, regressed or excessively delayed')
+    if (committed is None or len(frames) - committed < 3 or
+            frames[-1]['before'] - frames[committed]['after'] < 1.5):
+        raise ValueError('stop lacks new-frame quiet observation spanning two pulse intervals')
+    return dict(observed=kinds, committed_index=committed, prior_frames_retained=committed,
+                max_commit_latency_seconds=1.5, minimum_quiet_seconds=1.5,
+                not_claimed='instantaneous_compositor_present_at_service_return')
 
 
 def verify_background_restored(baseline, frames):

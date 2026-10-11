@@ -1,5 +1,31 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R38 集中回归失败分析与同归档补充测试准备
+
+R37 新包的 metadata 和 observer-info 已实际通过，原始完整批次仍保留失败。
+亮度项在 AA 返回后等待固定两秒，UITest 成功输出的是空树，未调用任何采样接口；
+改为限时等待真实、唯一、可见、可点击的 Run 节点，记录所有准备尝试。不重试
+传输错误、重复节点、隐藏节点或畸形树，不修改采样后端或绕过失败。
+
+闪屏停止的首帧为上一条 native 操作的光学 serial 15，而停止后 serial 为 16；
+后续帧及恢复序列全为 off。重启首帧同样为启动过渡画面，耗时 3.086 秒。
+SDK stopBlinking 返回服务结果，没有声明 compositor-present fence。新测试保留
+所有帧：只允许此前一个 serial 的过渡帧，必须在实际停止返回观察后 1.5 秒内
+出现新 serial；从新帧起必须全部 off，至少三个新帧和 1.5 秒静默（两次脉冲间隔）。
+任何新帧残留、serial 倒退、超时或缺少静默仍失败；明确不宣称服务返回瞬间已经
+呈现。重启单独记录启动窗口就绪过程，然后才执行严格 off 序列。
+旧的即刻首帧失败不追改为通过，新标准仍需实际新启动验证。
+
+`run_packaged_ui_batch.py` 对同一实际新归档再解包、以独占 HDC 新启动来宾，
+集中执行 Arc/DynamicLayout、亮度和闪屏；普通应用/设置恢复/同 boot 健康未证明
+则不复用 VM，有限测试电源覆盖始终恢复。不启动构建矩阵，不替代完整首包门禁。
+新增准备/像素/清理夹具仅验证测试器拒绝逻辑，尚未作为 guest 证明。
+此前 Spring/Arc 冻结主机批次 1521 项、跳过 1 项通过，输入保持不变：
+`host-r38-frozen-batch-04.json`，树 SHA256
+`3d4f3b17e06d1d88b34713d87d9918cfdc30ffcfd5db3807ff2473c7fa002fe0`，
+日志 SHA256 `366e2e89f1052f34cd79c396a90d098532aec1165a496a06ef046e12e7f75f4e`。
+此批次不包含本节的等待/停止呈现验证调整；追加配方需独立冻结。
+
 ## R38 追加：SDK 组件工厂、真实滚动和动态布局严格回归（未闭环）
 
 ArcList/ArcListItem、ArcScrollBar、DynamicLayout 的 Attribute/Instance 在 SDK

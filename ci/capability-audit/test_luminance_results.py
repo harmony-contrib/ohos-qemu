@@ -10,12 +10,41 @@ from build_luminance_probe import TEMPLATE, module, page
 from run_root_probe import digest
 from sign_luminance_probe import configure_profile
 from verify_luminance_results import SCOPE, verify, verify_evidence
-from run_luminance_probe import observations_complete
+from run_luminance_probe import observations_complete, click_when_ready
 
 
 class LuminanceTests(unittest.TestCase):
     nonce = 'a' * 32
     identity = json.dumps({'applicationInfo': dict(appPrivilegeLevel='system_core', isSystemApp=True, uid=20000001)})
+
+    def test_actual_control_attachment_wait_never_retries_duplicates_or_transport_failures(self):
+        from unittest.mock import MagicMock
+        from guest_ui import GuestUiCommandError, LayoutNotReady
+        from test_guest_ui import node
+        from build_luminance_probe import BUNDLE
+        with tempfile.TemporaryDirectory() as directory:
+            empty = {'attributes': {}, 'children': []}
+            actual = node('luminance-run', bundle=BUNDLE)
+            paths = [Path(directory) / str(index) for index in range(2)]
+            for path, layout in zip(paths, (empty, actual)): path.write_text(json.dumps(layout))
+            ui = MagicMock(); ui.layout.side_effect = [LayoutNotReady('window not attached'),
+                (empty, paths[0]), (actual, paths[1])]
+            attempts = []; ticks = iter(range(10))
+            selection = click_when_ready(ui, attempts, 10, clock=lambda: next(ticks), sleep=lambda _: None)
+            self.assertEqual(len(attempts), 3)
+            self.assertEqual(selection['selected_node']['rect'], [20, 30, 320, 180])
+            ui.shell.assert_called_once_with('uitest uiInput click 180 120', 'actual-luminance-ready-node-center')
+            for error in (GuestUiCommandError('connection lost', None, '[Fail]'), ValueError('malformed hierarchy')):
+                ui = MagicMock(); ui.layout.side_effect = error
+                with self.assertRaises(type(error)): click_when_ready(ui, [], 10)
+                ui.shell.assert_not_called()
+            ui = MagicMock(); ui.layout.return_value = ([actual, actual], paths[1])
+            with self.assertRaises(ValueError): click_when_ready(ui, [], 10)
+            ui.shell.assert_not_called()
+            ui = MagicMock(); ui.layout.return_value = (empty, paths[0]); ticks = iter(range(10))
+            with self.assertRaises(ValueError):
+                click_when_ready(ui, [], 2, clock=lambda: next(ticks), sleep=lambda _: None)
+            ui.shell.assert_not_called()
 
     def test_real_jsonl_termination_not_literal_backslash_n(self):
         row = dict(runId=self.nonce, name='summary', values=[1], error='')

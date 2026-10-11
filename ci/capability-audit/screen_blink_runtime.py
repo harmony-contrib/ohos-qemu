@@ -14,7 +14,8 @@ from build_screen_blink_probe import BUNDLE
 from guest_ui import select_node
 from run_root_probe import digest
 from verify_screen_blink_results import (
-    classify_pixels, optical_sequence, rows, verify_background_restored, verify_frames, verify_initial)
+    classify_pixels, optical_sequence, rows, verify_background_restored, verify_frames, verify_initial,
+    verify_committed_stop)
 
 
 def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds=90, *, background=None):
@@ -54,17 +55,18 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
         report['phases'].append(dict(name=name + '-control', selection=selected))
         return observe(name, values, text)
 
-    def capture(name, rect, mode, seconds=5, *, continue_after_restored=False):
+    def capture(name, rect, mode, seconds=5, *, continue_after_restored=False, committed_stop=False):
         frames = []
-        deadline = time.monotonic() + seconds
+        started = time.monotonic()
+        deadline = started + seconds
         while len(frames) < 3 or time.monotonic() < deadline:
             before = time.monotonic()
             path = ui.screenshot(label=name)
             after = time.monotonic()
             frames.append(dict(path=str(path), sha256=digest(path), before=before, after=after))
             if 'optical_marker' in report:
-                # Retain every frame in the original assertion, even stale ones.
-                # This records evidence for diagnosis, not a relaxed stop gate.
+                # Keep every prior and new frame; a stop additionally replays
+                # the caller serial against a bounded present/quiet contract.
                 frames[-1]['optical_sequence'] = optical_sequence(path, report['optical_marker'])
                 frames[-1]['expected_sequence'] = len(observed) % 256
             if after > deadline + 10:
@@ -73,7 +75,14 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
         record = dict(name=name, rect=rect, mode=mode, frames=frames)
         report['phases'].append(record)
         try:
-            record['observed'] = verify_frames(frames, rect, mode)
+            if committed_stop and 'optical_marker' in report:
+                record.update(mode='bounded-committed-off', started=started,
+                    marker=report['optical_marker'], expected_sequence=len(observed) % 256)
+                record['commit'] = verify_committed_stop(frames, rect, record['marker'],
+                                                       record['expected_sequence'], started)
+                record['observed'] = record['commit']['observed']
+            else:
+                record['observed'] = verify_frames(frames, rect, mode)
         except ValueError as error:
             if not continue_after_restored:
                 raise
@@ -82,6 +91,28 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             record['failure'] = str(error)
             report['failures'].append(name + ': ' + str(error))
             capture(name + '-recovery', rect, 'off', 1)
+
+    def wait_baseline(rect, label):
+        readiness = dict(name=label, frames=[])
+        report['phases'].append(readiness)
+        deadline = time.monotonic() + wait_seconds
+        consecutive = []
+        while time.monotonic() < deadline:
+            before = time.monotonic()
+            path = ui.screenshot(label=label)
+            frame = dict(path=str(path), sha256=digest(path), before=before, after=time.monotonic())
+            readiness['frames'].append(frame)
+            try:
+                kind = classify_pixels(path, rect)
+            except ValueError as error:
+                kind = 'not-baseline'; frame['precondition_error'] = str(error)
+            frame['kind'] = kind
+            consecutive = (consecutive + [frame]) if kind == 'off' else []
+            if len(consecutive) == 3:
+                verify_frames(consecutive, rect, 'off')
+                return
+            time.sleep(.1)
+        raise ValueError('actual baseline never became stable before blink actions')
 
     try:
         initial = observe('ready', [1])
@@ -98,28 +129,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             # ArkUI publishes its tree before the starting window disappears.
             # Establish the real baseline before testing any blink operation;
             # retain every precondition frame, including the starting window.
-            readiness = dict(name='baseline-readiness', frames=[])
-            report['phases'].append(readiness)
-            deadline = time.monotonic() + wait_seconds
-            consecutive = []
-            while time.monotonic() < deadline:
-                before = time.monotonic()
-                path = ui.screenshot(label='baseline-readiness')
-                frame = dict(path=str(path), sha256=digest(path), before=before, after=time.monotonic())
-                readiness['frames'].append(frame)
-                try:
-                    kind = classify_pixels(path, rect)
-                except ValueError as error:
-                    kind = 'not-baseline'
-                    frame['precondition_error'] = str(error)
-                frame['kind'] = kind
-                consecutive = (consecutive + [frame]) if kind == 'off' else []
-                if len(consecutive) == 3:
-                    verify_frames(consecutive, rect, 'off')
-                    break
-                time.sleep(.1)
-            else:
-                raise ValueError('actual baseline never became stable before blink actions')
+            wait_baseline(rect, 'baseline-readiness')
             capture('disabled-baseline', rect, 'off', 1)
             click('blink-enable', 'master.enabled', [1], '1')
             # Public settings notification is asynchronous; do not reinterpret
@@ -131,7 +141,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             click('blink-wrong-stop', 'wrong.stop', [2, 0, 1])
             capture('wrong-stop-retains-owner', rect, 'continuous')
             click('blink-stop', 'continuous.stop', [0, 0, 1])
-            capture('stopped', rect, 'off', 1, continue_after_restored=True)
+            capture('stopped', rect, 'off', 3.5, continue_after_restored=True, committed_stop=True)
             click('blink-stop', 'continuous.stop', [0, 0, 1])
             # Begin sampling before the timed public call, not after the
             # UI input/result round trip may have consumed the entire pulse.
@@ -183,6 +193,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
                     raise ValueError('caller restart did not produce a new process identity')
                 report['caller_exit']['restarted_pid'] = new_pid
                 report['scope'] = 'actual_calls_pixels_and_caller_exit_NOT_competing_token_or_account_switch_proof'
+                wait_baseline(rect, 'restart-baseline-readiness')
                 capture('restarted-initial-stop', rect, 'off', 1)
         report['status'] = 'pass'
     except (ValueError, OSError, KeyError, TypeError) as error:

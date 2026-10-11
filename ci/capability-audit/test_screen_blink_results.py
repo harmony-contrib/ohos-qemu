@@ -7,7 +7,8 @@ import unittest
 
 from PIL import Image
 from run_root_probe import digest
-from verify_screen_blink_results import optical_sequence, rows, verify_background_restored, verify_frames, verify_initial
+from verify_screen_blink_results import (optical_sequence, rows, verify_background_restored, verify_frames,
+                                        verify_initial, verify_committed_stop)
 
 
 class BlinkResultTests(unittest.TestCase):
@@ -125,6 +126,44 @@ class BlinkResultTests(unittest.TestCase):
             for rect in ([-1, 0, 160, 20], [0, 0, 200, 20], [0, 0, 8, 20]):
                 with self.assertRaises(ValueError):
                     optical_sequence(path, rect)
+
+    def test_stop_keeps_old_frame_but_rejects_pulse_on_new_serial_and_all_late_regressions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            frames = []
+            rect, marker = [0, 30, 200, 200], [0, 0, 160, 20]
+            for index, (serial, on, before) in enumerate(((15, True, 10.0), (16, False, 10.4),
+                                                        (16, False, 11.3), (16, False, 12.1))):
+                path = Path(directory) / f'{index}.png'
+                image = Image.new('RGB', (200, 240), (130, 140, 36) if on else (32, 48, 64))
+                for bit in range(8):
+                    image.paste('white' if serial & (1 << bit) else 'black', (bit * 20, 0, (bit + 1) * 20, 20))
+                image.save(path)
+                frames.append(dict(path=str(path), sha256=digest(path), before=before, after=before+.1))
+            result = verify_committed_stop(frames, rect, marker, 16, 10.0)
+            self.assertEqual(result['prior_frames_retained'], 1)
+            self.assertEqual(result['observed'], ['on', 'off', 'off', 'off'])
+            with self.assertRaises(ValueError): verify_frames(frames, rect, 'off')
+            for change in ('early', 'late', 'quiet', 'no-new', 'boolean', 'duplicate', 'tamper', 'pulse', 'regressed'):
+                bad = copy.deepcopy(frames); serial = 16
+                if change == 'early': bad[0]['before'] = 9
+                elif change == 'late':
+                    for frame in bad[1:]: frame['before'] += 2; frame['after'] += 2
+                elif change == 'quiet': bad.pop()
+                elif change == 'no-new': serial = 17
+                elif change == 'boolean': serial = True
+                elif change == 'duplicate': bad[1] = bad[0]
+                elif change == 'tamper': bad[0]['sha256'] = '0'*64
+                else:
+                    path = Path(directory) / ('bad-' + change + '.png')
+                    with Image.open(bad[2]['path']) as image:
+                        if change == 'pulse': image.paste((130, 140, 36), (0, 30, 200, 230))
+                        else:
+                            for bit in range(8):
+                                image.paste('white' if 15 & (1 << bit) else 'black', (bit*20, 0, (bit+1)*20, 20))
+                        image.save(path)
+                    bad[2].update(path=str(path), sha256=digest(path))
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    verify_committed_stop(bad, rect, marker, serial, 10.0)
 
 
 if __name__ == '__main__':

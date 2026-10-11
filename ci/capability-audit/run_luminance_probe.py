@@ -18,7 +18,7 @@ import time
 import zipfile
 
 from build_luminance_probe import BUNDLE, ROLES, module
-from guest_ui import GuestUi
+from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
 from run_normal_hap_probe import APP_FILES, ROOT, stop_previous_probe
 from run_root_probe import digest
 from sign_luminance_probe import configure_profile
@@ -35,6 +35,29 @@ def observations_complete(raw, nonce):
     except (ValueError, IndexError):
         return False
     return isinstance(final, dict) and final.get('runId') == nonce and final.get('name') == 'summary'
+
+
+def click_when_ready(ui, attempts, timeout=60, *, clock=time.monotonic, sleep=time.sleep):
+    """Wait for actual app attachment, not a guessed post-AA sleep or fake node."""
+    deadline = clock() + timeout
+    while clock() < deadline:
+        record = {}
+        attempts.append(record)
+        try:
+            layout, path = ui.layout(bundle=BUNDLE, label='actual-luminance-ready')
+            record.update(layout=str(path), layout_sha256=digest(path))
+            selected = select_node(layout, BUNDLE, identifier='luminance-run', clickable=True)
+        except (LayoutNotReady, NodeNotReady) as error:
+            record['not_ready'] = str(error)
+            sleep(.25)
+            continue
+        # Use the selected real node, without a second dump racing window attach.
+        left, top, width, height = selected['rect']
+        ui.shell(f'uitest uiInput click {left + width // 2} {top + height // 2}',
+                 'actual-luminance-ready-node-center')
+        record['selected_node'] = selected
+        return dict(layout=str(path), layout_sha256=digest(path), selected_node=selected)
+    raise ValueError('actual luminance caller never attached an enabled Run control')
 
 
 def run(args):
@@ -140,8 +163,8 @@ def run(args):
             if 'start ability successfully' not in shell('aa start -a EntryAbility -b ' + BUNDLE,
                     role + '-launch').lower():
                 raise ValueError('luminance caller did not launch')
-            time.sleep(2)
-            selection = ui.click(BUNDLE, identifier='luminance-run', label='actual-luminance-run')
+            record['control_readiness_attempts'] = []
+            selection = click_when_ready(ui, record['control_readiness_attempts'], min(args.wait_seconds, 60))
             record['control'] = selection
             deadline = time.monotonic() + args.wait_seconds
             while time.monotonic() < deadline:

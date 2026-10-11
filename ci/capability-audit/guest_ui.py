@@ -22,6 +22,10 @@ class LayoutNotReady(ValueError):
     """Exact packaged UITest window-enumeration failure; never a valid layout."""
 
 
+class NodeNotReady(ValueError):
+    """Well-formed hierarchy has no matching node yet; duplicates remain fatal."""
+
+
 def bounds(value):
     match = re.fullmatch(r'\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]', value or '')
     if not match:
@@ -58,6 +62,8 @@ def select_node(layout, bundle, *, identifier=None, text=None, clickable=False):
             selected.append({'attributes': attributes, 'bundle': actual_bundle,
                              'rect': list(bounds(attributes.get('bounds')))})
         pending.extend((child, actual_bundle, depth + 1) for child in children)
+    if not selected:
+        raise NodeNotReady('require exactly one matching visible node in the actual target bundle')
     if len(selected) != 1:
         raise ValueError('require exactly one matching visible node in the actual target bundle')
     return selected[0]
