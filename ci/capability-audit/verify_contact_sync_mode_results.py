@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import re
 
-from contact_sync_mode_contract import CONTRACT, AUDIO_CONTRACT, PHOTO_CONTRACT, RECORD_CLASSES, STATE_RECORD_CLASSES, SCOPE, sha256, verify_inputs
+from contact_sync_mode_contract import CONTRACT, AUDIO_CONTRACT, PHOTO_CONTRACT, RECORD_CLASSES, STATE_RECORD_CLASSES, PHOTO_RECORD_CLASSES, SCOPE, sha256, verify_inputs
 
 
 def verify(text, run_id, identity):
@@ -18,7 +18,7 @@ def verify(text, run_id, identity):
         raise ValueError('one complete actual enum observation required')
     row = json.loads(lines[0])
     if (not isinstance(row, dict) or set(row) != {'runId', 'values', 'native', 'audioValues', 'audioNative',
-            'photoValues', 'photoNative', 'records', 'stateRecords'} or row['runId'] != run_id or
+            'photoValues', 'photoNative', 'records', 'stateRecords', 'photoRecords'} or row['runId'] != run_id or
             row['values'] != [1, 2] or any(type(value) is not int for value in row['values'])):
         raise ValueError('typed public SDK enum values absent, wrong, malformed or stale')
     if row['audioValues'] != [0, 1] or any(type(value) is not int for value in row['audioValues']):
@@ -57,9 +57,21 @@ def verify(text, run_id, identity):
             state['flags'] != [True] * 12 or any(type(flag) is not bool for flag in state['flags']) or
             state['values'] != [run_id + suffix for suffix in ('-first-changed', '-second', '-collection', '-other')]):
         raise ValueError('actual state record construction/inheritance/fields/creator isolation failed')
+    photo = row['photoRecords']
+    expected = [(run_id + '-cover-changed', run_id + '-cover-second'), ('image/*', 'video/*'), ('17', '29'),
+                (run_id + '-info-changed', run_id + '-info-second'),
+                (json.dumps([run_id + '-first', run_id + '-second'], separators=(',', ':')), '[]')]
+    if not isinstance(photo, list) or len(photo) != len(PHOTO_RECORD_CLASSES):
+        raise ValueError('all five photo record classes required')
+    for actual, name, (first, second) in zip(photo, PHOTO_RECORD_CLASSES, expected):
+        if (not isinstance(actual, dict) or set(actual) != {'name', 'first', 'second', 'flags'} or
+                actual['name'] != name or actual['first'] != first or actual['second'] != second or
+                actual['flags'] != [True] * 4 or any(type(flag) is not bool for flag in actual['flags'])):
+            raise ValueError('photo record construction/fields/isolation failed: ' + name)
     return {'contract': CONTRACT, 'member_count': 2, 'audio_contract': AUDIO_CONTRACT, 'audio_member_count': 2,
             'photo_contract': PHOTO_CONTRACT, 'photo_member_count': 1, 'record_classes': list(RECORD_CLASSES),
             'state_record_classes': list(STATE_RECORD_CLASSES),
+            'photo_record_classes': list(PHOTO_RECORD_CLASSES),
             'not_claimed': 'persistence_cloud_sync_storage_permissions_contacts_or_fusion_provider_or_microphone_blocking_behavior'}
 
 

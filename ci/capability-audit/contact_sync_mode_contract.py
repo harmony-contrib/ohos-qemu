@@ -12,8 +12,10 @@ NATIVE = HERE / 'contact_sync_mode_hap_probe.cpp'
 CONTRACT = 'arkts_export:@ohos.contact:ContactSyncMode'
 AUDIO_CONTRACT = 'arkts_export:@ohos.multimedia.audio:DeviceBlockStatus'
 PHOTO_CONTRACT = 'arkts_export:@ohos.file.photoAccessHelper:FusionAssetType'
-SCOPE = 'actual_contact_and_state_record_constructors_and_enums_NOT_provider_or_persistence_behavior'
+SCOPE = 'actual_contact_state_photo_record_constructors_and_enums_NOT_provider_or_persistence_behavior'
 STATE_RECORD_CLASSES = ('ConnectOptions', 'ConnectOptionsCollections')
+PHOTO_RECORD_CLASSES = ('DefaultCoverOrderInfo', 'PhotoViewMimeTypeFileSizeFilter', 'RecentPhotoOptions',
+                        'RecentPhotoInfo', 'RequestReadPermissionResult')
 RECORD_CLASSES = ('ContactAttributes', 'Group', 'Holder', 'Name', 'NickName', 'Note',
                   'Organization', 'Portrait', 'Website')
 
@@ -61,6 +63,7 @@ def inputs(project, sdk, arch, run_id):
             'native_source_sha256': sha256(NATIVE), 'resolver_sha256': sha256(HERE / 'extract_const_enum_contracts.cjs'),
             'contact_declaration_sha256': sha256(sdk / 'ets/api/@ohos.contact.d.ts'),
             'state_declaration_sha256': sha256(sdk / 'ets/api/@ohos.arkui.StateManagement.d.ts'),
+            'photo_declaration_sha256': sha256(sdk / 'ets/api/@ohos.file.photoAccessHelper.d.ts'),
             'typescript_sha256': sha256(sdk / 'ets/build-tools/ets-loader/node_modules/typescript/lib/typescript.js')}
 
 
@@ -76,6 +79,7 @@ def verify_inputs(value, run_id, arch):
             sha256(HERE / 'extract_const_enum_contracts.cjs') != value.get('resolver_sha256') or
             sha256(Path(value['sdk']) / 'ets/api/@ohos.contact.d.ts') != value.get('contact_declaration_sha256') or
             sha256(Path(value['sdk']) / 'ets/api/@ohos.arkui.StateManagement.d.ts') != value.get('state_declaration_sha256') or
+            sha256(Path(value['sdk']) / 'ets/api/@ohos.file.photoAccessHelper.d.ts') != value.get('photo_declaration_sha256') or
             sha256(Path(value['sdk']) / 'ets/build-tools/ets-loader/node_modules/typescript/lib/typescript.js') !=
             value.get('typescript_sha256') or expected(value['sdk']) != value.get('contract') or
             expected_audio(value['sdk']) != value.get('audio_contract') or

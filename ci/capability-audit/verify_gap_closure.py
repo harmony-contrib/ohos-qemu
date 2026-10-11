@@ -545,6 +545,11 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                     'evidence': str(modes[0]), 'sha256': digest(modes[0]),
                     'verifier': 'typed_constructor_inheritance_unset_fields_and_independent_creators',
                     'not_claimed': 'persistent_storage_backend_lifecycle_encryption_or_permissions'}
+            for name in actual['photo_record_classes']:
+                closed['arkts_export:@ohos.file.photoAccessHelper:' + name] = {
+                    'evidence': str(modes[0]), 'sha256': digest(modes[0]),
+                    'verifier': 'typed_constructor_instanceof_unset_fields_and_isolated_data_records',
+                    'not_claimed': 'photo_assets_provider_permissions_factory_instances_or_album_ordering'}
     exports = child('arkts-exports/evidence.json')
     if exports and exports[1].get('persona') == 'arkts-exports' and device_type is not None:
         document = exports[1]

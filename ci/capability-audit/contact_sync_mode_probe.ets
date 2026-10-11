@@ -17,6 +17,7 @@ interface Observation {
   photoValues: number[]; photoNative: NativeModes;
   records: ContactRecordObservation[];
   stateRecords: StateRecordObservation;
+  photoRecords: ContactRecordObservation[];
 }
 
 interface StateRecordObservation { flags: boolean[]; values: string[]; }
@@ -49,6 +50,43 @@ function stateRecords(runId: string): StateRecordObservation {
 }
 
 interface ContactRecordObservation { name: string; first: string; second: string; flags: boolean[]; }
+
+function photoRecords(runId: string): ContactRecordObservation[] {
+  const a0 = new photoAccessHelper.DefaultCoverOrderInfo(); const b0 = new photoAccessHelper.DefaultCoverOrderInfo();
+  const empty0 = a0.albumType === undefined && a0.albumSubtype === undefined && a0.orderKey === undefined &&
+    a0.orderSubKey === undefined && a0.orderType === undefined && a0.lpath === undefined;
+  a0.lpath = runId + '-cover-changed'; b0.lpath = runId + '-cover-second'; a0.orderType = 0; b0.orderType = 1;
+  const a1 = new photoAccessHelper.PhotoViewMimeTypeFileSizeFilter(); const b1 = new photoAccessHelper.PhotoViewMimeTypeFileSizeFilter();
+  const empty1 = a1.photoViewMimeType === undefined && a1.sizeFilter === undefined;
+  a1.photoViewMimeType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+  b1.photoViewMimeType = photoAccessHelper.PhotoViewMIMETypes.VIDEO_TYPE;
+  const a2 = new photoAccessHelper.RecentPhotoOptions(); const b2 = new photoAccessHelper.RecentPhotoOptions();
+  const empty2 = a2.period === undefined && a2.MIMEType === undefined && a2.photoSource === undefined;
+  a2.period = 17; b2.period = 29;
+  const a3 = new photoAccessHelper.RecentPhotoInfo(); const b3 = new photoAccessHelper.RecentPhotoInfo();
+  const empty3 = a3.identifier === undefined && a3.dateTaken === undefined;
+  a3.identifier = runId + '-info-changed'; b3.identifier = runId + '-info-second';
+  const a4 = new photoAccessHelper.RequestReadPermissionResult(); const b4 = new photoAccessHelper.RequestReadPermissionResult();
+  const empty4 = a4.authorizedUris === undefined && a4.invalidUris === undefined;
+  a4.authorizedUris = [runId + '-first']; b4.authorizedUris = []; a4.authorizedUris.push(runId + '-second');
+  return [
+    { name: 'DefaultCoverOrderInfo', first: a0.lpath, second: b0.lpath,
+      flags: [a0 instanceof photoAccessHelper.DefaultCoverOrderInfo, b0 instanceof photoAccessHelper.DefaultCoverOrderInfo,
+        a0 !== b0 && a0.orderType === 0 && b0.orderType === 1, empty0] },
+    { name: 'PhotoViewMimeTypeFileSizeFilter', first: a1.photoViewMimeType, second: b1.photoViewMimeType,
+      flags: [a1 instanceof photoAccessHelper.PhotoViewMimeTypeFileSizeFilter,
+        b1 instanceof photoAccessHelper.PhotoViewMimeTypeFileSizeFilter, a1 !== b1, empty1] },
+    { name: 'RecentPhotoOptions', first: a2.period.toString(), second: b2.period.toString(),
+      flags: [a2 instanceof photoAccessHelper.RecentPhotoOptions, b2 instanceof photoAccessHelper.RecentPhotoOptions,
+        a2 !== b2, empty2] },
+    { name: 'RecentPhotoInfo', first: a3.identifier, second: b3.identifier,
+      flags: [a3 instanceof photoAccessHelper.RecentPhotoInfo, b3 instanceof photoAccessHelper.RecentPhotoInfo,
+        a3 !== b3, empty3] },
+    { name: 'RequestReadPermissionResult', first: JSON.stringify(a4.authorizedUris), second: JSON.stringify(b4.authorizedUris),
+      flags: [a4 instanceof photoAccessHelper.RequestReadPermissionResult,
+        b4 instanceof photoAccessHelper.RequestReadPermissionResult, a4 !== b4, empty4] }
+  ];
+}
 
 function contactRecords(runId: string): ContactRecordObservation[] {
   const a0 = new contact.ContactAttributes(); const b0 = new contact.ContactAttributes();
@@ -109,7 +147,8 @@ struct Index {
       photoValues: [photoAccessHelper.FusionAssetType.COMPATIBLE_ASSET],
       photoNative: modeProbe.inspectPhoto(),
       records: contactRecords(this.runId),
-      stateRecords: stateRecords(this.runId)
+      stateRecords: stateRecords(this.runId),
+      photoRecords: photoRecords(this.runId)
     };
     const file = fs.openSync('/data/storage/el2/base/files/contact-sync-mode-__RUN__-results.log',
       fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);

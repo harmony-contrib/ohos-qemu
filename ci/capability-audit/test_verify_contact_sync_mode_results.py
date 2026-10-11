@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
-from contact_sync_mode_contract import HERE, TEMPLATE, RECORD_CLASSES, expected, expected_audio, expected_photo, inputs, sha256, verify_inputs
+from contact_sync_mode_contract import HERE, TEMPLATE, RECORD_CLASSES, PHOTO_RECORD_CLASSES, expected, expected_audio, expected_photo, inputs, sha256, verify_inputs
 from verify_contact_sync_mode_results import verify
 
 RUN = 'a' * 32
@@ -34,7 +34,12 @@ class ContactSyncModeResultTests(unittest.TestCase):
                 'photoValues': [0], 'photoNative': {'values': [0], 'statuses': [0] * 10,
                 'types': [6, 6, 3], 'own': [True, True], 'exception': False}, 'records': records,
                 'stateRecords': {'flags': [True] * 12, 'values': [RUN + suffix for suffix in
-                    ('-first-changed', '-second', '-collection', '-other')]}}
+                    ('-first-changed', '-second', '-collection', '-other')]},
+                'photoRecords': [dict(name=name, first=first, second=second, flags=[True] * 4)
+                    for name, (first, second) in zip(PHOTO_RECORD_CLASSES, [
+                        (RUN + '-cover-changed', RUN + '-cover-second'), ('image/*', 'video/*'), ('17', '29'),
+                        (RUN + '-info-changed', RUN + '-info-second'),
+                        (json.dumps([RUN + '-first', RUN + '-second'], separators=(',', ':')), '[]')])]}
 
     def test_record_constructor_prototypes_properties_and_isolation_cannot_be_missing(self):
         row = self.observed()
@@ -78,7 +83,9 @@ class ContactSyncModeResultTests(unittest.TestCase):
             path = child / 'evidence.json'
             path.write_text(json.dumps(evidence))
             closed = behavior_results(root, 'test-boot', 'a' * 64, 'phone')
-            self.assertEqual(len(closed), 14)
+            self.assertEqual(len(closed), 19)
+            for name in PHOTO_RECORD_CLASSES:
+                self.assertIn('arkts_export:@ohos.file.photoAccessHelper:' + name, closed)
             for name in ('ConnectOptions', 'ConnectOptionsCollections'):
                 self.assertIn('arkts_export:@ohos.arkui.StateManagement:' + name, closed)
             for name in RECORD_CLASSES:
@@ -104,6 +111,15 @@ class ContactSyncModeResultTests(unittest.TestCase):
                       {'flags': [True] * 12, 'values': ['shared'] * 4}, {}, None):
             with self.assertRaises(ValueError):
                 verify(json.dumps(dict(self.observed(), stateRecords=state)), RUN, IDENTITY)
+
+    def test_photo_records_require_all_real_constructors_and_independent_fields(self):
+        for index in range(len(PHOTO_RECORD_CLASSES)):
+            for field, value in (('flags', [True, True, False, True]), ('flags', [1] * 4),
+                                 ('first', 'wrong'), ('second', 'shared'), ('name', 'other')):
+                row = self.observed()
+                row['photoRecords'][index][field] = value
+                with self.assertRaises(ValueError):
+                    verify(json.dumps(row), RUN, IDENTITY)
 
     def test_exact_values_actual_native_own_reads_and_ordinary_identity(self):
         row = self.observed()

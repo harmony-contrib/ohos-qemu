@@ -71,6 +71,30 @@ class PhotosRecentInfoTests(unittest.TestCase):
         self.assertNotEqual(self.apply().returncode, 0)
         self.assertEqual(self.snapshot(), before)
 
+    def test_record_successor_preserves_whole_wrapper_and_old_patch_replay(self):
+        self.assertEqual(self.apply().returncode, 0)
+        successor = COMPONENT.parent / 'public_record_classes'
+        result = self.apply(successor)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        original = self.snapshot()
+        for component in ('fusion_asset_type', 'api26_photo_enums', 'api26_photo_search_enums',
+                          'photos_recent_info', 'public_record_classes'):
+            for _ in range(2):
+                result = self.apply(COMPONENT.parent / component)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.snapshot(), original)
+        result = subprocess.run(['node', str(HERE / 'photos_recent_info_host.js'),
+            str(HERE / 'fixtures/photos_recent_info/photoaccesshelperinf.js'),
+            str(self.root / baseline.PROJECT / baseline.FILES[0][0])], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('"checks":130', result.stdout)
+        target = self.root / baseline.PROJECT / baseline.FILES[0][0]
+        target.write_bytes(target.read_bytes() + b'\n// unknown successor change\n')
+        before = self.snapshot()
+        self.assertNotEqual(self.apply().returncode, 0)
+        self.assertNotEqual(self.apply(successor).returncode, 0)
+        self.assertEqual(self.snapshot(), before)
+
     def test_symlink_sibling_is_rejected(self):
         target = self.root/baseline.PROJECT/baseline.FILES[0][0]
         preserved = target.with_suffix('.preserved')

@@ -1,0 +1,21 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+--- a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
++++ b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+@@ -1540,4 +1540,17 @@
++// SDK data records only. Values remain caller-owned; service defaults and
++// permission/provider checks stay in the existing operations consuming them.
++class DefaultCoverOrderInfo {}
++class PhotoViewMimeTypeFileSizeFilter {}
++class RecentPhotoOptions {}
++class RecentPhotoInfo {}
++class RequestReadPermissionResult {}
++
+ export default {
++  DefaultCoverOrderInfo,
++  PhotoViewMimeTypeFileSizeFilter,
++  RecentPhotoOptions,
++  RecentPhotoInfo,
++  RequestReadPermissionResult,
+   getPhotoAccessHelper,
+   startPhotoPicker,
+   getPhotoAccessHelperAsync,

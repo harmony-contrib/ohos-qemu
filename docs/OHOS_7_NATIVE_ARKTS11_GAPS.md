@@ -1,5 +1,28 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R35 构建期间的下一批照片数据类（未关闭运行缺口）
+
+补齐 `DefaultCoverOrderInfo`、`PhotoViewMimeTypeFileSizeFilter`、`RecentPhotoOptions`、
+`RecentPhotoInfo`、`RequestReadPermissionResult` 的真实 JS 数据类导出。字段由调用者持有，
+不伪造图库内容、授权结果或 provider 成功，不改已有工厂返回对象及操作默认值。
+沿用集中 constructor/enum HAP，新增 typed new、instanceof、初始字段和数组隔离检查；
+账本只在同一新包/同一 boot 的原始记录重新验证通过后关闭这五项，不关闭 provider 行为。
+
+- 精确候选 JS SHA256 `992b87e1cef32bf50fda7ac9893de60762ebdf6f1ea29da9fee18cf7cafe2ed1`。
+  所有旧照片补丁与新补丁交错重放两次通过；未知修改仍拒绝，旧 wrapper 的 130 条行为检查通过。
+- ARM64 实际产品 `ohos_abc.py` 规则编译通过：`photo-record-abc-r35-02/evidence.json`，
+  SHA256 `0bd9f00508a60dbb246971aebf307868de0266b41e947c0ab562ccbcadcd17cb`。
+  `r35-01` 保留失败记录：ARMv7 产品缓存缺少自身 es2abc；x86_64 缓存也缺该工具。
+  没有借用 ARM64 工具冒充这两个产品验证，它们仍待各自产物构建验收。
+- 真实 API26 SDK 的普通 HAP 编译通过：`photo-records-hap-r35-01`，未签名 HAP SHA256
+  `51307c351d0cfa5e5f10fefd7628459f1a0d763ab2de5814c719d4cba75012be`。
+- 本轮主机日志 `host-photo-records-batch-r35-01.log`：1444 项通过、1 项跳过，SHA256
+  `b60b5980fd37a8401e1c861cc4d24802ef51035a487314e1344c70c141366ace`。
+  上一 VPN 提交回归 `host-vpn-committed-r35-02.log`：1440 项通过、1 项跳过，SHA256
+  `f75b75e60291932af8659f54548a320b97854ec896c35ee2962bf11ba5c9e2d3`。
+
+以上同属**下一轮批次**，不在冻结 R35 中；R35 尚在构建，首包运行门禁仍未通过。
+
 ## R35 构建期间的下一批 VPN 候选（未关闭运行缺口）
 
 `always_on_vpn` 补上两个 SDK 已声明的 Promise API，经真实客户端/生成 IPC 到服务端，

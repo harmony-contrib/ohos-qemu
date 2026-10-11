@@ -24,6 +24,15 @@ FILES = (
 def validate(root, require_patched=False):
     for entry in FILES[1:]:
         validate_component(root, PROJECT, REVISION, (entry,), require_patched=True)
+    # The later public-record component preserves this complete implementation.
+    # Recognize only its exact final bytes so replaying the shared patch plan is
+    # idempotent; unknown edits still fail the original validator below.
+    successor = '992b87e1cef32bf50fda7ac9893de60762ebdf6f1ea29da9fee18cf7cafe2ed1'
+    try:
+        return validate_component(root, PROJECT, REVISION,
+                                  ((FILES[0][0], successor, successor),), require_patched=True)
+    except ValueError:
+        pass
     return validate_component(root, PROJECT, REVISION, FILES[:1], require_patched)
 
 if __name__ == '__main__':
