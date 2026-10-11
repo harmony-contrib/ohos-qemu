@@ -1,5 +1,38 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 同批追加相机与状态管理数据类（新包验证待执行）
+
+Camera `a421fc5b11593deb06a1b3928ebdf81b2655870b` 漏注册 SDK 的
+EffectSuggestionStatus 数据类；已有 setter 仍按字段解析。独立组件
+`camera_framework/effect_suggestion_record` 注册真实 NAPI 构造器，字段由调用方填写，
+不增加默认值，不改变会话、权限和算法支持状态。与原 depth 组件重复应用通过。
+普通 Camera 测试增加四条构造/instanceof/未设置字段/独立读写观测，原有两轮预览、
+四张真实 JPEG 与释放验证保留；不能把数据类补齐算作效果算法实现。
+
+真实完整翻译单元 `camera-effect-record-tu-r34-06/evidence.json` 三 ABI 通过，SHA
+`cee09a062a45f70bfba6898a97d6e39c36edee309dbad5965dbf0647a4a46b8c`。
+ARMv7 缓存缺少 Camera/Deferred/HDI 生成头文件，最初预检因此失败。工具随后按每个
+产品真实 ninja 规则在独立目录生成，记录命令和原始 IDL 校验和，再以 VFS 叠加编译；
+未复制 ARM64 的生成头文件冒充其它 ABI，也未修改生产源码/输出挂载或 IDL 权限检查。
+IDL 工具要求输入可写，故只复制原始 IDL 字节到自有临时目录，哈希逐个核对。
+中间工具路径映射错误及失败记录保留，不算产品编译成功。
+真实 SDK Camera HAP SHA `a78171c6c186914ac2f3741b87c7be064224c7f2cf4707a0310e4ea4ee078e95`，
+目录 `camera-effect-record-hap-r34-01`；未执行候选新包。
+
+ArkUI `e55e178228b9f6388b15d3024e8caf125fa293d7` 的动态 StateManagement 模块只在
+内部保留 ConnectOptions/ConnectOptionsCollections 接口，漏了 SDK 声明的运行时数据类。
+按 KB 路由后核对 jsStateManagement.js 与 v2_persistence.ts，独立组件
+`ace_engine/connect_options_records` 仅补真实 JS 类与继承关系、模块导出。
+存储实现、字段检查、默认加密域、权限及静态代码生成不变。
+与联系人同一个普通应用批量验证构造、继承、未设置字段、独立 creator；不调用或
+宣称持久化后端通过。真实 SDK HAP 目录 `state-records-hap-r34-01`，SHA
+`51ee8820dd84d3058efc1074133ca8acad29bd281b43222e2c48318d7222e86b`。
+
+相机追加后宿主全量 `host-batch-data-classes-r34-01.log`：1427 项、跳过 1 项，228.918 秒，
+SHA `a59c06ed9ce5e564ba6420ba1474fb46687393d76cee6f0f5440c5b321477ca6`。
+该次不含后加的 StateManagement 测试；本轮最终冻结输入仍需统一宿主回归与新包运行。
+历史 R34 的 151/281 不因候选补丁或宿主 fixture 测试而增加。
+
 ## R34 完整运行结果与下一批验收接入
 
 R34 新归档 `first-taskpool-software-ap-7.0-release-20261010-r34/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`

@@ -32,7 +32,9 @@ class ContactSyncModeResultTests(unittest.TestCase):
                 'audioValues': [0, 1], 'audioNative': {'values': [0, 1], 'statuses': [0] * 14,
                 'types': [6, 6, 3, 3], 'own': [True, True, True], 'exception': False},
                 'photoValues': [0], 'photoNative': {'values': [0], 'statuses': [0] * 10,
-                'types': [6, 6, 3], 'own': [True, True], 'exception': False}, 'records': records}
+                'types': [6, 6, 3], 'own': [True, True], 'exception': False}, 'records': records,
+                'stateRecords': {'flags': [True] * 12, 'values': [RUN + suffix for suffix in
+                    ('-first-changed', '-second', '-collection', '-other')]}}
 
     def test_record_constructor_prototypes_properties_and_isolation_cannot_be_missing(self):
         row = self.observed()
@@ -76,7 +78,9 @@ class ContactSyncModeResultTests(unittest.TestCase):
             path = child / 'evidence.json'
             path.write_text(json.dumps(evidence))
             closed = behavior_results(root, 'test-boot', 'a' * 64, 'phone')
-            self.assertEqual(len(closed), 12)
+            self.assertEqual(len(closed), 14)
+            for name in ('ConnectOptions', 'ConnectOptionsCollections'):
+                self.assertIn('arkts_export:@ohos.arkui.StateManagement:' + name, closed)
             for name in RECORD_CLASSES:
                 self.assertIn('arkts_export:@ohos.contact:' + name, closed)
             self.assertFalse(any(key.startswith('behavior:') for key in closed))
@@ -89,6 +93,17 @@ class ContactSyncModeResultTests(unittest.TestCase):
             path.write_text(json.dumps(evidence))
             with self.assertRaises(ValueError):
                 behavior_results(root, 'test-boot', 'a' * 64, 'phone')
+
+    def test_state_record_flags_and_nonce_values_are_required(self):
+        for index in range(12):
+            row = self.observed()
+            row['stateRecords']['flags'][index] = False
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                verify(json.dumps(row), RUN, IDENTITY)
+        for state in ({'flags': [1] * 12, 'values': self.observed()['stateRecords']['values']},
+                      {'flags': [True] * 12, 'values': ['shared'] * 4}, {}, None):
+            with self.assertRaises(ValueError):
+                verify(json.dumps(dict(self.observed(), stateRecords=state)), RUN, IDENTITY)
 
     def test_exact_values_actual_native_own_reads_and_ordinary_identity(self):
         row = self.observed()
@@ -123,6 +138,7 @@ class ContactSyncModeResultTests(unittest.TestCase):
         (api / '@ohos.contact.d.ts').write_text(
             'declare namespace contact { enum ContactSyncMode { MODE_INCREMENTAL=1, MODE_CLOUD_BASED=2 } }\n'
             'export default contact;\n')
+        (api / '@ohos.arkui.StateManagement.d.ts').write_text('export class ConnectOptions {}\n')
         (api / '@ohos.multimedia.audio.d.ts').write_text(
             'declare namespace audio { enum DeviceBlockStatus { UNBLOCKED=0, BLOCKED=1 } }\n'
             'export default audio;\n')

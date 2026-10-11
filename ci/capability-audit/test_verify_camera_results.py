@@ -70,7 +70,7 @@ class CameraResultTests(unittest.TestCase):
             root = Path(directory)
             native, arkts = fixture(root)
             observed = verify(render(native), render(arkts), RUN, 'arm64', IDENTITY, root)
-            self.assertEqual((observed['native_records'], observed['arkts_records'], len(observed['photos'])), (67, 45, 4))
+            self.assertEqual((observed['native_records'], observed['arkts_records'], len(observed['photos'])), (67, 49, 4))
             self.assertEqual(observed['uid'], UID)
 
     def test_partial_reordered_duplicate_stale_wrong_arch_or_privileged_fail(self):

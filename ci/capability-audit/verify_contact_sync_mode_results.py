@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import re
 
-from contact_sync_mode_contract import CONTRACT, AUDIO_CONTRACT, PHOTO_CONTRACT, RECORD_CLASSES, SCOPE, sha256, verify_inputs
+from contact_sync_mode_contract import CONTRACT, AUDIO_CONTRACT, PHOTO_CONTRACT, RECORD_CLASSES, STATE_RECORD_CLASSES, SCOPE, sha256, verify_inputs
 
 
 def verify(text, run_id, identity):
@@ -18,7 +18,7 @@ def verify(text, run_id, identity):
         raise ValueError('one complete actual enum observation required')
     row = json.loads(lines[0])
     if (not isinstance(row, dict) or set(row) != {'runId', 'values', 'native', 'audioValues', 'audioNative',
-            'photoValues', 'photoNative', 'records'} or row['runId'] != run_id or
+            'photoValues', 'photoNative', 'records', 'stateRecords'} or row['runId'] != run_id or
             row['values'] != [1, 2] or any(type(value) is not int for value in row['values'])):
         raise ValueError('typed public SDK enum values absent, wrong, malformed or stale')
     if row['audioValues'] != [0, 1] or any(type(value) is not int for value in row['audioValues']):
@@ -52,9 +52,15 @@ def verify(text, run_id, identity):
                 actual['flags'] != [True, True, True] or
                 any(type(flag) is not bool for flag in actual['flags'])):
             raise ValueError('actual typed contact construction/properties/isolation failed: ' + name)
+    state = row['stateRecords']
+    if (not isinstance(state, dict) or set(state) != {'flags', 'values'} or
+            state['flags'] != [True] * 12 or any(type(flag) is not bool for flag in state['flags']) or
+            state['values'] != [run_id + suffix for suffix in ('-first-changed', '-second', '-collection', '-other')]):
+        raise ValueError('actual state record construction/inheritance/fields/creator isolation failed')
     return {'contract': CONTRACT, 'member_count': 2, 'audio_contract': AUDIO_CONTRACT, 'audio_member_count': 2,
             'photo_contract': PHOTO_CONTRACT, 'photo_member_count': 1, 'record_classes': list(RECORD_CLASSES),
-            'not_claimed': 'cloud_sync_storage_permissions_contacts_or_fusion_provider_or_microphone_blocking_behavior'}
+            'state_record_classes': list(STATE_RECORD_CLASSES),
+            'not_claimed': 'persistence_cloud_sync_storage_permissions_contacts_or_fusion_provider_or_microphone_blocking_behavior'}
 
 
 if __name__ == '__main__':

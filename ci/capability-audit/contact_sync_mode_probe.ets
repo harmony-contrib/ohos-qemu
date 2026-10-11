@@ -3,6 +3,7 @@ import audio from '@ohos.multimedia.audio';
 import photoAccessHelper from '@ohos.file.photoAccessHelper';
 import fs from '@ohos.file.fs';
 import modeProbe from 'libcontactsyncmodeprobe.so';
+import { ConnectOptions, ConnectOptionsCollections } from '@ohos.arkui.StateManagement';
 
 interface NativeModes {
   values: number[];
@@ -15,6 +16,36 @@ interface Observation {
   runId: string; values: number[]; native: NativeModes; audioValues: number[]; audioNative: NativeModes;
   photoValues: number[]; photoNative: NativeModes;
   records: ContactRecordObservation[];
+  stateRecords: StateRecordObservation;
+}
+
+interface StateRecordObservation { flags: boolean[]; values: string[]; }
+class RecordValue { value: string = ''; }
+
+function stateRecords(runId: string): StateRecordObservation {
+  const first = new ConnectOptions<RecordValue>();
+  const second = new ConnectOptions<RecordValue>();
+  const collection = new ConnectOptionsCollections<Array<RecordValue>, RecordValue>();
+  const other = new ConnectOptionsCollections<Array<RecordValue>, RecordValue>();
+  const flags: boolean[] = [first instanceof ConnectOptions, second instanceof ConnectOptions,
+    first !== second, collection instanceof ConnectOptionsCollections, collection instanceof ConnectOptions,
+    other instanceof ConnectOptionsCollections, other instanceof ConnectOptions, collection !== other,
+    first.type === undefined && first.key === undefined && first.defaultCreator === undefined && first.areaMode === undefined,
+    collection.type === undefined && collection.key === undefined && collection.defaultCreator === undefined &&
+      collection.defaultSubCreator === undefined && collection.areaMode === undefined];
+  first.type = RecordValue;
+  second.type = RecordValue;
+  first.key = runId + '-first'; second.key = runId + '-second';
+  first.defaultCreator = (): RecordValue => { const value = new RecordValue(); value.value = first.key!; return value; };
+  second.defaultCreator = (): RecordValue => { const value = new RecordValue(); value.value = second.key!; return value; };
+  first.key += '-changed';
+  collection.key = runId + '-collection'; other.key = runId + '-other';
+  collection.defaultSubCreator = (): RecordValue => { const value = new RecordValue(); value.value = collection.key!; return value; };
+  collection.defaultCreator = (): Array<RecordValue> => [collection.defaultSubCreator!()];
+  flags.push(first.type === RecordValue && second.type === RecordValue);
+  flags.push(other.defaultSubCreator === undefined && other.defaultCreator === undefined);
+  return { flags: flags, values: [first.defaultCreator().value, second.defaultCreator().value,
+    collection.defaultCreator()[0].value, other.key] };
 }
 
 interface ContactRecordObservation { name: string; first: string; second: string; flags: boolean[]; }
@@ -77,7 +108,8 @@ struct Index {
       audioNative: modeProbe.inspectAudio(),
       photoValues: [photoAccessHelper.FusionAssetType.COMPATIBLE_ASSET],
       photoNative: modeProbe.inspectPhoto(),
-      records: contactRecords(this.runId)
+      records: contactRecords(this.runId),
+      stateRecords: stateRecords(this.runId)
     };
     const file = fs.openSync('/data/storage/el2/base/files/contact-sync-mode-__RUN__-results.log',
       fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);

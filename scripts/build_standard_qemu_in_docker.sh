@@ -222,6 +222,8 @@ AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/
 UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/ui_effect/api26_public_modes/apply.sh"
 BLUETOOTH_CONTROL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_control_enums/apply.sh"
 CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/camera_framework/api26_depth_contracts/apply.sh"
+CAMERA_EFFECT_RECORD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/camera_framework/effect_suggestion_record/apply.sh"
+STATE_OPTIONS_RECORDS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/connect_options_records/apply.sh"
 BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_opp_enums/apply.sh"
 PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_enums/apply.sh"
 PHOTO_SEARCH_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_search_enums/apply.sh"
@@ -2941,6 +2943,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_control_enums_component.log"
   bash "${CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_camera_depth_contracts_component.log"
+  bash "${CAMERA_EFFECT_RECORD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_camera_effect_record_component.log"
+  bash "${STATE_OPTIONS_RECORDS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_state_options_records_component.log"
   bash "${BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_opp_enums_component.log"
   bash "${EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

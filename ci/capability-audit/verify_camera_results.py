@@ -19,7 +19,9 @@ NATIVE_CYCLE = ('manager_create', 'real_camera_enumeration', 'capabilities', 're
                 'config_commit', 'session_start', 'real_frame_start', 'session_stop', '@frames',
                 'real_frame_completion', 'callback_unregister', 'preview_release', 'session_release',
                 'input_close', 'input_release', 'capabilities_release', 'cameras_release', 'manager_release')
-ARKTS_PREFIX = ('ordinary_user_permission', 'real_ArkUI_surface', 'native_probe_started', 'native_complete')
+ARKTS_PREFIX = ('effect_record_constructor', 'effect_record_unset_fields', 'effect_record_values',
+                'effect_record_isolation', 'ordinary_user_permission', 'real_ArkUI_surface',
+                'native_probe_started', 'native_complete')
 ARKTS_CYCLE = ('camera_enumeration', 'real_profiles', 'input_open', 'session_configured', 'preview_started',
                'preview_frame_start', 'capture_requested_1', 'capture_call_returned_1',
                'photo_timestamp_1', 'photo_JPEG_1', 'photo_dimensions_1', 'photo_real_pixels_1',

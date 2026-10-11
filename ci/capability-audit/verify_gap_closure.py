@@ -540,6 +540,11 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                     'evidence': str(modes[0]), 'sha256': digest(modes[0]),
                     'verifier': 'ordinary_typed_constructor_instanceof_independent_properties_and_Holder_default',
                     'not_claimed': 'contacts_database_sync_picker_provider_or_permission_behavior'}
+            for name in actual['state_record_classes']:
+                closed['arkts_export:@ohos.arkui.StateManagement:' + name] = {
+                    'evidence': str(modes[0]), 'sha256': digest(modes[0]),
+                    'verifier': 'typed_constructor_inheritance_unset_fields_and_independent_creators',
+                    'not_claimed': 'persistent_storage_backend_lifecycle_encryption_or_permissions'}
     exports = child('arkts-exports/evidence.json')
     if exports and exports[1].get('persona') == 'arkts-exports' and device_type is not None:
         document = exports[1]
@@ -700,6 +705,10 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
     if camera:
         from verify_camera_results import verify_evidence as verify_camera_evidence
         verify_camera_evidence(camera[1], archive_sha, boot_id)
+        closed['arkts_export:@ohos.multimedia.camera:EffectSuggestionStatus'] = {
+            'evidence': str(camera[0]), 'sha256': digest(camera[0]),
+            'verifier': 'typed_constructor_instanceof_unset_fields_and_independent_records',
+            'not_claimed': 'effect_suggestion_algorithm_or_system_session_setter'}
         closed['behavior:camera-host-backend-missing'] = {
             'evidence': str(camera[0]), 'sha256': digest(camera[0]),
             'verifier': 'ordinary_Camera_real_user_UI_NDK_ArkTS_two_previews_four_JPEGs_callbacks_recreation',

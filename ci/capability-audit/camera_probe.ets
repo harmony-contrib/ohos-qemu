@@ -75,6 +75,27 @@ struct Index {
     return selected;
   }
 
+  private checkEffectSuggestionRecord(): void {
+    const first: camera.EffectSuggestionStatus = new camera.EffectSuggestionStatus();
+    const second: camera.EffectSuggestionStatus = new camera.EffectSuggestionStatus();
+    this.record('effect_record_constructor', 0, first instanceof camera.EffectSuggestionStatus &&
+      second instanceof camera.EffectSuggestionStatus && first !== second);
+    this.record('effect_record_unset_fields', 0, first.type === undefined && first.status === undefined &&
+      second.type === undefined && second.status === undefined);
+    first.type = camera.EffectSuggestionType.EFFECT_SUGGESTION_NONE;
+    first.status = true;
+    second.type = camera.EffectSuggestionType.EFFECT_SUGGESTION_PORTRAIT;
+    second.status = false;
+    this.record('effect_record_values', 0, first.type === camera.EffectSuggestionType.EFFECT_SUGGESTION_NONE &&
+      first.status === true && second.type === camera.EffectSuggestionType.EFFECT_SUGGESTION_PORTRAIT &&
+      second.status === false);
+    first.type = camera.EffectSuggestionType.EFFECT_SUGGESTION_PORTRAIT;
+    first.status = false;
+    second.status = true;
+    this.record('effect_record_isolation', 0, first.status === false && second.status === true &&
+      first.type === camera.EffectSuggestionType.EFFECT_SUGGESTION_PORTRAIT);
+  }
+
   private async checkPhoto(photo: camera.Photo, cycle: number, index: number,
                            previousTimestamp: number): Promise<number> {
     let source: image.ImageSource | undefined = undefined;
@@ -228,6 +249,7 @@ struct Index {
       const results: string = this.context.filesDir + '/camera-arkts-' + this.runId + '-results.log';
       if (!nativeProbe.createFile(results)) throw new Error('Existing/unsafe Camera evidence path');
       this.file = fs.openSync(results, fs.OpenMode.WRITE_ONLY | fs.OpenMode.NOFOLLOW);
+      this.checkEffectSuggestionRecord();
       const access: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const permission: PermissionRequestResult = await access.requestPermissionsFromUser(this.context, ['ohos.permission.CAMERA']);
       this.record('ordinary_user_permission', 0, permission.permissions.length === 1 &&
