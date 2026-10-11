@@ -65,8 +65,30 @@ class ImageMetadataEvidenceTests(unittest.TestCase):
                                         self.archive, self.boot, 'arm64')
 
     def test_bound_raw_contract_remains_narrow(self):
-        self.assertEqual(self.check()['closed'], [])
+        self.assertEqual(self.check()['closed'], ['arkts_export:@ohos.multimedia.image:AvisMetadata'])
         self.assertEqual(self.check()['observations'], 22)
+
+    def test_ledger_replays_actual_evidence_and_rejects_diagnostic_boot(self):
+        from verify_gap_closure import behavior_results
+        runtime = self.root / 'ledger'
+        (runtime / 'image-metadata').mkdir(parents=True)
+        (runtime / 'boot').mkdir()
+        (runtime / 'image-metadata/evidence.json').write_text(json.dumps(self.document))
+        boot = dict(status='pass', purpose='acceptance',
+            scope='fresh_packaged_QEMU_boot_NOT_full_behavior_gate', archive_sha256=self.archive,
+            test_environment=dict(boot_id=self.boot, guest_arch='arm64', device_type='phone',
+                                  external_keepalive=False))
+        boot_path = runtime / 'boot/boot.json'
+        boot_path.write_text(json.dumps(boot))
+        check = lambda: behavior_results(runtime, self.boot, self.archive, 'phone')
+        self.assertEqual(set(check()), {verifier.AVIS_CONTRACT})
+        boot_path.write_text(json.dumps(dict(boot, purpose='diagnostic')))
+        with self.assertRaises(ValueError):
+            check()
+        boot_path.write_text(json.dumps(boot))
+        self.files['raw_results'].write_text('{}')
+        with self.assertRaises(ValueError):
+            check()
 
     def test_every_recorded_file_rejects_unrecorded_changes(self):
         for key, path in self.files.items():

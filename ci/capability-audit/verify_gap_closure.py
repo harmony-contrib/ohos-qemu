@@ -99,6 +99,30 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             'verifier': 'ordinary_typed_ArkTS_constructor_optional_callbacks_isolation_subclass_and_existing_enum',
             'not_claimed': 'component_start_callback_delivery_or_service_IPC'}
 
+    metadata = child('image-metadata/evidence.json')
+    if metadata:
+        from verify_image_metadata_results import verify_evidence as verify_metadata, AVIS_CONTRACT
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('image constructor closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or
+                environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('image constructor proof requires unchanged acceptance package')
+        actual = verify_metadata(metadata[1], archive_sha, boot_id, environment['guest_arch'])
+        if actual['closed'] != [AVIS_CONTRACT]:
+            raise ValueError('image constructor proof must close only the verified Avis class')
+        closed[AVIS_CONTRACT] = {
+            'evidence': str(metadata[0]), 'sha256': digest(metadata[0]),
+            'verifier': 'ordinary_typed_constructor_isolation_and_real_AVIS_factory_instances',
+            'not_claimed': 'Dng_Tiff_constructors_or_other_image_APIs'}
+
     thermal = child('thermal/evidence.json')
     if thermal:
         from verify_thermal_results import verify_evidence as verify_thermal
@@ -511,6 +535,11 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[PHOTO_CONTRACT] = {'evidence': str(modes[0]), 'sha256': digest(modes[0]),
                                'verifier': 'typed_and_native_public_enum_own_members_and_exact_values',
                                'not_claimed': 'fusion_provider_album_storage_sync_or_permission_behavior'}
+            for name in actual['record_classes']:
+                closed['arkts_export:@ohos.contact:' + name] = {
+                    'evidence': str(modes[0]), 'sha256': digest(modes[0]),
+                    'verifier': 'ordinary_typed_constructor_instanceof_independent_properties_and_Holder_default',
+                    'not_claimed': 'contacts_database_sync_picker_provider_or_permission_behavior'}
     exports = child('arkts-exports/evidence.json')
     if exports and exports[1].get('persona') == 'arkts-exports' and device_type is not None:
         document = exports[1]

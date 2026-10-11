@@ -9,6 +9,7 @@ from run_normal_hap_probe import require_normal_identity
 from run_root_probe import digest
 
 SCOPE = 'real_image_metadata_and_Avis_constructor_NOT_Dng_Tiff_constructors_or_full_gate'
+AVIS_CONTRACT = 'arkts_export:@ohos.multimedia.image:AvisMetadata'
 EXPECTED = {
     'dng.selected': ([1, 4, 0, 0], 'FakeCamera ModelX'),
     'dng.default': ([1, 4, 0, 0], 'FakeCamera ModelX'),
@@ -48,7 +49,7 @@ def verify(text, run_id, identity):
                 not isinstance(row['values'], list) or any(type(item) is not int for item in row['values']) or
                 row['text'] != text or row['error'] != ''):
             raise ValueError('failed, stale or malformed image metadata observation: ' + name)
-    return dict(closed=[], scope=SCOPE, observations=len(rows), formats=['DNG', 'TIFF', 'AVIS'])
+    return dict(closed=[AVIS_CONTRACT], scope=SCOPE, observations=len(rows), formats=['DNG', 'TIFF', 'AVIS'])
 
 
 def verify_inputs(path, run_id, arch):

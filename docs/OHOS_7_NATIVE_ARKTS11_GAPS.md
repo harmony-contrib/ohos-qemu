@@ -1,5 +1,29 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R34 完整运行结果与下一批验收接入
+
+R34 新归档 `first-taskpool-software-ap-7.0-release-20261010-r34/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`
+SHA256 `da52899a074dcf3c38cfaa08c18df62ae28d19332f7a18eacd775514baca1a4a`。
+冻结输入与命令见下文 R34 记录及 `r34-after-targeted-full-01.json`。
+四轮 factory-objects 和热点真实服务 activated/关闭恢复定向验证通过；热点关联、DHCP、
+数据传输仍不在该定向证据范围。完整运行目录
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-_562b0zu`，boot ID
+`12156c83-7f77-4a8a-82db-59ec446b705a`，ARM64 phone/macOS HVF。
+`r34-independent-full-runtime-01.json` 中已执行检查（含 ArkWeb、Vulkan、native-bindings）通过，
+但最终能力账本 281 项仅关闭 151 项、未闭环 130 项，完整门禁失败。
+这是待闭环数量，不等同于 130 项均尚无实现；不能把局部回归成功当作全部能力可用。
+未启动其它五包。原 R32 导航冻结现场仍保留，后续运行通过不证明原故障已解释。
+
+下一批新增九个联系人数据类及 AvisMetadata 的验收接入：重放真实普通应用结果、
+编译输入、原始记录与归档/启动身份绑定后，才允许关闭对应十个导出条目；不关闭
+联系人数据库/选择器或 Dng/Tiff 构造。当前宿主 fixture 测试不能计入新包关闭数。
+联系人测试 9 项、图片测试 18 项通过；包含证据改写、错误身份、诊断启动拒绝回归。
+R34 无这些候选代码，账本保持 151/281，不重写历史结果。
+
+`retired-r34-passed-disks-01.json` 记录回收两个已关闭、通过定向检查的临时客体 images，
+共 10,074,529,792 allocated bytes。归档可恢复原始磁盘，成功用例的临时运行态不保留；
+所有日志、校验和及失败现场保留。Docker 正常启动恢复后继续本地工作。
+
 ## 2026-10-11 同批联系人数据类候选（尚未新包运行）
 
 固定 ContactsData `c73bd27daa3fcd8ed6099b17cbffbd7021e3873e` 的 `contact.js`

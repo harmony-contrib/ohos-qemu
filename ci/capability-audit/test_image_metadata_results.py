@@ -18,7 +18,7 @@ class ImageMetadataResultsTests(unittest.TestCase):
                       self.nonce, self.identity)
 
     def test_narrow_contract_does_not_claim_complete_release_closure(self):
-        self.assertEqual(self.check()['closed'], [])
+        self.assertEqual(self.check()['closed'], ['arkts_export:@ohos.multimedia.image:AvisMetadata'])
         self.assertEqual(self.check()['observations'], 22)
 
     def test_missing_class_wrong_factory_prototype_or_shared_defaults_fail(self):

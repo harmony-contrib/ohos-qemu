@@ -48,6 +48,48 @@ class ContactSyncModeResultTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 verify(json.dumps(dict(row, records=records)), RUN, IDENTITY)
 
+    def test_record_closure_rechecks_raw_evidence_and_does_not_close_provider(self):
+        from verify_gap_closure import behavior_results
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sdk = self.sdk(root / 'sdk')
+            project = root / 'project'
+            page = project / 'entry/src/main/ets/pages/Index.ets'
+            page.parent.mkdir(parents=True)
+            page.write_text(TEMPLATE.read_text().replace('__RUN__', RUN))
+            child = root / 'contact-sync-mode'
+            child.mkdir()
+            compiled = child / 'inputs.json'
+            compiled.write_text(json.dumps(inputs(project, sdk, 'arm64', RUN)))
+            raw = child / 'results.log'
+            raw.write_text(json.dumps(self.observed()))
+            identity = child / 'application-identity.json'
+            identity.write_text(IDENTITY)
+            result = child / 'result.json'
+            result.write_text(json.dumps(dict(status='pass', result=verify(raw.read_text(), RUN, IDENTITY),
+                archive_sha256='a' * 64, run_id=RUN, arch='arm64', compiled_inputs_sha256=sha256(compiled),
+                results_sha256=sha256(raw), application_identity_sha256=sha256(identity))))
+            evidence = dict(status='pass', boot_id='test-boot', archive_sha256='a' * 64,
+                persona='contact-sync-mode', run_id=RUN, arch='arm64', compiled_contract_inputs=str(compiled),
+                compiled_contract_inputs_sha256=sha256(compiled), result=str(result), result_sha256=sha256(result),
+                raw_results_sha256=sha256(raw), ordinary_identity_sha256=sha256(identity))
+            path = child / 'evidence.json'
+            path.write_text(json.dumps(evidence))
+            closed = behavior_results(root, 'test-boot', 'a' * 64, 'phone')
+            self.assertEqual(len(closed), 12)
+            for name in RECORD_CLASSES:
+                self.assertIn('arkts_export:@ohos.contact:' + name, closed)
+            self.assertFalse(any(key.startswith('behavior:') for key in closed))
+            self.assertEqual(behavior_results(root, 'other-boot', 'a' * 64, 'phone'), {})
+            changed = self.observed()
+            changed['records'][0]['flags'] = [True, True, False]
+            raw.write_text(json.dumps(changed))
+            self.assertEqual(behavior_results(root, 'test-boot', 'a' * 64, 'phone'), {})
+            evidence['raw_results_sha256'] = sha256(raw)
+            path.write_text(json.dumps(evidence))
+            with self.assertRaises(ValueError):
+                behavior_results(root, 'test-boot', 'a' * 64, 'phone')
+
     def test_exact_values_actual_native_own_reads_and_ordinary_identity(self):
         row = self.observed()
         self.assertEqual(verify(json.dumps(row) + '\n', RUN, IDENTITY)['member_count'], 2)
