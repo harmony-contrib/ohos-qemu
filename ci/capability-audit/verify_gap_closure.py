@@ -753,6 +753,25 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(vpn[0]), 'sha256': digest(vpn[0]),
                 'verifier': 'three_real_HAP_roles_policy_persistence_restart_readback_cleanup_and_numeric_denials',
                 'not_claimed': 'VPN_tunnel_server_traffic_or_all_VPN_configuration_APIs'}
+    luminance = child('luminance-sampler/evidence.json')
+    if luminance:
+        from verify_luminance_results import verify_evidence as verify_luminance
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('luminance closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('luminance proof requires unchanged acceptance package')
+        for contract in verify_luminance(luminance[1], archive_sha, boot_id, environment['guest_arch'], device_type):
+            closed[contract] = {'evidence': str(luminance[0]), 'sha256': digest(luminance[0]),
+                'verifier': 'SDK_documented_UIContext_factory_real_RS_dark_light_cycles_and_unsubscription',
+                'not_claimed': 'public_constructor_or_other_ArkUI_classes_or_all_luminance_options'}
     native = child('native-gap-abi/result.json')
     if native and native[1].get('kind') == 'native-gap-abi':
         document = native[1]

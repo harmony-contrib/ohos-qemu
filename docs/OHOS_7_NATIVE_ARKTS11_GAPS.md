@@ -1,5 +1,23 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## LuminanceSampler：按 SDK 工厂契约验证，仍未关闭缺口
+
+API26 `@ohos.arkui.UIContext.d.ts:768` 明确要求先调用 `UIContext.getLuminanceSampler`，
+不是公开构造器。先执行 ace_engine KB 查询（LuminanceSampler/luminance 无命中）后核对源码：
+`frameworks/bridge/declarative_frontend/engine/jsUIContext.js:784` 调用实际 `luminancesampler` NAPI；
+`interfaces/napi/kits/luminance_sampler/js_luminance_sampler.cpp:225` 为工厂返回对象绑定三个方法；
+`frameworks/core/components_ng/render/adapter/rosen_luminance_sampling_helper.cpp` 接入真实 RS
+颜色采样配置和回调。因此增加伪造的导出类不是已证明需要的修复。
+
+新增无额外权限的系统测试 HAP：实际附着节点获取/复用、未知节点、越界错误、
+两轮黑白背景 RS 采样、取消指定监听和最终清理。严格验证器拒绝仅有工厂对象、
+缺失亮度变化、回调计数不符、未清理、旧包/旧 boot、改动的原始记录等证据。
+只有这些新包证据通过，才允许按工厂契约关闭这一项；不宣称公开构造器或其他 ArkUI 能力。
+
+API26 HAP `luminance-factory-hap-r36-01` 已编译，SHA256
+`97eb08a29ecddc86ade34fbab0b55bd7241acaa8447f585a37f9897756f6af81`。
+三项相关主机验证测试通过；实际来宾回调尚未运行，不从剩余缺口数量中扣除。
+
 ## R36 同包补充验证准备
 
 提交 `b6281a0c9df6790b802d4d8603b27b2c8625eedf` 的冻结主机整套回归通过：
