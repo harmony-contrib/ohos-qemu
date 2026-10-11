@@ -2108,8 +2108,10 @@ if args.spring_loading_only:
     write('entry/src/main/ets/pages/Index.ets', spring_source(challenge))
     write('spring-loading-probe-inputs.json', spring_inputs(root, args.sdk, args.arch, challenge))
 if args.arkui_components_only:
-    from arkui_components_contract import source as components_source, inputs as components_inputs
+    from arkui_components_contract import (source as components_source, ability_source as components_ability,
+                                           inputs as components_inputs)
     challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/entryability/EntryAbility.ets', components_ability(challenge))
     write('entry/src/main/ets/pages/Index.ets', components_source(challenge))
     # Imported @uicomponent factories require the official API26 UI transform.
     # Do not bypass the checker or replace these components with fake aliases.

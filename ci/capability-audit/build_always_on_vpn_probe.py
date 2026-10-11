@@ -34,8 +34,16 @@ def module(role, compiled=False):
 
 
 def build(args):
+    return build_application(args, page(args.run_id, args.role), TEMPLATE,
+        'vpn-policy-probe-inputs.json', 'real_policy_persistence_restart_and_permission_NOT_VPN_traffic',
+        '@ohos.net.vpnExtension.d.ts')
+
+
+def build_application(args, generated_page, template, receipt_name, scope, declaration_name):
+    """Reuse the actual typed three-role app build, never override image policy."""
     root, sdk = args.output.resolve(), args.sdk.resolve()
-    generated_page = page(args.run_id, args.role)
+    if args.role not in ROLES or re.fullmatch('[0-9a-f]{32}', args.run_id) is None:
+        raise ValueError('fresh nonce and explicit bounded VPN role required')
     for name in ('ets', 'native'):
         metadata = json.loads((sdk / name / 'oh-uni-package.json').read_text())
         if any(metadata.get(key) != value for key, value in (
@@ -72,11 +80,11 @@ export default class EntryAbility extends UIAbility {
 """)
     generated = root / 'entry/src/main/ets/pages/Index.ets'
     write('entry/src/main/ets/pages/Index.ets', generated_page)
-    declaration = sdk / 'ets/api/@ohos.net.vpnExtension.d.ts'
-    write('vpn-policy-probe-inputs.json', {'schema_version': 1, 'run_id': args.run_id, 'role': args.role,
-        'arch': args.arch, 'scope': 'real_policy_persistence_restart_and_permission_NOT_VPN_traffic',
+    declaration = sdk / 'ets/api' / declaration_name
+    write(receipt_name, {'schema_version': 1, 'run_id': args.run_id, 'role': args.role,
+        'arch': args.arch, 'scope': scope,
         'request_permissions': [PERMISSION] if args.role == 'system' else [],
-        'template_sha256': digest(TEMPLATE), 'generated_source': str(generated),
+        'template_sha256': digest(template), 'generated_source': str(generated),
         'generated_source_sha256': digest(generated), 'sdk_declaration': str(declaration),
         'sdk_declaration_sha256': digest(declaration)})
     subprocess.run([args.arkdown, 'build', '--project', root, '--target', 'hap', '--mode', 'debug'],

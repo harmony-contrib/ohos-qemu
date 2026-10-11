@@ -100,6 +100,8 @@ class SpringLoadingResultTests(unittest.TestCase):
         self.assertIn('context instanceof drag.SpringLoadingContext', page)
         self.assertIn("infos === undefined", page)
         self.assertNotIn('this.callback(new', page)
+        self.assertIn("Column() { Text('Drag the nonce data') }", page)
+        self.assertNotIn("Text('Drag the nonce text').id('spring-source')", page)
         root = Path(__file__).resolve().parents[2]
         builder = (root / 'ci/capability-audit/build_hap_probe.py').read_text()
         self.assertIn('args.spring_loading_only', builder)

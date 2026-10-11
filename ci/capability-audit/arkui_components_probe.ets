@@ -55,7 +55,7 @@ class DynamicModifier implements AttributeModifier<DynamicLayoutAttribute> {
 struct Index {
   @State private phase: number = 0;
   @State private counter: number = 0;
-  @State private algorithm: LayoutAlgorithm = new RowLayoutAlgorithm();
+  @State private algorithm: LayoutAlgorithm | undefined = undefined;
   private readonly scroller: Scroller = new Scroller();
   private readonly listModifier: ListModifier = new ListModifier();
   private readonly itemModifier: ItemModifier = new ItemModifier();
@@ -63,7 +63,12 @@ struct Index {
   private readonly dynamicModifier: DynamicModifier = new DynamicModifier();
   private start(): void {
     if (this.phase !== 0) { Capture.record('failed', false, [], 'duplicate start'); return; }
-    Capture.phase = 1; Capture.record('ready.row'); this.phase = 1;
+    // An unavailable native algorithm must leave a real failure journal, not
+    // throw before aboutToAppear and look like a generic UI readiness timeout.
+    try {
+      this.algorithm = new RowLayoutAlgorithm();
+      Capture.phase = 1; Capture.record('ready.row'); this.phase = 1;
+    } catch (error) { Capture.record('failed', false, [], String(error)); }
   }
   private change(): void {
     if (this.phase !== 1 || this.counter !== 1) {
@@ -104,12 +109,14 @@ struct Index {
         Button('Scroll to last').id('components-scroll').onClick(() => {
           Capture.record('scroll.request'); this.scroller.scrollToIndex(7, false, ScrollAlign.CENTER);
         })
-        DynamicLayout(this.algorithm) {
-          Button('__RUN__ child A ' + this.counter).id('components-child-a')
-            .width(100).height(50).backgroundColor('#B03020').onClick(() => { this.child(); })
-          Text('__RUN__ child B').id('components-child-b')
-            .width(100).height(50).backgroundColor('#20A030')
-        }.attributeModifier(this.dynamicModifier).id('components-dynamic')
+        if (this.algorithm !== undefined) {
+          DynamicLayout(this.algorithm) {
+            Button('__RUN__ child A ' + this.counter).id('components-child-a')
+              .width(100).height(50).backgroundColor('#B03020').onClick(() => { this.child(); })
+            Text('__RUN__ child B').id('components-child-b')
+              .width(100).height(50).backgroundColor('#20A030')
+          }.attributeModifier(this.dynamicModifier).id('components-dynamic')
+        }
         Button('Switch row to column').id('components-switch').onClick(() => { this.change(); })
       }
     }.width('100%').height('100%').padding(8)

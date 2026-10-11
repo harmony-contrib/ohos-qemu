@@ -316,6 +316,22 @@ def run(args):
             'vpn-policy-three-roles-and-caller-restart', timeout=6000, env=child_env)
         check('vpn-policy', work / 'vpn-policy/evidence.json', [vpn_record])
         same_guest('after-vpn-policy-cleanup')
+        def vpn_store_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'sys-vpn-store/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('system VPN store caller cleanup unproven; stop batch')
+        with independent_probe(report, 'sys-vpn-store', vpn_store_batch_health, save):
+            vpn_store_record = command([sys.executable, Path(__file__).with_name('run_sys_vpn_store_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'sys-vpn-store',
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'system-VPN-three-variant-CRUD-replacement-boundaries-restart-and-denials', timeout=6000, env=child_env)
+            check('sys-vpn-store', work / 'sys-vpn-store/evidence.json', [vpn_store_record])
         def blink_batch_health(label):
             same_guest(label)
             if label.startswith('after-'):

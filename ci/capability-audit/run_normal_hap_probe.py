@@ -484,6 +484,10 @@ def run(args):
                 command([args.hdc, '-t', args.target, 'shell', 'hilog -x'],
                         'failure-actual-hilog', diagnostic_bytes=True)
                 shell('ps -ef', 'failure-actual-processes')
+                if args.persona == 'arkui-components':
+                    startup = app_files + 'arkui-components-' + challenge + '-startup.log'
+                    shell('cat ' + shlex.quote(startup) + ' 2>/dev/null',
+                          'failure-actual-component-startup', accepted_failure=True)
                 report['same_boot_failure_diagnostics_captured'] = True
             except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as capture_error:
                 report['failure_diagnostics_error'] = str(capture_error)

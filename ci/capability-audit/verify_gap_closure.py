@@ -839,6 +839,26 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(vpn[0]), 'sha256': digest(vpn[0]),
                 'verifier': 'three_real_HAP_roles_policy_persistence_restart_readback_cleanup_and_numeric_denials',
                 'not_claimed': 'VPN_tunnel_server_traffic_or_all_VPN_configuration_APIs'}
+    vpn_store = child('sys-vpn-store/evidence.json')
+    if vpn_store:
+        from verify_sys_vpn_store_results import verify_evidence as verify_vpn_store
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('system VPN CRUD closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('system VPN store proof requires unchanged acceptance package')
+        for contract in verify_vpn_store(vpn_store[1], archive_sha, boot_id, environment['guest_arch'],
+                                         device_type, environment['target']):
+            closed[contract] = {'evidence': str(vpn_store[0]), 'sha256': digest(vpn_store[0]),
+                'verifier': 'three_real_HAP_roles_three_variants_complete_network_CRUD_replace_caller_restart_and_denials',
+                'not_claimed': 'connected_tunnel_traffic_PKCS12_legacy_DB_migration_or_all_VPN_options'}
     luminance = child('luminance-sampler/evidence.json')
     if luminance:
         from verify_luminance_results import verify_evidence as verify_luminance

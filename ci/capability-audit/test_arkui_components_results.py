@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from PIL import Image, ImageDraw
 
-from arkui_components_contract import CONTRACTS, SCOPE, inputs, source
+from arkui_components_contract import CONTRACTS, SCOPE, ability_source, inputs, source
 from arkui_components_ui import BUNDLE, IDS, exercise, verify_actions
 from guest_ui import select_node
 from run_root_probe import digest
@@ -81,6 +81,7 @@ def project_inputs(root):
     plugin = root / 'tools/hvigor-ohos-plugin'; plugin.mkdir(parents=True)
     (plugin / 'package.json').write_text(json.dumps({'name': '@ohos/hvigor-ohos-plugin', 'version': 'synthetic'}))
     files = {'entry/src/main/ets/pages/Index.ets': source(NONCE),
+        'entry/src/main/ets/entryability/EntryAbility.ets': ability_source(NONCE),
         'entry/src/main/module.json5': json.dumps({'module': {'requestPermissions': [], 'deviceTypes': ['default']}}),
         'entry/src/main/resources/base/profile/main_pages.json': json.dumps({'src': ['pages/Index']}),
         'build-profile.json5': json.dumps({'app': {'products': [dict(name='default', compileSdkVersion='26.0.0',
@@ -105,6 +106,20 @@ def project_inputs(root):
 
 
 class ArkuiComponentTests(unittest.TestCase):
+    def test_real_constructor_failure_is_observable_and_ability_is_input_bound(self):
+        page = source(NONCE)
+        self.assertIn('LayoutAlgorithm | undefined = undefined', page)
+        self.assertIn('this.algorithm = new RowLayoutAlgorithm();', page)
+        self.assertIn("Capture.record('failed', false, [], String(error))", page)
+        self.assertNotIn('as LayoutAlgorithm', page)
+        with tempfile.TemporaryDirectory() as directory:
+            value = project_inputs(Path(directory))
+            self.assertIn('ability', value['generated_sha256'])
+            ability = Path(value['project']) / 'entry/src/main/ets/entryability/EntryAbility.ets'
+            ability.write_text(ability.read_text().replace('loadContent.callback', 'fake.success'))
+            with self.assertRaises(ValueError):
+                inputs(value['project'], value['sdk'], 'arm64', NONCE)
+
     def test_typed_factory_lifecycle_fixture_is_narrow_not_global_constructor_aliases(self):
         result = verifier.verify(text(fixture()), NONCE, IDENTITY)
         self.assertEqual(result['closed'], CONTRACTS)

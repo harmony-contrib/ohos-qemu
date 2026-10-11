@@ -6,6 +6,27 @@ from run_root_probe import digest
 
 SCOPE = 'ordinary_typed_Arc_factories_scroll_and_dynamic_layout_switch_preserving_child_state'
 TEMPLATE = Path(__file__).with_name('arkui_components_probe.ets')
+ABILITY_TEMPLATE = """import { UIAbility } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import window from '@ohos.window';
+import fs from '@ohos.file.fs';
+
+export default class EntryAbility extends UIAbility {
+  private journal(event: string, code: number = 0, message: string = ''): void {
+    const path: string = '/data/storage/el2/base/files/arkui-components-__RUN__-startup.log';
+    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
+    try {
+      fs.writeSync(file.fd, JSON.stringify({ runId: '__RUN__', event, code, message }) + '\\n');
+    } finally { fs.closeSync(file); }
+  }
+  onWindowStageCreate(stage: window.WindowStage): void {
+    this.journal('stage.created');
+    stage.loadContent('pages/Index', (error: BusinessError) => {
+      this.journal('loadContent.callback', error?.code ?? 0, error?.message ?? '');
+    });
+  }
+}
+"""
 CONTRACTS = [
     *('arkts_export:@ohos.arkui.ArcList:' + name for name in
       ('ArcListAttribute', 'ArcListInstance', 'ArcListItemAttribute', 'ArcListItemInstance')),
@@ -22,17 +43,26 @@ def source(run_id):
     return TEMPLATE.read_text().replace('__RUN__', run_id)
 
 
+def ability_source(run_id):
+    # Reuse the same nonce validation as the page; this journal is diagnostic,
+    # never a substitute for the native callbacks and actual compositor proof.
+    source(run_id)
+    return ABILITY_TEMPLATE.replace('__RUN__', run_id)
+
+
 def inputs(project, sdk, arch, run_id):
     project, sdk = Path(project).resolve(), Path(sdk).resolve()
     if arch not in ('arm64', 'armv7a', 'x86_64'):
         raise ValueError('actual component caller ABI required')
     paths = dict(page=project / 'entry/src/main/ets/pages/Index.ets',
+        ability=project / 'entry/src/main/ets/entryability/EntryAbility.ets',
         module=project / 'entry/src/main/module.json5',
         pages=project / 'entry/src/main/resources/base/profile/main_pages.json',
         build_profile=project / 'build-profile.json5', entry_profile=project / 'entry/build-profile.json5',
         hvigorfile=project / 'hvigorfile.ts', entry_hvigorfile=project / 'entry/hvigorfile.ts',
         compiler_config=project / 'hvigor/hvigor-config.json5')
     if (any(path.is_symlink() for path in paths.values()) or paths['page'].read_text() != source(run_id) or
+            paths['ability'].read_text() != ability_source(run_id) or
             json.loads(paths['module'].read_text())['module'].get('requestPermissions', []) != [] or
             json.loads(paths['module'].read_text())['module'].get('deviceTypes') != ['default'] or
             json.loads(paths['pages'].read_text()) != {'src': ['pages/Index']}):

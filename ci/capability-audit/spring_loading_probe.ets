@@ -89,7 +89,11 @@ struct Index {
         Button('Abort').id('spring-mode-abort').onClick(() => { this.choose(2); })
         Button('Cancel').id('spring-mode-cancel').onClick(() => { this.choose(3); })
       }
-      Text('Drag the nonce text').id('spring-source').width('80%').height(100)
+      // A generic draggable source exercises physical dragging directly. Text
+      // has separate mouse-selection prerequisites; an unselected Text never
+      // starts a drag and cannot test the SpringLoading lifecycle at all.
+      Column() { Text('Drag the nonce data') }
+        .id('spring-source').width('80%').height(100)
         .backgroundColor('#206080').draggable(true)
         .onDragStart((event: DragEvent): DragItemInfo => {
           const text = new data.PlainText(); text.textContent = '__RUN__';

@@ -1,5 +1,65 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R38 实际首包回归结束：门槛未通过，下一轮批量修复
+
+首包归档：
+`/Volumes/PSSD/qemu/packages/first-spring-ui-7.0-release-20261011-r38/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA256 `f49f3b267c5d0a44e3acf2f099e1774a55a2bc048a036c91c61883a40a8fe8bf`。
+严格使用冻结 `a2497a19a625e38f0657b5167e6a50e8f56d784f` 的脚本启动完整新包：
+`bash /Volumes/PSSD/qemu/build-inputs/r38-ui-batch-tikpgjp_/scripts/validate_packaged_qemu.sh
+--package-archive` 加上述归档，`--package-directory` 加同名打包目录，
+`--evidence-output /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r38-bound-full-runtime-01.json`。
+实际 ARM64/HVF phone、API26 Release SDK，HDC `127.0.0.1:60824`，
+boot `22f367b4-ec8b-4fce-928b-9f02a07c054a`；2026-10-11 17:11:28 UTC 结束。
+ArkWeb、Vulkan 真实窗口、UDMF/Pasteboard/AVPlayer 退出及 31 个已登记检查通过；
+ohos-native-bindings 全部 **32 模块 / 102 用例通过**，用户 checkout 和依赖锁未修改。
+完整台账仍是 **158 / 281 闭环、123 未闭环**，首包整体失败，不放行其余五包。
+
+三个失败项不追改为通过：亮度真实工厂与数字边界成功但 RS 没有通知；Spring
+真实按下/移动未启动拖拽；Arc/DynamicLayout 在初始 ready 前失败，没有布局证据。
+亮度实际 Ninja 仅启用 GL，现有采样调度只有 Vulkan fence 分支，GL 路径直接返回。
+最小 GL/CPU 真实快照回退另行请求授权，未批准前不修改采样实现。
+Spring 测试原先使用未选中的 Text，而实际鼠标 Text 拖拽要求先有选区；下一批改为
+真实可拖拽 Column，保留 UDMF、原始输入及所有 abort/CANCEL/重入断言。
+Arc 下一批将真实算法构造延后至启动动作并记录异常，增加输入绑定的 loadContent
+诊断 journal；不替换原生组件，不放宽几何、像素、滚动和子节点状态检查。
+新调用方在原 R38 归档上的诊断必须明确标为 diagnostic，不能成为交付或台账证明。
+
+证据位于 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`：
+
+- `r38-bound-full-runtime-01.json` SHA256 `3cb201d26b64703925f932617c87c26c03c17ea46990183893197c3b9ccafcdd`。
+- `openharmony-qemu-arm64-arm64_virt-phone-runtime-y9gnveew/native-bindings/evidence.json`
+  SHA256 `1b1050414c319a77fd6e2815488af0856cc32480be0849e4a97190a59b6bc093`。
+- 同目录 `cxx-arkts11-gaps.json` SHA256 `34cd52412e2e16a2f2bf8bcd9b1fcf4adec8eb86a0b2f3b1bcc0982c2c02b87e`。
+
+## R39 追加网络/边界与集中验证入口（候选，未计入闭环）
+
+在原 VPN 精确部件中增加两个独立补丁：解析调用方请求的 IPv6 前缀，IPv4/IPv6
+在窄化前拒绝非整数、越界、NaN/Inf；返回真实 routes、MTU、IPv4/IPv6、legacy、
+blocking、用户和可信/阻止应用字段，保留真实 excluded route。没有扩大旧前缀
+允许区间，未宣称补齐宽端口或 PKCS#12。原地址端口 ABI 和 VPN 公开 API/IPC/权限不变。
+17 项数组/前缀/字段/存储测试通过，完整 VPN 相邻回归 33 项通过；这些包含模拟
+NAPI/Parcel、主机 ASan/UBSan，不作为 NativeRdb/HKS 或实际来宾证明。
+实际 ARM64 完整 NAPI TU 两次编译通过，报告：
+
+- `vpn-prefix-tu-r39-04.json` SHA256 `2a8f5c7c6e51525b49215f44899903b509334580d4c19b97ba9c0c58eda116d4`。
+- `vpn-network-tu-r39-05.json` SHA256 `67fa211f52b64361a3f0d25e993eae8a77a007d1c99d07d423a915684bb7f40c`。
+
+新增真实 SDK 类型的 normal/system-denied/system 三角色 SysVPN CRUD 回归。
+系统角色验证三种配置、完整双地址/双路由/字段、同 ID 替换、失败更新不破坏数据、
+真实调用方换 PID 后读回、只删除自己的配置；普通和缺权限角色分别要求数字
+202/201。结果与原始日志、身份、签名权限、SDK/源码、归档/boot/ABI/画像绑定。
+完整首包 suite、门槛和台账均接入，仅在实际来宾通过后消除四个 CRUD 导出缺口；
+不消除 connected/tunnel、PKCS#12 或旧 NativeRdb 升级缺口。
+七项严格验证器主机拒绝夹具通过。三角色 VPN 和通用 Spring 源的 API26 typed
+HAP 编译通过，报告 `candidate-haps-r39-02.json` SHA256
+`57a642b24e90fdda49af2c7ba5025de165cbf342313401d223fa246a612b20af`；
+之前方法名 id 与 ArkUI id 冲突的失败保留，改名 ownedVpnId，不关闭 SDK 检查。
+追加 Arc journal/延迟真实构造 typed HAP 编译通过，
+`arc-startup-hap-r39-01.json` SHA256
+`cd4c189eaa55e386cdc0248d1240fb6157213927bc64a6589b2128e70bfe398e`。
+所有 HAP 编译和主机检查不是新包证明；此批尚未启动新的代表包或其余五包。
+
 ## R39 网络候选批次：VPN 数组和持久化（未计入闭环）
 
 R38 仍使用冻结输入只构建 ARM64 phone；以下追加候选不会注入该构建或改写
@@ -41,11 +101,11 @@ NAPI 4 个编译通过，候选头文件实际消费已检查。
 解压恢复；没有移除当前 R38 构建或无关 zig-napi guest。收据
 `r37-unstarted-extraction-image-cleanup-20261012.json`，清理后剩余约 67 GiB。
 
-完整新包 CRUD、全部配置类型、重启、权限拒绝和清理的 ArkTS 测试尚待接入与
-真实执行；connected/tunnel API 仍需正向连接及流量证明。台账仍 **158 / 281
+完整新包 CRUD、配置类型、重启、权限拒绝和清理的 ArkTS 测试已在后续追加批次接入，
+尚待真实执行；connected/tunnel API 仍需正向连接及流量证明。台账仍 **158 / 281
 闭环、123 未闭环**，没有六包交付、没有放行其余五包。
 
-## R37 完整新包验证结论，R38 Spring 代表包构建中
+## R37 完整新包验证结论与 R38 构建启动记录（历史）
 
 R37 归档 SHA256 `5c365c5fffbeecf8e36773b78c504f965003b1a375c84139a68e16d4ba2c5ebd`，
 实际 ARM64/HVF phone boot `23f1dd8a-62ff-4585-97d6-26fd2172158b`。
@@ -72,7 +132,7 @@ WindowSizeLayoutBreakpointInfo 四项实际证明，当前 **158 / 281 闭环、
 `/Volumes/PSSD/qemu/build-inputs/phone-pJoBGD` 与通过的冻结树相同。
 构建记录 `r38-representative-build-02.json`，待产出
 `/Volumes/PSSD/qemu/packages/first-spring-ui-7.0-release-20261011-r38/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`。
-目前归档不存在，不能提供校验和。完成后用相同冻结输入启动完整新包回归，包含
+当时归档不存在，不能提供校验和。完成后用相同冻结输入启动完整新包回归，包含
 真实 Spring 悬停/abort/CANCEL/重入、Arc/DynamicLayout UI 以及原全部回归。
 R37 没有 Spring 修复，不能用旧包通过替代此新包证明。
 
