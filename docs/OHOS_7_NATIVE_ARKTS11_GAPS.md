@@ -1,5 +1,22 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R36 补充测试轮询修正与冻结重验
+
+发现亮度探针等待条件误用了字面量反斜线 n，而 ArkTS 实际写入 JSONL 换行；
+这会在应用完成后仍超时。提交 `70bcc5ae59c714c14335972be061bbe01b985c63`
+改为识别完整末行、当前 nonce 和 summary；失败 summary 结束等待但仍由严格验证器判失败。
+新增真实 LF/CRLF、未结束/截断、错误 nonce、非 summary 及失败 summary 回归。
+
+完整冻结主机回归 1472 项、跳过 1 项、231.551 秒，其余通过；报告
+`host-batched-runtime-frozen-r36-02.json`，日志 SHA256
+`7cfe17f512cd637c47a0db213203d97a20dd66d0952a25760cc580beeb83c824`。
+冻结目录 `/Volumes/PSSD/qemu/build-inputs/host-batched-runtime-h8rkpwhb`，树 SHA256
+`7d0a8a01be4a2e8825753bfd067721ce042922ae82d02b00c65f03a1e49051b6`。
+下面的 latest-batch-01 在启动任何 VM 前已取消，由 `after-r36-latest-batch-02.py`
+等待相同前置实例退出并执行这份修正后的冻结测试，输出 `r36-latest-full-runtime-02.json`。
+执行前后核对冻结文件清单；仍只复用 R36 代表归档，不重打镜像、不放行其余五包。
+尚无这轮实际亮度回调结果，严格缺口计数不变。
+
 ## R36 后续同包整批验证排程（尚未通过来宾门禁）
 
 提交 `0d5e35e2dcb63e25ca72827c7af9d793d67727c3` 的冻结主机回归完成：
