@@ -46,7 +46,22 @@ section table 的位置/大小/索引）、所有 program headers 和 PT_LOAD co
 调整校验只容许该非加载元数据裁剪；实际动态符号/重定位、代码、常量、初始化数据、
 全部 program headers 和 ABI 仍精确绑定，原编译整文件 hash 仍保留。三个 ELF ABI、
 代码篡改、header/load 边界与签名 HAP 错配纳入 11 项严格主机回归，均通过。
-原失败报告与归档保留，等待新的冻结整批回归/三 ABI HAP 和新代表包运行。
+原失败报告与归档保留。提交 `a21d41b707c44a4ab46e70704fa24fb595751a55`
+冻结树 `e0b89a9d2ac804d55b2d7fff1de70a7c2350d24dbca304eb6577ba08f27026cd`
+的完整主机回归 1671 项、跳过 1 项、320.525 秒，其余通过，输入不变；报告
+`host-r40-frozen-batch-03.json` SHA256
+`62989229aac983cadba1889c1cac06926c8223e0162c3d39e5b6ceaa9fb36bf1`，日志
+SHA256 `7820505f730c9212b7fb6c956608ec30805d5dca2834f2155c010d0a10f61376`。
+
+同冻结树三个 ABI 的实际 API26 Release native/类型 HAP 编译均通过，输入不变；报告
+`avc-default-compilation-r40-03/evidence.json` SHA256
+`f6934d5d1c1d89204729eb6fa2ca4556c57f54da5617ebb63563a45e1ccd57af`。
+02 的三个 HAP 均编译成功，但 x86_64 的 unsigned HAP 使用既有 Arkdown 嵌套
+native staging 路径，严格签名 HAP 布局检查拒绝。03 使用已有签名前归一化器生成新的
+unsigned 诊断归档，逐项记录原/新归档与 normalizer 哈希；native 字节和模块权限
+保持不变，三个 ABI 的真实加载 ELF 均与编译产物精确一致。保留 02 原始失败；
+没有放宽签名 HAP 校验或改写原归档。这些结果仍不证明签名安装、来宾默认 AVC
+编解码或媒体管线可用，新代表包实际运行门槛尚未通过。
 
 ## R40 媒体 ResultSet 下一批候选（未入 R39、未计入闭环）
 
