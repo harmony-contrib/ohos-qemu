@@ -108,11 +108,20 @@ class EthernetControlResultTests(unittest.TestCase):
             with self.assertRaises(ValueError): page(nonce, role)
 
     def test_false_success_carrier_only_boolean_and_invalid_flags_fail(self):
-        for values in ([1, 0, 4099], [1, 0, 1], [1, 0, -1], [1, 0, 65536], [1, 0, True], [1, 0, '0x0']):
+        for values in ([1, 0, 4099], [1, 0, 1], [1, 0, -1], [1, 0, 0x100000000], [1, 0, True], [1, 0, '0x0']):
             rows = observations('system', 'seed'); rows[2]['values'] = values
             with self.subTest(values=values), self.assertRaises(ValueError): self.check(rows)
         rows = observations('system', 'seed'); rows[1]['values'] = [0, 1, 4099]
         with self.assertRaises(ValueError): self.check(rows)
+
+    def test_full_kernel_flags_are_not_truncated_to_ioctl_short_or_carrier_state(self):
+        rows = observations('system', 'seed')
+        for row, (_, value) in zip(rows, expected('system', 'seed')):
+            if type(value) is bool:
+                # Linux flags include bits >=16; only IFF_UP is the admin switch.
+                row['values'][2] = 0xFFFFFFFF if value else 0xFFFFFFFE
+        self.check(rows)
+        self.assertIn('flags > 0xFFFFFFFF', page(RUN, 'system'))
 
     def test_missing_reordered_failed_foreign_root_and_wrong_denials_fail(self):
         value = observations('system', 'seed')

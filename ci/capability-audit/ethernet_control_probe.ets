@@ -26,7 +26,7 @@ struct Index {
     const text: string = fs.readTextSync('/sys/class/net/eth0/flags').trim();
     if (!/^0x[0-9a-fA-F]+$/.test(text)) { throw new Error('missing real eth0 kernel flags'); }
     const flags = Number.parseInt(text.substring(2), 16);
-    if (!Number.isInteger(flags) || flags < 0 || flags > 65535) { throw new Error('invalid kernel flags'); }
+    if (!Number.isInteger(flags) || flags < 0 || flags > 0xFFFFFFFF) { throw new Error('invalid kernel flags'); }
     this.record(name, [typeof enabled === 'boolean' ? 1 : 0, enabled ? 1 : 0, flags]);
   }
   private async denied(method: number): Promise<number[]> {

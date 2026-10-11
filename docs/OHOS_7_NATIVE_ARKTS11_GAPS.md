@@ -67,6 +67,18 @@ root 修改网卡、权限或注入库。读取失败不能跳过。三角色 HA
 补齐真实 account-100/AppRunningRecords 形状后重跑，没有放宽生产验证器。
 台账仍为 **158 / 281 闭环、123 未闭环**，没有启动其余五包或交付六包。
 
+Ethernet 主提交 `de172b3836a8568275c3cd92998571e7992089be` 的冻结集中主机回归
+`host-r39-frozen-batch-06.json`：**1579 项、跳过 1 项、256.262 秒，其余通过**，
+输入不变；树 SHA256 `654f9c8b2de16d4b1b9c6e5df5236ce5dcdee5f053a0c0d8248d742aae454fe4`，
+日志 SHA256 `9e2bb6fd2ee40d20bf454040b34160f331cd094b9ce44202a180eb4336c21a7b`。
+随后核对固定 Linux 6.6 的 `include/uapi/linux/if.h`：网卡 flags 存在 16 位以上
+标志，不能将 sysfs 的完整 flags 当作 ioctl short 限为 65535。探针/严格验证器
+改为 uint32 域，只核对 IFF_UP，不把 carrier/其他高位当作全局管理开关；新增拒绝
+超出 uint32 和合法高位保留的夹具，7 项严格验证器回归通过。
+更新源的三角色实际 API26 HAP `ethernet-control-haps-r39-02.json` 编译通过，输入
+不变，SHA256 `cf45edf7191ec0ef78525b8a074da52253894af9d48b428d0a74f2e21d3a37f6`。
+这一追加不追改 `06` 的冻结输入，后续集中批次须包含高位边界修正。
+
 ## R39 追加网络/边界与集中验证入口（候选，未计入闭环）
 
 追加路由前缀候选：地址前缀与路由前缀是两个不同契约，不能复用地址的

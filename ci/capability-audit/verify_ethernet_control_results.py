@@ -47,7 +47,7 @@ def verify(text, run_id, role, phase, identity_text):
                 raise ValueError('Ethernet caller must match actual non-root installed identity')
         elif type(expected_value) is bool:
             if (len(values) != 3 or values[:2] != [1, int(expected_value)] or
-                    not 0 <= values[2] <= 65535 or bool(values[2] & 1) != expected_value):
+                    not 0 <= values[2] <= 0xFFFFFFFF or bool(values[2] & 1) != expected_value):
                 raise ValueError('global policy and actual kernel administrative flags differ: ' + name)
         elif values != expected_value:
             raise ValueError('actual numeric denial/summary differs: ' + name)
