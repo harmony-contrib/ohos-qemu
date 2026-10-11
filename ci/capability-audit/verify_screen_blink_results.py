@@ -95,7 +95,7 @@ def classify_pixels(path, rect):
 
 
 def verify_frames(frames, rect, mode):
-    if mode not in ('continuous', 'single', 'off') or not isinstance(frames, list) or len(frames) < 3:
+    if mode not in ('continuous', 'single', 'armed-single', 'off') or not isinstance(frames, list) or len(frames) < 3:
         raise ValueError('complete real compositor frame sequence required')
     previous = -1.0
     kinds = []
@@ -117,6 +117,9 @@ def verify_frames(frames, rect, mode):
     if mode == 'single' and ('on' not in kinds or kinds[-1] != 'off' or
                             transitions != 1 or kinds[0] != 'on'):
         raise ValueError('single mode must render once and clear without an explicit stop')
+    if mode == 'armed-single' and ('on' not in kinds or kinds[0] != 'off' or
+                                  kinds[-1] != 'off' or transitions != 2):
+        raise ValueError('armed single must show baseline, one actual pulse and automatic clear')
     if mode == 'off' and any(kind != 'off' for kind in kinds):
         raise ValueError('stopped/disabled/dead caller left visible screen pulse')
     return kinds

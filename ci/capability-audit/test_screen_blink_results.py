@@ -79,6 +79,11 @@ class BlinkResultTests(unittest.TestCase):
             self.assertEqual(verify_frames(frames, rect, 'continuous'), ['on', 'off'] * 3)
             verify_frames([frames[0], frames[1], frames[3]], rect, 'single')
             verify_frames(frames[1::2], rect, 'off')
+            self.assertEqual(verify_frames([frames[1], frames[2], frames[3], frames[5]], rect, 'armed-single'),
+                             ['off', 'on', 'off', 'off'])
+            for invalid in (frames[1::2], frames, frames[:3], frames[1:5]):
+                with self.assertRaises(ValueError):
+                    verify_frames(invalid, rect, 'armed-single')
             baseline = dict(path=frames[1]['path'], sha256=frames[1]['sha256'])
             extra = Path(directory) / 'last-off.png'
             Image.new('RGB', (200, 200), (32, 48, 64)).save(extra)

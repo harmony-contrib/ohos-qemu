@@ -19,6 +19,7 @@ struct Index {
   private readonly restorePath: string = '/data/storage/el2/base/files/screen-blink-__BLINK_RUN__-restore';
   private readonly settingKey: string = 'accessibility_flash_reminder_switch';
   private original: string = '';
+  private singleTimer: number = -1;
 
   private record(name: string, values: number[], text: string = ''): void {
     const row: BlinkRow = { runId: this.runId, role: this.role, name, values, text };
@@ -60,8 +61,23 @@ struct Index {
   }
 
   private restore(): void {
+    if (this.singleTimer !== -1) {
+      clearTimeout(this.singleTimer);
+      this.singleTimer = -1;
+    }
     this.control('cleanup.stop', false, config.BlinkingMode.CONTINUOUS_BLINK);
     this.master(this.original, 'cleanup.master');
+  }
+
+  private armSingle(): void {
+    if (this.singleTimer !== -1) { this.record('single.already.armed', [0]); return; }
+    this.record('single.armed', [1]);
+    // Allow the host to begin real compositor sampling before the short pulse.
+    // The timer invokes the same public API; it never draws a test pulse.
+    this.singleTimer = setTimeout(() => {
+      this.singleTimer = -1;
+      this.control('single.start', true, config.BlinkingMode.SINGLE_BLINK);
+    }, 2500);
   }
 
   aboutToAppear(): void {
@@ -112,8 +128,7 @@ struct Index {
           this.control('continuous.start', true, config.BlinkingMode.CONTINUOUS_BLINK))
         Button('Stop').id('blink-stop').onClick(() =>
           this.control('continuous.stop', false, config.BlinkingMode.CONTINUOUS_BLINK))
-        Button('Single').id('blink-single').onClick(() =>
-          this.control('single.start', true, config.BlinkingMode.SINGLE_BLINK))
+        Button('Single').id('blink-single').onClick(() => this.armSingle())
         Button('Wrong scenario').id('blink-wrong-stop').onClick(() => this.control('wrong.stop', false,
           config.BlinkingMode.CONTINUOUS_BLINK, config.BlinkingScenario.CALL))
       }

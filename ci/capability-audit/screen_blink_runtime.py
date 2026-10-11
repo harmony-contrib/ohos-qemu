@@ -123,10 +123,11 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             click('blink-stop', 'continuous.stop', [0, 0, 1])
             capture('stopped', rect, 'off', 1, continue_after_restored=True)
             click('blink-stop', 'continuous.stop', [0, 0, 1])
-            # Capture immediately after the public single start. A missed pulse
-            # is a failed test, not grounds to accept only a return code.
-            click('blink-single', 'single.start', [0, 0, 1])
-            capture('single-auto-clear', rect, 'single', 3, continue_after_restored=True)
+            # Begin sampling before the timed public call, not after the
+            # UI input/result round trip may have consumed the entire pulse.
+            click('blink-single', 'single.armed', [1])
+            capture('single-auto-clear', rect, 'armed-single', 6, continue_after_restored=True)
+            observe('single.start', [0, 0, 1])
             click('blink-start', 'continuous.start', [0, 0, 1])
             click('blink-disable', 'master.disabled', [1], '0')
             time.sleep(1)

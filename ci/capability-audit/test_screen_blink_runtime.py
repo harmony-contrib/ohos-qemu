@@ -49,8 +49,8 @@ class RuntimeTests(unittest.TestCase):
                     state['active'] = False
                     row('continuous.stop', [0, 0, 1])
                 elif identifier == 'blink-single':
-                    state['single'] = 1
-                    row('single.start', [0, 0, 1])
+                    state['single'] = 3
+                    row('single.armed', [1])
                 elif identifier == 'blink-restore':
                     state.update(enabled=False, active=False)
                     row('cleanup.stop', [0, 0, 1])
@@ -66,8 +66,10 @@ class RuntimeTests(unittest.TestCase):
                     on = True
                     state['residual_seen'] = True
                 if state['single']:
-                    on = not missed_single
-                    state['single'] = 0
+                    state['single'] -= 1
+                    if state['single'] == 0:
+                        on = not missed_single
+                        row('single.start', [0, 0, 1])
                 path = Path(directory) / f"frame-{state['sequence']}.png"
                 color = (130, 140, 36) if on else (32, 48, 64)
                 if permanent_splash or (splash and state['sequence'] == 1):
