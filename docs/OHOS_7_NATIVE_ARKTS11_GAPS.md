@@ -1,5 +1,23 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R36 仅 ARM64 phone 本地构建进行中
+
+提交 `8d4736ef5153ede3da955ed8bf71a08133b0022c` 的冻结主机回归：1456 项、
+跳过 1 项、223.064 秒，其余通过；`host-screen-blink-frozen-r36-01.json`。
+日志 SHA256 `c3e5e97fa647ae80ee67e263a6e189ad4c813f05cb9fab3a70c70193aa7c1a7c`。
+实际 Docker `/work` 为 `/Volumes/PSSD/qemu/build-inputs/phone-Mv8IXH`，与通过主机回归
+的冻结树逐文件一致，树 SHA256
+`cbb298e05414024df29be72e04f2f7a765059238f23ba07d3922a02ddb869aa4`。
+
+构建控制器 `build-r36-blink-contact-vpn-photo-representative-01.py`，记录
+`r36-representative-build-01.json`；目标目录
+`/Volumes/PSSD/qemu/packages/first-blink-contact-vpn-photo-7.0-release-20261011-r36`。
+只构建 ARM64 phone；归档尚未交付，不存在其余五包的放行。
+`after-r36-batch-full-01.py` 等待真实构建与冻结主机回归成功，核对新归档哈希后，
+从该冻结树执行完整新包回归，写 `r36-independent-full-runtime-01.json`。
+这些控制器均无矩阵启动逻辑。R36 冻结脚本含既有严格总清单、联系人、照片和 VPN
+回归；闪屏测试 HAP/签名器已有，但实际像素/权限/生命周期完整运行器仍待补齐。
+
 ## 同批无障碍闪屏候选（尚未关闭两项运行缺口）
 
 `accessibility/screen_blink` 将公开同步调用接入真实 NAPI → client → 新增末尾 IDL →
