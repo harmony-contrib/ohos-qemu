@@ -248,6 +248,16 @@ def exercise(ui, pointer, read_results, run_id, timeout=60, capture_after_drag=N
                 time.sleep(0.02)
             if capture_after_drag is not None:
                 capture_after_drag(prefix)
+            # onDragStart precedes asynchronous preview/data publication. Do
+            # not assume that a burst of moves has already become a system
+            # drag. Observe the actual callback, then send one gentle physical
+            # arrival inside the same target after startup has had time to run.
+            text, _ = observed(lambda rows: has(rows, generation, 'drag.started'), prefix + '-actual-drag-start')
+            checkpoint(cycle, 'initiated', text)
+            time.sleep(1)
+            pointer.move([finish[0] + 2, finish[1]], prefix + '.drag.post-start-arrival')
+            if capture_after_drag is not None:
+                capture_after_drag(prefix + '-post-start-arrival')
             text, _ = observed(lambda rows: has(rows, generation, 'callback', 0), prefix + '-real-BEGIN')
             checkpoint(cycle, 'begin', text)
             if mode == 'normal':
@@ -375,7 +385,7 @@ def verify_actions(actions, raw_text, run_id, archive_sha, boot_id, arch, device
             raise ValueError('actual physical drag modes or generations changed')
         prefix = 'g' + str(generation)
         checkpoints = cycle.get('checkpoints')
-        names = ['ready', 'begin'] + ([] if mode == 'cancel' else ['terminal']) + (
+        names = ['ready', 'initiated', 'begin'] + ([] if mode == 'cancel' else ['terminal']) + (
             ['held-quiet'] if mode == 'abort' else []) + ['released', 'quiet']
         if not isinstance(checkpoints, list) or [row.get('name') for row in checkpoints] != names:
             raise ValueError('actual held, released and quiet observations are incomplete')
@@ -423,6 +433,17 @@ def verify_actions(actions, raw_text, run_id, archive_sha, boot_id, arch, device
             moved = input_request(prefix + '.drag.step.' + str(step), move_arguments(point, size))
             if step == 1 and moved['host_ns'] - press['completed_ns'] < 1_000_000_000:
                 raise ValueError('real source long press was not held before crossing the target boundary')
+        initiated, rows = checkpoint('initiated')
+        if not any(row['name'] == 'drag.started' for row in rows) or any(
+                row['name'] in ('drop', 'drag.ended') for row in rows):
+            raise ValueError('actual source drag callback must precede the held arrival')
+        arrival = [finish[0] + 2, finish[1]]
+        left, top, width, height = nodes['target']['rect']
+        if not left < arrival[0] < left + width or not top < arrival[1] < top + height:
+            raise ValueError('post-start physical arrival must stay inside the actual target')
+        arrived = input_request(prefix + '.drag.post-start-arrival', move_arguments(arrival, size))
+        if arrived['host_ns'] - initiated['host_ns'] < 1_000_000_000:
+            raise ValueError('physical arrival did not follow the observed source startup interval')
         _, rows = checkpoint('begin')
         callbacks = [row for row in rows if row['name'] == 'callback']
         if not callbacks or callbacks[0]['state'] != 0 or (mode == 'cancel' and len(callbacks) != 1):

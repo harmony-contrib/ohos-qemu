@@ -48,6 +48,45 @@ Unix CLI/环境变量/直接核心脚本均覆盖，Windows 生成参数也调�
 冻结。没有伪造 acceptance receipt、改旧 recipe、改归档或追改台账；源 snapshot、
 原始失败、私有 QMP 动作、日志与电源恢复记录保留，拥有的 VM 已关闭。
 
+### R39 真实 Spring 悬停诊断通过，仍不替代新包验收
+
+07 增加目标 ENTER/MOVE 被动 journal 后仍未进入 BEGIN，失败保留。源端
+onDragStart 早于异步预览和 UDMF 发布；八次快速移动不能证明服务已经开始接收
+目标悬停。08 在实际 source callback 已观测后保持按下，等待一秒，再向实际
+目标内偏移两像素发送一次真实 QMP 移动。没有主动调用 Spring 回调、伪造拖拽
+数据、修改原生延时或放宽契约断言；严格重放新增的观测前缀、时序和物理请求。
+
+原 R38 归档的独立 ARM64/HVF phone 诊断 08 通过四轮真实拖拽、11 次原生回调：
+BEGIN、仅 BEGIN 可更新配置、abort 不产生 CANCEL、同一拖拽按住并微移后仍
+无回调、释放后的下一次重入、CANCEL 可选数据省略均通过。boot
+`839da586-9054-4719-a4fe-59ea36b8272f`、私有 HDC `127.0.0.1:54886`，
+实际 QEMU 11.0.3、API26 Release SDK；命令与原始 QMP 动作在独立证据内。
+输入不变、电源恢复且拥有的 VM 关闭。08 未消费新 converter/native 链接或
+新启动脚本，因此不能证明这些候选已经入包，也不修改 R38 失败或台账计数。
+
+- `r39-spring-loading-diagnostic-07/evidence.json` SHA256
+  `37dd90a3f229a95b1c45fdc0dc28599828db7adbdbc8bdbbe2ab39d5dbc9b559`。
+- `r39-spring-loading-diagnostic-08/evidence.json` SHA256
+  `800b95382b112df08c5902f616147e7adc30c9683c5a0ed2764439b1c0b6d93a`；
+  子报告 SHA256 `f11b87211efa884e981b3a63fd5f032db744ea3315ad7a00cd5fb1c338c95496`。
+- 08 真实 callback 原文 SHA256
+  `0a11f6969351e47b909c471628c34db032e5550da8b0be24abecc07c29839937`，
+  动作 SHA256 `321589fb6dd2efef51e539f2cdbd240365011da5d6c212b334acbf49f3bb1932`。
+
+提交 `6f4477f75144ea1dc5bd26336ae49edc54c83511` 的冻结主机回归
+`host-r39-frozen-batch-12.json`：**1623 项、跳过 1 项、306.337 秒，其余通过**，
+输入不变；树 SHA256 `6bffb1869398d686daa6e4c4572d895114702a5f2c3967c2c653bf70a12fc921`，
+日志 SHA256 `ac693361d23b0908ab675e47000465bffe3601917e29d08ed6c747b7e8011dca`，
+报告 SHA256 `3421f466bdf9f27137d716ca9e5460de6830199775aaf3253b6833361e6a489c`。
+该冻结批次不包含随后新增的 startup 观测/到达动作，不能混合声称其回归覆盖。
+
+另清理已经失败终止的 03/04/05/06 四组确切 images 副本，约 18.86 GiB，
+删除前核对终态、恢复电源、无打开文件及八个普通无链接镜像文件；原归档、
+metadata、日志及证据均保留，活动 07 未触及。收据
+`r39-spring-unused-images-cleanup-03-06.json` SHA256
+`32385a51d776cc5aec372323a8a901eca792e7ff6220282cde5024892d3ece91`。
+原始镜像可从归档恢复，删除副本的临时 userdata 状态不可恢复。
+
 ## R38 实际首包回归结束：门槛未通过，下一轮批量修复
 
 首包归档：

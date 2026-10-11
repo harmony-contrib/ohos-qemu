@@ -98,6 +98,9 @@ def evidence(root):
             point = [a + (b - a) * step // 8 for a, b in zip(start, finish)]
             request('input-send-event', prefix + '.drag.step.' + str(step), move_arguments(point, size),
                     delay=1_100_000_000 if step == 1 else 100_000_000)
+        checkpoint('initiated', 1)
+        request('input-send-event', prefix + '.drag.post-start-arrival',
+                move_arguments([finish[0] + 2, finish[1]], size), delay=1_100_000_000)
         begin_index = 2 if mode == 'cancel' else 3
         checkpoint('begin', begin_index)
         if mode != 'cancel':
@@ -167,7 +170,7 @@ class SpringLoadingInputTests(unittest.TestCase):
                 changed = copy.deepcopy(actions); changed[field] = value
                 with self.subTest(field=field), self.assertRaises(ValueError): check(changed, raw)
             changed = copy.deepcopy(actions)
-            changed['cycles'][1]['checkpoints'][3]['host_ns'] -= 1_500_000_000
+            changed['cycles'][1]['checkpoints'][4]['host_ns'] -= 1_500_000_000
             with self.assertRaises(ValueError): check(changed, raw)
             changed = copy.deepcopy(actions)
             next(row for row in changed['requests'] if row['label'] == 'g1.drag.step.1')['host_ns'] -= 1_000_000_000
@@ -182,7 +185,7 @@ class SpringLoadingInputTests(unittest.TestCase):
             for path in (Path(actions['boot']), Path(actions['pointer-owner-before']['process']),
                          Path(actions['cycles'][0]['geometry']['layout']),
                          Path(actions['cycles'][0]['geometry']['screenshot']),
-                         Path(actions['cycles'][1]['checkpoints'][3]['results'])):
+                         Path(actions['cycles'][1]['checkpoints'][4]['results'])):
                 original = path.read_bytes(); path.write_bytes(original + b' changed')
                 with self.subTest(path=path), self.assertRaises(ValueError): check(actions, raw)
                 path.write_bytes(original)
@@ -206,6 +209,23 @@ class SpringLoadingInputTests(unittest.TestCase):
             changed['requests'][0]['reply'] = [row for row in changed['requests'][0]['reply']
                                                if row['name'] != 'human-monitor-command']
             with self.assertRaises(ValueError): check(changed, raw)
+
+    def test_observed_startup_and_real_held_arrival_are_not_optional(self):
+        with tempfile.TemporaryDirectory() as directory:
+            actions, raw = evidence(Path(directory))
+            for cycle_index in range(4):
+                changed = copy.deepcopy(actions)
+                del changed['cycles'][cycle_index]['checkpoints'][1]
+                with self.subTest(cycle=cycle_index, mutation='no-startup-observation'), self.assertRaises(ValueError):
+                    check(changed, raw)
+                changed = copy.deepcopy(actions)
+                cycle = changed['cycles'][cycle_index]
+                arrival = next(row for row in changed['requests'] if row['label'] ==
+                               'g' + str(cycle['generation']) + '.drag.post-start-arrival')
+                arrival['host_ns'] = cycle['checkpoints'][1]['host_ns'] + 900_000_000
+                arrival['completed_ns'] = arrival['host_ns'] + 1000
+                with self.subTest(cycle=cycle_index, mutation='arrival-too-early'), self.assertRaises(ValueError):
+                    check(changed, raw)
 
 
 if __name__ == '__main__': unittest.main()
