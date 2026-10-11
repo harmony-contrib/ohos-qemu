@@ -161,11 +161,11 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
                       '--app-context', '--probe-exit-code', '0']
     if persona in ('const-enum', 'arkts-exports', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile'):
         arguments += ['--arch', arch]
-    if persona in ('audio-stream', 'avc-media', 'audio-suite-effects', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile'):
+    if persona in ('audio-stream', 'audio-suite-effects', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'camera', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile'):
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -446,7 +446,7 @@ def run(args):
         results = args.output / 'results.log'
         results.write_text(result)
         verification = args.output / 'verified-result.json'
-        if args.persona in ('rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
+        if args.persona in ('avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs))
             ui_arguments += ['--inputs', str(inputs)]

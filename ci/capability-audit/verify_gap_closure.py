@@ -562,6 +562,27 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(rpc_runtime[0]), 'sha256': digest(rpc_runtime[0]),
                 'verifier': 'ordinary_native_base_objects_parcel_roundtrips_and_actual_request_completions',
                 'not_claimed': actual['not_claimed']}
+    avc = child('avc-media/evidence.json')
+    if avc:
+        from verify_avc_media_results import verify_evidence as verify_avc
+        boot_path = runtime / 'boot/boot.json'
+        if boot_path.is_symlink() or not boot_path.is_file():
+            raise ValueError('default AVC closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('default AVC proof requires unchanged acceptance package')
+        actual = verify_avc(avc[1], archive_sha, boot_id, environment['guest_arch'],
+                            device_type, environment['target'])
+        for contract in actual['closed']:
+            closed[contract] = {'evidence': str(avc[0]), 'sha256': digest(avc[0]),
+                'verifier': 'ordinary_default_MIME_and_capability_name_AVC_encode_decode_48_real_challenged_frames',
+                'not_claimed': actual['not_claimed']}
     spring = child('spring-loading/evidence.json')
     if spring:
         from verify_spring_loading_results import verify_evidence as verify_spring

@@ -12,6 +12,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 #include <unistd.h>
 
@@ -266,10 +267,12 @@ bool Decode(FILE *out, const char *run, int profile, int mode, int cycle, const 
     auto step = [&](const char *name, int actual, int wanted = AV_ERR_OK) {
         return Step(out, run, profile, mode, cycle, name, actual, wanted);
     };
-    OH_AVCapability *capability = OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_AVC, false, SOFTWARE);
+    OH_AVCapability *capability = OH_AVCodec_GetCapability(OH_AVCODEC_MIMETYPE_VIDEO_AVC, false);
     const char *name = capability == nullptr || OH_AVCapability_IsHardware(capability) ? nullptr : OH_AVCapability_GetName(capability);
-    OH_AVCodec *codec = name == nullptr ? nullptr : OH_VideoDecoder_CreateByName(name);
-    bool valid = step("decoder_create", codec != nullptr, 1);
+    OH_AVCodec *codec = name == nullptr ? nullptr : (cycle == 1 ?
+        OH_VideoDecoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_AVC) : OH_VideoDecoder_CreateByName(name));
+    bool valid = step("decoder_creation_path", cycle, cycle);
+    valid &= step("decoder_create", codec != nullptr, 1);
     if (codec == nullptr) return false;
     const OH_AVCodecCallback callbacks = {Error, Changed, NeedInput, Output};
     context->callbackStorageAttached = true;
@@ -318,10 +321,12 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     auto step = [&](const char *name, int actual, int wanted = AV_ERR_OK) {
         return Step(out, run, profile, mode, cycle, name, actual, wanted);
     };
-    OH_AVCapability *capability = OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_AVC, true, SOFTWARE);
+    OH_AVCapability *capability = OH_AVCodec_GetCapability(OH_AVCODEC_MIMETYPE_VIDEO_AVC, true);
     const char *name = capability == nullptr ? nullptr : OH_AVCapability_GetName(capability);
-    OH_AVCodec *codec = name == nullptr ? nullptr : OH_VideoEncoder_CreateByName(name);
-    bool valid = step("software_encoder_create", codec != nullptr && !OH_AVCapability_IsHardware(capability), 1);
+    OH_AVCodec *codec = name == nullptr ? nullptr : (cycle == 1 ?
+        OH_VideoEncoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_AVC) : OH_VideoEncoder_CreateByName(name));
+    bool valid = step("encoder_creation_path", cycle, cycle);
+    valid &= step("default_encoder_create", codec != nullptr && !OH_AVCapability_IsHardware(capability), 1);
     if (codec == nullptr) return false;
     const OH_AVCodecCallback callbacks = {Error, Changed, NeedInput, Output};
     context->callbackStorageAttached = true;
@@ -378,6 +383,27 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     fflush(out);
     return valid;
 }
+
+bool DefaultIsSoftware(bool encoder)
+{
+    OH_AVCapability *capability = OH_AVCodec_GetCapability(OH_AVCODEC_MIMETYPE_VIDEO_AVC, encoder);
+    const char *selected = capability == nullptr ? nullptr : OH_AVCapability_GetName(capability);
+    if (selected == nullptr || OH_AVCapability_IsHardware(capability)) return false;
+    const std::string name(selected);
+    OH_AVCapability *software = OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_AVC, encoder, SOFTWARE);
+    const char *softwareName = software == nullptr ? nullptr : OH_AVCapability_GetName(software);
+    return softwareName != nullptr && !OH_AVCapability_IsHardware(software) && name == softwareName;
+}
+
+bool RejectName(const char *name, bool encoder)
+{
+    OH_AVCodec *codec = encoder ? OH_VideoEncoder_CreateByName(name) : OH_VideoDecoder_CreateByName(name);
+    if (codec == nullptr) return true;
+    // Always destroy an unexpected live instance, even though this boundary fails.
+    if (encoder) OH_VideoEncoder_Destroy(codec);
+    else OH_VideoDecoder_Destroy(codec);
+    return false;
+}
 } // namespace
 
 extern "C" int RunAvcMediaProbe(FILE *out, const char *run)
@@ -387,6 +413,23 @@ extern "C" int RunAvcMediaProbe(FILE *out, const char *run)
     bool passed = Step(out, run, -1, -1, -1, "null_encoder_start", OH_VideoEncoder_Start(nullptr), AV_ERR_INVALID_VAL);
     passed &= Step(out, run, -1, -1, -1, "null_decoder_start", OH_VideoDecoder_Start(nullptr), AV_ERR_INVALID_VAL);
     passed &= Step(out, run, -1, -1, -1, "null_encoder_configure", OH_VideoEncoder_Configure(nullptr, nullptr), AV_ERR_INVALID_VAL);
+    auto boundary = [&](const char *name, bool actual) {
+        passed &= Step(out, run, -1, -1, -1, name, actual, 1);
+    };
+    boundary("avc_encoder_default_is_software", DefaultIsSoftware(true));
+    boundary("avc_decoder_default_is_software", DefaultIsSoftware(false));
+    boundary("avc_encoder_hardware_absent", OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_AVC, true, HARDWARE) == nullptr);
+    boundary("avc_decoder_hardware_absent", OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_AVC, false, HARDWARE) == nullptr);
+    boundary("hevc_encoder_unadvertised", OH_AVCodec_GetCapability(OH_AVCODEC_MIMETYPE_VIDEO_HEVC, true) == nullptr);
+    boundary("hevc_encoder_hardware_absent", OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_HEVC, true, HARDWARE) == nullptr);
+    boundary("hevc_decoder_hardware_absent", OH_AVCodec_GetCapabilityByCategory(OH_AVCODEC_MIMETYPE_VIDEO_HEVC, false, HARDWARE) == nullptr);
+    boundary("legacy_rk_encoder_avc_rejected", RejectName("OMX.rk.video_encoder.avc", true));
+    boundary("legacy_rk_encoder_hevc_rejected", RejectName("OMX.rk.video_encoder.hevc", true));
+    boundary("legacy_rk_decoder_avc_rejected", RejectName("OMX.rk.video_decoder.avc", false));
+    boundary("legacy_rk_decoder_hevc_rejected", RejectName("OMX.rk.video_decoder.hevc", false));
+    OH_AVCodec *unsupported = OH_VideoEncoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_HEVC);
+    boundary("hevc_create_by_mime_unsupported", unsupported == nullptr);
+    if (unsupported != nullptr) OH_VideoEncoder_Destroy(unsupported);
     const int profiles[] = {AVC_PROFILE_BASELINE, AVC_PROFILE_MAIN};
     const int modes[] = {BITRATE_MODE_CBR, BITRATE_MODE_VBR, BITRATE_MODE_CQ};
     for (int profile : profiles) for (int mode : modes) for (int cycle = 1; cycle <= 2; ++cycle) {

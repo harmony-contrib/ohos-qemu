@@ -13,7 +13,7 @@ struct Index {
   }
   build() {
     Column() {
-      Text('QEMU software AVC media audit').fontSize(24)
+      Text('QEMU default AVC media audit').fontSize(24)
       Text(this.note).fontSize(18)
     }.width('100%').height('100%').justifyContent(FlexAlign.Center).backgroundColor(Color.White)
   }

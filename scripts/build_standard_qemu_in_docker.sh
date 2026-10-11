@@ -347,6 +347,7 @@ PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media
 PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/public_record_classes/apply.sh"
 SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
+CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/codec_hardware_profile/apply.sh"
 QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
 AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_library_path/apply.sh"
 AUDIO_SUITE_DSP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_dsp/apply.sh"
@@ -3144,6 +3145,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_record_classes_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_eos_component.log"
+  bash "${CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_codec_hardware_profile_component.log"
   avc_component_args=(--source-root "${OHOS_ROOT}" --artifact-root "${QEMU_AVC_ARTIFACTS}")
   for avc_product in "${PRODUCTS[@]}"; do
     avc_component_args+=(--product "${avc_product}")

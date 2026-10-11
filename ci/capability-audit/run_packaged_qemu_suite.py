@@ -471,6 +471,8 @@ def run(args):
                     check('completion-handler', path, [record])
                 if persona == 'rpc-runtime':
                     check('rpc-runtime', path, [record])
+                if persona == 'avc-media':
+                    check('avc-media', path, [record])
                 if persona == 'image-metadata':
                     check('image-metadata', path, [record])
                 if persona == 'observer-info':

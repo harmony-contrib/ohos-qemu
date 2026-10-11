@@ -1,5 +1,36 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R40 默认视频编码器下一批候选（未入 R39、未计入闭环）
+
+补查发现：原 AVC 437 行回归显式选 SOFTWARE，不能证明默认能力选择、MIME 创建
+或录屏/转码可用。固定 `vendor/ohemu @ b56c5a95ec590543691278b85afe9fe228744163`
+的主 `hdf.hcs` 引入 `media_codec_capabilities.hcs`；实际 HDI 4.0
+CodecComponentConfig 读取 match_attr `media_codec_capabilities`，而不是独立 adapter HCB。
+该主配置及三个替代/旧版配置复制 RK OMX/MPP AVC/HEVC 硬件能力，但 QEMU board
+没有这些硬件实现。不能重命名软件实例为 OMX.rk 或把 software 测试当作默认路径验收。
+
+新增 `common/vendor/ohemu/codec_hardware_profile` 四个独立精确补丁，只清空这四份
+配置的硬件视频组。根节点、match_attr、transport、全部软件/音频组保持原字节；
+真实软件编码/解码由 AVCodec 原有后端注册。两画像/三 ABI 在 GN/遍历前统一应用，
+不取消 SDK/SysCap，不改权限、IPC、driver 或 dayu200 配置。
+精确源哈希、重复应用、局部应用、未知编辑、链接和错误 revision 回归通过。
+
+本地 Docker 只读固定 source，临时目录应用两次；真实 hc-gen 编译主 hdf.hcs
+和四份独立 HCS，并反编译实际 HCB，五项通过、原 source/tool 输入不变。
+报告 `codec-hardware-profile-r40-02.json` SHA256
+`951717d747d3edec4e865c07525a3fb5030019ab18143bf9920d025a77dc73a9`。
+01 的 HCB 编译/反编译进程成功，但诊断调用方误读 .hcs 而非工具生成的 .d.hcs，
+失败证据保留；不是镜像或 codec 运行失败。此检查不是新镜像行为证明。
+
+AVC 门槛改为 473 行：要求默认 AVC 编码/解码能力等于真实 software 选择，硬件
+AVC/HEVC 能力为空、旧 RK 名称创建拒绝、不假称 HEVC 编码支持。两 profile、三
+bitrate mode 各两轮，第一轮 CreateByMime、第二轮默认能力名 CreateByName；必须
+真实编码 48 帧、SPS/IDR/EOS、动态码率/CQ 拒绝、解码挑战像素及错误恢复。
+输入绑定真实源码、API26 Release headers、零权限模块、实际 native 编译命令/ELF，
+严格重放 archive/boot/ABI/profile/target，并核对签名 HAP 内真实 native binary。
+新包通过后最多关闭原“已广告 video encoder 创建失败”，不关闭 codec 全枚举、
+HEVC 编码或录制/录屏/转码管线；目前没有关闭任何台账项。
+
 ## R40 媒体 ResultSet 下一批候选（未入 R39、未计入闭环）
 
 固定 MediaLibrary `564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380` 的真实

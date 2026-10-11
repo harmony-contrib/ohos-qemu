@@ -17,7 +17,7 @@ from snapshot_build_inputs import digest_files
 from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
-                             "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects",
+                             "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects", "avc-media",
                              "application-home", "photos-asset", "photo-result-set", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "rpc-runtime", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler", "ethernet-control"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 
@@ -286,6 +286,12 @@ def verified_payload(name, path, identity, environment):
             sys.path.insert(0, str(audit))
             from verify_rpc_runtime_results import verify_evidence
             verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'])
+        elif name == 'avc-media':
+            audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
+            sys.path.insert(0, str(audit))
+            from verify_avc_media_results import verify_evidence
+            verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                            environment['device_type'], environment['target'])
         elif name == 'observer-info':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

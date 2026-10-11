@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from verify_avc_media_results import BOUNDARIES, encoder_steps, DECODER, PTS, INTERVAL, verify
+from verify_avc_media_results import BOUNDARIES, encoder_steps, decoder_steps, PTS, INTERVAL, verify
 
 RUN = '59671e19c36640e1a587bc11eb2e9a3d'
 UID = 20010036
@@ -27,14 +27,14 @@ def rows():
             for cycle in (1, 2):
                 key = profile, mode, cycle
                 common = dict(run_id=RUN, profile=profile, mode=mode, cycle=cycle)
-                step(encoder_steps(mode), key)
+                step(encoder_steps(mode, cycle), key)
                 result.append(dict(common, type='bitstream', pts=0, bytes=24, flags=8,
                                    sps_profile=66 if profile == 0 else 77))
                 for frame in range(4):
                     result.append(dict(common, type='bitstream', pts=PTS + frame * INTERVAL,
                                        bytes=200, flags=2 if frame in (0, 2) else 0, sps_profile=-1))
                 result.append(dict(common, type='bitstream', pts=PTS + 4 * INTERVAL, bytes=0, flags=1, sps_profile=-1))
-                step(DECODER, key)
+                step(decoder_steps(cycle), key)
                 for frame in range(4):
                     result.append(dict(common, type='pixels', frame=frame, pts=PTS + frame * INTERVAL,
                                        width=64, height=64, stride=64, format=1,
@@ -65,14 +65,14 @@ class AvcMediaVerifierTests(unittest.TestCase):
         with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
 
     def test_full_fixture_and_bm_prefix(self):
-        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 437)
+        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 473)
         verify(render(rows()), RUN, 'org.harmonycontrib.capabilityaudit:\n' + IDENTITY)
 
     def test_partial_stale_reordered_duplicate_cannot_pass(self):
         complete = rows()
         for broken in (complete[:-1], list(reversed(complete)), complete * 2, complete[:200] + complete[201:]):
             with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
-        for index in (0, 15, 20, 30, 100, 436):
+        for index in (0, 15, 20, 30, 100, 472):
             broken = rows()
             broken[index]['run_id'] = 'a' * 32
             with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
@@ -122,16 +122,17 @@ class AvcMediaVerifierTests(unittest.TestCase):
     def test_cli_keeps_failed_native_records_and_does_not_claim_full_gate(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for name, data in (('archive', 'host fixture only'), ('results', render(rows()[:-1])), ('identity', IDENTITY)):
+            for name, data in (('archive', 'host fixture only'), ('results', render(rows()[:-1])), ('identity', IDENTITY), ('inputs', '{}')):
                 (root / name).write_text(data)
             completed = subprocess.run([sys.executable, str(Path(__file__).with_name('verify_avc_media_results.py')),
                 '--archive', str(root / 'archive'), '--results', str(root / 'results'),
                 '--application-identity', str(root / 'identity'), '--run-id', RUN,
+                '--inputs', str(root / 'inputs'), '--arch', 'arm64',
                 '--output', str(root / 'report')], capture_output=True)
             evidence = json.loads((root / 'report').read_text())
             self.assertEqual(completed.returncode, 1)
             self.assertEqual(evidence['status'], 'fail')
-            self.assertEqual(len(evidence['observations']), 436)
+            self.assertEqual(len(evidence['observations']), 472)
             for key in ('first_artifact_behavior_gate_passed', 'hardware_codec_tested', 'hevc_tested',
                         'mathematical_CBR_conformance_tested'):
                 self.assertFalse(evidence[key])

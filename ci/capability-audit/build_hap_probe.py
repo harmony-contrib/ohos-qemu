@@ -347,7 +347,7 @@ if minimal_app:
                                          "usedScene": {"abilities": ["EntryAbility"], "when": "inuse"}}]
                                        if args.camera_only else [{"name": "ohos.permission.GET_WIFI_INFO"},
                                                                  {"name": "ohos.permission.SET_WIFI_INFO"}]
-                                       if args.wifi_scan_only else [{"name": "ohos.permission.INTERNET"}] if args.network_accounting_only else [] if (args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only) else [] if dedicated_contract_only else [{"name": "ohos.permission.INTERNET"}]),
+                                       if args.wifi_scan_only else [{"name": "ohos.permission.INTERNET"}] if args.network_accounting_only else [] if (args.avc_media_only or args.const_enum_only or args.arkts_exports_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only) else [] if dedicated_contract_only else [{"name": "ohos.permission.INTERNET"}]),
                 "abilities": [{
                     "name": "EntryAbility",
                     "srcEntry": "./ets/entryability/EntryAbility.ets",
@@ -2284,8 +2284,6 @@ if args.avc_media_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write("entry/src/main/ets/pages/Index.ets",
           Path(__file__).with_name("avc_media_probe.ets").read_text().replace("__AVC_RUN_ID__", challenge))
-    write("avc-media-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
-                                        "arch": args.arch, "role": "ordinary_app"})
 
 libs = root / "entry/libs" / abi
 libs.mkdir(parents=True, exist_ok=True)
@@ -2355,13 +2353,8 @@ if args.audio_stream_only:
                str(Path(__file__).with_name("probes") / "audio_stream.cpp"), "-lace_napi.z", "-lohaudio",
                "-o", str(libs / "libaudiostreamprobe.so")]
 if args.avc_media_only:
-    flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
-    command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
-               "--sysroot=" + str(native / "sysroot"), *flags, "-std=c++17", "-shared", "-fPIC", "-O2",
-               "-Wall", "-Wextra", "-Werror", str(Path(__file__).with_name("avc_media_hap_probe.cpp")),
-               str(Path(__file__).with_name("probes") / "avc_media.cpp"), "-lace_napi.z",
-               "-lnative_media_venc", "-lnative_media_vdec", "-lnative_media_codecbase", "-lnative_media_core",
-               "-o", str(libs / "libavcmediaprobe.so")]
+    from avc_media_contract import compile_command as avc_compile_command
+    command = avc_compile_command(root, args.sdk, args.arch)
 if args.audio_suite_effects_only:
     flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
     command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
@@ -2401,6 +2394,9 @@ if not (args.rpc_runtime_only or args.arkui_components_only or args.spring_loadi
     subprocess.run(command, check=True)
     if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only or args.runtime_enum_only or args.curve_only):
         shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")
+    if args.avc_media_only:
+        from avc_media_contract import inputs as avc_inputs
+        write('avc-media-probe-inputs.json', avc_inputs(root, args.sdk, args.arch, challenge))
 
 environment = dict(os.environ, OHOS_SDK_HOME=str(args.sdk))
 if args.arkui_components_only:
