@@ -242,6 +242,8 @@ BLUETOOTH_OPP_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communicat
 PHOTO_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_enums/apply.sh"
 PHOTO_SEARCH_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/api26_photo_search_enums/apply.sh"
 PHOTOS_RECENT_INFO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_recent_info/apply.sh"
+PHOTO_RESULT_SET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/result_set_boundaries/apply.sh"
+PHOTO_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/business_error/apply.sh"
 EFFECT_LIGHT_DEGREE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/effect_kit/api26_light_degree/apply.sh"
 MISSION_STATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_mission_state/apply.sh"
 PARTICLE_ERROR_CODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/particle_error_code/apply.sh"
@@ -3060,6 +3062,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_search_enums_component.log"
   bash "${PHOTOS_RECENT_INFO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_recent_info_component.log"
+  bash "${PHOTO_BUSINESS_ERROR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_business_error_component.log"
+  bash "${PHOTO_RESULT_SET_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_result_set_component.log"
   bash "${METADATA_FETCH_RESULT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_metadata_fetch_result_component.log"
   bash "${INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

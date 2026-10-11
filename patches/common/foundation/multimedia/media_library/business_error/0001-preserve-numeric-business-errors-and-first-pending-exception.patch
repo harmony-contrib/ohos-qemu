@@ -1,0 +1,87 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/napi_error.cpp b/foundation/multimedia/media_library/frameworks/js/src/napi_error.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/napi_error.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/napi_error.cpp
+@@ -69,7 +69,23 @@
+     return "";
+ }
+ 
++static void ThrowNumericBusinessError(napi_env env, int32_t code, const std::string &message)
++{
++    bool pending = false;
++    NAPI_CALL_RETURN_VOID(env, napi_is_exception_pending(env, &pending));
++    if (pending) {
++        // A validation helper already chose the error. Do not replace it with
++        // the enclosing wrapper's generic null-result failure.
++        return;
++    }
++    napi_value errorObj = nullptr;
++    MediaLibraryNapiUtils::CreateNapiErrorObject(env, errorObj, code, message);
++    if (errorObj != nullptr) {
++        NAPI_CALL_RETURN_VOID(env, napi_throw(env, errorObj));
++    }
++}
++
+ void NapiError::SetApiName(const std::string &Name)
+ {
+     apiName = Name;
+ }
+@@ -188,8 +204,8 @@
+         }
+     }
+ 
+     NAPI_DEBUG_LOG("ThrowError errCode:%{public}d errMsg:%{public}s", err, message.c_str());
+-    NAPI_CALL_RETURN_VOID(env, napi_throw_error(env, to_string(err).c_str(), message.c_str()));
++    ThrowNumericBusinessError(env, err, message);
+ }
+ 
+ void NapiError::ThrowError(napi_env env, int32_t err, const char *funcName, int32_t line, const std::string &errMsg)
+@@ -215,9 +231,9 @@
+         }
+     }
+ 
+     NAPI_ERR_LOG("{%{public}s:%d} ThrowError errCode:%{public}d errMsg:%{public}s", funcName, line,
+         err, message.c_str());
+-    NAPI_CALL_RETURN_VOID(env, napi_throw_error(env, to_string(err).c_str(), message.c_str()));
++    ThrowNumericBusinessError(env, err, message);
+ }
+ 
+ } // namespace Media
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/medialibrary_napi_utils.cpp b/foundation/multimedia/media_library/frameworks/js/src/medialibrary_napi_utils.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/medialibrary_napi_utils.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/medialibrary_napi_utils.cpp
+@@ -1048,23 +1048,22 @@
+     NAPI_ERR_LOG("Error: %{public}s, js errcode:%{public}d ", errMsg.c_str(), originalError);
+ }
+ 
+ void MediaLibraryNapiUtils::CreateNapiErrorObject(napi_env env, napi_value &errorObj, const int32_t errCode,
+     const string errMsg)
+ {
+-    napi_status statusError;
+-    napi_value napiErrorCode = nullptr;
+-    napi_value napiErrorMsg = nullptr;
+-    statusError = napi_create_string_utf8(env, to_string(errCode).c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
+-    if (statusError == napi_ok) {
+-        statusError = napi_create_string_utf8(env, errMsg.c_str(), NAPI_AUTO_LENGTH, &napiErrorMsg);
+-        if (statusError == napi_ok) {
+-            statusError = napi_create_error(env, napiErrorCode, napiErrorMsg, &errorObj);
+-            if (statusError == napi_ok) {
+-                NAPI_DEBUG_LOG("napi_create_error success");
+-            }
+-        }
+-    }
++    errorObj = nullptr;
++    napi_value code = nullptr;
++    napi_value message = nullptr;
++    napi_value candidate = nullptr;
++    if (napi_create_int32(env, errCode, &code) != napi_ok ||
++        napi_create_string_utf8(env, errMsg.c_str(), NAPI_AUTO_LENGTH, &message) != napi_ok ||
++        napi_create_error(env, nullptr, message, &candidate) != napi_ok ||
++        napi_set_named_property(env, candidate, "code", code) != napi_ok) {
++        NAPI_ERR_LOG("Create numeric BusinessError failed");
++        return;
++    }
++    errorObj = candidate;
+ }
+ 
+ void MediaLibraryNapiUtils::InvokeJSAsyncMethodWithoutWork(napi_env env, napi_deferred deferred, napi_ref callbackRef,
+     const JSAsyncContextOutput &asyncContext)

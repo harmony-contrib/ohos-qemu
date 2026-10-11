@@ -306,6 +306,22 @@ def run(args):
             'certificate-real-empty-import-cleanup-and-ordinary-denial', timeout=4800, env=child_env)
         check('certificate-manager', work / 'certificate-manager/evidence.json', [certificate_record])
         same_guest('after-certificate-both-roles')
+        def photo_result_set_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'photo-result-set/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('photo query caller cleanup unproven; stop batch')
+        with independent_probe(report, 'photo-result-set', photo_result_set_batch_health, save):
+            photo_result_set_record = command([sys.executable, Path(__file__).with_name('run_photo_result_set_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'photo-result-set',
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'readonly-photo-query-typed-ResultSet-cursors-boundaries-and-three-roles', timeout=4800, env=child_env)
+            check('photo-result-set', work / 'photo-result-set/evidence.json', [photo_result_set_record])
         # Policy mutation requires verified cleanup; failure cannot be treated
         # as independent from later networking probes.
         vpn_record = command([sys.executable, Path(__file__).with_name('run_always_on_vpn_probe.py'),

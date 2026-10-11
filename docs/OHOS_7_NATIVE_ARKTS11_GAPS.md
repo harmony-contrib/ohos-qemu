@@ -1,5 +1,76 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R40 媒体 ResultSet 下一批候选（未入 R39、未计入闭环）
+
+固定 MediaLibrary `564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380` 的真实
+photoAccessHelper 注册入口已调用 `ResultSetNapi::Init`；不能把再次导出类当作修复。
+核对真实 `query(sql)` 工厂、RDB visitor 与 API26 SDK 后，准备两个独立精确部件，
+两画像/三 ABI 均在 GN 和源码遍历前应用，不修改正在构建的冻结 R39 输入。
+
+- `result_set_boundaries`：索引在 int32 转换前检查参数数目、数字、有限值、整数
+  和范围，避免无参读取未初始化句柄、NaN/小数截断及大整数绕回。空结果
+  goToFirstRow 返回 false；裸构造/无原生包装对象 close 保留 helper 异常，不解引用 null。
+  独立第二补丁把真实 SQL NULL 的 std::monostate 转为 JS null，修复 getValue 返回
+  undefined、getRow 漏掉字段的问题。现有 Uint8Array BLOB 转换已经实现，未替换。
+- `business_error`：两个同步错误入口及现有异步错误工厂生成数字 code，保持原错误码
+  和消息；已有参数异常不被外层通用失败覆盖。所有权限、visitor 数据库调用、公开签名、
+  原生布局与资源释放路径保持不变。
+
+ResultSet 原文件为 CRLF 且无 EOF 换行。LF 补丁只对精确目标机械恢复 CRLF；完整字节
+哈希、重复应用、未知修改、LF 漂移、符号链接及错误项目 revision 均纳入 fail-closed 校验。
+主机 12 项针对性回归通过：真实 Node NAPI 执行补丁后的索引/空结果/close 与原异常身份，
+并复现旧 NULL 缺陷，验证新 null 与原数值、UTF8、bool、空/非空 BLOB、行字段及独立拷贝。
+RDB/container 在这些主机夹具中明确是替身，不是图库/provider 或来宾验收。
+
+证据根目录仍为 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006`。
+本地 Docker 只读 source/out，`compile_photo_result_set.py --source-root
+/Volumes/PSSD/qemu/openharmony --tu resultset|error|utils --output /evidence/对应报告`：
+三份完整真实 TU 各以三个实际产品命令编译，共 9 个对象通过；组件原始输入不变、精确补丁
+应用两次且哈希一致。此检查不是链接、新包或真实查询证明。
+
+- `photo-result-set-tu-r40-02.json` SHA256
+  `e99006a071fb128701b61c4082f97f866c8fe9a06809fc1b51986a51e03fdad9`，最终源
+  `338f1438f457550a9292186ac9d0cf1276250977b5012c26256d19a2255c4ac8`。
+- `media-error-tu-r40-01.json` SHA256
+  `d9eaae6f8e2fa68e0790bcf9af9d5b2a1e33c8141525f57e94851698fde03564`，最终源
+  `0dd1b17bfbcca6c27c7a0034bf12c1d2e0d60d14f331370a4d8d589300ee80b7`。
+- `media-utils-tu-r40-01.json` SHA256
+  `536402bb37c9911b52e96e9f32400c6861328a348d415dc275f2c0d37e18a9de`，最终源
+  `b2bb7472200313e07a162a4b0cfc18d2128733aa5c8b05e5e2cb9396f7177a8a`。
+
+新增真实 SDK 类型调用方与 `photo-result-set` 三角色门槛：普通应用 202、无权限系统应用
+201、唯一 ACCESS_MEDIALIB_THUMB_DB 的授权系统应用执行真实只读 query、Photos 表计数、
+类型/BLOB/NULL/行、首尾/空游标、无效索引/SQL、重复 close、裸 close、重建/错误恢复
+与 release。只修改测试签名角色，不修改镜像权限或数据库；未使用反射成功、伪 provider、
+DB 写操作或原型替换。ARM64 类型调用方 `photo-resultset-hap-r40-02` 已真实编译；01 因
+调用方误用不存在的 ProcessManager.getUid 编译失败，修正为 SDK 已有 uid/euid/pid；
+这两份是编译诊断，随后冻结源码的三 ABI/三角色编译和新包运行仍待完成。
+严格重放原始日志、源码/SDK/模块/签名/角色/nonce/archive/boot/ABI，最多关闭 ResultSet，
+不关闭 KnowledgeContent、语义分析、云同步或其他媒体能力。当前尚未关闭该台账项。
+
+## R39 冻结回归、单代表包构建与清理记录
+
+提交 `294e061c0c4b8ddde76a7c3d06a86fc20294d2b8` 的
+`host-r39-frozen-batch-14.json`：1644 项、跳过 1 项、310.657 秒，其余通过，输入不变。
+冻结树 `73512bdedf5332ab5e5740adfb274b649bfd39fdf4183a88c8cd1396d7638c11`；
+日志 SHA256 `881adb2781a45a09a4045ea195799c059daf3f8d2a448e0d4dfd400dc9db8888`，
+报告 `0fb1d8f722fdfd1c6577771a90d97cf25f537c9769dd13542e01660cdac4c93c`。
+同冻结树真实 SDK 编译的 RPC 三 ABI HAP 通过，
+`rpc-runtime-compilation-r39-01/evidence.json` SHA256
+`6d5796cff9ea6a90aa961a36d24b74d61c920888b615f01f2e5250b7f3bf28e1`；未运行来宾。
+
+本地 Docker 仅构建 ARM64 phone，实际输入快照 `phone-tqMt1I` 的树与上述一致；
+输出根 `packages/first-rpc-network-ui-7.0-release-20261012-r39`。记录时仍在构建，
+没有归档校验和或启动/首包整体通过结论。构建完成后使用同冻结验证脚本集中验证新归档；
+没有启动其余五包。R38 的失败和最近 123 个未闭环契约保留，未授权的亮度 GL/CPU
+真实采样回退未实现。新增 R40 媒体补丁不属于此 R39 包。
+
+清理仅删除已终止、自有诊断 07/08 的各 8 个 images 文件，释放 9,838,408 KiB
+（约 9.38 GiB）。已校验原进程不存在、电源恢复、没有打开文件/链接/活动引用；原 R38
+归档与全部非 images 日志/证据哈希保留。临时 userdata 状态不可恢复，原基础镜像可从归档
+重新提取。收据 `r39-spring-unused-images-cleanup-07-08.json` SHA256
+`1f1d91e194ec9f6abbea822449e729a4256dd0f8df658034289795ba88f949a8`。
+
 ## R39 RPC 原生抽象基类候选（未计入闭环）
 
 固定 API26 Release SDK 的 `IRemoteObject` 是抽象类，真实编译允许类型引用、
