@@ -21,7 +21,15 @@ ENCODER = [('default_encoder_create', 1), ('encoder_register', 0), ('encoder_con
 DECODER = [('decoder_create', 1), ('decoder_register', 0), ('decoder_configure', 0),
            ('decoder_prepare', 0), ('decoder_start', 0), ('decoder_feed', 1), ('decoder_eos', 1),
            ('decoder_stop', 0), ('decoder_destroy', 0)]
+RGBA_BOUNDARY = [('truncated_rgba_create', 1), ('truncated_rgba_register', 0), ('truncated_rgba_configure', 0),
+                 ('truncated_rgba_prepare', 0), ('truncated_rgba_start', 0), ('truncated_rgba_push', 0),
+                 ('truncated_rgba_error', 6), ('truncated_rgba_destroy', 0), ('truncated_rgba_no_encoded_output', 1)]
 PTS, INTERVAL = 123456789, 33333
+
+
+def expected_y(run, frame, cycle):
+    value = 32 + ((ord(run[frame]) + frame + cycle) % 16) * 8
+    return 16 + ((value * 220) >> 8) if cycle == 3 else value
 
 
 def encoder_steps(mode, cycle=None):
@@ -41,8 +49,8 @@ def verify(text, run, identity_text):
         raise ValueError('explicit fresh AVC run challenge required')
     uid = application_identity(identity_text)
     rows = [json.loads(line) for line in text.splitlines() if line.strip()]
-    if len(rows) != 473 or any(not isinstance(row, dict) or row.get('run_id') != run for row in rows):
-        raise ValueError('incomplete, stale or mixed default AVC media results: require 473 rows')
+    if len(rows) != 710 or any(not isinstance(row, dict) or row.get('run_id') != run for row in rows):
+        raise ValueError('incomplete, stale or mixed default AVC media results: require 710 rows')
     fields = {
         'identity': {'type', 'run_id', 'uid', 'euid'},
         'step': {'type', 'run_id', 'profile', 'mode', 'cycle', 'name', 'actual', 'expected', 'passed'},
@@ -76,9 +84,10 @@ def verify(text, run, identity_text):
                 raise ValueError('failed AVC lifecycle/boundary: ' + str(row))
 
     steps(BOUNDARIES, (-1, -1, -1))
+    steps(RGBA_BOUNDARY, (-2, -2, -2))
     for profile in (0, 8):
         for mode in (0, 1, 2):
-            for cycle in (1, 2):
+            for cycle in (1, 2, 3):
                 key = profile, mode, cycle
                 steps(encoder_steps(mode, cycle), key)
                 packets = [take('bitstream', key) for _ in range(6)]
@@ -113,7 +122,7 @@ def verify(text, run, identity_text):
                     frame = row['frame']
                     if (frame not in range(4) or frame in seen or row['pts'] != PTS + frame * INTERVAL or
                             row['width'] != 64 or row['height'] != 64 or not 64 <= row['stride'] <= 16384 or
-                            row['format'] != 1 or row['expected_y'] != 32 + ((ord(run[frame]) + frame + cycle) % 16) * 8 or
+                            row['format'] != 1 or row['expected_y'] != expected_y(run, frame, cycle) or
                             row['samples'] != 4096 or not 0 <= row['absolute_error'] <= 4096 * 8 or row.get('passed') is not True):
                         raise ValueError('real decoded challenge pixels/timestamp failed')
                     seen.add(frame)
@@ -123,17 +132,18 @@ def verify(text, run, identity_text):
                     raise ValueError('AVC recreate cycle failed')
     last = rows[index]
     if (index != len(rows) - 1 or last.get('type') != 'summary' or last.get('passed') is not True or
-            type(last.get('cycles')) is not int or last['cycles'] != 12 or
-            type(last.get('frames')) is not int or last['frames'] != 48):
+            type(last.get('cycles')) is not int or last['cycles'] != 18 or
+            type(last.get('frames')) is not int or last['frames'] != 72):
         raise ValueError('AVC media summary failed')
     return rows
 
 
 def result(rows):
     return {'closed': ['behavior:media-video-encoder-creation-failure'], 'observations': len(rows),
-            'scope': SCOPE, 'encoder_MIME_cycles': 6, 'encoder_default_name_cycles': 6,
-            'decoder_MIME_cycles': 6, 'decoder_default_name_cycles': 6, 'challenged_frames': 48,
-            'not_claimed': 'HEVC_encoding_or_full_codec_enumeration_or_recording_screen_capture_transcoding_pipelines'}
+            'scope': SCOPE, 'encoder_MIME_cycles': 6, 'encoder_default_name_cycles': 12,
+            'decoder_MIME_cycles': 6, 'decoder_default_name_cycles': 12, 'challenged_frames': 72,
+            'RGBA_buffer_cycles': 6, 'truncated_RGBA_real_error_and_recreate': True,
+            'not_claimed': 'surface_input_or_HEVC_encoding_or_full_codec_enumeration_or_recording_screen_capture_transcoding_pipelines'}
 
 
 def verify_evidence(document, archive_sha, boot_id, arch, device=None, target=None):

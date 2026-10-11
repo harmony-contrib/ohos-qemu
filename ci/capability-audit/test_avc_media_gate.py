@@ -88,8 +88,8 @@ class AvcMediaGateTests(unittest.TestCase):
     def test_default_selection_evidence_is_narrow_and_raw_replayed(self):
         actual = self.check()
         self.assertEqual(actual['closed'], ['behavior:media-video-encoder-creation-failure'])
-        self.assertEqual(actual['observations'], 473)
-        self.assertEqual(actual['challenged_frames'], 48)
+        self.assertEqual(actual['observations'], 710)
+        self.assertEqual(actual['challenged_frames'], 72)
         self.assertEqual(actual['encoder_MIME_cycles'], 6)
         self.assertIn('HEVC_encoding', actual['not_claimed'])
         self.assertIn('transcoding_pipelines', actual['not_claimed'])

@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from verify_avc_media_results import BOUNDARIES, encoder_steps, decoder_steps, PTS, INTERVAL, verify
+from verify_avc_media_results import BOUNDARIES, RGBA_BOUNDARY, encoder_steps, decoder_steps, expected_y, PTS, INTERVAL, verify
 
 RUN = '59671e19c36640e1a587bc11eb2e9a3d'
 UID = 20010036
@@ -22,9 +22,10 @@ def rows():
                                name=name, actual=code, expected=code, passed=True))
 
     step(BOUNDARIES, (-1, -1, -1))
+    step(RGBA_BOUNDARY, (-2, -2, -2))
     for profile in (0, 8):
         for mode in (0, 1, 2):
-            for cycle in (1, 2):
+            for cycle in (1, 2, 3):
                 key = profile, mode, cycle
                 common = dict(run_id=RUN, profile=profile, mode=mode, cycle=cycle)
                 step(encoder_steps(mode, cycle), key)
@@ -38,11 +39,11 @@ def rows():
                 for frame in range(4):
                     result.append(dict(common, type='pixels', frame=frame, pts=PTS + frame * INTERVAL,
                                        width=64, height=64, stride=64, format=1,
-                                       expected_y=32 + ((ord(RUN[frame]) + frame + cycle) % 16) * 8,
+                                       expected_y=expected_y(RUN, frame, cycle),
                                        samples=4096, absolute_error=123, passed=True))
                 step([('all_decoded_frames', 1)], key)
                 result.append(dict(common, type='cycle', frames=4, passed=True))
-    result.append(dict(type='summary', run_id=RUN, cycles=12, frames=48, passed=True))
+    result.append(dict(type='summary', run_id=RUN, cycles=18, frames=72, passed=True))
     return result
 
 
@@ -65,14 +66,14 @@ class AvcMediaVerifierTests(unittest.TestCase):
         with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
 
     def test_full_fixture_and_bm_prefix(self):
-        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 473)
+        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 710)
         verify(render(rows()), RUN, 'org.harmonycontrib.capabilityaudit:\n' + IDENTITY)
 
     def test_partial_stale_reordered_duplicate_cannot_pass(self):
         complete = rows()
         for broken in (complete[:-1], list(reversed(complete)), complete * 2, complete[:200] + complete[201:]):
             with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
-        for index in (0, 15, 20, 30, 100, 472):
+        for index in (0, 15, 20, 30, 100, 709):
             broken = rows()
             broken[index]['run_id'] = 'a' * 32
             with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
@@ -132,10 +133,28 @@ class AvcMediaVerifierTests(unittest.TestCase):
             evidence = json.loads((root / 'report').read_text())
             self.assertEqual(completed.returncode, 1)
             self.assertEqual(evidence['status'], 'fail')
-            self.assertEqual(len(evidence['observations']), 472)
+            self.assertEqual(len(evidence['observations']), 709)
             for key in ('first_artifact_behavior_gate_passed', 'hardware_codec_tested', 'hevc_tested',
                         'mathematical_CBR_conformance_tested'):
                 self.assertFalse(evidence[key])
+
+    def test_real_RGBA_conversion_and_truncated_error_are_required(self):
+        complete = rows()
+        for index, row in enumerate(complete):
+            if row.get('type') == 'pixels' and row.get('cycle') == 3:
+                broken = rows()
+                frame = row['frame']
+                broken[index]['expected_y'] = 32 + ((ord(RUN[frame]) + frame + 3) % 16) * 8
+                with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
+        for name, _ in RGBA_BOUNDARY:
+            broken = rows()
+            index = next(i for i, row in enumerate(broken) if row.get('name') == name)
+            broken[index]['actual'] = 123
+            with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
+        source = (Path(__file__).parent / 'probes/avc_media.cpp').read_text()
+        self.assertIn('OH_AVCodecBufferAttr attr = {kPts, size - 1, 0, AVCODEC_BUFFER_FLAGS_NONE}', source)
+        self.assertIn('"truncated_rgba_error", error, AV_ERR_UNKNOWN', source)
+        self.assertIn('AV_PIXEL_FORMAT_RGBA', source)
 
 
 if __name__ == '__main__':

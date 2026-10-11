@@ -1,5 +1,31 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R40 AVC 输入边界批量候选（未入 R39、未计入闭环）
+
+继续检查固定 AVCodec `e5c525670d1f6622d441c9e5bf975ea0579ea177`，发现 RGBA
+buffer 模式的 InputFrame stride 使用像素，但长度校验当作字节；实际转换仍读取
+四字节/像素。因此一帧只声明 16,383 字节、实际容量足够的 64×64 RGBA 输入仍会
+进入转换。新增 `avc_eos/0002` 独立补丁统一两模式的 RGBA 字节 stride，再给转换器
+恢复像素 stride。所有输入长度以正数/对齐/偶数高度及 int64 算术校验；YUV 避免
+先将完整乘积再乘三导致溢出。不改公开签名、错误码、权限或现有后端。
+源守卫只接受完整原版、完整先前 EOS 修复、完整两补丁修复；未知、局部新修复及链接拒绝。
+
+真实旧/新输入分支的 ASan/UBSan 回归复现截短 RGBA 误接受，并检查有效 RGBA/YUV、
+双模式 stride、差一字节、零/负/奇数尺寸、INT_MAX 乘积和未知格式。相关 AVC 主机
+测试 38 项通过。只读本地 Docker 在自有临时 checkout 应用两次精确补丁，以三个真实
+产品命令编译完整 `avc_encoder.cpp`，3 个 TU 对象通过，原 source/配方不变；报告
+`avc-input-wrapper-tu-r40-01.json` SHA256
+`99d804ebca2e763202834e115df6a8868dd44b1a0369061f7f8efea7cb2c1c08`，完整修复源
+`7d97ae8e4fc86c31f7f0a7af019197d9a88b98364422812460ccb13e145457e0`。
+这些是分支及编译证明，不是新包行为验收。
+
+下一次集中 AVC 来宾门槛从先前 473 行扩展到 710 行：先通过公开 API 提交该截短
+RGBA 帧，要求真实异步 UNKNOWN 错误、销毁后仍没有任何编码输出，再重建有效实例。
+两个 profile/三个 bitrate mode 各新增 RGBA 编解码轮次，共 18 轮/72 帧；继续要求
+实际 SPS/IDR/EOS、完整挑战解码像素和错误恢复。严格重放保留全部源、SDK、native、
+签名 HAP、零权限角色、nonce、归档、boot/ABI 绑定。不声称 surface 输入、HEVC
+编码或录制/录屏/转码管线通过；这些新调用方尚待冻结编译和新代表包运行。
+
 ## R40 默认视频编码器下一批候选（未入 R39、未计入闭环）
 
 补查发现：原 AVC 437 行回归显式选 SOFTWARE，不能证明默认能力选择、MIME 创建

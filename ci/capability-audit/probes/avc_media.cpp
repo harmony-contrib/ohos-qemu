@@ -49,6 +49,7 @@ struct Context {
     int stride = 0;
     int format = 0;
     uint8_t expected[kFrames] = {};
+    uint8_t inputY[kFrames] = {};
     bool callbackStorageAttached = false;
 };
 
@@ -185,13 +186,13 @@ bool Wait(Context &context, int64_t pts, bool eos)
     return ready && context.error == 0;
 }
 
-OH_AVFormat *Configuration(int profile, int mode, bool encoder)
+OH_AVFormat *Configuration(int profile, int mode, bool encoder, bool rgba = false)
 {
     OH_AVFormat *format = OH_AVFormat_Create();
     if (format == nullptr) return nullptr;
     bool valid = OH_AVFormat_SetIntValue(format, OH_MD_KEY_WIDTH, kWidth) &&
         OH_AVFormat_SetIntValue(format, OH_MD_KEY_HEIGHT, kHeight) &&
-        OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, AV_PIXEL_FORMAT_YUVI420) &&
+        OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, rgba ? AV_PIXEL_FORMAT_RGBA : AV_PIXEL_FORMAT_YUVI420) &&
         OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, 30);
     if (encoder) {
         // The actual OHOS CodecParamChecker rejects quality plus bitrate,
@@ -208,16 +209,25 @@ OH_AVFormat *Configuration(int profile, int mode, bool encoder)
     return format;
 }
 
-bool FeedFrame(OH_AVCodec *codec, Context &context, int frame)
+bool FeedFrame(OH_AVCodec *codec, Context &context, int frame, bool rgba)
 {
     Input input = {};
     if (!InputBuffer(context, input)) return false;
-    const int size = kWidth * kHeight * 3 / 2;
+    const int size = rgba ? kWidth * kHeight * 4 : kWidth * kHeight * 3 / 2;
     uint8_t *data = OH_AVBuffer_GetAddr(input.buffer);
     if (data == nullptr || OH_AVBuffer_GetCapacity(input.buffer) < size) return false;
-    std::memset(data, context.expected[frame], kWidth * kHeight);
-    std::memset(data + kWidth * kHeight, 64, kWidth * kHeight / 4);
-    std::memset(data + kWidth * kHeight * 5 / 4, 192, kWidth * kHeight / 4);
+    if (rgba) {
+        for (int pixel = 0; pixel < kWidth * kHeight; ++pixel) {
+            data[pixel * 4] = context.inputY[frame];
+            data[pixel * 4 + 1] = context.inputY[frame];
+            data[pixel * 4 + 2] = context.inputY[frame];
+            data[pixel * 4 + 3] = 255;
+        }
+    } else {
+        std::memset(data, context.expected[frame], kWidth * kHeight);
+        std::memset(data + kWidth * kHeight, 64, kWidth * kHeight / 4);
+        std::memset(data + kWidth * kHeight * 5 / 4, 192, kWidth * kHeight / 4);
+    }
     const OH_AVCodecBufferAttr attr = {kPts + frame * kInterval, size, 0, AVCODEC_BUFFER_FLAGS_NONE};
     return OH_AVBuffer_SetBufferAttr(input.buffer, &attr) == AV_ERR_OK &&
         OH_VideoEncoder_PushInputBuffer(codec, input.index) == AV_ERR_OK && Wait(context, attr.pts, false);
@@ -315,8 +325,12 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
 {
     std::unique_ptr<Context, CallbackLifetime> context(new Context);
     context->encoder = true;
+    const bool rgba = cycle == 3;
     for (int frame = 0; frame < kFrames; ++frame) {
-        context->expected[frame] = 32 + ((static_cast<unsigned char>(run[frame]) + frame + cycle) % 16) * 8;
+        context->inputY[frame] = 32 + ((static_cast<unsigned char>(run[frame]) + frame + cycle) % 16) * 8;
+        // Actual default BT601/BT709 limited-range conversion has luma weights
+        // summing to 220. Decode the emitted stream, never inspect input as output.
+        context->expected[frame] = rgba ? 16 + ((context->inputY[frame] * 220) >> 8) : context->inputY[frame];
     }
     auto step = [&](const char *name, int actual, int wanted = AV_ERR_OK) {
         return Step(out, run, profile, mode, cycle, name, actual, wanted);
@@ -331,7 +345,7 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     const OH_AVCodecCallback callbacks = {Error, Changed, NeedInput, Output};
     context->callbackStorageAttached = true;
     valid &= step("encoder_register", OH_VideoEncoder_RegisterCallback(codec, callbacks, context.get()));
-    OH_AVFormat *format = Configuration(profile, mode, true);
+    OH_AVFormat *format = Configuration(profile, mode, true, rgba);
     valid &= step("encoder_configure", format == nullptr ? AV_ERR_UNKNOWN : OH_VideoEncoder_Configure(codec, format));
     if (format != nullptr) OH_AVFormat_Destroy(format);
     valid &= step("encoder_prepare", OH_VideoEncoder_Prepare(codec));
@@ -343,7 +357,7 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
             if (frame == 1) valid &= step(mode == BITRATE_MODE_CQ ? "dynamic_bitrate_cq_rejected" :
                 "dynamic_bitrate", SetParameter(codec, false), mode == BITRATE_MODE_CQ ? AV_ERR_INVALID_VAL : AV_ERR_OK);
             if (frame == 2) valid &= step("request_idr", SetParameter(codec, true));
-            valid &= step(frameNames[frame], FeedFrame(codec, *context, frame), 1);
+            valid &= step(frameNames[frame], FeedFrame(codec, *context, frame, rgba), 1);
         }
         valid &= step("encoder_eos", EndEncoding(codec, *context), 1);
         valid &= step("encoder_stop", OH_VideoEncoder_Stop(codec));
@@ -404,6 +418,63 @@ bool RejectName(const char *name, bool encoder)
     else OH_VideoDecoder_Destroy(codec);
     return false;
 }
+
+bool TruncatedRgba(FILE *out, const char *run)
+{
+    std::unique_ptr<Context, CallbackLifetime> context(new Context);
+    context->encoder = true;
+    auto step = [&](const char *name, int actual, int wanted = AV_ERR_OK) {
+        return Step(out, run, -2, -2, -2, name, actual, wanted);
+    };
+    OH_AVCodec *codec = OH_VideoEncoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    bool valid = step("truncated_rgba_create", codec != nullptr, 1);
+    if (codec == nullptr) return false;
+    const OH_AVCodecCallback callbacks = {Error, Changed, NeedInput, Output};
+    context->callbackStorageAttached = true;
+    valid &= step("truncated_rgba_register", OH_VideoEncoder_RegisterCallback(codec, callbacks, context.get()));
+    OH_AVFormat *format = Configuration(AVC_PROFILE_BASELINE, BITRATE_MODE_CBR, true, true);
+    valid &= step("truncated_rgba_configure", format == nullptr ? AV_ERR_UNKNOWN : OH_VideoEncoder_Configure(codec, format));
+    if (format != nullptr) OH_AVFormat_Destroy(format);
+    valid &= step("truncated_rgba_prepare", OH_VideoEncoder_Prepare(codec));
+    const auto started = OH_VideoEncoder_Start(codec);
+    valid &= step("truncated_rgba_start", started);
+    int submitted = AV_ERR_UNKNOWN;
+    if (started == AV_ERR_OK) {
+        Input input = {};
+        if (InputBuffer(*context, input)) {
+            uint8_t *address = OH_AVBuffer_GetAddr(input.buffer);
+            const int size = kWidth * kHeight * 4;
+            if (address != nullptr && OH_AVBuffer_GetCapacity(input.buffer) >= size) {
+                // Capacity is sufficient, but the declared frame is one byte
+                // short. The old wrapper reads undeclared bytes and encodes it.
+                std::memset(address, 128, size);
+                const OH_AVCodecBufferAttr attr = {kPts, size - 1, 0, AVCODEC_BUFFER_FLAGS_NONE};
+                if (OH_AVBuffer_SetBufferAttr(input.buffer, &attr) == AV_ERR_OK) {
+                    submitted = OH_VideoEncoder_PushInputBuffer(codec, input.index);
+                }
+            }
+        }
+    }
+    valid &= step("truncated_rgba_push", submitted);
+    int error = 0;
+    {
+        std::unique_lock<std::mutex> lock(context->mutex);
+        context->condition.wait_for(lock, std::chrono::seconds(5), [&] {
+            return context->error != 0 || !context->packets.empty();
+        });
+        error = context->error;
+    }
+    valid &= step("truncated_rgba_error", error, AV_ERR_UNKNOWN);
+    const auto destroyed = OH_VideoEncoder_Destroy(codec);
+    valid &= step("truncated_rgba_destroy", destroyed);
+    {
+        std::lock_guard<std::mutex> lock(context->mutex);
+        valid &= step("truncated_rgba_no_encoded_output", context->packets.empty(), 1);
+    }
+    if (destroyed != AV_ERR_OK) { (void)context.release(); return false; }
+    context->callbackStorageAttached = false;
+    return valid;
+}
 } // namespace
 
 extern "C" int RunAvcMediaProbe(FILE *out, const char *run)
@@ -430,12 +501,13 @@ extern "C" int RunAvcMediaProbe(FILE *out, const char *run)
     OH_AVCodec *unsupported = OH_VideoEncoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_HEVC);
     boundary("hevc_create_by_mime_unsupported", unsupported == nullptr);
     if (unsupported != nullptr) OH_VideoEncoder_Destroy(unsupported);
+    passed = TruncatedRgba(out, run) && passed;
     const int profiles[] = {AVC_PROFILE_BASELINE, AVC_PROFILE_MAIN};
     const int modes[] = {BITRATE_MODE_CBR, BITRATE_MODE_VBR, BITRATE_MODE_CQ};
-    for (int profile : profiles) for (int mode : modes) for (int cycle = 1; cycle <= 2; ++cycle) {
+    for (int profile : profiles) for (int mode : modes) for (int cycle = 1; cycle <= 3; ++cycle) {
         passed = Cycle(out, run, profile, mode, cycle) && passed;
     }
-    fprintf(out, "{\"type\":\"summary\",\"run_id\":\"%s\",\"cycles\":12,\"frames\":48,\"passed\":%s}\n",
+    fprintf(out, "{\"type\":\"summary\",\"run_id\":\"%s\",\"cycles\":18,\"frames\":72,\"passed\":%s}\n",
         run, passed ? "true" : "false");
     fflush(out);
     return passed ? 0 : 1;
