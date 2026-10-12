@@ -16,7 +16,7 @@ def expected(run_id):
         'sequence': ([1, 1, 1, 3, 1, 1, 1], ''),
         'parcel': ([1, 1], ''),
         'local-boundaries': ([1900005, 1900005, 0, 0], ''),
-        'proxy-boundaries': ([1900006], ''),
+        'proxy-boundaries': ([1900006, 1900007], ''),
         'proxy-recipient': ([0], ''),
     }
     for name, code in (('base-promise', 701), ('concrete-promise', 702), ('recreated-promise', 703)):

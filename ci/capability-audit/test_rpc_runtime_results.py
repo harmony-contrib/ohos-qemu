@@ -36,6 +36,32 @@ class RpcRuntimeResultTests(unittest.TestCase):
         for changed in (rows[:-1], rows + rows[:1], rows[::-1], [rows[0]] + rows[:-1]):
             with self.assertRaises(ValueError): verify(text(changed), RUN, IDENTITY)
 
+    def test_context_descriptor_requires_exact_numeric_documented_boundary(self):
+        for value in ('1900007', 0, 1900008, True):
+            rows = fixture()
+            next(row for row in rows if row['name'] == 'proxy-boundaries')['values'][1] = value
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                verify(text(rows), RUN, IDENTITY)
+        from rpc_runtime_contract import source
+        caller = source(RUN)
+        self.assertIn("proxy.getInterfaceDescriptor() === ''", caller)
+        self.assertIn('proxy.getDescriptor();', caller)
+        self.assertNotIn('proxy.getDescriptor().length', caller)
+
+    def test_proxy_roundtrip_checks_native_contract_not_unpromised_JS_identity(self):
+        from rpc_runtime_contract import source
+        caller = source(RUN)
+        self.assertIn('this.contextProxy(third)', caller)
+        self.assertIn('this.contextProxy(array[2])', caller)
+        self.assertIn('object instanceof rpc.IRemoteObject && object instanceof rpc.RemoteProxy', caller)
+        self.assertIn('!object.isObjectDead()', caller)
+        self.assertIn('object.getDescriptor(); }) === 1900007', caller)
+        self.assertNotIn('third === proxy', caller)
+        self.assertNotIn('array[2] === proxy', caller)
+        # Exact local callback-object identity remains mandatory.
+        self.assertIn('first === base', caller)
+        self.assertIn('second === concrete', caller)
+
     def test_nonce_errors_and_unexpected_fields_rejected(self):
         for change in ({'runId': 'f' * 32}, {'error': 'actual error'}, {'extra': True}):
             rows = fixture()

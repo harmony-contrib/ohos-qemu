@@ -48,6 +48,13 @@ struct Index {
       return typeof value.code === 'number' ? value.code : -2;
     }
   }
+  private contextProxy(object: rpc.IRemoteObject): boolean {
+    // readRemoteObject constructs a native proxy wrapper, not a JS identity cache.
+    // Check both exported native classes and observable handle-0 behavior instead.
+    return object instanceof rpc.IRemoteObject && object instanceof rpc.RemoteProxy &&
+      !object.isObjectDead() && object.getInterfaceDescriptor() === '' &&
+      this.errorCode((): void => { object.getDescriptor(); }) === 1900007;
+  }
   private async request(object: rpc.IRemoteObject, name: string, code: number): Promise<void> {
     const data = rpc.MessageSequence.create(); const reply = rpc.MessageSequence.create();
     try {
@@ -115,7 +122,7 @@ struct Index {
         proxy instanceof rpc.IRemoteObject ? 1 : 0, proxy instanceof rpc.RemoteProxy ? 1 : 0]); completed++;
       this.record('descriptors', [base.getDescriptor() === '' ? 1 : 0,
         base.getInterfaceDescriptor() === '' ? 1 : 0, concrete.getDescriptor() === RUN ? 1 : 0,
-        proxy.getDescriptor().length > 0 ? 1 : 0, base.isObjectDead() ? 1 : 0,
+        proxy.getInterfaceDescriptor() === '' ? 1 : 0, base.isObjectDead() ? 1 : 0,
         concrete.isObjectDead() ? 1 : 0, proxy.isObjectDead() ? 1 : 0]); completed++;
       const sequence = rpc.MessageSequence.create();
       try {
@@ -124,8 +131,8 @@ struct Index {
         const first = sequence.readRemoteObject(); const second = sequence.readRemoteObject();
         const third = sequence.readRemoteObject(); const array = sequence.readRemoteObjectArray();
         this.record('sequence', [first === base ? 1 : 0, second === concrete ? 1 : 0,
-          third === proxy ? 1 : 0, array.length, array[0] === base ? 1 : 0,
-          array[1] === concrete ? 1 : 0, array[2] === proxy ? 1 : 0]); completed++;
+          this.contextProxy(third) ? 1 : 0, array.length, array[0] === base ? 1 : 0,
+          array[1] === concrete ? 1 : 0, this.contextProxy(array[2]) ? 1 : 0]); completed++;
       } finally { sequence.reclaim(); }
       const parcel = rpc.MessageParcel.create();
       try { this.record('parcel', [parcel.writeRemoteObject(base) ? 1 : 0,
@@ -134,7 +141,11 @@ struct Index {
       this.record('local-boundaries', [this.errorCode((): void => { base.registerDeathRecipient(recipient, 0); }),
         this.errorCode((): void => { base.unregisterDeathRecipient(recipient, 0); }),
         base.addDeathRecipient(recipient, 0) ? 1 : 0, base.removeDeathRecipient(recipient, 0) ? 1 : 0]); completed++;
-      this.record('proxy-boundaries', [this.errorCode((): void => { proxy.getLocalInterface(RUN); })]);
+      // The system context is Binder handle 0: the pinned IPC core intentionally
+      // returns no descriptor, and the modern getter must throw numeric 1900007.
+      // Positive local descriptors above remain required; no proxy metadata is invented.
+      this.record('proxy-boundaries', [this.errorCode((): void => { proxy.getLocalInterface(RUN); }),
+        this.errorCode((): void => { proxy.getDescriptor(); })]);
       proxy.registerDeathRecipient(recipient, 0); proxy.unregisterDeathRecipient(recipient, 0);
       this.record('proxy-recipient', [recipient.calls]); completed++;
       await this.request(base, 'base-promise', 701); completed++;

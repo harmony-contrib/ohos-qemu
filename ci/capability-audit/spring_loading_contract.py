@@ -23,18 +23,22 @@ def inputs(project, sdk, arch, run_id):
     pages = project / 'entry/src/main/resources/base/profile/main_pages.json'
     declarations = {name: sdk / name for name in (
         'ets/api/@ohos.arkui.dragController.d.ts', 'ets/api/@ohos.data.unifiedDataChannel.d.ts',
-        'ets/component/common.d.ts')}
+        'ets/component/common.d.ts', 'ets/api/@ohos.systemDateTime.d.ts')}
     drag = declarations['ets/api/@ohos.arkui.dragController.d.ts'].read_text()
+    clock = declarations['ets/api/@ohos.systemDateTime.d.ts'].read_text()
     if (page.is_symlink() or page.read_text() != source(run_id) or
             json.loads(module.read_text())['module'].get('requestPermissions', []) != [] or
             json.loads(pages.read_text()) != {'src': ['pages/Index']} or
             'class SpringLoadingContext {' not in drag or 'abort(): void;' not in drag or
-            'updateConfiguration(config: DragSpringLoadingConfiguration): void;' not in drag):
+            'updateConfiguration(config: DragSpringLoadingConfiguration): void;' not in drag or
+            'function getUptime(timeType: TimeType, isNanoseconds?: boolean): number;' not in clock or
+            'STARTUP = 0' not in clock):
         raise ValueError('actual ordinary spring-loading caller or SDK changed')
     return dict(schema_version=1, scope=SCOPE, run_id=run_id, arch=arch, project=str(project), sdk=str(sdk),
         generated_sha256=digest(page), module_sha256=digest(module), pages_sha256=digest(pages),
         contract_sha256=digest(Path(__file__)), template_sha256=digest(TEMPLATE),
         sdk_declarations_sha256={name: digest(path) for name, path in declarations.items()},
+        observation_clock='systemDateTime.getUptime(STARTUP,false)_milliseconds_NOT_wall_clock',
         request_permissions=[], requires_real_input=True, first_artifact_behavior_gate_passed=False)
 
 

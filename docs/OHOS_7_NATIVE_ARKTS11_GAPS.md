@@ -1,5 +1,50 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R40 网络批次与未到达 UI/RPC 的集中诊断（未计入闭环）
+
+提交 `1688e1d5f441df585c5c209bf1c0f4302b1db74a` 的冻结全量主机回归
+`host-r40-frozen-batch-07.json`：1685 项、跳过 1 项、395.688 秒，其余通过，
+输入不变；树 `8da7b0b6f8d08a34f294b21bccf14d97ec657016abcfb509de7d33ab331ee4ae`，
+报告 SHA256 `754be3ee1cf93f23926cb5aecc995152fde61f09ad60da09ce00b067c4a3456c`，
+日志 SHA256 `8b0481b1a580fca33d2d83d54269920c357e03c77f58d5be4b999e6b24ae3158`。
+同冻结树实际三 ABI AVC typed HAP 编译通过、输入不变，
+`avc-default-compilation-r40-07/evidence.json` SHA256
+`d6d6467174e753ea3c353c8df1674db067993c912d16e504b8e6af941db46935`。
+完整真实准备文件复制到私有 scratch，子网络补丁两次应用后、父 VPN/Ethernet
+API26 组件各再次应用两次，全部文件仍为精确子修复状态；真实只读输入不变。
+`network-followup-parent-reruns-r40-01.json` SHA256
+`16306b82abcff8d712f96fdd7eacf41c9bb5e4ff019fa025a68b705ff9609c19`。
+这些不是链接、来宾行为或六包门槛。
+
+在原 R39 归档上批量补测此前未到达的 RPC/Spring/Arc，未替换系统库。
+诊断 01 因主机 PATH 缺 Docker 失败；02 修正 PATH 后 Arc 通过、RPC 在系统
+context 描述符检查失败，Spring 拒绝 diagnostic purpose 的 pointer 输入。
+03 使用原归档的原始 boot 实现及 acceptance purpose（外层仍严格标为
+diagnostic，完整首包 gate 始终为 false），Arc 通过；RPC 实际完成 7 次
+请求、6 次成功本地分发与 4 次真实 callback，但代理 JS identity 检查失败；
+Spring 的 11 次回调、BEGIN 更新/非 BEGIN 忽略/静默 abort/重入/CANCEL
+省略序列出现，但 Date.now 的墙上时钟回拨导致严格时间顺序拒绝。
+01/02/03 全部失败原文保留，不追改为通过；03 外层证据 SHA256
+`80a8c06a7e8d1969b7f392e3e7da31e2c234e84a054ba59310dfc530153aad7a`。
+R40 构建尝试 01 在诊断前置检查失败，未开始编译或打包。
+
+SDK/固定实现核对后调整调用方而非修改 Binder：
+`IPCObjectProxy::GetInterfaceDescriptor` 对 handle 0 明确返回空，现代 getter
+按 SDK 抛通信错误 1900007；现在同时严格要求 legacy 空串、数字错误和有效
+原生代理类型。`CreateJsProxyRemoteObject` 每次通过 napi_new_instance 包装
+同一原生对象，SDK 不承诺 JS === 缓存；代理 roundtrip 核对两个真实类、存活
+状态及 handle-0 行为，仍保留本地 base/concrete callback 对象的 === 验证。
+Spring 所有观察改用 SDK 公开的 getUptime(STARTUP,false) 毫秒单调时钟，不改
+全局时钟、权限、计时阈值或状态预期；新增 SDK 声明/调用方哈希绑定，逆序及
+少于 1500ms 的 quiet 区间仍被拒绝。22 项 RPC、20 项 Spring 相邻主机测试
+通过；新的实际诊断 04 尚待完成，尚未关闭缺口或放行其余五包。
+
+只清理已结束诊断 01/02 的 16 个 images 副本，释放 10,100,858,880 字节。
+原进程不在、策略恢复且无链接/打开文件；归档与所有非 images 证据哈希不变。
+基础镜像可重新提取，临时 userdata 不可恢复。收据
+`ended-ui-rpc-images-cleanup-r40-01.json` SHA256
+`b8bca66499025ea312156ad266206a8b9c1e77048968801e111d17f66697e400`。
+
 ## R40 AVC surface 调用方追加（未入 R39、未计入闭环）
 
 继续补充默认 AVC 的真实 surface 输入路径：通过公开 GetSurface/NativeWindow/

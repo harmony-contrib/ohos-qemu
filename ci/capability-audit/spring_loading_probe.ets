@@ -2,6 +2,7 @@
 import drag from '@ohos.arkui.dragController';
 import data from '@ohos.data.unifiedDataChannel';
 import fs from '@ohos.file.fs';
+import systemDateTime from '@ohos.systemDateTime';
 
 interface Row {
   runId: string; name: string; generation: number; state: number; sequence: number;
@@ -29,7 +30,7 @@ struct Index {
       fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
     try {
       fs.writeSync(file.fd, JSON.stringify({ runId: '__RUN__', generation: this.generation,
-        name, time: Date.now() }) + '\n');
+        name, time: systemDateTime.getUptime(systemDateTime.TimeType.STARTUP, false) }) + '\n');
     } finally { fs.closeSync(file); }
   }
   private pointer(event: MouseEvent): void {
@@ -37,7 +38,8 @@ struct Index {
     // gesture. This separates missing physical input from drag recognition.
     const row: PointerRow = { runId: '__RUN__', generation: this.generation,
       action: event.action, button: event.button, displayX: event.displayX,
-      displayY: event.displayY, windowX: event.windowX, windowY: event.windowY, time: Date.now(),
+      displayY: event.displayY, windowX: event.windowX, windowY: event.windowY,
+      time: systemDateTime.getUptime(systemDateTime.TimeType.STARTUP, false),
       pressedButtons: event.pressedButtons ?? [] };
     const file = fs.openSync('/data/storage/el2/base/files/spring-loading-__RUN__-pointer.log',
       fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
@@ -46,7 +48,8 @@ struct Index {
   private record(name: string, state: number = -1, sequence: number = -1, instance: boolean = true,
     config: number[] = [], summarySize: number = -1, error: string = '', infosOmitted: boolean = false): void {
     const row: Row = { runId: '__RUN__', name, generation: this.generation, state, sequence, instance,
-      config, summarySize, count: this.count, time: Date.now(), error, infosOmitted };
+      config, summarySize, count: this.count,
+      time: systemDateTime.getUptime(systemDateTime.TimeType.STARTUP, false), error, infosOmitted };
     const file = fs.openSync(this.path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
     try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
   }

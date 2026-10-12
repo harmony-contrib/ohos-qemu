@@ -107,6 +107,19 @@ class SpringLoadingResultTests(unittest.TestCase):
         self.assertIn('args.spring_loading_only', builder)
         self.assertIn("'--spring-loading-only'", builder)
 
+    def test_observation_clock_is_real_monotonic_and_backwards_or_short_intervals_still_fail(self):
+        page = source(NONCE)
+        self.assertEqual(page.count('systemDateTime.getUptime(systemDateTime.TimeType.STARTUP, false)'), 3)
+        self.assertNotIn('Date.now()', page)
+        rows = fixture()
+        rows[3]['time'] = rows[2]['time'] - 1
+        with self.assertRaises(ValueError): self.call(rows)
+        rows = fixture()
+        begin = next(row for row in rows if row['name'] == 'quiet.begin')
+        end = next(row for row in rows if row['name'] == 'quiet.end')
+        end['time'] = begin['time'] + 1499
+        with self.assertRaises(ValueError): self.call(rows)
+
     def test_full_evidence_requires_compiled_caller_physical_actions_and_same_package_boot(self):
         from run_root_probe import digest
         from spring_loading_contract import inputs, SCOPE
@@ -130,6 +143,9 @@ class SpringLoadingResultTests(unittest.TestCase):
                                    'updateConfiguration(config: DragSpringLoadingConfiguration): void;\n}')
             for relative in ('ets/api/@ohos.data.unifiedDataChannel.d.ts', 'ets/component/common.d.ts'):
                 path = sdk / relative; path.parent.mkdir(parents=True, exist_ok=True); path.write_text('// fixture')
+            (sdk / 'ets/api/@ohos.systemDateTime.d.ts').write_text(
+                '// Synthetic declaration, NOT real compiler evidence.\n'
+                'STARTUP = 0\nfunction getUptime(timeType: TimeType, isNanoseconds?: boolean): number;\n')
             paths = dict(result=root / 'verified-result.json', raw_results=root / 'results.log',
                 ordinary_identity=root / 'application-identity.json', hap=root / 'ordinary-probe-signed.hap',
                 compiled_contract_inputs=project / 'spring-loading-probe-inputs.json', spring_loading_actions=actions_path)
