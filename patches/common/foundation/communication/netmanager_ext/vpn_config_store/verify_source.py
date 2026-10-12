@@ -29,4 +29,16 @@ FILES = (
 
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    try:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    except ValueError as original_error:
+        # One reviewed later component repairs the OpenVPN-only common-field
+        # omission. Accept only its complete exact source plus all other final
+        # store files, so rerunning this parent never erases the child repair.
+        following = tuple((name, original, '11a8895cfc7d8c4ea546e8044c1ba2dd2763dce04abbff524736c02c4ea7ef67'
+                           if name == 'frameworks/native/netvpnclient/src/vpn_data_bean.cpp' else final)
+                          for name, original, final in FILES)
+        try:
+            return validate_component(root, PROJECT, REVISION, following, True)
+        except ValueError:
+            raise original_error

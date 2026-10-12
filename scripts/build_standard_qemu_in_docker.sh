@@ -206,11 +206,13 @@ QEMU_JSVM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/arkcompiler/jsvm/apply.sh"
 LOCATION_NDK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location_ndk/apply.sh"
 ETHERNET_API26_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_api26/apply.sh"
 ETHERNET_CONTROL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_control/apply.sh"
+ETHERNET_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_business_error/apply.sh"
 OPTIONAL_SETTINGS_READ_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/optional_settings_read/apply.sh"
 INET_ADDR_PORT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/inet_addr_port/apply.sh"
 ALWAYS_ON_VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/always_on_vpn/apply.sh"
 VPN_CONFIG_ARRAYS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_config_arrays/apply.sh"
 VPN_CONFIG_STORE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_config_store/apply.sh"
+VPN_OPENVPN_FIELDS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_openvpn_fields/apply.sh"
 TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/core_service/api26_enums/apply.sh"
 TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/sms_mms/api26_enums/apply.sh"
 TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_enums/apply.sh"
@@ -2945,6 +2947,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_api26_component.log"
   bash "${ETHERNET_CONTROL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_control_component.log"
+  bash "${ETHERNET_BUSINESS_ERROR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_business_error_component.log"
   bash "${INET_ADDR_PORT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_inet_addr_port_component.log"
   bash "${TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3001,6 +3005,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_config_arrays_component.log"
   bash "${VPN_CONFIG_STORE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_config_store_component.log"
+  bash "${VPN_OPENVPN_FIELDS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_openvpn_fields_component.log"
   bash "${DHW_UI_PREINSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_dhardware_ui_preinstall_component.log"
   bash "${QEMU_AUDIO_DEVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

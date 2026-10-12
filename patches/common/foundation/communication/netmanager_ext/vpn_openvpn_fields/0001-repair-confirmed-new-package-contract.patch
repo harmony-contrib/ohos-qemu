@@ -1,0 +1,13 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/vpn_data_bean.cpp b/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/vpn_data_bean.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/vpn_data_bean.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/vpn_data_bean.cpp
+@@ -64,7 +64,8 @@
+     openvpnConfig->password_ = vpnBean->password_;
+     openvpnConfig->userId_ = vpnBean->userId_;
+     openvpnConfig->isLegacy_ = (vpnBean->isLegacy_) == 1;
+-    openvpnConfig->saveLogin_ = (vpnBean->saveLogin_) == 1;
++    openvpnConfig->saveLogin_ = (vpnBean->saveLogin_) == 1;
++    openvpnConfig->forwardingRoutes_ = vpnBean->forwardingRoutes_;
+ 
+     openvpnConfig->ovpnPort_ = vpnBean->ovpnPort_;
+     openvpnConfig->ovpnProtocol_ = vpnBean->ovpnProtocol_;

@@ -230,10 +230,48 @@ SHA256 `913500aa32623d055f2f6f0ff531e30efe26c0b8c03314f403f73224a7e7fa09`。
 `127.0.0.1:65132`；boot 证据位于
 `openharmony-qemu-arm64-arm64_virt-phone-runtime-cweml9rs/boot/boot.json`，SHA256
 `c4591d4f81ff00c8ca437128b5be7aeae5aca478be8ea18f51e37e766c79b7b0`。
-purpose 为 acceptance、external_keepalive=false；截至记录时多个窄检查已经通过，
-集中验收仍在运行，不能声称 Spring/RPC/全部能力或首包整体通过。
+purpose 为 acceptance、external_keepalive=false；集中验收已于
+`2026-10-12T00:33:52.282869+00:00` 结束，整体失败，首包门槛未通过。
+13 个窄检查通过：boot、backup-init、boot-profile、power-suspend、application-home、
+native-gap-abi、huks-compatibility、rs-objects、screen-modes、project-quota、
+issue20-library-exit、certificate-manager、vpn-policy。SysVPN-store 独立检查失败后
+继续执行，Ethernet-control 随后失败并中止后续检查；Spring、Arc、RPC、亮度和
+ohos-native-bindings e2e 在此包尚未运行，不能沿用旧包结果或声称首包整体通过。
+完整失败证据 `r39-bound-full-runtime-01.json` SHA256
+`c3091926e6b6e4006670d78d899a6684d020de2f1ad9933395e3952443c1a2cd`。
 R38 的失败和最近 123 个未闭环契约保留，未授权的亮度 GL/CPU
 真实采样回退未实现。新增 R40 媒体补丁不属于此 R39 包。
+
+本轮两处最小网络 follow-up 待新包验证：OpenVPN 数据库存储已有
+`forwardingRoutes`，但恢复 bean 时漏拷贝该字段；补齐拷贝，不改 IPC、布局或
+数据库 schema。Ethernet 同步 `isEthernetEnabled` 的普通应用权限拒绝返回
+字符串 `"202"`，改用现有 `napi_throw_business_error` 返回数字 202，不改权限、
+错误码值、映射或成功返回。两组件均在旧准备组件之后、GN/源码遍历之前执行。
+父 VPN 组件仅允许完整精确的后续状态，反复应用不能抹掉子修复。
+原 SysVPN-store 和 Ethernet-control 失败证据 SHA256 分别为
+`0fd42436466bff49116510343b41ddd031676ca82907b30a7a858995ebd5cbb7`、
+`538cb39970852efd041f3c11a8f8721fdac622774ee805137e0ed2500be41c50`。
+
+6 项 follow-up 主机测试通过，包含精确输入/重复应用/未知及链接拒绝、实际
+旧/新 OpenVPN 转换函数 ASan/UBSan、父组件精确后续状态和准备顺序。
+智能指针与网络恢复为明示主机 double，不是数据库或来宾验收。
+只读源/输出卷上的实际 ARM64 全 TU 编译通过，实际 feature flags 均启用：
+`vpn-parcel-openvpn-fields-tu-r40-02.json` SHA256
+`a4ec4b5de1904543d0dc1d894d7dbfb2898023c4c50ed71a3e1cca404731fa39`，
+`vpn-service-openvpn-fields-tu-r40-02.json` SHA256
+`5d830b84e13e16fdf46d3ae243dc1b539cabc183cd9aa8e4f2d3846928e991fa`，
+`ethernet-business-error-tu-r40-03.json` SHA256
+`c1eec881da966d12c2bb3071c268390ec80c7ec80d15ba59f5747ff038773dfb`。
+没有修改真实输入。ARMv7a/x86_64 旧 GN 图没有 SysVPN bean 目标，且 Ethernet
+同步入口未启用；保留失败尝试 01/02，未强行添加 define，不能算三 ABI 完整编译
+通过。其新配置生成、实际编译和来宾行为仍须各自验收，未放行其余五包。
+
+额外清理三个已结束、自有 Arc 03/04、Blink 06 诊断的 24 个 images 文件，释放
+15,111,794,688 字节。原进程不在、策略已恢复、无链接/打开文件/活动引用；
+非 images 证据及两个原归档逐个哈希不变。仅临时 userdata 状态不可恢复，
+基础镜像可由保留归档重新提取。收据
+`ended-arc-blink-images-cleanup-r40-01.json` SHA256
+`0ffce6db59aaa679b02669b263736e6c68dfd5a6474543537e74f7e930e75d23`。
 
 清理仅删除已终止、自有诊断 07/08 的各 8 个 images 文件，释放 9,838,408 KiB
 （约 9.38 GiB）。已校验原进程不存在、电源恢复、没有打开文件/链接/活动引用；原 R38
