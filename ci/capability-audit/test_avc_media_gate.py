@@ -10,7 +10,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
 
-from avc_media_contract import ABIS, HEADERS, SCOPE, inputs, source, sha, runtime_identity
+from avc_media_contract import ABIS, HEADERS, GRAPHICS_HEADERS, SCOPE, inputs, source, sha, runtime_identity
 from test_verify_avc_media_results import RUN, UID, IDENTITY, rows, render
 import verify_avc_media_results as verifier
 
@@ -45,6 +45,10 @@ class AvcMediaGateTests(unittest.TestCase):
         header.mkdir(parents=True)
         for name in HEADERS:
             (header / name).write_text('// Synthetic SDK unit fixture only: ' + name)
+        for name in GRAPHICS_HEADERS:
+            path = self.sdk / 'native/sysroot/usr/include' / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('// Synthetic SDK unit fixture only: ' + name)
         for name in ('native', 'ets'):
             path = self.sdk / name
             path.mkdir(exist_ok=True)
@@ -88,8 +92,8 @@ class AvcMediaGateTests(unittest.TestCase):
     def test_default_selection_evidence_is_narrow_and_raw_replayed(self):
         actual = self.check()
         self.assertEqual(actual['closed'], ['behavior:media-video-encoder-creation-failure'])
-        self.assertEqual(actual['observations'], 710)
-        self.assertEqual(actual['challenged_frames'], 72)
+        self.assertEqual(actual['observations'], 962)
+        self.assertEqual(actual['challenged_frames'], 96)
         self.assertEqual(actual['encoder_MIME_cycles'], 6)
         self.assertIn('HEVC_encoding', actual['not_claimed'])
         self.assertIn('transcoding_pipelines', actual['not_claimed'])

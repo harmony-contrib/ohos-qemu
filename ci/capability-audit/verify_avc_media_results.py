@@ -29,15 +29,22 @@ PTS, INTERVAL = 123456789, 33333
 
 def expected_y(run, frame, cycle):
     value = 32 + ((ord(run[frame]) + frame + cycle) % 16) * 8
-    return 16 + ((value * 220) >> 8) if cycle == 3 else value
+    return 16 + ((value * 220) >> 8) if cycle >= 3 else value
 
 
 def encoder_steps(mode, cycle=None):
     # A CQ encoder cannot accept bitrate updates; retain a real error-code
     # boundary and prove the subsequent frames/IDR/EOS still work unchanged.
-    return ([('encoder_creation_path', cycle)] if cycle is not None else []) + [
+    result = ([('encoder_creation_path', cycle)] if cycle is not None else []) + [
         ('dynamic_bitrate_cq_rejected', 3) if mode == 2 and name == 'dynamic_bitrate'
         else (name, code) for name, code in ENCODER]
+    if cycle == 4:
+        index = result.index(('encoder_prepare', 0))
+        result[index:index] = [('surface_null_window_rejected', 3), ('encoder_input_surface', 0),
+                               ('surface_configuration', 1)]
+        index = result.index(('encoder_start', 0)) + 1
+        result[index:index] = [('surface_buffer_queue_rejected', 8)]
+    return result
 
 
 def decoder_steps(cycle):
@@ -49,8 +56,8 @@ def verify(text, run, identity_text):
         raise ValueError('explicit fresh AVC run challenge required')
     uid = application_identity(identity_text)
     rows = [json.loads(line) for line in text.splitlines() if line.strip()]
-    if len(rows) != 710 or any(not isinstance(row, dict) or row.get('run_id') != run for row in rows):
-        raise ValueError('incomplete, stale or mixed default AVC media results: require 710 rows')
+    if len(rows) != 962 or any(not isinstance(row, dict) or row.get('run_id') != run for row in rows):
+        raise ValueError('incomplete, stale or mixed default AVC media results: require 962 rows')
     fields = {
         'identity': {'type', 'run_id', 'uid', 'euid'},
         'step': {'type', 'run_id', 'profile', 'mode', 'cycle', 'name', 'actual', 'expected', 'passed'},
@@ -87,7 +94,7 @@ def verify(text, run, identity_text):
     steps(RGBA_BOUNDARY, (-2, -2, -2))
     for profile in (0, 8):
         for mode in (0, 1, 2):
-            for cycle in (1, 2, 3):
+            for cycle in (1, 2, 3, 4):
                 key = profile, mode, cycle
                 steps(encoder_steps(mode, cycle), key)
                 packets = [take('bitstream', key) for _ in range(6)]
@@ -132,18 +139,18 @@ def verify(text, run, identity_text):
                     raise ValueError('AVC recreate cycle failed')
     last = rows[index]
     if (index != len(rows) - 1 or last.get('type') != 'summary' or last.get('passed') is not True or
-            type(last.get('cycles')) is not int or last['cycles'] != 18 or
-            type(last.get('frames')) is not int or last['frames'] != 72):
+            type(last.get('cycles')) is not int or last['cycles'] != 24 or
+            type(last.get('frames')) is not int or last['frames'] != 96):
         raise ValueError('AVC media summary failed')
     return rows
 
 
 def result(rows):
     return {'closed': ['behavior:media-video-encoder-creation-failure'], 'observations': len(rows),
-            'scope': SCOPE, 'encoder_MIME_cycles': 6, 'encoder_default_name_cycles': 12,
-            'decoder_MIME_cycles': 6, 'decoder_default_name_cycles': 12, 'challenged_frames': 72,
-            'RGBA_buffer_cycles': 6, 'truncated_RGBA_real_error_and_recreate': True,
-            'not_claimed': 'surface_input_or_HEVC_encoding_or_full_codec_enumeration_or_recording_screen_capture_transcoding_pipelines'}
+            'scope': SCOPE, 'encoder_MIME_cycles': 6, 'encoder_default_name_cycles': 18,
+            'decoder_MIME_cycles': 6, 'decoder_default_name_cycles': 18, 'challenged_frames': 96,
+            'RGBA_buffer_cycles': 6, 'RGBA_surface_cycles': 6, 'truncated_RGBA_real_error_and_recreate': True,
+            'not_claimed': 'YUV_surface_or_HEVC_encoding_or_full_codec_enumeration_or_recording_screen_capture_transcoding_pipelines'}
 
 
 def verify_evidence(document, archive_sha, boot_id, arch, device=None, target=None):

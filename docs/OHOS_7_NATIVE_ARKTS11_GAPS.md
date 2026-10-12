@@ -1,5 +1,19 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## R40 AVC surface 调用方追加（未入 R39、未计入闭环）
+
+继续补充默认 AVC 的真实 surface 输入路径：通过公开 GetSurface/NativeWindow/
+NativeBuffer 请求、等待实际 fence、映射写入 RGBA 挑战帧、unmap/flush，再解码
+实际输出；用 NotifyEndOfStream 排空，并由调用方释放窗口。每个 profile/bitrate
+mode 增加一轮 surface，现共 24 轮/96 帧、962 条严格观察；要求空 window 参数和
+surface 下 buffer queue 调用被拒绝，PTS、SPS/IDR/EOS、像素与重建回归保持。
+新增 NativeWindow/NativeBuffer 的实际 SDK header 和编译链接输入绑定，仍是零权限普通应用。
+固定 AVC fuzzer/async/sync/preproc 样例在 SET_UI_TIMESTAMP 使用微秒；实际
+NativeWindow 在 RequestBuffer 捕获该值。调用方据此在 request 前设置微秒挑战，
+未擅自把 codec 的时间戳除以 1000，也未改变镜像时间戳语义。
+43 项相邻 AVC 主机回归通过；实际 SDK 编译及新包 surface 行为仍待验证。
+不声称 YUV surface、HEVC 编码或完整录制/录屏/转码管线已经闭环。
+
 ## R40 AVC 输入边界批量候选（未入 R39、未计入闭环）
 
 继续检查固定 AVCodec `e5c525670d1f6622d441c9e5bf975ea0579ea177`，发现 RGBA

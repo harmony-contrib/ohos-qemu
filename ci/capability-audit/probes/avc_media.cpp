@@ -5,6 +5,8 @@
 #include <multimedia/player_framework/native_avcodec_videoencoder.h>
 #include <multimedia/player_framework/native_avcodec_videodecoder.h>
 #include <multimedia/player_framework/native_avformat.h>
+#include <native_buffer/native_buffer.h>
+#include <native_window/external_window.h>
 #include <chrono>
 #include <condition_variable>
 #include <cstdio>
@@ -12,6 +14,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <poll.h>
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -233,6 +236,61 @@ bool FeedFrame(OH_AVCodec *codec, Context &context, int frame, bool rgba)
         OH_VideoEncoder_PushInputBuffer(codec, input.index) == AV_ERR_OK && Wait(context, attr.pts, false);
 }
 
+bool FeedSurfaceFrame(OHNativeWindow *window, Context &context, int frame)
+{
+    if (window == nullptr) return false;
+    const int64_t pts = kPts + frame * kInterval;
+    // Fixed AVCodec surface samples use microseconds. NativeWindow captures
+    // uiTimestamp at RequestBuffer, so set it before requesting this frame.
+    if (OH_NativeWindow_NativeWindowHandleOpt(window, SET_UI_TIMESTAMP, static_cast<uint64_t>(pts)) != 0) return false;
+    OHNativeWindowBuffer *windowBuffer = nullptr;
+    int fence = -1;
+    const auto requested = OH_NativeWindow_NativeWindowRequestBuffer(window, &windowBuffer, &fence);
+    bool ready = true;
+    if (fence >= 0) {
+        pollfd wait = {fence, POLLIN, 0};
+        ready = poll(&wait, 1, 3000) == 1 && (wait.revents & POLLIN) != 0 &&
+            (wait.revents & (POLLERR | POLLNVAL)) == 0;
+        close(fence);
+    }
+    if (windowBuffer == nullptr) return false;
+    auto abort = [&] {
+        OH_NativeWindow_NativeWindowAbortBuffer(window, windowBuffer);
+        return false;
+    };
+    if (requested != 0 || !ready) return abort();
+    OH_NativeBuffer *buffer = nullptr;
+    if (OH_NativeBuffer_FromNativeWindowBuffer(windowBuffer, &buffer) != 0 || buffer == nullptr) return abort();
+    OH_NativeBuffer_Config config = {};
+    OH_NativeBuffer_GetConfig(buffer, &config);
+    BufferHandle *handle = OH_NativeWindow_GetBufferHandleFromNative(windowBuffer);
+    if (handle == nullptr || config.width != kWidth || config.height != kHeight ||
+            config.format != NATIVEBUFFER_PIXEL_FMT_RGBA_8888 || config.stride < kWidth * 4 ||
+            config.stride > 16384 || handle->size < static_cast<int64_t>(config.stride) * kHeight) return abort();
+    void *address = nullptr;
+    const auto mapped = OH_NativeBuffer_Map(buffer, &address);
+    if (mapped != 0) return abort();
+    if (address == nullptr) {
+        OH_NativeBuffer_Unmap(buffer);
+        return abort();
+    }
+    auto *bytes = static_cast<uint8_t *>(address);
+    for (int row = 0; row < kHeight; ++row) {
+        for (int column = 0; column < kWidth; ++column) {
+            uint8_t *pixel = bytes + row * config.stride + column * 4;
+            pixel[0] = context.inputY[frame];
+            pixel[1] = context.inputY[frame];
+            pixel[2] = context.inputY[frame];
+            pixel[3] = 255;
+        }
+    }
+    if (OH_NativeBuffer_Unmap(buffer) != 0) return abort();
+    Region::Rect rectangle = {0, 0, kWidth, kHeight};
+    const Region region = {&rectangle, 1};
+    if (OH_NativeWindow_NativeWindowFlushBuffer(window, windowBuffer, -1, region) != 0) return abort();
+    return Wait(context, pts, false);
+}
+
 int SetParameter(OH_AVCodec *codec, bool idr)
 {
     OH_AVFormat *format = OH_AVFormat_Create();
@@ -325,7 +383,8 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
 {
     std::unique_ptr<Context, CallbackLifetime> context(new Context);
     context->encoder = true;
-    const bool rgba = cycle == 3;
+    const bool surfaceMode = cycle == 4;
+    const bool rgba = cycle >= 3;
     for (int frame = 0; frame < kFrames; ++frame) {
         context->inputY[frame] = 32 + ((static_cast<unsigned char>(run[frame]) + frame + cycle) % 16) * 8;
         // Actual default BT601/BT709 limited-range conversion has luma weights
@@ -348,18 +407,39 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     OH_AVFormat *format = Configuration(profile, mode, true, rgba);
     valid &= step("encoder_configure", format == nullptr ? AV_ERR_UNKNOWN : OH_VideoEncoder_Configure(codec, format));
     if (format != nullptr) OH_AVFormat_Destroy(format);
+    std::unique_ptr<OHNativeWindow, void (*)(OHNativeWindow *)> window(nullptr, OH_NativeWindow_DestroyNativeWindow);
+    if (surfaceMode) {
+        valid &= step("surface_null_window_rejected", OH_VideoEncoder_GetSurface(codec, nullptr), AV_ERR_INVALID_VAL);
+        OHNativeWindow *created = nullptr;
+        const auto obtained = OH_VideoEncoder_GetSurface(codec, &created);
+        window.reset(created);
+        valid &= step("encoder_input_surface", obtained);
+        const uint64_t usage = NATIVEBUFFER_USAGE_CPU_READ | NATIVEBUFFER_USAGE_CPU_WRITE;
+        const bool configured = created != nullptr &&
+            OH_NativeWindow_NativeWindowHandleOpt(created, SET_BUFFER_GEOMETRY, kWidth, kHeight) == 0 &&
+            OH_NativeWindow_NativeWindowHandleOpt(created, SET_FORMAT, NATIVEBUFFER_PIXEL_FMT_RGBA_8888) == 0 &&
+            OH_NativeWindow_NativeWindowHandleOpt(created, SET_USAGE, usage) == 0 &&
+            OH_NativeWindow_NativeWindowHandleOpt(created, SET_TIMEOUT, 3000) == 0;
+        valid &= step("surface_configuration", configured, 1);
+    }
     valid &= step("encoder_prepare", OH_VideoEncoder_Prepare(codec));
     const auto started = OH_VideoEncoder_Start(codec);
     valid &= step("encoder_start", started);
     if (started == AV_ERR_OK) {
+        if (surfaceMode) {
+            valid &= step("surface_buffer_queue_rejected", OH_VideoEncoder_PushInputBuffer(codec, 0), AV_ERR_INVALID_STATE);
+        }
         const char *frameNames[kFrames] = {"encode_frame_0", "encode_frame_1", "encode_frame_2", "encode_frame_3"};
         for (int frame = 0; frame < kFrames; ++frame) {
             if (frame == 1) valid &= step(mode == BITRATE_MODE_CQ ? "dynamic_bitrate_cq_rejected" :
                 "dynamic_bitrate", SetParameter(codec, false), mode == BITRATE_MODE_CQ ? AV_ERR_INVALID_VAL : AV_ERR_OK);
             if (frame == 2) valid &= step("request_idr", SetParameter(codec, true));
-            valid &= step(frameNames[frame], FeedFrame(codec, *context, frame, rgba), 1);
+            valid &= step(frameNames[frame], surfaceMode ? FeedSurfaceFrame(window.get(), *context, frame) :
+                FeedFrame(codec, *context, frame, rgba), 1);
         }
-        valid &= step("encoder_eos", EndEncoding(codec, *context), 1);
+        const bool eos = surfaceMode ? OH_VideoEncoder_NotifyEndOfStream(codec) == AV_ERR_OK &&
+            Wait(*context, 0, true) : EndEncoding(codec, *context);
+        valid &= step("encoder_eos", eos, 1);
         valid &= step("encoder_stop", OH_VideoEncoder_Stop(codec));
     }
     const auto destroyed = OH_VideoEncoder_Destroy(codec);
@@ -504,10 +584,10 @@ extern "C" int RunAvcMediaProbe(FILE *out, const char *run)
     passed = TruncatedRgba(out, run) && passed;
     const int profiles[] = {AVC_PROFILE_BASELINE, AVC_PROFILE_MAIN};
     const int modes[] = {BITRATE_MODE_CBR, BITRATE_MODE_VBR, BITRATE_MODE_CQ};
-    for (int profile : profiles) for (int mode : modes) for (int cycle = 1; cycle <= 3; ++cycle) {
+    for (int profile : profiles) for (int mode : modes) for (int cycle = 1; cycle <= 4; ++cycle) {
         passed = Cycle(out, run, profile, mode, cycle) && passed;
     }
-    fprintf(out, "{\"type\":\"summary\",\"run_id\":\"%s\",\"cycles\":18,\"frames\":72,\"passed\":%s}\n",
+    fprintf(out, "{\"type\":\"summary\",\"run_id\":\"%s\",\"cycles\":24,\"frames\":96,\"passed\":%s}\n",
         run, passed ? "true" : "false");
     fflush(out);
     return passed ? 0 : 1;

@@ -7,7 +7,7 @@ import struct
 import zipfile
 
 HERE = Path(__file__).resolve().parent
-SCOPE = 'ordinary_default_AVC_MIME_and_name_YUV_RGBA_72_challenged_pixels_and_truncated_input_NOT_surface_HEVC_or_media_pipelines'
+SCOPE = 'ordinary_default_AVC_MIME_and_name_YUV_RGBA_buffer_and_surface_96_challenged_pixels_and_truncated_input_NOT_HEVC_or_full_media_pipelines'
 ABIS = {'arm64': ('arm64-v8a', 'aarch64-linux-ohos', 183, 2),
         'armv7a': ('armeabi-v7a', 'arm-linux-ohos', 40, 1),
         'x86_64': ('x86_64', 'x86_64-linux-ohos', 62, 2)}
@@ -15,6 +15,8 @@ SOURCES = ('avc_media_probe.ets', 'avc_media_hap_probe.cpp', 'probes/avc_media.c
 HEADERS = ('native_avbuffer.h', 'native_avbuffer_info.h', 'native_avcapability.h',
            'native_avcodec_videoencoder.h', 'native_avcodec_videodecoder.h', 'native_avcodec_base.h',
            'native_avcodec_videobase.h', 'native_avformat.h', 'native_averrors.h')
+GRAPHICS_HEADERS = ('native_window/external_window.h', 'native_window/buffer_handle.h',
+                    'native_buffer/native_buffer.h', 'native_buffer/buffer_common.h')
 
 
 def sha(path):
@@ -37,7 +39,7 @@ def compile_command(project, sdk, arch):
     return [str(native / 'llvm/bin/clang++'), '--target=' + triple, '--sysroot=' + str(native / 'sysroot'),
             *flags, '-std=c++17', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
             str(HERE / SOURCES[1]), str(HERE / SOURCES[2]), '-lace_napi.z', '-lnative_media_venc',
-            '-lnative_media_vdec', '-lnative_media_codecbase', '-lnative_media_core',
+            '-lnative_media_vdec', '-lnative_media_codecbase', '-lnative_media_core', '-lnative_window', '-lnative_buffer',
             '-o', str(Path(project).resolve() / 'entry/libs' / abi / 'libavcmediaprobe.so')]
 
 
@@ -105,6 +107,7 @@ def inputs(project, sdk, arch, run):
         raise ValueError('AVC caller source/nonce or zero-permission role changed')
     header_root = sdk / 'native/sysroot/usr/include/multimedia/player_framework'
     paths = [header_root / name for name in HEADERS]
+    paths += [sdk / 'native/sysroot/usr/include' / name for name in GRAPHICS_HEADERS]
     for component in ('native', 'ets'):
         path = sdk / component / 'oh-uni-package.json'
         metadata = json.loads(path.read_text())

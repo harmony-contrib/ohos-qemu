@@ -25,7 +25,7 @@ def rows():
     step(RGBA_BOUNDARY, (-2, -2, -2))
     for profile in (0, 8):
         for mode in (0, 1, 2):
-            for cycle in (1, 2, 3):
+            for cycle in (1, 2, 3, 4):
                 key = profile, mode, cycle
                 common = dict(run_id=RUN, profile=profile, mode=mode, cycle=cycle)
                 step(encoder_steps(mode, cycle), key)
@@ -43,7 +43,7 @@ def rows():
                                        samples=4096, absolute_error=123, passed=True))
                 step([('all_decoded_frames', 1)], key)
                 result.append(dict(common, type='cycle', frames=4, passed=True))
-    result.append(dict(type='summary', run_id=RUN, cycles=18, frames=72, passed=True))
+    result.append(dict(type='summary', run_id=RUN, cycles=24, frames=96, passed=True))
     return result
 
 
@@ -66,14 +66,14 @@ class AvcMediaVerifierTests(unittest.TestCase):
         with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
 
     def test_full_fixture_and_bm_prefix(self):
-        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 710)
+        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 962)
         verify(render(rows()), RUN, 'org.harmonycontrib.capabilityaudit:\n' + IDENTITY)
 
     def test_partial_stale_reordered_duplicate_cannot_pass(self):
         complete = rows()
         for broken in (complete[:-1], list(reversed(complete)), complete * 2, complete[:200] + complete[201:]):
             with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
-        for index in (0, 15, 20, 30, 100, 709):
+        for index in (0, 15, 20, 30, 100, 961):
             broken = rows()
             broken[index]['run_id'] = 'a' * 32
             with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
@@ -133,7 +133,7 @@ class AvcMediaVerifierTests(unittest.TestCase):
             evidence = json.loads((root / 'report').read_text())
             self.assertEqual(completed.returncode, 1)
             self.assertEqual(evidence['status'], 'fail')
-            self.assertEqual(len(evidence['observations']), 709)
+            self.assertEqual(len(evidence['observations']), 961)
             for key in ('first_artifact_behavior_gate_passed', 'hardware_codec_tested', 'hevc_tested',
                         'mathematical_CBR_conformance_tested'):
                 self.assertFalse(evidence[key])
@@ -155,6 +155,28 @@ class AvcMediaVerifierTests(unittest.TestCase):
         self.assertIn('OH_AVCodecBufferAttr attr = {kPts, size - 1, 0, AVCODEC_BUFFER_FLAGS_NONE}', source)
         self.assertIn('"truncated_rgba_error", error, AV_ERR_UNKNOWN', source)
         self.assertIn('AV_PIXEL_FORMAT_RGBA', source)
+
+    def test_real_surface_steps_challenge_and_EOS_are_required(self):
+        surface = [(i, row) for i, row in enumerate(rows()) if row.get('cycle') == 4]
+        self.assertEqual(sum(row['type'] == 'pixels' for _, row in surface), 24)
+        names = dict(encoder_steps(0, 4))
+        self.assertEqual(names['surface_null_window_rejected'], 3)
+        self.assertEqual(names['surface_buffer_queue_rejected'], 8)
+        for index, row in surface:
+            if row['type'] != 'step': continue
+            broken = rows()
+            broken[index]['actual'] = 123
+            with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
+        for index, row in surface:
+            if row['type'] == 'pixels':
+                broken = rows()
+                broken[index]['pts'] *= 1000
+                with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
+        source = (Path(__file__).parent / 'probes/avc_media.cpp').read_text()
+        self.assertLess(source.index('SET_UI_TIMESTAMP'), source.index('OH_NativeWindow_NativeWindowRequestBuffer'))
+        for name in ('OH_NativeBuffer_Map', 'OH_NativeBuffer_Unmap', 'OH_NativeWindow_NativeWindowFlushBuffer',
+                     'OH_VideoEncoder_NotifyEndOfStream', 'OH_NativeWindow_DestroyNativeWindow'):
+            self.assertIn(name, source)
 
 
 if __name__ == '__main__':
