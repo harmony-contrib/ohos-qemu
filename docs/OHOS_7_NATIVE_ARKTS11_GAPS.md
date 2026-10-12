@@ -37,13 +37,48 @@ SDK/固定实现核对后调整调用方而非修改 Binder：
 Spring 所有观察改用 SDK 公开的 getUptime(STARTUP,false) 毫秒单调时钟，不改
 全局时钟、权限、计时阈值或状态预期；新增 SDK 声明/调用方哈希绑定，逆序及
 少于 1500ms 的 quiet 区间仍被拒绝。22 项 RPC、20 项 Spring 相邻主机测试
-通过；新的实际诊断 04 尚待完成，尚未关闭缺口或放行其余五包。
+通过；新的实际诊断 04 的 RPC、SpringLoading、Arc 全部通过，普通应用、
+实际 native 请求和物理输入未替换，电源策略恢复、冻结输入不变。
+`r39-unreached-ui-rpc-batch-r40-04/evidence.json` SHA256
+`2d6c87ab489ab8bde398807b756ae9cf2685f41ae0a9ccb643e1845d89111c17`。
+其运行环境为本地 ARM64/HVF、phone、API26 Release SDK，04 的独立 boot ID
+`335dd097-b7c0-45a2-9f65-ae20cbdf8592`，HDC `127.0.0.1:52713`；
+该诊断仍不替代新 R40 包的完整首包门槛，尚未关闭缺口或放行其余五包。
+
+提交 `518cf93db6e94b5706934c98fb3a20e828fefb88` 冻结主机批次 08：1688 项、
+跳过 1 项、389.391 秒，其余通过，输入不变；树 SHA256
+`102b1a5ba2b43a4e798a0ab9f73034f0f3dd99d8c7d038f3cada68a6ced7e077`。
+`host-r40-frozen-batch-08.json` SHA256
+`524f824d214150c60e1f2e3dd0d51f917b650b11b6adf013b0ce9d404d7d1410`，日志 SHA256
+`fdbd1df578f0e7d5de56ff3359aeaec4c23093d678e344a2cd7d7adb49bf8b5d`。
+同冻结树实际 SDK 三 ABI typed HAP 编译均通过、输入不变：RPC
+`rpc-runtime-compilation-r40-01/evidence.json` SHA256
+`077f6c6df9e6e6465c4b44cd57c69551f1eebc09e2cbb127f1dbaebb0da94b56`，Spring
+`spring-loading-compilation-r40-01/evidence.json` SHA256
+`e84635ccf69e3a0dae2f3c0e0eb457578b61d8b35e3bf70ae095c680bf3cb6de`，AVC
+`avc-default-compilation-r40-08/evidence.json` SHA256
+`93504961d2c2adb98be57ea699285db1fb9447cc992d1a19656619f85d3e601c`。
+本地 Docker 构建尝试 02 已开始，仅 ARM64 phone，输出根
+`/Volumes/PSSD/qemu/packages/first-media-avc-network-7.0-release-20261012-r40`；
+完成归档后才由同冻结树自动启动完整运行门槛，未开始其他五包。
 
 只清理已结束诊断 01/02 的 16 个 images 副本，释放 10,100,858,880 字节。
 原进程不在、策略恢复且无链接/打开文件；归档与所有非 images 证据哈希不变。
 基础镜像可重新提取，临时 userdata 不可恢复。收据
 `ended-ui-rpc-images-cleanup-r40-01.json` SHA256
 `b8bca66499025ea312156ad266206a8b9c1e77048968801e111d17f66697e400`。
+
+构建前另清理已经结束的诊断 03/04 各八个 images 文件，释放
+10,136,690,688 字节；原 PID 不在、策略已恢复、无打开文件/链接/活动引用，
+原 R39 归档及非 images 证据哈希保留。基础镜像可提取，临时 userdata 不可恢复。
+`r40-ui-rpc-diagnostic-images-cleanup-02.json` SHA256
+`d7e7aed80bdb17effc3b9e35cb23c4d7fde2f6b12da097bc84bf0ba9ab7a8eba`。
+另外只删除六组已结束 R20 FA negative-control 01..06 的过期 images 副本，
+释放 30,223,589,376 字节；核对失败终态、原 PID 消失、八个普通文件及无引用，
+日志和元数据哈希全部保留，未碰 R38/R39 归档。这些旧磁盘及临时 userdata
+不可恢复（其旧 R20 归档在本次清理前已不存在）。收据
+`obsolete-fa-negative-disks-cleanup-r40-01.json` SHA256
+`1ce17395e5fc9b6061e0e0171636da269ccd52eac35f3fbe0c585943f04e0523`。
 
 ## R40 AVC surface 调用方追加（未入 R39、未计入闭环）
 
