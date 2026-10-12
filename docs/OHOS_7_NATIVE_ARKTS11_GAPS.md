@@ -45,6 +45,16 @@ SHA256 `5a84ba84b1c80fe2bde1aad09708dccbf0b9aad29950098ce7a79beda21bb60e`。
 `120e4e626f03adf08e4be5728c739b265e2cf68b8a34ff083a87fa6a6ebb67cc`。
 这次只改变应用方式，不改变上述实际修复源和测试调用方；仍不替代新包门槛。
 
+提交 `4b0dd513910c9d3f1f381f1e57eacb401a87dfcd` 的最终冻结批次
+`host-r40-frozen-batch-05.json`：1678 项、跳过 1 项、364.956 秒，其余通过，输入不变；
+冻结树 `d5f13d0db5aa794606d329a103c03035b2daa65d53cdd16be73211899c71bbab`，报告
+SHA256 `92a4c6ac62ef0ad290a477a6c6efd889174c6efed948be7aa12960452ee4bf1e`，日志
+SHA256 `31e22c7ae51b170528c6f9f56151ca32ab6980985a2123f815bb84107e08805c`。
+同最终树重新实际编译三个 ABI 的 native/类型 HAP，全部通过、输入不变；
+`avc-default-compilation-r40-05/evidence.json` SHA256
+`16922df4a843d67e69a0a617cde7196097207559d9e0dc7051d58f15195d44fb`。
+这些未签名 HAP 不用于替代新包调用方，不沿用旧运行结果或放行其余五包。
+
 ## R40 默认视频编码器下一批候选（未入 R39、未计入闭环）
 
 补查发现：原 AVC 437 行回归显式选 SOFTWARE，不能证明默认能力选择、MIME 创建
