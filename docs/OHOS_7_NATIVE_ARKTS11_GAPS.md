@@ -211,9 +211,28 @@ SHA256 `9b59495e1323f3f766245d621a867b297d251635ef020a96de041b301e0c225b`。
 `6d5796cff9ea6a90aa961a36d24b74d61c920888b615f01f2e5250b7f3bf28e1`；未运行来宾。
 
 本地 Docker 仅构建 ARM64 phone，实际输入快照 `phone-tqMt1I` 的树与上述一致；
-输出根 `packages/first-rpc-network-ui-7.0-release-20261012-r39`。记录时仍在构建，
-没有归档校验和或启动/首包整体通过结论。构建完成后使用同冻结验证脚本集中验证新归档；
-没有启动其余五包。R38 的失败和最近 123 个未闭环契约保留，未授权的亮度 GL/CPU
+输出根 `packages/first-rpc-network-ui-7.0-release-20261012-r39`，本地编译、最终镜像
+检查及归档已经完成。完整归档路径为
+`/Volumes/PSSD/qemu/packages/first-rpc-network-ui-7.0-release-20261012-r39/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+894,904,911 字节，SHA256
+`11e023d3ea698a45209e5ef880349e8c7cc2835a053c8f099b2b0bc0974ec109`。
+构建报告 `r39-representative-build-01.json` SHA256
+`65b6c076b9a7ad4ccb9008a2984a1662aeee58ee5588dc10f4436db90c12ff51`，完整构建日志
+SHA256 `913500aa32623d055f2f6f0ff531e30efe26c0b8c03314f403f73224a7e7fa09`。
+
+使用同冻结树的 `scripts/validate_packaged_qemu.sh --package-archive 上述归档
+--package-directory 对应完整目录 --evidence-output
+/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r39-bound-full-runtime-01.json`
+集中验收。环境为本地 macOS QEMU 11.0.3/HVF、API26 Release SDK 26.0.0.105、
+现有 host-validation-venv-r21-01 和 ohos-native-bindings 原测试的自有快照，
+没有替换镜像系统库、更新冻结输入或启动其余五包。
+新归档实际启动通过，boot ID `afd9ce03-9c28-411f-b441-7c80dce85c51`，HDC
+`127.0.0.1:65132`；boot 证据位于
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-cweml9rs/boot/boot.json`，SHA256
+`c4591d4f81ff00c8ca437128b5be7aeae5aca478be8ea18f51e37e766c79b7b0`。
+purpose 为 acceptance、external_keepalive=false；截至记录时多个窄检查已经通过，
+集中验收仍在运行，不能声称 Spring/RPC/全部能力或首包整体通过。
+R38 的失败和最近 123 个未闭环契约保留，未授权的亮度 GL/CPU
 真实采样回退未实现。新增 R40 媒体补丁不属于此 R39 包。
 
 清理仅删除已终止、自有诊断 07/08 的各 8 个 images 文件，释放 9,838,408 KiB
