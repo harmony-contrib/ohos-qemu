@@ -11,7 +11,16 @@ surface 下 buffer queue 调用被拒绝，PTS、SPS/IDR/EOS、像素与重建�
 固定 AVC fuzzer/async/sync/preproc 样例在 SET_UI_TIMESTAMP 使用微秒；实际
 NativeWindow 在 RequestBuffer 捕获该值。调用方据此在 request 前设置微秒挑战，
 未擅自把 codec 的时间戳除以 1000，也未改变镜像时间戳语义。
-43 项相邻 AVC 主机回归通过；实际 SDK 编译及新包 surface 行为仍待验证。
+43 项相邻 AVC 主机回归通过。提交 `aa802914e18a150b33ab2362b711d0873521141e`
+冻结树 `bc0906ff62558db82f5325501c093da464f3d7ad8a3b0cb1e608b2df4ee4ca62` 的
+完整主机回归 1679 项、跳过 1 项、398.916 秒，其余通过、输入不变；
+`host-r40-frozen-batch-06.json` SHA256
+`7660b6fa27e40580ff69aa80f105e1729e83e85e47646020d1a5251564c9f9d0`，日志
+SHA256 `8ca3ac4082a62adbf77785eea4347ff3dc8bd2d49f1152d18409702f075db744`。
+同冻结树的三个 ABI 实际 native/类型 HAP 编译、归一化 unsigned 归档的真实加载字节
+校验全部通过，输入不变；`avc-default-compilation-r40-06/evidence.json` SHA256
+`29d323598a3164c79f72e26a9991be98280d4b43057faee8ac25a789250552a8`。
+新包 surface 行为仍待验证，编译诊断 HAP 尚未签名或运行。
 不声称 YUV surface、HEVC 编码或完整录制/录屏/转码管线已经闭环。
 
 ## R40 AVC 输入边界批量候选（未入 R39、未计入闭环）
