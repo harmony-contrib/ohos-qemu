@@ -1,0 +1,14 @@
+{
+  "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp": {
+    "before": "f8f844ed08e8dd8e72f79f1b39958e832a7c290c9a3132df0201aea8e6e7b05f",
+    "after": "07ac43284cb4c6da5b1085f33367458484e3e90bb23dbf58ed4b1c91a18834cb"
+  },
+  "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp": {
+    "before": "b67464e24de268e234913e1b8719f6b4e62f04e82115eaccc03086f85a6d8c89",
+    "after": "19a959d9964b71e60f2fd14cd5a264166c57092480b51a1fa0bf3e0c66535679"
+  },
+  "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h": {
+    "before": "fbf29076f2c6eaf440e3be54edab6ede957eee7f4906e229e7d68d2e4ce0db7e",
+    "after": "fe77e1d13bfd9dc9ddfcd8a1468b07c777dee604922dd86d5266d549d677353f"
+  }
+}

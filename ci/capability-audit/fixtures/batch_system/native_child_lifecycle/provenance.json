@@ -1,0 +1,86 @@
+{
+  "source_container": "ohos-qemu-parallel-source-20261015-01",
+  "source_root": "/ohos",
+  "project": "foundation/ability/ability_runtime",
+  "revision": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+  "source_state": "native_child_process.cpp is the exact baseline post-0002/post-0003 source; four callback files match pinned HEAD. Separate pristine files come from git show of the fixed revision for the complete installer regression.",
+  "files": [
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+      "sha256": "f8f844ed08e8dd8e72f79f1b39958e832a7c290c9a3132df0201aea8e6e7b05f",
+      "bytes": 14512
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+      "sha256": "b67464e24de268e234913e1b8719f6b4e62f04e82115eaccc03086f85a6d8c89",
+      "bytes": 3702
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+      "sha256": "fbf29076f2c6eaf440e3be54edab6ede957eee7f4906e229e7d68d2e4ce0db7e",
+      "bytes": 1821
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/src/child_callback_manager.cpp",
+      "sha256": "c66914aeea79519f788591375e702063e60e81bb6af09bd40af1c74d472f661e",
+      "bytes": 1255
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/include/child_callback_manager.h",
+      "sha256": "763a8b80bf65aabe746f6e3686091aafdb6332a69ecfb7ca6a7e459d0fca29f9",
+      "bytes": 1381
+    }
+  ],
+  "pristine_files": [
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+      "sha256": "8bb39515667a4411a5ef35065da39f659f73dec83b6b543dcfb52cab75276f8a",
+      "bytes": 14158
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+      "sha256": "b67464e24de268e234913e1b8719f6b4e62f04e82115eaccc03086f85a6d8c89",
+      "bytes": 3702
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+      "sha256": "fbf29076f2c6eaf440e3be54edab6ede957eee7f4906e229e7d68d2e4ce0db7e",
+      "bytes": 1821
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/src/child_callback_manager.cpp",
+      "sha256": "c66914aeea79519f788591375e702063e60e81bb6af09bd40af1c74d472f661e",
+      "bytes": 1255
+    },
+    {
+      "path": "foundation/ability/ability_runtime/frameworks/native/child_process/include/child_callback_manager.h",
+      "sha256": "763a8b80bf65aabe746f6e3686091aafdb6332a69ecfb7ca6a7e459d0fca29f9",
+      "bytes": 1381
+    },
+    {
+      "path": "foundation/ability/ability_runtime/interfaces/inner_api/child_process_manager/include/child_process_args_manager.h",
+      "sha256": "f8c1155db7caa1a05bee1ea64834760ab9c923f9a0fc6c382ba644d4047f9c8f",
+      "bytes": 1815
+    },
+    {
+      "path": "foundation/ability/ability_runtime/interfaces/inner_api/child_process_manager/BUILD.gn",
+      "sha256": "484849c06915e23ac5a01ca8a330183caee56fdb9c2d2ac986bb22c5ac93911a",
+      "bytes": 3083
+    },
+    {
+      "path": "foundation/ability/ability_runtime/interfaces/inner_api/app_manager/include/appmgr/child_process_args.h",
+      "sha256": "f9244af5318c0e22a1a5e1f18a9b465de8d1d6f3174d16d52ab15abb212c7ad3",
+      "bytes": 1430
+    },
+    {
+      "path": "foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_args.cpp",
+      "sha256": "2737a731a604713c45cae76e72d90b12729ee5bd0e07a4e16bca58f50f0c7d59",
+      "bytes": 3771
+    },
+    {
+      "path": "foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_info.cpp",
+      "sha256": "65b38bd0008cff0d0a081a2336adaa578f2a11a7290f9e6ec5b63208ae49eba9",
+      "bytes": 5005
+    }
+  ]
+}
