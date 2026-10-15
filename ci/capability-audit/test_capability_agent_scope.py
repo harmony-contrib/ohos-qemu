@@ -66,6 +66,17 @@ class CapabilityAgentScopeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'integration requests'):
             self.check(report=report)
 
+    def test_component_directory_does_not_replace_explicit_upstream_ownership(self):
+        target = 'foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp'
+        report = {'requirements_review': {row['id']: {} for row in self.plan['agents']['system']['requirements']},
+                  'upstream_targets': [target], 'remaining_gaps': [], 'tests': [], 'integration_requests': []}
+        check_scope(self.plan, 'system', [
+            'patches/common/foundation/ability/ability_runtime/native_child_process/0004-callback.patch'],
+            report, {target}, [])
+        with self.assertRaisesRegex(ValueError, 'upstream target owned'):
+            check_scope(self.plan, 'system', [], {**report, 'upstream_targets': [
+                'foundation/ability/ability_runtime/frameworks/native/appdata/new.cpp']}, set(), [])
+
 
 if __name__ == '__main__':
     unittest.main()

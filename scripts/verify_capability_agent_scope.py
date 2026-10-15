@@ -42,8 +42,9 @@ def check_scope(plan: dict, agent: str, changed: list[str], report: dict,
     if not isinstance(declared, list) or len(declared) != len(set(declared)):
         raise ValueError('upstream targets must be an explicit unique list')
     targets = {relative_path(name) for name in declared}
-    upstream_prefixes = [prefix.removeprefix('patches/common/')
-                         for prefix in allocation['prefixes'] if prefix.startswith('patches/common/')]
+    upstream_prefixes = allocation.get('upstream_prefixes', [
+        prefix.removeprefix('patches/common/') for prefix in allocation['prefixes']
+        if prefix.startswith('patches/common/')])
     for target in targets:
         if not any(target.startswith(prefix) for prefix in upstream_prefixes):
             raise ValueError('agent changed an upstream target owned by another group or parent: ' + target)

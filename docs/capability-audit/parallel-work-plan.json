@@ -1657,7 +1657,17 @@
           "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         }
       ],
-      "count": 10
+      "count": 10,
+      "upstream_prefixes": [
+        "base/security/",
+        "base/startup/",
+        "base/msdp/",
+        "foundation/distributeddatamgr/",
+        "foundation/msdp/",
+        "foundation/graphic/graphic_3d/",
+        "domains/",
+        "foundation/ability/ability_runtime/frameworks/native/child_process/"
+      ]
     }
   }
 }
