@@ -46,7 +46,8 @@ def check_scope(plan: dict, agent: str, changed: list[str], report: dict,
         prefix.removeprefix('patches/common/') for prefix in allocation['prefixes']
         if prefix.startswith('patches/common/')])
     for target in targets:
-        if not any(target.startswith(prefix) for prefix in upstream_prefixes):
+        if (target not in allocation.get('upstream_files', []) and
+                not any(target.startswith(prefix) for prefix in upstream_prefixes)):
             raise ValueError('agent changed an upstream target owned by another group or parent: ' + target)
     if not patch_targets <= targets:
         raise ValueError('patch changes undeclared upstream files: ' +

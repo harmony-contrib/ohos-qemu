@@ -38,6 +38,8 @@ def encoder_steps(mode, cycle=None):
     result = ([('encoder_creation_path', cycle)] if cycle is not None else []) + [
         ('dynamic_bitrate_cq_rejected', 3) if mode == 2 and name == 'dynamic_bitrate'
         else (name, code) for name, code in ENCODER]
+    if cycle == 2:
+        result.insert(result.index(('encoder_start', 0)) + 1, ('nonzero_input_offset', 4096))
     if cycle == 4:
         index = result.index(('encoder_prepare', 0))
         result[index:index] = [('surface_null_window_rejected', 3), ('encoder_input_surface', 0),
@@ -58,8 +60,8 @@ def verify(text, run, identity_text):
         raise ValueError('explicit fresh AVC run challenge required')
     uid = application_identity(identity_text)
     rows = [json.loads(line) for line in text.splitlines() if line.strip()]
-    if len(rows) != 962 or any(not isinstance(row, dict) or row.get('run_id') != run for row in rows):
-        raise ValueError('incomplete, stale or mixed default AVC media results: require 962 rows')
+    if len(rows) != 968 or any(not isinstance(row, dict) or row.get('run_id') != run for row in rows):
+        raise ValueError('incomplete, stale or mixed default AVC media results: require 968 rows')
     fields = {
         'identity': {'type', 'run_id', 'uid', 'euid'},
         'step': {'type', 'run_id', 'profile', 'mode', 'cycle', 'name', 'actual', 'expected', 'passed'},
@@ -152,6 +154,8 @@ def result(rows):
             'scope': SCOPE, 'encoder_MIME_cycles': 6, 'encoder_default_name_cycles': 18,
             'decoder_MIME_cycles': 6, 'decoder_default_name_cycles': 18, 'challenged_frames': 96,
             'RGBA_buffer_cycles': 6, 'RGBA_surface_cycles': 6, 'truncated_RGBA_real_error_and_recreate': True,
+            'nonzero_offset_YUV_buffer_cycles': 6, 'nonzero_offset_challenged_frames': 24,
+            'nonzero_offset_prefix_bytes': 4096,
             'not_claimed': 'YUV_surface_or_HEVC_encoding_or_full_codec_enumeration_or_recording_screen_capture_transcoding_pipelines'}
 
 

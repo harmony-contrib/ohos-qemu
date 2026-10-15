@@ -1473,7 +1473,10 @@
           "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         }
       ],
-      "count": 7
+      "count": 7,
+      "upstream_files": [
+        "device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
+      ]
     },
     "system": {
       "groups": [

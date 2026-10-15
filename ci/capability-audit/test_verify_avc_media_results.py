@@ -66,7 +66,7 @@ class AvcMediaVerifierTests(unittest.TestCase):
         with self.assertRaises(ValueError): verify(render(broken), RUN, IDENTITY)
 
     def test_full_fixture_and_bm_prefix(self):
-        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 962)
+        self.assertEqual(len(verify(render(rows()), RUN, IDENTITY)), 968)
         verify(render(rows()), RUN, 'org.harmonycontrib.capabilityaudit:\n' + IDENTITY)
 
     def test_partial_stale_reordered_duplicate_cannot_pass(self):
@@ -133,7 +133,7 @@ class AvcMediaVerifierTests(unittest.TestCase):
             evidence = json.loads((root / 'report').read_text())
             self.assertEqual(completed.returncode, 1)
             self.assertEqual(evidence['status'], 'fail')
-            self.assertEqual(len(evidence['observations']), 961)
+            self.assertEqual(len(evidence['observations']), 967)
             for key in ('first_artifact_behavior_gate_passed', 'hardware_codec_tested', 'hevc_tested',
                         'mathematical_CBR_conformance_tested'):
                 self.assertFalse(evidence[key])

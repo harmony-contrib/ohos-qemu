@@ -77,6 +77,15 @@ class CapabilityAgentScopeTests(unittest.TestCase):
             check_scope(self.plan, 'system', [], {**report, 'upstream_targets': [
                 'foundation/ability/ability_runtime/frameworks/native/appdata/new.cpp']}, set(), [])
 
+    def test_one_cross_component_file_does_not_grant_its_parent_directory(self):
+        target = 'device/qemu/common/virt_full/audio_alsa/vendor_capture.c'
+        report = {'requirements_review': {row['id']: {} for row in self.plan['agents']['media']['requirements']},
+                  'upstream_targets': [target], 'remaining_gaps': [], 'tests': [], 'integration_requests': []}
+        check_scope(self.plan, 'media', [], report, {target}, [])
+        for foreign in [target + '.other', 'device/qemu/common/virt_full/audio_alsa/vendor_render.c']:
+            with self.subTest(path=foreign), self.assertRaisesRegex(ValueError, 'upstream target owned'):
+                check_scope(self.plan, 'media', [], {**report, 'upstream_targets': [foreign]}, {foreign}, [])
+
 
 if __name__ == '__main__':
     unittest.main()

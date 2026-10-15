@@ -212,13 +212,19 @@ OH_AVFormat *Configuration(int profile, int mode, bool encoder, bool rgba = fals
     return format;
 }
 
-bool FeedFrame(OH_AVCodec *codec, Context &context, int frame, bool rgba)
+bool FeedFrame(OH_AVCodec *codec, Context &context, int frame, bool rgba, int offset)
 {
     Input input = {};
     if (!InputBuffer(context, input)) return false;
     const int size = rgba ? kWidth * kHeight * 4 : kWidth * kHeight * 3 / 2;
     uint8_t *data = OH_AVBuffer_GetAddr(input.buffer);
-    if (data == nullptr || OH_AVBuffer_GetCapacity(input.buffer) < size) return false;
+    const int capacity = OH_AVBuffer_GetCapacity(input.buffer);
+    if (data == nullptr || offset < 0 || offset > capacity || size > capacity - offset) return false;
+    // The YUV buffer has the wrapper's full RGBA-sized allocation. A complete
+    // luma plane before the real frame makes ignoring offset visibly fail the
+    // independent decoder check, even with the allowed lossy pixel tolerance.
+    std::memset(data, context.expected[frame] >= 96 ? 0 : 255, offset);
+    data += offset;
     if (rgba) {
         for (int pixel = 0; pixel < kWidth * kHeight; ++pixel) {
             data[pixel * 4] = context.inputY[frame];
@@ -231,7 +237,7 @@ bool FeedFrame(OH_AVCodec *codec, Context &context, int frame, bool rgba)
         std::memset(data + kWidth * kHeight, 64, kWidth * kHeight / 4);
         std::memset(data + kWidth * kHeight * 5 / 4, 192, kWidth * kHeight / 4);
     }
-    const OH_AVCodecBufferAttr attr = {kPts + frame * kInterval, size, 0, AVCODEC_BUFFER_FLAGS_NONE};
+    const OH_AVCodecBufferAttr attr = {kPts + frame * kInterval, size, offset, AVCODEC_BUFFER_FLAGS_NONE};
     return OH_AVBuffer_SetBufferAttr(input.buffer, &attr) == AV_ERR_OK &&
         OH_VideoEncoder_PushInputBuffer(codec, input.index) == AV_ERR_OK && Wait(context, attr.pts, false);
 }
@@ -385,6 +391,7 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     context->encoder = true;
     const bool surfaceMode = cycle == 4;
     const bool rgba = cycle >= 3;
+    const int inputOffset = cycle == 2 ? kWidth * kHeight : 0;
     for (int frame = 0; frame < kFrames; ++frame) {
         context->inputY[frame] = 32 + ((static_cast<unsigned char>(run[frame]) + frame + cycle) % 16) * 8;
         // Actual default BT601/BT709 limited-range conversion has luma weights
@@ -426,6 +433,9 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     const auto started = OH_VideoEncoder_Start(codec);
     valid &= step("encoder_start", started);
     if (started == AV_ERR_OK) {
+        if (cycle == 2) {
+            valid &= step("nonzero_input_offset", inputOffset, 4096);
+        }
         if (surfaceMode) {
             // The Release CodecClient rejects mixing buffer input with an active
             // surface before IPC as INVALID_OPERATION, mapped by the C API to
@@ -439,7 +449,7 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
                 "dynamic_bitrate", SetParameter(codec, false), mode == BITRATE_MODE_CQ ? AV_ERR_INVALID_VAL : AV_ERR_OK);
             if (frame == 2) valid &= step("request_idr", SetParameter(codec, true));
             valid &= step(frameNames[frame], surfaceMode ? FeedSurfaceFrame(window.get(), *context, frame) :
-                FeedFrame(codec, *context, frame, rgba), 1);
+                FeedFrame(codec, *context, frame, rgba, inputOffset), 1);
         }
         const bool eos = surfaceMode ? OH_VideoEncoder_NotifyEndOfStream(codec) == AV_ERR_OK &&
             Wait(*context, 0, true) : EndEncoding(codec, *context);

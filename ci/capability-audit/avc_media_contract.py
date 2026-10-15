@@ -7,7 +7,7 @@ import struct
 import zipfile
 
 HERE = Path(__file__).resolve().parent
-SCOPE = 'ordinary_default_AVC_MIME_and_name_YUV_RGBA_buffer_and_surface_96_challenged_pixels_and_truncated_input_NOT_HEVC_or_full_media_pipelines'
+SCOPE = 'ordinary_default_AVC_MIME_and_name_YUV_RGBA_buffer_and_surface_96_challenged_pixels_nonzero_offset_and_truncated_input_NOT_HEVC_or_full_media_pipelines'
 ABIS = {'arm64': ('arm64-v8a', 'aarch64-linux-ohos', 183, 2),
         'armv7a': ('armeabi-v7a', 'arm-linux-ohos', 40, 1),
         'x86_64': ('x86_64', 'x86_64-linux-ohos', 62, 2)}
