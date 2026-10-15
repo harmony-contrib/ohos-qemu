@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Accept only the exact fixed wrapper or its explicit EOS repair, never unknown edits."""
 import argparse
+import importlib.util
 from pathlib import Path
 import subprocess
 
@@ -107,7 +108,15 @@ def repaired_source(original, include_input=True):
     return repaired
 
 
-def validate(root, require_patched=False):
+def surface_layout_source(original):
+    path = Path(__file__).resolve().parent.parent / 'avc_surface_layout/layout.py'
+    spec = importlib.util.spec_from_file_location('avc_eos_surface_layout', path)
+    layout = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(layout)
+    return layout.repair_wrapper(repaired_source(original))
+
+
+def validate(root, require_patched=False, require_surface_layout=False):
     project = root / 'foundation/multimedia/av_codec'
     if subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip() != REVISION:
         raise ValueError('AVC EOS repair requires the pinned 7.0 wrapper')
@@ -123,17 +132,28 @@ def validate(root, require_patched=False):
             raise ValueError('linked AVC wrapper input rejected')
     actual = target.read_bytes().decode()
     accepted = (repaired,) if require_patched else (original, repaired_source(original, False), repaired)
+    # The later independently guarded layout component overlaps this complete wrapper.
+    # Recognize its exact complete bytes so repeated preparation never reverses an old stack over it.
+    try:
+        overlay = surface_layout_source(original)
+    except (ValueError, IndexError):
+        overlay = None
+    if overlay is not None:
+        accepted += (overlay,)
+    if require_surface_layout:
+        accepted = (overlay,) if overlay is not None else ()
     if actual not in accepted:
         raise ValueError('unknown/incomplete AVC wrapper changes; preserve edits and refuse this backend')
-    return actual == repaired
+    return actual == repaired or (overlay is not None and actual == overlay)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--require-patched', action='store_true')
+    parser.add_argument('--require-surface-layout', action='store_true')
     args = parser.parse_args()
-    print('AVC EOS patch present: ' + str(validate(args.source_root, args.require_patched)))
+    print('AVC EOS patch present: ' + str(validate(args.source_root, args.require_patched, args.require_surface_layout)))
 
 
 if __name__ == '__main__':

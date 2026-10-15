@@ -1,0 +1,207 @@
+{
+  "agent": "media",
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "branch": "codex/capability-media-20261015",
+  "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
+  "status": "reviewable_candidate_host_checks_passed_new_package_required",
+  "requirements_review": {
+    "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent": {
+      "status": "unresolved",
+      "source_finding": "SDK defines getRelatedEntity/getSearchSuggestion with system+READ_IMAGEVIDEO authorization. Exact class/method tokens absent in 4066 scoped media_library source/config files. Existing Photos/geographic knowledge joins do not implement Entity/alias/ranking or all suggestion types.",
+      "candidate": "No fake class or empty query result added. Real data/index/authorization/delete contract documented in REVIEW.md.",
+      "remaining": "Implement native class/IPC/provider queries with stable real Entity IDs, aliases, FieldType/ranking/filter mapping, real asset-backed suggestion counts, index updates/deletes/visibility/persistence and normal/system-denied/system-granted new-package HAP evidence.",
+      "gap_closed": false
+    },
+    "behavior:audio-capture-and-dependent-pipelines": {
+      "status": "unresolved",
+      "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
+      "candidate": "No input device/backend synthesized; no additional audio source change.",
+      "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence.",
+      "gap_closed": false
+    },
+    "behavior:media-recording-input-backends-missing": {
+      "status": "candidate_prepared",
+      "source_finding": "Actual audio/video capture filters require capture producer/surface. Shared AVC input ignores AVMemory offset and accepts incompatible surface byte ranges/layouts.",
+      "candidate": "Real AVC input offset, surface geometry/stride/UV capacity checks and validation-error surface release, preserving existing encoder backend.",
+      "remaining": "Actual AVRecorder audio+video producer to decodable file, timestamp and pause/stop/release/recreate/authorization validation on the representative package.",
+      "gap_closed": false
+    },
+    "behavior:audio-interrupt-haptic-renderer-dependency": {
+      "status": "unresolved",
+      "source_finding": "AudioHapticPlayerImpl Start calls actual audioPlayer Start; independent Renderer PCM callbacks cannot demonstrate interrupt focus or audio/vibration synchronization.",
+      "candidate": "No fake callback/focus success introduced.",
+      "remaining": "Two real ordinary callers competing for focus, actual interruption/resume callbacks and synchronized vibration/playback, lifecycle and denial boundaries on a new package.",
+      "gap_closed": false
+    },
+    "behavior:media-codec-base-partial": {
+      "status": "candidate_prepared",
+      "source_finding": "Pinned AVC surface RGBA validates stride only as pixels, NV21 indexes plane[2] although supported native layout can be two physical planes, UV tail is not bounded, P010 maps to an 8-bit converter, and AVMemory offset is ignored.",
+      "candidate": "Independent exact-source avc_surface_layout patch and guards; real source functions and scalar converters exercised with challenged pixels, old-code reproductions, offset/stride/chroma-end/overflow/layout rejection and surface cleanup.",
+      "remaining": "Two actual full product TUs and link; new-package default/software AVC create, full encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary cases. No HEVC, P010 converter or complete codec-matrix closure claimed.",
+      "gap_closed": false
+    },
+    "behavior:audio-vivid-metadata-runtime-plugin-missing": {
+      "status": "unresolved",
+      "source_finding": "media_foundation native_audio_vivid.cpp explicitly loads libAudioVividMetaBuilder.z.so and requires CreateAudioVividMetaBuilder/DestroyAudioVividMetaBuilder; no true format implementation supplied to this group.",
+      "candidate": "Kept genuine unsupported/error behavior; no dummy builder, fabricated metadata or empty success.",
+      "remaining": "Real Audio Vivid metadata format/algorithm plugin with provenance/license and installed ABI, objects/positions/gain metadata serialization roundtrip and lifecycle/error validation on the new package.",
+      "gap_closed": false
+    },
+    "behavior:video-encoder-dependent-media-pipelines": {
+      "status": "candidate_prepared",
+      "source_finding": "Recording/screen-capture/transcoding share the actual encoder input; existing software AVC and truthful hardware capability preparation do not validate complete pipelines.",
+      "candidate": "Fixes actual shared AVC byte routing, supported layouts, bounds and rejected-surface release without replacing backend data.",
+      "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers.",
+      "gap_closed": false
+    }
+  },
+  "upstream_targets": [
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp",
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp"
+  ],
+  "ownership": "Both complete upstream paths exclusively assigned by parent before edits; no shared source/out writes or other agent files changed.",
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_batch_media_avc_surface_layout.py -v",
+      "result": "passed",
+      "tests": 5,
+      "actual_function_pixel_assertions": 123357,
+      "evidence": "docs/capability-audit/parallel/media/host-checks-04.log",
+      "scope": "host ASan/UBSan; actual pinned wrapper/SendFrame/scalar converters with small contract harness; no guest/backend acceptance"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p 'test_avc*.py' -v",
+      "result": "passed",
+      "tests": 33,
+      "evidence": "docs/capability-audit/parallel/media/existing-avc-checks-01.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_verify_avc_media_results.py -v",
+      "result": "passed",
+      "tests": 11,
+      "evidence": "docs/capability-audit/parallel/media/existing-avc-verifier-checks-01.log"
+    },
+    {
+      "command": "docker exec -i ohos-qemu-parallel-source-20261015-01 python3 - --source-root /ohos < ci/capability-audit/batch_media_review_source.py",
+      "result": "passed",
+      "evidence": "docs/capability-audit/parallel/media/source-review.json",
+      "scope": "read-only fixed source; no /ohos/out artifact proof"
+    },
+    {
+      "command": "bash -n patches/common/foundation/multimedia/av_codec/avc_eos/apply.sh patches/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh",
+      "result": "passed",
+      "scope": "shell syntax only"
+    }
+  ],
+  "integration_requests": [
+    {
+      "id": "media-build-hook",
+      "owner": "parent",
+      "request": "Wire avc_surface_layout/apply.sh into scripts/build_standard_qemu_in_docker.sh immediately after software_avc and before metadata/traversal; source-root is ${OHOS_ROOT}. Include new component/guard/fixture/test bytes in central frozen inputs and metadata. Existing avc_eos now recognizes only this exact complete wrapper overlay and skips the old stack on repeat."
+    },
+    {
+      "id": "media-official-tu-validation",
+      "owner": "parent",
+      "request": "Under the single heavy-resource lease, compile both changed full avc_encoder.cpp and avc_encoder_util.cpp using actual fixed product flags/headers in owned scratch, then link/build the representative artifact; no mixed /ohos/out or host-harness success substitutes for this."
+    },
+    {
+      "id": "media-host-suite",
+      "owner": "parent",
+      "request": "Include test_batch_media_avc_surface_layout.py in central host discovery. Existing 33 AVC and 11 strict verifier checks remain unchanged and pass."
+    },
+    {
+      "id": "media-public-runtime-cases",
+      "owner": "parent",
+      "request": "Extend the shared ordinary HAP AVC caller/verifier with public OH_AVBuffer nonzero offset and prefixed challenged frame, actual RGBA surface input, NV12/NV21 (real two-plane/metadata fallback as available), capacity/stride/UV-tail rejection and release/recreate checks. Preserve all existing default codec, output pixel, PTS, EOS, bitrate, IDR and permissions gates."
+    },
+    {
+      "id": "media-capability-pipelines",
+      "owner": "parent",
+      "request": "Keep all 7 IDs unresolved until their own actual behavior passes the newly packaged representative artifact. Validate audio input/recording/interrupt/haptic/screen-capture/transcoding and KnowledgeContent populated data/index/delete/role behavior separately; AVC host repair or Renderer callback cannot close them."
+    }
+  ],
+  "remaining_gaps": [
+    {
+      "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+      "remaining": "Implement native class/IPC/provider queries with stable real Entity IDs, aliases, FieldType/ranking/filter mapping, real asset-backed suggestion counts, index updates/deletes/visibility/persistence and normal/system-denied/system-granted new-package HAP evidence."
+    },
+    {
+      "id": "behavior:audio-capture-and-dependent-pipelines",
+      "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence."
+    },
+    {
+      "id": "behavior:media-recording-input-backends-missing",
+      "remaining": "Actual AVRecorder audio+video producer to decodable file, timestamp and pause/stop/release/recreate/authorization validation on the representative package."
+    },
+    {
+      "id": "behavior:audio-interrupt-haptic-renderer-dependency",
+      "remaining": "Two real ordinary callers competing for focus, actual interruption/resume callbacks and synchronized vibration/playback, lifecycle and denial boundaries on a new package."
+    },
+    {
+      "id": "behavior:media-codec-base-partial",
+      "remaining": "Two actual full product TUs and link; new-package default/software AVC create, full encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary cases. No HEVC, P010 converter or complete codec-matrix closure claimed."
+    },
+    {
+      "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
+      "remaining": "Real Audio Vivid metadata format/algorithm plugin with provenance/license and installed ABI, objects/positions/gain metadata serialization roundtrip and lifecycle/error validation on the new package."
+    },
+    {
+      "id": "behavior:video-encoder-dependent-media-pipelines",
+      "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers."
+    }
+  ],
+  "gap_closures": 0,
+  "package_created": false,
+  "first_package": null,
+  "runtime_validation": "not run; central representative-package gate remains mandatory before other five artifacts",
+  "resources": {
+    "docker_access": "approved bounded read-only queries in ohos-qemu-parallel-source-20261015-01",
+    "source_out_modified": false,
+    "heavy_jobs_started": 0,
+    "qemu_hdc_used": false
+  },
+  "preserved_failures": [
+    "docs/capability-audit/parallel/media/host-checks-01.log: missing fixture manifest and unsupported macOS leak detector; fixed without relaxing ASan/UBSan or pixel assertions",
+    "docs/capability-audit/parallel/media/source-review-01.failure.json: git show needed HEAD:./path inside nested drivers/peripheral/audio directory; read-only query fixed"
+  ],
+  "evidence_sha256": {
+    "docs/capability-audit/parallel/media/REVIEW.md": "5303bdca065383dd8a80ab47a181e0a66f02a73040430921a0f18f4533f22f7f",
+    "docs/capability-audit/parallel/media/environment.json": "c6e5f090868cec546b31fd59ca8e99a0c8317ee4e1fa2a877a0f599655afc223",
+    "docs/capability-audit/parallel/media/existing-avc-checks-01.log": "92ef61f618af9e946390015284cf50d68a2c2b0f5fb96b39d0370db61b6aeaea",
+    "docs/capability-audit/parallel/media/existing-avc-verifier-checks-01.log": "231778c98edcae600e32bd7979b747e5c23c46d303d7ea8cd30995ded7af4096",
+    "docs/capability-audit/parallel/media/host-checks-01.log": "e4ddf9822aab917c0bb9a972bfb837d4f47cd95ce77a988b66f60a5271640c60",
+    "docs/capability-audit/parallel/media/host-checks-02.log": "d3e8d435143a23854fe2122a67f443857f5ce2bd4aae5a0397b1dc42ff81ecb8",
+    "docs/capability-audit/parallel/media/host-checks-03.log": "4896b80817d8f92176a1204d679d445b5232280227a8a0d4686c9fae68fbf6f6",
+    "docs/capability-audit/parallel/media/host-checks-04.log": "219ee7447c5b6185e2bb4e7a338b9100aaf9b4ec6ff9da450771851e40efddf8",
+    "docs/capability-audit/parallel/media/source-review-01.failure.json": "c409d69a730d3911915efff9b769f78519cedb1928bf974a49dd4f36faed8d68",
+    "docs/capability-audit/parallel/media/source-review.json": "3ff9b7323a7a3be22d86f32cb5e2b858870af9d7172062a8e3d0d73dbce78c71"
+  },
+  "changed_files": [
+    "ci/capability-audit/batch_media_review_source.py",
+    "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
+    "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
+    "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/manifest.json",
+    "ci/capability-audit/test_batch_media_avc_surface_layout.py",
+    "docs/capability-audit/parallel/media/REVIEW.md",
+    "docs/capability-audit/parallel/media/environment.json",
+    "docs/capability-audit/parallel/media/existing-avc-checks-01.log",
+    "docs/capability-audit/parallel/media/existing-avc-verifier-checks-01.log",
+    "docs/capability-audit/parallel/media/host-checks-01.log",
+    "docs/capability-audit/parallel/media/host-checks-02.log",
+    "docs/capability-audit/parallel/media/host-checks-03.log",
+    "docs/capability-audit/parallel/media/host-checks-04.log",
+    "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/source-review-01.failure.json",
+    "docs/capability-audit/parallel/media/source-review.json",
+    "patches/common/foundation/multimedia/av_codec/avc_eos/apply.sh",
+    "patches/common/foundation/multimedia/av_codec/avc_eos/verify_source.py",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/0001-validate-real-input-layout-and-release-rejected-surfaces.patch",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/README.md",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/layout.py",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/verify_source.py"
+  ]
+}
