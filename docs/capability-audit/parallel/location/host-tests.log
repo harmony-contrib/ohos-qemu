@@ -1,0 +1,30 @@
+2026-10-15; macOS host; LC_ALL=C LC_CTYPE=C LANG=C. No OHOS/QEMU runtime validation.
+
+$ python3 ci/capability-audit/test_batch_location_rtt_lifecycle.py
+.RTT 3 event families: optional/identity/multiple listeners/environment/queue/reentry/reference/error cases passed
+.
+----------------------------------------------------------------------
+Ran 2 tests in 1.336s
+
+OK
+
+$ python3 ci/capability-audit/test_call_public_enums.py
+......
+----------------------------------------------------------------------
+Ran 6 tests in 4.043s
+
+OK
+
+$ git apply --check /Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu/patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch
+Workdir: private complete four-source-file copy from read-only fixed container.
+exit=0
+
+New package, QEMU, HDC and SDK build: NOT RUN (central parent acceptance).
+
+Final whitespace-normalized patch recheck (includes marker-free reverse-apply idempotency):
+.RTT 3 event families: optional/identity/multiple listeners/environment/queue/reentry/reference/error cases passed
+.
+----------------------------------------------------------------------
+Ran 2 tests in 1.338s
+
+OK
