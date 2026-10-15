@@ -46,6 +46,8 @@ matrix_jsvm_shared="${JSVM_ENGINE_ARTIFACTS:-}"
 matrix_vulkan_shared="${QEMU_VULKAN_ARTIFACTS:-}"
 matrix_avc_shared="${QEMU_AVC_ARTIFACTS:-}"
 export QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
+mesa_llvm_recipe="$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)"
+export QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${CACHE_ROOT}/artifacts/qemu-mesa-llvm/${mesa_llvm_recipe}}"
 
 if [ ! -x "${RUNNER}" ] || [ ! -x "${VERIFY}" ]; then
   echo "missing executable matrix dependency under ${SCRIPT_DIR}" >&2
@@ -236,7 +238,11 @@ if ! { [ "${MATRIX_SKIP_EXISTING}" = 1 ] && [ -f "${first_tar}" ] &&
 fi
 verify_package "${MATRIX_FIRST_DEVICE_TYPE}" "${first_dir}"
 verify_current_inputs "${first_tar}"
-if [ -n "${MATRIX_FIRST_VALIDATOR}" ]; then
+if ! python3 "${SCRIPT_DIR}/verify_first_artifact_gate.py" \
+  --archive "${first_tar}" --evidence "${MATRIX_FIRST_ARTIFACT_EVIDENCE}" \
+  --repository "${SCRIPT_DIR}/.." --product "${MATRIX_FIRST_PRODUCT}" \
+  --device-type "${MATRIX_FIRST_DEVICE_TYPE}" >/dev/null 2>&1 && \
+  [ -n "${MATRIX_FIRST_VALIDATOR}" ]; then
   [ -f "${MATRIX_FIRST_VALIDATOR}" ] || { echo 'first-artifact validator script is missing' >&2; exit 1; }
   bash "${MATRIX_FIRST_VALIDATOR}" --package-archive "${first_tar}" \
     --package-directory "${first_dir}" --evidence-output "${MATRIX_FIRST_ARTIFACT_EVIDENCE}"

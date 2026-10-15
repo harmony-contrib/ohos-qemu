@@ -1,0 +1,455 @@
+{
+  "run_id": "0b2ab5cc352b7ac4b5ff1dd19b764995",
+  "app_label": "Settings navigation audit",
+  "settings_uid": 20010011,
+  "supported_routes": {
+    "input": true,
+    "detail": true,
+    "network": true,
+    "display": true,
+    "mobile": true,
+    "refresh": true,
+    "sound": true,
+    "biometrics": true,
+    "about": true,
+    "nfc": false,
+    "app-detail": true,
+    "double-click": false
+  },
+  "caller_uid": 20010038,
+  "caller_pid": 2569,
+  "methods": [
+    {
+      "packageName": "com.example.kikakeyboard",
+      "name": "com.example.kikakeyboard",
+      "methodId": "ServiceExtAbility",
+      "id": "ServiceExtAbility",
+      "icon": "",
+      "iconId": 16777218,
+      "label": "kikaInput",
+      "labelId": 16777216,
+      "enabledState": 2
+    }
+  ],
+  "source_evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r50-settings-complete-contract-diagnostic-02/complete-contract/evidence.json",
+  "source_evidence_sha256": "c0d1e2c4f976e0001a569881202aafa1f2967bb351ed5183ee6afc1144d28369",
+  "scope": "Actual diagnostic samples for rejection regression; NOT new-package acceptance",
+  "samples": {
+    "input": {
+      "layout": {
+        "path": "input.json",
+        "sha256": "bd8a3657a65c8f2518289e38c3a9d564e43e56ae44573552ef746451199ece09"
+      },
+      "screenshot": {
+        "path": "input.png",
+        "sha256": "27a97ce0ba72536ca05f705f197882b619d77f5517fa192de0bb96d0c223ca4d"
+      },
+      "AMS": {
+        "path": "input.txt",
+        "sha256": "1491fc63ea92e70d61bf3e6a589e7dac7a8f833f4a1a4a50a04e08462a241ba0"
+      },
+      "observation": {
+        "node": {
+          "attributes": {
+            "accessibilityId": "3298534883347",
+            "backgroundColor": "#00000000",
+            "backgroundImage": "empty source",
+            "blur": "",
+            "bounds": "[18,48][86,74]",
+            "checkable": "false",
+            "checked": "false",
+            "clickable": "false",
+            "clip": "false",
+            "description": "",
+            "displayId": "0",
+            "enabled": "true",
+            "focused": "false",
+            "hashcode": "29:3298534883347",
+            "hierarchy": "ROOT29,0,0,1,1,0,0,0,1,0,0,1",
+            "hint": "",
+            "hitTestBehavior": "HitTestMode.Default",
+            "hostWindowId": "29",
+            "id": "__NavdestinationField__Text__MainTitle__",
+            "key": "__NavdestinationField__Text__MainTitle__",
+            "longClickable": "false",
+            "opacity": "1.000000",
+            "origBounds": "[18,48][86,74]",
+            "originalText": "输入法",
+            "scrollable": "false",
+            "selected": "false",
+            "text": "输入法",
+            "type": "Text",
+            "visible": "true",
+            "zIndex": "0"
+          },
+          "bundle": "org.harmonycontrib.capabilityaudit",
+          "rect": [
+            18,
+            48,
+            68,
+            26
+          ]
+        },
+        "binding": {
+          "provider_pid": 2897,
+          "provider_uid": 20010011,
+          "host_pid": 2569,
+          "host_uid": 20010038,
+          "provider_bundle": "com.ohos.settings",
+          "host_bundle": "org.harmonycontrib.capabilityaudit"
+        },
+        "pixels": {
+          "bright_pixels": 1104,
+          "dark_pixels": 508,
+          "crop_sha256": "04138cd9c0136efc6425755380c6b17f3544b0201cf79569c4aafdb628fa1c5a"
+        }
+      }
+    },
+    "network": {
+      "layout": {
+        "path": "network.json",
+        "sha256": "df86fe645d1269dac94b0d942fe73a0ef64580408783a069e880ef99316eaf7c"
+      },
+      "screenshot": {
+        "path": "network.png",
+        "sha256": "4ce862c1eaf78883ed91b7485744c589d21ebaa8742c2ddd443b7404703502ee"
+      },
+      "AMS": {
+        "path": "network.txt",
+        "sha256": "e9b909c6bb9a348d48d5a06824645a7c17856da41b3d6e0288dd339b277ad7a2"
+      },
+      "observation": {
+        "node": {
+          "attributes": {
+            "accessibilityId": "173",
+            "backgroundColor": "#00000000",
+            "backgroundImage": "empty source",
+            "blur": "",
+            "bounds": "[475,273][791,295]",
+            "checkable": "false",
+            "checked": "false",
+            "clickable": "false",
+            "clip": "false",
+            "description": "",
+            "displayId": "0",
+            "enabled": "true",
+            "focused": "false",
+            "hashcode": "30:173",
+            "hierarchy": "ROOT30,0,1,2,0,0,0,0,1,1",
+            "hint": "",
+            "hitTestBehavior": "HitTestMode.Default",
+            "hostWindowId": "30",
+            "id": "",
+            "key": "",
+            "longClickable": "false",
+            "opacity": "1.000000",
+            "origBounds": "[475,273][791,295]",
+            "originalText": "设置网络",
+            "scrollable": "false",
+            "selected": "false",
+            "text": "设置网络",
+            "type": "Text",
+            "visible": "true",
+            "zIndex": "0"
+          },
+          "bundle": "com.ohos.settings",
+          "rect": [
+            475,
+            273,
+            316,
+            22
+          ]
+        },
+        "binding": {
+          "provider_pid": 3348,
+          "provider_uid": 20010011,
+          "host_pid": 2569,
+          "host_uid": 20010038,
+          "provider_bundle": "com.ohos.settings",
+          "host_bundle": "org.harmonycontrib.capabilityaudit"
+        },
+        "pixels": {
+          "bright_pixels": 6203,
+          "dark_pixels": 556,
+          "crop_sha256": "d3b310836b8f32733c7c35230b38c2480a8f3ac496ece2284262622de48c0b24"
+        }
+      }
+    },
+    "display": {
+      "layout": {
+        "path": "display.json",
+        "sha256": "e033d28ca8f3099d06c9756f6bbf424d94e4603aaaa5ed12142970786faf4203"
+      },
+      "screenshot": {
+        "path": "display.png",
+        "sha256": "d141280711512133fbf7021903ee7682204815f587bbc0e627b48702a1b3d849"
+      },
+      "AMS": {
+        "path": "display.txt",
+        "sha256": "842769eb8f61546786be1f05f58b8582cb1205fd15b55f414af5070af8184590"
+      },
+      "observation": {
+        "node": {
+          "attributes": {
+            "accessibilityId": "55",
+            "backgroundColor": "#00000000",
+            "backgroundImage": "empty source",
+            "blur": "",
+            "bounds": "[529,84][642,110]",
+            "checkable": "false",
+            "checked": "false",
+            "clickable": "false",
+            "clip": "false",
+            "description": "",
+            "displayId": "0",
+            "enabled": "true",
+            "focused": "false",
+            "hashcode": "31:55",
+            "hierarchy": "ROOT31,0,0,1,0,1,0,0,1",
+            "hint": "",
+            "hitTestBehavior": "HitTestMode.Default",
+            "hostWindowId": "31",
+            "id": "Setting.Display.title_id",
+            "key": "Setting.Display.title_id",
+            "longClickable": "false",
+            "opacity": "1.000000",
+            "origBounds": "[529,84][642,110]",
+            "originalText": "显示和亮度",
+            "scrollable": "false",
+            "selected": "false",
+            "text": "显示和亮度",
+            "type": "Text",
+            "visible": "true",
+            "zIndex": "0"
+          },
+          "bundle": "com.ohos.settings",
+          "rect": [
+            529,
+            84,
+            113,
+            26
+          ]
+        },
+        "binding": {
+          "provider_pid": 3657,
+          "provider_uid": 20010011,
+          "caller_pid": 2569,
+          "caller_uid": 20010038,
+          "provider_bundle": "com.ohos.settings",
+          "caller_bundle": "org.harmonycontrib.capabilityaudit",
+          "provider_ability": "com.ohos.settings.MainAbility"
+        },
+        "pixels": {
+          "bright_pixels": 1659,
+          "dark_pixels": 990,
+          "crop_sha256": "10b45e4f31185a79803ccc17c952596709187cc102549e650ca524b861eee019"
+        }
+      }
+    },
+    "app-detail": {
+      "layout": {
+        "path": "app-detail.json",
+        "sha256": "5ebc1bf40efd61b068d3e3784dcae16629b00ef454e91b8c4544604af39c4176"
+      },
+      "screenshot": {
+        "path": "app-detail.png",
+        "sha256": "733019a8b5e1bad16ad8ea05c493e7d72d75a12a24da15fc8d30ee76089489c1"
+      },
+      "AMS": {
+        "path": "app-detail.txt",
+        "sha256": "ff8ba6e45a55e104de5496f587c0775e2c5233f51d5fd0aa8585c3e9ffa94d62"
+      },
+      "observation": {
+        "node": {
+          "attributes": {
+            "accessibilityId": "68",
+            "backgroundColor": "#00000000",
+            "backgroundImage": "empty source",
+            "blur": "",
+            "bounds": "[574,86][800,108]",
+            "checkable": "false",
+            "checked": "false",
+            "clickable": "false",
+            "clip": "false",
+            "description": "",
+            "displayId": "0",
+            "enabled": "true",
+            "focused": "false",
+            "hashcode": "31:68",
+            "hierarchy": "ROOT31,0,0,1,0,1,1,0,1",
+            "hint": "",
+            "hitTestBehavior": "HitTestMode.Default",
+            "hostWindowId": "31",
+            "id": "Setting.AppDetail.title_id",
+            "key": "Setting.AppDetail.title_id",
+            "longClickable": "false",
+            "opacity": "1.000000",
+            "origBounds": "[574,86][800,108]",
+            "originalText": "Settings navigation audit",
+            "scrollable": "false",
+            "selected": "false",
+            "text": "Settings navigation audit",
+            "type": "Text",
+            "visible": "true",
+            "zIndex": "0"
+          },
+          "bundle": "com.ohos.settings",
+          "rect": [
+            574,
+            86,
+            226,
+            22
+          ]
+        },
+        "binding": {
+          "provider_pid": 6671,
+          "provider_uid": 20010011,
+          "caller_pid": 2569,
+          "caller_uid": 20010038,
+          "provider_bundle": "com.ohos.settings",
+          "caller_bundle": "org.harmonycontrib.capabilityaudit",
+          "provider_ability": "com.ohos.settings.MainAbility"
+        },
+        "pixels": {
+          "bright_pixels": 3518,
+          "dark_pixels": 1121,
+          "crop_sha256": "103e2c06b628f117aac189cb8f4e04245c1d0f35d0038cc96e3186c7921674e0"
+        }
+      }
+    },
+    "nfc": {
+      "layout": {
+        "path": "nfc.json",
+        "sha256": "0ca19ce0f2e5eef091d63dd4dc5bde35a6c8f375721c165719ad15b221ecc46b"
+      },
+      "screenshot": {
+        "path": "nfc.png",
+        "sha256": "5331b877938148f33f1b6fb44b5d7633037056ac821ebd8586b857edec2f7954"
+      },
+      "AMS": {
+        "path": "nfc.txt",
+        "sha256": "271eecfe0beaffa7539daa6fc1a571494f49981042a31280624d375b42bb464e"
+      },
+      "observation": {
+        "node": {
+          "attributes": {
+            "accessibilityId": "25",
+            "backgroundColor": "#00000000",
+            "backgroundImage": "empty source",
+            "blur": "",
+            "bounds": "[442,212][838,230]",
+            "checkable": "false",
+            "checked": "false",
+            "clickable": "false",
+            "clip": "false",
+            "description": "",
+            "displayId": "0",
+            "enabled": "true",
+            "focused": "false",
+            "hashcode": "29:25",
+            "hierarchy": "ROOT29,0,0,1,0,0",
+            "hint": "",
+            "hitTestBehavior": "HitTestMode.Default",
+            "hostWindowId": "29",
+            "id": "settings-run-marker",
+            "key": "settings-run-marker",
+            "longClickable": "false",
+            "opacity": "1.000000",
+            "origBounds": "[442,212][838,230]",
+            "originalText": "Settings challenge 0b2ab5cc352b7ac4b5ff1dd19b764995",
+            "scrollable": "false",
+            "selected": "false",
+            "text": "Settings challenge 0b2ab5cc352b7ac4b5ff1dd19b764995",
+            "type": "Text",
+            "visible": "true",
+            "zIndex": "0"
+          },
+          "bundle": "org.harmonycontrib.capabilityaudit",
+          "rect": [
+            442,
+            212,
+            396,
+            18
+          ]
+        },
+        "binding": {
+          "caller_pid": 2569,
+          "caller_uid": 20010038,
+          "settings_foreground_absent": true
+        },
+        "pixels": {
+          "bright_pixels": 5700,
+          "dark_pixels": 812,
+          "crop_sha256": "45788c3e8ad6d42f322cdaa6f3527090696b324e7871c6d7f1c15845301c3267"
+        }
+      }
+    },
+    "double-click": {
+      "layout": {
+        "path": "double-click.json",
+        "sha256": "4d8c7da38e51bd9c0dfff6492db44c007ccbb418d60c07f6c7cdd2b566760ef5"
+      },
+      "screenshot": {
+        "path": "double-click.png",
+        "sha256": "ea0eb04c0782b89c3e5fc1774bb365566d03f4c937a5800321061578f6177982"
+      },
+      "AMS": {
+        "path": "double-click.txt",
+        "sha256": "271eecfe0beaffa7539daa6fc1a571494f49981042a31280624d375b42bb464e"
+      },
+      "observation": {
+        "node": {
+          "attributes": {
+            "accessibilityId": "25",
+            "backgroundColor": "#00000000",
+            "backgroundImage": "empty source",
+            "blur": "",
+            "bounds": "[442,212][838,230]",
+            "checkable": "false",
+            "checked": "false",
+            "clickable": "false",
+            "clip": "false",
+            "description": "",
+            "displayId": "0",
+            "enabled": "true",
+            "focused": "false",
+            "hashcode": "29:25",
+            "hierarchy": "ROOT29,0,0,1,0,0",
+            "hint": "",
+            "hitTestBehavior": "HitTestMode.Default",
+            "hostWindowId": "29",
+            "id": "settings-run-marker",
+            "key": "settings-run-marker",
+            "longClickable": "false",
+            "opacity": "1.000000",
+            "origBounds": "[442,212][838,230]",
+            "originalText": "Settings challenge 0b2ab5cc352b7ac4b5ff1dd19b764995",
+            "scrollable": "false",
+            "selected": "false",
+            "text": "Settings challenge 0b2ab5cc352b7ac4b5ff1dd19b764995",
+            "type": "Text",
+            "visible": "true",
+            "zIndex": "0"
+          },
+          "bundle": "org.harmonycontrib.capabilityaudit",
+          "rect": [
+            442,
+            212,
+            396,
+            18
+          ]
+        },
+        "binding": {
+          "caller_pid": 2569,
+          "caller_uid": 20010038,
+          "settings_foreground_absent": true
+        },
+        "pixels": {
+          "bright_pixels": 5700,
+          "dark_pixels": 812,
+          "crop_sha256": "45788c3e8ad6d42f322cdaa6f3527090696b324e7871c6d7f1c15845301c3267"
+        }
+      }
+    }
+  }
+}

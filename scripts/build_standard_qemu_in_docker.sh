@@ -135,6 +135,10 @@ Environment:
   QEMU_AVC_ARTIFACTS    Required pinned real software AVC backend/provenance for
                        every selected ABI, default: $CACHE_ROOT/artifacts/avc-m144
                        Build with scripts/build_m144_avc_encoder.sh first.
+  QEMU_MESA_LLVM_ARTIFACTS
+                       Fixed private LLVM dependency root for Mesa, default:
+                       $CACHE_ROOT/artifacts/qemu-mesa-llvm/<current-recipe>
+                       Prepare with scripts/build_qemu_mesa_llvm_in_docker.sh.
   ARMV7A_PRODUCT_COMPONENT
                        Apply the armv7a_virt product components, default: 1
   STANDARD_VPN_COMPONENT
@@ -207,12 +211,18 @@ LOCATION_NDK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location_ndk/a
 ETHERNET_API26_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_api26/apply.sh"
 ETHERNET_CONTROL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_control/apply.sh"
 ETHERNET_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/ethernet_business_error/apply.sh"
+NETWORK_CALLER_API_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/caller_api_version/apply.sh"
+COLOR_PICKER_GL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/color_picker_gl_sampling/apply.sh"
+RS_APPLICATION_AGENT_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/application_agent_identity/apply.sh"
+RESULT_SET_EXPORT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/result_set_export/apply.sh"
+SQLITE_EXPRESSION_BLOB_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/relational_store/expression_blob_values/apply.sh"
 OPTIONAL_SETTINGS_READ_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/optional_settings_read/apply.sh"
 INET_ADDR_PORT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/inet_addr_port/apply.sh"
 ALWAYS_ON_VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/always_on_vpn/apply.sh"
 VPN_CONFIG_ARRAYS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_config_arrays/apply.sh"
 VPN_CONFIG_STORE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_config_store/apply.sh"
 VPN_OPENVPN_FIELDS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_openvpn_fields/apply.sh"
+CONNECTED_VPN_NULLABLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/connected_vpn_nullable/apply.sh"
 TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/core_service/api26_enums/apply.sh"
 TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/sms_mms/api26_enums/apply.sh"
 TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_enums/apply.sh"
@@ -229,6 +239,10 @@ OBSERVER_INFO_CLASSES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ac
 SPRING_LOADING_CONTEXT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/spring_loading_context/apply.sh"
 SPRING_LOADING_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/spring_loading_lifecycle/apply.sh"
 SPRING_LOADING_SEMANTICS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/spring_loading_semantics/apply.sh"
+LAZY_DYNAMIC_ALGORITHM_UPDATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/lazy_dynamic_algorithm_update/apply.sh"
+WITHENV_DEFAULT_FONT_SCALE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/withenv_default_font_scale/apply.sh"
+PASTEBOARD_READ_PERMISSION_ERRORS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/pasteboard/read_permission_errors/apply.sh"
+PASTEBOARD_READ_BUSINESS_ERRORS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/pasteboard/read_business_errors/apply.sh"
 MOUSE_PRESSED_BUTTONS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/mouse_pressed_buttons/apply.sh"
 RPC_INTERFACE_BASE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/ipc/remote_interface_base/apply.sh"
 IMAGE_MODEL_CALLBACKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/image_model_callbacks/apply.sh"
@@ -443,6 +457,7 @@ QEMU_VULKAN_COMPONENT="${QEMU_VULKAN_COMPONENT:-auto}"
 QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/swiftshader-m144-7.0}"
 QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/avc-m144-7.0}"
 QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0}"
+QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${CACHE_ROOT}/artifacts/qemu-mesa-llvm/$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)}"
 export QEMU_ARKWEB_CORE_ARTIFACTS
 export QEMU_QOS_COMPONENT QEMU_VIBRATOR_COMPONENT QEMU_ACCESSIBILITY_COMPONENT QEMU_JSVM_COMPONENT
 QEMU_CCACHE_ON_OUT_VOLUME="${QEMU_CCACHE_ON_OUT_VOLUME:-0}"
@@ -2805,6 +2820,12 @@ prepare_source_and_sdk() {
 
 # The only aggregate capability patch plan, shared by Docker and both profiles.
 apply_qemu_capability_patch_plan() {
+  for mesa_product in "${PRODUCTS[@]}"; do
+    python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" \
+      --artifact-root "${QEMU_MESA_LLVM_ARTIFACTS}/${mesa_product}" --product "${mesa_product}"
+  done
+  python3 "${PATCH_ROOT}/common/third_party/mesa3d/llvm_backend/apply_backend.py" \
+    --source-root "${OHOS_ROOT}" --restore-hooks
   bash "${QEMU_HOST_GN_EXECUTION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_host_gn_execution_component.log"
   bash "${IDL_COMMON_TYPE_OUTPUTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -2888,6 +2909,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_binder_object_safety_component.log"
   bash "${RS_ASYNC_CALLER_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_async_caller_identity_component.log"
+  bash "${RS_APPLICATION_AGENT_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_application_agent_identity_component.log"
   apply_qemu_serial_components
   configure_qemu_device_profile
   if [ "${DEVICE_TYPE}" = "2in1" ] && [ "${QEMU_2IN1_PROFILE_COMPONENT}" != "0" ]; then
@@ -2918,6 +2941,9 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_kms_mesa_build_component.log"
   bash "${MESA_KMS_MAPPING_BUILD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_kms_mapping_build_component.log"
+  python3 "${PATCH_ROOT}/common/third_party/mesa3d/llvm_backend/apply_backend.py" \
+    --source-root "${OHOS_ROOT}" --artifact-root "${QEMU_MESA_LLVM_ARTIFACTS}" --products "${PRODUCTS[@]}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_llvm_backend.log"
   apply_qemu_vulkan_component
   bash "${RENDER_CONNECTION_REPLY_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_render_connection_reply.log"
@@ -2949,6 +2975,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_control_component.log"
   bash "${ETHERNET_BUSINESS_ERROR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ethernet_business_error_component.log"
+  bash "${NETWORK_CALLER_API_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_network_caller_api_component.log"
+  bash "${COLOR_PICKER_GL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_color_picker_gl_component.log"
   bash "${INET_ADDR_PORT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_inet_addr_port_component.log"
   bash "${TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3007,6 +3037,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_config_store_component.log"
   bash "${VPN_OPENVPN_FIELDS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_openvpn_fields_component.log"
+  bash "${CONNECTED_VPN_NULLABLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_connected_vpn_nullable_component.log"
   bash "${DHW_UI_PREINSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_dhardware_ui_preinstall_component.log"
   bash "${QEMU_AUDIO_DEVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3091,6 +3123,14 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_spring_loading_lifecycle_component.log"
   bash "${SPRING_LOADING_SEMANTICS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_spring_loading_semantics_component.log"
+  bash "${LAZY_DYNAMIC_ALGORITHM_UPDATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_lazy_dynamic_algorithm_update_component.log"
+  bash "${WITHENV_DEFAULT_FONT_SCALE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_withenv_default_font_scale_component.log"
+  bash "${PASTEBOARD_READ_PERMISSION_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_pasteboard_read_permission_errors_component.log"
+  bash "${PASTEBOARD_READ_BUSINESS_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_pasteboard_read_business_errors_component.log"
   bash "${MOUSE_PRESSED_BUTTONS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mouse_pressed_buttons_component.log"
   bash "${RPC_INTERFACE_BASE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3149,6 +3189,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_record_classes_component.log"
+  bash "${RESULT_SET_EXPORT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_result_set_export_component.log"
+  bash "${SQLITE_EXPRESSION_BLOB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_sqlite_expression_blob_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_eos_component.log"
   bash "${CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

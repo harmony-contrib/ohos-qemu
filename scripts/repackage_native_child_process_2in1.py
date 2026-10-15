@@ -109,8 +109,10 @@ def main():
             print(f"replaced and verified: {image_path}", flush=True)
         common.command(fsck_tool, "-fn", str(image))
         patches = {path.name: common.digest(path) for path in sorted(PATCH_DIR.glob("*.patch"))}
-        if len(patches) != 2:
-            raise RuntimeError("expected exactly the two Native child-process patches")
+        if set(patches) != {'0001-share-child-process-args-across-dsos.patch',
+                            '0002-budget-child-process-parameter-parcels.patch',
+                            '0003-validate-config-boundaries.patch'}:
+            raise RuntimeError("expected the exact three Native child-process patches")
         if arch == "armv7a":
             armv7_patches = sorted(ARMV7_PATCH_DIR.glob("*.patch"))
             armv7_patches += sorted(ARMV7_COMPACT_PATCH_DIR.glob("*.patch"))

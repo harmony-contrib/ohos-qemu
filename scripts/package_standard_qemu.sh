@@ -3115,6 +3115,14 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${IMAGES_OUT}/vendor.img"
   if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
      [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
+    mesa_output="qemu_mesa"
+    if [ "${PRODUCT}" = armv7a_virt ]; then mesa_output="mesa3d"; fi
+    python3 "${SCRIPT_DIR}/verify_mesa_llvm_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" \
+      --source-build "${SOURCE_ROOT}/out/${PRODUCT}/packages/phone/${mesa_output}" \
+      --dependency "${QEMU_MESA_LLVM_ARTIFACTS:?full profile requires pinned LLVM artifacts}/${PRODUCT}" \
+      --write-provenance "${PACKAGE_DIR}/mesa-llvm-source" \
+      --output "${PACKAGE_DIR}/mesa-llvm-image-evidence.json"
     python3 "${SCRIPT_DIR}/verify_arkweb_core_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
       --source-artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS:?full profile requires verified source core artifacts}" \

@@ -1,0 +1,81 @@
+--- a/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/napi_systempasteboard.cpp
++++ b/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/napi_systempasteboard.cpp
+@@ -456,9 +456,9 @@
+         PASTEBOARD_HILOGD(PASTEBOARD_MODULE_JS_NAPI, "GetData Begin");
+         int32_t ret = PasteboardClient::GetInstance()->GetPasteData(*context->pasteData);
+         if (ret == static_cast<int32_t>(PasteboardError::TASK_PROCESSING)) {
+-            context->SetErrInfo(ret, "Another getData is being processed");
++            context->SetBusinessErrInfo(ret, "Another getData is being processed");
+         } else if (ret == static_cast<int32_t>(PasteboardError::PERMISSION_VERIFICATION_ERROR)) {
+-            context->SetErrInfo(static_cast<int32_t>(JSErrorCode::NO_PERMISSION),
++            context->SetBusinessErrInfo(static_cast<int32_t>(JSErrorCode::NO_PERMISSION),
+                 "Permission verification failed. The application cannot read the clipboard.");
+         } else {
+             context->status = napi_ok;
+@@ -1055,9 +1055,16 @@
+     int32_t ret = (value != nullptr) ? *value : static_cast<int32_t>(PasteboardError::TIMEOUT_ERROR);
+     processorEvent->SetEvent("getDataSync", ret, ret == static_cast<int32_t>(PasteboardError::E_OK) ?
+         EventReportResult::EVENT_REPORT_SUCCESS : EventReportResult::EVENT_REPORT_FAIL);
+-    if (!CheckExpression(env, ret != static_cast<int32_t>(PasteboardError::PERMISSION_VERIFICATION_ERROR),
+-        JSErrorCode::NO_PERMISSION,
+-        "Permission verification failed. The application cannot read the clipboard.")) {
++    if (ret == static_cast<int32_t>(PasteboardError::PERMISSION_VERIFICATION_ERROR)) {
++        napi_value message = nullptr;
++        napi_value error = nullptr;
++        napi_value code = nullptr;
++        NAPI_CALL(env, napi_create_string_utf8(env,
++            "Permission verification failed. The application cannot read the clipboard.", NAPI_AUTO_LENGTH, &message));
++        NAPI_CALL(env, napi_create_error(env, nullptr, message, &error));
++        NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(JSErrorCode::NO_PERMISSION), &code));
++        NAPI_CALL(env, napi_set_named_property(env, error, "code", code));
++        NAPI_CALL(env, napi_throw(env, error));
+         return nullptr;
+     }
+     return instance;
+--- a/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/async_call.cpp
++++ b/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/async_call.cpp
+@@ -128,7 +128,7 @@
+         napi_value errCode = nullptr;
+         napi_value message = nullptr;
+         std::string errMsg("async call failed");
+-        if (context->ctx->errCode_ != 0) {
++        if (context->ctx->errCode_ != 0 && !context->ctx->numericErrCode_) {
+             napi_create_string_utf8(env, std::to_string(context->ctx->errCode_).c_str(), NAPI_AUTO_LENGTH, &errCode);
+         }
+         if (!context->ctx->errMsg_.empty()) {
+@@ -136,6 +136,11 @@
+         }
+         napi_create_string_utf8(env, errMsg.c_str(), NAPI_AUTO_LENGTH, &message);
+         napi_create_error(env, errCode, message, &result[ARG_ERROR]);
++        if (context->ctx->numericErrCode_) {
++            napi_value numericCode = nullptr;
++            napi_create_int32(env, context->ctx->errCode_, &numericCode);
++            napi_set_named_property(env, result[ARG_ERROR], "code", numericCode);
++        }
+         napi_get_undefined(env, &result[ARG_DATA]);
+     }
+     if (context->defer != nullptr) {
+--- a/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/include/async_call.h
++++ b/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/include/async_call.h
+@@ -45,6 +45,13 @@
+         {
+             errCode_ = errCode;
+             errMsg_ = errMsg;
++            numericErrCode_ = false;
++        }
++
++        void SetBusinessErrInfo(int32_t errCode, std::string errMsg)
++        {
++            SetErrInfo(errCode, std::move(errMsg));
++            numericErrCode_ = true;
+         }
+ 
+         virtual napi_status operator()(napi_env env, size_t argc, napi_value *argv, napi_value self)
+@@ -83,6 +90,7 @@
+         OutputAction output_ = nullptr;
+         ExecAction exec_ = nullptr;
+         int32_t errCode_ = 0;
++        bool numericErrCode_ = false;
+         std::string errMsg_;
+     };
+ 

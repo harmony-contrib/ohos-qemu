@@ -22,7 +22,7 @@ TARGET = '127.0.0.1:12345'
 def fixture(root):
     doc = dict(status='pass', scope=SCOPE, boot_id=BOOT, archive_sha256=ARCHIVE, arch='arm64',
         device='phone', target=TARGET, udid='1' * 64, failures=[], cleanup_verified=True,
-        first_artifact_behavior_gate_passed=False, roles={}, commands=[],
+        first_artifact_behavior_gate_passed=False, roles={}, commands=[], wait_seconds=180,
         caller_cleanup=dict(bundle='org.harmonycontrib.capabilityaudit', kernel_process_absent=True,
             ability_process_records_absent=True, consecutive_absent_observations=2))
     def json_file(path, value):
@@ -108,6 +108,8 @@ def fixture(root):
                 path, sha = json_file(directory / ('action-' + str(phase_index) + '.json'), layout)
                 phase['selection'] = dict(layout=path, layout_sha256=sha, selected_node=dict(
                     attributes=layout['attributes'], bundle='org.harmonycontrib.capabilityaudit', rect=[0, 0, 20, 20]))
+                control_previous_sequence = len(observations) % 256
+                phase['selection']['observed_sequence_before'] = control_previous_sequence
                 command(directory, ['hdc', '-t', TARGET, 'shell',
                     'uitest uiInput click 10 10; task_ui_rc=$?; printf "\\n__UITEST_EXIT_' + 'a' * 32 + '__=%s"'],
                     '__UITEST_EXIT_' + 'a' * 32 + '__=0\n')
@@ -126,11 +128,18 @@ def fixture(root):
                     before = phase_index * 10 + frame_index
                     frames.append(dict(path=str(path), sha256=digest(path), before=before, after=before + .1))
                 phase['frames'] = frames
+                if kind == 'readiness':
+                    # Explicit synthetic fixture metadata, never original native timing.
+                    phase.update(started=frames[0]['before'], wait_seconds=180,
+                                 deadline=frames[0]['before']+180)
+                    for frame in frames: frame['kind'] = 'off'
                 if kind == 'frames':
                     phase.update(rect=rect, mode=argument)
                     if argument == 'bounded-committed-off':
-                        phase.update(marker=marker, started=phase_index * 10, expected_sequence=len(observations))
-                        phase['commit'] = verify_committed_stop(frames, rect, marker, len(observations), phase['started'])
+                        phase.update(marker=marker, started=phase_index * 10, expected_sequence=len(observations),
+                                     previous_sequence=control_previous_sequence)
+                        phase['commit'] = verify_committed_stop(frames, rect, marker, len(observations),
+                            phase['started'], previous_sequence=control_previous_sequence)
                         phase['observed'] = phase['commit']['observed']
                     else: phase['observed'] = verify_frames(frames, rect, argument)
             runtime['phases'].append(phase)

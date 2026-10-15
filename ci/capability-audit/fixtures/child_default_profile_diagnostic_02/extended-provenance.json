@@ -1,0 +1,13 @@
+{
+  "scope": "Actual failing expanded R49 child config diagnostic; regression rejection only",
+  "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r50-child-default-complete-contract-diagnostic-01/complete-contract/evidence.json",
+  "source_sha256": "20e0db82f1ced3c1c5fea5c9864ab90e1f76cca842667b7c9b338a77c7c1416a",
+  "run_id": "3ed2c36d04a09e358ae9ddfb60ccb231",
+  "uid": 20010038,
+  "pid": 2606,
+  "parameters": {
+    "persist.sys.abilityms.multi_process_model": "false",
+    "const.max_native_child_process": "0",
+    "const.product.devicetype": "phone"
+  }
+}

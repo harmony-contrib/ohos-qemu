@@ -40,16 +40,40 @@ def build(args):
 
 
 def build_application(args, generated_page, template, receipt_name, scope, declaration_name,
-                      module_factory=None, extra_files=None, strict_mode=None):
+                      module_factory=None, extra_files=None, strict_mode=None, bundle_name=None,
+                      additional_sdk_declarations=None, entry_ability_source=None):
     """Reuse the actual typed three-role app build, never override image policy."""
+    root, sdk = prepare_application(args, generated_page, template, receipt_name, scope, declaration_name,
+        module_factory, extra_files, strict_mode, bundle_name, additional_sdk_declarations, entry_ability_source)
+    subprocess.run([args.arkdown, 'build', '--project', root, '--target', 'hap', '--mode', 'debug'],
+                   cwd=root, env=dict(os.environ, OHOS_SDK_HOME=str(sdk)), check=True)
+
+
+def prepare_application(args, generated_page, template, receipt_name, scope, declaration_name,
+                        module_factory=None, extra_files=None, strict_mode=None, bundle_name=None,
+                        additional_sdk_declarations=None, entry_ability_source=None):
+    """Write exact caller inputs before selecting its real supported compiler."""
     root, sdk = args.output.resolve(), args.sdk.resolve()
     if args.role not in ROLES or re.fullmatch('[0-9a-f]{32}', args.run_id) is None:
         raise ValueError('fresh nonce and explicit bounded VPN role required')
+    selected_bundle = BUNDLE if bundle_name is None else bundle_name
+    if (not isinstance(selected_bundle, str) or len(selected_bundle) > 127 or
+            re.fullmatch('[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+', selected_bundle) is None):
+        raise ValueError('explicit valid probe bundle identity required')
     for name in ('ets', 'native'):
         metadata = json.loads((sdk / name / 'oh-uni-package.json').read_text())
         if any(metadata.get(key) != value for key, value in (
                 ('apiVersion', '26'), ('releaseType', 'Release'), ('platformVersion', '26.0.0'))):
             raise ValueError('actual API26 Release SDK required')
+    sdk_declarations = {}
+    for name in additional_sdk_declarations or ():
+        relative = Path(name)
+        if relative.is_absolute() or '..' in relative.parts:
+            raise ValueError('additional SDK declaration must remain inside the SDK')
+        path = sdk / relative
+        if path.is_symlink() or not path.is_file():
+            raise ValueError('actual regular SDK declaration required: ' + name)
+        sdk_declarations[name] = digest(path)
     root.mkdir(parents=True, exist_ok=False)
     application_module = (module_factory or module)(args.role)
     requests = application_module['module']['requestPermissions']
@@ -63,7 +87,7 @@ def build_application(args, generated_page, template, receipt_name, scope, decla
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(value if isinstance(value, str) else json.dumps(value, indent=2) + '\n')
 
-    write('AppScope/app.json5', {'app': {'bundleName': BUNDLE, 'vendor': 'harmony-contrib',
+    write('AppScope/app.json5', {'app': {'bundleName': selected_bundle, 'vendor': 'harmony-contrib',
         'versionCode': 1, 'versionName': '1.0.0', 'icon': '$media:icon', 'label': '$string:app_name'}})
     write('AppScope/resources/base/element/string.json', {'string': [{'name': 'app_name', 'value': 'VPN policy regression'}]})
     write('AppScope/resources/base/media/icon.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#365c88"/></svg>')
@@ -80,7 +104,7 @@ def build_application(args, generated_page, template, receipt_name, scope, decla
     write('entry/src/main/module.json5', application_module)
     write('entry/src/main/resources/base/element/color.json', {'color': [{'name': 'background', 'value': '#ffffff'}]})
     write('entry/src/main/resources/base/profile/main_pages.json', {'src': ['pages/Index']})
-    write('entry/src/main/ets/entryability/EntryAbility.ets', """import UIAbility from '@ohos.app.ability.UIAbility';
+    write('entry/src/main/ets/entryability/EntryAbility.ets', entry_ability_source if entry_ability_source is not None else """import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
 export default class EntryAbility extends UIAbility {
   onWindowStageCreate(stage: window.WindowStage): void { stage.loadContent('pages/Index'); }
@@ -89,6 +113,9 @@ export default class EntryAbility extends UIAbility {
     generated = root / 'entry/src/main/ets/pages/Index.ets'
     write('entry/src/main/ets/pages/Index.ets', generated_page)
     additional_inputs = {}
+    if entry_ability_source is not None:
+        name = 'entry/src/main/ets/entryability/EntryAbility.ets'
+        additional_inputs[name] = digest(root / name)
     for name, value in (extra_files or {}).items():
         relative = Path(name)
         if relative.is_absolute() or '..' in relative.parts or (root / relative).exists():
@@ -102,9 +129,10 @@ export default class EntryAbility extends UIAbility {
         'template_sha256': digest(template), 'generated_source': str(generated),
         'generated_source_sha256': digest(generated), 'sdk_declaration': str(declaration),
         'sdk_declaration_sha256': digest(declaration), 'additional_input_sha256': additional_inputs,
-        'strict_mode': strict_mode or {}})
-    subprocess.run([args.arkdown, 'build', '--project', root, '--target', 'hap', '--mode', 'debug'],
-                   cwd=root, env=dict(os.environ, OHOS_SDK_HOME=str(sdk)), check=True)
+        'strict_mode': strict_mode or {},
+        **({'bundle_name': selected_bundle} if bundle_name is not None else {}),
+        **({'additional_sdk_declarations': sdk_declarations} if sdk_declarations else {})})
+    return root, sdk
 
 
 if __name__ == '__main__':

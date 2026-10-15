@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 from run_root_probe import digest
-from release_scope import SCOPE, exclusion_record
+from release_scope import SCOPE, IMAGE_GENERATION, exclusion_record
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / 'docs/capability-audit/native-arkts11-gap-ledger.json'
@@ -22,6 +22,39 @@ VIDEO_PROCESSING_OPTIONAL = frozenset({
     'native:SystemCapability.Multimedia.VideoProcessingEngine:libvideo_processing.so',
 })
 AUDIO_SUITE_NATIVE = 'native:SystemCapability.Multimedia.Audio.SuiteEngine:libohaudiosuite.so'
+MATRIX4_NAMES = ('combine', 'copy', 'invert', 'rotate', 'scale', 'transformPoint', 'translate')
+
+
+def matrix4_aggregate_resolution(closed, metadata, exclusions):
+    """Resolve the exact original export finding within the approved scope."""
+    finding = next((row for row in metadata['runtime_behavior_gaps']
+                    if row['id'] == 'arkui-runtime-export-gaps'), None)
+    expected_finding = {
+        'id': 'arkui-runtime-export-gaps', 'status': 'partially_broken',
+        'syscap_match': {'exact': ['SystemCapability.ArkUI.ArkUI.Full']},
+        'evidence': 'ArkUI rendering and native gesture tests pass, but the API 26 runtime omits '
+                    'seven public matrix4 functions and multiple declared image-generation functions',
+    }
+    exports = {row['module']: row['missing'] for row in metadata['arkts11_runtime_export_gaps']}
+    matrix = exports.get('@ohos.matrix4', [])
+    image = exports.get('@ohos.arkui.intelligence.imageGeneration', [])
+    if (finding != expected_finding or len(matrix) != len(MATRIX4_NAMES) or
+            {row['name'] for row in matrix} != set(MATRIX4_NAMES) or
+            any(row['kind'] != 'function' for row in matrix) or
+            {'arkts_export:@ohos.arkui.intelligence.imageGeneration:' + row['name'] for row in image}
+            != IMAGE_GENERATION or
+            set(exclusions['features']['imageGeneration']) != IMAGE_GENERATION):
+        raise ValueError('original ArkUI aggregate scope or approved imageGeneration exclusion changed')
+    identifiers = ['arkts_export:@ohos.matrix4:' + name for name in MATRIX4_NAMES]
+    if not all(identifier in closed for identifier in identifiers):
+        return None
+    proofs = [closed[identifier] for identifier in identifiers]
+    if any(proof != proofs[0] for proof in proofs[1:]):
+        raise ValueError('ArkUI aggregate requires one complete seven-function Matrix4 proof')
+    return {**proofs[0], 'verifier': 'exact_original_ArkUI_export_finding_all_seven_typed_Matrix4_contracts',
+        'required_contracts': identifiers, 'approved_exclusions': sorted(IMAGE_GENERATION),
+        'release_scope_policy_sha256': exclusions['policy_sha256'],
+        'not_claimed': 'imageGeneration is user-excluded, not fixed or validated; other ArkUI behavior not covered'}
 
 
 def optional_profile_resolutions(optional, device):
@@ -778,11 +811,28 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                     verification.get('results_sha256') != digest(raw) or
                     verification.get('application_identity_sha256') != digest(identity)):
                 raise ValueError('Matrix4 closure differs from actual complete typed arithmetic/boundaries')
-            for name in ('combine', 'copy', 'invert', 'rotate', 'scale', 'transformPoint', 'translate'):
+            for name in MATRIX4_NAMES:
                 closed['arkts_export:@ohos.matrix4:' + name] = {
                     'evidence': str(matrix[0]), 'sha256': digest(matrix[0]),
                     'verifier': 'ordinary_API26_typed_root_arithmetic_boundaries_objects_and_64_roundtrips',
                     'not_claimed': 'all_ArkUI_exports_layout_or_compositor_behavior'}
+            boot_path = runtime / 'boot/boot.json'
+            if device_type in ('phone', '2in1') and boot_path.is_file() and not boot_path.is_symlink():
+                boot = json.loads(boot_path.read_text())
+                environment = boot.get('test_environment', {})
+                if (boot.get('status') == 'pass' and boot.get('purpose') == 'acceptance' and
+                        boot.get('scope') == 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' and
+                        boot.get('archive_sha256') == archive_sha and environment.get('boot_id') == boot_id and
+                        environment.get('device_type') == device_type and
+                        environment.get('guest_arch') == document['arch'] and
+                        environment.get('external_keepalive') is False and not any(boot.get(key) for key in (
+                            'candidate_kernel', 'kernel_command_line_diagnostic', 'diagnostic_assistance',
+                            'diagnostic_power_button'))):
+                    metadata = json.loads(LEDGER.read_text())['devices'][device_type]
+                    exclusions = exclusion_record(device_type, requirements(metadata))
+                    aggregate = matrix4_aggregate_resolution(closed, metadata, exclusions)
+                    if aggregate:
+                        closed['behavior:arkui-runtime-export-gaps'] = aggregate
     factories = child('factory-objects/evidence.json')
     if factories and factories[1].get('persona') == 'factory-objects':
         document = factories[1]
@@ -940,6 +990,121 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
             closed[contract] = {'evidence': str(ethernet[0]), 'sha256': digest(ethernet[0]),
                 'verifier': 'three_actual_HAP_roles_repeated_public_controls_real_kernel_flags_and_caller_restart',
                 'not_claimed': 'traffic_hotplug_service_restart_errors_or_all_Ethernet_APIs'}
+    insight = child('insight-contract/evidence.json')
+    if insight:
+        from verify_insight_contract_evidence import verify_evidence as verify_insight
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('dynamic intent closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('dynamic intents require this unchanged fresh acceptance package')
+        for contract in verify_insight(insight[1], archive_sha, boot_id, environment['guest_arch'],
+                                        device_type, environment['target']):
+            closed[contract] = {'evidence': str(insight[0]), 'sha256': digest(insight[0]),
+                'verifier': 'real_compiler_and_BMS_all_seven_decorators_nine_signed_callers_native_dispatch_widgets_routes_and_stable_pixels',
+                'not_claimed': 'all_API26_exports_other_ArkUI_or_external_AI_providers'}
+    lazy = child('lazy-column/evidence.json')
+    if lazy:
+        from verify_lazy_column_evidence import verify_evidence as verify_lazy
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('lazy type closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('lazy types require this unchanged fresh acceptance package')
+        for contract in verify_lazy(lazy[1], archive_sha, boot_id, environment['guest_arch'], device_type, environment['target']):
+            closed[contract] = {'evidence': str(lazy[0]), 'sha256': digest(lazy[0]),
+                'verifier': 'official_API26_typed_factory_native_visible_indexes_reset_scroll_remove_recreate_and_stable_pixels',
+                'not_claimed': 'remaining_ArkUI_types_or_all_API26_ArkUI_behaviors'}
+    lazy_layouts = child('lazy-layouts/evidence.json')
+    if lazy_layouts:
+        from verify_lazy_layouts_evidence import verify_evidence as verify_lazy_layouts
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('lazy layout closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('lazy layouts require this unchanged fresh acceptance package')
+        for contract in verify_lazy_layouts(lazy_layouts[1], archive_sha, boot_id, environment['guest_arch'], device_type, environment['target']):
+            closed[contract] = {'evidence': str(lazy_layouts[0]), 'sha256': digest(lazy_layouts[0]),
+                'verifier': 'official_API26_inherited_waterflow_and_custom_lazy_factories_native_measure_layout_indexes_changes_and_stable_pixels',
+                'not_claimed': 'remaining_ArkUI_types_or_all_API26_ArkUI_behaviors'}
+    selection = child('selection/evidence.json')
+    if selection:
+        from verify_selection_evidence import verify_evidence as verify_selection
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('selection closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('selection requires this unchanged fresh acceptance package')
+        for contract in verify_selection(selection[1], archive_sha, boot_id, environment['guest_arch'], device_type, environment['target']):
+            closed[contract] = {'evidence': str(selection[0]), 'sha256': digest(selection[0]),
+                'verifier': 'official_API26_factory_three_ordinary_roles_actual_user_consent_native_copy_veto_join_clear_recreation_clipboard_and_stable_pixels',
+                'not_claimed': 'remaining_ArkUI_types_or_external_text_menu_providers'}
+    env_reader = child('env-reader/evidence.json')
+    if env_reader:
+        from verify_env_reader_evidence import verify_evidence as verify_env_reader
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('environment/reader closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('environment/reader requires this unchanged fresh acceptance package')
+        for contract in verify_env_reader(env_reader[1], archive_sha, boot_id, environment['guest_arch'], device_type, environment['target']):
+            closed[contract] = {'evidence': str(env_reader[0]), 'sha256': digest(env_reader[0]),
+                'verifier': 'official_API26_inherited_environment_default_font_native_two_way_reader_equality_boundaries_recreation_and_stable_pixels',
+                'not_claimed': 'remaining_ArkUI_types_or_all_ArkUI_behavior'}
+    settings_all = child('settings-all-navigation/evidence.json')
+    if settings_all:
+        from verify_settings_all_navigation_evidence import verify_evidence as verify_settings_all
+        boot_path = runtime / 'boot/boot.json'
+        if not boot_path.is_file() or boot_path.is_symlink():
+            raise ValueError('complete Settings closure requires actual acceptance boot')
+        boot = json.loads(boot_path.read_text())
+        environment = boot.get('test_environment', {})
+        if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
+                boot.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
+                boot.get('archive_sha256') != archive_sha or environment.get('boot_id') != boot_id or
+                environment.get('external_keepalive') is not False or environment.get('device_type') != device_type or
+                any(boot.get(key) for key in ('candidate_kernel', 'kernel_command_line_diagnostic',
+                    'diagnostic_assistance', 'diagnostic_power_button'))):
+            raise ValueError('complete Settings requires this unchanged fresh acceptance package')
+        for contract in verify_settings_all(settings_all[1], archive_sha, boot_id,
+                environment['guest_arch'], device_type, environment['target']):
+            closed[contract] = {'evidence': str(settings_all[0]), 'sha256': digest(settings_all[0]),
+                'verifier': 'official_API26_ordinary_caller_all_twelve_routes_two_rounds_actual_provider_UID_PID_titles_pixels_returns_profile_boundaries_and_exit'}
     blink = child('screen-blink/evidence.json')
     if blink:
         from verify_screen_blink_evidence import verify_evidence as verify_blink

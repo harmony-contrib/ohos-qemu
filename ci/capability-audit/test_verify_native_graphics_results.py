@@ -37,6 +37,26 @@ class NativeGraphicsResultsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 verify("gles", changed, 0)
 
+    def test_llvm_shader_generations_pixels_teardown_and_nonce_are_mandatory(self):
+        nonce = "a" * 32
+        row = {
+            "runId": nonce, "pid": 12, "uid": 0, "backend": "llvmpipe",
+            "glesVersions": [2, 3], "contextGenerations": 6, "shaderPrograms": 6,
+            "shaderPixels": 19507428, "pbufferPixels": 6, "swapCount": 6,
+            "teardownCount": 6, "patternHash": "123456789abcdef0",
+            "scope": "native_GLES_LLVM_shader_lifecycle", "compositorTested": False, "pass": True,
+        }
+        self.assertEqual(verify("gles-llvm", json.dumps(row), 0, nonce)["shader_pixels"], 19507428)
+        for key, value in (("shaderPixels", 1), ("contextGenerations", 1),
+                           ("teardownCount", 5), ("backend", "softpipe"),
+                           ("pass", 1), ("glesVersions", [2, 3.0]), ("pid", "12")):
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                verify("gles-llvm", json.dumps({**row, key: value}), 0, nonce)
+        with self.assertRaises(ValueError):
+            verify("gles-llvm", json.dumps(row), 0, "b" * 32)
+        with self.assertRaises(ValueError):
+            verify("gles-llvm", json.dumps(row), 1, nonce)
+
 
 if __name__ == "__main__":
     unittest.main()

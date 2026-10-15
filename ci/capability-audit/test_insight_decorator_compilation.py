@@ -46,7 +46,11 @@ class InsightDecoratorCompilationTests(unittest.TestCase):
             self.assertIn('@InsightIntent' + name + '(', text)
         generated = sources(NONCE, 'valid')
         self.assertNotIn('__INTENT_RUN__', str(generated))
-        self.assertEqual(len(generated), 8)
+        self.assertIn('entry/src/main/ets/pages/AuditWidget.ets', generated)
+        self.assertEqual(generated['entry/src/main/resources/base/profile/form_config.json']['forms'][0]['src'],
+            './ets/pages/AuditWidget.ets')
+        self.assertNotIn({'srcEntry': './ets/intents/AuditWidget.ets'},
+            generated['entry/src/main/resources/base/profile/insight_intent.json']['insightIntentsSrcEntry'])
         self.assertIn(NONCE, generated['entry/src/main/ets/intents/AuditLink.ets'])
         self.assertIn('NOT_guest', SCOPE)
 

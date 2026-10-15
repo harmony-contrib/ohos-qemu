@@ -28,6 +28,7 @@ def expected(role, nonce):
         for cycle in range(2):
             suffix = '.' + str(cycle)
             rows += [(name + suffix, values, text) for name, values, text in (
+                ('query.shape', [1, 1], ''),
                 ('factory', [5, 2, -1, 1], ''), ('first', [1, 0, 0], ''),
                 ('values.first', [7, 1.25, 4, 0, 17, 127, 255, 1], nonce),
                 ('row.first', [5, 7, 1.25, 4, 0, 17, 127, 255, 1], nonce),
@@ -36,6 +37,7 @@ def expected(role, nonce):
                 ('past-last', [0], ''), ('invalid.column', [8, 8, 0, 7], ''),
                 ('invalid.row', [8, 8, 0, 7], ''), ('closed', [2, 1], ''),
                 ('bare-close', [1], ''), ('empty', [5, 0, 0, 0], ''),
+                ('empty-blob', [2, 1, 0, 1, 0, 1], ''),
                 ('invalid.sql', [1], ''), ('media-table', None, ''),
                 ('recovery', [7, 1.25, 4, 0, 17, 127, 255, 1], nonce))]
     return rows + [('released', [1], ''), ('summary', [2], '')]

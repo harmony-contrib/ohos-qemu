@@ -18,6 +18,9 @@ def module(role, compiled=False):
     value = base_module(role, compiled)
     body = value['module']
     body['metadata'] = [{'name': 'ohos.insight.intent', 'resource': '$profile:insight_intent'}]
+    body['abilities'][0]['skills'] = [{
+        'actions': ['ohos.want.action.viewData'], 'entities': ['entity.system.browsable'],
+        'uris': [{'scheme': 'audit', 'host': 'intent'}]}]
     body['extensionAbilities'] = [{
         'name': 'AuditForm', 'srcEntry': './ets/intents/AuditForm.ets', 'type': 'form',
         'exported': False,
@@ -30,7 +33,8 @@ def sources(run_id, case):
         raise ValueError('fresh nonce and exact decorator case required')
     result = {}
     for path in sorted(TEMPLATES.glob('*.ets')):
-        name = ('pages/Index.ets' if path.name == 'Index.ets' else 'intents/' + path.name)
+        name = ('entryability/' + path.name if path.name == 'EntryAbility.ets' else
+            'pages/' + path.name if path.name in ('Index.ets', 'AuditWidget.ets') else 'intents/' + path.name)
         result['entry/src/main/ets/' + name] = path.read_text().replace('__INTENT_RUN__', run_id)
     if case == 'duplicate-name':
         key = 'entry/src/main/ets/intents/AuditLink.ets'
@@ -46,10 +50,11 @@ def sources(run_id, case):
         result[key] = result[key].replace("formName: 'AuditWidget'", "formName: 'AbsentWidget'")
     result['entry/src/main/resources/base/profile/insight_intent.json'] = {
         'insightIntentsSrcEntry': [{'srcEntry': './ets/intents/' + path.name}
-            for path in sorted(TEMPLATES.glob('*.ets')) if path.name != 'Index.ets']}
+            for path in sorted(TEMPLATES.glob('*.ets')) if path.name not in (
+                'Index.ets', 'AuditWidget.ets', 'EntryAbility.ets')]}
     result['entry/src/main/resources/base/profile/form_config.json'] = {'forms': [{
         'name': 'AuditWidget', 'displayName': '$string:app_name',
-        'description': '$string:app_name', 'src': './ets/pages/Index.ets',
+        'description': '$string:app_name', 'src': './ets/pages/AuditWidget.ets',
         'uiSyntax': 'arkts', 'window': {'designWidth': 720, 'autoDesignWidth': True},
         'colorMode': 'auto', 'isDefault': True, 'updateEnabled': False,
         'scheduledUpdateTime': '00:00', 'updateDuration': 0,
@@ -60,9 +65,11 @@ def sources(run_id, case):
 def build(args):
     files = sources(args.run_id, args.case)
     page = files.pop('entry/src/main/ets/pages/Index.ets')
+    ability = files.pop('entry/src/main/ets/entryability/EntryAbility.ets')
     return build_application(args, page, TEMPLATES / 'Index.ets',
         'insight-decorator-probe-inputs.json', SCOPE, '@ohos.app.ability.InsightIntentDecorator.d.ts',
-        module_factory=module, extra_files=files, strict_mode={'useNormalizedOHMUrl': True})
+        module_factory=module, extra_files=files, strict_mode={'useNormalizedOHMUrl': True},
+        entry_ability_source=ability)
 
 
 if __name__ == '__main__':

@@ -101,7 +101,8 @@ def verify(root, nonce):
     with zipfile.ZipFile(hap) as archive:
         require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate HAP entries')
         document = json.loads(archive.read('resources/base/profile/insight_intent.json'))
-        module = json.loads(archive.read('module.json'))['module']
+        manifest = json.loads(archive.read('module.json'))
+        module = manifest['module']
         require(module.get('hasInsightIntent') is True and module.get('requestPermissions') == [] and
                 module.get('packageName') == 'vpn-policy-probe' and
                 module.get('virtualMachine') == 'ark24.0.0.0', 'actual dynamic HAP intent declaration differs')
@@ -109,12 +110,22 @@ def verify(root, nonce):
             {key: item.get(key) for key in ('name', 'resource')} for item in module.get('metadata', [])],
             'compiled module must reference its actual intent profile')
         require(len(archive.read('ets/modules.abc')) > 0, 'actual compiled ABC required')
+        require(len(archive.read('ets/widgets.abc')) > 0, 'actual separately compiled widget ABC required')
+        compiled_form = json.loads(json.dumps(expected['entry/src/main/resources/base/profile/form_config.json']))
+        label_id = manifest['app'].get('labelId')
+        require(type(label_id) is int and label_id > 0 and manifest['app'].get('label') == '$string:app_name',
+                'actual widget display resource must bind the compiled app label')
+        for field in ('displayName', 'description'):
+            compiled_form['forms'][0][field] = '$string:' + str(label_id)
+        require(json.loads(archive.read('resources/base/profile/form_config.json')) == compiled_form,
+                'actual widget source and declared dimensions differ')
         rows = verify_metadata(document, nonce)
-    cache = root / 'entry/build/default/cache/default/default@CompileArkTS/esmodule/debug/entry/src/main/ets'
+    cache = root / 'entry/build/default/cache/default/default@CompileArkTS/esmodule'
     transformed = {}
     for template in sorted(TEMPLATES.glob('*.ets')):
-        name = ('pages/Index' if template.stem == 'Index' else 'intents/' + template.stem) + '.ts'
-        path = cache / name
+        name = ('entryability/' + template.stem if template.stem == 'EntryAbility' else
+            'pages/' + template.stem if template.stem in ('Index', 'AuditWidget') else 'intents/' + template.stem) + '.ts'
+        path = cache / ('debug_widget' if template.stem == 'AuditWidget' else 'debug') / 'entry/src/main/ets' / name
         require(not path.is_symlink() and path.is_file(), 'actual transformed source required: ' + name)
         text = path.read_text()
         require('InsightIntentDecorator' not in text and not re.search(

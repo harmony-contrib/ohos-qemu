@@ -1,5 +1,6 @@
 """Synthetic verifier/wiring fixtures, not guest Matrix4 success."""
 import ast
+import copy
 import json
 from pathlib import Path
 import tempfile
@@ -8,7 +9,9 @@ from types import SimpleNamespace
 
 from run_normal_hap_probe import PERSONAS, verifier_arguments
 from run_root_probe import digest
-from verify_gap_closure import behavior_results
+from verify_gap_closure import (LEDGER, MATRIX4_NAMES, behavior_results, requirements,
+                                matrix4_aggregate_resolution)
+from release_scope import exclusion_record
 from verify_matrix4_results import EXPECTED, TEMPLATE, verify, verify_inputs
 
 RUN = 'a' * 32
@@ -141,6 +144,27 @@ class Matrix4VerifierTests(unittest.TestCase):
             ('combine', 'copy', 'invert', 'rotate', 'scale', 'transformPoint', 'translate')})
         self.assertEqual(behavior_results(self.root, 'wrong-boot', 'c' * 64), {})
         self.assertEqual(behavior_results(self.root, 'fixture-not-a-boot', 'd' * 64), {})
+        boot = self.root / 'boot/boot.json'
+        boot.parent.mkdir()
+        document = dict(status='pass', purpose='acceptance',
+            scope='fresh_packaged_QEMU_boot_NOT_full_behavior_gate', archive_sha256='c' * 64,
+            test_environment=dict(boot_id='fixture-not-a-boot', device_type='phone',
+                                  guest_arch='arm64', external_keepalive=False))
+        boot.write_text(json.dumps(document))
+        aggregate = behavior_results(self.root, 'fixture-not-a-boot', 'c' * 64, 'phone')
+        self.assertEqual(set(aggregate), set(closed) | {'behavior:arkui-runtime-export-gaps'})
+        for change in (lambda d: d.update(purpose='diagnostic'),
+                       lambda d: d.update(archive_sha256='d' * 64),
+                       lambda d: d.update(candidate_kernel={'fixture': True}),
+                       lambda d: d['test_environment'].update(boot_id='old-boot'),
+                       lambda d: d['test_environment'].update(device_type='2in1'),
+                       lambda d: d['test_environment'].update(guest_arch='x86_64'),
+                       lambda d: d['test_environment'].update(external_keepalive=True)):
+            changed_boot = copy.deepcopy(document)
+            change(changed_boot)
+            boot.write_text(json.dumps(changed_boot))
+            self.assertEqual(set(behavior_results(self.root, 'fixture-not-a-boot', 'c' * 64, 'phone')),
+                             set(closed))
         changed = rows()
         changed[0]['values'][0] = 100
         raw.write_text(render(changed))
@@ -148,6 +172,43 @@ class Matrix4VerifierTests(unittest.TestCase):
         outer.write_text(json.dumps(evidence))
         with self.assertRaises(ValueError):
             behavior_results(self.root, 'fixture-not-a-boot', 'c' * 64)
+
+    def test_aggregate_never_accepts_partial_or_different_function_proofs(self):
+        for device, metadata in json.loads(LEDGER.read_text())['devices'].items():
+            exclusions = exclusion_record(device, requirements(metadata))
+            proofs = {'arkts_export:@ohos.matrix4:' + name: {'evidence': 'synthetic', 'sha256': 'c' * 64}
+                      for name in MATRIX4_NAMES}
+            aggregate = matrix4_aggregate_resolution(proofs, metadata, exclusions)
+            self.assertEqual(len(aggregate['required_contracts']), 7)
+            self.assertIn('not fixed or validated', aggregate['not_claimed'])
+            for identifier in proofs:
+                partial = {key: value for key, value in proofs.items() if key != identifier}
+                self.assertIsNone(matrix4_aggregate_resolution(partial, metadata, exclusions))
+                changed = copy.deepcopy(proofs)
+                changed[identifier]['sha256'] = 'd' * 64
+                with self.assertRaises(ValueError):
+                    matrix4_aggregate_resolution(changed, metadata, exclusions)
+
+    def test_aggregate_cannot_hide_expanded_baseline_or_new_exclusions(self):
+        metadata = json.loads(LEDGER.read_text())['devices']['phone']
+        exclusions = exclusion_record('phone', requirements(metadata))
+        proofs = {'arkts_export:@ohos.matrix4:' + name: {'evidence': 'synthetic', 'sha256': 'c' * 64}
+                  for name in MATRIX4_NAMES}
+        for module in ('@ohos.matrix4', '@ohos.arkui.intelligence.imageGeneration'):
+            changed = copy.deepcopy(metadata)
+            row = next(row for row in changed['arkts11_runtime_export_gaps'] if row['module'] == module)
+            row['missing'].append({'name': 'anotherOriginalRequirement', 'kind': 'function'})
+            with self.assertRaises(ValueError):
+                matrix4_aggregate_resolution(proofs, changed, exclusions)
+        changed = copy.deepcopy(metadata)
+        next(row for row in changed['runtime_behavior_gaps'] if row['id'] ==
+             'arkui-runtime-export-gaps')['evidence'] += '; another behavior gap'
+        with self.assertRaises(ValueError):
+            matrix4_aggregate_resolution(proofs, changed, exclusions)
+        changed = copy.deepcopy(exclusions)
+        changed['features']['imageGeneration'].append('behavior:another-requirement')
+        with self.assertRaises(ValueError):
+            matrix4_aggregate_resolution(proofs, metadata, changed)
 
 
 if __name__ == '__main__':

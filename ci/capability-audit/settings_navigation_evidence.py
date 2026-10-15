@@ -8,16 +8,18 @@ CALLER = 'org.harmonycontrib.capabilityaudit'
 ABILITY = 'ExternalCommonUIExtensionAbility'
 
 
-def provider_binding(dump, settings_uid, caller_uid):
+def provider_binding(dump, settings_uid, caller_uid, *, ability=ABILITY):
+    if ability not in (ABILITY, 'OpenNetworkUIExtensionAbility'):
+        raise ValueError('known public Settings extension required')
     if (type(settings_uid) is not int or type(caller_uid) is not int or
             settings_uid == caller_uid or settings_uid // 200000 != 100 or caller_uid // 200000 != 100):
         raise ValueError('distinct actual account-100 provider and ordinary caller identities required')
     records = re.split(r'(?=^    uri \[)', dump, flags=re.M)
     candidates = []
     for record in records:
-        if re.match(r'    uri \[/com\.ohos\.settings/phone/ExternalCommonUIExtensionAbility[0-9]+\]', record):
+        if re.match(r'    uri \[/com\.ohos\.settings/phone/' + re.escape(ability) + r'[0-9]+\]', record):
             record = re.split(r'^ {2,4}(?:PendingWantRecords|AppRunningRecords):', record, flags=re.M)[0]
-            if (f'main name [{ABILITY}]' in record and f'bundle name [{SETTINGS}]' in record and
+            if (f'main name [{ability}]' in record and f'bundle name [{SETTINGS}]' in record and
                     'ability type [UIEXTENSION]' in record and
                     f'root host bundle name [{CALLER}]' in record and
                     'root host module name [entry]' in record and 'root host ability name [EntryAbility]' in record and
@@ -37,7 +39,7 @@ def provider_binding(dump, settings_uid, caller_uid):
             continue
         pid, uid = map(int, identity.groups())
         if (pid == provider_pid and uid == settings_uid and 'state #FOREGROUND' in app and
-                re.search(r'^      process name \[com\.ohos\.settings:ExternalCommonUIExtensionAbility:[0-9]+\]$', app, re.M)):
+                re.search(r'^      process name \[com\.ohos\.settings:' + re.escape(ability) + r':[0-9]+\]$', app, re.M)):
             providers.append(app)
         if (uid == caller_uid and f'process name [{CALLER}]' in app and 'state #FOREGROUND' in app and
                 re.search(r'uiextension provider #\d+\s+pid #' + str(provider_pid) + r'\b', app)):
@@ -47,6 +49,36 @@ def provider_binding(dump, settings_uid, caller_uid):
         raise ValueError('reciprocal AMS provider/host PID and UID binding required')
     return {'provider_pid': provider_pid, 'provider_uid': settings_uid,
             'host_pid': hosts[0], 'host_uid': caller_uid, 'provider_bundle': SETTINGS, 'host_bundle': CALLER}
+
+
+def page_binding(dump, settings_uid, caller_uid):
+    """Bind the foreground Settings page and background caller to real AMS identities."""
+    if (type(settings_uid) is not int or type(caller_uid) is not int or
+            settings_uid == caller_uid or settings_uid // 200000 != 100 or caller_uid // 200000 != 100):
+        raise ValueError('distinct actual account-100 Settings/caller identities required')
+    pages = re.split(r'(?=^      AbilityRecord ID #)', dump.split('  ExtensionRecords:', 1)[0], flags=re.M)
+    foreground = [page for page in pages if
+        f'main name [{SETTINGS}.MainAbility]' in page and f'bundle name [{SETTINGS}]' in page and
+        'ability type [PAGE]' in page and 'app state #FOREGROUND' in page and
+        re.search(r'^        state #FOREGROUND\b', page, re.M)]
+    if len(foreground) != 1:
+        raise ValueError('one actual foreground Settings MainAbility required')
+    apps = re.split(r'(?=^    AppRunningRecord ID #)', dump, flags=re.M)
+    providers, callers = [], []
+    for app in apps:
+        identity = re.search(r'^      pid #([1-9][0-9]*)  uid #([1-9][0-9]*)$', app, re.M)
+        if not identity:
+            continue
+        pid, uid = map(int, identity.groups())
+        if uid == settings_uid and f'process name [{SETTINGS}]' in app and 'state #FOREGROUND' in app:
+            providers.append(pid)
+        if uid == caller_uid and f'process name [{CALLER}]' in app and 'state #BACKGROUND' in app:
+            callers.append(pid)
+    if len(providers) != 1 or len(callers) != 1 or providers[0] == callers[0]:
+        raise ValueError('actual distinct Settings foreground and caller background processes required')
+    return {'provider_pid': providers[0], 'provider_uid': settings_uid, 'caller_pid': callers[0],
+            'caller_uid': caller_uid, 'provider_bundle': SETTINGS, 'caller_bundle': CALLER,
+            'provider_ability': SETTINGS + '.MainAbility'}
 
 
 def embedded_title(layout, text):

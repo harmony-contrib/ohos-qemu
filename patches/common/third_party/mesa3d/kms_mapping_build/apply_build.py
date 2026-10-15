@@ -9,13 +9,24 @@ from verify_source import FILES, OFFICIAL_GNI_SHA, PROJECT, REVISION
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / 'lib'))
 from exact_source_states import digest, validate_component
 
+MAPPING_GN_SHA = '6f009ea7e6bb37219c5a3e3adf3c46644e3915b05b45d3d0e009d05e4ee4da24'
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', required=True, type=Path)
     args = parser.parse_args()
     root = args.source_root.resolve()
     path = root / PROJECT / 'ohos/BUILD.gn'
-    if digest(path.read_bytes()) == OFFICIAL_GNI_SHA:
+    actual = digest(path.read_bytes())
+    if actual == MAPPING_GN_SHA:
+        validate_component(root, PROJECT, REVISION,
+                           (('ohos/BUILD.gn', MAPPING_GN_SHA, MAPPING_GN_SHA),), require_patched=True)
+        subprocess.run(['git', '-C', str(root), 'apply', '--check',
+                        str(Path(__file__).with_name('0002-track-import-lifetime-backport-input.patch'))], check=True)
+        subprocess.run(['git', '-C', str(root), 'apply', '--whitespace=nowarn',
+                        str(Path(__file__).with_name('0002-track-import-lifetime-backport-input.patch'))], check=True)
+        validate_component(root, PROJECT, REVISION, FILES, require_patched=True)
+    elif actual == OFFICIAL_GNI_SHA:
         validate_component(root, PROJECT, REVISION,
                            (('ohos/BUILD.gn', OFFICIAL_GNI_SHA, OFFICIAL_GNI_SHA),), require_patched=True)
         print('exact official Mesa GN has no generated ARMv7 action; no ARMv7 mapping build claim')

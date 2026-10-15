@@ -146,8 +146,10 @@ class PhotoResultSetResultsTests(unittest.TestCase):
                     value = deepcopy(document); value['roles'][role][field + '_sha256'] = '0' * 64
                     with self.subTest(role=role, field=field), self.assertRaises(ValueError): self.evidence(value)
             record = document['roles']['system']; path = Path(record['raw_results'])
-            invalid = json.loads(path.read_text().splitlines()[3]); invalid['values'][-1] = 0
-            lines = path.read_text().splitlines(); lines[3] = json.dumps(invalid); path.write_text('\n'.join(lines) + '\n')
+            lines = path.read_text().splitlines()
+            index = next(index for index, line in enumerate(lines) if json.loads(line)['name'] == 'values.first.0')
+            invalid = json.loads(lines[index]); invalid['values'][-1] = 0
+            lines[index] = json.dumps(invalid); path.write_text('\n'.join(lines) + '\n')
             record['raw_results_sha256'] = digest(path)
             with self.assertRaises(ValueError): self.evidence(document)
 

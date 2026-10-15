@@ -104,6 +104,25 @@ class PhotosRecentInfoTests(unittest.TestCase):
         self.assertNotEqual(self.apply().returncode, 0)
         self.assertEqual(self.snapshot(), before)
 
+    def test_result_set_export_preserves_all_parent_replays(self):
+        for name in ('photos_recent_info', 'public_record_classes', 'result_set_export'):
+            result = self.apply(COMPONENT.parent / name)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        final = self.snapshot()
+        for name in ('fusion_asset_type', 'api26_photo_enums', 'api26_photo_search_enums',
+                     'photos_recent_info', 'public_record_classes', 'result_set_export'):
+            for _ in range(2):
+                result = self.apply(COMPONENT.parent / name)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.snapshot(), final)
+        target = self.root / baseline.PROJECT / baseline.FILES[0][0]
+        target.write_bytes(target.read_bytes() + b'\n// unknown child state\n')
+        unknown = self.snapshot()
+        for name in ('fusion_asset_type', 'api26_photo_enums', 'api26_photo_search_enums',
+                     'photos_recent_info', 'public_record_classes', 'result_set_export'):
+            self.assertNotEqual(self.apply(COMPONENT.parent / name).returncode, 0)
+            self.assertEqual(self.snapshot(), unknown)
+
     def test_preparation_orders_complete_repair_before_source_traversal(self):
         recipe = (ROOT/'scripts/build_standard_qemu_in_docker.sh').read_text()
         marker = 'bash "${PHOTOS_RECENT_INFO_COMPONENT_SCRIPT}"'

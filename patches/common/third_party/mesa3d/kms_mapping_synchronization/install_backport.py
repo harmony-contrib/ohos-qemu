@@ -15,6 +15,7 @@ HISTORICAL = '995d2506d18924b48db0cf40e6ad7de04fc4e558'
 ORIGINAL_SHA = 'b8b8736f347fb473a718c610abf3099bfb72d5a9f28bf75e3620fb72f8592194'
 DESTINATION = Path('device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping')
 PREVIOUS_HELPER_SHA = 'b627b3bb969a0a691c0d8ab36cdf7753a5f665fc9cc2a5d298187011743856b6'
+MAPPING_ONLY_HELPER_SHA = '0ab55a500ef0eca395929f1181c8d90fec70f9a1174934438fdea045b2f6bc5a'
 
 
 def check_no_symlink(path, root):
@@ -39,13 +40,15 @@ def install(root):
     if version != '21.3.3':
         raise ValueError('historical Mesa revision is not 21.3.3')
     pairs = ((COMPONENT / 'files/apply_mesa_kms_mapping.py', 0o755),
-             (COMPONENT / '0001-serialize-displaytarget-mapping.patch', 0o644))
+             (COMPONENT / '0001-serialize-displaytarget-mapping.patch', 0o644),
+             (COMPONENT / '0002-serialize-import-reference-and-final-destroy.patch', 0o644))
     destination = root / DESTINATION
     check_no_symlink(destination, root)
     for source, mode in pairs:
         target = destination / source.name
         known_previous = (source.name == 'apply_mesa_kms_mapping.py' and target.is_file()
-                          and hashlib.sha256(target.read_bytes()).hexdigest() == PREVIOUS_HELPER_SHA)
+                          and hashlib.sha256(target.read_bytes()).hexdigest() in
+                          (PREVIOUS_HELPER_SHA, MAPPING_ONLY_HELPER_SHA))
         if target.is_symlink() or (target.exists() and target.read_bytes() != source.read_bytes()
                                    and not known_previous):
             raise ValueError('unknown installed mapping recipe; preserving source')

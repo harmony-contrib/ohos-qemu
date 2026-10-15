@@ -127,7 +127,9 @@ def parse_exit(output, run_id):
 
 
 def probe_command(kind, remote, run_id, quota_device=None):
-    if kind == 'project-quota':
+    if kind == 'gles-llvm':
+        arguments = [run_id]
+    elif kind == 'project-quota':
         if not isinstance(quota_device, str) or not re.fullmatch(r'/dev/block/vd[a-z]+[0-9]*', quota_device):
             raise ValueError('project quota requires the validated actual userdata device')
         arguments = ['--disposable-guest', quota_device, run_id]
@@ -141,7 +143,10 @@ def probe_command(kind, remote, run_id, quota_device=None):
                   "native-gap-abi": [run_id],
                   "permission-registry": [remote + "/permission-names.txt", run_id]}[kind])
     executable = shlex.join([remote + "/probe", *arguments])
-    return ("unset LD_LIBRARY_PATH LD_PRELOAD; " + executable +
+    unset = "unset LD_LIBRARY_PATH LD_PRELOAD; "
+    if kind == 'gles-llvm':
+        unset += "unset GALLIUM_DRIVER MESA_LOADER_DRIVER_OVERRIDE EGL_PLATFORM LIBGL_DRIVERS_PATH; "
+    return (unset + executable +
             " >" + shlex.quote(remote + "/stdout.jsonl") +
             " 2>" + shlex.quote(remote + "/stderr.txt") + "; probe_status=$?; " +
             "printf '__OHOS_PROBE_EXIT_" + run_id + "=%s\\n' \"$probe_status\"")
@@ -157,7 +162,7 @@ def verify_result(kind, log, arch, run_id, code, definitions=None, device=None):
             raise ValueError('actual display readback process failed')
         return verify_screen_modes(log)
     if kind in GRAPHICS_KINDS:
-        return verify_graphics(kind, log, code)
+        return verify_graphics(kind, log, code, run_id=run_id)
     if kind == "vibrator-hdi":
         return verify_vibrator(log, arch, run_id, code)
     if kind == "permission-registry":
@@ -301,6 +306,11 @@ def run_probe(args, runner=subprocess.run):
             (args.output / name).write_text(content.replace("\r", ""))
         log = (args.output / "stdout.jsonl").read_text()
         evidence["log_sha256"] = digest(args.output / "stdout.jsonl")
+        if args.kind == 'gles-llvm':
+            stderr = args.output / "stderr.txt"
+            evidence["stderr_sha256"] = digest(stderr)
+            if re.search(r'bad fde:|FDE is really a CIE', stderr.read_text(), re.I):
+                raise ValueError('LLVM GLES JIT frame registration failed')
         evidence["result"] = verify_result(args.kind, log, args.arch, run_id, code, definitions, args.device)
         if getattr(args, 'boot_id', None) is not None:
             if shell('cat /proc/sys/kernel/random/boot_id').strip() != args.boot_id:

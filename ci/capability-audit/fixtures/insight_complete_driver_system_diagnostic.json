@@ -1,0 +1,140 @@
+{
+  "scope": "captured_unchanged_R44_diagnostic_NOT_new_package_gate",
+  "caller_nonce": "e7a9cc61007221c5e8474787650d93e8",
+  "uid": 20010040,
+  "target_nonce": "063ff834a4c38eb747054cf598b90a2f",
+  "metadata": {
+    "extractInsightIntents": [
+      {
+        "ClassInheritanceInfo": {
+          "definitionFilePath": "sdk",
+          "generics": [
+            {
+              "definitionFilePath": "",
+              "typeName": "AuditEntity"
+            }
+          ],
+          "parentClassName": "InsightIntentEntryExecutor"
+        },
+        "executeMode": [
+          "background"
+        ],
+        "intentName": "AuditEntry",
+        "displayName": "Audit entry",
+        "decoratorClass": "AuditEntry",
+        "moduleName": "entry",
+        "decoratorFile": "@normalized:N&&&vpn-policy-probe/src/main/ets/intents/AuditEntry&",
+        "decoratorType": "@InsightIntentEntry",
+        "entities": [
+          {
+            "decoratorType": "@InsightIntentEntity",
+            "supportedQueryProperties": [
+              "value"
+            ],
+            "entityCategory": "audit entity",
+            "parentClassName": "IntentEntity",
+            "decoratorFile": "@normalized:N&&&vpn-policy-probe/src/main/ets/intents/AuditEntity&",
+            "className": "AuditEntity",
+            "entityId": "audit",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "$id": "/schemas/AuditEntity"
+            }
+          }
+        ],
+        "abilityName": "EntryAbility",
+        "domain": "LocalDomain",
+        "intentVersion": "1.0.0",
+        "bundleName": "org.harmonycontrib.capabilityaudit",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "/schemas/AuditEntity"
+            }
+          },
+          "required": [
+            "value",
+            "entity"
+          ]
+        }
+      },
+      {
+        "decoratorType": "@InsightIntentForm",
+        "intentName": "AuditForm",
+        "displayName": "Audit form",
+        "abilityName": "AuditForm",
+        "decoratorClass": "AuditForm",
+        "domain": "LocalDomain",
+        "intentVersion": "1.0.0",
+        "formName": "AuditWidget",
+        "moduleName": "entry",
+        "bundleName": "org.harmonycontrib.capabilityaudit",
+        "decoratorFile": "@normalized:N&&&vpn-policy-probe/src/main/ets/intents/AuditForm&"
+      },
+      {
+        "decoratorType": "@InsightIntentFunctionMethod",
+        "functionName": "echo",
+        "intentName": "AuditFunction",
+        "displayName": "Audit function",
+        "decoratorClass": "AuditFunctions",
+        "domain": "LocalDomain",
+        "intentVersion": "1.0.0",
+        "moduleName": "entry",
+        "bundleName": "org.harmonycontrib.capabilityaudit",
+        "decoratorFile": "@normalized:N&&&vpn-policy-probe/src/main/ets/intents/AuditFunctions&",
+        "functionParamList": [
+          "value"
+        ],
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value"
+          ]
+        }
+      },
+      {
+        "decoratorType": "@InsightIntentLink",
+        "intentName": "AuditLink",
+        "displayName": "Audit link",
+        "decoratorClass": "AuditLink",
+        "domain": "LocalDomain",
+        "intentVersion": "1.0.0",
+        "moduleName": "entry",
+        "bundleName": "org.harmonycontrib.capabilityaudit",
+        "decoratorFile": "@normalized:N&&&vpn-policy-probe/src/main/ets/intents/AuditLink&",
+        "uri": "audit://intent/063ff834a4c38eb747054cf598b90a2f"
+      },
+      {
+        "decoratorType": "@InsightIntentPage",
+        "intentName": "AuditPage",
+        "displayName": "Audit page",
+        "decoratorClass": "Index",
+        "domain": "LocalDomain",
+        "intentVersion": "1.0.0",
+        "moduleName": "entry",
+        "bundleName": "org.harmonycontrib.capabilityaudit",
+        "decoratorFile": "@normalized:N&&&vpn-policy-probe/src/main/ets/pages/Index&",
+        "uiAbility": "EntryAbility",
+        "pagePath": "@normalized:N&&&vpn-policy-probe/src/main/ets/pages/Index&"
+      }
+    ]
+  },
+  "raw_results": "{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"identity\",\"values\":[20010040,20010040,4186],\"data\":\"\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"lookup\",\"values\":[5],\"data\":\"[{\\\"bundleName\\\":\\\"org.harmonycontrib.capabilityaudit\\\",\\\"moduleName\\\":\\\"entry\\\",\\\"intentName\\\":\\\"AuditEntry\\\",\\\"domain\\\":\\\"LocalDomain\\\",\\\"intentVersion\\\":\\\"1.0.0\\\",\\\"displayName\\\":\\\"Audit entry\\\",\\\"displayDescription\\\":\\\"\\\",\\\"schema\\\":\\\"\\\",\\\"icon\\\":\\\"\\\",\\\"llmDescription\\\":\\\"\\\",\\\"intentType\\\":\\\"@InsightIntentEntry\\\",\\\"parameters\\\":{\\\"properties\\\":{\\\"entity\\\":{\\\"$ref\\\":\\\"/schemas/AuditEntity\\\"},\\\"value\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"value\\\",\\\"entity\\\"],\\\"type\\\":\\\"object\\\"},\\\"keywords\\\":[],\\\"developType\\\":\\\"decorator\\\",\\\"entities\\\":[{\\\"className\\\":\\\"AuditEntity\\\",\\\"entityId\\\":\\\"audit\\\",\\\"entityCategory\\\":\\\"audit entity\\\",\\\"parameters\\\":{\\\"$id\\\":\\\"/schemas/AuditEntity\\\",\\\"properties\\\":{\\\"value\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"value\\\"],\\\"type\\\":\\\"object\\\"},\\\"parentClassName\\\":\\\"IntentEntity\\\",\\\"isQueryable\\\":false,\\\"supportedQueryProperties\\\":[\\\"value\\\"]}],\\\"subIntentInfo\\\":{\\\"abilityName\\\":\\\"EntryAbility\\\",\\\"executeMode\\\":[1]}},{\\\"bundleName\\\":\\\"org.harmonycontrib.capabilityaudit\\\",\\\"moduleName\\\":\\\"entry\\\",\\\"intentName\\\":\\\"AuditFunction\\\",\\\"domain\\\":\\\"LocalDomain\\\",\\\"intentVersion\\\":\\\"1.0.0\\\",\\\"displayName\\\":\\\"Audit function\\\",\\\"displayDescription\\\":\\\"\\\",\\\"schema\\\":\\\"\\\",\\\"icon\\\":\\\"\\\",\\\"llmDescription\\\":\\\"\\\",\\\"intentType\\\":\\\"@InsightIntentFunctionMethod\\\",\\\"parameters\\\":{\\\"properties\\\":{\\\"value\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"value\\\"],\\\"type\\\":\\\"object\\\"},\\\"keywords\\\":[],\\\"developType\\\":\\\"decorator\\\",\\\"entities\\\":[],\\\"subIntentInfo\\\":{}},{\\\"bundleName\\\":\\\"org.harmonycontrib.capabilityaudit\\\",\\\"moduleName\\\":\\\"entry\\\",\\\"intentName\\\":\\\"AuditForm\\\",\\\"domain\\\":\\\"LocalDomain\\\",\\\"intentVersion\\\":\\\"1.0.0\\\",\\\"displayName\\\":\\\"Audit form\\\",\\\"displayDescription\\\":\\\"\\\",\\\"schema\\\":\\\"\\\",\\\"icon\\\":\\\"\\\",\\\"llmDescription\\\":\\\"\\\",\\\"intentType\\\":\\\"@InsightIntentForm\\\",\\\"keywords\\\":[],\\\"developType\\\":\\\"decorator\\\",\\\"entities\\\":[],\\\"subIntentInfo\\\":{\\\"abilityName\\\":\\\"AuditForm\\\",\\\"formName\\\":\\\"AuditWidget\\\"}},{\\\"bundleName\\\":\\\"org.harmonycontrib.capabilityaudit\\\",\\\"moduleName\\\":\\\"entry\\\",\\\"intentName\\\":\\\"AuditLink\\\",\\\"domain\\\":\\\"LocalDomain\\\",\\\"intentVersion\\\":\\\"1.0.0\\\",\\\"displayName\\\":\\\"Audit link\\\",\\\"displayDescription\\\":\\\"\\\",\\\"schema\\\":\\\"\\\",\\\"icon\\\":\\\"\\\",\\\"llmDescription\\\":\\\"\\\",\\\"intentType\\\":\\\"@InsightIntentLink\\\",\\\"keywords\\\":[],\\\"developType\\\":\\\"decorator\\\",\\\"entities\\\":[],\\\"subIntentInfo\\\":{\\\"uri\\\":\\\"audit://intent/063ff834a4c38eb747054cf598b90a2f\\\"}},{\\\"bundleName\\\":\\\"org.harmonycontrib.capabilityaudit\\\",\\\"moduleName\\\":\\\"entry\\\",\\\"intentName\\\":\\\"AuditPage\\\",\\\"domain\\\":\\\"LocalDomain\\\",\\\"intentVersion\\\":\\\"1.0.0\\\",\\\"displayName\\\":\\\"Audit page\\\",\\\"displayDescription\\\":\\\"\\\",\\\"schema\\\":\\\"\\\",\\\"icon\\\":\\\"\\\",\\\"llmDescription\\\":\\\"\\\",\\\"intentType\\\":\\\"@InsightIntentPage\\\",\\\"keywords\\\":[],\\\"developType\\\":\\\"decorator\\\",\\\"entities\\\":[],\\\"subIntentInfo\\\":{\\\"uiAbility\\\":\\\"EntryAbility\\\",\\\"pagePath\\\":\\\"@normalized:N&&&vpn-policy-probe/src/main/ets/pages/Index&\\\",\\\"navigationId\\\":\\\"\\\",\\\"navDestinationName\\\":\\\"\\\"}}]\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"entry.0\",\"values\":[0],\"data\":\"{\\\"entityId\\\":\\\"audit\\\",\\\"value\\\":\\\"e7a9cc61007221c5e8474787650d93e8:0:entry\\\"}\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"entry.1\",\"values\":[0],\"data\":\"{\\\"entityId\\\":\\\"audit\\\",\\\"value\\\":\\\"e7a9cc61007221c5e8474787650d93e8:1:entry\\\"}\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"function.metadata\",\"values\":[],\"data\":\"{\\\"bundleName\\\":\\\"org.harmonycontrib.capabilityaudit\\\",\\\"moduleName\\\":\\\"entry\\\",\\\"intentName\\\":\\\"AuditFunction\\\",\\\"domain\\\":\\\"LocalDomain\\\",\\\"intentVersion\\\":\\\"1.0.0\\\",\\\"displayName\\\":\\\"Audit function\\\",\\\"displayDescription\\\":\\\"\\\",\\\"schema\\\":\\\"\\\",\\\"icon\\\":\\\"\\\",\\\"llmDescription\\\":\\\"\\\",\\\"intentType\\\":\\\"@InsightIntentFunctionMethod\\\",\\\"parameters\\\":{\\\"properties\\\":{\\\"value\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"value\\\"],\\\"type\\\":\\\"object\\\"},\\\"keywords\\\":[],\\\"developType\\\":\\\"decorator\\\",\\\"entities\\\":[],\\\"subIntentInfo\\\":{}}\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"function.0\",\"values\":[0],\"data\":\"{\\\"methodResult\\\":\\\"\\\\\\\"e7a9cc61007221c5e8474787650d93e8:0:echo\\\\\\\"\\\"}\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"function.1\",\"values\":[0],\"data\":\"{\\\"methodResult\\\":\\\"\\\\\\\"e7a9cc61007221c5e8474787650d93e8:1:echo\\\\\\\"\\\"}\",\"error\":\"\"}\n{\"runId\":\"e7a9cc61007221c5e8474787650d93e8\",\"role\":\"system\",\"name\":\"summary\",\"values\":[1],\"data\":\"\",\"error\":\"\"}\n"
+}

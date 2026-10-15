@@ -1,0 +1,8 @@
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"identity","values":[20010038,20010038,2904],"data":""}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"permission.state","values":[2],"data":""}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"create.request","values":[1],"data":""}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"modifier.selection","values":[1,1],"data":""}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"willCopy","values":[0],"data":"e21ac5f384d583d1cbc7e2006f5b4cc4 alpha\ne21ac5f384d583d1cbc7e2006f5b4cc4 beta"}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"pasteboard.deferred.reject","values":["201"],"data":"Permission verification failed. The application cannot read the clipboard."}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"pasteboard.sync.reject","values":["201"],"data":"Permission verification failed. The application cannot read the clipboard."}
+{"runId":"e21ac5f384d583d1cbc7e2006f5b4cc4","cycle":0,"phase":0,"name":"pasteboard.callback.reject","values":["201"],"data":"Permission verification failed. The application cannot read the clipboard."}

@@ -85,6 +85,13 @@ class FirstArtifactGateTests(unittest.TestCase):
                        lambda d: d['test_environment'].update(device_type='2in1'),
                        lambda d: d['test_environment'].update(guest_identity={}),
                        lambda d: d['checks'].pop('arkweb'),
+                       lambda d: d['checks'].pop('insight-contract'),
+                       lambda d: d['checks'].pop('lazy-column'),
+                       lambda d: d['checks'].pop('lazy-layouts'),
+                       lambda d: d['checks'].pop('selection'),
+                       lambda d: d['checks'].pop('env-reader'),
+                       lambda d: d['checks'].pop('settings-all-navigation'),
+                       lambda d: d['checks'].pop('child-default-profile'),
                        lambda d: d['checks']['vulkan'].update(status='fail'),
                        lambda d: d['checks']['issue20-library-exit'].update(commands=[]),
                        lambda d: d['checks']['native-bindings-e2e']['commands'][0].update(exit_code=1)):

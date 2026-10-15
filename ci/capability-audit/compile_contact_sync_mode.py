@@ -41,7 +41,8 @@ def candidate_headers(files, overlay, selected):
 
 def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=None, candidate_defines=(),
         overlay_component_headers=False, prepare_component_idl=False, prepare_component_hdi=False,
-        prepare_component_wifi_hdi=False, required_candidate_headers=None, additional_components=()):
+        prepare_component_wifi_hdi=False, required_candidate_headers=None, additional_components=(),
+        prepare_component_sqlite_headers=False, prepare_component_display_common=False):
     """Shared full-TU check with the complete exact component; no stub headers."""
     component, source_file = Path(component), Path(source_file)
     if candidate_defines not in ((), ('QEMU_VIVID_CAPTURE_ENABLED',), ('WM_QEMU_SOFTWARE_CAPTURE',),
@@ -84,11 +85,16 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
         inputs.extend([*sorted(selected.glob('*.patch')), selected / 'apply.sh', selected / 'verify_source.py'])
     if caller is not None:
         inputs.append(Path(caller).resolve())
+    if prepare_component_idl:
+        inputs.extend([ROOT / 'ci/capability-audit/compile_render_connection_reply.py',
+                       ROOT / 'ci/capability-audit/compile_camera_component.py'])
     if prepare_component_hdi:
         inputs.append(ROOT / 'ci/capability-audit/prepare_display_hdi.py')
     if prepare_component_wifi_hdi:
         inputs.extend([ROOT / 'ci/capability-audit/prepare_wifi_hdi.py',
                        ROOT / 'ci/capability-audit/prepare_display_hdi.py'])
+    if prepare_component_sqlite_headers:
+        inputs.append(ROOT / 'ci/capability-audit/prepare_sqlite_headers.py')
     before = {str(path): digest(path) for path in inputs}
     products = args.product or list(PRODUCTS)
     if len(set(products)) != len(products):
@@ -184,12 +190,17 @@ def run(args, component=COMPONENT, source_file=SOURCE, target=TARGET, caller=Non
                     root, cwd, argv, owned_generated, copy_readonly_inputs=True)
             if prepare_component_hdi:
                 from prepare_display_hdi import prepare
-                argv, hdi_inputs = prepare(root, cwd, argv, logs / (product + '-hdi-generated'))
+                argv, hdi_inputs = prepare(root, cwd, argv, logs / (product + '-hdi-generated'),
+                                          include_graphic_common=prepare_component_display_common)
                 generated_inputs += hdi_inputs
             if prepare_component_wifi_hdi:
                 from prepare_wifi_hdi import prepare
                 argv, hdi_inputs = prepare(root, cwd, argv, logs / (product + '-wifi-hdi-generated'))
                 generated_inputs += hdi_inputs
+            if prepare_component_sqlite_headers:
+                from prepare_sqlite_headers import prepare
+                argv, sqlite_inputs = prepare(root, cwd, argv, logs / (product + '-sqlite-generated'))
+                generated_inputs += sqlite_inputs
             compile_log = logs / (product + '-compile.log')
             with compile_log.open('x') as stream:
                 subprocess.run(argv, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT, check=True)

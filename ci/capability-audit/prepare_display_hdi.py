@@ -10,11 +10,14 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def prepare(root, cwd, command, output):
+def prepare(root, cwd, command, output, *, include_graphic_common=False):
     output.mkdir(exist_ok=False)
     targets = ['gen/drivers/interface/display/' + family + '/v1_0/display_' + family + '_type.h'
                for family in ('composer', 'buffer')]
     targets.append('gen/drivers/interface/display/buffer/v1_2/display_buffer_type.h')
+    if include_graphic_common:
+        targets += ['gen/drivers/interface/display/graphic/common/' + version + '/cm_color_space.h'
+                    for version in ('v1_0', 'v2_0', 'v2_1', 'v2_2', 'v2_4')]
     result = subprocess.run([str(root / 'prebuilts/build-tools/linux-x86/bin/ninja'),
         '-w', 'dupbuild=warn', '-C', str(cwd), '-t', 'commands', '-s', *targets],
         capture_output=True, text=True, check=True)
@@ -31,11 +34,18 @@ def prepare(root, cwd, command, output):
     records = []
     lines = result.stdout.strip().splitlines()
     if len(lines) != len(targets):
-        raise ValueError('expected exactly the three real display HDI generation actions')
+        raise ValueError('expected exactly ' + str(len(targets)) + ' real display HDI generation actions')
     for index, line in enumerate(lines):
         argv = shlex.split(line)
         while argv and argv[0] == '/usr/bin/env':
             argv.pop(0)
+        # Earlier product graphs retain this exact source-volume alias.
+        # Resolve the alias into the same RO inputs before checking the tool
+        # and declarations; owned outputs are still redirected below.
+        argv = [str(root / token.removeprefix('/openharmony/'))
+                if token.startswith('/openharmony/') else
+                'ohos.hdi:' + str(root / token.removeprefix('ohos.hdi:/openharmony/'))
+                if token.startswith('ohos.hdi:/openharmony/') else token for token in argv]
         if (not argv or Path(argv[0]).name != 'idl' or argv.count('-d') != 1 or
                 argv.count('-r') != 1 or '--gen-cpp' not in argv or
                 argv[argv.index('--intf-type') + 1] != 'hdi'):

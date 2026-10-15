@@ -33,6 +33,7 @@ from run_with_owned_hdc import run as isolated_run
 sys.path.insert(0, str(ROOT / 'ci/capability-audit'))
 from hitrace_kernel_contract import trace_configuration, verify_restored_configuration, verify_rows, verify_trace
 from run_normal_hap_probe import require_normal_identity
+from hitrace_failure_snapshot import capture as capture_failure
 
 if not args.owned_child:
     BASE.mkdir(parents=True, exist_ok=True)
@@ -58,6 +59,7 @@ report = dict(status='fail', scope='fresh_archive_ordinary_Cxx_ArkTS_kernel_trac
     closed=[], first_artifact_behavior_gate_passed=False, failures=[], commands=[])
 override = tracing = False
 before = setup = trace_before = None
+remote = '/data/app/el2/100/base/' + BUNDLE + '/files/hitrace-' + nonce + '-results.log'
 
 def command(argv, label, timeout=1800):
     result = subprocess.run(list(map(str, argv)), capture_output=True, text=True, timeout=timeout)
@@ -125,7 +127,6 @@ try:
     actual = trace_state('trace-enabled')
     assert actual['on'] == '1' and int(actual['tags']) & (1 << 62)
     report['trace_enabled'] = actual
-    remote = '/data/app/el2/100/base/' + BUNDLE + '/files/hitrace-' + nonce + '-results.log'
     assert guest.shell('if test -e ' + remote + '; then echo STALE; else echo ABSENT; fi', 'nonce-absent').strip() == 'ABSENT'
     reply = guest.shell('aa start -a EntryAbility -b ' + BUNDLE, 'launch-real-ordinary-app')
     assert 'start ability successfully' in reply
@@ -152,7 +153,9 @@ try:
 except Exception as error:
     report['failures'].append(type(error).__name__ + ': ' + str(error))
     try:
-        guest.shell('hilog -x', 'failure-hilog')
+        if guest.shell('cat /proc/sys/kernel/random/boot_id', 'failure-same-boot').strip() != report['boot_id']:
+            raise ValueError('failure capture refused a changed guest kernel')
+        report['failure_snapshot'] = capture_failure(guest.shell, remote)
     except Exception as diagnostic_error:
         report['diagnostic_error'] = str(diagnostic_error)
 finally:

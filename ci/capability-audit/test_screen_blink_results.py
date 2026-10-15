@@ -69,6 +69,36 @@ class BlinkResultTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify_initial(self.encode(actual), self.nonce, 'normal', identity)
 
+    def test_caller_exit_keeps_bounded_animation_and_requires_three_stable_background_frames(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            baseline = root / 'baseline.png'
+            Image.new('RGB', (200, 200), (32, 48, 64)).save(baseline)
+            record = dict(path=str(baseline), sha256=digest(baseline))
+
+            def frames(colors, times):
+                result = []
+                for index, (color, started) in enumerate(zip(colors, times)):
+                    path = root / f'frame-{index}.png'
+                    Image.new('RGB', (200, 200), color).save(path)
+                    result.append(dict(path=str(path), sha256=digest(path), before=started, after=started+.1))
+                return result
+
+            off, transition, pulse = (32, 48, 64), (0, 0, 255), (130, 140, 36)
+            actual = frames([transition, off, off, off], [2, 3, 4, 5])
+            with self.assertRaises(ValueError):
+                verify_background_restored(record, actual)
+            verify_background_restored(record, actual, 0)
+            for colors, times in (
+                ([transition, off, off], [2, 3, 4]),
+                ([transition, off, off, off], [2, 3, 3.5, 3.8]),
+                ([transition, off, off, off], [2, 6, 7, 8]),
+                ([transition, off, pulse, off], [2, 3, 4, 5]),
+                ([pulse, pulse, pulse], [2, 3, 4]),
+                ([off, off, off], [-1, 1, 2])):
+                with self.subTest(colors=colors, times=times), self.assertRaises(ValueError):
+                    verify_background_restored(record, frames(colors, times), 0)
+
     def test_actual_pixels_order_integrity_and_timing(self):
         with tempfile.TemporaryDirectory() as directory:
             frames = []
@@ -164,6 +194,35 @@ class BlinkResultTests(unittest.TestCase):
                     bad[2].update(path=str(path), sha256=digest(path))
                 with self.subTest(change=change), self.assertRaises(ValueError):
                     verify_committed_stop(bad, rect, marker, serial, 10.0)
+
+    def test_compound_cleanup_uses_exact_observed_prior_serial_and_requires_full_quiet_window(self):
+        with tempfile.TemporaryDirectory() as directory:
+            rect, marker = [0, 30, 200, 200], [0, 0, 160, 20]
+            for previous, final in ((11, 13), (255, 1)):
+                frames = []
+                for index, (offset, before) in enumerate(((0, 10.0), (1, 10.3), (2, 10.9),
+                                                        (2, 12.0), (2, 13.0))):
+                    serial = (previous + offset) % 256
+                    path = Path(directory) / f'{previous}-{index}.png'
+                    image = Image.new('RGB', (200, 240), (32, 48, 64))
+                    for bit in range(8):
+                        image.paste('white' if serial & (1 << bit) else 'black',
+                                    (bit * 20, 0, (bit + 1) * 20, 20))
+                    image.save(path)
+                    frames.append(dict(path=str(path), sha256=digest(path), before=before, after=before + .1))
+                with self.assertRaises(ValueError):
+                    verify_committed_stop(frames, rect, marker, final, 10.0)
+                result = verify_committed_stop(frames, rect, marker, final, 10.0,
+                                              previous_sequence=previous)
+                self.assertEqual(result['prior_frames_retained'], 2)
+                self.assertEqual(result['previous_sequence'], previous)
+                for bad_previous in (True, (previous - 1) % 256, (previous + 1) % 256):
+                    with self.assertRaises(ValueError):
+                        verify_committed_stop(frames, rect, marker, final, 10.0,
+                                              previous_sequence=bad_previous)
+                with self.assertRaises(ValueError):
+                    verify_committed_stop(frames[:-1], rect, marker, final, 10.0,
+                                          previous_sequence=previous)
 
 
 if __name__ == '__main__':

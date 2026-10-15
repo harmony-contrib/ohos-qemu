@@ -18,8 +18,9 @@ from power_test_policy import verify_policy_states
 
 REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "native-bindings-e2e", "cxx-arkts11-gaps", "power-suspend", "certificate-manager", "rs-objects", "avc-media",
-                             "application-home", "photos-asset", "photo-result-set", "settings-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "rpc-runtime", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler", "ethernet-control"))
+                             "application-home", "photos-asset", "photo-result-set", "settings-navigation", "settings-all-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "rpc-runtime", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler", "ethernet-control", "insight-contract", "lazy-column", "lazy-layouts", "selection", "env-reader"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
+REQUIRED_CHECKS |= frozenset(('child-default-profile',))
 
 
 def verified_payload(name, path, identity, environment):
@@ -218,15 +219,41 @@ def verified_payload(name, path, identity, environment):
                     json.loads(nested.read_text()).get('status') != 'pass'):
                 raise ValueError('actual Web strict verification is missing or changed')
         elif name == 'vulkan':
-            required = {'vulkan-device', 'vulkan-headless', 'vulkan-ohos-surface', 'vulkan-window'}
+            required = {'vulkan-device', 'vulkan-headless', 'vulkan-ohos-surface', 'vulkan-window', 'gles-llvm'}
             results = payload.get('results', {})
             if set(results) != required:
-                raise ValueError('Vulkan device, WSI boundary and actual compositor are separate mandatory checks')
+                raise ValueError('Vulkan device, WSI, compositor and LLVM GLES shader lifetimes are mandatory')
             for kind, row in results.items():
                 nested = Path(row.get('evidence', ''))
                 if (nested.is_symlink() or not nested.is_file() or checksum(nested) != row.get('sha256') or
                         json.loads(nested.read_text()).get('status') != 'pass'):
                     raise ValueError('actual Vulkan child result missing or changed: ' + kind)
+                if kind == 'gles-llvm':
+                    native = json.loads(nested.read_text())
+                    audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
+                    sys.path.insert(0, str(audit))
+                    from run_root_probe import verify_result
+                    raw = nested.parent / 'stdout.jsonl'
+                    stderr = nested.parent / 'stderr.txt'
+                    if (native.get('kind') != kind or
+                            native.get('scope') != 'isolated_root_probe_only_not_normal_app_or_full_capability_gate' or
+                            native.get('archive_sha256') != identity['sha256'] or
+                            native.get('boot_id') != environment['boot_id'] or
+                            native.get('archive_binding') != 'actual_live_owned_boot_and_initial_full_archive_inventory' or
+                            native.get('arch') != environment['guest_arch'] or
+                            native.get('device') != environment['device_type'] or
+                            native.get('target') != environment['target'] or
+                            native.get('kernel_boot_id_unchanged') is not True or
+                            native.get('first_artifact_behavior_gate_passed') is not False or
+                            raw.is_symlink() or not raw.is_file() or checksum(raw) != native.get('log_sha256') or
+                            stderr.is_symlink() or not stderr.is_file() or checksum(stderr) != native.get('stderr_sha256')):
+                        raise ValueError('LLVM GLES must execute on this actual newly packaged boot')
+                    if re.search(r'bad fde:|FDE is really a CIE', stderr.read_text(), re.I):
+                        raise ValueError('actual LLVM GLES JIT registration failed')
+                    verified = verify_result(kind, raw.read_text(), environment['guest_arch'],
+                                             native.get('run_id'), native.get('probe_exit_code'))
+                    if native.get('result') != verified:
+                        raise ValueError('LLVM GLES typed verification differs from actual raw results')
         elif name in ('rs-objects', 'screen-modes', 'project-quota'):
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))
@@ -266,6 +293,16 @@ def verified_payload(name, path, identity, environment):
             sys.path.insert(0, str(audit))
             from verify_settings_navigation_results import verify_evidence
             verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'])
+        elif name == 'settings-all-navigation':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_settings_all_navigation_evidence import verify_evidence
+            verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                            environment['device_type'], environment['target'])
+        elif name == 'child-default-profile':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_child_default_profile_evidence import verify_evidence
+            verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                            environment['device_type'], environment['target'])
         elif name == 'storage-stats':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))
@@ -326,6 +363,31 @@ def verified_payload(name, path, identity, environment):
             from verify_ethernet_control_results import verify_evidence as verify_ethernet
             verify_ethernet(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
                             environment['device_type'], environment['target'])
+        elif name == 'insight-contract':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_insight_contract_evidence import verify_evidence as verify_insight
+            verify_insight(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                           environment['device_type'], environment['target'])
+        elif name == 'lazy-column':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_lazy_column_evidence import verify_evidence as verify_lazy
+            verify_lazy(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                        environment['device_type'], environment['target'])
+        elif name == 'lazy-layouts':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_lazy_layouts_evidence import verify_evidence as verify_lazy_layouts
+            verify_lazy_layouts(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                                environment['device_type'], environment['target'])
+        elif name == 'selection':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_selection_evidence import verify_evidence as verify_selection
+            verify_selection(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                             environment['device_type'], environment['target'])
+        elif name == 'env-reader':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from verify_env_reader_evidence import verify_evidence as verify_env_reader
+            verify_env_reader(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
+                              environment['device_type'], environment['target'])
         elif name == 'sys-vpn-store':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

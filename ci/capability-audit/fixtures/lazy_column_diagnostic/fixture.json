@@ -1,0 +1,63 @@
+{
+  "scope": "captured_old_R44_diagnostic_unit_fixture_NOT_new_package_or_gate",
+  "first_artifact_behavior_gate_passed": false,
+  "boot_id": "364de86d-d9e8-4df7-ab59-2e642c7dc924",
+  "archive_sha256": "d9f2aafa605f6fbedab36ba1295a967a33aaa8773ee2617d390250ba2c284995",
+  "source_evidence_sha256": "8374f76b5a7414b0f6cd1a8d5a13b514bdaf7682a3585d2a9e5638715501a8ba",
+  "nonce": "cdc313c7286c5623344f6cc3a932089d",
+  "uid": 20010038,
+  "journal": "native-results.log",
+  "phases": {
+    "0:initial": {
+      "screenshot": "0-initial.png",
+      "layout": "0-initial.json"
+    },
+    "0:bottom": {
+      "screenshot": "0-bottom.png",
+      "layout": "0-bottom.json"
+    },
+    "0:top": {
+      "screenshot": "0-top.png",
+      "layout": "0-top.json"
+    },
+    "0:removed": {
+      "screenshot": "0-removed.png",
+      "layout": "0-removed.json"
+    },
+    "1:initial": {
+      "screenshot": "1-initial.png",
+      "layout": "1-initial.json"
+    },
+    "1:bottom": {
+      "screenshot": "1-bottom.png",
+      "layout": "1-bottom.json"
+    },
+    "1:top": {
+      "screenshot": "1-top.png",
+      "layout": "1-top.json"
+    },
+    "1:removed": {
+      "screenshot": "1-removed.png",
+      "layout": "1-removed.json"
+    }
+  },
+  "files_sha256": {
+    "native-results.log": "e40f1fdaf3d9d47feeaeb3350b123b6323046b22e062b2937fcd7a362c9a5cd6",
+    "0-initial.png": "e6dcc33c74762991a2e89b50b4462df400d12465083715df4c20e4221fddacb6",
+    "0-initial.json": "68af728d170850c76d6e4cd8b4f2ee5a26b71730c39cca61b5d3c97b92668c73",
+    "0-bottom.png": "b46e9d849d3f693982f8ee6f3604099531b9faae344fa2147f187ea7d4b1855e",
+    "0-bottom.json": "33534933806e4a847843a22a7fb987899a52ead664d383485ef283031290b168",
+    "0-top.png": "58a13eb55991fb55d3bd02b9cca4c5919a4a1cc95098c958eb0cd16ee45857fb",
+    "0-top.json": "68af728d170850c76d6e4cd8b4f2ee5a26b71730c39cca61b5d3c97b92668c73",
+    "0-removed.png": "5d81fcad53c5fb8bb8fb1916d2d3f12a55ccd1d405bc7f2ab11c07f9095ceed4",
+    "0-removed.json": "35b8845cc9b1c0b4db1725d1b4d39bafab9f7e6f16141141b304612d05515a4f",
+    "1-initial.png": "58a13eb55991fb55d3bd02b9cca4c5919a4a1cc95098c958eb0cd16ee45857fb",
+    "1-initial.json": "bbcee9af864484a73bb67ac3cdaac5be609212d95e147dd0ff0366d02ac8ccdd",
+    "1-bottom.png": "b46e9d849d3f693982f8ee6f3604099531b9faae344fa2147f187ea7d4b1855e",
+    "1-bottom.json": "36a0fb9283682b933e27a6c0216f224d55e6be5405a400a6998097416e592f2d",
+    "1-top.png": "74312680a0dc2ce1a5d375b8eca203b7072287a9b393da3b47ce14fa673cccf1",
+    "1-top.json": "bbcee9af864484a73bb67ac3cdaac5be609212d95e147dd0ff0366d02ac8ccdd",
+    "1-removed.png": "762f7e5c7a5f1bc81e40971b867e9ebcfd3b57f47a41f286ee6a226282c5f55e",
+    "1-removed.json": "59c62d96632c369eadb7c61f0409ada68f2cb0f6dbba65884dae200e0e08dce0"
+  }
+}

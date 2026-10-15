@@ -1,0 +1,14 @@
+{
+  "scope": "captured_old_R44_native_lazy_update_failure_NOT_new_package_or_gate",
+  "first_artifact_behavior_gate_passed": false,
+  "source_evidence_sha256": "8e5804d93edd80c69525eebe43d56dd06d3b6ece47ad878080d866965432fdec",
+  "nonce": "8d2d8974c9247d124076f7dc34f538a0",
+  "uid": 20010038,
+  "boot_id": "6251e843-a034-4124-9748-7d203f4fefa6",
+  "archive_sha256": "d9f2aafa605f6fbedab36ba1295a967a33aaa8773ee2617d390250ba2c284995",
+  "files_sha256": {
+    "lazy_dynamic_layout_model_ng.cpp": "3764aa91becc4306695c127e96bb8f8fd596c0f77ddf2e0f9d0c43736f57d8ea",
+    "lazy_dynamic_layout_pattern.cpp": "40f8170e4834f6b0d68bf011aa0dec6587f606f651f5c94acf725861ddec2cf1",
+    "native-results.log": "1cae376634a836b5d554a01c6a31df991a15d51612a952832821fac13fa36968"
+  }
+}

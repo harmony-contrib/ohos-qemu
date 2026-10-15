@@ -777,6 +777,13 @@ FILES = tuple(_object_files.pop(entry[0], entry) for entry in FILES) + tuple(_ob
 def validate(root, require_patched=False):
     if {entry[0] for entry in FILES} != set(REPLACEMENTS):
         raise ValueError('incomplete RS identity component baseline')
+    successor = 'ab3f257b5afb0e96e485948aeeff89affe3a87fe4f65101d1f259b4c48fea3b6'
+    successor_files = tuple((entry[0], successor, successor) if entry[0] == FILE else entry
+                            for entry in FILES)
+    try:
+        return validate_component(root, PROJECT, REVISION, successor_files, require_patched=True)
+    except ValueError:
+        pass
     return validate_component(root, PROJECT, REVISION, FILES, require_patched)
 
 

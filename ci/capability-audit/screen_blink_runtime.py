@@ -28,6 +28,7 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
     cleaned = role != 'system'
     observed = []
     process_stopped = False
+    control_previous_sequence = None
 
     def observe(name, expected=None, text=''):
         nonlocal observed
@@ -51,8 +52,11 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
         raise ValueError('blink observation timed out: ' + name)
 
     def click(identifier, name, values, text=''):
+        nonlocal control_previous_sequence
+        control_previous_sequence = len(observed) % 256
         selected = ui.click(BUNDLE, identifier=identifier, label=name)
         selected['layout_sha256'] = digest(Path(selected['layout']))
+        selected['observed_sequence_before'] = control_previous_sequence
         report['phases'].append(dict(name=name + '-control', selection=selected))
         return observe(name, values, text)
 
@@ -78,9 +82,10 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
         try:
             if committed_stop and 'optical_marker' in report:
                 record.update(mode='bounded-committed-off', started=started,
-                    marker=report['optical_marker'], expected_sequence=len(observed) % 256)
+                    marker=report['optical_marker'], expected_sequence=len(observed) % 256,
+                    previous_sequence=control_previous_sequence)
                 record['commit'] = verify_committed_stop(frames, rect, record['marker'],
-                                                       record['expected_sequence'], started)
+                    record['expected_sequence'], started, previous_sequence=control_previous_sequence)
                 record['observed'] = record['commit']['observed']
             else:
                 record['observed'] = verify_frames(frames, rect, mode)
@@ -94,15 +99,19 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
             capture(name + '-recovery', rect, 'off', 1)
 
     def wait_baseline(rect, label):
-        readiness = dict(name=label, frames=[])
+        started = time.monotonic()
+        deadline = started + wait_seconds
+        readiness = dict(name=label, frames=[], started=started,
+                         deadline=deadline, wait_seconds=wait_seconds)
         report['phases'].append(readiness)
-        deadline = time.monotonic() + wait_seconds
         consecutive = []
         while time.monotonic() < deadline:
             before = time.monotonic()
             path = ui.screenshot(label=label)
             frame = dict(path=str(path), sha256=digest(path), before=before, after=time.monotonic())
             readiness['frames'].append(frame)
+            if frame['after'] > deadline:
+                raise ValueError('startup readiness capture completed after original deadline')
             try:
                 kind = classify_pixels(path, rect)
             except ValueError as error:
@@ -170,15 +179,17 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
                     time.sleep(.1)
                 else:
                     raise ValueError('owned blink caller did not actually exit')
+                exit_observed = time.monotonic()
                 time.sleep(2)
                 frames = []
-                for index in range(3):
+                while len(frames) < 3 or time.monotonic() - exit_observed < 8:
                     before = time.monotonic()
-                    path = ui.screenshot(label='caller-exit-' + str(index))
+                    path = ui.screenshot(label='caller-exit-' + str(len(frames)))
                     frames.append(dict(path=str(path), sha256=digest(path), before=before, after=time.monotonic()))
                     time.sleep(.8)
-                report['caller_exit'] = dict(pid=original_pid, baseline=background, frames=frames)
-                verify_background_restored(background, frames)
+                report['caller_exit'] = dict(pid=original_pid, baseline=background, frames=frames,
+                                            exit_observed=exit_observed)
+                verify_background_restored(background, frames, exit_observed)
                 if 'start ability successfully' not in shell('aa start -a EntryAbility -b ' + BUNDLE,
                                                             'blink-restart-owned-caller').lower():
                     raise ValueError('owned blink caller did not restart')
@@ -209,12 +220,13 @@ def exercise(ui, shell, remote, output, nonce, role, identity_text, wait_seconds
                     time.sleep(1)
                     observed = []
                     verify_initial(observe('ready', [1]), nonce, role, identity_text, restarted=True)
+                    wait_baseline(report['surface']['rect'], 'cleanup-restart-baseline-readiness')
                 raw = click('blink-restore', 'cleanup.master', [1], '0')
                 actual = rows(raw, nonce, role)
                 if (len(actual) < 2 or actual[-2]['name'] != 'cleanup.stop' or
                         actual[-2]['values'] != [0, 0, 1]):
                     raise ValueError('owned screen controller did not stop during cleanup')
-                capture('cleanup-off', report['surface']['rect'], 'off', 1)
+                capture('cleanup-off', report['surface']['rect'], 'off', 3.5, committed_stop=True)
                 cleaned = True
             except (ValueError, OSError, KeyError, TypeError) as error:
                 report['failures'].append('cleanup: ' + str(error))

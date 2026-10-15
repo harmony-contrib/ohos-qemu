@@ -1,0 +1,95 @@
+diff --git a/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c b/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c
+--- a/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c
++++ b/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c
+@@ -96,6 +96,7 @@
+ 
+    int fd;
+    struct list_head bo_list;
++   mtx_t bo_lock;
+ };
+ 
+ static inline struct kms_sw_plane *
+@@ -205,7 +206,9 @@
+    if (!plane)
+       goto free_bo;
+ 
++   mtx_lock(&kms_sw->bo_lock);
+    list_add(&kms_sw_dt->link, &kms_sw->bo_list);
++   mtx_unlock(&kms_sw->bo_lock);
+ 
+    DEBUG_PRINT("KMS-DEBUG: created buffer %u (size %u)\n", kms_sw_dt->handle, kms_sw_dt->size);
+ 
+@@ -231,9 +234,12 @@
+    struct kms_sw_displaytarget *kms_sw_dt = plane->dt;
+    struct drm_mode_destroy_dumb destroy_req;
+ 
++   mtx_lock(&kms_sw->bo_lock);
+    kms_sw_dt->ref_count --;
+-   if (kms_sw_dt->ref_count > 0)
++   if (kms_sw_dt->ref_count > 0) {
++      mtx_unlock(&kms_sw->bo_lock);
+       return;
++   }
+ 
+    if (kms_sw_dt->map_count > 0) {
+       DEBUG_PRINT("KMS-DEBUG: leaked map buffer %u\n", kms_sw_dt->handle);
+@@ -255,6 +261,7 @@
+    }
+ 
+    FREE(kms_sw_dt);
++   mtx_unlock(&kms_sw->bo_lock);
+ }
+ 
+ static void *
+@@ -426,6 +433,8 @@
+    assert(whandle->type == WINSYS_HANDLE_TYPE_KMS ||
+           whandle->type == WINSYS_HANDLE_TYPE_FD);
+ 
++   /* Serialize lookup/ref and final unref: map_lock protects mappings only. */
++   mtx_lock(&kms_sw->bo_lock);
+    switch(whandle->type) {
+    case WINSYS_HANDLE_TYPE_FD:
+       kms_sw_pl = kms_sw_displaytarget_add_from_prime(kms_sw, whandle->handle,
+@@ -436,6 +445,7 @@
+                                                       whandle->offset);
+       if (kms_sw_pl)
+          *stride = kms_sw_pl->stride;
++      mtx_unlock(&kms_sw->bo_lock);
+       return sw_displaytarget(kms_sw_pl);
+    case WINSYS_HANDLE_TYPE_KMS:
+       kms_sw_dt = kms_sw_displaytarget_find_and_ref(kms_sw, whandle->handle);
+@@ -444,6 +454,7 @@
+          LIST_FOR_EACH_ENTRY(plane, &kms_sw_dt->planes, link) {
+             if (whandle->offset == plane->offset) {
+                *stride = plane->stride;
++               mtx_unlock(&kms_sw->bo_lock);
+                return sw_displaytarget(plane);
+             }
+          }
+@@ -454,6 +465,7 @@
+       break;
+    }
+ 
++   mtx_unlock(&kms_sw->bo_lock);
+    assert(0);
+    return NULL;
+ }
+@@ -505,6 +517,7 @@
+ static void
+ kms_destroy_sw_winsys(struct sw_winsys *winsys)
+ {
++   mtx_destroy(&kms_sw_winsys(winsys)->bo_lock);
+    FREE(winsys);
+ }
+ 
+@@ -517,6 +530,10 @@
+    if (!ws)
+       return NULL;
+ 
++   if (mtx_init(&ws->bo_lock, mtx_plain) != thrd_success) {
++      FREE(ws);
++      return NULL;
++   }
+    ws->fd = fd;
+    list_inithead(&ws->bo_list);
+ 

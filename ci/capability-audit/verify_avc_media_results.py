@@ -43,7 +43,9 @@ def encoder_steps(mode, cycle=None):
         result[index:index] = [('surface_null_window_rejected', 3), ('encoder_input_surface', 0),
                                ('surface_configuration', 1)]
         index = result.index(('encoder_start', 0)) + 1
-        result[index:index] = [('surface_buffer_queue_rejected', 8)]
+        # The pinned CodecClient rejects surface/buffer mode mixing as
+        # INVALID_OPERATION; the public C API maps that to OPERATE_NOT_PERMIT (2).
+        result[index:index] = [('surface_buffer_queue_rejected', 2)]
     return result
 
 

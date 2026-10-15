@@ -10,7 +10,8 @@ from run_normal_hap_probe import APP_FILES
 from run_root_probe import digest
 from sign_ethernet_control_probe import configure_profile
 import test_verify_always_on_vpn_results as identities
-from verify_ethernet_control_results import EVIDENCE_SCOPE, METHODS, expected, verify, verify_evidence
+from verify_ethernet_control_results import (
+    BEHAVIOR_CONTRACT, EVIDENCE_SCOPE, EXPORT_CONTRACTS, METHODS, expected, verify, verify_evidence)
 
 UID = identities.UID
 RUN = identities.RUN
@@ -33,7 +34,7 @@ def fixture(root):
     doc = dict(status='pass', scope=EVIDENCE_SCOPE, archive_sha256='b' * 64,
         boot_id='12345678-1234-1234-1234-123456789abc', arch='arm64', device='phone',
         target='127.0.0.1:56789', failures=[], roles={}, udid='1' * 64,
-        caller_cleanup_verified=True, commands=[])
+        caller_cleanup_verified=True, commands=[], role_setup={})
     def command(label, reply, script=None, argv=None):
         path = root / (f'{len(doc["commands"]):03d}-' + label + '.log')
         path.write_text(reply)
@@ -64,6 +65,20 @@ def fixture(root):
         for field, path in paths.items():
             record.update({field: str(path), field + '_sha256': digest(path)})
         doc['roles'][role] = record
+        prefix = role + '-pre-replacement-'
+        command(prefix+'stop-own-previous-audit-app', 'force stop process successfully.\n', 'aa force-stop '+BUNDLE)
+        for _ in range(2):
+            command(prefix+'previous-own-kernel-processes', 'ABSENT\n', 'task_probe_pids=$(pidof '+BUNDLE+'); '+
+                'if test -n "$task_probe_pids"; then printf "%s\\n" "$task_probe_pids"; else echo ABSENT; fi')
+            command(prefix+'previous-own-ability-and-process-records', 'User ID #100\nAppRunningRecords:\n',
+                'aa dump -a -u 100')
+        doc['role_setup'][role] = {'caller_drained_before_replacement': {
+            'scope': 'bounded_own_test_bundle_lifecycle_setup_NOT_capability_pass', 'bundle': BUNDLE,
+            'stop_reply': 'force stop process successfully.', 'observations': 2,
+            'consecutive_absent_observations': 2, 'kernel_process_absent': True,
+            'ability_process_records_absent': True}}
+        command(role+'-uninstall-own-old', 'uninstall bundle successfully.\n',
+            argv=['hdc','-t',doc['target'],'uninstall',BUNDLE])
         command(role + '-install', 'install bundle successfully.\n',
                 argv=['hdc', '-t', doc['target'], 'install', str(paths['signed_hap'])])
         command(role + '-identity', identity, 'bm dump -n ' + BUNDLE)
@@ -96,6 +111,35 @@ class EthernetControlResultTests(unittest.TestCase):
     def evidence(self, doc):
         return verify_evidence(doc, 'b' * 64, '12345678-1234-1234-1234-123456789abc',
                                'arm64', 'phone', '127.0.0.1:56789')
+
+    def test_live_kernel_or_ability_record_cannot_hide_behind_drain_summary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            doc = fixture(Path(temporary))
+            self.evidence(doc)
+            for label, reply in (
+                    ('normal-pre-replacement-previous-own-kernel-processes', '5746\n'),
+                    ('normal-pre-replacement-previous-own-ability-and-process-records',
+                     'User ID #100\nAppRunningRecords:\n'+BUNDLE+'\n')):
+                row = [row for row in doc['commands'] if Path(row['log']).name.endswith(label+'.log')][-1]
+                path = Path(row['log']); before = path.read_text()
+                path.write_text(reply); row['sha256'] = digest(path)
+                with self.assertRaises(ValueError): self.evidence(doc)
+                path.write_text(before); row['sha256'] = digest(path)
+
+    def test_missing_or_reordered_pre_replacement_queries_never_close_the_gap(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            doc = fixture(Path(temporary))
+            for suffix in ('stop-own-previous-audit-app', 'previous-own-kernel-processes',
+                           'previous-own-ability-and-process-records'):
+                changed = copy.deepcopy(doc)
+                index = next(i for i,row in enumerate(changed['commands']) if
+                    Path(row['log']).name.endswith('normal-pre-replacement-'+suffix+'.log'))
+                del changed['commands'][index]
+                with self.assertRaises(ValueError): self.evidence(changed)
+            changed = copy.deepcopy(doc)
+            install = next(i for i,row in enumerate(changed['commands']) if Path(row['log']).name.endswith('normal-install.log'))
+            changed['commands'][0],changed['commands'][install] = changed['commands'][install],changed['commands'][0]
+            with self.assertRaises(ValueError): self.evidence(changed)
 
     def test_roles_and_exact_positive_phases(self):
         for role in ROLES:
@@ -138,7 +182,7 @@ class EthernetControlResultTests(unittest.TestCase):
     def test_bound_evidence_and_actual_command_journal_replayed(self):
         with tempfile.TemporaryDirectory() as directory:
             doc = fixture(Path(directory))
-            self.assertEqual(self.evidence(doc), ['arkts_export:@ohos.net.ethernet:' + name for name in METHODS])
+            self.assertEqual(self.evidence(doc), [*EXPORT_CONTRACTS, BEHAVIOR_CONTRACT])
             for key, changed in (('status', 'fail'), ('scope', 'discovery'), ('archive_sha256', 'old'),
                 ('boot_id', 'old'), ('arch', 'x86_64'), ('target', 'foreign'), ('device', '2in1'),
                 ('caller_cleanup_verified', False), ('commands', [])):
@@ -174,6 +218,34 @@ class EthernetControlResultTests(unittest.TestCase):
         self.assertIn("elif name == 'ethernet-control':", gate)
         self.assertIn("ethernet = child('ethernet-control/evidence.json')", closure)
         self.assertIn('from verify_ethernet_control_results import verify_evidence', closure)
+
+    def test_behavior_closure_is_only_the_three_audited_API26_controls(self):
+        root = Path(__file__).resolve().parents[2]
+        ledger = json.loads((root / 'docs/capability-audit/native-arkts11-gap-ledger.json').read_text())
+        # Bind the claim to the original finding, not the broader Ethernet/BPF
+        # backends. A discovery-only or partial-role document still cannot close it.
+        findings = []
+        def collect(value):
+            if isinstance(value, dict):
+                if value.get('id') == 'ethernet-api26-export-gaps':
+                    findings.append(value)
+                for child in value.values():
+                    collect(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect(child)
+        collect(ledger)
+        self.assertTrue(findings)
+        for finding in findings:
+            self.assertTrue(all(name in finding['evidence'] for name in METHODS))
+        with tempfile.TemporaryDirectory() as directory:
+            doc = fixture(Path(directory))
+            closed = self.evidence(doc)
+            self.assertEqual([item for item in closed if item.startswith('behavior:')], [BEHAVIOR_CONTRACT])
+            partial = copy.deepcopy(doc)
+            del partial['roles']['system']['phases']['restart']
+            with self.assertRaises(ValueError):
+                self.evidence(partial)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,8 @@ from verify_always_on_vpn_results import identity, verify_restart
 
 EVIDENCE_SCOPE = 'three_real_Ethernet_roles_kernel_admin_flags_and_caller_restart_NOT_traffic_or_full_gate'
 METHODS = ('disableEthernetInterface', 'enableEthernetInterface', 'isEthernetEnabled')
+EXPORT_CONTRACTS = tuple('arkts_export:@ohos.net.ethernet:' + name for name in METHODS)
+BEHAVIOR_CONTRACT = 'behavior:ethernet-api26-export-gaps'
 
 
 def expected(role, phase):
@@ -115,7 +117,10 @@ def verify_evidence(document, archive_sha, boot_id, arch, device, target):
     if len(nonces) != len(ROLES):
         raise ValueError('independent fresh challenge required for every role')
     verify_commands(document)
-    return ['arkts_export:@ohos.net.ethernet:' + name for name in METHODS]
+    # This baseline finding is exactly the three missing API26 controls. Their
+    # real state changes, permission denials, repeat calls and caller restart
+    # were all replayed above; this does not close traffic or other APIs.
+    return [*EXPORT_CONTRACTS, BEHAVIOR_CONTRACT]
 
 
 def verify_commands(document):
@@ -149,6 +154,44 @@ def verify_commands(document):
 
     for role, record in document['roles'].items():
         installed, install, install_reply = one(role + '-install')
+        setup = document.get('role_setup', {}).get(role, {}).get('caller_drained_before_replacement', {})
+        prefix = role + '-pre-replacement-'
+        stopped, _, stop_reply = one(prefix + 'stop-own-previous-audit-app', 'aa force-stop ' + BUNDLE)
+        not_installed = ('error: failed to force stop process.' in stop_reply and
+            'Error Code:10104002' in stop_reply and
+            'The application corresponding to the specified package name is not installed.' in stop_reply)
+        if stop_reply.strip() != 'force stop process successfully.' and not not_installed:
+            raise ValueError('previous Ethernet role did not stop before replacement')
+        uninstalls = [row for row in journal if row[1] == role + '-uninstall-own-old']
+        if (len(uninstalls) != 1 or uninstalls[0][2]['argv'][1:] !=
+                ['-t', document['target'], 'uninstall', BUNDLE] or
+                not stopped < uninstalls[0][0] < installed):
+            raise ValueError('own role drain must precede exact bundle replacement')
+        pairs = []; pending = None
+        for index, label, row, reply in journal:
+            if not stopped < index < uninstalls[0][0]:
+                continue
+            if row['exit_code'] != 0:
+                raise ValueError('pre-replacement lifecycle query failed')
+            if label == prefix + 'previous-own-kernel-processes':
+                script = 'task_probe_pids=$(pidof ' + BUNDLE + '); ' + (
+                    'if test -n "$task_probe_pids"; then printf "%s\\n" "$task_probe_pids"; else echo ABSENT; fi')
+                if pending is not None or row['argv'][1:] != ['-t', document['target'], 'shell', script]:
+                    raise ValueError('ordered exact own kernel lifecycle query required')
+                pending = reply
+            elif label == prefix + 'previous-own-ability-and-process-records':
+                if pending is None or row['argv'][1:] != ['-t', document['target'], 'shell', 'aa dump -a -u 100']:
+                    raise ValueError('ordered exact account-100 ability lifecycle query required')
+                pairs.append(previous_probe_absent(pending, reply)); pending = None
+            else:
+                raise ValueError('unexpected command inside previous-role drain')
+        if (pending is not None or len(pairs) < 2 or pairs[-2:] != [True, True] or
+                setup.get('scope') != 'bounded_own_test_bundle_lifecycle_setup_NOT_capability_pass' or
+                setup.get('bundle') != BUNDLE or setup.get('stop_reply') != stop_reply.strip() or
+                type(setup.get('observations')) is not int or setup['observations'] != len(pairs) or
+                setup.get('consecutive_absent_observations') != 2 or
+                setup.get('kernel_process_absent') is not True or setup.get('ability_process_records_absent') is not True):
+            raise ValueError('two actual kernel and ability absences required before role replacement')
         if (install['argv'][1:] != ['-t', document['target'], 'install', record['signed_hap']] or
                 not re.search('success', install_reply, re.I) or re.search('failed to install', install_reply, re.I)):
             raise ValueError('actual exact-role Ethernet HAP installation is required')

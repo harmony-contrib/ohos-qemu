@@ -131,7 +131,13 @@ class RuntimeTests(unittest.TestCase):
             result = self.execute(directory, permanent_splash=True)
             self.assertEqual(result['status'], 'fail')
             self.assertNotIn('master.enabled-control', [p['name'] for p in result['phases']])
-            self.assertTrue(any('baseline never' in error for error in result['failures']))
+            self.assertTrue(any('baseline never' in error or
+                error == 'startup readiness capture completed after original deadline'
+                for error in result['failures']))
+            readiness = next(p for p in result['phases'] if p['name'] == 'baseline-readiness')
+            self.assertEqual(readiness['deadline'], readiness['started'] + readiness['wait_seconds'])
+            if 'startup readiness capture completed after original deadline' in result['failures']:
+                self.assertGreater(readiness['frames'][-1]['after'], readiness['deadline'])
 
     def test_stop_failure_stays_failed_while_later_cases_run_after_proven_off(self):
         with tempfile.TemporaryDirectory() as directory:

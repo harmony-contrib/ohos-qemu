@@ -17,6 +17,10 @@ for patch_file in \
   0002-budget-child-process-parameter-parcels.patch; do
   bash "${PATCH_ROOT}/lib/apply_patch.sh" "${SOURCE_ROOT}" "${SCRIPT_DIR}/${patch_file}"
 done
+python3 "${SCRIPT_DIR}/verify_config_source.py" --source-root "${SOURCE_ROOT}"
+bash "${PATCH_ROOT}/lib/apply_patch.sh" "${SOURCE_ROOT}" \
+  "${SCRIPT_DIR}/0003-validate-config-boundaries.patch"
+python3 "${SCRIPT_DIR}/verify_config_source.py" --source-root "${SOURCE_ROOT}" --require-patched
 
 python3 - "${SCRIPT_DIR}" "${SOURCE_ROOT}" <<'PY'
 import hashlib

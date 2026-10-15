@@ -11,8 +11,10 @@ import tempfile
 
 RELATIVE = Path('src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c')
 ORIGINAL_SHA = 'b8b8736f347fb473a718c610abf3099bfb72d5a9f28bf75e3620fb72f8592194'
-REPAIRED_SHA = 'e5fef3b60fa2c555bc4447cba13a2dd23819fd7f6bf33c065a597a9bca909670'
+MAPPING_SHA = 'e5fef3b60fa2c555bc4447cba13a2dd23819fd7f6bf33c065a597a9bca909670'
+REPAIRED_SHA = 'e34309672d2bec5db3ed89e53fa340d8cbcac89dfa7f074c3280673ddc3a5687'
 PATCH_SHA = '6286238e04e7545a5c63c4bd0f3fa9b8c16f5d690b252498c4119b700c47da55'
+LIFETIME_PATCH_SHA = '3f9cd6bfba3db8a89929392d3520217bf805f82de142d7f7a84b07f7b36dad61'
 
 
 def digest(path):
@@ -30,15 +32,17 @@ def check_path(path, root):
 def apply(root, patch):
     root = Path(root).resolve()
     patch = Path(patch).resolve()
+    lifetime_patch = patch.with_name('0002-serialize-import-reference-and-final-destroy.patch')
     source = root / RELATIVE
     check_path(source, root)
     check_path(root / 'VERSION', root)
-    if (root / 'VERSION').read_text().strip() != '21.3.3' or digest(patch) != PATCH_SHA:
+    if ((root / 'VERSION').read_text().strip() != '21.3.3' or digest(patch) != PATCH_SHA
+            or digest(lifetime_patch) != LIFETIME_PATCH_SHA):
         raise ValueError('requires exact historical Mesa 21.3.3 mapping recipe')
     state = digest(source)
     if state == REPAIRED_SHA:
         return
-    if state != ORIGINAL_SHA:
+    if state not in (ORIGINAL_SHA, MAPPING_SHA):
         raise ValueError('unknown historical mapping edits; preserving source')
     lock = root / '.ohos-qemu-kms-mapping.lock'
     descriptor = os.open(lock, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
@@ -47,7 +51,7 @@ def apply(root, patch):
         state = digest(source)
         if state == REPAIRED_SHA:
             return
-        if state != ORIGINAL_SHA:
+        if state not in (ORIGINAL_SHA, MAPPING_SHA):
             raise ValueError('historical mapping source changed before lock acquisition')
         with tempfile.TemporaryDirectory(prefix='mesa-kms-map-') as temporary:
             staged = Path(temporary)
@@ -58,9 +62,11 @@ def apply(root, patch):
             for variable in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR'):
                 environment.pop(variable, None)
             environment['GIT_CEILING_DIRECTORIES'] = str(staged.parent)
-            for operation in ('--check', '--whitespace=nowarn'):
-                subprocess.run(['git', '-C', str(staged), 'apply', operation, str(patch)],
-                               env=environment, check=True)
+            stack = (patch, lifetime_patch) if state == ORIGINAL_SHA else (lifetime_patch,)
+            for item in stack:
+                for operation in ('--check', '--whitespace=nowarn'):
+                    subprocess.run(['git', '-C', str(staged), 'apply', operation, str(item)],
+                                   env=environment, check=True)
             if digest(target) != REPAIRED_SHA:
                 raise ValueError('historical mapping patch produced an unexpected complete file')
             # Extracted build sources live inside the Mesa 25 checkout. Git
@@ -80,7 +86,7 @@ def apply(root, patch):
                 if digest(replacement_name) != REPAIRED_SHA:
                     raise ValueError('verified historical mapping copy differs')
                 check_path(source, root)
-                if digest(source) != ORIGINAL_SHA:
+                if digest(source) != state:
                     raise ValueError('historical mapping source changed before atomic publication')
                 os.replace(replacement_name, source)
             finally:

@@ -23,9 +23,19 @@ outer Mesa 25 repository and silently filter out the patch. The installer can
 upgrade the exact previous helper payload; unknown installed assets still fail
 before any sibling is changed.
 
-The exact native functions have a deterministic host interleaving regression:
+The second patch serializes BO lookup/import references, plane lookup and final
+release with a winsys mutex. The map mutex alone cannot protect an imported
+target whose final reference is concurrently released. Both GN actions track
+both patches; the installer upgrades only exact known helper payloads. The
+source helper accepts the complete original, mapping-only prefix and complete
+two-patch result, verifies the full stack in scratch and publishes atomically.
+
+The exact native functions have deterministic host interleaving regressions:
 the original returns an invalid mapping after concurrent unmap; the repaired
 version retains the mapping until the final owner releases it. Error and
-read-only/read-write/duplicate-unmap boundaries run under ASAN/UBSAN. This is
-not proof that the independent RS null-transfer crash is fixed; newly packaged
-guest rendering and stability validation are still required.
+read-only/read-write/duplicate-unmap boundaries run under ASAN/UBSAN.
+The mapping-only source also reproduces an import/final-release use-after-free
+under ASAN; the second patch serializes that race and covers PRIME/seek/init
+failure and shared-plane reference boundaries. These are host regressions.
+Newly packaged guest rendering and stability validation are still required,
+including the R40 RS fault at `kms_sw_displaytarget_map`.

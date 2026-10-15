@@ -358,6 +358,149 @@ def run(args):
             'Ethernet-three-roles-real-kernel-flags-repeated-control-and-caller-restart', timeout=6000, env=child_env)
         check('ethernet-control', work / 'ethernet-control/evidence.json', [ethernet_record])
         same_guest('after-Ethernet-policy-cleanup')
+        def insight_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'insight-contract/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('intent caller/widget cleanup unproven; stop batch')
+        with independent_probe(report, 'insight-contract', insight_batch_health, save):
+            insight_record = command([sys.executable, Path(__file__).with_name('run_insight_contract_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'insight-contract',
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'seven-dynamic-intent-decorators-three-roles-real-dispatch-widgets-and-routes',
+                timeout=6000, env=child_env)
+            check('insight-contract', work / 'insight-contract/evidence.json', [insight_record])
+        def lazy_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'lazy-column/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('lazy caller cleanup unproven; stop batch')
+        with independent_probe(report, 'lazy-column', lazy_batch_health, save):
+            lazy_record = command([sys.executable, Path(__file__).with_name('run_lazy_column_contract_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'lazy-column',
+                '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+                '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node'),
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'typed-LazyColumn-native-scroll-reset-remove-and-recreate-stable-pixels',
+                timeout=2400, env=child_env)
+            check('lazy-column', work / 'lazy-column/evidence.json', [lazy_record])
+        def lazy_layout_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'lazy-layouts/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('lazy layout caller cleanup unproven; stop batch')
+        with independent_probe(report, 'lazy-layouts', lazy_layout_batch_health, save):
+            lazy_layout_record = command([sys.executable, Path(__file__).with_name('run_lazy_layouts_contract_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'lazy-layouts',
+                '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+                '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node'),
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'typed-waterflow-and-lazy-dynamic-real-algorithm-change-scroll-and-recreation',
+                timeout=3000, env=child_env)
+            check('lazy-layouts', work / 'lazy-layouts/evidence.json', [lazy_layout_record])
+        def selection_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'selection/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('selection caller cleanup unproven; stop batch')
+        with independent_probe(report, 'selection', selection_batch_health, save):
+            selection_record = command([sys.executable, Path(__file__).with_name('run_selection_contract_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'selection',
+                '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+                '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node'),
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'typed-selection-three-ordinary-roles-real-user-consent-copy-veto-join-and-recreation',
+                timeout=3600, env=child_env)
+            check('selection', work / 'selection/evidence.json', [selection_record])
+        def env_reader_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'env-reader/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('environment/reader caller cleanup unproven; stop batch')
+        with independent_probe(report, 'env-reader', env_reader_batch_health, save):
+            env_reader_record = command([sys.executable, Path(__file__).with_name('run_env_reader_contract_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'env-reader',
+                '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+                '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node'),
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'typed-WithEnv-inheritance-default-font-and-ContainerReader-native-equality-boundaries',
+                timeout=3600, env=child_env)
+            check('env-reader', work / 'env-reader/evidence.json', [env_reader_record])
+        def settings_all_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'settings-all-navigation/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('complete Settings caller cleanup unproven; stop batch')
+        with independent_probe(report, 'settings-all-navigation', settings_all_batch_health, save):
+            settings_all_record = command([sys.executable, Path(__file__).with_name('run_settings_all_navigation_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'settings-all-navigation',
+                '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+                '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node'),
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'typed-Settings-all-twelve-routes-two-rounds-profile-boundaries-provider-pixels-and-exit',
+                timeout=6000, env=child_env)
+            check('settings-all-navigation', work / 'settings-all-navigation/evidence.json', [settings_all_record])
+        def child_default_batch_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                child = json.loads((work / 'child-default-profile/evidence.json').read_text())
+                if (child.get('archive_sha256') != report['package']['sha256'] or
+                        child.get('boot_id') != environment['boot_id'] or
+                        child.get('caller_cleanup_verified') is not True):
+                    raise ValueError('default child profile caller cleanup unproven; stop batch')
+        with independent_probe(report, 'child-default-profile', child_default_batch_health, save):
+            child_default_record = command([sys.executable, Path(__file__).with_name('run_child_default_profile_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--output', work / 'child-default-profile',
+                '--hvigor-home', os.environ.get('QEMU_TEST_HVIGOR_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/hvigor'),
+                '--node-home', os.environ.get('QEMU_TEST_NODE_HOME',
+                    '/Applications/DevEco-Studio.app/Contents/tools/node'),
+                '--source-volume', source_volume, '--docker-image', docker_image],
+                'typed-default-child-C-ArkTS-parameters-config-boundaries-no-peer-and-actual-PID-exit',
+                timeout=2400, env=child_env)
+            check('child-default-profile', work / 'child-default-profile/evidence.json', [child_default_record])
         def blink_batch_health(label):
             same_guest(label)
             if label.startswith('after-'):
@@ -513,7 +656,8 @@ def run(args):
         graphics_results = {}
         for kind, binary in (('vulkan-device', 'vulkan_device_probe'),
                              ('vulkan-headless', 'vulkan_headless_probe'),
-                             ('vulkan-ohos-surface', 'vulkan_ohos_surface_probe')):
+                             ('vulkan-ohos-surface', 'vulkan_ohos_surface_probe'),
+                             ('gles-llvm', 'mesa_llvm_gles')):
             record = command([sys.executable, Path(__file__).with_name('run_root_probe.py'),
                 '--kind', kind, '--archive', args.package_archive, '--probe', graphics / binary,
                 '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
@@ -522,7 +666,7 @@ def run(args):
                 '--output', work / kind], 'native-' + kind, env=child_env)
             path = work / kind / 'result.json'
             if json.loads(path.read_text()).get('status') != 'pass':
-                raise ValueError('native Vulkan verification failed: ' + kind)
+                raise ValueError('native graphics verification failed: ' + kind)
             graphics_results[kind] = {'evidence': str(path), 'sha256': checksum(path), 'command': record}
             same_guest('after-' + kind)
         if 'vulkan-window' in normal_results:

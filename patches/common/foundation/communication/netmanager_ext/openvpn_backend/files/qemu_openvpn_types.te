@@ -1,0 +1,4 @@
+# Types used only by the QEMU system OpenVPN backend.
+type qemu_openvpn_exec, exec_attr, system_file_attr, file_attr;
+type qemu_openvpn_data_file, data_file_attr, file_attr;
+type qemu_openvpn_control_param, parameter_attr;

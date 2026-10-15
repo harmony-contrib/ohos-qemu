@@ -204,6 +204,13 @@ PY
     echo "FAIL: package conflates static capability checks with runtime validation" >&2
     FAIL=1
   fi
+  MANIFEST_PRODUCT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["product"])' "${PACKAGE}/manifest.json")"
+  if ! python3 "${SCRIPT_DIR}/verify_mesa_llvm_image.py" \
+    --system-image "${PACKAGE}/images/system.img" --product "${MANIFEST_PRODUCT}" \
+    --packaged-provenance "${PACKAGE}/mesa-llvm-source"; then
+    echo "FAIL: packaged Mesa libraries differ from the current fixed LLVM build" >&2
+    FAIL=1
+  fi
   if ! python3 "${SCRIPT_DIR}/../patches/lib/kernel_evidence.py" \
     --package "${PACKAGE}" --guest-arch "${MANIFEST_ARCH}"; then
     echo "FAIL: full source package has stale or missing kernel build evidence" >&2

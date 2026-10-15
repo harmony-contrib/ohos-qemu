@@ -536,9 +536,14 @@ Run the host regression suite in a task-specific venv with the pinned screenshot
 dependency:
 
 ```bash
-/path/to/screenshot-venv/bin/python -m unittest discover \
+LC_ALL=C LC_CTYPE=C LANG=C /path/to/screenshot-venv/bin/python -m unittest discover \
   -s ci/capability-audit -p 'test_*.py'
 ```
+
+Use the portable `C` locale for host checks. macOS system Perl, used by
+`shasum`, can abort when a Linux-style `C.UTF-8` locale is inherited. Preserve
+such failed host logs and rerun the affected cases with the corrected locale;
+an environment failure is not a kernel or new-package runtime result.
 
 The bindings workspace now has an ARM32 E2E driver path on branch
 `audit/ohos7-qemu-e2e-arm32`. Sync the selected Rust demos for the requested

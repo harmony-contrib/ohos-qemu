@@ -10,8 +10,9 @@ from build_screen_blink_probe import BUNDLE, ROLES, module
 from guest_ui import select_node
 from run_root_probe import digest
 from sign_screen_blink_probe import configure_profile
+from screen_blink_readiness import verify_startup_readiness
 from verify_screen_blink_results import (identity, rows, verify_inputs, verify_initial,
-    verify_frames, verify_committed_stop, verify_background_restored)
+    verify_frames, verify_committed_stop, verify_background_restored, classify_pixels)
 
 CONTRACTS = ['arkts_export:@ohos.accessibility.config:' + name
              for name in ('startBlinking', 'stopBlinking')]
@@ -58,11 +59,11 @@ def plan():
     value.append(('restart-baseline-readiness', 'readiness', None))
     capture('restarted-initial-stop', 'off')
     control('cleanup.master', 'blink-restore', [1], '0')
-    capture('cleanup-off', 'off')
+    capture('cleanup-off', 'bounded-committed-off')
     return value
 
 
-def verify_runtime(document, nonce, role, identity_text, commands):
+def verify_runtime(document, nonce, role, identity_text, commands, *, expected_wait_seconds=180):
     if (document.get('status') != 'pass' or document.get('role') != role or
             document.get('run_id') != nonce or document.get('failures') != [] or
             document.get('cleanup_verified') is not True or
@@ -86,6 +87,7 @@ def verify_runtime(document, nonce, role, identity_text, commands):
     previous = []
     pids = []
     input_cursor = 0
+    control_previous_sequence = None
     for row, (name, kind, argument) in zip(phases, expected):
         if row.get('name') != name or row.get('failure'):
             raise ValueError('missing/reordered/failed actual screen blink phase: ' + name)
@@ -108,6 +110,9 @@ def verify_runtime(document, nonce, role, identity_text, commands):
                 previous = actual
         elif kind == 'control':
             selection = row.get('selection', {})
+            control_previous_sequence = len(previous) % 256
+            if selection.get('observed_sequence_before') != control_previous_sequence:
+                raise ValueError('blink pre-control serial differs from real preceding observations')
             layout_path = checked(selection.get('layout', ''), selection.get('layout_sha256'))
             selected = select_node(json.loads(layout_path.read_text()), BUNDLE,
                                    identifier=argument, clickable=True)
@@ -123,30 +128,17 @@ def verify_runtime(document, nonce, role, identity_text, commands):
                 raise ValueError('actual screen blink native input command/reply is missing')
             input_cursor = candidates[0] + 1
         elif kind == 'readiness':
-            frames = row.get('frames', [])
-            if not isinstance(frames, list) or len(frames) < 3:
-                raise ValueError('blink baseline readiness lacks actual captures')
-            # Early startup images are preconditions, not blink failures.
-            # Preserve/check all bytes and timing; require the final three off.
-            previous_after = -1
-            seen = set()
-            for frame in frames:
-                path = checked(frame.get('path', ''), frame.get('sha256'))
-                before, after = frame.get('before'), frame.get('after')
-                if (str(path) in seen or type(before) not in (int, float) or type(after) not in (int, float) or
-                        not math.isfinite(before) or not math.isfinite(after) or
-                        before < previous_after or after < before or after - before > 3):
-                    raise ValueError('invalid readiness capture timing/identity')
-                seen.add(str(path)); previous_after = after
-            verify_frames(frames[-3:], rect, 'off')
+            verify_startup_readiness(row, rect, checked, classify_pixels, verify_frames,
+                                     expected_wait_seconds=expected_wait_seconds)
         else:
             if row.get('rect') != rect or row.get('mode') != argument:
                 raise ValueError('actual screen blink frame surface/mode differs')
             if argument == 'bounded-committed-off':
-                if row.get('marker') != marker or row.get('expected_sequence') != len(previous) % 256:
+                if (row.get('marker') != marker or row.get('expected_sequence') != len(previous) % 256 or
+                        row.get('previous_sequence') != control_previous_sequence):
                     raise ValueError('native stop optical marker/serial differs')
                 result = verify_committed_stop(row.get('frames'), rect, marker,
-                                               row['expected_sequence'], row.get('started'))
+                    row['expected_sequence'], row.get('started'), previous_sequence=control_previous_sequence)
                 if result != row.get('commit') or result['observed'] != row.get('observed'):
                     raise ValueError('bounded compositor stop summary differs from real frames')
             elif verify_frames(row.get('frames'), rect, argument) != row.get('observed'):
@@ -176,12 +168,15 @@ def verify_runtime(document, nonce, role, identity_text, commands):
                     ('PRESENT', 'ABSENT') for index, command in exited) or
                 exited[-1][1]['output'].strip() != 'ABSENT'):
             raise ValueError('actual old caller kernel absence before new caller launch is unproven')
-        verify_background_restored(exit_.get('baseline', {}), exit_.get('frames', []))
+        verify_background_restored(exit_.get('baseline', {}), exit_.get('frames', []), exit_.get('exit_observed'))
     return pids
 
 
-def verify_evidence(document, archive_sha, boot_id, arch, device, target):
-    if (document.get('status') != 'pass' or document.get('scope') != SCOPE or
+def verify_evidence(document, archive_sha, boot_id, arch, device, target, *, expected_wait_seconds=180):
+    if (type(expected_wait_seconds) is not int or not 60 <= expected_wait_seconds <= 600 or
+            type(document.get('wait_seconds')) is not int or
+            document['wait_seconds'] != expected_wait_seconds or
+            document.get('status') != 'pass' or document.get('scope') != SCOPE or
             document.get('archive_sha256') != archive_sha or document.get('boot_id') != boot_id or
             document.get('arch') != arch or document.get('device') != device or document.get('target') != target or
             document.get('failures') != [] or document.get('cleanup_verified') is not True or
@@ -243,7 +238,8 @@ def verify_evidence(document, archive_sha, boot_id, arch, device, target):
                 configure_profile(copy.deepcopy(profile), role, document['udid'], compiled) != profile):
             raise ValueError('actual signed screen blink permission profile differs')
         verify_runtime(json.loads(paths['runtime'].read_text()), nonce, role,
-                       paths['application_identity'].read_text(), role_commands)
+                       paths['application_identity'].read_text(), role_commands,
+                       expected_wait_seconds=expected_wait_seconds)
     if len(nonces) != 3:
         raise ValueError('screen blink roles must have separate fresh nonces')
     return CONTRACTS

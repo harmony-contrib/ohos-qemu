@@ -1,0 +1,3 @@
+# Only this service's start/stop commands. No general servicectrl membership.
+ohos.servicectrl.start.qemu_openvpn = netsysnative:netsysnative:0660
+ohos.servicectrl.stop.qemu_openvpn = netsysnative:netsysnative:0660

@@ -120,11 +120,15 @@ def prepare_missing_idl(root, cwd, command, output, copy_readonly_inputs=False):
         action_lines = queried.stdout.strip().splitlines()
     for index, line in enumerate(action_lines, start=existing):
         argv = shlex.split(line)
-        # Some fixed-product Ninja files retain the build-time /openharmony
-        # prefix. Resolve only that exact leading prefix into this RO mount.
-        argv = [','.join(str(root / part.removeprefix('/openharmony/'))
-                         if part.startswith('/openharmony/') else part
-                         for part in token.split(',')) for token in argv]
+        # The pinned product Ninja files retain these two observed build roots.
+        # Map only those exact prefixes, then verify every real generator/IDL
+        # input against this read-only source and confine outputs to scratch.
+        prefixes = ('/openharmony/', '/Volumes/PSSD/qemu/openharmony/')
+        def mapped(part):
+            for prefix in prefixes:
+                if part.startswith(prefix): return str(root / part[len(prefix):])
+            return part
+        argv = [','.join(mapped(part) for part in token.split(',')) for token in argv]
         generator = cwd / argv[1] if len(argv) > 1 else None
         if len(argv) > 1 and argv[0] == "/usr/bin/env" and generator.name == "rust_cxxbridge.py":
             records.append(prepare_missing_rust_cxx(root, cwd, argv, output, index, line))

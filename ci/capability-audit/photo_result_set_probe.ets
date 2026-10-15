@@ -85,6 +85,8 @@ struct Index {
     const suffix: string = '.' + cycle.toString();
     const rs: photoAccessHelper.ResultSet = await this.bounded(helper.query(this.sql()));
     try {
+      this.record('query.shape' + suffix, [typeof rs === 'object' && rs !== null ? 1 : 0,
+        typeof photoAccessHelper.ResultSet === 'function' ? 1 : 0]);
       this.record('factory' + suffix, [rs.columnCount, rs.rowCount, rs.rowIndex,
         rs instanceof photoAccessHelper.ResultSet ? 1 : 0]);
       this.record('first' + suffix, [rs.goToFirstRow() ? 1 : 0, rs.rowIndex, rs.isAtLastRow ? 1 : 0]);
@@ -115,6 +117,20 @@ struct Index {
       this.record('empty' + suffix, [empty.columnCount, empty.rowCount,
         empty.goToFirstRow() ? 1 : 0, empty.goToNextRow() ? 1 : 0]);
     } finally { empty.close(); }
+    const emptyBlob: photoAccessHelper.ResultSet = await this.bounded(helper.query("SELECT X'' AS b, NULL AS z"));
+    try {
+      if (!emptyBlob.goToFirstRow()) throw new Error('Empty BLOB query returned no row');
+      const bytes: photoAccessHelper.ValueType = emptyBlob.getValue(0);
+      const nullValue: photoAccessHelper.ValueType = emptyBlob.getValue(1);
+      const row: photoAccessHelper.ValuesBucket = emptyBlob.getRow();
+      const rowBytes: photoAccessHelper.ValueType = row['b'];
+      if (!(bytes instanceof Uint8Array) || !(rowBytes instanceof Uint8Array)) {
+        throw new Error('Empty BLOB became a non-byte value');
+      }
+      this.record('empty-blob' + suffix, [emptyBlob.columnCount, emptyBlob.rowCount,
+        bytes.length, nullValue === null ? 1 : 0, rowBytes.length,
+        row['z'] === null && Object.keys(row).includes('z') ? 1 : 0]);
+    } finally { emptyBlob.close(); }
     let invalid: boolean = false;
     try { const unexpected = await this.bounded(helper.query('SELECT broken_' + this.nonce + ' FROM Photos')); unexpected.close(); }
     catch (error) { this.requireError(error as BusinessError, 23800151); invalid = true; }
@@ -147,7 +163,11 @@ struct Index {
       }
       await helper.release(); helper = undefined;
       this.record('released', [1]); this.record('summary', [2]);
-    } catch (error) { this.record('unexpected', [], '', JSON.stringify(error)); }
+    } catch (error) {
+      const actual: BusinessError = error as BusinessError;
+      this.record('unexpected', [], '', JSON.stringify({ code: actual.code, name: actual.name,
+        message: actual.message, stack: actual.stack }));
+    }
     finally { if (helper !== undefined) await helper.release(); }
   }
 

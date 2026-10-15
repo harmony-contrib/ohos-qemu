@@ -1,0 +1,129 @@
+# Staged by the checked QEMU backend installer, together with the locked source
+# archive and recipe/ tree. This file alone does not activate the backend.
+import("//build/ohos.gni")
+import("//foundation/communication/netmanager_ext/netmanager_ext_config.gni")
+
+assert(netmanager_ext_feature_sysvpn)
+assert(product_name == "armv7a_virt" || product_name == "arm64_virt" ||
+       product_name == "x86_64_virt")
+
+openvpn_generated = "$target_gen_dir/source-build"
+openvpn_archive =
+    "upstream/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4.tar.gz"
+
+action("build_openvpn") {
+  script = "recipe/scripts/build_product_openvpn.py"
+  inputs = [
+    openvpn_archive,
+    "recipe/scripts/build_openvpn_ohos.py",
+    "recipe/scripts/build_product_openvpn.py",
+    "recipe/scripts/build_openvpn_ohos_in_docker.sh",
+    "recipe/scripts/openvpn_source_lock.json",
+    "recipe/scripts/openvpn_source_archive.py",
+    "recipe/scripts/openharmony_release_source_lock.py",
+    "recipe/scripts/openharmony_7_0_release_source_lock.json",
+    "recipe/patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch",
+  ]
+  outputs = [
+    "$openvpn_generated/openvpn",
+    "$openvpn_generated/build-evidence.json",
+    "$openvpn_generated/COPYING",
+    "$openvpn_generated/COPYRIGHT.GPL",
+  ]
+  args = [
+    "--source-root",
+    rebase_path("//", root_build_dir),
+    "--archive",
+    rebase_path(openvpn_archive, root_build_dir),
+    "--output",
+    rebase_path(openvpn_generated, root_build_dir),
+    "--product",
+    product_name,
+    "--jobs",
+    "1",
+  ]
+  deps = [
+    "//third_party/musl:musl_all",
+    "//third_party/openssl:libcrypto_shared",
+    "//third_party/openssl:libssl_shared",
+  ]
+}
+
+ohos_prebuilt_executable("qemu_openvpn") {
+  source = "$openvpn_generated/openvpn"
+  output = "qemu_openvpn"
+  deps = [ ":build_openvpn" ]
+  install_enable = true
+  enable_strip = false
+  subsystem_name = "communication"
+  part_name = "netmanager_ext"
+}
+
+foreach(helper,
+        [
+          "supervisor",
+          "tun_bridge",
+        ]) {
+  executable_name = "qemu_openvpn_service"
+  if (helper == "tun_bridge") {
+    executable_name = "qemu_openvpn_tun"
+  }
+  ohos_executable(executable_name) {
+    sources = [ "$helper.cpp" ]
+    defines = [ "SUPPORT_SYSVPN" ]
+    cflags_cc = [
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+    ]
+    deps = [ "$EXT_INNERKITS_ROOT/netvpnclient:net_vpn_manager_if" ]
+    external_deps = [
+      "c_utils:utils",
+      "ipc:ipc_single",
+    ]
+    subsystem_name = "communication"
+    part_name = "netmanager_ext"
+  }
+}
+
+ohos_prebuilt_etc("qemu_openvpn.cfg") {
+  source = "qemu_openvpn.cfg"
+  relative_install_dir = "init"
+  subsystem_name = "communication"
+  part_name = "netmanager_ext"
+}
+
+ohos_prebuilt_etc("qemu_openvpn.para.dac") {
+  source = "qemu_openvpn.para.dac"
+  relative_install_dir = "param"
+  subsystem_name = "communication"
+  part_name = "netmanager_ext"
+}
+
+foreach(license,
+        [
+          "COPYING",
+          "COPYRIGHT.GPL",
+        ]) {
+  ohos_prebuilt_etc("qemu_openvpn_$license") {
+    source = "$openvpn_generated/$license"
+    output = license
+    deps = [ ":build_openvpn" ]
+    relative_install_dir = "licenses/qemu_openvpn"
+    subsystem_name = "communication"
+    part_name = "netmanager_ext"
+  }
+}
+
+group("qemu_openvpn_backend") {
+  deps = [
+    ":qemu_openvpn",
+    ":qemu_openvpn.cfg",
+    ":qemu_openvpn.para.dac",
+    ":qemu_openvpn_COPYING",
+    ":qemu_openvpn_COPYRIGHT.GPL",
+    ":qemu_openvpn_service",
+    ":qemu_openvpn_tun",
+  ]
+}

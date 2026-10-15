@@ -160,7 +160,7 @@ def verify_frames(frames, rect, mode):
     return kinds
 
 
-def verify_committed_stop(frames, rect, marker, sequence, started):
+def verify_committed_stop(frames, rect, marker, sequence, started, *, previous_sequence=None):
     """Keep every frame; distinguish a bounded prior frame from a new-frame pulse.
 
     SDK returns a synchronous service result, not a compositor-present fence.
@@ -171,8 +171,17 @@ def verify_committed_stop(frames, rect, marker, sequence, started):
     if (type(sequence) is not int or not 0 <= sequence < 256 or type(started) not in (int, float) or
             not math.isfinite(started)):
         raise ValueError('exact native stop serial and observed return time required')
+    explicit_previous = previous_sequence is not None
+    if previous_sequence is None:
+        previous_sequence = (sequence - 1) % 256
+    if type(previous_sequence) is not int or not 0 <= previous_sequence < 256:
+        raise ValueError('exact observed pre-control serial required')
+    steps = (sequence - previous_sequence) % 256
+    if steps not in (1, 2):
+        raise ValueError('stop requires one call or the exact two-row cleanup transaction')
     kinds = frame_kinds(frames, rect)
     committed = None
+    previous_progress = 0
     for index, (frame, kind) in enumerate(zip(frames, kinds)):
         if frame['before'] < started:
             raise ValueError('stop compositor capture predates actual native return')
@@ -184,17 +193,24 @@ def verify_committed_stop(frames, rect, marker, sequence, started):
                 committed = index
             if kind != 'off':
                 raise ValueError('native stop committed but screen pulse remains visible')
-        elif committed is not None or serial != (sequence - 1) % 256 or frame['after'] - started > 1.5:
-            raise ValueError('stop compositor serial is foreign, regressed or excessively delayed')
+        else:
+            progress = (serial - previous_sequence) % 256 if type(serial) is int else steps
+            if (committed is not None or progress >= steps or progress < previous_progress or
+                    frame['after'] - started > 1.5):
+                raise ValueError('stop compositor serial is foreign, regressed or excessively delayed')
+            previous_progress = progress
     if (committed is None or len(frames) - committed < 3 or
             frames[-1]['before'] - frames[committed]['after'] < 1.5):
         raise ValueError('stop lacks new-frame quiet observation spanning two pulse intervals')
-    return dict(observed=kinds, committed_index=committed, prior_frames_retained=committed,
+    result = dict(observed=kinds, committed_index=committed, prior_frames_retained=committed,
                 max_commit_latency_seconds=1.5, minimum_quiet_seconds=1.5,
                 not_claimed='instantaneous_compositor_present_at_service_return')
+    if explicit_previous:
+        result['previous_sequence'] = previous_sequence
+    return result
 
 
-def verify_background_restored(baseline, frames):
+def verify_background_restored(baseline, frames, exit_observed=None):
     """Caller exit returns to the actual pre-launch compositor, not an assumed UI."""
     from PIL import Image
     if len(frames) < 3:
@@ -210,6 +226,10 @@ def verify_background_restored(baseline, frames):
         expected = list(image.convert('RGB').crop(rect).getdata())
     seen = {str(path)}
     previous = -1.
+    restored = []
+    if exit_observed is not None and (type(exit_observed) not in (float, int) or
+            not math.isfinite(exit_observed)):
+        raise ValueError('actual caller exit observation time required')
     for frame in frames:
         path = Path(frame['path'])
         before, after = frame['before'], frame['after']
@@ -226,5 +246,18 @@ def verify_background_restored(baseline, frames):
             actual = list(image.convert('RGB').crop(rect).getdata())
         same = sum(all(abs(a - b) <= 10 for a, b in zip(pixel, wanted))
                    for pixel, wanted in zip(actual, expected))
-        if same / len(expected) < .97:
+        matches = same / len(expected) >= .97
+        if exit_observed is None and not matches:
             raise ValueError('caller exit did not restore actual pre-launch background')
+        if exit_observed is not None:
+            if before < exit_observed or after - exit_observed > 11:
+                raise ValueError('caller-exit presentation observation is outside its finite window')
+            if matches:
+                if not restored and after - exit_observed > 5:
+                    raise ValueError('caller-exit compositor did not restore background within five seconds')
+                restored.append(frame)
+            elif restored:
+                raise ValueError('caller-exit compositor changed again after actual background restoration')
+    if exit_observed is not None and (len(restored) < 3 or
+            restored[-1]['after'] - restored[0]['before'] < 1.5):
+        raise ValueError('caller-exit background requires three actual frames and 1.5 seconds of stability')

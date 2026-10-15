@@ -161,7 +161,7 @@ class AvcMediaVerifierTests(unittest.TestCase):
         self.assertEqual(sum(row['type'] == 'pixels' for _, row in surface), 24)
         names = dict(encoder_steps(0, 4))
         self.assertEqual(names['surface_null_window_rejected'], 3)
-        self.assertEqual(names['surface_buffer_queue_rejected'], 8)
+        self.assertEqual(names['surface_buffer_queue_rejected'], 2)
         for index, row in surface:
             if row['type'] != 'step': continue
             broken = rows()
@@ -177,6 +177,19 @@ class AvcMediaVerifierTests(unittest.TestCase):
         for name in ('OH_NativeBuffer_Map', 'OH_NativeBuffer_Unmap', 'OH_NativeWindow_NativeWindowFlushBuffer',
                      'OH_VideoEncoder_NotifyEndOfStream', 'OH_NativeWindow_DestroyNativeWindow'):
             self.assertIn(name, source)
+
+    def test_surface_mode_requires_operation_error_and_rejects_old_state_expectation(self):
+        source = (Path(__file__).parent / 'probes/avc_media.cpp').read_text()
+        self.assertIn('OH_VideoEncoder_PushInputBuffer(codec, 0),\n                AV_ERR_OPERATE_NOT_PERMIT', source)
+        surface = [i for i, row in enumerate(rows()) if row.get('name') == 'surface_buffer_queue_rejected']
+        self.assertEqual(len(surface), 6)
+        for index in surface:
+            broken = rows()
+            # A self-reported "pass" with the earlier wrong expectation is still
+            # invalid; require the one exact Release public error, not any error.
+            broken[index].update(actual=8, expected=8, passed=True)
+            with self.assertRaises(ValueError):
+                verify(render(broken), RUN, IDENTITY)
 
 
 if __name__ == '__main__':

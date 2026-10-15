@@ -1,6 +1,6 @@
 # Native child-process arguments
 
-Fixes two OpenHarmony 7.0 issues reproduced using the SDK C API independently
+Fixes OpenHarmony 7.0 issues reproduced using the SDK C API independently
 of Rust bindings:
 
 1. `OH_Ability_GetCurrentChildProcessArgs()` returned null inside a successfully
@@ -15,6 +15,11 @@ of Rust bindings:
    format or the global Parcel default. A larger existing capacity is preserved.
    The C API rejects entry parameters above 150 KiB with `NCP_ERR_INVALID_PARAM`;
    both serializers enforce the same byte limit.
+3. API26 permits destroying a null configs pointer as a successful no-op, but
+   the release implementation returned 401. Null destruction now succeeds;
+   non-null destruction still releases the object. The isolation-mode setter
+   rejects values outside its two declared enum values before changing config.
+   Newly packaged runtime validation is required for these config boundaries.
 
 Apply with `./apply.sh --source-root /path/to/openharmony`. Both complete device
 profiles and the Docker source-build runner apply this component automatically.

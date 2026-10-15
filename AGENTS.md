@@ -1,5 +1,11 @@
 # Build and package validation
 
+Batch all known fixes before starting a new representative package build. After
+its complete runtime validation, collect all failures and repair them together
+before the next build/package/validation cycle. Avoid rebuilding a package for
+each individual fix. Finish an already-running representative attempt and
+preserve its evidence when changing to this workflow.
+
 When a change requires multiple QEMU artifact packages, build and package one
 representative artifact first. Boot and validate that newly packaged artifact
 against the behavior the change is intended to fix, including relevant boundary

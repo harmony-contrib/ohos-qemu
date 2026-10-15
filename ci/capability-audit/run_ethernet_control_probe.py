@@ -99,6 +99,15 @@ def run(args):
                     compiled['module']['requestPermissions'] != module(role)['module']['requestPermissions'] or
                     configure_profile(json.loads(json.dumps(profile)), role, args.udid, compiled) != profile):
                 raise ValueError('signed Ethernet role/permissions differ')
+            report.setdefault('role_setup', {})[role] = {
+                'kernel_pids_before_replacement': shell('pidof ' + BUNDLE + ' || true',
+                    role + '-before-replacement-own-pids', True),
+                'abilities_before_replacement': shell('aa dump -a -u 100',
+                    role + '-before-replacement-abilities', True),
+            }
+            report['role_setup'][role]['caller_drained_before_replacement'] = stop_previous_probe(
+                lambda script, label, accepted_failure=False:
+                    shell(script, role + '-pre-replacement-' + label, accepted_failure))
             command([args.hdc, '-t', args.target, 'uninstall', BUNDLE], role + '-uninstall-own-old', allow_failure=True)
             installed = command([args.hdc, '-t', args.target, 'install', signed], role + '-install')
             if not re.search('success', installed, re.I) or re.search('failed to install', installed, re.I):
@@ -146,6 +155,21 @@ def run(args):
                                 timeout=15, allow_failure=True)
                     time.sleep(2)
                 else:
+                    # Preserve the actual failure before terminating the owned
+                    # caller. An empty journal is not evidence of a permission
+                    # denial or a successful interface recovery.
+                    diagnostic = dict(role=role, phase=phase, last_poll=raw)
+                    report['failure_diagnostic'] = diagnostic
+                    for script, label in (
+                            ('pidof ' + BUNDLE + ' || true', 'caller-process'),
+                            ('aa dump -r', 'ability-state'),
+                            ('ls -la ' + shlex.quote(APP_FILES), 'own-files'),
+                            ('cat /sys/class/net/eth0/flags; ip addr show eth0', 'kernel-interface'),
+                            ('hilog -x', 'hilog')):
+                        try:
+                            diagnostic[label] = shell(script, role + '-' + phase + '-failure-' + label, True)
+                        except (ValueError, OSError, subprocess.SubprocessError) as capture_error:
+                            diagnostic[label + '-capture-error'] = str(capture_error)
                     raise ValueError('Ethernet caller did not complete')
                 raw_path = output / (phase + '-results.log')
                 raw_path.write_text(raw)

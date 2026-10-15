@@ -1,5 +1,7 @@
 """Exact historical Mesa map/unmap interleaving; not RS root-cause or guest proof."""
 from pathlib import Path
+import base64
+import gzip
 import hashlib
 import importlib.util
 import re
@@ -13,6 +15,25 @@ from test_access_token_kernel import compile_run, patch_sections, write_preimage
 ROOT = Path(__file__).resolve().parents[2]
 COMPONENT = ROOT / 'patches/common/third_party/mesa3d/kms_mapping_synchronization'
 PATCH = COMPONENT / '0001-serialize-displaytarget-mapping.patch'
+LIFETIME_PATCH = COMPONENT / '0002-serialize-import-reference-and-final-destroy.patch'
+
+
+def historical_source(state):
+    """Complete pinned historical bytes, including the already shipped prefix."""
+    fixture = Path(__file__).with_name('fixtures') / 'kms_winsys_mapping_prepared.c.gz.b64'
+    prepared = gzip.decompress(base64.b64decode(fixture.read_bytes()))
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        path = root / 'src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c'
+        path.parent.mkdir(parents=True)
+        path.write_bytes(prepared)
+        if state == 'original':
+            subprocess.run(['git', '-C', root, 'apply', '-R', PATCH], check=True)
+        elif state == 'repaired':
+            subprocess.run(['git', '-C', root, 'apply', LIFETIME_PATCH], check=True)
+        elif state != 'mapping':
+            raise ValueError(state)
+        return path.read_bytes()
 
 
 def functions(repaired):
@@ -178,28 +199,49 @@ class MesaKmsMappingTests(unittest.TestCase):
         spec.loader.exec_module(helper)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            write_preimages(root, PATCH)
             path = root / helper.RELATIVE
+            path.parent.mkdir(parents=True)
             (root / 'VERSION').write_text('21.3.3\n')
-            before = hashlib.sha256(path.read_bytes()).hexdigest()
-            subprocess.run(['git', '-C', root, 'apply', PATCH], check=True, capture_output=True)
-            after = hashlib.sha256(path.read_bytes()).hexdigest()
-            subprocess.run(['git', '-C', root, 'apply', '-R', PATCH], check=True, capture_output=True)
-            with patch.object(helper, 'ORIGINAL_SHA', before), patch.object(helper, 'REPAIRED_SHA', after):
+            for state in ('original', 'mapping', 'repaired'):
+                path.write_bytes(historical_source(state))
+                expected = {'original': helper.ORIGINAL_SHA, 'mapping': helper.MAPPING_SHA,
+                            'repaired': helper.REPAIRED_SHA}[state]
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
                 helper.apply(root, PATCH)
                 helper.apply(root, PATCH)
-                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), after)
-                path.write_bytes(b'unknown user changes')
-                with self.assertRaises(ValueError):
-                    helper.apply(root, PATCH)
-                self.assertEqual(path.read_bytes(), b'unknown user changes')
-                (root / 'VERSION').write_text('25.0.1\n')
-                with self.assertRaises(ValueError):
-                    helper.apply(root, PATCH)
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), helper.REPAIRED_SHA)
+            path.write_bytes(b'unknown user changes')
+            with self.assertRaises(ValueError):
+                helper.apply(root, PATCH)
+            self.assertEqual(path.read_bytes(), b'unknown user changes')
+            (root / 'VERSION').write_text('25.0.1\n')
+            with self.assertRaises(ValueError):
+                helper.apply(root, PATCH)
+
+    def test_corrupt_lifetime_patch_rejects_before_publishing_even_the_mapping_prefix(self):
+        spec = importlib.util.spec_from_file_location('kms_corrupt_stack', COMPONENT / 'files/apply_mesa_kms_mapping.py')
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / 'source'
+            path = root / helper.RELATIVE
+            path.parent.mkdir(parents=True)
+            before = historical_source('original')
+            path.write_bytes(before)
+            (root / 'VERSION').write_text('21.3.3\n')
+            recipe = Path(temporary) / 'recipe'
+            recipe.mkdir()
+            first = recipe / PATCH.name
+            first.write_bytes(PATCH.read_bytes())
+            (recipe / LIFETIME_PATCH.name).write_bytes(LIFETIME_PATCH.read_bytes()[:-20])
+            with self.assertRaises(ValueError):
+                helper.apply(root, first)
+            self.assertEqual(path.read_bytes(), before)
+            self.assertFalse((root / '.ohos-qemu-kms-mapping.lock').exists())
 
     def test_both_builders_apply_before_meson_and_gn_tracks_exact_assets(self):
         device = ROOT / 'patches/common/device/qemu/kms_mesa_build'
-        for item in sorted(device.glob('*.patch')):
+        for item in sorted(device.glob('000[12]-*.patch')):
             sections = patch_sections(item)
             python = [value for name, value in sections.items() if name.endswith('.py')]
             self.assertEqual(len(python), 1)
@@ -214,6 +256,9 @@ class MesaKmsMappingTests(unittest.TestCase):
             self.assertIn('inputs = [', added)
             self.assertIn('mesa_kms_mapping/apply_mesa_kms_mapping.py', added)
             self.assertIn('mesa_kms_mapping/0001-serialize-displaytarget-mapping.patch', added)
+        for item in (device / '0003-track-import-lifetime-backport-input.patch',
+                     ROOT / 'patches/common/third_party/mesa3d/kms_mapping_build/0002-track-import-lifetime-backport-input.patch'):
+            self.assertIn('mesa_kms_mapping/0002-serialize-import-reference-and-final-destroy.patch', item.read_text())
         builder = (ROOT / 'scripts/build_standard_qemu_in_docker.sh').read_text()
         plan = builder.split('apply_qemu_capability_patch_plan() {', 1)[1].split('\nmain() {', 1)[0]
         for variable in ('MESA_KMS_MAPPING_COMPONENT_SCRIPT', 'QEMU_KMS_MESA_BUILD_COMPONENT_SCRIPT',
@@ -233,23 +278,18 @@ class MesaKmsMappingTests(unittest.TestCase):
             unrelated.parent.mkdir(parents=True)
             unrelated.write_bytes(b'parent Mesa 25 source must not be changed\n')
             extracted = parent / 'build-ohos-qemu-source-21.3.3-fixed'
-            write_preimages(extracted, PATCH)
-            (extracted / 'VERSION').write_text('21.3.3\n')
             source = extracted / helper.RELATIVE
+            source.parent.mkdir(parents=True)
+            source.write_bytes(historical_source('original'))
+            (extracted / 'VERSION').write_text('21.3.3\n')
             before = source.read_bytes()
             # This was the real normal-build failure: exit 0, no application.
             subprocess.run(['git', '-C', str(extracted), 'apply', str(PATCH)],
                            check=True, capture_output=True)
             self.assertEqual(source.read_bytes(), before)
-            with tempfile.TemporaryDirectory() as scratch:
-                private = Path(scratch)
-                write_preimages(private, PATCH)
-                subprocess.run(['git', '-C', str(private), 'apply', str(PATCH)], check=True)
-                repaired = (private / helper.RELATIVE).read_bytes()
-            with patch.object(helper, 'ORIGINAL_SHA', hashlib.sha256(before).hexdigest()), \
-                    patch.object(helper, 'REPAIRED_SHA', hashlib.sha256(repaired).hexdigest()):
-                helper.apply(extracted, PATCH)
-                helper.apply(extracted, PATCH)
+            repaired = historical_source('repaired')
+            helper.apply(extracted, PATCH)
+            helper.apply(extracted, PATCH)
             self.assertEqual(source.read_bytes(), repaired)
             self.assertEqual(unrelated.read_bytes(), b'parent Mesa 25 source must not be changed\n')
             self.assertFalse(list(source.parent.glob('.ohos-qemu-kms-mapping-*')))
@@ -289,6 +329,12 @@ class MesaKmsMappingTests(unittest.TestCase):
             self.assertEqual(target.read_bytes(), (COMPONENT / 'files/apply_mesa_kms_mapping.py').read_bytes())
             self.assertEqual(target.stat().st_mode & 0o777, 0o755)
             self.assertEqual(sibling.read_bytes(), PATCH.read_bytes())
+            self.assertEqual((destination / LIFETIME_PATCH.name).read_bytes(), LIFETIME_PATCH.read_bytes())
+            previous_mapping = (Path(__file__).with_name('fixtures') / 'previous_mesa_kms_mapping_only_helper.py').read_bytes()
+            self.assertEqual(hashlib.sha256(previous_mapping).hexdigest(), helper.MAPPING_ONLY_HELPER_SHA)
+            target.write_bytes(previous_mapping)
+            helper.install(root)
+            self.assertEqual(target.read_bytes(), (COMPONENT / 'files/apply_mesa_kms_mapping.py').read_bytes())
             self.assertFalse(list(destination.glob('.mapping-recipe-*')))
 
     def test_device_recipes_fail_before_mutating_siblings_with_unknown_input(self):
@@ -298,7 +344,7 @@ class MesaKmsMappingTests(unittest.TestCase):
         spec.loader.exec_module(helper)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            write_preimages(root, tuple(sorted(component.glob('*.patch'))))
+            write_preimages(root, tuple(sorted(component.glob('000[12]-*.patch'))))
             files = []
             before = {}
             for relative, original, repaired, item, optional in helper.FILES:
@@ -320,17 +366,19 @@ class MesaKmsMappingTests(unittest.TestCase):
         spec.loader.exec_module(helper)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            write_preimages(root, tuple(sorted(component.glob('*.patch'))))
+            write_preimages(root, tuple(sorted(component.glob('000[12]-*.patch'))))
             before = {relative: (root / helper.PROJECT / relative).read_bytes()
                       for relative, _, _, _, _ in helper.FILES}
-            for item in sorted(component.glob('*.patch')):
+            for item in sorted(component.glob('000[12]-*.patch')):
                 subprocess.run(['git', '-C', root, 'apply', item], check=True, capture_output=True)
+            mapping_gn = hashlib.sha256((root / helper.PROJECT / 'common/virt_full/hardware/gpu/BUILD.gn').read_bytes()).hexdigest()
+            subprocess.run(['git', '-C', root, 'apply', helper.LIFETIME_INPUT_PATCH], check=True, capture_output=True)
             files = tuple((relative, hashlib.sha256(before[relative]).hexdigest(),
                            hashlib.sha256((root / helper.PROJECT / relative).read_bytes()).hexdigest(), item, optional)
                           for relative, _, _, item, optional in helper.FILES)
             for relative, content in before.items():
                 (root / helper.PROJECT / relative).write_bytes(content)
-            with patch.object(helper, 'FILES', files):
+            with patch.object(helper, 'FILES', files), patch.object(helper, 'MAPPING_GN_SHA', mapping_gn):
                 helper.apply(root)
                 helper.apply(root)
                 # The normal base installer refreshes only the shared Python payload.

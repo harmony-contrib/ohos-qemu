@@ -18,7 +18,27 @@ FILES = [
 ]
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    try:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    except ValueError as original_error:
+        # The reviewed later nullable-result component rebuilds both IPC ends.
+        # Accept only its complete exact state, never a partially changed parent.
+        following_hashes = {
+            'interfaces/innerkits/netvpnclient/INetworkVpnService.idl':
+                '3c8259477599282e159352d03afd7b2e27740ff5ab0815ca9f03766b11e791c6',
+            'frameworks/native/netvpnclient/src/networkvpn_client.cpp':
+                '58952fc33d04c16bb4078f5cec60acc3eab14503fe18e74ed16e8cf902a91f36',
+            'services/vpnmanager/include/networkvpn_service.h':
+                '72d1637791a4b897c4e1187380eb7490e578c4c81eefd5b026a0e86ea09edad3',
+            'services/vpnmanager/src/networkvpn_service.cpp':
+                '7c622df9325665c6983ad35a281364aafa5fdb16a555de2246d061c2b7689d53',
+        }
+        following = tuple((name, original, following_hashes.get(name, final))
+                          for name, original, final in FILES)
+        try:
+            return validate_component(root, PROJECT, REVISION, following, True)
+        except ValueError:
+            raise original_error
 
 if __name__ == '__main__':
     import argparse

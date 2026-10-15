@@ -448,7 +448,22 @@ class QemuGuest:
             # cleanup either; all exceptions still propagate to the caller.
             self.report['failures'].append(str(error) or type(error).__name__)
             try:
+                # Preserve the original failure before best-effort diagnosis.
+                # Never wake/retry a failed boot or delay interrupt cleanup.
                 self.save()
+                boot_id = self.report['test_environment'].get('boot_id')
+                if (isinstance(error, Exception) and boot_id and self.process is not None
+                        and self.process.poll() is None):
+                    try:
+                        from boot_failure_snapshot import capture
+                        self.report['failure_snapshot'] = capture(
+                            lambda script, label: self.command(
+                                [self.args.hdc, '-t', self.target, 'shell', script], label, timeout=5),
+                            boot_id)
+                    except Exception as snapshot_error:
+                        self.report['failure_snapshot'] = {
+                            'capture_error': type(snapshot_error).__name__ + ': ' + str(snapshot_error)}
+                    self.save()
             finally:
                 self.close()
             raise

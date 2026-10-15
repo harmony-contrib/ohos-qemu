@@ -1,0 +1,27 @@
+diff --git a/foundation/communication/netmanager_base/utils/napi_utils/src/base_context.cpp b/foundation/communication/netmanager_base/utils/napi_utils/src/base_context.cpp
+--- a/foundation/communication/netmanager_base/utils/napi_utils/src/base_context.cpp
++++ b/foundation/communication/netmanager_base/utils/napi_utils/src/base_context.cpp
+@@ -17,6 +17,7 @@
+ 
+ #include <limits>
+ 
++#include "native_engine/native_engine.h"
+ #include "napi_utils.h"
+ #include "node_api.h"
+ 
+@@ -35,6 +36,15 @@
+       needThrowException_(false),
+       releaseVersion_(0)
+ {
++    auto *nativeEngine = reinterpret_cast<NativeEngine *>(env);
++    if (nativeEngine != nullptr) {
++        // NativeEngine stores this application's target API, including release stage digits.
++        constexpr int32_t API_VERSION_MOD = 1000;
++        const int32_t callerApiVersion = nativeEngine->GetApiVersion();
++        if (callerApiVersion > 0) {
++            releaseVersion_ = static_cast<uint32_t>(callerApiVersion % API_VERSION_MOD);
++        }
++    }
+ }
+ 
+ BaseContext::~BaseContext()

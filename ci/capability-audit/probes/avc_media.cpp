@@ -427,7 +427,11 @@ bool Cycle(FILE *out, const char *run, int profile, int mode, int cycle)
     valid &= step("encoder_start", started);
     if (started == AV_ERR_OK) {
         if (surfaceMode) {
-            valid &= step("surface_buffer_queue_rejected", OH_VideoEncoder_PushInputBuffer(codec, 0), AV_ERR_INVALID_STATE);
+            // The Release CodecClient rejects mixing buffer input with an active
+            // surface before IPC as INVALID_OPERATION, mapped by the C API to
+            // OPERATE_NOT_PERMIT. The encoder is running, not in an invalid state.
+            valid &= step("surface_buffer_queue_rejected", OH_VideoEncoder_PushInputBuffer(codec, 0),
+                AV_ERR_OPERATE_NOT_PERMIT);
         }
         const char *frameNames[kFrames] = {"encode_frame_0", "encode_frame_1", "encode_frame_2", "encode_frame_3"};
         for (int frame = 0; frame < kFrames; ++frame) {

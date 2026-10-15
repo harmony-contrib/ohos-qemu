@@ -10,6 +10,8 @@ import tempfile
 COMPONENT = Path(__file__).resolve().parent
 PROJECT = Path('device/qemu')
 REVISION = 'b017aee8e2dfc97e45aeb508facc1527c3d06f4b'
+MAPPING_GN_SHA = 'f1589da299160eda36104125459c7bebddf02b38cfb7ba1683cdb124e4d0b59e'
+LIFETIME_INPUT_PATCH = COMPONENT / '0003-track-import-lifetime-backport-input.patch'
 # Mixed exact states are legitimate: the base installer refreshes the Python
 # payload while its GN action is already repaired. Unknown bytes are not.
 FILES = (
@@ -19,7 +21,7 @@ FILES = (
      '0001-integrate-shared-64bit-mapping-backport.patch', False),
     ('common/virt_full/hardware/gpu/BUILD.gn',
      '6ce2236c14b20f4899507162363be49cb2bfa2f3b8a852434044eebcaa70bdb1',
-     'f1589da299160eda36104125459c7bebddf02b38cfb7ba1683cdb124e4d0b59e',
+     'b56b266c535d01bbb36c184bee26339a35af63221fcd93630ba9ee8212242af0',
      '0001-integrate-shared-64bit-mapping-backport.patch', False),
     ('arm_virt/linux_full_armv7a/build_armv7a_mesa.py',
      '9615946849f1973b595ded1b0c4225c4714d567132f8b1663c318b5bf84d8f0a',
@@ -44,10 +46,22 @@ def selected(root):
         if optional and not path.exists():
             continue  # The ARMv7 product has not been generated in this checkout.
         actual = digest(path)
-        if actual not in (original, repaired):
+        previous = (MAPPING_GN_SHA,) if relative.endswith('/BUILD.gn') else ()
+        if actual not in (original, repaired) + previous:
             raise ValueError('unknown Mesa build recipe; preserving all source files: ' + relative)
         result.append((str(PROJECT / relative), actual, repaired, COMPONENT / patch))
     return result
+
+
+def apply_file(root, relative, actual, repaired, patch):
+    if actual == repaired:
+        return
+    if actual != MAPPING_GN_SHA:
+        subprocess.run(['git', '-C', str(root), 'apply', '--include=' + relative,
+                        '--whitespace=nowarn', str(patch)], check=True)
+    if digest(root / relative) == MAPPING_GN_SHA:
+        subprocess.run(['git', '-C', str(root), 'apply', '--include=' + relative,
+                        '--whitespace=nowarn', str(LIFETIME_INPUT_PATCH)], check=True)
 
 
 def apply(root):
@@ -63,17 +77,13 @@ def apply(root):
             target = staged / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(root / relative, target)
-            if original != repaired:
-                subprocess.run(['git', '-C', str(staged), 'apply', '--include=' + relative,
-                                '--whitespace=nowarn', str(patch)], check=True)
+            apply_file(staged, relative, original, repaired, patch)
             if digest(target) != repaired:
                 raise ValueError('Mesa recipe did not produce exact complete output: ' + relative)
         if selected(root) != files:
             raise ValueError('Mesa recipe inputs changed while preparing complete patches')
         for relative, original, repaired, patch in files:
-            if original != repaired:
-                subprocess.run(['git', '-C', str(root), 'apply', '--include=' + relative,
-                                '--whitespace=nowarn', str(patch)], check=True)
+            apply_file(root, relative, original, repaired, patch)
     if any(digest(root / relative) != repaired for relative, _, repaired, _ in files):
         raise ValueError('incomplete Mesa build recipe repair')
     print('verified common 64-bit and generated ARMv7a Mesa mapping recipes')

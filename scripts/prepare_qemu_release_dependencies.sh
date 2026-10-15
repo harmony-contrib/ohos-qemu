@@ -12,6 +12,14 @@ main() {
   export JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${dependency_root}/jsvm}"
   export QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${dependency_root}/swiftshader}"
   export QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${dependency_root}/avc}"
+  llvm_recipe="$(python3 "${script_dir}/qemu_mesa_llvm_artifacts.py" --recipe-hash)"
+  export QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${cache_root}/artifacts/qemu-mesa-llvm/${llvm_recipe}}"
+  if [ ! -f "${QEMU_MESA_LLVM_ARTIFACTS}/$1/manifest.json" ]; then
+    QEMU_MESA_LLVM_ARTIFACT_OUTPUT="${QEMU_MESA_LLVM_ARTIFACTS}/$1" \
+      bash "${script_dir}/build_qemu_mesa_llvm_in_docker.sh" "$1"
+  fi
+  python3 "${script_dir}/qemu_mesa_llvm_artifacts.py" \
+    --artifact-root "${QEMU_MESA_LLVM_ARTIFACTS}/$1" --product "$1"
   frontend="${script_dir}/run_m144_release_build_docker.sh"
   if [ ! -f "${QEMU_ARKWEB_CORE_ARTIFACTS}/${arch}/core-artifact.json" ]; then
     if [ ! -f "${QEMU_ARKWEB_CORE_ARTIFACTS}/${arch}/native-build-evidence.json" ]; then

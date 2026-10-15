@@ -1,0 +1,2 @@
+/system/bin/qemu_openvpn(_service|_tun)?    u:object_r:qemu_openvpn_exec:s0
+/data/service/el1/public/vpn/qemu_openvpn(/.*)?    u:object_r:qemu_openvpn_data_file:s0

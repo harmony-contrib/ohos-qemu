@@ -86,7 +86,6 @@ def main():
                 command(['bash', component / 'apply.sh', '--source-root', staged], component.name + '-' + str(attempt))
         report['patched_recipe_sha256'] = {str(path.relative_to(staged)): digest(path)
                                           for path in staged.rglob('*') if path.is_file() and path.suffix in ('.py', '.gn')}
-        from test_mesa_kms_mapping import functions
         for arch, directory, triple, machine in TARGETS:
             build = root / 'third_party/mesa3d' / directory
             database = build / 'compile_commands.json'
@@ -111,10 +110,8 @@ def main():
             source.parent.mkdir(parents=True)
             shutil.copy2(actual_source, source)
             shutil.copy2(source_root / 'VERSION', private / 'VERSION')
-            contents = actual_source.read_text()
-            for name in ('kms_sw_displaytarget_map', 'kms_sw_displaytarget_unmap'):
-                if next(part for part in functions(False).split('\nstatic ') if name + '(' in part).strip() not in contents:
-                    raise ValueError('host fixture differs from the actual original native function')
+            if digest(actual_source) not in (helper.ORIGINAL_SHA, helper.MAPPING_SHA, helper.REPAIRED_SHA):
+                raise ValueError('complete actual historical KMS source is not a pinned accepted state')
             for attempt in (1, 2):
                 helper.apply(private, KMS / '0001-serialize-displaytarget-mapping.patch')
             obj = out / (arch + '-kms.o')
@@ -128,6 +125,7 @@ def main():
             if data[:4] != b'\x7fELF' or int.from_bytes(data[18:20], 'little') != machine:
                 raise ValueError('KMS compiler output ABI mismatch')
             report['objects'].append({'arch': arch, 'original_argv': original,
+                                      'original_source_sha256': digest(actual_source),
                                       'patched_source_sha256': digest(source), 'object_sha256': digest(obj),
                                       'dependency_sha256': digest(dep), 'elf_machine': machine})
         if any(digest(path) != expected for path, expected in inputs.items()):

@@ -1,0 +1,44 @@
+{
+  "scope": "actual diagnostic AMS parser fixtures_ONLY_NOT_normal_identity_or_complete_navigation_proof",
+  "source_evidence_sha256": "169b5ac09beac793e4a702dbdaf8b01be7454b68914e03d68f0e97f267e17356",
+  "archive_sha256": "1c5cd61a7a13d0ab1f7d6bb9340d4bc0a01a37ab83e9216b2007aaeb29660164",
+  "boot_id": "5c93d5bf-4489-4744-a4a8-03edd2e88621",
+  "records": [
+    {
+      "file": "1-input.txt",
+      "sha256": "0100887a8bcd222b9c76013098a1a0a38c90b0c4e44c19ab8b5a7671c8e2cc11",
+      "cycle": 1,
+      "route": "input"
+    },
+    {
+      "file": "1-network.txt",
+      "sha256": "6a22fd6bd6c5444ea9efa5c5e78eb4356257dbf3e98529f84644e6564fbbde42",
+      "cycle": 1,
+      "route": "network"
+    },
+    {
+      "file": "1-display.txt",
+      "sha256": "6dbd0d2e1f8cc51f27b408d8175888d05925e5b8fb80e5ef27a141f72cddcb8d",
+      "cycle": 1,
+      "route": "display"
+    },
+    {
+      "file": "1-app-detail.txt",
+      "sha256": "432a53b9e90fae58955cde9e7c0105d81fea6b2dbac60464e10bb4470d29bbc9",
+      "cycle": 1,
+      "route": "app-detail"
+    },
+    {
+      "file": "2-network.txt",
+      "sha256": "1377eecea10d2146c3fa0e5afd1f818baf5b2744404408fe13d87ba9f9dc4e7f",
+      "cycle": 2,
+      "route": "network"
+    },
+    {
+      "file": "2-display.txt",
+      "sha256": "ae1824eea2c813290410ec3b033b38ee7ebc335771d75f175a91f6450df307b9",
+      "cycle": 2,
+      "route": "display"
+    }
+  ]
+}

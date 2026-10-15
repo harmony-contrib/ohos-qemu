@@ -46,7 +46,7 @@ def run(args):
     args.output.mkdir(parents=True, exist_ok=False)
     report = dict(status='fail', archive=str(args.archive), archive_sha256=digest(args.archive),
                   arch=args.arch, device=args.device, boot_id=args.boot_id, target=args.target,
-                  udid=args.udid, roles={}, commands=[], failures=[],
+                  udid=args.udid, roles={}, commands=[], failures=[], wait_seconds=args.wait_seconds,
                   scope='three_roles_actual_screen_pixels_NOT_complete_lifecycle_or_full_gate',
                   first_artifact_behavior_gate_passed=False)
     installation_attempted = False
@@ -181,7 +181,7 @@ def run(args):
         if report['status'] == 'pass':
             try:
                 report['verified_contracts'] = verify_evidence(report, report['archive_sha256'],
-                    args.boot_id, args.arch, args.device, args.target)
+                    args.boot_id, args.arch, args.device, args.target, expected_wait_seconds=args.wait_seconds)
             except (ValueError, OSError, KeyError, TypeError, zipfile.BadZipFile) as error:
                 report['status'] = 'fail'
                 report['failures'].append('strict screen blink replay failed: ' + str(error))

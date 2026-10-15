@@ -1,5 +1,1116 @@
 # OpenHarmony 7.0 Native / ArkTS 1.1 缺失清单
 
+## 当前交付状态（R51 启动稳定性失败；完整账本仍为 R49）
+
+2026-10-15 整理提交时复核：R51 已完成归档，但休眠/真实电源键唤醒后
+RenderService 重启，未执行启动后的行为检查。最新完整账本仍为 R49 的
+281 项要求、199 项闭合、82 项未闭合；另行保留 R50 HiTrace 全流程超时
+与 R51 RenderService 重启两项验收故障。当前配方 Mesa 消费端 05 的依赖
+构建已完成，但不是新 QEMU 包或 RenderService 修复证明。详情见
+`OHOS_7_BATCH_REPAIR.md`；后续按能力隔离修复与资源规则见
+`OHOS_7_PARALLEL_REPAIR.md`。以下 R50/R51 过程证据保留其原始失败。
+
+R50 冻结输入 tree SHA256
+`efea00d62bd02fcb6d64919a97628c3cf712132c064318d3067eb48e780706a8`，
+1819 项主机回归通过（1 项跳过），ARM64 phone 的新源码构建及打包已完成。
+新归档 `/Volumes/PSSD/qemu/packages/first-settings-child-config-7.0-release-20261014-r50/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`
+为 894911787 字节，SHA256
+`879933a2fca5e8bdf6fb21705e95f97ce7ed1e95f85bb038cf86f6ec30a73370`。
+独立归档身份复核记录 `r50-new-representative-package-identity-01.json`。
+新 acceptance boot ID `17fcc26b-ed41-41e8-a2ec-726b095cf0ba`，
+Darwin ARM64/HVF，无外部保活；完整运行在 `r50-settings-child-config-full-runtime-01.json`。
+完整运行已于 2026-10-14T03:55:23Z 结束：39 项检查通过，子进程载荷溯源与 HiTrace 两处失败。
+本轮完整 Settings 24 阶段及 ScreenBlink 单项通过；UDMF/Pasteboard/AVPlayer 24 次
+实际退出与 ArkWeb 单项通过。HiTrace 普通调用者未生成本轮 nonce 日志；原始 hilog
+另记录前一普通应用 PID 22958 在 UIAbility 生命周期转换时阻塞于 RenderService
+同步 IPC，随后 APP_FREEZE。原因仍在排查，不能用强停、加时或历史通过替代修复。
+本轮在此中断，完整 Vulkan、NativeBindings 和 C++/ArkTS 1.1 缺口账本未执行；
+因此不能把 39 项通过当作完整通过，也不能从 R49 全量计数扣减部分新结果。
+Guest 已退出；终态及原始证据校验和见 `r49-current-work-state-58.json`。
+其他五包未启动，首包门槛仍为 false。
+
+复核原始参数日志还发现新增子进程冷重放的参数格式问题：实际 `param get`
+输出在 `false / 0 / phone` 后带空格，而冻结验证器逐字比较。独立修正候选及
+三条实际参数、15 条错误值向量保存在 `r50-child-parameter-provenance-source-candidate-01/`。
+本轮冻结验收没有被修改，原始失败若发生会保留；候选重放不能替代新冻结包的完整验收。
+随后独立复核实际官方编译 HAP，确认 `DoNativeStrip` 使 `libprofile.so` 从
+20688 字节变为 10944 字节；使用同一 SDK `llvm-strip` 可逐字复现 HAP 内 ELF。
+冻结冷重放错误地将 HAP 内 ELF 与剥离前 ELF 哈希直接比较，会先拒绝这个正常转换。
+复现记录 `r50-child-native-strip-actual-reproduction-01.json`；包含严格剥离复现及
+参数格式修正的第二候选在 `r50-child-native-provenance-source-candidate-02/`。
+没有删除载荷验证或改写原始证据；完整门槛仍需后续新冻结包验收。
+
+子进程修正随后已应用到工作树：原始 ELF、SDK llvm-strip 与处理后载荷均独立绑定，
+并以实际官方 HAP 字节严格比对；参数允许原生尾部空白但拒绝多 token。
+15 项针对性回归及重新执行的官方 SDK 34 个编译任务通过，证据为
+`r50-child-native-provenance-applied-source-evidence-01.json`。
+该修正没有改写 R50 失败或其冻结输入。
+
+HiTrace 独立短链路诊断从同一 R50 归档重新提取 guest，boot ID
+`d0a0da9f-c8f2-4b9e-a617-6fcd1d6ea627`，实际两代 C++/ArkTS 共 36 条
+内核记录通过，包含 -2147483649 / 0 / 2147483648 计数边界。
+`r50-hitrace-short-transition-observed-01.json` 保存原完整失败与独立诊断绑定。
+该短链路没有重现完整序列的冻结，不能推翻原始完整失败。
+新失败只读采集保存调用者日志、trace、线程等待和生命周期状态；19 项相关回归通过。
+
+后续 R51 冻结 tree SHA256
+`d87748ff975df7703a2c7852c80ae770213477b70932d14cc14bf6c7bee3c835`，
+1823 项主机回归通过（1 项跳过），399.013 秒，冻结输入未改变。
+原 `r51-child-provenance-hitrace-diagnostics-build-and-runtime-01.json` 对应构建
+在 2026-10-14 PSSD 断连时中断；旧状态停留在 building，不能视作仍在运行。
+PSSD 与 Docker 恢复后重新核验冻结文件和主机日志哈希，记录在
+`r51-storage-restoration-frozen-input-integrity-01.json`，原冻结输入保持不变。
+续建控制器为 `r51-child-provenance-hitrace-diagnostics-build-and-runtime-02.json`，
+只构建同一 ARM64 phone 代表包，并使用独立日志和完整运行证据路径。
+续建已生成 R51 归档，SHA256 为
+`6b27a2062a8b4361255d26499d1fcf86685d0f0f4d686dfd3965acdede28fbfe`；
+但启动稳定性检查失败，未进入后续行为验收，没有新全量账本，其他五包未启动。
+
+另外的 R50 独立 VPN 诊断确认系统 MANAGE_VPN 调用者在空闲状态两次
+`getConnectedSysVpnConfig()` 拒绝为数值 5，而应用列表为空；活动 TUN 建立又拒绝
+为 2200003，未产生真实活动连接。空闲值的私有 IPC 空 Parcelable 不可传输原因
+已有源码定位，候选在冻结输入外做真实生成 IPC/完整 TU 编译；尚未修复验收、
+未关闭两个 getter 或整个 VPN 行为。后续仍须活动连接、权限/账户、断开和退出证明。
+
+
+VPN 后续诊断在 R50 独立 fresh guest 中定位到调用者缺少 INTERNET，固定源码
+仅在该权限授予后加入 netsys_socket 组 1097。补齐正常声明后实际进程组为
+1002/1097/3099，拿到 TUN FD 33 并完成销毁；镜像 socket 权限仍为 0660。
+随后 C++ NAPI worker 通过应用 UDP socket 发送本轮 nonce，从返回的 TUN FD
+读取真实 66 字节包并注回，应用 UDP socket 实际收到同一 nonce。
+独立复核两方向 IPv4 头及 UDP 伪头校验和，绑定记录为
+`r51-vpn-actual-UDP-TUN-UDP-independent-packet-verification-01.json`，
+SHA256 `a9366de71466a5e36763a7e859ef3b2a98433bef618622fe432fdec15b24189d`。
+该诊断没有关闭两个 getter：原镜像配置查询仍拒绝 5，活动应用列表仍为空。
+
+工作树新增 `connected_vpn_nullable` 四个精确补丁，重建私有 IPC 的零/单个结果、
+保留旧单连接的实际 owner、合并当前账户活动单/多连接且去重，并隔离其他账户
+的系统配置。源码服务最终 SHA256
+`7c622df9325665c6983ad35a281364aafa5fdb16a555de2246d061c2b7689d53`。
+初始 IPC 四个 TU 已在三架构编译，最终服务 TU 又在三架构重新编译；最终
+函数及相邻回归 13 项通过。四补丁最终源码、实际 GN 对象及重新生成 IPC 的三架构
+绑定复核为 `r51-connected-vpn-four-patch-three-ABI-compilation-03.json`，
+回归为 `r51-connected-vpn-four-patch-targeted-regressions-09.log`。
+第四补丁来自真实普通角色诊断：原镜像两轮配置 getter 拒绝 202，但应用 getter
+拒绝 201；系统 API 应先检查系统身份。另一个缺少 MANAGE_VPN 的系统角色
+两轮两个 getter 均拒绝数值 201。第四补丁使应用 getter 使用既有系统身份及
+MANAGE_VPN 检查，没有给调用者增加授权。上述原镜像错误结果仍完整保留。
+这些补丁在 R51 冻结输入之外，未进入正在构建的 R51 归档，也尚未在新包中验证。
+实际系统 VPN 连接、两应用/多连接、完整三角色与账户边界仍待完成，不能因
+TUN 数据回环或这些编译结果而宣称完整 VPN、首包或六包通过。
+
+系统 VPN 后端另发现固定 netsys wrapper 调用 `/system/bin/ipsec`，目前源码产物
+没有配套 OpenVPN/IPsec 可执行提供者；该静态结论仍须新 guest 核查。
+仓库新增固定 OpenVPN 源码锁 `scripts/openvpn_source_lock.json` 与独立 Docker
+构建入口 `scripts/build_openvpn_ohos_in_docker.sh`，保留完整上游许可证。
+冻结配方 `2754a0c5685dc997ae66a1c388004626484521492a03fae54d8a2c0ef90e5f94`
+已在 ARM64 使用实际 OHOS clang/musl/OpenSSL 编译，和前两次独立构建生成
+逐字相同 ELF，SHA256 `0fbfa22a6739c787c473343bfc474e2d1cbe97c41ce87bad3fcff8eb4e03782e`。
+绑定记录 `r51-openvpn-final-frozen-recipe-build-identity-02.json`。
+当前入口尚未接入镜像；原生 TUN 桥接候选仅完成编译/链接，真实协商状态、
+进程身份、peer 数据、断开、权限和账户回归尚未验证，没有关闭任何 VPN 缺口。
+
+下述 R49 结果作为历史完整失败基线保留。
+
+R49 冻结输入 tree SHA256 为
+`c11c9b2d92b0a35a8bdd8a844cdd7bd9db110a7a0a3563e96e222efce322c282`，
+1799 项主机回归通过，ARM64 phone 源码构建及打包已完成。
+新归档 `/Volumes/PSSD/qemu/packages/first-pasteboard-env-lifecycle-7.0-release-20261014-r49/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`
+为 894900539 字节，SHA256
+`1c5cd61a7a13d0ab1f7d6bb9340d4bc0a01a37ab83e9216b2007aaeb29660164`。
+独立复核归档及冻结标识证据 `r49-new-representative-package-identity-01.json` SHA256
+`7f095c6508316d6198dd52083d8a1361c42d5ede9e3c55d519490325d96a3555`。
+完整控制器已验收该归档新提取的 acceptance guest，boot ID 为
+`8aa9bcee-2df0-4dce-948c-21f1591758b9`，Darwin ARM64/HVF、4 CPU、4096 MiB、
+1280×800、无外部保活。完整运行已结束且 guest 已退出，首包门槛为 false，
+其余五包没有启动。NativeBindings 32 模块、102 项实际测试全部通过；完整账本
+281 项中 199 闭合、82 未闭合（26 项导出、56 项行为）。相较原始 R44 新增闭合
+22 项、丢失 ScreenBlink 两项，因此净增 20；没有简单从旧失败数减去单项通过数。
+当前完整账本 SHA256 `961aec0b5da0a9589c811fbafde3e3b5cefc5e3a40486ed630f29d1ff391f226`，
+完整运行 SHA256 `25d7fcfebb18ef9720f588c18015c889b7757d793d42ee0bca8963a47feee013`。
+当前工作清单 `r49-current-full-gap-worklist-01.json` SHA256
+`88baa0626ef9c226683a7ef42d1446b9f5ca3326cbdddfbb1a010c785b1a4120`。
+
+R49 的完整验收顺序已通过 Ethernet 三角色、启停/重复调用、服务重启及实际退出
+检查，原始证据 SHA256 为
+`ad0630c0b6ec0658f5bd90ee617ef8a0fdfef28268833684ec3acffcb6906369`；
+冻结 verifier 独立重放记录 `r49-ethernet-full-acceptance-evidence-replay-01.json`
+SHA256 `97d81bf70c9148bb5d214dc17bc5d1df64a61d1bfd97e019271bba4252831f60`。
+该结果绑定上述 R49 归档和 boot；R47 原完整运行的 180 秒启动超时仍保留为失败，
+并未被新运行覆盖或撤回。本轮完整 suite 和关闭账本已结束，整体失败。
+R49 另已通过 Insight 七个装饰器、LazyColumn 两个类型、LazyDynamic/WaterFlow
+五个类型及 Selection 两个类型的完整单项验收，并独立重放冻结 verifier。
+Selection 三角色、两轮共 84 阶段，三 getter 的拒绝码均为数值型 201，真实用户
+授权、菜单复制、veto、join 内容、移除静默及退出均已验证。原始 Selection 证据
+SHA256 `6669ec5fdf46ffd98fdc09125553f8b934f5bcbedd5325c7edfbee2e4f30fec2`；
+重放 `r49-selection-full-acceptance-evidence-replay-01.json` SHA256
+`8e2f56f5c18113f04d9dedb67d74ac356a85182cca7bbd732281984b7c1e8108`。
+EnvReader 36 阶段、两轮继承/隔离/默认字体恢复及尺寸/比例边界也已完成本轮
+验收和实际退出验证。原始证据 SHA256
+`dfa87cad8eb1f3660e6c5fc8dcfc5a0d94229fd33a89fb7de5550fef74ee10e1`；
+冻结重放 `r49-env-reader-full-acceptance-evidence-replay-01.json` SHA256
+`c7e66b9ac8880380d3e0b31bd237c156a8bd4a15fc6d2403618606fd483947bd`。
+R49 上述 20 项原未闭合要求已有精确单项证明，完整账本另闭合 ArkUI 聚合行为和
+视频编码器创建行为，合计新增 22 项。原待准备清单中的另外 80 项仍未闭合，
+加上本轮丢失的 ScreenBlink 两项，形成当前 82 项未闭合要求。
+阶段覆盖计划 `r49-unresolved-coverage-plan-12.json` SHA256
+`dd940d94a5098fdf8fd26fea8b2ac1b819d2be4d13ad9e805d97f690173371b3`。
+该计划保留中间状态；后续工作以新的完整工作清单为准。
+这些单项计数不改变原始 R44 的 281/179/102 账本；本轮完整账本为上文的
+281/199/82，不能据单项通过判定首包门槛或六包交付完成。
+
+本轮完整验收随后记录 ScreenBlink 严格重放失败：重启后的第一张未就绪画面
+采集耗时 3.00839775 秒，被 readiness 的 3 秒逐帧上限拒绝；该帧实际分类为
+not-baseline，随后三张稳定 off 帧耗时均小于 0.23 秒。原始失败及全部截图保留，
+并未改成通过。分析 `r49-screen-blink-readiness-failure-analysis-01.json` SHA256
+`ab2bddf7449e38efd9e7fde6cb4ec8e28e409a83042ad9a109b8d730c31d022e`。
+冻结输入外的拟修正仅为显式记录原始启动等待窗口、重放每张前置画面身份/分类，
+并保留最后三张基线及全部 Blink 行为帧的原限制。12 项补充边界检查通过，但它们
+使用明确标记的派生诊断窗口，不能充当原始 R49 采集字段或推翻本轮失败。
+本轮完整 suite 已结束，原始失败未撤回。独立采集诊断 01 在主机调用器构建阶段
+因候选目录缺少相对路径构建脚本失败，未执行新采集器，日志保留。补齐与冻结源码
+逐字节相同的 builder/template 后，诊断 02 在 R49 新 guest 的 boot
+`bcfc7bf4-d7f3-4a8f-9834-4d6806236ba4` 完成三角色、真实像素和退出严格重放。
+两个实际采集的 180 秒窗口耗时 2.58209142/2.26821442 秒，均保留四张原始截图。
+外层诊断 SHA256 `da542eb040d6d18cee647cf5c47c5de872bb1f28b36633b92036c3935b37c214`，
+实际新采集器 SHA256 `3fa2a549c7d758160d73d253f00d8c616090f47ad36fe64367ee9c9a89fcf779`。
+已将实际诊断过的修正应用到仓库，35 项 ScreenBlink/首包门槛相关回归通过；
+源码与测试证据 `r49-bounded-readiness-applied-source-evidence-01.json` SHA256
+`3ced6fbb06f519c3a2b1109221e921e05e66e5d627293a18b009c94e409a9ec6`。
+实际记录的窗口和原始缺字段失败截图已加入明确标记的诊断回归 fixture。
+这些结果证明修正方向，不会推翻冻结 R49 完整失败，仍需新代表包完整实跑。
+其余五包未启动；当前继续采集默认子进程画像等其他未闭合要求。
+
+冻结输入外的子进程默认画像调用器及全 Settings 导航入口调用器已经官方 API26
+Hvigor 编译。子进程边界和 Settings 全入口已有下述独立诊断；Settings 完整严格
+契约现已通过独立诊断并接入套件，尚未在新冻结代表包中完成 acceptance；
+两者均不增加本轮完整账本关闭数量。Settings 精确源码复核记录
+`r49-settings-navigation-exact-source-review-01/evidence.json` SHA256
+`762557fe82e57000822ab9c46e49cb0c8a77b481ce7f071cec3518ba2e9a5750`，
+全入口调用器编译记录 `r49-settings-all-route-real-sdk-01/compile-evidence.json`
+SHA256 `bb93aaf19ba38595f4015afd76979cf519eff9c76587400684114db9d576aca1`。
+早期原始观察本身不提供完整证明，后续完整契约见下文。
+
+Settings 全入口原始诊断 01 在 NFC 调用后的 Back 返回检查失败，原始截图显示
+该调用没有离开调用器；固定源码在 NFC 谓词 false 或设备页面不支持时返回
+undefined。诊断 02 读取实际 NFC 参数，两项均为 errNum106 不存在，源码默认
+判定不支持；phone 的双击入口也不在原生支持页表中。没有修改系统参数或新增排除。
+诊断 02 完成两轮 12 入口共 24 次调用、72 张原始截图、AMS 及返回记录；两个
+不导航边界不再发送 Back。原始观察回读记录
+`r49-settings-all-route-raw-observation-review-01.json` SHA256
+`642238d7a63a3bd4f27913ce3a7d9cc1b87f7744882493522b55d042cd7981ef`。
+提供者绑定代码新增 OpenNetwork 扩展和 MainAbility 前台/调用器后台 UID/PID
+校验，使用实际 AMS fixture 的相关回归通过。不能据原始 24 次观察关闭整个
+Settings 导航要求或首包门槛。
+
+完整 Settings 契约诊断 `r50-settings-complete-contract-diagnostic-02/` 已结束。
+仍使用 R49 归档，新 boot ID `bc2509e3-2b7a-44a1-9274-7293879f978b`，
+普通调用器 UID 20010038、实际 PID 2569。官方 Hvigor 新 nonce 编译、零额外权限、
+UDID 绑定签名、签名前后 payload/ABC、BMS 身份、31 行原生追加日志、两轮 12 入口、
+每次请求与返回的三帧稳定标题/挑战文字、真实 AMS 提供者绑定、60 秒原始截止时间、
+实际命令顺序及调用器名字和 `/proc/2569` 退出均通过严格重放。证据
+`complete-contract/evidence.json` SHA256
+`c0d1e2c4f976e0001a569881202aafa1f2967bb351ed5183ee6afc1144d28369`，
+独立重放记录 `r50-settings-complete-contract-cold-replay-01.json`。
+10 组 nonce/UID/缺阶段/缺实际 PID 退出/超时/扩截止时间/假像素/命令乱序/假清理/旧范围
+变体全部被拒绝，23 项相关回归通过；实际页面与不导航截图加入明确标记的诊断 fixture。
+统一套件新增 `settings-all-navigation`，首包验证器将其列为必需检查，完整账本仅接受
+同一新 acceptance 归档、boot、架构、画像、target 且无辅助启动的完整契约。
+原有 input/detail 的 FA/Stage 检查保留。该诊断确认方向，没有回写 R49 原始失败账本，
+当前仍为 199/281 闭合、82 未闭合；其他五包尚未开始。
+
+扩展默认子进程契约在 R49 新 boot
+`e35ea22f-1ea6-406d-9a36-e7dbd27c048e` 实跑失败：普通 UID 20010038、PID 2606，
+30 项 C 边界中 `DestroyChildProcessConfigs(nullptr)` 实际 401（API26 规定 0），
+隔离模式非法值 2 实际 0（应为参数错误 401）。原生期望没有放宽；失败日志、全部
+返回值和 `/proc/2606` 退出证据保留在
+`r50-child-default-complete-contract-diagnostic-01/complete-contract/evidence.json`。
+差异记录 `r50-child-config-actual-failures-analysis-01.json` SHA256
+`2c584ae345dbcf74b59277a2668fa1d5c014d86037537972e6d28342a71c056c`。
+源码新增配置修复补丁与精确原始/修复哈希守卫；隔离副本的真实函数及 ARM64 完整
+C API 翻译单元均编译通过，后者使用现有真实 GN 命令，证据
+`r50-child-config-boundaries-full-TU-compile-01/evidence.json`。统一套件与首包门槛
+增加 `child-default-profile`，包含 C/ArkTS 真实编译、签名 payload、默认参数、
+类型错误码、无子进程日志和实际调用器 PID 退出；该检查不关闭整个子进程行为。
+新冻结候选 R50 tree SHA256
+`efea00d62bd02fcb6d64919a97628c3cf712132c064318d3067eb48e780706a8`
+正在运行完整主机回归，后续仅重建一个 ARM64 phone 代表包并完整启动验证。
+支持型画像的子进程参数/FD/隔离/数量/退出/恢复仍需实际证明；首包门槛仍为 false。
+
+默认 phone 子进程诊断 02 已在 R49 新 boot
+`86958185-d117-4414-8193-6ad499df2e71` 收集普通 UID/euid 20010038 的真实边界。
+实际参数为 multi_process_model=false、max_native_child_process=0、device_type=phone；
+Ark/native 支持标志均为 false，真实编译 StartMode 值为 0/1。C 两种启动为
+16010004，ArkTS 新启动为 801，旧 Promise/callback 两种模式为 16000061，
+非法入口为 401，错误类型均为 number。对应 SDK 将 C 的“多进程关闭”16010004
+与“不支持设备”801 区分，不能任意改码或为 const enum 伪造运行时对象。
+分析 `r49-child-profile-actual-boundary-analysis-01.json` SHA256
+`b5c761ead749709f00a5868bdc78056c08cd4372f021b9e49e4b4a173a30878f`。
+这不是支持画像上的启动/参数/FD/隔离/数量/退出恢复证明，也未增加本轮完整账本
+关闭数。诊断 01 的主机空间门槛失败保留，未启动 guest；02 使用新的独立运行记录。
+
+以下 R44、R46、R47 等记录保留各阶段原始结果和失败，时间相关措辞为历史状态。
+
+首包完整门槛没有通过，其余五包从未启动。R44 完整运行账本的 281 项有效要求中，
+179 项闭合，102 项未闭合（43 项 ArkTS 导出、59 项行为）。原始账本 SHA256
+`4401e5729f6cfcf06d273c90a64372c0e786a16c94776ddc41875774ca112b1d`
+保持不变；R45 已主动停止不充分的代表包构建，未产生归档。以下历史记录中的“正在”
+描述当时状态，不能作为当前通过或交付状态。CloudSync、imageGeneration 和 ArkTS
+Static 沿用用户已确认排除，未追加其他排除。
+
+R46 当前已准备的候选为 10 项：Ethernet 精确行为 1 项、Insight 装饰器 7 项、
+LazyColumn Attribute/Instance 类型 2 项。其余 92 项尚未准备完成；这 10 项均未
+在新包验收，不能从原始 102 项失败账本中扣除。没有启动其余五包。
+
+Selection 后续诊断 04 因授权窗口延迟出现而失败，未把过早截图当成实际授权。
+05 使用 SDK 正确的 user_grant reason/usedScene 和设备绑定普通应用 profile，
+实际 BMS 为 hos_normal_app/system_basic，仅声明 READ_PASTEBOARD；通过原始
+UITest 树点击权限管理器“仅本次允许”，原生日志 authResults 为 `[0]`。
+延迟读取确认 NEWLINE 和 DIRECT 的真实 plain text/HTML/styled-string 内容；
+即时 onCopy 读取可早于写入完成，因此不能用即时空值判断写入失败。
+05 窄观察 SHA256 `f23cc1d165ed6c8bf548f8647bd71f06bdb995ca7dd06dfc5b428ddca5f00f92`。
+
+`r46-selection-complete-runner-diagnostic-07` 在未改动 R44 归档的 boot
+`4074d084-9c7d-42eb-856d-2e77ed09418c`，Darwin ARM64/HVF、4 CPU、4096 MiB、
+1280×800，执行三种普通角色，每角色两次创建、28 阶段，总计 84 阶段。
+普通/无声明 system_basic/实际授权 reader 的 UID/euid 均为 20010038，PID 分别
+2580、2881、6981；采集真实菜单长按/全选/复制、seed/veto、join、clear、remove、
+三个连续稳定 PNG、两秒移除静默与实际 PID/bundle 退出，并核验编译/SDK、完整
+HAP payload、codesign/profile、BMS、1500 条真实命令与画面/日志来源。
+外层 SHA256 `71f3f0352488872304441836728f3fa1df6201bb637cec0b09cb443feedaea79`，
+子探针 `9f6e9e8a4e1d752b638113c152cb37a765e86526111ce9544e8503686cf2195d`。
+这些复制和内容隔离结果不代表全部 Pasteboard 权限语义或新包通过。
+
+该诊断发现无声明权限角色 `getSelfPermissionStatus` 返回 SDK 正确的 INVALID=2，
+但 `getData` 返回空记录而未抛文档要求的 201。初版重放 01 的宽松读取边界因此
+被撤回；当前严格重放 02 明确拒绝实际旧日志，SHA256
+`2d8df7bd7f946196db4578e908a2875ba2ec283bd35a6b83d3d1840bd4738eca`。
+状态 07 的候选 12 项已由状态 08 恢复为 10 项；Selection 两项仍须原生修复及新包
+实跑，不能凭旧包内容隔离通过增加 ready 或扣减原始失败数。`selection` 已加入
+suite/首包必要检查/精确两项 verifier，仅同一新归档的 acceptance boot 能注册。
+
+固定 pasteboard HEAD `6909fc2dc334c03afaf1e7c131d0f82639393a4d` 的公开异步
+GetData 只传播 TASK_PROCESSING，GetDataSync 也丢弃服务权限返回码。
+`read_permission_errors` 候选保留服务授权及既有空数据/busy/timeout 行为，把
+PERMISSION_VERIFICATION_ERROR 传播为公开 BusinessError 201。完整 NAPI TU
+原 SHA256 `01332401c8d6116509d89f0d7a08377a490c400e500ff332c0a0ceca103e554f`，
+最终 `3bca4fd436922e8b7ed606592be61364656cd44089591faace552744d38610ad`。
+主构建已接入；真实方法分支和精确应用/重放/未知编辑拒绝共 3 项主机测试通过。
+三架构完整 TU 证据 `r46-pasteboard-read-permission-errors-tu-04.json` SHA256
+`73971ce91849c45d0c99bf9186a5f9f107f32081572df62a116bcf247e57a679`，原始源码与
+recipe 输入前后未变。01 补丁路径检查、02 缺 ARMv7 生成 IDL、03 x86_64 Ninja
+保留旧 Mac 绝对路径的失败日志均保留；04 以真实 IDL 生成器、只读声明的自有副本
+生成缺失输入，仅映射已观察的两个 build prefix 并继续逐输入 hash 校验，三对象通过。
+没有使用声明 stub 或修改原只读 source/out。
+
+Selection caller 已扩展为顺序执行 Promise、同步和 callback getter，所有无权限
+形式必须抛 201；旧日志或仅一个 getter 通过都不能满足当前 verifier。
+官方 API26 Hvigor `r46-selection-real-sdk-09` 编译证据 SHA256
+`61145833d0f95a926aff5a7b795732412d75941537792d2beb27e645ce606c66`。
+当前 22 项 Selection、3 项原生权限修复、2 项只读 IDL、7 项首包门槛主机回归通过，
+并非本轮完整主机 suite 或新包实跑。部分主机 getter 结构测试为显式合成契约向量，
+没有命令 provenance，不能充当实际运行证据。
+
+EnvReader caller 另补入独立 family/cycle、实际 UIContext density、宽度 99/100/199/200/
+300/400，以及高宽比 159/200、160/200、249/200、250/200 临界值，两轮场景状态与
+移除挑战。`r46-env-reader-real-sdk-07` 官方编译证据 SHA256
+`e8c7684caafa6bad0c797991e2cc2835d481e1d7ad7d755626e7443d59cda244`。
+EnvReader 完整 runner/provenance 随后已接入 suite/首包必要检查/精确三项 verifier，
+要求两轮环境和 reader 场景、原生默认字体/继承隔离、13 组尺寸及比例边界、36 阶段
+各三帧稳定画面、真实密度/命令/签名/UID/PID 与移除静默。拒绝旧诊断、无字体值、
+错误索引/几何、旧画面和缺少第二轮的 4 项结果契约回归通过；尚未将这三项加入 ready。
+
+R47 冻结输入 `/Volumes/PSSD/qemu/build-inputs/r47-arkui-pasteboard-boundaries-ouchdp0l`，
+tree SHA256 `fa3ff1cb1929c66c718556978f3fdaffedffb1ce660309cc5964f52fcfb13702`。
+完整主机回归 1789 项、1 项按平台跳过，其余通过，376.549 秒；主机证据 SHA256
+`5d9f4576d2aecc9071f5f465d4e254a5576730cb7c5d633037ab5aa01fafac42`。
+已结束的 Insight 11–14、LazyColumn 01/02、LazyLayouts 01、EnvReader 01、Selection
+07 共 36 个可变磁盘经逐文件精确 gzip 恢复校验后回收，20,736,978,327 字节，
+恢复证据 SHA256 `93982e381d57121d78767cc7c2b13b74be0691b200ebb79ba21ece1a06be80dd`。
+
+本地 Docker 只启动新的 ARM64 phone 代表包构建，目标目录
+`/Volumes/PSSD/qemu/packages/first-arkui-pasteboard-boundaries-7.0-release-20261014-r47`，
+controller 为 `r47-arkui-pasteboard-boundaries-build-and-runtime-01.json`。
+冻结代码、固定 main/M144 recipe、4 个构建作业；主构建确认三个新组件的精确应用并
+重新编译 JSView、LazyDynamic 模型和 Pasteboard NAPI，随后进行完整链接/镜像/打包。
+controller 在新归档产生后自动记录 SHA256、运行全部冻结验收并验证完整首包门槛。
+此段记录的当前状态是构建中，没有新归档运行结论。主机通过不是门槛，三个原生修复
+仍须新包实跑，原 281/179/102 账本和 ready 10 保持不变；其余五包从未启动。
+
+R47 随后完成系统构建和新归档：
+`/Volumes/PSSD/qemu/packages/first-arkui-pasteboard-boundaries-7.0-release-20261014-r47/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA256 `105f1414ce4f8837efe12192a09d7a0d9023d0f4533b13ebdfa41ea480baef01`。
+冻结完整验收已经启动，工作目录为
+`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/openharmony-qemu-arm64-arm64_virt-phone-runtime-thl7imfm`。
+acceptance boot ID `c4fd34af-ac41-45d2-b519-8634e79cac1a`，Darwin ARM64/HVF、4 CPU、
+4096 MiB、1280×800，真实 API26 phone/aarch64/account100，60 秒无外部 keepalive
+后内核 ID 和 RenderService 均保持。此时完整验收仍在运行；启动通过和任何局部通过
+均不释放首包门槛，不能启动另外五包。
+
+R47 完整运行随后在 Ethernet 有权限 system 角色的 seed 阶段停止：180 秒没有业务
+日志；normal 202 和 system-denied 201 边界通过，但不能据此闭合整个 Ethernet。
+调用方清理被实际验证，电源策略恢复，整机关闭。完整运行证据 SHA256
+`433529457cb1333bd9d93b5c836b09c802c36b9d74ea9f8881e379417f085546`，Ethernet
+失败 SHA256 `6bdc1c6fcb875e9342686e956502e8556c6473574ad349bdbd8bfd4429d595e2`。
+新 LazyDynamic/WithEnv/Pasteboard 边界还未被该完整运行执行，不能宣称修复实跑通过。
+
+同一新 R47 归档的独立 Ethernet 诊断 boot `3983806d-f2f7-4c3d-8004-07bdd7a8f284`
+完成三角色、重复开关和调用方重启，子证据 SHA256
+`6c9f78666148cbb233ae83ba3278335bfb5092063cb2f6803382af91d8458070`。
+这不撤销完整前置上下文中的启动失败；当前增加超时前真实进程/ability/自有文件/
+网卡/hilog 捕获，继续复现和定位，未放宽超时或静默重试。另一个同一新归档的
+`r47-new-native-boundaries-diagnostic-01` 在解压阶段退出 120，没有 QEMU 运行/
+transport 证据，部分解压和原日志保留，原因未证实。独立 suffix02 已直接输出日志并
+用冻结 R47 代码启动新包，验证完整 lazy-layouts、env-reader 和 selection 子探针；
+其 scope 明确不等于完整首包门槛。另已准备 VPN→系统 VPN 存储→Ethernet 前置上下文
+复现，不能以孤立通过撤销首包原失败。
+首包仍未通过，其余五包未启动，六包路径与校验和尚未交付。
+
+suffix02 新包 boot `1d5fef11-da90-4cdb-8874-e14eb7c6bd03` 通过无外部保活稳定启动，
+但 Docker socket 缺失导致 Lazy HAP 签名命令失败，尚未执行修复行为；VM/owned HDC
+已关闭，原失败保留。实际 OrbStack 日志记录 03:50:45 block write `StorageFull`/28
+并停机；诊断01缺失的 Python 原异常仍不能据此补写。环境失败记录 SHA256
+`7db25f02e68678b5f4fb33a64246d39b371073f11b6a7d84494b2d6d384aa018`。
+恢复 Docker 29.4.0 并只读确认签名工具/SDK jar 后，三个已结束自有 R47 VM 的四种
+只读磁盘逐文件与保留归档比对后回收 8,199,446,025 字节，恢复证据 SHA256
+`f4f6d23dfb9a37dd9b785ced88f0e4722a286b96832a388ddcc4786fb68f1d50`。
+suffix03 增加 Docker/空间启动前检查，用同一新 R47 归档继续独立诊断，不追改失败。
+
+suffix03 boot `21e55ed4-fbd1-4e3a-af30-13eac97760d7` 的完整 LazyDynamic/WaterFlow
+五项在新 R47 包上通过 20 个阶段，两轮创建、参数更新后 callback/滚动、移除安静期
+和严格重放。子证据 SHA256 `7cfb65324d596e65e9b98a589fa7f57728665dde249802ff5aa9d4136788dfde`，
+重放 `e21aa99ef444ab1aafd98dd2220fb21d8c49fd3521123a03993baae7e32e56d2`，
+UID 20010038/PID 2590，调用方退出被实查。Env/Reader 和 Selection 随后各自在稳定
+实际像素检查失败：UITest 树存在，Env 原生方向/默认字体值正确，但截图保持启动
+图标；不能用日志/树代替实际绘制通过。其失败子证据分别
+`fd813573b3350bbd3c1cf9b0bf819d47c95de1379e593da35ef544ad3b23a635`、
+`a2009c956518170809a8a32ae483c256cd4976e2b3e4822eaa064ae7d5cca0cb`，
+外层失败 `3c79a93054a21ff41cceedbb6bf6ac39cb1a63c979accef7b852fdeddf8a603e`。
+VM/HDC 已结束，完整门槛仍 false；开始有实际只读窗口/RS dump 的失败定位。
+
+当前仓库已登记严格的原始 ArkUI 聚合缺口：要求七个同源 Matrix4 完整契约、
+同一验收启动的归档/ABI/画像、无保活及既有 imageGeneration 排除，不涵盖其他
+ArkUI 功能。新增拒绝局部/异源/改变 baseline/额外排除/诊断启动回归，Matrix4+
+AudioRenderer 12 项通过。记录 `d2fccd32aa67f9e8e3609c8bf8fb0e6d3172b315886ae4fc047fba2217a86eba`。
+该登记及只读失败捕获晚于冻结 R47，未追改冻结输入或原 R44 281/179/102 账本，
+未用候选登记或子探针通过放行其余五包。
+
+冷启动 Env-first 诊断04 boot `eea1ce36-fae4-4af8-8ea7-ac0cf6e7bd92` 仍有实际
+Env 画面不呈现失败，已经在调用方退出前收集 AA、WindowManager、RSTree、client
+树和 surface。应用窗口 29/PID 2580、RS 中应用 surface/root/子节点存在，不是
+缺少组件树的静态问题；实际截图仍不符合契约，根因未确定。Selection 后续四个
+原生菜单/复制否决/稳定像素阶段通过后，在原生日志严格校验失败：Promise、sync、
+callback 都记录 `values:["201"]`，SDK 要求 number 201，不能改 caller 转换或放宽
+验证。Env 子失败 SHA256 `b67f377ae1a39507cc9f770a23b173fdfa7bce77abb94a625795d3d80ae0ff5e`，
+Selection 子失败 `04487c12b0b18ff911c70cc6afaee0257dfaa965645130f8ff8ca56ff86188ab`。
+
+新增 read_business_errors 精确后继：当前 getData 权限/并发任务错误选择数字
+BusinessError，旧 SetErrInfo 调用保持原错误形态；getDataSync 权限错误创建带
+number code 的 Error 再抛出。脚本按 parent→successor 应用，parent 只接受全套
+三文件精确后继，未知/部分编辑失败。真实 NAPI 两 TU＋修改头文件三 ABI 共六个
+对象通过，证据 SHA256 `131ac753b09235094543b0aa1235aa5b63d85b45320154fef9e1ad66e8eec18f`。
+源码卷保持只读；修改只在仓库/隔离候选，尚未构建含该修复的新包。7 个真实 native
+片段/交付类型/原样 legacy/精确状态回归通过；44 个相关主机测试通过，仍不等于实跑。
+
+VPN→系统 VPN 存储→Ethernet 顺序诊断完成，外层 SHA256
+`af3b6e8c9d57e0c483237de32387e54c0d8060f6de589574cd9e42fcb29d1494`，三子探针通过。
+原完整上下文 Ethernet 失败未撤销。全部原始前置步骤诊断01在电源截图校验退出，
+实际原因是启动器误用无 Pillow 的系统 Python (`ModuleNotFoundError: PIL`)，
+不是合成器行为失败；其实际日志保留，下一 suffix02 用专用 Pillow12 venv 和
+启动前检查重新执行，完整第一门槛仍 false，其他五包未启动。
+
+专用 venv 全部原始前置步骤诊断02 boot `30136368-56ac-47a5-965c-3709b4c2169a`
+通过 boot、默认真实休眠/唤醒、首页、ABI/HUKS、内核/Binder/RS、配额、系统 DSO
+退出、证书、照片、VPN/存储和 Ethernet；在 Ethernet 后明确结束，后续检查未执行。
+外层 `74b325e47d7cd73ea1d2932aef4d387a95e1228290dddce9e0bd58e688acab7f`，
+Ethernet `e5202a1a2672fe1329c52c4e1513db3375f5079ca90378a701cf213cca8965b2`。
+不能据此撤销最初完整验收中的超时。实际发现角色替换前旧 PID 5746/5929 仍在，
+当前 runner 改为替换前 force-stop 并取得两次实际内核/AA 退出观察；独立 verifier
+按原始 HDC 指令、回复、顺序验证，新增拒绝残留/缺失/乱序回归，21 项相关测试通过。
+
+冻结 R48 候选 `r48-pasteboard-business-errors-xrw22rz0` 的 1796 主机测试通过，
+368.192 秒且输入不变；树 `1f3dd334849c2b40d0c4f460c79f8c84f5217cf854d17f5682dbc1fe351a8ea6`，
+证据 `735889756c3fec03ca653f53855a71bddb940899af4c697154749bc9821338e6`。
+没有产生 R48 归档；该快照早于上述 Ethernet 生命周期及后续 Env 标记改动，
+不能当作当前仓库全量回归通过，最终重打首包前须重新冻结/检查。
+
+Env 隔离05 证明了本轮实际绘制：创建前页面已经呈现，Env 红色块实际
+RGB `(192,49,32)`，旧验证器逐字节要求 `(192,48,32)`。失败原样保留；
+这轮不能归因于未绘制，也不能撤销03/04中真实启动画面的观察。当前 caller 与
+checker 同步改为饱和红/绿标记，保留严格像素、文本、方向及稳定帧要求，未放宽
+容差。诊断06正在同一新 R47 包运行严格 Ethernet drain 与完整 EnvReader；
+仍不是完整第一门槛。原始账本 281/179/102 不变；15 仅表示方向候选，87 仍需
+完整证明（其中5个额外 ArkUI、其他82项），数字 Pasteboard 后继尚待新包实跑。
+
+诊断06 的实际绿色为 `(2,255,0)`。当前颜色检查明确限制每通道最多2级量化误差，
+仍要求最少300背景像素、实绘文字、坐标方向和三次稳定帧；原始06失败保留。
+有真实捕获 PNG/布局回归，错误 nonce 和倒置方向仍被拒绝。诊断07 boot
+`38a0dfad-f75d-4eeb-9144-3b8d457c4d9b` 完成全部36阶段、两轮 @Env/@CustomEnv
+继承/更新、字体覆盖恢复、ContainerReader 13个尺寸/等值边界、移除安静期和退出。
+子证据 `ebc14f9e5c5512e92b273e2a6ab17dbbf805db8105e7158825a34428a12b5bda`，
+严格重放 `129b65967e3bfd9485c242b6af61d1dee8ae7fd3ddb56bd736cf7e54e338abb9`，
+UID20010038/PID2574/density0.9375。新严格 Ethernet drain06 子证据
+`7a2facefb0c5a22bf27d8e0aee7a8466ad296937875e31a6fa17c90e6bc1eb1b`。
+这些是新 R47 的独立方向诊断，仍不是完整首包门槛；原R44账本281/179/102不变，
+18仅方向候选，84仍需证明（Selection2＋其他82）。
+
+R49 冻结 `r49-pasteboard-env-lifecycle-4985sx8t`，树
+`c11c9b2d92b0a35a8bdd8a844cdd7bd9db110a7a0a3563e96e222efce322c282`，
+1799主机回归通过/365.085秒/输入不变，证据
+`43d0ea2c13f41d278296834bfc5140d54ac501c0e697280ed10a2c5bc006a40e`。
+六次结束运行的24个可变磁盘逐文件 gzip、解压hash/长度、inode/mtime 全检查后
+回收13,824,651,582字节，恢复证据
+`0b2808eba15d906085ec02f011d3ab0fc873db3b088e28f51b606e528fcd94ba`。
+保留归档/HAP/PNG/原日志/所有失败；未改用户文件或活跃磁盘。24GiB空间门槛下，
+只启动一个 ARM64 phone R49 完整构建及随后全套冻结运行；未产生归档前不声明
+修复实跑，完整缺口账本不通过就不放行其余五包。
+
+
+
+
+
+
+已结束的 Selection 03/04/05/06 十六个可变磁盘逐文件 gzip 备份、流式解压 hash/
+长度和原 inode/mtime 检查后回收 raw，9,216,434,812 字节；恢复映射 SHA256
+`d787922d50329ea53030b8fdcab36e8e308568eee60cde6e7f075dda4e0f98da`。
+只读缓存仅在结束诊断、owned HDC 关闭且与保留 R44 归档精确一致后回收；归档、
+HAP、签名、原生日志、UITest/PNG 和报告保留，未触碰无关 QEMU/Docker 进程。
+
+LazyColumn 使用独立官方 Hvigor API26 OpenHarmony 项目编译真实 typed factory，
+不再先编译 Arc 探针再覆盖页面。共享项目生成与原 Arkdown 构建分开，旧调用仍执行
+相同 Arkdown 命令。实际 SDK 编译成功，48 项 Insight 共享生成回归、7 项 LazyColumn
+真实捕获回归及 7 项首包门槛回归通过；不是本轮完整主机回归或完整包验收。
+
+`r46-lazy-column-complete-runner-diagnostic-02` 在保持 R44 归档 SHA256
+`d9f2aafa605f6fbedab36ba1295a967a33aaa8773ee2617d390250ba2c284995`
+的诊断 boot `364de86d-d9e8-4df7-ab59-2e642c7dc924` 中完成两轮创建、真实 typed
+属性重置/链式调用、滚动到底部、返回顶部、移除和再次创建。实际普通 UID/euid
+20010038、PID 2575，顶部回调 `[0,5]`、底部 `[34,39]`；八个阶段各要求三个连续
+稳定 UITest/PNG 帧，保留全部 transient。两次移除后至少两秒原生日志完全不变，
+画面无残留 item 颜色，最终自有调用进程 PID 与 bundle 均消失。电源策略恢复，
+自有 VM/HDC 已关闭，无产品代码或镜像替换。
+
+外层诊断 SHA256 `c6e3c5a4f72150d5340f907f5aaf8755214cb833a9bdabfd28eea4ede61eab1b`，
+完整子探针 `8374f76b5a7414b0f6cd1a8d5a13b514bdaf7682a3585d2a9e5638715501a8ba`；
+最终严格 provenance 重放 `strict-provenance-replay-02.json` SHA256
+`e297e3abd64ed8432125969ccac729829870357677ed8b8b459ef67391ec80d0`。
+校验编译输入/SDK/真实编译命令、完整 HAP payload、设备绑定签名/profile、BMS、
+实际 UI 选择与有序点击、原生日志、画面来源和退出。官方 PageInfoGenerator 在签名
+时新增标准 `.pages.info`；只允许该非空八字节对齐 bitmap，其余文件集合/内容必须
+完全一致，签名日志必须包含 codesign/digest/app/permission 验证成功。初版重放对
+文件集合的错误预期和主机负例失败均保留，最终重放仍明确不是首包门槛。
+
+`lazy-column` 已加入 suite、首包必要检查和精确两项账本候选注册；拒绝诊断、旧包、
+辅助启动、错误 nonce/UID、缺少第二轮、缺少 reset/边界回调、移除后迟到回调和
+旧画面。只有未来同一新归档的无辅助 acceptance boot 下完整验证才能注册这两项。
+
+R46 `r46-lazy-layouts-complete-runner-diagnostic-01` 用同一未改动 R44 归档启动
+`6251e843-a034-4124-9748-7d203f4fefa6`，官方 API26 Hvigor 编译普通 typed caller，
+实际 UID/euid 20010038、PID 2646。两轮 WaterFlow 各有 37 次原生可见范围回调；
+从两列变三列，子项宽度和几何变化、顶部/底部、移除静默、节点身份保持及各阶段
+三个稳定真实画面均采集。LazyDynamic 两轮初始均收到 helper 和 `[0,1,2,3,4]`
+回调；算法步长从 40 改为 60 后，原生调用 `onMeasure` 不再提供 helper，滚动虽
+改变画面，却没有后续可见索引回调。完整五项校验因此失败，不能只凭 WaterFlow
+或布局像素通过来闭合这五项。二十个阶段、失败 hilog 和原生日志均保留；自有进程、
+VM/HDC 关闭，原电源策略恢复。外层失败 SHA256
+`e2a64aac666e593d208577aaee01c9969cbe18e681fd0f3d3c9e4e6efab3e081`，子探针
+`8e5804d93edd80c69525eebe43d56dd06d3b6ece47ad878080d866965432fdec`，精确失败观察
+`3a7b1b65d964c4359b02456756b39022497e798d7809d19021b1ec69646f3142`。
+
+固定 ace_engine HEAD `e55e178228b9f6388b15d3024e8caf125fa293d7` 的模型对每次更新
+调用 `ReplacePattern`；该方法重建 LayoutProperty，滚动参考与 main-tree attach 状态
+丢失。`lazy_dynamic_algorithm_update` 精确双文件候选改为复用现有 pattern/属性并更新
+参数，保留已安装的可见索引 callback（新参数显式提供的 callback 优先），null 参数
+清空算法，attached 节点轴变化仍调用原生父节点/轴验证。最终 model SHA256
+`352ba2fea32c7bf185fdf2fad95605c0e63e94ce2856158967d5b8addf6a88b4`，pattern
+`3bf088d6e5d676fe5b149817afc6b3c324cc22ad37476d0c12f8ce9040fa87b9`。
+精确应用/重复重放、混合/未知编辑原子拒绝、实际完整方法的 callback/null/轴边界
+与原失败捕获共 6 项主机测试通过。前两次隔离应用在末尾无换行标记和补丁路径处
+失败，保留日志，随后按原字节修正；没有修改原只读源码。
+
+`r46-lazy-dynamic-algorithm-update-tu-03.json` SHA256
+`7a607cb1a0041a308a5edabf07bb2b0e9c589051bd8c5ec24cc827e6f7d361ee`：两份完整
+TU 使用三个实际产品 Ninja 命令编译，六个对象通过，原 source/recipe 前后 hash
+不变。主构建脚本已经接入修复；`lazy-layouts` 已加入 suite、首包必要检查及五项
+精确候选 verifier，校验实际编译、签名、安装、原生 helper/measure/layout/index、
+节点身份、实际几何与稳定画面、移除/重建和退出。此修复尚未链接进新包并运行，
+五项仍未计为准备完成，候选准备数保持 10，原失败账本仍有 102 项未闭合。
+
+回收结束的 Insight 10/14 和 LazyColumn 01/02 中与原归档精确一致的 16 个只读
+Image/ramdisk/system/vendor 缓存，共 10,932,594,812 字节。归档、可变磁盘、HAP、
+报告和所有画面保留；回收证据 `r46-owned-ended-diagnostic-readonly-cleanup-05.json`
+SHA256 `785504bcf531a21fc684bf51dd395efbad3b94ed3aca1316ca4634bf980d0b9d`。
+
+WithEnv/ContainerReader 的真实 caller 先被官方 checker 拒绝默认 `@Env`、保留成员名、
+多直接子节点及错误的双向绑定语法。按实际编译器源码的后缀 `this.value!!` 和合法
+结构修正后，`r46-env-reader-real-sdk-05` 官方 SDK 编译通过；未修改 SDK/关闭 checker。
+编译证据 SHA256 `3a4783a951716c543bbd401f0b7c5e277038d88b55b77cceb54fd7d0a384e81c`。
+SelectionContainer 的真实 modifier/reset、menu copy/veto、NEWLINE/DIRECT join、
+controller clear/remove 及 Pasteboard 读取 caller 也由官方 SDK 编译通过，
+`r46-selection-real-sdk-03` 证据 SHA256
+`df6386c0fdcd2b0b72b1e64149154e0a1bd37ec40ef5e64a76feaa66822e2f22`；尚未运行。
+
+`r46-env-reader-factory-diagnostic-01` 同一未改动 R44 归档的 boot
+`d1ae57c2-01c8-4536-bbe0-961cdcd8d2c7`，普通 UID/euid 20010038、PID 2613。
+outer 的实际 CustomEnv 从 outer-0 更新 outer-1，方向 Ltr→Rtl、字体缩放 1→1.5；
+inner 保持 inner-fixed/Rtl/1，outside 保持 unset/Auto。实际 A/B 几何同步改变方向。
+ContainerReader 原生双向回写尺寸 180×120→280×180→180×120，宽断点 1→2→1，
+每阶段实际 UITest/PNG 三份均保留。外部无覆盖 `@Env(FONT_SCALE)` 实际为 undefined
+（UI 明确呈现 undefined，JSON array 序列化 null），所以不能计这三项完整通过。
+原诊断 SHA256 `9469ff182f431f9edd7cc7e0f29936152276feb36c991d567a819f5afb6852fd`，
+原生观察 `85f68d8b79c72d6824f7247e8f754cfd1d535a58a6e091d87bf338122f15ed7e`；
+scope 为诊断收集，仍缺完整稳定像素/provenance、重建、完整断点边界验证。
+固定 ContainerReader 源码计算高度断点使用 height/width 比例；下一轮 caller 必须
+用实际比例边界覆盖，当前高阈值配置没有证明高度断点变化。
+
+固定源码的 `MakeSystemEnvValue` 在字体没有覆盖值时直接返回空值；
+`withenv_default_font_scale` 候选让 query 和覆盖移除通知都传入实际 owning UINode，
+从该节点的真实 pipeline 读取字体缩放。保留显式覆盖、错误类型、方向和未知 key
+语义，缺失 node/pipeline 仍不伪造值。`js_view.cpp` 最终 SHA256
+`82543a7ac5df453694308d783b4594b3e2291dbcfa38498163394e54602da4f9`；精确应用/重放
+及 owning-pipeline、显式覆盖、null/type/key/方向等 3 项主机回归通过。两个动态前端
+各使用三个实际产品命令编译完整 JSView TU，六个对象通过，源码/recipe 前后不变；
+`r46-withenv-default-font-scale-tu-01.json` SHA256
+`979c1020788b0390db0636f875a750a9c59b3fe8a8130a6db70e71b3856de9b8`。
+主构建脚本已接入，修复尚未在新包实跑，三项与 Selection 两项都未加入 ready 数。
+
+诊断 guests/owned HDC 均结束。另回收结束的 LazyLayouts/EnvReader 中 8 个原归档
+精确一致只读缓存，5,466,297,406 字节；原归档、全部可变磁盘/证据保留。
+`r46-owned-ended-diagnostic-readonly-cleanup-06.json` SHA256
+`eb94b46d4bce37adf9c57c488fa4d570dddba954bf925ce3ac3fe7678743d969`。
+
+R46 后续 EnvReader caller 补入两轮重建、字体覆盖移除、宽度 199/200 断点边界和
+高度比 0.8/1.25 的真实配置，resize 改为 280×300。官方 SDK 接受
+`.env(FONT_SCALE, undefined)` 的移除调用；`r46-env-reader-real-sdk-06` 编译证据
+SHA256 `c1f50cfc181282145ab7c17c9a10894990c5a31c5efcba6c7f582891c6837f9c`。
+此扩展尚未运行，没有计入 ready 或原账本闭合。
+
+Selection 01 普通 UID 20010038、PID 2634 实际 typed reset/chain 返回 `[1,1]`；
+真实长按呈现复制/全选菜单。菜单文本 leaf 本身不可点击，采集器根据原始 UITest
+树选择其 `SelectMenuButton` 可点击父节点，拒绝禁用、越界、外 bundle 和重名按钮；
+四项捕获主机回归通过。01 原报告 SHA256
+`9712a162f691c9720901d557d58d8d386f72aa2283510ecaaefe8e875bcdfc9d`；未验证复制
+内容、两轮重建或完整稳定画面/签名/命令来源，不能闭合两项类型契约。
+
+02 的真实菜单全选/复制在 veto 阶段只产生 `willCopy=0`，允许阶段产生精确 nonce
+alpha/newline/beta，DIRECT 阶段无换行拼接；controller clear/remove 也有原生日志。
+03 增加复制完成后一秒再由普通应用按钮读取 Pasteboard，仍为零记录；原报告分别
+SHA256 `3d35c9f78c27e41e88e36d0aa357cd66af6518aa0b683be20df99961f27c8178`、
+`3f64574629aee98ebd4a80e07b5dd45309f8736d038a3c78fa4f0b525de784e1`。
+03 hilog 记录 READ_PASTEBOARD permission denied，因此当前空记录不能证明写入失败。
+固定 access_token HEAD `d3e0d2cdab18e6cf25279a01ad1e892e3de214f1` 定义该权限为
+`user_grant`、`availableLevel=system_basic`、`availableType=NORMAL`、provisionEnable。
+精确定义证据 `r46-selection-read-permission-source-01.json` SHA256
+`54f65df03ed1f66b1deb1e14221c40fa3641583d927b661f3e4a42af9763a343`。
+实际 `ace_capability_ohos/clipboard_impl.o` 产品命令包含 SYSTEM_CLIPBOARD_SUPPORTED；
+先前错误 target 的 query 失败不能作为宏缺失证据。下一步须用权限正确的 reader
+和实际授权流程验证内容，并保留普通调用者拒绝边界；尚未增加通过数。
+
+外置盘耗尽时，Selection 04 编译在写出项目时退出 120，日志为空，Docker daemon
+停止；没有把该次计为编译失败的 API 缺口或通过。只读缓存回收 07 的记录创建失败
+发生在任何 unlink 前，原缓存仍在；改在系统盘记录后，逐文件原归档 hash/inode/
+mtime 检查并回收结束的 Selection 01/02 八个只读缓存，5,466,297,406 字节。
+可恢复记录 `r46-owned-ended-diagnostic-readonly-cleanup-07-recovered.json` SHA256
+`25815e0936063c95aa869b9c149d94733a5084a53964363d9ed8a06da492c36f`。
+八个可变磁盘另存 gzip，逐文件流式解压的 hash/长度与原始磁盘一致，结束诊断与
+HDC 关闭确认后才移除 raw，共 4,608,217,406 字节；备份映射
+`r46-ended-selection-mutable-images-backup-01/evidence.json` SHA256
+`a02cdec19cd65fd067f5780cc457fe86cf30ade04802c222996f2284510d0713`。
+Docker 已恢复，Selection 05 官方编译通过；主归档、全部报告/HAP/截图和可恢复失败
+磁盘保留。资源恢复不是首包门槛，当前未启动剩余五包。
+
+R46 Insight 诊断 05 将 `formHost.addForm` 错用于普通卡片，实际 FMS
+`CreateForm` 报 `Invalid to add commom form`，系统角色返回 401，提供方无添加日志。
+该 API 是主题卡片入口，诊断保留失败。普通卡片改用真实 `FormComponent`，采用固定
+sdk-js HEAD `43e34facc58b9c0f15c58571554ddd7eaa004455` 的完整系统声明，原始 SHA256
+`2810366b9d7386bbc41ca39593805dd2c7c0195fc0187ca729fc9ec0bb9c308d`。
+隔离验证 SDK 的 loader 副本只调整两个 Want 相对导入路径，准备后 SHA256
+`beb85cc80f58a47f180fe251e0750c7417d5b35cd169c2dcd03e7fa084fcc0c4`；
+没有伪造类型或关闭 checker，原验证 SDK 保留。`prepare_form_component_sdk.py`
+拒绝未知/链接声明并可精确重放。
+
+06 因 verifier 对独立 widget cache 路径和编译资源 ID 的错误预期失败；修正后独立
+重放真实构建通过，保留原失败。07 三角色真实调用中 normal/system-denied 返回数值
+202/201；系统宿主的 FormComponent 查询缺少 GET_BUNDLE_INFO_PRIVILEGED，不能计为通过。
+宿主仅对 system 角色请求并签名 REQUIRE_FORM、GET_BUNDLE_INFO_PRIVILEGED；普通卡片
+使用文档/服务的 `dimension: 2` 对应所声明的 `2*2`。
+
+08 保持 R44 原始归档 `d9f2aafa...b284995`、无 kernel/DSO/ABC/init 替换，boot ID
+`d46f5757-4a86-4047-b465-2ac06ca787c7`。真实两个 Form ID 为 870363656、752278918，
+提供方各记录 add/update/update.success/remove，宿主删除后各返回数值 16501001；
+两个更新后的实际画面与 nonce/ID/data 绑定一致。进一步像素核验发现首次 acquired
+截图仍是空白，尽管 UITest 已显示 added 数据，因此本轮不能证明完整初始呈现。
+新增 verifier 拒绝白屏，采集器要求三帧稳定真实卡片/文字，待新诊断及新包验收。
+原生 FormCallbackInfo.id 实测为字符串；探针仅使用 SDK 提供的 idString 调用服务，
+不把该 id 字段计为数值契约已修复。
+
+08 的三个独立 intent caller 通过严格解析：实际五项 BMS 元数据，Entry 两次不同
+challenge 的实体结果，以及 Function/FunctionMethod 两次真实 native 静态分发返回
+精确 boxed `methodResult`；normal/system-denied 对 lookup/Entry/Function 均为数值
+202/201。完整诊断报告 SHA256
+`6798b449b4a343be799a78e17002afe1e0e77cfac0d563625310623c2f58bac5`，
+自有 HDC 关闭、原电源策略恢复。29 项 Insight 主机回归通过，但不注册新包 closure。
+
+09 的 Page 真实 `driver.execute` 返回 0，目标页面仍为初始空入参文本，未显示 nonce
+challenge，原始报告失败（SHA256
+`922facb26c0148e906a3a790f3e0c4578d6f89c8aa747ce92c239005eaebb8a8`），
+boot ID `f32528f7-f5c6-4432-bed1-6524efde7a93`。Link 尚未执行，七个装饰器仍未完整闭合。
+正在核对固定 WindowImpl/WindowSessionImpl、Ability Page 和 ArkUI 的真实参数交付链，
+不凭返回 0、编译元数据或旧镜像诊断放行。
+
+只清理已结束的 05/06/07 中与 R44 原归档精确一致的 Image/ramdisk/system/vendor
+解包缓存，12 文件、8,199,446,109 字节，可由保留原归档恢复。全部报告、HAP、画面和
+可变 guest image 保留；清理记录 SHA256
+`2a81b1579e6b85a5ff242900fa549a16f86a5b0b377b7e7849e19e587069c061`。
+
+10 三种 Form 角色均通过严格日志解析；两个创建与更新阶段均要求三帧稳定真实蓝色
+卡片/文字，初始白屏会保留为未就绪样本且不能放行。Entry/静态函数三角色也通过。
+Page 的空参数界面仍失败；独立继续采集 Link 两次真实 native URI 跳转与 receiver
+Want，未把其他专项通过改写为完整成功。报告 SHA256
+`ad12b498766244019adea77bc95b770bcb2926c0ac6c839c2573053e852c6b28`。
+固定 SDK common.d.ts 声明 `onNewParam`，实际 PageRouterManager 对栈内页面调用
+`FireOnNewParam`；探针补齐该回调并直接读取其入参，没有修改窗口/ArkUI 产品实现。
+
+11 原 R44 归档诊断的 boot ID `0e693131-0951-4550-b9ca-36742e8dbe8c`，
+三种 Form 与 Entry/Function caller 均通过；Page 0 实际停止自有目标后冷启动、Page 1
+复用同 PID，目标的 create/newWant 与两个 newParam 回调携带真实非 root caller
+UID/PID/bundle 和独立 challenge；两个 Link URI/native openlink flag 同样对应实际
+caller。Page 两幅真实文字像素差 71，Link 两幅差 76。原诊断 SHA256
+`60e708cfbdaa3f7e0fec74cb903febe421849429dfdc5f6f70f3b90d2775aca9`，
+严格导航重放 SHA256
+`cd88c035ea69c3cb92874ff4553b6b3b2742b5598bc0200e2851d51b1609527e`。
+这些仍是旧归档诊断，七项未注册为新包 closure。当前 42 项 Insight 主机回归通过，
+新增现有 guest 的完整 runner/provenance verifier 候选；尚未接入 suite，尚未实跑该
+最终组合，不允许将其候选源码或旧镜像记录计入首包门槛。
+
+08/09 的另 8 个原归档只读缓存回收 5,466,297,406 字节，记录 SHA256
+`b6fcdfbd4ea61a7496dcabaf506ff6d716f9c6946f942e3c65c645f76220a4e5`。
+为继续构建保留空间，将结束的 05–10 的 24 个可变磁盘保存为 gzip；逐文件流式解压
+回读的 SHA256/长度与原始磁盘完全相同，原 inode/mtime/大小在压缩前后不变，确认
+没有使用这些目录的 QEMU 且自有 HDC 已关闭后才移除 raw 副本，节省 12,773,494,002
+字节。完整可恢复备份与映射位于
+`r46-ended-insight-mutable-images-backup-01/`，记录 SHA256
+`a64d117de4973cd10f424a4fe13a2dbde7e0393702d8c97f641fec36e4cc2af9`；所有原归档、
+报告、HAP、画面和未压缩的 11 客体保留。此资源回收不是能力通过证据。
+
+12 首次完整 runner 实跑完成所有行为后，证据校验在产品类型输出的尾随空格处失败；
+原始失败保留。仅对三个身份 token 使用精确 split 比较，不放宽其他数值/命令输出。
+拒绝角色未产生卡片日志时，改为显式条件读取并要求真实 shell 成功，不能把失败 cat
+解释为成功。13 继续实跑，严格导航像素校验拒绝未呈现/较短的前一幅画面，原失败
+仍保留；导航采集也要求三帧稳定实际文字，保存每幅 transient 和原始 UITest/HDC 来源。
+
+14 完整现有 guest runner 及独立 provenance verifier 已实际通过。外层明确仍为
+R44 原归档诊断、gate false，boot ID `1f41075d-71ff-4d07-8257-a88735369d4a`；
+外层报告 SHA256 `d905d2bebb6c26a93cc3436a8d61bf606d23c00d7f1ad91f8370f4ab5808da89`。
+完整 child 报告 SHA256
+`107d1b5f0b05ff49f54a1ae6fea88e62c46c0be108a7f0d85e4c2f4e1ad0ccd2`，
+绑定十份真实编译/签名 HAP、BMS 角色/非 root UID、独立九个 caller nonce、五项 BMS
+元数据、Entry/静态函数各两次分发、两个卡片生命周期及删除边界、Page 冷/暖和两次
+Link、receiver caller 身份、所有读取/传输的真实命令、三帧稳定实际文字和清理。
+SDK 仅在自有目录准备固定完整声明，没有 kernel/DSO/ABC/init 替换；自有 HDC 关闭。
+
+已接入 `run_packaged_qemu_suite.py`、首包 `REQUIRED_CHECKS` 和完整 ledger 的七项
+精确注册。Ledger 注册额外要求相同新归档/acceptance boot、无诊断辅助、正确架构、
+画像及目标；诊断、辅助或外来 boot 即使 child 自报 pass 也被拒绝。新增门禁回归
+禁止缺失该完整 child 后启动矩阵。当前 48 项专项及七项首包外层测试通过，包含 Ledger 反诊断回归。没有据此改写原始 102 项失败。
+`r46-unresolved-coverage-plan-02.json` 将 Ethernet 一项与 Insight 七项标为候选方向已准备，
+其余 94 项尚未准备完整证明；这不是排除或新包闭合数。完整新代表包仍未放行。
+
+下一批 ArkUI 类型中的 LazyColumnLayout 已启动独立真实调用诊断。首个 SDK 01 仅因
+缺少 builder 必需的实际 UDID 失败，保留失败；02 使用 14 实测 UDID 和真实官方
+Hvigor/Node/API26 SDK，完整新 typed modifier 调用编译通过。准备项目时的旧 Arc 编译
+不作为 lazy 调用证明；之后实际覆写候选 page 并重新用官方 checker/transform 编译。
+原 Arc receipt 因 page 已变化不用于新证明，当前只是独立 SDK 编译方向证据。
+
+`r46-lazy-column-factory-diagnostic-01` 始终为 R44 未修改原归档诊断，boot ID
+`f22fdb5d-cedc-4462-944e-2c14da1792d4`，普通 caller 的实际 UID/eUID 20010038、PID 2616。
+真实 `LazyColumnLayoutAttribute` modifier 的 width/space/alignItems 返回同一实例；
+可视回调从 `[0,5]` 到 `[34,39]` 再到 `[0,5]`。真实 UITest 依次看到首项 0、末项 39、
+首项 0，移除后无子项。原诊断 SHA256
+`f450d9078224f5be0e70bc569391b70f4788f624b39d8bef250656a777ea463c`。
+`narrow-observation-01.json` 只接受日志与 hierarchy，明确未证明稳定像素、最终签名/
+命令 provenance 或新包，未注册 closure。其余 lazy/ContainerReader/SelectionContainer/
+WithEnv 类型仍须完整调用和边界，不添加假构造器或将这两项候选误计为全部 ArkUI 通过。
+
+## R43 新首包构建状态（完整运行门槛尚未通过）
+
+冻结输入为 `/Volumes/PSSD/qemu/build-inputs/r43-napi-sqlite-blink-o8oxcgrl`，
+树 SHA256 `fbc9a641ef45e7fc5bc6f1125b7e36fc5347f27bea91d6b06b724fe3e46aad34`。
+`host-r43-napi-sqlite-blink-01.json` 记录 1704 项主机回归、跳过 1 项，350.416 秒，
+其余通过且输入不变；报告 SHA256 `282c6f94448e1c6104a43bbc9c8c4e643f2559c7356d863fb1cd5b15605cb235`。
+这只是主机回归证明。`build-and-validate-r43-napi-sqlite-blink-02.py` 正在本地 Docker
+仅构建 ARM64 phone 新代表产物，计划包根
+`/Volumes/PSSD/qemu/packages/first-napi-sqlite-blink-7.0-release-20261013-r43/`。
+控制器随后执行同冻结树的完整新归档运行验证，并独立重放首包门禁。
+当前尚无该新包通过证据，**其余五包未启动**。
+
+R42 GL 亮度独立诊断第一次在启动客体前因 host Python 缺少 Pillow 失败；
+`r42-gl-luminance-diagnostic-r43-01-transport/transport.json` 保留失败与自有 HDC 清理。
+第二次使用已有验证 venv，输出 `r42-gl-luminance-diagnostic-r43-02/`，
+始终标记为 R42 原归档诊断、gate false，不改变 R42 的完整失败。
+第二次已结束：boot ID `9b658682-96de-49cd-acae-91edf5058f36`，亮度工厂/参数
+边界通过，黑色实际背景仍没有要求的 RS 回调，原始 results.log 记录
+`actual RS luminance callback did not match rendered background`。自有调用方退出
+和原始电源策略恢复均证明；完整诊断报告 SHA256
+`1eb3fbfae3aed9ac5b88baf7c31707d3e0872695db47859daa91cd7699d64905`。R42 GL 候选仍不完整，R43 不预先放行。
+
+RS 加载路径诊断 `r42-gl-luminance-diagnostic-r43-06/boot/` 记录实际
+`/proc/488/maps` 的路径为 `/system/lib64/platformsdk/librender_service_base.z.so`。
+`r42-gl-luminance-diagnostic-r43-03/` 完整 hilog 没有定位到取色阶段；
+04 的诊断服务控制超时，05/06 的 QMP reset 后普通解锁失败，三次都未形成有效
+亮度 trace，不计为运行通过。07 改为显式自有 VM 进程重启，仍为诊断、gate false。
+为后续构建回收空间，仅清理已结束 02–06 中与原归档 SHA 精确一致的
+Image/ramdisk/system/vendor 解包缓存，保留可变来宾数据和全部报告/日志/HAP/画面；
+`r42-owned-diagnostic-readonly-cache-cleanup-r43-01.json` 记录 20 个可恢复文件、
+13,665,743,370 字节及每个原归档 member/校验和，原归档恢复校验再次通过。
+
+07 自有 VM 进程重启后也未通过普通解锁，因此没有形成亮度通过或有效 trace。
+08 的独立 trace 镜像准备在启动 VM 前因 Docker Python 3.10 不支持
+`hashlib.file_digest` 失败；09 改为流式 SHA256。09 仅在私有 system.img 的
+原 graphic.cfg 的 init/post-fs-data 增加启动 trace 开关，未替换渲染库，
+明确为诊断镜像，不可放行。其原始 system SHA256
+`1cbec6684c28f167a16a9ecd7e282b30f2679d7e193dfbb1553a1783ca6154ad`，
+诊断副本 SHA256 `6dc72105e5e53623e1fdf5d25c1ad612736e7559c80d9ad8d98ad3d293d58b04`。
+09 外层早期 scope 字符串的 unchanged 指种子归档未改变；客体实际使用上述
+trace 配置副本，`candidate_system_trace_init` 与 `diagnostic_assistance` 明示此差异。
+
+09 首次冷启动和普通主页设置通过，boot ID `7e0ec73c-df6c-456d-a5c0-d70eb5e77aba`。
+实际 kernel trace 显示 node 10986526343196 执行 OnDraw/ExtractSnapshot，
+`ColorPickAltManager::extracted background luminance = 0, prevLuminance = 256`；
+GL 读取真实黑色像素成功。ArkTS 原始日志仍缺回调并失败，不能关闭亮度能力。
+SendCommands 被执行，但未观察到应用 OnTransaction，后续定位消息交付与注册。
+完整 trace SHA256 `a4f3e873f966b362bc7d6ff9ab599b383e76d1d462fc11baddc2788d4dd45e05`，紧凑观察证据
+`r42-luminance-color-pick-trace-r43-09.json` 保存实际原始行及完整文件路径/校验和。
+10 持续采集全 hilog 避免滚动覆盖，仍为私有 trace 诊断镜像、gate false。
+
+10 连续完整 hilog 记录实际应用 PID 2567 发起 `RegisterRSApplicationAgent!`，
+RS 随后两次报告该 PID 没有 application agent；IPC 记录异步 wire PID 为 0、
+内核可信 real PID 为 2567。已有 `async_caller_identity` 只规范提交事务，
+注册分支再次直接使用 `GetCallingPid()`，将 agent 记到 0，与真实节点 owner 不匹配。
+`r42-rs-agent-registration-diagnostic-r43-10.json` 保存这些实际行，完整 hilog SHA256
+`9288b12778c5712a1e6a04ae4bdc3f64f12cd87c4f12afcf00857c49d11cb772`。
+这些是诊断副本的定位证据，仍没有把亮度能力计为通过。
+
+R44 新 `application_agent_identity` 组件仅在注册分支的 async zero-wire-PID
+情况下读取 `IPCSkeleton::GetCallingRealPid()`，拒绝非正身份，不读取 Parcel PID，
+保留同步正 PID、权限检查与 profiler 映射。完整 stub 从 prior stack SHA256
+`228baf8e2271551f22494fbf1535289fffd77af5da7cdf90f3dfa1ce98d92abb` 到
+`ab3f257b5afb0e96e485948aeeff89affe3a87fe4f65101d1f259b4c48fea3b6`。
+父组件只接受这一精确后继且其余 13 文件全已修复，重放不抹去后继，混合/未知/
+symlink 状态拒绝。四项主机回归使用真实完整注册 case 与显式 Binder doubles，
+复现旧零 PID 丢失通知，验证身份/flags/对象边界、多 owner 和父重放；不声称真实 IPC。
+`host-r44-rs-agent-identity-01.json` 的冻结树
+`r44-rs-agent-identity-ogrrrixo` SHA256
+`922bc68cbdb4524ca3f6ea75efa50ce149c4dda3c26da75abe294f5e6ac35b22`：
+1708 项、363.421 秒、跳过 1 项，其余通过。后续只读 TU 的真实生成头/path 别名修复
+已改变验证工具输入，因此该冻结树未用于打包，最终工具状态需另行冻结回归。
+前三次 TU 尝试分别因候选 cpp 的 quoted header、ARM32 display common 生成头、
+旧 `/openharmony` alias 未映射失败，未计为三架构通过。第四次运行真实八个 display
+HDI action（原三项及五个 graphic/common version），校验完整 IDL/host tool 字节，
+输出仅写 scratch，使用真实 product CXX flags；仍不是首包门槛。
+R43 正继续原冻结树系统构建/验收；R44 新首包控制器已准备但未启动。
+
+第四次实际三 ABI TU 完成：`rs-application-agent-identity-tu-r44-04.json`，
+完整源码 SHA256 `ab3f257b5afb0e96e485948aeeff89affe3a87fe4f65101d1f259b4c48fea3b6`，
+三个真实产品全部通过，只读源码/构建输入不变。证据 SHA256
+`e0f1a01c5f9e4b9a43a267ace593afa1faebb8e6361c6d05e66ee1f7ba41a699`。
+最终验证工具状态重新冻结运行 `host-r44-rs-agent-identity-02.json`；
+不能沿用旧冻结 01 的输入身份打包。R44 控制器等待 R43 的完整验收结束，
+保持其真实 out 图到验证完成，然后只重建 ARM64 phone 代表包；没有其余五包入口。
+
+R44 最终冻结树 `r44-rs-agent-identity-8_ct0p55`，SHA256
+`4ff6f251df9479f9237389ecae2c3cd326a1245b036a347392bb8165a54cce00`。
+`host-r44-rs-agent-identity-02.json`：1708 项、跳过 1 项、363.427 秒，其余通过，
+冻结输入不变，报告 SHA256 `d2f0604ad83569797cc0650b40db83caf9e23ff75ee109461e495365ebdfa7fe`。
+R43 编译到 6000 余任务后主动停止：此树不含已从真实日志证实必需的 agent 修复，
+尚未创建 archive 或启动该候选；停止仅作用于验证 tree SHA 为 fbc9a... 的自有
+Docker container，保留 out/cache 与日志，`r43-superseded-build-stop-r44-01.json` 明示原因。
+R43 原控制器记录失败，不能计为包完成或首包通过。
+`build-and-validate-r44-rs-agent-identity-02.py` 已开始仅 ARM64 phone 新代表包，
+包根 `/Volumes/PSSD/qemu/packages/first-rs-agent-identity-7.0-release-20261013-r44/`。
+首包完整运行 gate 尚未通过，其余五包仍未启动。
+
+R44 实际 Docker builder 的六份关键完整源码已逐字节匹配最终修复：
+`r44-actual-build-source-01.json` SHA256
+`d8c3655fd4d422d539ff59a1c35141f497d0eb84f628c94a7eaf827c0940d23c`。
+实际日志 `r44-rs-agent-identity-representative-build-01.log` 记录 task 1037
+CXX 的注册 stub 和 task 1326 的 `librender_service.z.so` SOLINK。源核对/编译/链接
+仍只是构建证据；归档字节核验 watcher 已等待该控制器真正产出的新归档，
+完整新包 boot/行为 gate 未通过，其余五包仍未启动。
+仅清理结束的 07/08/09/10 中仍与原归档 SHA 完全一致的只读解包缓存，
+`r42-owned-diagnostic-readonly-cache-cleanup-r44-02.json` 记录 14 文件、
+6,637,627,400 字节，修改的 trace system.img 与可变 guest image、全部证据保留。
+
+R44 主系统构建成功，主构建耗时 1:15:29。新归档为
+`/Volumes/PSSD/qemu/packages/first-rs-agent-identity-7.0-release-20261013-r44/openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，
+SHA256 `d9f2aafa605f6fbedab36ba1295a967a33aaa8773ee2617d390250ba2c284995`。
+归档绑定最终冻结树 `4ff6f251df9479f9237389ecae2c3cd326a1245b036a347392bb8165a54cce00`。
+`r44-packaged-repairs-01/evidence.json` 已逐字节核对实际新 image 内的
+RS server/base、网络、RDB、public photoaccesshelper ABC 和 KMS，明确 gate false。
+`r44-rs-agent-identity-full-runtime-01.json` 的完整新归档验收已启动，客体目录
+`openharmony-qemu-arm64-arm64_virt-phone-runtime-2y9vxibo`；未使用 trace init 副本，
+没有候选 kernel/DSO 替换，正在真实启动。首包完整 gate 未通过，其余五包未启动。
+
+R44 本轮未修改镜像的实际 boot ID 为
+`725849ca-10da-450c-9d27-317bc0a983a7`，Darwin arm64/HVF，4 CPU、4096 MiB、
+1280×800，独立 HDC server 50967/目标 127.0.0.1:50976。Photo ResultSet 三角色
+真实查询/类型/游标/边界通过，证据 SHA256
+`9003bb9841db6a86d42e47823933f22dc5abd14f876d1f071284991757df5e38`；
+SysVPN 三角色 CRUD/覆盖/参数边界/调用方重启通过，证据 SHA256
+`c4aa63b5e39b3328c02bb13da7cd95a207acd3ad70206bc86c8065dd7bcfe5f2`，
+invalid 参数现为真实数值 401。以太网控制和 Blink 全专项（含停止/退出静默）通过。
+`luminance-sampler/evidence.json` SHA256
+`87d85f1423c1e5129542c604a3ebf351035b55ba4aba8f7cdfbd38b51f355689`：
+两轮实际黑/白 RS 回调为 0/255，两次 off 前后计数 2/2，重新订阅及调用方退出清理通过。
+这些是当前新归档的专项运行结果；ArkTS 全能力集、ArkWeb、Vulkan、完整 ledger 和
+bindings E2E 尚在后续验收，不能把专项通过升级为完整首包放行。
+
+R44 后续 ArkWeb JS/DOM/Canvas/WebGL1/2 真实像素、异常/reload/renderer 退出恢复，
+Web 工厂、Vulkan 窗口呈现/销毁/重建、I18n/矩阵/工厂/曲线/绑定/枚举/Contacts、
+Worker、音频流、AudioSuite 效果、相机、Settings 导航、照片与存储专项通过。
+AVC 专项失败，原 `avc-media/results.log` 的 962 行与原失败证据保留，gate 仍 false。
+96 帧挑战像素都通过；六个 Surface cycle 的 buffer queue 返回实际 2，却被测试
+错误要求为 8，后续 `real_headers_and_requested_idr` 因复用累积 valid 而连带失败。
+
+R45 只修正 AVC 测试调用和严格 verifier 的错误预期：固定 Release
+`CodecClient::QueueInputBuffer(uint32_t)` 在 Surface 模式返回
+`AVCS_ERR_INVALID_OPERATION`，C API 映射为 `AV_ERR_OPERATE_NOT_PERMIT`（2）；
+8 是 `AV_ERR_INVALID_STATE`，不是这一模式混用的契约。完整 Client/CAPI/error mapper
+源码及其函数与固定 HEAD 的等同性证明保存在
+`r45-avc-surface-boundary-source-01/`；实际 SDK 也定义 2/8。紧凑观察报告
+`r45-avc-surface-contract-observation-01.json` SHA256
+`1c3c754ce593898122defa1234884d19efa6ec588956b258e0aadfe7992cc064`，明确不是修正后的来宾通过。
+不修改产品错误映射、不接受任意非零错误、不改写 R44 原始结果。
+新增回归拒绝自报 pass 但返回旧预期 8 的六种 Surface 组合；11 项专项主机测试通过。
+完整真实 AVC 调用库三个 ABI 编译通过，证据
+`r45-avc-caller-three-abi-compile-01/evidence.json`，仍非运行门槛。
+候选冻结 `r45-avc-surface-contract-wmdfw8qc`，树 SHA256
+`c3a1b8f9486547533c566c29d5289395aa08959d95215df0946225003635f97f`，全量主机回归正在运行。
+R44 正继续完成其余独立专项和完整 ledger；R45 新代表包控制器仅准备，未启动。
+必须在原验收结束、确认没有其他未处理失败后重新打包并冷启动完整验收，不能用修正
+verifier 重解释旧日志放行。其余五包仍未启动。
+
+R45 冻结主机回归完成：1709 项、471.563 秒、跳过 1 项，其余通过，输入不变。
+`build-and-validate-r45-avc-surface-contract-01.py` 已启动等待（报告文件为
+`r45-avc-surface-contract-build-and-runtime-02.json`）；只有 R44 完整运行结束且
+失败项限于 AVC 及完整 ledger 的连带失败才允许重建，否则拒绝启动新的构建。
+R44 又已通过 Thermal、NetworkAccounting、Router/Observer、SpringLoading、ArkUI、
+phone 画像、HiTrace、图形内存、服务初始化、原生 Vulkan 与完整权限注册表；
+实际 `vulkan.json` SHA256
+`114d1655b9b90600774b4f09b93be0e87664c3fe3cea30147ea4aae47a3017bb`。
+全部当前 bindings E2E 正在执行，完整 ledger 尚待收尾，仍未放行首包或其余五包。
+
+R44 最终完整执行完毕，但首包 gate **失败**：bindings E2E 为 32 模块/102 用例全通过，
+其证据 SHA256 `2f30ac302ccf10c6cb900845095eb7acc6fe41a19e41b3b7d7776629b454a779`。
+完整运行报告 SHA256 `db71cb0b45fc8d95ba477d986f3060211763234f9cae435f1beaa8ae869dfd23`。
+最终 ledger 的 281 个当前范围要求只闭合 179，仍有 **102** 项未闭合
+（43 个 ArkTS 导出契约、59 个行为要求），并非仅 AVC 的连带失败。
+`cxx-arkts11-gaps.json` SHA256
+`4401e5729f6cfcf06d273c90a64372c0e786a16c94776ddc41875774ca112b1d`；
+原始基线 291 项中，10 项 CloudSync/imageGeneration 按既有用户决定排除，ArkTS Static
+也保持既有排除，不能把其他缺少注册证明的要求静默跳过。
+
+R45 控制器的顶层错误字符串检查不足，误把整个 ledger 错误视为 AVC 连带项而进入构建。
+逐项读到 102 项后立即停止自有 builder，在任何 archive 生成之前结束；只停止核验
+PACKAGE_ROOT 和最终冻结树 c3a1... 一致的 container，保留 out/cache/log。
+`r45-incomplete-ledger-build-stop-01.json` 记录实际停止及原因。R45 没有归档或运行通过，
+控制器状态失败；其余五包始终未启动。后续先逐项补齐未闭合范围与真实证明，并检查
+完整 unresolved 列表，再重新冻结、打包和启动代表包；不得靠单个顶层错误字符串放行。
+
+R46 已保存完整 102 项原 unresolved 清单与逐项候选状态：
+`r46-unresolved-coverage-plan-01.json`，不是通过报告。以太网原 finding 恰好只涉及
+三个 API26 控制；严格角色/真实 kernel flags/重复调用/调用方重启/清理 verifier
+现同时注册 `behavior:ethernet-api26-export-gaps`，不扩大为流量或 BPF 后端通过。
+8 项主机回归通过；旧 R44 证据只用于验证严格重放，
+`r46-ethernet-baseline-replay-01.json` SHA256
+`444adf18daa9d341a21cc2bd907441b7ae354b6b35e440242e5f5a8ee55cd11d` 明确 gate false，
+原失败证据不变，完整新代表包仍是必需条件。
+KnowledgeContent 的实际 pinned media_library 源码搜索未找到原生类或其两方法实现；
+SDK 声明有 `getRelatedEntity` 与 `getSearchSuggestion`，需要真实查询后端和三角色调用证明，
+不能用空数据类或仅转发不存在的 native export 关闭该项。InsightIntent 的既有编译探针
+已检查真实 metadata/装饰器消除，但明确没有来宾注册/执行证明，仍待补齐。
+
+R46 新 InsightIntent 调用方使用独立 bundle
+`org.harmonycontrib.insightdriveraudit`，目标仍为自有装饰器探针；构建 helper 只增加显式
+bundle_name 选项，旧调用方身份/receipt 默认不变。实际 SDK 首次编译指出本探针误用
+process.getUid/getEUid/getPid，已按 SDK 改为 uid/euid/pid 属性；失败 01 保留，系统调用方
+实际编译 02 通过。身份/精确 ACL/错误角色三项主机回归及四项严格解析回归通过。
+
+诊断 01 的脚本误读 QemuGuest.boot_id，启动后失败并关闭自有 VM/HDC；02 使用真实
+boot report 的字段，未改 R44 镜像、未注入 kernel/DSO/ABC。boot ID
+`9536a22a-d636-49cc-8cb0-1828e224cca6`，BMS 实际返回 Entry/FunctionMethod/Form/Link/Page
+五种已注册 decorator 信息（含实体 schema、实际 URI 与页面路径）；两个 entry 调用返回
+各自 nonce/cycle 的实体值，code 0。严格重放核对完整注册信息和两个不同挑战值，
+不是计数/自报成功判定。诊断报告 SHA256
+`7deb6883a7f63d3a784ad6321c2dfb561b13e2f57d3a378a66d68f70f05d0519`，
+电源策略恢复、自有 HDC/VM 关闭，明确 gate false。
+诊断 03 正补齐普通/系统无权限/系统有权限三角色；Form 创建、Link/Page 实际路由、
+完整签名/command/新归档绑定仍未完成。七个 compiler decorator finding 尚未注册闭合，
+102 项原 unresolved 清单及其原证据没有被改写。
+
+诊断 03 在来宾运行前因本探针 normal 字面量比较的 TS2367 编译错误失败，清理与策略
+恢复完成；改为显式 string 角色字段后三角色实际 SDK HAP 均编译通过。
+21 项 Insight 主机回归通过。诊断 04 三角色严格解析均通过：normal 202、system-denied
+201 为数值，system 返回五种完整注册信息及两次各自 nonce/cycle 的 entry 实体值。
+boot ID `0c618a0a-b72b-41ac-90d1-ba55136fe485`，原 R44 image 未修改，仍只诊断；报告 SHA256
+`ab0672281d532a32f8b0df4e3d6b3e2af8aefd7036dcadf54a97cdd01b401b66`。
+电源恢复与自有 VM/HDC 关闭，无其余五包、无首包放行；Link/Page 路由、Form 创建和完整
+证据绑定仍继续，不能据此把七项全部或完整 ledger 计为通过。
+
+## R41 KMS 引用释放候选与新代表包（尚未通过首包门槛）
+
+R40 新归档 SHA256 `e8c40ce433b0f838e21817dd8af7b5390bc3901987a03c5ccfb9c6036dd4d618`
+的完整验收在 `render_service` 致命崩溃后中止；不能以已经通过的启动、ABI、
+退出回归等前置项放行。原失败 boot ID 为 `d3d60707-d02f-4d20-9382-17b02f187c32`。
+独立 COW 重启仅用于取回故障日志，未作为验收：实际 RS 栈从
+`pthread_mutex_lock` 到 `kms_sw_displaytarget_map`，后经 softpipe/Skia/RS 缓存绘制。
+
+本轮把现有未完成的 KMS 第二补丁接入两条实际 Mesa 构建路径：winsys 锁保护
+BO 列表、导入 lookup/ref、plane 获取和最终 unref/destroy。第一补丁的 map 锁
+不能独立保护导入对象的最后引用。补丁原候选的末尾 hunk 计数无效，已从相同完整
+候选源码重新生成，修复后的完整 C 文件 SHA256 仍为
+`e34309672d2bec5db3ed89e53fa340d8cbcac89dfa7f074c3280673ddc3a5687`。
+实际发布 helper 接受完整原版、已发布 map-only prefix 与完整两补丁状态；
+在 scratch 检查整个所需补丁栈后原子替换，拒绝未知源码/坏补丁，精确升级旧 helper。
+两条 GN action 都追踪第二补丁，重复应用和父 builder 刷新不抹去最终修复。
+
+ASAN/UBSAN 的确定性交错复现 map-only 版本 import/final-release use-after-free；
+修复版本验证 64 轮并发、PRIME/seek/mutex-init 失败、共享 plane 引用及锁释放。
+本地 Docker 只读源码和 out 卷，复制实际完整输入到 scratch，真实三个 ABI 的
+KMS TU 都编译通过（ELF machine 40/183/62），GN recipes 应用两次仍精确匹配。
+证据根为 `/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/mesa-kms-lifetime-r41-01/`。
+
+冻结输入 `r41-kms-lifetime-o3do_01b`，树 SHA256
+`9fb6fa263c1ae38d8b990e2cf7156f903bd835228cfbbfb6be9518664153023d`：
+全量主机回归 1691 项、跳过 1 项，其余通过，384.585 秒，输入不变。
+主机报告 `host-r41-kms-lifetime-01.json` 和三 ABI TU 证据均明确不是来宾证明。
+本地 Docker 已完成 ARM64 phone 系统构建，主构建耗时 1:37:39。输出根为
+`/Volumes/PSSD/qemu/packages/first-kms-lifetime-7.0-release-20261012-r41/`。
+`build-and-validate-r41-kms-lifetime-01.py` 仅控制这一代表包和同冻结树完整验收，
+独立运行首包证据校验器；不包含其余五包构建入口。新归档为该根下
+`openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，SHA256
+`672c1f21b35aadebe88df6b21adb7868acc3bfaf28bc6b3e3eb4e03b9ef420d6`。
+实际最终 system.img 的 KMS DSO 与刚编译文件逐字节一致，SHA256
+`d06a7d76e2e4c3903f5f49ed5627f7357af5392c4edaf038f8c3764481119656`；
+记录 `r41-packaged-kms-image-01/evidence.json` 明确只是镜像字节核验。
+
+新归档已解包并在本地 macOS ARM64/HVF 启动，boot ID
+`ca47e1ff-8f9f-4700-8afe-fd9428e0fc51`，HDC `127.0.0.1:51443`，无外部 keepalive。
+启动、backup/boot-profile、两次实际 suspend/wake/compositor 及普通系统主页检查已通过。
+完整证据 `r41-kms-lifetime-full-runtime-01.json` 于
+`2026-10-12T16:42:40.885249+00:00` 结束，SHA256
+`c8a2cff35a01093831c5b24ea26f79fd03f63ce694f662b63dbd4d7610e7f9a2`，
+**整体失败，首包门槛未通过，其余五包未启动**。14 个窄检查通过：boot、backup-init、
+boot-profile、power-suspend、application-home、native-gap-abi、huks-compatibility、
+rs-objects、screen-modes、project-quota、issue20-library-exit、certificate-manager、
+vpn-policy、ethernet-control。原 R40 的 RS 致命崩溃在本次执行到的范围内未再出现，
+但不能外推为完整图形/ArkWeb/Vulkan 稳定性通过。
+
+照片 ResultSet 的普通与 system-denied 角色通过，system 角色只留下 identity 与
+`unexpected:{}`，未得到正向游标/值边界证据。SysVPN 正向存储已读回宽端口及
+forwardingRoutes，但非法 family/port 等同步参数拒绝的 code 仍为字符串 `"401"`。
+闪屏的退出背景第一帧为 Launcher 关闭动画（中央像素匹配比例 0.94654296875），
+后两帧匹配比例均为 1.0；严格整批依然失败。清理重启后缺少绘制就绪等待，
+清理第一帧也尚未呈现其新的 optical serial，无法证明恢复，因此门禁停止后续用例。
+电源覆盖由套件恢复，原始画面/失败报告保留；ArkWeb、Vulkan、亮度、完整缺口台账
+和 native-bindings e2e 未在此完整套件到达，不沿用旧包结果。
+
+后续候选保留全部过渡帧，并要求实际退出后五秒内恢复、三个背景帧及至少 1.5 秒
+稳定；清理重启先等待原样 test surface，再按现有 optical serial/quiet 契约验证停止。
+不降低原有 97%/颜色差阈值，不将 R41 改绿。网络候选从真实 HAP token 获取调用方
+API version，修复 BaseContext 的默认 0 导致 API26 仍选 legacy string 错误分支，
+保留 API24 分界与非 HAP/旧版行为。三 ABI 完整 BaseContext TU 编译通过，
+`network-caller-api-tu-r42-01.json` 是编译证明，未入 R41，不是来宾闭环。
+两次独立 R41 原归档诊断均已完成，完整 gate 始终为 false：
+`r41-resultset-ui-diagnostic-r42-01/evidence.json` 和
+`r41-resultset-shape-diagnostic-r42-02/evidence.json`。原生 query 返回实际对象，
+但公开 ResultSet 构造器 typeof 不是 function（query.shape `[1,0]`），随后的
+instanceof 抛出 TypeError `Type of target is not Object`。亮度 factory 与数值错误边界
+通过，但实际 RS 黑/白回调缺失；RPC、SpringLoading、Arc 的独立诊断通过。
+这些结果没有改写 R41 的失败，也未关闭台账或放行其余五包。
+
+R42 候选把原生 `photoAccessHelper.ResultSet` 直接转出公共 facade，完整最终 JS
+SHA256 `2b0cbaa4c727061697794e9ade94cb98c6cabe3d68c7aa5a49956ff33f882f26`。
+父 Photo/Fusion/search/recent/record 组件仅接受该精确后继状态，重复应用不会抹去导出。
+GL 候选在快照所属渲染上下文使用现有真实 PickColor/readback/average 实现，
+保留 VK semaphore 路径；共享可变 RuntimeShaderBuilder 改为局部 builder。
+两份完整 TU 三 ABI 编译证据为 `color-picker-gl-picker-tu-r42-02.json` 和
+`color-picker-gl-scale-tu-r42-02.json`，各自三条真实产品命令通过；只读输入不变。
+旧预检的错误源码哈希已由实际 pinned Git 字节纠正，失败预检没有计入通过。
+公共 facade 真实 ARM64 ABC 编译 `photo-result-set-export-r42-05/evidence.json` 通过；
+ARMv7a/x86_64 的历史 out 尚缺各自 es2abc，未计为通过，随首包门槛后的对应构建验证。
+候选完整源码最终 SHA256 分别为
+`d9339407358117e6dc50a72837277320566bf32236ed4579be443abd7615a60c` 与
+`2389495362d4cff91cf6e77b7fe9aea605a2be327c1717d4603cd912abe00649`。
+R42 冻结树 `r42-public-gl-g1vonysn`，树 SHA256
+`4e50729b72401c9e17a02b3c71393bef51155fcf6fe38e95217f4559f647aecf`。
+`host-r42-public-gl-01.json`：1701 项、跳过 1 项、378.363 秒，其余通过，输入不变。
+`build-and-validate-r42-public-gl-02.py` 仅控制 ARM64 phone 新首包及同冻结树完整验收，
+输出根 `/Volumes/PSSD/qemu/packages/first-public-gl-7.0-release-20261013-r42/`。
+该次构建在 GN 阶段主动停止，没有生成归档或启动来宾：实际 HAP 的
+`apiTargetVersion` 为 `70000026`，BMS `API_VERSION_MOD = 1000`；直接比较
+编码原值会把编码 API23 误选成新版数字错误。失败控制器和原冻结回归报告均保留，
+不能将该回归通过或停止的构建计为新首包成功。
+
+修正候选在 BaseContext 读取真实 HAP token 后按 BMS 的 `% 1000` 解码，
+完整最终源码 SHA256 `1231c126468411ce5ccccfdccfdd9225fc11de7920cfdca6b78cbcab6d5313b4`。
+ASAN/UBSAN 真实模板回归覆盖 -1/0/9/23/24/26 及 50000023、60000026、
+70000023/24/26/0，旧 API23 仍走 legacy，API24/26 走数字错误。
+`network-caller-api-tu-r42-02.json` 三 ABI 真实完整 TU 编译通过；原未打包 raw
+候选仅在精确 SHA 守卫下恢复该文件到 pinned pristine 后重编，记录
+`r42-encoded-api-guarded-source-reset-01.json`。BMS 原始源码证据为
+`r42-target-api-encoding-source-01.json`。
+下一冻结回归与控制器为 `run-host-r42-public-gl-api-mod-01.py` 和
+`build-and-validate-r42-public-gl-api-mod-02.py`，新首包根为
+`/Volumes/PSSD/qemu/packages/first-public-gl-encoded-api-7.0-release-20261013-r42/`。
+修正后的冻结树 `r42-public-gl-api-mod-vixo84my`，SHA256
+`b54a5c4a17e6c4bfc11cf2fc7f984f11db4dc6215b54e834f691cb3a6598c7bf`。
+`host-r42-public-gl-api-mod-01.json`：1701 项、跳过 1 项、367.686 秒，其余通过，输入不变。
+新首包本地 Docker 构建与打包已完成，归档为该根下
+`openharmony-qemu-arm64-arm64_virt-phone.tar.gz`，SHA256
+`20db3df1ca7d52718ee0749e5a5ab7e65546f44bcb3a0dbc37fbd14301f38f7e`。
+归档输入树与上述修正冻结树精确匹配。构建日志记录两份 GL CXX、BaseContext CXX、
+Rosen/网络 DSO 链接和公开 photoaccesshelper ABC action 均实际执行。
+最终 system.img 已逐字节匹配实际网络/Rosen DSO、photoaccesshelper ABC 和 KMS：
+`r42-packaged-repairs-02/evidence.json`，明确仅为镜像字节核验、gate 为 false。
+第一次字节预检的默认 lib64 路径不存在，原失败记录保留；实际 GN 安装元数据明确
+两份库位于 `lib64/platformsdk`，据此核验后通过，没有修改镜像或放宽 inode 唯一性。
+完整新归档运行验收 `r42-public-gl-api-mod-full-runtime-01.json` 已在 macOS ARM64/HVF
+启动，boot ID `bcc91a2b-9382-4c5c-b607-d72e53abf17b`，HDC `127.0.0.1:55188`，
+私有 HDC server `55184`，无外部 keepalive。启动、两次真实休眠唤醒、系统主页、
+Native/HUKS、RS 对象、屏幕模式、project quota、UDMF/Pasteboard/AVPlayer 退出
+及证书前置检查已通过。完整套件于 `2026-10-12T19:48:29.640506+00:00` 结束，整体失败，报告 SHA256
+`a22e54e7ccd127453305ba3d5c00d705f76126721077660ffaa81caef03014c1`。
+14 项窄检查通过，但 photo-result-set、sys-vpn-store、screen-blink 失败；闪屏清理
+未证明后停止后续批次。照片 query.shape `[1,1]`、factory 的原型身份已成功，
+随后 BLOB 列 getValue 抛 `23800301 Database error`。SysVPN 的非法 family 仍返回
+字符串 `"401"`，API 版本候选没有关闭这条真实路径。闪屏主体、退出背景和重启
+检查已成功，清理的第一帧为实际前序号 11，随后的新序号为 13；旧断言只允许 12，
+且两秒捕获不足以保证新序号后 1.5 秒稳定。下一候选将记录真实控制前序号，
+允许该两条结果事务的有界正向进度，并保留全部帧与原有 1.5 秒提交/稳定门槛。
+原 R42 报告保持失败，电源覆盖已恢复，所属 QEMU/HDC 已停止；ArkWeb、Vulkan、
+亮度及完整台账/E2E 未在本套件运行，不能外推通过。首包门槛未通过，其余五包
+未启动，六包交付未完成。
+
+R43 候选从当前 napi_env 的 NativeEngine 读取应用 target API，仍按 `% 1000`
+解码；旧 Binder calling-token 版本候选没有使 R42 的真实入口变绿，已保留失败。
+当前 C++ SHA256 `0310af124ad55596e34025876cbdc14ef675b668912d4164af096cc29f16a34a`，
+`network-native-engine-api-tu-r43-01.json` 三 ABI 编译通过；真实两条模板路径的
+ASAN/UBSAN 回归覆盖编码 API23/24/26、legacy/unversioned 和空 env。
+SQLite 无声明类型的 BLOB 表达式被原实现错误拒绝；新源文件 SHA256
+`db0d35950401945b0fa074296561fef7258e7eacce296843f71b028b9a16125e`。
+保留声明 ASSET/ASSETS/FloatVector/BigInt 解码，普通空 BLOB 返回字节数组而非 NULL。
+两项真实 SQLite SQL/参数/UNION/NULL/空 BLOB/拷贝隔离主机回归通过。
+`sqlite-expression-blob-tu-r43-02.json` 三 ABI 完整 TU 编译通过；ARMv7a/x86_64 的
+未生成 sqlite3sym.h 由对应真实 Ninja patch action 在私有 scratch 生成，非伪造头文件。
+闪屏候选记录真实控制前序号与一/两条事务进度；保留全部帧，提交后不可回退，
+仍要求 <=1.5 秒提交且 >=1.5 秒稳定、>=3 个新帧，cleanup 捕获改为 3.5 秒。
+24 项相关主机回归通过。公开照片探针新增真实空 BLOB 与 NULL 的值/行键边界。
+以上尚未入新镜像，均未关闭完整首包门槛。R43 冻结回归与仅首包控制器已启动，
+输出根 `/Volumes/PSSD/qemu/packages/first-napi-sqlite-blink-7.0-release-20261013-r43/`。
+独立 R42 原归档 GL 亮度诊断 `r42-gl-luminance-diagnostic-r43-01` 已启动，其 gate
+始终为 false；不替代 R43 新归档的完整运行验收。
+
 ## R40 网络批次与未到达 UI/RPC 的集中诊断（未计入闭环）
 
 提交 `1688e1d5f441df585c5c209bf1c0f4302b1db74a` 的冻结全量主机回归

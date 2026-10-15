@@ -1,0 +1,23 @@
+--- a/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp
+@@ -49,9 +49,5 @@
+ Ability_NativeChildProcess_ErrCode OH_Ability_DestroyChildProcessConfigs(Ability_ChildProcessConfigs* configs)
+ {
+-    if(configs == nullptr){
+-        TAG_LOGE(AAFwkTag::PROCESSMGR, "null Ability_ChildProcessConfigs");
+-        return NCP_ERR_INVALID_PARAM;
+-    }
+     delete configs;
+     configs = nullptr;
+     return NCP_NO_ERROR;
+@@ -64,6 +60,10 @@
+         TAG_LOGE(AAFwkTag::APPKIT, "null Ability_ChildProcessConfigs");
+         return NCP_ERR_INVALID_PARAM;
+     }
++    if (isolationMode != NCP_ISOLATION_MODE_NORMAL && isolationMode != NCP_ISOLATION_MODE_ISOLATED) {
++        TAG_LOGE(AAFwkTag::APPKIT, "invalid child process isolation mode");
++        return NCP_ERR_INVALID_PARAM;
++    }
+     configs->isolationMode = isolationMode;
+     return NCP_NO_ERROR;
+ }

@@ -1,0 +1,12 @@
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"identity","values":[20010038,20010038,2576],"data":""}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"typed.const.enum","values":[0,1],"data":""}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"supported","values":[0,0],"data":""}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"C_API","values":[],"data":"[{\"name\":\"parent.args.present\",\"code\":0,\"pid\":-1},{\"name\":\"destroy.null\",\"code\":401,\"pid\":-1},{\"name\":\"config.created\",\"code\":1,\"pid\":-1},{\"name\":\"isolation.uid.null\",\"code\":401,\"pid\":-1},{\"name\":\"isolation.uid\",\"code\":0,\"pid\":-1},{\"name\":\"process.name\",\"code\":0,\"pid\":-1},{\"name\":\"start\",\"code\":16010004,\"pid\":-1},{\"name\":\"start.configured\",\"code\":16010004,\"pid\":-1},{\"name\":\"start.null\",\"code\":401,\"pid\":-1},{\"name\":\"start.configured.null\",\"code\":401,\"pid\":-1},{\"name\":\"config.destroy\",\"code\":0,\"pid\":-1}]"}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"legacy.promise.reject.0","values":[16000061],"data":"number:Operation not supported."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"legacy.callback.reject.0","values":[16000061],"data":"number:Operation not supported."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"legacy.promise.reject.1","values":[16000061],"data":"number:Operation not supported."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"legacy.callback.reject.1","values":[16000061],"data":"number:Operation not supported."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"ark.reject","values":[801],"data":"number:Capability not support."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"native.reject","values":[801],"data":"number:Capability not support."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"invalid.entry.reject","values":[401],"data":"number:Param entryPoint must contains a colon to separate library name and entry function."}
+{"runId":"69e2fb1f99f12e31be5d2f18c54528cc","name":"summary","values":[1],"data":""}

@@ -1,0 +1,17 @@
+{
+  "scope": "captured_old_package_unit_fixtures_NOT_gate",
+  "callers": {
+    "normal": {
+      "run_id": "675f1d3459821829876234f7181dd261",
+      "uid": 20010038
+    },
+    "reader-denied": {
+      "run_id": "3ae0e6ce3ba0b335b69b6c19acb4b64f",
+      "uid": 20010038
+    },
+    "reader": {
+      "run_id": "d66d94157d4634f4aa01e6933e585935",
+      "uid": 20010038
+    }
+  }
+}

@@ -2,13 +2,37 @@
 import json
 import re
 
-KINDS = ("vulkan-device", "vulkan-headless", "vulkan-ohos-surface", "gles")
+KINDS = ("vulkan-device", "vulkan-headless", "vulkan-ohos-surface", "gles", "gles-llvm")
 
 
-def verify(kind, log, exit_code):
+def verify(kind, log, exit_code, run_id=None):
     if kind not in KINDS or type(exit_code) is not int or exit_code != 0:
         raise ValueError("native graphics probe did not exit successfully")
     lines = log.replace("\r", "").splitlines()
+    if kind == "gles-llvm":
+        if len(lines) != 1 or not isinstance(run_id, str) or not re.fullmatch("[a-f0-9]{32}", run_id):
+            raise ValueError("isolated real GLES run nonce required")
+        row = json.loads(lines[0])
+        required = {
+            "runId": run_id, "backend": "llvmpipe", "glesVersions": [2, 3],
+            "contextGenerations": 6, "shaderPrograms": 6, "shaderPixels": 19507428,
+            "pbufferPixels": 6, "swapCount": 6, "teardownCount": 6,
+            "scope": "native_GLES_LLVM_shader_lifecycle",
+            "compositorTested": False, "pass": True,
+        }
+        if (set(row) != set(required) | {"pid", "uid", "patternHash"} or
+                any(type(row.get(key)) is not type(value) or row[key] != value
+                    for key, value in required.items()) or
+                type(row["pid"]) is not int or row["pid"] <= 0 or
+                type(row["uid"]) is not int or row["uid"] < 0 or
+                any(type(value) is not int for value in row["glesVersions"]) or
+                not isinstance(row["patternHash"], str) or
+                not re.fullmatch("[a-f0-9]{16}", row["patternHash"]) or
+                row["patternHash"] == "0" * 16):
+            raise ValueError("complete LLVM GLES2/3 shaders, bounds or teardown proof missing")
+        return {"scope": row["scope"], "shader_pixels": row["shaderPixels"],
+                "context_generations": 6, "backend": "llvmpipe",
+                "compositor_tested": False, "webgl_tested": False}
     if kind == "vulkan-device":
         patterns = (r"loader_api=\d+\.\d+\.\d+", r"instance=ok",
                     r"physical_devices=[1-9][0-9]* name=.+ api=\d+\.\d+\.\d+",

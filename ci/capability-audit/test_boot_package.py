@@ -141,6 +141,38 @@ class FreshPackageBootTests(unittest.TestCase):
                 close.assert_called_once_with()
             self.assertEqual(guest.report['failures'], ['KeyboardInterrupt'])
 
+    def test_failed_live_boot_snapshots_are_bounded_and_original_error_survives(self):
+        for snapshot_error in (None, ValueError('diagnostic helper failed')):
+            with self.subTest(snapshot_error=snapshot_error), tempfile.TemporaryDirectory() as directory:
+                args = argparse.Namespace(archive=Path('/synthetic.tar.gz'), purpose='acceptance',
+                    hdc_port=5555, output=Path(directory) / 'boot', hdc='/synthetic-hdc')
+                guest = QemuGuest(args)
+                original = ValueError('RenderService restarted during unassisted boot stability')
+                def fail_after_identity(_):
+                    guest.process = Mock()
+                    guest.process.poll.return_value = None
+                    guest.target = '127.0.0.1:5555'
+                    guest.report['test_environment']['boot_id'] = 'a1f293cc-5726-4630-8965-2b31b25407e7'
+                    raise original
+                def snapshot(shell, boot_id):
+                    shell('cat /proc/sys/kernel/random/boot_id', 'failure-identity')
+                    if snapshot_error is not None: raise snapshot_error
+                    return {'scope': 'synthetic diagnostic orchestration test only'}
+                with patch('boot_package.port_available', side_effect=fail_after_identity), \
+                        patch('boot_failure_snapshot.capture', side_effect=snapshot), \
+                        patch.object(guest, 'command') as command, \
+                        patch.object(guest, 'save'), patch.object(guest, 'close') as close:
+                    with self.assertRaises(ValueError) as raised:
+                        guest.start()
+                    self.assertIs(raised.exception, original)
+                    close.assert_called_once_with()
+                    command.assert_called_once_with(['/synthetic-hdc', '-t', '127.0.0.1:5555',
+                        'shell', 'cat /proc/sys/kernel/random/boot_id'], 'failure-identity', timeout=5)
+                self.assertEqual(guest.report['failures'], [str(original)])
+                self.assertFalse(guest.report['first_artifact_behavior_gate_passed'])
+                if snapshot_error is not None:
+                    self.assertIn('capture_error', guest.report['failure_snapshot'])
+
     def test_private_port_range(self):
         for value in (True, 80, 65536, '5555'):
             with self.assertRaises(ValueError):

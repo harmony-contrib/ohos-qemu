@@ -33,3 +33,7 @@ done
   ${ARM_FLAGS[@]+"${ARM_FLAGS[@]}"} -O2 -g -Wall -Wextra -Werror \
   "${ROOT}/egl_extension_probe.c" -ldl -o "${OUTPUT}/egl_extension_probe"
 file "${OUTPUT}"/vulkan_* "${OUTPUT}/egl_extension_probe"
+"${SDK}/llvm/bin/clang" --target="${TARGET}" --sysroot="${SDK}/sysroot" \
+  ${ARM_FLAGS[@]+"${ARM_FLAGS[@]}"} -O2 -g -Wall -Wextra -Werror \
+  "${ROOT}/probes/mesa_llvm_gles.c" -L"${SDK}/sysroot/usr/lib/${TARGET}" \
+  -lEGL -lGLESv3 -lm -o "${OUTPUT}/mesa_llvm_gles"
