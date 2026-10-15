@@ -7,13 +7,15 @@ was stored, and invoked the supplied event listener as an async completion.
 
 This component retains the real IMS event route and fixes its listener registry:
 
-- Omitted listeners remove this environment's registrations. A supplied listener
+- Omitted or explicitly `undefined` listeners remove this environment's registrations. A supplied listener
   removes only matching registrations; it is never invoked as a completion.
 - Each event family supports independent listeners and environments. Duplicate
   registration releases its redundant references.
 - Pending work retains a registration token rather than a raw callback copy.
   Removal invalidates the token before releasing its two N-API references.
-  Environment cleanup also invalidates pending work before the environment exits.
+  The environment hook owns the registration and its mutex independently of
+  the singleton. Environment cleanup invalidates pending work before exit,
+  including when the singleton has already been destroyed.
 
 Apply this component to the fixed source after the existing `api26_enums`
 component. It uses the existing `SUPPORT_RTT_CALL` feature gate. Shared patch

@@ -10,7 +10,7 @@
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h"
   ],
-  "patch_sha256": "8e19ec78b6a49d40f35f2c73bd85bf3fbf55430dca829edec928220b6ad80bed",
+  "patch_sha256": "e6d28f731f540d715bd15064b4dcf355f9a2d6ca438601288e411987f3659180",
   "requirements_review": [
     {
       "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
@@ -322,7 +322,7 @@
   "tests": [
     {
       "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_location_rtt_lifecycle.py",
-      "result": "PASS: 2 tests, actual patched C++ functions executed with ASan/UBSan; component application is idempotent",
+      "result": "PASS: 2 tests; actual patched C++ with ASan/UBSan, explicit undefined, identity/multiple/environment isolation, owner-before-env teardown, queued cancellation, reference release and hook error cases; component reapply works with and without markers.",
       "evidence": "host-tests.log"
     },
     {
@@ -334,6 +334,11 @@
       "command": "git apply --check <new component patch> (private complete copies of the four fixed source files)",
       "result": "PASS; original source container was read only",
       "evidence": "host-tests.log"
+    },
+    {
+      "command": "clang++ -std=c++17 -fsyntax-only -I <private copied fixed header bundle> include_probe.cpp",
+      "result": "PASS: both napi_add_env_cleanup_hook and napi_remove_env_cleanup_hook have napi_status (*)(napi_env, void (*)(void*), void*) type; effective default NAPI_VERSION=8.",
+      "evidence": "followup-review.json and host-tests.log"
     },
     {
       "command": "New OpenHarmony build / package / QEMU runtime",
@@ -489,11 +494,14 @@
     "ci/capability-audit/fixtures/batch_location/rtt_before.json",
     "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
     "docs/capability-audit/parallel/location/backend-excerpts.json",
+    "docs/capability-audit/parallel/location/followup-review.json",
     "docs/capability-audit/parallel/location/host-tests.log",
     "docs/capability-audit/parallel/location/result.json",
     "docs/capability-audit/parallel/location/source-evidence.json",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
-  ]
+  ],
+  "followup_date": "2026-10-16",
+  "followup_review": "followup-review.json"
 }
