@@ -312,6 +312,7 @@ IDL_COMMON_TYPE_OUTPUTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/build/idl_common_
 MESA_KMS_MAPPING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/mesa3d/kms_mapping_synchronization/apply.sh"
 QEMU_KMS_MESA_BUILD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/kms_mesa_build/apply.sh"
 MESA_KMS_MAPPING_BUILD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/mesa3d/kms_mapping_build/apply.sh"
+GRAPHICS3D_SCENE_STARTUP_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_3d/scene_startup/apply.sh"
 QEMU_POWER_WAKELOCKS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/power_wakelocks/apply.sh"
 QEMU_POWER_BUTTON_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_power_button/apply.sh"
 QEMU_VIRTIO_GPU_S2IDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/kernel/linux/linux_6_6/qemu_virtio_gpu_s2idle/apply.sh"
@@ -2944,6 +2945,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_kms_mesa_build_component.log"
   bash "${MESA_KMS_MAPPING_BUILD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_kms_mapping_build_component.log"
+  bash "${GRAPHICS3D_SCENE_STARTUP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_graphics3d_scene_startup_component.log"
   python3 "${PATCH_ROOT}/common/third_party/mesa3d/llvm_backend/apply_backend.py" \
     --source-root "${OHOS_ROOT}" --artifact-root "${QEMU_MESA_LLVM_ARTIFACTS}" --products "${PRODUCTS[@]}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mesa_llvm_backend.log"
