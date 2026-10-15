@@ -2,6 +2,7 @@
 // management events; connection publication also requires its real TUN bridge.
 #include "management_protocol.h"
 #include "profile_policy.h"
+#include "process_lifecycle.h"
 #include "networkvpn_client.h"
 #include <array>
 #include <cerrno>
@@ -140,10 +141,11 @@ bool Spawn(Session &session, const std::string &config, const std::string &manag
     std::vector<char *> argv;
     for (auto &argument : arguments) argv.push_back(argument.data());
     argv.push_back(nullptr);
+    const pid_t supervisor = getpid();
     session.child = fork();
     if (session.child < 0) return false;
     if (session.child == 0) {
-        if (setpgid(0, 0) != 0) _exit(126);
+        if (!OhosOpenvpn::BindToParent(supervisor) || setpgid(0, 0) != 0) _exit(126);
         execv(CLIENT, argv.data());
         _exit(127);
     }

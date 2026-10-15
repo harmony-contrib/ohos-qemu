@@ -4,6 +4,10 @@ The sources in `files/` address the absent system OpenVPN process backend.
 They are not yet installed by the full QEMU recipe. The fixed OpenVPN dependency
 alone does not provide this service.
 
+The 2026-10-15 network batch adds a paired `qemu_openvpn_control` netsys
+component and an `openvpn_lifecycle` controller component. They are also staged
+candidates awaiting aggregate installation and newly packaged validation.
+
 The supervisor uses init's actual `netsysnative` UID 1098, obtains the active
 configuration through `NetworkVpnClient`, owns the OpenVPN process group and
 uses a private management Unix socket. It accepts management events only from
@@ -18,6 +22,15 @@ credential paths, management/TUN endpoint replacement, executable hooks,
 plugins and log/PID/replay-file outputs. The private askpass path is appended
 only after validation. The supervisor also keeps the authenticated bridge's
 readiness connection open, so a bridge exit terminates the owned session.
+
+The fixed init stops this ordinary service with SIGKILL, which bypasses C++
+destructors. The exec child and TUN bridge now each set Linux
+`PR_SET_PDEATHSIG=SIGKILL` and check their exact parent again to reject the
+fork/prctl reparenting race before accessing VPN/TUN resources. Guard error
+and race paths pass the host regression with explicit syscall doubles. An
+actual Linux fork/exec/SIGKILL regression is included but skipped on the macOS
+host; it must run during central Linux validation. Abrupt-stop stale private
+session directories and restart/multiple-owner behavior remain open.
 
 The bridge consumes OpenVPN's negotiated configuration and AF_UNIX packet
 socket, requests the real TUN descriptor from netsys, verifies TUN/NO_PI and

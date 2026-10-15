@@ -1,0 +1,302 @@
+{
+  "agent": "network",
+  "date": "2026-10-15",
+  "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "branch": "codex/capability-network-20261015",
+  "summary": "Bounded first-round source repairs and review of all 9 assigned gaps. No runtime ledger closure, package build or shared source mutation.",
+  "fixed_source": {
+    "container": "ohos-qemu-parallel-source-20261015-01",
+    "root": "/ohos",
+    "access": "read-only git/cat/python queries only",
+    "revisions": {
+      "foundation/communication/netmanager_base": "9831989d54f490d046a632ab13d309580d2fa710",
+      "foundation/communication/netmanager_ext": "8c41289750820fb2ddb347b1205cee9a7b527388"
+    }
+  },
+  "qemu_gn_condition": "netmanager_base_enable_feature_sysvpn && (product_name == \"armv7a_virt\" || product_name == \"arm64_virt\" || product_name == \"x86_64_virt\")",
+  "upstream_targets": [
+    "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
+    "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
+    "foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h",
+    "foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp",
+    "foundation/communication/netmanager_ext/qemu_openvpn/supervisor.cpp",
+    "foundation/communication/netmanager_ext/qemu_openvpn/tun_bridge.cpp",
+    "foundation/communication/netmanager_ext/qemu_openvpn/process_lifecycle.h"
+  ],
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_openvpn_lifecycle test_connected_vpn_nullable test_openvpn_profile_policy -v",
+      "environment": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+      "result": "PASS: 9 collected, 8 passed, 1 Linux-only test skipped; actual patched method bodies and policy compiled with ASan/UBSan and -Werror, using explicit service/syscall doubles.",
+      "evidence": "docs/capability-audit/parallel/network/host-tests.txt",
+      "limits": "No product TU compilation or runtime VPN proof; Linux fork/exec/SIGKILL test pending."
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "parent",
+      "action": "Add netmanager_base/qemu_openvpn_control/apply.sh and netmanager_ext/openvpn_lifecycle/apply.sh to the aggregate checked source preparation; keep exact states and existing component ordering.",
+      "paths": [
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "owner": "parent",
+      "action": "Install openvpn_backend/files plus locked upstream/recipe inputs under foundation/communication/netmanager_ext/qemu_openvpn, add the staged qemu_openvpn_backend GN target to the netmanager_ext aggregate, and install its complete binaries/licenses/init/DAC/SELinux together. Review startup.service.ctl read permissions used internally by ServiceControl(RESTART).",
+      "paths": [
+        "foundation/communication/netmanager_ext/bundle.json",
+        "base/security/selinux_adapter",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ],
+      "blocker": "Backend is not yet activated or fully negotiated for DNS/IPv6/routes; do not interpret the new init request path as complete VPN delivery."
+    },
+    {
+      "owner": "parent",
+      "action": "Run the Linux-only test in a private writable scratch/container under the heavy-resource lease, then compile final sources on all target architectures and execute first-new-package TLS/permission/account/lifecycle validation. The fixed source container must remain read-only.",
+      "test": "test_batch_network_openvpn_lifecycle.OpenvpnLifecycleTests.test_linux_parent_death_kills_real_exec_child"
+    },
+    {
+      "owner": "parent",
+      "action": "Coordinate USB MTP provider declaration with apps/media owners; coordinate BPF/kernel and bridge/tap launcher changes centrally to avoid overlapping source ownership."
+    }
+  ],
+  "requirements_review": {
+    "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand": {
+      "status": "open_export_and_backend_dependency",
+      "finding": "Fixed NAPI registers pairDeviceOutOfBand only. API 26 startPairOutOfBand adds a deviceId parameter and optional P192/P256 data, so aliasing the existing three-argument parser is incorrect.",
+      "evidence": [
+        "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:53",
+        "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:800",
+        "/ohos/interface/sdk-js/api/@ohos.bluetooth.connection.d.ts:286"
+      ],
+      "remaining": [
+        "Implement and boundary-test the API 26 four-argument parser/export while preserving native permission checks.",
+        "Provide an actual Bluetooth controller/vendor transport and OOB-capable peer; verify pairing events, errors and cleanup."
+      ]
+    },
+    "behavior:netmanager-ebpf-backend": {
+      "status": "open_new_package_validation",
+      "finding": "The repository already has BPF_SYSCALL/CGROUP_BPF kernel candidates for all three architectures. Historical ENOSYS alone cannot establish the behavior of the next rebuilt kernel, and candidate configuration does not prove UID policy/statistics.",
+      "evidence": [
+        "patches/common/device/qemu/kernel_capability/0001-enable-ebpf-dmabuf-and-arm64-ftrace.patch",
+        "docs/capability-audit/parallel-work-plan.json"
+      ],
+      "remaining": [
+        "Boot a newly packaged kernel and verify actual BPF program/map loading and attachment, UID accounting, access-policy enforcement, denied caller boundaries and cleanup.",
+        "Kernel/defconfig modifications belong to central integration; this batch did not edit them."
+      ]
+    },
+    "behavior:bluetooth-state-transition-false-success": {
+      "status": "open_backend_dependency",
+      "finding": "Historical adapter/vendor-loader rollback remains open. Existing enum/export repairs cannot substitute for a Bluetooth transport or confirm adapter state transitions.",
+      "evidence": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "patches/common/foundation/communication/bluetooth/api26_control_enums/README.md"
+      ],
+      "remaining": [
+        "Select a real virtual or passthrough controller and matching vendor/HDI transport.",
+        "Use a new package and peer to verify enable/disable final state, pairing/data, unplug and cleanup; request acceptance must not count as enabled."
+      ]
+    },
+    "behavior:wifi-sta-backend-unavailable": {
+      "status": "open_new_package_and_peer_validation",
+      "finding": "The repository already stages mac80211_hwsim/virt_wifi modules and WPA scan/channel/software-PNO/regulatory candidates. Their own evidence explicitly leaves AP association/data/P2P validation open; historical absent-module evidence must not be misreported as a fresh-source result.",
+      "evidence": [
+        "scripts/build_standard_qemu_in_docker.sh:2365",
+        "patches/common/foundation/communication/wifi/wpa_scan/README.md",
+        "patches/common/foundation/communication/wifi/wpa_channels/README.md",
+        "patches/common/foundation/communication/wifi/software_ap_regulatory/README.md"
+      ],
+      "remaining": [
+        "Validate the actual packaged modules, service identity, real radio interface and regulatory behavior.",
+        "Run STA/AP association, DHCP, packet transfer, P2P, failure, device-change and teardown tests using a genuine compatible peer."
+      ]
+    },
+    "behavior:usb-manager-device-query": {
+      "status": "open_device_and_provider_dependency",
+      "finding": "Host enumeration and a USB service alone do not establish gadget/device-mode operation. The historical missing UDC/configfs binding and MTP service declaration mismatch remain separate unresolved dependencies.",
+      "evidence": [
+        "/ohos/base/usb/usb_manager/services/native/src/usb_host_manager.cpp:489",
+        "/ohos/base/usb/usb_manager/services/native/src/usb_service.cpp:856",
+        "docs/capability-audit/parallel-work-plan.json"
+      ],
+      "remaining": [
+        "Provide actual QEMU host-device fixtures/passthrough and a genuine UDC backend for device mode.",
+        "Coordinate MtpService HAP/provider declaration with the owning app/media group through the parent; do not edit their files.",
+        "Validate descriptor/query/open/permission/data/unplug/cleanup behavior and real MTP activation on a new package."
+      ]
+    },
+    "behavior:peer-device-user-nat-isolation": {
+      "status": "open_shared_launcher_and_peer_dependency",
+      "finding": "The current package launcher still generates a user-mode NAT netdev, preventing ordinary peer discovery between independent guests. Correcting a single service implementation cannot create a shared layer-2 test network.",
+      "evidence": [
+        "scripts/package_standard_qemu.sh:1244",
+        "docs/capability-audit/parallel-work-plan.json"
+      ],
+      "remaining": [
+        "Parent owns shared launcher changes: design explicit bridge/tap networking with unique interfaces, MACs, ports and two independent device identities.",
+        "Validate discovery, account/authentication boundaries, distributed/cast data and peer removal with two newly packaged guests."
+      ]
+    },
+    "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig": {
+      "status": "open_source_candidate_improved",
+      "finding": "Added QEMU-only netsys init service control independent of ipsec; controller rejects failed starts/stops, preserves cleanup errors and clears stale disconnected configuration. Staged OpenVPN exec child and TUN bridge bind lifetime to their exact parent for init SIGKILL. CONNECTED still requires actual management TLS state and authenticated TUN readiness; no requirement is closed.",
+      "evidence": [
+        "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+        "docs/capability-audit/parallel/network/host-tests.txt"
+      ],
+      "remaining": [
+        "Integrate exact netsys/controller components and install the whole staged OpenVPN backend at foundation/communication/netmanager_ext/qemu_openvpn.",
+        "Complete GN/aggregate dependencies, narrow init service DAC/SELinux and startup.service.ctl.qemu_openvpn read access required by the real ServiceControl restart helper.",
+        "Run actual Linux parent-death/fork/exec regression and cross-compile the final changed sources for all three target architectures.",
+        "Validate profile policy against locked OpenVPN parser, credentials, negotiated DNS/IPv6/routes, abrupt-stop session-file cleanup, restart and multiple owners.",
+        "Use a newly packaged representative artifact with a real TLS peer to validate connection/data, failure and exit, ordinary/system caller permissions, account/owner boundaries, and teardown before other packages."
+      ]
+    },
+    "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo": {
+      "status": "open_source_candidate_improved",
+      "finding": "Added QEMU-only netsys init service control independent of ipsec; controller rejects failed starts/stops, preserves cleanup errors and clears stale disconnected configuration. Staged OpenVPN exec child and TUN bridge bind lifetime to their exact parent for init SIGKILL. CONNECTED still requires actual management TLS state and authenticated TUN readiness; no requirement is closed.",
+      "evidence": [
+        "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+        "docs/capability-audit/parallel/network/host-tests.txt"
+      ],
+      "remaining": [
+        "Integrate exact netsys/controller components and install the whole staged OpenVPN backend at foundation/communication/netmanager_ext/qemu_openvpn.",
+        "Complete GN/aggregate dependencies, narrow init service DAC/SELinux and startup.service.ctl.qemu_openvpn read access required by the real ServiceControl restart helper.",
+        "Run actual Linux parent-death/fork/exec regression and cross-compile the final changed sources for all three target architectures.",
+        "Validate profile policy against locked OpenVPN parser, credentials, negotiated DNS/IPv6/routes, abrupt-stop session-file cleanup, restart and multiple owners.",
+        "Use a newly packaged representative artifact with a real TLS peer to validate connection/data, failure and exit, ordinary/system caller permissions, account/owner boundaries, and teardown before other packages."
+      ]
+    },
+    "behavior:vpn-runtime-export-gaps": {
+      "status": "open_source_candidate_improved",
+      "finding": "Added QEMU-only netsys init service control independent of ipsec; controller rejects failed starts/stops, preserves cleanup errors and clears stale disconnected configuration. Staged OpenVPN exec child and TUN bridge bind lifetime to their exact parent for init SIGKILL. CONNECTED still requires actual management TLS state and authenticated TUN readiness; no requirement is closed.",
+      "evidence": [
+        "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+        "docs/capability-audit/parallel/network/host-tests.txt"
+      ],
+      "remaining": [
+        "Integrate exact netsys/controller components and install the whole staged OpenVPN backend at foundation/communication/netmanager_ext/qemu_openvpn.",
+        "Complete GN/aggregate dependencies, narrow init service DAC/SELinux and startup.service.ctl.qemu_openvpn read access required by the real ServiceControl restart helper.",
+        "Run actual Linux parent-death/fork/exec regression and cross-compile the final changed sources for all three target architectures.",
+        "Validate profile policy against locked OpenVPN parser, credentials, negotiated DNS/IPv6/routes, abrupt-stop session-file cleanup, restart and multiple owners.",
+        "Use a newly packaged representative artifact with a real TLS peer to validate connection/data, failure and exit, ordinary/system caller permissions, account/owner boundaries, and teardown before other packages."
+      ]
+    }
+  },
+  "remaining_gaps": [
+    {
+      "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+      "status": "open_export_and_backend_dependency",
+      "required": [
+        "Implement and boundary-test the API 26 four-argument parser/export while preserving native permission checks.",
+        "Provide an actual Bluetooth controller/vendor transport and OOB-capable peer; verify pairing events, errors and cleanup."
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+      "status": "open_source_candidate_improved",
+      "required": [
+        "Integrate exact netsys/controller components and install the whole staged OpenVPN backend at foundation/communication/netmanager_ext/qemu_openvpn.",
+        "Complete GN/aggregate dependencies, narrow init service DAC/SELinux and startup.service.ctl.qemu_openvpn read access required by the real ServiceControl restart helper.",
+        "Run actual Linux parent-death/fork/exec regression and cross-compile the final changed sources for all three target architectures.",
+        "Validate profile policy against locked OpenVPN parser, credentials, negotiated DNS/IPv6/routes, abrupt-stop session-file cleanup, restart and multiple owners.",
+        "Use a newly packaged representative artifact with a real TLS peer to validate connection/data, failure and exit, ordinary/system caller permissions, account/owner boundaries, and teardown before other packages."
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+      "status": "open_source_candidate_improved",
+      "required": [
+        "Integrate exact netsys/controller components and install the whole staged OpenVPN backend at foundation/communication/netmanager_ext/qemu_openvpn.",
+        "Complete GN/aggregate dependencies, narrow init service DAC/SELinux and startup.service.ctl.qemu_openvpn read access required by the real ServiceControl restart helper.",
+        "Run actual Linux parent-death/fork/exec regression and cross-compile the final changed sources for all three target architectures.",
+        "Validate profile policy against locked OpenVPN parser, credentials, negotiated DNS/IPv6/routes, abrupt-stop session-file cleanup, restart and multiple owners.",
+        "Use a newly packaged representative artifact with a real TLS peer to validate connection/data, failure and exit, ordinary/system caller permissions, account/owner boundaries, and teardown before other packages."
+      ]
+    },
+    {
+      "id": "behavior:netmanager-ebpf-backend",
+      "status": "open_new_package_validation",
+      "required": [
+        "Boot a newly packaged kernel and verify actual BPF program/map loading and attachment, UID accounting, access-policy enforcement, denied caller boundaries and cleanup.",
+        "Kernel/defconfig modifications belong to central integration; this batch did not edit them."
+      ]
+    },
+    {
+      "id": "behavior:bluetooth-state-transition-false-success",
+      "status": "open_backend_dependency",
+      "required": [
+        "Select a real virtual or passthrough controller and matching vendor/HDI transport.",
+        "Use a new package and peer to verify enable/disable final state, pairing/data, unplug and cleanup; request acceptance must not count as enabled."
+      ]
+    },
+    {
+      "id": "behavior:wifi-sta-backend-unavailable",
+      "status": "open_new_package_and_peer_validation",
+      "required": [
+        "Validate the actual packaged modules, service identity, real radio interface and regulatory behavior.",
+        "Run STA/AP association, DHCP, packet transfer, P2P, failure, device-change and teardown tests using a genuine compatible peer."
+      ]
+    },
+    {
+      "id": "behavior:usb-manager-device-query",
+      "status": "open_device_and_provider_dependency",
+      "required": [
+        "Provide actual QEMU host-device fixtures/passthrough and a genuine UDC backend for device mode.",
+        "Coordinate MtpService HAP/provider declaration with the owning app/media group through the parent; do not edit their files.",
+        "Validate descriptor/query/open/permission/data/unplug/cleanup behavior and real MTP activation on a new package."
+      ]
+    },
+    {
+      "id": "behavior:peer-device-user-nat-isolation",
+      "status": "open_shared_launcher_and_peer_dependency",
+      "required": [
+        "Parent owns shared launcher changes: design explicit bridge/tap networking with unique interfaces, MACs, ports and two independent device identities.",
+        "Validate discovery, account/authentication boundaries, distributed/cast data and peer removal with two newly packaged guests."
+      ]
+    },
+    {
+      "id": "behavior:vpn-runtime-export-gaps",
+      "status": "open_source_candidate_improved",
+      "required": [
+        "Integrate exact netsys/controller components and install the whole staged OpenVPN backend at foundation/communication/netmanager_ext/qemu_openvpn.",
+        "Complete GN/aggregate dependencies, narrow init service DAC/SELinux and startup.service.ctl.qemu_openvpn read access required by the real ServiceControl restart helper.",
+        "Run actual Linux parent-death/fork/exec regression and cross-compile the final changed sources for all three target architectures.",
+        "Validate profile policy against locked OpenVPN parser, credentials, negotiated DNS/IPv6/routes, abrupt-stop session-file cleanup, restart and multiple owners.",
+        "Use a newly packaged representative artifact with a real TLS peer to validate connection/data, failure and exit, ordinary/system caller permissions, account/owner boundaries, and teardown before other packages."
+      ]
+    }
+  ],
+  "closed_requirement_count": 0,
+  "shared_resources": {
+    "heavy_lease_requested": false,
+    "builds_started": 0,
+    "containers_created": 0,
+    "source_or_out_writes": 0
+  },
+  "changed_files": [
+    "ci/capability-audit/fixtures/batch_network/fixed-source.json",
+    "ci/capability-audit/test_batch_network_openvpn_lifecycle.py",
+    "docs/capability-audit/parallel/network/host-tests.txt",
+    "docs/capability-audit/parallel/network/result.json",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/README.md",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/verify_source.py",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/README.md",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/supervisor.cpp",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/tun_bridge.cpp",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/README.md",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/apply.sh",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/verify_source.py"
+  ]
+}

@@ -2,6 +2,7 @@
 // configuration and real TUN FD. No test entry point can synthesize CONNECTED.
 #include "networkvpn_client.h"
 #include "received_descriptor.h"
+#include "process_lifecycle.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -89,6 +90,7 @@ int ConnectReady()
 int Bridge()
 {
     if (getuid() != 1098 || geteuid() != 1098) return 2;
+    if (!OhosOpenvpn::BindToParent(getppid())) return 2;
     const int peer = Decimal(getenv("TUNTAP_SOCKET_FD"), 0, std::numeric_limits<int>::max());
     const int mtu = Decimal(getenv("TUNTAP_MTU"), 576, 65535);
     const char *address = getenv("ifconfig_local");

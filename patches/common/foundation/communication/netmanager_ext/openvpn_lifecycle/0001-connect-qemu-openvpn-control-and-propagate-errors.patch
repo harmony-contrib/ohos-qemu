@@ -1,0 +1,90 @@
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h b/foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h
+@@ -84,7 +84,7 @@
+     void UpdateConfig(cJSON* jConfig);
+     int32_t ProcessDnsConfig(cJSON* jConfig);
+     void UpdateState(cJSON* state);
+-    void StopOpenvpn();
++    int32_t StopOpenvpn();
+ };
+ } // namespace NetManagerStandard
+ } // namespace OHOS
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp b/foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp
+@@ -38,16 +38,25 @@
+ int32_t OpenvpnCtl::StartOpenvpn()
+ {
+     if (openvpnConfig_ == nullptr) {
+         NETMGR_EXT_LOG_E("StartOpenvpn openvpnConfig_ is null");
+-        return NETMANAGER_EXT_ERR_INTERNAL;
+-    }
+-    UpdateOpenvpnState(OPENVPN_STATE_STARTED);
++        UpdateOpenvpnState(OPENVPN_STATE_DISCONNECTED);
++        return NETMANAGER_EXT_ERR_INTERNAL;
++    }
+     if (!std::filesystem::exists(VPN_PIDDIR) || !std::filesystem::is_directory(VPN_PIDDIR)) {
+         NETMGR_EXT_LOG_E("StartOpenvpn config dir check error.");
+-        return NETMANAGER_EXT_ERR_INTERNAL;
+-    }
+-    NetsysController::GetInstance().ProcessVpnStage(SysVpnStageCode::VPN_STAGE_OPENVPN_RESTART);
++        UpdateOpenvpnState(OPENVPN_STATE_DISCONNECTED);
++        return NETMANAGER_EXT_ERR_INTERNAL;
++    }
++    int32_t result = NetsysController::GetInstance().ProcessVpnStage(SysVpnStageCode::VPN_STAGE_OPENVPN_RESTART);
++    if (result != NETMANAGER_EXT_SUCCESS) {
++        NETMGR_EXT_LOG_E("StartOpenvpn backend request failed: %{public}d", result);
++        UpdateOpenvpnState(OPENVPN_STATE_DISCONNECTED);
++        return NETMANAGER_EXT_ERR_INTERNAL;
++    }
++    // A successful request is still asynchronous. CONNECTED comes only from
++    // the authenticated backend after TLS negotiation and real TUN setup.
++    UpdateOpenvpnState(OPENVPN_STATE_STARTED);
+     return NETMANAGER_EXT_SUCCESS;
+ }
+-
++
+ int32_t OpenvpnCtl::NotifyConnectStage(const std::string &stage, const int32_t &result)
+@@ -271,26 +280,32 @@
+ }
+-
++
+ int32_t OpenvpnCtl::Destroy()
+ {
+-    StopOpenvpn();
++    int32_t stopResult = StopOpenvpn();
+     if (multiVpnInfo_ != nullptr) {
+         NetsysController::GetInstance().ProcessVpnStage(SysVpnStageCode::VPN_STAGE_SET_VPN_CALL_MODE,
+             multiVpnInfo_->isVpnExtCall ? "0" : "1");
+     }
+     int result = NetVpnImpl::Destroy();
+     NETMGR_EXT_LOG_I("openvpn Destroy result %{public}d}", result);
+-    return result;
+-}
+-
+-void OpenvpnCtl::StopOpenvpn()
+-{
+-    NetsysController::GetInstance().ProcessVpnStage(SysVpnStageCode::VPN_STAGE_OPENVPN_STOP);
++    return result != NETMANAGER_EXT_SUCCESS ? result : stopResult;
++}
++
++int32_t OpenvpnCtl::StopOpenvpn()
++{
++    int32_t result = NetsysController::GetInstance().ProcessVpnStage(SysVpnStageCode::VPN_STAGE_OPENVPN_STOP);
++    if (result != NETMANAGER_EXT_SUCCESS) {
++        NETMGR_EXT_LOG_E("StopOpenvpn backend request failed: %{public}d", result);
++        return NETMANAGER_EXT_ERR_INTERNAL;
++    }
+     UpdateOpenvpnState(OPENVPN_STATE_DISCONNECTED);
++    return NETMANAGER_EXT_SUCCESS;
+ }
+-
++
+ int32_t OpenvpnCtl::GetConnectedSysVpnConfig(sptr<SysVpnConfig> &sysVpnConfig)
+ {
++    sysVpnConfig = nullptr;
+     if (openvpnState_ == OPENVPN_STATE_CONNECTED && openvpnConfig_ != nullptr) {
+         sysVpnConfig = openvpnConfig_;
+     }
+     return NETMANAGER_EXT_SUCCESS;
