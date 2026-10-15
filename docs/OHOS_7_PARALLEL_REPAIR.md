@@ -29,6 +29,13 @@ CloudSync、imageGeneration、ArkTS Static 三项既有排除保持不变。
 使用自己的 `batch_<组>_` / `test_batch_<组>_` 前缀；公共入口接线通过该组
 报告中的 `integration_requests` 提交，由主 agent 统一实现。
 
+集成检查器为 `scripts/verify_capability_agent_scope.py`。各组的
+`result.json` 必须包含全部分配 ID 的 `requirements_review`（按 ID 建表，
+或带 `id` 的列表）、完整 `upstream_targets` 列表、`tests`、
+`integration_requests` 和 `remaining_gaps`。检查器读取待合入的 Git 提交，
+核对允许路径与编号补丁的实际上游路径，并与已接受组的报告比较目标重叠；
+这项检查通过只代表分工正确，不代表能力验收通过。
+
 资源规则：各组可运行有界的本地主机检查；Docker、官方 SDK 编译、QEMU、HDC、
 制品构建和清理都先向主 agent 申请资源。默认最多一个重任务，编译 jobs=2；
 以实际内存和磁盘余量决定是否调整。容器、卷、端口、客体和输出目录必须唯一。
