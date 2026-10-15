@@ -1,0 +1,20 @@
+{
+  "system": "Darwin",
+  "release": "24.1.0",
+  "machine": "arm64",
+  "python": "3.13.7 (main, Aug 14 2025, 11:12:11) [Clang 17.0.0 (clang-1700.0.13.3)]",
+  "python_for_tests": "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+  "clang": "Apple clang version 16.0.0 (clang-1600.0.26.6)\nTarget: arm64-apple-darwin24.1.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "locale": "LC_ALL=C LC_CTYPE=C LANG=C",
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "macos_leak_detector": "unsupported; detect_leaks=0 only on Darwin, enabled on Linux",
+  "source_container": "ohos-qemu-parallel-source-20261015-01",
+  "source_root": "/ohos",
+  "source_access": "read-only git/Python queries only",
+  "heavy_resource_lease": "not requested or used",
+  "new_package_created": false,
+  "runtime_gap_closures": 0
+}

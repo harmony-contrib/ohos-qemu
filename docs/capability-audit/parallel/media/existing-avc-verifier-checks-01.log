@@ -1,0 +1,16 @@
+test_actual_profile_timestamp_idr_bytes_and_eos_are_required (test_verify_avc_media_results.AvcMediaVerifierTests.test_actual_profile_timestamp_idr_bytes_and_eos_are_required) ... ok
+test_actual_rate_control_contract_and_strict_CQ_boundary (test_verify_avc_media_results.AvcMediaVerifierTests.test_actual_rate_control_contract_and_strict_CQ_boundary) ... ok
+test_cli_keeps_failed_native_records_and_does_not_claim_full_gate (test_verify_avc_media_results.AvcMediaVerifierTests.test_cli_keeps_failed_native_records_and_does_not_claim_full_gate) ... ok
+test_every_decoded_frame_requires_raw_challenge_metrics (test_verify_avc_media_results.AvcMediaVerifierTests.test_every_decoded_frame_requires_raw_challenge_metrics) ... ok
+test_false_status_or_tampered_step_codes_cannot_pass (test_verify_avc_media_results.AvcMediaVerifierTests.test_false_status_or_tampered_step_codes_cannot_pass) ... ok
+test_full_fixture_and_bm_prefix (test_verify_avc_media_results.AvcMediaVerifierTests.test_full_fixture_and_bm_prefix) ... ok
+test_partial_stale_reordered_duplicate_cannot_pass (test_verify_avc_media_results.AvcMediaVerifierTests.test_partial_stale_reordered_duplicate_cannot_pass) ... ok
+test_privileged_or_mismatched_application_identity_fails (test_verify_avc_media_results.AvcMediaVerifierTests.test_privileged_or_mismatched_application_identity_fails) ... ok
+test_real_RGBA_conversion_and_truncated_error_are_required (test_verify_avc_media_results.AvcMediaVerifierTests.test_real_RGBA_conversion_and_truncated_error_are_required) ... ok
+test_real_surface_steps_challenge_and_EOS_are_required (test_verify_avc_media_results.AvcMediaVerifierTests.test_real_surface_steps_challenge_and_EOS_are_required) ... ok
+test_surface_mode_requires_operation_error_and_rejects_old_state_expectation (test_verify_avc_media_results.AvcMediaVerifierTests.test_surface_mode_requires_operation_error_and_rejects_old_state_expectation) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 20.637s
+
+OK
