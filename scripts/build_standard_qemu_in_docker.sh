@@ -226,6 +226,7 @@ CONNECTED_VPN_NULLABLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communi
 TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/core_service/api26_enums/apply.sh"
 TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/sms_mms/api26_enums/apply.sh"
 TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_enums/apply.sh"
+TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
 SCREENLOCK_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/theme/screenlock_mgr/api26_enums/apply.sh"
 I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api26_suggestion_type/apply.sh"
 DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
@@ -350,6 +351,7 @@ PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/stand
 PHOTOS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/photos_provider/apply.sh"
 PHOTOS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/photos_provider/apply.sh"
 SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/source_provider/apply.sh"
+SETTINGS_ACCESSIBILITY_COMPLETION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/accessibility_service_completion/apply.sh"
 SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/external_input/apply.sh"
 SETTINGS_INPUT_2IN1_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/input_2in1_navigation/apply.sh"
 SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/refresh_rate_page/apply.sh"
@@ -363,6 +365,7 @@ PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media
 PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/public_record_classes/apply.sh"
 SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
+AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh"
 CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/codec_hardware_profile/apply.sh"
 QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
 AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_library_path/apply.sh"
@@ -2987,6 +2990,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_sms_enums_component.log"
   bash "${TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_call_enums_component.log"
+  bash "${TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_rtt_lifecycle_component.log"
   bash "${SCREENLOCK_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_screenlock_enums_component.log"
   bash "${I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3163,6 +3168,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_signing_component.log"
   bash "${SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_source_provider_component.log"
+  bash "${SETTINGS_ACCESSIBILITY_COMPLETION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_accessibility_completion_component.log"
   bash "${SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_external_input_component.log"
   bash "${SETTINGS_INPUT_2IN1_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3203,6 +3210,8 @@ apply_qemu_capability_patch_plan() {
   done
   bash "${SOFTWARE_AVC_COMPONENT_SCRIPT}" "${avc_component_args[@]}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_software_avc_component.log"
+  bash "${AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_surface_layout_component.log"
   bash "${AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_library_path_component.log"
   bash "${AUDIO_SUITE_DSP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
