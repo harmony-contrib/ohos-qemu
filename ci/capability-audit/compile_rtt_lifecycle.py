@@ -83,8 +83,25 @@ def main():
                    'candidate_sha256': digest(staged / name)}
             if result.returncode == 0:
                 data = object_path.read_bytes()
-                if data[:6] != b'\x7fELF\x02\x01' or struct.unpack_from('<H', data, 18)[0] != 183:
-                    raise ValueError('actual ARM64 object required')
+                if data[:4] == b'BC\xc0\xde':
+                    # Product GN enables ThinLTO. Keep its actual bitcode
+                    # command and verify the module target with the same SDK.
+                    disassembler = (cwd / argv[0]).resolve().parent / 'llvm-dis'
+                    ir = args.output / f'{unit}.ll'
+                    subprocess.run([str(disassembler), str(object_path), '-o', str(ir)], check=True)
+                    with ir.open() as stream:
+                        triple = next((line.strip() for line in stream
+                                       if line.startswith('target triple = ')), '')
+                    if triple not in ('target triple = "aarch64-linux-ohos"',
+                                      'target triple = "aarch64-unknown-linux-ohos"'):
+                        raise ValueError('actual ARM64 LLVM bitcode target required')
+                    row.update(object_format='LLVM_bitcode', target_triple=triple,
+                               llvm_ir_sha256=digest(ir))
+                elif (data[:6] == b'\x7fELF\x02\x01' and
+                      struct.unpack_from('<H', data, 18)[0] == 183):
+                    row['object_format'] = 'ELF_ARM64'
+                else:
+                    raise ValueError('actual ARM64 ELF or product ThinLTO bitcode required')
                 consumed = dep.read_text()
                 if any(str(staged / header) not in consumed for header in headers):
                     raise ValueError('compiler did not consume both actual candidate headers')
