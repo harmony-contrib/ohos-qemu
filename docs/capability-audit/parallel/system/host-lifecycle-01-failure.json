@@ -1,0 +1,7 @@
+{
+  "status": "failed_host_test_environment",
+  "reason": "Apple clang AddressSanitizer rejects detect_leaks=1 before main; baseline failures from this attempt are invalid reproduction evidence",
+  "preserved_output": "/tmp/ohos-capability-system-host-lifecycle-01",
+  "resolution": "Disable unsupported LeakSanitizer on Darwin only; retain ASan/UBSan and actual manager live/ref assertions; require baseline to reach its boundary assertion",
+  "stderr": "==21758==AddressSanitizer: detect_leaks is not supported on this platform.\n"
+}

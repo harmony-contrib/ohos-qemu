@@ -1,0 +1,355 @@
+{
+  "agent": "system",
+  "branch": "codex/capability-system-20261015",
+  "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "reviewed_on": "2026-10-16 Asia/Shanghai",
+  "status": "bounded_first_round_candidate_ready",
+  "requirements_total": 10,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "upstream_targets": [
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h"
+  ],
+  "requirements_review": {
+    "behavior:access-token-api26-kernel-abi": {
+      "status": "open_runtime_identity_proof_pending",
+      "fixed_source_findings": [
+        "AppSpawn SetUserId is a real implementation and SetUidGid calls it before setresuid in the baseline; do not re-fix the old weak success stub.",
+        "SpmGetVersion clears the version and propagates ioctl errno on failure; the prior SPM handshake repair is present."
+      ],
+      "source_paths": [
+        "base/startup/appspawn/modules/common/appspawn_common.c",
+        "base/security/access_token/interfaces/innerkits/token_setproc/src/spm_setproc.c"
+      ],
+      "remaining": [
+        "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+        "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+      ],
+      "action": "No additional kernel/token identity patch guessed from stale evidence."
+    },
+    "behavior:msdp-device-status-mock-or-missing-clients": {
+      "status": "open_real_sensor_backend_and_clients_pending",
+      "fixed_source_findings": [
+        "InitMsdpImpl first tries sensor HDI, then sensor-enabled algorithm, then explicitly falls back to MockHandle.",
+        "The tree contains real devicestatus_algo sources for absolute-still/horizontal/vertical and sensor callback integration; existence alone does not show QEMU runtime input."
+      ],
+      "source_paths": [
+        "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+        "base/msdp/device_status/libs/BUILD.gn"
+      ],
+      "remaining": [
+        "Need genuine QEMU sensor event delivery and all declared device-status/multimodal client libraries in each profile.",
+        "Need public API subscribe/unsubscribe, transition and restart/permission checks proving results are sensor-derived and not mock JSON."
+      ],
+      "action": "No fake mock backend or successful empty event stream introduced."
+    },
+    "behavior:native-child-process-phone-boundary": {
+      "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+      "fixed_source_findings": [
+        "Both Create entrypoints retain the startup callback after dispatch; synchronous terminal notification can remove nothing and then be retained forever.",
+        "Null child/proxy allocation failure do not release retention consistently; unsynchronized callback_ permits reentrant or concurrent duplicate delivery.",
+        "SDK declares StartMode as export const enum; missing NAPI runtime enum object alone is not sufficient failure evidence. Existing typed const-enum compilation is the relevant boundary."
+      ],
+      "source_paths": [
+        "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+        "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+        "foundation/ability/ability_runtime/frameworks/js/napi/js_child_process_manager/js_child_process_manager.cpp",
+        "interface/sdk-js/api/@ohos.app.ability.childProcessManager.d.ts"
+      ],
+      "action": "Added 0004 terminal callback lifecycle patch: retain before dispatch, clean immediate failure, take callback once under a short mutex, release retained reference and hold a local strong reference while calling user code outside locks. Invalid child/proxy failures truthfully return NCP_ERR_INTERNAL once.",
+      "remaining": [
+        "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+        "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+      ]
+    },
+    "behavior:session-manager-profile-gap": {
+      "status": "open_profile_and_sceneboard_runtime_pending",
+      "fixed_source_findings": [
+        "Pinned window_manager bundle declares SessionManager=false and includes scene/session/screen-session manager libraries.",
+        "Repository baseline already selects real SceneBoard implementation/profile through patches/lib/graphics_features.py and phone/2in1 product adapters."
+      ],
+      "source_paths": [
+        "foundation/window/window_manager/bundle.json"
+      ],
+      "remaining": [
+        "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+        "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+      ],
+      "action": "Avoided a duplicate profile declaration-only patch and avoided the main-agent RenderService ownership."
+    },
+    "behavior:calendar-lifecycle-device-difference": {
+      "status": "open_provider_ui_and_packaged_runtime_pending",
+      "fixed_source_findings": [
+        "Fixed calendar source actually declares calendardata_whole and ReminderCallbackExtAbility with specific whole-calendar and update-rrule permissions.",
+        "Native editEvent still explicitly targets missing EditorUIExtensionAbility; ReminderAgentHelper targets com.ohos.calendar.",
+        "The baseline has source-provider HAP/signature preparation; old prebuilt absence must not be re-repaired by fabricating a provider."
+      ],
+      "source_paths": [
+        "applications/standard/calendardata/entry/src/main/module.json5",
+        "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+        "applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets"
+      ],
+      "remaining": [
+        "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+        "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+      ],
+      "action": "No duplicate source HAP build, weakened ACL or empty editor UI added."
+    },
+    "behavior:device-attest-uninitialized": {
+      "status": "open_oem_provisioning_dependency",
+      "fixed_source_findings": [
+        "OEMGetProductId and OEMGetProductKey have intentionally empty product ID/key buffers in the fixed OEM adapter."
+      ],
+      "source_paths": [
+        "test/xts/device_attest/services/oem_adapter/src/device_attest_oem_adapter.c"
+      ],
+      "remaining": [
+        "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+        "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+      ],
+      "action": "No fabricated credentials, success result or ticket introduced."
+    },
+    "behavior:advertising-service-provider-missing": {
+      "status": "open_real_ad_provider_dependency",
+      "fixed_source_findings": [
+        "Fixed ads config targets com.samples.AdsServiceDemo/AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService.",
+        "AdLoadService additionally requires providerApiAbilityName before connecting, and the shipped config omits that key."
+      ],
+      "source_paths": [
+        "domains/advertising/advertising/frameworks/js/napi/ads/resource/ad_service_config.json",
+        "domains/advertising/advertising/frameworks/js/napi/ads/src/ad_load_service.cpp"
+      ],
+      "remaining": [
+        "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+        "Adding a name or returning synthetic ad data alone would not repair this capability."
+      ],
+      "action": "No fictional provider configuration or mock ad service added."
+    },
+    "behavior:graphics3d-scene-manager-unavailable": {
+      "status": "open_scene_plugin_loader_runtime_diagnosis",
+      "fixed_source_findings": [
+        "Scene.load failure maps to RenderContextJS::CreateScene line 881: CreateSceneManager(uri) returns null before scene creation.",
+        "Public module/library presence is not proof the META scene plugin registry, task queues, renderer and scene importer initialized."
+      ],
+      "source_paths": [
+        "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp"
+      ],
+      "remaining": [
+        "Need loader/registry initialization diagnostics from the new package and an actual Scene.load/create/render/destroy/recreate path with a valid asset.",
+        "No runtime failure evidence yet identifies a safe single upstream source change; software-render context and plugin packaging need focused diagnosis."
+      ],
+      "action": "No blank scene, synthetic manager or Promise-success fallback introduced."
+    },
+    "behavior:security-guard-empty-model-config": {
+      "status": "open_real_risk_model_dependency",
+      "fixed_source_findings": [
+        "Fixed OEM security_guard_model.cfg is exactly an empty modelcfg array.",
+        "Framework model configuration parser caches supplied model IDs and associated event lists; no actual OEM risk model is supplied by the current config."
+      ],
+      "source_paths": [
+        "base/security/security_guard/oem_property/hos/security_guard_model.cfg"
+      ],
+      "remaining": [
+        "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+        "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+      ],
+      "action": "No invented model IDs, fake score or permission relaxation introduced."
+    },
+    "behavior:app-domain-verification-extension-missing": {
+      "status": "open_real_verification_routing_evidence_pending",
+      "fixed_source_findings": [
+        "CompleteVerifyRefresh and ExecuteVerifyTask already fall back to the real VerifyTask path on E_EXTENSIONS_LIB_NOT_FOUND.",
+        "ConvertToExplicitWant fallback constructs an empty TargetInfo and invokes OnConvert(0,...); optional extension absence alone is not proof all verification is broken."
+      ],
+      "source_paths": [
+        "foundation/bundlemanager/app_domain_verify/services/src/agent/core/app_domain_verify_agent_service.cpp"
+      ],
+      "remaining": [
+        "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+        "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+      ],
+      "action": "No optional-library dependency fabricated and no trust/signature rule weakened."
+    }
+  },
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/batch_system_child_lifecycle.py --output /tmp/ohos-capability-system-host-lifecycle-02",
+      "result": "7 baseline assertion failures reproduced; 17 repaired scenarios pass ASan/UBSan; 20 additional 32-thread contention schedules pass",
+      "evidence": "docs/capability-audit/parallel/system/host-lifecycle-02.json"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_system_child_lifecycle.py -v",
+      "result": "6 tests pass; includes pristine full installer applied twice, exact revision/hash and unknown/mixed/symlink protection"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_child_config_boundaries.py -v",
+      "result": "3 existing config tests pass"
+    },
+    {
+      "command": "git diff --cached --check -- . ':!*.patch' ':!ci/capability-audit/fixtures/batch_system/**'",
+      "result": "pass",
+      "scope": "Product/test scripts and reports checked normally; exact pinned source fixtures and unified patch context preserve upstream trailing spaces and are verified by SHA256 instead of whitespace normalization."
+    }
+  ],
+  "failed_attempts": [
+    {
+      "evidence": "docs/capability-audit/parallel/system/host-lifecycle-01-failure.json",
+      "reason": "Darwin ASan has no LeakSanitizer; pre-main failure is not valid baseline reproduction; corrected environmental flag and retained actual lifetime assertions"
+    },
+    {
+      "evidence": "docs/capability-audit/parallel/system/installer-01-failure.log",
+      "reason": "An intermediate test copied later baseline transport source without patch markers then tried to reverse-check original 0002; changed the complete installer test input to actual pinned pristine HEAD, without changing product code or inventing markers"
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "main",
+      "request": "Register new test_batch_system_child_lifecycle.py in any explicit host regression allowlist, while preserving existing child/default-profile checks. New final native cpp SHA is accepted by component verify_config_source; shared verifier or fixture changes remain main-owned."
+    },
+    {
+      "owner": "main",
+      "request": "Under the exclusive build lease, compile the actual three changed upstream files with fixed official GN/SDK parameters and link libchild_process.so before the representative package freeze; host ABI-shim tests are supplemental only."
+    },
+    {
+      "owner": "main",
+      "request": "Run fresh representative package disabled-phone regression plus an eligible real native-child profile lifecycle: immediate failures, actual startup IPC proxy, null/duplicate fault boundaries if injectable, repeated create/exit/kill, callbacks, FD/args, normal/isolated UID/token identity and foreign caller rejection. First package gate and any subsequent five-package matrix remain main-owned."
+    },
+    {
+      "owner": "main",
+      "request": "Audit StartMode with the SDK const-enum classification and existing typed const-enum probe; missing reflected NAPI object alone is insufficient. Keep this requirement open until its full lifecycle/profile contract passes; do not add a fabricated runtime enum solely to satisfy reflection."
+    }
+  ],
+  "remaining_gaps": [
+    {
+      "id": "behavior:access-token-api26-kernel-abi",
+      "status": "open_runtime_identity_proof_pending",
+      "dependencies": [
+        "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+        "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+      ]
+    },
+    {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "status": "open_real_sensor_backend_and_clients_pending",
+      "dependencies": [
+        "Need genuine QEMU sensor event delivery and all declared device-status/multimodal client libraries in each profile.",
+        "Need public API subscribe/unsubscribe, transition and restart/permission checks proving results are sensor-derived and not mock JSON."
+      ]
+    },
+    {
+      "id": "behavior:native-child-process-phone-boundary",
+      "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+      "dependencies": [
+        "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+        "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+      ]
+    },
+    {
+      "id": "behavior:session-manager-profile-gap",
+      "status": "open_profile_and_sceneboard_runtime_pending",
+      "dependencies": [
+        "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+        "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+      ]
+    },
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "status": "open_provider_ui_and_packaged_runtime_pending",
+      "dependencies": [
+        "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+        "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+      ]
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "status": "open_oem_provisioning_dependency",
+      "dependencies": [
+        "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+        "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+      ]
+    },
+    {
+      "id": "behavior:advertising-service-provider-missing",
+      "status": "open_real_ad_provider_dependency",
+      "dependencies": [
+        "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+        "Adding a name or returning synthetic ad data alone would not repair this capability."
+      ]
+    },
+    {
+      "id": "behavior:graphics3d-scene-manager-unavailable",
+      "status": "open_scene_plugin_loader_runtime_diagnosis",
+      "dependencies": [
+        "Need loader/registry initialization diagnostics from the new package and an actual Scene.load/create/render/destroy/recreate path with a valid asset.",
+        "No runtime failure evidence yet identifies a safe single upstream source change; software-render context and plugin packaging need focused diagnosis."
+      ]
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "status": "open_real_risk_model_dependency",
+      "dependencies": [
+        "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+        "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+      ]
+    },
+    {
+      "id": "behavior:app-domain-verification-extension-missing",
+      "status": "open_real_verification_routing_evidence_pending",
+      "dependencies": [
+        "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+        "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+      ]
+    }
+  ],
+  "resources": {
+    "heavy_resource_lease_requested": false,
+    "heavy_tasks_started": 0,
+    "shared_container_queries": "small read-only git/cat/python queries only",
+    "source_mutation": false,
+    "out_used_as_evidence": false,
+    "builds_or_packages_created": 0
+  },
+  "evidence_files": [
+    "docs/capability-audit/parallel/system/source-review.json",
+    "docs/capability-audit/parallel/system/unit-tests.json",
+    "docs/capability-audit/parallel/system/host-lifecycle-02.json",
+    "docs/capability-audit/parallel/system/host-lifecycle-02.log"
+  ],
+  "changed_files": [
+    "ci/capability-audit/batch_system_child_lifecycle.py",
+    "ci/capability-audit/batch_system_child_lifecycle_harness.cpp",
+    "ci/capability-audit/batch_system_child_lifecycle_support.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/expected_hashes.json",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/include/child_callback_manager.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/src/child_callback_manager.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/frameworks/native/child_process/include/child_callback_manager.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/frameworks/native/child_process/src/child_callback_manager.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/include/appmgr/child_process_args.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_args.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_info.cpp",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/interfaces/inner_api/child_process_manager/BUILD.gn",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/interfaces/inner_api/child_process_manager/include/child_process_args_manager.h",
+    "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/provenance.json",
+    "ci/capability-audit/test_batch_system_child_lifecycle.py",
+    "docs/capability-audit/parallel/system/host-lifecycle-01-failure.json",
+    "docs/capability-audit/parallel/system/host-lifecycle-02.json",
+    "docs/capability-audit/parallel/system/host-lifecycle-02.log",
+    "docs/capability-audit/parallel/system/installer-01-failure.log",
+    "docs/capability-audit/parallel/system/result.json",
+    "docs/capability-audit/parallel/system/source-review.json",
+    "docs/capability-audit/parallel/system/unit-tests.json",
+    "patches/common/foundation/ability/ability_runtime/native_child_process/0004-complete-start-callback-lifecycle.patch",
+    "patches/common/foundation/ability/ability_runtime/native_child_process/README.md",
+    "patches/common/foundation/ability/ability_runtime/native_child_process/apply.sh",
+    "patches/common/foundation/ability/ability_runtime/native_child_process/verify_callback_source.py",
+    "patches/common/foundation/ability/ability_runtime/native_child_process/verify_config_source.py"
+  ]
+}

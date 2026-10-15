@@ -1,0 +1,123 @@
+--- a/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp
+@@ -120,12 +120,14 @@
+         return NCP_ERR_INTERNAL;
+     }
+ 
++    // Keep the stub alive before dispatch: a synchronous notification may remove it.
++    ChildCallbackManager::GetInstance().AddRemoteObject(callbackStub);
+     auto cpmErr = ChildProcessManager::GetInstance().CreateNativeChildProcessByAppSpawnFork(strLibName, callbackStub);
+     if (cpmErr != ChildProcessManagerErrorCode::ERR_OK) {
+-        return ChildProcessManagerErrorUtil::CvtChildProcessManagerErrCode(cpmErr);
+-    }
+-
+-    ChildCallbackManager::GetInstance().AddRemoteObject(callbackStub);
++        ChildCallbackManager::GetInstance().RemoveRemoteObject(callbackStub);
++        return ChildProcessManagerErrorUtil::CvtChildProcessManagerErrCode(cpmErr);
++    }
++
+     return NCP_NO_ERROR;
+ }
+ 
+@@ -150,13 +152,15 @@
+     }
+ 
+     auto isolationMode = configs->isolationMode == NCP_ISOLATION_MODE_ISOLATED;
++    // Keep the stub alive before dispatch: a synchronous notification may remove it.
++    ChildCallbackManager::GetInstance().AddRemoteObject(callbackStub);
+     auto cpmErr = ChildProcessManager::GetInstance().CreateNativeChildProcessByAppSpawnFork(strLibName,
+         callbackStub, configs->processName, isolationMode, configs->isIsolationUid);
+     if (cpmErr != ChildProcessManagerErrorCode::ERR_OK) {
+-        return ChildProcessManagerErrorUtil::CvtChildProcessManagerErrCode(cpmErr);
+-    }
+-
+-    ChildCallbackManager::GetInstance().AddRemoteObject(callbackStub);
++        ChildCallbackManager::GetInstance().RemoveRemoteObject(callbackStub);
++        return ChildProcessManagerErrorUtil::CvtChildProcessManagerErrCode(cpmErr);
++    }
++
+     return NCP_NO_ERROR;
+ }
+ 
+--- a/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp
+@@ -26,45 +26,55 @@
+ {
+ }
+ 
++OH_Ability_OnNativeChildProcessStarted NativeChildCallback::TakeStartCallback()
++{
++    std::lock_guard<std::mutex> lock(startCallbackMutex_);
++    auto callback = callback_;
++    callback_ = nullptr;
++    return callback;
++}
++
+ void NativeChildCallback::OnNativeChildStarted(const sptr<IRemoteObject> &nativeChild)
+ {
+-    if (callback_ == nullptr) {
++    // Removal and user callbacks may release the last external reference.
++    sptr<NativeChildCallback> keepAlive(this);
++    auto callback = TakeStartCallback();
++    if (callback == nullptr) {
+         TAG_LOGE(AAFwkTag::PROCESSMGR, "null callback_");
+         return;
+     }
++    ChildCallbackManager::GetInstance().RemoveRemoteObject(this);
+ 
+     if (!nativeChild) {
+         TAG_LOGE(AAFwkTag::PROCESSMGR, "null nativeChild");
++        callback(NCP_ERR_INTERNAL, nullptr);
+         return;
+     }
+-    
++
+     TAG_LOGI(AAFwkTag::PROCESSMGR, "Native child process started");
+     sptr<IRemoteObject> ipcRemote = nativeChild;
+     OHIPCRemoteProxy *ipcProxy = CreateIPCRemoteProxy(ipcRemote);
+     if (ipcProxy == nullptr) {
+         TAG_LOGE(AAFwkTag::PROCESSMGR, "null ipcProxy");
+-        callback_(NCP_ERR_INTERNAL, nullptr);
++        callback(NCP_ERR_INTERNAL, nullptr);
+         return;
+     }
+ 
+-    callback_(static_cast<int32_t>(ChildProcessManagerErrorCode::ERR_OK), ipcProxy);
+-    callback_ = nullptr;
+-
+-    ChildCallbackManager::GetInstance().RemoveRemoteObject(this);
++    callback(static_cast<int32_t>(ChildProcessManagerErrorCode::ERR_OK), ipcProxy);
+ }
+ 
+ void NativeChildCallback::OnError(int32_t errCode)
+ {
+-    if (callback_ == nullptr) {
++    sptr<NativeChildCallback> keepAlive(this);
++    auto callback = TakeStartCallback();
++    if (callback == nullptr) {
+         TAG_LOGE(AAFwkTag::PROCESSMGR, "null callback_");
+         return;
+     }
++    ChildCallbackManager::GetInstance().RemoveRemoteObject(this);
+ 
+     TAG_LOGI(AAFwkTag::PROCESSMGR, "Native child process start err %{public}d", errCode);
+-    callback_(errCode, nullptr);
+-    
+-    callback_ = nullptr;
+-    ChildCallbackManager::GetInstance().RemoveRemoteObject(this);
++    callback(errCode, nullptr);
+ }
+ 
+ int32_t NativeChildCallback::OnNativeChildExit(int32_t pid, int32_t signal)
+--- a/foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h
++++ b/foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h
+@@ -39,6 +39,9 @@
+     std::list<OH_Ability_OnNativeChildProcessExit> GetExitCallbacks();
+ 
+ private:
++    OH_Ability_OnNativeChildProcessStarted TakeStartCallback();
++
++    std::mutex startCallbackMutex_;
+     OH_Ability_OnNativeChildProcessStarted callback_ = nullptr;
+     std::mutex exitCallbackListMutex_;
+     std::list<OH_Ability_OnNativeChildProcessExit> exitCallbacks_;

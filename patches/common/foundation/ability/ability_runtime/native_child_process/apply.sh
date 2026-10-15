@@ -22,6 +22,11 @@ bash "${PATCH_ROOT}/lib/apply_patch.sh" "${SOURCE_ROOT}" \
   "${SCRIPT_DIR}/0003-validate-config-boundaries.patch"
 python3 "${SCRIPT_DIR}/verify_config_source.py" --source-root "${SOURCE_ROOT}" --require-patched
 
+python3 "${SCRIPT_DIR}/verify_callback_source.py" --source-root "${SOURCE_ROOT}"
+bash "${PATCH_ROOT}/lib/apply_patch.sh" "${SOURCE_ROOT}" \
+  "${SCRIPT_DIR}/0004-complete-start-callback-lifecycle.patch"
+python3 "${SCRIPT_DIR}/verify_callback_source.py" --source-root "${SOURCE_ROOT}" --require-patched
+
 python3 - "${SCRIPT_DIR}" "${SOURCE_ROOT}" <<'PY'
 import hashlib
 import json
@@ -38,4 +43,4 @@ patches = {
 )
 PY
 
-echo "Native child-process shared arguments and 150 KiB transport configured"
+echo "Native child-process arguments, config boundaries and callback lifecycle configured"

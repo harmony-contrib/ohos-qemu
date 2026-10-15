@@ -1,0 +1,77 @@
+FILE after/callback_reentry.log
+callback_reentry: pass
+
+FILE after/compile.log
+
+FILE after/concurrent_terminal.log
+concurrent_terminal: pass
+
+FILE after/create_delayed.log
+create_delayed: pass
+
+FILE after/create_delayed_configs.log
+create_delayed_configs: pass
+
+FILE after/create_early_error.log
+create_early_error: pass
+
+FILE after/create_early_error_configs.log
+create_early_error_configs: pass
+
+FILE after/create_early_success.log
+create_early_success: pass
+
+FILE after/create_early_success_configs.log
+create_early_success_configs: pass
+
+FILE after/create_reject.log
+create_reject: pass
+
+FILE after/create_reject_configs.log
+create_reject_configs: pass
+
+FILE after/drop_last_owner.log
+drop_last_owner: pass
+
+FILE after/drop_last_owner_error.log
+drop_last_owner_error: pass
+
+FILE after/error_then_success.log
+error_then_success: pass
+
+FILE after/exit_callbacks.log
+exit_callbacks: pass
+
+FILE after/null_child.log
+null_child: pass
+
+FILE after/proxy_failure.log
+proxy_failure: pass
+
+FILE after/success_then_error.log
+success_then_error: pass
+
+FILE apply.log
+
+FILE before/callback_reentry.log
+callback_reentry: calls == 1 && lastError == 0 && proxyAttempts == 1
+
+FILE before/compile.log
+
+FILE before/create_early_error.log
+create_early_error: IRemoteObject::live == 1
+
+FILE before/create_early_error_configs.log
+create_early_error_configs: IRemoteObject::live == 1
+
+FILE before/create_early_success.log
+create_early_success: IRemoteObject::live == 1
+
+FILE before/create_early_success_configs.log
+create_early_success_configs: IRemoteObject::live == 1
+
+FILE before/null_child.log
+null_child: calls == 1 && lastError == NCP_ERR_INTERNAL && proxyAttempts == 0
+
+FILE before/proxy_failure.log
+proxy_failure: calls == 1

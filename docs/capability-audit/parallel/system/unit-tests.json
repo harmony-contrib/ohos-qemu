@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "locale": "C",
+  "checks": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_system_child_lifecycle.py -v",
+      "tests": 6,
+      "result": "OK",
+      "seconds": 8.879,
+      "includes": "complete pinned pristine installer 0001 through 0004 applied twice, no fabricated markers"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_child_config_boundaries.py -v",
+      "tests": 3,
+      "result": "OK",
+      "seconds": 0.504
+    },
+    {
+      "command": "git diff --cached --check -- . ':!*.patch' ':!ci/capability-audit/fixtures/batch_system/**'",
+      "result": "pass",
+      "scope": "Product/test scripts and reports checked normally; exact pinned source fixtures and unified patch context preserve upstream trailing spaces and are verified by SHA256 instead of whitespace normalization."
+    }
+  ],
+  "runtime_tested": false,
+  "requirements_closed": 0
+}
