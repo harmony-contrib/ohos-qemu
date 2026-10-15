@@ -15,21 +15,25 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 PATCH = ROOT / 'patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch'
+PATCHES = sorted(PATCH.parent.glob('[0-9][0-9][0-9][0-9]-*.patch'))
 FIXTURE = Path(__file__).parent / 'fixtures/batch_location/rtt_before.json'
 
 
 def patched_sources():
     files = json.loads(FIXTURE.read_text())['files']
-    sections = re.split(r'^--- a/base/telephony/call_manager/frameworks/js/napi/', PATCH.read_text(), flags=re.M)[1:]
+    sections = [section for patch in PATCHES for section in re.split(r'^--- a/base/telephony/call_manager/frameworks/js/napi/', patch.read_text(), flags=re.M)[1:]]
     for section in sections:
         name = section.splitlines()[0]
         hunks = re.split(r'^@@[^\n]*\n', section, flags=re.M)[1:]
+        cursor = 0
         for hunk in hunks:
             old = ''.join(line if line == '\n' else line[1:] for line in hunk.splitlines(keepends=True) if line == '\n' or line.startswith((' ', '-')))
             new = ''.join(line if line == '\n' else line[1:] for line in hunk.splitlines(keepends=True) if line == '\n' or line.startswith((' ', '+')))
-            if files[name].count(old) != 1:
-                raise AssertionError(f'Production hunk is not unique in fixture: {name}')
-            files[name] = files[name].replace(old, new, 1)
+            start = files[name].find(old, cursor)
+            if start < 0:
+                raise AssertionError(f'Ordered production hunk is missing in fixture: {name}')
+            files[name] = files[name][:start] + new + files[name][start + len(old):]
+            cursor = start + len(new)
     return files
 
 
@@ -63,13 +67,13 @@ using napi_value = Value*;
 struct Ref { napi_env env; napi_value value; bool live = true; };
 using napi_ref = Ref*;
 using napi_status = int;
-constexpr int napi_ok = 0, napi_function = 1;
+constexpr int napi_ok = 0, napi_function = 1, napi_undefined = 2;
 using Hook = void (*)(void*);
 struct Env { bool alive = true; std::vector<std::pair<Hook,void*>> hooks; std::vector<std::unique_ptr<Ref>> refs; };
 struct Info { std::vector<napi_value> args; };
 using napi_callback_info = Info*;
 Value undefinedValue;
-int errors = 0, deliveries = 0, queueFailure = 0, cleanupFailure = 0;
+int errors = 0, deliveries = 0, queueFailure = 0, cleanupFailure = 0, removeCleanupFailure = 0;
 std::function<void()> duringDelivery;
 struct uv_loop_s {};
 struct uv_work_t { void* data = nullptr; };
@@ -91,7 +95,7 @@ int napi_add_env_cleanup_hook(napi_env env,Hook hook,void* data) {
     assert(env->alive); if (cleanupFailure) return -1; env->hooks.push_back({hook,data}); return 0;
 }
 int napi_remove_env_cleanup_hook(napi_env env,Hook hook,void* data) {
-    assert(env->alive); auto it=std::find(env->hooks.begin(),env->hooks.end(),std::make_pair(hook,data));
+    assert(env->alive); if (removeCleanupFailure) return -1; auto it=std::find(env->hooks.begin(),env->hooks.end(),std::make_pair(hook,data));
     assert(it!=env->hooks.end()); env->hooks.erase(it); return 0;
 }
 int napi_throw_error(napi_env,const char*,const char*) { ++errors; return 0; }
@@ -110,7 +114,7 @@ constexpr int TELEPHONY_SUCCESS = 0, CALL_ERR_CALLBACK_NOT_EXIST = -1, TELEPHONY
 #define TELEPHONY_LOGE(...) ((void)0)
 #define TELEPHONY_LOGI(...) ((void)0)
 #define TELEPHONY_LOGD(...) ((void)0)
-#define NAPI_VERSION 2
+#define NAPI_VERSION 8
 '''
 
 CLASS = r'''
@@ -149,7 +153,7 @@ struct NapiUtil {
     static JsError ConverErrorMessageForJs(int) { return {}; }
 };
 struct NapiCallManagerUtils {
-    static bool MatchValueType(napi_env,napi_value value,int) { return value && value->function; }
+    static bool MatchValueType(napi_env,napi_value value,int type) { return type == napi_undefined ? value == &undefinedValue : value && value != &undefinedValue && value->function; }
     static napi_value CreateUndefined(napi_env) { return &undefinedValue; }
 };
 #define GET_PARAMS(env,info,limit) size_t argc=std::min(size_t(limit),info->args.size()); napi_value argv[limit]={}; for(size_t i=0;i<argc;++i) argv[i]=info->args[i]
@@ -186,6 +190,10 @@ int main() {
         report(); off(env,{&a}); assert(liveRefs(env)==2); drain(); assert(deliveries==calls+3);
         report(); assert(off(env,{})==&undefinedValue); assert(liveRefs(env)==0); drain(); assert(deliveries==calls+3);
         off(env,{}); assert(liveRefs(env)==0); // repeated removal is harmless
+        add(env,a); report(); int beforeUndefined = errors;
+        assert(off(env,{&undefinedValue})==&undefinedValue); assert(liveRefs(env)==0);
+        drain(); assert(deliveries==calls+3 && errors==beforeUndefined);
+        off(env,{&undefinedValue}); assert(liveRefs(env)==0 && errors==beforeUndefined);
         add(env,a); report(); off(env,{&a}); add(env,a); // old queued registration must not target its replacement
         drain(); assert(deliveries==calls+3); report(); drain(); assert(deliveries==calls+4);
         add(other,a); off(env,{}); assert(liveRefs(env)==0 && liveRefs(other)==2);
@@ -199,9 +207,31 @@ int main() {
         add(env,a); queueFailure=1; assert(report()==TELEPHONY_ERROR); queueFailure=0; off(env,{}); assert(liveRefs(env)==0);
         add(env,a); report(); drain(-1); off(env,{}); assert(liveRefs(env)==0);
         cleanupFailure=1; add(env,a); cleanupFailure=0; assert(liveRefs(env)==0 && env.hooks.empty());
+        add(env,a); removeCleanupFailure=1; off(env,{}); removeCleanupFailure=0;
+        assert(liveRefs(env)==0 && env.hooks.size()==1); // failed hook removal keeps its holder alive until env exit
         closeEnv(env); assert(jobs.empty());
+        // The singleton's vectors and group mutexes can die before an environment.
+        // Its cleanup hook must own both the registration and its synchronization.
+        for (bool queued : {false,true}) {
+            Env orphan; Value value; int beforeOrphan = deliveries;
+            std::weak_ptr<RttCallbackRegistration> orphanRegistration;
+            {
+                auto owner = std::make_unique<NapiCallAbilityCallback>();
+                (owner.get()->*registers[group])(listener(orphan,value));
+                if(group==0) orphanRegistration=owner->rttModifyIndCallbacks_.front();
+                else if(group==1) orphanRegistration=owner->rttErrCauseCallbacks_.front();
+                else orphanRegistration=owner->rttCallMessageCallbacks_.front();
+                if (queued) {
+                    if(group==0) { RttEvent event; owner->ReportRttCallEventInfo(event); }
+                    else if(group==1) { RttError event; owner->ReportRttCallErrorInfo(event); }
+                    else { AppExecFwk::PacMap event; owner->ReportRttCallMessageInfo(event); }
+                }
+            }
+            assert(orphan.hooks.size()==1 && liveRefs(orphan)==2 && !orphanRegistration.expired());
+            closeEnv(orphan); drain(); assert(deliveries==beforeOrphan && orphanRegistration.expired());
+        }
     }
-    std::cout << "RTT 3 event families: optional/identity/multiple listeners/environment/queue/reentry/reference/error cases passed\n";
+    std::cout << "RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed\n";
 }
 '''
 

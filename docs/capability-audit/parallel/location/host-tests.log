@@ -28,3 +28,37 @@ Final whitespace-normalized patch recheck (includes marker-free reverse-apply id
 Ran 2 tests in 1.338s
 
 OK
+
+2026-10-16 followup: explicit undefined, explicit includes and owner-independent env hook lifetime.
+
+$ python3 ci/capability-audit/test_batch_location_rtt_lifecycle.py
+.RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed
+.
+----------------------------------------------------------------------
+Ran 2 tests in 1.868s
+
+OK
+
+$ python3 ci/capability-audit/test_call_public_enums.py
+......
+----------------------------------------------------------------------
+Ran 6 tests in 4.886s
+
+OK
+
+Final cumulative patch: git apply --check against private complete copies of all four fixed-source files
+exit=0
+
+Actual fixed OHOS/Node headers include-only syntax probe:
+$ clang++ -std=c++17 -fsyntax-only -I /Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu/docs/capability-audit/parallel/location/followup-scratch/headers /Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu/docs/capability-audit/parallel/location/followup-scratch/headers/include_probe.cpp
+exit=0
+
+No OpenHarmony component build, package, QEMU/HDC or modem test; 0 requirement closures.
+
+Final owner-lifetime test also verifies weak_ptr expiry after hook/queued-work cleanup:
+.RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed
+.
+----------------------------------------------------------------------
+Ran 2 tests in 1.348s
+
+OK
