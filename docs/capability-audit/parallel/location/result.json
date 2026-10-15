@@ -5,10 +5,22 @@
   "branch": "codex/capability-location-20261015",
   "summary": "Repair RTT listener contract and lifetime on its existing IMS route; review all 22 assigned requirements without closing package/runtime gaps.",
   "upstream_targets": [
-    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp",
-    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp",
+    "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
+    "base/location/location/frameworks/js/napi/include/location_napi_adapter.h",
+    "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp",
+    "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp",
+    "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl",
+    "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp",
+    "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h",
+    "base/location/location/interfaces/inner_api/include/locator_impl.h",
+    "base/location/location/services/location_locator/locator/include/locator_ability.h",
+    "base/location/location/services/location_locator/locator/include/request_manager.h",
+    "base/location/location/services/location_locator/locator/source/locator_ability.cpp",
+    "base/location/location/services/location_locator/locator/source/request_manager.cpp",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
-    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h"
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h",
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp",
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
   ],
   "patch_sha256": "e6d28f731f540d715bd15064b4dcf355f9a2d6ca438601288e411987f3659180",
   "requirements_review": [
@@ -45,14 +57,14 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "Dynamic NAPI export is absent. Static Taihe implementation explicitly throws ERRCODE_NOT_SUPPORTED; its return 0 is unreachable fallback. RDB working-state helper exists, but production source only resets it to 0 and exposes no active/HD icon state producer.",
+      "status": "implemented_live_state_pending_compile_and_packaged_validation",
+      "classification": "new_binding_to_live_request_and_permission_state",
+      "finding": "NAPI and Taihe now call a service-side system-permission checked IPC query. Current-account GNSS/network/fused requests must have active privacy-use state, valid lifetime, permission and switch state; frozen, passive-only and other-account requests are excluded. No HD provider is present, so HD status is not inferred.",
       "evidence": [
         "source-evidence.json: symbols",
         "backend-excerpts.json: icon producer audit where applicable"
       ],
-      "next_required": "Implement an authoritative per-user active/HD location icon state producer and permission-checked query, then wire both language surfaces; test active, idle, HD and user/permission boundaries."
+      "next_required": "Generate/compile the updated IDL and complete location TUs, then new packaged normal/system-caller query, start/stop/freeze/user/switch/permission boundaries. An actual HD provider/state source is still required for HD status."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
@@ -343,6 +355,11 @@
     {
       "command": "New OpenHarmony build / package / QEMU runtime",
       "result": "NOT RUN: centralized representative artifact gate remains owned by parent"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_location_icon_state.py",
+      "result": "PASS: 2 tests, real new request/service/client/NAPI functions and original availability guard executed under ASan/UBSan; original IDs preserved.",
+      "evidence": "host-tests.log and round2-ipc-baseline.json"
     }
   ],
   "integration_requests": [
@@ -359,6 +376,15 @@
     {
       "kind": "representative_artifact_validation",
       "action": "Build real ARM64 phone NAPI sources under SUPPORT_RTT_CALL and validate all ten RTT exports, no-arg/matching/nonmatching off returns void and callback silence; verify permission errors in ordinary/system caller contexts. Positive session/event proof needs an actual modem/SIM/IMS route."
+    },
+    {
+      "kind": "patch_component",
+      "path": "common/base/location/location/api26_runtime",
+      "action": "Register after location/api26_public_enums; this component adds real live icon state query. BLE routes will follow before any package freeze."
+    },
+    {
+      "kind": "complete_translation_units",
+      "action": "Regenerate frameworks/native/locator_sdk:locator_interface from updated ILocatorService.idl, then compile/link native locator_sdk, generated interface proxy/stub, services/location_locator/locator:lbsservice_locator (locator_ability.cpp + request_manager.cpp), frameworks/js/napi:geolocationmanager and frameworks/ets/taihe/locator_sdk:location_framework_taihe_native (ohos.geoLocationManager.impl.cpp). Run ordinary/system permissions and idle/active/freeze/timeout/user/switch checks only on new representative package."
     }
   ],
   "remaining_gaps": [
@@ -374,8 +400,8 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
-      "status": "blocked_backend_and_binding",
-      "dependency": "Implement an authoritative per-user active/HD location icon state producer and permission-checked query, then wire both language surfaces; test active, idle, HD and user/permission boundaries."
+      "status": "implemented_live_state_pending_compile_and_packaged_validation",
+      "dependency": "Generate/compile the updated IDL and complete location TUs, then new packaged normal/system-caller query, start/stop/freeze/user/switch/permission boundaries. An actual HD provider/state source is still required for HD status."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
@@ -491,17 +517,27 @@
   },
   "validation_limit": "Host lifecycle execution and fixed-source review do not satisfy AGENTS.md representative package/runtime gate. All 22 requirements remain open until genuine behavior and package evidence are accepted.",
   "changed_files": [
+    "ci/capability-audit/fixtures/batch_location/icon_source.json",
     "ci/capability-audit/fixtures/batch_location/rtt_before.json",
+    "ci/capability-audit/test_batch_location_icon_state.py",
     "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
     "docs/capability-audit/parallel/location/backend-excerpts.json",
     "docs/capability-audit/parallel/location/followup-review.json",
     "docs/capability-audit/parallel/location/host-tests.log",
     "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/round2-ipc-baseline.json",
     "docs/capability-audit/parallel/location/source-evidence.json",
+    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch",
+    "patches/common/base/location/location/api26_runtime/README.md",
+    "patches/common/base/location/location/api26_runtime/apply.sh",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
   ],
   "followup_date": "2026-10-16",
-  "followup_review": "followup-review.json"
+  "followup_review": "followup-review.json",
+  "round2_base_commit": "72bad25b78c86bb7be2033f057bd3990984da3b8",
+  "patch_sha256_by_path": {
+    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec"
+  }
 }

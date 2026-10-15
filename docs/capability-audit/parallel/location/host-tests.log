@@ -62,3 +62,24 @@ Final owner-lifetime test also verifies weak_ptr expiry after hook/queued-work c
 Ran 2 tests in 1.348s
 
 OK
+
+2026-10-16 round 2 base: 72bad25b78c86bb7be2033f057bd3990984da3b8. Live icon implementation.
+
+$ python3 ci/capability-audit/test_batch_location_icon_state.py
+Live icon query: GNSS/network/fused, privacy-use, freeze, account, timeout, permission, switch, passive, service boundaries passed
+..
+----------------------------------------------------------------------
+Ran 2 tests in 1.714s
+
+OK
+
+$ python3 ci/capability-audit/test_batch_location_rtt_lifecycle.py
+RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed
+..
+----------------------------------------------------------------------
+Ran 2 tests in 1.398s
+
+OK
+
+Final icon patch applies to complete private copies from read-only fixed source: git apply --check exit=0.
+No source container writes or product compilation.
