@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "agent": "network",
+  "requirements_reviewed": 9,
+  "changed_files": [
+    "ci/capability-audit/fixtures/batch_network/fixed-source.json",
+    "ci/capability-audit/test_batch_network_openvpn_lifecycle.py",
+    "docs/capability-audit/parallel/network/host-tests.txt",
+    "docs/capability-audit/parallel/network/result.json",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/README.md",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/verify_source.py",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/README.md",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/supervisor.cpp",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/tun_bridge.cpp",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/README.md",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/apply.sh",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/verify_source.py"
+  ],
+  "upstream_targets": [
+    "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
+    "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
+    "foundation/communication/netmanager_ext/qemu_openvpn/process_lifecycle.h",
+    "foundation/communication/netmanager_ext/qemu_openvpn/supervisor.cpp",
+    "foundation/communication/netmanager_ext/qemu_openvpn/tun_bridge.cpp",
+    "foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h",
+    "foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp"
+  ],
+  "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
+  "first_artifact_behavior_gate_passed": false,
+  "base": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "head": "660e4d56e2f7954442a99c2fab55a6836be9a9e0"
+}

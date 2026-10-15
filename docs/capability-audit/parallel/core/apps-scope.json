@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "agent": "apps",
+  "requirements_reviewed": 34,
+  "changed_files": [
+    "ci/capability-audit/batch_apps_collect_static_evidence.py",
+    "ci/capability-audit/fixtures/batch_apps/accessibility_service/IgnoreRepeatClickService.before.ets",
+    "ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs",
+    "ci/capability-audit/fixtures/batch_apps/accessibility_service/provenance.json",
+    "ci/capability-audit/test_batch_apps_accessibility_service.py",
+    "docs/capability-audit/parallel/apps/README.md",
+    "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/static-evidence.json",
+    "patches/common/applications/standard/settings/accessibility_service_completion/0001-await-accessibility-actions-before-reporting-success.patch",
+    "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
+    "patches/common/applications/standard/settings/accessibility_service_completion/apply.sh",
+    "patches/common/applications/standard/settings/accessibility_service_completion/verify_source.py"
+  ],
+  "upstream_targets": [
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets"
+  ],
+  "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
+  "first_artifact_behavior_gate_passed": false,
+  "base": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "head": "b88407cb7e9f93c1d58b4def55c64385e143f865"
+}

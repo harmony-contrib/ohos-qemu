@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "scope": "actual Linux host parent-death/fork/exec plus patched method regressions ONLY_NOT_product_or_guest",
+  "input": {
+    "commit": "660e4d56e2f7954442a99c2fab55a6836be9a9e0",
+    "git_archive_sha256": "5a7abcf6f8a258624bd25b6c4fa26f92558ff94573952f7021cf34a363f442ff",
+    "source": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261015/network-validation/source",
+    "purpose": "immutable Linux host regression source, not a package build"
+  },
+  "status": "pass_5_tests_zero_skips_GNU11_ASan_UBSan",
+  "logs": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261015/network-validation/linux-tests.log",
+      "sha256": "897878636ef3e1f4bf268ec06e313cb474b5dce51b126a58e2a98065851d651f",
+      "result": "environment: OHOS Clang lacks native Linux ASan runtime"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261015/network-validation/linux-tests-02.log",
+      "sha256": "d475d2edac04d6badb7d8a455ad7b5dfac12a91abb3ec6b144387f6070fdbc22",
+      "result": "environment: private Docker tmpfs default noexec"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261015/network-validation/linux-tests-03.log",
+      "sha256": "9be9c833c518201595860ca66af6751a7b128b71e82e96a94398b9c882112a72",
+      "result": "5 passed, zero skips"
+    }
+  ],
+  "final_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "--name",
+    "ohos-qemu-parallel-network-linux-20261015-03",
+    "--network",
+    "none",
+    "--cpus",
+    "2",
+    "--memory",
+    "2g",
+    "--read-only",
+    "--tmpfs",
+    "/tmp:rw,exec,nosuid,nodev,size=512m",
+    "--mount",
+    "type=bind,source=/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261015/network-validation/source,target=/work,readonly",
+    "--mount",
+    "source=ohos-qemu-7_0-release-source,target=/ohos,readonly",
+    "--mount",
+    "source=ohos-qemu-7_0-release-out,target=/ohos/out,readonly",
+    "--env",
+    "LC_ALL=C",
+    "--env",
+    "LC_CTYPE=C",
+    "--env",
+    "LANG=C",
+    "--env",
+    "PATH=/ohos/prebuilts/clang/ohos/linux-x86_64/llvm/bin:/usr/bin:/bin",
+    "--env",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "--env",
+    "CXX=/usr/bin/g++",
+    "--workdir",
+    "/work/ci/capability-audit",
+    "--entrypoint",
+    "python3",
+    "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "-m",
+    "unittest",
+    "test_batch_network_openvpn_lifecycle",
+    "-v"
+  ],
+  "compiler": "GNU g++ 11 using image-native ASan/UBSan",
+  "image_id": "sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55",
+  "source_out_readonly": true,
+  "private_executable_tmpfs": true,
+  "first_artifact_behavior_gate_passed": false
+}

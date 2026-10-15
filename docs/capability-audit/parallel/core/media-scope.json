@@ -1,0 +1,39 @@
+{
+  "status": "pass",
+  "agent": "media",
+  "requirements_reviewed": 7,
+  "changed_files": [
+    "ci/capability-audit/batch_media_review_source.py",
+    "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
+    "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
+    "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/manifest.json",
+    "ci/capability-audit/test_batch_media_avc_surface_layout.py",
+    "docs/capability-audit/parallel/media/REVIEW.md",
+    "docs/capability-audit/parallel/media/environment.json",
+    "docs/capability-audit/parallel/media/existing-avc-checks-01.log",
+    "docs/capability-audit/parallel/media/existing-avc-verifier-checks-01.log",
+    "docs/capability-audit/parallel/media/host-checks-01.log",
+    "docs/capability-audit/parallel/media/host-checks-02.log",
+    "docs/capability-audit/parallel/media/host-checks-03.log",
+    "docs/capability-audit/parallel/media/host-checks-04.log",
+    "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/source-review-01.failure.json",
+    "docs/capability-audit/parallel/media/source-review.json",
+    "patches/common/foundation/multimedia/av_codec/avc_eos/apply.sh",
+    "patches/common/foundation/multimedia/av_codec/avc_eos/verify_source.py",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/0001-validate-real-input-layout-and-release-rejected-surfaces.patch",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/README.md",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/layout.py",
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/verify_source.py"
+  ],
+  "upstream_targets": [
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp",
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp"
+  ],
+  "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
+  "first_artifact_behavior_gate_passed": false,
+  "base": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "head": "11d48c0e8d50bd9213a2b732afff41824bd14e1b"
+}

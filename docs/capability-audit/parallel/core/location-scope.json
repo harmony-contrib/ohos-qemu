@@ -1,0 +1,27 @@
+{
+  "status": "pass",
+  "agent": "location",
+  "requirements_reviewed": 22,
+  "changed_files": [
+    "ci/capability-audit/fixtures/batch_location/rtt_before.json",
+    "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+    "docs/capability-audit/parallel/location/backend-excerpts.json",
+    "docs/capability-audit/parallel/location/followup-review.json",
+    "docs/capability-audit/parallel/location/host-tests.log",
+    "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/source-evidence.json",
+    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
+  ],
+  "upstream_targets": [
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h",
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp",
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+  ],
+  "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
+  "first_artifact_behavior_gate_passed": false,
+  "base": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "head": "72bad25b78c86bb7be2033f057bd3990984da3b8"
+}
