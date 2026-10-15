@@ -1,0 +1,122 @@
+FILE after/good-compile.log
+
+FILE after/host-compile.log
+
+FILE after/init_application.log
+init_application: pass
+
+FILE after/init_application_init.log
+init_application_init: pass
+
+FILE after/init_cached.log
+init_cached: pass
+
+FILE after/init_check_schedule.log
+init_check_schedule: pass
+
+FILE after/init_class_factory.log
+init_class_factory: pass
+
+FILE after/init_engine_factory.log
+init_engine_factory: pass
+
+FILE after/init_engine_instance.log
+init_engine_instance: pass
+
+FILE after/init_good.log
+init_good: pass
+
+FILE after/init_init_schedule.log
+init_init_schedule: pass
+
+FILE after/init_metadata.log
+init_metadata: pass
+
+FILE after/init_queue_1.log
+init_queue_1: pass
+
+FILE after/init_queue_2.log
+init_queue_2: pass
+
+FILE after/init_queue_3.log
+init_queue_3: pass
+
+FILE after/init_queue_property.log
+init_queue_property: pass
+
+FILE after/init_register_engine.log
+init_register_engine: pass
+
+FILE after/init_register_io.log
+init_register_io: pass
+
+FILE after/init_register_release.log
+init_register_release: pass
+
+FILE after/init_render_init.log
+init_render_init: pass
+
+FILE after/init_render_instance.log
+init_render_instance: pass
+
+FILE after/init_resources.log
+init_resources: pass
+
+FILE after/init_retry.log
+init_retry: pass
+
+FILE after/init_scene_context.log
+init_scene_context: pass
+
+FILE after/init_scene_manager.log
+init_scene_manager: pass
+
+FILE after/missing_export-compile.log
+
+FILE after/missing_export_retry.log
+missing_export_retry: pass
+
+FILE after/missing_library_global.log
+missing_library_global: pass
+
+FILE after/plugin_once.log
+plugin_once: pass
+
+FILE after/plugin_retry.log
+plugin_retry: pass
+
+FILE after/preloaded_engine.log
+preloaded_engine: pass
+
+FILE after/shutdown_reload.log
+shutdown_reload: pass
+
+FILE after/uid_failure.log
+uid_failure: pass
+
+FILE before/good-compile.log
+
+FILE before/host-compile.log
+
+FILE before/init_engine_factory.log
+init_engine_factory: !SceneAdapter::InitEngine({})
+
+FILE before/init_render_init.log
+init_render_init: !SceneAdapter::InitEngine({})
+
+FILE before/init_retry.log
+init_retry: !SceneAdapter::InitEngine({})
+
+FILE before/missing_export-compile.log
+
+FILE before/missing_export_retry.log
+missing_export_retry: engineInstance_.libHandle_ == nullptr && !Core::GetPluginRegister && !Core::CreatePluginRegistry
+
+FILE before/plugin_retry.log
+plugin_retry: Loads() == 2
+
+FILE before/preloaded_engine.log
+preloaded_engine: Loads() == 1
+
+FILE before/uid_failure.log
+uid_failure: !adapter.LoadPluginByUid(Base::Uid{"requested"})

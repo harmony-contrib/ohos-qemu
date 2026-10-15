@@ -1,0 +1,105 @@
+{
+  "agent": "system",
+  "round": 2,
+  "baseline_commit": "bfc1e5e31226c15922f5e9ca48163db97e23164c",
+  "branch": "codex/capability-system-20261015",
+  "reviewed_on": "2026-10-16 Asia/Shanghai",
+  "status": "graphics3d_startup_candidate_host_verified_official_compile_pending",
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "upstream_targets": [
+    "foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp",
+    "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp"
+  ],
+  "approved_but_unchanged": [
+    "foundation/graphic/graphic_3d/3d_scene_adapter/include/scene_adapter/scene_adapter.h"
+  ],
+  "source_revision": "b2d7af910f2d4b941697630020b0940245d5bd99",
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "module_confirmation": "Parent agent explicitly approved the graphic_3d adapter and JS module targets after reviewing the applicable upstream AGENTS. Official GN compilation is delegated to the parent exclusive build lease; Windows build.bat is not an applicable host build.",
+  "changes": [
+    "Track successful default-plugin registration separately from the engine DSO handle, so an earlier engine-only load or registration failure cannot suppress real registration.",
+    "Return failure immediately on dlopen failure; incomplete dlsym exports close the DSO and clear function pointers, allowing a clean retry.",
+    "Requested UID loading always reaches the real plugin registry and propagates its result even if the engine was already loaded.",
+    "Queue creation/registration/scheduling, engine factory/instance, render factory/instance/Init, metadata/resources/application initialization, scene context/manager and queue-property failure return false. Partial adapter-owned engine objects reset on ENGINE_THREAD; complete success is recorded only after the initial frame.",
+    "SceneManager creation/rejection runs before acquiring the JS queue reference; deinitialization clears the engine-success state."
+  ],
+  "patch_sha256": "3e3508d06ef2d380c8cedb2a8c888d1c715587532e84a393702cb299a0e0e154",
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/batch_system_graphics3d_startup.py --output /tmp/ohos-capability-system-graphics3d-startup-03",
+      "result": "7 baseline assertion failures reproduced and 30 repaired scenarios pass ASan/UBSan; actual loader/initializer source extracted; real host dlopen/dlsym used; initializer services have test-only ABI shims",
+      "evidence": "docs/capability-audit/parallel/system/round2-graphics3d/host-03.json"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_system_graphics3d_startup.py -v",
+      "result": "6 tests pass in 9.249 seconds: actual function execution, full installer twice, exact source/revision, unknown/mixed/symlink preservation"
+    },
+    {
+      "command": "git diff --cached --check -- . ':!*.patch'",
+      "result": "pass; unified patch context preserves original whitespace and exact hashes"
+    }
+  ],
+  "limitations": [
+    "Host boundary verification does not execute the real engine/plugin registry, GPU renderer, NAPI or a guest. The test DSO is not a replacement backend and is never installed.",
+    "The JS queue change is validated by exact-source ordering plus pending official compilation; there is no host NAPI execution.",
+    "These source defects can cause false initialization success and prevent recovery. The original guest SceneManager error still requires fresh runtime diagnostics to establish its complete root cause.",
+    "The unmodified application_context.h implementation has its own unchecked internal render-context construction path; adapter-level checks cannot prove its internal failure branches safe. Request separate ownership before changing that lower-level module if new runtime evidence reaches it."
+  ],
+  "integration_requests": [
+    {
+      "owner": "main",
+      "request": "Wire patches/common/foundation/graphic/graphic_3d/scene_startup/apply.sh into the common product/source patch sequence before freeze. Register test_batch_system_graphics3d_startup.py if host regressions use an explicit allowlist."
+    },
+    {
+      "owner": "main",
+      "request": "Exclusive build lease: compile full scene_adapter.cpp and RenderContextJS.cpp with pinned official GN/SDK arguments, then link the actual scene-adapter consumer/libscene; do not count host ABI-shim compilation as that gate."
+    },
+    {
+      "owner": "main",
+      "request": "First packaged normal-HAP runtime: capture real plugin loader/class registry/engine-init logs; validate Scene.load valid empty/glTF/GLB/scene2 assets, scene root/resource creation and observable rendered pixels; missing/corrupt asset rejection followed by successful retry; repeated destroy/recreate and module/worker teardown; real known/unknown loadPlugin UID outcomes. Preserve package/checksum/environment and do not start remaining five packages until the complete representative gate passes."
+    }
+  ],
+  "resources": {
+    "heavy_tasks_started": 0,
+    "shared_source_writes": false,
+    "out_evidence_used": false,
+    "source_queries": "Bounded read-only git/cat/sed queries in the parent-authorized container only."
+  },
+  "remaining_work_queue": {
+    "msdp": {
+      "status": "queued_by_parent_resource_scheduling",
+      "revision": "96335211bea5ca348325d55746e14e102208354f",
+      "findings": [
+        "device_status.gni enables the real sensor path only if sensors_sensor exists in global_parts_info; the package feature set must be checked.",
+        "interfaces/innerkits/BUILD.gn defines the real devicestatus_client and libs/BUILD.gn the real sensor-driven devicestatus_algo; both are listed in bundle.json sub_component. Do not infer source absence from old image inventory.",
+        "services/native/src/devicestatus_msdp_client_impl.cpp: InitMsdpImpl tries sensor HDI, then the real sensor algorithm, then explicit MockHandle fallback. Actual QEMU sensor delivery and public subscribe/unsubscribe transitions remain to implement/validate."
+      ],
+      "new_backend_implemented": false
+    },
+    "calendar": "apps owns CalendarData; send real editor/reminder UI integration there.",
+    "device_attest": "Await legitimate OEM product identity/key/service configuration requested by parent; no credentials fabricated.",
+    "other_services": "Prior ten-item result remains open; advertising/model/provider evidence and AppDomainVerify target ownership remain required."
+  },
+  "changed_files": [
+    "ci/capability-audit/batch_system_graphics3d_plugin_abi.h",
+    "ci/capability-audit/batch_system_graphics3d_startup.py",
+    "ci/capability-audit/batch_system_graphics3d_startup_harness.cpp",
+    "ci/capability-audit/batch_system_graphics3d_test_library.cpp",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/3d_scene_adapter__include__scene_adapter__scene_adapter.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/3d_scene_adapter__src__scene_adapter.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/expected_hashes.json",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/kits__js__src__RenderContextJS.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/provenance.json",
+    "ci/capability-audit/test_batch_system_graphics3d_startup.py",
+    "docs/capability-audit/parallel/system/result.json",
+    "docs/capability-audit/parallel/system/round2-graphics3d/failed-attempts.json",
+    "docs/capability-audit/parallel/system/round2-graphics3d/host-03.json",
+    "docs/capability-audit/parallel/system/round2-graphics3d/host-03.log",
+    "docs/capability-audit/parallel/system/round2-graphics3d/result.json",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/0001-retry-real-scene-plugins-and-report-engine-init-failures.patch",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/README.md",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/apply.sh",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/verify_source.py"
+  ]
+}

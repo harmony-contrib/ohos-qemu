@@ -1,0 +1,10 @@
+{
+  "foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp": {
+    "before": "7526b5c062075bd73986b390a02b6ef9550ca61e948c6991a62fab6440d1d259",
+    "after": "96bc804ab887068cd3ccf717c0f146463a0deb9f7e4885b700d277e70d879aed"
+  },
+  "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp": {
+    "before": "ac6d4decfe475cb03dc8fe54538b452ae4239e6bb988e79d118d2120fa0e5ef5",
+    "after": "38bdcbf842147ae7b4aaaa4e58da32c660b64f340f528341fe3d1d295f71e45c"
+  }
+}

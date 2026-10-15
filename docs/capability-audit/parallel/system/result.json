@@ -3,14 +3,16 @@
   "branch": "codex/capability-system-20261015",
   "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "reviewed_on": "2026-10-16 Asia/Shanghai",
-  "status": "bounded_first_round_candidate_ready",
+  "status": "two_bounded_round_candidates_ready_official_compile_and_runtime_pending",
   "requirements_total": 10,
   "requirements_closed": 0,
   "first_artifact_behavior_gate_passed": false,
   "upstream_targets": [
     "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
     "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
-    "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h"
+    "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+    "foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp",
+    "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp"
   ],
   "requirements_review": {
     "behavior:access-token-api26-kernel-abi": {
@@ -128,7 +130,7 @@
       "action": "No fictional provider configuration or mock ad service added."
     },
     "behavior:graphics3d-scene-manager-unavailable": {
-      "status": "open_scene_plugin_loader_runtime_diagnosis",
+      "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
       "fixed_source_findings": [
         "Scene.load failure maps to RenderContextJS::CreateScene line 881: CreateSceneManager(uri) returns null before scene creation.",
         "Public module/library presence is not proof the META scene plugin registry, task queues, renderer and scene importer initialized."
@@ -140,7 +142,7 @@
         "Need loader/registry initialization diagnostics from the new package and an actual Scene.load/create/render/destroy/recreate path with a valid asset.",
         "No runtime failure evidence yet identifies a safe single upstream source change; software-render context and plugin packaging need focused diagnosis."
       ],
-      "action": "No blank scene, synthetic manager or Promise-success fallback introduced."
+      "action": "Round 2 repairs actual engine/plugin load and retry state, truthful complete initialization, partial object rollback and JS queue lifetime; see round2-graphics3d/result.json. This does not yet prove the original guest failure fully resolved."
     },
     "behavior:security-guard-empty-model-config": {
       "status": "open_real_risk_model_dependency",
@@ -280,7 +282,7 @@
     },
     {
       "id": "behavior:graphics3d-scene-manager-unavailable",
-      "status": "open_scene_plugin_loader_runtime_diagnosis",
+      "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
       "dependencies": [
         "Need loader/registry initialization diagnostics from the new package and an actual Scene.load/create/render/destroy/recreate path with a valid asset.",
         "No runtime failure evidence yet identifies a safe single upstream source change; software-render context and plugin packaging need focused diagnosis."
@@ -321,6 +323,15 @@
     "ci/capability-audit/batch_system_child_lifecycle.py",
     "ci/capability-audit/batch_system_child_lifecycle_harness.cpp",
     "ci/capability-audit/batch_system_child_lifecycle_support.h",
+    "ci/capability-audit/batch_system_graphics3d_plugin_abi.h",
+    "ci/capability-audit/batch_system_graphics3d_startup.py",
+    "ci/capability-audit/batch_system_graphics3d_startup_harness.cpp",
+    "ci/capability-audit/batch_system_graphics3d_test_library.cpp",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/3d_scene_adapter__include__scene_adapter__scene_adapter.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/3d_scene_adapter__src__scene_adapter.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/expected_hashes.json",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/kits__js__src__RenderContextJS.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/graphics3d_startup/provenance.json",
     "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/expected_hashes.json",
     "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/include/child_callback_manager.h",
     "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
@@ -339,17 +350,27 @@
     "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/pristine/foundation/ability/ability_runtime/interfaces/inner_api/child_process_manager/include/child_process_args_manager.h",
     "ci/capability-audit/fixtures/batch_system/native_child_lifecycle/provenance.json",
     "ci/capability-audit/test_batch_system_child_lifecycle.py",
+    "ci/capability-audit/test_batch_system_graphics3d_startup.py",
     "docs/capability-audit/parallel/system/host-lifecycle-01-failure.json",
     "docs/capability-audit/parallel/system/host-lifecycle-02.json",
     "docs/capability-audit/parallel/system/host-lifecycle-02.log",
     "docs/capability-audit/parallel/system/installer-01-failure.log",
     "docs/capability-audit/parallel/system/result.json",
+    "docs/capability-audit/parallel/system/round2-graphics3d/failed-attempts.json",
+    "docs/capability-audit/parallel/system/round2-graphics3d/host-03.json",
+    "docs/capability-audit/parallel/system/round2-graphics3d/host-03.log",
+    "docs/capability-audit/parallel/system/round2-graphics3d/result.json",
     "docs/capability-audit/parallel/system/source-review.json",
     "docs/capability-audit/parallel/system/unit-tests.json",
     "patches/common/foundation/ability/ability_runtime/native_child_process/0004-complete-start-callback-lifecycle.patch",
     "patches/common/foundation/ability/ability_runtime/native_child_process/README.md",
     "patches/common/foundation/ability/ability_runtime/native_child_process/apply.sh",
     "patches/common/foundation/ability/ability_runtime/native_child_process/verify_callback_source.py",
-    "patches/common/foundation/ability/ability_runtime/native_child_process/verify_config_source.py"
-  ]
+    "patches/common/foundation/ability/ability_runtime/native_child_process/verify_config_source.py",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/0001-retry-real-scene-plugins-and-report-engine-init-failures.patch",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/README.md",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/apply.sh",
+    "patches/common/foundation/graphic/graphic_3d/scene_startup/verify_source.py"
+  ],
+  "round2": "docs/capability-audit/parallel/system/round2-graphics3d/result.json"
 }
