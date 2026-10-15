@@ -1,0 +1,107 @@
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
+@@ -33,29 +33,38 @@
+ const DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION_KEY: string = 'transition_animations_notification';
+  
+ export default class IgnoreRepeatClickService extends ServiceExtensionAbility {
++  private requestQueue: Promise<void> = Promise.resolve();
++
+   async onCreate(want: Want) {
+     LogUtil.showInfo(TAG, 'onCreate');
+   }
+- 
+-  onRequest(want: Want, startId: number) {
+-    LogUtil.showInfo(TAG, `onRequest abilityName:${want?.abilityName} bundleName:${want?.bundleName} action:${want?.action?.toString()}`);
+-    if (want?.action?.toString() === DISABLE_IGNORE_REPEAT_CLICK_SWITCH) {
+-      this.disableIgnoreRepeatClickSwitch();
+-      LogUtil.warn(`${TAG} disableIgnoreRepeatClickSwitch`);
+-    } else if (want?.action?.toString() === DISABLE_IGNORE_REPEAT_CLICK_NOTIFICATION) {
+-      this.disableIgnoreRepeatClickNotification();
+-      LogUtil.warn(`${TAG} disableIgnoreRepeatClickNotification`);
+-    } else if (want?.action?.toString() === REOPEN_TRANSITION_ANIMATIONS_SWITCH) {
+-      this.reopenTransitionAnimationsSwitch();
+-      LogUtil.warn(`${TAG} reOpenTransitionAnimations`);
+-    } else if (want?.action?.toString() === DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION) {
+-      this.disableTransitionAnimationsNotification();
+-      LogUtil.warn(`${TAG} disableTransitionAnimationsNotification`);
+-    } else {
+-      LogUtil.warn(`${TAG} no suitable action`);
++
++  onRequest(want: Want, startId: number): void {
++    const action: string = want?.action?.toString() ?? '';
++    LogUtil.showInfo(TAG, `onRequest abilityName:${want?.abilityName} bundleName:${want?.bundleName} action:${action}`);
++    // Serialize notification actions until the real configuration operation completes.
++    this.requestQueue = this.requestQueue.then(() => this.handleRequest(action));
++  }
++
++  private async handleRequest(action: string): Promise<void> {
++    try {
++      if (action === DISABLE_IGNORE_REPEAT_CLICK_SWITCH) {
++        await this.disableIgnoreRepeatClickSwitch();
++      } else if (action === DISABLE_IGNORE_REPEAT_CLICK_NOTIFICATION) {
++        this.disableIgnoreRepeatClickNotification();
++      } else if (action === REOPEN_TRANSITION_ANIMATIONS_SWITCH) {
++        await this.reopenTransitionAnimationsSwitch();
++      } else if (action === DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION) {
++        this.disableTransitionAnimationsNotification();
++      } else {
++        LogUtil.warn(`${TAG} no suitable action`);
++      }
++    } catch (e) {
++      LogUtil.error(`${TAG} action:${action} failed, code: ${e?.code} message: ${e?.message}`);
+     }
+   }
+- 
++
++
+   onDisconnect(want: Want) {
+     LogUtil.showInfo(TAG, 'onDisconnect');
+   }
+@@ -64,35 +73,23 @@
+     LogUtil.showInfo(TAG, 'onDestroy');
+   }
+  
+-  private disableIgnoreRepeatClickSwitch() {
+-    try {
+-      IgnoreRepeatedStateModel.getInstance().ignoreRepeatClick = false;
+-      config.ignoreRepeatClick.set(false);
+-      HiSysEventUtil.reportDefaultBehaviorEventByUE(
+-        HiSysAccessibilityEventGroup.IGNORE_REPEAT_TOUCHES_SWITCH, 'off');
+-      LogUtil.info(`${TAG} ignoreRepeatClick set off success`);
+-      return true;
+-    } catch (e) {
+-      LogUtil.error(`${TAG} ignoreRepeatClick set off failed, code: ${e?.code} message: ${e?.message}`);
+-      return false;
+-    }
++  private async disableIgnoreRepeatClickSwitch(): Promise<void> {
++    await config.ignoreRepeatClick.set(false);
++    IgnoreRepeatedStateModel.getInstance().ignoreRepeatClick = false;
++    HiSysEventUtil.reportDefaultBehaviorEventByUE(
++      HiSysAccessibilityEventGroup.IGNORE_REPEAT_TOUCHES_SWITCH, 'off');
++    LogUtil.info(`${TAG} ignoreRepeatClick set off success`);
+   }
+  
+   private disableIgnoreRepeatClickNotification() {
+     SettingsDataUtils.setSecureValue(DISABLE_IGNORE_REPEAT_CLICK_NOTIFICATION_KEY, CLICK_SWITCH_OFF);
+   }
+ 
+-  private reopenTransitionAnimationsSwitch() {
+-    try {
+-      config.animationOff.set(false);
+-      HiSysEventUtil.reportDefaultBehaviorEventByUE(
+-        HiSysAccessibilityEventGroup.TRANSITION_ANIMATIONS_STATE, 'on');
+-      LogUtil.info(`${TAG} animationOff set false success`);
+-      return true;
+-    } catch (e) {
+-      LogUtil.error(`${TAG} animationOff set false failed, code: ${e?.code} message: ${e?.message}`);
+-      return false;
+-    }
++  private async reopenTransitionAnimationsSwitch(): Promise<void> {
++    await config.animationOff.set(false);
++    HiSysEventUtil.reportDefaultBehaviorEventByUE(
++      HiSysAccessibilityEventGroup.TRANSITION_ANIMATIONS_STATE, 'on');
++    LogUtil.info(`${TAG} animationOff set false success`);
+   }
+  
+   private disableTransitionAnimationsNotification() {

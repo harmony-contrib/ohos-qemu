@@ -1,0 +1,635 @@
+{
+  "schema_version": 1,
+  "agent": "apps",
+  "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "branch": "codex/capability-apps-20261015",
+  "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
+  "requirements_count": 34,
+  "summary": "34项逐项复核；Settings provider异步完成/错误处理源码候选已修复；完整账本无核销，service安全退出保留为后续工作。",
+  "acceptance_status": "host regression passed; official SDK/HAP compile and newly packaged runtime acceptance pending",
+  "upstream_targets": [
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets"
+  ],
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_accessibility_service.py",
+      "result": "PASS",
+      "test_cases": 4,
+      "executed_behavior_scenarios": 10,
+      "duration_seconds": 0.728,
+      "coverage": [
+        "original full-file reproduces premature cache/event success",
+        "exact patch twice and SHA256",
+        "drift/symlink reject before writing",
+        "delayed real completion",
+        "synchronous throw and asynchronous rejection",
+        "queue continues after rejection",
+        "queued and synchronous reentrant onRequest",
+        "notification preferences and failure",
+        "unknown action",
+        "no unconditional terminateSelf in any request, including synchronous reentry"
+      ],
+      "scope": "host-only complete patched class execution with explicit backend/context doubles; no SDK/guest claim"
+    },
+    {
+      "command": "docker exec -i ohos-qemu-parallel-source-20261015-01 python3 - --source-root /ohos --system-root /ohos/out/arm64_virt/packages/phone/system < ci/capability-audit/batch_apps_collect_static_evidence.py",
+      "result": "PASS; 17 source files and 22 selected staged HAP modules inspected",
+      "evidence": "docs/capability-audit/parallel/apps/static-evidence.json",
+      "scope": "read-only mixed-profile staging; cannot substitute archive/BMS/runtime evidence"
+    }
+  ],
+  "integration_requests": [
+    {
+      "id": "apps-settings-a11y-component",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "files": [
+        "scripts/build_standard_qemu_in_docker.sh"
+      ],
+      "request": "Add settings/accessibility_service_completion/apply.sh to Settings source preparation after pinned source preparation and before HAP build; use existing --source-root contract. Only the one declared upstream file changes."
+    },
+    {
+      "id": "apps-core-validation",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "request": "Official API26 Settings HAP compile; add new host regression to concentrated checks; validate four actual accessibility notification actions, config/error completion, permissions, continuous requests and extension destruction/restart on the first new representative package. Keep all34 ledger rows open until the whole run passes."
+    },
+    {
+      "id": "apps-cross-domain-next-wave",
+      "owner": "main",
+      "required_for_this_candidate": false,
+      "request": "Use per-item findings to assign unique owners for vendor/HAP preinstall/signature wiring and network/telephony/location/media/notification caller contracts. Similar names do not guarantee compatible protocols; no blanket bundle replacements."
+    },
+    {
+      "id": "apps-safe-service-lifetime",
+      "owner": "main",
+      "required_for_this_candidate": false,
+      "request": "Fixed ServiceExtensionContext::TerminateAbility passes token_,-1 with no latest-startId guard. Do not add unconditional async self-termination to this notification service: a new onRequest can arrive while termination is outstanding. Validate existing lifetime and select an atomic/conditional stop contract before claiming idle exit; notification helpers are synchronous setValueSync and need no await."
+    }
+  ],
+  "requirements_review": {
+    "arkts_export:@ohos.accessibility.config:startBlinking": {
+      "status": "existing_candidate_needs_new_package",
+      "finding": "基线已有真实 NAPI/client/IPC/AAMS/WM screen_blink 实现；R50单项通过不能替代完整验收。",
+      "next_required": "同一新归档验证系统/普通调用者、真实输入/像素/节点、停止/退出/重启边界。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "arkts_export:@ohos.accessibility.config:stopBlinking": {
+      "status": "existing_candidate_needs_new_package",
+      "finding": "与startBlinking同一真实实现，已有调用者跟踪和窗口释放候选；仍缺本轮完整新包证明。",
+      "next_required": "验证重复stop、无start、caller退出、关闭总开关和服务重启后窗口/像素恢复。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:phone-published-capabilities-not-declared": {
+      "status": "declaration_and_backend_missing",
+      "finding": "固定暂存syscap仍不含DistributedFile、HiDumper、DataTransitManager、DeviceAuth、DeviceSecurityLevel、PinAuth六项；不能仅添加字符串。",
+      "next_required": "为六项分别指定真实后端所有者，核对最低配置，接线声明/公开接口/权限与插件完整回归。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:phone-avinputcast-not-declared": {
+      "status": "existing_declaration_needs_provider_and_new_package",
+      "finding": "混合暂存syscap已声明AVInputCast，但不能由暂存推断phone归档canIUse或真实投送行为。",
+      "next_required": "新phone包核对声明/canIUse，再验证AVInputCast真实会话、provider选择/取消/回调。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:accessibility-qemu-input-e2e": {
+      "status": "existing_candidate_needs_new_package",
+      "finding": "已有输入E2E和ScreenBlink候选，本轮另补Settings通知service完成/退出语义；均不能替代整体新包验收。",
+      "next_required": "运行真实a11y输入、像素、节点和caller退出/重启轨迹，并加入Settings通知动作。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:api26-runtime-export-mismatches-phone": {
+      "status": "coverage_refresh_and_cross_domain_implementation_required",
+      "finding": "聚合约40个syscap的API26导出差异；基线有分模块修复，旧R49导出面不能按源码候选扣减。",
+      "next_required": "同包刷新arkts-export-surface，并按模块把剩余真实导出/值/行为差异分给唯一所有者；不注册空函数。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/runtime/arm64-phone/arkts-export-surface-latest.json"
+      ]
+    },
+    "behavior:intelligent-scene-notification-query-fails": {
+      "status": "provider_protocol_and_runtime_missing",
+      "finding": "暂存有IntelligentScene DataExtAbility/NotDisturbService，但HAP存在不能证明原35200001已消失或provider数据协议正确。",
+      "next_required": "新phone包复测两种DND query，保存provider初始化、数据、拒绝和重启证据；仍失败时定位通知/IntelligentScene链。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:shortkey-empty-launch-config": {
+      "status": "existing_candidate_needs_new_package",
+      "finding": "基线已有qemu.settings Meta+I真实Shortkeys配置/保留键补丁，暂存能见businessId；未形成完整新包闭环。",
+      "next_required": "验证businessId/setKeyDownDuration、短按、错误修饰键、普通调用者拒绝和重启。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:certificate-dialog-device-result": {
+      "status": "capability_decision_requires_runtime_review",
+      "finding": "源码/暂存CertificateManager都有MainExtensionAbility和CertPickerUIExtAbility，旧phone supportsCACertDialog=false不能归因为缺HAP。",
+      "next_required": "由certificate_manager所有者跟踪支持判断，实测证书选择、取消、拒绝、空列表和device分支。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:ability-share-picker-system-provider-missing": {
+      "status": "real_provider_missing",
+      "finding": "预装配置列sharepickerdialog但暂存缺该bundle；SettingsInstantShareService不是PickerDialog share协议实现。",
+      "next_required": "提供真实系统share picker，处理目标枚举/数据授权/完成/取消/退出，并接入构建、签名、预装。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:ability-send-data-action-has-no-enabled-handler": {
+      "status": "preinstall_and_behavior_evidence_missing",
+      "finding": "暂存Bluetooth HAP有BluetoothServiceAbility，预装列表未列/system/app/Bluetooth；混合暂存不是phone BMS注册证据。",
+      "next_required": "统一真实Bluetooth预装/签名，验证sendData MIME/URI/权限/接收结果与取消，不能只注册任意handler。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:avcast-media-controller-provider-mismatch": {
+      "status": "provider_protocol_and_wiring_missing",
+      "finding": "暂存provider是com.hmos.mediacontroller，只有UIExtAbility/AVVolumeExtension；没有com.ohos.mediacontroller，包名替换不证明picker协议。",
+      "next_required": "媒体所有者核对真实Want/会话结果协议，统一唯一provider的名字/入口/签名/预装并跑选择/取消。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:media-control-volume-provider-activation": {
+      "status": "provider_protocol_and_wiring_missing",
+      "finding": "AVVolumeExtension仅见com.hmos.mediacontroller暂存；缺phone归档启用及真实面板操作证明。",
+      "next_required": "协调媒体provider，验证真实音量读取/调整、拒绝、取消、关闭和重启后的UI生命周期。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:distributed-hardware-ui-preinstall-path-mismatch": {
+      "status": "existing_candidate_needs_new_package",
+      "finding": "基线已有dhardware_preinstall正确目录补丁，暂存目录/预装已一致；不是同包BMS/实际交互证明。",
+      "next_required": "新包查DHardwareUIAbility/Mech扩展注册，验证真实发起、取消、错误和退出。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:photo-provider-not-activated-2in1": {
+      "status": "existing_source_provider_needs_new_package",
+      "finding": "基线已有Photos源码构建、FA-card真实provider重定向和Store初始化；源码/暂存有Recent*、DefaultAlbumName和FACardService，仍缺完整行为。",
+      "next_required": "新包验证Recent组件/Info/DefaultAlbum、图库授权/取消/退出、FA-card真实数据变化/cloud设置协议，2in1单独验收。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:enterprise-provisioning-provider-missing": {
+      "status": "source_provider_build_and_preinstall_missing",
+      "finding": "AdminProvisioning真源码存在，但HAP图只在rk3568/ohos-arm64添加目标，未覆盖QEMU；暂存预装有目录但缺payload。旧JSON和JSON5入口还不同。",
+      "next_required": "准备API26可构建provider、精确签名/权限和QEMU构建图；真实EDM provisioning/授权/取消/退出验证。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:wallpaper-ui-provider-missing": {
+      "status": "source_provider_build_and_contract_missing",
+      "finding": "theme/product/phone有com.ohos.wallpaper/WallpaperExtAbility真源码，暂存缺bundle；Launcher源码也没WallpaperExtAbility。",
+      "next_required": "构建签名预装theme provider，核对ThemeService缺席时launcher fallback合同，再验证图片设置/还原/取消。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:accessibility-screen-reader-provider-missing": {
+      "status": "real_backend_missing",
+      "finding": "暂存两种screenreader bundle均缺；设置页/扩展名字不能提供朗读、焦点、手势、TTS生命周期。",
+      "next_required": "实现真实reader extension并统一bundle配置，验证焦点/手势/朗读/关闭/重启，不能空壳。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:accessibility-caption-provider-missing": {
+      "status": "real_backend_missing",
+      "finding": "暂存无com.ohos.vassistant/AiCaptionServiceExtAbility；状态查询不等于实时音频转字幕。",
+      "next_required": "提供真实字幕音频/识别/显示/权限/停止后端并预装，目前没有可直接复用的完整provider。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:vpn-dialog-provider-prefix-mismatch": {
+      "status": "existing_candidate_needs_network_integration",
+      "finding": "基线vpn_dialog_bundle补丁已转com.ohos.vpndialog，暂存有真实VpnServiceExtAbility；本组不改网络调用者。",
+      "next_required": "network/main统一验证新包真实授权允许/拒绝/取消/断连/重启，保留调用者及服务结果。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:network-policy-settings-providers-missing": {
+      "status": "provider_contract_and_caller_wiring_missing",
+      "finding": "暂存CommunicationsSetting是com.ohos且无NetAccessPolicySettingUIExtension；普通Settings页不能冒充联网策略编辑协议。",
+      "next_required": "网络所有者核对策略模型/现有UI，提供真实入口并统一调用者及通知跳转，验证持久化/取消/拒绝。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:telephony-apn-settings-provider-missing": {
+      "status": "provider_contract_and_caller_wiring_missing",
+      "finding": "暂存com.ohos.callsetting有若干Dialog/CallSetting入口但无GeneralCallSettingDialogAbility；相近名字不保证APN协议兼容。",
+      "next_required": "telephony/main核对APN Want/结果协议，提供真实APN设置入口/权限，验证增改删/取消/重启。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:wifi-system-ui-providers-not-activated": {
+      "status": "preinstall_missing_and_network_backend_dependency",
+      "finding": "暂存LocationDialog有WifiServiceAbility/HotSpotServiceAbility，PortalLogin有EntryAbility；预装未列这两目录，WiFi后端由network负责。",
+      "next_required": "main统一唯一目录/签名预装，network完成STA/AP后端；新包验证真实通知/portal界面与取消/退出。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:camera-picker-entrypoint-missing-phone": {
+      "status": "source_provider_and_packaging_missing",
+      "finding": "真源码product/picker声明PickerAbility，混合暂存也有独立picker；HAP图只在SceneBoard分支加入cameraPicker，不能用旧phone MainAbility替代。",
+      "next_required": "main准备phone独立picker模块构建/签名/打包，media完成camera后端，再验证拍摄/结果URI/权限/取消/异常退出。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:notification-extension-settings-entrypoint-missing": {
+      "status": "real_ui_entrypoint_missing",
+      "finding": "混合暂存SceneBoard未见NotificationAccessGrantUIExtensionAbility；NotificationManangerUIExtensionAbility属于另一流程。",
+      "next_required": "提供订阅扩展授权真实UI/结果协议，协调通知调用者，验证允许/拒绝/取消/重启。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:accessibility-settings-entrypoints-unavailable": {
+      "status": "candidate_repaired_needs_sdk_and_new_package",
+      "finding": "Settings真源及暂存已声明两个目标；本轮修复IgnoreRepeatClickService提前成功、未处理Promise拒绝与请求排队。两个notification helper为同步setValueSync。保留framework service生命周期，避免无startId条件的异步terminateSelf与新请求竞态。尚未公共recipe接线/官方SDK编译。",
+      "next_required": "接线新组件并SDK构建，操作四类真实通知action，核对config/缓存、权限拒绝/连续请求。另需单独建立安全idle-stop与service销毁/重启闭环，不能由本候选核销。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
+        "ci/capability-audit/test_batch_apps_accessibility_service.py"
+      ]
+    },
+    "behavior:notification-manager-settings-provider-missing-phone": {
+      "status": "profile_wiring_and_runtime_evidence_missing",
+      "finding": "混合暂存SceneBoard notificationmanagement有目标NotificationManangerUIExtensionAbility；phone画像是否启用它不能由暂存推断。",
+      "next_required": "在phone冻结配置选择真实provider、核对UIExtension契约，验证通知修改/结果/取消/退出/权限，不能用不同SystemUI入口冒充。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:avsession-desktop-lyrics-provider-missing": {
+      "status": "real_ui_backend_missing",
+      "finding": "暂存缺com.ohos.mediacontroller，com.hmos.mediacontroller也没有DesktopLyricAbility；无可直接重命名复用目标。",
+      "next_required": "实现真实桌面歌词UI/provider和会话订阅/显示/隐藏/清理，验证支持查询、enable及重启。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:location-privacy-ui-providers-unavailable": {
+      "status": "preinstall_and_detail_provider_missing",
+      "finding": "暂存LocationDialog有LocationPrivacyExtAbility但未列预装；com.huawei.hmos.location/LocationPrivacyDetailAbility仍缺。",
+      "next_required": "与location组统一真实consent/detail provider、目录及签名，验证同意/拒绝/详情/取消/caller退出。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:telephony-number-identity-provider-missing": {
+      "status": "multiple_real_backends_missing",
+      "finding": "暂存缺com.numberidentity/com.spamshield/com.hmos.hsdr；归属/标记DataShare和风控能力不能用空表或固定分类替代。",
+      "next_required": "telephony/main拆解身份/归属/骚扰/反诈四种真实协议，提供数据/服务/权限及更新/错误/离线/重启证明。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:settings-navigation-provider-mismatch": {
+      "status": "existing_candidate_needs_new_package",
+      "finding": "基线已修真实Settings bundle路由并源码构建，源码/暂存都有两种UIExtension；R50完整单项仍未记入后续完整账本。",
+      "next_required": "新包跑全部公开导航和真实UI/controller操作，含2in1 implicit app info、无权限/取消/退出/重启。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:contacts-picker-entrypoint-missing-phone": {
+      "status": "source_provider_build_and_signing_missing",
+      "finding": "Contacts真源码有ContactUiExtentionAbility，混合暂存也有；源码无GN source_provider构建，HAP图仍按SceneBoard选择预编译Contacts，旧phone可能缺入口。",
+      "next_required": "为phone准备固定Contacts源码构建、依赖和精确签名预装，实测所有picker overload、选择/取消/权限/退出及2in1回归。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:arkui-expanded-text-menu-providers-missing": {
+      "status": "runtime_plugin_and_handler_backends_missing",
+      "finding": "暂存lib/lib64均缺expanded_menu/libexpanded_menu.z.so；菜单动作还依赖缺失或名字不同的Browser/Calendar/Maps/分享handler。",
+      "next_required": "提供真实menu映射plugin和动作handler，验证文本/URI、安全授权/选择/取消/退出，不能隐藏菜单或固定成功。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    },
+    "behavior:arkui-text-service-runtime-plugins-missing": {
+      "status": "real_runtime_plugin_backends_missing",
+      "finding": "暂存缺systemshare_innerkits、ai_text_translation_innerapi、ai_text_analyzer_innerapi三库；已有fallback没有真实分享/翻译/识别行为。",
+      "next_required": "提供与ArkUI dlopen接口/ABI匹配的真实服务后端，验证目标/内容/实体范围及错误/取消/释放，不加空符号。",
+      "ledger_closed": false,
+      "evidence": [
+        "docs/capability-audit/parallel/apps/static-evidence.json",
+        "docs/OHOS_7_BATCH_REPAIR.md",
+        "docs/capability-audit/system-bundle-provider-audit.json"
+      ]
+    }
+  },
+  "remaining_gaps": [
+    {
+      "id": "arkts_export:@ohos.accessibility.config:startBlinking",
+      "status": "existing_candidate_needs_new_package",
+      "reason": "同一新归档验证系统/普通调用者、真实输入/像素/节点、停止/退出/重启边界。"
+    },
+    {
+      "id": "arkts_export:@ohos.accessibility.config:stopBlinking",
+      "status": "existing_candidate_needs_new_package",
+      "reason": "验证重复stop、无start、caller退出、关闭总开关和服务重启后窗口/像素恢复。"
+    },
+    {
+      "id": "behavior:phone-published-capabilities-not-declared",
+      "status": "declaration_and_backend_missing",
+      "reason": "为六项分别指定真实后端所有者，核对最低配置，接线声明/公开接口/权限与插件完整回归。"
+    },
+    {
+      "id": "behavior:phone-avinputcast-not-declared",
+      "status": "existing_declaration_needs_provider_and_new_package",
+      "reason": "新phone包核对声明/canIUse，再验证AVInputCast真实会话、provider选择/取消/回调。"
+    },
+    {
+      "id": "behavior:accessibility-qemu-input-e2e",
+      "status": "existing_candidate_needs_new_package",
+      "reason": "运行真实a11y输入、像素、节点和caller退出/重启轨迹，并加入Settings通知动作。"
+    },
+    {
+      "id": "behavior:api26-runtime-export-mismatches-phone",
+      "status": "coverage_refresh_and_cross_domain_implementation_required",
+      "reason": "同包刷新arkts-export-surface，并按模块把剩余真实导出/值/行为差异分给唯一所有者；不注册空函数。"
+    },
+    {
+      "id": "behavior:intelligent-scene-notification-query-fails",
+      "status": "provider_protocol_and_runtime_missing",
+      "reason": "新phone包复测两种DND query，保存provider初始化、数据、拒绝和重启证据；仍失败时定位通知/IntelligentScene链。"
+    },
+    {
+      "id": "behavior:shortkey-empty-launch-config",
+      "status": "existing_candidate_needs_new_package",
+      "reason": "验证businessId/setKeyDownDuration、短按、错误修饰键、普通调用者拒绝和重启。"
+    },
+    {
+      "id": "behavior:certificate-dialog-device-result",
+      "status": "capability_decision_requires_runtime_review",
+      "reason": "由certificate_manager所有者跟踪支持判断，实测证书选择、取消、拒绝、空列表和device分支。"
+    },
+    {
+      "id": "behavior:ability-share-picker-system-provider-missing",
+      "status": "real_provider_missing",
+      "reason": "提供真实系统share picker，处理目标枚举/数据授权/完成/取消/退出，并接入构建、签名、预装。"
+    },
+    {
+      "id": "behavior:ability-send-data-action-has-no-enabled-handler",
+      "status": "preinstall_and_behavior_evidence_missing",
+      "reason": "统一真实Bluetooth预装/签名，验证sendData MIME/URI/权限/接收结果与取消，不能只注册任意handler。"
+    },
+    {
+      "id": "behavior:avcast-media-controller-provider-mismatch",
+      "status": "provider_protocol_and_wiring_missing",
+      "reason": "媒体所有者核对真实Want/会话结果协议，统一唯一provider的名字/入口/签名/预装并跑选择/取消。"
+    },
+    {
+      "id": "behavior:media-control-volume-provider-activation",
+      "status": "provider_protocol_and_wiring_missing",
+      "reason": "协调媒体provider，验证真实音量读取/调整、拒绝、取消、关闭和重启后的UI生命周期。"
+    },
+    {
+      "id": "behavior:distributed-hardware-ui-preinstall-path-mismatch",
+      "status": "existing_candidate_needs_new_package",
+      "reason": "新包查DHardwareUIAbility/Mech扩展注册，验证真实发起、取消、错误和退出。"
+    },
+    {
+      "id": "behavior:photo-provider-not-activated-2in1",
+      "status": "existing_source_provider_needs_new_package",
+      "reason": "新包验证Recent组件/Info/DefaultAlbum、图库授权/取消/退出、FA-card真实数据变化/cloud设置协议，2in1单独验收。"
+    },
+    {
+      "id": "behavior:enterprise-provisioning-provider-missing",
+      "status": "source_provider_build_and_preinstall_missing",
+      "reason": "准备API26可构建provider、精确签名/权限和QEMU构建图；真实EDM provisioning/授权/取消/退出验证。"
+    },
+    {
+      "id": "behavior:wallpaper-ui-provider-missing",
+      "status": "source_provider_build_and_contract_missing",
+      "reason": "构建签名预装theme provider，核对ThemeService缺席时launcher fallback合同，再验证图片设置/还原/取消。"
+    },
+    {
+      "id": "behavior:accessibility-screen-reader-provider-missing",
+      "status": "real_backend_missing",
+      "reason": "实现真实reader extension并统一bundle配置，验证焦点/手势/朗读/关闭/重启，不能空壳。"
+    },
+    {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "status": "real_backend_missing",
+      "reason": "提供真实字幕音频/识别/显示/权限/停止后端并预装，目前没有可直接复用的完整provider。"
+    },
+    {
+      "id": "behavior:vpn-dialog-provider-prefix-mismatch",
+      "status": "existing_candidate_needs_network_integration",
+      "reason": "network/main统一验证新包真实授权允许/拒绝/取消/断连/重启，保留调用者及服务结果。"
+    },
+    {
+      "id": "behavior:network-policy-settings-providers-missing",
+      "status": "provider_contract_and_caller_wiring_missing",
+      "reason": "网络所有者核对策略模型/现有UI，提供真实入口并统一调用者及通知跳转，验证持久化/取消/拒绝。"
+    },
+    {
+      "id": "behavior:telephony-apn-settings-provider-missing",
+      "status": "provider_contract_and_caller_wiring_missing",
+      "reason": "telephony/main核对APN Want/结果协议，提供真实APN设置入口/权限，验证增改删/取消/重启。"
+    },
+    {
+      "id": "behavior:wifi-system-ui-providers-not-activated",
+      "status": "preinstall_missing_and_network_backend_dependency",
+      "reason": "main统一唯一目录/签名预装，network完成STA/AP后端；新包验证真实通知/portal界面与取消/退出。"
+    },
+    {
+      "id": "behavior:camera-picker-entrypoint-missing-phone",
+      "status": "source_provider_and_packaging_missing",
+      "reason": "main准备phone独立picker模块构建/签名/打包，media完成camera后端，再验证拍摄/结果URI/权限/取消/异常退出。"
+    },
+    {
+      "id": "behavior:notification-extension-settings-entrypoint-missing",
+      "status": "real_ui_entrypoint_missing",
+      "reason": "提供订阅扩展授权真实UI/结果协议，协调通知调用者，验证允许/拒绝/取消/重启。"
+    },
+    {
+      "id": "behavior:accessibility-settings-entrypoints-unavailable",
+      "status": "candidate_repaired_needs_sdk_and_new_package",
+      "reason": "接线新组件并SDK构建，操作四类真实通知action，核对config/缓存、权限拒绝/连续请求。另需单独建立安全idle-stop与service销毁/重启闭环，不能由本候选核销。"
+    },
+    {
+      "id": "behavior:notification-manager-settings-provider-missing-phone",
+      "status": "profile_wiring_and_runtime_evidence_missing",
+      "reason": "在phone冻结配置选择真实provider、核对UIExtension契约，验证通知修改/结果/取消/退出/权限，不能用不同SystemUI入口冒充。"
+    },
+    {
+      "id": "behavior:avsession-desktop-lyrics-provider-missing",
+      "status": "real_ui_backend_missing",
+      "reason": "实现真实桌面歌词UI/provider和会话订阅/显示/隐藏/清理，验证支持查询、enable及重启。"
+    },
+    {
+      "id": "behavior:location-privacy-ui-providers-unavailable",
+      "status": "preinstall_and_detail_provider_missing",
+      "reason": "与location组统一真实consent/detail provider、目录及签名，验证同意/拒绝/详情/取消/caller退出。"
+    },
+    {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "status": "multiple_real_backends_missing",
+      "reason": "telephony/main拆解身份/归属/骚扰/反诈四种真实协议，提供数据/服务/权限及更新/错误/离线/重启证明。"
+    },
+    {
+      "id": "behavior:settings-navigation-provider-mismatch",
+      "status": "existing_candidate_needs_new_package",
+      "reason": "新包跑全部公开导航和真实UI/controller操作，含2in1 implicit app info、无权限/取消/退出/重启。"
+    },
+    {
+      "id": "behavior:contacts-picker-entrypoint-missing-phone",
+      "status": "source_provider_build_and_signing_missing",
+      "reason": "为phone准备固定Contacts源码构建、依赖和精确签名预装，实测所有picker overload、选择/取消/权限/退出及2in1回归。"
+    },
+    {
+      "id": "behavior:arkui-expanded-text-menu-providers-missing",
+      "status": "runtime_plugin_and_handler_backends_missing",
+      "reason": "提供真实menu映射plugin和动作handler，验证文本/URI、安全授权/选择/取消/退出，不能隐藏菜单或固定成功。"
+    },
+    {
+      "id": "behavior:arkui-text-service-runtime-plugins-missing",
+      "status": "real_runtime_plugin_backends_missing",
+      "reason": "提供与ArkUI dlopen接口/ABI匹配的真实服务后端，验证目标/内容/实体范围及错误/取消/释放，不加空符号。"
+    }
+  ],
+  "changed_files": [
+    "ci/capability-audit/batch_apps_collect_static_evidence.py",
+    "ci/capability-audit/fixtures/batch_apps/accessibility_service/IgnoreRepeatClickService.before.ets",
+    "ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs",
+    "ci/capability-audit/fixtures/batch_apps/accessibility_service/provenance.json",
+    "ci/capability-audit/test_batch_apps_accessibility_service.py",
+    "docs/capability-audit/parallel/apps/README.md",
+    "docs/capability-audit/parallel/apps/static-evidence.json",
+    "patches/common/applications/standard/settings/accessibility_service_completion/0001-await-accessibility-actions-before-reporting-success.patch",
+    "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
+    "patches/common/applications/standard/settings/accessibility_service_completion/apply.sh",
+    "patches/common/applications/standard/settings/accessibility_service_completion/verify_source.py",
+    "docs/capability-audit/parallel/apps/result.json"
+  ]
+}
