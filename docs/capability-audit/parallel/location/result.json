@@ -1,0 +1,499 @@
+{
+  "agent": "location",
+  "date": "2026-10-15",
+  "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
+  "branch": "codex/capability-location-20261015",
+  "summary": "Repair RTT listener contract and lifetime on its existing IMS route; review all 22 assigned requirements without closing package/runtime gaps.",
+  "upstream_targets": [
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp",
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp",
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h"
+  ],
+  "patch_sha256": "8e19ec78b6a49d40f35f2c73bd85bf3fbf55430dca829edec928220b6ad80bed",
+  "requirements_review": [
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "No current-district API implementation was found in fixed production source. Existing point geocoding/location APIs do not supply the new request/cache/current-fix district orchestration. The recorded image also lacks location/geocoder provider operation.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Implement permission-checked current-fix and reverse-geocoder district orchestration, cache policy and service errors; supply actual location/geocoder providers and validate real district/error boundaries."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "Dynamic NAPI export is absent. Static Taihe implementation explicitly throws ERRCODE_NOT_SUPPORTED; its return 0 is unreachable fallback. RDB working-state helper exists, but production source only resets it to 0 and exposes no active/HD icon state producer.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Implement an authoritative per-user active/HD location icon state producer and permission-checked query, then wire both language surfaces; test active, idle, HD and user/permission boundaries."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "No post-processing track implementation/export was found. SDK requires SKIING post-processing, records up to 24 hours and incremental reads; raw cached GNSS fixes or an empty array cannot satisfy that contract.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Provide genuine sports trajectory post-processing, per-caller history/cursor and retention semantics, plus GNSS input provider and permission-checked NAPI; validate real tracks, retention and repeated-read boundaries."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "New public search exports/handlers are absent. Legacy bluetoothScanResultChange and LocatorRequiredDataManager BLE scanning exist, but lack BluetoothSearchRequestParams device-ID matching and a propagated scan-start failure contract; direct aliases would be incomplete.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "missing_new_binding_and_semantic_backend",
+      "finding": "New public search exports/handlers are absent. Legacy bluetoothScanResultChange and LocatorRequiredDataManager BLE scanning exist, but lack BluetoothSearchRequestParams device-ID matching and a propagated scan-start failure contract; direct aliases would be incomplete.",
+      "evidence": [
+        "source-evidence.json: symbols",
+        "backend-excerpts.json: icon producer audit where applicable"
+      ],
+      "next_required": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "classification": "existing_real_backend_with_listener_contract_defects",
+      "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+      "evidence": [
+        "backend-excerpts.json: NAPI and call.js exports",
+        "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+      ],
+      "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "classification": "existing_real_backend_with_listener_contract_defects",
+      "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+      "evidence": [
+        "backend-excerpts.json: NAPI and call.js exports",
+        "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+      ],
+      "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "classification": "existing_real_backend_with_listener_contract_defects",
+      "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+      "evidence": [
+        "backend-excerpts.json: NAPI and call.js exports",
+        "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+      ],
+      "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "classification": "existing_real_backend_with_listener_contract_defects",
+      "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+      "evidence": [
+        "backend-excerpts.json: NAPI and call.js exports",
+        "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+      ],
+      "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "classification": "existing_real_backend_with_listener_contract_defects",
+      "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+      "evidence": [
+        "backend-excerpts.json: NAPI and call.js exports",
+        "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+      ],
+      "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "classification": "existing_real_backend_with_listener_contract_defects",
+      "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+      "evidence": [
+        "backend-excerpts.json: NAPI and call.js exports",
+        "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+      ],
+      "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "existing_implementation_pending_packaged_validation",
+      "classification": "existing_real_backend_feature_gated",
+      "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+      "evidence": [
+        "backend-excerpts.json: out_rtt_args and NAPI exports",
+        "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+      ],
+      "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "existing_implementation_pending_packaged_validation",
+      "classification": "existing_real_backend_feature_gated",
+      "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+      "evidence": [
+        "backend-excerpts.json: out_rtt_args and NAPI exports",
+        "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+      ],
+      "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "existing_implementation_pending_packaged_validation",
+      "classification": "existing_real_backend_feature_gated",
+      "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+      "evidence": [
+        "backend-excerpts.json: out_rtt_args and NAPI exports",
+        "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+      ],
+      "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "existing_implementation_pending_packaged_validation",
+      "classification": "existing_real_backend_feature_gated",
+      "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+      "evidence": [
+        "backend-excerpts.json: out_rtt_args and NAPI exports",
+        "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+      ],
+      "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "new_sdk_contract_missing_fixed_source_backend",
+      "finding": "No on/offCommunicationStateChange implementation or export appears in the 43 production state_registry files scanned. SDK describes a boolean 5A state, so mapping generic call state or network-present to this event would change the contract.",
+      "evidence": [
+        "source-evidence.json: symbols and scanned_production_files",
+        "backend-excerpts.json: @ohos.telephony.observer.d.ts 1054-1068"
+      ],
+      "next_required": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_backend_and_binding",
+      "classification": "new_sdk_contract_missing_fixed_source_backend",
+      "finding": "No on/offCommunicationStateChange implementation or export appears in the 43 production state_registry files scanned. SDK describes a boolean 5A state, so mapping generic call state or network-present to this event would change the contract.",
+      "evidence": [
+        "source-evidence.json: symbols and scanned_production_files",
+        "backend-excerpts.json: @ohos.telephony.observer.d.ts 1054-1068"
+      ],
+      "next_required": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+    },
+    {
+      "id": "behavior:location-provider-backends-missing",
+      "group": "定位",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_device_transport",
+      "classification": "device_profile_backend_boundary",
+      "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport.",
+      "evidence": [
+        "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence"
+      ],
+      "next_required": "Add a real GNSS/location provider and QEMU device/transport route; package and validate current-location callbacks, trajectory, fences and disabled/permission cases."
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "group": "电话与通信",
+      "closure": "open",
+      "runtime_validation": "not_run_in_this_round",
+      "status": "blocked_device_transport",
+      "classification": "device_profile_backend_boundary",
+      "finding": "Prior complete packaged evidence reports no modem/SIM/radio transport. Enabling RTT compile gates exposes the framework path, without supplying a radio/IMS network.",
+      "evidence": [
+        "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence"
+      ],
+      "next_required": "Provide actual modem/SIM/radio plus IMS transport for QEMU; validate calls, SMS, data and RTT sessions with positive service outcomes and device-absent errors."
+    }
+  ],
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+      "result": "PASS: 2 tests, actual patched C++ functions executed with ASan/UBSan; component application is idempotent",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_call_public_enums.py",
+      "result": "PASS: all 6 existing RTT enum/feature/history regressions",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "git apply --check <new component patch> (private complete copies of the four fixed source files)",
+      "result": "PASS; original source container was read only",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "New OpenHarmony build / package / QEMU runtime",
+      "result": "NOT RUN: centralized representative artifact gate remains owned by parent"
+    }
+  ],
+  "integration_requests": [
+    {
+      "kind": "patch_component",
+      "path": "common/base/telephony/call_manager/api26_rtt_lifecycle",
+      "action": "Register this component in the shared patch/build pipeline after call_manager/api26_enums. It was kept separate because the existing enum regression builds a deliberately minimal component fixture."
+    },
+    {
+      "kind": "host_regression",
+      "path": "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+      "action": "Include in normal test_*.py discovery; clang++ and ASan/UBSan required."
+    },
+    {
+      "kind": "representative_artifact_validation",
+      "action": "Build real ARM64 phone NAPI sources under SUPPORT_RTT_CALL and validate all ten RTT exports, no-arg/matching/nonmatching off returns void and callback silence; verify permission errors in ordinary/system caller contexts. Positive session/event proof needs an actual modem/SIM/IMS route."
+    }
+  ],
+  "remaining_gaps": [
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Implement permission-checked current-fix and reverse-geocoder district orchestration, cache policy and service errors; supply actual location/geocoder providers and validate real district/error boundaries."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Implement an authoritative per-user active/HD location icon state producer and permission-checked query, then wire both language surfaces; test active, idle, HD and user/permission boundaries."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Provide genuine sports trajectory post-processing, per-caller history/cursor and retention semantics, plus GNSS input provider and permission-checked NAPI; validate real tracks, retention and repeated-read boundaries."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "dependency": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "dependency": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "dependency": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "dependency": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "dependency": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "status": "implementation_repaired_pending_packaged_validation",
+      "dependency": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "status": "existing_implementation_pending_packaged_validation",
+      "dependency": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "status": "existing_implementation_pending_packaged_validation",
+      "dependency": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "status": "existing_implementation_pending_packaged_validation",
+      "dependency": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "status": "existing_implementation_pending_packaged_validation",
+      "dependency": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "status": "blocked_backend_and_binding",
+      "dependency": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+    },
+    {
+      "id": "behavior:location-provider-backends-missing",
+      "status": "blocked_device_transport",
+      "dependency": "Add a real GNSS/location provider and QEMU device/transport route; package and validate current-location callbacks, trajectory, fences and disabled/permission cases."
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "status": "blocked_device_transport",
+      "dependency": "Provide actual modem/SIM/radio plus IMS transport for QEMU; validate calls, SMS, data and RTT sessions with positive service outcomes and device-absent errors."
+    }
+  ],
+  "counts": {
+    "assigned": 22,
+    "reviewed": 22,
+    "event_requirements_with_lifecycle_repairs": 6,
+    "existing_operation_implementations_requiring_new_package_proof": 4,
+    "location_binding_or_provider_requirements": 9,
+    "communication_state_missing_backend_requirements": 2,
+    "telephony_missing_device_transport_requirements": 1,
+    "closed_by_this_round": 0
+  },
+  "resource_use": {
+    "source_container": "ohos-qemu-parallel-source-20261015-01",
+    "container_operations": "read-only git/Python source queries only",
+    "compile": "bounded local clang++ harness only",
+    "build_package_qemu_hdc": "none"
+  },
+  "validation_limit": "Host lifecycle execution and fixed-source review do not satisfy AGENTS.md representative package/runtime gate. All 22 requirements remain open until genuine behavior and package evidence are accepted.",
+  "changed_files": [
+    "ci/capability-audit/fixtures/batch_location/rtt_before.json",
+    "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+    "docs/capability-audit/parallel/location/backend-excerpts.json",
+    "docs/capability-audit/parallel/location/host-tests.log",
+    "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/source-evidence.json",
+    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "source_container": "ohos-qemu-parallel-source-20261015-01",
+  "root": "/ohos",
+  "project_heads": {
+    "base/location/location": "5a0c49c2adb0623fdac73f76e4f98f2e57674c00",
+    "base/telephony/call_manager": "42f264011d0a44a300e3e8b825863754916cb6a8",
+    "base/telephony/state_registry": "2327cba6f48f4274b269e530c48a919e2eed28b7",
+    "base/telephony/cellular_call": "4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c"
+  },
+  "symbols": {
+    "getLocationIconStatus": [],
+    "GetLocationIconStatus": [
+      {
+        "path": "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
+        "line": 635,
+        "text": "::ohos::geoLocationManager::LocationIconStatus GetLocationIconStatus()"
+      },
+      {
+        "path": "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
+        "line": 1136,
+        "text": "TH_EXPORT_CPP_API_GetLocationIconStatus(GetLocationIconStatus);"
+      }
+    ],
+    "getCurrentDistrict": [],
+    "GetCurrentDistrict": [],
+    "getPostProcessingTrack": [],
+    "GetPostProcessingTrack": [],
+    "addFusionFence": [],
+    "AddFusionFence": [],
+    "removeFusionFence": [],
+    "RemoveFusionFence": [],
+    "isFusionFenceSupported": [],
+    "IsFusionFenceSupported": [],
+    "startBluetoothSearch": [],
+    "StartBluetoothSearch": [],
+    "stopBluetoothSearch": [],
+    "StopBluetoothSearch": [],
+    "onCommunicationStateChange": [],
+    "OnCommunicationStateChange": [],
+    "offCommunicationStateChange": [],
+    "OffCommunicationStateChange": []
+  },
+  "scanned_production_files": {
+    "base/location/location": 361,
+    "base/telephony/call_manager": 387,
+    "base/telephony/state_registry": 43,
+    "base/telephony/cellular_call": 102
+  },
+  "out_directories": [
+    ".ccache",
+    ".ccache-tmp",
+    "dfx",
+    "hb_args",
+    "preloader",
+    "gen",
+    "kernel",
+    "x86_64_virt",
+    "armv7a_virt",
+    "arm64_virt"
+  ],
+  "original_rtt_file_sha256": {
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp": "2bde32f906339e756478c4e6f602070b48faf8f5de51e46689517c7a96fec509",
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp": "e7163aa0e8730fce8cb51edf273f4d20dabe9496a6940e90a6f420f54a950543",
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h": "a665890ba0a2a1dd614e3bf38c973a5f1d75d780594f2a033fa6e38130f37768",
+    "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h": "caf6031eb3bff19f3ced34b8b7b8a12ad8092a999780c044781bc86e4c4b3adb"
+  }
+}
