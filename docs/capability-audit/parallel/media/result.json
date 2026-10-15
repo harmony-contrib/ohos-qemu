@@ -8,10 +8,10 @@
   "status": "reviewable_candidate_host_checks_passed_new_package_required",
   "requirements_review": {
     "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent": {
-      "status": "unresolved",
+      "status": "candidate_prepared",
       "source_finding": "SDK defines getRelatedEntity/getSearchSuggestion with system+READ_IMAGEVIDEO authorization. Exact class/method tokens absent in 4066 scoped media_library source/config files. Existing Photos/geographic knowledge joins do not implement Entity/alias/ranking or all suggestion types.",
-      "candidate": "No fake class or empty query result added. Real data/index/authorization/delete contract documented in REVIEW.md.",
-      "remaining": "Implement native class/IPC/provider queries with stable real Entity IDs, aliases, FieldType/ranking/filter mapping, real asset-backed suggestion counts, index updates/deletes/visibility/persistence and normal/system-denied/system-granted new-package HAP evidence.",
+      "candidate": "Round 2: implemented native static class, native token/READ checks, current-account VISITOR bound queries over real asset/analysis/nickname data, relationships, aliases, weighted votes and 7 suggestion counts. NONE/HOLIDAY producers and actual product/ACL compatibility remain unresolved.",
+      "remaining": "Actual product NAPI/4-TU compilation and link, signed three-role new-package data/alias/count/delete/permission-revocation/current-account evidence, absent NONE/HOLIDAY producers, and fully verified SDK ranking/default/display compatibility.",
       "gap_closed": false
     },
     "behavior:audio-capture-and-dependent-pipelines": {
@@ -59,7 +59,16 @@
   },
   "upstream_targets": [
     "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp",
-    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp"
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp",
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h",
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js",
+    "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn",
+    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h",
+    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h"
   ],
   "ownership": "Both complete upstream paths exclusively assigned by parent before edits; no shared source/out writes or other agent files changed.",
   "tests": [
@@ -93,6 +102,26 @@
       "command": "bash -n patches/common/foundation/multimedia/av_codec/avc_eos/apply.sh patches/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh",
       "result": "passed",
       "scope": "shell syntax only"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_batch_media_knowledge_content.py -v",
+      "result": "passed",
+      "tests": 8,
+      "evidence": "docs/capability-audit/parallel/media/round2/knowledge-host-01.log",
+      "scope": "host implementation/SQLite/source checks; no OHOS SDK/NAPI/Visitor/ACL runtime acceptance"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_batch_media_knowledge_install.py -v",
+      "result": "passed",
+      "tests": 4,
+      "evidence": "docs/capability-audit/parallel/media/round2/knowledge-install-01.log",
+      "scope": "host implementation/SQLite/source checks; no OHOS SDK/NAPI/Visitor/ACL runtime acceptance"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_photo_public_enums test_photo_fusion_asset_type test_photos_recent_info test_photo_result_set_export test_photo_record_classes -v",
+      "result": "passed",
+      "tests": 21,
+      "evidence": "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log"
     }
   ],
   "integration_requests": [
@@ -120,12 +149,17 @@
       "id": "media-capability-pipelines",
       "owner": "parent",
       "request": "Keep all 7 IDs unresolved until their own actual behavior passes the newly packaged representative artifact. Validate audio input/recording/interrupt/haptic/screen-capture/transcoding and KnowledgeContent populated data/index/delete/role behavior separately; AVC host repair or Renderer callback cannot close them."
+    },
+    {
+      "id": "media-knowledge-content",
+      "owner": "parent",
+      "request": "See round2/knowledge-status.json: apply after complete prior photo stack; actual 4 TU/NAPI link and new signed 3-role populated-data HAP/Visitor/permission/alias/count/delete/current-account tests remain mandatory. Five old facade guards accept only the exact known new wrapper, not arbitrary edits."
     }
   ],
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
-      "remaining": "Implement native class/IPC/provider queries with stable real Entity IDs, aliases, FieldType/ranking/filter mapping, real asset-backed suggestion counts, index updates/deletes/visibility/persistence and normal/system-denied/system-granted new-package HAP evidence."
+      "remaining": "Actual product NAPI/4-TU compilation and link, signed three-role new-package data/alias/count/delete/permission-revocation/current-account evidence, absent NONE/HOLIDAY producers, and fully verified SDK ranking/default/display compatibility."
     },
     {
       "id": "behavior:audio-capture-and-dependent-pipelines",
@@ -176,15 +210,24 @@
     "docs/capability-audit/parallel/media/host-checks-03.log": "4896b80817d8f92176a1204d679d445b5232280227a8a0d4686c9fae68fbf6f6",
     "docs/capability-audit/parallel/media/host-checks-04.log": "219ee7447c5b6185e2bb4e7a338b9100aaf9b4ec6ff9da450771851e40efddf8",
     "docs/capability-audit/parallel/media/source-review-01.failure.json": "c409d69a730d3911915efff9b769f78519cedb1928bf974a49dd4f36faed8d68",
-    "docs/capability-audit/parallel/media/source-review.json": "3ff9b7323a7a3be22d86f32cb5e2b858870af9d7172062a8e3d0d73dbce78c71"
+    "docs/capability-audit/parallel/media/source-review.json": "3ff9b7323a7a3be22d86f32cb5e2b858870af9d7172062a8e3d0d73dbce78c71",
+    "docs/capability-audit/parallel/media/round2/knowledge-host-01.log": "6e3b8112236813f5fb5d01d98419e14deafb6816a455da6034cccbfc21d3e658",
+    "docs/capability-audit/parallel/media/round2/knowledge-install-01.log": "2817f3135c207418655f96cc027fe13a1802ad72e51f1361cff397f9fb48f0d0",
+    "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log": "d7f45b3039c41689f1f658c654c30f826bc0ecf3818aa9c5bb78dfc1764dc7bf",
+    "docs/capability-audit/parallel/media/round2/knowledge-status.json": "652bb0c8c4493be4063650fb9a201688d447f4493b4c6b22f438f2519312f903"
   },
   "changed_files": [
+    "ci/capability-audit/batch_media_knowledge_query_cli.cpp",
     "ci/capability-audit/batch_media_review_source.py",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
     "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/knowledge/baseline.json",
+    "ci/capability-audit/fixtures/batch_media/knowledge/guard-context.json",
     "ci/capability-audit/fixtures/batch_media/manifest.json",
     "ci/capability-audit/test_batch_media_avc_surface_layout.py",
+    "ci/capability-audit/test_batch_media_knowledge_content.py",
+    "ci/capability-audit/test_batch_media_knowledge_install.py",
     "docs/capability-audit/parallel/media/REVIEW.md",
     "docs/capability-audit/parallel/media/environment.json",
     "docs/capability-audit/parallel/media/existing-avc-checks-01.log",
@@ -194,6 +237,10 @@
     "docs/capability-audit/parallel/media/host-checks-03.log",
     "docs/capability-audit/parallel/media/host-checks-04.log",
     "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/round2/knowledge-host-01.log",
+    "docs/capability-audit/parallel/media/round2/knowledge-install-01.log",
+    "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log",
+    "docs/capability-audit/parallel/media/round2/knowledge-status.json",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
     "patches/common/foundation/multimedia/av_codec/avc_eos/apply.sh",
@@ -202,6 +249,23 @@
     "patches/common/foundation/multimedia/av_codec/avc_surface_layout/README.md",
     "patches/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh",
     "patches/common/foundation/multimedia/av_codec/avc_surface_layout/layout.py",
-    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/verify_source.py"
-  ]
+    "patches/common/foundation/multimedia/av_codec/avc_surface_layout/verify_source.py",
+    "patches/common/foundation/multimedia/media_library/api26_photo_search_enums/verify_source.py",
+    "patches/common/foundation/multimedia/media_library/fusion_asset_type/verify_source.py",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/0001-implement-native-knowledge-queries-with-real-asset-relations.patch",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/README.md",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/apply.py",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/apply.sh",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/files/knowledge_content_napi.cpp",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/files/knowledge_content_napi.h",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/files/knowledge_content_query.cpp",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/files/knowledge_content_query.h",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/manifest.json",
+    "patches/common/foundation/multimedia/media_library/knowledge_content/transforms.py",
+    "patches/common/foundation/multimedia/media_library/photos_recent_info/verify_source.py",
+    "patches/common/foundation/multimedia/media_library/public_record_classes/verify_source.py",
+    "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py"
+  ],
+  "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
+  "round2_status": "KnowledgeContent native real-data implementation prepared; audio fixes in progress; no new package or closures"
 }
