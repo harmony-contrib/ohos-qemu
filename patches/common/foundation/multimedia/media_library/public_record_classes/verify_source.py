@@ -13,11 +13,12 @@ FILES = [('frameworks/js/src/photoaccesshelperinf.js',
 
 
 def validate(root, require_patched=False):
-    try:
-        return validate_component(root, PROJECT, REVISION,
-            ((FILES[0][0], '2b0cbaa4c727061697794e9ade94cb98c6cabe3d68c7aa5a49956ff33f882f26', '2b0cbaa4c727061697794e9ade94cb98c6cabe3d68c7aa5a49956ff33f882f26'),), require_patched=True)
-    except ValueError:
-        pass
+    for successor in ("2b0cbaa4c727061697794e9ade94cb98c6cabe3d68c7aa5a49956ff33f882f26", "7108e690526019093c562302afb8d2b41cfefe064bffb555a9da4d0180e32682"):
+        try:
+            return validate_component(root, PROJECT, REVISION,
+                ((FILES[0][0], successor, successor),), require_patched=True)
+        except ValueError:
+            pass
     return validate_component(root, PROJECT, REVISION, FILES, require_patched)
 
 

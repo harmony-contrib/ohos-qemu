@@ -1,0 +1,13 @@
+test_actual_delete_and_relationship_updates_are_not_cached (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_actual_delete_and_relationship_updates_are_not_cached) ... ok
+test_actual_random_vote_weighting_without_replacement_and_unsupported_producer (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_actual_random_vote_weighting_without_replacement_and_unsupported_producer) ... ok
+test_alias_update_index_uniqueness_and_reopen_persistence (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_alias_update_index_uniqueness_and_reopen_persistence) ... ok
+test_all_seven_search_types_count_distinct_photos_without_alias_inflation (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_all_seven_search_types_count_distinct_photos_without_alias_inflation) ... ok
+test_hide_trash_pending_temporary_risk_clean_sync_burst_and_type_exclusions (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_hide_trash_pending_temporary_risk_clean_sync_burst_and_type_exclusions) ... ok
+test_new_actual_asset_is_counted_and_source_index_plan_is_used (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_new_actual_asset_is_counted_and_source_index_plan_is_used) ... ok
+test_nonempty_related_entities_aliases_and_real_asset_votes (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_nonempty_related_entities_aliases_and_real_asset_votes) ... ok
+test_parameter_binding_unicode_no_match_and_sql_injection (test_batch_media_knowledge_content.KnowledgeContentQueryTests.test_parameter_binding_unicode_no_match_and_sql_injection) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 3.754s
+
+OK

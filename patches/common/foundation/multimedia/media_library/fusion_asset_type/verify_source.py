@@ -49,7 +49,7 @@ def validate(root, require_patched=False):
                 raise ValueError('component input contains a symlink: ' + FILES[1][0])
             cursor = cursor.parent
         wrapper_sha = digest(wrapper.read_bytes())
-        if search_composed and wrapper_sha not in (SEARCH_WRAPPER_SHA, RECENT_WRAPPER_SHA, RECORD_WRAPPER_SHA, '2b0cbaa4c727061697794e9ade94cb98c6cabe3d68c7aa5a49956ff33f882f26'):
+        if search_composed and wrapper_sha not in (SEARCH_WRAPPER_SHA, RECENT_WRAPPER_SHA, RECORD_WRAPPER_SHA, '2b0cbaa4c727061697794e9ade94cb98c6cabe3d68c7aa5a49956ff33f882f26', '7108e690526019093c562302afb8d2b41cfefe064bffb555a9da4d0180e32682'):
             raise ValueError('incomplete source/search Photo composition; preserving source')
         expected_wrapper = wrapper_sha if search_composed else COMPOSED_WRAPPER_SHA
         if wrapper_sha == expected_wrapper:
