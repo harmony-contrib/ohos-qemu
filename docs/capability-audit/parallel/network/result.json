@@ -3,14 +3,15 @@
   "date": "2026-10-16",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-network-20261015",
-  "summary": "API26 follow-up independently validates both supplied objects while preserving SDK P256 precedence; full Bluetooth service/peer acceptance remains open.",
+  "summary": "Real peer-bound one-time Bluetooth OOB service/GAP candidate: classic P192/P256 and LE SC P256, actual negative replies and failure/lifetime handling; source/host verified only, all 9 requirements remain open.",
   "fixed_source": {
     "container": "ohos-qemu-parallel-source-20261016-02",
     "root": "/ohos",
     "access": "read-only git/cat/python queries only",
     "revisions": {
       "foundation/communication/netmanager_base": "9831989d54f490d046a632ab13d309580d2fa710",
-      "foundation/communication/netmanager_ext": "8c41289750820fb2ddb347b1205cee9a7b527388"
+      "foundation/communication/netmanager_ext": "8c41289750820fb2ddb347b1205cee9a7b527388",
+      "foundation/communication/bluetooth_service": "c489d0aabf77624a4f5ca80ab8b5adefd2d5cfbf"
     },
     "openvpn": {
       "commit": "dc1f569087135894ac2703aeabd7a960ee9452d4",
@@ -37,6 +38,18 @@
     "configure.ac",
     "foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp",
     "foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp",
+    "foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/stack/include/gap_if.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap.h",
+    "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c",
+    "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c",
     "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
     "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
     "foundation/communication/netmanager_ext/qemu_openvpn/management_protocol.h",
@@ -79,6 +92,12 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_bluetooth_oob -v",
       "result": "PASS 2 tests, includes malformed P192 plus valid P256 and malformed P256 plus valid P192; exact ordered whole-stack idempotence.",
       "evidence": "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_bluetooth_service -v",
+      "result": "PASS 5 tests: exact full-source state guards; actual peer/type-bound storage with concurrent single consumption, 60-second clock boundary, cancellation/off; actual server permission-item selection and parameter/failure paths; actual classic/LE handler C/R consumption, curve advertisement, negative replies, SC failure and weak timer teardown; actual C GAPIF blocking task/HCI extended command and error propagation. ASan/UBSan and -Werror.",
+      "evidence": "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt",
+      "limits": "Platform access-token, timer and controller functions are explicit doubles; no full product TU, controller/peer challenge or new package runtime proof."
     }
   ],
   "integration_requests": [
@@ -114,12 +133,14 @@
       "owner": "parent",
       "action": "Apply bluetooth/api26_oob_pairing after existing framework enum components and include its real connection NAPI TU in cross-architecture compilation. Keep the original API23 entry. This is an export/parameter repair only until the separate service/adapter/HCI implementation and real peer checks complete."
     },
-    "Apply bluetooth/api26_oob_validation after api26_oob_pairing; rebuild actual NAPI TU. This changes parser behavior only and does not satisfy controller/peer OOB acceptance."
+    "Apply bluetooth/api26_oob_validation after api26_oob_pairing; rebuild actual NAPI TU. This changes parser behavior only and does not satisfy controller/peer OOB acceptance.",
+    "Integrate bluetooth_service/oob_pairing_backend (12 exact approved files; ipc bluetooth_host_stub.cpp unchanged). Compile/link all affected server, classic/LE, GAP and HCI-consuming TUs on fixed source. Host command: PYTHONPATH=ci/capability-audit python -m unittest test_batch_network_bluetooth_service -v. Keep actual controller/peer and first-new-package gate; do not close OOB requirement from this candidate.",
+    "Bluetooth remaining product dependencies: real vendor/HDI transport/controller plus OOB-capable peer, virtual identifier mapping, LE legacy TK data contract, local controller OOB generation and optional randomizer semantics; current unsupported cases return real 801. Parent owns controller/launcher/init/shared build integration."
   ],
   "requirements_review": {
     "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand": {
-      "status": "open_api26_binding_candidate_real_oob_backend_pending",
-      "finding": "Added an independent API26 export/parser and real asynchronous BluetoothRemoteDevice::StartPairOutOfBand call. Outer deviceId drives the target while OOB raw address data remains validated by the existing common parser. Fixed service still rejects real OOB requests with 801 and local OOB generation currently returns empty success; neither is masked by the new entry.",
+      "status": "open_real_service_gap_candidate_controller_peer_pending",
+      "finding": "API26 validates both supplied objects and selects P256 per fixed SDK. New exact service candidate validates system/API permission, raw peer/type and C/R and uses real classic P192/extended P256 HCI and LE P256 SC GAP replies. Single-use storage, cancellation/expiry/off and actual failures are covered in host bodies; local generation no longer reports empty success. Hardware, full-TU and runtime proof remain absent.",
       "evidence": [
         "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:53",
         "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:800",
@@ -127,12 +148,14 @@
         "patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md",
         "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
         "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:941",
-        "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:1444"
+        "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:1444",
+        "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/README.md",
+        "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt"
       ],
       "remaining": [
-        "Compile/link/package the final real API26 NAPI TU and validate actual caller/permission/off boundaries.",
-        "Implement system-API OOB checks and one-time peer/transport/P192/P256 data in real Bluetooth service/adapter/GAP/HCI paths, including result/cancel/timeout/power-off cleanup; never replace 801 with empty success.",
-        "Provide actual controller/vendor transport and OOB-capable peer; verify real challenge, pair events, data, disconnect and cleanup in the newly packaged representative artifact."
+        "Compile/link/package all real NAPI/service/stack TUs and test actual system/non-system/missing-permission/off boundaries.",
+        "Implement real controller/vendor/HDI transport and OOB peer challenge. Verify classic P192/P256 and LE SC C/R, events, data, failed challenge, cancel/replay/timeout/off/unplug/cleanup in the newly packaged representative artifact.",
+        "Virtual-to-raw mapping and actual local OOB generation remain unavailable. LE P192 is not a legacy TK; optional randomizer omission is unsupported. Delayed firmware callbacks lack session identity and need actual duplicate-event/restart validation."
       ]
     },
     "behavior:netmanager-ebpf-backend": {
@@ -257,11 +280,11 @@
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
-      "status": "open_api26_binding_candidate_real_oob_backend_pending",
+      "status": "open_real_service_gap_candidate_controller_peer_pending",
       "required": [
-        "Compile/link/package the final real API26 NAPI TU and validate actual caller/permission/off boundaries.",
-        "Implement system-API OOB checks and one-time peer/transport/P192/P256 data in real Bluetooth service/adapter/GAP/HCI paths, including result/cancel/timeout/power-off cleanup; never replace 801 with empty success.",
-        "Provide actual controller/vendor transport and OOB-capable peer; verify real challenge, pair events, data, disconnect and cleanup in the newly packaged representative artifact."
+        "Compile/link/package all real NAPI/service/stack TUs and test actual system/non-system/missing-permission/off boundaries.",
+        "Implement real controller/vendor/HDI transport and OOB peer challenge. Verify classic P192/P256 and LE SC C/R, events, data, failed challenge, cancel/replay/timeout/off/unplug/cleanup in the newly packaged representative artifact.",
+        "Virtual-to-raw mapping and actual local OOB generation remain unavailable. LE P192 is not a legacy TK; optional randomizer omission is unsupported. Delayed firmware callbacks lack session identity and need actual duplicate-event/restart validation."
       ]
     },
     {
@@ -345,17 +368,20 @@
   },
   "changed_files": [
     "ci/capability-audit/fixtures/batch_network/bluetooth-oob-prepared.json",
+    "ci/capability-audit/fixtures/batch_network/bluetooth-service-prepared.json",
     "ci/capability-audit/fixtures/batch_network/cjson/LICENSE",
     "ci/capability-audit/fixtures/batch_network/cjson/cJSON.c",
     "ci/capability-audit/fixtures/batch_network/cjson/cJSON.h",
     "ci/capability-audit/fixtures/batch_network/fixed-source.json",
     "ci/capability-audit/fixtures/batch_network/session-prepared.json",
     "ci/capability-audit/test_batch_network_bluetooth_oob.py",
+    "ci/capability-audit/test_batch_network_bluetooth_service.py",
     "ci/capability-audit/test_batch_network_openvpn_lifecycle.py",
     "ci/capability-audit/test_batch_network_openvpn_session.py",
     "ci/capability-audit/test_batch_network_session_contract.py",
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/host-tests.txt",
     "docs/capability-audit/parallel/network/result.json",
     "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
@@ -367,6 +393,10 @@
     "patches/common/foundation/communication/bluetooth/api26_oob_validation/README.md",
     "patches/common/foundation/communication/bluetooth/api26_oob_validation/apply.sh",
     "patches/common/foundation/communication/bluetooth/api26_oob_validation/verify_source.py",
+    "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/0001-bind-single-use-peer-oob-to-real-gap-and-hci.patch",
+    "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/README.md",
+    "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/apply.sh",
+    "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/verify_source.py",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/README.md",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh",
@@ -392,7 +422,7 @@
     "patches/common/foundation/communication/netmanager_ext/openvpn_session/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "03833801849bb7178e84076ad40d2d4096f5427d",
+  "round_base_commit": "8396178967eac6aa22ca826a6fa191bf9d872399",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
