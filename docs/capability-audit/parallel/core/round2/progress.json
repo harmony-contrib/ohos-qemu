@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T23:35:56.004442+08:00",
+  "updated_at": "2026-10-17T02:07:41.035165+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "654c223",
+  "checkpoint_commit": "9dbdc4387aa5c0685106a40ebdd9d3d7262116d2",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -25,7 +25,11 @@
     "out_volume": "ohos-qemu-7_0-release-out",
     "diagnostic_source_and_out_readonly": true,
     "max_heavy_jobs": 1,
-    "compiler_jobs": 2
+    "compiler_jobs": 2,
+    "current_heavy_container": "stupefied_dubinsky",
+    "current_heavy_dynamic_cpus": 4,
+    "current_heavy_dynamic_memory_gib": 8,
+    "current_heavy_memory_swap_total_gib": 10
   },
   "evidence": {
     "public_MIC_HAP_original_SDK_failure": {
@@ -1357,11 +1361,11 @@
     }
   },
   "agents": {
-    "apps": "resumed real fixed-source share picker/sendData provider implementation batch;normal entry/URI ownership/results/exit contract under inspection",
-    "network": "both original native source fixes actual TUs PASS;dualUID focus runner integrated846a76b;fixing final ready/journal publication observations while root strict verifier305374e integrated",
-    "location": "complete actual 17 TU coverage across04/05/06 after source fixes;complete current6module Rust and private newAPI actual link PASS;frozen source/header/object deps independently bound;guest0 closures",
-    "media": "fresh PCM request and live callbacks integratedcf9b072;all3 actual unsigned API26 eventHAPs PASS again;actual runtime pending",
-    "system": "Linux current provider35 and bridge24 regression pass incl two actual unloads and same-process reload; actual new guest load/API still pending"
+    "apps": "0652db2 integrated c7a60b6: Contacts true deadline/navigation and AMS connection helper; current task read-only Contacts_data source\u2192ABC chain review",
+    "media": "d860039 integrated9cdb0ae; current exclusive wrapper/coordinator native-image and actual SERVICE connection binding; no heavy lease",
+    "system": "74b7c0b live wrapper integrated938ef2b; 9dbf67e readonly guard review integrated9dbdc43; current task readonly old R50/R51 root cause review",
+    "network": "prior source/API/focus fixes integrated; no active write or heavy lease",
+    "location": "prior 17 TUs/full Rust/API coverage integrated; no active write or heavy lease"
   },
   "external_dependencies": {
     "device_attest": "Legitimate OEM identity/key/service location requested; no supplied configuration yet. Do not fabricate attestation.",
@@ -1386,21 +1390,26 @@
     "Legitimate OEM DeviceAttest, AudioVivid, Ads, SecurityGuard, geocoder/modem/HCI inputs still unsupplied"
   ],
   "next_required": [
-    "Batch corrected Contacts types and Theme schema then rebuild three complete official product SDK HAPs",
-    "Resolve Contacts public caller framing/errors and finish Wallpaper settings and backend route",
-    "Integrate full source graph/signing/preinstall and new genuine GNSS/Sensor/Contacts/Wallpaper runtime verifiers",
-    "Build/package one ARM64 phone and validate actual runtime and regressions before remaining five"
+    "Finish currently running current-recipe M144 native+official HAP attempt and preserve all actual failures/results",
+    "Complete media freshnative-image plus actual AMS witness integration and batch remaining confirmed source/verifier fixes",
+    "Run actual LinuxSDK39 live-only HAP03; preserve any failures then repair together",
+    "Prepare complete patched source with current M144 dependency; freeze all scripts/patches/ci before one full ARM64 phone build/package",
+    "Run full fresh packaged representative runtime with current 3families and regressions; collect all failures before next repair/build cycle",
+    "Only after full representative behavior gate passes build/package/accept all remaining five with appropriate arch/profile evidence"
   ],
   "Contacts_Theme_current_SDK": "Contacts SDK02 + Theme SDK04 phone/pad complete real API26 product builds PASS; unsigned only",
   "Settings_current_SDK": "SDK06 wallpaper UI full HAP PASS; actual 44 extensions, 6 ELF, exact permissions SET_WALLPAPER once PASS; signing/BMS/pixels pending",
-  "Contacts_Theme_signing_wiring": "source GN+exact profiles+typed original installs+mandatory image guard implemented; 12 host tests PASS; real OS signing ext4 pending",
+  "Contacts_Theme_signing_wiring": "source GN/exact profiles/original installs/mandatory image guard implemented; actual source signing3HAP+13private ext4 PASS; BMS/runtime pending",
   "Contacts_Theme_real_OS_signing": "01 PASS 3 signed sourceHAP +13 privateext4 cases; source grant/APL preserved NOT BMS/runtime",
-  "MSDP_public_still": "b8a2087 integrated; host01 two compilerfail preserved; host02 GNU ASan/UBSan two compiles and12casesPASS; root composition15 checksPASS; real16platformTUs/GN/link/guest pending",
-  "runtime_tools": "ordinary Contacts and challenged Wallpaper tools integrated; caller SDK01 startup-schema fail fixed ec51d1a, next actualSDK pending; actualguestNOTexecuted",
+  "MSDP_public_still": "all15 actual product TUs covered via original8 unaffected+retry7; GNUASan/UBSan current13 cases PASS; actual fresh full GN/link/image/public API/restart guest pending",
+  "runtime_tools": "Contacts full_boundaries+ordinary callers/seed/provider+actual observer adapters ready; Wallpaper wrapper/native-image/AMS connection integration in progress; actual guest not executed",
   "MSDP_current_platform_coverage": "15actualtargetsPASS via01unaffected8+02changed7; private fields genuine failures repaired; freshGN/link/newguest pending",
   "MSDP_image_guard_review": "64byte fake and CFIfalse false accept repaired; strong before/build/finish witness+rawGN/log+ELF implemented testsPASS; actual full pipeline pending",
-  "runtime_extension_HAPs": "Contacts caller +Wallpaper importer SDK02PASS; seed/query/live01 preparation path error preserved SDK0executed; fixed exactbytes crosssnapshot acceptance nextbatchpending",
-  "representative_runtime_integration": "three fixed families wired; immutable same-directory boot snapshots; strict independent raw recomputation and cleanup stop rules; 28 host checks PASS; wrappers integrating, actual guest pending",
+  "runtime_extension_HAPs": "SDK02 normal Contacts and Wallpaper importer actual HAP PASS; seed/query actual HAP PASS; live CMake profile fixed, live-only SDK03 queued behind current heavy",
+  "representative_runtime_integration": "fixed3families, immutable same-directory boot copies, strict raw re-verification and exact cleanup_errors=[]; Contacts mandatory full deadline/navigation; Wallpaper finding closure disabled pending freshnative+AMS; current70host testsPASS and integrated Apps testsPASS; guest pending",
   "SDK_seed_query_live02": "Contacts seed and Wallpaper query actual SDK39 HAP PASS individually; overall batch FAIL from live nonexistent CMake task; original records preserved; tool fix integrated and live-only actual retry pending",
-  "engine_dependency_refresh": "host preflight rejected stale M144 recipe, no source/out mutation; actual current090fd4d native108-step build+official HAP under CPU2/mem5G currently running"
+  "engine_dependency_refresh": "current090fd4 M144 108-step actual build:105 compile steps complete, libarkweb_engine.so real CFI+ThinLTO link active, no OOM; native+official HAP launcher not yet complete. Dynamic container CPU2\u21924/memory5\u21928GiB separately recorded.",
+  "Wallpaper_native_image_guard": "14ebd31 forced-owned2object+3DSO witness+actualGNselectedfalse/protectedcommands/rawlogs/ELF/image implemented; independently reviewed and7host guard testsPASS; no actual full build/image execution yet",
+  "runtime_helpers": "actual3 product helper CFI compile/link PASS; original parser failure preserved; independent actual readonly recheck02 PASS unchanged compiler/header/DSO/ELF; true guest DSO hash match still mandatory",
+  "runtime_inputs_prepared": "r52-first-runtime-inputs-01 exact Contacts/Wallpaper real SDK source adapters PASS; controlled virtual vectors explicitly NOT physical measurement or guest result; freshboot sign/permission/newVM still pending"
 }
