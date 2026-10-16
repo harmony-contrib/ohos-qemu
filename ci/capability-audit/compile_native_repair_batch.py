@@ -585,6 +585,14 @@ def run(args):
                     argv += export_flags
                     row['diagnostic_public_export'] = [export_proof]
                     row['fresh_GN_dependency_selection_tested'] = False
+                if args.group == 'communication_state' and unit in (
+                        'event_listener_handler__observer', 'napi_state_registry__observer',
+                        'observer_ani__observer_ani_cxx'):
+                    export_flags, export_proof = exported_includes(root,
+                        'base/security/access_token/interfaces/innerkits/accesstoken/BUILD.gn', 'accesstoken')
+                    argv += export_flags
+                    row['diagnostic_public_export'] = [export_proof]
+                    row['fresh_GN_dependency_selection_tested'] = False
                 if args.group == 'vpn_broker' and unit in ('system_vpn_wrapper', 'multi_vpn_manager'):
                     export_flags, export_proof = exported_includes(root,
                         'base/startup/init/interfaces/innerkits/BUILD.gn', 'exported_header_files')
