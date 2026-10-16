@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "read_only_container": "ohos-qemu-parallel-source-20261016-02",
+  "source_root": "/ohos",
+  "files": {
+    "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h": {
+      "file": "libs__include__devicestatus_algorithm_manager.h.gz.b64",
+      "sha256": "3c3bb7dc518b4ab89a6ee62271ca436e07475fbdb49b8a4de46259b0741ac935",
+      "bytes": 2361
+    },
+    "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp": {
+      "file": "libs__src__devicestatus_algorithm_manager.cpp.gz.b64",
+      "sha256": "5e07d69bdb885cf7600a60834403b92ae3036e92cd972bf757e466346987ecab",
+      "bytes": 7414
+    },
+    "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h": {
+      "file": "libs__include__algorithm__algo_absolute_still.h.gz.b64",
+      "sha256": "e6af0875377c2fb654e9af801f13620e009f96afdfd2acc5b2cc68fb43bdb23e",
+      "bytes": 1213
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp": {
+      "file": "libs__src__algorithm__algo_absolute_still.cpp.gz.b64",
+      "sha256": "d75dd2f848aa21b736055a6b05a2fa38d2950f89c0e64fdf86498c2d17aa1deb",
+      "bytes": 2400
+    },
+    "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h": {
+      "file": "libs__include__datahub__sensor_data_callback.h.gz.b64",
+      "sha256": "6cdecfafea1ba1f9d17195cb7eb9d06bcffc98d741e4082d9ae14c151ca51ec4",
+      "bytes": 2267
+    },
+    "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp": {
+      "file": "libs__src__datahub__sensor_data_callback.cpp.gz.b64",
+      "sha256": "f27de38639a295ce28d75da470835fabe43bed54ab5ecad4e06dd96b57d0bd5a",
+      "bytes": 6480
+    },
+    "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h": {
+      "file": "services__native__include__devicestatus_msdp_client_impl.h.gz.b64",
+      "sha256": "64e8c8b4cb78edccb6755bb2a803b5990b8ebbf002ae6ed807d7323720c2d785",
+      "bytes": 2926
+    },
+    "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp": {
+      "file": "services__native__src__devicestatus_msdp_client_impl.cpp.gz.b64",
+      "sha256": "09b00c603b0fedc4966b6d2bb99d0f619548b9d4ae176bfb407f2fd4140e43c1",
+      "bytes": 13639
+    },
+    "base/msdp/device_status/services/native/include/devicestatus_manager.h": {
+      "file": "services__native__include__devicestatus_manager.h.gz.b64",
+      "sha256": "43f03fc7ab6ff8a03311013187f9453f1923a34388249553671d89b55a739143",
+      "bytes": 6768
+    },
+    "base/msdp/device_status/services/native/src/devicestatus_manager.cpp": {
+      "file": "services__native__src__devicestatus_manager.cpp.gz.b64",
+      "sha256": "cf53629a41af6013fb7b3dfd9be6c7cab580f0744124bbcf713ec11b7b06f01c",
+      "bytes": 28558
+    },
+    "base/msdp/device_status/libs/include/algorithm/algo_base.h": {
+      "file": "libs__include__algorithm__algo_base.h.gz.b64",
+      "sha256": "4dca37104459292d43aa1cfdae05135163a5d435c675eda0f319c76b81fec0a4",
+      "bytes": 2370
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp": {
+      "file": "libs__src__algorithm__algo_horizontal.cpp.gz.b64",
+      "sha256": "7ac5d35f808b4b78ef4c3fc85eda218e7c881bafed0823dbc2b4df9c02df53b1",
+      "bytes": 2676
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp": {
+      "file": "libs__src__algorithm__algo_vertical.cpp.gz.b64",
+      "sha256": "d0a8cd5f35ac57a4413b2883a6858d6353526c99af9b7dc8e789f340d40e7d63",
+      "bytes": 2636
+    },
+    "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h": {
+      "file": "support__base__msdp__device_status__libs__interface__devicestatus_msdp_interface.h.gz.b64",
+      "sha256": "eb3bb180126b51d321de5b5bea5ca861e8aa9d4c4c5c40ff992302882c919821",
+      "bytes": 1854
+    }
+  },
+  "base_composition": "Apply existing sensor_input component first; public_still will guard those final hashes without changing old component or fixture.",
+  "support_files": {
+    "base/msdp/device_status/libs/include/algorithm/algo_horizontal.h": {
+      "file": "support__base__msdp__device_status__libs__include__algorithm__algo_horizontal.h.gz.b64",
+      "sha256": "a4ddc8a027032a31d2dcbfbd595828c5668be3a3205262373bfc9dc4b91ced0c",
+      "bytes": 1200
+    },
+    "base/msdp/device_status/libs/include/algorithm/algo_vertical.h": {
+      "file": "support__base__msdp__device_status__libs__include__algorithm__algo_vertical.h.gz.b64",
+      "sha256": "89b6900a116112ba89d4861977c27b555f449a0fd112a1374554cbca91354a94",
+      "bytes": 1186
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_base.cpp": {
+      "file": "support__base__msdp__device_status__libs__src__algorithm__algo_base.cpp.gz.b64",
+      "sha256": "bebefd655b1db8a09508043e0e9ecfc26051f590ea92d6ea4c12815e13855e37",
+      "bytes": 2245
+    },
+    "base/msdp/device_status/interfaces/innerkits/include/stationary_data.h": {
+      "file": "support__base__msdp__device_status__interfaces__innerkits__include__stationary_data.h.gz.b64",
+      "sha256": "80ce8afc57ad2c29981e4c6f7079a7e37770b20c344d515d29d89c13b81bb500",
+      "bytes": 2847
+    },
+    "base/msdp/device_status/libs/include/devicestatus_data_define.h": {
+      "file": "support__base__msdp__device_status__libs__include__devicestatus_data_define.h.gz.b64",
+      "sha256": "d02d1bfebbed69785f48b9e00e13590d58a36f0ad17fbf0be093388ad25a329c",
+      "bytes": 1833
+    },
+    "base/msdp/device_status/utils/common/include/devicestatus_common.h": {
+      "file": "support__base__msdp__device_status__utils__common__include__devicestatus_common.h.gz.b64",
+      "sha256": "2fe4a1927def53427fc4978efa4476381276fe750df07b3319f87cb68cc29b76",
+      "bytes": 7296
+    },
+    "base/msdp/device_status/utils/common/include/devicestatus_define.h": {
+      "file": "support__base__msdp__device_status__utils__common__include__devicestatus_define.h.gz.b64",
+      "sha256": "9a7348e00df1794109de4ce96e1c8de8b3f512af37b745a0e613ee96f83dff5a",
+      "bytes": 3561
+    },
+    "base/msdp/device_status/utils/common/include/devicestatus_errors.h": {
+      "file": "support__base__msdp__device_status__utils__common__include__devicestatus_errors.h.gz.b64",
+      "sha256": "52408ab6573f5559e625cde28ea7d166828d39f91f125e98601cf37655183955",
+      "bytes": 2831
+    },
+    "base/sensors/sensor/interfaces/inner_api/sensor_agent.h": {
+      "file": "support__base__sensors__sensor__interfaces__inner_api__sensor_agent.h.gz.b64",
+      "sha256": "630820e0d32eb78ea956685ca4edb67b5a0f86ee55084ae6c424fd3741c62cf9",
+      "bytes": 14096
+    },
+    "base/sensors/sensor/interfaces/inner_api/sensor_agent_type.h": {
+      "file": "support__base__sensors__sensor__interfaces__inner_api__sensor_agent_type.h.gz.b64",
+      "sha256": "db6c8868bace0c0d921483469987e19e8dc78b146e38012c784a939de0459d46",
+      "bytes": 21576
+    },
+    "commonlibrary/c_utils/base/include/singleton.h": {
+      "file": "support__commonlibrary__c_utils__base__include__singleton.h.gz.b64",
+      "sha256": "144cb706768e59484473413c100774812642147b620524afc109a014662b1d33",
+      "bytes": 6085
+    },
+    "commonlibrary/c_utils/base/include/nocopyable.h": {
+      "file": "support__commonlibrary__c_utils__base__include__nocopyable.h.gz.b64",
+      "sha256": "388f5c506f925f6f4fbe00e9937c4ff2550a65a4058a57fe110f54735579a30e",
+      "bytes": 1396
+    },
+    "commonlibrary/c_utils/base/include/errors.h": {
+      "file": "support__commonlibrary__c_utils__base__include__errors.h.gz.b64",
+      "sha256": "df8da91d96d16d2aaca88cb6d07b4124c07624587ce824cdc3ac7a7f0ce5476e",
+      "bytes": 5203
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "status": "fail",
+  "scope": "Linux_host_actual_algorithm_DSO_and_extracted_service_retirement_manager_functions_ONLY_NOT_guest",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "-std=c++17",
+        "-g",
+        "-O1",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pthread",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-fno-gnu-unique",
+        "-DDEVICE_STATUS_SENSOR_ENABLE",
+        "-I/evidence/run/include",
+        "-I/evidence/run",
+        "-shared",
+        "-fPIC",
+        "/evidence/run/after/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_base.cpp",
+        "/work/ci/capability-audit/batch_system_public_still_harness.cpp",
+        "-DBATCH_PLUGIN_HELPERS",
+        "-o",
+        "/evidence/run/libactual_msdp.so"
+      ],
+      "exit_code": 1,
+      "log_sha256": "bcb7eb96484d843540736b9b66cda3eeb26d0e0d3f4fd50da4f622063df7a959"
+    },
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "-std=c++17",
+        "-g",
+        "-O1",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pthread",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-fno-gnu-unique",
+        "-DDEVICE_STATUS_SENSOR_ENABLE",
+        "-I/evidence/run/include",
+        "-I/evidence/run",
+        "/work/ci/capability-audit/batch_system_public_still_harness.cpp",
+        "-rdynamic",
+        "-ldl",
+        "-o",
+        "/evidence/run/actual_msdp_host"
+      ],
+      "exit_code": 1,
+      "log_sha256": "f3ff95fed176ca671476759306d6d01ee29bc9c8ee9aace95c620d2cdb7c771c"
+    }
+  ],
+  "cases": [],
+  "first_artifact_behavior_gate_passed": false,
+  "requirements_closed": 0
+}

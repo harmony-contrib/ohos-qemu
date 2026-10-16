@@ -1,0 +1,141 @@
+{
+  "status": "pass",
+  "scope": "Linux_host_actual_algorithm_DSO_and_extracted_service_retirement_manager_functions_ONLY_NOT_guest",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "-std=c++17",
+        "-g",
+        "-O1",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pthread",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-fno-gnu-unique",
+        "-DDEVICE_STATUS_SENSOR_ENABLE",
+        "-I/evidence/run/include",
+        "-I/evidence/run",
+        "-shared",
+        "-fPIC",
+        "/evidence/run/after/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+        "/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_base.cpp",
+        "/work/ci/capability-audit/batch_system_public_still_harness.cpp",
+        "-DBATCH_PLUGIN_HELPERS",
+        "-o",
+        "/evidence/run/libactual_msdp.so"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "/usr/bin/g++",
+        "-std=c++17",
+        "-g",
+        "-O1",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pthread",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-fno-gnu-unique",
+        "-DDEVICE_STATUS_SENSOR_ENABLE",
+        "-I/evidence/run/include",
+        "-I/evidence/run",
+        "/work/ci/capability-audit/batch_system_public_still_harness.cpp",
+        "-rdynamic",
+        "-ldl",
+        "-o",
+        "/evidence/run/actual_msdp_host"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "cases": [
+    {
+      "name": "public_type_and_shared_input",
+      "exit_code": 0,
+      "seconds": 0.18307405500672758,
+      "log_sha256": "bb480f03e96d44dbabb5161390b7e25f41b05535487401bce02cc85226dd5d8a"
+    },
+    {
+      "name": "callback_stop",
+      "exit_code": 0,
+      "seconds": 0.12457900299341418,
+      "log_sha256": "bc7948d186f6fd11abba383e5773b63d14feb9062a764ac7dcde8785c4b06836"
+    },
+    {
+      "name": "restart_reload",
+      "exit_code": 0,
+      "seconds": 0.18407645399565808,
+      "log_sha256": "0eac383641427c7f70806436a49686f57dc0d811f8dc0e914faeb98b640878b4"
+    },
+    {
+      "name": "batch_rollback",
+      "exit_code": 0,
+      "seconds": 0.1308048529899679,
+      "log_sha256": "48ba15451368d4be3da953e13d25bea1283f12c2a7762f0c6427cf1bee521313"
+    },
+    {
+      "name": "deactivate_retry",
+      "exit_code": 0,
+      "seconds": 0.12731942799291573,
+      "log_sha256": "4ff4b122c89ba21f26350a01253347eafdc47690598b699e24a2a78d2d9c644e"
+    },
+    {
+      "name": "relative_unsupported",
+      "exit_code": 0,
+      "seconds": 0.07330224401084706,
+      "log_sha256": "0c5097f03e5ef63aa1941884d1e039db9c778aa37a97908cf2615deaa6d4f130"
+    },
+    {
+      "name": "owner_required",
+      "exit_code": 0,
+      "seconds": 0.07621356000890955,
+      "log_sha256": "7307125e3a203b59e19624d09e739ab4235bf63c74a772485796c42db848436d"
+    },
+    {
+      "name": "manager_first_last",
+      "exit_code": 0,
+      "seconds": 0.07803717799833976,
+      "log_sha256": "3fa42dccf1c6f018fec6bf1106547e56ec40e12b9f6fb0ce507dd35af42d69b6"
+    },
+    {
+      "name": "manager_rollback",
+      "exit_code": 0,
+      "seconds": 0.07623459299793467,
+      "log_sha256": "cfffea9394b048e8105a3262a592aeee8a8de9ba3526270076bd302b2ae11c03"
+    },
+    {
+      "name": "manager_death",
+      "exit_code": 0,
+      "seconds": 0.07499828701838851,
+      "log_sha256": "a7dd26f801c37c7c50ac92cc20752a2c7bdd5a4491d3f1ec16e17295b510e828"
+    },
+    {
+      "name": "manager_reentry",
+      "exit_code": 0,
+      "seconds": 0.07925440900726244,
+      "log_sha256": "a0b9566c5c007a5823a82b68fef81aa19577a309e3f9cfc7209fb57a9080a5c1"
+    },
+    {
+      "name": "manager_event_filters",
+      "exit_code": 0,
+      "seconds": 0.07240376301342621,
+      "log_sha256": "8fbd7b9f730d1cac29781eab6789e91c9de8ef7164e3bb43f6b62ef9a27dc397"
+    }
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "requirements_closed": 0,
+  "algorithm_DSO_sha256": "dd74c4ac55c2b9ea3e51ab24b36a3dfff61362f01d3ba14df7af0e6a3bdb199f",
+  "harness_binary_sha256": "bd453c07e6b1453258b20e2cd4550427343d93b995e39c32844acf4418460e8a"
+}

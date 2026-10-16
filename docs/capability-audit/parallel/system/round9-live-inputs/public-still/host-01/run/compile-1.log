@@ -1,0 +1,6 @@
+In file included from /work/ci/capability-audit/batch_system_public_still_harness.cpp:113:
+/evidence/run/actual_client.inc: In member function 'OHOS::Msdp::DeviceStatus::IMsdp* OHOS::Msdp::DeviceStatus::DeviceStatusMsdpClientImpl::GetAlgoInst(OHOS::Msdp::DeviceStatus::Type)':
+/evidence/run/actual_client.inc:188:53: error: unused parameter 'type' [-Werror=unused-parameter]
+  188 | IMsdp* DeviceStatusMsdpClientImpl::GetAlgoInst(Type type)
+      |                                                ~~~~~^~~~
+cc1plus: all warnings being treated as errors
