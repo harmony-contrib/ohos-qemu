@@ -413,6 +413,90 @@ EOF
   rm -f "${block}"
 }
 
+ensure_qemu_peer_lan_support() {
+  local file="$1"
+  local qemu_bin="$2"
+  python3 - "${file}" "${qemu_bin}" <<'PEER_PY'
+import re
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+if '# QEMU_PEER_LAN_V1' in text:
+    raise SystemExit(0)
+nics = list(re.finditer(r'virtio-net-(?:pci|device),netdev=[A-Za-z0-9_-]+(?:,mac=[0-9a-fA-F:]+)?', text))
+serial = re.search(r'(?<![A-Za-z0-9_.])sn=([A-Za-z0-9_-]+)', text)
+original_serial = serial.group(1) if serial else ''
+mac = re.search(r',mac=([0-9a-fA-F:]+)$', nics[0].group()) if len(nics) == 1 else None
+original_mac = mac.group(1) if mac else '52:54:00:12:34:56'
+def nic(match):
+    return re.sub(r',mac=[0-9a-fA-F:]+$', '', match.group()) + ',mac=${QEMU_MGMT_MAC}'
+if len(nics) == 1:
+    text = re.sub(r'virtio-net-(?:pci|device),netdev=[A-Za-z0-9_-]+(?:,mac=[0-9a-fA-F:]+)?', nic, text)
+if serial and len(nics) == 1:
+    text = re.sub(r'(?<![A-Za-z0-9_.])sn=[A-Za-z0-9_-]+', 'sn=${QEMU_GUEST_SERIAL}', text)
+block = r'''# QEMU_PEER_LAN_V1: optional real two-QEMU Ethernet link; user NIC remains management.
+QEMU_PEER_MODE="${QEMU_PEER_MODE:-off}"
+QEMU_MGMT_MAC="${QEMU_MGMT_MAC:-@MGMT_MAC@}"
+QEMU_GUEST_SERIAL="${QEMU_GUEST_SERIAL:-@SERIAL@}"
+if ! [[ "${QEMU_MGMT_MAC}" =~ ^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$ ]]; then
+  echo "QEMU_MGMT_MAC must be a valid MAC address" >&2; exit 2
+fi
+if [ -n "${QEMU_GUEST_SERIAL}" ] && ! [[ "${QEMU_GUEST_SERIAL}" =~ ^[A-Za-z0-9_-]{1,32}$ ]]; then
+  echo "QEMU_GUEST_SERIAL must contain 1..32 safe serial characters" >&2; exit 2
+fi
+case "${QEMU_PEER_MODE}" in
+  off) ;;
+  listen|connect)
+    if [ "$((16#${QEMU_MGMT_MAC%%:*} & 3))" -ne 2 ]; then
+      echo "peer LAN requires a locally administered unicast management MAC" >&2; exit 2
+    fi
+    if [ @NIC_COUNT@ -ne 1 ] || [ @HAS_SERIAL@ -ne 1 ]; then
+      echo "peer LAN requires exactly one recognized management NIC and an existing boot sn parameter" >&2; exit 2
+    fi
+    if ! [[ "${QEMU_PEER_PORT:-}" =~ ^[1-9][0-9]{0,4}$ ]] ||
+       [ "${QEMU_PEER_PORT}" -gt 65535 ] || [ "${QEMU_PEER_PORT}" = "${HDC_HOST_PORT:-5555}" ]; then
+      echo "QEMU_PEER_PORT must be 1..65535 and distinct from HDC" >&2; exit 2
+    fi
+    if ! [[ "${QEMU_PEER_MAC:-}" =~ ^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$ ]] ||
+       [ "$((16#${QEMU_PEER_MAC%%:*} & 3))" -ne 2 ] ||
+       [ "$(echo "${QEMU_PEER_MAC}" | tr 'A-F' 'a-f')" = "$(echo "${QEMU_MGMT_MAC}" | tr 'A-F' 'a-f')" ]; then
+      echo "peer LAN requires a distinct locally administered unicast QEMU_PEER_MAC" >&2; exit 2
+    fi
+    if ! [[ "${QEMU_INSTANCE_UUID:-}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]] ||
+       [ -z "${QEMU_GUEST_SERIAL}" ]; then
+      echo "peer LAN requires explicit QEMU_INSTANCE_UUID and boot serial; actual guest UDID must still be verified" >&2; exit 2
+    fi
+    case " ${QEMU_EXTRA_ARGS} " in
+      *peer_lan*|*" -uuid "*) echo "peer LAN/UUID arguments are reserved by the configured instance" >&2; exit 2 ;;
+    esac
+    if ! "${QEMU_BIN}" -M @MACHINE@ -netdev help 2>&1 | grep -qx stream; then
+      echo "selected QEMU does not advertise the stream network backend" >&2; exit 2
+    fi
+    if [ "${QEMU_PEER_MODE}" = listen ]; then
+      QEMU_PEER_ENDPOINT="server=on"
+    else
+      QEMU_PEER_ENDPOINT="server=off,reconnect-ms=250"
+    fi
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -uuid ${QEMU_INSTANCE_UUID} -netdev stream,id=peer_lan,${QEMU_PEER_ENDPOINT},addr.type=inet,addr.host=127.0.0.1,addr.port=${QEMU_PEER_PORT} -device virtio-net-pci,id=peer_lan_nic,netdev=peer_lan,mac=${QEMU_PEER_MAC}"
+    if [ -n "${QEMU_PEER_CAPTURE_FILE:-}" ]; then
+      if ! [[ "${QEMU_PEER_CAPTURE_FILE}" =~ ^/[A-Za-z0-9_./-]+$ ]] || [ -e "${QEMU_PEER_CAPTURE_FILE}" ] || [ -L "${QEMU_PEER_CAPTURE_FILE}" ]; then
+        echo "peer capture requires a new absolute path containing only safe characters" >&2; exit 2
+      fi
+      QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -object filter-dump,id=peer_lan_capture,netdev=peer_lan,file=${QEMU_PEER_CAPTURE_FILE}"
+    fi
+    ;;
+  *) echo "QEMU_PEER_MODE must be off, listen, or connect" >&2; exit 2 ;;
+esac
+'''.replace('@MGMT_MAC@', original_mac).replace('@SERIAL@', original_serial).replace('@NIC_COUNT@', str(len(nics))).replace(
+    '@HAS_SERIAL@', str(int(serial is not None))).replace('@MACHINE@', 'q35' if sys.argv[2] == 'qemu-system-x86_64' else 'virt')
+text, count = re.subn(r'^QEMU_BIN=.*$', lambda match: match.group() + '\n' + block, text, count=1, flags=re.M)
+if count != 1:
+    raise SystemExit('unable to insert optional peer LAN after launch binary resources')
+path.write_text(text)
+PEER_PY
+}
+
 normalize_common_qemu_launcher() {
   local file="$1"
   local default_smp="${2:-4}"
@@ -476,6 +560,8 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   inject_launcher_resource_defaults \
     "${file}" "${default_smp}" "${default_mem}" "${default_qemu_bin}" \
     "${default_cpu}"
+
+  ensure_qemu_peer_lan_support "${file}" "${default_qemu_bin}"
 
   # Observe real sleep/wake through a supported option, without editing the
   # packaged launcher or disabling the guest's power policy.
@@ -894,6 +980,9 @@ Supported environment variables:
   QEMU_KERNEL_LOG_LEVEL
   QEMU_ACCESSIBILITY QEMU_QMP_SOCKET
   QEMU_ACCEL QEMU_BIN QEMU_EXTRA_ARGS
+  QEMU_PEER_MODE=off|listen|connect QEMU_PEER_PORT QEMU_PEER_MAC QEMU_MGMT_MAC
+  QEMU_INSTANCE_UUID QEMU_GUEST_SERIAL QEMU_PEER_CAPTURE_FILE
+  (peer LAN: POSIX full products only; separate instance disks and actual distinct UDIDs required)
 USAGE
 }
 
@@ -1397,6 +1486,33 @@ pnpm run test:ui:accessibility -- --arch x64  # use arm64 for an ARM64 guest
 The runner executes the enable command after HAP installation, when the bundle
 and ability are available in the guest.
 EOF
+
+  case "${product}" in
+    arm64_virt|armv7a_virt|x86_64_virt)
+      cat >>"${package_dir}/README.md" <<'EOF'
+
+## Optional two-instance peer Ethernet (Linux and macOS)
+
+The default remains one management `user` NIC. Full POSIX launchers can add a
+real QEMU `stream` Ethernet NIC: use `QEMU_PEER_MODE=listen` in the first VM and
+`QEMU_PEER_MODE=connect` in the second, with the same explicit `QEMU_PEER_PORT`.
+The stream endpoint binds only host loopback. Each VM requires its own
+`QEMU_PEER_MAC`, `QEMU_MGMT_MAC`, `QEMU_INSTANCE_UUID`, `QEMU_GUEST_SERIAL`, HDC
+port, QMP socket, VNC display and independent copies of every disk image.
+`QEMU_PEER_CAPTURE_FILE` optionally records actual data-NIC packets as pcap.
+MACs must be distinct locally administered unicast addresses. The selected
+QEMU must advertise `stream`; missing support fails instead of using user NAT.
+
+The boot serial and UUID configure the emulated hardware. They are not proof
+of independent OpenHarmony identities: compare each running guest's actual
+`bm get --udid`, kernel boot UUID, and the two NIC MACs before configuring the
+private data subnet. Duplicate actual UDIDs must stop peer validation. The
+peer link supplies Ethernet only; static addressing, service discovery,
+account/device authentication and authenticated sessions require separate
+actual guest verification. Do not run two guests against shared userdata.
+EOF
+      ;;
+  esac
 
   if [ "${product}" = "x86_64_virt" ]; then
     cat >>"${package_dir}/README.md" <<'EOF'

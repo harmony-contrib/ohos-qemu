@@ -1,0 +1,6 @@
+test_three_abis_default_cli_env_override_invalid_and_idempotent (test_launcher_kernel_log_level.KernelLoggingLauncherTests.test_three_abis_default_cli_env_override_invalid_and_idempotent) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 5.011s
+
+OK

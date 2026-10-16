@@ -1,0 +1,81 @@
+{
+  "scope": "installed backend help and official source only; no VM/guest evidence",
+  "qemu": {
+    "path": "/opt/homebrew/Cellar/qemu/11.0.3/bin/qemu-system-aarch64",
+    "sha256": "45fa769772f3823a32ba49c94e30968685a7343bc409f170a53de75993fe6388",
+    "help": [
+      {
+        "argv": [
+          "/opt/homebrew/Cellar/qemu/11.0.3/bin/qemu-system-aarch64",
+          "--version"
+        ],
+        "exit_code": 0,
+        "stdout": "QEMU emulator version 11.0.3\nCopyright (c) 2003-2026 Fabrice Bellard and the QEMU Project developers\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/opt/homebrew/Cellar/qemu/11.0.3/bin/qemu-system-aarch64",
+          "-M",
+          "virt",
+          "-netdev",
+          "help"
+        ],
+        "exit_code": 0,
+        "stdout": "Available netdev backend types:\nsocket\nstream\ndgram\nhubport\ntap\nuser\nvde\nbridge\nvhost-user\nvmnet-host\nvmnet-shared\nvmnet-bridged\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "official_manual": "https://www.qemu.org/docs/master/system/qemu-manpage.html",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/qemu/qemu/v11.0.3/net/stream.c",
+      "sha256": "3d577d41e795f564cdd648153e5d83418d7eb0fc21cf1264d020e1252fe26341",
+      "bytes": 9317,
+      "lines": 288,
+      "matches": [
+        {
+          "line": 52,
+          "snippet": "return net_stream_data_receive(d, buf, size);"
+        },
+        {
+          "line": 132,
+          "snippet": "qapi_event_send_netdev_stream_connected(d->nc.name, addr);"
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/qemu/qemu/v11.0.3/net/stream_data.c",
+      "sha256": "c64e51fca856e68cdc14087368426baaf185c5c71ebfa393f02883e1cf3a2d02",
+      "bytes": 5124,
+      "lines": 191,
+      "matches": [
+        {
+          "line": 84,
+          "snippet": "if (qemu_send_packet_async(&d->nc, rs->buf,"
+        },
+        {
+          "line": 123,
+          "snippet": "net_socket_rs_init(&d->rs, net_stream_data_rs_finalize, false);"
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/qemu/qemu/v11.0.3/qapi/net.json",
+      "sha256": "629d2e26416ffb47467b97c97af8f9c21e99cffe3574161af935ab2fcfcc6b8a",
+      "bytes": 31445,
+      "lines": 1193,
+      "matches": [
+        {
+          "line": 786,
+          "snippet": "{ 'struct': 'NetdevStreamOptions',"
+        },
+        {
+          "line": 777,
+          "snippet": "# @reconnect-ms: For a client socket, if a socket is disconnected,"
+        }
+      ]
+    }
+  ]
+}
