@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-17T03:22:20.879015+08:00",
+  "updated_at": "2026-10-17T03:45:12.705631+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
   "checkpoint_commit": "1a97e6f",
   "ledger": {
@@ -1404,6 +1404,14 @@
     "full_source_preparation_05": {
       "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-source-prepare-05/evidence.json",
       "sha256": "6bbc864657a54c5f1a744d21584ec6970d69f2a109cfac7021ade5499fa22e84"
+    },
+    "first_full_build_01": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-arm64-phone-full-build-01/evidence.json",
+      "sha256": "60a6fd56d4f476ea9aa944376c7a280a2e43c39f94a8f3eb6467d325c56f45f7"
+    },
+    "first_GN_failure_and_calendar_batch": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/first-full-GN-failure-and-calendar-input-batch.json",
+      "sha256": "19180a406fbf45dc85ac8dcaae0904b01922b871421ebe2281915034d21ab5da"
     }
   },
   "agents": {
@@ -1436,10 +1444,10 @@
     "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied"
   ],
   "next_required": [
-    "One complete ARM64 phone GN/images build with actual Contacts/MSDP/Wallpaper native witnesses and package",
-    "Recheck/rebuild runtime helpers against fresh actual product DSOs before any guest run",
-    "Full fresh representative clock/suspend-wake/ordinary HiTrace and all capability boundaries; preserve and batch repair all failures",
-    "Only after representative behavior gate PASS build and accept all other five packages"
+    "Integrate exact GNSS BUILD upgrade and batch real calendar resource Docker forwarding; complete actual source preparation and GN preflight",
+    "One full ARM64 phone image build, all3 native witnesses and package guards",
+    "Fresh helper DSO binding and complete new packaged guest acceptance",
+    "Only after representative gate PASS build and accept the other five"
   ],
   "Contacts_Theme_current_SDK": "Contacts SDK02 + Theme SDK04 phone/pad complete real API26 product builds PASS; unsigned only",
   "Settings_current_SDK": "SDK06 wallpaper UI full HAP PASS; actual 44 extensions, 6 ELF, exact permissions SET_WALLPAPER once PASS; signing/BMS/pixels pending",
@@ -1456,5 +1464,6 @@
   "Wallpaper_native_image_guard": "14ebd31 forced-owned2object+3DSO witness+actualGNselectedfalse/protectedcommands/rawlogs/ELF/image implemented; independently reviewed and7host guard testsPASS; no actual full build/image execution yet",
   "runtime_helpers": "actual3 product helper CFI compile/link PASS; original parser failure preserved; independent actual readonly recheck02 PASS unchanged compiler/header/DSO/ELF; true guest DSO hash match still mandatory",
   "runtime_inputs_prepared": "All 3 family configs ready; actual SDK03 adapter and private-copy PASS after exact SDK39 strip replay; Chinese source consent label still requires actual node; helpers must bind new product DSOs",
-  "source_preparation": "05 actual full source patch plan and fixed release source manifest PASS exit0 in308.49s; source/GN/images/package/runtime gates remain distinct"
+  "source_preparation": "05 actual full source patch plan and fixed release source manifest PASS exit0 in308.49s; source/GN/images/package/runtime gates remain distinct",
+  "first_full_build": "01 frozen f82275e actual GN failed after840.70s on unused output_prefix in external GNSS; no native compile/package/runtime"
 }

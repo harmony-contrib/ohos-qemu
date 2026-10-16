@@ -1,0 +1,37 @@
+{
+  "scope": "preserved actual first representative full-build GN failure and batched trusted resource input repair; NOT package/runtime acceptance",
+  "first_full_build": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-arm64-phone-full-build-01/evidence.json",
+    "sha256": "60a6fd56d4f476ea9aa944376c7a280a2e43c39f94a8f3eb6467d325c56f45f7"
+  },
+  "preserved_raw_GN_inputs_logs_and_pending_witnesses": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-arm64-phone-full-build-01/gn-failure/preservation.json",
+    "sha256": "dd3ea0b13322451f97ed2aeac1064a28ce7eb60f7287b113544f83827f272ed9"
+  },
+  "failure": "GN external_gnss BUILD.gn output_prefix is unused; existing supported output_prefix_override must be retained",
+  "exit_code": 1,
+  "build_seconds": 840.7012991905212,
+  "native_compile_started": false,
+  "new_package_created": false,
+  "resource": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/resources/knowledge/cn-2026/holidays.ics",
+    "sha256": "12798eab4471df83e23359ace64cab99228a256763cda188db5ded01ed32dfc9"
+  },
+  "resource_provenance": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/resources/knowledge/cn-2026/provenance.json",
+    "sha256": "3fe334526cbea8766073574a6e75ce19e54cfeca05cc15ff422b9dd0f0e0ffa0"
+  },
+  "actual_CXX_SQLite_producer_and_importer_checks": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/knowledge-CN2026-actual-producer-01.log",
+    "sha256": "00139f96b495fb4cafe917f1271d83ac479f16085172ec48bd0aafb37e05df78"
+  },
+  "actual_host_checks": 4,
+  "calendar_intervals": 7,
+  "calendar_expanded_days": 33,
+  "calendar_scope": "CN mainland 2026 seven officially published holiday/rest intervals, excludes makeup workdays and all out-of-scope dates",
+  "Docker_asset_forwarding_and_RO_mount": "implemented, actual full wrapper run still pending",
+  "GNSS_exact_component_upgrade": "apps exclusive narrow task, integration pending",
+  "packages_validated": 0,
+  "remaining_five_started": false,
+  "first_artifact_behavior_gate_passed": false
+}

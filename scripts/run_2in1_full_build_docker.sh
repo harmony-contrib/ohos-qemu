@@ -81,6 +81,7 @@ BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
 NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
 SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
+QEMU_KNOWLEDGE_ICS="${QEMU_KNOWLEDGE_ICS:-}"
 PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
 PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
 QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-1}"
@@ -242,6 +243,33 @@ if [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
     >"${LOG_DIR}/arkweb-source-core-preflight-${DEVICE_TYPE}.json"
 fi
 ARTIFACT_MOUNT_ARGS=()
+KNOWLEDGE_INPUT_MOUNT_ARGS=()
+KNOWLEDGE_ICS_CONTAINER=""
+if [ -n "${QEMU_KNOWLEDGE_ICS}" ]; then
+  python3 - "${QEMU_KNOWLEDGE_ICS}" "${LOG_DIR}/knowledge-input-${DEVICE_TYPE}.json" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1])
+if (not source.is_absolute() or not source.is_file() or
+        any(path.is_symlink() for path in (source, *source.parents)) or
+        any(char in str(source) for char in (',', '\n', '\r'))):
+    raise ValueError('QEMU_KNOWLEDGE_ICS requires an absolute regular non-aliased file suitable for a Docker mount')
+data = source.read_bytes()
+if not 0 < len(data) <= 1048576:
+    raise ValueError('QEMU_KNOWLEDGE_ICS must contain 1..1048576 bytes')
+data.decode('utf-8')
+Path(sys.argv[2]).write_text(json.dumps({
+    'scope': 'actual selected calendar input ONLY NOT parser/image/runtime acceptance',
+    'source': str(source), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data),
+    'container_path': '/qemu-inputs/knowledge/holidays.ics', 'container_read_only': True,
+}, indent=2) + '\n')
+PY
+  KNOWLEDGE_ICS_CONTAINER=/qemu-inputs/knowledge/holidays.ics
+  KNOWLEDGE_INPUT_MOUNT_ARGS+=(--mount "type=bind,src=${QEMU_KNOWLEDGE_ICS},dst=${KNOWLEDGE_ICS_CONTAINER},readonly")
+fi
 if [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
   for mesa_product in ${PRODUCTS}; do
     python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" \
@@ -481,6 +509,7 @@ exec docker run --rm \
   -e QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS}" \
   -e QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS}" \
   -e SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY}" \
+  -e QEMU_KNOWLEDGE_ICS="${KNOWLEDGE_ICS_CONTAINER}" \
   -e SCENEBOARD_RUNTIME_ASSET_ROOT="${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
   -e SCENEBOARD_RUNTIME_NATIVE_REVISION="${SCENEBOARD_RUNTIME_NATIVE_REVISION}" \
   -e SDKMANAGER_COMMON_VERSION="${SDKMANAGER_COMMON_VERSION}" \
@@ -517,6 +546,7 @@ exec docker run --rm \
   ${SERIAL_CACHE_MOUNT_ARGS[@]+"${SERIAL_CACHE_MOUNT_ARGS[@]}"} \
   ${PACKAGE_MOUNT_ARGS[@]+"${PACKAGE_MOUNT_ARGS[@]}"} \
   ${ARTIFACT_MOUNT_ARGS[@]+"${ARTIFACT_MOUNT_ARGS[@]}"} \
+  ${KNOWLEDGE_INPUT_MOUNT_ARGS[@]+"${KNOWLEDGE_INPUT_MOUNT_ARGS[@]}"} \
   --mount "type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}" \
   --mount "type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out" \
   -v "${BUILD_INPUT_ROOT}:/work:ro" \

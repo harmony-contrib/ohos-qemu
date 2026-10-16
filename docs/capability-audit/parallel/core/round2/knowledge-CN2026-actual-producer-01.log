@@ -1,0 +1,9 @@
+test_official_CN_2026_asset_indexes_exact_published_intervals (test_batch_media_knowledge_holiday.Holiday.test_official_CN_2026_asset_indexes_exact_published_intervals) ... ok
+test_absence_creates_real_config_directory_without_dates_and_both_reapply (test_qemu_knowledge_resource.KnowledgeResourceTests.test_absence_creates_real_config_directory_without_dates_and_both_reapply) ... ok
+test_explicit_external_bytes_bound_and_retained_with_complete_shared_GN (test_qemu_knowledge_resource.KnowledgeResourceTests.test_explicit_external_bytes_bound_and_retained_with_complete_shared_GN) ... ok
+test_symlink_partial_and_publication_failure_preserve_all_prior_inputs (test_qemu_knowledge_resource.KnowledgeResourceTests.test_symlink_partial_and_publication_failure_preserve_all_prior_inputs) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 3.889s
+
+OK

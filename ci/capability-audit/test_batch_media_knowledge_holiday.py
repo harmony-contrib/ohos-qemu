@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 import base64
 import copy
+import datetime
 import gzip
 import hashlib
 import importlib.util
@@ -73,6 +74,32 @@ class Holiday(unittest.TestCase):
     def test_observer_cancel_join_reopen_inflight_and_reentrant_stop(self):
         self.publish(self.calendar([self.event()]))
         subprocess.run([str(self.root/'producer'),str(self.database),'observer-tests'],env=dict(self.env,BATCH_MEDIA_TEST_RESOURCE_DIRECTORY=str(self.resource)),check=True,timeout=18)
+
+    def test_official_CN_2026_asset_indexes_exact_published_intervals(self):
+        # Actual published facts, independently encoded as an explicitly
+        # scoped resource. This executes the real C++ parser and SQLite
+        # producer; it is not a claim about a packaged system or public API.
+        resource=ROOT/'patches/resources/knowledge/cn-2026'
+        facts=json.loads((resource/'provenance.json').read_text())
+        data=(resource/'holidays.ics').read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(),facts['asset']['sha256'])
+        self.publish(data);self.run_producer()
+        expected=set()
+        for event in facts['events']:
+            day=datetime.date.fromisoformat(event['start_inclusive'])
+            end=datetime.date.fromisoformat(event['dtend_exclusive'])
+            self.assertEqual((end-day).days,event['civil_day_count'])
+            while day<end:
+                expected.add((event['uid'],day.strftime('%Y%m%d'),event['summary']))
+                day+=datetime.timedelta(days=1)
+        actual={(row[0],row[2],row[3]) for row in self.rows()}
+        self.assertEqual(len(expected),33)
+        self.assertEqual(actual,expected)
+        dates={date for _,date,_ in actual}
+        for event in facts['events']:
+            self.assertNotIn(event['dtend_exclusive'].replace('-',''),dates)
+        for day in facts['makeup_workdays_not_in_holiday_ics']+['2025-12-31','2027-01-01']:
+            self.assertNotIn(day.replace('-',''),dates)
 
     def test_no_exceptions_pthread_failures_rollback_retry_and_worker_owned_destruction(self):
         self.publish(self.calendar([self.event()]))
