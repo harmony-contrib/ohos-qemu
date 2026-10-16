@@ -14,6 +14,7 @@ class Background(unittest.TestCase):
   with tempfile.TemporaryDirectory(prefix='batch-media-background-') as temp:
    root=Path(temp);controller=root/'background-controller.ts';controller.write_text(source+'\nexport { AudioRecordingSession };\n')
    subprocess.run(['node',str(SDK/'ets/build-tools/ets-loader/node_modules/typescript/lib/tsc.js'),'--skipLibCheck','--strict','--target','ES2020','--module','commonjs','--moduleResolution','node','--lib','ES2020,DOM','--baseUrl',str(SDK/'ets/api'),'--outDir',str(root),str(controller)],check=True,timeout=30)
+   subprocess.run(['node',str(HERE/'fixtures/batch_media/audio_events/limited_throw_guard.js'),str(SDK),str(controller)],check=True,timeout=30)
    subprocess.run(['node',str(HERE/'fixtures/batch_media/audio_events/background_lifecycle_harness.js'),str(root/'background-controller.js'),str(root)],check=True,timeout=10)
 
 if __name__=='__main__':unittest.main(verbosity=2)
