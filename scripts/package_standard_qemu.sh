@@ -3136,6 +3136,11 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
       --source-root "${SOURCE_ROOT}" \
       --write-provenance "${PACKAGE_DIR}/openvpn-source" \
       --output "${PACKAGE_DIR}/openvpn-image-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_qemu_runtime_assets_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --vendor-image "${IMAGES_OUT}/vendor.img" \
+      --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \
+      --write-provenance "${PACKAGE_DIR}/runtime-assets-source" \
+      --output "${PACKAGE_DIR}/runtime-assets-image-evidence.json"
     python3 "${SCRIPT_DIR}/verify_arkweb_core_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
       --source-artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS:?full profile requires verified source core artifacts}" \

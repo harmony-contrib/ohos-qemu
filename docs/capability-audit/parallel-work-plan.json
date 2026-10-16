@@ -17,7 +17,8 @@
     "patches/common/vendor",
     "patches/common/kernel",
     "patches/common/foundation/graphic/graphic_2d",
-    "patches/common/third_party/mesa3d"
+    "patches/common/third_party/mesa3d",
+    "device/qemu except media vendor_capture.c and system common/virt_full/external_gnss new provider sources; parent retains all shared BUILD/init/SELinux/launch changes"
   ],
   "parent_acceptance_failures": [
     "R50-full-suite-HiTrace-ordinary-launch-timeout",
@@ -1535,7 +1536,8 @@
         "patches/common/foundation/ability/ability_runtime/native_child_process/",
         "patches/common/foundation/distributeddatamgr/",
         "patches/common/foundation/graphic/graphic_3d/",
-        "patches/common/foundation/msdp/"
+        "patches/common/foundation/msdp/",
+        "patches/common/device/qemu/external_gnss/"
       ],
       "requirements": [
         {
@@ -1709,7 +1711,8 @@
         "foundation/msdp/",
         "foundation/graphic/graphic_3d/",
         "domains/",
-        "foundation/ability/ability_runtime/frameworks/native/child_process/"
+        "foundation/ability/ability_runtime/frameworks/native/child_process/",
+        "device/qemu/common/virt_full/external_gnss/"
       ],
       "upstream_files": [
         "drivers/peripheral/sensor/bundle.json",
@@ -1718,7 +1721,10 @@
         "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
         "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
         "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
-        "drivers/peripheral/sensor/sensor.gni"
+        "drivers/peripheral/sensor/sensor.gni",
+        "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+        "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+        "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h"
       ]
     }
   },
