@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-network-20261015",
-  "summary": "Second source batch: atomic native owner/generation snapshot and authenticated stage routing, real negotiated dual-stack routes/DNS, explicit reconnect gating and abrupt-exit session-file cleanup. Async callback draft is excluded; all 9 requirements remain open pending final compilation and real new-package acceptance.",
+  "summary": "Independent API26 Bluetooth entrypoint batch after atomic VPN batch: distinct deviceId/transport/optional-OOB parsing and real native async request/error propagation. Real Bluetooth service/adapter OOB and VPN callback lifecycle are still active follow-up work; all 9 requirements remain open.",
   "fixed_source": {
     "container": "ohos-qemu-parallel-source-20261016-02",
     "root": "/ohos",
@@ -35,6 +35,8 @@
   "qemu_gn_condition": "netmanager_base_enable_feature_sysvpn && (product_name == \"armv7a_virt\" || product_name == \"arm64_virt\" || product_name == \"x86_64_virt\")",
   "upstream_targets": [
     "configure.ac",
+    "foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp",
+    "foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.h",
     "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
     "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
     "foundation/communication/netmanager_ext/qemu_openvpn/management_protocol.h",
@@ -67,6 +69,11 @@
       "result": "21 collected; 20 passed, Linux-only parent-death/exec test skipped on macOS. Real prepared bodies and fixed cJSON compile/run with ASan/UBSan and -Werror. Locked OpenVPN port patch applies cleanly to the checksum-verified source archive.",
       "evidence": "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
       "limits": "Explicit service/process-role doubles remain host-only; no product compiler, QEMU or HDC run was started by the agent."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_bluetooth_oob -v",
+      "result": "PASS: 2 actual new entry/parser body and exact-source tests; ASan/UBSan and -Werror. Explicit NAPI/common-parser/native async doubles verify request semantics and error propagation, not real permission enforcement or OOB pairing.",
+      "evidence": "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt"
     }
   ],
   "integration_requests": [
@@ -97,20 +104,29 @@
     {
       "owner": "network_next_batch",
       "action": "Implement/validate the API26 Bluetooth four-argument startPairOutOfBand parser/export and genuine backend/peer work; coordinate BPF/kernel, USB MTP provider and bridge/tap topology with their central owners."
+    },
+    {
+      "owner": "parent",
+      "action": "Apply bluetooth/api26_oob_pairing after existing framework enum components and include its real connection NAPI TU in cross-architecture compilation. Keep the original API23 entry. This is an export/parameter repair only until the separate service/adapter/HCI implementation and real peer checks complete."
     }
   ],
   "requirements_review": {
     "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand": {
-      "status": "open_export_and_backend_dependency",
-      "finding": "Fixed NAPI registers pairDeviceOutOfBand only. API 26 startPairOutOfBand adds a deviceId parameter and optional P192/P256 data, so aliasing the existing three-argument parser is incorrect.",
+      "status": "open_api26_binding_candidate_real_oob_backend_pending",
+      "finding": "Added an independent API26 export/parser and real asynchronous BluetoothRemoteDevice::StartPairOutOfBand call. Outer deviceId drives the target while OOB raw address data remains validated by the existing common parser. Fixed service still rejects real OOB requests with 801 and local OOB generation currently returns empty success; neither is masked by the new entry.",
       "evidence": [
         "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:53",
         "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:800",
-        "/ohos/interface/sdk-js/api/@ohos.bluetooth.connection.d.ts:286"
+        "/ohos/interface/sdk-js/api/@ohos.bluetooth.connection.d.ts:286",
+        "patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md",
+        "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
+        "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:941",
+        "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:1444"
       ],
       "remaining": [
-        "Implement and boundary-test the API 26 four-argument parser/export while preserving native permission checks.",
-        "Provide an actual Bluetooth controller/vendor transport and OOB-capable peer; verify pairing events, errors and cleanup."
+        "Compile/link/package the final real API26 NAPI TU and validate actual caller/permission/off boundaries.",
+        "Implement system-API OOB checks and one-time peer/transport/P192/P256 data in real Bluetooth service/adapter/GAP/HCI paths, including result/cancel/timeout/power-off cleanup; never replace 801 with empty success.",
+        "Provide actual controller/vendor transport and OOB-capable peer; verify real challenge, pair events, data, disconnect and cleanup in the newly packaged representative artifact."
       ]
     },
     "behavior:netmanager-ebpf-backend": {
@@ -235,10 +251,11 @@
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
-      "status": "open_export_and_backend_dependency",
+      "status": "open_api26_binding_candidate_real_oob_backend_pending",
       "required": [
-        "Implement and boundary-test the API 26 four-argument parser/export while preserving native permission checks.",
-        "Provide an actual Bluetooth controller/vendor transport and OOB-capable peer; verify pairing events, errors and cleanup."
+        "Compile/link/package the final real API26 NAPI TU and validate actual caller/permission/off boundaries.",
+        "Implement system-API OOB checks and one-time peer/transport/P192/P256 data in real Bluetooth service/adapter/GAP/HCI paths, including result/cancel/timeout/power-off cleanup; never replace 801 with empty success.",
+        "Provide actual controller/vendor transport and OOB-capable peer; verify real challenge, pair events, data, disconnect and cleanup in the newly packaged representative artifact."
       ]
     },
     {
@@ -321,17 +338,24 @@
     "source_or_out_writes": 0
   },
   "changed_files": [
+    "ci/capability-audit/fixtures/batch_network/bluetooth-oob-prepared.json",
     "ci/capability-audit/fixtures/batch_network/cjson/LICENSE",
     "ci/capability-audit/fixtures/batch_network/cjson/cJSON.c",
     "ci/capability-audit/fixtures/batch_network/cjson/cJSON.h",
     "ci/capability-audit/fixtures/batch_network/fixed-source.json",
     "ci/capability-audit/fixtures/batch_network/session-prepared.json",
+    "ci/capability-audit/test_batch_network_bluetooth_oob.py",
     "ci/capability-audit/test_batch_network_openvpn_lifecycle.py",
     "ci/capability-audit/test_batch_network_openvpn_session.py",
     "ci/capability-audit/test_batch_network_session_contract.py",
+    "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/host-tests.txt",
     "docs/capability-audit/parallel/network/result.json",
     "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
+    "patches/common/foundation/communication/bluetooth/api26_oob_pairing/0001-bind-api26-device-target-and-oob-promise.patch",
+    "patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md",
+    "patches/common/foundation/communication/bluetooth/api26_oob_pairing/apply.sh",
+    "patches/common/foundation/communication/bluetooth/api26_oob_pairing/verify_source.py",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/README.md",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh",
@@ -357,7 +381,7 @@
     "patches/common/foundation/communication/netmanager_ext/openvpn_session/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "660e4d56e2f7954442a99c2fab55a6836be9a9e0",
+  "round_base_commit": "0c0fc765fa9ef75428d3955a1829ca6865ac5e31",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
