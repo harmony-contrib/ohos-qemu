@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T21:03:52.255255+08:00",
+  "updated_at": "2026-10-16T21:35:20.581974+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "30774b8139fdbfdcbdad631c732d2949f4302997",
+  "checkpoint_commit": "305374e463b31d125b347464551f468decd48519",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -1175,13 +1175,115 @@
         }
       ],
       "count_correction": "Previous root commentary incorrectly reported14/3 from partial log extraction; authoritative objects are11/6."
+    },
+    "communication_remaining3_proxy_service_TUs_PASS": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-proxy-service-platform-06/artifacts/communication_state/evidence.json",
+      "sha256": "ac752eba07708671132c7ca5718fb46e6268220343ce341972f127a30ceee1ef",
+      "reported_status": "pass",
+      "scope": "selected_complete_product_TUs_ONLY_NOT_all_group_units_or_link_or_runtime",
+      "objects": [
+        {
+          "unit": "telephony_observer_proxy__tel_state_registry_api",
+          "role": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "CFI_selected_in_original_link_flags": null
+        },
+        {
+          "unit": "telephony_observer_proxy__tel_state_registry",
+          "role": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "CFI_selected_in_original_link_flags": null
+        },
+        {
+          "unit": "telephony_state_registry_service__tel_state_registry",
+          "role": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "CFI_selected_in_original_link_flags": null
+        }
+      ]
+    },
+    "complete_Rust_API_private_link_all5_commands_PASS": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-03/artifacts/evidence.json",
+      "sha256": "2320364200791a1fb6835996898b24e46433effb4390cf0f313e4b18a4364bfc",
+      "reported_status": "pass",
+      "scope": "complete_current_Rust_dylib_compile_link_source_bound_CXX_private_registry_API_existing_other_dependencies_NOT_fresh_GN_package_runtime"
+    },
+    "child_two_Graphics3D_full_original_flags_links_PASS": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-child-Graphics3D-actual-CFI-links-02/artifacts/evidence.json",
+      "sha256": "d7beb59c06f6c3a03619823b0b46f940efa6523f4862162ace5ef19f0781483d",
+      "reported_status": "pass",
+      "scope": "actual_current_child_and_Graphics3D_complete_shared_library_CFI_LTO_links_ONLY_NOT_fresh_GN_or_runtime",
+      "links": [
+        {
+          "unit": "child",
+          "role": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.9817290306091309,
+          "CFI_selected_in_original_link_flags": true
+        },
+        {
+          "unit": "scene_adapter",
+          "role": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 3.3761630058288574,
+          "CFI_selected_in_original_link_flags": false
+        },
+        {
+          "unit": "RenderContextJS",
+          "role": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 7.4310150146484375,
+          "CFI_selected_in_original_link_flags": false
+        }
+      ]
+    },
+    "fresh_PCM_three_actual_event_HAPs_PASS": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-three-audio-event-fresh-PCM-HAP-roles-03/evidence.json",
+      "sha256": "2d568fe04c6fed089785da09983b5e4f581d6c0747eb8f8065f22d331365ba49",
+      "reported_status": null,
+      "scope": null,
+      "rows": [
+        {
+          "unit": null,
+          "role": "event-revoke",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 2.705512046813965,
+          "CFI_selected_in_original_link_flags": null
+        },
+        {
+          "unit": null,
+          "role": "event-owner",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.6547870635986328,
+          "CFI_selected_in_original_link_flags": null
+        },
+        {
+          "unit": null,
+          "role": "event-contender",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.7056012153625488,
+          "CFI_selected_in_original_link_flags": null
+        }
+      ]
     }
   },
   "agents": {
-    "apps": "source adaptation integrated; Calendar actual TU and official unsigned HAP, Admin unsigned API26 HAP pass; actual signing/BMS/UI pending",
-    "network": "VPN final networkvpn_service actual TU now passes; readonly real background/notification map integrated, implementing isolated two-UID focus runner",
-    "location": "04 complete objects recount:11PASS/6FAIL;05 repaired3 AccessToken consumers+wrapperPASS;other2proxy override and1registry service header fixes assigned;API/Rust must not reuse failed objects",
-    "media": "Holiday final single actual product TU now passes under unchanged -fno-exceptions; 3 actual event HAPs previously passed; adding requested post-background fresh native PCM observation protocol",
+    "apps": "resumed real fixed-source share picker/sendData provider implementation batch;normal entry/URI ownership/results/exit contract under inspection",
+    "network": "both original native source fixes actual TUs PASS;dualUID focus runner integrated846a76b;fixing final ready/journal publication observations while root strict verifier305374e integrated",
+    "location": "complete actual 17 TU coverage across04/05/06 after source fixes;complete current6module Rust and private newAPI actual link PASS;frozen source/header/object deps independently bound;guest0 closures",
+    "media": "fresh PCM request and live callbacks integratedcf9b072;all3 actual unsigned API26 eventHAPs PASS again;actual runtime pending",
     "system": "Linux current provider35 and bridge24 regression pass incl two actual unloads and same-process reload; actual new guest load/API still pending"
   },
   "external_dependencies": {
@@ -1191,7 +1293,7 @@
     "security_guard": "Actual SecurityGuard model/config/repository/SDK missing."
   },
   "remaining_core_acceptance": [
-    "complete Rust/API dependency link; two-UID live focus runner/core verifier; batched current source composition and host regression",
+    "merge final focus collection race fix;source composition/batched currenthostregressions;Settings actual build;actual remaining profile/provider implementations",
     "complete Rust ANI dylib compile/link; GNSS Linux reload; actual remaining modules links and fresh GN product selection",
     "root real ordinary audio revoke/two-UID focus and notifications/background-task service observation",
     "real Calendar/Admin signing/BMS/UI, true modem/HCI/GNSS/Sensor/Knowledge external provider behavior",
