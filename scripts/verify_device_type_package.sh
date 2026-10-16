@@ -223,6 +223,12 @@ PY
     echo "FAIL: packaged Sensor VDI or trusted calendar assets differ from the current source" >&2
     FAIL=1
   fi
+  if ! python3 "${SCRIPT_DIR}/verify_qemu_gnss_image.py" \
+    --system-image "${PACKAGE}/images/system.img" --vendor-image "${PACKAGE}/images/vendor.img" \
+    --product "${MANIFEST_PRODUCT}" --packaged-provenance "${PACKAGE}/gnss-source"; then
+    echo "FAIL: packaged GNSS vendor, HDI bridge, service or standalone inputs differ from current source" >&2
+    FAIL=1
+  fi
   if ! python3 "${SCRIPT_DIR}/../patches/lib/kernel_evidence.py" \
     --package "${PACKAGE}" --guest-arch "${MANIFEST_ARCH}"; then
     echo "FAIL: full source package has stale or missing kernel build evidence" >&2

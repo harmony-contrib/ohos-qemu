@@ -223,3 +223,10 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 2026-10-16 当前集成追加：定位 round5（worker 94d765b，集成 264c020）通过与其他四组互斥的 upstream scope 检查，移除补造卫星，修复 GNSS 配置初始化和失败传播，27 项 host 回归通过。VPN broker Linux 第三次完整回归固定 e72fbea、GCC/G++、保留 Werror/ASan/UBSan，41 项全部通过、0 跳过；前两次环境与 fixture 失败日志原样保留。证据：`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-broker-complete-Linux-host-03/artifacts/evidence.json`。
 
 主构建已接入 base/ext broker、完整 5A 通信状态组件及 Recorder 配置修复。VPN 两个私有监听 socket 由 init 创建并传递，netsysnative 原有配置逐字段保留；源安装 7 项事务/未知修改测试通过。诊断编译器新增真实 GN public config 字面 include 导出来源记录，保留原产品所有编译保护，并明确该补充不证明新 GN 的真实依赖选择。新增完整 GNSS/Recorder/VPN TU 编译检查，等待集中结果。以上仍为源码和诊断阶段，82 项仍待关闭、代表包运行门禁 false、验收交付 0/6，其余五包未启动。
+
+
+2026-10-16 GNSS系统批 e16465a+a9b7697 通过25个累计upstream所有权检查后集成160f785+09ab0d3；根已为真实1022 location_host接入专属0700目录、input0600策略、GN目标、const.location.supl_mode=1实际standalone配置。根联合Sensor+GNSS+VPN完整普通/开发者SELinux编译PASS（r52-combined-Sensor-GNSS-VPN-SELinux-policy-01，19.585s）。GNSS四个完整真实平台TU保留CFI/LTO/栈保护全部PASS（r52-GNSS-bridge-provider-full-TUs-01，56.676s），实际新bridge和vendorGnssAdapter.so两个共享库按HDI完整CFI/LTO链接及符号/SONAME检查PASS（r52-GNSS-bridge-provider-actual-CFI-links-01，9.812s）。以上均未声称新GN目标已经在产品选择或新guest实际加载。
+
+根也完成实际Sensor DSO的依赖专用ext4读回与四项拒绝测试（r52-real-Sensor-DSO-runtime-assets-ext4-01）：配置改字节、额外未绑定ICS、优先级更高的product VDI、两个不同真实inode歧义均拒绝。不是产品镜像，不核销运行能力。新增GNSS源码/构建图/三层真实库/启动和参数的镜像绑定检查，包装及离线检查均必须执行。
+
+完整能力TU第一批416.977s：location 14/15PASS，真实const AppIdentity&缺口由round6修复并集成b934096；Knowledge 4/6PASS，缺RDB/OpenSSL declared exports；Recorder标准CLI与私有stage清单问题、VPN遗漏前驱问题全部收齐。媒体round5 63395d3已通过scope集成aaecdc8，补真实普通后台录音与RDB direct dep/Recorder标准CLI；47 host tests及Recorder/audio_event最终三ABI链接PASS，真正HAP/权限/运行仍待验。VPN当前helpers两个完整TU和实际executable links PASS。真实FFRT第一批health PASS、callback fail；已实证为探针遗留单应用VPN触发正确互斥过滤，network修探针e262999集成8667c52，保留原断言并补抑制分支，待真实libffrt复验。所有失败证据原样保留；其余五包未开始、门禁false、0/6、82项仍待闭环。
