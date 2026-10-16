@@ -145,7 +145,10 @@ int main(int argc,char **argv){
  assert(argc==2);using namespace OhosOpenvpn;const std::string root=argv[1];assert(mkdir(root.c_str(),0700)==0);
  BrokerRuntime broker(root,getuid(),[](const BrokerCommand&,const std::string &directory){
   alarm(10);std::ofstream(directory+"/client.ovpn")<<"private credentials";
-  for(;;)pause();return 0;
+  for(;;){
+   pause();
+  }
+  return 0;
  });assert(broker.Open());
  BrokerCommand one;one.start=true;one.owner={1000023,100,"first.owner","one"};one.interfaceName="multitun-vpn1";
  one.session={std::string(32,'a'),"client\nactual-profile\n","one-password"};
@@ -187,7 +190,10 @@ int main(int argc,char **argv){assert(argc==2);using namespace OhosOpenvpn;asser
  close(pipeFd[1]);std::vector<pid_t>pids;for(int i=0;i<3;++i){pollfd ready{pipeFd[0],POLLIN,0};assert(poll(&ready,1,3000)>0);Trace trace{};assert(read(pipeFd[0],&trace,sizeof(trace))==sizeof(trace));assert(!ProcessStart(trace.pid).empty());pids.push_back(trace.pid);}close(pipeFd[0]);
  assert(kill(controller,SIGKILL)==0);int status=0;while(waitpid(controller,&status,0)<0)assert(errno==EINTR);
  const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);for(;;){const pid_t child=waitpid(-1,&status,WNOHANG);if(child>0)continue;if(child<0 && errno==EINTR)continue;if(child<0 && errno==ECHILD)break;assert(std::chrono::steady_clock::now()<deadline);poll(nullptr,0,10);}
- for(pid_t pid:pids)assert(ProcessStart(pid).empty());bool secretLeft=false;for(const auto &entry:std::filesystem::directory_iterator(root))if(entry.is_directory())secretLeft=std::filesystem::exists(entry.path()/"askpass");assert(secretLeft);
+ for(pid_t pid:pids){
+  assert(ProcessStart(pid).empty());
+ }
+ bool secretLeft=false;for(const auto &entry:std::filesystem::directory_iterator(root))if(entry.is_directory())secretLeft=std::filesystem::exists(entry.path()/"askpass");assert(secretLeft);
  SessionStore restarted;assert(restarted.Open(root.c_str(),getuid()));for(const auto &entry:std::filesystem::directory_iterator(root))assert(entry.path().filename()=="backend.lock");
 }
 '''

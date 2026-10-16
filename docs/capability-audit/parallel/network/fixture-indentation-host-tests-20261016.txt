@@ -1,0 +1,18 @@
+test_actual_parser_target_optional_selection_async_capture_and_errors (test_batch_network_bluetooth_oob.BluetoothOobTests.test_actual_parser_target_optional_selection_async_capture_and_errors) ... ok
+test_exact_stack_export_and_idempotence (test_batch_network_bluetooth_oob.BluetoothOobTests.test_exact_stack_export_and_idempotence) ... ok
+test_actual_classic_and_le_handlers_consume_match_and_reject_late_requests (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_classic_and_le_handlers_consume_match_and_reject_late_requests) ... ok
+test_actual_extended_gap_task_and_hci_parameters_and_errors (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_extended_gap_task_and_hci_parameters_and_errors) ... ok
+test_actual_peer_type_single_use_expiry_cancel_and_off (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_peer_type_single_use_expiry_cancel_and_off) ... ok
+test_actual_service_permissions_target_shape_off_and_failure_propagation (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_service_permissions_target_shape_off_and_failure_propagation) ... ok
+test_exact_service_gap_stack_and_unknown_edit (test_batch_network_bluetooth_service.BluetoothServiceTests.test_exact_service_gap_stack_and_unknown_edit) ... ok
+test_actual_broker_two_owners_stop_isolation_replay_and_cleanup (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_broker_two_owners_stop_isolation_replay_and_cleanup) ... ok
+test_actual_codec_roundtrip_owner_replay_and_socket_framing (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_codec_roundtrip_owner_replay_and_socket_framing) ... ok
+test_actual_new_dispatch_cancels_connected_before_blocking_stop (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_new_dispatch_cancels_connected_before_blocking_stop) ... ok
+test_complete_exact_broker_chain_and_unknown_edits (test_batch_network_vpn_broker.VpnBrokerTests.test_complete_exact_broker_chain_and_unknown_edits) ... ok
+test_linux_sigkill_broker_kills_all_descendants_and_reclaims_credentials (test_batch_network_vpn_broker.VpnBrokerTests.test_linux_sigkill_broker_kills_all_descendants_and_reclaims_credentials) ... skipped 'requires real Linux broker/worker/client/bridge parent death'
+test_linux_stop_reaps_worker_and_descendant_blocked_on_callback (test_batch_network_vpn_broker.VpnBrokerTests.test_linux_stop_reaps_worker_and_descendant_blocked_on_callback) ... skipped 'requires real Linux subreaper/PDEATHSIG'
+
+----------------------------------------------------------------------
+Ran 13 tests in 23.096s
+
+OK (skipped=2)

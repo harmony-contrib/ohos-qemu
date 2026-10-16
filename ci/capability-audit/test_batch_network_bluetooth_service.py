@@ -63,7 +63,10 @@ int main(){
  assert(session.State(data.peer.data(),0)==2);
  std::atomic<int> taken{0};std::vector<std::thread> threads;
  for(int i=0;i<8;++i)threads.emplace_back([&]{PairingOobData copy;if(session.Take(data.peer.data(),1,copy)){assert(copy.confirmation[0]==25 && copy.randomizer[0]==52);++taken;}});
- for(auto &thread:threads)thread.join();assert(taken==1 && session.State(data.peer.data(),1)==2);
+ for(auto &thread:threads){
+  thread.join();
+ }
+ assert(taken==1 && session.State(data.peer.data(),1)==2);
  assert(!session.Take(data.peer.data(),1,out));session.Complete(other.data());assert(!session.Arm(data));
  session.Complete(data.peer.data());assert(session.Arm(data));session.Invalidate(data.peer.data());
  assert(!session.Take(data.peer.data(),1,out) && !session.Arm(data));session.Complete(data.peer.data());
