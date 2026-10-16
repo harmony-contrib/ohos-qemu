@@ -1,0 +1,11 @@
+{
+  "scope": "read-only source bytes, not archive/runtime proof",
+  "source_alias": "/ohos",
+  "container": "ohos-qemu-parallel-source-20261016-02",
+  "sha256": {
+    "base/theme/wallpaper_mgr/services/BUILD.gn": "16c6df2d65364e8a54582a1736d950053d41abe3e945b04fda3caff8ac0b97dd",
+    "base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp": "3271676807142d4b03664db0850c0d58d11ec0258941f98bd5658d57003038ac",
+    "base/theme/wallpaper_mgr/wallpaper.gni": "d727530a2f509b8e17f06b9c20cac2fc0a5489de3e0d59a13d74542a561d4033",
+    "base/theme/wallpaper_mgr/services/src/wallpaper_extension_ability_connection.cpp": "1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d"
+  }
+}

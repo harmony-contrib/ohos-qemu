@@ -1,0 +1,72 @@
+{
+  "agent": "system",
+  "status": "read_only_review_complete_root_repairs_confirmed_by_pure_replay",
+  "baseline_commit": "74b7c0b0bc17132281b52869a9ccb24ab8f31258",
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "upstream_targets": [],
+  "findings": [
+    {
+      "id": "ordered-protection-flags",
+      "severity": "P2",
+      "location": "scripts/qemu_wallpaper_build_witness.py compile_check",
+      "type": "verifier_false_accept_boundary",
+      "observed": "Appended cancellation of CFI/all sanitizers/LTO/noexceptions/nortti accepted by reviewed predicate",
+      "root_resolution": "Root repaired final ordered flags; same five tails now reject and legitimate original command accepts"
+    },
+    {
+      "id": "selected-arg-block",
+      "severity": "P2",
+      "location": "scripts/qemu_wallpaper_build_witness.py selected_args",
+      "type": "verifier_false_accept_boundary",
+      "observed": "theme_service true plus another argument Current false accepted",
+      "root_resolution": "Root repaired unique selected argument block and query argv; pure replay wrong block rejects"
+    }
+  ],
+  "normal_build_path_blockers_found": [],
+  "integration_review": [
+    "begin/finish follow source/load preflight and real non-load-only full phone/2in1 images build; shell pipefail covers build failure",
+    "package adds six-payload wallpaper-native inventory and compares actual ext4 DSO; full device verification consumes same directory/system.img",
+    "actual service and extension-connection source/object paths and solink edge verified; no patched/fresh graph claim from current mixed out",
+    "actual source hash observation matches component baseline/current unchanged hashes; patched expected hashes match component declared after hashes",
+    "previous /ohos vs absolute /Volumes/PSSD/qemu/openharmony GN diagnostic mismatch explicitly excluded as product defect"
+  ],
+  "resource_observation": {
+    "source": "build/config/compiler/BUILD.gn:567-617",
+    "LLD_internal_thinlto_jobs": 16,
+    "non_LLD_plugin_jobs": 16,
+    "literal_not_exposed_thread_GN_arg_in_this_branch": true,
+    "outer_link_pool": "build/toolchain/BUILD.gn:17-18 depth=concurrent_links",
+    "root_concurrent_links_1_does_not_reduce_inner_jobs": true,
+    "protection_or_resource_flags_modified_by_this_agent": false
+  },
+  "tests": [
+    {
+      "scope": "only pure captured predicate replay based on actual prior product compile query, not fresh GN selection/native execution",
+      "result": "parser-replay.json",
+      "sha256": "8eaef39914b8b261a1d8330105855be328f415dc397285f62538666bdf129a93"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=ROOT/scripts:ROOT/ci/capability-audit python3 -m unittest test_qemu_wallpaper_build_witness -v",
+      "exit_code": 0,
+      "passed": 7,
+      "log": "root-pure-tests.log",
+      "sha256": "d743f3a38dc6fba6a3b06a37347578332c60e609334ecffaa516f62d2d2ca2dd"
+    }
+  ],
+  "original_source_capture_limitation": "Root changed full file before copying; original whole script SHA observed, exact predicate excerpt captured from prior tool output with separate hash. Not claimed as full original bytes.",
+  "resources": {
+    "heavy_lease_held": false,
+    "native_SDK_Docker_build_GN_Ninja_or_guest_executed": false,
+    "readonly_inspector_queries": "fixed narrow source and existing Wallpaper target configuration only; no writes",
+    "shared_source_modified": false
+  },
+  "integration_requests": [
+    "Root retain its actual full build/forced-output witness and actual AMS connection helper/new package runtime evidence; parser tests do not replace them",
+    "Root owns any resource lease changes; no invented thread-count GN argument or lowered CFI/LTO flags recommended"
+  ],
+  "remaining_gaps": [
+    "No full source build, actual new output witness, package image or runtime AMS Wallpaper fallback connection executed in this review",
+    "No representative artifact behavior gate or requirement closure; all runtime failures must remain for the next batch repair cycle"
+  ]
+}
