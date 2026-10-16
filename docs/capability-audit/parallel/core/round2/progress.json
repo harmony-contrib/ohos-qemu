@@ -987,7 +987,34 @@
       "reported_status": null,
       "scope": "batched_whole_current_capability_TUs_and_helper_links_preserve_actual_flags_NOT_fresh_GN_or_runtime"
     },
-    "communication17_full_TUs_14pass3_GN_dependency_fail": {
+    "independent_actual_AAC_AVC_decoder_tools": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-independent-media-decoder-tools/evidence.json",
+      "sha256": "59e53baf4f62ecd07e7f85e40fd18e8d6167c52855261f1702d4f04ff5a63103",
+      "reported_status": null,
+      "scope": "independent_real_decoder_executables_ONLY_NOT_media_capture"
+    },
+    "batched_Holiday_VPN_communication_6_affected_TUs_all_pass": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-batched-platform-fixes-05/host-evidence.json",
+      "sha256": "e4f32ad9e0a8d5985f1f5a54e0777a69f7225d7b8dab8afd9bdadec222e8ea9d",
+      "reported_status": null,
+      "scope": "batched_whole_current_capability_TUs_and_helper_links_preserve_actual_flags_NOT_fresh_GN_or_runtime",
+      "error": null
+    },
+    "Linux_GNSS_provider_35_bridge_24_and_same_process_reload": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round5-linux-gnss/result.json",
+      "sha256": "1ca0d02f84bd99459239a323d86cddbdbbeb14be1b7f4ba0c83bcb3e54a56530",
+      "reported_status": "host_lifetime_passed_official_CFI_links_verified_read_only_new_guest_pending",
+      "scope": "GNU_Linux_host_validation_of_existing_GNSS_plugin_lifetime_only",
+      "error": null
+    },
+    "complete_Rust_first_real_link_failure_preserved": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-01/artifacts/evidence.json",
+      "sha256": "2841274a64e99e9368f742cbd5e57d598e713e18e4ef518b93137ef340d03a6d",
+      "reported_status": "fail",
+      "scope": "complete_current_Rust_dylib_compile_link_source_bound_CXX_existing_product_dependencies_NOT_fresh_GN_package_runtime",
+      "error": "ValueError: real command failed: complete-Rust-dylib; complete log retained"
+    },
+    "communication17_full_TUs_11pass6_fail_full_objects_corrected": {
       "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-complete-platform-04/artifacts/communication_state/evidence.json",
       "sha256": "4b4f56eb62b7d11042e936b7b85a3174a4b0fc9d0407250e6ab3be1a4321d880",
       "reported_status": "fail",
@@ -1146,40 +1173,14 @@
           "seconds": null,
           "error": null
         }
-      ]
-    },
-    "independent_actual_AAC_AVC_decoder_tools": {
-      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-independent-media-decoder-tools/evidence.json",
-      "sha256": "59e53baf4f62ecd07e7f85e40fd18e8d6167c52855261f1702d4f04ff5a63103",
-      "reported_status": null,
-      "scope": "independent_real_decoder_executables_ONLY_NOT_media_capture"
-    },
-    "batched_Holiday_VPN_communication_6_affected_TUs_all_pass": {
-      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-batched-platform-fixes-05/host-evidence.json",
-      "sha256": "e4f32ad9e0a8d5985f1f5a54e0777a69f7225d7b8dab8afd9bdadec222e8ea9d",
-      "reported_status": null,
-      "scope": "batched_whole_current_capability_TUs_and_helper_links_preserve_actual_flags_NOT_fresh_GN_or_runtime",
-      "error": null
-    },
-    "Linux_GNSS_provider_35_bridge_24_and_same_process_reload": {
-      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round5-linux-gnss/result.json",
-      "sha256": "1ca0d02f84bd99459239a323d86cddbdbbeb14be1b7f4ba0c83bcb3e54a56530",
-      "reported_status": "host_lifetime_passed_official_CFI_links_verified_read_only_new_guest_pending",
-      "scope": "GNU_Linux_host_validation_of_existing_GNSS_plugin_lifetime_only",
-      "error": null
-    },
-    "complete_Rust_first_real_link_failure_preserved": {
-      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-01/artifacts/evidence.json",
-      "sha256": "2841274a64e99e9368f742cbd5e57d598e713e18e4ef518b93137ef340d03a6d",
-      "reported_status": "fail",
-      "scope": "complete_current_Rust_dylib_compile_link_source_bound_CXX_existing_product_dependencies_NOT_fresh_GN_package_runtime",
-      "error": "ValueError: real command failed: complete-Rust-dylib; complete log retained"
+      ],
+      "count_correction": "Previous root commentary incorrectly reported14/3 from partial log extraction; authoritative objects are11/6."
     }
   },
   "agents": {
     "apps": "source adaptation integrated; Calendar actual TU and official unsigned HAP, Admin unsigned API26 HAP pass; actual signing/BMS/UI pending",
     "network": "VPN final networkvpn_service actual TU now passes; readonly real background/notification map integrated, implementing isolated two-UID focus runner",
-    "location": "actual14 of17 whole communication TUs initially pass, 3 failed GN dependency repaired and actual4 selected retest passes; complete Rust reaches actual linker, missing new TelephonyObserver API dependency being rebuilt privately; lease location",
+    "location": "04 complete objects recount:11PASS/6FAIL;05 repaired3 AccessToken consumers+wrapperPASS;other2proxy override and1registry service header fixes assigned;API/Rust must not reuse failed objects",
     "media": "Holiday final single actual product TU now passes under unchanged -fno-exceptions; 3 actual event HAPs previously passed; adding requested post-background fresh native PCM observation protocol",
     "system": "Linux current provider35 and bridge24 regression pass incl two actual unloads and same-process reload; actual new guest load/API still pending"
   },

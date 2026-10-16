@@ -233,7 +233,7 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 
 2026-10-16 后续集中复验：location 15 个完整平台 TU、Recorder 完整 TU 及真实 libffrt callback 回归通过（r52-current-capability-full-TUs-and-FFRT-02）。六类普通 HAP 第一轮中 Capturer/Recorder/拒绝 Recorder 的真实 API26 unsigned HAP 和 native/权限合同通过；三个 event HAP 发现同一 ArkTS throw 类型问题，67ea121 修复后仅重建这三个角色，r52-three-audio-event-ordinary-HAP-roles-02 三项均通过。仍未证明签名安装、真实权限 UI、后台任务或录音事件。
 
-真实通信 17 个完整 TU 首轮收齐 14 PASS/3 FAIL（r52-communication-complete-platform-04）：新增权限检查的 NAPI/ANI consumer 均缺真实 access_token direct GN dependency，已交原所有者统一修复；Rust 完整链接尚未通过。VPN 完整 TU 首轮 7 PASS/1 FAIL，真实基接口非虚析构暴露 fixture 错误；network 修复 a942364 已经 scope 检查集成 d9ac091，保留共享接口和 Werror，等待受影响平台 TU 复编。Holiday 在真实产品 -fno-exceptions 下的 try/catch 编译错误已交 media 集中修复，未修改编译保护。
+真实通信 17 个完整 TU 首轮完整统计为 11 PASS/6 FAIL（此前只摘录部分错误日志误写14/3，已按objects全表纠正）（r52-communication-complete-platform-04）：其中3个新增权限检查的 NAPI/ANI consumer 缺真实 access_token direct GN dependency；另外两份proxy缺完整override声明、registry service缺ipc_skeleton.h。所有失败交原所有者集中修复；Rust完整链接尚未通过。VPN 完整 TU 首轮 7 PASS/1 FAIL，真实基接口非虚析构暴露 fixture 错误；network 修复 a942364 已经 scope 检查集成 d9ac091，保留共享接口和 Werror，等待受影响平台 TU 复编。Holiday 在真实产品 -fno-exceptions 下的 try/catch 编译错误已交 media 集中修复，未修改编译保护。
 
 根完成 Recorder 普通应用权限 UI/token、私有输入/输出、两个录制生命周期与独立 ffmpeg/ffprobe 实际 AAC/AVC 解码验收接线，首包门禁要求同一新归档、同一 boot、三个新 nonce 的 grant/deny/grant；离线门禁重新运行解码而不接受旧 pass 字段。36 项相关权限边界/证据/调度回归通过（recorder-acceptance-host-01.log），不是 guest 或包验收。真实 ffmpeg/ffprobe 9.0.1 工具及 SHA 另存 r52-independent-media-decoder-tools/evidence.json。
 
@@ -246,3 +246,5 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 GNSS系统Linux测试4288e492已scope检查合入30774b8：GNU11.4/Werror/ASan/UBSan/LSan，provider35场景和bridge24对照完成通过。两次真实unload marker、同进程reload、新nonce拒旧帧/新代回调均实测；仅修host harness可移植性，0产品target变化。证据在 parallel/system/round5-linux-gnss/，容器已删除。真实OHOS客体CFI加载、公开API以及首包行为仍待验。
 
 完整Rust ANI首轮进入实际ld.lld，但旧产品 libtel_state_registry_api.z.so 缺新增虚方法/调整thunk而失败；r52-communication-full-Rust-01 原日志保留，正用真实新对象与原solink recipe闭合私有依赖，禁止用stub/放宽no-undefined替代。根已核对后台服务1903/ANS3203实际源码并增加严格task UID/pid/未挂起状态与notification OwnerUid/Id/Label联合观测；双UID焦点运行编排与独立验收继续进行。82未关、新核销0、首包完整门禁false、六包0/6、其余五包未启动。
+
+通信完整结果二次核对：04真实objects为11 PASS/6 FAIL，05仅复验并通过其中3个权限consumer加wrapper；另2个proxy与registry service仍待集中修复/复验。此前14/3为根统计错误，已纠正正文与progress，不使用任何失败对象进行API/Rust链接。
