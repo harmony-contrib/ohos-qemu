@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-network-20261015",
-  "summary": "Independent API26 Bluetooth entrypoint batch after atomic VPN batch: distinct deviceId/transport/optional-OOB parsing and real native async request/error propagation. Real Bluetooth service/adapter OOB and VPN callback lifecycle are still active follow-up work; all 9 requirements remain open.",
+  "summary": "API26 follow-up independently validates both supplied objects while preserving SDK P256 precedence; full Bluetooth service/peer acceptance remains open.",
   "fixed_source": {
     "container": "ohos-qemu-parallel-source-20261016-02",
     "root": "/ohos",
@@ -74,6 +74,11 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_bluetooth_oob -v",
       "result": "PASS: 2 actual new entry/parser body and exact-source tests; ASan/UBSan and -Werror. Explicit NAPI/common-parser/native async doubles verify request semantics and error propagation, not real permission enforcement or OOB pairing.",
       "evidence": "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_bluetooth_oob -v",
+      "result": "PASS 2 tests, includes malformed P192 plus valid P256 and malformed P256 plus valid P192; exact ordered whole-stack idempotence.",
+      "evidence": "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt"
     }
   ],
   "integration_requests": [
@@ -108,7 +113,8 @@
     {
       "owner": "parent",
       "action": "Apply bluetooth/api26_oob_pairing after existing framework enum components and include its real connection NAPI TU in cross-architecture compilation. Keep the original API23 entry. This is an export/parameter repair only until the separate service/adapter/HCI implementation and real peer checks complete."
-    }
+    },
+    "Apply bluetooth/api26_oob_validation after api26_oob_pairing; rebuild actual NAPI TU. This changes parser behavior only and does not satisfy controller/peer OOB acceptance."
   ],
   "requirements_review": {
     "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand": {
@@ -349,6 +355,7 @@
     "ci/capability-audit/test_batch_network_openvpn_session.py",
     "ci/capability-audit/test_batch_network_session_contract.py",
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/host-tests.txt",
     "docs/capability-audit/parallel/network/result.json",
     "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
@@ -356,6 +363,10 @@
     "patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md",
     "patches/common/foundation/communication/bluetooth/api26_oob_pairing/apply.sh",
     "patches/common/foundation/communication/bluetooth/api26_oob_pairing/verify_source.py",
+    "patches/common/foundation/communication/bluetooth/api26_oob_validation/0001-validate-both-provided-oob-objects.patch",
+    "patches/common/foundation/communication/bluetooth/api26_oob_validation/README.md",
+    "patches/common/foundation/communication/bluetooth/api26_oob_validation/apply.sh",
+    "patches/common/foundation/communication/bluetooth/api26_oob_validation/verify_source.py",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/README.md",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh",
@@ -381,7 +392,7 @@
     "patches/common/foundation/communication/netmanager_ext/openvpn_session/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "0c0fc765fa9ef75428d3955a1829ca6865ac5e31",
+  "round_base_commit": "03833801849bb7178e84076ad40d2d4096f5427d",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
@@ -390,5 +401,14 @@
       "src/openvpn/syshead.h",
       "src/openvpn/tun_afunix.c"
     ]
+  },
+  "bluetooth_sdk_contract": {
+    "source": "interface/sdk-js/api/@ohos.bluetooth.connection.d.ts",
+    "sha256": "b77b7d6e432cc51811efc8cfbd05126c7ccc42a6fd6a7d62dc0b2fb2ca52e170",
+    "lines": [
+      265,
+      268
+    ],
+    "semantics": "Both provided objects are validated; P256 alone takes effect when both supplied, so existing single-group IPC shape is retained."
   }
 }

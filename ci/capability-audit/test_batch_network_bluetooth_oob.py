@@ -8,13 +8,15 @@ import unittest
 from test_batch_network_openvpn_lifecycle import ROOT,body,compile_run
 
 PROJECT='foundation/communication/bluetooth'
-COMPONENT=ROOT/'patches/common'/PROJECT/'api26_oob_pairing'
+BASE_COMPONENT=ROOT/'patches/common'/PROJECT/'api26_oob_pairing'
+COMPONENT=BASE_COMPONENT.parent/'api26_oob_validation'
 FIXTURE=Path(__file__).with_name('fixtures')/'batch_network/bluetooth-oob-prepared.json'
 
 
 def patched(root):
     for name,encoded in json.loads(FIXTURE.read_text()).items():
         p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(base64.b64decode(encoded))
+    subprocess.run(['bash',str(BASE_COMPONENT/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True)
     subprocess.run(['bash',str(COMPONENT/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True)
 
 
@@ -26,6 +28,7 @@ class BluetoothOobTests(unittest.TestCase):
             text=source.read_text()
             self.assertEqual(text.count('DECLARE_NAPI_FUNCTION("startPairOutOfBand", StartPairOutOfBand)'),1)
             self.assertEqual(text.count('DECLARE_NAPI_FUNCTION("pairDeviceOutOfBand", PairDeviceOutOfBand)'),1)
+            subprocess.run(['bash',str(BASE_COMPONENT/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True)
             subprocess.run(['bash',str(COMPONENT/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True)
             source.write_text(text+'// unknown source\n')
             denied=subprocess.run(['bash',str(COMPONENT/'apply.sh'),'--source-root',str(root)],capture_output=True)
@@ -68,7 +71,7 @@ napi_status napi_typeof(napi_env,napi_value value,napi_valuetype *type){if(!valu
 bool IsValidTransport(int value){return value==0 || value==1;}
 napi_status ParseOobDataParam(napi_env,napi_value value,int,AddressInfo&,OobData& output){
  ++parseCalls;if(value->type!=napi_object || value->oob.hash.size()!=16 || (!value->oob.random.empty() && value->oob.random.size()!=16))return napi_invalid_arg;
- output=value->oob;return napi_ok;
+ output.hash=value->oob.hash;output.rawPeer=value->oob.rawPeer;if(!value->oob.random.empty())output.random=value->oob.random;return napi_ok;
 }
 struct NapiHaEventUtils {NapiHaEventUtils(napi_env,const char*){}};
 struct NapiAsyncWorkRet {int code;explicit NapiAsyncWorkRet(int value):code(value){}};
@@ -100,7 +103,18 @@ int main(){
   assert(promise->code==error && nativeData.type==OobDataType::P256 && nativeData.hash[0]==25);
  }
  enabled=false;arguments={&id,&transport,&absent,&p256};promise=StartPairOutOfBand(nullptr,nullptr);works.back()->Complete();assert(promise->code==2900003);enabled=true;
+ p192.oob.random.assign(16,8);p256.oob.random.clear();arguments={&id,&transport,&p192,&p256};
+ promise=StartPairOutOfBand(nullptr,nullptr);works.back()->Complete();assert(nativeData.random.empty());
+ p192.oob.random.clear();
  const auto count=works.size();const int calls=nativeCalls;
+ arguments={&id,&transport,&p192,&p256};p192.oob.hash.resize(15);thrown=0;
+ StartPairOutOfBand(nullptr,nullptr);assert(thrown==401 && works.size()==count && nativeCalls==calls);
+ p192.oob.hash.resize(16);p192.oob.random.resize(17);thrown=0;
+ StartPairOutOfBand(nullptr,nullptr);assert(thrown==401 && works.size()==count && nativeCalls==calls);
+ p192.oob.random.clear();p256.oob.hash.resize(15);thrown=0;
+ StartPairOutOfBand(nullptr,nullptr);assert(thrown==401 && works.size()==count && nativeCalls==calls);
+ p256.oob.hash.resize(16,25);
+
  for(auto bad:std::vector<std::vector<napi_value>>{
   {},{&id,&transport},{&id,&transport,&absent},{&id,&transport,&absent,&absent},
   {&id,&transport,&nullValue},{&id,&transport,&p192,&p256,&absent},
