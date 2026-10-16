@@ -17,6 +17,8 @@ python3 ci/capability-audit/batch_apps_contact_picker_runtime.py prepare \
 输出普通 Stage 模型 HAP 项目、确定性的 metadata 和
 `caller-source-manifest.json`。使用现有完整 Linux API26 SDK39 runner 构建；
 fixture 没有第三方依赖，不需要 OHPM 网络下载。生成器不运行构建，不填签名。
+module.deviceTypes 使用真实 SDK39 支持的 default/tablet/2in1；不写该 SDK
+缺少 syscap 集的 phone 值。代表包的 ARM64 phone 运行验收要求仍完整保留。
 root 必须给 `com.ohos.qemu.contactpickercaller` 使用 APL normal、非
 `hos_system_app`、零 ACL/受限权限的真实有效 profile；实际 BMS/token 校验仍必需。
 

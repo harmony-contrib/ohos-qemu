@@ -98,7 +98,7 @@ def prepare_project(output):
     write('entry/build-profile.json5', {'apiType': 'stageMode', 'targets': [{'name': 'default'}]})
     write('entry/oh-package.json5', {'name': 'entry', 'version': '1.0.0', 'dependencies': {}})
     write('entry/src/main/module.json5', {'module': {'name': 'entry', 'type': 'entry',
-          'mainElement': 'EntryAbility', 'deviceTypes': ['phone', 'tablet', '2in1'], 'deliveryWithInstall': True,
+          'mainElement': 'EntryAbility', 'deviceTypes': ['default', 'tablet', '2in1'], 'deliveryWithInstall': True,
           'installationFree': False, 'pages': '$profile:main_pages', 'requestPermissions': [],
           'abilities': [{'name': 'EntryAbility', 'srcEntry': './ets/entryability/EntryAbility.ets',
                          'launchType': 'singleton', 'exported': True, 'label': '$string:app_name',
