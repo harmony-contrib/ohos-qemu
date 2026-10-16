@@ -26,3 +26,4 @@ patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.h 
 patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_snd_capture.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/drivers/peripheral/audio/capture_loopback/files/vendor_capture.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0001-index-real-system-holidays-and-bound-knowledge-responses.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

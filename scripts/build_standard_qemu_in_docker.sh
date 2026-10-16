@@ -376,6 +376,7 @@ SETTINGS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/settin
 PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_facard/apply.sh"
 PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/public_record_classes/apply.sh"
 KNOWLEDGE_CONTENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/knowledge_content/apply.sh"
+KNOWLEDGE_HOLIDAY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/knowledge_holiday_index/apply.sh"
 SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
 AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh"
@@ -3259,6 +3260,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_result_set_export_component.log"
   bash "${KNOWLEDGE_CONTENT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_knowledge_content_component.log"
+  bash "${KNOWLEDGE_HOLIDAY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_knowledge_holiday_component.log"
   bash "${SQLITE_EXPRESSION_BLOB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_sqlite_expression_blob_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
