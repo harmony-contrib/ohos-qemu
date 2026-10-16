@@ -90,3 +90,12 @@ uses actual media_log.h and declares AccessTokenKit/IPCSkeleton's direct
 access_token:libaccesstoken_sdk and ipc:ipc_core GN dependencies for the native
 photoaccesshelpernative target, rather than relying on transitive headers or
 manually patched compiler include options.
+
+Round5 GN integration: photoaccesshelpernative directly depends on
+relational_store:rdb_data_share_adapter because media_asset_rdbstore.h includes
+its exported rdb_utils.h. medialibrary_data_extension already directly depends
+on openssl:libcrypto_shared; actual crypto_config_public exports source and
+generated include directories. Derive these declared configs in actual GN
+compilation; do not compensate with arbitrary compiler include flags.
+The exact thirteen-file guard accepts both previous complete e0d1137 and
+caeaf60 states as upgrades, preserving mixed/unknown source rejection.

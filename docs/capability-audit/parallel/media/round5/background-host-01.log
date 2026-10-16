@@ -1,0 +1,28 @@
+test_actual_ETS_helper_official_API26_types_and_failure_cleanup (test_batch_media_audio_background.Background.test_actual_ETS_helper_official_API26_types_and_failure_cleanup) ... /Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/fixtures/batch_media/audio_events/background_lifecycle_harness.js:40
+    openSync: (name) => { if (evidenceBroken) throw new Error('controlled EIO'); return { fd: fs.openSync(name, 'wx', 0o600) }; },
+                                                    ^
+
+Error: controlled EIO
+    at Object.openSync (/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/fixtures/batch_media/audio_events/background_lifecycle_harness.js:40:53)
+    at AudioRecordingSession.record (evalmachine.<anonymous>:60:52)
+    at AudioRecordingSession.finish (evalmachine.<anonymous>:230:26)
+
+Node.js v24.14.0
+ERROR
+
+======================================================================
+ERROR: test_actual_ETS_helper_official_API26_types_and_failure_cleanup (test_batch_media_audio_background.Background.test_actual_ETS_helper_official_API26_types_and_failure_cleanup)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_background.py", line 17, in test_actual_ETS_helper_official_API26_types_and_failure_cleanup
+    subprocess.run(['node',str(HERE/'fixtures/batch_media/audio_events/background_lifecycle_harness.js'),str(root/'background-controller.js'),str(root)],check=True,timeout=10)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['node', '/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/fixtures/batch_media/audio_events/background_lifecycle_harness.js', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/batch-media-background-syh778eb/background-controller.js', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/batch-media-background-syh778eb']' returned non-zero exit status 1.
+
+----------------------------------------------------------------------
+Ran 1 test in 0.914s
+
+FAILED (errors=1)

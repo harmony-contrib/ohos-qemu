@@ -30,6 +30,14 @@ class Recorder(unittest.TestCase):
     else:
      with self.assertRaises(ValueError):install.run(root)
      self.assertEqual(before,p.read_bytes())
+ def test_standard_cli_apply_require_patched_and_unknown_preservation(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);name=next(iter(install.MANIFEST['files']));p=root/name;p.parent.mkdir(parents=True);p.write_bytes(baseline())
+   command=['bash',str(COMP/'apply.sh'),'--source-root',str(root),'--product','arm64_virt']
+   subprocess.run(command,check=True,capture_output=True,text=True);self.assertTrue(install.validate(root,True))
+   before=p.read_bytes();subprocess.run(command+['--require-patched'],check=True,capture_output=True,text=True);self.assertEqual(before,p.read_bytes())
+   p.write_bytes(before+b'// preserved real user change\n');unknown=p.read_bytes()
+   result=subprocess.run(command,check=False,capture_output=True,text=True);self.assertNotEqual(result.returncode,0);self.assertIn('preserving edits',result.stderr);self.assertEqual(unknown,p.read_bytes())
  def test_review_patch_produces_exact_payload(self):
   with tempfile.TemporaryDirectory() as temp:
    root=Path(temp);name=next(iter(install.MANIFEST['files']));p=root/name;p.parent.mkdir(parents=True);p.write_bytes(baseline().replace(b'\r\n',b'\n'))

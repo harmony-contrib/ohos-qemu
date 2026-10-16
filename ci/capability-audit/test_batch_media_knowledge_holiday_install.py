@@ -49,6 +49,17 @@ class Install(unittest.TestCase):
             with self.assertRaises(ValueError):install.run(root)
             (root/gn).write_bytes(original);install.run(root);self.assertTrue(install.validate(root,True));old.run(root)
 
+    def test_exact_round4_complete_state_upgrades_using_standard_cli(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);baseline(root);old.run(root);install.run(root)
+            fixture=json.loads((FIX/'holiday-previous-round4.json').read_text())['files']
+            for name,entry in fixture.items():
+                data=gzip.decompress(base64.b64decode(entry['gzip_base64']));self.assertEqual(hashlib.sha256(data).hexdigest(),entry['sha256']);(root/name).write_bytes(data)
+            self.assertFalse(install.validate(root));self.assertTrue(old.validate(root,True))
+            with self.assertRaises(ValueError):install.validate(root,True)
+            subprocess.run(['bash',str(COMP/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True,text=True)
+            self.assertTrue(install.validate(root,True));old.run(root);install.run(root)
+
     def test_partial_unknown_symlink_reject_and_preserve_all_files(self):
         for mode in ['partial','unknown','symlink']:
             with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:
@@ -81,7 +92,8 @@ class Install(unittest.TestCase):
             service=(root/old.transforms.PROJECT/'services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp').read_text()
             self.assertIn('KnowledgeHolidayIndex::Refresh(*rdbStore_)',service);self.assertIn('KnowledgeHolidayIndex::Observe(rdbStore_)',service);self.assertEqual(service.count('KnowledgeHolidayIndex::Refresh(*rdbStore_)'),2);self.assertEqual(service.count('KnowledgeHolidayIndex::StopObserver()'),3)
             gn=(root/old.transforms.PROJECT/'interfaces/kits/js/BUILD.gn').read_text();a=gn.index('ohos_shared_library("photoaccesshelpernative") {');b=gn.index('\n}',a);target=gn[a:b]
-            self.assertIn('"access_token:libaccesstoken_sdk"',target);self.assertIn('"ipc:ipc_core"',target)
+            self.assertIn('"access_token:libaccesstoken_sdk"',target);self.assertIn('"ipc:ipc_core"',target);self.assertEqual(target.count('"relational_store:rdb_data_share_adapter"'),1)
+            service_gn=(root/old.transforms.PROJECT/'frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn').read_text();self.assertEqual(service_gn.count('"openssl:libcrypto_shared"'),1)
             self.assertIn('#include "media_log.h"',(COMP/'files/knowledge_holiday_index.cpp').read_text())
             helper=(root/old.transforms.PROJECT/'frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp').read_text();self.assertIn('store->QueryByStep(sql, args, false)',helper)
 

@@ -5,6 +5,7 @@ batch_media_audio_event_hap.cpp as libbatchmediaaudioevent.so with actual API26
 NDK, C++17/pthread/PIC/shared, -lohaudio -lace_napi.z. ETS template
 batch_media_audio_event_probe.ets uses run(runId:string,mode:number):boolean and
 __BATCH_MEDIA_AUDIO_EVENT_RUN_ID__ / __BATCH_MEDIA_AUDIO_EVENT_MODE__ placeholders.
+Round5 adds status(runId:string):number and abort(runId:string):boolean.
 The real ordinary MICROPHONE requestPermissionsFromUser is awaited and actual
 answers are saved as audio-event-RUN-modeN-permission.json. Normal APL/UID only;
 no system permission, forged foreground or self-grant is added. Mode0 is active
@@ -45,18 +46,13 @@ changes, post-action stream stops/no nonzero samples after200ms, and denied
 restart. Failure of an unavailable backend cannot prove permission enforcement.
 
 Mode1 and mode2 must be distinct ordinary bundles/UIDs with real MIC grants.
-First prepare/authorize the contender and wait for its prepared-state
-ACTION=contender_start ready; this does not start capture. Then establish owner
-mode1 baseline/checkpoint and ACTION=focus_begin ready. Owner refuses that ready
-unless its real state is RUNNING with successful positive native frames. Parent
-independently correlates owner checkpoint and checks latest await_action
-snapshots still RUNNING/progressing after the second HAP's setup, before acking
-contender_start. If backgrounding/authorization already stopped owner, fail that
-attempt; it must not be called a focus success. Parent owns the real two-app
-foreground/background setup and must independently preserve both identities.
-No validated two-foreground-window procedure or legal audioRecording background
-task has been implemented here; background policy remains an explicit actual
-runtime gate, and any required legitimate background adaptation is a later batch.
+Round5 supersedes the original idle-contender preparation. See
+../round5/HANDOFF.md for actual MIC primer, real ordinary audioRecording task,
+normal KEEP_BACKGROUND_RUNNING/profile/backgroundModes and notification consent,
+new native status/abort methods, Start button and root service/UI verification.
+Root must independently verify owner is still RUNNING with advancing fresh PCM
+after second-app authorization and before contender_start ACK. Both actor tasks
+and tokens must be real ordinary service state. No runtime claim is made.
 
 After contender Start succeeds, it obtains real baseline PCM and publishes
 ACTION=contender_stop ready. Parent verifies contender actual input, grants owner
@@ -88,4 +84,5 @@ Root's shared verifier still must bind actual permission/token changes, two UIDs
 actual installed focus policy, cross-app Start/stop/callback timing and foreground
 state. The diagnostic alone does not certify them. Host tests use explicit
 synthetic oracle fixtures; SDK syntax and actual callback/nonce/file functions
-execute under ASan/UBSan. Real product/HAP/HDI/service runtime remains pending.
+execute under ASan/UBSan. Round5 actual official SDK26 three-ABI native links passed; full UI HAP and
+real product/HDI/service runtime remain pending.

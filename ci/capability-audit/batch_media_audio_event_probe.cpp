@@ -18,6 +18,7 @@
 namespace {
 constexpr size_t CAPACITY=48000*4*40,MAX_CHUNKS=4096,MAX_EVENTS=128;
 constexpr const char *PRIVATE="/data/storage/el2/base/files/";
+std::atomic<bool> cancelled{false};
 struct Chunk {size_t offset;int length;int phase;int64_t time;};
 struct Event {int kind;int code;int hint;int64_t time;};
 struct Context {std::mutex mutex;std::vector<uint8_t> bytes=std::vector<uint8_t>(CAPACITY);std::vector<Chunk> chunks;std::vector<Event> events;size_t size=0;int phase=1;int invalid=0;Context(){chunks.reserve(MAX_CHUNKS);events.reserve(MAX_EVENTS);}};
@@ -39,9 +40,9 @@ void Error(OH_AudioCapturer*,void *user,OH_AudioStream_Result code)
 {
  auto &c=*static_cast<Context*>(user);std::lock_guard<std::mutex> lock(c.mutex);if(c.events.size()<MAX_EVENTS)c.events.push_back({2,code,0,Now()});else ++c.invalid;
 }
-bool Step(FILE *out,const char *run,const char *name,int actual)
+bool Step(FILE *out,const char *run,const char *name,int actual,bool primer=false)
 {
- fprintf(out,"{\"type\":\"event_step\",\"run_id\":\"%s\",\"name\":\"%s\",\"actual\":%d,\"monotonic_ns\":%lld}\n",run,name,actual,static_cast<long long>(Now()));fflush(out);return actual==AUDIOSTREAM_SUCCESS;
+ fprintf(out,"{\"type\":\"%s\",\"run_id\":\"%s\",\"name\":\"%s\",\"actual\":%d,\"monotonic_ns\":%lld}\n",primer?"event_primer_step":"event_step",run,name,actual,static_cast<long long>(Now()));fflush(out);return actual==AUDIOSTREAM_SUCCESS;
 }
 void Phase(Context &c,int phase){std::lock_guard<std::mutex> lock(c.mutex);c.phase=phase;}
 bool Snapshot(FILE *out,const char *run,OH_AudioCapturer *capturer,Context &c,const char *point)
@@ -51,7 +52,7 @@ bool Snapshot(FILE *out,const char *run,OH_AudioCapturer *capturer,Context &c,co
  const auto stamp=OH_AudioCapturer_GetTimestamp(capturer,CLOCK_MONOTONIC,&position,&time);
  std::lock_guard<std::mutex> lock(c.mutex);
  fprintf(out,"{\"type\":\"event_snapshot\",\"run_id\":\"%s\",\"point\":\"%s\",\"phase\":%d,\"state_result\":%d,\"state\":%d,\"frames_result\":%d,\"frames\":%lld,\"timestamp_result\":%d,\"position\":%lld,\"timestamp_ns\":%lld,\"before_ns\":%lld,\"after_ns\":%lld,\"copied_bytes\":%zu,\"events\":%zu,\"invalid\":%d}\n",run,point,c.phase,status,state,read,static_cast<long long>(frames),stamp,static_cast<long long>(position),static_cast<long long>(time),static_cast<long long>(before),static_cast<long long>(Now()),c.size,c.events.size(),c.invalid);fflush(out);
- return c.invalid==0&&(strcmp(point,"baseline")!=0||(status==AUDIOSTREAM_SUCCESS&&read==AUDIOSTREAM_SUCCESS&&frames>=0));
+ return c.invalid==0&&((strcmp(point,"baseline")!=0&&strcmp(point,"primer_baseline")!=0)||(status==AUDIOSTREAM_SUCCESS&&read==AUDIOSTREAM_SUCCESS&&frames>=0));
 }
 bool WritePrivate(const std::string &path,const void *bytes,size_t size)
 {
@@ -76,13 +77,13 @@ bool Ack(const std::string &path,const std::string &nonce,bool &pending)
  while(valid&&offset<33){ssize_t n=read(fd,bytes+offset,33-offset);if(n<0&&errno==EINTR)continue;if(n<=0){valid=false;break;}offset+=static_cast<size_t>(n);}
  if(close(fd)!=0)valid=false;return valid&&std::string(bytes,33)==nonce+"\n";
 }
-bool Checkpoint(FILE *out,const char *run,int mode,Context &c)
+bool Checkpoint(FILE *out,const char *run,int mode,Context &c,bool primer=false)
 {
  std::vector<uint8_t> bytes;
  {std::lock_guard<std::mutex> lock(c.mutex);bytes.assign(c.bytes.begin(),c.bytes.begin()+c.size);}
- const std::string name="audio-event-"+std::string(run)+"-mode"+std::to_string(mode)+"-baseline.pcm";
+ const std::string name="audio-event-"+std::string(run)+"-mode"+std::to_string(mode)+(primer?"-primer.pcm":"-baseline.pcm");
  const bool saved=WritePrivate(std::string(PRIVATE)+name,bytes.data(),bytes.size());
- fprintf(out,"{\"type\":\"event_checkpoint\",\"run_id\":\"%s\",\"basename\":\"%s\",\"bytes\":%zu,\"persisted\":%s,\"monotonic_ns\":%lld}\n",run,name.c_str(),bytes.size(),saved?"true":"false",static_cast<long long>(Now()));fflush(out);return saved;
+ fprintf(out,"{\"type\":\"%s\",\"run_id\":\"%s\",\"basename\":\"%s\",\"bytes\":%zu,\"persisted\":%s,\"monotonic_ns\":%lld}\n",primer?"event_primer_checkpoint":"event_checkpoint",run,name.c_str(),bytes.size(),saved?"true":"false",static_cast<long long>(Now()));fflush(out);return saved;
 }
 bool Handshake(FILE *out,const char *run,const char *action,OH_AudioCapturer *capturer,Context &c)
 {
@@ -96,29 +97,67 @@ bool Handshake(FILE *out,const char *run,const char *action,OH_AudioCapturer *ca
  const std::string ready="{\"run_id\":\""+std::string(run)+"\",\"action\":\""+action+"\",\"nonce\":\""+nonce+"\",\"uid\":"+std::to_string(getuid())+",\"monotonic_ns\":"+std::to_string(created)+",\"state_result\":"+std::to_string(stateResult)+",\"state\":"+std::to_string(state)+",\"frames_result\":"+std::to_string(framesResult)+",\"frames\":"+std::to_string(frames)+",\"copied_bytes\":"+std::to_string(copied)+"}\n";
  if(!Snapshot(out,run,capturer,c,"before_ready")||!WritePrivate(prefix+"-ready.json",ready.data(),ready.size()))return false;
  fprintf(out,"{\"type\":\"event_ready\",\"run_id\":\"%s\",\"action\":\"%s\",\"nonce\":\"%s\",\"monotonic_ns\":%lld}\n",run,action,nonce.c_str(),static_cast<long long>(created));fflush(out);
- while(true){const auto tick=Now();if(tick<created||tick-created>=15000000000LL)return false;bool pending=false;if(Ack(prefix+"-ack",nonce,pending)){
+ while(true){if(cancelled.load())return false;const auto tick=Now();if(tick<created||tick-created>=15000000000LL)return false;bool pending=false;if(Ack(prefix+"-ack",nonce,pending)){
    fprintf(out,"{\"type\":\"event_ack\",\"run_id\":\"%s\",\"action\":\"%s\",\"nonce\":\"%s\",\"monotonic_ns\":%lld}\n",run,action,nonce.c_str(),static_cast<long long>(Now()));fflush(out);return true;}
   if(!pending)return false;usleep(50000);if(!Snapshot(out,run,capturer,c,"await_action"))return false;
  }
 }
 bool Observe(FILE *out,const char *run,OH_AudioCapturer *capturer,Context &c,const char *point,int ticks)
 {
- bool valid=true;for(int i=0;i<ticks;++i){usleep(20000);valid&=Snapshot(out,run,capturer,c,point);}return valid;
+ bool valid=true;for(int i=0;i<ticks;++i){if(cancelled.load())return false;usleep(20000);valid&=Snapshot(out,run,capturer,c,point);}return valid;
 }
-bool Persist(FILE *out,const char *run,int mode,Context &c)
+bool Persist(FILE *out,const char *run,int mode,Context &c,bool primer=false)
 {
- std::lock_guard<std::mutex> lock(c.mutex);const std::string name="audio-event-"+std::string(run)+"-mode"+std::to_string(mode)+".pcm";
+ std::lock_guard<std::mutex> lock(c.mutex);const std::string name="audio-event-"+std::string(run)+"-mode"+std::to_string(mode)+(primer?"-primer-full.pcm":".pcm");
  const bool saved=WritePrivate(std::string(PRIVATE)+name,c.bytes.data(),c.size);
- for(const auto &chunk:c.chunks)fprintf(out,"{\"type\":\"event_chunk\",\"run_id\":\"%s\",\"offset\":%zu,\"bytes\":%d,\"phase\":%d,\"monotonic_ns\":%lld}\n",run,chunk.offset,chunk.length,chunk.phase,static_cast<long long>(chunk.time));
- for(const auto &event:c.events)fprintf(out,"{\"type\":\"event_callback\",\"run_id\":\"%s\",\"kind\":%d,\"code\":%d,\"hint\":%d,\"monotonic_ns\":%lld}\n",run,event.kind,event.code,event.hint,static_cast<long long>(event.time));
- fprintf(out,"{\"type\":\"event_pcm\",\"run_id\":\"%s\",\"basename\":\"%s\",\"bytes\":%zu,\"persisted\":%s,\"invalid\":%d}\n",run,name.c_str(),c.size,saved?"true":"false",c.invalid);fflush(out);return saved&&c.invalid==0;
+ for(const auto &chunk:c.chunks)fprintf(out,"{\"type\":\"%s\",\"run_id\":\"%s\",\"offset\":%zu,\"bytes\":%d,\"phase\":%d,\"monotonic_ns\":%lld}\n",primer?"event_primer_chunk":"event_chunk",run,chunk.offset,chunk.length,chunk.phase,static_cast<long long>(chunk.time));
+ for(const auto &event:c.events)fprintf(out,"{\"type\":\"%s\",\"run_id\":\"%s\",\"kind\":%d,\"code\":%d,\"hint\":%d,\"monotonic_ns\":%lld}\n",primer?"event_primer_callback":"event_callback",run,event.kind,event.code,event.hint,static_cast<long long>(event.time));
+ fprintf(out,"{\"type\":\"%s\",\"run_id\":\"%s\",\"basename\":\"%s\",\"bytes\":%zu,\"persisted\":%s,\"invalid\":%d}\n",primer?"event_primer_pcm":"event_pcm",run,name.c_str(),c.size,saved?"true":"false",c.invalid);fflush(out);return saved&&c.invalid==0;
 }
+// A real MIC stream keeps audioRecording truthful while the ordinary contender
+// is backgrounded and waiting. MIC->MIC is shared by the fixed focus policy.
+// Only after the nonce action do we release it and create VOICE_COMMUNICATION.
+bool Primer(FILE *out,const char *run)
+{
+ auto context=std::make_unique<Context>();context->phase=0;
+ OH_AudioStreamBuilder *builder=nullptr;OH_AudioCapturer *capturer=nullptr;
+ bool valid=Step(out,run,"create",OH_AudioStreamBuilder_Create(&builder,AUDIOSTREAM_TYPE_CAPTURER),true);
+ if(builder==nullptr)return false;
+ valid&=Step(out,run,"rate",OH_AudioStreamBuilder_SetSamplingRate(builder,48000),true);
+ valid&=Step(out,run,"channels",OH_AudioStreamBuilder_SetChannelCount(builder,2),true);
+ valid&=Step(out,run,"format",OH_AudioStreamBuilder_SetSampleFormat(builder,AUDIOSTREAM_SAMPLE_S16LE),true);
+ valid&=Step(out,run,"encoding",OH_AudioStreamBuilder_SetEncodingType(builder,AUDIOSTREAM_ENCODING_TYPE_RAW),true);
+ valid&=Step(out,run,"source",OH_AudioStreamBuilder_SetCapturerInfo(builder,AUDIOSTREAM_SOURCE_TYPE_MIC),true);
+ valid&=Step(out,run,"read_callback",OH_AudioStreamBuilder_SetCapturerReadDataCallback(builder,Read,context.get()),true);
+ valid&=Step(out,run,"interrupt_callback",OH_AudioStreamBuilder_SetCapturerInterruptCallback(builder,Interrupt,context.get()),true);
+ valid&=Step(out,run,"error_callback",OH_AudioStreamBuilder_SetCapturerErrorCallback(builder,Error,context.get()),true);
+ valid&=Step(out,run,"generate",OH_AudioStreamBuilder_GenerateCapturer(builder,&capturer),true);
+ if(capturer!=nullptr){
+  Context &live=*context.release();
+  if(valid&&!cancelled.load())valid=Step(out,run,"start",OH_AudioCapturer_Start(capturer),true);
+  else valid=false;
+  if(valid){usleep(200000);valid=Observe(out,run,capturer,live,"primer_baseline",50);}
+  if(valid)valid=Checkpoint(out,run,2,live,true);
+  if(valid)valid=Handshake(out,run,"contender_start",capturer,live);
+  valid&=Step(out,run,"stop",OH_AudioCapturer_Stop(capturer),true);
+  const auto released=OH_AudioCapturer_Release(capturer);valid&=Step(out,run,"release",released,true);
+  if(released==AUDIOSTREAM_SUCCESS){valid&=Persist(out,run,2,live,true);delete &live;}
+ }
+ valid&=Step(out,run,"destroy",OH_AudioStreamBuilder_Destroy(builder),true);
+ return valid&&!cancelled.load();
 }
+
+}
+extern "C" void PrepareBatchMediaAudioEventProbe() {cancelled.store(false);}
+extern "C" void CancelBatchMediaAudioEventProbe() {cancelled.store(true);}
 extern "C" int RunBatchMediaAudioEventProbe(FILE *out,const char *run,int mode)
 {
  if(out==nullptr||run==nullptr||strlen(run)!=32||mode<0||mode>2)return 2;
  for(size_t i=0;i<32;++i)if(!((run[i]>='0'&&run[i]<='9')||(run[i]>='a'&&run[i]<='f')))return 2;
  fprintf(out,"{\"type\":\"event_identity\",\"run_id\":\"%s\",\"mode\":%d,\"uid\":%u,\"euid\":%u}\n",run,mode,getuid(),geteuid());
+ if(mode==2&&!Primer(out,run)){
+  fprintf(out,"{\"type\":\"event_summary\",\"run_id\":\"%s\",\"mode\":2,\"candidate_complete\":false,\"token_PCM_and_focus_verification_required\":true}\n",run);fflush(out);return 1;
+ }
  auto context=std::make_unique<Context>();OH_AudioStreamBuilder *builder=nullptr;OH_AudioCapturer *capturer=nullptr;
  bool valid=Step(out,run,"create",OH_AudioStreamBuilder_Create(&builder,AUDIOSTREAM_TYPE_CAPTURER));
  if(builder==nullptr)return 1;
@@ -129,29 +168,34 @@ extern "C" int RunBatchMediaAudioEventProbe(FILE *out,const char *run,int mode)
  valid&=Step(out,run,"generate",OH_AudioStreamBuilder_GenerateCapturer(builder,&capturer));
  if(capturer!=nullptr){
   Context &live=*context.release();
-  if(valid&&mode==2)valid=Handshake(out,run,"contender_start",capturer,live);
-  if(valid){
+  if(valid&&!cancelled.load()){
    const int64_t before=Now();const int started=OH_AudioCapturer_Start(capturer);const int64_t after=Now();
    fprintf(out,"{\"type\":\"event_start_interval\",\"run_id\":\"%s\",\"actual\":%d,\"before_ns\":%lld,\"after_ns\":%lld}\n",run,started,static_cast<long long>(before),static_cast<long long>(after));
    valid=Step(out,run,"start",started);
-  }
+  }else valid=false;
   if(valid){
    usleep(200000); // actual stream warmup before timestamp/rate baseline
    valid&=Observe(out,run,capturer,live,"baseline",50);
    valid&=Checkpoint(out,run,mode,live);
-   if(mode==0){
-    valid&=Handshake(out,run,"revoke",capturer,live);Phase(live,2);valid&=Observe(out,run,capturer,live,"after_revoke",75);
-    const auto restarted=OH_AudioCapturer_Start(capturer);fprintf(out,"{\"type\":\"event_restart_after_revoke\",\"run_id\":\"%s\",\"actual\":%d,\"monotonic_ns\":%lld}\n",run,restarted,static_cast<long long>(Now()));
-    valid&=Observe(out,run,capturer,live,"after_denied_restart",25);
-   } else if(mode==1){
-    valid&=Handshake(out,run,"focus_begin",capturer,live);Phase(live,2);valid&=Observe(out,run,capturer,live,"interrupted",25);
-    valid&=Handshake(out,run,"focus_end",capturer,live);Phase(live,3);valid&=Step(out,run,"restart_after_focus",OH_AudioCapturer_Start(capturer));valid&=Observe(out,run,capturer,live,"resumed",50);
-   } else valid&=Handshake(out,run,"contender_stop",capturer,live);
+   if(valid&&mode==0){
+    valid=Handshake(out,run,"revoke",capturer,live);
+    if(valid){Phase(live,2);valid=Observe(out,run,capturer,live,"after_revoke",75);}
+    if(valid&&!cancelled.load()){
+     const auto restarted=OH_AudioCapturer_Start(capturer);fprintf(out,"{\"type\":\"event_restart_after_revoke\",\"run_id\":\"%s\",\"actual\":%d,\"monotonic_ns\":%lld}\n",run,restarted,static_cast<long long>(Now()));
+     valid=Observe(out,run,capturer,live,"after_denied_restart",25);
+    }
+   } else if(valid&&mode==1){
+    valid=Handshake(out,run,"focus_begin",capturer,live);
+    if(valid){Phase(live,2);valid=Observe(out,run,capturer,live,"interrupted",25);}
+    if(valid)valid=Handshake(out,run,"focus_end",capturer,live);
+    if(valid&&!cancelled.load()){Phase(live,3);valid=Step(out,run,"restart_after_focus",OH_AudioCapturer_Start(capturer));}
+    if(valid)valid=Observe(out,run,capturer,live,"resumed",50);
+   } else if(valid)valid=Handshake(out,run,"contender_stop",capturer,live);
   }
   const auto stopped=OH_AudioCapturer_Stop(capturer);fprintf(out,"{\"type\":\"event_stop\",\"run_id\":\"%s\",\"actual\":%d,\"monotonic_ns\":%lld}\n",run,stopped,static_cast<long long>(Now()));
   const auto released=OH_AudioCapturer_Release(capturer);valid&=Step(out,run,"release",released);
   if(released==AUDIOSTREAM_SUCCESS){valid&=Persist(out,run,mode,live);delete &live;}
  }
  valid&=Step(out,run,"destroy",OH_AudioStreamBuilder_Destroy(builder));
- fprintf(out,"{\"type\":\"event_summary\",\"run_id\":\"%s\",\"mode\":%d,\"candidate_complete\":%s,\"token_PCM_and_focus_verification_required\":true}\n",run,mode,valid?"true":"false");fflush(out);return valid?0:1;
+ fprintf(out,"{\"type\":\"event_summary\",\"run_id\":\"%s\",\"mode\":%d,\"candidate_complete\":%s,\"token_PCM_and_focus_verification_required\":true}\n",run,mode,(valid&&!cancelled.load())?"true":"false");fflush(out);return valid&&!cancelled.load()?0:1;
 }

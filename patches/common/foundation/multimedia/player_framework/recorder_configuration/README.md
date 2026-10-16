@@ -8,7 +8,7 @@ SetMaxDuration return value. This exact full-source component checks both errors
 before advancing. SetLocation and SetOrientationHint are actually void; no fake
 return checking or replacement backend is added.
 
-Apply `apply.sh OHOS_ROOT` to the exact manifest revision and whole TU preimage.
+Apply `apply.sh --source-root OHOS_ROOT [--product PRODUCT]` to the exact manifest revision and whole TU preimage.
 The installer preflights before mutation, rejects unknown edits and symlinks,
 preserves original CRLF, and repeats only the exact installed state. The review
 patch is LF; the actual payload preserves original source bytes outside the two

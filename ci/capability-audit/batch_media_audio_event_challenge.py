@@ -5,6 +5,35 @@ from pathlib import Path
 HERE=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('event_pcm_oracle',HERE/'batch_media_audio_capture_challenge.py');pcm=importlib.util.module_from_spec(spec);spec.loader.exec_module(pcm)
 
+def verify_primer(rows,directory,reference,run,ready,ack,main_steps):
+ # Explicitly separate the contender's genuine MIC primer from VOIP focus input.
+ steps=[r for r in rows if r.get('type')=='event_primer_step']
+ names=['create','rate','channels','format','encoding','source','read_callback','interrupt_callback','error_callback','generate','start','stop','release','destroy']
+ if [r.get('name') for r in steps]!=names or any(r.get('actual')!=0 for r in steps):raise ValueError('real MIC primer lifecycle missing or failed')
+ if not steps[-2]['monotonic_ns']<=main_steps[0]['monotonic_ns']:raise ValueError('VOIP generated before real primer release')
+ snapshots=[r for r in rows if r.get('type')=='event_snapshot' and r.get('point')=='primer_baseline']
+ if len(snapshots)!=50 or any(r.get('phase')!=0 or r.get('state_result')!=0 or r.get('state')!=2 or r.get('frames_result')!=0 or r.get('timestamp_result')!=0 or r.get('invalid')!=0 for r in snapshots):raise ValueError('MIC primer was not actually RUNNING with valid timestamps')
+ first,last=snapshots[0],snapshots[-1];delta=last['timestamp_ns']-first['timestamp_ns']
+ if delta<=0 or not 48000*.98<=(last['position']-first['position'])*1e9/delta<=48000*1.02:raise ValueError('MIC primer frame/timestamp rate mismatch')
+ items=[r for r in rows if r.get('type')=='event_primer_pcm'];name=f'audio-event-{run}-mode2-primer-full.pcm'
+ if len(items)!=1:raise ValueError('MIC primer PCM file missing')
+ data=(Path(directory)/name).read_bytes();item=items[0]
+ if item.get('basename')!=name or item.get('persisted')is not True or item.get('bytes')!=len(data) or item.get('invalid')!=0 or not 0<len(data)<=48000*4*40:raise ValueError('MIC primer PCM file failed or truncated')
+ chunks=[r for r in rows if r.get('type')=='event_primer_chunk'];offset=0;previous=0
+ for row in chunks:
+  size=row.get('bytes');time=row.get('monotonic_ns')
+  if type(size)is not int or size<=0 or size%4 or row.get('offset')!=offset or type(time)is not int or time<previous or row.get('phase')!=0:raise ValueError('MIC primer actual PCM callback ranges invalid')
+  offset+=size;previous=time
+ if offset!=len(data):raise ValueError('MIC primer PCM callback ranges incomplete')
+ if not any(ready['monotonic_ns']-200000000<=r['monotonic_ns']<=ack['monotonic_ns'] for r in chunks):raise ValueError('MIC primer has no fresh PCM around contender readiness')
+ points=[r for r in rows if r.get('type')=='event_primer_checkpoint'];name=f'audio-event-{run}-mode2-primer.pcm'
+ if len(points)!=1:raise ValueError('MIC primer checkpoint missing')
+ checkpoint=(Path(directory)/name).read_bytes();point=points[0]
+ if point.get('basename')!=name or point.get('persisted')is not True or point.get('bytes')!=len(checkpoint) or data[:len(checkpoint)]!=checkpoint or point['monotonic_ns']>ready['monotonic_ns']:raise ValueError('MIC primer checkpoint changed or late')
+ correlation=pcm.phase_content(checkpoint[4800*4:-4800*4],reference)
+ if any(r.get('kind')==2 or (r.get('kind')==1 and r.get('hint')==3) for r in rows if r.get('type')=='event_primer_callback'):raise ValueError('MIC primer errored or lost focus before deliberate VOIP start')
+ return {'checkpoint':point,'PCM_correlation':correlation,'bytes':len(data),'closed_requirements':0}
+
 def verify(results,directory,manifest,challenge,identity,run,mode):
  _,reference=pcm.load_reference(manifest,challenge,run)
  text=Path(identity).read_text()
@@ -58,6 +87,7 @@ def verify(results,directory,manifest,challenge,identity,run,mode):
   if any(leaked):raise ValueError('real nonzero microphone samples continued after denial/interruption')
   return {'observations':len(post),'post_action_pcm_bytes':len(leaked),'post_action_nonzero_bytes':0}
  report={'status':'candidate_audio_event_PCM_diagnostic_pass','run_id':run,'mode':mode,'uid':uid,'baseline':baseline,'start_interval':intervals[0],'checkpoint':checkpoint,'signals':ready,'acks':acks,'callbacks':callbacks,'closed_requirements':0,'first_artifact_behavior_gate_passed':False,'external_token_or_second_app_policy_evidence_required':True}
+ if mode==2:report['primer']=verify_primer(rows,directory,reference,run,ready[0],acks[0],steps)
  if mode==0:
   report['quiet']=quiet('revoke','after_revoke');restarts=[r for r in rows if r.get('type')=='event_restart_after_revoke']
   if len(restarts)!=1 or type(restarts[0].get('actual'))is not int or restarts[0]['actual']==0:raise ValueError('Start succeeded after live microphone revocation')
