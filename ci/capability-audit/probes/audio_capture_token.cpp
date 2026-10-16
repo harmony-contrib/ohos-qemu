@@ -21,8 +21,9 @@ static unsigned long long NowNs()
 
 int main(int argc, char **argv)
 {
-    if (argc != 4 || getuid() != 0 ||
-        (strcmp(argv[3], "query") != 0 && strcmp(argv[3], "revoke") != 0)) return 2;
+    if ((argc != 4 && argc != 5) || getuid() != 0 ||
+        (strcmp(argv[3], "query") != 0 && strcmp(argv[3], "revoke") != 0 &&
+         strcmp(argv[3], "query-background") != 0)) return 2;
     const std::string run(argv[1]);
     if (run.size() != 32 || run.find_first_not_of("0123456789abcdef") != std::string::npos) return 2;
     const std::string uidText(argv[2]);
@@ -30,8 +31,11 @@ int main(int argc, char **argv)
     char *end = nullptr;
     const unsigned long expected = strtoul(argv[2], &end, 10);
     if (*end != '\0' || expected / 200000 != 100 || expected % 200000 < 10000) return 2;
-    constexpr const char *bundle = "org.harmonycontrib.capabilityaudit";
-    constexpr const char *permission = "ohos.permission.MICROPHONE";
+    const char *bundle = argc == 5 ? argv[4] : "org.harmonycontrib.capabilityaudit";
+    if (strcmp(bundle, "org.harmonycontrib.capabilityaudit") != 0 &&
+        strcmp(bundle, "org.harmonycontrib.capabilityauditfocus") != 0) return 2;
+    const char *permission = strcmp(argv[3], "query-background") == 0 ?
+        "ohos.permission.KEEP_BACKGROUND_RUNNING" : "ohos.permission.MICROPHONE";
     const AccessTokenID token = AccessTokenKit::GetHapTokenID(100, bundle, 0);
     HapTokenInfo info {};
     const int queried = AccessTokenKit::GetHapTokenInfo(token, info);

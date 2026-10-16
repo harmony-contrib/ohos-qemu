@@ -422,6 +422,9 @@ def run(args):
     if any(not os.statvfs(p).f_flag & os.ST_RDONLY for p in [root, root / 'out']):
         raise ValueError('fixed source and product out must be read-only')
     group = GROUPS[args.group]
+    units = getattr(args, 'unit', None) or group['units']
+    if len(set(units)) != len(units) or not set(units) <= set(group['units']):
+        raise ValueError('unique declared group units required')
     if not set(args.product) <= set(group.get('supported_products', PRODUCTS)):
         raise ValueError('this diagnostic group lacks real commands for the requested product')
     project = Path(group['project'])
@@ -505,13 +508,18 @@ def run(args):
               'scope': group.get('scope', 'complete_patched_product_TUs_ONLY_NOT_link_package_runtime'),
               'components': [str(c.relative_to(ROOT / 'patches/common')) for c in components], 'source_before_sha256': before,
               'candidate_sha256': {name: sha(staged / name) for name in owned},
-              'recipe_sha256': recipe_before, 'objects': [], 'first_artifact_behavior_gate_passed': False}
+              'recipe_sha256': recipe_before, 'objects': [],
+              'coverage': {'declared_group_units': group['units'], 'selected_units': units,
+                           'all_group_units_tested': set(units) == set(group['units'])}, 'first_artifact_behavior_gate_passed': False}
+    if not report['coverage']['all_group_units_tested']:
+        report['group_context_scope'] = report['scope']
+        report['scope'] = 'selected_complete_product_TUs_ONLY_NOT_all_group_units_or_link_or_runtime'
     if generated_report:
         report['actual_idl_generation'] = generated_report
     for product in args.product:
         cwd = root / 'out' / product
         arch, machine, elf_class = PRODUCTS[product]
-        for unit in group['units']:
+        for unit in units:
             row = {'product': product, 'unit': unit, 'status': 'fail'}
             try:
                 target = group['targets'][unit] if 'targets' in group else group['target'].format(unit=unit)
@@ -629,6 +637,7 @@ if __name__ == '__main__':
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--group', choices=GROUPS, required=True)
+    parser.add_argument('--unit', action='append', help='selected complete TUs; coverage remains explicit')
     parser.add_argument('--product', choices=PRODUCTS, action='append', required=True)
     args = parser.parse_args()
     if len(args.product) != len(set(args.product)):

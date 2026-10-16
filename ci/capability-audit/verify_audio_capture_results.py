@@ -98,7 +98,7 @@ def checked_file(record):
     return path
 
 
-def verify(args):
+def verify_transport(args, recorder=False):
     run, arch = args.run_id, args.arch
     runtime = json.loads(args.runtime.read_text())
     archive_sha = sha(args.archive)
@@ -113,8 +113,16 @@ def verify(args):
         raise ValueError('microphone acceptance boot changed')
     binding(json.loads(boot_path.read_text()), archive_sha, args.boot_id, arch, runtime['device'], runtime['target'])
     value = json.loads(args.inputs.read_text())
-    contract.verify_inputs(value, run, arch, denied)
-    contract.verify_hap(args.hap, value, arch)
+    if recorder:
+        import media_capture_contract as media_contract
+        if (value.get('kind') != 'recorder' or value.get('run_id') != run or value.get('arch') != arch or
+                value.get('expected_denied') is not denied):
+            raise ValueError('Recorder compiled role/run differs')
+        media_contract.verify_inputs(value)
+        media_contract.verify_hap(args.hap, value)
+    else:
+        contract.verify_inputs(value, run, arch, denied)
+        contract.verify_hap(args.hap, value, arch)
     uid = require_normal_identity(args.application_identity.read_text())
     observations = runtime.get('tokens', [])
     if (len(observations) < 3 or observations[0].get('phase') != 'before-launch' or
@@ -148,9 +156,10 @@ def verify(args):
             continue
         path = checked_file(item)
         if (path.name != name or path.stat().st_size != item.get('bytes') or item.get('uid') != uid or
-                (name.endswith('.pcm') and item.get('mode') != 600)):
+                (name.endswith(('.pcm', '.mp4')) and item.get('mode') != 600)):
             raise ValueError('actual microphone files are truncated, stale or owned by another caller')
-    permission = json.loads(checked_file(files[f'audio-capture-{run}-permission.json']).read_text())
+    permission_name = ('recorder' if recorder else 'audio-capture') + '-' + run + '-permission.json'
+    permission = json.loads(checked_file(files[permission_name]).read_text())
     if (permission.get('run_id') != run or permission.get('expected_denied') is not denied or
             permission.get('permissions') != ['ohos.permission.MICROPHONE'] or
             permission.get('auth_results') != [-1 if denied else 0] or
@@ -174,20 +183,32 @@ def verify(args):
         path = checked_file(library)
         if contract.runtime_identity(path.read_bytes(), arch) != row.get('linked_library_runtime_sha256'):
             raise ValueError('root tool uses another artifact library')
+    if sha(Path(runtime['asound'])) != runtime['asound_sha256']:
+        raise ValueError('actual independent ALSA hardware observation changed')
+    return runtime, uid, denied, files, archive_sha
+
+
+def verify_producer(runtime):
+    producer = runtime['producer']
+    path = Path(producer['log'])
+    if producer.get('host_exit_code') != 0 or sha(path) != producer['log_sha256']:
+        raise ValueError('real independent PCM producer failed or its evidence changed')
+    rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    expected = [{'event': 'feeding', 'device': 'hw:CARD=QemuCapture,DEV=1,SUBDEV=0',
+                 'rate': 48000, 'channels': 2, 'bytes': 192000},
+                {'event': 'played', 'frames': 960000, 'rate': 48000, 'channels': 2,
+                 'repeats': 20, 'source_bytes': 192000}]
+    if rows != expected:
+        raise ValueError('real producer did not complete the exact independent stereo source')
+
+
+def verify(args):
+    run, arch = args.run_id, args.arch
+    runtime, uid, denied, files, archive_sha = verify_transport(args)
     if denied:
         result = denied_results(args.results.read_text(), run, uid, files)
     else:
-        producer = runtime['producer']
-        path = Path(producer['log'])
-        if producer.get('host_exit_code') != 0 or sha(path) != producer['log_sha256']:
-            raise ValueError('real independent PCM producer failed or its evidence changed')
-        rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
-        expected = [{'event': 'feeding', 'device': 'hw:CARD=QemuCapture,DEV=1,SUBDEV=0',
-                     'rate': 48000, 'channels': 2, 'bytes': 192000},
-                    {'event': 'played', 'frames': 960000, 'rate': 48000, 'channels': 2,
-                     'repeats': 20, 'source_bytes': 192000}]
-        if rows != expected:
-            raise ValueError('real producer did not complete the exact independent stereo source')
+        verify_producer(runtime)
         result = verify_pcm(args.results, args.runtime.parent / 'private', args.runtime.parent / 'challenge/challenge.json',
             args.runtime.parent / 'challenge/challenge.pcm', run, args.application_identity)
     return {'status': 'pass', 'scope': SCOPE, 'run_id': run, 'arch': arch, 'boot_id': args.boot_id,

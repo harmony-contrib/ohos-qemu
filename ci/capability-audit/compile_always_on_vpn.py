@@ -44,8 +44,15 @@ def query(source, cwd, target, log):
 def generate(source, cwd, staged, output):
     original = query(source, cwd, str(Path('gen') / IDL / 'inetwork_vpn_service.h'),
                      output / 'query.log')
-    command = [','.join(str(source / part.removeprefix('/openharmony/'))
-                       if part.startswith('/openharmony/') else part
+    # Product diagnostics can retain the original host's absolute GN root.
+    # Derive it from the exact fixed IDL suffix and relocate only that prefix.
+    old_idl = original[original.index('--src-idl') + 1]
+    suffix = str(IDL) + '/INetworkVpnService.idl'
+    if not old_idl.endswith('/' + suffix):
+        raise ValueError('one canonical fixed VPN service IDL source required')
+    old_root = old_idl[:-len(suffix)]
+    command = [','.join(str(source / part[len(old_root):])
+                       if part.startswith(old_root) else part
                        for part in token.split(',')) for token in original]
     flags = ('--src-idl', '--dst-path', '--dst-file', '--idl-tool-path')
     if command[:2] != ['/usr/bin/env', '../../build/config/components/idl_tool/idl.py'] or any(

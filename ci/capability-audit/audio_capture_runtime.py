@@ -58,6 +58,9 @@ class CaptureRuntime:
             raise ValueError('real microphone setup/observation command failed: ' + label)
         return text[:match.start()].rstrip('\n')
 
+    def generate_challenge(self):
+        generate(self.output / 'challenge', self.run)
+
     def prepare(self):
         tools = self.output / 'tools'
         self.command(['docker', 'run', '--rm', '--platform', 'linux/amd64', '--network', 'none',
@@ -102,7 +105,7 @@ class CaptureRuntime:
         label_path = self.output / 'permission-labels.json'
         label_path.write_text(json.dumps(self.labels, ensure_ascii=False, indent=2) + '\n')
         self.value.update(labels=str(label_path), labels_sha256=sha(label_path))
-        generate(self.output / 'challenge', self.run)
+        self.generate_challenge()
         self.actual_shell('test ! -e ' + self.remote + ' && mkdir -m 0700 ' + self.remote,
                           'create-owned-root-microphone-directory')
         self.started = True

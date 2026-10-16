@@ -57,11 +57,11 @@ def openssl_public_includes(root, product):
     if any(text.count(value) != 1 for value in declarations):
         raise ValueError('fixed OpenSSL published public config required')
     generated = root / 'out' / product / 'obj/third_party/openssl/build_all_generated/include'
-    if not (generated / 'openssl/opensslconf.h').is_file():
+    if not (generated / 'openssl/configuration.h').is_file():
         raise ValueError('actual product OpenSSL generated configuration missing')
     directories = [root / 'third_party/openssl/include', generated]
     flags = [item for directory in directories for item in ('-I', str(directory))]
     return flags, {'build_file': build_file, 'build_file_sha256': hashlib.sha256(raw).hexdigest(),
         'public_config': 'crypto_config_public', 'include_dirs': [str(p) for p in directories],
-        'generated_opensslconf_sha256': hashlib.sha256((generated / 'openssl/opensslconf.h').read_bytes()).hexdigest(),
+        'generated_configuration_sha256': hashlib.sha256((generated / 'openssl/configuration.h').read_bytes()).hexdigest(),
         'scope': 'fixed_declared_public_config_and_existing_product_generated_header_NOT_fresh_GN_selection'}
