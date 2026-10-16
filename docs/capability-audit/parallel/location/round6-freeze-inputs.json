@@ -1,0 +1,75 @@
+{
+  "base_commit": "94d765b83b6c06058f32b67c9ad5637fa8e139af",
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "project_revision": "5a0c49c2adb0623fdac73f76e4f98f2e57674c00",
+  "modified_existing_upstream_targets": {
+    "base/location/location/services/location_locator/locator/source/locator_ability.cpp": {
+      "sha256_before": "c38d4b034e6c0b0310e50bab0e72373c83b6c966f38e648b1053549815aadd8d",
+      "sha256_after": "63499d9ac1b6b7467a0300313ee754ec4f0c90601417b9bcfe1c9c7ca64cc298"
+    }
+  },
+  "new_upstream_targets": [],
+  "cumulative_location_original": {
+    "base/location/location/frameworks/base_module/source/request_config.cpp": "ce53f9bbb79e4d8ad7978f43a94c8da74aa5eb2ede61f1cd2888229c259c3eb5",
+    "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp": "7f921b19e87a20ff24053cbf78e95d5d18689483363d98a9378e558c71f54c9d",
+    "base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h": "d23ab24104b996f25f6ee47e8b2b965cdfb3741b6debeb8d4004a9f179862d22",
+    "base/location/location/frameworks/js/napi/include/location_napi_adapter.h": "df3a6935369feb2b0f186e24f8ab9177d6207dea0482541f38c1c20ad289f990",
+    "base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp": "a3ad0ab918bccf1fdfa2c4a2e17aa7930d2ab7af2ad1cdd4dddeac6f8296662e",
+    "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp": "10f006e05e6acd07d360f5473110f032fc82a1b060d4c52dfb7b93afc72636c5",
+    "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp": "10b3d9a118b6abd5fe9e2bc3aaf8c0c4e11d35d6bf99bfc933e62deb8d74515e",
+    "base/location/location/frameworks/js/napi/source/napi_util.cpp": "36406ece4437d0ebb7cfb0c361b90035ae422bad312237945a7f29607caa71f0",
+    "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl": "082dc98ff2d23395c4b18533ef6574dd50c2d331f35a3dcdd038d2b582dbba9d",
+    "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp": "88f399fd86a5cf15383c074e0d84e2c1ef4e5f22e1f6df9452a7f3f1d4dc33bc",
+    "base/location/location/interfaces/inner_api/include/constant_definition.h": "66413a57e9914ce2850ac268297d4924ed630ec7aa830336bd7a1b73adbbfe36",
+    "base/location/location/interfaces/inner_api/include/fusion_fence_request.h": null,
+    "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h": "b55ec5e3afe9de9eef869e414a1f87b2621e6ad2447270b0ac6f771ccb9585e1",
+    "base/location/location/interfaces/inner_api/include/locator_impl.h": "64b3c6e816e046b3bf2161afeb2cc9a8a8008ffa99447bf331cc1d3c7fa6ef8d",
+    "base/location/location/interfaces/inner_api/include/request_config.h": "d890828f8496ed04739d2ebb3b5b68ac748284755627b4faa2b4f717477f64a4",
+    "base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h": "a22355966d2eaf0ebeabe72a7b30b7d6f84f085f8c7e16d2fb31fabbfd6d9d1a",
+    "base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp": "31a10e85f0af933cfdb36c78a809f7404a838e502b2756f822c4b03da236f4b8",
+    "base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp": "aaaf88b88b1c3b99ea5a25559b18d4928d82e3f06af722ad37508aafe533ee03",
+    "base/location/location/services/location_locator/locator/BUILD.gn": "6a7103d84ec91f572aa50aa49caf87af4cb749e227ddcbd8aca9912b53092d0f",
+    "base/location/location/services/location_locator/locator/include/locator_ability.h": "f18ef92972cafd8f0c0198c93a7f1f8120f03d3bf28d5cff9d5d99d78b8765d8",
+    "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h": "4e6da25f6e689033cd68ddf5d0661ab2bb446c91f91daa4ecd572fb926fbba05",
+    "base/location/location/services/location_locator/locator/include/report_manager.h": "59ee6ab5679e88a3351f8200ff49b364ed2ccda144e4710496b77326c3b35462",
+    "base/location/location/services/location_locator/locator/include/request_manager.h": "9323e1dcca912bb48a7ef0d8ae4df901eb7cdc3f576cc9484d9dca3aeaaa6327",
+    "base/location/location/services/location_locator/locator/source/locator_ability.cpp": "942a8a3d327d1dded66ad65c35e6fea0931280119992502b93e54bfc0a5513c9",
+    "base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp": "02b59695678a6ef244f8a1b42c034b9759c9f2390060858241197e7b275c8155",
+    "base/location/location/services/location_locator/locator/source/report_manager.cpp": "1a945bcf7974898496400ea1cbe22461548e8228701b5d2c639b539742182db2",
+    "base/location/location/services/location_locator/locator/source/request_manager.cpp": "8617a90d00307e8018e72d87942b4a6c8a8e7d077cf854b6d68040f4716fd4ee"
+  },
+  "read_only_contract_inputs": {
+    "base/location/location/interfaces/inner_api/include/common_utils.h": {
+      "sha256": "271095cb4be918ad7739d4c483f9f50f4fc462912b1947492d4740893462a114"
+    },
+    "base/location/location/frameworks/location_common/common/source/common_utils.cpp": {
+      "sha256": "996825ac1b2bad35aeec1b0923a15ca49a360552755d43164cac2ed2364eed75"
+    },
+    "base/location/location/interfaces/inner_api/include/app_identity.h": {
+      "sha256": "9dea0594c89b3ae0c2ffec6b1b5c2d2f1bd660a1ca7ddaf15a2db7ecc873d4f8"
+    }
+  },
+  "parent_platform_batch": {
+    "reported_by": "parent completion message",
+    "full_TUs": 15,
+    "passed": 14,
+    "only_failure": "base/location/location/services/location_locator/locator/source/locator_ability.cpp const AppIdentity to mutable account helper",
+    "gnss_new_two_TUs": "parent reported both passed",
+    "error_log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-capability-full-TUs-and-helpers-01/artifacts/location/arm64_virt-locator_ability-compile.log",
+    "error_log_sha256": "0a14f79b330fc0a2e3f93d6b37819d910aac318dcac67e135e68c8d1fa015ea2"
+  },
+  "production_manifest_sha256": "77dd520cd572b5e4caed482babe565772f53a51224becf7ff4a6bb6615bb0712",
+  "patch_sha256": {
+    "0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec",
+    "0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b",
+    "0003-connect-current-district-and-processed-skiing-history.patch": "80244fe9981f57694d685a979ee06f4060d7ce793618b062ecbadc1505fbbdb4",
+    "0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
+    "0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144",
+    "0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7"
+  },
+  "host_tests": {
+    "count": 28,
+    "elapsed_seconds": "41.403",
+    "scope": "Actual extracted service/account functions, frozen declarations, explicit OS-account/permission boundaries; no platform/runtime claim."
+  }
+}

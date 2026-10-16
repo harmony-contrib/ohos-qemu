@@ -101,8 +101,8 @@ struct ProxyFreezeManager {std::set<int> frozen;static ProxyFreezeManager* GetIn
 struct LocationAccountManager {static LocationAccountManager* GetInstance(){static LocationAccountManager v;return &v;}std::vector<int> GetActiveUserIds(){return activeUsers;}};
 struct CommonUtils {
     static int GetUserIdByUid(int uid){return uid/1000;}
-    static bool IsAppBelongCurrentAccount(AppIdentity identity){return GetUserIdByUid(identity.uid)==currentUser;}
-    static bool IsAppBelongActiveAccounts(AppIdentity identity,std::vector<int> ids){for(int id:ids)if(GetUserIdByUid(identity.uid)==id)return true;return false;}
+    static bool IsAppBelongCurrentAccount(AppIdentity& identity){return GetUserIdByUid(identity.uid)==currentUser;}
+    static bool IsAppBelongActiveAccounts(AppIdentity& identity,std::vector<int> ids){for(int id:ids)if(GetUserIdByUid(identity.uid)==id)return true;return false;}
     static int64_t GetCurrentTime(){return now;}
     static LocationErrCode ErrCodeToLocationErrCode(ErrCode errorCode);
 };
