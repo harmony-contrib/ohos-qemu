@@ -685,6 +685,8 @@
         "patches/common/third_party/openvpn/"
       ],
       "files": [
+        "ci/capability-audit/audio_focus_runtime.py",
+        "ci/capability-audit/run_audio_focus_probe.py",
         "scripts/build_openvpn_ohos.py",
         "scripts/build_openvpn_ohos_in_docker.sh",
         "scripts/build_product_openvpn.py",
@@ -1365,7 +1367,10 @@
           "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         }
       ],
-      "count": 22
+      "count": 22,
+      "files": [
+        "ci/capability-audit/compile_communication_rust.py"
+      ]
     },
     "media": {
       "groups": [
