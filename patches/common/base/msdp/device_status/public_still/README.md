@@ -57,3 +57,10 @@ unsubscribe still does not wait on itself. This bounded-wait delta has light
 source/installer checks only; its new blocking-callback case and the previous
 12 cases await the next root-scheduled native batch. The preserved host-02 PASS
 refers to commit 74c5082 before this delta.
+
+Root platform01 completed with 12/15 actual objects passing; all three real
+manager variants rejected obsolete `type_`, `event_` and `arrs_` private fields.
+The component removes those unused fields and their array-only `argSize_`. No
+warning is disabled. This cleanup and the bounded drain are batched for the next
+native diagnostic. The nonexistent intention-service object is excluded from
+the test scope rather than treated as a product defect.

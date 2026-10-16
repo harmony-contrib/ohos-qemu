@@ -1071,7 +1071,7 @@
      };
  
      class BoomerangCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
-@@ -133,6 +136,9 @@
+@@ -133,9 +136,11 @@
      void HandlerPageScrollerEvent(int32_t event);
      void SystemBarHiddedInit();
  #endif
@@ -1080,8 +1080,11 @@
 +    bool HasObjectLocked(const sptr<IRemoteObject>& object) const;
      void TimerTask();
      void RemoveLibTimerTask(const std::shared_ptr<BoomerangAlgoImpl> &boomerangAlgo);
-     static constexpr int32_t argSize_ { TYPE_MAX };
-@@ -143,6 +149,10 @@
+-    static constexpr int32_t argSize_ { TYPE_MAX };
+ 
+     std::mutex mutex_;
+     sptr<IRemoteObject::DeathRecipient> devicestatusCBDeathRecipient_ { nullptr };
+@@ -143,16 +148,17 @@
      std::shared_ptr<DeviceStatusMsdpClientImpl> msdpImpl_ { nullptr };
      std::map<Type, OnChangedValue> msdpData_;
      std::map<Type, std::set<const sptr<IRemoteDevStaCallback>, classcomp>> listeners_;
@@ -1092,6 +1095,16 @@
      std::map<std::string, std::set<const sptr<IRemoteBoomerangCallback>, boomerangClasscomp>> boomerangListeners_;
      sptr<IRemoteBoomerangCallback> notifyListener_ { nullptr };
      sptr<IRemoteBoomerangCallback> encodeCallback_ { nullptr };
+     std::map<sptr<IRemoteBoomerangCallback>, std::string> bundleNameCache_;
+     sptr<AppExecFwk::IBundleMgr> bundleManager_ { nullptr };
+     std::shared_ptr<BoomerangAlgoImpl> boomerangAlgo_;
+-    int32_t type_ { -1 };
+     int32_t boomerangType_ { -1 };
+-    int32_t event_ { -1 };
+-    int32_t arrs_[argSize_] {};
+ #ifdef BOOMERANG_ONESTEP
+     bool isAccessibilityInit_ = false;
+     std::atomic<bool> lastEnable_ { true };
 --- a/base/msdp/device_status/services/native/src/devicestatus_manager.cpp
 +++ b/base/msdp/device_status/services/native/src/devicestatus_manager.cpp
 @@ -52,8 +52,8 @@

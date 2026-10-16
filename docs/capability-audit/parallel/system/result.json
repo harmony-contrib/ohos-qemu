@@ -3,7 +3,7 @@
   "branch": "codex/capability-system-20261015",
   "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "reviewed_on": "2026-10-17 Asia/Shanghai",
-  "status": "public_still_host02_verified_bounded_wait_delta_light_checked_native_and_product_package_pending",
+  "status": "public_still_platform01_feedback_repaired_bounded_drain_current_native_recheck_pending",
   "requirements_total": 10,
   "requirements_closed": 0,
   "first_artifact_behavior_gate_passed": false,
@@ -104,6 +104,7 @@
         "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
       ],
       "remaining": [
+        "Recompile all15 actual product objects after root platform01 unused private-field cleanup and bounded callback drain delta; previous12 successful object results do not prove current full product linkage.",
         "Run the complete current 13-case GNU ASan/UBSan host batch including actual blocked external callback quiesce; preserved 12-case host-02 PASS applies only before this bounded-wait delta.",
         "Root must apply public_still after sensor_input, compile all affected actual product TUs in sensor-enabled/no-mock, sensor-enabled/default and sensor-disabled configurations, and link actual CFI/LTO DSOs with corrected internal Destroy function type.",
         "Need same newly packaged ARM64 phone actual external random acceleration challenge matched through actual VDI -> Sensor HDI -> SensorAgent -> independent public still threshold algorithm -> ordinary stationary API callbacks; archive/signature/BMS UID/same-boot binding and failure/stop/restart/old-generation boundaries remain unvalidated.",
@@ -317,6 +318,11 @@
       "command": "Python prepare-only and six public_still source-guard tests after bounded wait change; native compiler not invoked",
       "result": "PASS light checks only. Added external_callback_quiesce is unexecuted; next root-scheduled native batch must run it with all prior12 scenarios.",
       "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/public-still/bounded-wait-prepare.json"
+    },
+    {
+      "command": "Root frozen a9189eb actual ARM64 product MSDP 15-object platform01 batch",
+      "result": "12 PASS,3 manager variants FAIL: obsolete unused type_/event_/arrs_ private fields. Exact logs retained; cleanup and bounded drain now await consolidated recompile. Nonexistent 16th intention service object excluded as diagnostic scope error.",
+      "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/public-still/platform-01/summary.json"
     }
   ],
   "failed_attempts": [
@@ -400,6 +406,7 @@
     "Keep the frozen platform01 attempt and host-02 evidence. Batch current bounded-wait delta and all platform compile failures before the next native diagnostic; do not substitute old twelve-case PASS for the new thirteen-case test."
   ],
   "remaining_gaps": [
+    "Root platform01: obsolete private-field compile failures repaired in current candidate; full15-object native recheck remains pending.",
     "Run the complete current 13-case GNU ASan/UBSan host batch including actual blocked external callback quiesce; preserved 12-case host-02 PASS applies only before this bounded-wait delta.",
     {
       "id": "behavior:access-token-api26-kernel-abi",

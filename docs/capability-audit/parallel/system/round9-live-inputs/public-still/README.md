@@ -63,3 +63,14 @@ but **not executed** in this follow-up. `bounded-wait-prepare.json` and
 platform01 attempt is allowed to finish; all new native failures and this delta
 are to be batched in the next diagnostic cycle. No new host or product native
 compile was started for this follow-up.
+
+## Actual platform01 compile feedback
+
+Root completed and retained its frozen `a9189eb` attempt. Twelve actual MSDP
+objects passed; the three manager variants failed the same unused private-field
+warning. `platform-01/` preserves those exact logs and hashes. The current source
+removes the obsolete `type_`, `event_`, `arrs_` fields and array-only `argSize_`
+after checking all actual member uses. It preserves warning settings. The real
+stationary-server label has manager/client objects, no service object; the
+platform contract now lists exactly 15 real objects. Current-source native
+recompilation and all 13 host cases remain pending a root-scheduled batch.
