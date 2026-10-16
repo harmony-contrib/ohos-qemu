@@ -1,0 +1,14 @@
+test_duplicate_json_evidence_rejected (__main__.FocusHostGuards.test_duplicate_json_evidence_rejected) ... ok
+test_expired_ack_refuses_before_any_control_write (__main__.FocusHostGuards.test_expired_ack_refuses_before_any_control_write) ... ok
+test_expired_fresh_request_refuses_before_any_control_write (__main__.FocusHostGuards.test_expired_fresh_request_refuses_before_any_control_write) ... ok
+test_forced_stop_requires_actual_force_hint_and_start_causality (__main__.FocusHostGuards.test_forced_stop_requires_actual_force_hint_and_start_causality) ... ok
+test_fresh_reply_rejects_replay_identity_stale_callbacks_and_bool_results (__main__.FocusHostGuards.test_fresh_reply_rejects_replay_identity_stale_callbacks_and_bool_results) ... ok
+test_identity_rejects_shared_system_and_other_account (__main__.FocusHostGuards.test_identity_rejects_shared_system_and_other_account) ... ok
+test_missing_preflight_never_launches_commands_or_stops_bundles (__main__.FocusHostGuards.test_missing_preflight_never_launches_commands_or_stops_bundles) ... ok
+test_native_private_mode_rejects_before_file_transfer (__main__.FocusHostGuards.test_native_private_mode_rejects_before_file_transfer) ... ok
+test_ready_rejects_foreign_uid_nonce_and_nonrunning (__main__.FocusHostGuards.test_ready_rejects_foreign_uid_nonce_and_nonrunning) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.006s
+
+OK

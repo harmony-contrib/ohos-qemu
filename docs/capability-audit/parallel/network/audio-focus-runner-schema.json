@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "scope": "ordinary_dual_UID_MIC_VOIP_focus_with_real_BG_ANS_and_independent_PCM",
+  "status": "captured_NOT_independently_verified",
+  "run_id": "32lowerhex",
+  "boot_id": "actual kernel UUID",
+  "archive_sha256": "sha256",
+  "arch": "arm64|armv7a|x86_64",
+  "device": "phone|2in1",
+  "target": "actual HDC target",
+  "runner_sha256": "audio_focus_runtime.py sha256",
+  "sources_sha256": {
+    "run_audio_focus_probe.py": "sha256",
+    "audio_focus_runtime.py": "sha256",
+    "audio_focus_observation.py": "sha256"
+  },
+  "common": {
+    "capture_runtime_path": "ABS/output/capture/runtime.json",
+    "capture_runtime_sha256": "sha256",
+    "boot_path": "ABS/output/acceptance-boot.json",
+    "boot_sha256": "sha256",
+    "challenge_manifest_path": "ABS/output/capture/challenge/challenge.json",
+    "challenge_manifest_sha256": "sha256",
+    "challenge_pcm_path": "ABS/output/capture/challenge/challenge.pcm",
+    "challenge_pcm_sha256": "sha256",
+    "notification_contract_path": "ABS/output/focus/notification-contract.json",
+    "notification_contract_sha256": "sha256",
+    "producer_configuration": {
+      "rate": 48000,
+      "channels": 2,
+      "repeat": 60,
+      "timeout_ms": 90000,
+      "source_frames": 48000,
+      "expected_frames": 2880000
+    },
+    "clocks": []
+  },
+  "actors": {
+    "owner": {
+      "bundle": "fixed matching bundle",
+      "mode": "1 owner / 2 contender",
+      "uid": "actual UID",
+      "pid": "actual PID",
+      "identity_path": "ABS/output/ROLE/application-identity.json",
+      "identity_sha256": "sha256",
+      "hap_path": "ABS/output/ROLE/ordinary-probe-signed.hap",
+      "hap_sha256": "sha256",
+      "inputs_path": "ABS/output/ROLE/project/media-audio-event-probe-inputs.json",
+      "inputs_sha256": "sha256",
+      "native_results_path": "ABS/output/ROLE/private/audio-event-RUN-modeMODE-results.log",
+      "native_results_sha256": "sha256",
+      "files": {
+        "audio-event-RUN-...": {
+          "path": "ABS/output/ROLE/private/BASENAME",
+          "sha256": "sha256",
+          "remote": "actual app files/BASENAME",
+          "uid": "actual UID",
+          "mode": "actual numeric stat mode",
+          "bytes": "actual size"
+        }
+      },
+      "tokens": [
+        {
+          "phase": "before-launch|after-MIC|background|clock-*|final",
+          "observation": "exact actual root tool JSON"
+        }
+      ],
+      "mic_action": {
+        "layout": "ABS saved UI tree",
+        "layout_sha256": "sha256",
+        "selected_node": "actual selector result",
+        "decision": "ALLOW"
+      },
+      "notification_action": null,
+      "notification_initial": "actual bool",
+      "background_journal": [
+        "basenames into files"
+      ],
+      "service_snapshots": [
+        {
+          "phase": "active|cleanup",
+          "uid_dump_path": "ABS",
+          "uid_dump_sha256": "sha256",
+          "all_dump_path": "ABS",
+          "all_dump_sha256": "sha256",
+          "ans_dump_path": "ABS",
+          "ans_dump_sha256": "sha256",
+          "actual_clock_interval": "[guest monotonic_ns lower,upper]",
+          "observation": "actual active_task result or null"
+        }
+      ],
+      "ready_json": [
+        {
+          "action": "focus_begin|focus_end|contender_start|contender_stop",
+          "path": "ABS",
+          "sha256": "sha256",
+          "observation": "exact ready JSON",
+          "actual_clock_interval": "[guest monotonic_ns lower,upper]"
+        }
+      ],
+      "fresh_snapshots": [
+        {
+          "action": "focus_begin|contender_start",
+          "nonce": "actual ready nonce",
+          "request_file": "basename key",
+          "reply_file": "basename key",
+          "pcm_file": "basename key",
+          "request_clock_interval": "[guest monotonic_ns lower,upper]",
+          "observation": "exact snapshot reply JSON",
+          "correlation": "actual phase_content"
+        }
+      ],
+      "acks": [
+        {
+          "action": "actual action",
+          "nonce": "actual ready nonce",
+          "file": "basename key",
+          "actual_clock_interval": "[guest monotonic_ns lower,upper]"
+        }
+      ],
+      "process_before": {
+        "uid": "actual",
+        "pid": "actual",
+        "starttime": "actual"
+      },
+      "process_after": {
+        "uid": "same actual",
+        "pid": "same actual",
+        "starttime": "same actual"
+      }
+    },
+    "contender": {
+      "bundle": "fixed matching bundle",
+      "mode": "1 owner / 2 contender",
+      "uid": "actual UID",
+      "pid": "actual PID",
+      "identity_path": "ABS/output/ROLE/application-identity.json",
+      "identity_sha256": "sha256",
+      "hap_path": "ABS/output/ROLE/ordinary-probe-signed.hap",
+      "hap_sha256": "sha256",
+      "inputs_path": "ABS/output/ROLE/project/media-audio-event-probe-inputs.json",
+      "inputs_sha256": "sha256",
+      "native_results_path": "ABS/output/ROLE/private/audio-event-RUN-modeMODE-results.log",
+      "native_results_sha256": "sha256",
+      "files": {
+        "audio-event-RUN-...": {
+          "path": "ABS/output/ROLE/private/BASENAME",
+          "sha256": "sha256",
+          "remote": "actual app files/BASENAME",
+          "uid": "actual UID",
+          "mode": "actual numeric stat mode",
+          "bytes": "actual size"
+        }
+      },
+      "tokens": [
+        {
+          "phase": "before-launch|after-MIC|background|clock-*|final",
+          "observation": "exact actual root tool JSON"
+        }
+      ],
+      "mic_action": {
+        "layout": "ABS saved UI tree",
+        "layout_sha256": "sha256",
+        "selected_node": "actual selector result",
+        "decision": "ALLOW"
+      },
+      "notification_action": null,
+      "notification_initial": "actual bool",
+      "background_journal": [
+        "basenames into files"
+      ],
+      "service_snapshots": [
+        {
+          "phase": "active|cleanup",
+          "uid_dump_path": "ABS",
+          "uid_dump_sha256": "sha256",
+          "all_dump_path": "ABS",
+          "all_dump_sha256": "sha256",
+          "ans_dump_path": "ABS",
+          "ans_dump_sha256": "sha256",
+          "actual_clock_interval": "[guest monotonic_ns lower,upper]",
+          "observation": "actual active_task result or null"
+        }
+      ],
+      "ready_json": [
+        {
+          "action": "focus_begin|focus_end|contender_start|contender_stop",
+          "path": "ABS",
+          "sha256": "sha256",
+          "observation": "exact ready JSON",
+          "actual_clock_interval": "[guest monotonic_ns lower,upper]"
+        }
+      ],
+      "fresh_snapshots": [
+        {
+          "action": "focus_begin|contender_start",
+          "nonce": "actual ready nonce",
+          "request_file": "basename key",
+          "reply_file": "basename key",
+          "pcm_file": "basename key",
+          "request_clock_interval": "[guest monotonic_ns lower,upper]",
+          "observation": "exact snapshot reply JSON",
+          "correlation": "actual phase_content"
+        }
+      ],
+      "acks": [
+        {
+          "action": "actual action",
+          "nonce": "actual ready nonce",
+          "file": "basename key",
+          "actual_clock_interval": "[guest monotonic_ns lower,upper]"
+        }
+      ],
+      "process_before": {
+        "uid": "actual",
+        "pid": "actual",
+        "starttime": "actual"
+      },
+      "process_after": {
+        "uid": "same actual",
+        "pid": "same actual",
+        "starttime": "same actual"
+      }
+    }
+  },
+  "timeline": [],
+  "failures": [],
+  "first_artifact_behavior_gate_passed": false,
+  "note": "SCHEMA ONLY, not runtime evidence. Additional diagnostic/cleanup metadata may be retained. Native PCM/ready/ack/snapshot require actual mode0600; ArkTS permission/journal retain SDK-created mode. Clock intervals use actual independent token tool CLOCK_MONOTONIC queries bracketing each operation."
+}
