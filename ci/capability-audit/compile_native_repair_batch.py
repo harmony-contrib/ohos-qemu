@@ -16,6 +16,42 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'bluetooth_oob_napi': {
+        'project': 'foundation/communication/bluetooth',
+        'revision': '1727fa05c457f697f7cf80f290c82c663f1c3aab',
+        'components': ['api26_oob_pairing', 'api26_oob_validation'],
+        'units': ['napi_bluetooth_connection'],
+        'sources': {'napi_bluetooth_connection': 'frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp'},
+        'targets': {'napi_bluetooth_connection': 'obj/foundation/communication/bluetooth/frameworks/js/napi/src/connection/connection/napi_bluetooth_connection.o'},
+        'required_header': 'frameworks/js/napi/src/connection/napi_bluetooth_connection.h',
+    },
+    'bluetooth_oob_service': {
+        'project': 'foundation/communication/bluetooth_service',
+        'revision': 'c489d0aabf77624a4f5ca80ab8b5adefd2d5cfbf',
+        'components': ['oob_pairing_backend'],
+        'units': ['bluetooth_host_server', 'classic_adapter', 'ble_adapter', 'ble_security', 'gap_if', 'gap_br_sec'],
+        'sources': {
+            'bluetooth_host_server': 'services/bluetooth/server/src/bluetooth_host_server.cpp',
+            'classic_adapter': 'services/bluetooth/service/src/classic/classic_adapter.cpp',
+            'ble_adapter': 'services/bluetooth/service/src/ble/ble_adapter.cpp',
+            'ble_security': 'services/bluetooth/service/src/ble/ble_security.cpp',
+            'gap_if': 'services/bluetooth/stack/src/gap/gap_if.c',
+            'gap_br_sec': 'services/bluetooth/stack/src/gap/gap_br_sec.c'},
+        'targets': {
+            'bluetooth_host_server': 'obj/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_server/bluetooth_host_server.o',
+            'classic_adapter': 'obj/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/btservice/classic_adapter.o',
+            **{name: 'obj/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/btservice/' + name + '.o'
+               for name in ('ble_adapter', 'ble_security')},
+            **{name: 'obj/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/btstack/' + name + '.o'
+               for name in ('gap_if', 'gap_br_sec')}},
+        'required_headers': {
+            'bluetooth_host_server': 'services/bluetooth/service/include/interface_adapter.h',
+            'classic_adapter': 'services/bluetooth/service/src/classic/classic_adapter.h',
+            'ble_adapter': 'services/bluetooth/service/src/ble/ble_adapter.h',
+            'ble_security': 'services/bluetooth/service/src/ble/ble_security.h',
+            'gap_if': 'services/bluetooth/stack/include/gap_if.h',
+            'gap_br_sec': 'services/bluetooth/stack/src/gap/gap.h'},
+    },
     'calendar_editor': {
         'project': 'applications/standard/calendardata',
         'revision': 'f922427ca0dc20895a0e254ae41382e5b03299a4',

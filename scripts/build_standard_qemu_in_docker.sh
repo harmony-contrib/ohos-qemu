@@ -258,6 +258,7 @@ UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/graphic
 BLUETOOTH_CONTROL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_control_enums/apply.sh"
 BLUETOOTH_OOB_PAIRING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_oob_pairing/apply.sh"
 BLUETOOTH_OOB_VALIDATION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth/api26_oob_validation/apply.sh"
+BLUETOOTH_OOB_BACKEND_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/bluetooth_service/oob_pairing_backend/apply.sh"
 CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/camera_framework/api26_depth_contracts/apply.sh"
 CAMERA_EFFECT_RECORD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/camera_framework/effect_suggestion_record/apply.sh"
 STATE_OPTIONS_RECORDS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/connect_options_records/apply.sh"
@@ -3029,6 +3030,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_oob_pairing_component.log"
   bash "${BLUETOOTH_OOB_VALIDATION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_oob_validation_component.log"
+  bash "${BLUETOOTH_OOB_BACKEND_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_bluetooth_oob_backend_component.log"
   bash "${CAMERA_DEPTH_CONTRACTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_camera_depth_contracts_component.log"
   bash "${CAMERA_EFFECT_RECORD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
