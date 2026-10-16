@@ -29,7 +29,7 @@ struct Index {
       if (fs.accessSync(evidencePath)) {
         throw new Error('Existing microphone authorization evidence is preserved');
       }
-      const evidenceFile = fs.openSync(evidencePath, fs.OpenMode.CREATE | fs.OpenMode.WRONLY);
+      const evidenceFile = fs.openSync(evidencePath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY);
       try {
         fs.writeSync(evidenceFile.fd, permissionEvidence);
       } finally {
