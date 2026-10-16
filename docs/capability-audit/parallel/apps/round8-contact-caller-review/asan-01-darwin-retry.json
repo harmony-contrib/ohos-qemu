@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/tmp/ohos-apps-contact-picker-asan-01/native_lifecycle_test"
+  ],
+  "environment": {
+    "LC_ALL": "C",
+    "LC_CTYPE": "C",
+    "LANG": "C",
+    "ASAN_OPTIONS": "detect_leaks=0:abort_on_error=1",
+    "UBSAN_OPTIONS": "halt_on_error=1"
+  },
+  "exit_code": 0,
+  "seconds": 0.40911729098297656,
+  "stdout": "44 actual protocol challenge cases passed\n17 actual native lifecycle adapter scenarios passed\n",
+  "stderr": "",
+  "limitations": [
+    "Darwin runtime does not support LeakSanitizer; no LSan claim",
+    "UI/NAPI/libuv adapters challenge real extracted code but are not a system runtime proof"
+  ],
+  "recompiled": false
+}
