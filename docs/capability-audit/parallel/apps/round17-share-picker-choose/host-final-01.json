@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "ci/capability-audit",
+    "-p",
+    "test_batch_apps_share_picker_choose.py",
+    "-v"
+  ],
+  "cwd": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
+  "started_at": "2026-10-16T21:52:29.503780+00:00",
+  "finished_at": "2026-10-16T21:52:35.165401+00:00",
+  "duration_seconds": 5.662,
+  "exit_code": 0,
+  "scope": "host tests only; no native ABI, SDK compilation, active source installation or guest evidence",
+  "stdout": {
+    "path": "host-final-01.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stderr": {
+    "path": "host-final-01.stderr.log",
+    "sha256": "d70f0a1478e273f85feab3288612ba361a718bea36bd6a074e5c5e047d65606b"
+  }
+}

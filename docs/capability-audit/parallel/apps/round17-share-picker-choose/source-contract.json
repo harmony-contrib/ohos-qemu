@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "fixed_settings_revision": "0aba461c750fda71977c2f5186ca0e756ecfc6ca",
+  "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-06/source/applications/standard/settings",
+  "baseline_files": {
+    "product/phone/src/main/module.json5": {
+      "sha256": "ec1d3c1525d7298209346cb8f47715f781c1a6cc52b058cadef5e57d211db6bf"
+    },
+    "product/phone/src/main/resources/base/profile/main_pages.json": {
+      "sha256": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d"
+    },
+    "product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": {
+      "sha256": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d"
+    },
+    "product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": {
+      "sha256": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758"
+    },
+    "product/phone/src/main/ets/pages/SharePicker.ets": {
+      "sha256": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd"
+    },
+    "feature/theme/src/main/ets/ThemeSettings.ets": {
+      "sha256": "3bf743568c5dcb454d511c93e96204dd8dce90f80b346dbb4e0bbdf56e857f8a"
+    },
+    "feature/theme/src/main/ets/WallpaperPicker.ets": {
+      "sha256": "7b2f8faa71e20ed238c5f9a831fe478362b1b343a7dd21836684d1272557c3be"
+    },
+    "feature/theme/src/main/ets/utils/WallpaperSelectionController.ets": {
+      "sha256": "1bbf47e6f91fd4c3048d1fabbfaa7e374a3e8ca19d72b7ae274eea2dda1a9d6b"
+    },
+    "feature/theme/src/main/resources/base/element/string.json": {
+      "sha256": "802ae7d5fc23d4baf2aa7fef33128b18ee0632803705c94d02f4e5309752b4f7"
+    },
+    "feature/theme/src/main/resources/zh_CN/element/string.json": {
+      "sha256": "2c6b1fac6b33ee867750638daece46cc4aa14865295bdc93cd350735b2719198"
+    }
+  },
+  "sdk": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/application/UIAbilityContext.d.ts",
+      "sha256": "d23c784fccf8f8eacdf3023a2db2a835bd8a68742670a154fb02eb3beae39f49",
+      "excerpts": [
+        {
+          "start": 302,
+          "end": 349,
+          "text": "     * Starts a UIAbility with the caller information specified. The caller information is carried in **want** and\n     * identified at the system service layer. The UIAbility can obtain the caller information from the **want** parameter\n     *  in the **onCreate** lifecycle callback. When this API is used to start a UIAbility, the caller information carried\n     *  in **want** is not overwritten by the current application information. The system service layer can obtain the\n     * initial caller information. This API uses an asynchronous callback to return the result. It can be called only on\n     * the main thread.\n     *\n     * > **NOTE**\n     * >\n     * > For details about the startup rules for the components in the stage model, see\n     * > [Component Startup Rules (Stage Model)](docroot://application-models/component-startup-rules.md).\n     *\n     * @param { Want } want - Want information about the target UIAbility.\n     * @param { AsyncCallback<void> } callback - Callback used to return the result. If the API call is successful, **code** in\n     *     **err** is **0**. Otherwise, **err** contains the corresponding error code and error information.\n     * @throws { BusinessError } 201 - The application does not have permission to call the interface.\n     * @throws { BusinessError } 202 - The application is not system-app, can not use system-api.\n     * @throws { BusinessError } 401 - Parameter error. Possible causes: 1. Mandatory parameters are left unspecified;\n     *     2. Incorrect parameter types; 3. Parameter verification failed.\n     * @throws { BusinessError } 16000001 - The specified ability does not exist.\n     * @throws { BusinessError } 16000002 - Incorrect ability type.\n     * @throws { BusinessError } 16000004 - Cannot start an invisible component.\n     * @throws { BusinessError } 16000005 - The specified process does not have the permission.\n     * @throws { BusinessError } 16000006 - Cross-user operations are not allowed.\n     * @throws { BusinessError } 16000008 - The crowdtesting application expires.\n     * @throws { BusinessError } 16000009 - An ability cannot be started or stopped in Wukong mode.\n     * @throws { BusinessError } 16000010 - The call with the continuation and prepare continuation flag is forbidden.\n     * @throws { BusinessError } 16000011 - The context does not exist.\n     * @throws { BusinessError } 16000012 - The application is controlled.\n     * @throws { BusinessError } 16000013 - The application is controlled by EDM.\n     * @throws { BusinessError } 16000050 - Internal error.\n     * @throws { BusinessError } 16000053 - The ability is not on the top of the UI.\n     * @throws { BusinessError } 16000055 - Installation-free timed out.\n     * @throws { BusinessError } 16200001 - The caller has been released.\n     * @throws { BusinessError } 16000073 - The app clone index is invalid. [since 12]\n     * @throws { BusinessError } 16000071 - App clone is not supported. [since 14]\n     * @throws { BusinessError } 16000072 - App clone or multi-instance is not supported. [since 14]\n     * @throws { BusinessError } 16000076 - The app instance key is invalid. [since 14]\n     * @throws { BusinessError } 16000077 - The number of app instances reaches the limit. [since 14]\n     * @throws { BusinessError } 16000078 - The multi-instance is not supported. [since 14]\n     * @throws { BusinessError } 16000079 - The APP_INSTANCE_KEY cannot be specified. [since 14]\n     * @throws { BusinessError } 16000080 - Creating a new instance is not supported. [since 14]\n     * @syscap SystemCapability.Ability.AbilityRuntime.Core\n     * @systemapi\n     * @stagemodelonly\n     * @since 10\n     */\n    startAbilityAsCaller(want: Want, callback: AsyncCallback<void>): void;"
+        },
+        {
+          "start": 399,
+          "end": 446,
+          "text": "     * Starts a UIAbility with the caller information specified. The caller information is carried in **want** and\n     * identified at the system service layer. The UIAbility can obtain the caller information from the **want** parameter\n     *  in the **onCreate** lifecycle callback. When this API is used to start a UIAbility, the caller information carried\n     *  in **want** is not overwritten by the current application information. The system service layer can obtain the\n     * initial caller information. This API uses a promise to return the result. It can be called only on the main thread.\n     *\n     *\n     * > **NOTE**\n     * >\n     * > For details about the startup rules for the components in the stage model, see\n     * > [Component Startup Rules (Stage Model)](docroot://application-models/component-startup-rules.md).\n     *\n     * @param { Want } want - Want information about the target UIAbility.\n     * @param { StartOptions } options - Parameters used for starting the UIAbility.\n     * @returns { Promise<void> } Promise that returns no value.\n     * @throws { BusinessError } 201 - The application does not have permission to call the interface.\n     * @throws { BusinessError } 202 - The application is not system-app, can not use system-api.\n     * @throws { BusinessError } 401 - Parameter error. Possible causes: 1. Mandatory parameters are left unspecified;\n     *     2. Incorrect parameter types; 3. Parameter verification failed.\n     * @throws { BusinessError } 16000001 - The specified ability does not exist.\n     * @throws { BusinessError } 16000002 - Incorrect ability type.\n     * @throws { BusinessError } 16000004 - Cannot start an invisible component.\n     * @throws { BusinessError } 16000005 - The specified process does not have the permission.\n     * @throws { BusinessError } 16000006 - Cross-user operations are not allowed.\n     * @throws { BusinessError } 16000008 - The crowdtesting application expires.\n     * @throws { BusinessError } 16000009 - An ability cannot be started or stopped in Wukong mode.\n     * @throws { BusinessError } 16000010 - The call with the continuation and prepare continuation flag is forbidden.\n     * @throws { BusinessError } 16000011 - The context does not exist.\n     * @throws { BusinessError } 16000012 - The application is controlled.\n     * @throws { BusinessError } 16000013 - The application is controlled by EDM.\n     * @throws { BusinessError } 16000050 - Internal error.\n     * @throws { BusinessError } 16000053 - The ability is not on the top of the UI.\n     * @throws { BusinessError } 16000055 - Installation-free timed out.\n     * @throws { BusinessError } 16200001 - The caller has been released.\n     * @throws { BusinessError } 16000073 - The app clone index is invalid. [since 12]\n     * @throws { BusinessError } 16000071 - App clone is not supported. [since 14]\n     * @throws { BusinessError } 16000072 - App clone or multi-instance is not supported. [since 14]\n     * @throws { BusinessError } 16000076 - The app instance key is invalid. [since 14]\n     * @throws { BusinessError } 16000077 - The number of app instances reaches the limit. [since 14]\n     * @throws { BusinessError } 16000078 - The multi-instance is not supported. [since 14]\n     * @throws { BusinessError } 16000079 - The APP_INSTANCE_KEY cannot be specified. [since 14]\n     * @throws { BusinessError } 16000080 - Creating a new instance is not supported. [since 14]\n     * @syscap SystemCapability.Ability.AbilityRuntime.Core\n     * @systemapi\n     * @stagemodelonly\n     * @since 10\n     */\n    startAbilityAsCaller(want: Want, options?: StartOptions): Promise<void>;"
+        },
+        {
+          "start": 1384,
+          "end": 1410,
+          "text": "     * Terminates this UIAbility. This API uses a promise to return the result. It can be called only on the main thread.\n     * The result is returned to the caller when **terminateSelfWithResult** is called to terminate the UIAbility that is\n     * started by calling\n     * [startAbilityForResult]{@link UIAbilityContext.startAbilityForResult(want: Want, callback: AsyncCallback<AbilityResult>)}\n     * .\n     *\n     * > **NOTE**\n     * >\n     * > After this API is called, missions in the task center are not cleared by default. To clear missions, set\n     * > [removeMissionAfterTerminate](docroot://quick-start/module-configuration-file.md#abilities) to **true**.\n     *\n     * @param { AbilityResult } parameter - Information returned to the caller.\n     * @returns { Promise<void> } Promise that returns no value.\n     * @throws { BusinessError } 401 - Parameter error. Possible causes: 1.Mandatory parameters are left unspecified.\n     *     2.Incorrect parameter types.\n     * @throws { BusinessError } 16000001 - The specified ability does not exist. [since 9 - 9]\n     * @throws { BusinessError } 16000004 - Cannot start an invisible component. [since 9 - 9]\n     * @throws { BusinessError } 16000005 - The specified process does not have the permission. [since 9 - 9]\n     * @throws { BusinessError } 16000009 - An ability cannot be started or stopped in Wukong mode.\n     * @throws { BusinessError } 16000011 - The context does not exist.\n     * @throws { BusinessError } 16000050 - Internal error.\n     * @syscap SystemCapability.Ability.AbilityRuntime.Core\n     * @stagemodelonly\n     * @atomicservice [since 11]\n     * @since 9\n     */\n    terminateSelfWithResult(parameter: AbilityResult): Promise<void>;"
+        }
+      ]
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.Want.d.ts",
+      "sha256": "01fe0cb09dec5add50713939b915c4170dd04ada26cd3614718f0591a687f1bc",
+      "excerpts": [
+        {
+          "start": 97,
+          "end": 143,
+          "text": "    /**\n     * Action to take, such as viewing and sharing application details. In implicit Want, you can define this field and\n     * use it together with **uri** or **parameters** to specify the operation to be performed on the data. For details\n     * about the definition and matching rules of implicit Want, see\n     * [Matching Rules of Explicit Want and Implicit Want](docroot://application-models/explicit-implicit-want-mappings.md)\n     * .\n     *\n     * @syscap SystemCapability.Ability.AbilityBase\n     * @atomicservice [since 11]\n     * @since 9\n     */\n    action?: string;\n    /**\n     * List of parameters in the Want object.\n     *\n     * 1. The values of the following keys are assigned by the system. Manual settings do not take effect, since the\n     * system automatically changes the values to the actual values during data transfer.\n     *\n     * - **ohos.aafwk.param.callerPid**: PID of the caller. The value is a string.\n     * - **ohos.aafwk.param.callerBundleName**: bundle name of the caller. The value is a string.\n     * - **ohos.aafwk.param.callerAbilityName**: ability name of the caller. The value is a string.\n     * - **ohos.aafwk.param.callerNativeName**: process name of the caller when the native method is called. The value is\n     * a string.\n     * - **ohos.aafwk.param.callerAppId**: appId of the caller. The value is a string.\n     * - **ohos.aafwk.param.callerAppIdentifier**: appIdentifier of the caller. The value is a string.\n     * - **ohos.aafwk.param.callerToken**: token of the caller. The value is a string.\n     * - **ohos.aafwk.param.callerUid**: UID in [BundleInfo]{@link ./bundleManager/BundleInfo:BundleInfo}, that is,\n     * the application's UID in the bundle information. The value is a number.\n     * - **ohos.param.callerAppCloneIndex**: clone index of the caller. The value is of the numeric type.\n     * - **component.startup.newRules**: enabled status of the new control rule. The value is of the Boolean type.\n     * - **moduleName**: module name of the caller. The value is a string.\n     * - **ohos.ability.params.abilityRecoveryRestart**: support for ability restart upon fault recovery. The value is of\n     * the Boolean type.\n     * - **ohos.extra.param.key.showMode**: mode to show the atomic service startup. The value is an enumerated value of\n     * [wantConstant.ShowMode]{@link ./@ohos.app.ability.wantConstant:wantConstant.showMode}.\n     *\n     * **NOTE**\n     *\n     * In cross-device scenarios, the following fields do not take effect and cannot be used for identity or permission\n     * verification: **ohos.aafwk.param.callerPid**, **ohos.aafwk.param.callerToken**, and **ohos.aafwk.param.callerUid**.\n     *\n     * 2. Certain keys are defined by the system, and their values need to be manually assigned. For details about the\n     * keys and their values, see [wantConstant.Params]{@link ./@ohos.app.ability.wantConstant:wantConstant.params}.\n     * 3. In addition to the foregoing cases, applications may further agree on the key-value pairs to transfer.\n     *\n     * **NOTE**\n     *"
+        }
+      ]
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.ability.wantConstant.d.ts",
+      "sha256": "66029ad78cbf53139ef35a4f6f4d209e4035b2df8d930495e83f2c4be056e4df",
+      "excerpts": [
+        {
+          "start": 116,
+          "end": 146,
+          "text": "        /**\n         * Action of launching the UI for dismissing a timer.\n         *\n         * @syscap SystemCapability.Ability.AbilityBase\n         * @since 6\n         * @deprecated since 9\n         */\n        ACTION_DISMISS_TIMER = 'ohos.want.action.dismissTimer',\n        /**\n         * Action of launching the UI for sending an SMS message.\n         *\n         * @syscap SystemCapability.Ability.AbilityBase\n         * @since 6\n         * @deprecated since 9\n         */\n        ACTION_SEND_SMS = 'ohos.want.action.sendSms',\n        /**\n         * Action of launching the UI for opening a contact or picture.\n         *\n         * @syscap SystemCapability.Ability.AbilityBase\n         * @since 6\n         * @deprecated since 9\n         */\n        ACTION_CHOOSE = 'ohos.want.action.choose',\n        /**\n         * Action of launching the UI for photographing.\n         *\n         * @syscap SystemCapability.Ability.AbilityBase\n         * @since 8\n         * @deprecated since 9\n         */"
+        }
+      ]
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.UIAbility.d.ts",
+      "sha256": "0c52110f43ba1e557734a0e74a9f477ad2d81bccaef045485628e7f3472c5fcb",
+      "excerpts": [
+        {
+          "start": 310,
+          "end": 340,
+          "text": "     * @atomicservice [since 11]\n     * @since 9\n     */\n    context: UIAbilityContext;\n    /**\n     * Want in the request used to\n     * [cold start](docroot://application-models/uiability-intra-device-interaction.md#cold-starting-uiability) the\n     * UIAbility. The value is the Want received in [onCreate]{@link UIAbility.onCreate}.\n     *\n     * @syscap SystemCapability.Ability.AbilityRuntime.AbilityCore\n     * @stagemodelonly\n     * @atomicservice [since 11]\n     * @since 9\n     */\n    launchWant: Want;\n    /**\n     * Want in the most recent request to launch the UIAbility.\n     *\n     * - On the first launch of a UIAbility, it is the Want parameter received in [onCreate]{@link UIAbility.onCreate}.\n     * - On subsequent launches, it is the most recent Want received in [onNewWant]{@link UIAbility.onNewWant}.\n     *\n     * @syscap SystemCapability.Ability.AbilityRuntime.AbilityCore\n     * @stagemodelonly\n     * @atomicservice [since 11]\n     * @since 9\n     */\n    lastRequestWant: Want;\n    /**\n     * Background communication object created by the system for the UIAbility, known as the Callee UIAbility (Callee),\n     * which is capable of receiving data sent from the Caller object.\n     *"
+        },
+        {
+          "start": 559,
+          "end": 578,
+          "text": "     * @since 9\n     */\n    onContinue(wantParam: Record<string, Object>): AbilityConstant.OnContinueResult | Promise<AbilityConstant.OnContinueResult>;\n    /**\n     * Called when a started UIAbility instance is brought up again. If there are specific scenarios where you do not want\n     * this lifecycle callback to be triggered, you can use\n     * [setOnNewWantSkipScenarios]{@link ./application/UIAbilityContext:UIAbilityContext.setOnNewWantSkipScenarios} to set\n     * those [scenarios]{@link ./@ohos.app.ability.contextConstant:contextConstant.Scenarios}.\n     *\n     * This API returns the result synchronously and does not support asynchronous callback.\n     *\n     * @param { Want } want - Data passed by the caller when re-launching the UIAbility.\n     * @param { AbilityConstant.LaunchParam } launchParam - UIAbility launch parameters, including the launch reason.\n     * @syscap SystemCapability.Ability.AbilityRuntime.AbilityCore\n     * @stagemodelonly\n     * @crossplatform [since 10]\n     * @atomicservice [since 11]\n     * @since 9\n     */\n    onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void;"
+        },
+        {
+          "start": 716,
+          "end": 737,
+          "text": "     * @stagemodelonly\n     * @atomicservice\n     * @since 15\n     */\n    onPrepareToTerminateAsync(): Promise<boolean>;\n    /**\n     * Called when an operation of going back to the previous page is triggered on this UIAbility. The return value\n     * determines whether to destroy the UIAbility instance.\n     *\n     * - When the target SDK version is earlier than 12, the default return value is **false**, indicating that the\n     * UIAbility will be destroyed.\n     * - When the target SDK version is 12 or later, the default return value is **true**, indicating that the UIAbility\n     * will be moved to the background and will not be destroyed.\n     *\n     * @returns { boolean } The value <code>true</code> means that the UIAbility instance will be moved to the background\n     *     and will not be destroyed, and <code>false</code> means that the UIAbility instance will be destroyed.\n     * @syscap SystemCapability.Ability.AbilityRuntime.AbilityCore\n     * @stagemodelonly\n     * @atomicservice [since 11]\n     * @since 10\n     */\n    onBackPressed(): boolean;"
+        }
+      ]
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.dialogSession.d.ts",
+      "sha256": "923a9df1106510f0157583d7fd510e6f2235dc8dee63a19e0992e467316ec65a",
+      "excerpts": []
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.common.d.ts",
+      "sha256": "581aef56e1d9a3fb7f4d86e9d26a35dc1ccdae9e3198c069feeb589c5b1710a5",
+      "excerpts": []
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.bundle.bundleManager.d.ts",
+      "sha256": "9eb16dc9d886672b8f7add1ae74cc2272f32ab1cfff642bdadbb8b5883e24e21",
+      "excerpts": []
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.window.d.ts",
+      "sha256": "9ddb12c9a551ef48369dbbdbff6a490270f4fe3a535155f63065337635501dfd",
+      "excerpts": []
+    }
+  ],
+  "runtime_validated": false,
+  "native_evidence_pending": [
+    "SupportSystemAbilityPermission::IsSupportSaCallPermission production implementation/header, requested as narrow source-06 host export; no active source access by this agent"
+  ],
+  "native_sources": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-01/evidence.json",
+      "sha256": "bfcf3d4b4f68e8ff335e1db28808ef992ce0305772a50d9cabb05477aae309f0",
+      "runtime_validated": false
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-02/evidence.json",
+      "sha256": "5834e13ab5373881dd935a79cc3a41924cd9156b9fb7c74d578ca93e0a230b02",
+      "runtime_validated": false
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-03/evidence.json",
+      "sha256": "4400cc2d657cfe9ca3d5eb5f49300716d2e6a487dd1753ccaa2611fcf4eb5d1f",
+      "runtime_validated": false
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-04/evidence.json",
+      "sha256": "91bcc623fddb056d3be1d8fbc4a2d1b25a466551f9f0ecdd001f015292f6e32d",
+      "runtime_validated": false
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-05/evidence.json",
+      "sha256": "6ee614589192265d12a97ec1bedac5d6b42f23c389e2637e4919c2dae212029c",
+      "runtime_validated": false
+    }
+  ],
+  "resolved_protocol": {
+    "ams_constant_name": "ACTION_CHOOSE",
+    "ams_constant_value": "ohos.want.action.select",
+    "deprecated_sdk_choose": "ohos.want.action.choose; not the actual ShowPickerDialog trigger in this revision",
+    "legacy_before": "action cleared; unconsumed remote token; StartAbility(want,-1,userId) binds userId=-1 and requestCode=original userId per real overload, discarding the actual original requestCode; no dialog ownership binding",
+    "candidate_strategy": "Real AMS dialogSession stores original caller token/Want/requestCode. Provider receives only server session id. Owner UID/token/PID and current handler matching must be checked natively. No Settings grant API."
+  },
+  "early_correction": {
+    "previous_description": "requestCode=-1",
+    "actual_declaration": "StartAbility(const Want&, int32_t userId, int requestCode, uint64_t specifiedFullTokenId=0)",
+    "actual_definition_line": 702,
+    "actual_header_line": 190,
+    "candidate_call": "StartAbility(dialog,userId,DEFAULT_INVAL_VALUE)",
+    "scope": "Correction from exact source overload inspection, not a second separately counted finding."
+  },
+  "ownership_contract": {
+    "creation": "Before any IN_PROCESS_CALL, AMS requires existing live UIAbility token, actual user and IsAppSelfCalled(caller) access-token match. It stores actual requestCode and original Want; UI supplies none of them.",
+    "binding": "After AMS token/JudgeSelfCalled validation and before framework AttachAbilityThread/onCreate, configured provider record binds actual application UID/access token/IPC PID and native UIAbility token; JS getter cannot create or rebind a session",
+    "trust_boundary": "Authenticated OS Settings process with opaque per-session ID. Existing dialogSession IPC has no JS UIAbility-token argument; this does not claim isolation from malicious code already executing inside that same trusted Settings process. External ordinary apps cannot choose a caller-supplied session ID, read its authenticated owner data or invoke its authenticated result API.",
+    "cleanup": "Only stored native UIAbility token is closed; its SID/configured provider/system-app identity are rechecked. Caller scheduler death recipient holds only its SID and unregisters only its own callback. Timeout 10min and cap64 are native server bounds.",
+    "selection": "Snapshot membership plus fresh native BMS query precedes committed launch; UI metadata never replaces original Want/caller/grant/requestCode. Cancellation before commit removes session; after commit only actual launch result wins."
+  }
+}

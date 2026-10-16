@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "scope": "Host validation history, not build/runtime proof",
+  "prior_tool_transcript_only": [
+    {
+      "methods": 16,
+      "failures": 1,
+      "duration_seconds": 5.392,
+      "reason": "SDK import check rejected nonexistent @ohos.app.ability.UIAbilityContext. Corrected to actual @ohos.app.ability.common common.UIAbilityContext. Raw command output exists only in earlier tool transcript; no invented local raw log/hash."
+    },
+    {
+      "methods": 16,
+      "failures": 0,
+      "duration_seconds": 10.75,
+      "scope": "Earlier candidate before final native Attach/death/exact-window cleanup changes; superseded. Raw output only in earlier tool transcript."
+    }
+  ],
+  "retained_runs": [
+    "host-final-01.json",
+    "host-final-02.json",
+    "host-final-03.json"
+  ],
+  "native_compilation_performed": false,
+  "sdk_compilation_performed": false,
+  "source_installed": false,
+  "guest_executed": false
+}
