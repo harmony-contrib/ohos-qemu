@@ -1,0 +1,33 @@
+{
+  "base_commit": "631b2dadf6bd13892d509f28e8ded0b78dfd480b",
+  "upstream_targets": [
+    "base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h",
+    "base/telephony/state_registry/services/src/telephony_state_registry_service.cpp"
+  ],
+  "actual_04_objects": {
+    "pass": 11,
+    "fail": 6,
+    "evidence_sha256": "4b4f56eb62b7d11042e936b7b85a3174a4b0fc9d0407250e6ab3be1a4321d880"
+  },
+  "forward_states": [
+    "original",
+    "prefix_1",
+    "prefix_2",
+    "final"
+  ],
+  "target_count": 44,
+  "manifest_sha256": "00680283c52f71e26cab98dd138043c64cc6522dfce8db96be3f873f60cda2c1",
+  "new_patch_sha256": "865c2c2844e81d9fade2054a759c63253c36126164c154f3e9a7277924874306",
+  "tests": {
+    "strict_guard": "2 PASS,8.232s; all4 legal states/reapply and unknown/mixed/HEAD/symlink/patch rejection",
+    "host_runtime": "3 PASS,4.172s; actual full broker/proxy class declarations independently fail before and pass after with -Winconsistent-missing-override/-Werror; boundary doubles only, not platform",
+    "complete_platform": "pending selected3 actual platform TUs by root"
+  },
+  "required_platform_units": [
+    "telephony_observer_proxy__tel_state_registry_api",
+    "telephony_observer_proxy__tel_state_registry",
+    "telephony_state_registry_service__tel_state_registry"
+  ],
+  "runtime_tested": false,
+  "closed_requirements": 0
+}

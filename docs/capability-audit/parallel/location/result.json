@@ -85,7 +85,7 @@
   "requirements_review": [
     {
       "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
@@ -106,7 +106,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_district_route_pending_compile_provider_and_packaged_validation",
@@ -125,7 +125,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_live_state_pending_compile_and_packaged_validation",
@@ -141,7 +141,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_skiing_route_pending_compile_provider_and_packaged_validation",
@@ -160,7 +160,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
@@ -176,7 +176,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
@@ -194,7 +194,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
@@ -209,7 +209,7 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
@@ -224,7 +224,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implementation_repaired_pending_packaged_validation",
@@ -238,7 +238,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implementation_repaired_pending_packaged_validation",
@@ -252,7 +252,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implementation_repaired_pending_packaged_validation",
@@ -266,7 +266,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implementation_repaired_pending_packaged_validation",
@@ -280,7 +280,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implementation_repaired_pending_packaged_validation",
@@ -294,7 +294,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implementation_repaired_pending_packaged_validation",
@@ -308,7 +308,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "existing_implementation_pending_packaged_validation",
@@ -322,7 +322,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:setRttCapability",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "existing_implementation_pending_packaged_validation",
@@ -336,7 +336,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:startRtt",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "existing_implementation_pending_packaged_validation",
@@ -350,7 +350,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.call:stopRtt",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "existing_implementation_pending_packaged_validation",
@@ -364,7 +364,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
@@ -380,7 +380,7 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
@@ -396,7 +396,7 @@
     },
     {
       "id": "behavior:location-provider-backends-missing",
-      "group": "定位",
+      "group": "\u5b9a\u4f4d",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "remaining_implementation_and_validation",
@@ -414,7 +414,7 @@
     },
     {
       "id": "behavior:telephony-no-modem-or-sim",
-      "group": "电话与通信",
+      "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
       "status": "remaining_implementation_and_validation",
@@ -553,6 +553,11 @@
       "command": "Communication strict guard2 plus actual complete44-file patch forward application",
       "result": "PASS:original/prefix1/final exact states and idempotence/rejection cases; raw CRLF binary enum unchanged. No current actual compile/link result claimed.",
       "evidence": "round8-access-token-gn.json"
+    },
+    {
+      "command": "Communication strict guards and actual complete44-byte forward chain plus actual broker/proxy declaration compilation and producer/NAPI regressions",
+      "result": "PASS:guard2 and runtime3; independently reproduced pre-fix missing-override failure with -Werror. Actual platform selected3 revalidation pending. No runtime/closure.",
+      "evidence": "round8-native-contract-fixes.json"
     }
   ],
   "integration_requests": [
@@ -620,6 +625,10 @@
     {
       "kind": "round8_communication_declared_SDK_dependency",
       "action": "Integrate the44-target two-patch communication component. Actual observer and observer_ani_cxx declare access_token:libaccesstoken_sdk. Root may follow real provider public configs for labeled TU diagnostics; fresh GN/native dependency propagation and actual three failed consumers plus Rust dylib still require verification. No missing-header workaround or API stub is provided."
+    },
+    {
+      "kind": "round8_native_selected3_and_complete_Rust",
+      "action": "Recompile both proxy target variants plus registry_service with final44-file component. Never reuse failed04 proxies. Preserve no-undefined; complete private original-flags API solink then full current6-module Rust dylib link using successful source-bound CXX objects. Representative-runtime gate remains unpassed."
     }
   ],
   "remaining_gaps": [
@@ -777,7 +786,8 @@
     "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch": "c0bf33c522e59759810ab13de3a8215c53d6c9a33d3b4c4d6e1754b43a2d9ccd",
     "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144",
     "patches/common/base/location/location/api26_runtime/0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7",
-    "patches/common/base/telephony/state_registry/communication_state/0002-declare-access-token-public-SDK-dependencies.patch": "de993c4e58df61b6ac92ae08656c95299d42aea4145950badac15d04b999547b"
+    "patches/common/base/telephony/state_registry/communication_state/0002-declare-access-token-public-SDK-dependencies.patch": "de993c4e58df61b6ac92ae08656c95299d42aea4145950badac15d04b999547b",
+    "patches/common/base/telephony/state_registry/communication_state/0003-complete-native-observer-override-and-IPC-includes.patch": "865c2c2844e81d9fade2054a759c63253c36126164c154f3e9a7277924874306"
   },
   "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
   "round2_batch_date": "2026-10-16",
@@ -888,5 +898,7 @@
     "patches/common/base/telephony/state_registry/communication_state/README.md",
     "patches/common/base/telephony/state_registry/communication_state/source_states.json",
     "patches/common/base/telephony/state_registry/communication_state/verify_source.py"
-  ]
+  ],
+  "round8_native_base_commit": "631b2dadf6bd13892d509f28e8ded0b78dfd480b",
+  "round8_native_implementation": "Existing2 targets: all actual proxy callback override contracts and explicit service ipc_skeleton.h; no signature/ABI/transaction change. All44 exact original/prefix1/prefix2/final states guarded. Batch04 object truth is11 pass/6 fail;05 only4 selected pass."
 }
