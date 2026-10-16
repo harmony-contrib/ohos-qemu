@@ -28,3 +28,5 @@ patches/common/drivers/peripheral/audio/capture_loopback/files/vendor_capture.c 
 patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0001-index-real-system-holidays-and-bound-knowledge-responses.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 ci/capability-audit/fixtures/ril_communication/IRilCallback.idl -text whitespace=cr-at-eol
+# Preserve the exact UBSan diagnostic bytes from the first fresh-PCM host attempt.
+docs/capability-audit/parallel/media/round8-host-01.log -text whitespace=-blank-at-eol
