@@ -80,6 +80,7 @@ foreach(helper,
     deps = [ "$EXT_INNERKITS_ROOT/netvpnclient:net_vpn_manager_if" ]
     external_deps = [
       "c_utils:utils",
+      "init:libbegetutil",
       "ipc:ipc_single",
     ]
     subsystem_name = "communication"

@@ -23,6 +23,11 @@ class OpenvpnSourceInstallTests(unittest.TestCase):
         self.build = self.root / installer.BUILD
         self.build.parent.mkdir(parents=True)
         self.build.write_bytes(self.original)
+        self.native_cfg = self.root / installer.NATIVE_CFG
+        self.native_cfg.parent.mkdir(parents=True)
+        self.native_original = (ROOT / 'ci/capability-audit/fixtures/openvpn_source_install/netsysnative.cfg').read_bytes()
+        self.assertEqual(hashlib.sha256(self.native_original).hexdigest(), installer.NATIVE_CFG_SHA256)
+        self.native_cfg.write_bytes(self.native_original)
         self.archive = Path(self.temporary.name) / 'source.tar.gz'
         self.archive.write_bytes(b'isolated archive contract fixture')
 
@@ -58,6 +63,12 @@ class OpenvpnSourceInstallTests(unittest.TestCase):
         self.assertEqual(service['uid'], 'netsysnative')
         self.assertEqual(service['disabled'], 1)
         self.assertEqual(service['secon'], 'u:r:netsysnative:s0')
+        self.assertEqual(service['socket'][0]['name'], 'qemu_openvpn')
+        native = json.loads(first[installer.NATIVE_CFG])
+        original_native = json.loads(self.native_original)
+        native_service = next(s for s in native['services'] if s['name'] == 'netsysnative')
+        self.assertEqual(native_service['socket'].pop(0)['name'], 'qemu_openvpn_tunfd')
+        self.assertEqual(native, original_native)
         self.install()
         self.assertEqual(first, self.snapshot())
 
@@ -69,6 +80,17 @@ class OpenvpnSourceInstallTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'preserving edits'):
             self.install()
         self.assertEqual(before, self.snapshot())
+
+    def test_missing_or_modified_native_cfg_rejects_before_publication(self):
+        for content in (None, self.native_original + b'\ncaller change\n'):
+            with self.subTest(content=content is None):
+                self.native_cfg.unlink(missing_ok=True)
+                if content is not None:
+                    self.native_cfg.write_bytes(content)
+                before = self.snapshot()
+                with self.assertRaisesRegex(ValueError, 'netsysnative|preserving edits'):
+                    self.install()
+                self.assertEqual(before, self.snapshot())
 
     def test_changed_owned_input_and_gn_are_not_overwritten(self):
         self.install()

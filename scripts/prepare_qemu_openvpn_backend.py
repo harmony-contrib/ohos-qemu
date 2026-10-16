@@ -17,7 +17,11 @@ from openvpn_source_archive import validate as validate_archive
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = 'foundation/communication/netmanager_ext'
 POLICY = 'base/security/selinux_adapter'
+BASE = 'foundation/communication/netmanager_base'
+NATIVE_CFG = BASE + '/services/etc/init/netsysnative.cfg'
+NATIVE_CFG_SHA256 = 'e9dd94da52893eeeec00e0988bf9cbc1c46bb66289106e3b8643a310fd5f4419'
 REVISIONS = {PROJECT: '8c41289750820fb2ddb347b1205cee9a7b527388',
+             BASE: '9831989d54f490d046a632ab13d309580d2fa710',
              POLICY: 'cfc1d5b31a7438dbc87763f9222f00337221cf21'}
 BUILD = PROJECT + '/BUILD.gn'
 BUILD_SHA256 = '982285f8a99a4eadd4ea272fd718ce618e49dccad0f9a1975ac6c8ba036e4b4c'
@@ -85,7 +89,8 @@ def payloads(archive):
     destination = PROJECT + '/qemu_openvpn/'
     result = {destination + path.name: path.read_bytes()
               for path in sorted(COMPONENT.iterdir())
-              if path.is_file() and path.name not in POLICY_FILES}
+              if path.is_file() and path.name not in POLICY_FILES and path.name != 'netsysnative.cfg'}
+    result[NATIVE_CFG] = (COMPONENT / 'netsysnative.cfg').read_bytes()
     result.update({POLICY_BASE + target: (COMPONENT / source).read_bytes()
                    for source, target in POLICY_FILES.items()})
     result.update({destination + 'recipe/' + name: (ROOT / name).read_bytes()
@@ -141,8 +146,11 @@ def install(root, archive):
     for name, data in planned.items():
         path = checked(root, name)
         actual = read_optional(path)
+        if name == NATIVE_CFG and actual is None:
+            raise ValueError('fixed netsysnative init file required')
         if (actual is not None and actual != data and
                 not (name == BUILD and actual == original) and
+                not (name == NATIVE_CFG and digest(actual) == NATIVE_CFG_SHA256) and
                 previous_files.get(name) != digest(actual)):
             raise ValueError('unknown or modified OpenVPN input; preserving edits: ' + name)
         snapshots[name] = actual

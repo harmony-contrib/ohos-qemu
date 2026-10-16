@@ -26,6 +26,7 @@ LOGS = tuple(name + '.log' for name in (
     'make-openvpn', 'ELF-identity'))
 PROGRAMS = ('qemu_openvpn', 'qemu_openvpn_service', 'qemu_openvpn_tun')
 CONFIGS = {'etc/init/qemu_openvpn.cfg': 'qemu_openvpn.cfg',
+           'etc/init/netsysnative.cfg': 'netsysnative.cfg',
            'etc/param/qemu_openvpn.para.dac': 'qemu_openvpn.para.dac'}
 LICENSES = ('COPYING', 'COPYRIGHT.GPL')
 IMAGE_FILES = tuple('bin/' + name for name in PROGRAMS) + tuple(CONFIGS) + tuple(

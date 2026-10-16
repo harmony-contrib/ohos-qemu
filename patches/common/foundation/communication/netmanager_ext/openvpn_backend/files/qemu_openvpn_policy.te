@@ -15,3 +15,12 @@ allow qemu_openvpn_control_param tmpfs:filesystem associate;
 allow init qemu_openvpn_control_param:file { map open read relabelfrom relabelto };
 allow netsysnative qemu_openvpn_control_param:file { map open read };
 allow netsysnative qemu_openvpn_control_param:parameter_service set;
+
+# init creates named endpoints using each service's real setsockcreatecon.
+# The passed socket objects retain netsysnative as their socket domain; only
+# these two filesystem endpoints receive the dedicated file labels.
+type_transition init dev_unix_socket:sock_file qemu_openvpn_control_socket "qemu_openvpn";
+type_transition init dev_unix_socket:sock_file qemu_openvpn_tunfd_socket "qemu_openvpn_tunfd";
+allow init { qemu_openvpn_control_socket qemu_openvpn_tunfd_socket }:sock_file { create getattr setattr relabelto unlink write };
+allow netsysnative { qemu_openvpn_control_socket qemu_openvpn_tunfd_socket }:sock_file { getattr write };
+allow netsysnative self:unix_stream_socket { accept connect connectto create getattr getopt listen read setopt shutdown write };

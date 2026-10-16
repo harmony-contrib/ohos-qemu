@@ -15,6 +15,8 @@ import re
 import shlex
 import subprocess
 
+from gn_export_diagnostic import exported_includes
+
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
     'msdp_sensor': {
@@ -160,7 +162,7 @@ GROUPS = {
                   'locator_required_data_manager', 'location_napi_adapter',
                   'location_napi_entry', 'bluetooth_scan_result_callback_napi',
                   'ohos.geoLocationManager.impl', 'locator_service_proxy', 'locator_service_stub',
-                  'request_config', 'report_manager', 'napi_util'],
+                  'request_config', 'report_manager', 'napi_util', 'gnss_ability', 'gnss_event_callback'],
         'sources': {
             'locator_impl': 'frameworks/native/locator_sdk/source/locator_impl.cpp',
             'locator_ability': 'services/location_locator/locator/source/locator_ability.cpp',
@@ -232,16 +234,64 @@ GROUPS['location']['sources'].update({
     'request_config': 'frameworks/base_module/source/request_config.cpp',
     'report_manager': 'services/location_locator/locator/source/report_manager.cpp',
     'napi_util': 'frameworks/js/napi/source/napi_util.cpp',
+    **{name: 'services/location_gnss/gnss/source/' + name + '.cpp' for name in ('gnss_ability', 'gnss_event_callback')},
 })
 GROUPS['location']['targets'].update({
     'request_config': 'obj/base/location/location/frameworks/base_module/source/lbsbase_module/request_config.o',
     'report_manager': 'obj/base/location/location/services/location_locator/locator/source/lbsservice_locator/report_manager.o',
     'napi_util': 'obj/base/location/location/frameworks/js/napi/source/geolocationmanager/napi_util.o',
+    **{name: 'obj/base/location/location/services/location_gnss/gnss/source/lbsservice_gnss/' + name + '.o'
+       for name in ('gnss_ability', 'gnss_event_callback')},
 })
 GROUPS['knowledge_content']['extra_owned'] = [
     str(Path(name).relative_to('foundation/multimedia/media_library')) for name in json.loads(
         (ROOT / 'patches/common/foundation/multimedia/media_library/knowledge_holiday_index/manifest.json').read_text())['files']
 ]
+# These groups preserve original product flags. New dependency exports and
+# feature selections are explicitly labeled diagnostics until fresh GN runs.
+GROUPS['recorder'] = {
+    'project': 'foundation/multimedia/player_framework',
+    'revision': '3d3b1231db27561e8978652d7ae867c12f488d9a',
+    'components': ['recorder_configuration'], 'units': ['native_avrecorder'],
+    'sources': {'native_avrecorder': 'frameworks/native/capi/recorder/native_avrecorder.cpp'},
+    'targets': {'native_avrecorder': 'obj/foundation/multimedia/player_framework/frameworks/native/capi/recorder/avrecorder/native_avrecorder.o'},
+    'required_header': None, 'supported_products': ['arm64_virt'],
+}
+NETWORK_BASE = 'foundation/communication/netmanager_base'
+NETWORK_EXT = 'foundation/communication/netmanager_ext'
+GROUPS['vpn_broker'] = {
+    'project': NETWORK_EXT, 'revision': '8c41289750820fb2ddb347b1205cee9a7b527388',
+    'additional_projects': {NETWORK_BASE: '9831989d54f490d046a632ab13d309580d2fa710'},
+    'components': [],
+    'component_paths': [NETWORK_BASE + '/' + name for name in (
+        'optional_settings_read', 'qemu_openvpn_control', 'qemu_openvpn_broker')] +
+        [NETWORK_EXT + '/' + name for name in ('always_on_vpn', 'vpn_config_arrays', 'vpn_config_store',
+         'vpn_openvpn_fields', 'connected_vpn_nullable', 'openvpn_lifecycle', 'openvpn_session',
+         'vpn_callback_dispatch', 'netvpn_callback_unused', 'openvpn_broker')],
+    'payloads': {NETWORK_EXT + '/qemu_openvpn/' + p.name: str(p.relative_to(ROOT))
+        for p in (ROOT / 'patches/common' / NETWORK_EXT / 'openvpn_backend/files').iterdir()
+        if p.suffix in ('.h', '.cpp')},
+    'units': ['system_vpn_wrapper', 'multi_vpn_manager', 'networkvpn_service',
+              'open_vpn_ctl', 'net_vpn_impl', 'multi_vpn_helper',
+              'network_vpn_service_proxy', 'network_vpn_service_stub'],
+    'source_paths': {
+        NETWORK_UNIT: NETWORK_BASE + '/services/netmanagernative/src/' + DIRECTORY + '/' + NETWORK_UNIT + '.cpp'
+        for NETWORK_UNIT, DIRECTORY in (('system_vpn_wrapper', 'netsys'), ('multi_vpn_manager', 'manager'))},
+    'targets': {
+        NETWORK_UNIT: 'obj/' + NETWORK_BASE + '/services/netmanagernative/src/' + DIRECTORY + '/netsys_native_manager/' + NETWORK_UNIT + '.o'
+        for NETWORK_UNIT, DIRECTORY in (('system_vpn_wrapper', 'netsys'), ('multi_vpn_manager', 'manager'))},
+    'diagnostic_feature_defines': ['OHOS_QEMU_OPENVPN'],
+    'generate_vpn_idl': True,
+    'required_header': None, 'supported_products': ['arm64_virt'],
+    'scope': 'eight_complete_current_VPN_broker_TUs_actual_product_flags_explicit_new_GN_define_NOT_fresh_GN_link_runtime',
+}
+for name in ('networkvpn_service', 'open_vpn_ctl', 'net_vpn_impl', 'multi_vpn_helper'):
+    GROUPS['vpn_broker']['source_paths'][name] = NETWORK_EXT + '/services/vpnmanager/src/' + name + '.cpp'
+    GROUPS['vpn_broker']['targets'][name] = 'obj/' + NETWORK_EXT + '/services/vpnmanager/src/net_vpn_manager/' + name + '.o'
+for name, target in (('network_vpn_service_proxy', 'net_vpn_manager_if'),
+                     ('network_vpn_service_stub', 'networkvpn_interface_stub')):
+    GROUPS['vpn_broker']['targets'][name] = ('obj/out/arm64_virt/gen/' + NETWORK_EXT +
+        '/interfaces/innerkits/netvpnclient/' + target + '/' + name + '.o')
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
@@ -334,7 +384,9 @@ def generate_location_idl(root, output, staged, product):
     interface = (generated / 'ilocator_service.h').read_text()
     if not all(name in interface for name in ('GetLocationIconStatus', 'StartBluetoothSearch', 'StopBluetoothSearch',
                                              'StartDistrictLocating', 'StartLocatingWithSportsType',
-                                             'GetPostProcessingTrack', 'CheckDistrictAccess')):
+                                             'GetPostProcessingTrack', 'CheckDistrictAccess',
+                                             'AddFusionFence', 'RemoveFusionFence', 'IsFusionFenceSupported',
+                                             'ReleaseFusionFence')):
         raise ValueError('generated interface omits candidate methods')
     return generated, root / gen_relative, {
         'original_argv': original, 'executed_argv': argv,
@@ -358,15 +410,20 @@ def run(args):
         if actual != revision:
             raise ValueError('fixed source revision required: ' + name)
     output.mkdir(parents=True, exist_ok=False)
-    components = [ROOT / 'patches/common' / project / name for name in group['components']]
+    components = ([ROOT / 'patches/common' / project / name for name in group['components']] +
+                  [ROOT / 'patches/common' / name for name in group.get('component_paths', [])])
     owned = sorted(set(patch_paths(components)) |
                    {str(project / name) for name in group.get('extra_checkout', [])} |
-                   {str(project / name) for name in group.get('extra_owned', [])})
+                   {str(project / name) for name in group.get('extra_owned', [])} |
+                   set(group.get('payloads', {})))
     if any(not any(Path(name).is_relative_to(p) for p in projects) for name in owned):
         raise ValueError('component targets a different project')
     before = {name: sha(root / name) if (root / name).is_file() else None for name in owned}
     recipe = [Path(__file__), ROOT / 'patches/lib/apply_patch.sh',
               ROOT / 'patches/lib/apply_component_stack.py', ROOT / 'patches/lib/exact_source_states.py',
+              ROOT / 'patches/lib/apply_exact_component.py',
+              *(ROOT / name for name in group.get('payloads', {}).values()),
+              ROOT / 'ci/capability-audit/gn_export_diagnostic.py',
               *(p for c in components for p in c.rglob('*')
                if p.is_file() and '__pycache__' not in p.parts)]
     recipe_before = {str(p): sha(p) for p in recipe}
@@ -386,6 +443,10 @@ def run(args):
             if existing:
                 subprocess.run(['git', '-C', str(checkout), 'checkout', revision, '--', *existing],
                                stdout=log, stderr=subprocess.STDOUT, check=True)
+    for name, payload in group.get('payloads', {}).items():
+        destination = staged / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((ROOT / payload).read_bytes())
     for attempt in (1, 2):
         for component in components:
             with (output / f'apply-{component.name}-{attempt}.log').open('xb') as log:
@@ -399,6 +460,17 @@ def run(args):
             directory, original_directory, proof = generate_location_idl(root, output, staged, product)
             generated[product] = (directory, original_directory)
             generated_report[product] = proof
+    if group.get('generate_vpn_idl'):
+        from compile_always_on_vpn import generate, IDL
+        for product in args.product:
+            directory = output / ('generated-' + product)
+            directory.mkdir()
+            proof, entries = generate(root, root / 'out' / product, staged, directory)
+            generated[product] = (directory / 'generated', root / 'out' / product / 'gen' / IDL)
+            generated_report[product] = {**proof,
+                'generated_sha256': proof['output_sha256'],
+                'prior_generated_sha256': {entry['name'].removeprefix(str(generated[product][1]) + '/'): sha(Path(entry['name']))
+                    for entry in entries}}
     overlay = output / 'headers.json'
     overlay.write_text(json.dumps({'version': 0, 'roots': [
         {'type': 'file', 'name': str(root / name), 'external-contents': str(staged / name),
@@ -410,7 +482,7 @@ def run(args):
     report = {'status': 'fail', 'group': args.group, 'source_revision': group['revision'],
               'source_revisions': projects,
               'scope': group.get('scope', 'complete_patched_product_TUs_ONLY_NOT_link_package_runtime'),
-              'components': group['components'], 'source_before_sha256': before,
+              'components': [str(c.relative_to(ROOT / 'patches/common')) for c in components], 'source_before_sha256': before,
               'candidate_sha256': {name: sha(staged / name) for name in owned},
               'recipe_sha256': recipe_before, 'objects': [], 'first_artifact_behavior_gate_passed': False}
     if generated_report:
@@ -429,7 +501,8 @@ def run(args):
                 argv = shlex.split(query.stdout.splitlines()[-1])
                 if Path(argv[0]).name == 'ccache':
                     argv.pop(0)
-                if group.get('generate_idl') and unit in ('locator_service_proxy', 'locator_service_stub'):
+                if (group.get('generate_idl') and unit in ('locator_service_proxy', 'locator_service_stub') or
+                        group.get('generate_vpn_idl') and unit in ('network_vpn_service_proxy', 'network_vpn_service_stub')):
                     source = generated[product][1] / (unit + '.cpp')
                     candidate_source = generated[product][0] / (unit + '.cpp')
                 else:
@@ -453,6 +526,19 @@ def run(args):
                         raise ValueError('conflicting product feature define; preserving original command')
                     if flag not in argv:
                         additions.append(flag)
+                if args.group == 'knowledge_content' and unit in (
+                        'native_module_ohos_photoaccess_helper', 'knowledge_content_napi', 'knowledge_content_query'):
+                    export_flags, export_proof = exported_includes(root,
+                        'base/security/access_token/interfaces/innerkits/accesstoken/BUILD.gn', 'accesstoken')
+                    argv += export_flags
+                    row['diagnostic_public_export'] = export_proof
+                    row['fresh_GN_dependency_selection_tested'] = False
+                if args.group == 'vpn_broker' and unit in ('system_vpn_wrapper', 'multi_vpn_manager'):
+                    export_flags, export_proof = exported_includes(root,
+                        'base/startup/init/interfaces/innerkits/BUILD.gn', 'exported_header_files')
+                    argv += export_flags
+                    row['diagnostic_public_export'] = export_proof
+                    row['fresh_GN_dependency_selection_tested'] = False
                 if additions:
                     argv += additions
                     row['diagnostic_feature_defines_added'] = additions

@@ -3021,6 +3021,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_rtt_lifecycle_component.log"
   python3 "${SCRIPT_DIR}/prepare_ril_communication_callback.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_ril_communication_callback.log"
+  bash "${PATCH_ROOT}/common/base/telephony/state_registry/communication_state/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_communication_state_component.log"
   bash "${SCREENLOCK_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_screenlock_enums_component.log"
   bash "${I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3083,6 +3085,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_connected_vpn_nullable_component.log"
   bash "${QEMU_OPENVPN_CONTROL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_openvpn_control_component.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_base/qemu_openvpn_broker/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_openvpn_broker_component.log"
   bash "${OPENVPN_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_openvpn_lifecycle_component.log"
   bash "${OPENVPN_SESSION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3091,6 +3095,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_callback_dispatch_component.log"
   bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/netvpn_callback_unused/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_netvpn_callback_unused_component.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/openvpn_broker/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_openvpn_broker_component.log"
   python3 "${SCRIPT_DIR}/openvpn_source_archive.py" --output "${QEMU_OPENVPN_SOURCE_ARCHIVE}" \
     2>&1 | tee "${CACHE_ROOT}/logs/check_qemu_openvpn_source_archive.log"
   python3 "${SCRIPT_DIR}/prepare_qemu_openvpn_backend.py" --source-root "${OHOS_ROOT}" \
@@ -3264,6 +3270,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_knowledge_content_component.log"
   bash "${KNOWLEDGE_HOLIDAY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_knowledge_holiday_component.log"
+  bash "${PATCH_ROOT}/common/foundation/multimedia/player_framework/recorder_configuration/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_recorder_configuration_component.log"
   bash "${SQLITE_EXPRESSION_BLOB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_sqlite_expression_blob_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

@@ -14,6 +14,7 @@ import subprocess
 from compile_always_on_vpn import TARGETS, query
 from compile_native_repair_batch import PRODUCTS, verify_object
 from compile_taskpool_thread_info import digest
+from gn_export_diagnostic import exported_includes
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPONENT = ROOT / 'patches/common/foundation/communication/netmanager_ext/openvpn_backend/files'
@@ -57,10 +58,16 @@ def run(args):
         raise ValueError('actual SYSVPN-enabled product client command required')
     library = cwd / 'communication/netmanager_ext/libnet_vpn_manager_if.z.so'
     library_before = digest(library)
+    init_flags, init_export = exported_includes(source, 'base/startup/init/interfaces/innerkits/BUILD.gn',
+                                               'exported_header_files')
+    init_library = cwd / 'startup/init/libbegetutil.z.so'
+    init_library_before = digest(init_library)
     report = {'status': 'fail', 'product': args.product,
               'scope': 'whole_native_helpers_product_client_flags_and_executable_links_ONLY_NOT_fresh_GN_selection_or_runtime',
               'original_product_argv': original, 'inputs_sha256': checksums,
               'library_sha256': library_before, 'objects': [],
+              'init_public_export_diagnostic': init_export,
+              'init_library_sha256': init_library_before,
               'actual_client_header_before_sha256': header_before,
               'current_client_header_sha256': digest(header),
               'client_header_component_sha256': {p.name: digest(p) for p in warning_component.iterdir() if p.is_file()},
@@ -78,7 +85,8 @@ def run(args):
             argv[argv.index('-c') + 1] = str(unit)
             argv[argv.index('-o') + 1] = str(obj)
             argv[argv.index('-MF') + 1] = str(dep)
-            argv += ['-Wall', '-Wextra', '-Werror']
+            argv += ['-Wall', '-Wextra', '-Werror', *init_flags]
+            row['fresh_GN_dependency_selection_tested'] = False
             argv += ['-ivfsoverlay', str(overlay)]
             row['compile_argv'] = argv
             log = output / (name + '-compile.log')
@@ -97,9 +105,10 @@ def run(args):
                 raise ValueError('actual current helper source/headers were not consumed')
             binary = output / name
             argv = [str(tools / 'clang++'), '--target=' + arch + '-linux-ohos',
-                    '--sysroot=' + str(cwd / 'obj/third_party/musl'), str(obj), str(library),
+                    '--sysroot=' + str(cwd / 'obj/third_party/musl'), str(obj), str(library), str(init_library),
                     '-Wl,-rpath-link=' + str(cwd / 'communication/netmanager_base'),
-                    '-Wl,-rpath-link=' + str(cwd / 'communication/netmanager_ext'), '-o', str(binary)]
+                    '-Wl,-rpath-link=' + str(cwd / 'communication/netmanager_ext'),
+                    '-Wl,-rpath-link=' + str(cwd / 'startup/init'), '-o', str(binary)]
             row['link_argv'] = argv
             log = output / (name + '-link.log')
             with log.open('xb') as stream:
@@ -117,7 +126,8 @@ def run(args):
         save()
     report['inputs_unchanged'] = (checksums == {p.name: digest(p) for p in originals} ==
                                   {p.name: digest(p) for p in inputs.iterdir()})
-    report['library_unchanged'] = library_before == digest(library)
+    report['library_unchanged'] = (library_before == digest(library) and
+                                   init_library_before == digest(init_library))
     report['client_header_inputs_unchanged'] = (digest(source / header_relative) == header_before and
         digest(header) == report['current_client_header_sha256'])
     if report['inputs_unchanged'] and report['library_unchanged'] and all(

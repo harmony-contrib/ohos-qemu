@@ -218,3 +218,8 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 
 总账仍是 281 项、已关 199、未关 82；本轮新增核销 0，六包完整验收 0/6，代表包
 完整运行门禁未通过，其余五包尚未开始。
+
+
+2026-10-16 当前集成追加：定位 round5（worker 94d765b，集成 264c020）通过与其他四组互斥的 upstream scope 检查，移除补造卫星，修复 GNSS 配置初始化和失败传播，27 项 host 回归通过。VPN broker Linux 第三次完整回归固定 e72fbea、GCC/G++、保留 Werror/ASan/UBSan，41 项全部通过、0 跳过；前两次环境与 fixture 失败日志原样保留。证据：`/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-broker-complete-Linux-host-03/artifacts/evidence.json`。
+
+主构建已接入 base/ext broker、完整 5A 通信状态组件及 Recorder 配置修复。VPN 两个私有监听 socket 由 init 创建并传递，netsysnative 原有配置逐字段保留；源安装 7 项事务/未知修改测试通过。诊断编译器新增真实 GN public config 字面 include 导出来源记录，保留原产品所有编译保护，并明确该补充不证明新 GN 的真实依赖选择。新增完整 GNSS/Recorder/VPN TU 编译检查，等待集中结果。以上仍为源码和诊断阶段，82 项仍待关闭、代表包运行门禁 false、验收交付 0/6，其余五包未启动。

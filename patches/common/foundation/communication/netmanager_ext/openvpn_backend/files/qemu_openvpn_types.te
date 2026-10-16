@@ -2,3 +2,5 @@
 type qemu_openvpn_exec, exec_attr, system_file_attr, file_attr;
 type qemu_openvpn_data_file, data_file_attr, file_attr;
 type qemu_openvpn_control_param, parameter_attr;
+type qemu_openvpn_control_socket, dev_attr, file_attr;
+type qemu_openvpn_tunfd_socket, dev_attr, file_attr;
