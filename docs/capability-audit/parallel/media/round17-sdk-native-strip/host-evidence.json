@@ -1,0 +1,32 @@
+{
+  "scope": "mocked_strip_output_and_receipt_counterexamples_ONLY_NOT_actual_strip_SDK_or_guest_evidence",
+  "base_commit": "0f1f4eef8789f74cc07d3b249dabb17673b1ec98",
+  "argv": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "-m",
+    "unittest",
+    "test_batch_system_sdk_native_strip",
+    "-v"
+  ],
+  "environment": {
+    "LC_ALL": "C",
+    "LC_CTYPE": "C",
+    "LANG": "C",
+    "PYTHONPATH": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit"
+  },
+  "exit_code": 0,
+  "seconds": 0.26662495790515095,
+  "log": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round17-sdk-native-strip/host-tests-01.log",
+    "sha256": "0aa1128d42f550d8417446e084fb6e01ee6c4f0b740afdaaf50a3aa74238fc19"
+  },
+  "source_files": {
+    "ci/capability-audit/batch_system_sdk_native_strip.py": "ee211a9a4d3c83bb3aed48acc9c8fa347947e9417469eae38cfcd211f768f267",
+    "ci/capability-audit/test_batch_system_sdk_native_strip.py": "7344b412857fcc98a5fe27b00cfa4a3464b404837c08c9ced8b73a5fb4882903"
+  },
+  "actual_strip_executed": false,
+  "SDK_executed": false,
+  "native_compilation_executed": false,
+  "guest_commands_executed": false,
+  "first_artifact_behavior_gate_passed": false
+}
