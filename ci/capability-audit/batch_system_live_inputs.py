@@ -13,6 +13,11 @@ BUNDLE = 'org.harmonycontrib.liveinputaudit'
 PERMISSIONS = ['ohos.permission.ACCELEROMETER', 'ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']
 SOCKETS = {'gnss': '/dev/unix/socket/qemu_gnss/input', 'sensor': '/dev/unix/socket/qemu_sensor/input'}
 SCOPE = 'new_package_external_input_to_ordinary_public_callbacks_NOT_all_MSDP_or_first_artifact_gate'
+SDK_PRODUCT = {'name': 'default', 'compileSdkVersion': '26.0.0', 'compatibleSdkVersion': '26.0.0',
+               'targetSdkVersion': '26.0.0', 'runtimeOS': 'OpenHarmony'}
+HVIGOR_CONFIG = {'modelVersion': '6.0.0', 'dependencies': {}, 'execution': {'daemon': False, 'parallel': False}}
+HVIGOR_APP = "import { appTasks } from '@ohos/hvigor-ohos-plugin';\nexport default { system: appTasks, plugins: [] };\n"
+HVIGOR_HAP = "import { hapTasks } from '@ohos/hvigor-ohos-plugin';\nexport default { system: hapTasks, plugins: [] };\n"
 
 
 def digest(path):
@@ -119,7 +124,9 @@ def sdk_contract(sdk):
 def project_files(project):
     # Source/native inputs, not generated build output/cache state.
     project = Path(project)
-    names = ['AppScope/app.json5', 'build-profile.json5', 'entry/src/main/module.json5',
+    names = ['AppScope/app.json5', 'build-profile.json5', 'oh-package.json5', 'entry/oh-package.json5',
+             'entry/build-profile.json5', 'hvigor/hvigor-config.json5', 'hvigorfile.ts', 'entry/hvigorfile.ts',
+             'entry/src/main/cpp/types/libliveinputaudit/oh-package.json5', 'entry/src/main/module.json5',
              'entry/src/main/ets/pages/Index.ets', 'entry/src/main/ets/entryability/EntryAbility.ets',
              'socket_probe.cpp', 'entry/src/main/cpp/types/libliveinputaudit/Index.d.ts']
     return {name: digest(project / name) for name in names}
@@ -136,6 +143,11 @@ def verify_project(project, sdk, run_id, arch):
             value['run_id'] != run_id or value['arch'] != arch or value['bundle'] != BUNDLE or
             value['fixture_hashes'] != {p.name: digest(p) for p in FIXTURES.iterdir() if p.is_file()}):
         raise ValueError('actual compiled public caller/source/SDK fixture changed')
+    if (read_json(project / 'build-profile.json5')['app']['products'] != [SDK_PRODUCT] or
+            read_json(project / 'hvigor/hvigor-config.json5') != HVIGOR_CONFIG or
+            (project / 'hvigorfile.ts').read_text() != HVIGOR_APP or
+            (project / 'entry/hvigorfile.ts').read_text() != HVIGOR_HAP):
+        raise ValueError('actual OpenHarmony API26/Hvigor6 build configuration changed')
     module = read_json(project / 'entry/src/main/module.json5')['module']
     if sorted(x['name'] for x in module['requestPermissions']) != sorted(PERMISSIONS):
         raise ValueError('ordinary HAP permissions changed')

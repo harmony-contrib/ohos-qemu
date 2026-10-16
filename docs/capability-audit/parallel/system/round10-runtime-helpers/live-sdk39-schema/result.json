@@ -1,0 +1,24 @@
+{
+  "status": "pass_light_schema_guards_only",
+  "baseline": "e7b5ffa42a36cee5f23ce5f4cf37d3ddd94ea9eb",
+  "fixes": [
+    "actual LinuxSDK39 validated OpenHarmony/26.0.0 compile+compatible+target product schema",
+    "real Hvigor6 root appTasks and entry hapTasks",
+    "modelVersion6 dependency/execution daemon=false parallel=false config",
+    "guard all build/package/Hvigor input hashes and independently check expected build schema"
+  ],
+  "tests": {
+    "passed": 17,
+    "command": "python3 -m unittest discover -s ci/capability-audit -p batch_system_test_live_inputs.py -v"
+  },
+  "reference": "Root already passed batch_apps_run_contact_picker_runtime.py prepare_seed scaffold",
+  "actual_SDK_metadata_read": true,
+  "SDK_native_or_HAP_compile_executed": false,
+  "ETS_business_changed": false,
+  "normal_permissions_changed": false,
+  "remaining_gaps": [
+    "Root must perform actual LinuxSDK39/Hvigor build, legitimate normal HAP signing and same-package runtime validation; no generator metadata override required or permitted to hide this contract."
+  ],
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false
+}
