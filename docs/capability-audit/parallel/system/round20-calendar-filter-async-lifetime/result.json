@@ -1,0 +1,244 @@
+{
+  "schema": 1,
+  "agent": "system",
+  "round": "20-calendar-filter-async-lifetime",
+  "status": "source_candidate_light_model_and_patch_pass_native_runtime_unverified",
+  "created_utc": "2026-10-16T21:16:37.187593+00:00",
+  "base_commit": "331b5fd5e3e82fd88c753942ead67901b7bed3e8",
+  "finding_ids": [
+    "behavior:calendar-lifecycle-device-difference"
+  ],
+  "closed_findings": 0,
+  "upstream_targets": [
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_napi.cpp",
+    "applications/standard/calendardata/calendarmanager/napi/src/napi_queue.cpp"
+  ],
+  "source_sha256": {
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_napi.cpp": {
+      "before_sha256": "c221a9d84da1e727fb0c1f74c1dfbe97202eacb81aaaeacf5dbdb60cc237a612",
+      "after_sha256": "ac7988d8392eb0a4b28857e89e4e2735ed48421639fa5c8c51b40fb48e029258",
+      "payload_path": "calendarmanager/napi/src/calendar_napi.cpp.gz.b64",
+      "payload_encoding": "gzip_base64"
+    },
+    "applications/standard/calendardata/calendarmanager/napi/src/napi_queue.cpp": {
+      "before_sha256": "ebe49fef63a257561072c52890130e28be5bebf2d4d09aa670ef6c518f2cc8a5",
+      "after_sha256": "0a08657a0f8b8d021a9725d73d14f7b6ac7f2c8f3ecfb59ee127ef85e78837a1"
+    }
+  },
+  "unchanged_dependencies": {
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h": "578ce09c60602e04cd46c55f8a4a6b56d1f81ea47333d4be75ff4d19dfce8c3e",
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_napi.h": "feb38d325f6a2b77daea6bfa2ea6765dd49d803602f09cdef1b232b301b9e5ed",
+    "applications/standard/calendardata/calendarmanager/napi/include/event_filter_napi.h": "22da7c0bf1fe38bad6242564504f2a94fbbf5debef6c3c87921e0241e7cf00b8",
+    "applications/standard/calendardata/calendarmanager/napi/include/napi_queue.h": "cb89b7fc8a4840d2f4a7cce8f466ac4d87cb12ee73486e8c944506bcff53c48e",
+    "applications/standard/calendardata/calendarmanager/napi/include/napi_util.h": "afe872d7f744ee19c6a5189b8c2b928b28d70be8accaf310f0b381d97b6971b6",
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp": "49f933bc39c943f6aee6beecb1a24a89d5d9933048dfe7b73117393746934b2b",
+    "applications/standard/calendardata/calendarmanager/napi/src/event_filter_napi.cpp": "62a7ca655952bad77f722329f8f19d19e903f12750d4b4b5323718faf73b1d9d",
+    "applications/standard/calendardata/calendarmanager/napi/src/napi_util.cpp": "476452c69c4b447265961c1ded3b937fd795f49cdef4218b1c51614cbd8e9e2b"
+  },
+  "manifest": {
+    "path": "patches/common/applications/standard/calendardata/filter_async_lifetime/manifest.json",
+    "sha256": "d111b64a94364dbaa83dbe35e00933af9fc63a309643ba61a053ef8b8f486ac1",
+    "size": 3743
+  },
+  "recipe_files": {
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/0001-retain-native-filter-through-async-completion.patch": "648af287246a4ba76d1e3391b3bcde345dc1761e91ca5423db744689cc51179e",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/README.md": "42b0b80171e026642c7faa1a8af929f860df0043d5ac4e821e7ecd7b7ffdf980",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/apply.py": "71a8e49e2237f95211067e0653ebc223bd807da048bbaa934d38d7d5252a6612",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/apply.sh": "8b5137640644822a480d15d97b11ed67d0f10d626762e32863faf1f5d9772313",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/files/calendarmanager/napi/src/calendar_napi.cpp.gz.b64": "e197c8ffb63478ea665f0778b6ce447f8afc5aff231dbe7381c3876d7060de29",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/files/calendarmanager/napi/src/napi_queue.cpp": "0a08657a0f8b8d021a9725d73d14f7b6ac7f2c8f3ecfb59ee127ef85e78837a1",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/manifest.json": "d111b64a94364dbaa83dbe35e00933af9fc63a309643ba61a053ef8b8f486ac1",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/ownership_model.py": "c71d5a1b233e33c603fbc006f609626c91d20045e302ee86d4509d79c2c3ceba",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/00-calendar_manager_napi.h.gz.b64": "a74073d90925eb9be11f4f8a4f2e72ae9b526c0805f1ea6c7450b061e686a079",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/01-calendar_napi.h.gz.b64": "bb1363b91fb4747abd8d73a597404d24a85e1af52c49713c127e4e1e7ebee89a",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/02-event_filter_napi.h.gz.b64": "1aa64e73e2ae17ed0a8dd999fc5fd92b06ee59df6a6a29355558ae05e5e2b159",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/03-napi_queue.h.gz.b64": "d2b822cb366a7f763672a9307d13068d092050c9b411d9eb6855a0f663f198a9",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/04-napi_util.h.gz.b64": "0ce9421f1880f7136e37d854bbaffcc7fdf7b3ccc87d5beb94d6a7ee9c2a4cbe",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/05-calendar_manager_napi.cpp.gz.b64": "5766e58c490546f7800c9644b8fda4f71785c0861100b3da33e63d79bbd7ce0d",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/06-calendar_napi.cpp.gz.b64": "28200a3f5cecdc5d666cb2dbe142f3dfcff5a5bbd955ff8b413e6d982858ec0b",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/07-event_filter_napi.cpp.gz.b64": "881cfd424220394e26f14a1aa7455fcb17a7eab95ea3c0388cd588814af0ef83",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/08-napi_queue.cpp.gz.b64": "f1cbb07a5ce4a6ac68750462e39c37f8dee81ff7c65abb49decce266579c576a",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/predecessor/09-napi_util.cpp.gz.b64": "387628baf26efeca9a76a98f15b0c92c9250446940d8bf88646b8edaa476adce",
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/verify_source.py": "f6c63aa168f2b8ef291c829936ea158ab8817caa3716eec189d8fb5caa267673",
+    "ci/capability-audit/test_batch_system_calendar_filter_async_lifetime.py": "e6cc5bd062c0212baf49749454a65b2c6c3115bd48bc759611d861d6f72dd64b"
+  },
+  "source_evidence": {
+    "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/source-evidence.json",
+    "sha256": "ee1c8e1b69141ba46c8add429764498074f1c05950c04e3735d891c78bb4db02",
+    "size": 7778
+  },
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 ci/capability-audit/test_batch_system_calendar_filter_async_lifetime.py -v",
+      "scope": "Actual source guard/transaction/patch execution plus source-constrained executable ownership/scheduling MODEL. No C++/engine/guest execution.",
+      "runs": [
+        {
+          "sequence": 1,
+          "exit_code": 1,
+          "python_tests": 12,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-01.log",
+            "sha256": "0aa9bcc1875cf46b93936b7cd1a944bb0c0c6e096a6b2d156cd29c25880411bc",
+            "size": 3622
+          }
+        },
+        {
+          "sequence": 2,
+          "exit_code": 0,
+          "python_tests": 12,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-02.log",
+            "sha256": "bf2c1ff27f28344d1c7574fa9756e2dbdcd2d0e734ab3ff3d03390cb5d016463",
+            "size": 2079
+          }
+        },
+        {
+          "sequence": 3,
+          "exit_code": 0,
+          "python_tests": 13,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-03.log",
+            "sha256": "8496013fb98a48ce90c819a9b8e5018e3fbe3e981dce675d577f4509161153a2",
+            "size": 2252
+          }
+        },
+        {
+          "sequence": 4,
+          "exit_code": 0,
+          "python_tests": 13,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-04.log",
+            "sha256": "67837755eb702a44331e0daf16a6a808bd0b3e072f5284bf3ef007f7dbbefec2",
+            "size": 2252
+          }
+        },
+        {
+          "sequence": 5,
+          "exit_code": 1,
+          "python_tests": 13,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-05.log",
+            "sha256": "00e721ef4573e11cebf7fe21c7fbabe57aa18e6f4485a58ac012c3c2ee083e84",
+            "size": 3238
+          }
+        },
+        {
+          "sequence": 6,
+          "exit_code": 0,
+          "python_tests": 13,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-06.log",
+            "sha256": "3b200e028ac9fe5f0e8449be5e5d2c7dfb5547f7db190ea8467d9ddfc1e6b7e1",
+            "size": 2252
+          }
+        },
+        {
+          "sequence": 7,
+          "exit_code": 0,
+          "python_tests": 13,
+          "evidence": {
+            "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-07.log",
+            "sha256": "ab7b872a31d6ec72972db81e5ca7f0f70c9c092924424d4e742920443407df9c",
+            "size": 2252
+          }
+        }
+      ],
+      "final": {
+        "exit_code": 0,
+        "python_tests": 13,
+        "evidence": {
+          "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/host-tests-07.log",
+          "sha256": "ab7b872a31d6ec72972db81e5ca7f0f70c9c092924424d4e742920443407df9c",
+          "size": 2252
+        }
+      },
+      "model_boundaries": [
+        "original raw wrapper finalized before worker produces model UAF counterexample",
+        "original failed enqueue loses pending promise",
+        "native snapshot survives wrapper GC and is released once",
+        "zero-argument no filter; invalid unwrap/receiver/null wrapper/null native/keys",
+        "promise and callback creation/enqueue/cancel/output failure paths",
+        "self/callback ref or promise setup failure synchronous throw",
+        "environment exit before/after worker; null complete env; callback reentry",
+        "failed hook unregister leaves independent environment token, not finished context",
+        "two simultaneous requests share one native filter; cancel one and complete the other"
+      ],
+      "static_source_boundaries": [
+        "GetEvents worker contains no wrapper access, unwrap or NAPI calls",
+        "queue worker / cleanup hook contain no NAPI calls",
+        "thirteen actual existing queue callers return queue result directly",
+        "two-target review patch replays exactly to complete pinned postimages",
+        "unknown/mixed/dependency drift fail before replacing source; failed second rename restores both original files"
+      ]
+    }
+  ],
+  "intermediate_failures": [
+    {
+      "sequence": 1,
+      "reason": "Review patch serialization omitted no-final-newline marker for original napi_queue.cpp; exact installer/model cases already passed.",
+      "additional_log": {
+        "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/patch-check-01-failed.log",
+        "sha256": "9780563b00e066041906e76627290576f57765519f5d5b71714018251ee3e904",
+        "size": 42
+      }
+    },
+    {
+      "sequence": 5,
+      "reason": "Removing whitespace-only review-patch context did not preserve exact matching of an original whitespace-only line. Final patch uses explicit supported zero-context serialization, while installer still verifies full source SHA."
+    }
+  ],
+  "requirements_review": [
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "status": "open",
+      "candidate": "Native Calendar/GetEvents filter snapshots and correct async queue error/teardown ownership; no source HAP/profile change",
+      "runtime_pass": false
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "root",
+      "id": "calendar-filter-private-next",
+      "request": "Apply filter_async_lifetime/apply.sh only to isolated next source after existing source_provider/event_editor/editor_callback_dispatch. May coexist with calendar_main: neither changes the other component's pinned files. Do not alter current fullbuild02."
+    },
+    {
+      "owner": "root",
+      "id": "calendar-filter-full-native-validation",
+      "target": "//applications/standard/calendardata/calendarmanager:calendarmanager",
+      "sources": [
+        "calendarmanager/napi/src/calendar_napi.cpp",
+        "calendarmanager/napi/src/napi_queue.cpp"
+      ],
+      "request": "Compile both complete actual product TUs and full actual target CFI/LTO link. Then execute genuine native ownership/queue/engine lifetime fault cases under sanitizer; current Python models are not that evidence."
+    },
+    {
+      "owner": "root",
+      "id": "calendar-filter-environment-runtime",
+      "request": "Verify actual Ark NativeEngine complete-callback delivery and work/reference cleanup ordering during environment teardown, including worker still running, cancellation, callback reentry and failed cleanup-hook removal. No test here proves real engine scheduling."
+    },
+    {
+      "owner": "root",
+      "id": "calendar-filter-new-package-api",
+      "request": "On next representative new package exercise ordinary authorized CalendarManager getEvents with temporary filters, failure/GC/concurrency and app/process lifetime. Recheck Main/Editor compatibility, signing/BMS and permission boundaries; no first-package gate is satisfied by these light checks."
+    }
+  ],
+  "remaining_gaps": [
+    "No native C++ compilation/execution, ASan/UBSan, real OHOS public ABI or product CFI/LTO linking performed in this round.",
+    "Real engine environment teardown callback ordering and ownership cleanup must be tested; model assumes the public complete-after-work-or-cancel API contract.",
+    "Full thirteen-caller callback/Promise success/failure/reentry runtime regression remains required; source compatibility was inspected only.",
+    "If JS engine cannot allocate or deliver even an error, queue reports an exception; OOM/dead-engine promise delivery cannot be certified by these models.",
+    "Exact installer handles ordinary caught failure rollback; forced process death/power-loss atomicity is not claimed.",
+    "The ordinary API and Calendar Main/Editor lifecycle must pass on the next representative newly packaged image; current fullbuild02 does not contain this private candidate.",
+    "No calendar device comparison, reminder runtime behavior, audit closure or package acceptance is claimed."
+  ],
+  "resources": {
+    "heavy_lease": false,
+    "native_or_sdk_compile": false,
+    "docker_by_this_agent": false,
+    "active_source_out": false,
+    "vm_or_hdc": false,
+    "host_platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O"
+  },
+  "ledger_modified": false,
+  "first_artifact_gate": false
+}
