@@ -16,6 +16,27 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'alsa_capture': {
+        'project': 'drivers/peripheral',
+        'revision': '69094b77aa2200160207b1b06b3c0b586ae2157c',
+        'additional_projects': {
+            'device/qemu': 'b017aee8e2dfc97e45aeb508facc1527c3d06f4b',
+            'vendor/ohemu': 'b56c5a95ec590543691278b85afe9fe228744163'},
+        'components': ['audio', 'audio/capture_loopback'],
+        'units': ['alsa_soundcard_capture', 'alsa_soundcard_render', 'alsa_snd_capture', 'qemu_vendor_capture'],
+        'source_paths': {
+            'alsa_soundcard_capture': 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c',
+            'alsa_soundcard_render': 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c',
+            'alsa_snd_capture': 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c',
+            'qemu_vendor_capture': 'device/qemu/common/virt_full/audio_alsa/vendor_capture.c'},
+        'targets': {
+            'alsa_soundcard_capture': 'obj/drivers/peripheral/audio/supportlibs/alsa_adapter/src/audio_capture_adapter/alsa_soundcard.o',
+            'alsa_soundcard_render': 'obj/drivers/peripheral/audio/supportlibs/alsa_adapter/src/audio_render_adapter/alsa_soundcard.o',
+            'alsa_snd_capture': 'obj/drivers/peripheral/audio/supportlibs/alsa_adapter/src/audio_capture_adapter/alsa_snd_capture.o',
+            'qemu_vendor_capture': 'obj/device/qemu/common/virt_full/audio_alsa/audio_capture_adapter/vendor_capture.o'},
+        'required_header': 'audio/supportlibs/alsa_adapter/include/alsa_soundcard.h',
+        'supported_products': ['arm64_virt'],
+    },
     'location': {
         'project': 'base/location/location',
         'revision': '5a0c49c2adb0623fdac73f76e4f98f2e57674c00',
@@ -200,14 +221,16 @@ def run(args):
     if not set(args.product) <= set(group.get('supported_products', PRODUCTS)):
         raise ValueError('this diagnostic group lacks real commands for the requested product')
     project = Path(group['project'])
-    revision = subprocess.check_output(['git', '-C', str(root / project), 'rev-parse', 'HEAD'], text=True).strip()
-    if revision != group['revision']:
-        raise ValueError('fixed source revision required')
+    projects = {str(project): group['revision'], **group.get('additional_projects', {})}
+    for name, revision in projects.items():
+        actual = subprocess.check_output(['git', '-C', str(root / name), 'rev-parse', 'HEAD'], text=True).strip()
+        if actual != revision:
+            raise ValueError('fixed source revision required: ' + name)
     output.mkdir(parents=True, exist_ok=False)
     components = [ROOT / 'patches/common' / project / name for name in group['components']]
     owned = sorted(set(patch_paths(components)) |
                    {str(project / name) for name in group.get('extra_checkout', [])})
-    if any(not Path(name).is_relative_to(project) for name in owned):
+    if any(not any(Path(name).is_relative_to(p) for p in projects) for name in owned):
         raise ValueError('component targets a different project')
     before = {name: sha(root / name) if (root / name).is_file() else None for name in owned}
     recipe = [Path(__file__), ROOT / 'patches/lib/apply_patch.sh',
@@ -217,17 +240,20 @@ def run(args):
     recipe_before = {str(p): sha(p) for p in recipe}
     staged = output / 'candidate'
     private = staged / project
-    private.parent.mkdir(parents=True)
     with (output / 'source-checkout.log').open('xb') as log:
-        subprocess.run(['git', 'clone', '--quiet', '--shared', '--no-checkout', str(root / project), str(private)],
-                       stdout=log, stderr=subprocess.STDOUT, check=True)
-        # New files have no HEAD blob; the component creates them itself.
-        existing = [str(Path(name).relative_to(project)) for name in owned
-                    if subprocess.run(['git', '-C', str(private), 'cat-file', '-e',
-                        revision + ':' + str(Path(name).relative_to(project))],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0]
-        subprocess.run(['git', '-C', str(private), 'checkout', revision, '--', *existing],
-                       stdout=log, stderr=subprocess.STDOUT, check=True)
+        for name, revision in projects.items():
+            checkout = staged / name
+            checkout.parent.mkdir(parents=True, exist_ok=True)
+            subprocess.run(['git', 'clone', '--quiet', '--shared', '--no-checkout', str(root / name), str(checkout)],
+                           stdout=log, stderr=subprocess.STDOUT, check=True)
+            # New files have no HEAD blob; the component creates them itself.
+            existing = [str(Path(path).relative_to(name)) for path in owned if Path(path).is_relative_to(name)
+                        and subprocess.run(['git', '-C', str(checkout), 'cat-file', '-e',
+                            revision + ':' + str(Path(path).relative_to(name))],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0]
+            if existing:
+                subprocess.run(['git', '-C', str(checkout), 'checkout', revision, '--', *existing],
+                               stdout=log, stderr=subprocess.STDOUT, check=True)
     for attempt in (1, 2):
         for component in components:
             with (output / f'apply-{component.name}-{attempt}.log').open('xb') as log:
@@ -249,7 +275,8 @@ def run(args):
          'external-contents': str(directory / name), 'use-external-name': True}
         for product, (directory, original_directory) in generated.items()
         for name in generated_report[product]['generated_sha256'] if name.endswith('.h')]}) + '\n')
-    report = {'status': 'fail', 'group': args.group, 'source_revision': revision,
+    report = {'status': 'fail', 'group': args.group, 'source_revision': group['revision'],
+              'source_revisions': projects,
               'scope': 'complete_patched_product_TUs_ONLY_NOT_link_package_runtime',
               'components': group['components'], 'source_before_sha256': before,
               'candidate_sha256': {name: sha(staged / name) for name in owned},
@@ -274,10 +301,12 @@ def run(args):
                     source = generated[product][1] / (unit + '.cpp')
                     candidate_source = generated[product][0] / (unit + '.cpp')
                 else:
-                    source = root / project / (group['sources'][unit] if 'sources' in group else
-                                              group['directory'] + '/' + unit + '.cpp')
+                    source = (root / group['source_paths'][unit] if 'source_paths' in group else
+                              root / project / (group['sources'][unit] if 'sources' in group else
+                                                group['directory'] + '/' + unit + '.cpp'))
                     candidate_source = staged / source.relative_to(root)
-                if (Path(argv[0]).name != 'clang++' or '--target=' + arch + '-linux-ohos' not in argv or
+                compiler = 'clang' if source.suffix == '.c' else 'clang++'
+                if (Path(argv[0]).name != compiler or '--target=' + arch + '-linux-ohos' not in argv or
                         argv.count('-c') != 1 or argv.count('-o') != 1 or argv.count('-MF') != 1 or
                         any(v in argv for v in ('&&', ';', '|')) or
                         (cwd / argv[argv.index('-c') + 1]).resolve() != source):

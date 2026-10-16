@@ -202,6 +202,7 @@ QEMU_SHORTKEY_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimod
 QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_manager/apply.sh"
 QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
 QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh"
+QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/capture_loopback/apply.sh"
 QEMU_ACCESSIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh"
 SENSOR_HEALTH_PERMISSION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/interface/sdk-js/sensor_health_permission/apply.sh"
 ARKWEB_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/web/webview/business_error/apply.sh"
@@ -1986,6 +1987,8 @@ apply_qemu_audio_component() {
   fi
   bash "${QEMU_AUDIO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_component.log"
+  bash "${QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_capture_component.log"
 }
 
 fix_case_insensitive_selinux_version_header() {

@@ -20,3 +20,9 @@ patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0005-va
 patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0006-preserve-and-validate-full-sdk-port-at-every-vpn-input.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0007-validate-remaining-setup-and-extension-prefixes.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/foundation/communication/netmanager_base/inet_addr_port/0001-preserve-full-sdk-port-and-validate-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Exact upstream CRLF payloads and review diff for the capture-only PCM route.
+patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.h -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_snd_capture.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/files/vendor_capture.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
