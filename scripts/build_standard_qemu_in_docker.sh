@@ -223,6 +223,9 @@ VPN_CONFIG_ARRAYS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communicatio
 VPN_CONFIG_STORE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_config_store/apply.sh"
 VPN_OPENVPN_FIELDS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_openvpn_fields/apply.sh"
 CONNECTED_VPN_NULLABLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/connected_vpn_nullable/apply.sh"
+QEMU_OPENVPN_CONTROL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh"
+OPENVPN_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/openvpn_lifecycle/apply.sh"
+OPENVPN_SESSION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/openvpn_session/apply.sh"
 TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/core_service/api26_enums/apply.sh"
 TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/sms_mms/api26_enums/apply.sh"
 TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_enums/apply.sh"
@@ -464,6 +467,7 @@ QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-auto}"
 QEMU_VULKAN_COMPONENT="${QEMU_VULKAN_COMPONENT:-auto}"
 QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/swiftshader-m144-7.0}"
 QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/avc-m144-7.0}"
+QEMU_OPENVPN_SOURCE_ARCHIVE="${QEMU_OPENVPN_SOURCE_ARCHIVE:-${CACHE_ROOT}/artifacts/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4.tar.gz}"
 QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0}"
 QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${CACHE_ROOT}/artifacts/qemu-mesa-llvm/$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)}"
 export QEMU_ARKWEB_CORE_ARTIFACTS
@@ -3055,6 +3059,17 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_openvpn_fields_component.log"
   bash "${CONNECTED_VPN_NULLABLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_connected_vpn_nullable_component.log"
+  bash "${QEMU_OPENVPN_CONTROL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_openvpn_control_component.log"
+  bash "${OPENVPN_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_openvpn_lifecycle_component.log"
+  bash "${OPENVPN_SESSION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_openvpn_session_component.log"
+  python3 "${SCRIPT_DIR}/openvpn_source_archive.py" --output "${QEMU_OPENVPN_SOURCE_ARCHIVE}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/check_qemu_openvpn_source_archive.log"
+  python3 "${SCRIPT_DIR}/prepare_qemu_openvpn_backend.py" --source-root "${OHOS_ROOT}" \
+    --archive "${QEMU_OPENVPN_SOURCE_ARCHIVE}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_openvpn_backend.log"
   bash "${DHW_UI_PREINSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_dhardware_ui_preinstall_component.log"
   bash "${QEMU_AUDIO_DEVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
