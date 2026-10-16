@@ -14,7 +14,9 @@ from test_batch_location_communication_runtime import COMPONENT, FIXTURE, source
 class CommunicationGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.states={'original':json.loads(FIXTURE.read_text())['files'],'final':sources()}
+        cls.states={'original':json.loads(FIXTURE.read_text())['files'],
+                    **{'prefix_'+str(index):sources(prefix=index) for index in range(1,len(list(COMPONENT.glob('*.patch'))))},
+                    'final':sources()}
 
     def fixture(self,directory,state='original'):
         root=Path(directory)/'source';component=Path(directory)/'fixture'/COMPONENT.relative_to(ROOT)

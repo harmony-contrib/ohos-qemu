@@ -52,6 +52,7 @@
     "base/telephony/ril_adapter/services/hril/include/hril_notification_map.h",
     "base/telephony/ril_adapter/services/hril/src/hril_network.cpp",
     "base/telephony/ril_adapter/services/vendor/src/vendor_report.c",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/BUILD.gn",
     "base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets",
     "base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h",
     "base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp",
@@ -59,6 +60,7 @@
     "base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs",
     "base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs",
     "base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs",
+    "base/telephony/state_registry/frameworks/js/napi/BUILD.gn",
     "base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h",
     "base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h",
     "base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h",
@@ -546,6 +548,11 @@
       "command": "Parent actual regenerated IPC plus15 full platform TUs before patch6",
       "result": "Parent reported14 pass; sole failure locator_ability const AppIdentity against shared AppIdentity& API. Both new GNSS TUs passed. Failure preserved; parent must revalidate patch6 full TU. This is not runtime proof.",
       "evidence": "round6-freeze-inputs.json:parent_platform_batch"
+    },
+    {
+      "command": "Communication strict guard2 plus actual complete44-file patch forward application",
+      "result": "PASS:original/prefix1/final exact states and idempotence/rejection cases; raw CRLF binary enum unchanged. No current actual compile/link result claimed.",
+      "evidence": "round8-access-token-gn.json"
     }
   ],
   "integration_requests": [
@@ -609,6 +616,10 @@
     {
       "kind": "round6_complete_locator_TU",
       "action": "Parent finished actual regenerated IPC/full15-TU batch:14 pass and only locator_ability const account-helper mismatch. Revalidate complete locator_ability.cpp/module with exact fixed header using round6-platform-build-request.json; all representative-package/runtime gates remain root-only."
+    },
+    {
+      "kind": "round8_communication_declared_SDK_dependency",
+      "action": "Integrate the44-target two-patch communication component. Actual observer and observer_ani_cxx declare access_token:libaccesstoken_sdk. Root may follow real provider public configs for labeled TU diagnostics; fresh GN/native dependency propagation and actual three failed consumers plus Rust dylib still require verification. No missing-header workaround or API stub is provided."
     }
   ],
   "remaining_gaps": [
@@ -765,7 +776,8 @@
     "patches/common/base/location/location/api26_runtime/0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
     "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch": "c0bf33c522e59759810ab13de3a8215c53d6c9a33d3b4c4d6e1754b43a2d9ccd",
     "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144",
-    "patches/common/base/location/location/api26_runtime/0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7"
+    "patches/common/base/location/location/api26_runtime/0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7",
+    "patches/common/base/telephony/state_registry/communication_state/0002-declare-access-token-public-SDK-dependencies.patch": "de993c4e58df61b6ac92ae08656c95299d42aea4145950badac15d04b999547b"
   },
   "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
   "round2_batch_date": "2026-10-16",
@@ -853,5 +865,28 @@
     "all_cumulative_targets": 73,
     "full_TUs_recheck_requested": 1,
     "behavior_closures": 0
-  }
+  },
+  "round7_document_commit": "14db697bae8b7bc855b83679fa63ab3ea963a798",
+  "round8_gn_base_commit": "14db697bae8b7bc855b83679fa63ab3ea963a798",
+  "round8_gn_implementation": "round8-access-token-gn.md",
+  "round8_gn_counts": {
+    "new_communication_GN_targets": 2,
+    "communication_cumulative_targets": 44,
+    "location_cumulative_targets": 27,
+    "RTT_targets": 4,
+    "all_cumulative_targets": 75,
+    "behavior_closures": 0
+  },
+  "round8_gn_changed_files": [
+    "ci/capability-audit/fixtures/batch_location/communication_runtime_before.json",
+    "ci/capability-audit/test_batch_location_communication_runtime.py",
+    "ci/capability-audit/test_batch_location_communication_source_guard.py",
+    "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/round8-access-token-gn.json",
+    "docs/capability-audit/parallel/location/round8-access-token-gn.md",
+    "patches/common/base/telephony/state_registry/communication_state/0002-declare-access-token-public-SDK-dependencies.patch",
+    "patches/common/base/telephony/state_registry/communication_state/README.md",
+    "patches/common/base/telephony/state_registry/communication_state/source_states.json",
+    "patches/common/base/telephony/state_registry/communication_state/verify_source.py"
+  ]
 }
