@@ -174,6 +174,12 @@
       "exit_code": 0,
       "tests": 28,
       "scope": "host adapters/parser/transport model only"
+    },
+    {
+      "name": "Contact fresh suite wrapper host contracts and frozen real SDK input checks",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ci/capability-audit -p 'test_batch_apps*contact_picker*py' -v",
+      "result": "66 PASS; 3 real SDK project/source/HAP input checks pass; no signing/native build/guest run",
+      "evidence": "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json"
     }
   ],
   "integration_requests": [
@@ -1241,7 +1247,13 @@
     "patches/common/applications/standard/theme/source_provider/0001-build-fixed-real-provider-sources.patch",
     "patches/common/applications/standard/theme/source_provider/README.md",
     "patches/common/applications/standard/theme/source_provider/apply.sh",
-    "patches/common/applications/standard/theme/source_provider/verify_source.py"
+    "patches/common/applications/standard/theme/source_provider/verify_source.py",
+    "ci/capability-audit/batch_apps_contact_picker_coordinator.py",
+    "ci/capability-audit/test_batch_apps_contact_picker_coordinator.py",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/README.md",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/inputs.example.json",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-tests.log"
   ],
   "previous_batch_commit": "5eac5fe063fc813a0912857555f97439e023893b",
   "parent_integration_baseline": "8bf5840",
@@ -1548,6 +1560,53 @@
     "remaining_gaps": [
       "Actual new-package Contacts UI/AMS session+overload+cleanup observations pending root.",
       "MSDP actual complete build/link/witness/image and runtime not run by apps."
+    ],
+    "ledger_closed": false,
+    "first_artifact_behavior_gate_passed": false
+  },
+  "contact_picker_suite_wrapper_batch": {
+    "status": "candidate_complete_host_checked_not_runtime_validated",
+    "previous_agent_commit": "c95d45e7fd9959d49f9804c8f888422c1e3c8276",
+    "changed_files": [
+      "ci/capability-audit/batch_apps_contact_picker_coordinator.py",
+      "ci/capability-audit/test_batch_apps_contact_picker_coordinator.py",
+      "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/README.md",
+      "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/inputs.example.json",
+      "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json",
+      "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-tests.log"
+    ],
+    "upstream_targets_added": [],
+    "host_checks": 66,
+    "frozen_sdk_project_input_checks": {
+      "caller": {
+        "source_files": 19,
+        "commands": 2,
+        "batch_exit_code": 0
+      },
+      "seed": {
+        "source_files": 18,
+        "commands": 2,
+        "batch_exit_code": 1
+      },
+      "provider": {
+        "source_files": 1077,
+        "commands": 2,
+        "batch_exit_code": 1
+      }
+    },
+    "evidence": "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json",
+    "entrypoint": "batch_apps_contact_picker_coordinator.py",
+    "independent_parent_entrypoint": "verify_evidence(evidence_path,archive_path,boot_path)",
+    "public_contract": "Current archive system.img unique Contacts; exact source SDK HAP payload; fresh boot UDID ordinary caller0permissions and CRUD seed2normal permissions; actual public signing/codeSign/CMS; actual BMS UID/token and UI user grant; raw required matrix; actual CRUD/process/BMS/AMS/helper cleanup",
+    "integration_requests": [
+      "Root wire fixed CLI in shared representative suite and independently call verify_evidence from first-artifact gate/gap-closure.",
+      "Root provide stable boot snapshot, current archive, complete actual SDK snapshots/reports, fixed public signer files, product observer and real helper recheck receipt.",
+      "Root execute single representative ARM64 phone fresh-package UI/runtime batch, preserve all failures, repair together before rebuild; do not emit other five packages before full gate."
+    ],
+    "remaining_gaps": [
+      "No actual signing/install/new-archive extraction/guest runtime has run in this agent batch.",
+      "Required real provider layout/AMS/session observations and first fresh-package full suite remain root-owned.",
+      "Optional native deadline/navigation diagnostics are not covered by the required 15-case matrix."
     ],
     "ledger_closed": false,
     "first_artifact_behavior_gate_passed": false
