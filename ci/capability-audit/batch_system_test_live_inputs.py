@@ -6,6 +6,7 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from batch_system_live_inputs import nonce, load_rows, read_json, trace, f32
 from batch_system_verify_live_inputs import compare_location, compare_sensor, compare_still, verify_msdp_inventory, sessions, window, mapped_processes
@@ -23,6 +24,54 @@ class ContractTests(unittest.TestCase):
     def file(self, value):
         temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
         path = Path(temp.name) / 'input.json'; path.write_text(json.dumps(value)); return path
+
+    def generated_project(self):
+        # Metadata lookup seam only; no SDK/API implementation is supplied here.
+        import batch_system_build_live_hap as build
+        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
+        project = Path(temp.name) / 'project'
+        with patch('batch_system_build_live_hap.sdk_contract', return_value={'unit': 'metadata only'}), \
+             patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
+            build.generate(project, Path(temp.name), 'arm64', RUN)
+        return project
+
+    def test_actual_linux_sdk39_project_schema(self):
+        project = self.generated_project()
+        product = read_json(project / 'build-profile.json5')['app']['products']
+        self.assertEqual(product, [{'name': 'default', 'compileSdkVersion': '26.0.0',
+            'compatibleSdkVersion': '26.0.0', 'targetSdkVersion': '26.0.0', 'runtimeOS': 'OpenHarmony'}])
+        self.assertEqual(read_json(project / 'hvigor/hvigor-config.json5'),
+            {'modelVersion': '6.0.0', 'dependencies': {}, 'execution': {'daemon': False, 'parallel': False}})
+        for name, task in [('hvigorfile.ts', 'appTasks'), ('entry/hvigorfile.ts', 'hapTasks')]:
+            self.assertEqual((project / name).read_text(), "import { " + task +
+                " } from '@ohos/hvigor-ohos-plugin';\nexport default { system: " + task + ", plugins: [] };\n")
+        self.assertFalse((project / 'live-inputs-build.json').exists())
+
+    def test_schema_tamper_cannot_be_hidden_by_refreshing_file_hashes(self):
+        from batch_system_live_inputs import project_files, verify_project
+        for mutation in ('runtime', 'compile_version', 'app_task', 'hap_task', 'parallel'):
+            project = self.generated_project()
+            if mutation in ('runtime', 'compile_version'):
+                path = project / 'build-profile.json5'; value = read_json(path)
+                if mutation == 'runtime': value['app']['products'][0]['runtimeOS'] = 'HarmonyOS'
+                else: del value['app']['products'][0]['compileSdkVersion']
+                path.write_text(json.dumps(value))
+            elif mutation == 'parallel':
+                path = project / 'hvigor/hvigor-config.json5'; value = read_json(path)
+                value['execution']['parallel'] = True; path.write_text(json.dumps(value))
+            else:
+                (project / ('hvigorfile.ts' if mutation == 'app_task' else 'entry/hvigorfile.ts')).write_text('export default {};\n')
+            contract = project / 'live-inputs-contract.json'; value = read_json(contract)
+            value['source_files'] = project_files(project); contract.write_text(json.dumps(value))
+            with patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
+                with self.assertRaisesRegex(ValueError, 'OpenHarmony API26/Hvigor6'):
+                    verify_project(project, Path('/unused'), RUN, 'arm64')
+
+    def test_missing_hvigor_wiring_fails_closed(self):
+        from batch_system_live_inputs import verify_project
+        project = self.generated_project(); (project / 'entry/hvigorfile.ts').unlink()
+        with patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
+            with self.assertRaises(FileNotFoundError): verify_project(project, Path('/unused'), RUN, 'arm64')
 
     def test_nonce_rejects_stale_shape(self):
         for value in ['', 'x' * 32, 'F' * 32, '0' * 32, 1, None]:

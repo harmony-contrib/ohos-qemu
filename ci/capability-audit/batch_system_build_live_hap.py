@@ -7,7 +7,8 @@ from pathlib import Path
 import subprocess
 import time
 from batch_system_live_inputs import (BUNDLE, FIXTURES, PERMISSIONS, digest, nonce,
-                                     project_files, sdk_contract, verify_project, write_json)
+                                     project_files, sdk_contract, verify_project, write_json,
+                                     SDK_PRODUCT, HVIGOR_CONFIG, HVIGOR_APP, HVIGOR_HAP)
 
 
 def generate(output, sdk, arch, run_id):
@@ -22,11 +23,12 @@ def generate(output, sdk, arch, run_id):
         'versionCode': 1, 'versionName': '1.0.0', 'icon': '$media:icon', 'label': '$string:app_name'}})
     put('AppScope/resources/base/element/string.json', {'string': [{'name': 'app_name', 'value': 'Live input audit'}]})
     put('AppScope/resources/base/media/icon.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#336688"/></svg>')
-    put('build-profile.json5', {'app': {'products': [{'name': 'default', 'targetSdkVersion': '7.0.0(26)',
-        'compatibleSdkVersion': '7.0.0(26)', 'runtimeOS': 'HarmonyOS'}],
-        'buildModeSet': [{'name': 'debug'}, {'name': 'release'}]},
+    put('build-profile.json5', {'app': {'products': [SDK_PRODUCT]},
         'modules': [{'name': 'entry', 'srcPath': './entry', 'targets': [{'name': 'default', 'applyToProducts': ['default']}]}]})
-    put('oh-package.json5', {'modelVersion': '6.0.0', 'name': 'live-input-audit', 'version': '1.0.0', 'dependencies': {}})
+    put('hvigor/hvigor-config.json5', HVIGOR_CONFIG)
+    put('hvigorfile.ts', HVIGOR_APP)
+    put('entry/hvigorfile.ts', HVIGOR_HAP)
+    put('oh-package.json5', {'modelVersion': '6.0.0', 'name': 'live-input-audit', 'version': '1.0.0', 'dependencies': {}, 'devDependencies': {}})
     put('entry/oh-package.json5', {'modelVersion': '6.0.0', 'name': 'entry', 'version': '1.0.0',
         'dependencies': {'libliveinputaudit.so': 'file:./src/main/cpp/types/libliveinputaudit'}})
     put('entry/build-profile.json5', {'apiType': 'stageMode', 'buildOption': {'externalNativeOptions': {'abiFilters': [abi]}}, 'targets': [{'name': 'default'}]})

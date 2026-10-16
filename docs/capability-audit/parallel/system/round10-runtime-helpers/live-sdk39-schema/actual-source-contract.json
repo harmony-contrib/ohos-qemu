@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "bundle": "org.harmonycontrib.liveinputaudit",
+  "role": "ordinary_app",
+  "run_id": "936ab166accc40e086f830e144c9d0fb",
+  "arch": "arm64",
+  "sdk": {
+    "@ohos.stationary.d.ts": "a187eeb55dfd6895762f8689f846e050883c97416386f26c1339d6ecb83b273a",
+    "@ohos.sensor.d.ts": "7b7e7bde75aa5c43b223acf949fc9c58a41efb61ad434fe7e50a7c5979f51342",
+    "@ohos.geoLocationManager.d.ts": "81dcee95b0a8fa0b183b15132a5dbcc41250707d62bb71268ea5b1cf09715d9b",
+    "ets_metadata": {
+      "sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab",
+      "value": {
+        "apiVersion": "26",
+        "displayName": "Ets",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "ets",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      }
+    },
+    "native_metadata": {
+      "sha256": "3dbc4a06ffd3b1be6b45c3c346a7900ca42f8a81a5b0454dc7f5cc1e5a9509a8",
+      "value": {
+        "apiVersion": "26",
+        "displayName": "Native",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "native",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      }
+    }
+  },
+  "source_files": {
+    "AppScope/app.json5": "91eeedc5969bd6807f33a3f65361638ab00988e7d867908c079cf1937adf2034",
+    "build-profile.json5": "b150a2e5456d08cc9c177927d8cfac5291e447d01e337e44b792681e9bb8b168",
+    "oh-package.json5": "43769810c1b4afcb5f65b78b4a726b7cc87b2b8304eff68dbd6257090685a805",
+    "entry/oh-package.json5": "77977a27512ea67649a1a3cec8fae3d1a131004ed92152b7a82e2199a639ddc6",
+    "entry/build-profile.json5": "979aa8d6cab7c87d40b1f27f44003be7e7dcd677cff0088a56f3eaa81afe44fc",
+    "hvigor/hvigor-config.json5": "19fd4e493f941f2dc8d7f4d0da03cbe22fcd2f7fe3adc099cbbb2bdc2656e88b",
+    "hvigorfile.ts": "2378c5e0c5246005ada73a67e8c9834fa08adb9ffd6fb6c219051456753bed5a",
+    "entry/hvigorfile.ts": "f547983dcab9c8fff87cc3ddedb22bb98063663c5b8afe18bb32e131311ec289",
+    "entry/src/main/cpp/types/libliveinputaudit/oh-package.json5": "4f15361c29471753c22458902dacde4cc09ef1341d3a3d7f0c5ee24f9aeab73f",
+    "entry/src/main/module.json5": "a79f7155c593ce69e4d86e2ee931a0b47deefa743f5e5968dba0ac9435650fd4",
+    "entry/src/main/ets/pages/Index.ets": "97db5d048bf60aa52d38e023b0fd6e30d7e155af6bd35e1b9072bfb7afc55b2a",
+    "entry/src/main/ets/entryability/EntryAbility.ets": "bbb2b8d48bd28775902fc1c1a0b66a92fa999e573e85250280803e60a67ca411",
+    "socket_probe.cpp": "4ca6552c6e6dd0bf6c39776b81a0ac1b6a60516e3a641dcf51b63ec08f53627c",
+    "entry/src/main/cpp/types/libliveinputaudit/Index.d.ts": "cbe1635be20bd56cc56d4912f2ee2654a46a3188f4c3fcbe23d23288ea31a82f"
+  },
+  "fixture_hashes": {
+    "socket_probe.cpp": "4ca6552c6e6dd0bf6c39776b81a0ac1b6a60516e3a641dcf51b63ec08f53627c",
+    "Index.ets.in": "fac9ea8d1bb37cd558cbc8fe5266e915ee164e8cccede93366449be3271efe14",
+    "fixed_sources.json": "5103ade8bafe1f753a8ac799a74e3835b4c9462a7211fd2c40fef2b4101dbea4",
+    "EntryAbility.ets": "bbb2b8d48bd28775902fc1c1a0b66a92fa999e573e85250280803e60a67ca411"
+  },
+  "triple": "aarch64-linux-ohos",
+  "abi": "arm64-v8a",
+  "not_claimed": "SDK compilation, valid signature, public callback delivery, MSDP backend or package gate"
+}
