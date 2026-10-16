@@ -14,11 +14,12 @@ python3 ci/capability-audit/batch_apps_contact_picker_coordinator.py \
   --signer-dist FIXED_PUBLIC_SIGNER_DIST \
   --observer-local ACTUAL_PRODUCT_OBSERVER_ELF \
   --observer-receipt ACTUAL_PRODUCT_HELPER_BUILD_OR_RECHECK_JSON \
+  --full-boundaries \
   --output NEW_EVIDENCE_DIRECTORY
 ```
 
 `--signer-jar` is optional; it defaults to `hap-sign-tool.jar` in signer-dist.
-The only UI options are `--permission-bundle` (default
+The UI options are `--permission-bundle` (default
 `com.ohos.permissionmanager`) and repeatable `--allow-text` (default 允许/Allow).
 The parent owns the stable boot snapshot beside its real qemu.log, guest wake,
 SDK/native compilation, archive preparation, and the first-artifact gate.
@@ -77,8 +78,14 @@ At runtime the wrapper:
 references, `cleanup_complete` and `cleanup_errors`. A failure with incomplete
 cleanup must stop reuse of the guest. Successful component evidence always
 keeps `first_artifact_behavior_gate_passed=false` and `ledger_closed=false`.
-The optional native deadline/navigation cases remain outside the required
-matrix; they are not silently counted as capability closure.
+`--full-boundaries` is required by the representative first-package gate. It
+adds the actual native 600000ms deadline and navigation dismissal, making 17
+cases / 18 public invocations. The independent verifier requires both raw
+records, actual provider/session closure, the proper BusinessError and a real
+600000..659999ms recorded deadline. The product timeout is unchanged. Omitting
+the flag leaves the 15-case diagnostic mode with
+`full_boundaries_requested=false` and `full_boundaries_verified=false`; the
+parent must not use that mode to release the remaining package matrix.
 
 The parent must call
 `verify_evidence(evidence_path, archive_path, boot_path)`. This function rehashes
@@ -90,6 +97,8 @@ cleanup evidence through the strict verifier. A child process's pass field or
 a stored verification summary is insufficient. Preserve the extracted package,
 SDK snapshots, public signing inputs, and native helper receipts alongside the
 runtime evidence so independent verification can run after guest shutdown.
+The parent gate also requires the returned, independently recomputed
+`full_boundaries_verified=true` (not only the outer JSON field).
 
 `host-checks.json` and `host-tests.log` record 66 passing host checks and the
 three real SDK source/HAP input checks. The signing-command parser and ELF

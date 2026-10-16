@@ -180,6 +180,13 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ci/capability-audit -p 'test_batch_apps*contact_picker*py' -v",
       "result": "66 PASS; 3 real SDK project/source/HAP input checks pass; no signing/native build/guest run",
       "evidence": "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json"
+    },
+    {
+      "name": "Root integration read-only review, full Contacts boundary contracts and actual-source Wallpaper connection parser",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ci/capability-audit -p 'test_batch_apps*contact_picker*py' -v",
+      "result": "83 apps host tests +13 frozen root tests PASS; real retained observer adapter PASS; no compiler/signing/guest execution",
+      "evidence": "docs/capability-audit/parallel/apps/round11-root-integration-review/host-checks.json",
+      "additional_command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ci/capability-audit -p 'test_batch_apps_wallpaper_connection.py' -v"
     }
   ],
   "integration_requests": [
@@ -1253,7 +1260,18 @@
     "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/README.md",
     "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/inputs.example.json",
     "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json",
-    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-tests.log"
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-tests.log",
+    "ci/capability-audit/batch_apps_wallpaper_connection.py",
+    "ci/capability-audit/test_batch_apps_wallpaper_connection.py",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/README.md",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/contacts-full-boundaries.log",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/host-checks.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/real-observer-readonly-check.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-host-tests.log",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-review.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/source-dump-contract.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/source-query.log",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/wallpaper-AMS-connection.log"
   ],
   "previous_batch_commit": "5eac5fe063fc813a0912857555f97439e023893b",
   "parent_integration_baseline": "8bf5840",
@@ -1610,5 +1628,67 @@
     ],
     "ledger_closed": false,
     "first_artifact_behavior_gate_passed": false
+  },
+  "root_integration_review_and_boundaries_batch": {
+    "status": "candidate_complete_host_checked_not_guest_validated",
+    "reviewed_root_commit": "20b37a9",
+    "parent_integrated_previous_candidate": "ee60241",
+    "upstream_targets_added": [],
+    "changed_files": [
+      "ci/capability-audit/batch_apps_contact_picker_coordinator.py",
+      "ci/capability-audit/test_batch_apps_contact_picker_coordinator.py",
+      "ci/capability-audit/batch_apps_wallpaper_connection.py",
+      "ci/capability-audit/test_batch_apps_wallpaper_connection.py",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/README.md",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/contacts-full-boundaries.log",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/host-checks.json",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/real-observer-readonly-check.json",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-host-tests.log",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-review.json",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/source-dump-contract.json",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/source-query.log",
+      "docs/capability-audit/parallel/apps/round11-root-integration-review/wallpaper-AMS-connection.log"
+    ],
+    "contacts_full_boundaries": {
+      "flag": "--full-boundaries",
+      "additional_real_cases": [
+        "deadline",
+        "navigation-dismiss"
+      ],
+      "required_case_count": 17,
+      "required_invocation_count": 18,
+      "native_deadline_ms_unchanged": 600000,
+      "independent_return_field": "full_boundaries_verified",
+      "diagnostic_mode_cannot_release_matrix": true
+    },
+    "wallpaper_helper": {
+      "entrypoint": "batch_apps_wallpaper_connection.verify_runtime_connections(runtime_path,*,target,user_id=100,module_name=phone_wallpaper)",
+      "raw_connection_stages": [
+        "desktop-1",
+        "desktop-2"
+      ],
+      "requires": "actual command-bound CONNECTED exact Wallpaper service record plus BMS/current-user unique PID/UID cross-check",
+      "service_token_to_pid_directly_observed": false,
+      "connection_caller_identity_observed": false,
+      "root_product_GN_DSO_system_image_inventory_required": true
+    },
+    "tests": {
+      "apps_host_checks": 83,
+      "frozen_root_host_checks": 13,
+      "actual_observer_recheck_adapter": "PASS read-only source/ELF/receipt hashes; original failed report preserved"
+    },
+    "confirmed_core_issue_reported": "20b capability_health accepts missing/null/object/string cleanup_errors truthiness; root must require exact []",
+    "integration_requests": [
+      "Root force --full-boundaries in representative Contacts argv and require independently returned full_boundaries_verified=true.",
+      "Root tighten failed-child cleanup_errors list contract; keep all first-package failures without releasing remaining matrix.",
+      "Root verify actual wallpaper-native inventory/source/HAP/DSO/system.img binding, public UI challenges and no manual renderer start/connect, then call new guest-raw connection helper before original Wallpaper ID closure.",
+      "Other phone architectures need appropriate independent runtime acceptance; do not reuse ARM64 raw observations to close their ledger."
+    ],
+    "remaining_gaps": [
+      "No actual new package/guest deadline/navigation/Wallpaper connection runtime evidence exists in this agent batch.",
+      "Full original MSDP missing clients finding remains unresolved by the external-inputs subset."
+    ],
+    "first_artifact_behavior_gate_passed": false,
+    "ledger_closed": false
   }
 }

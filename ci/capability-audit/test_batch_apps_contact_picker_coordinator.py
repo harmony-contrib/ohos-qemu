@@ -240,6 +240,51 @@ class CoordinatorTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'different guest'): c.independent_result(self.root, 'nonce', 'boot')
         raw.assert_not_called()
 
+    def test_full_boundary_scope_requires_both_extra_raw_invocations(self):
+        marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
+        log = self.root / 'transport-actual-home.log'; log.write_text('actual unit input result\n' + marker + '0\n')
+        home = {**c.descriptor(log), 'exit_code': 0,
+                'argv': ['hdc', '-t', '127.0.0.1:5555', 'shell', 'uitest uiInput keyEvent Home; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"']}
+        report = {'run_id': 'nonce', 'status': 'pass', 'failures': [],
+                  'test_environment': {'boot_id': 'boot', 'target': '127.0.0.1:5555'}, 'commands': [home]}
+        self.json('driver-report.json', report)
+        rows = [{'case_id': row['id'], 'invocation_id': row['id'] + '/' + slot} for row in c.verifier.MATRIX.values()
+                if row['required'] for slot in row['slots']]
+        value = {'raw_results_verified': True, 'scope': 'required_caller_matrix', 'run_id': 'nonce', 'observations': rows}
+        with patch.object(c.verifier, 'verify_runtime', return_value=value):
+            self.assertFalse(c.independent_result(self.root, 'nonce', 'boot')['full_boundaries_verified'])
+            with self.assertRaisesRegex(ValueError, 'complete matrix'): c.independent_result(self.root, 'nonce', 'boot', True)
+            value['observations'] = rows + [{'case_id': name, 'invocation_id': name + '/a'} for name in c.FULL_BOUNDARY_CASES]
+            result = c.independent_result(self.root, 'nonce', 'boot', True)
+            self.assertTrue(result['full_boundaries_verified']); self.assertEqual(len(result['observations']), 18)
+            report['commands'] = []; self.json('driver-report.json', report)
+            with self.assertRaisesRegex(ValueError, 'actual Home command'): c.independent_result(self.root, 'nonce', 'boot', True)
+            report['commands'] = [home]; self.json('driver-report.json', report)
+            value['observations'].pop()
+            with self.assertRaisesRegex(ValueError, 'complete matrix'): c.independent_result(self.root, 'nonce', 'boot', True)
+
+    def test_real_raw_verifier_rejects_shortened_native_deadline(self):
+        import test_batch_apps_contact_picker_runtime as synthetic
+        fixture = synthetic.RuntimeVerifier('test_complete_synthetic_verifier_fixture_does_not_close_runtime_gate')
+        fixture.setUp(); self.addCleanup(fixture.doCleanups)
+        fixture.make_case('deadline')
+        action = next(event for event in fixture.ui['events'] if event['kind'] == 'done'); action['kind'] = 'deadline_wait'
+        result = next(row for row in fixture.rows if row['event'] == 'reject')
+        result['timestamp_ms'] = 600100
+        self.assertTrue(fixture.verify('deadline')['raw_results_verified'])
+        result['timestamp_ms'] = 600099
+        with self.assertRaisesRegex(ValueError, 'native deadline'): fixture.verify('deadline')
+
+    def test_real_raw_navigation_requires_home_action_and_provider_closure(self):
+        import test_batch_apps_contact_picker_runtime as synthetic
+        fixture = synthetic.RuntimeVerifier('test_complete_synthetic_verifier_fixture_does_not_close_runtime_gate')
+        fixture.setUp(); self.addCleanup(fixture.doCleanups)
+        fixture.make_case('navigation-dismiss')
+        action = next(event for event in fixture.ui['events'] if event['kind'] == 'done'); action['kind'] = 'home'
+        self.assertTrue(fixture.verify('navigation-dismiss')['raw_results_verified'])
+        action['kind'] = 'done'
+        with self.assertRaisesRegex(ValueError, 'terminal UI action'): fixture.verify('navigation-dismiss')
+
     def test_real_installed_path_must_be_unique_and_own_bundle(self):
         path = '/data/app/el1/bundle/public/' + self.bundle + '/entry.hap'
         self.assertEqual(c.installed_path(json.dumps({'hapPath': path}), self.bundle), path)

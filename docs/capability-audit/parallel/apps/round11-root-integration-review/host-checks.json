@@ -1,0 +1,53 @@
+{
+  "scope": "host_contract_tests_ONLY_NOT_guest_runtime",
+  "checks": [
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.13/bin/python3.13",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "ci/capability-audit",
+        "-p",
+        "test_batch_apps*contact_picker*py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "docs/capability-audit/parallel/apps/round11-root-integration-review/contacts-full-boundaries.log",
+      "result_summary": [
+        "----------------------------------------------------------------------",
+        "Ran 69 tests in 1.558s",
+        "",
+        "OK"
+      ]
+    },
+    {
+      "argv": [
+        "/opt/homebrew/opt/python@3.13/bin/python3.13",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "ci/capability-audit",
+        "-p",
+        "test_batch_apps_wallpaper_connection.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "docs/capability-audit/parallel/apps/round11-root-integration-review/wallpaper-AMS-connection.log",
+      "result_summary": [
+        "----------------------------------------------------------------------",
+        "Ran 14 tests in 0.019s",
+        "",
+        "OK"
+      ]
+    }
+  ],
+  "new_wrapper_checks": 38,
+  "Contacts_related_checks": 69,
+  "Wallpaper_connection_checks": 14,
+  "total": 83,
+  "source_build_or_signing_or_guest_executed": false,
+  "first_artifact_behavior_gate_passed": false
+}
