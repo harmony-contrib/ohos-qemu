@@ -15,12 +15,14 @@ import subprocess
 import sys
 import time
 import tempfile
+import tarfile
 from types import SimpleNamespace
 import zipfile
 
 from batch_media_wallpaper_runtime import HERE, Runtime, record, sha, write_json, SEED, SETTINGS, PHOTOS
 from batch_media_wallpaper_coordinator import Coordinator, QUERY, READ, validate_hap, adapt_sdk_build, ordered_actions, request_file, actual_query
 from batch_media_wallpaper_artifacts import caller_sources, adapt_helpers, verify_helper_receipt
+import batch_media_wallpaper_native as native_binding
 from batch_media_verify_wallpaper_runtime import checked, check_challenge, verify
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
 from guest_ui import GuestUi
@@ -271,6 +273,12 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     if env!=current or any(value.get(k)!=env[e]for k,e in
             [('boot_id','boot_id'),('arch','guest_arch'),('device','device_type'),('udid','udid'),('target','target')]):
         raise ValueError('wallpaper wrapper escaped actual parent guest/environment')
+    if sha(checked(value['native_verifier']))!=sha(Path(native_binding.__file__)):
+        raise ValueError('native archive/mapping verifier implementation changed')
+    native=json.loads(checked(value['native_archive']).read_text())
+    with tempfile.TemporaryDirectory(prefix='wallpaper-current-archive-')as temporary:
+        actual=native_binding.archive_native(archive_path,boot_path,Path(temporary).resolve()/'native')
+    if actual!=native:raise ValueError('current archive/native GN/image proof differs')
     artifacts=json.loads(checked(value['artifacts']).read_text())
     if value.get('asset_cleanup')!=asset_cleanup_proof(evidence_path.parent):raise ValueError('raw asset/default cleanup differs')
     inputs=json.loads(checked(value['coordinator_inputs']).read_text())
@@ -291,6 +299,9 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     if (coo.get('status')!='completed_actions_NOT_runtime_acceptance' or coo.get('boot_id')!=env['boot_id']or
             coo.get('run_id')!=challenge['run_id']or coo.get('failures')!=[]or len(coo.get('actions',[]))!=21):
         raise ValueError('all real coordinator actions required')
+    if inputs.get('native')!=value['native_archive']or inputs.get('renderer_provider_hap')!=value['renderer_provider']['hap']:
+        raise ValueError('coordinator native/source HAP proof differs from independently re-read current archive')
+    verify_native_runtime(value,coo,native,env)
     for i,row in enumerate(coo['actions'],1):
         path=checked(row['request'])
         if path.parent.resolve()!=(evidence_path.parent/'actions').resolve():raise ValueError('request outside owned action directory')
@@ -346,6 +357,9 @@ def verify_evidence(evidence_path, archive_path, boot_path):
             completed=subprocess.run(list(map(str,argv)),stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=90)
             if completed.returncode:raise ValueError('actual signature re-verification failed: '+label)
             return completed.stdout+completed.stderr
+        provider=signatures.provider_from_image(boot_path,artifacts['provider'],Path(temporary)/'renderer-provider',dist,jar,
+            actual_command,provider_name='theme',device=env['device_type'])
+        verify_provider_proof(value['renderer_provider'],provider,native)
         for role,bundle,permissions in [('seed',SEED,[]),('query',QUERY,[READ])]:
             item=caller_sources(artifacts[role]);signed=checked(inputs[role]['signed_hap'])
             contract=Path(temporary)/('contract-'+role);contract.mkdir()
@@ -362,6 +376,35 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     if len(cleanup)!=2 or any(not re.search('success',checked({k:c[k]for k in ('path','sha256')}).read_text(),re.I)for c in cleanup):
         raise ValueError('both owned observers must be actually removed')
     return result
+
+
+def verify_native_runtime(value,coordinator,native,env):
+    """Independent composition; no claimed direct service-token/PID association."""
+    import batch_apps_wallpaper_connection as connections
+    if sha(checked(value['connection_verifier']))!=sha(Path(connections.__file__)):
+        raise ValueError('actual AMS connection verifier changed')
+    module='phone_wallpaper'if env['device_type']=='phone'else'pad_wallpaper'
+    actual=connections.verify_runtime_connections(checked(value['runtime']),target=env['target'],module_name=module)
+    if json.loads(checked(value['native_connections']).read_text())!=actual:
+        raise ValueError('actual two public desktop stage AMS connection replay differs')
+    mappings=native_binding.verify_mappings(coordinator,native,target=env['target'])
+    if json.loads(checked(value['native_mappings']).read_text())!=mappings:
+        raise ValueError('actual same-boot native mapping replay differs')
+    haps=native_binding.verify_renderer_haps(coordinator,native,checked(value['renderer_provider']['hap']),target=env['target'])
+    if any(hap['uid']!=stage['uid']for hap,stage in zip(haps,actual['stages'])):
+        raise ValueError('actually installed renderer UID differs from actual AMS connected process')
+    return {'connections':actual,'mappings':mappings,'installed_renderer_haps':haps}
+
+
+def verify_provider_proof(stored,actual,native):
+    for key in ('system_image','image_identity','archive_guard','sdk','signer_inputs'):
+        if stored[key]!=actual[key]:raise ValueError('source-bound current-image Wallpaper provider differs: '+key)
+    for key in ('hap','embedded_profile'):
+        if checked(stored[key]).read_bytes()!=checked(actual[key]).read_bytes():
+            raise ValueError('source-bound current-image Wallpaper bytes differ: '+key)
+    if (stored['system_image']!=native['system_image']or
+            stored['archive_guard']['sha256']!=native['files_sha256']['contacts-theme-provider-evidence.json']):
+        raise ValueError('source provider proof does not belong to the independently re-read current archive')
 
 
 def run(args):
@@ -395,6 +438,10 @@ def run(args):
         transport=Transport(args,plan);transport.wake_if_asleep('requested-wallpaper-suite-start');transport.guest.start();transport.identity('wrapper-initial')
         env=transport.guest.env;report.update(boot_id=env['boot_id'],arch=env['guest_arch'],device=env['device_type'],target=env['target'],udid=env['udid'])
         if env['guest_arch']!='arm64':raise ValueError('provided actual product helper builder currently supports arm64 only')
+        native=native_binding.archive_native(args.archive,args.boot,args.output/'native-archive')
+        write_json(args.output/'native-archive.json',native)
+        report.update(native_archive=record(args.output/'native-archive.json'),native_verifier=record(Path(native_binding.__file__)))
+        save()
         if plan.get('device_type',env['device_type'])!=env['device_type']:raise ValueError('source/UI plan belongs to another device profile')
         screenshot=transport.ui.screenshot(label='actual-challenge-geometry')
         from PIL import Image
@@ -408,7 +455,11 @@ def run(args):
         signer=artifacts['signer'];dist=Path(signer['dist']).resolve();jar=checked(signer['jar'])
         _,_,signing_inputs=signer_tools.signer_inputs(dist,jar)
         report['shared_signer']=record(Path(signer_tools.__file__))
-        report['signer_inputs']=signing_inputs;inputs={'tools':adapt_helpers(artifacts['helpers'],args.output)}
+        report['signer_inputs']=signing_inputs;inputs={'tools':adapt_helpers(artifacts['helpers'],args.output),'native':report['native_archive']}
+        provider=signer_tools.provider_from_image(args.boot,artifacts['provider'],args.output/'renderer-provider',dist,jar,
+            command,provider_name='theme',device=env['device_type'])
+        verify_provider_proof(provider,provider,native)
+        report['renderer_provider']=provider;inputs['renderer_provider_hap']=provider['hap']
         for role in ('seed','query'):
             item=caller_sources(artifacts[role]);unsigned=checked(item['unsigned_hap']);page=checked(item['compiled_page'])
             adapt_sdk_build(item,page,unsigned,args.output/(role+'-SDK-target.json'))
@@ -453,8 +504,17 @@ def run(args):
         independent=verify(args.output/'runtime/runtime.json');write_json(args.output/'independent-verification.json',independent)
         if independent.get('status')!='pass':raise ValueError('independent wallpaper file/pixel oracle failed')
         report['independent_verification']=record(args.output/'independent-verification.json')
+        import batch_apps_wallpaper_connection as connections
+        connection_proof=connections.verify_runtime_connections(args.output/'runtime/runtime.json',target=env['target'],
+            module_name='phone_wallpaper'if env['device_type']=='phone'else'pad_wallpaper')
+        write_json(args.output/'native-connections.json',connection_proof)
+        mapping_proof=native_binding.verify_mappings(json.loads((args.output/'coordinator/coordinator.json').read_text()),native,target=env['target'])
+        write_json(args.output/'native-mappings.json',mapping_proof)
+        report.update(connection_verifier=record(Path(connections.__file__)),native_connections=record(args.output/'native-connections.json'),
+            native_mappings=record(args.output/'native-mappings.json'))
+        verify_native_runtime(report,json.loads((args.output/'coordinator/coordinator.json').read_text()),native,env)
         report['status']='pass'
-    except (OSError,ValueError,KeyError,TypeError,ImportError,subprocess.SubprocessError)as error:
+    except (OSError,ValueError,KeyError,TypeError,ImportError,tarfile.TarError,EOFError,subprocess.SubprocessError)as error:
         report['failures'].append(type(error).__name__+': '+str(error))
     finally:
         if transport:
@@ -492,7 +552,7 @@ def run(args):
         save()
         if report['status']=='pass':
             try:verify_evidence(args.output/'evidence.json',args.archive,original_boot)
-            except (OSError,ValueError,KeyError,TypeError,ImportError,subprocess.SubprocessError)as error:
+            except (OSError,ValueError,KeyError,TypeError,ImportError,tarfile.TarError,EOFError,subprocess.SubprocessError)as error:
                 report['status']='fail';report['failures'].append('independent wrapper replay failed: '+str(error));save()
     return report
 
