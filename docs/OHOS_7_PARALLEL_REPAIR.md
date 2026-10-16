@@ -272,6 +272,26 @@ Settings05实际完整产品Linux26.0.0.39 SDK编译PASS（256.309s），真实5
 根修复external_input在share_picker后继全五文件已完整时的整栈重放，拒绝缺文件/未知共享后继；Settings镜像检查同时要求所有当前候选组件完整。MMS新增只读源/原profile/OS signer/原两份授权校验及强制镜像HAP检查；26项相关package/source mutation检查PASS。实际签名/镜像检查尚待执行，不把上述unsigned HAP当交付或运行验收。
 
 最新ETS ready短写修复后，3个普通音频event HAP在真实API26 unsigned构建和native/权限/后台合同中全部PASS（r52-three-audio-event-ready-completion-HAP-roles-04）；仍待guest。根自查MMS签名helper提取公共输入函数后 certificates lambda 作用域错误，提升为模块函数并补外部签名/Git/CMS超时；将用真实公共OS key/profile/HAP和独立ext4反例完成签名与镜像检查，未提前称通过。
+# Contacts SDK pass and Theme internal module migration (2026-10-16)
+
+Attempt 02 completed: Contacts produced an 8,780,214-byte unsigned HAP, SHA256
+4bf63d5977b54f10f3a9c459b301e8beee976b80cd67786c90bd429b4efe1583.
+Its 38 permission declarations and actual per-session sys/commonUI picker are
+present. Both Theme modules then failed current SDK module-name syntax, before
+compiling renderer source. The module_names component migrates internal names
+phone-wallpaper/pad-wallpaper to phone_wallpaper/pad_wallpaper consistently across
+the project graph, source GN selections and module manifests. Bundle, feature
+type, WallpaperExtAbility, permissions and profiles remain unchanged. The full
+four-component Theme source stack replays three times and rejects unknown drift
+without mutation. Reuse the passing Contacts build; next SDK batch covers only
+the two corrected Theme modules.
+
+BMS source review found no entry-module requirement for this installable,
+non-installationFree feature-only extension app. Device matching still needs the
+actual packaged const.bms.supportAppTypes and real BMS installation; source review
+is not runtime acceptance. New MSDP public-still fixes have 13 exclusive source
+targets, recorded in the ownership plan; relativeStill remains unsupported.
+
 # Contacts / Theme complete product SDK attempt 01 (2026-10-16)
 
 The frozen 6a580c8 source batch completed all three SDK attempts. Contacts reached

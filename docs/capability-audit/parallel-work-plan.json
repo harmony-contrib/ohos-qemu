@@ -1854,6 +1854,27 @@
       "fixture_prefix": "ci/capability-audit/fixtures/batch_system/live_inputs/",
       "no_shared_suite_or_closure_edits": true,
       "no_heavy_tasks": true
+    },
+    "system_public_still": {
+      "agent": "system",
+      "targets": [
+        "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h",
+        "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+        "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h",
+        "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+        "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h",
+        "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+        "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h",
+        "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+        "base/msdp/device_status/services/native/include/devicestatus_manager.h",
+        "base/msdp/device_status/services/native/src/devicestatus_manager.cpp",
+        "base/msdp/device_status/libs/include/algorithm/algo_base.h",
+        "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+        "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp"
+      ],
+      "component": "patches/common/base/msdp/device_status/public_still/",
+      "preserve_original_sensor_input_component": true,
+      "native_compile_needs_short_root_lease": true
     }
   }
 }

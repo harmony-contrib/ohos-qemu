@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Exact source packaging metadata; not SDK, signature or guest acceptance."""
 from pathlib import Path
+import hashlib
+import importlib.util
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
 from exact_source_states import validate_component
@@ -18,4 +20,16 @@ FILES = (
 
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    files = FILES
+    build = Path(root) / PROJECT / 'BUILD.gn'
+    if build.is_file():
+        spec = importlib.util.spec_from_file_location('theme_module_names_guard',
+            Path(__file__).resolve().parent.parent / 'module_names/verify_source.py')
+        guard = importlib.util.module_from_spec(spec);spec.loader.exec_module(guard)
+        successors = {name: after for name, _, after in guard.FILES}
+        if hashlib.sha256(build.read_bytes()).hexdigest() == successors['BUILD.gn']:
+            # Only a complete known current-SDK successor can supersede two
+            # metadata files; missing/unknown companion edits still fail closed.
+            guard.validate(root, require_patched=True)
+            files = tuple((name, before, successors.get(name, after)) for name, before, after in FILES)
+    return validate_component(root, PROJECT, REVISION, files, require_patched)

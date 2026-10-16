@@ -1,0 +1,99 @@
+{
+  "status": "pass",
+  "rows": [
+    {
+      "cycle": 0,
+      "component": "source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 0,
+      "component": "sdk_schema",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: sdk_schema\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 0,
+      "component": "module_names",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: module_names\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 0,
+      "component": "renderer_lifecycle",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: renderer_lifecycle\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 1,
+      "component": "source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 1,
+      "component": "sdk_schema",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: sdk_schema\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 1,
+      "component": "module_names",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: module_names\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 1,
+      "component": "renderer_lifecycle",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: renderer_lifecycle\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 2,
+      "component": "source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 2,
+      "component": "sdk_schema",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: sdk_schema\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 2,
+      "component": "module_names",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: module_names\n",
+      "stderr": ""
+    },
+    {
+      "cycle": 2,
+      "component": "renderer_lifecycle",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: renderer_lifecycle\n",
+      "stderr": ""
+    },
+    {
+      "component": "source_provider",
+      "unknown_companion_rejected": true,
+      "exit_code": 1
+    },
+    {
+      "component": "module_names",
+      "unknown_companion_rejected": true,
+      "exit_code": 1
+    }
+  ]
+}
