@@ -107,7 +107,8 @@ GROUPS = {
         'units': ['locator_impl', 'locator_ability', 'request_manager',
                   'locator_required_data_manager', 'location_napi_adapter',
                   'location_napi_entry', 'bluetooth_scan_result_callback_napi',
-                  'ohos.geoLocationManager.impl', 'locator_service_proxy', 'locator_service_stub'],
+                  'ohos.geoLocationManager.impl', 'locator_service_proxy', 'locator_service_stub',
+                  'request_config', 'report_manager', 'napi_util'],
         'sources': {
             'locator_impl': 'frameworks/native/locator_sdk/source/locator_impl.cpp',
             'locator_ability': 'services/location_locator/locator/source/locator_ability.cpp',
@@ -175,6 +176,16 @@ GROUPS = {
         'required_header': None,
     },
 }
+GROUPS['location']['sources'].update({
+    'request_config': 'frameworks/base_module/source/request_config.cpp',
+    'report_manager': 'services/location_locator/locator/source/report_manager.cpp',
+    'napi_util': 'frameworks/js/napi/source/napi_util.cpp',
+})
+GROUPS['location']['targets'].update({
+    'request_config': 'obj/base/location/location/frameworks/base_module/source/lbsbase_module/request_config.o',
+    'report_manager': 'obj/base/location/location/services/location_locator/locator/source/lbsservice_locator/report_manager.o',
+    'napi_util': 'obj/base/location/location/frameworks/js/napi/source/geolocationmanager/napi_util.o',
+})
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
@@ -265,7 +276,9 @@ def generate_location_idl(root, output, staged, product):
         if not (generated / name).is_file():
             raise ValueError('actual IDL generator omitted ' + name)
     interface = (generated / 'ilocator_service.h').read_text()
-    if not all(name in interface for name in ('GetLocationIconStatus', 'StartBluetoothSearch', 'StopBluetoothSearch')):
+    if not all(name in interface for name in ('GetLocationIconStatus', 'StartBluetoothSearch', 'StopBluetoothSearch',
+                                             'StartDistrictLocating', 'StartLocatingWithSportsType',
+                                             'GetPostProcessingTrack', 'CheckDistrictAccess')):
         raise ValueError('generated interface omits candidate methods')
     return generated, root / gen_relative, {
         'original_argv': original, 'executed_argv': argv,
