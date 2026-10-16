@@ -15,6 +15,40 @@ runtime = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runtime)
 
 
+def ams_fixture(sessions, host_pid=111):
+    """Synthetic aa-dump grammar only, never guest evidence."""
+    text = '  ExtensionRecords:\n'
+    for session in sessions:
+        text += f"""    uri [/com.ohos.contacts/entry/ContactUiExtentionAbility{session}]
+      AbilityRecord ID #{300 + session}   state #FOREGROUND   start time [100]
+      main name [ContactUiExtentionAbility]
+      bundle name [com.ohos.contacts]
+      ability type [UIEXTENSION]
+      app state #FOREGROUND
+      root host bundle name [com.ohos.qemu.contactpickercaller]
+      root host module name [entry]
+      root host ability name [EntryAbility]
+      pid: {9000 + session}
+"""
+    text += f"""  AppRunningRecords:
+    AppRunningRecord ID #0
+      process name [com.ohos.qemu.contactpickercaller]
+      pid #{host_pid}  uid #20000100
+      state #FOREGROUND
+"""
+    for index, session in enumerate(sessions):
+        text += f'      uiextension provider #{index}\n        pid #{9000 + session}\n'
+    for session in sessions:
+        text += f"""    AppRunningRecord ID #{session}
+      process name [com.ohos.contacts:ContactUiExtentionAbility:{session}]
+      pid #{9000 + session}  uid #20010011
+      state #FOREGROUND
+      root caller #0
+        pid #{host_pid}
+"""
+    return text
+
+
 class RuntimeVerifier(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix='contacts-runtime-unit-')
@@ -22,6 +56,7 @@ class RuntimeVerifier(unittest.TestCase):
         self.root = Path(temporary.name)
         self.run = 'host_unit_only'
         self.rows = []
+        self.session_serial = 0
         self.ui = {'run_id': self.run, 'boot_session_id': 'unit-not-a-real-boot', 'events': []}
         self.records = [{'id': 1000 + i, 'key': 'key-' + str(i), 'name': {'fullName': self.run + '-seed-' + str(i)},
                          'phoneNumbers': [{'phoneNumber': '+1555000' + str(i).zfill(4)}]} for i in range(205)]
@@ -57,6 +92,8 @@ class RuntimeVerifier(unittest.TestCase):
                         'deleted_keys': [r['key'] for r in self.records], 'remaining_contacts': [],
                         'raw_delete': self.json_artifact('delete.json', {'run_id': self.run, 'api': 'contact.deleteContact', 'keys': [r['key'] for r in self.records]}),
                         'raw_readback': self.json_artifact('cleanup-read.json', {'run_id': self.run, 'api': 'contact.queryContacts', 'contacts': []})}
+        self.ui['provider_bms'] = self.json_artifact('provider-bms.json', {'appInfo': {
+            'bundleName': runtime.CONTRACT['provider_bundle'], 'uid': 20010011, 'isSystemApp': True}})
         self.ui['caller_processes'] = {}
         for phase, processes in [('before_exit', [{'pid': 111, 'bundleNames': [runtime.BUNDLE]}]),
                                  ('after_exit', []), ('after_reopen', [{'pid': 222, 'bundleNames': [runtime.BUNDLE]}])]:
@@ -73,9 +110,16 @@ class RuntimeVerifier(unittest.TestCase):
     def bytes(self):
         return b''.join((json.dumps(row) + '\n').encode() for row in self.rows)
 
+    def ams_artifact(self, name, sessions, host_pid=111):
+        (self.root / name).write_text(ams_fixture(sessions, host_pid))
+        return self.desc(name)
+
     def make_case(self, case_id):
         case = runtime.MATRIX[case_id]
         launch = case_id.replace('-', '_')
+        host_pid = 222 if case_id == 'reopen' else 111
+        sessions = list(range(self.session_serial + 1, self.session_serial + 1 + len(case['slots'])))
+        self.session_serial += len(sessions)
         for slot in case['slots']:
             invocation = launch + '/' + slot
             self.rows.append({'schema_version': 1, 'run_id': self.run, 'case_id': case_id, 'launch_id': launch,
@@ -90,7 +134,8 @@ class RuntimeVerifier(unittest.TestCase):
             caller_layout = self.json_artifact(invocation.replace('/', '_') + '-caller.json',
                 {'attributes': {'bundleName': runtime.BUNDLE, 'id': 'contact_case_start'}})
             self.ui['events'].append({'kind': 'caller_start', 'invocation_id': invocation,
-                                      'layout': caller_layout, 'screenshot': self.desc('screen.png')})
+                                      'layout': caller_layout, 'screenshot': self.desc('screen.png'),
+                                      'ams': self.ams_artifact(invocation.replace('/', '_') + '-start.ams', [], host_pid)})
             expected = runtime.selected_records(case, slot, self.records)
             if case['ui'] == 'provider-launch':
                 (self.root / 'provider.log').write_text(runtime.CONTRACT['provider_bundle'] + ' ' + runtime.CONTRACT['provider_ability'])
@@ -100,13 +145,19 @@ class RuntimeVerifier(unittest.TestCase):
                 action = 'cancel' if 'cancel' in case['ui'] else 'force_stop' if 'force-stop' in case['ui'] and 'after' not in case['ui'] else 'done'
                 node = 'close_click_btn' if action == 'cancel' else 'doneButton'
                 layout = self.json_artifact(invocation.replace('/', '_') + '-layout.json', {'attributes': {
-                    'bundleName': runtime.CONTRACT['provider_bundle'], 'id': node},
-                    'children': [{'id': 'selectedText', 'text': '205 selected' if len(expected) == 205 else 'selection'},
-                                 *[{'text': record['name']['fullName']} for record in self.records[:4]]]})
+                    'bundleName': runtime.CONTRACT['provider_bundle'], 'id': 'root', 'visible': 'true'},
+                    'children': [{'attributes': {'id': 'doneButton', 'visible': 'true', 'enabled': 'true', 'clickable': 'true'}},
+                                 {'attributes': {'id': 'selectedText', 'visible': 'true', 'text': '205/205 selected' if len(expected) == 205 else 'selection'}},
+                                 *([{'attributes': {'id': node, 'visible': 'true', 'enabled': 'true', 'clickable': 'true'}}] if node != 'doneButton' else []),
+                                 *[{'attributes': {'text': record['name']['fullName'], 'visible': 'true'}} for record in self.records[:4]]]})
                 self.ui['events'].append({'kind': 'picker_visible', 'invocation_id': invocation})
                 snapshot = invocation.replace('/', '_') + '-before.jsonl'
                 (self.root / snapshot).write_bytes(self.bytes())
+                before_sessions = list(sessions)
+                sessions.pop(0)
                 self.ui['events'].append({'kind': action, 'invocation_id': invocation, 'node_id': node,
+                                          'ams_before': self.ams_artifact(invocation.replace('/', '_') + '-before.ams', before_sessions, host_pid),
+                                          'ams_after': self.ams_artifact(invocation.replace('/', '_') + '-after.ams', sessions, host_pid),
                                           'layout': layout, 'screenshot': self.desc('screen.png'), 'journal_before': self.desc(snapshot)})
                 after = self.json_artifact(invocation.replace('/', '_') + '-after.json',
                     {'attributes': {'bundleName': runtime.BUNDLE, 'id': 'contact_case_status'}})
@@ -201,6 +252,115 @@ class RuntimeVerifier(unittest.TestCase):
         self.build['booted_package_sha256'] = self.build['representative_package']['sha256']
         self.cleanup['remaining_contacts'] = [self.records[0]]
         with self.assertRaisesRegex(runtime.EvidenceError, 'cleanup'): self.verify('select-promise')
+
+    def host_action(self, case='select-promise'):
+        self.make_case(case)
+        action = next(row for row in self.ui['events'] if row['kind'] in ('done', 'cancel'))
+        old = action['layout']
+        tree = runtime.document(old['path'])
+        children = tree['children']
+        for index, child in enumerate(children):
+            child['attributes'].update(hostWindowId='42', accessibilityId=str(100000000100 + index))
+        host_tree = {'attributes': {'bundleName': runtime.BUNDLE, 'type': 'Root', 'visible': 'true'},
+            'children': [{'attributes': {'type': 'UIExtensionComponent', 'visible': 'true',
+                'hostWindowId': '42', 'accessibilityId': '77'}, 'children': children}]}
+        replacement = self.json_artifact('host-picker.json', host_tree)
+        for event in self.ui['events']:
+            if event.get('layout') == old: event['layout'] = replacement
+        action['layout_after'] = next(row['layout'] for row in self.ui['events'] if row['kind'] == 'picker_absent')
+        return action, host_tree
+
+    def test_host_owned_real_extension_requires_ams_and_remote_subtree_not_caller_preview(self):
+        action, tree = self.host_action()
+        self.assertTrue(self.verify('select-promise')['raw_results_verified'])
+        for mode in ['column', 'outside', 'window', 'local_id', 'duplicate', 'still_visible']:
+            with self.subTest(mode=mode):
+                changed = copy.deepcopy(tree)
+                if mode == 'column': changed['children'][0]['attributes']['type'] = 'Column'
+                elif mode == 'outside': changed['children'] += changed['children'][0].pop('children')
+                elif mode == 'window': changed['children'][0]['children'][0]['attributes']['hostWindowId'] = '43'
+                elif mode == 'local_id': changed['children'][0]['children'][0]['attributes']['accessibilityId'] = '100'
+                elif mode == 'duplicate': changed['children'][0]['children'].append(copy.deepcopy(changed['children'][0]['children'][0]))
+                original, after = action['layout'], action['layout_after']
+                action['layout'] = self.json_artifact(mode + '.json', changed)
+                if mode == 'still_visible': action['layout_after'] = action['layout']
+                with self.assertRaises(runtime.EvidenceError): self.verify('select-promise')
+                action['layout'], action['layout_after'] = original, after
+
+    def test_counter_limit_205_does_not_mean_205_actually_selected(self):
+        self.make_case('options-promise-205')
+        action = next(row for row in self.ui['events'] if row['kind'] == 'done')
+        tree = runtime.document(action['layout']['path'])
+        for row in runtime.objects(tree):
+            if row.get('id') == 'selectedText': row['text'] = 'Selected 204/205'
+        action['layout'] = self.json_artifact('false-selected-count.json', tree)
+        with self.assertRaisesRegex(runtime.EvidenceError, 'actual selection'):
+            self.verify('options-promise-205')
+
+    def test_host_cancel_changes_stay_in_same_bound_remote_tree(self):
+        action, tree = self.host_action('cancel-default')
+        self.assertTrue(self.verify('cancel-default')['raw_results_verified'])
+        change = next(row for row in self.ui['events'] if row['kind'] == 'select')
+        altered = copy.deepcopy(tree)
+        altered['children'][0]['attributes']['accessibilityId'] = '78'
+        change['layout'] = self.json_artifact('foreign-session-change.json', altered)
+        with self.assertRaises(runtime.EvidenceError): self.verify('cancel-default')
+
+    def test_ams_pid_uid_host_ability_record_and_closure_counterexamples(self):
+        self.make_case('select-promise')
+        action = next(row for row in self.ui['events'] if row['kind'] == 'done')
+        original = action['ams_before']
+        text = Path(original['path']).read_text()
+        for old, new in [('uid #20010011', 'uid #20010012'),
+                         ('root host bundle name [' + runtime.BUNDLE, 'root host bundle name [another.app'),
+                         ('root host ability name [EntryAbility]', 'root host ability name [FakeAbility]'),
+                         ('root host module name [entry]', 'root host module name [fake]'),
+                         ('main name [ContactUiExtentionAbility]', 'main name [PreviewAbility]'),
+                         ('bundle name [com.ohos.contacts]', 'bundle name [com.evil.app]'),
+                         ('pid #111\n', 'pid #555\n'),
+                         ('pid: 9001', 'pid: 9999'),
+                         ('/entry/ContactUiExtentionAbility1]', '/entry/FakeAbility1]'),
+                         ('state #FOREGROUND', 'state #BACKGROUND')]:
+            (self.root / 'wrong.ams').write_text(text.replace(old, new))
+            action['ams_before'] = self.desc('wrong.ams')
+            with self.subTest(old=old), self.assertRaises(runtime.EvidenceError): self.verify('select-promise')
+        action['ams_before'] = original
+        original_after = action['ams_after']
+        for empty in ['', '  ExtensionRecords:\n  AppRunningRecords:\n']:
+            (self.root / 'truncated-after.ams').write_text(empty)
+            action['ams_after'] = self.desc('truncated-after.ams')
+            with self.assertRaises(runtime.EvidenceError): self.verify('select-promise')
+        action['ams_after'] = original_after
+        for mode in ['unchanged', 'duplicate']:
+            if mode == 'unchanged':
+                action['ams_after'] = original
+            else:
+                (self.root / 'wrong.ams').write_text(text + text)
+                action['ams_before'] = self.desc('wrong.ams')
+            with self.subTest(mode=mode), self.assertRaises(runtime.EvidenceError): self.verify('select-promise')
+
+    def test_ams_session_reuse_and_nonsequential_dual_closures_fail(self):
+        self.make_case('select-promise'); self.make_case('select-callback')
+        actions = [row for row in self.ui['events'] if row['kind'] == 'done']
+        actions[1]['ams_before'] = actions[0]['ams_before']
+        # A full matrix would fail earlier on missing cases, so challenge the
+        # same independent UI verifier twice with the shared verified-session set.
+        raw = self.bytes()
+        for index, action in enumerate(actions):
+            invocation = action['invocation_id']
+            if index == 0:
+                runtime.verify_ui(self.ui, invocation, 'done', raw, [], [self.records[0]], self.records, 20000100)
+            else:
+                with self.assertRaisesRegex(runtime.EvidenceError, 'reused'):
+                    runtime.verify_ui(self.ui, invocation, 'done', raw, [], [self.records[1]], self.records, 20000100)
+        self.ui['events'] = []; self.rows = []
+        self.make_case('dual-session')
+        actions = [row for row in self.ui['events'] if row['kind'] == 'done']
+        first = runtime.ams_sessions(Path(actions[0]['ams_before']['path']).read_text(), 20010011, 20000100)
+        sessions = [int(value['uri'].rsplit('Ability', 1)[-1]) for value in first.values()]
+        actions[1]['ams_before'] = self.ams_artifact('dual-repeat-before.ams', sessions)
+        actions[1]['ams_after'] = self.ams_artifact('dual-repeat-after.ams', sessions[:1])
+        with self.assertRaises(runtime.EvidenceError): self.verify('dual-session')
 
     def test_native_appmgr_query_keeps_actual_api_and_rejects_failures_or_ps(self):
         for case in ['exit-pending', 'reopen']: self.make_case(case)

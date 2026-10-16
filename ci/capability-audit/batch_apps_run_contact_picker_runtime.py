@@ -181,8 +181,16 @@ def clickable_for_text(layout, bundle, text):
     raise ValueError('actual contact row has no enabled clickable ancestor')
 
 
+def scoped_layout(view):
+    tree = view['tree']
+    return {'attributes': {'bundleName': view['owner']}, 'children': tree if isinstance(tree, list) else [tree]}
+
+
 def selected_count(layout):
-    nodes = [node for node, bundle, _ in walk(layout) if bundle == PROVIDER and
+    view = verifier.picker_view(layout)
+    layout = scoped_layout(view)
+    owner = view['owner']
+    nodes = [node for node, bundle, _ in walk(layout) if bundle == owner and
              node['attributes'].get('id') == 'selectedText' and node['attributes'].get('visible') == 'true']
     if not nodes:
         raise NodeNotReady('visible Contacts selection counter missing')
@@ -215,6 +223,8 @@ class Driver:
         self.evidence = {'run_id': run_id, 'boot_session_id': guest.env['boot_id'], 'events': [], 'caller_processes': {}}
         self.last_journal = ''
         self.serial = 0
+        self.caller_uid = None
+        self.contacts_uid = None
 
     def label(self, stem):
         self.serial += 1
@@ -239,7 +249,7 @@ class Driver:
             try:
                 result = action()
                 if result is not None and result is not False: return result
-            except (LayoutNotReady, NodeNotReady) as error:
+            except (LayoutNotReady, NodeNotReady, verifier.PickerNotReady, verifier.AmsNotReady) as error:
                 last = str(error)
             self.sleep(0.3)
         raise ValueError('bounded runtime wait expired: ' + last)
@@ -348,9 +358,10 @@ class Driver:
                 return False
         self.snapshot('caller-ready-' + case_id, ready)
         if case_id == 'reopen': self.processes('after_reopen', 1)
+        _, start_ams = self.raw('aa dump -a -u 100', 'AMS-before-caller-Start')
         clicked = self.node_click(CALLER, identifier='contact_case_start', stem='caller-start-' + case_id)
         for slot in verifier.MATRIX[case_id]['slots']:
-            self.event('caller_start', launch_id + '/' + slot, **clicked)
+            self.event('caller_start', launch_id + '/' + slot, ams=start_ams, **clicked)
 
     def wait_terminals(self, invocations, seconds=90):
         def complete():
@@ -369,10 +380,12 @@ class Driver:
         def visible():
             layout, path = self.layout('contact-' + kind)
             try:
-                node = clickable_for_text(layout, PROVIDER, record['name']['fullName'])
+                view = verifier.picker_view(layout)
+                scoped = scoped_layout(view)
+                node = clickable_for_text(scoped, view['owner'], record['name']['fullName'])
             except NodeNotReady:
                 # Scroll only inside the actual provider's single visible List.
-                lists = [n['attributes'] for n, b, _ in walk(layout) if b == PROVIDER and
+                lists = [n['attributes'] for n, b, _ in walk(scoped) if b == view['owner'] and
                          n['attributes'].get('scrollable') == 'true' and n['attributes'].get('visible') == 'true']
                 if not lists: return None  # Provider can still be loading its public query.
                 verifier.require(len(lists) == 1, 'contact is off-screen without one actual scrollable list')
@@ -382,6 +395,7 @@ class Driver:
                 return None
             self.event(kind, invocation, contact_id=record['id'], layout=descriptor(path),
                        screenshot=self.screen('contact-' + kind), selected_node=node)
+            self.live_ams()
             self.actual_click(node, 'contact-' + kind)
             return True
         return self.wait(visible, 60)
@@ -398,10 +412,11 @@ class Driver:
             identifiers = ['doneButton'] if kind == 'done' else ['close_click_btn', 'Settings_close_btn', 'contactList_contacts_back_arrowBack']
             def action():
                 layout, path = self.layout('picker-' + kind)
+                view = verifier.picker_view(layout)
                 matches = []
                 for identifier in identifiers:
                     try:
-                        matches.append((identifier, select_node(layout, PROVIDER, identifier=identifier, clickable=True)))
+                        matches.append((identifier, select_node(scoped_layout(view), view['owner'], identifier=identifier, clickable=True)))
                     except NodeNotReady:
                         pass
                 if not matches: return None
@@ -409,20 +424,64 @@ class Driver:
                 identifier, node = matches[0]
                 screenshot = self.screen('picker-' + kind)
                 before = pending_snapshot()
-                self.event(kind, invocation, node_id=identifier, layout=descriptor(path),
-                           screenshot=screenshot, journal_before=before, selected_node=node)
+                ams = self.live_ams()
+                row = self.event(kind, invocation, node_id=identifier, layout=descriptor(path), ams_before=ams,
+                                 screenshot=screenshot, journal_before=before, selected_node=node)
                 self.actual_click(node, 'picker-' + kind)
-                return True
-            self.wait(action)
+                return row
+            return self.wait(action)
         else:
-            snap = self.snapshot('picker-before-' + kind, lambda layout: PROVIDER in verifier.text_values(layout, 'bundleName'))
+            snap = self.snapshot('picker-before-' + kind, self.has_picker)
             before = pending_snapshot()
-            self.event(kind, invocation, journal_before=before, **snap)
+            ams = self.live_ams()
+            row = self.event(kind, invocation, journal_before=before, ams_before=ams, **snap)
             if kind == 'force_stop': self.raw('aa force-stop ' + CALLER, 'force-stop-owned-caller')
             elif kind == 'home': self.ui.shell('uitest uiInput keyEvent Home', self.label('actual-home'))
+            return row
+
+    @staticmethod
+    def has_picker(layout):
+        try: verifier.picker_view(layout)
+        except verifier.PickerNotReady: return False
+        return True
+
+    def live_ams(self):
+        raw, proof = self.raw('aa dump -a -u 100', 'bound-live-provider-AMS')
+        verifier.require(verifier.ams_sessions(raw, self.contacts_uid, self.caller_uid),
+                         'actual live Contacts provider must exist before picker input')
+        return proof
+
+    def picker_click(self, identifier, stem):
+        def click():
+            layout, path = self.layout(stem)
+            view = verifier.picker_view(layout)
+            node = select_node(scoped_layout(view),
+                               view['owner'], identifier=identifier, clickable=True)
+            self.live_ams()
+            self.actual_click(node, stem)
+            return True
+        return self.wait(click)
+
+    def session_closed(self, action):
+        before = verifier.ams_sessions(Path(action['ams_before']['path']).read_text(), self.contacts_uid, self.caller_uid)
+        def closed():
+            text, proof = self.raw('aa dump -a -u 100', 'AMS-after-input')
+            after = verifier.ams_sessions(text, self.contacts_uid, self.caller_uid)
+            if len(set(before) - set(after)) != 1 or not set(after) <= set(before): return None
+            layout, path = self.layout('immediate-after-input')
+            old_view = verifier.picker_view(json.loads(Path(action['layout']['path']).read_text()))
+            if old_view['host_owned'] and any(row.get('type') == 'UIExtensionComponent' and
+                    row.get('visible') == 'true' and row.get('accessibilityId') == old_view['extension_id'] and
+                    row.get('hostWindowId') == old_view['window_id'] for row in verifier.objects(layout)):
+                return None
+            action['ams_after'] = proof
+            action['layout_after'] = descriptor(path)
+            verifier.closed_session(action, self.contacts_uid, self.caller_uid)
+            return True
+        self.wait(closed)
 
     def absent(self, invocations):
-        snap = self.snapshot('picker-absent', lambda layout: PROVIDER not in verifier.text_values(layout, 'bundleName'))
+        snap = self.snapshot('picker-absent', lambda layout: not self.has_picker(layout) and PROVIDER not in verifier.text_values(layout, 'bundleName'))
         for invocation in invocations: self.event('picker_absent', invocation, **snap)
 
     def case(self, case_id, seed):
@@ -442,9 +501,9 @@ class Driver:
                     path.write_text(fresh)
                     return descriptor(path)
                 self.event('provider_launch', invocations[0], raw_log=self.wait(launch_proof, 30))
-            self.snapshot('no-provider-after-' + case_id, lambda layout: PROVIDER not in verifier.text_values(layout, 'bundleName'))
+            self.snapshot('no-provider-after-' + case_id, lambda layout: not self.has_picker(layout) and PROVIDER not in verifier.text_values(layout, 'bundleName'))
             return
-        self.snapshot('picker-visible', lambda layout: PROVIDER in verifier.text_values(layout, 'bundleName'))
+        self.snapshot('picker-visible', self.has_picker)
         _, ams = self.raw('aa dump -a -u 100', 'actual-provider-AMS-' + case_id)
         for invocation in invocations:
             self.event('picker_visible', invocation)
@@ -464,8 +523,9 @@ class Driver:
                     return count if count in pending else None
                 count = self.wait(current)
                 invocation = pending.pop(count)
-                self.terminal_input(invocation, 'done')
+                action = self.terminal_input(invocation, 'done')
                 self.wait_terminals([invocation])
+                self.session_closed(action)
             self.absent(invocations)
             return
         invocation = invocations[0]
@@ -479,16 +539,17 @@ class Driver:
             self.wait_count(3)
         elif '205' in case_id:
             self.wait_count(205)
-            self.node_click(PROVIDER, identifier='all_select_message', stem='clear-all205')
+            self.picker_click('all_select_message', 'clear-all205')
             self.wait_count(0)
-            self.node_click(PROVIDER, identifier='all_select_message', stem='select-all205')
+            self.picker_click('all_select_message', 'select-all205')
             self.wait_count(205)
         kind = 'cancel' if 'cancel' in case['ui'] else 'force_stop' if case_id == 'exit-pending' else \
                'home' if case_id == 'navigation-dismiss' else 'deadline_wait' if case_id == 'deadline' else 'done'
         if kind == 'force_stop': self.processes('before_exit', 1)
-        self.terminal_input(invocation, kind)
+        action = self.terminal_input(invocation, kind)
         if kind == 'force_stop': self.processes('after_exit', 0)
         else: self.wait_terminals(invocations, 660 if kind == 'deadline_wait' else 90)
+        self.session_closed(action)
         self.absent(invocations)
 
     def execute(self, seed_token, cases):
@@ -626,6 +687,10 @@ def run(args):
                         'installed_caller_hap': descriptor(installed), 'permission_probe': token_proof}
             write_json(args.output / (key + '-identity.json'), identity)
             identities[key] = app
+        provider_raw, provider_bms = driver.raw('bm dump -n ' + PROVIDER, 'Contacts-provider-BMS-UID')
+        driver.evidence['provider_bms'] = provider_bms
+        driver.contacts_uid = verifier.provider_uid(driver.evidence)
+        driver.caller_uid = identities['caller']['uid']
         # Zero-permission caller is checked before it can trigger any UI.
         verifier.verify_identity(verifier.document(args.output / 'caller-identity.json'), build, run_id)
         driver.raw('aa dump -a -u 100', 'AMS-before')

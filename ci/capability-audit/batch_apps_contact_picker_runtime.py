@@ -200,7 +200,139 @@ def verify_seed(seed, cleanup, run_id):
     return records
 
 
-def verify_ui(ui, invocation, policy, raw_journal, terminal, expected, records):
+def provider_uid(ui):
+    raw = raw_json(artifact(ui['provider_bms']))
+    matches = [row for row in objects(raw) if row.get('bundleName') == CONTRACT['provider_bundle'] and 'isSystemApp' in row]
+    require(len(matches) == 1 and matches[0].get('isSystemApp') is True,
+            'actual system Contacts provider BMS identity required')
+    value = matches[0].get('uid')
+    require(type(value) is int and value // 200000 == 100, 'current-user Contacts provider UID required')
+    return value
+
+
+class AmsNotReady(EvidenceError):
+    pass
+
+
+def ams_sessions(dump, contacts_uid, caller_uid):
+    """Parse real aa dump records. No ArkUI ID is assumed equal to an AMS ID."""
+    require(type(contacts_uid) is int and type(caller_uid) is int and contacts_uid != caller_uid and
+            contacts_uid // 200000 == caller_uid // 200000 == 100, 'distinct current-user provider/host UIDs required')
+    require(len(re.findall(r'^  ExtensionRecords:$', dump, re.M)) == 1 and
+            len(re.findall(r'^  AppRunningRecords:$', dump, re.M)) == 1, 'complete actual AMS extension/process dump required')
+    processes = {}
+    for block in re.split(r'(?=^    AppRunningRecord ID #)', dump, flags=re.M)[1:]:
+        identity = re.findall(r'^      pid #([1-9][0-9]*)  uid #([1-9][0-9]*)$', block, re.M)
+        require(len(identity) == 1, 'malformed AMS process identity')
+        pid, uid = map(int, identity[0])
+        require(pid not in processes, 'duplicate AMS process PID')
+        processes[pid] = (uid, block)
+    require(processes, 'actual AMS process records missing')
+    hosts = [(pid, block) for pid, (uid, block) in processes.items() if uid == caller_uid and
+             re.search(r'^      process name \[' + re.escape(BUNDLE) + r'\]$', block, re.M)]
+    entries = re.split(r'(?=^    uri \[)', dump, flags=re.M)[1:]
+    sessions = {}
+    for block in entries:
+        block = re.split(r'^  [A-Za-z].*:$', block, flags=re.M)[0]
+        if not ('ability type [UIEXTENSION]' in block and
+                f'root host bundle name [{BUNDLE}]' in block and
+                re.search(r'AbilityRecord ID #[1-9][0-9]*\s+state #(FOREGROUND|ACTIVE)\b', block) and
+                'app state #FOREGROUND' in block):
+            continue
+        # A second live provider for this ordinary host prevents proving which
+        # remote tree is Contacts. Do not accept a real Contacts connection plus
+        # a different extension containing a fake preview.
+        require(f'bundle name [{CONTRACT["provider_bundle"]}]' in block and
+                f'main name [{CONTRACT["provider_ability"]}]' in block,
+                'foreign live UIExtension for Contacts host')
+        uri = re.findall(r'^    uri \[(' + re.escape('/' + CONTRACT['provider_bundle'] + '/entry/' +
+                         CONTRACT['provider_ability']) + r'[1-9][0-9]*)\]$', block, re.M)
+        record = re.findall(r'AbilityRecord ID #([1-9][0-9]*)\s+state #(?:FOREGROUND|ACTIVE)\b', block)
+        pid = re.findall(r'^      pid: ([1-9][0-9]*)$', block, re.M)
+        require(len(uri) == len(record) == len(pid) == 1 and
+                'root host module name [entry]' in block and 'root host ability name [EntryAbility]' in block,
+                'actual Contacts UIExtension URI/record/host ability required')
+        provider_pid = int(pid[0])
+        if provider_pid not in processes or not hosts:
+            raise AmsNotReady('AMS closing session still references a process no longer present')
+        require(processes[provider_pid][0] == contacts_uid and
+                len(hosts) == 1 and hosts[0][0] != provider_pid, 'AMS provider/host PID and BMS UID mismatch')
+        provider = processes[provider_pid][1]
+        host_pid, host = hosts[0]
+        name = re.escape(CONTRACT['provider_bundle'])
+        ability = re.escape(CONTRACT['provider_ability'])
+        require(re.search(r'^      process name \[' + name + r'(?::' + ability + r'(?::[1-9][0-9]*)?)?\]$', provider, re.M),
+                'wrong Contacts provider process')
+        if 'state #FOREGROUND' not in provider:
+            continue  # A closing record may remain cached after its process backgrounds.
+        if 'state #FOREGROUND' not in host:
+            raise AmsNotReady('AMS host is transitioning out of foreground')
+        require(re.search(r'^      uiextension provider #[0-9]+\n        pid #' + str(provider_pid) + r'$', host, re.M) and
+                re.search(r'^      root caller #[0-9]+\n        pid #' + str(host_pid) + r'$', provider, re.M),
+                'reciprocal live AMS provider/host connection required')
+        key = uri[0] + '#' + record[0]
+        require(key not in sessions, 'duplicate live AMS Contacts session')
+        sessions[key] = {'record_id': int(record[0]), 'uri': uri[0], 'provider_pid': provider_pid,
+                         'provider_uid': contacts_uid, 'host_pid': host_pid, 'host_uid': caller_uid}
+    return sessions
+
+
+def closed_session(action, contacts_uid, caller_uid):
+    before = ams_sessions(artifact(action['ams_before']).read_text(), contacts_uid, caller_uid)
+    after = ams_sessions(artifact(action['ams_after']).read_text(), contacts_uid, caller_uid)
+    removed = set(before) - set(after)
+    require(len(removed) == 1 and set(after) <= set(before), 'one actual AMS Contacts session must close for this input')
+    require(all(after[key] == before[key] for key in after), 'other live AMS session changed identity')
+    return before[next(iter(removed))]
+
+
+class PickerNotReady(EvidenceError):
+    pass
+
+
+def picker_view(layout):
+    """Unique real controls, with host-owned nodes confined to a remote subtree."""
+    roots = layout if isinstance(layout, list) else [layout]
+    pending = [(row, '', []) for row in roots]
+    rows = []
+    while pending:
+        node, owner, ancestors = pending.pop()
+        require(isinstance(node, dict) and len(rows) < 100000 and len(ancestors) < 256, 'malformed picker hierarchy')
+        attrs, children = node.get('attributes'), node.get('children', [])
+        require(isinstance(attrs, dict) and isinstance(children, list), 'actual UITest attributes/children required')
+        owner = attrs.get('bundleName') or owner
+        rows.append((node, owner, ancestors))
+        pending.extend((child, owner, ancestors + [node]) for child in children)
+    def identified(identifier):
+        return [row for row in rows if row[0]['attributes'].get('id') == identifier and
+                row[0]['attributes'].get('visible') == 'true']
+    counters, dones = identified('selectedText'), identified('doneButton')
+    if not counters or not dones: raise PickerNotReady('actual Contacts picker controls not ready')
+    require(len(counters) == len(dones) == 1, 'duplicate visible Contacts picker IDs')
+    counter, owner, ancestry = counters[0]
+    require(owner in (BUNDLE, CONTRACT['provider_bundle']) and dones[0][1] == owner, 'picker controls have mixed/foreign owners')
+    if owner == CONTRACT['provider_bundle']:
+        return {'owner': owner, 'tree': layout, 'host_owned': False, 'window_id': None, 'extension_id': None}
+    extensions = [node for node, bundle, _ in rows if bundle == BUNDLE and
+                  node['attributes'].get('type') == 'UIExtensionComponent' and node['attributes'].get('visible') == 'true']
+    require(len(extensions) == 1, 'one actual visible host UIExtension subtree required')
+    extension = extensions[0]
+    require(extension in ancestry and extension in dones[0][2], 'caller preview is outside remote UIExtension subtree')
+    window = extension['attributes'].get('hostWindowId', '')
+    extension_id = extension['attributes'].get('accessibilityId', '')
+    require(re.fullmatch('[1-9][0-9]*', window) and re.fullmatch('[1-9][0-9]*', extension_id),
+            'actual host window and UIExtension identity required')
+    for row in (counters[0], dones[0]):
+        attrs = row[0]['attributes']
+        require(attrs.get('hostWindowId') == window and re.fullmatch('[1-9][0-9]*', attrs.get('accessibilityId', '')) and
+                int(attrs['accessibilityId']) >= 100000000000 and int(attrs['accessibilityId']) > int(extension_id),
+                'picker child window/remote accessibility identity mismatch')
+    require(counter['attributes']['accessibilityId'] != dones[0][0]['attributes']['accessibilityId'],
+            'picker controls alias the same remote node')
+    return {'owner': owner, 'tree': extension, 'host_owned': True, 'window_id': window, 'extension_id': extension_id}
+
+
+def verify_ui(ui, invocation, policy, raw_journal, terminal, expected, records, caller_uid):
     events = [event for event in ui.get('events', []) if event.get('invocation_id') == invocation]
     require(events, 'independent UI evidence missing: ' + invocation)
     starts = [event for event in events if event.get('kind') == 'caller_start']
@@ -230,10 +362,34 @@ def verify_ui(ui, invocation, policy, raw_journal, terminal, expected, records):
     screenshot = artifact(action['screenshot']).read_bytes()
     require(screenshot.startswith((b'\x89PNG\r\n\x1a\n', b'P6\n')), 'actual screenshot format missing')
     layout = raw_json(artifact(action['layout']))
-    require(CONTRACT['provider_bundle'] in text_values(layout, 'bundleName'), 'layout is not the Contacts provider')
+    view = picker_view(layout)
+    uid = provider_uid(ui)
+    binding = closed_session(action, uid, caller_uid)
+    start_sessions = ams_sessions(artifact(starts[0]['ams']).read_text(), uid, caller_uid)
+    require(not start_sessions, 'Contacts session already existed before caller Start')
+    baseline = ams_sessions(artifact(action['ams_before']).read_text(), uid, caller_uid)
+    require(binding['host_uid'] == caller_uid and baseline and
+            (len(baseline) in (1, 2) if policy == 'two-done' else len(baseline) == 1),
+            'actual Contacts provider binding or session count invalid')
+    if view['host_owned']:
+        post = raw_json(artifact(action['layout_after']))
+        require(not any(row.get('type') == 'UIExtensionComponent' and row.get('visible') == 'true' and
+                        row.get('accessibilityId') == view['extension_id'] and row.get('hostWindowId') == view['window_id']
+                        for row in objects(post)), 'selected host UIExtension session remains visible after input')
+    require(not any(row.get('ams_session') == binding for row in ui.setdefault('_verified_sessions', [])),
+            'one AMS session was reused for multiple public invocations')
+    ui['_verified_sessions'].append({'invocation_id': invocation, 'ams_session': binding})
     if action_kind in {'done', 'cancel'}:
         allowed = {'doneButton'} if action_kind == 'done' else {'close_click_btn', 'Settings_close_btn', 'contactList_contacts_back_arrowBack'}
-        require(action.get('node_id') in allowed and action['node_id'] in text_values(layout, 'id'), 'actual terminal UI target missing')
+        require(action.get('node_id') in allowed and action['node_id'] in text_values(view['tree'], 'id'), 'actual terminal UI target missing')
+        targets = [row for row in objects(layout) if row.get('id') == action['node_id'] and row.get('visible') == 'true']
+        require(len(targets) == 1 and targets[0].get('enabled') == 'true' and targets[0].get('clickable') == 'true',
+                'terminal picker ID is not unique, visible and clickable')
+        if view['host_owned']:
+            require(targets[0].get('hostWindowId') == view['window_id'] and
+                    re.fullmatch('[1-9][0-9]*', targets[0].get('accessibilityId', '')) and
+                    int(targets[0]['accessibilityId']) >= 100000000000,
+                    'terminal control belongs to a different host window or local preview')
     before = artifact(action['journal_before']).read_bytes()
     require(raw_journal.startswith(before), 'UI journal-before snapshot is not a prefix of the final journal')
     prefix = [json.loads(line) for line in before.decode().splitlines() if line]
@@ -245,12 +401,19 @@ def verify_ui(ui, invocation, policy, raw_journal, terminal, expected, records):
     require(len(absent) == 1, 'provider disappearance snapshot missing or ambiguous')
     after = raw_json(artifact(absent[0]['layout']))
     require(CONTRACT['provider_bundle'] not in text_values(after, 'bundleName'), 'provider still visible after completion')
+    try:
+        picker_view(after)
+    except PickerNotReady:
+        pass
+    else:
+        raise EvidenceError('picker controls still visible after completion')
     require(artifact(absent[0]['screenshot']).read_bytes().startswith((b'\x89PNG\r\n\x1a\n', b'P6\n')),
             'provider disappearance screenshot missing')
     if len(expected) == 205:
-        counters = [node for node in objects(layout) if node.get('id') == 'selectedText']
-        require(counters and any('205' in text for node in counters for text in text_values(node, 'text')),
-                '205 selection count not visible before Done')
+        counters = [row for row in objects(view['tree']) if row.get('id') == 'selectedText']
+        counts = [pair for row in counters for text in text_values(row, 'text')
+                  for pair in re.findall(r'(?<!\d)(\d+)\s*/\s*(\d+)(?!\d)', text)]
+        require(counts == [('205', '205')], '205 actual selection count/limit not visible before Done')
     if policy == 'change-selection-then-cancel':
         changes = {(event.get('kind'), event.get('contact_id')) for event in events}
         require(('unselect', records[0]['id']) in changes and ('select', records[3]['id']) in changes,
@@ -258,8 +421,10 @@ def verify_ui(ui, invocation, policy, raw_journal, terminal, expected, records):
         for kind, record in [('unselect', records[0]), ('select', records[3])]:
             change = next(event for event in events if event.get('kind') == kind and event.get('contact_id') == record['id'])
             layout = raw_json(artifact(change['layout']))
-            require(CONTRACT['provider_bundle'] in text_values(layout, 'bundleName') and
-                    record['name']['fullName'] in text_values(layout, 'text'),
+            changed = picker_view(layout)
+            require(changed['owner'] == view['owner'] and changed['window_id'] == view['window_id'] and
+                    changed['extension_id'] == view['extension_id'] and
+                    record['name']['fullName'] in text_values(changed['tree'], 'text'),
                     'changed contact is not visible in the independent layout')
 
 
@@ -382,8 +547,24 @@ def verify_runtime(journal_path, seed_path, cleanup_path, ui_path, identity_path
                     require(result.get('value_type') == 'object', 'success returned undefined/nonobject')
                     compare_contacts(json.loads(result.get('raw_json', 'null')), expected)
                     require(callbacks == (1 if callback_api else 0), 'public overload result channel mismatch')
-            verify_ui(ui, invocation, case['ui'], raw_journal, terminal, expected, records)
+            verify_ui(ui, invocation, case['ui'], raw_journal, terminal, expected, records, identity['uid'])
             observations.append({'case_id': case['id'], 'invocation_id': invocation, 'terminal_observations': len(terminal)})
+        if case['id'] in {'exit-pending', 'reopen'}:
+            phase = 'before_exit' if case['id'] == 'exit-pending' else 'after_reopen'
+            measured = raw_json(artifact(ui['caller_processes'][phase]))
+            pid = next(row['pid'] for row in measured['processes'] if BUNDLE in row.get('bundleNames', []))
+            bindings = [row['ams_session'] for row in ui['_verified_sessions'] if row['invocation_id'] in allowed_invocations]
+            require(len(bindings) == 1 and bindings[0]['host_pid'] == pid, 'AMS host differs from actual AppMgr caller process')
+        if case['id'] == 'dual-session':
+            actions = [row for row in ui['events'] if row.get('invocation_id') in allowed_invocations and row.get('kind') == 'done']
+            uid = provider_uid(ui)
+            require(len(actions) == 2, 'two actual dual-session inputs required')
+            first = ams_sessions(artifact(actions[0]['ams_before']).read_text(), uid, identity['uid'])
+            middle = ams_sessions(artifact(actions[0]['ams_after']).read_text(), uid, identity['uid'])
+            second = ams_sessions(artifact(actions[1]['ams_before']).read_text(), uid, identity['uid'])
+            last = ams_sessions(artifact(actions[1]['ams_after']).read_text(), uid, identity['uid'])
+            require(len(first) == 2 and len(middle) == 1 and middle == second and not last,
+                    'dual AMS session lifecycle is not two to one to zero')
     return {'schema_version': 1, 'raw_results_verified': True, 'run_id': run_id, 'identity': identity,
             'scope': 'one_case_only' if only_case else 'required_caller_matrix', 'observations': observations,
             'ledger_closed': False, 'first_artifact_behavior_gate_passed': False,
