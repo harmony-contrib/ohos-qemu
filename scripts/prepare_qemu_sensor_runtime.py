@@ -49,10 +49,12 @@ allow sensor_host self:unix_stream_socket { create bind listen accept read write
 allow sensor_host dev_random_file:chr_file { getattr open read };
 # Only a root HDC command (domain su, UID checked again with SO_PEERCRED)
 # may feed external measurements. Public Sensor consumers use the HDI service.
-allow su dev_unix_socket:dir search;
-allow su qemu_sensor_input_dir:dir search;
-allow su qemu_sensor_input_socket:sock_file { getattr write };
-allow su sensor_host:unix_stream_socket connectto;
+debug_only(`
+    allow su dev_unix_socket:dir search;
+    allow su qemu_sensor_input_dir:dir search;
+    allow su qemu_sensor_input_socket:sock_file { getattr write };
+    allow su sensor_host:unix_stream_socket connectto;
+')
 ''',
 }
 

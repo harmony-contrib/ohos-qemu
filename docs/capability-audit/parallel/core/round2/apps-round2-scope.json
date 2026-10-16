@@ -3,6 +3,12 @@
   "agent": "apps",
   "requirements_reviewed": 34,
   "changed_files": [
+    "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/00-calendar_manager_napi.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/01-calendar_manager_napi.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/napi_harness.cpp",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/provenance.json",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/source-provider-pristine.json",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/00-calendar_manager_napi.cpp.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/01-calendar_manager_napi.h.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/02-module.json5.gz.b64",
@@ -10,11 +16,17 @@
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
     "docs/capability-audit/parallel/apps/README.md",
     "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+    "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/result.json",
     "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/0001-dispatch-editor-results-with-native-lifetime-cancellation.patch",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/README.md",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/verify_source.py",
     "patches/common/applications/standard/calendardata/event_editor/0001-provide-user-confirmed-calendar-event-editor.patch",
     "patches/common/applications/standard/calendardata/event_editor/README.md",
     "patches/common/applications/standard/calendardata/event_editor/apply.sh",
@@ -27,10 +39,11 @@
     "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
     "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets",
     "applications/standard/calendardata/entry/src/main/module.json5",
-    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json"
+    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets"
   ],
   "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
   "first_artifact_behavior_gate_passed": false,
   "base": "b88407cb7e9f93c1d58b4def55c64385e143f865",
-  "head": "ee2748c1abc73c5d77ef3bbbb0ee06466b47c7d2"
+  "head": "33cc68a6bf6d7fc4761465edca34189d30bca46a"
 }
