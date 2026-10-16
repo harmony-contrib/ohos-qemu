@@ -16,13 +16,14 @@ COMPONENT = ROOT/'patches/common/base/telephony/state_registry/communication_sta
 FIXTURE = Path(__file__).parent/'fixtures/batch_location/communication_runtime_before.json'
 
 
-def sources():
+def sources(prefix=None):
     files=json.loads(FIXTURE.read_text())['files']
     with tempfile.TemporaryDirectory(prefix='batch-location-communication-src-') as directory:
         root=Path(directory)
         for name,text in files.items():
             target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(text)
-        for patch in sorted(COMPONENT.glob('*.patch')):
+        patches=sorted(COMPONENT.glob('*.patch'))
+        for patch in patches if prefix is None else patches[:prefix]:
             subprocess.run(['git','apply',str(patch)],cwd=root,check=True,capture_output=True)
         return {name:(root/name).read_bytes().decode() for name in files}
 

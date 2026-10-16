@@ -30,7 +30,8 @@ def manifest():
         if path.is_absolute() or '..' in path.parts or '\\' in name or not any(
                 name.startswith(project + '/') for project in PROJECTS):
             raise ValueError('unsafe telephony source target')
-    if set(data['states']) != {'original', 'final'} or any(
+    expected_states = {'original', 'final'} | {'prefix_' + str(index) for index in range(1, len(data['patches']))}
+    if set(data['states']) != expected_states or any(
             set(state) != set(data['files']) for state in data['states'].values()):
         raise ValueError('incomplete communication whole-component states')
     patches = sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))

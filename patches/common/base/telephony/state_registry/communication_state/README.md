@@ -26,3 +26,10 @@ GET_NETWORK_INFO. The ANI bridge carries the same explicit bool/slot data flow.
 Host tests exercise actual patched function boundaries with dependency doubles.
 They do not replace complete platform TU, actual modem/HDI or new-package runtime
 validation. No capability requirement is closed by this source patch alone.
+
+
+The second patch declares access_token:libaccesstoken_sdk on the actual observer
+and observer_ani_cxx GN targets. All44 complete files now have pinned original,
+first-patch prefix and final states. The previous binary enum patch/CRLF bytes
+are unchanged. See round8-access-token-gn.md/json for the parent full-TU failures,
+real SDK public exports and remaining actual compilation/link/GN/runtime gates.
