@@ -1788,57 +1788,38 @@
   },
   "current_resource_lease": {
     "owner": "root",
-    "scope": "current090fd4 M144 native\u2192official HAP serial attempt; source/out RO to others",
+    "scope": "complete source patch preparation05, then one ARM64 phone full images/package attempt after preparation success",
     "max_heavy_jobs": 1,
-    "container": "stupefied_dubinsky",
-    "original_cpu": 2,
-    "original_memory_gib": 5,
-    "live_native_cpu": 4,
-    "live_native_memory_gib": 8,
-    "memory_swap_total_gib": 10,
-    "resource_adjustment_evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/resource-adjustments.json",
+    "container": "ohos-qemu-phone-build",
+    "source_and_out": "exclusive root writes; all agents have ceased reads and writes",
+    "preparation_cpus": 2,
+    "preparation_memory_gib": 5,
+    "full_build_planned_cpus": 4,
+    "full_build_planned_memory_gib": 10,
+    "compiler_jobs": 2,
+    "kernel_jobs": 2,
+    "capacity_observation": {
+      "host_memory_bytes": 34359738368,
+      "physical_cpus": 12,
+      "docker_memory_bytes": 16819298304,
+      "docker_cpus": 12,
+      "host_disk_free_gib": 381
+    },
+    "capacity_reason": "single heavy build; CPU4 and memory10GiB previously used successfully for same-session M144; leave VM headroom, retain two compiler jobs",
+    "completed_dependencies": [
+      "current090 M144 native and signed HAP",
+      "live SDK03 HAP and exact SDK39 NativeStrip replay",
+      "three ABI clock CLI build and host recheck"
+    ],
     "queued": [
-      "live-only SDK03",
-      "full patched source prepare02",
-      "one ARM64 phone full build/package/actual runtime"
+      "finish preparation05",
+      "one full ARM64 phone GN/images/three native witnesses/package",
+      "fresh product helper recheck and actual complete runtime gate"
     ],
     "remaining_five_started": false
   },
-  "active_exclusive_grants": {
-    "media_round15_native_connection": {
-      "agent": "media",
-      "write_prefixes": [
-        "ci/capability-audit/batch_media_wallpaper_suite.py",
-        "ci/capability-audit/batch_media_wallpaper_coordinator.py",
-        "ci/capability-audit/test_batch_media",
-        "docs/capability-audit/parallel/media/"
-      ],
-      "root_owns": [
-        "scripts/qemu_wallpaper_build_witness.py",
-        "ci/capability-audit/parallel_runtime_suite.py",
-        "ci/capability-audit/run_packaged_qemu_suite.py",
-        "all product source and full build/package scripts"
-      ],
-      "no_heavy_tasks": true
-    },
-    "apps_contacts_ABC_readonly": {
-      "agent": "apps",
-      "read_only_source_and_out": true,
-      "write_prefixes": [
-        "ci/capability-audit/batch_apps_",
-        "ci/capability-audit/test_batch_apps_",
-        "docs/capability-audit/parallel/apps/round12"
-      ],
-      "no_heavy_tasks": true
-    },
-    "system_R50_R51_readonly": {
-      "agent": "system",
-      "read_only_source_and_out": true,
-      "write_prefix": "docs/capability-audit/parallel/system/round13",
-      "no_heavy_tasks": true
-    }
-  },
-  "updated_at": "2026-10-17T02:07:41.035165+08:00",
+  "active_exclusive_grants": {},
+  "updated_at": "2026-10-17T03:17:16.705530+08:00",
   "previous_exclusive_grants": {
     "apps_provider_lifecycle": {
       "agent": "apps",
@@ -1977,6 +1958,38 @@
       "write_prefix": "docs/capability-audit/parallel/system/round10-runtime-helpers/",
       "native_compile_requires_root_lease": true,
       "no_shared_suite_edits": true
+    },
+    "media_round15_native_connection": {
+      "agent": "media",
+      "write_prefixes": [
+        "ci/capability-audit/batch_media_wallpaper_suite.py",
+        "ci/capability-audit/batch_media_wallpaper_coordinator.py",
+        "ci/capability-audit/test_batch_media",
+        "docs/capability-audit/parallel/media/"
+      ],
+      "root_owns": [
+        "scripts/qemu_wallpaper_build_witness.py",
+        "ci/capability-audit/parallel_runtime_suite.py",
+        "ci/capability-audit/run_packaged_qemu_suite.py",
+        "all product source and full build/package scripts"
+      ],
+      "no_heavy_tasks": true
+    },
+    "apps_contacts_ABC_readonly": {
+      "agent": "apps",
+      "read_only_source_and_out": true,
+      "write_prefixes": [
+        "ci/capability-audit/batch_apps_",
+        "ci/capability-audit/test_batch_apps_",
+        "docs/capability-audit/parallel/apps/round12"
+      ],
+      "no_heavy_tasks": true
+    },
+    "system_R50_R51_readonly": {
+      "agent": "system",
+      "read_only_source_and_out": true,
+      "write_prefix": "docs/capability-audit/parallel/system/round13",
+      "no_heavy_tasks": true
     }
   }
 }
