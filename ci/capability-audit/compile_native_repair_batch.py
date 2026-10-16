@@ -16,6 +16,22 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'qemu_sensor': {
+        'project': 'drivers/peripheral',
+        'revision': '69094b77aa2200160207b1b06b3c0b586ae2157c',
+        'components': ['sensor/qemu_external'],
+        'units': ['qemu_sensor_input', 'qemu_sensor_vdi'],
+        'sources': {name: 'sensor/hdi_impl/' + name + '.cpp'
+                    for name in ('qemu_sensor_input', 'qemu_sensor_vdi')},
+        'extra_owned': ['sensor/hdi_impl/' + name for name in (
+            'qemu_sensor_input.cpp', 'qemu_sensor_vdi.cpp', 'qemu_sensor_input.h', 'qemu_sensor_protocol.h')],
+        'template_sources': {name: 'sensor/hdi_impl/sensor_impl.cpp'
+                             for name in ('qemu_sensor_input', 'qemu_sensor_vdi')},
+        'targets': {name: 'obj/drivers/peripheral/sensor/hdi_impl/libhdi_sensor_impl/sensor_impl.o'
+                    for name in ('qemu_sensor_input', 'qemu_sensor_vdi')},
+        'required_header': 'sensor/hdi_impl/qemu_sensor_input.h',
+        'scope': 'whole_new_sensor_TUs_actual_HDI_target_flags_ONLY_NOT_fresh_GN_selection_link_runtime',
+    },
     'bluetooth_oob_napi': {
         'project': 'foundation/communication/bluetooth',
         'revision': '1727fa05c457f697f7cf80f290c82c663f1c3aab',
@@ -275,7 +291,8 @@ def run(args):
     output.mkdir(parents=True, exist_ok=False)
     components = [ROOT / 'patches/common' / project / name for name in group['components']]
     owned = sorted(set(patch_paths(components)) |
-                   {str(project / name) for name in group.get('extra_checkout', [])})
+                   {str(project / name) for name in group.get('extra_checkout', [])} |
+                   {str(project / name) for name in group.get('extra_owned', [])})
     if any(not any(Path(name).is_relative_to(p) for p in projects) for name in owned):
         raise ValueError('component targets a different project')
     before = {name: sha(root / name) if (root / name).is_file() else None for name in owned}
@@ -323,7 +340,7 @@ def run(args):
         for name in generated_report[product]['generated_sha256'] if name.endswith('.h')]}) + '\n')
     report = {'status': 'fail', 'group': args.group, 'source_revision': group['revision'],
               'source_revisions': projects,
-              'scope': 'complete_patched_product_TUs_ONLY_NOT_link_package_runtime',
+              'scope': group.get('scope', 'complete_patched_product_TUs_ONLY_NOT_link_package_runtime'),
               'components': group['components'], 'source_before_sha256': before,
               'candidate_sha256': {name: sha(staged / name) for name in owned},
               'recipe_sha256': recipe_before, 'objects': [], 'first_artifact_behavior_gate_passed': False}
@@ -352,12 +369,17 @@ def run(args):
                                                 group['directory'] + '/' + unit + '.cpp'))
                     candidate_source = staged / source.relative_to(root)
                 compiler = 'clang' if source.suffix == '.c' else 'clang++'
+                template = (root / project / group['template_sources'][unit]
+                            if 'template_sources' in group else source)
                 if (Path(argv[0]).name != compiler or '--target=' + arch + '-linux-ohos' not in argv or
                         argv.count('-c') != 1 or argv.count('-o') != 1 or argv.count('-MF') != 1 or
                         any(v in argv for v in ('&&', ';', '|')) or
-                        (cwd / argv[argv.index('-c') + 1]).resolve() != source):
+                        (cwd / argv[argv.index('-c') + 1]).resolve() != template):
                     raise ValueError('exact real product TU command required')
                 row['original_argv'] = argv[:]
+                if template != source:
+                    row['command_template_source'] = str(template)
+                    row['fresh_GN_source_selection_tested'] = False
                 obj = output / f'{product}-{unit}.o'
                 dep = output / f'{product}-{unit}.d'
                 argv[argv.index('-c') + 1] = str(candidate_source)
