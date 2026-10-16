@@ -1,0 +1,36 @@
+{
+  "scope": "isolated next-batch source integration ONLY; current representative fullbuild02 remains frozen at 2c6a5c2",
+  "status": "pass_host_composition_ONLY",
+  "candidate_commits": [
+    "331b5fd5e3e82fd88c753942ead67901b7bed3e8",
+    "6c3dd817a328aae84eb393e8320e77af73c7002f"
+  ],
+  "changes": [
+    "source_provider\u2192event_editor\u2192editor_callback_dispatch\u2192calendar_main real complete stack replay",
+    "accept MainAbility scene only for exact complete known module and full source successor",
+    "preserve pinned system_core platform signature and all three original ACLs"
+  ],
+  "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest -v test_calendar_main_integration test_calendar_provider test_batch_system_calendar_main test_batch_media_audio_haptic",
+  "exit_code": 0,
+  "test_count": 35,
+  "seconds": 7.318,
+  "log": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-calendar-main-next-integration-host-01.log",
+    "sha256": "a5090991d9212faa2583e6544b1d55123d6f92ef07a5a508daf67674b94c806f"
+  },
+  "files": {
+    "patches/lib/calendar_provider.py": "c553c1d639916875ddc6c03b92988511a0dae0134a84bac929596aaadd8a822b",
+    "patches/common/applications/standard/calendardata/event_editor/verify_source.py": "06a92d19ba3732f4e2f765e9d88fde0d95796fd796d6ebefc001ef6278c0ac40",
+    "scripts/build_standard_qemu_in_docker.sh": "33fb4f6fd03f13f7da68f09c12b19d1068bca57edc62c955508facdd1d9e801e",
+    "ci/capability-audit/test_calendar_main_integration.py": "0b3e85d725c89353f1a55cebaefdf839a05b985b2dcc61dc9816202bb8afb423"
+  },
+  "new_guest_validated": false,
+  "closed_findings": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining": [
+    "actual complete SDK candidate compile/sign/preinstall/BMS",
+    "newly packaged runtime UI/CRUD/permission/cancel/foreground/background/restart observations",
+    "real reminder publication/cancel/reboot persistence",
+    "separate native Calendar/Filter asynchronous ownership repair"
+  ]
+}

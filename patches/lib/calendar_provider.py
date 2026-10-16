@@ -2,6 +2,7 @@
 """Verify CalendarData source/provider/signing wiring, not runtime behavior."""
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -19,9 +20,37 @@ AUTHORITIES = {
 }
 EDITOR = {'name': 'EditorUIExtensionAbility', 'srcEntry': './ets/EditorUIExtensionAbility.ets',
           'type': 'sys/commonUI', 'exported': True, 'extensionProcessMode': 'instance'}
+MAIN_COMPONENT = Path(__file__).resolve().parents[1] / 'common/applications/standard/calendardata/calendar_main'
+MAIN_MODULE_SHA256 = '5b194f9398daffa7596d0265f247f3cbae6aca61ee528cd3759178424f3f62fe'
 
 
-def validate(module, profile, capabilities, fingerprint, platform_fingerprint, require_editor=False):
+def main_scene_selected(module):
+    return any(isinstance(entry.get('usedScene'), dict) and
+               isinstance(entry['usedScene'].get('abilities'), list) and
+               'MainAbility' in entry['usedScene']['abilities']
+               for entry in module.get('requestPermissions', []))
+
+
+def validate_main_module(module):
+    path = MAIN_COMPONENT / 'files/entry/src/main/module.json5'
+    if path.is_symlink() or hashlib.sha256(path.read_bytes()).hexdigest() != MAIN_MODULE_SHA256:
+        raise ValueError('known Calendar Main module postimage is missing or changed')
+    expected = json.loads(path.read_text())['module']
+    # JSON spelling preserves Boolean-versus-integer distinctions in the exact
+    # known successor; Python dictionary equality alone treats True as 1.
+    canonical = lambda value: json.dumps(value, sort_keys=True, separators=(',', ':'))
+    if canonical(module) != canonical(expected):
+        raise ValueError('MainAbility permission scene requires the complete exact Calendar Main module')
+
+
+def validate_main_source(root):
+    spec = importlib.util.spec_from_file_location('calendar_provider_main_source', MAIN_COMPONENT / 'verify_source.py')
+    verifier = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verifier)
+    verifier.validate(root, require_patched=True)
+
+
+def validate(module, profile, capabilities, fingerprint, platform_fingerprint, require_editor=False, require_main=False):
     if fingerprint != SIGNATURE or platform_fingerprint != SIGNATURE:
         raise ValueError('CalendarData profile/platform certificate does not match pinned source signing policy')
     bundle = profile.get('bundle-info', {})
@@ -43,17 +72,23 @@ def validate(module, profile, capabilities, fingerprint, platform_fingerprint, r
     has_editor = 'EditorUIExtensionAbility' in names
     expected = original | ({'EditorUIExtensionAbility'} if has_editor else set())
     if (len(names) != len(set(names)) or module.get('deviceTypes') != ['default', 'tablet'] or
-            set(names) != expected or (require_editor and not has_editor)):
+            set(names) != expected or ((require_editor or require_main) and not has_editor)):
         raise ValueError('unexpected or incomplete CalendarData provider/device surface')
     if has_editor:
         editor = next(entry for entry in extensions if entry['name'] == 'EditorUIExtensionAbility')
         if editor != EDITOR or editor.get('exported') is not True:
             raise ValueError('CalendarData editor must use the exact per-session common UI extension')
+        has_main = main_scene_selected(module)
+        if has_main or require_main:
+            validate_main_module(module)
+        scene = ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
+                 'ReminderCallbackExtAbility', 'EditorUIExtensionAbility']
+        if has_main:
+            scene.append('MainAbility')
         for permission in ('ohos.permission.READ_WHOLE_CALENDAR', 'ohos.permission.WRITE_WHOLE_CALENDAR'):
             grants = [entry for entry in module.get('requestPermissions', []) if entry.get('name') == permission]
             if (len(grants) != 1 or grants[0].get('usedScene') != {
-                    'abilities': ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
-                                  'ReminderCallbackExtAbility', 'EditorUIExtensionAbility'],
+                    'abilities': scene,
                     'when': 'inuse'}):
                 raise ValueError('CalendarData editor requires the exact existing in-use permission scene')
     for name, (uri, read, write) in AUTHORITIES.items():
@@ -82,7 +117,7 @@ def platform_leaf_fingerprint(chain):
     return certificate_fingerprint(certificates[-1])
 
 
-def verify(root, require_editor=False):
+def verify(root, require_editor=False, require_main=False):
     source = root / 'applications/standard/calendardata'
     source_build = (source / 'BUILD.gn').read_text()
     if (source_build.count('ohos_app("calendardata_hap")') != 1 or
@@ -102,7 +137,9 @@ def verify(root, require_editor=False):
     module = json.loads((source / 'entry/src/main/module.json5').read_text())['module']
     capabilities = json.loads((root / 'vendor/ohemu/virt/preinstall-config/install_list_capability.json').read_text())
     validate(module, profile, capabilities, certificate_fingerprint(certificate),
-             platform_leaf_fingerprint(platform), require_editor)
+             platform_leaf_fingerprint(platform), require_editor, require_main)
+    if require_main or main_scene_selected(module):
+        validate_main_source(root)
     if require_editor:
         page = 'pages/EventEditor'
         pages = json.loads((source / 'entry/src/main/resources/base/profile/main_pages.json').read_text())['src']
@@ -123,8 +160,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--require-editor', action='store_true')
+    parser.add_argument('--require-main', action='store_true')
     args = parser.parse_args()
-    verify(args.source_root, args.require_editor)
+    verify(args.source_root, args.require_editor, args.require_main)
 
 
 if __name__ == '__main__':

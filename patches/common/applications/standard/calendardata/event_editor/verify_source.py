@@ -25,5 +25,15 @@ def validate(root, require_patched=False):
             ui_files = tuple(record for record in FILES if record[0] not in {entry[0] for entry in successor.FILES})
             validate_component(root, PROJECT, REVISION, ui_files, require_patched=True)
         except (ValueError, OSError):
-            raise original_error
+            # MainAbility changes the module permission scenes. Accept that
+            # module only as part of its entire known six-file successor,
+            # which also pins all seven unchanged editor/native dependencies.
+            main_path = Path(__file__).resolve().parent.parent / 'calendar_main/verify_source.py'
+            try:
+                spec = importlib.util.spec_from_file_location('calendar_editor_main_successor', main_path)
+                main = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(main)
+                main.validate(root, require_patched=True)
+            except (ValueError, OSError):
+                raise original_error
         return True
