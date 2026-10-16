@@ -1582,6 +1582,9 @@ PY
     # 2in1 device type and try to rewrite ohos.para before it has been built.
     # The GN argument still selects the compile-time device type.
     build_args+=(--gn-args "device_type=${DEVICE_TYPE}")
+    # One product linker at a time shares the coordinator's heavy-work lease.
+    # Ninja still uses BUILD_JOBS for compilation; target LTO/CFI stay enabled.
+    build_args+=(--gn-args "concurrent_links=1")
     case "${DEVICE_TYPE}" in
       phone) build_args+=(--gn-args "target_platform=phone") ;;
       # AccessToken and other platform branches use pc, not the BMS device type

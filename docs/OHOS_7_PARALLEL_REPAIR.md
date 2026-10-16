@@ -152,3 +152,39 @@ CalendarData 新表单和 UIExtension 已完成实际官方 API26 Release HAP �
 线程和生命周期，应用组正在补齐真实调度/清理后再统一编译该原生单元。
 蓝牙 OOB 的真实服务/GAP/HCI 候选已合入，完整平台编译进行中；尚无实际控制器
 及 peer 配对验收。以上均不核销原有 82 项，也不解除其余五包的门禁。
+
+继续集成后，Calendar 回调调度/环境清理已合入，其完整平台单元通过；蓝牙六个服务
+单元及一个 NAPI 单元也全部通过。此前 22 个既有产品单元加这 8 个，共 30 个完整
+既有平台目标单元通过。新传感器的两个完整源使用实际 HDI 目标选项编译通过，并用
+该目标的 LTO/CFI 链接选项生成真实 `libhdi_sensor_impl.z.so`；只调整并发数/私有缓存、
+替换新对象并移除新 GN 分支不再依赖的旧 HAL。该诊断尚不证明正式 GN 选中和 HDF 加载。
+
+AdminProvisioning 已合入真实 Stage/Hvigor 构建和激活/取消/重试/新 Want 生命周期修复，
+官方 API26 Release unsigned HAP 编译通过。主集成保持原 normal APL、系统应用身份、
+三项原 ACL 和五项请求权限，以准确平台叶证书绑定预装授权；实际固定源码的安装、
+签名策略和传感器 init/GN 配置组合检查通过。新包仍须完成签名校验、BMS 和真实 UI 行为。
+
+VPN 回调已绑定实际控制器/owner/account/UID/PID/vpnId，采用可撤销 listener epoch 和
+真实 FFRT 串行队列。实际抽取函数用官方 Linux API26 编译，并链接输出中的真实
+`libffrt.so` 在 QEMU 用户态通过全部断言；账户、IPC 和 VPN 后端在此探针中仍为明确
+double。当前两个完整辅助程序已用真实产品客户端编译选项及严格警告编译、原生链接。
+首轮发现上游空回调的命名参数警告，已精确去掉五个未使用参数名；未关闭 Werror。
+次轮保留两个成功对象，修正证据脚本变量遮蔽后复验同一对象并补齐桥接程序链接。
+原始失败和输入/对象哈希均保留。后续多 owner broker 还在开发，会另行集中验证新批次。
+
+传感器 socket 固定为 `/dev/unix/socket/qemu_sensor/input`，init 先创建 sensor_host
+所有的 0700 专属目录，socket 为 0600；外部输入另受 UID、随机 nonce 和序列检查。
+完整普通/开发 SELinux 策略编译均通过。第一轮发现非开发策略没有 `su` 类型，已将
+HDC root 客户端规则限定在开发策略内，保留原始失败，未给普通应用开放写入路径。
+HDI 加载优先级及真实运行时 DAC/SELinux 拒绝仍由新包验收确认。
+
+公开 AudioCapturer 调用方的 ARM64、ARMv7、x86_64 API26 共享库编译/链接均通过，
+ARM64 实际 ALSA PCM producer 也已编译链接。其余两种 producer 缺少当前输出中的
+libasound，记录为未完成；未为此提前构建其余五包。普通 HAP 只经公开 Capturer 采样，
+随机双声道挑战仅交 root producer，独立相关性、时间戳、生命周期和令牌边界仍待实际
+新包执行。新增包检查器拒绝旧/混合 OpenVPN 构建、错误程序或签名/授权不符的提供方。
+
+当前并发为网络 multiowner/TUN 归属、定位 district/轨迹/围栏/5A、媒体真实采集与
+KnowledgeContent 日历索引；所有目标按独占路径登记。重型工作仍一次一个，正式构建
+限制同一时间一个产品链接任务。详细路径/SHA256 与各诊断的适用范围见 core/round2
+进度索引。代表包完整行为门禁仍为 false，六包完整验收仍为 0/6；尚未启动其他五包。
