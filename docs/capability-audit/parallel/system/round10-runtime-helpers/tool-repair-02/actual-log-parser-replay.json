@@ -1,0 +1,39 @@
+{
+  "original_builder_sha256": "79e30432e111b3ecd40c0703015853cf0a8884d6b42400c949d627d17c148a43",
+  "scope": "Pure parser functions on recorded batch01 log snippets; no actual DSO inspection/native execution",
+  "results": {
+    "contact_picker_observer": {
+      "old_defined_symbol": false,
+      "new_defined_symbol": true,
+      "old_needed": [],
+      "new_needed": [
+        "libaccesstoken_sdk.z.so",
+        "libapp_manager.z.so",
+        "libc++.so",
+        "libc.so"
+      ]
+    },
+    "wallpaper_default_resolver": {
+      "old_defined_symbol": false,
+      "new_defined_symbol": true,
+      "old_needed": [],
+      "new_needed": [
+        "libc++.so",
+        "libc.so",
+        "libcjson.z.so",
+        "libclang_rt.ubsan_minimal.so",
+        "libconfigpolicy_util.z.so"
+      ]
+    },
+    "wallpaper_token_query": {
+      "old_defined_symbol": false,
+      "new_defined_symbol": true,
+      "old_needed": [],
+      "new_needed": [
+        "libaccesstoken_sdk.z.so",
+        "libc++.so",
+        "libc.so"
+      ]
+    }
+  }
+}

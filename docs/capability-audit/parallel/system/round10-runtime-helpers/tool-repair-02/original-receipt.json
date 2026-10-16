@@ -1,0 +1,52 @@
+{
+  "purpose": "Verbatim snippets for output parser regression, not new compilation/runtime evidence",
+  "original_report": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/build.json",
+    "sha256": "b2d5d610217aa173d7b8e2837f0bd9208cda59fe273fbd44c94df4d1276194ba",
+    "status": "fail"
+  },
+  "logs": {
+    "contact_picker_observer": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/004-contact_picker_observer-actual-ELF-ABI.log",
+      "sha256": "404b3112fa4df02c63df20845f193619b4007c5d7badeec769b81c8d442ed019",
+      "exit_code": 0,
+      "snippet": "llvm-01-contact_picker_observer.txt",
+      "snippet_sha256": "64ebc8ad0c4ba180fba393762dcd6b8904cf41642ba555e29489b0692d2cf093",
+      "selection": "Verbatim full DynamicSection and the first actual __cfi_check and std::__h:: Symbol blocks; Symbols wrapper added",
+      "object_new_hash_capture": {
+        "sha256": "fb9526475e30d6e268540860d444cb1dd9caf2f1a471a45f33adcfb0dc24cad7",
+        "bytes": 1428088,
+        "origin_note": "Observed immutable private output now; original report had no object hash"
+      },
+      "original_binary_sha256": "7cb824ab95e9323c0794ea47a9386ea6d3ecfa267eb97c18269992edf6799e99"
+    },
+    "wallpaper_default_resolver": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/008-wallpaper_default_resolver-actual-ELF-ABI.log",
+      "sha256": "67b0f15b03c70a9b7c4589f22b06d55c4ec267237dc125a5912828c98607283b",
+      "exit_code": 0,
+      "snippet": "llvm-01-wallpaper_default_resolver.txt",
+      "snippet_sha256": "b2524584b1fc29cd5cfbda213e91ff6a1afdb9de8153e7648184c3252f496bf1",
+      "selection": "Verbatim full DynamicSection and the first actual __cfi_check and std::__h:: Symbol blocks; Symbols wrapper added",
+      "object_new_hash_capture": {
+        "sha256": "0592fa9ee924dbd4a50f2da136fe47ebcbefef9bece64c02583ae5cf925f0960",
+        "bytes": 214132,
+        "origin_note": "Observed immutable private output now; original report had no object hash"
+      },
+      "original_binary_sha256": "13b9f2abee00eef20b618c8b1f3096494ecbf0876f6719c5739d6afac0aa6011"
+    },
+    "wallpaper_token_query": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/012-wallpaper_token_query-actual-ELF-ABI.log",
+      "sha256": "1271f0004e8c76753b3ce3d616ff16d84ab30c5a23a767f18601873fa1401cd0",
+      "exit_code": 0,
+      "snippet": "llvm-01-wallpaper_token_query.txt",
+      "snippet_sha256": "28e0715904ffda9c6b5d14094165dd6ea88dda88383db4eefb46f82c0a9fe239",
+      "selection": "Verbatim full DynamicSection and the first actual __cfi_check and std::__h:: Symbol blocks; Symbols wrapper added",
+      "object_new_hash_capture": {
+        "sha256": "6ffb8c39444ebaed918e0c7d1398f02a1248192027df7d805a1932ab481f4a18",
+        "bytes": 186136,
+        "origin_note": "Observed immutable private output now; original report had no object hash"
+      },
+      "original_binary_sha256": "de80a45dd1bb3fc1e0bf48d8e60958611a85cfa2822ee7160357e783cfbf3563"
+    }
+  }
+}

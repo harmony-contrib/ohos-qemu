@@ -1,0 +1,52 @@
+DynamicSection [ (29 entries)
+  Tag                Type           Name/Value
+  0x0000000000000001 NEEDED         Shared library: [libaccesstoken_sdk.z.so]
+  0x0000000000000001 NEEDED         Shared library: [libc++.so]
+  0x0000000000000001 NEEDED         Shared library: [libc.so]
+  0x000000000000001E FLAGS          BIND_NOW 
+  0x000000006FFFFFFB FLAGS_1        NOW PIE 
+  0x0000000000000015 DEBUG          0x0
+  0x0000000060000011 ANDROID_RELA   0x1760
+  0x0000000060000012 ANDROID_RELASZ 100 (bytes)
+  0x0000000000000009 RELAENT        24 (bytes)
+  0x0000000000000024 RELR           0x17C8
+  0x0000000000000023 RELRSZ         24 (bytes)
+  0x0000000000000025 RELRENT        8 (bytes)
+  0x0000000000000017 JMPREL         0x17E0
+  0x0000000000000002 PLTRELSZ       1008 (bytes)
+  0x0000000000000003 PLTGOT         0x67D0
+  0x0000000000000014 PLTREL         RELA
+  0x0000000000000006 SYMTAB         0x340
+  0x000000000000000B SYMENT         24 (bytes)
+  0x0000000000000005 STRTAB         0xC18
+  0x000000000000000A STRSZ          2881 (bytes)
+  0x000000006FFFFEF5 GNU_HASH       0xB50
+  0x000000000000001A FINI_ARRAY     0x6460
+  0x000000000000001C FINI_ARRAYSZ   8 (bytes)
+  0x000000000000000C INIT           0x516C
+  0x000000000000000D FINI           0x5180
+  0x000000006FFFFFF0 VERSYM         0xA90
+  0x000000006FFFFFFE VERNEED        0xB2C
+  0x000000006FFFFFFF VERNEEDNUM     1
+  0x0000000000000000 NULL           0x0
+]
+Symbols [
+  Symbol {
+    Name: __cfi_check (963)
+    Value: 0x5000
+    Size: 360
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xF)
+  }
+  Symbol {
+    Name: std::__h::basic_ios<char, std::__h::char_traits<char>>::~basic_ios() (1604)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+]

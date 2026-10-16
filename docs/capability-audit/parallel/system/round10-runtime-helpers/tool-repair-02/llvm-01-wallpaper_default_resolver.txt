@@ -1,0 +1,51 @@
+DynamicSection [ (28 entries)
+  Tag                Type           Name/Value
+  0x0000000000000001 NEEDED         Shared library: [libconfigpolicy_util.z.so]
+  0x0000000000000001 NEEDED         Shared library: [libcjson.z.so]
+  0x0000000000000001 NEEDED         Shared library: [libc++.so]
+  0x0000000000000001 NEEDED         Shared library: [libc.so]
+  0x0000000000000001 NEEDED         Shared library: [libclang_rt.ubsan_minimal.so]
+  0x000000000000001E FLAGS          BIND_NOW 
+  0x000000006FFFFFFB FLAGS_1        NOW PIE 
+  0x0000000000000015 DEBUG          0x0
+  0x0000000060000011 ANDROID_RELA   0x13D0
+  0x0000000060000012 ANDROID_RELASZ 92 (bytes)
+  0x0000000000000009 RELAENT        24 (bytes)
+  0x0000000000000024 RELR           0x1430
+  0x0000000000000023 RELRSZ         24 (bytes)
+  0x0000000000000025 RELRENT        8 (bytes)
+  0x0000000000000017 JMPREL         0x1448
+  0x0000000000000002 PLTRELSZ       1368 (bytes)
+  0x0000000000000003 PLTGOT         0x88D8
+  0x0000000000000014 PLTREL         RELA
+  0x0000000000000006 SYMTAB         0x340
+  0x000000000000000B SYMENT         24 (bytes)
+  0x0000000000000005 STRTAB         0xAA8
+  0x000000000000000A STRSZ          2344 (bytes)
+  0x000000006FFFFEF5 GNU_HASH       0xA60
+  0x000000000000001A FINI_ARRAY     0x8550
+  0x000000000000001C FINI_ARRAYSZ   8 (bytes)
+  0x000000000000000C INIT           0x716C
+  0x000000000000000D FINI           0x7180
+  0x0000000000000000 NULL           0x0
+]
+Symbols [
+  Symbol {
+    Name: __cfi_check (38)
+    Value: 0x7000
+    Size: 360
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xD)
+  }
+  Symbol {
+    Name: std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>::operator=(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&) (658)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+]

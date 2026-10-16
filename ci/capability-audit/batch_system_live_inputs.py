@@ -18,6 +18,13 @@ SDK_PRODUCT = {'name': 'default', 'compileSdkVersion': '26.0.0', 'compatibleSdkV
 HVIGOR_CONFIG = {'modelVersion': '6.0.0', 'dependencies': {}, 'execution': {'daemon': False, 'parallel': False}}
 HVIGOR_APP = "import { appTasks } from '@ohos/hvigor-ohos-plugin';\nexport default { system: appTasks, plugins: [] };\n"
 HVIGOR_HAP = "import { hapTasks } from '@ohos/hvigor-ohos-plugin';\nexport default { system: hapTasks, plugins: [] };\n"
+ENTRY_PROFILE = {'apiType': 'stageMode', 'targets': [{'name': 'default'}]}
+NATIVE_TARGETS = {'arm64': ('arm64-v8a', 'aarch64-linux-ohos'),
+                  'armv7a': ('armeabi-v7a', 'arm-linux-ohos'), 'x86_64': ('x86_64', 'x86_64-linux-ohos')}
+
+
+def native_packaging(arch):
+    return {'mode': 'prebuilt', 'relative_library': 'entry/libs/' + NATIVE_TARGETS[arch][0] + '/libliveinputaudit.so'}
 
 
 def digest(path):
@@ -148,6 +155,11 @@ def verify_project(project, sdk, run_id, arch):
             (project / 'hvigorfile.ts').read_text() != HVIGOR_APP or
             (project / 'entry/hvigorfile.ts').read_text() != HVIGOR_HAP):
         raise ValueError('actual OpenHarmony API26/Hvigor6 build configuration changed')
+    if read_json(project / 'entry/build-profile.json5') != ENTRY_PROFILE:
+        raise ValueError('actual prebuilt native module configuration changed')
+    if (value.get('native_packaging') != native_packaging(arch) or
+            (value.get('abi'), value.get('triple')) != NATIVE_TARGETS[arch]):
+        raise ValueError('actual prebuilt native packaging contract changed')
     module = read_json(project / 'entry/src/main/module.json5')['module']
     if sorted(x['name'] for x in module['requestPermissions']) != sorted(PERMISSIONS):
         raise ValueError('ordinary HAP permissions changed')
