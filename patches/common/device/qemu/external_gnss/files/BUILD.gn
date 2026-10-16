@@ -4,7 +4,6 @@ import("//device/qemu/common/virt_full/device.gni")
 
 ohos_shared_library("qemu_external_gnss") {
   output_name = "vendorGnssAdapter"
-  output_prefix = ""
   output_prefix_override = true
   output_extension = "so"
   sources = [
