@@ -1,0 +1,37 @@
+{
+  "source": "RO inspector ohos-qemu-parallel-source-20261016-02",
+  "files": {
+    "base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp": {
+      "sha256": "3271676807142d4b03664db0850c0d58d11ec0258941f98bd5658d57003038ac"
+    },
+    "base/theme/wallpaper_mgr/services/BUILD.gn": {
+      "sha256": "16c6df2d65364e8a54582a1736d950053d41abe3e945b04fda3caff8ac0b97dd"
+    },
+    "applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets": {
+      "sha256": "2d848fe7c01a166526ec99bc5ae3f7a461eae84b9f1f04aabb040fa1753e6530",
+      "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/settings/feature/theme/src/main/ets/WallpaperPicker.ets"
+    },
+    "applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets": {
+      "sha256": "10fdd330cd3958d3e15819d2d62c7ae659a1e4b3293fa059a8c29e9cacfe0dcf",
+      "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/settings/feature/theme/src/main/ets/ThemeSettings.ets"
+    },
+    "applications/standard/settings/product/phone/src/main/module.json5": {
+      "sha256": "fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62",
+      "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/settings/product/phone/src/main/module.json5"
+    },
+    "applications/standard/settings/feature/theme/src/main/resources/base/element/string.json": {
+      "sha256": "2767b757ebf4bed992d49b7cbf8316dd0a542545eacd15bfda86e213a60e3395",
+      "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/settings/feature/theme/src/main/resources/base/element/string.json"
+    },
+    "applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json": {
+      "sha256": "cd8cc6d0a9f9832c070314b7d8d071620d7d44b106b22973c978c5e9cfc497ed",
+      "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/settings/feature/theme/src/main/resources/zh_CN/element/string.json"
+    }
+  },
+  "revisions": {
+    "base/theme/wallpaper_mgr": "42256bdeaa504da4ae4d038c24d42a4601e3a6cf",
+    "applications/standard/settings": "0aba461c750fda71977c2f5186ca0e756ecfc6ca"
+  },
+  "scope": "exact fixed source fixtures only; not build or runtime proof",
+  "baseline": "6a580c86a41034532c16f2b73b75ea76a4fe7fc2"
+}
