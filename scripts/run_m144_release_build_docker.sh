@@ -60,6 +60,7 @@ main() {
   docker volume inspect "${ohos_volume}" >/dev/null || \
     { echo 'prepare the pinned OpenHarmony release/SDK source volume first' >&2; exit 1; }
   docker run --rm --platform "${DOCKER_PLATFORM:-linux/amd64}" \
+    --cpus "${M144_BUILD_CPUS:-2}" --memory "${M144_BUILD_MEMORY:-5g}" \
     --ulimit nofile=1048576:1048576 \
     --mount "type=volume,src=${source_volume},dst=/workspace" \
     --mount "type=volume,src=${ohos_volume},dst=/ohos,readonly" \
@@ -69,8 +70,8 @@ main() {
     --mount "type=bind,src=${artifacts},dst=/artifacts" \
     ${hap_tool_mounts[@]+"${hap_tool_mounts[@]}"} \
     -e M144_WORK_ROOT=/workspace/release -e OHOS_ROOT=/ohos \
-    -e M144_CORE_BUILD_JOBS="${M144_CORE_BUILD_JOBS:-4}" \
-    -e M144_BUILD_JOBS="${M144_BUILD_JOBS:-4}" \
+    -e M144_CORE_BUILD_JOBS="${M144_CORE_BUILD_JOBS:-2}" \
+    -e M144_BUILD_JOBS="${M144_BUILD_JOBS:-2}" \
     -e M144_CORE_SKIP_APT="${M144_CORE_SKIP_APT:-${default_prepared_image}}" \
     -e M144_SKIP_APT="${M144_SKIP_APT:-${default_prepared_image}}" \
     -e M144_RELEASE_STAGE="${mode}" -e M144_RELEASE_ARCH="${arch}" \
