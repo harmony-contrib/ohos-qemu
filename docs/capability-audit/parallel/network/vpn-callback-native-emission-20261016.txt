@@ -1,0 +1,8 @@
+test_actual_functions_reentry_epoch_owner_order_teardown_and_delivery_failures (test_batch_network_vpn_callbacks.VpnCallbackTests.test_actual_functions_reentry_epoch_owner_order_teardown_and_delivery_failures) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 2.755s
+
+OK
+/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/.network-scratch/vpn-callback-native.cpp
+sha256=7c5e7e79540c8e829e76781ad3226e55c242a02292584326c3333f64f783f148
