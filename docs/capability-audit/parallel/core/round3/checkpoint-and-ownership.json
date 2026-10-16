@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-17T07:49:47.683697+08:00",
+  "scope": "Checkpoint existing committed adaptation, then five capability workstreams with exclusive paths and root acceptance",
+  "baseline_commit": "2c6a5c2502b6d7feb5d4ffdef34955b40296bd59",
+  "baseline_worktree": "clean; existing implementation already committed",
+  "baseline_ledger": {
+    "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r51-full-unresolved-batch-worklist-04.json",
+    "sha256": "eefbee1c3a9476d6635886f3a67913350fb68b9e33981704d42d1991eec6503a",
+    "total": 281,
+    "closed": 199,
+    "unresolved": 82
+  },
+  "latest_representative_attempt": {
+    "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-arm64-phone-full-build-02/evidence.json",
+    "sha256": "f702eda1b9e5e9ded4d4f3345456298c0d3d6e29b846e11c7a7888be560b2963",
+    "exit_code": 1,
+    "failure": "qemu_mesa action exit126: build_qemu_mesa_llvm.py is not executable",
+    "package_created": false,
+    "runtime_gate_passed": false,
+    "failure_preserved": true
+  },
+  "workstreams": {
+    "apps": {
+      "open_records": 34,
+      "allowed_prefixes": [
+        "patches/common/applications/standard/",
+        "patches/common/foundation/barrierfree/",
+        "patches/common/base/barrierfree/",
+        "patches/common/foundation/arkui/",
+        "ci/capability-audit/batch_apps_",
+        "ci/capability-audit/test_batch_apps_",
+        "ci/capability-audit/fixtures/batch_apps/",
+        "docs/capability-audit/parallel/apps/"
+      ],
+      "finding_ids": [
+        "arkts_export:@ohos.accessibility.config:startBlinking",
+        "arkts_export:@ohos.accessibility.config:stopBlinking",
+        "behavior:phone-published-capabilities-not-declared",
+        "behavior:phone-avinputcast-not-declared",
+        "behavior:accessibility-qemu-input-e2e",
+        "behavior:api26-runtime-export-mismatches-phone",
+        "behavior:intelligent-scene-notification-query-fails",
+        "behavior:shortkey-empty-launch-config",
+        "behavior:certificate-dialog-device-result",
+        "behavior:ability-share-picker-system-provider-missing",
+        "behavior:ability-send-data-action-has-no-enabled-handler",
+        "behavior:avcast-media-controller-provider-mismatch",
+        "behavior:media-control-volume-provider-activation",
+        "behavior:distributed-hardware-ui-preinstall-path-mismatch",
+        "behavior:photo-provider-not-activated-2in1",
+        "behavior:enterprise-provisioning-provider-missing",
+        "behavior:wallpaper-ui-provider-missing",
+        "behavior:accessibility-screen-reader-provider-missing",
+        "behavior:accessibility-caption-provider-missing",
+        "behavior:vpn-dialog-provider-prefix-mismatch",
+        "behavior:network-policy-settings-providers-missing",
+        "behavior:telephony-apn-settings-provider-missing",
+        "behavior:wifi-system-ui-providers-not-activated",
+        "behavior:camera-picker-entrypoint-missing-phone",
+        "behavior:notification-extension-settings-entrypoint-missing",
+        "behavior:accessibility-settings-entrypoints-unavailable",
+        "behavior:notification-manager-settings-provider-missing-phone",
+        "behavior:avsession-desktop-lyrics-provider-missing",
+        "behavior:location-privacy-ui-providers-unavailable",
+        "behavior:telephony-number-identity-provider-missing",
+        "behavior:settings-navigation-provider-mismatch",
+        "behavior:contacts-picker-entrypoint-missing-phone",
+        "behavior:arkui-expanded-text-menu-providers-missing",
+        "behavior:arkui-text-service-runtime-plugins-missing"
+      ]
+    },
+    "network": {
+      "open_records": 9,
+      "allowed_prefixes": [
+        "ci/capability-audit/batch_network_",
+        "ci/capability-audit/fixtures/batch_network/",
+        "ci/capability-audit/test_batch_network_",
+        "docs/capability-audit/parallel/network/",
+        "patches/common/base/usb/",
+        "patches/common/foundation/communication/bluetooth/",
+        "patches/common/foundation/communication/bluetooth_service/",
+        "patches/common/foundation/communication/netmanager_base/",
+        "patches/common/foundation/communication/netmanager_ext/",
+        "patches/common/foundation/communication/wifi/",
+        "patches/common/third_party/openvpn/"
+      ],
+      "finding_ids": [
+        "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+        "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+        "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+        "behavior:netmanager-ebpf-backend",
+        "behavior:bluetooth-state-transition-false-success",
+        "behavior:wifi-sta-backend-unavailable",
+        "behavior:usb-manager-device-query",
+        "behavior:peer-device-user-nat-isolation",
+        "behavior:vpn-runtime-export-gaps"
+      ]
+    },
+    "location": {
+      "open_records": 22,
+      "allowed_prefixes": [
+        "patches/common/base/location/",
+        "patches/common/base/telephony/",
+        "ci/capability-audit/batch_location_",
+        "ci/capability-audit/test_batch_location_",
+        "ci/capability-audit/fixtures/batch_location/",
+        "docs/capability-audit/parallel/location/"
+      ],
+      "finding_ids": [
+        "arkts_export:@ohos.geoLocationManager:addFusionFence",
+        "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+        "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+        "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+        "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+        "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+        "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+        "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+        "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+        "arkts_export:@ohos.telephony.call:offRttErrCause",
+        "arkts_export:@ohos.telephony.call:offRttModifyInd",
+        "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+        "arkts_export:@ohos.telephony.call:onRttErrCause",
+        "arkts_export:@ohos.telephony.call:onRttModifyInd",
+        "arkts_export:@ohos.telephony.call:sendRttMessage",
+        "arkts_export:@ohos.telephony.call:setRttCapability",
+        "arkts_export:@ohos.telephony.call:startRtt",
+        "arkts_export:@ohos.telephony.call:stopRtt",
+        "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+        "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+        "behavior:location-provider-backends-missing",
+        "behavior:telephony-no-modem-or-sim"
+      ]
+    },
+    "media": {
+      "open_records": 7,
+      "allowed_prefixes": [
+        "patches/common/foundation/multimedia/",
+        "patches/common/drivers/peripheral/audio/",
+        "patches/common/drivers/peripheral/codec/",
+        "patches/common/drivers/peripheral/camera/",
+        "ci/capability-audit/batch_media_",
+        "ci/capability-audit/test_batch_media_",
+        "ci/capability-audit/fixtures/batch_media/",
+        "docs/capability-audit/parallel/media/",
+        "patches/common/applications/standard/settings/wallpaper_settings/",
+        "patches/common/base/theme/wallpaper_mgr/qemu_renderer/"
+      ],
+      "finding_ids": [
+        "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+        "behavior:audio-capture-and-dependent-pipelines",
+        "behavior:media-recording-input-backends-missing",
+        "behavior:audio-interrupt-haptic-renderer-dependency",
+        "behavior:media-codec-base-partial",
+        "behavior:audio-vivid-metadata-runtime-plugin-missing",
+        "behavior:video-encoder-dependent-media-pipelines"
+      ]
+    },
+    "system": {
+      "open_records": 10,
+      "allowed_prefixes": [
+        "ci/capability-audit/batch_system_",
+        "ci/capability-audit/fixtures/batch_system/",
+        "ci/capability-audit/test_batch_system_",
+        "docs/capability-audit/parallel/system/",
+        "patches/common/base/msdp/",
+        "patches/common/base/security/",
+        "patches/common/base/startup/",
+        "patches/common/domains/",
+        "patches/common/drivers/peripheral/sensor/qemu_external/",
+        "patches/common/foundation/ability/ability_runtime/native_child_process/",
+        "patches/common/foundation/distributeddatamgr/",
+        "patches/common/foundation/graphic/graphic_3d/",
+        "patches/common/foundation/msdp/",
+        "patches/common/device/qemu/external_gnss/",
+        "patches/common/drivers/peripheral/gnss/qemu_provider/tests/"
+      ],
+      "finding_ids": [
+        "behavior:access-token-api26-kernel-abi",
+        "behavior:msdp-device-status-mock-or-missing-clients",
+        "behavior:native-child-process-phone-boundary",
+        "behavior:session-manager-profile-gap",
+        "behavior:calendar-lifecycle-device-difference",
+        "behavior:device-attest-uninitialized",
+        "behavior:advertising-service-provider-missing",
+        "behavior:graphics3d-scene-manager-unavailable",
+        "behavior:security-guard-empty-model-config",
+        "behavior:app-domain-verification-extension-missing"
+      ]
+    }
+  },
+  "ownership_overrides": {
+    "apps_excludes": [
+      "patches/common/applications/standard/settings/wallpaper_settings/",
+      "patches/common/applications/standard/calendar/"
+    ],
+    "system_adds": [
+      "patches/common/applications/standard/calendar/"
+    ],
+    "root_only": [
+      "scripts/ (all)",
+      "patches/patch-plan.json and shared patch manifests",
+      "ci/capability-audit shared runners/verifiers",
+      "docs/capability-audit shared ledgers",
+      "shared product BUILD.gn, init, SELinux, device/vendor/kernel/graphic_2d/mesa patches",
+      "Git index and commits",
+      "Docker source/out writes, SDK/HAP jobs, QEMU runtime, packaging"
+    ],
+    "agents_no_git_commit": true,
+    "agents_no_source_out_write": true,
+    "agents_no_unleased_heavy_work": true
+  },
+  "scheduling": {
+    "five_distinct_agents": true,
+    "max_concurrent_children": 3,
+    "wave1": [
+      "apps",
+      "media",
+      "system"
+    ],
+    "wave2": [
+      "network",
+      "location"
+    ],
+    "max_heavy_jobs": 1,
+    "compiler_jobs": 2,
+    "root_review_and_commit_each_disjoint_batch": true
+  },
+  "acceptance": {
+    "batch_all_known_fixes_before_build": true,
+    "representative_product": "arm64_virt phone",
+    "first_new_archive_runtime_required": true,
+    "record_archive_checksum_environment_commands_results": true,
+    "remaining_five_started": false,
+    "first_artifact_behavior_gate_passed": false,
+    "host_or_cached_object_checks_are_not_runtime_closure": true
+  },
+  "external_material": "Do not fabricate OEM identity, AudioVivid algorithm, Ads provider, SecurityGuard model, modem/HCI peer or reverse-geocoder results."
+}
