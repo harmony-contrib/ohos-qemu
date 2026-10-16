@@ -36,6 +36,7 @@ SIGNER_INPUTS = {
     'OpenHarmonyProfileDebug.pem': 'a7232bdad96a24bf8c5ac3460cd8163b4af605e38ce8a14d9381572ce1ea0344',
     'UnsgnedDebugProfileTemplate.json': 'e7793d8501b56137b625e66ae8ff832adbbaf95b6e7c8440282c9423d174d16f',
 }
+FULL_BOUNDARY_CASES = ('deadline', 'navigation-dismiss')
 descriptor = driver.descriptor
 write_json = driver.write_json
 require = verifier.require
@@ -407,19 +408,33 @@ def installed_path(raw, bundle):
     return paths.pop()
 
 
-def independent_result(output, run_id, boot_id):
+def independent_result(output, run_id, boot_id, full_boundaries=False):
     output = Path(output); report = load(output / 'driver-report.json')
     require(report.get('run_id') == run_id and report.get('status') == 'pass' and report.get('failures') == [] and
             report['test_environment']['boot_id'] == boot_id, 'driver failure or different guest/run')
     result = verifier.verify_runtime(output / 'journal.jsonl', output / 'seed.json', output / 'cleanup.json',
         output / 'ui.json', output / 'caller-identity.json', output / 'build.json')
     wanted = {row['id'] for row in verifier.MATRIX.values() if row['required']}
+    if full_boundaries: wanted.update(FULL_BOUNDARY_CASES)
     observations = result['observations']
     require(result.get('raw_results_verified') is True and result.get('scope') == 'required_caller_matrix' and
             result.get('run_id') == run_id and {row['case_id'] for row in observations} == wanted and
-            len(observations) == sum(len(row['slots']) for row in verifier.MATRIX.values() if row['required']),
+            len(observations) == sum(len(verifier.MATRIX[name]['slots']) for name in wanted),
             'independent complete matrix verification missing')
-    return result
+    if full_boundaries:
+        home = [row for row in report['commands'] if 'actual-home' in Path(row['path']).name]
+        require(len(home) == 1 and home[0].get('exit_code') == 0 and
+                len(home[0]['argv']) == 5 and
+                home[0]['argv'][1:4] == ['-t', report['test_environment']['target'], 'shell'] and
+                home[0]['argv'][4].startswith('uitest uiInput keyEvent Home; task_ui_rc=$?; printf '),
+                'full navigation boundary lacks actual Home command')
+        markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', home[0]['argv'][4])
+        raw = checked_artifact(home[0]).read_text().replace('\r', '')
+        require(len(markers) == 1 and raw.count(markers[0]) == 1 and raw.rstrip().endswith(markers[0] + '0'),
+                'actual navigation Home remote command failed')
+    return {**result, 'full_boundaries_verified': bool(full_boundaries),
+            'required_boundary_case_ids': list(FULL_BOUNDARY_CASES) if full_boundaries else [],
+            'observed_case_ids': sorted({row['case_id'] for row in observations})}
 
 
 def verify_runtime_identities(runtime, build, env, permissions_bundle, allow_texts):
@@ -541,6 +556,8 @@ def verify_evidence(evidence_path, archive_path, boot_path):
             report.get('cleanup_complete') is True and report.get('cleanup_errors') == [],
             'coordinator archive/boot/status binding differs')
     require(report['cleanup'].get('public_CRUD_required') is True, 'successful Contacts run must include actual CRUD cleanup')
+    require(type(report.get('full_boundaries_requested')) is bool and
+            type(report.get('full_boundaries_verified')) is bool, 'explicit Contacts boundary scope required')
     verify_resources_cleanup(report['cleanup'], report['run_id'], env['target'])
     spec = load(checked_artifact(report['inputs']))
     sdk = {'caller': verify_sdk_project(spec['caller'], fixture=verifier.FIX, source_manifest='caller-source-manifest.json'),
@@ -583,11 +600,13 @@ def verify_evidence(evidence_path, archive_path, boot_path):
             signatures[key] = {'signed_hap': descriptor(signed), 'application_signer_sha256': APP_LEAF,
                                'profile_signer_sha256': PROFILE_LEAF}
         crypto_commands = len(rows)
-    result = independent_result(runtime, report['run_id'], env['boot_id'])
+    result = independent_result(runtime, report['run_id'], env['boot_id'], report['full_boundaries_requested'])
+    require(report['full_boundaries_verified'] == result['full_boundaries_verified'], 'Contacts boundary summary differs from raw re-verification')
     require(load(checked_artifact(report['independent_verifier'])) == result, 'stored independent result differs from raw re-verification')
     return {'status': 'pass', 'archive_sha256': verifier.sha(archive_path), 'boot_id': env['boot_id'],
             'scope': 'Contacts_raw_source_signature_image_UI_results_reverified_NOT_full_behavior_gate',
             'evidence': descriptor(evidence_path), 'raw_results': result, 'signatures': signatures,
+            'full_boundaries_verified': result['full_boundaries_verified'],
             'actual_crypto_commands_reexecuted': crypto_commands,
             'first_artifact_behavior_gate_passed': False, 'ledger_closed': False}
 
@@ -599,6 +618,7 @@ def run(args):
               'cleanup_complete': False, 'cleanup_errors': [], 'cleanup': {'public_CRUD_required': False, 'processes': {},
                   'installed_bundles': [], 'observer_removed': True}}
     report['permission_bundle'] = args.permission_bundle; report['allow_texts'] = args.allow_text or ['允许', 'Allow']
+    report['full_boundaries_requested'] = args.full_boundaries; report['full_boundaries_verified'] = False
     guest = None; installed = []; observer_remote = None; caller_uid = None
     try:
         spec = load(args.inputs)
@@ -652,13 +672,15 @@ def run(args):
         driver_report = driver.run(argparse.Namespace(boot=args.boot, archive=args.archive, hdc=args.hdc,
             build=output / 'build.json', identity=output / 'caller-signed-identity.json', seed_identity=output / 'seed-signed-identity.json',
             observer_local=args.observer_local, observer=observer_remote, output=output / 'runtime', run_id=run_id,
-            permission_bundle=args.permission_bundle, allow_text=args.allow_text, optional_case=[]))
+            permission_bundle=args.permission_bundle, allow_text=args.allow_text,
+            optional_case=list(FULL_BOUNDARY_CASES) if args.full_boundaries else []))
         report['driver_report'] = descriptor(output / 'runtime/driver-report.json')
         # A child's pass string cannot substitute for consuming all raw inputs.
-        result = independent_result(output / 'runtime', run_id, guest.env['boot_id'])
+        result = independent_result(output / 'runtime', run_id, guest.env['boot_id'], args.full_boundaries)
         verify_runtime_identities(output / 'runtime', load(output / 'runtime/build.json'), guest.env,
                                   report['permission_bundle'], report['allow_texts'])
         report['independent_verifier'] = write_json(output / 'coordinator-independent-verifier.json', result)
+        report['full_boundaries_verified'] = result['full_boundaries_verified']
         require(driver_report['failures'] == [], 'runtime driver failed')
         require(guest.shell('cat /proc/sys/kernel/random/boot_id', 'currentboot-after').strip() == guest.env['boot_id'], 'guest rebooted')
         report['status'] = 'pass'
@@ -728,6 +750,8 @@ def main():
     parser.add_argument('--hdc', required=True)
     parser.add_argument('--permission-bundle', default='com.ohos.permissionmanager')
     parser.add_argument('--allow-text', action='append')
+    parser.add_argument('--full-boundaries', action='store_true',
+                        help='also run the real 600000ms native deadline and navigation dismissal; required by the first-package gate')
     args = parser.parse_args(); report = run(args)
     print(json.dumps({key: report[key] for key in ('status', 'failures', 'first_artifact_behavior_gate_passed')}))
     return report['status'] != 'pass'
