@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-17T03:52:01.755292+08:00",
+  "updated_at": "2026-10-17T04:02:14.098550+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "1a97e6f",
+  "checkpoint_commit": "43a4c43",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -26,10 +26,10 @@
     "diagnostic_source_and_out_readonly": true,
     "max_heavy_jobs": 1,
     "compiler_jobs": 2,
-    "current_heavy_container": null,
-    "current_heavy_dynamic_cpus": null,
-    "current_heavy_dynamic_memory_gib": null,
-    "current_heavy_memory_swap_total_gib": null,
+    "current_heavy_container": "ohos-qemu-arm64-phone-GN-preflight-01",
+    "current_heavy_dynamic_cpus": 4,
+    "current_heavy_dynamic_memory_gib": 10,
+    "current_heavy_memory_swap_total_gib": 20,
     "source_out_write_owner": "root only during preparation/build; agents have released all source/out reads",
     "full_build_reserved_cpus": 4,
     "full_build_reserved_memory_gib": 10
@@ -1412,12 +1412,16 @@
     "first_GN_failure_and_calendar_batch": {
       "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/first-full-GN-failure-and-calendar-input-batch.json",
       "sha256": "19180a406fbf45dc85ac8dcaae0904b01922b871421ebe2281915034d21ab5da"
+    },
+    "full_source_preparation_06": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-source-prepare-06/evidence.json",
+      "sha256": "800c12cfb992ee54e43b1a8fe7537130968ae5ec3e8c4a40d3070ac2c4a28b3e"
     }
   },
   "agents": {
-    "apps": "6fbacdf exact GNSS prefix and complete predecessor upgrade integrated; host GNSS/Contacts guard44 tests PASS; actual source/GN pending",
-    "media": "f15c8a2 narrow exact SDK strip utility integrated; root actual replay plus host adapter PASS; no active lease",
-    "system": "7b25af8 fixed default Chinese foreground consent source contract integrated; no active source/out reads",
+    "apps": "root integrated exact GNSS predecessor migration; actual source06 PASS; independent full build/archive/guest gate review active, docs only",
+    "media": "actual SDK39 strip replay + host adapter PASS; new SDK105 Knowledge query/import/deny/curator project/raw verifier preparation active; no source/out lease",
+    "system": "official calendar source already integrated by root; open82 ledger actionable categorization in progress, docs only",
     "network": "prior source/API/focus fixes integrated; no active write or heavy lease",
     "location": "prior 17 TUs/full Rust/API coverage integrated; no active write or heavy lease"
   },
@@ -1440,11 +1444,11 @@
     "0/6 newly packaged artifacts accepted; first gate false",
     "Native/HAP dependency success is not new package runtime proof",
     "Actual new fullbuild required for fresh Contacts JS/ABC, MSDP, Wallpaper and HiCollie macro/DSO witness",
-    "SDK03 actual HAP PASS; exact strip replay adapter pending",
+    "SDK03 actual HAP and exact strip replay adapter PASS; actual signing/BMS/new guest pending",
     "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied"
   ],
   "next_required": [
-    "Actual full source preparation06 with selected official CN2026 ICS and exact GNSS predecessor migration, then GN-only preflight",
+    "Consume actual GN-only preflight and batch any graph failures; it does not satisfy the representative artifact runtime gate",
     "One full ARM64 phone image build, all3 native witnesses and package guards",
     "Fresh helper DSO binding and complete new packaged guest acceptance",
     "Only after representative gate PASS build and accept the other five"
@@ -1464,6 +1468,6 @@
   "Wallpaper_native_image_guard": "14ebd31 forced-owned2object+3DSO witness+actualGNselectedfalse/protectedcommands/rawlogs/ELF/image implemented; independently reviewed and7host guard testsPASS; no actual full build/image execution yet",
   "runtime_helpers": "actual3 product helper CFI compile/link PASS; original parser failure preserved; independent actual readonly recheck02 PASS unchanged compiler/header/DSO/ELF; true guest DSO hash match still mandatory",
   "runtime_inputs_prepared": "All 3 family configs ready; actual SDK03 adapter and private-copy PASS after exact SDK39 strip replay; Chinese source consent label still requires actual node; helpers must bind new product DSOs",
-  "source_preparation": "05 actual full source patch plan and fixed release source manifest PASS exit0 in308.49s; source/GN/images/package/runtime gates remain distinct",
+  "source_preparation": "06 actual complete source patch plan and fixed release source manifest PASS exit0 in343.85s; GNSS exact migration and selected official calendar RO input imported; actual GN-only preflight in progress",
   "first_full_build": "01 frozen f82275e actual GN failed after840.70s on unused output_prefix in external GNSS; no native compile/package/runtime"
 }
