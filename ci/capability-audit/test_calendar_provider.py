@@ -12,7 +12,7 @@ from unittest.mock import patch
 REPO = Path(__file__).resolve().parents[2]
 COMPONENT = REPO / 'patches/common/applications/standard/calendardata/source_provider'
 sys.path.insert(0, str(REPO / 'patches/lib'))
-from calendar_provider import ACLS, AUTHORITIES, BUNDLE, SIGNATURE, platform_leaf_fingerprint, validate
+from calendar_provider import ACLS, AUTHORITIES, BUNDLE, EDITOR, SIGNATURE, platform_leaf_fingerprint, validate
 spec = importlib.util.spec_from_file_location('calendar_source_apply', COMPONENT / 'apply.py')
 apply = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(apply)
@@ -39,6 +39,35 @@ def policy():
 
 
 class CalendarProviderTests(unittest.TestCase):
+    def test_editor_requires_exact_surface_inuse_scene_and_existing_boundaries(self):
+        module, profile, capabilities = policy()
+        with self.assertRaises(ValueError):
+            validate(module, profile, capabilities, SIGNATURE, SIGNATURE, require_editor=True)
+        module['extensionAbilities'].append(copy.deepcopy(EDITOR))
+        module['requestPermissions'] = [
+            {'name': name, 'usedScene': {'abilities': ['DataShareLowerExtAbility',
+                'DataShareHighExtAbility', 'ReminderCallbackExtAbility', 'EditorUIExtensionAbility'],
+                'when': 'inuse'}} for name in
+            ('ohos.permission.READ_WHOLE_CALENDAR', 'ohos.permission.WRITE_WHOLE_CALENDAR')]
+        validate(module, profile, capabilities, SIGNATURE, SIGNATURE, require_editor=True)
+        for key, value in (('type', 'service'), ('srcEntry', './ets/DataAbility/DataShareHighExtAbility.ets'),
+                           ('extensionProcessMode', 'bundle'), ('exported', 1), ('permissions', [])):
+            broken = copy.deepcopy(module)
+            broken['extensionAbilities'][-1][key] = value
+            with self.assertRaises(ValueError):
+                validate(broken, profile, capabilities, SIGNATURE, SIGNATURE, True)
+        for scene in ({'abilities': ['EditorUIExtensionAbility'], 'when': 'always'},
+                      {'abilities': ['DataShareHighExtAbility'], 'when': 'inuse'}):
+            broken = copy.deepcopy(module)
+            broken['requestPermissions'][0]['usedScene'] = scene
+            with self.assertRaises(ValueError):
+                validate(broken, profile, capabilities, SIGNATURE, SIGNATURE, True)
+        for index, key in ((0, 'readPermission'), (1, 'writePermission')):
+            broken = copy.deepcopy(module)
+            broken['extensionAbilities'][index][key] = ''
+            with self.assertRaises(ValueError):
+                validate(broken, profile, capabilities, SIGNATURE, SIGNATURE, True)
+
     def test_stage_build_migration_is_exact_and_rejects_unknown_or_symlink(self):
         desired = source_prepare.desired_build()
         legacy = desired.decode().replace('  # Hvigor owns Stage resources and all five local HAR dependencies.\n  deps = []',

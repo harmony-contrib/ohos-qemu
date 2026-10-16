@@ -17,9 +17,11 @@ AUTHORITIES = {
     'DataShareHighExtAbility': ('datashare://calendardata_whole', 'ohos.permission.READ_WHOLE_CALENDAR',
                               'ohos.permission.WRITE_WHOLE_CALENDAR'),
 }
+EDITOR = {'name': 'EditorUIExtensionAbility', 'srcEntry': './ets/EditorUIExtensionAbility.ets',
+          'type': 'sys/commonUI', 'exported': True, 'extensionProcessMode': 'instance'}
 
 
-def validate(module, profile, capabilities, fingerprint, platform_fingerprint):
+def validate(module, profile, capabilities, fingerprint, platform_fingerprint, require_editor=False):
     if fingerprint != SIGNATURE or platform_fingerprint != SIGNATURE:
         raise ValueError('CalendarData profile/platform certificate does not match pinned source signing policy')
     bundle = profile.get('bundle-info', {})
@@ -37,9 +39,23 @@ def validate(module, profile, capabilities, fingerprint, platform_fingerprint):
     names = [entry.get('name') for entry in extensions]
     # Keep the fixed SDK's declaration; QEMU has an explicit BMS compatibility
     # profile. Do not invent SDK SysCap sets to force new module device labels.
+    original = set(AUTHORITIES) | {'ReminderCallbackExtAbility'}
+    has_editor = 'EditorUIExtensionAbility' in names
+    expected = original | ({'EditorUIExtensionAbility'} if has_editor else set())
     if (len(names) != len(set(names)) or module.get('deviceTypes') != ['default', 'tablet'] or
-            set(names) != set(AUTHORITIES) | {'ReminderCallbackExtAbility'}):
-        raise ValueError('unexpected CalendarData provider/device surface; do not bless missing Editor UI')
+            set(names) != expected or (require_editor and not has_editor)):
+        raise ValueError('unexpected or incomplete CalendarData provider/device surface')
+    if has_editor:
+        editor = next(entry for entry in extensions if entry['name'] == 'EditorUIExtensionAbility')
+        if editor != EDITOR or editor.get('exported') is not True:
+            raise ValueError('CalendarData editor must use the exact per-session common UI extension')
+        for permission in ('ohos.permission.READ_WHOLE_CALENDAR', 'ohos.permission.WRITE_WHOLE_CALENDAR'):
+            grants = [entry for entry in module.get('requestPermissions', []) if entry.get('name') == permission]
+            if (len(grants) != 1 or grants[0].get('usedScene') != {
+                    'abilities': ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
+                                  'ReminderCallbackExtAbility', 'EditorUIExtensionAbility'],
+                    'when': 'inuse'}):
+                raise ValueError('CalendarData editor requires the exact existing in-use permission scene')
     for name, (uri, read, write) in AUTHORITIES.items():
         entry = next(entry for entry in extensions if entry['name'] == name)
         if (entry.get('type') != 'dataShare' or entry.get('exported') is not True or entry.get('uri') != uri or
@@ -66,7 +82,7 @@ def platform_leaf_fingerprint(chain):
     return certificate_fingerprint(certificates[-1])
 
 
-def verify(root):
+def verify(root, require_editor=False):
     source = root / 'applications/standard/calendardata'
     source_build = (source / 'BUILD.gn').read_text()
     if (source_build.count('ohos_app("calendardata_hap")') != 1 or
@@ -85,7 +101,15 @@ def verify(root):
     platform = (root / 'developtools/hapsigner/dist/OpenHarmonyApplication.pem').read_bytes()
     module = json.loads((source / 'entry/src/main/module.json5').read_text())['module']
     capabilities = json.loads((root / 'vendor/ohemu/virt/preinstall-config/install_list_capability.json').read_text())
-    validate(module, profile, capabilities, certificate_fingerprint(certificate), platform_leaf_fingerprint(platform))
+    validate(module, profile, capabilities, certificate_fingerprint(certificate),
+             platform_leaf_fingerprint(platform), require_editor)
+    if require_editor:
+        page = 'pages/EventEditor'
+        pages = json.loads((source / 'entry/src/main/resources/base/profile/main_pages.json').read_text())['src']
+        if (pages.count(page) != 1 or
+                not (source / 'entry/src/main/ets/EditorUIExtensionAbility.ets').is_file() or
+                not (source / 'entry/src/main/ets/pages/EventEditor.ets').is_file()):
+            raise ValueError('CalendarData editor source/page is missing from the real HAP')
     build = (root / 'applications/standard/hap/BUILD.gn').read_text()
     if re.search(r'calendarData_hap|CalendarData\.hap', build):
         raise ValueError('stale CalendarData prebuilt still exists in the HAP build graph')
@@ -98,8 +122,9 @@ def verify(root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
+    parser.add_argument('--require-editor', action='store_true')
     args = parser.parse_args()
-    verify(args.source_root)
+    verify(args.source_root, args.require_editor)
 
 
 if __name__ == '__main__':

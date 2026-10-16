@@ -354,6 +354,7 @@ AUDIO_DEVICE_BLOCK_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/mult
 PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/fusion_asset_type/apply.sh"
 ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/config_install/apply.sh"
 CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/source_provider/apply.sh"
+CALENDAR_EVENT_EDITOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/event_editor/apply.sh"
 CALENDAR_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/calendar_provider/apply.sh"
 CALENDAR_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/calendar_provider/apply.sh"
 PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/photos/source_provider/apply.sh"
@@ -3185,11 +3186,13 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_alsa_config_install_component.log"
   bash "${CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_source_provider_component.log"
+  bash "${CALENDAR_EVENT_EDITOR_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_event_editor_component.log"
   bash "${CALENDAR_PREBUILT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_prebuilt_component.log"
   bash "${CALENDAR_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_signing_component.log"
-  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" \
+  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" --require-editor \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_calendar_source_provider.log"
   bash "${PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_source_provider_component.log"

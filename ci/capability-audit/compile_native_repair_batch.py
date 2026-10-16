@@ -16,6 +16,16 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'calendar_editor': {
+        'project': 'applications/standard/calendardata',
+        'revision': 'f922427ca0dc20895a0e254ae41382e5b03299a4',
+        'components': ['source_provider', 'event_editor'],
+        'extra_checkout': ['build-profile.json5'],
+        'units': ['calendar_manager_napi'],
+        'sources': {'calendar_manager_napi': 'calendarmanager/napi/src/calendar_manager_napi.cpp'},
+        'targets': {'calendar_manager_napi': 'obj/applications/standard/calendardata/calendarmanager/napi/src/calendarmanager/calendar_manager_napi.o'},
+        'required_header': 'calendarmanager/napi/include/calendar_manager_napi.h',
+    },
     'alsa_capture': {
         'project': 'drivers/peripheral',
         'revision': '69094b77aa2200160207b1b06b3c0b586ae2157c',
