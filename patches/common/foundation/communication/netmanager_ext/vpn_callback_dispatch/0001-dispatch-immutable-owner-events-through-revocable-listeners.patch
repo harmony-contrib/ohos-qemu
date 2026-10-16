@@ -1027,7 +1027,7 @@ diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/include
 -        virtual ~VpnConnStateCb() = default;
 +        VpnConnStateCb(std::weak_ptr<NetworkVpnService> service, std::shared_ptr<CallbackOrigin> origin)
 +            : service_(service), origin_(std::move(origin)) {}
-+        ~VpnConnStateCb() override;
++        virtual ~VpnConnStateCb();
 +        void Commit();
          void OnVpnConnStateChanged(const VpnConnectState &state, const sptr<VpnState> &vpnState) override;
          void SendConnStateChanged(const VpnConnectState &state, int32_t vpnType = 0,

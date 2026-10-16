@@ -45,6 +45,12 @@
       "foundation/communication/netmanager_base/services/netmanagernative/src/netsys_native_service_stub.cpp": "e84436479d79365d68817d01bf8137d56d84851046a7143561d442bd00d3d2a5",
       "foundation/communication/netmanager_ext/services/vpnmanager/src/multi_vpn_helper.cpp": "1e7dc12025c5d2b6917d25c786738ad778f5e69e7079a7a9be8fc133a35eb5d2",
       "foundation/resourceschedule/ffrt/interfaces/kits/cpp/task.h": "ddb78d1d7d862512e729d0075f4991101430fc3e52e5f098a2d17eadc75b80ff"
+    },
+    "vpn_callback_destructor_contract": {
+      "file": "foundation/communication/netmanager_ext/services/vpnmanager/include/i_vpn_conn_state_cb.h",
+      "sha256": "b22e88f6e637dcc5026aa66741d9d1fe4575de0503cd081fe73e063f70ee5686",
+      "actual_contract": "Implicit non-virtual base destructor; derived callback retains its own virtual destructor without override; factory uses make_shared<concrete> and interface shared_ptr conversions preserve concrete destruction.",
+      "access": "Exact header read only from the fixed source container; shared base interface not modified."
     }
   },
   "qemu_gn_condition": "netmanager_base_enable_feature_sysvpn && (product_name == \"armv7a_virt\" || product_name == \"arm64_virt\" || product_name == \"x86_64_virt\")",
@@ -177,6 +183,23 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python ci/capability-audit/batch_network_emit_vpn_broker_native.py --output-dir .network-scratch/broker-native-callback-fixture",
       "result": "PASS: two generator regressions. Repaired callback SHA256 da52abb3f26a2db4187b763fd743f18add45ecbe02c8e9b3f3be5461607841f7; health probe remains c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2.",
       "evidence": "docs/capability-audit/parallel/network/callback-fixture-native-emission-20261016.txt"
+    },
+    {
+      "command": "Correct the IVpnConnStateCb host fixture to the actual implicit non-virtual destructor, before source repair",
+      "result": "EXPECTED REPRODUCTION: same illegal destructor override and Wdelete-non-abstract-non-virtual-dtor under -Werror as the real product compiler; derived-destructor static_assert also fails.",
+      "evidence": "docs/capability-audit/parallel/network/callback-destructor-before-fix-host-20261016.txt",
+      "limits": "Retained before-fix diagnostic, not the current test outcome."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p 'test_batch_network*.py' -v",
+      "result": "PASS: 41 collected, 38 passed, same three Linux-only process tests skipped on macOS. -Wall -Wextra -Werror and ASan/UBSan retained. Actual callback factory/destructor and shared_ptr<non-virtual-base> ownership now covered in deterministic and asynchronous native-shaped host paths; exact predecessor/broker rawSHA replay passes, old incorrect override headers reject without mutation.",
+      "evidence": "docs/capability-audit/parallel/network/callback-destructor-host-tests-20261016.txt",
+      "limits": "Full target TU recompilation/updated native callback proof remain parent work. No SDK compile, build, QEMU/HDC or shared source mutation by this agent."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python ci/capability-audit/batch_network_emit_vpn_broker_native.py --output-dir .network-scratch/broker-native-callback-destructor",
+      "result": "PASS: two generator regressions. Updated callback SHA256 4386420d293c78682af4b9b14239d14e83a56849c8d763cbe82261059df52b50; health remains c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2. Callback probe now models actual non-virtual base destructor and exercises interface shared ownership cleanup.",
+      "evidence": "docs/capability-audit/parallel/network/callback-destructor-native-emission-20261016.txt"
     }
   ],
   "integration_requests": [
@@ -200,7 +223,7 @@
     {
       "owner": "parent",
       "action": "Run batch_network_emit_vpn_broker_native.py --output-dir PRIVATE_DIR; target-compile and execute both callback and health probes against real FFRT with bounded timeouts. Account/IPC/backend doubles remain explicit; additionally exercise real service IPC and guest process death.",
-      "status": "Health real-FFRT proof passed; original callback probe failed due to fixture single-VPN precondition. Regenerate repaired callback hash da52abb3... and repeat actual target/libffrt run; original count/owner/stopping assertions retained."
+      "status": "Previous corrected callback real-FFRT probe passed. Regenerate the current callback 4386420d293c78682af4b9b14239d14e83a56849c8d763cbe82261059df52b50 with actual non-virtual base/virtual concrete destructor and shared ownership regression; repeat target proof. Health source hash unchanged."
     },
     {
       "owner": "parent",
@@ -488,6 +511,10 @@
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-destructor-20261016.md",
+    "docs/capability-audit/parallel/network/callback-destructor-before-fix-host-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-destructor-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-destructor-native-emission-20261016.txt",
     "docs/capability-audit/parallel/network/callback-fixture-before-fix-host-reproduction-20261016.txt",
     "docs/capability-audit/parallel/network/callback-fixture-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/callback-fixture-native-emission-20261016.txt",
@@ -557,7 +584,7 @@
     "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "d9c44dc087f3726975a621e6b98bcd71ed770f85",
+  "round_base_commit": "e2629996d79c2ec8cf7e970f46c4edf2a6b1421f",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
@@ -604,6 +631,14 @@
     {
       "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-vpn-broker-callback-and-health-real-FFRT-01/artifacts/health/evidence.json",
       "scope": "Actual API26/ARM64/libffrt health probe PASS. Its generated source is byte-identical after this fixture repair; does not prove full platform service IPC or new guest."
+    },
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-Knowledge-communication-platform-03/artifacts/vpn_broker/arm64_virt-networkvpn_service-compile.log",
+      "scope": "Eight complete current VPN TUs: seven passed, networkvpn_service.cpp failed because base destructor is non-virtual, so derived override is invalid and make_shared emits Wdelete-non-abstract-non-virtual-dtor. Current round repairs only that internal header declaration; full TU rerun pending."
+    },
+    {
+      "source": "Parent NEW_TASK: platform02 callback_real_ffrt",
+      "scope": "Previous corrected callback probe passed with actual target libffrt. This round changes fixture base-destructor contract and adds ownership/lifetime assertions; current callback probe requires fresh proof. Health native source unchanged and previous pass retained."
     }
   ],
   "broker_contract": {
@@ -647,18 +682,29 @@
     "fake_connection_entrypoint": false
   },
   "latest_round": {
-    "scope": "Repair the real-FFRT callback probe fixture: its prior single non-system VPN suppressed the multi-owner disconnected event by the actual product exclusion rule. Preserve that rule, exercise suppression explicitly, destroy the prior single owner successfully, and retain every original stopping/owner assertion. Execute the emitted native main on the host with a real threaded serial-queue double in addition to the deterministic host main.",
-    "upstream_targets": [],
-    "changed_files": [
-      "ci/capability-audit/test_batch_network_vpn_broker.py",
-      "docs/capability-audit/parallel/network/callback-fixture-before-fix-host-reproduction-20261016.txt",
-      "docs/capability-audit/parallel/network/callback-fixture-host-tests-20261016.txt",
-      "docs/capability-audit/parallel/network/callback-fixture-native-emission-20261016.txt",
-      "docs/capability-audit/parallel/network/callback-probe-fixture-20261016.md",
-      "docs/capability-audit/parallel/network/result.json"
+    "scope": "Fix the internal callback derived destructor declaration against the actual implicit non-virtual base destructor, restoring the derived virtual destructor without override. Host fixture now matches the base contract and tests concrete shared_ptr control-block lifetime, pending-origin cancellation and waiter wake. Product callback function bodies and shared interface unchanged.",
+    "upstream_targets": [
+      "foundation/communication/netmanager_ext/services/vpnmanager/include/networkvpn_service.h"
     ],
-    "callback_probe_sha256": "da52abb3f26a2db4187b763fd743f18add45ecbe02c8e9b3f3be5461607841f7",
+    "changed_files": [
+      "ci/capability-audit/fixtures/batch_network/vpn-broker-prepared.json",
+      "ci/capability-audit/test_batch_network_vpn_broker.py",
+      "ci/capability-audit/test_batch_network_vpn_callbacks.py",
+      "docs/capability-audit/parallel/network/callback-destructor-20261016.md",
+      "docs/capability-audit/parallel/network/callback-destructor-before-fix-host-20261016.txt",
+      "docs/capability-audit/parallel/network/callback-destructor-host-tests-20261016.txt",
+      "docs/capability-audit/parallel/network/callback-destructor-native-emission-20261016.txt",
+      "docs/capability-audit/parallel/network/result.json",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_broker/verify_source.py",
+      "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/0001-dispatch-immutable-owner-events-through-revocable-listeners.patch",
+      "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/verify_source.py"
+    ],
+    "callback_probe_sha256": "4386420d293c78682af4b9b14239d14e83a56849c8d763cbe82261059df52b50",
     "health_probe_sha256": "c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2",
-    "acceptance": "Parent must repeat real ARM64/libffrt callback probe. Health source/probe and all product patches are unchanged. No product/package runtime closure; all 9 remain open."
+    "exact_header_sha256": {
+      "callback_predecessor": "bec9f609eee2421a3af247a77a938df1feca3b582a7789d27f974fc102b8cc5a",
+      "broker_final": "318cfc99049ecca78d6dc3c5149255b55449f28ccb4c06cd8be572d13e45096a"
+    },
+    "acceptance": "Parent must fresh-replay the complete corrected source stack and recompile full actual networkvpn_service TU; prior bad override raw hashes are deliberately rejected. Re-run the newly extended real FFRT callback probe as appropriate. All 9 requirements and first package runtime gate remain open."
   }
 }
