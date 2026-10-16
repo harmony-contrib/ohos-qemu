@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "scope": "read_only_host_current_Capturer_wiring_and_retained_actual_build_inputs_NOT_signing_or_guest_acceptance",
+  "reviewed_commit": "f82275e38321b10fc6429d2727d3ea9c90f8f44a",
+  "reviewed_files": {
+    "run_packaged_qemu_suite.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+      "sha256": "7f329f9c04cbb424eabd0885a72a18e32bb0f68cb8d75c06beccf58905cb43c0"
+    },
+    "run_normal_hap_probe.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_normal_hap_probe.py",
+      "sha256": "1223c5bbd86aef05327bda1162534d75e0f4918dcefe19a57bd7a3140da6cfc9"
+    },
+    "build_hap_probe.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+      "sha256": "6d882a964b7b1a41d797e251e4a965008a3ee60b618ca22b9e8f88fb14c207db"
+    },
+    "audio_capture_contract.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audio_capture_contract.py",
+      "sha256": "b2d3ab6649268f69d34894e961570176c3b09560155f050a8bf32116b22b4e0e"
+    },
+    "audio_capture_runtime.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audio_capture_runtime.py",
+      "sha256": "e6016d4ab78b67911b25538298b0c22057606d3bf806b4be7fa153c80389f678"
+    },
+    "verify_audio_capture_results.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_audio_capture_results.py",
+      "sha256": "fdb6d9cf52fc42ebea873d4b396ec5a63f93338438bb68f8b88cac6f1cf4e3fe"
+    },
+    "build_audio_capture_tools.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_audio_capture_tools.py",
+      "sha256": "c2fcd3757e51488af325ef6ee6424f489d4892eb4539834a8c168205bc3a36df"
+    },
+    "audio_capture_permission.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audio_capture_permission.py",
+      "sha256": "50db756ad3d9635afaa03ae5d482c903df2d83dd9be0db88c6638b851503fa01"
+    },
+    "batch_media_audio_capture_probe.ets": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_capture_probe.ets",
+      "sha256": "c18a71191f3698ef5fd390f7b54bbd1a3a81991fe154d3aefb9915512a65f293"
+    },
+    "batch_media_audio_capture_hap.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_capture_hap.cpp",
+      "sha256": "fd6cb8f7f9a7c0afbcba7fca93e53ad0a2de85bb9b5c08aa83a5274916b91a7a"
+    },
+    "batch_media_audio_capture_probe.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_capture_probe.cpp",
+      "sha256": "759d7a3d5fe7b0d1b61a90e2887c02234a21525aa15002a3f33472fca4eb7b38"
+    },
+    "batch_media_alsa_inject.c": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_alsa_inject.c",
+      "sha256": "066975e65dccd8931b92cd57147cbde93f5f924b601a7fcff97feb37429049ae"
+    },
+    "probes/audio_capture_token.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/probes/audio_capture_token.cpp",
+      "sha256": "a94b1a10c7b5a4024712ddddd02debc64a6faeaa734a362511bb5c72db020203"
+    }
+  },
+  "HAP02": {
+    "original_evidence": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-02/evidence.json",
+      "sha256": "dbaa62ea5807675e95e56911e9460e9f5a931ee9857d1a878d3f2f58300a1a36"
+    },
+    "exit_code": 0,
+    "original_hap": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-02/project/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "8770670d422a22bad0e3756cc5474c63e3c29a192be63302dccfb02c3aefcd94"
+    },
+    "original_hap_matches_report": true,
+    "original_hap_bytes": 1305219,
+    "run_id": "abb2542e07222371df7844cd6ee7f15e",
+    "compiled_contract": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-02/project/audio-capture-probe-inputs.json",
+      "sha256": "aee90c14f6891315d6048a831dfca623c7bd462d8e5a3aae0691512711416331"
+    },
+    "source_checks": {
+      "batch_media_audio_capture_probe.ets": {
+        "compiled_sha256": "c18a71191f3698ef5fd390f7b54bbd1a3a81991fe154d3aefb9915512a65f293",
+        "current_sha256": "c18a71191f3698ef5fd390f7b54bbd1a3a81991fe154d3aefb9915512a65f293",
+        "equal": true
+      },
+      "batch_media_audio_capture_hap.cpp": {
+        "compiled_sha256": "fd6cb8f7f9a7c0afbcba7fca93e53ad0a2de85bb9b5c08aa83a5274916b91a7a",
+        "current_sha256": "fd6cb8f7f9a7c0afbcba7fca93e53ad0a2de85bb9b5c08aa83a5274916b91a7a",
+        "equal": true
+      },
+      "batch_media_audio_capture_probe.cpp": {
+        "compiled_sha256": "759d7a3d5fe7b0d1b61a90e2887c02234a21525aa15002a3f33472fca4eb7b38",
+        "current_sha256": "759d7a3d5fe7b0d1b61a90e2887c02234a21525aa15002a3f33472fca4eb7b38",
+        "equal": true
+      }
+    },
+    "contract_current_equal": true,
+    "whole_builder_current_equal": false,
+    "original_builder_sha256": "a02dcd522eacd2ccf40bd86432c9f6f9f8a452d1b44bd65f8c86a7f919379664",
+    "sdk_checks": {
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_accessory_common.h": {
+        "compiled_sha256": "ee915c2251bca492130b77f5b06c5d29304abe48a62e769222d82f3fd95fc8ce",
+        "current_sha256": "ee915c2251bca492130b77f5b06c5d29304abe48a62e769222d82f3fd95fc8ce",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_accessory_input_stream_manager.h": {
+        "compiled_sha256": "bc6a5ea6a51f820151e7ccfeea400dd2dc5b8b73e2556f46dfa5c444c2b0f344",
+        "current_sha256": "bc6a5ea6a51f820151e7ccfeea400dd2dc5b8b73e2556f46dfa5c444c2b0f344",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_accessory_manager.h": {
+        "compiled_sha256": "252d82406cb22515df094d471b0a7aa0c0ab79590cd2e6edfec6f46f42ae2d91",
+        "current_sha256": "252d82406cb22515df094d471b0a7aa0c0ab79590cd2e6edfec6f46f42ae2d91",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_common.h": {
+        "compiled_sha256": "0b97f37bf927cabddd1902bde622e05987c312362dc91e5fe7a2e0ea1a7a2752",
+        "current_sha256": "0b97f37bf927cabddd1902bde622e05987c312362dc91e5fe7a2e0ea1a7a2752",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_debugging_manager.h": {
+        "compiled_sha256": "0a5d8c84acc5d2940db5aa5c8bdab109f27b7b307cbfe108393a692bf4c73d61",
+        "current_sha256": "0a5d8c84acc5d2940db5aa5c8bdab109f27b7b307cbfe108393a692bf4c73d61",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_device_base.h": {
+        "compiled_sha256": "bfd9358f15103ba2c0313c1d13041f3d67d1a2ad4601c8119a03188f1f848ad1",
+        "current_sha256": "bfd9358f15103ba2c0313c1d13041f3d67d1a2ad4601c8119a03188f1f848ad1",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_device_enhance_manager.h": {
+        "compiled_sha256": "2393d63eff8cde6c1672c8ebfeccb33e0c800d88f4944f7a0bca0900d62e2254",
+        "current_sha256": "2393d63eff8cde6c1672c8ebfeccb33e0c800d88f4944f7a0bca0900d62e2254",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_manager.h": {
+        "compiled_sha256": "c2673598f460b1a939668047c6bed2d52e955155eac147f9c255da5fbd57858c",
+        "current_sha256": "c2673598f460b1a939668047c6bed2d52e955155eac147f9c255da5fbd57858c",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_resource_manager.h": {
+        "compiled_sha256": "39c86b2465a817fcb275ccdb72fbe36cdea050d97c998b1f3d6ffa17859254dd",
+        "current_sha256": "39c86b2465a817fcb275ccdb72fbe36cdea050d97c998b1f3d6ffa17859254dd",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_routing_manager.h": {
+        "compiled_sha256": "55b8637b1ae619bdcd1446da778ae902b33187a6b9444e6b7214bd28a1f80978",
+        "current_sha256": "55b8637b1ae619bdcd1446da778ae902b33187a6b9444e6b7214bd28a1f80978",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_session_base.h": {
+        "compiled_sha256": "6ffea2bf03109952fca851f78fb67a2f4c08b95f5e41c1eb59622cdec3fe0b2a",
+        "current_sha256": "6ffea2bf03109952fca851f78fb67a2f4c08b95f5e41c1eb59622cdec3fe0b2a",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_session_manager.h": {
+        "compiled_sha256": "55b46057bef16c9058baf54f68f6723fc270cc88746680571f6735dc733e3f9a",
+        "current_sha256": "55b46057bef16c9058baf54f68f6723fc270cc88746680571f6735dc733e3f9a",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_stream_manager.h": {
+        "compiled_sha256": "44c4742ff55e00ef5cc4a884f202ce42802747ffb3b5dc913997e5efdba41a24",
+        "current_sha256": "44c4742ff55e00ef5cc4a884f202ce42802747ffb3b5dc913997e5efdba41a24",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audio_volume_manager.h": {
+        "compiled_sha256": "33b55607404a77e04186654c6e35b7ceb00e4f605a07f6f4205acf89ab394561",
+        "current_sha256": "33b55607404a77e04186654c6e35b7ceb00e4f605a07f6f4205acf89ab394561",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audiocapturer.h": {
+        "compiled_sha256": "92354281a3475abb93dd4978b1399864b100f044f63b7d307685b4fe2d2a8262",
+        "current_sha256": "92354281a3475abb93dd4978b1399864b100f044f63b7d307685b4fe2d2a8262",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audiorenderer.h": {
+        "compiled_sha256": "6305031d0ecaa5f5c62b28563563b4dbea784a54522d3c87b3643c56cef20c78",
+        "current_sha256": "6305031d0ecaa5f5c62b28563563b4dbea784a54522d3c87b3643c56cef20c78",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audiostream_base.h": {
+        "compiled_sha256": "49860d100750d278f7b370c3bf46b79dd8bd090d2b15df7435c17b3d3b3a91ce",
+        "current_sha256": "49860d100750d278f7b370c3bf46b79dd8bd090d2b15df7435c17b3d3b3a91ce",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/ohaudio/native_audiostreambuilder.h": {
+        "compiled_sha256": "315a6f09ee99200688af38c2895fbce94af8de6bfa0127410735f09169147b11",
+        "current_sha256": "315a6f09ee99200688af38c2895fbce94af8de6bfa0127410735f09169147b11",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/oh-uni-package.json": {
+        "compiled_sha256": "3dbc4a06ffd3b1be6b45c3c346a7900ca42f8a81a5b0454dc7f5cc1e5a9509a8",
+        "current_sha256": "3dbc4a06ffd3b1be6b45c3c346a7900ca42f8a81a5b0454dc7f5cc1e5a9509a8",
+        "equal": true
+      },
+      "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/oh-uni-package.json": {
+        "compiled_sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab",
+        "current_sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab",
+        "equal": true
+      }
+    },
+    "all20_sdk_file_hashes_equal": true,
+    "sdk_metadata": {
+      "native": {
+        "apiVersion": "26",
+        "displayName": "Native",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "native",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "ets": {
+        "apiVersion": "26",
+        "displayName": "Ets",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "ets",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      }
+    }
+  },
+  "tools02": {
+    "original_host_evidence": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Capturer-independent-tools-02/host-evidence.json",
+      "sha256": "a2388183f3450e19434bb7842f9acf40b4436fbea2e1fa6b7f276e4ba9eb2076"
+    },
+    "build": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Capturer-independent-tools-02/artifacts/tools/build.json",
+      "sha256": "33503d6400cd975deb379b75a4827646064c7caaf4302f6e5b04fa6bcc62d5dc"
+    },
+    "original_status": "pass",
+    "builder_current_equal": true,
+    "tools": {
+      "alsa_inject": {
+        "binary": {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Capturer-independent-tools-02/artifacts/tools/alsa_inject",
+          "sha256": "6789bdd4fc5e9c30f3cdf930da6fabd48cb316819d468051bf28738fad4f3d44"
+        },
+        "binary_matches_report": true,
+        "source_recorded": "066975e65dccd8931b92cd57147cbde93f5f924b601a7fcff97feb37429049ae",
+        "source_current": "066975e65dccd8931b92cd57147cbde93f5f924b601a7fcff97feb37429049ae",
+        "source_current_equal": true,
+        "linked_library_runtime_sha256": "c9c56a4b6ab752eddfbdd41633e40145b8efad5d647e6b3fe0121c2a51d28b8c"
+      },
+      "audio_capture_token": {
+        "binary": {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Capturer-independent-tools-02/artifacts/tools/audio_capture_token",
+          "sha256": "d9696273d35aead6e63c4403f4e579aafc080446feb4afd29a7b7b61177a5d12"
+        },
+        "binary_matches_report": true,
+        "source_recorded": "35f3ff387819116e00aeac7c667cd2bc7914ee2fe9dd898b6a3c3886b49ad7ce",
+        "source_current": "a94b1a10c7b5a4024712ddddd02debc64a6faeaa734a362511bb5c72db020203",
+        "source_current_equal": false,
+        "linked_library_runtime_sha256": "576879ee8572b8e93348503f3d69d9891feff47c47fe619d65f20861f99ebf50"
+      }
+    },
+    "old_AccessTokenKit_methods": [
+      "GetHapTokenID",
+      "GetHapTokenInfo",
+      "RevokePermission",
+      "VerifyAccessToken"
+    ],
+    "current_AccessTokenKit_methods": [
+      "GetHapTokenID",
+      "GetHapTokenInfo",
+      "RevokePermission",
+      "VerifyAccessToken"
+    ]
+  },
+  "host_paths": {
+    "SDK": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0",
+      "exists": true,
+      "is_file": false
+    },
+    "HDC": {
+      "path": "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/hdc",
+      "exists": true,
+      "is_file": true
+    },
+    "JAVA_HOME": {
+      "path": "/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home",
+      "exists": true,
+      "is_file": false
+    },
+    "JAVA8": {
+      "path": "/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home/bin/java",
+      "exists": true,
+      "is_file": true
+    },
+    "HVIGOR_HOME": {
+      "path": "/Applications/DevEco-Studio.app/Contents/tools/hvigor",
+      "exists": true,
+      "is_file": false
+    },
+    "NODE_HOME": {
+      "path": "/Applications/DevEco-Studio.app/Contents/tools/node",
+      "exists": true,
+      "is_file": false
+    },
+    "ARKDOWN_host_PATH": {
+      "path": "/Users/ranger/.volta/bin/arkdown",
+      "exists": true,
+      "is_file": true
+    }
+  },
+  "java8_release": {
+    "file": {
+      "path": "/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home/release",
+      "sha256": "f915776b95062b21b43579b643f3316eb708bba90dbda7374c3c927c6bb6862b"
+    },
+    "content": "IMPLEMENTOR=\"Azul Systems, Inc.\"\nIMPLEMENTOR_VERSION=\"Zulu8.72.0.17-CA-macos-aarch64\"\nJAVA_VERSION=\"1.8.0_382\"\nOS_NAME=\"Darwin\"\nOS_VERSION=\"11.2\"\nOS_ARCH=\"aarch64\"\nSOURCE=\".:git:1bc0593d05e7\"\n"
+  },
+  "CPU_cap": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-02/cpu-cap.cjs",
+    "sha256": "266d23f40729d1015060cec0afffb0edfff466fc21b626b3c1d842ae43eac03b"
+  },
+  "confirmed_default_capture_blocker": false,
+  "existing_prebuilt_auto_discovery": false,
+  "dynamic_rebuild_is_a_failure": false,
+  "runtime_and_token_extensions_still_require_actual_new_guest": true,
+  "tests_executed": false,
+  "Docker_source_out_or_VM_accessed": false,
+  "signature_or_compiler_executed": false,
+  "first_artifact_behavior_gate_passed": false,
+  "closed_requirement_ids": []
+}
