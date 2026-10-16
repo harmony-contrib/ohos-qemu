@@ -1,0 +1,29 @@
+{
+  "read_at_utc": "2026-10-16T19:02:02.342888+00:00",
+  "files": {
+    "ci/capability-audit/batch_system_run_live_inputs.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_run_live_inputs.py",
+      "sha256": "72cb97806e8acd70ec84b16600059c55eade3cc926811597ecf90c08e186b6ea"
+    },
+    "ci/capability-audit/batch_system_live_inputs_suite.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_live_inputs_suite.py",
+      "sha256": "020962a6227231ff5d89eac27ddbbce00e7a02e037a56a53a811f5a6054a6303"
+    },
+    "ci/capability-audit/batch_system_verify_live_inputs.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_verify_live_inputs.py",
+      "sha256": "6678b999f0b307903f406dc6c8644b9c83facf73baffc41dfef5eb094b83937c"
+    },
+    "ci/capability-audit/guest_ui.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/guest_ui.py",
+      "sha256": "dcc6a69d1836e72138dea54f6c8f768a5c1f7543a71a9054f0bb636ae0b14566"
+    },
+    "ci/capability-audit/batch_system_build_live_hap.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_build_live_hap.py",
+      "sha256": "54a0a608f26ced960bc406bac6cee34979277a9c5be33d8c254c45574891fee2"
+    },
+    "ci/capability-audit/fixtures/batch_system/live_inputs/Index.ets.in": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_system/live_inputs/Index.ets.in",
+      "sha256": "fac9ea8d1bb37cd558cbc8fe5266e915ee164e8cccede93366449be3271efe14"
+    }
+  }
+}
