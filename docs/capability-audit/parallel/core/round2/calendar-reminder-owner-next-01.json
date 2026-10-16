@@ -1,0 +1,110 @@
+{
+  "scope": "isolated next-batch actual notification consumer source repair and host execution ONLY; NOT product/guest acceptance",
+  "status": "pass_host_actual_functions_ONLY",
+  "finding_id": "behavior:calendar-lifecycle-device-difference",
+  "closed_findings": 0,
+  "component_manifest": {
+    "project": "base/notification/distributed_notification_service",
+    "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+    "files": {
+      "services/reminder/include/reminder_calendar_share_table.h": {
+        "before_sha256": "c6c0f87369b1cf03ec006527fa602cd577be06900b7cd82c2446a4285bef2ff0",
+        "after_sha256": "fe8c90a2d90140018f6c97f49b43e8a5cda47918a3b3f9231cb9d4b0224d1fc5"
+      },
+      "services/reminder/src/reminder_datashare_helper.cpp": {
+        "before_sha256": "1dd61955f425eb6ab49b1c59506b9af4f7f64d3adbbe20f17b5deea85389c5cf",
+        "after_sha256": "e2e3965475ba886054c4cec2e88612e55c32297ccfd527ebb91459a82b2a160c"
+      }
+    },
+    "source_consumer_fixture": {
+      "path": "tests/reminder_datashare_helper.cpp.gz.b64",
+      "uncompressed_sha256": "1dd61955f425eb6ab49b1c59506b9af4f7f64d3adbbe20f17b5deea85389c5cf"
+    },
+    "scope": "real source owner/URI routing delta ONLY; no runtime, notification delivery or reboot acceptance",
+    "closed_findings": 0
+  },
+  "source_exports": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-reminder-consumer-source-01/evidence.json",
+      "sha256": "eb94044e71291d5aa132d710e2c4ccdcf785016fcff9c91329d5fa79a7826e87"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-reminder-consumer-source-02/evidence.json",
+      "sha256": "347484e7cf852689b2a718af4b3ade4bcd4f7aa51d14de735a5b60650ce105c6"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-reminder-owner-source-03/evidence.json",
+      "sha256": "8e03f79affd958dd7a9c6c4265a3ce1252ee8ce14d3fa0dff27a447cb434bb4c"
+    }
+  ],
+  "confirmed_source_chain": [
+    "real CalendarData CalendarAlerts proxy producer",
+    "ReminderDataShareHelper::RegisterObserver and real InitShareReminders consumer",
+    "actual StartDataExtension on service init/unlock/timezone/time/language events",
+    "actual Query/CreateReminder/InitNormalInfo/CheckWantAgent/notification and state-update paths"
+  ],
+  "repairs": [
+    "NAME matches actual source HAP com.ohos.calendardata MainAbility, retaining actual UID/creator and valid original reminder URI",
+    "metadata reader matches actual module ohos.calendardata.reminderDbVersion=2"
+  ],
+  "actual_functions_executed_on_host": [
+    "ReminderDataShareHelper::UpdateCalendarUid",
+    "ReminderDataShareHelper::InitNormalInfo",
+    "ReminderDataShareHelper::CheckWantAgent"
+  ],
+  "counterexamples": [
+    {
+      "state": "original header + original helper",
+      "expected_exit": 7,
+      "reason": "missing old-bundle owner UID"
+    },
+    {
+      "state": "correct owner header + original helper",
+      "expected_exit": 10,
+      "reason": "actual ohos metadata not found by old hmos reader; whole-component replay refuses partial state"
+    },
+    {
+      "state": "complete fixed header + fixed helper",
+      "expected_exit": 0,
+      "reason": "owner/creator UIDs, metadata v2, valid original URI and foreign-bundle fallback verified"
+    }
+  ],
+  "host_dependency_doubles": "BMS lookup results, bundle metadata structures, reminder fields and no-op log sinks only; NOT an actual guest UID/token or notification delivery",
+  "tests": [
+    {
+      "exit_code": 0,
+      "count": 16,
+      "seconds": 10.598,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-calendar-reminder-owner-next-host-02.log",
+        "sha256": "2b8fdca11b996c81dfb19fc429065a0b76d7ad9a3d050c87603950171c228375"
+      }
+    },
+    {
+      "exit_code": 0,
+      "count": 3,
+      "seconds": 7.095,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-calendar-reminder-owner-next-host-03.log",
+        "sha256": "eb5a52ac6d25165c51fbf4f053d3275586952ecb5ced7d094ec7a5f71e03ecae"
+      }
+    }
+  ],
+  "files": {
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/0001-use-installed-calendar-source-provider-as-reminder-owner.patch": "1a6014a1a95bd71d8e5b1f46b9f833826a7e46202b3b97bef716b0dc48189e9d",
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/apply.sh": "540b2657cade534e156e7bc728b96979888be1d4ee2fb36931e9508d1e84ba0b",
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/manifest.json": "6d564fc72bb4f4a02c79edf940cc059b58fcf3ac85e3bb59a234f702b6eebed0",
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/tests/reminder_calendar_share_table.h.before": "c6c0f87369b1cf03ec006527fa602cd577be06900b7cd82c2446a4285bef2ff0",
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/tests/reminder_datashare_helper.cpp.gz.b64": "9ab204c711064adb67298f21a96f3f94aecc51cb76d0de1eca8f6e200e0f8efa",
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/verify_source.py": "4734a8d8317e4709963571a133215440f28e3d8f06af98e5fecdfa62f284a34e"
+  },
+  "build_script_sha256": "89f391f323e2108d724fa1b2c6d210a170721db769f2874fdfd69ec2f8050e2b",
+  "test_source_sha256": "e71191e0518854a1f905406cd98066bf5adfdd6b05a4b9538aaeff7928917fef",
+  "first_artifact_behavior_gate_passed": false,
+  "remaining": [
+    "actual selected GN + complete native TU compile/link and staged image binding",
+    "actual signed CalendarData provider/BMS and permission acceptance",
+    "public-API scheduled/edit/cancel/repeat/delete notification delivery and correct click route",
+    "real service/process/reboot/user/time/timezone lifecycle and persistent state readback"
+  ]
+}

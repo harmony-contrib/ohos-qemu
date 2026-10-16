@@ -1,0 +1,24 @@
+diff --git a/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h b/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h
+--- a/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h
++++ b/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h
+@@ -44,7 +44,7 @@
+     static constexpr const char* NEED_AGENT = "needAgent";
+ 
+     static constexpr const char* PROXY = "datashareproxy://com.ohos.calendardata/CalendarAlerts";
+-    static constexpr const char* NAME = "com.ohos.calendar";
++    static constexpr const char* NAME = "com.ohos.calendardata";
+     static constexpr const char* DATA_NAME = "com.ohos.calendardata";
+     static constexpr const char* ENTRY = "ReminderCallbackExtAbility";
+     static constexpr const char* MAIN_ABILITY = "MainAbility";
+diff --git a/base/notification/distributed_notification_service/services/reminder/src/reminder_datashare_helper.cpp b/base/notification/distributed_notification_service/services/reminder/src/reminder_datashare_helper.cpp
+--- a/base/notification/distributed_notification_service/services/reminder/src/reminder_datashare_helper.cpp
++++ b/base/notification/distributed_notification_service/services/reminder/src/reminder_datashare_helper.cpp
+@@ -271,7 +271,7 @@
+     }
+     for (const auto& moduleInfo : bundleInfo.hapModuleInfos) {
+         for (const auto& metaData : moduleInfo.metadata) {
+-            if (metaData.name != "hmos.calendardata.reminderDbVersion") {
++            if (metaData.name != "ohos.calendardata.reminderDbVersion") {
+                 continue;
+             }
+             ANSR_LOGI("calendar rdb is new version.");

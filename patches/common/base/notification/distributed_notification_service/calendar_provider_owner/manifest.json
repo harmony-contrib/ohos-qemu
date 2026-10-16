@@ -1,0 +1,20 @@
+{
+  "project": "base/notification/distributed_notification_service",
+  "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+  "files": {
+    "services/reminder/include/reminder_calendar_share_table.h": {
+      "before_sha256": "c6c0f87369b1cf03ec006527fa602cd577be06900b7cd82c2446a4285bef2ff0",
+      "after_sha256": "fe8c90a2d90140018f6c97f49b43e8a5cda47918a3b3f9231cb9d4b0224d1fc5"
+    },
+    "services/reminder/src/reminder_datashare_helper.cpp": {
+      "before_sha256": "1dd61955f425eb6ab49b1c59506b9af4f7f64d3adbbe20f17b5deea85389c5cf",
+      "after_sha256": "e2e3965475ba886054c4cec2e88612e55c32297ccfd527ebb91459a82b2a160c"
+    }
+  },
+  "source_consumer_fixture": {
+    "path": "tests/reminder_datashare_helper.cpp.gz.b64",
+    "uncompressed_sha256": "1dd61955f425eb6ab49b1c59506b9af4f7f64d3adbbe20f17b5deea85389c5cf"
+  },
+  "scope": "real source owner/URI routing delta ONLY; no runtime, notification delivery or reboot acceptance",
+  "closed_findings": 0
+}
