@@ -17,4 +17,15 @@ FILES = (
 CRLF_FILES = {'foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_networkvpn_service_stub_test.h'}
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    try:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    except ValueError as original_error:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('qemu_openvpn_session_following',
+            Path(__file__).resolve().parent.parent / 'openvpn_session/verify_source.py')
+        following = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(following)
+        try:
+            return following.validate_preceding(root, FILES)
+        except (ValueError, FileNotFoundError):
+            raise original_error

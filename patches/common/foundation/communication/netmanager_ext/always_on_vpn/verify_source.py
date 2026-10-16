@@ -38,7 +38,17 @@ def validate(root, require_patched=False):
         try:
             return validate_component(root, PROJECT, REVISION, following, True)
         except ValueError:
-            raise original_error
+            following_files = following
+            import importlib.util
+            spec = importlib.util.spec_from_file_location('qemu_openvpn_session_following',
+                Path(__file__).resolve().parent.parent / 'openvpn_session/verify_source.py')
+            following = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(following)
+            try:
+                return following.validate_preceding(root, following_files)
+            except (ValueError, FileNotFoundError):
+                raise original_error
+
 
 if __name__ == '__main__':
     import argparse

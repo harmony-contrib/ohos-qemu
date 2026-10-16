@@ -27,3 +27,45 @@
  #endif
  
  #ifdef HAVE_SYS_UN_H
+diff --git a/src/openvpn/dns.c b/src/openvpn/dns.c
+--- a/src/openvpn/dns.c
++++ b/src/openvpn/dns.c
+@@ -500,7 +500,7 @@
+     setenv_str(es, name, value);
+ }
+-
++
+-static void
++void
+ setenv_dns_options(const struct dns_options *o, struct env_set *es)
+ {
+     struct gc_arena gc = gc_new();
+diff --git a/src/openvpn/dns.h b/src/openvpn/dns.h
+--- a/src/openvpn/dns.h
++++ b/src/openvpn/dns.h
+@@ -209,6 +209,9 @@
+  */
+ void show_dns_options(const struct dns_options *o);
+-
++
++/* Export the final parsed DNS state to the owned AF_UNIX TUN child. */
++void setenv_dns_options(const struct dns_options *o, struct env_set *es);
++
+ /**
+  * Returns whether dns-updown is user defined
+  *
+diff --git a/src/openvpn/tun_afunix.c b/src/openvpn/tun_afunix.c
+--- a/src/openvpn/tun_afunix.c
++++ b/src/openvpn/tun_afunix.c
+@@ -114,6 +114,9 @@
+         setenv_str(env, "TUNTAP_LLADDR", o->lladdr);
+     }
+-
++
++    /* Final --dns state also covers DNS converted from legacy dhcp-option. */
++    setenv_dns_options(&o->dns_options, env);
++
+     tun_afunix_exec_child(o->dev_node, tt, env);
+-
++
+     close(fds[0]);

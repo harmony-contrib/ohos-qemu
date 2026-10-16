@@ -3,6 +3,8 @@
 #include "networkvpn_client.h"
 #include "received_descriptor.h"
 #include "process_lifecycle.h"
+#include "session_contract.h"
+#include "negotiated_config.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -20,7 +22,10 @@
 #include <sys/ioctl.h>
 #include <string>
 
+extern char **environ;
+
 namespace {
+std::string sessionToken;
 using OHOS::NetManagerStandard::NetworkVpnClient;
 volatile sig_atomic_t stopped = 0;
 void Stop(int) { stopped = 1; }
@@ -41,7 +46,7 @@ int Decimal(const char *text, int minimum, int maximum)
 }
 bool Notify(const std::string &body)
 {
-    return NetworkVpnClient::GetInstance().NotifyConnectStage("openvpn " + body, 0) == 0;
+    return NetworkVpnClient::GetInstance().NotifyConnectStage(OhosOpenvpn::Stage(sessionToken, body), 0) == 0;
 }
 int ReceiveTun()
 {
@@ -63,11 +68,6 @@ int ReceiveTun()
     message.msg_control = rights.data(); message.msg_controllen = rights.size();
     ssize_t received = recvmsg(control.value, &message, MSG_CMSG_CLOEXEC);
     return OhosOpenvpn::TakeSingleDescriptor(message, received, rights.size());
-}
-bool ValidIpv4(const char *address)
-{
-    in_addr binary {};
-    return address && inet_pton(AF_INET, address, &binary) == 1;
 }
 int ConnectReady()
 {
@@ -92,19 +92,22 @@ int Bridge()
     if (getuid() != 1098 || geteuid() != 1098) return 2;
     if (!OhosOpenvpn::BindToParent(getppid())) return 2;
     const int peer = Decimal(getenv("TUNTAP_SOCKET_FD"), 0, std::numeric_limits<int>::max());
-    const int mtu = Decimal(getenv("TUNTAP_MTU"), 576, 65535);
-    const char *address = getenv("ifconfig_local");
-    const char *mask = getenv("ifconfig_netmask");
-    const char *kind = getenv("TUNTAP_DEV_TYPE");
-    if (peer < 0 || mtu < 0 || !kind || strcmp(kind, "tun") || !ValidIpv4(address) || !ValidIpv4(mask)) return 2;
+    const char *token = getenv("OHOS_OPENVPN_SESSION");
+    if (!token || !OhosOpenvpn::Token(token) || peer < 0) return 2;
+    sessionToken = token;
+    OhosOpenvpn::Environment environment;
+    for (char **entry = environ; entry && *entry; ++entry) {
+        const char *split = strchr(*entry, '=');
+        if (!split) return 2;
+        if (!environment.emplace(std::string(*entry, static_cast<size_t>(split - *entry)), std::string(split + 1)).second) return 2;
+    }
+    OhosOpenvpn::NegotiatedConfig negotiated;
+    if (!OhosOpenvpn::ReadNegotiated(environment, negotiated)) return 2;
     int socketType = 0;
     socklen_t socketTypeSize = sizeof(socketType);
     if (getsockopt(peer, SOL_SOCKET, SO_TYPE, &socketType, &socketTypeSize) != 0 ||
         socketType != SOCK_DGRAM) return 2;
-    // Values are validated IP literals and an integer before JSON construction.
-    std::string config = "{\"config\":{\"mtu\":" + std::to_string(mtu) +
-        ",\"address\":\"" + address + "\",\"netmask\":\"" + mask + "\"}}";
-    if (!Notify(config) || !Notify("{\"setupVpnTun\":{}}")) return 3;
+    if (!Notify(OhosOpenvpn::NetworkJson(negotiated)) || !Notify("{\"setupVpnTun\":{}}")) return 3;
     Fd tun;
     tun.value = ReceiveTun();
     if (tun.value < 0) return 4;

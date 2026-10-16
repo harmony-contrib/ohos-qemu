@@ -3,6 +3,8 @@
 #include "management_protocol.h"
 #include "profile_policy.h"
 #include "process_lifecycle.h"
+#include "session_files.h"
+#include "session_contract.h"
 #include "networkvpn_client.h"
 #include <array>
 #include <cerrno>
@@ -29,6 +31,7 @@ constexpr uid_t NETSYS_UID = 1098;
 constexpr char CLIENT[] = "/system/bin/qemu_openvpn";
 constexpr char BRIDGE[] = "unix:/system/bin/qemu_openvpn_tun";
 volatile sig_atomic_t stopping = 0;
+std::string sessionToken;
 void Stop(int) { stopping = 1; }
 
 struct Fd {
@@ -54,7 +57,7 @@ bool Write(int fd, const std::string &text)
 bool Notify(int state)
 {
     return NetworkVpnClient::GetInstance().NotifyConnectStage(
-        "openvpn {\"updateState\":{\"state\":" + std::to_string(state) + "}}", 0) == 0;
+        OhosOpenvpn::Stage(sessionToken, "{\"updateState\":{\"state\":" + std::to_string(state) + "}}"), 0) == 0;
 }
 
 bool SaveSecret(const std::string &path, const std::string &contents)
@@ -132,10 +135,11 @@ bool Spawn(Session &session, const std::string &config, const std::string &manag
            const std::string &ready)
 {
     std::vector<std::string> arguments {
-        CLIENT, "--config", config, "--dev", "tun", "--dev-type", "tun",
+        CLIENT, "--client", "--config", config, "--dev", "tun", "--dev-type", "tun",
         "--dev-node", BRIDGE, "--script-security", "2", "--ifconfig-noexec",
         "--route-noexec", "--management", management, "unix", "--management-client",
         "--management-hold", "--setenv", "OHOS_OPENVPN_READY_SOCKET", ready,
+        "--setenv", "OHOS_OPENVPN_SESSION", sessionToken,
         "--verb", "3",
     };
     std::vector<char *> argv;
@@ -161,7 +165,7 @@ int Observe(Session &session, int managementListener, int readyListener)
     bool tlsConnected = false;
     bool published = false;
     std::string pending;
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(90);
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(90);
     while (!stopping) {
         siginfo_t exited {};
         if (waitid(P_PID, session.child, &exited, WEXITED | WNOHANG | WNOWAIT) < 0 || exited.si_pid) return 5;
@@ -197,7 +201,6 @@ int Observe(Session &session, int managementListener, int readyListener)
         }
         // A one-time readiness byte must not outlive the real TUN bridge. Its
         // private peer connection stays open for the entire forwarding loop.
-        if (descriptors[3].revents) return 17;
         if (descriptors[2].revents & (POLLERR | POLLHUP | POLLNVAL)) return 12;
         if (descriptors[2].revents & POLLIN) {
             std::array<char, 1024> bytes {};
@@ -211,9 +214,17 @@ int Observe(Session &session, int managementListener, int readyListener)
                 auto event = OhosOpenvpn::ParseState(pending);
                 pending.clear();
                 if (event == OhosOpenvpn::Event::Connected) tlsConnected = true;
-                else if (event != OhosOpenvpn::Event::Ignore) return 15;
+                else if (event == OhosOpenvpn::Event::Reconnecting) {
+                    if (NetworkVpnClient::GetInstance().NotifyConnectStage(
+                        OhosOpenvpn::Stage(sessionToken, "{\"reconnecting\":{}}"), 0) != 0) return 15;
+                    tlsConnected = published = tunReady = false;
+                    if (bridgeReady.value >= 0) close(bridgeReady.value);
+                    bridgeReady.value = -1;
+                    deadline = std::chrono::steady_clock::now() + std::chrono::seconds(90);
+                } else if (event != OhosOpenvpn::Event::Ignore) return 15;
             }
         }
+        if (tunReady && descriptors[3].revents) return 17;
         if (!published && tlsConnected && tunReady) {
             if (!Notify(4)) return 16;
             published = true;
@@ -227,23 +238,19 @@ int Run()
     // Match the actual service's UID check; this program never manufactures
     // a token or switches identity to bypass that authorization boundary.
     if (getuid() != NETSYS_UID || geteuid() != NETSYS_UID) return 2;
+    OhosOpenvpn::SessionConfig snapshot;
+    std::string envelope;
+    if (NetworkVpnClient::GetInstance().GetSysVpnCertUri(OhosOpenvpn::SESSION_REQUEST, envelope) != 0 ||
+        !OhosOpenvpn::DecodeSession(envelope, snapshot)) return 3;
+    sessionToken = snapshot.token;
+    std::string config = std::move(snapshot.profile);
+    std::string password = std::move(snapshot.password);
+    OhosOpenvpn::SessionStore store;
+    if (!store.Open("/data/service/el1/public/vpn/qemu_openvpn", NETSYS_UID)) return 3;
     Session session;
     char directory[] = "/data/service/el1/public/vpn/qemu_openvpn/session-XXXXXX";
     if (!mkdtemp(directory)) return 3;
     session.directory = directory;
-    std::string config;
-    std::string password;
-    auto &client = NetworkVpnClient::GetInstance();
-    if (client.GetSysVpnCertUri(1, config) != 0 || config.empty() || config.size() > 1024 * 1024 ||
-        config.find('\0') != std::string::npos || client.GetSysVpnCertUri(0, password) != 0 ||
-        password.find_first_of("\r\n") != std::string::npos || password.find('\0') != std::string::npos) return 3;
-    if (!password.empty()) {
-        // OpenvpnCtl appends this legacy filename. Use this session's private
-        // file instead, so another session cannot inherit its password.
-        const std::string suffix = "askpass /data/service/el1/public/vpn/askpass";
-        if (config.size() < suffix.size() || config.compare(config.size() - suffix.size(), suffix.size(), suffix)) return 3;
-        config.resize(config.size() - suffix.size());
-    }
     if (!OhosOpenvpn::ValidateProfile(config)) return 3;
     if (!password.empty()) {
         if (!SaveSecret(session.directory + "/askpass", password + "\n")) return 3;
@@ -271,6 +278,6 @@ int main()
     // The service initiating an explicit stop already owns its disconnected
     // transition. Calling back synchronously here can block an init restart
     // while that service still holds its setup/destroy mutex.
-    if (!stopping && getuid() == NETSYS_UID && geteuid() == NETSYS_UID) Notify(5);
+    if (!stopping && OhosOpenvpn::Token(sessionToken) && getuid() == NETSYS_UID && geteuid() == NETSYS_UID) Notify(5);
     return result;
 }
