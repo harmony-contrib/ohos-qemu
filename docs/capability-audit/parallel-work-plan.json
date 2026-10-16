@@ -1553,7 +1553,8 @@
         "patches/common/foundation/distributeddatamgr/",
         "patches/common/foundation/graphic/graphic_3d/",
         "patches/common/foundation/msdp/",
-        "patches/common/device/qemu/external_gnss/"
+        "patches/common/device/qemu/external_gnss/",
+        "patches/common/drivers/peripheral/gnss/qemu_provider/tests/"
       ],
       "requirements": [
         {
