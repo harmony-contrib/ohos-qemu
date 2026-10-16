@@ -71,6 +71,14 @@ class KernelLoggingLauncherTests(unittest.TestCase):
                     command_line = actual[actual.index('-append') + 1]
                     self.assertEqual([item for item in command_line.split() if item.startswith('loglevel=')],
                                      ['loglevel=' + level])
+                    for parameter in ('snd-ens1370.index=0', 'snd-aloop.index=1',
+                                      'snd-aloop.id=QemuCapture', 'snd-aloop.pcm_substreams=1'):
+                        self.assertEqual(command_line.split().count(parameter), 1)
+                if arch == 'x86_64':
+                    powershell = (package / 'launch/windows.ps1').read_text()
+                    for parameter in ('snd-ens1370.index=0', 'snd-aloop.index=1',
+                                      'snd-aloop.id=QemuCapture', 'snd-aloop.pcm_substreams=1'):
+                        self.assertIn(parameter, powershell)
                 for invalid in ('-1', '9', '7 8', '7;exit 0'):
                     result = subprocess.run(argv + ['--kernel-log-level', invalid],
                         env=environment, capture_output=True, text=True)

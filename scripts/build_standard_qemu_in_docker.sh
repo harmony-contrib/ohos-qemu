@@ -267,6 +267,7 @@ PARTICLE_ERROR_CODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ab
 CLOUD_FLAG_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributeddatamgr/relational_store/api26_cloud_flag/apply.sh"
 CURVE_ENUM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/api26_curve_enum/apply.sh"
 LOCATION_PUBLIC_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location/api26_public_enums/apply.sh"
+LOCATION_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/location/location/api26_runtime/apply.sh"
 NETMANAGER_API26_FEATURES_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/api26_features/apply.sh"
 VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_dialog_bundle/apply.sh"
 DHW_UI_PREINSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/dhardware_preinstall/apply.sh"
@@ -286,6 +287,7 @@ QEMU_THERMAL_SERVICE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/therma
 QEMU_THERMAL_CLIENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/client_reply/apply.sh"
 QEMU_THERMAL_NAPI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/powermgr/thermal_manager/napi_contract/apply.sh"
 QEMU_VIVID_KERNEL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/vivid_capture/apply.sh"
+QEMU_ALSA_CAPTURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/alsa_loopback_capture/apply.sh"
 QEMU_WLAN_RADIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_radio/apply.sh"
 QEMU_WLAN_REGULATORY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/wlan_regulatory/apply.sh"
 QEMU_WPA_CHANNELS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/communication/wifi/wpa_channels/apply.sh"
@@ -364,9 +366,11 @@ SETTINGS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/h
 SETTINGS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/settings_provider/apply.sh"
 PHOTOS_FACARD_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/photos_facard/apply.sh"
 PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/public_record_classes/apply.sh"
+KNOWLEDGE_CONTENT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/knowledge_content/apply.sh"
 SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/software_avc/apply.sh"
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
 AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh"
+AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.sh"
 CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/codec_hardware_profile/apply.sh"
 QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
 AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_library_path/apply.sh"
@@ -2877,6 +2881,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thermal_napi_component.log"
   bash "${QEMU_VIVID_KERNEL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_vivid_kernel_component.log"
+  bash "${QEMU_ALSA_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_alsa_capture_component.log"
   bash "${QEMU_WLAN_RADIO_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wlan_radio_component.log"
   bash "${QEMU_WLAN_REGULATORY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3031,6 +3037,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_curve_enum_component.log"
   bash "${LOCATION_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_location_public_enums_component.log"
+  bash "${LOCATION_RUNTIME_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_location_runtime_component.log"
   bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_netmanager_api26_features_component.log"
   bash "${VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3201,6 +3209,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photo_record_classes_component.log"
   bash "${RESULT_SET_EXPORT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_result_set_export_component.log"
+  bash "${KNOWLEDGE_CONTENT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_knowledge_content_component.log"
   bash "${SQLITE_EXPRESSION_BLOB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_sqlite_expression_blob_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3215,6 +3225,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_software_avc_component.log"
   bash "${AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_surface_layout_component.log"
+  bash "${AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_capture_integrity_component.log"
   bash "${AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_library_path_component.log"
   bash "${AUDIO_SUITE_DSP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

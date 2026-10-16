@@ -16,6 +16,21 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'audio_capture': {
+        'project': 'foundation/multimedia/av_codec',
+        'revision': 'e5c525670d1f6622d441c9e5bf975ea0579ea177',
+        'components': ['audio_capture_integrity'],
+        'units': ['audio_capture_filter', 'audio_capture_module'],
+        'sources': {
+            'audio_capture_filter': 'services/media_engine/filters/audio_capture_filter.cpp',
+            'audio_capture_module': 'services/media_engine/modules/source/audio_capture/audio_capture_module.cpp'},
+        'targets': {
+            'audio_capture_filter': 'obj/foundation/multimedia/av_codec/services/media_engine/filters/av_codec_media_engine_filters/audio_capture_filter.o',
+            'audio_capture_module': 'obj/foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/av_codec_media_engine_modules/audio_capture_module.o'},
+        'required_headers': {
+            'audio_capture_filter': 'interfaces/inner_api/native/audio_capture_filter.h',
+            'audio_capture_module': 'services/media_engine/modules/source/audio_capture/audio_capture_module.h'},
+    },
     'avc': {
         'project': 'foundation/multimedia/av_codec',
         'revision': 'e5c525670d1f6622d441c9e5bf975ea0579ea177',
@@ -112,8 +127,8 @@ def run(args):
     before = {name: sha(root / name) if (root / name).is_file() else None for name in owned}
     recipe = [Path(__file__), ROOT / 'patches/lib/apply_patch.sh',
               ROOT / 'patches/lib/apply_component_stack.py', ROOT / 'patches/lib/exact_source_states.py',
-              *(p for c in components for p in c.iterdir()
-               if p.is_file() and p.suffix in ('.py', '.sh', '.patch'))]
+              *(p for c in components for p in c.rglob('*')
+               if p.is_file() and '__pycache__' not in p.parts)]
     recipe_before = {str(p): sha(p) for p in recipe}
     staged = output / 'candidate'
     private = staged / project
@@ -182,7 +197,7 @@ def run(args):
                 disassembler = (cwd / argv[0]).resolve().parent / 'llvm-dis'
                 row.update(verify_object(obj, disassembler, arch, machine, elf_class))
                 dependency = dep.read_text()
-                required = group['required_header']
+                required = group.get('required_headers', {}).get(unit, group.get('required_header'))
                 if str(staged / source) not in dependency or (required and str(private / required) not in dependency):
                     raise ValueError('compiler did not consume actual candidate source/header')
                 row.update(status='pass', object_sha256=sha(obj), dependency_sha256=sha(dep))
