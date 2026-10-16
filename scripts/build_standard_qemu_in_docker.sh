@@ -3319,6 +3319,12 @@ apply_qemu_capability_patch_plan() {
   if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
     python3 "${SCRIPT_DIR}/prepare_qemu_sensor_runtime.py" --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_sensor_runtime.log"
+    knowledge_resource_args=(--source-root "${OHOS_ROOT}")
+    if [ -n "${QEMU_KNOWLEDGE_ICS:-}" ]; then
+      knowledge_resource_args+=(--asset "${QEMU_KNOWLEDGE_ICS}")
+    fi
+    python3 "${SCRIPT_DIR}/prepare_qemu_knowledge_resource.py" "${knowledge_resource_args[@]}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_knowledge_resource.log"
   fi
   ensure_flexlexer_header
   clean_corrupt_hvigor_state

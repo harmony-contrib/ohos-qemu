@@ -78,7 +78,9 @@ def run(root, output):
     if not re.search(r'CommunicationStateUpdated\(const OHOS::HDI::Ril::V1_1::RilRadioResponseInfo& responseInfo,\s*bool is5A\) = 0;', header):
         raise ValueError('actual generated RIL callback ABI differs from agreed service implementation')
     proxy = (output / 'after/ril/v1_5/ril_callback_proxy.cpp').read_text()
-    if not re.search(r'int32_t RilCallbackProxy::CommunicationStateUpdated\(.*?TF_ASYNC', proxy, re.S):
+    method = re.search(r'int32_t OHOS::HDI::Ril::V1_5::RilCallbackProxy::CommunicationStateUpdated_\([^{}]*\)\s*\{(.*?)\n\}', proxy, re.S)
+    if not method or any(part not in method[1] for part in ('MessageOption::TF_ASYNC',
+            'WriteBool(is5A)', 'SendRequest(CMD_RIL_CALLBACK_COMMUNICATION_STATE_UPDATED,')):
         raise ValueError('new generated callback is not actually one-way')
     overlay = output / 'generated-headers.json'
     overlay.write_text(json.dumps({'version': 0, 'roots': [

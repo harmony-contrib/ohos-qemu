@@ -23,6 +23,32 @@ ohos_prebuilt_etc("qemu_sensor_input_cfg") {
 
 '''
 DEPENDENCY = '    ":qemu_sensor_input_cfg",\n'
+# These two blocks are owned by the parent calendar resource installer. Both
+# installers normalize the same pinned GN base, preserving the other's complete
+# declarations rather than treating a legitimate second owner as an unknown edit.
+KNOWLEDGE_BLOCK = '''# Trusted optional KnowledgeContent configuration, without fabricated dates.
+ohos_prebuilt_etc("qemu_knowledge_resource_contract") {
+  source = "knowledge_resource.json"
+  output = "resource.json"
+  relative_install_dir = "knowledge-content"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+
+'''
+KNOWLEDGE_DEPENDENCY = '    ":qemu_knowledge_resource_contract",\n'
+KNOWLEDGE_ASSET_BLOCK = '''ohos_prebuilt_etc("qemu_knowledge_holidays") {
+  source = "qemu_holidays.ics"
+  output = "holidays.ics"
+  relative_install_dir = "knowledge-content"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+
+'''
+KNOWLEDGE_ASSET_DEPENDENCY = '    ":qemu_knowledge_holidays",\n'
+KNOWLEDGE_GN = ((KNOWLEDGE_BLOCK, KNOWLEDGE_DEPENDENCY),
+                (KNOWLEDGE_ASSET_BLOCK, KNOWLEDGE_ASSET_DEPENDENCY))
 POLICY = 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/'
 FILES = {
     'vendor/ohemu/virt/etc/qemu_sensor_input.cfg': json.dumps({'jobs': [{
@@ -103,11 +129,21 @@ def apply(root):
     if before_build is None:
         raise ValueError('QEMU product etc GN file required')
     original = before_build.replace(BLOCK.encode(), b'').replace(DEPENDENCY.encode(), b'')
+    foreign = []
+    for block, dependency in KNOWLEDGE_GN:
+        blocks, dependencies = before_build.count(block.encode()), before_build.count(dependency.encode())
+        if blocks not in (0, 1) or blocks != dependencies:
+            raise ValueError('partial shared KnowledgeContent GN declarations; preserving source')
+        if blocks:
+            foreign.append((block, dependency))
+        original = original.replace(block.encode(), b'').replace(dependency.encode(), b'')
     if hashlib.sha256(original).hexdigest() != BUILD_SHA:
         raise ValueError('unknown QEMU product etc source; preserving edits')
     anchor = b'group("product_etc_conf") {\n  deps = [\n'
     if original.count(anchor) != 1:
         raise ValueError('fixed product etc dependency group required')
+    for block, dependency in foreign:
+        original = original.replace(anchor, block.encode() + anchor + dependency.encode())
     final_build = original.replace(anchor, BLOCK.encode() + anchor + DEPENDENCY.encode())
     planned = {name: data.encode() for name, data in FILES.items()}
     planned[BUILD] = final_build
