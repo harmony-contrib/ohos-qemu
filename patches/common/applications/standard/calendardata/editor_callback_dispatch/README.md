@@ -26,10 +26,12 @@ closes a replacement UIContent. Per-request locks use environment before request
 when both are needed; UI invalidation releases the request lock before enqueue.
 
 Exact predecessor and final hashes are in verify_source.py. The earlier
-`event_editor` checker deliberately does not accept these new final native
-hashes. The parent must update shared final-state/replay recognition for the
-composed chain, without widening acceptance to unknown source. This component
-itself is idempotent and rejects partial/drifted states.
+`event_editor` checker recognizes this successor only when both native files
+match the dispatch final hashes and all five UI files match their existing final
+hashes. Mixed native pairs and UI drift are rejected before source mutation.
+The full source_provider -> event_editor -> editor_callback_dispatch chain is
+covered from pinned pristine inputs and then replayed twice. No shared guard
+changes are required for these two native hashes.
 
 Host checks execute the actual extracted functions with different UI/JS threads
 and enforce that value APIs run on JS within a scope. They exercise cancellation,
