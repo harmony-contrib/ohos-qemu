@@ -88,10 +88,19 @@
         "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-calendar-reminder-owner-next-host-03.log",
         "sha256": "eb5a52ac6d25165c51fbf4f053d3275586952ecb5ced7d094ec7a5f71e03ecae"
       }
+    },
+    {
+      "exit_code": 0,
+      "count": 3,
+      "seconds": 14.008,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-calendar-reminder-owner-next-host-04.log",
+        "sha256": "f25dd82a6492eeb75f226dd00bd3d75e3998c202034fe87200820355fc6f7fbf"
+      }
     }
   ],
   "files": {
-    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/0001-use-installed-calendar-source-provider-as-reminder-owner.patch": "1a6014a1a95bd71d8e5b1f46b9f833826a7e46202b3b97bef716b0dc48189e9d",
+    "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/0001-use-installed-calendar-source-provider-as-reminder-owner.patch": "b584131f70e1ff7539651a1d349537c9bd322f2a4660e3241c6a8f8d46eed467",
     "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/apply.sh": "540b2657cade534e156e7bc728b96979888be1d4ee2fb36931e9508d1e84ba0b",
     "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/manifest.json": "6d564fc72bb4f4a02c79edf940cc059b58fcf3ac85e3bb59a234f702b6eebed0",
     "patches/common/base/notification/distributed_notification_service/calendar_provider_owner/tests/reminder_calendar_share_table.h.before": "c6c0f87369b1cf03ec006527fa602cd577be06900b7cd82c2446a4285bef2ff0",
@@ -106,5 +115,6 @@
     "actual signed CalendarData provider/BMS and permission acceptance",
     "public-API scheduled/edit/cancel/repeat/delete notification delivery and correct click route",
     "real service/process/reboot/user/time/timezone lifecycle and persistent state readback"
-  ]
+  ],
+  "patch_format_repair": "Narrow unified context preserves exact pre/post source bytes and avoids whitespace-only context lines inside the tracked patch; actual full component replay repeated successfully."
 }
