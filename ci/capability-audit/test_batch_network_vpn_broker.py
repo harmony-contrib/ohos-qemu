@@ -18,6 +18,44 @@ from test_batch_network_openvpn_lifecycle import ROOT, EXT, BASE, body, compile_
 
 FIXTURE=Path(__file__).with_name("fixtures")/"batch_network/vpn-broker-prepared.json"
 
+# Execute the emitted native main on the host too. This explicit FFRT double
+# supplies an asynchronous serial worker; it does not replace target FFRT proof.
+ASYNC_FFRT=r'''
+namespace ffrt {
+using shared_mutex=std::shared_mutex;
+struct task_attr {task_attr&delay(uint64_t){return *this;}};
+class queue {
+ std::mutex mutex_;std::condition_variable changed_;std::deque<std::function<void()>> tasks_;
+ bool stopped_=false;std::thread worker_;
+ void Run(){
+  for(;;){
+   std::function<void()> task;
+   {
+    std::unique_lock<std::mutex> lock(mutex_);
+    changed_.wait(lock,[this]{return stopped_ || !tasks_.empty();});
+    if(tasks_.empty()){
+     if(stopped_){return;}
+     continue;
+    }
+    task=std::move(tasks_.front());tasks_.pop_front();
+   }
+   task();
+  }
+ }
+public:
+ explicit queue(const char*):worker_([this]{Run();}){}
+ ~queue(){
+  {std::lock_guard<std::mutex> lock(mutex_);stopped_=true;}
+  changed_.notify_all();worker_.join();
+ }
+ void*submit_h(std::function<void()> task,const task_attr& = {}){
+  {std::lock_guard<std::mutex> lock(mutex_);if(stopped_){return nullptr;}tasks_.push_back(std::move(task));}
+  changed_.notify_one();return this;
+ }
+};
+}
+'''
+
 def prepared(root):
     for name,encoded in json.loads(FIXTURE.read_text()).items():
         p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(base64.b64decode(encoded))
@@ -66,6 +104,24 @@ class VpnBrokerTests(unittest.TestCase):
  auto closingObject=std::make_shared<NetVpnImpl>();closingObject->nativeSession=true;
  auto closing=service->CreateConnectionCallback(closingObject,"closing.owner",100,"closing");closing->Commit();Drain();
  const int oldPublications=service->publishes;const auto oldStates=restarted->states.size();
+ // The original host main already destroyed its single VPN on remote death;
+ // the native main still owns nextObject. Exercise the same exclusion boundary
+ // in both mains, then tear down the single VPN before the multi-owner case.
+ {
+  std::unique_lock<ffrt::shared_mutex> lock(service->netVpnMutex_);
+  if(!service->vpnObj_){service->vpnObj_=std::make_shared<NetVpnImpl>();}
+  assert(!service->vpnObj_->IsSystemVpn());
+  assert(!service->IsNeedNotify(VpnConnectState::VPN_DISCONNECTED,"closing",100));
+ }
+ closing->OnVpnConnStateChanged(VpnConnectState::VPN_DISCONNECTED,State("closing"));Drain();
+ assert(restarted->states.size()==oldStates && service->publishes==oldPublications);
+ {
+  std::unique_lock<ffrt::shared_mutex> lock(service->netVpnMutex_);
+  auto single=service->vpnObj_;
+  assert(service->DestroyOwnedConnection(single)==0 && single->destroys==1);
+  service->vpnObj_.reset();
+  assert(service->IsNeedNotify(VpnConnectState::VPN_DISCONNECTED,"closing",100));
+ }
  std::future<bool> publisher;
  {
   std::unique_lock<ffrt::shared_mutex> lock(service->netVpnMutex_);
@@ -90,13 +146,15 @@ class VpnBrokerTests(unittest.TestCase):
             for signature in signatures:actual+='\n'+body(text,signature)
             declarations+='#include <cstring>\nconstexpr const char *INNER_CHL_NAME="inner-chl";\n'
             compile_run(declarations+actual+cases,root,extra=('-pthread',))
+            begin=declarations.index('namespace ffrt {');end=declarations.index('struct SysVpnConfig',begin)
+            native_cases=literals['cases'][:literals['cases'].index('int main(){')]+previous.NATIVE_MAIN
+            native_addition=addition.replace('Drain();','NativeFlush();').replace('std::future<bool> publisher;','std::future<void> publisher;').replace('return DrainOne();','NativeFlush();')
+            native_cases=native_cases.replace('    auto pendingObject = std::make_shared<NetVpnImpl>();',native_addition+'    auto pendingObject = std::make_shared<NetVpnImpl>();')
+            async_declarations=declarations[:begin]+ASYNC_FFRT+declarations[end:]
+            compile_run(async_declarations+actual+native_cases,root,extra=('-pthread',))
             native_output=os.environ.get('BATCH_NETWORK_BROKER_CALLBACK_NATIVE_OUTPUT')
             if native_output:
-                begin=declarations.index('namespace ffrt {');end=declarations.index('struct SysVpnConfig',begin)
                 native=declarations[:begin]+'#include "ffrt.h"\n'+declarations[end:]
-                native_cases=literals['cases'][:literals['cases'].index('int main(){')]+previous.NATIVE_MAIN
-                native_addition=addition.replace('Drain();','NativeFlush();').replace('std::future<bool> publisher;','std::future<void> publisher;').replace('return DrainOne();','NativeFlush();')
-                native_cases=native_cases.replace('    auto pendingObject = std::make_shared<NetVpnImpl>();',native_addition+'    auto pendingObject = std::make_shared<NetVpnImpl>();')
                 Path(native_output).write_text('// Actual multi-owner stop epoch/functions; real FFRT. Account/IPC/backend remain explicit doubles.\n'+native+actual+native_cases)
 
     def test_actual_codec_roundtrip_owner_replay_and_socket_framing(self):
