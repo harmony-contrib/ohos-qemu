@@ -34,6 +34,18 @@ GROUPS = {
         'target': 'obj/foundation/ability/ability_runtime/frameworks/native/child_process/src/child_process/{unit}.o',
         'required_header': 'frameworks/native/child_process/include/native_child_callback.h',
     },
+    'graphics3d': {
+        'project': 'foundation/graphic/graphic_3d',
+        'revision': 'b2d7af910f2d4b941697630020b0940245d5bd99',
+        'components': ['scene_startup'],
+        'units': ['scene_adapter', 'RenderContextJS'],
+        'sources': {'scene_adapter': '3d_scene_adapter/src/scene_adapter.cpp',
+                    'RenderContextJS': 'kits/js/src/RenderContextJS.cpp'},
+        'targets': {
+            'scene_adapter': 'obj/foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter_source/scene_adapter.o',
+            'RenderContextJS': 'obj/foundation/graphic/graphic_3d/kits/js/src/napi_source/RenderContextJS.o'},
+        'required_header': None,
+    },
 }
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
@@ -110,7 +122,7 @@ def run(args):
         for unit in group['units']:
             row = {'product': product, 'unit': unit, 'status': 'fail'}
             try:
-                target = group['target'].format(unit=unit)
+                target = group['targets'][unit] if 'targets' in group else group['target'].format(unit=unit)
                 query = subprocess.run([str(root / 'prebuilts/build-tools/linux-x86/bin/ninja'),
                     '-w', 'dupbuild=warn', '-C', str(cwd), '-t', 'commands', '-s', target],
                     capture_output=True, text=True, timeout=180, check=True)
@@ -118,7 +130,8 @@ def run(args):
                 argv = shlex.split(query.stdout.splitlines()[-1])
                 if Path(argv[0]).name == 'ccache':
                     argv.pop(0)
-                source = project / group['directory'] / (unit + '.cpp')
+                source = project / (group['sources'][unit] if 'sources' in group else
+                                    group['directory'] + '/' + unit + '.cpp')
                 if (Path(argv[0]).name != 'clang++' or '--target=' + arch + '-linux-ohos' not in argv or
                         argv.count('-c') != 1 or argv.count('-o') != 1 or argv.count('-MF') != 1 or
                         any(v in argv for v in ('&&', ';', '|')) or
