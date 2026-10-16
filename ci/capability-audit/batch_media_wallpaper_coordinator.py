@@ -566,7 +566,12 @@ class Coordinator(Runtime):
             write_json(destination,{'run_id':self.run,'boot_id':self.boot_id,'seed_uid':self.uids['seed'],
                                    'uris':self.uris,'consent_actions':actions,**self.haps['seed']})
         elif action=='show-settings-main':self.show_settings()
-        elif action=='show-real-desktop':self.home()
+        elif action=='show-real-desktop':
+            self.home()
+            if request['details'].get('case')in ('desktop-1','desktop-2'):
+                from batch_media_wallpaper_native import observe_maps, observe_renderer_hap
+                observe_maps(self,request)
+                observe_renderer_hap(self,request)
         elif action=='show-real-lock':self.show_lock()
         elif action=='cancel-real-Photos-picker':
             destination=self.receipt(request,'picker-cancel-observation.json')
