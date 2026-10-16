@@ -264,7 +264,8 @@
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-03.log": "c6aa9f24b9c8ebbd5aa50eff93af7eded3ce641dcac356087830076067be60e6",
     "docs/capability-audit/parallel/media/round2/alsa-inject-host-01.log": "32977d26d34487cd00f093ebf7b773d042d16030eb23b2c0fe7166a7c7e7c5ea",
     "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log": "a90c13487e87d6441c67875fd67ec354ed4b6021a5c6462d97d264ccf09f8d02",
-    "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log": "09c39f4beb3927783c34fbf9fd8825f29b95472658e6e974d0c46d078f12c4c7"
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log": "09c39f4beb3927783c34fbf9fd8825f29b95472658e6e974d0c46d078f12c4c7",
+    "docs/capability-audit/parallel/media/round2/HANDOFF.md": "2852a3ad7fd73635ea53f14950aafdaa78f2caec541c1406e0debfadf161af2d"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
@@ -295,6 +296,7 @@
     "docs/capability-audit/parallel/media/host-checks-03.log",
     "docs/capability-audit/parallel/media/host-checks-04.log",
     "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/round2/HANDOFF.md",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-01.log",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-02.log",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-03.log",
@@ -353,5 +355,6 @@
     "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py"
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
-  "round2_status": "knowledge_audio_integrity_and_real_ALSA_capture_candidates_prepared_actual_product_build_and_runtime_required"
+  "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
+  "handoff": "docs/capability-audit/parallel/media/round2/HANDOFF.md"
 }
