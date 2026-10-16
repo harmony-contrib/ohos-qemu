@@ -202,11 +202,13 @@ def verify_source(source):
     guard = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(guard)
     guard.validate(source, require_patched=True)
-    route_verifier = verifier.parent.parent / 'external_input/verify_source.py'
-    route_spec = importlib.util.spec_from_file_location('settings_input_guard', route_verifier)
-    route_guard = importlib.util.module_from_spec(route_spec)
-    route_spec.loader.exec_module(route_guard)
-    route_guard.validate(source, require_patched=True)
+    for component in ('accessibility_service_completion', 'external_input', 'input_2in1_navigation',
+                      'refresh_rate_page', 'share_picker'):
+        route_spec = importlib.util.spec_from_file_location('settings_guard_' + component,
+            verifier.parent.parent / component / 'verify_source.py')
+        route_guard = importlib.util.module_from_spec(route_spec)
+        route_spec.loader.exec_module(route_guard)
+        route_guard.validate(source, require_patched=True)
     policy = json.loads((source / 'vendor/ohemu/virt/preinstall-config/install_list_capability.json').read_text(),
                         object_pairs_hook=unique_object)
     entries = [item for item in policy['install_list'] if item.get('bundleName') == 'com.ohos.settings']

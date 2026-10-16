@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T21:35:20.581974+08:00",
+  "updated_at": "2026-10-16T22:29:58.693059+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "305374e463b31d125b347464551f468decd48519",
+  "checkpoint_commit": "0509dc43a64c3a0e111e924e0fa7927abda4496d",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -1277,6 +1277,36 @@
           "CFI_selected_in_original_link_flags": null
         }
       ]
+    },
+    "Settings_current_actual_Linux_product_SDK_HAP": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/evidence.json",
+      "sha256": "d25c82e831d13b646b9569c8abc27743b98388c67cd87dddb95c367825c32ed4",
+      "reported_status": 0,
+      "scope": "complete_Settings_actual_product_Linux_SDK26.0.0.39_NOT_host_public_SDK105_NOT_signing_BMS_guest"
+    },
+    "Settings_actual_HAP_44_extensions_3ABIs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Settings-actual-product-Linux-SDK-05/hap-contract.json",
+      "sha256": "8f951788aba64e5e04255f1d04a2a068e305c77163b026bc70732f10431323c6",
+      "reported_status": "pass_actual_unsigned_Settings_HAP_contract_NOT_signature_BMS_guest",
+      "scope": "actual OHOS ABI CFI call chain ONLY NOT guest"
+    },
+    "MMS_current_actual_Linux_product_SDK_HAP": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-actual-product-Linux-SDK-02/evidence.json",
+      "sha256": "0281ab2133cc07c7f74e476f057bf2d05de74f3d3d1ccae47ff850f127d60bbc",
+      "reported_status": 0,
+      "scope": "complete_MMS_actual_product_Linux_SDK26.0.0.39_NOT_signing_BMS_guest"
+    },
+    "MMS_actual_HAP_37_original_permissions_and_text_skill": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-actual-product-Linux-SDK-02/hap-contract.json",
+      "sha256": "63e285717b8f336c6c2e0f5ca68577a942351dec9af3fb52eb1a493a77019bc0",
+      "reported_status": "pass_unsigned_MMS_HAP_contract_ONLY_NOT_signature_BMS_guest",
+      "scope": "actual OHOS ABI CFI call chain ONLY NOT guest"
+    },
+    "GNSS_actual_OHOS_ABI_CFI_QEMU_user": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round6-ohos-abi/independent-checks.json",
+      "sha256": "39fd25bf657480f3b0bdd59e1c9970887e3fd3f5768b496c9554842ae01d3f0e",
+      "reported_status": "pass",
+      "scope": "actual OHOS ABI CFI call chain ONLY NOT guest"
     }
   },
   "agents": {
@@ -1300,5 +1330,12 @@
     "RenderService suspend/wake and ordinary HiTrace regressions against newly packaged representative artifact",
     "ONE newly packaged ARM64 phone: archive path/checksum/env/commands/full runtime boundary suite",
     "only after full representative gate passes build and accept remaining five ABI/profile packages"
+  ],
+  "current_runtime_acceptance_gaps": [
+    "No newly packaged representative has booted in this continuation; gate false, six packages0/6",
+    "MMS/Settings unsigned actual HAP builds and content checks passed; OS signing/BMS/UI pending",
+    "Root batched audio clock/error/short-ready fixes pass11host tests; new3HAPs queued",
+    "Contacts/Theme lifecycle source batch active; missing real wallpaper settings UI and other provider backends remain open",
+    "Legitimate OEM DeviceAttest, AudioVivid, Ads, SecurityGuard, geocoder/modem/HCI inputs still unsupplied"
   ]
 }

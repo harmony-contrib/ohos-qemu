@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Pinned public-input UI routing candidate; no preinstall grants or guest claim."""
 from pathlib import Path
+import hashlib
+import importlib.util
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
@@ -23,4 +25,14 @@ FILES = (
 
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    files = FILES
+    module = Path(root) / PROJECT / FILES[0][0]
+    if module.is_file() and hashlib.sha256(module.read_bytes()).hexdigest() == 'fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62':
+        # The share successor changes the two shared manifests. Require its
+        # entire exact five-file state before accepting either new hash.
+        spec = importlib.util.spec_from_file_location('settings_share_successor', Path(__file__).parent.parent / 'share_picker/verify_source.py')
+        successor = importlib.util.module_from_spec(spec);spec.loader.exec_module(successor)
+        successor.validate(root, require_patched=True)
+        hashes = {name: repaired for name, _, repaired in successor.FILES}
+        files = tuple((name, original, hashes.get(name, repaired)) for name, original, repaired in FILES)
+    return validate_component(root, PROJECT, REVISION, files, require_patched)

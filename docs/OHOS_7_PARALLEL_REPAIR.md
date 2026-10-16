@@ -266,3 +266,7 @@ media只读round9 a9f988f合入a945ca9，发现ETS ready短写、主流error_cal
 Settings/MMS当前官方SDK01完整尝试失败：host公共26.0.0.105缺系统组件声明（419 compiler errors，418条带文件坐标），MMS官方OHPM TLS重置。未将公共SDK缺system声明误认为419个独立产品缺陷。Settings转实际产品Linux26.0.0.39 SDK；02的CLI fetch_timeout太小、03的image原有/root/.ohpm断链、04缺私有pnpm缓存依次保留，均未进入ArkTS；05用私有root tmpfs和已有真实pnpm10.27缓存正在完整编译。根另固定真实NPM class-transformer0.5.1 tar SHA256=49efad879d3cc811a46e6baf72b0454a4f271c0da6b7899d024bdfcf94961f7e（已与官方metadata sha512核对），改本地固定依赖并去掉生产HAP未用的hypium devDependency；不改运行权限/ACL。
 
 Contacts/Theme八个构建元数据d3823b8经scope通过合入f7a6ff5；真实业务仍有picker会话/计时器和renderer窗口清理待apps本批修复。Theme仅渲染扩展，未称壁纸设置UI已提供。82项未关闭、交付0/6、代表包完整运行门禁false，其余五包未启动。
+
+Settings05实际完整产品Linux26.0.0.39 SDK编译PASS（256.309s），真实57,479,660B unsigned HAP SHA7487d5e02e9683e4fd506c589438d63d57b5e37a738e1deb1d194a342144a705，实际44扩展含sysPicker/share和3ABI共6原生库检查PASS。MMS02同真实SDK完整编译PASS（140.831s），真实8,091,208B unsigned HAP SHAa6a5847b9a5fde069fbe9f9571b3dae173bc2b2040ef9b00973d96abd0241951；原37权限、完整入口/skills及text/plain草稿接收合同PASS。MMS初版检查器误将旧visible字段当成未exported，失败另存；修为逐字段保留visible/exported的真实源/编译manifest后通过，未修改权限或BMS边界。
+
+根修复external_input在share_picker后继全五文件已完整时的整栈重放，拒绝缺文件/未知共享后继；Settings镜像检查同时要求所有当前候选组件完整。MMS新增只读源/原profile/OS signer/原两份授权校验及强制镜像HAP检查；26项相关package/source mutation检查PASS。实际签名/镜像检查尚待执行，不把上述unsigned HAP当交付或运行验收。

@@ -3,6 +3,7 @@
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -64,12 +65,12 @@ def desired_profile(original, leaf):
     return result
 
 
-def policy(data, expected):
+def policy(data, expected, require_current=False):
     value = json.loads(data, object_pairs_hook=unique)
     rows = value['install_list'] if isinstance(value, dict) else value
     matches = [r for r in rows if r.get('bundleName') == 'com.ohos.mms']
     desired = dict(expected, app_signature=[SIGNATURE])
-    if matches not in ([expected], [desired]):
+    if matches not in (([desired],) if require_current else ([expected], [desired])):
         raise ValueError('unknown MMS preinstall capability/grants; preserving source')
     matches[0]['app_signature'] = [SIGNATURE]
     return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode()
@@ -86,7 +87,7 @@ def replace(path, data):
             pending.unlink(missing_ok=True)
 
 
-def prepare(root):
+def source_identity(root):
     project, dist = root / PROJECT, root / 'developtools/hapsigner/dist'
     if subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip() != REVISION:
         raise ValueError('MMS requires the fixed release checkout')
@@ -99,6 +100,11 @@ def prepare(root):
     app_chain = certificates(read(dist / 'OpenHarmonyApplication.pem'))
     issuer_chain = certificates(read(dist / 'OpenHarmonyProfileRelease.pem'))
     if len(app_chain) != 3 or len(issuer_chain) != 3: raise ValueError('unexpected existing OS certificate chain')
+    return project, dist, original, app_chain, issuer_chain
+
+
+def prepare(root):
+    project, dist, original, app_chain, issuer_chain = source_identity(root)
     profile = project / 'signature/mms.p7b'
     directory = root / 'vendor/ohemu/virt/preinstall-config'
     paths = {directory / 'install_list_capability.json': CAPABILITY,
@@ -143,6 +149,33 @@ def prepare(root):
     return {'status': 'pass', 'scope': 'pinned_MMS_OS_signer_and_existing_grants_ONLY_NOT_install_or_runtime',
             'profile_sha256': hashlib.sha256(read(profile)).hexdigest(), 'signer': SIGNATURE,
             'first_artifact_behavior_gate_passed': False}
+
+
+def verify(root):
+    """Read-only package guard: source, signer, original policy and selection."""
+    project, _, raw, application, issuer = source_identity(root)
+    components = Path(__file__).resolve().parents[1] / 'common/applications/standard'
+    for component in ('mms/source_provider', 'mms/send_data_text', 'hap/mms_provider'):
+        spec = importlib.util.spec_from_file_location('mms_guard_' + component.replace('/', '_'),
+                                                     components / component / 'verify_source.py')
+        guard = importlib.util.module_from_spec(spec);spec.loader.exec_module(guard)
+        guard.validate(root, require_patched=True)
+    with tempfile.TemporaryDirectory(prefix='mms-profile-check-') as temporary:
+        original, signer = (Path(temporary) / name for name in ('original.p7b', 'issuer.pem'))
+        original.write_bytes(raw)
+        expected = desired_profile(cms(original), application[-1] + b'\n')
+        actual = cms(project / 'signature/mms.p7b', signer)
+        if (actual != expected or signer.read_bytes().count(b'-----BEGIN CERTIFICATE-----') != 1 or
+                certificate_fingerprint(signer.read_bytes()) != certificate_fingerprint(issuer[-1])):
+            raise ValueError('MMS source profile issuer/original policy differs')
+    directory = root / 'vendor/ohemu/virt/preinstall-config'
+    for name, expected in (('install_list_capability.json', CAPABILITY), ('install_list_permissions.json', GRANTS)):
+        policy(read(directory / name), expected, require_current=True)
+    installs = json.loads(read(directory / 'install_list.json'), object_pairs_hook=unique)['install_list']
+    if [r for r in installs if r.get('app_dir') == '/system/app/com.ohos.mms'] != [
+            {'app_dir': '/system/app/com.ohos.mms', 'removable': False}]:
+        raise ValueError('unique original MMS preinstall directory required')
+    return actual
 
 
 if __name__ == '__main__':

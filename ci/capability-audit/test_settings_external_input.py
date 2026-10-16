@@ -53,6 +53,24 @@ class SettingsExternalInputTests(unittest.TestCase):
         self.assertNotEqual(self.apply().returncode, 0)
         self.assertEqual(before, self.snapshot())
 
+    def test_entire_share_successor_replays_but_partial_or_unknown_successor_is_rejected(self):
+        self.assertEqual(self.apply().returncode, 0)
+        share = ROOT / 'patches/common/applications/standard/settings/share_picker/apply.sh'
+        argv = ['bash', str(share), '--source-root', str(self.root)]
+        self.assertEqual(subprocess.run(argv, capture_output=True).returncode, 0)
+        for _ in range(2):
+            self.assertEqual(self.apply().returncode, 0)
+            self.assertEqual(subprocess.run(argv, capture_output=True).returncode, 0)
+            self.assertTrue(baseline.validate(self.root, require_patched=True))
+        target = self.project / 'product/phone/src/main/ets/pages/SharePicker.ets'
+        original = target.read_bytes();target.unlink()
+        before = self.snapshot()
+        self.assertNotEqual(self.apply().returncode, 0)
+        self.assertEqual(before, self.snapshot());self.assertFalse(target.exists())
+        target.write_bytes(original + b'\n// unknown successor\n')
+        self.assertNotEqual(self.apply().returncode, 0)
+        self.assertEqual(before, self.snapshot())
+
     def test_partial_state_rejected(self):
         self.assertEqual(self.apply().returncode, 0)
         (self.project / baseline.FILES[-1][0]).unlink()
