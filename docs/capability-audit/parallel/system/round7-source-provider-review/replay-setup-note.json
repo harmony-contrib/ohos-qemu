@@ -1,0 +1,8 @@
+{
+  "initial_replay_exit_code": 1,
+  "initial_replay_error": "settings/source_provider staged validation: missing patched component file BUILD.gn",
+  "cause": "This review deliberately confines scratch to the report directory inside a Git worktree. Git discovered the enclosing repository, so git apply treated the staged source as a subdirectory and skipped outside-prefix diffs. The product applicator normally uses a temporary directory outside the repository.",
+  "test_only_correction": "Set GIT_CEILING_DIRECTORIES to the private scratch root for patch subprocesses, preserving the product's ordinary no-enclosing-repository temporary-directory behavior. No root helper/source was changed.",
+  "product_issue": false,
+  "scope": "review harness setup only"
+}
