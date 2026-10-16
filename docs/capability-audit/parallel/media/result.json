@@ -153,6 +153,13 @@
       "tests": 1,
       "evidence": "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log",
       "scope": "ASan/UBSan actual source/functions with controlled ALSA dependencies; JSON uses pinned real cJSON; no guest/HDI capability closure"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_batch_media_audio_capture.py -v",
+      "result": "passed",
+      "tests": 4,
+      "evidence": "docs/capability-audit/parallel/media/round3/capture-host-02.log",
+      "scope": "Actual full public caller host syntax against pinned real SDK headers, actual PCM callback ASan/UBSan and independent challenge oracle unit fixtures; not actual HAP/HDI/runtime proof"
     }
   ],
   "integration_requests": [
@@ -195,6 +202,11 @@
       "id": "media-alsa-capture-loopback",
       "owner": "parent",
       "request": "Apply drivers/peripheral/audio/capture_loopback after old audio 0001..0007. Compile full alsa_soundcard.c, alsa_snd_capture.c, both driver and device/qemu vendor_capture.c, plus alsa_soundcard.h. Parent kernel/JSON/launch contract is card0 ES1370 render, card1 QemuCapture capture D0/sub0, producer playback D1/sub0. Build batch_media_alsa_inject.c with actual guest libasound and sysroot. Read README for fresh challenge injection, public Capturer/Recorder independent output validation; verify honest unsupported mixer ops do not abort usable PCM service startup. Preserve representative gate."
+    },
+    {
+      "id": "media-public-capture-candidate",
+      "owner": "parent",
+      "request": "See round3/CAPTURE_CANDIDATE.md: compile/link two batch_media_audio_capture*.cpp into ordinary foreground HAP libbatchmediacapture.so, MIC user grant/denial/revocation real token tests; new random host PCM root producer D1p only, public MIC capturer D0c copies real PCM private files; independent batch_media_audio_capture_challenge.py diagnosis checks both channels/content/rate/clock/lifecycle/recreate. Shared runner/verifier remain parent-owned. Actual recorder output/decode remains separate."
     }
   ],
   "remaining_gaps": [
@@ -265,16 +277,24 @@
     "docs/capability-audit/parallel/media/round2/alsa-inject-host-01.log": "32977d26d34487cd00f093ebf7b773d042d16030eb23b2c0fe7166a7c7e7c5ea",
     "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log": "a90c13487e87d6441c67875fd67ec354ed4b6021a5c6462d97d264ccf09f8d02",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log": "09c39f4beb3927783c34fbf9fd8825f29b95472658e6e974d0c46d078f12c4c7",
-    "docs/capability-audit/parallel/media/round2/HANDOFF.md": "2852a3ad7fd73635ea53f14950aafdaa78f2caec541c1406e0debfadf161af2d"
+    "docs/capability-audit/parallel/media/round2/HANDOFF.md": "2852a3ad7fd73635ea53f14950aafdaa78f2caec541c1406e0debfadf161af2d",
+    "docs/capability-audit/parallel/media/round3/CAPTURE_CANDIDATE.md": "63c0e29789da4157f438e6c2e131c37621903a030554f7f49ee449c4b3f25920",
+    "docs/capability-audit/parallel/media/round3/capture-host-02.log": "9919ac6a3ddfecd0a513fba05088e746e10cf9920b2b9edabd96c6c44be81f8f",
+    "docs/capability-audit/parallel/media/round3/capture-host-01.log": "f170499f847bd260eaf42151e542c92a971c12b1d42a1df278229997ec035a40"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
+    "ci/capability-audit/batch_media_audio_capture_challenge.py",
+    "ci/capability-audit/batch_media_audio_capture_hap.cpp",
+    "ci/capability-audit/batch_media_audio_capture_probe.cpp",
+    "ci/capability-audit/batch_media_audio_capture_probe.ets",
     "ci/capability-audit/batch_media_knowledge_query_cli.cpp",
     "ci/capability-audit/batch_media_review_source.py",
     "ci/capability-audit/fixtures/batch_media/audio/alsa_shim.h",
     "ci/capability-audit/fixtures/batch_media/audio/baseline.json",
     "ci/capability-audit/fixtures/batch_media/audio/cjson.json",
     "ci/capability-audit/fixtures/batch_media/audio/integrity_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/audio_capture/public_sdk.json",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
     "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
@@ -283,6 +303,7 @@
     "ci/capability-audit/fixtures/batch_media/manifest.json",
     "ci/capability-audit/test_batch_media_alsa_capture.py",
     "ci/capability-audit/test_batch_media_alsa_inject.py",
+    "ci/capability-audit/test_batch_media_audio_capture.py",
     "ci/capability-audit/test_batch_media_audio_integrity.py",
     "ci/capability-audit/test_batch_media_avc_surface_layout.py",
     "ci/capability-audit/test_batch_media_knowledge_content.py",
@@ -310,6 +331,9 @@
     "docs/capability-audit/parallel/media/round2/knowledge-install-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-status.json",
+    "docs/capability-audit/parallel/media/round3/CAPTURE_CANDIDATE.md",
+    "docs/capability-audit/parallel/media/round3/capture-host-01.log",
+    "docs/capability-audit/parallel/media/round3/capture-host-02.log",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
     "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
@@ -356,5 +380,7 @@
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
   "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
-  "handoff": "docs/capability-audit/parallel/media/round2/HANDOFF.md"
+  "handoff": "docs/capability-audit/parallel/media/round2/HANDOFF.md",
+  "round3_base_commit": "d4e74c00caa47127906075c57d59500d60844f04",
+  "round3_status": "public_MIC_Capturer_candidate_prepared_actual_HAP_link_and_new_package_pending"
 }
