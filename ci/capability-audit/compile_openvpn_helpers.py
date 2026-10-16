@@ -31,6 +31,21 @@ def run(args):
     checksums = {p.name: digest(p) for p in originals}
     for p in originals:
         shutil.copyfile(p, inputs / p.name)
+    header_relative = 'foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h'
+    private_root = output / 'client-candidate'
+    header = private_root / header_relative
+    header.parent.mkdir(parents=True)
+    header_before = digest(source / header_relative)
+    shutil.copyfile(source / header_relative, header)
+    warning_component = ROOT / 'patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused'
+    for attempt in (1, 2):
+        with (output / f'client-header-apply-{attempt}.log').open('xb') as log:
+            subprocess.run(['bash', str(warning_component / 'apply.sh'), '--source-root', str(private_root)],
+                           stdout=log, stderr=subprocess.STDOUT, check=True)
+    overlay = output / 'client-headers.json'
+    overlay.write_text(json.dumps({'version': 0, 'roots': [{'type': 'file',
+        'name': str(source / header_relative), 'external-contents': str(header),
+        'use-external-name': True}]}) + '\n')
     cwd = source / 'out' / args.product
     original = query(source, cwd, TARGETS[3], output / 'query.log')
     if Path(original[0]).name == 'ccache':
@@ -46,6 +61,9 @@ def run(args):
               'scope': 'whole_native_helpers_product_client_flags_and_executable_links_ONLY_NOT_fresh_GN_selection_or_runtime',
               'original_product_argv': original, 'inputs_sha256': checksums,
               'library_sha256': library_before, 'objects': [],
+              'actual_client_header_before_sha256': header_before,
+              'current_client_header_sha256': digest(header),
+              'client_header_component_sha256': {p.name: digest(p) for p in warning_component.iterdir() if p.is_file()},
               'first_artifact_behavior_gate_passed': False}
 
     def save():
@@ -61,6 +79,7 @@ def run(args):
             argv[argv.index('-o') + 1] = str(obj)
             argv[argv.index('-MF') + 1] = str(dep)
             argv += ['-Wall', '-Wextra', '-Werror']
+            argv += ['-ivfsoverlay', str(overlay)]
             row['compile_argv'] = argv
             log = output / (name + '-compile.log')
             with log.open('xb') as stream:
@@ -74,7 +93,7 @@ def run(args):
             row['object_sha256'] = digest(obj)
             row['consumed_candidate_headers'] = [p for p in checksums if p.endswith('.h') and
                                                 str(inputs / p) in dep.read_text()]
-            if str(unit) not in dep.read_text() or not row['consumed_candidate_headers']:
+            if str(unit) not in dep.read_text() or str(header) not in dep.read_text() or not row['consumed_candidate_headers']:
                 raise ValueError('actual current helper source/headers were not consumed')
             binary = output / name
             argv = [str(tools / 'clang++'), '--target=' + arch + '-linux-ohos',
@@ -99,8 +118,10 @@ def run(args):
     report['inputs_unchanged'] = (checksums == {p.name: digest(p) for p in originals} ==
                                   {p.name: digest(p) for p in inputs.iterdir()})
     report['library_unchanged'] = library_before == digest(library)
+    report['client_header_inputs_unchanged'] = (digest(source / header_relative) == header_before and
+        digest(header) == report['current_client_header_sha256'])
     if report['inputs_unchanged'] and report['library_unchanged'] and all(
-            row['status'] == 'pass' for row in report['objects']):
+            row['status'] == 'pass' for row in report['objects']) and report['client_header_inputs_unchanged']:
         report['status'] = 'pass'
     save()
     print(json.dumps({'status': report['status'], 'objects': len(report['objects'])}))

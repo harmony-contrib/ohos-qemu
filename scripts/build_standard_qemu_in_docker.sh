@@ -3081,6 +3081,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_openvpn_lifecycle_component.log"
   bash "${OPENVPN_SESSION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_openvpn_session_component.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_callback_dispatch_component.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/netvpn_callback_unused/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_netvpn_callback_unused_component.log"
   python3 "${SCRIPT_DIR}/openvpn_source_archive.py" --output "${QEMU_OPENVPN_SOURCE_ARCHIVE}" \
     2>&1 | tee "${CACHE_ROOT}/logs/check_qemu_openvpn_source_archive.log"
   python3 "${SCRIPT_DIR}/prepare_qemu_openvpn_backend.py" --source-root "${OHOS_ROOT}" \
@@ -3238,6 +3242,12 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_prebuilt_component.log"
   bash "${SETTINGS_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_signing_component.log"
+  bash "${PATCH_ROOT}/common/applications/standard/admin_provisioning/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_admin_source_provider_component.log"
+  bash "${PATCH_ROOT}/common/applications/standard/hap/admin_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_admin_hap_provider_component.log"
+  python3 "${PATCH_ROOT}/lib/admin_provider.py" --source-root "${OHOS_ROOT}" --prepare \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_admin_signing_policy.log"
   bash "${PHOTOS_FACARD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
