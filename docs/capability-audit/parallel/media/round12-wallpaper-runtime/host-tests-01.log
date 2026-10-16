@@ -1,0 +1,24 @@
+test_ack_security_timeout_and_real_fresh_reply (test_batch_media_wallpaper_runtime.RuntimeTests.test_ack_security_timeout_and_real_fresh_reply) ... ok
+test_complete_host_oracle_and_mutations (test_batch_media_wallpaper_runtime.RuntimeTests.test_complete_host_oracle_and_mutations) ... ERROR
+test_pixels_reject_flat_stale_and_preview (test_batch_media_wallpaper_runtime.RuntimeTests.test_pixels_reject_flat_stale_and_preview) ... ok
+test_seed_errors_never_become_success (test_batch_media_wallpaper_runtime.RuntimeTests.test_seed_errors_never_become_success) ... ok
+test_stat_transfer_boundaries (test_batch_media_wallpaper_runtime.RuntimeTests.test_stat_transfer_boundaries) ... ok
+
+======================================================================
+ERROR: test_complete_host_oracle_and_mutations (test_batch_media_wallpaper_runtime.RuntimeTests.test_complete_host_oracle_and_mutations)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_wallpaper_runtime.py", line 23, in test_complete_host_oracle_and_mutations
+    self.assertEqual('pass', verifier.verify(case.path)['status'])
+                             ~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_verify_wallpaper_runtime.py", line 368, in verify
+    default, _ = transferred(value['defaults'][kind]); system_window(stage, plan)
+                                                       ~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_verify_wallpaper_runtime.py", line 272, in system_window
+    raise ValueError('full actual system viewport required, never a Settings preview')
+ValueError: full actual system viewport required, never a Settings preview
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.853s
+
+FAILED (errors=1)

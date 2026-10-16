@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-17",
+  "branch": "codex/wallpaper-settings-source",
+  "base_commit": "14ddd1d7ec8bc83a3761a940a4b092793aedf1d4",
+  "status": "light_host_checks_passed_runtime_candidates_NOT_guest_or_package_acceptance",
+  "upstream_changes": [],
+  "closed_requirements": [],
+  "first_artifact_behavior_gate_passed": false,
+  "new_package_created": false,
+  "test": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_batch_media_wallpaper_runtime.py -v",
+    "tests": 6,
+    "seconds": 2.523,
+    "result": "pass",
+    "log": "host-tests-05.log",
+    "scope": "Synthetic host oracle complete positive and rejection mutations; real Pillow JPEG/pixel rejection; owned ACK/nonce/mode/symlink/deadline; ordinary seed log/real-error contract; stat/size bounds; actual API26 SDK declaration types after stripping only UI DSL/decorators. Not ArkTS/HAP/native/product/guest evidence."
+  },
+  "preserved_failures": [
+    {
+      "log": "host-tests-01.log",
+      "finding": "Synthetic oracle fixture incorrectly supplied JPEG as compositor PNG; corrected fixture only, retained failed output."
+    }
+  ],
+  "native_helper": {
+    "source": "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/default_resolver.cpp",
+    "compiled": false,
+    "binary_sha256": null,
+    "dependencies": [
+      "config_policy:configpolicy_util",
+      "cJSON:cjson"
+    ],
+    "headers": [
+      "config_policy_utils.h",
+      "cJSON.h"
+    ],
+    "owner_of_actual_guest_build": "root"
+  },
+  "external_runtime_dependencies": [
+    "root real SDK39 importer/denied HAP compile + normal signer/installation + actual BMS/token source binding",
+    "root same fresh acceptance boot/coordinator 21 bounded nonce actions, real Photos consent and private PNG staging",
+    "root actual config-policy default resolver product compilation/link + original ordered paths/manifest/resource readback",
+    "root actual Photos deletion UI and independent active MediaLibrary API query for the five exact created URIs",
+    "root actual system desktop and profile-specific lock UI/AMS/compositor challenged/default pixels",
+    "root representative new-package full behavior gate before remaining five artifacts"
+  ],
+  "limits": [
+    "Only account100 supported and independently required foreground; no inferred current user.",
+    "Static image wallpaper selection/set/restore runtime candidate does not close full wallpaper UI-extension/live/dynamic APIs or original seven media requirements.",
+    "Actual external SceneBoard prebuilt corresponding type1 source path not established in this child; no claim that consumer is absent.",
+    "No QEMU/HDC/Docker/SDK/native build or renderer runtime performed.",
+    "Host fixture synthetic ELF/ABC/receipts are marked oracle-only source and never runtime acceptance inputs."
+  ],
+  "source_sha256": {
+    "ci/capability-audit/batch_media_verify_wallpaper_runtime.py": "78daa48ebf92c05a06325c00e5899ef0bbaf3d8f26e4bdef9ed91337085966ba",
+    "ci/capability-audit/batch_media_wallpaper_runtime.py": "1ace14a624e7987afba30cbc9b9c5d96c1b179c439ea6de175cb7d6e7b7b0459",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/Index.ets": "b95d38798234ee5b4058d3d04e3b9021256de6dd9fa5f6d4b5d162cb02d8814b",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/default_resolver.cpp": "5105e96fadc88c2f38f8dae88f72e04d0b228e7c7f8ed51500be82e144fcec32",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/oracle_fixture.py": "02544c945006b2155f0b339a0112cf5af10b6d15254c98af6ed4446cf17c0aa8",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/sdk-types.cjs": "9aba450ed81be93549f73dd1d72ee4f7ae33123ee922bcc59da47be3ec82b92b",
+    "ci/capability-audit/test_batch_media_wallpaper_runtime.py": "b81e392465d68f0b38e333c3f8cb9b348ced72cf85c3ca1b365cfa306015ec45"
+  },
+  "log_sha256": {
+    "host-tests-01.log": "eda047748546646de15a45fac96d4278f0fbbe0d365523d55d8d30266afb9e09",
+    "host-tests-02.log": "be02dcb4afd5ebb0367ba1cbbd54ae90cfdf7c98eceda7daefaaa6212f369b1c",
+    "host-tests-03.log": "a8a499ac7c7144d05d9e737d288f02b8f40cf4de7d77314a537f7d1a4bca0bc5",
+    "host-tests-04.log": "97aa420009900cb837c90ebdc05a3245169e3638f7eb45b15d310d849902f76f",
+    "host-tests-05.log": "856a63e35115d94b7ebad791869a00f4a43e6218602b7401a0ccda55bbf953a1"
+  }
+}
