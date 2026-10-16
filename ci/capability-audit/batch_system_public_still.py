@@ -124,7 +124,7 @@ def run(output, cxx):
         if any(c['exit_code'] for c in evidence['commands']):
             return evidence
         for name in ['public_type_and_shared_input', 'callback_stop', 'restart_reload', 'batch_rollback', 'deactivate_retry',
-                     'relative_unsupported', 'owner_required', 'manager_first_last', 'manager_rollback', 'manager_death', 'manager_reentry', 'manager_event_filters']:
+                     'relative_unsupported', 'owner_required', 'external_callback_quiesce', 'manager_first_last', 'manager_rollback', 'manager_death', 'manager_reentry', 'manager_event_filters']:
             started = time.monotonic(); log = output / (name + '.log')
             with log.open('wb') as stream:
                 try:

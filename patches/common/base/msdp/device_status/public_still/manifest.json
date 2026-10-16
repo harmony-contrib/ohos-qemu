@@ -1,15 +1,15 @@
 {
   "project": "base/msdp/device_status",
   "revision": "96335211bea5ca348325d55746e14e102208354f",
-  "patch_sha256": "7fcf539c7a4d58e756729ea034e5150ebd565499c8194167c1c71d8d4662bd5b",
+  "patch_sha256": "db312bbbfc960193db987ac2316d6333a559e9fa291e935eabb47ee80d86f96d",
   "originals": {
     "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h": {
       "before": "3c3bb7dc518b4ab89a6ee62271ca436e07475fbdb49b8a4de46259b0741ac935",
-      "after": "10c0a11dac1401f7f668b0beef06c71758144e82be55f9bc76c98182900d7088"
+      "after": "de10bd52b1bddd8ac7d8b4de58dc74706bf4055f82faa94f51d724346440bba7"
     },
     "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp": {
       "before": "5e07d69bdb885cf7600a60834403b92ae3036e92cd972bf757e466346987ecab",
-      "after": "7409f8af1c9a13bee305e3aec24a64814721644c8a868e7ee6876ed6a68fe1a7"
+      "after": "66e7494899a03569b37b0999dd90cc17414220d9575fde727ad588819b239f49"
     },
     "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h": {
       "before": "e6af0875377c2fb654e9af801f13620e009f96afdfd2acc5b2cc68fb43bdb23e",
@@ -25,7 +25,7 @@
     },
     "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp": {
       "before": "39703f1645ba480f9bc6111c807a8ede4aeb6154fc1b7cdb97aafb50ff9ab7d4",
-      "after": "d28954e2e1696e2bd2a7e228524659ceda8db78c25ebc12ca82680adb998dbc8"
+      "after": "2ad7b6c16c08e182f6beac40cb8acb2cc91032dae87ee233ca545cd3611ea340"
     },
     "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h": {
       "before": "64e8c8b4cb78edccb6755bb2a803b5990b8ebbf002ae6ed807d7323720c2d785",

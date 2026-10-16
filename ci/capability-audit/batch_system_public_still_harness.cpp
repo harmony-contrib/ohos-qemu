@@ -215,9 +215,15 @@ int main(int argc, char** argv)
     DEVICESTATUS_ALGO_LIB_PATH = library;
     auto client = std::make_shared<DeviceStatusMsdpClientImpl>();
     Recorded recorded; std::atomic<int> reentrantResult{-999};
+    std::mutex gateMutex; std::condition_variable gate;
+    bool release = false; std::atomic<bool> entered{false}, returned{false};
     std::weak_ptr<DeviceStatusMsdpClientImpl> weak = client;
     client->RegisterImpl([&](const Data& data) {
         recorded.Add(data);
+        if (name == "external_callback_quiesce" && data.type == TYPE_STILL && data.value == VALUE_ENTER) {
+            std::unique_lock lock(gateMutex); entered = true;
+            gate.wait(lock, [&] { return release; }); returned = true;
+        }
         if (name == "callback_stop" && data.type == TYPE_STILL && data.value == VALUE_ENTER) {
             auto owner = weak.lock(); reentrantResult = owner->AlgoDisable(TYPE_STILL);
         }
@@ -236,6 +242,19 @@ int main(int argc, char** argv)
         Check(!Mapped(library), "failed initialization left worker/DSO active");
         Check(client->AlgoHandle(TYPE_STILL) == RET_OK, "retry after complete initialization rollback failed");
         Check(client->AlgoDisable(TYPE_STILL) == RET_OK && Wait([&] { return !Mapped(library); }), "rollback retry did not retire");
+    } else if (name == "external_callback_quiesce") {
+        Check(client->AlgoHandle(TYPE_STILL) == RET_OK, "real backend start failed");
+        Five(); Check(Wait([&] { return entered.load(); }), "actual callback did not enter blocking boundary");
+        auto start = std::chrono::steady_clock::now();
+        int result = client->AlgoDisable(TYPE_STILL);
+        auto elapsed = std::chrono::steady_clock::now() - start;
+        Check(result != RET_OK && elapsed >= std::chrono::milliseconds(800) && elapsed < std::chrono::milliseconds(1800),
+            "external unsubscribe was unbounded or falsely successful while callback was blocked");
+        Check(Mapped(library) && deactivations == 0 && !returned, "timeout destroyed owner or stopped/unloaded executing algorithm");
+        { std::lock_guard lock(gateMutex); release = true; } gate.notify_one();
+        Check(Wait([&] { return returned.load(); }), "blocked actual callback did not return");
+        Check(client->AlgoDisable(TYPE_STILL) == RET_OK && Wait([&] { return !Mapped(library); }),
+            "successful retry did not stop/join/unload actual worker");
     } else if (name == "restart_reload") {
         for (int i = 0; i < 3; ++i) {
             Check(client->AlgoHandle(TYPE_STILL) == RET_OK, "actual DSO reload/worker restart failed");

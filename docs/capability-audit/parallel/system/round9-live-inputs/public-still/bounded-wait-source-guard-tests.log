@@ -1,0 +1,11 @@
+test_atomic_failure_restores_all_files (batch_system_public_still_test.PublicStillSourceGuards.test_atomic_failure_restores_all_files) ... ok
+test_composition_and_idempotence (batch_system_public_still_test.PublicStillSourceGuards.test_composition_and_idempotence) ... ok
+test_mixed_state_preserved (batch_system_public_still_test.PublicStillSourceGuards.test_mixed_state_preserved) ... ok
+test_prepare_extracts_actual_death_declaration (batch_system_public_still_test.PublicStillSourceGuards.test_prepare_extracts_actual_death_declaration) ... ok
+test_symlink_preserved (batch_system_public_still_test.PublicStillSourceGuards.test_symlink_preserved) ... ok
+test_unknown_source_preserved (batch_system_public_still_test.PublicStillSourceGuards.test_unknown_source_preserved) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.763s
+
+OK

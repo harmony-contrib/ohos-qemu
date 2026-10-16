@@ -3,7 +3,7 @@
   "branch": "codex/capability-system-20261015",
   "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "reviewed_on": "2026-10-17 Asia/Shanghai",
-  "status": "public_still_and_shared_sensor_lifecycle_candidate_host_verified_product_CFI_and_package_runtime_pending",
+  "status": "public_still_host02_verified_bounded_wait_delta_light_checked_native_and_product_package_pending",
   "requirements_total": 10,
   "requirements_closed": 0,
   "first_artifact_behavior_gate_passed": false,
@@ -64,7 +64,7 @@
       "action": "No additional kernel/token identity patch guessed from stale evidence."
     },
     "behavior:msdp-device-status-mock-or-missing-clients": {
-      "status": "candidate_public_still_real_threshold_algorithm_host_verified_new_package_API_runtime_pending",
+      "status": "public_still_candidate_bounded_wait_delta_native_recheck_pending",
       "fixed_source_findings": [
         "InitMsdpImpl first tries sensor HDI, then sensor-enabled algorithm, then explicitly falls back to MockHandle.",
         "The tree contains real devicestatus_algo sources for absolute-still/horizontal/vertical and sensor callback integration; existence alone does not show QEMU runtime input.",
@@ -104,12 +104,13 @@
         "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
       ],
       "remaining": [
+        "Run the complete current 13-case GNU ASan/UBSan host batch including actual blocked external callback quiesce; preserved 12-case host-02 PASS applies only before this bounded-wait delta.",
         "Root must apply public_still after sensor_input, compile all affected actual product TUs in sensor-enabled/no-mock, sensor-enabled/default and sensor-disabled configurations, and link actual CFI/LTO DSOs with corrected internal Destroy function type.",
         "Need same newly packaged ARM64 phone actual external random acceleration challenge matched through actual VDI -> Sensor HDI -> SensorAgent -> independent public still threshold algorithm -> ordinary stationary API callbacks; archive/signature/BMS UID/same-boot binding and failure/stop/restart/old-generation boundaries remain unvalidated.",
         "Public still uses the existing five-event acceleration magnitude heuristic. This batch does not validate physical immobility accuracy, implement relativeStill or other missing motion/sensor capabilities, or close the assigned MSDP requirement.",
         "Manager Binder lifetime cases use actual extracted function bodies with a host Binder scaffold; actual platform Binder death and cross-process callbacks remain package checks."
       ],
-      "action": "Round9 public_still composes after the immutable sensor_input final hashes. It connects public still to the genuine threshold algorithm, keeps separate logical instances/first-last references, shares one accelerometer, rolls back failed registrations/listeners and quiesces callback slots/worker before actual DSO unload. No synthetic sensor/API events or relativeStill implementation."
+      "action": "Round9 public_still composes after the immutable sensor_input final hashes. It connects public still to the genuine threshold algorithm, keeps separate logical instances/first-last references, shares one accelerometer, rolls back failed registrations/listeners and quiesces callback slots/worker before actual DSO unload. No synthetic sensor/API events or relativeStill implementation. Follow-up bounds external callback drain to one second, retains inactive slot/owner and stopping type on timeout, returns real failure and retries quiesce before physical stop/worker retirement."
     },
     "behavior:native-child-process-phone-boundary": {
       "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
@@ -311,6 +312,11 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p batch_system_public_still_test.py -v",
       "result": "6 PASS: exact old/new component composition and idempotence, unknown source preservation, mixed-state preservation, symlink rejection, atomic replacement rollback, actual death declaration extraction; no native compiler.",
       "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/public-still/source-guard-tests.log"
+    },
+    {
+      "command": "Python prepare-only and six public_still source-guard tests after bounded wait change; native compiler not invoked",
+      "result": "PASS light checks only. Added external_callback_quiesce is unexecuted; next root-scheduled native batch must run it with all prior12 scenarios.",
+      "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/public-still/bounded-wait-prepare.json"
     }
   ],
   "failed_attempts": [
@@ -390,9 +396,11 @@
     },
     "Apply new patches/common/base/msdp/device_status/public_still/apply.py after existing sensor_input exact final hashes; original component/fixtures are unchanged. Root owns shared preparation/builder hook.",
     "Compile/link actual product objects and configs in round9-live-inputs/public-still/platform-compilation-contract.json, preserving CFI/LTO/fno-exceptions, including real mock Destroy export consistency; no public SDK signature change.",
-    "Build/sign/run ordinary API HAP and challenge controller only against a fresh archived ARM64 phone representative package; root owns SDK/HAP signing, ordinary suite and closure integration. Live tools follow this source batch."
+    "Build/sign/run ordinary API HAP and challenge controller only against a fresh archived ARM64 phone representative package; root owns SDK/HAP signing, ordinary suite and closure integration. Live tools follow this source batch.",
+    "Keep the frozen platform01 attempt and host-02 evidence. Batch current bounded-wait delta and all platform compile failures before the next native diagnostic; do not substitute old twelve-case PASS for the new thirteen-case test."
   ],
   "remaining_gaps": [
+    "Run the complete current 13-case GNU ASan/UBSan host batch including actual blocked external callback quiesce; preserved 12-case host-02 PASS applies only before this bounded-wait delta.",
     {
       "id": "behavior:access-token-api26-kernel-abi",
       "status": "open_runtime_identity_proof_pending",

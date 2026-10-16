@@ -46,3 +46,20 @@ caller/controller work is a separate next delivery. Package archive, signature,
 UID, same-boot, nonce/generation, stop/quiet and negative input proof remain open.
 The ledger remains unchanged: zero requirements closed and no first-artifact gate
 passed by this batch.
+
+## Bounded-wait follow-up after host-02
+
+Light review found that the external callback drain was safe but unbounded. The
+follow-up keeps the same 14 source targets and adds a one-second wait deadline.
+Failure retains the inactive callback slot/owner and logical stopping state and
+propagates RET_ERR without physical stop or dlclose. A later retry may complete
+after the real callback returns. Self-unsubscribe remains nonwaiting.
+
+The harness adds `external_callback_quiesce`: block the real algorithm callback,
+require bounded truthful failure with the DSO still mapped and no Deactivate,
+release the callback, retry and require actual worker join/unload. It is prepared
+but **not executed** in this follow-up. `bounded-wait-prepare.json` and
+`bounded-wait-source-guard-tests.log` are light checks only. Root's already frozen
+platform01 attempt is allowed to finish; all new native failures and this delta
+are to be batched in the next diagnostic cycle. No new host or product native
+compile was started for this follow-up.

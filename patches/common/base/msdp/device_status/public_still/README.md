@@ -23,7 +23,7 @@ Each logical algorithm retains its own instance and callback type. One physical
 accelerometer registration is shared and is released after the last logical
 subscription. Actual SensorAgent failures propagate and partial registration is
 rolled back. Sensor callbacks run outside registry locks. Each slot retains its
-algorithm owner, disables old queued samples at unsubscribe, waits for other
+algorithm owner, disables old queued samples at unsubscribe, waits at most one second for other
 threads' in-flight callbacks and allows self-unsubscribe without waiting on self.
 All actual algorithm callers use `make_shared` before `Init`; unowned Init fails
 via `weak_from_this().lock()` without throwing under `-fno-exceptions`.
@@ -48,3 +48,12 @@ actual service methods. SensorAgent functions are fault-injection seams, and
 manager Binder objects are a host scaffold. The actual manager death declaration
 is extracted too. These tests do not replace the real product build or ordinary
 HAP callback test on the first newly packaged ARM64 phone artifact.
+
+A timed-out external unsubscribe returns a real failure and retains the inactive
+slot, algorithm owner and stopping type. No physical stop or unload follows that
+failure. A successful retry after the callback returns drains/removes the slot,
+then stops the physical subscription and starts actual worker retirement. Self
+unsubscribe still does not wait on itself. This bounded-wait delta has light
+source/installer checks only; its new blocking-callback case and the previous
+12 cases await the next root-scheduled native batch. The preserved host-02 PASS
+refers to commit 74c5082 before this delta.
