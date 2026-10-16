@@ -211,6 +211,12 @@ PY
     echo "FAIL: packaged Mesa libraries differ from the current fixed LLVM build" >&2
     FAIL=1
   fi
+  if ! python3 "${SCRIPT_DIR}/verify_openvpn_backend_image.py" \
+    --system-image "${PACKAGE}/images/system.img" --product "${MANIFEST_PRODUCT}" \
+    --packaged-provenance "${PACKAGE}/openvpn-source"; then
+    echo "FAIL: packaged OpenVPN programs/configuration differ from the current source build" >&2
+    FAIL=1
+  fi
   if ! python3 "${SCRIPT_DIR}/../patches/lib/kernel_evidence.py" \
     --package "${PACKAGE}" --guest-arch "${MANIFEST_ARCH}"; then
     echo "FAIL: full source package has stale or missing kernel build evidence" >&2

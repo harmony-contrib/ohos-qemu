@@ -3131,6 +3131,11 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
       --dependency "${QEMU_MESA_LLVM_ARTIFACTS:?full profile requires pinned LLVM artifacts}/${PRODUCT}" \
       --write-provenance "${PACKAGE_DIR}/mesa-llvm-source" \
       --output "${PACKAGE_DIR}/mesa-llvm-image-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_openvpn_backend_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" \
+      --source-root "${SOURCE_ROOT}" \
+      --write-provenance "${PACKAGE_DIR}/openvpn-source" \
+      --output "${PACKAGE_DIR}/openvpn-image-evidence.json"
     python3 "${SCRIPT_DIR}/verify_arkweb_core_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
       --source-artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS:?full profile requires verified source core artifacts}" \
