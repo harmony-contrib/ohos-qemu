@@ -1,0 +1,14 @@
+{
+  "revision": "65de33df8d6d7aaa5797a5625ed0e5938e5cb050",
+  "archive_sha256": "6b8cdac07b092b9a54d8a98664c73781368f2c2883cbad86a8c99bc0c73ded5b",
+  "files": {
+    "oh-package.json5": {
+      "file": "oh-package.json5.gz.b64",
+      "sha256": "16115ebec8b27dfc738277ad17f66683e8b06c4638278bc0d54e093ee3c48f6c"
+    },
+    "entry/src/main/module.json5": {
+      "file": "entry_src_main_module.json5.gz.b64",
+      "sha256": "45337d351839a70185504b0fa2c256e76b68e33d034dea2e530acaee88c48ef7"
+    }
+  }
+}

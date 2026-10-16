@@ -1,0 +1,138 @@
+[
+  {
+    "label": "positive",
+    "index": 0,
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/positive.ext4"
+    ],
+    "exit_code": 0,
+    "seconds": 0.13568949699401855,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/positive-0.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "positive",
+    "index": 1,
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/positive.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/positive-contract.json"
+    ],
+    "exit_code": 0,
+    "seconds": 3.5114858150482178,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/positive-1.log",
+    "sha256": "5d1a6f154dc84fa6b772cea9374b44ad544c6fb39dfa28ee6a6d3d18fb288c5a"
+  },
+  {
+    "label": "uninstall-veto",
+    "index": 0,
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/uninstall-veto.ext4"
+    ],
+    "exit_code": 0,
+    "seconds": 0.136702299118042,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/uninstall-veto-0.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "uninstall-veto",
+    "index": 1,
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/uninstall-veto.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/uninstall-veto-contract.json"
+    ],
+    "exit_code": 1,
+    "seconds": 0.968756914138794,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/uninstall-veto-1.log",
+    "sha256": "16010bb0b456ef12cd29aebff4d86fe5b115e1777d1215cb5a6bd5b0f0dff864"
+  },
+  {
+    "label": "numeric-uninstall",
+    "index": 0,
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/numeric-uninstall.ext4"
+    ],
+    "exit_code": 0,
+    "seconds": 0.130828857421875,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/numeric-uninstall-0.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "numeric-uninstall",
+    "index": 1,
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/numeric-uninstall.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/numeric-uninstall-contract.json"
+    ],
+    "exit_code": 1,
+    "seconds": 0.905616283416748,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/numeric-uninstall-1.log",
+    "sha256": "cce04cb7f5c8d18b9e31114fe1281e76412c47ca93046f97caa4c20c9930a1c8"
+  },
+  {
+    "label": "ambiguous-uninstall",
+    "index": 0,
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/ambiguous-uninstall.ext4"
+    ],
+    "exit_code": 0,
+    "seconds": 0.13704943656921387,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/ambiguous-uninstall-0.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "ambiguous-uninstall",
+    "index": 1,
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/ambiguous-uninstall.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/ambiguous-uninstall-contract.json"
+    ],
+    "exit_code": 1,
+    "seconds": 0.9547252655029297,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/ambiguous-uninstall-1.log",
+    "sha256": "2fc2d1845e9c3cae07ad031a012c4bc0839db82f6e4fed3c31632cbcbaf1d315"
+  }
+]

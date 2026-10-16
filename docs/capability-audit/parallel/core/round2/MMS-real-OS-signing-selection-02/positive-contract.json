@@ -1,0 +1,102 @@
+{
+  "status": "pass",
+  "scope": "offline_actual_source_MMS_HAP_signer_existing_grants_ONLY",
+  "first_artifact_behavior_gate_passed": false,
+  "provider_runtime_validated": false,
+  "failures": [],
+  "install_selection": {
+    "entry": {
+      "app_dir": "/system/app/com.ohos.mms",
+      "removable": false
+    },
+    "source_sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+    "source_uninstall_sha256": "1d2c69e6abeeaa1e9648bed76fba1cad730f440319f7f5cd818db164b3f06238",
+    "image_path": "/etc/app/install_list.json",
+    "image_inode": 17,
+    "image_path_aliases": [
+      "/etc/app/install_list.json"
+    ],
+    "image_file_sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+    "uninstall_policy": {
+      "image_path": "/etc/app/uninstall_list.json",
+      "image_inode": 20,
+      "image_path_aliases": [
+        "/etc/app/uninstall_list.json"
+      ],
+      "image_file_sha256": "1d2c69e6abeeaa1e9648bed76fba1cad730f440319f7f5cd818db164b3f06238"
+    }
+  },
+  "image_path": "/app/com.ohos.mms/Mms.hap",
+  "image_inode": 14,
+  "image_path_aliases": [
+    "/app/com.ohos.mms/Mms.hap"
+  ],
+  "system_image_sha256": "dc4f2e62760c03d39c4804609b31e98893f9e049f15bc5c1e345e2a641fc63b6",
+  "bundle": "com.ohos.mms",
+  "hap_sha256": "06f55bc9315ed6c0b436200132c46697cdd61d11426c68df27c84e9e806cca47",
+  "compiled_abc_bytes": 4569248,
+  "permissions": [
+    "ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
+    "ohos.permission.MANAGE_SETTINGS",
+    "ohos.permission.ACCESS_SEARCH_SERVICE",
+    "ohos.permission.WRITE_CONTACTS",
+    "ohos.permission.hsdr.REQUEST_HSDR",
+    "ohos.permission.PERMISSION_USED_STATS",
+    "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
+    "ohos.permission.ACCESS_SPAMSHIELD_SERVICE",
+    "ohos.permission.MANAGE_SECURE_SETTINGS",
+    "ohos.permission.VIBRATE",
+    "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+    "ohos.permission.READ_CONTACTS",
+    "ohos.permission.READ_MESSAGES",
+    "ohos.permission.SEND_MESSAGES",
+    "ohos.permission.SET_TELEPHONY_STATE",
+    "ohos.permission.GET_TELEPHONY_STATE",
+    "ohos.permission.RECEIVE_SMS",
+    "ohos.permission.PLACE_CALL",
+    "ohos.permission.NOTIFICATION_CONTROLLER",
+    "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+    "ohos.permission.GET_NETWORK_INFO",
+    "ohos.permission.GET_WIFI_INFO",
+    "ohos.permission.START_SYSTEM_DIALOG",
+    "ohos.permission.RECEIVE_MMS",
+    "ohos.permission.READ_CALL_LOG",
+    "ohos.permission.MICROPHONE",
+    "ohos.permission.INTERNET",
+    "ohos.permission.LAUNCH_DATA_PRIVACY_CENTER",
+    "ohos.permission.securityguard.REPORT_SECURITY_INFO",
+    "ohos.permission.ANTIFRAUD_DETECT",
+    "ohos.permission.ANTIFRAUD_PICTURE_DETECT",
+    "ohos.permission.CALLED_BELOW_LOCK_SCREEN",
+    "ohos.permission.PROTECT_SCREEN_LOCK_DATA",
+    "ohos.permission.READ_APP_LOCK",
+    "ohos.permission.ACCESS_HIVIEWCARE",
+    "ohos.permission.APPROXIMATELY_LOCATION",
+    "ohos.permission.LOCATION"
+  ],
+  "abilities": [
+    "com.ohos.mms.MainAbility",
+    "PushMessageAbility"
+  ],
+  "application_signer_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5",
+  "embedded_profile_sha256": "e50e32b6623823bbec6da3817255f6f888ce60128416072c66666277727739f5",
+  "digest_codesign_permission_verification": "pass",
+  "image_policies": {
+    "install_list_capability.json": {
+      "image_path": "/etc/app/install_list_capability.json",
+      "image_inode": 18,
+      "image_path_aliases": [
+        "/etc/app/install_list_capability.json"
+      ],
+      "sha256": "b26c5b45772b01d08501b6592c72b2b7bb1acf449c5a01d68ccc81e422583f92"
+    },
+    "install_list_permissions.json": {
+      "image_path": "/etc/app/install_list_permissions.json",
+      "image_inode": 19,
+      "image_path_aliases": [
+        "/etc/app/install_list_permissions.json"
+      ],
+      "sha256": "37d5922dacbff727e55366ae9a31fd8693914fb7eeacc6765063552ba4ffedac"
+    }
+  }
+}

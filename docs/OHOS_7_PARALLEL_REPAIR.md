@@ -272,6 +272,21 @@ Settings05实际完整产品Linux26.0.0.39 SDK编译PASS（256.309s），真实5
 根修复external_input在share_picker后继全五文件已完整时的整栈重放，拒绝缺文件/未知共享后继；Settings镜像检查同时要求所有当前候选组件完整。MMS新增只读源/原profile/OS signer/原两份授权校验及强制镜像HAP检查；26项相关package/source mutation检查PASS。实际签名/镜像检查尚待执行，不把上述unsigned HAP当交付或运行验收。
 
 最新ETS ready短写修复后，3个普通音频event HAP在真实API26 unsigned构建和native/权限/后台合同中全部PASS（r52-three-audio-event-ready-completion-HAP-roles-04）；仍待guest。根自查MMS签名helper提取公共输入函数后 certificates lambda 作用域错误，提升为模块函数并补外部签名/Git/CMS超时；将用真实公共OS key/profile/HAP和独立ext4反例完成签名与镜像检查，未提前称通过。
+# Contacts manifest and combined MMS image follow-up (2026-10-16)
+
+Contacts production preparation now merges the fixed source's duplicate URI
+keys: tel and calllog/voice/main both survive instead of silently discarding
+tel. All other parsed module fields remain equal, including 38 permissions and
+the pickerSheet declaration. The unused test-only Hypium development dependency
+is excluded from production HAP preparation. Original CRLF/no-final-newline
+bytes remain preserved. The exact patch applies and replays three times, then
+rejects an unknown edit without changing it.
+
+The same real signed MMS HAP passed the new combined actual image selection
+guard. Three additional ext4 mutations (uninstall veto, invalid numeric uninstall
+row and ambiguous uninstall inode) were rejected. No recompilation or new signer
+was substituted. Evidence: core/round2/MMS-real-OS-signing-selection-02.
+
 # Actual preinstall selection and MMS signing follow-up (2026-10-16)
 
 The real source MMS unsigned HAP was signed with the existing public OS key,

@@ -1,0 +1,9 @@
+{
+  "status": "fail",
+  "scope": "offline_actual_source_MMS_HAP_signer_existing_grants_ONLY",
+  "first_artifact_behavior_gate_passed": false,
+  "provider_runtime_validated": false,
+  "failures": [
+    "preinstall entry vetoed by uninstall policy: com.ohos.mms"
+  ]
+}

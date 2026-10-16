@@ -1319,6 +1319,12 @@
       "sha256": "7d25c0f97fcb014c00f850abbea75d7553951c4f8aa7bdee8ae56fdfcc6f226d",
       "status": "pass",
       "scope": "real OS signer exact unchanged original grants and 9 private ext4 positive/negative cases ONLY NOT product image or guest"
+    },
+    "MMS_combined_actual_image_install_uninstall_guard_02": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-selection-02/evidence.json",
+      "sha256": "d9bac79a982285238282a685bcd14c296f3e1e5ef36c8dea778da48b739d86e4",
+      "status": "pass",
+      "scope": "same actual signed MMS HAP private ext4 positive and 3 uninstall counterexamples ONLY NOT product image BMS or guest"
     }
   },
   "agents": {
