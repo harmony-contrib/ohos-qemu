@@ -25,10 +25,15 @@ def sha(path):
     return digest(path)
 
 
-def token(value, run, uid, allow_transition=False):
+def token(value, run, uid, allow_transition=False, bundle='org.harmonycontrib.capabilityaudit', operation='query'):
+    if (bundle not in ('org.harmonycontrib.capabilityaudit', 'org.harmonycontrib.capabilityauditfocus') or
+            operation not in ('query', 'query-background')):
+        raise ValueError('only the two ordinary audio callers and read-only token observations are supported')
+    permission = ('ohos.permission.KEEP_BACKGROUND_RUNNING' if operation == 'query-background' else
+                  'ohos.permission.MICROPHONE')
     if (not isinstance(value, dict) or value.get('run_id') != run or value.get('uid') != uid or
-            value.get('user_id') != 100 or value.get('bundle') != 'org.harmonycontrib.capabilityaudit' or
-            value.get('permission') != 'ohos.permission.MICROPHONE' or value.get('operation') != 'query' or
+            value.get('user_id') != 100 or value.get('bundle') != bundle or
+            value.get('permission') != permission or value.get('operation') != operation or
             type(value.get('token_id')) is not int or value['token_id'] <= 0 or value.get('result') != 0 or
             type(value.get('result')) is not int or type(value.get('after')) is not int or
             type(value.get('before')) is not int or value.get('before') not in (-1, 0) or
@@ -171,6 +176,11 @@ def verify_transport(args, recorder=False, audio_event=False):
             permission.get('dialog_shown_results') != [True] or
             any(type(v) is not bool for v in permission.get('dialog_shown_results', []))):
         raise ValueError('actual public permission request result disagrees with independent token/UI')
+    verify_tools(runtime, arch)
+    return runtime, uid, denied, files, archive_sha
+
+
+def verify_tools(runtime, arch):
     tools_path = Path(runtime['tools'])
     if sha(tools_path) != runtime['tools_sha256']:
         raise ValueError('microphone tool build evidence changed')
@@ -189,7 +199,6 @@ def verify_transport(args, recorder=False, audio_event=False):
             raise ValueError('root tool uses another artifact library')
     if sha(Path(runtime['asound'])) != runtime['asound_sha256']:
         raise ValueError('actual independent ALSA hardware observation changed')
-    return runtime, uid, denied, files, archive_sha
 
 
 def verify_producer(runtime):
