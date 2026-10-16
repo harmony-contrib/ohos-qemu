@@ -1,0 +1,205 @@
+{
+  "inspector": "ohos-qemu-parallel-source-20261016-02",
+  "mode": "existing_container_read_only_python_query_no_build",
+  "root": "/ohos",
+  "mixed_out_not_archival_proof": true,
+  "paths": {
+    "device/qemu/common/virt_full/BUILD.gn": {
+      "exists": true,
+      "size": 1409,
+      "sha256": "b263fd6a8686efd2597a02b2db13b2e413e62ff598c757a368b828c3229452e6",
+      "relevant_lines": []
+    },
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn": {
+      "exists": false
+    },
+    "device/qemu/common/virt_full/qemu_gnss_runtime/BUILD.gn": {
+      "exists": false
+    },
+    "drivers/peripheral/sensor/hdi_impl/BUILD.gn": {
+      "exists": true,
+      "size": 1570,
+      "sha256": "593dc5799e8a6317cce6ce9ce911aa95640fd6eafa12d0ac7f88bd6321e52acc",
+      "relevant_lines": []
+    },
+    "drivers/peripheral/sensor/sensor.gni": {
+      "exists": true,
+      "size": 377,
+      "sha256": "a997c12d5a68797fcce3f8db7e92eaea71da10735e32a4b38a8f12bce93c8e5a",
+      "relevant_lines": [
+        {
+          "line": 2,
+          "text": "  drivers_peripheral_sensor_feature_community = true"
+        },
+        {
+          "line": 3,
+          "text": "  drivers_peripheral_sensor_feature_lite_support_test = false"
+        },
+        {
+          "line": 4,
+          "text": "  drivers_peripheral_sensor_feature_model = false"
+        },
+        {
+          "line": 5,
+          "text": "  drivers_peripheral_sensor_feature_tv_flag = false"
+        }
+      ]
+    },
+    "base/msdp/device_status/device_status.gni": {
+      "exists": true,
+      "size": 5507,
+      "sha256": "910548018c72eae0bb4f8164e40ffeaff4ca4469c5b6e9fa691faba3247d6258",
+      "relevant_lines": [
+        {
+          "line": 27,
+          "text": "  device_status_sensor_enable = true"
+        },
+        {
+          "line": 42,
+          "text": "    device_status_sensor_enable = true"
+        },
+        {
+          "line": 47,
+          "text": "        device_status_sensor_enable = false"
+        },
+        {
+          "line": 59,
+          "text": "    device_status_sensor_enable = false"
+        }
+      ]
+    },
+    "applications/standard/contacts/BUILD.gn": {
+      "exists": false
+    },
+    "applications/standard/theme/BUILD.gn": {
+      "exists": false
+    },
+    "applications/standard/hap/BUILD.gn": {
+      "exists": true,
+      "size": 15215,
+      "sha256": "3c9db915d35742864f493c1c3f502314d43ebc85d6e79321e3647db25eb88df4",
+      "relevant_lines": [
+        {
+          "line": 228,
+          "text": "ohos_prebuilt_etc(\"contacts_hap\") {"
+        },
+        {
+          "line": 401,
+          "text": "    \"//applications/standard/hap:contacts_hap\","
+        },
+        {
+          "line": 462,
+          "text": "      \"//applications/standard/hap:contacts_hap\","
+        }
+      ]
+    },
+    "out/arm64_virt/obj/device/qemu/common/virt_full/external_gnss/qemu_external_gnss.ninja": {
+      "exists": false
+    },
+    "out/arm64_virt/obj/device/qemu/common/virt_full/qemu_gnss_runtime/qemu_gnss_runtime.ninja": {
+      "exists": false
+    },
+    "out/arm64_virt/obj/drivers/peripheral/location/gnss/hdi_service/libgnss_interface_service_2.0.ninja": {
+      "exists": true,
+      "size": 21225,
+      "sha256": "18ba08615e067df25e7fa129e465006717e8d96b9f8e4094aaf0e392ddb246c1",
+      "expected_object_tokens": {
+        "qemu_gnss_input.o": false,
+        "qemu_gnss_vendor.o": false,
+        "gnss_interface_impl.o": true,
+        "location_vendor_interface.o": true,
+        "gnss_ability.o": false,
+        "gnss_event_callback.o": false,
+        "sensor_impl.o": false,
+        "qemu_sensor_input.o": false,
+        "qemu_sensor_vdi.o": false
+      }
+    },
+    "out/arm64_virt/obj/base/location/location/services/location_gnss/gnss/lbsservice_gnss.ninja": {
+      "exists": true,
+      "size": 248271,
+      "sha256": "27d7dd483fba7e8a40cbbe5b8ed3e7c584a55721c39a91b76e57ab359b154be3",
+      "expected_object_tokens": {
+        "qemu_gnss_input.o": false,
+        "qemu_gnss_vendor.o": false,
+        "gnss_interface_impl.o": false,
+        "location_vendor_interface.o": false,
+        "gnss_ability.o": true,
+        "gnss_event_callback.o": true,
+        "sensor_impl.o": false,
+        "qemu_sensor_input.o": false,
+        "qemu_sensor_vdi.o": false
+      }
+    },
+    "out/arm64_virt/obj/drivers/peripheral/sensor/hdi_impl/libhdi_sensor_impl.ninja": {
+      "exists": true,
+      "size": 21260,
+      "sha256": "77e19d7d498afbaa5146dcc8319664e006cac51e3869255b3f2d1f55f0cebc0a",
+      "expected_object_tokens": {
+        "qemu_gnss_input.o": false,
+        "qemu_gnss_vendor.o": false,
+        "gnss_interface_impl.o": false,
+        "location_vendor_interface.o": false,
+        "gnss_ability.o": false,
+        "gnss_event_callback.o": false,
+        "sensor_impl.o": true,
+        "qemu_sensor_input.o": false,
+        "qemu_sensor_vdi.o": false
+      }
+    },
+    "out/arm64_virt/obj/applications/standard/contacts/contacts_hap.ninja": {
+      "exists": false
+    },
+    "out/arm64_virt/obj/applications/standard/theme/wallpaper_phone_hap.ninja": {
+      "exists": false
+    },
+    "out/arm64_virt/obj/applications/standard/theme/wallpaper_pad_hap.ninja": {
+      "exists": false
+    },
+    "out/arm64_virt/packages/phone/vendor/lib64/vendorGnssAdapter.so": {
+      "exists": false
+    },
+    "out/arm64_virt/packages/phone/vendor/lib64/libgnss_interface_service_2.0.z.so": {
+      "exists": true,
+      "size": 51104,
+      "sha256": "76dfca3175594694df2ee255ae7f7e27b41b01de8b0d6849eaec5542b3e4cff9"
+    },
+    "out/arm64_virt/packages/phone/system/lib64/liblbsservice_gnss.z.so": {
+      "exists": true,
+      "size": 543912,
+      "sha256": "df5c5a66ca9ee737e1fe9469069c0b19aa90629ba611ed68dbec7ddd9a9a348a"
+    },
+    "out/arm64_virt/packages/phone/vendor/lib64/libhdi_sensor_impl.z.so": {
+      "exists": true,
+      "size": 28416,
+      "sha256": "b33d6ba1f76efeb604442ea804e2544d643b0ce91a31df34e129cbac2ffa5e14"
+    },
+    "out/arm64_virt/packages/phone/vendor/lib64/libhdi_product_sensor_impl.z.so": {
+      "exists": false
+    },
+    "out/arm64_virt/packages/phone/system/lib64/libhdi_sensor_impl.z.so": {
+      "exists": false
+    }
+  },
+  "sensor_features": {
+    "path": "/ohos/out/preloader/arm64_virt/features.json",
+    "exists": true,
+    "sha256": "a70fef2ffdd2529cc43447d467955c526f72cba2c0466045f9ef3a4f1c88216b",
+    "expected": {
+      "drivers_peripheral_sensor_feature_community": true,
+      "drivers_peripheral_sensor_feature_qemu_external": true,
+      "device_status_sensor_enable": true,
+      "device_status_allow_mock_fallback": false
+    },
+    "actual": {
+      "drivers_peripheral_sensor_feature_community": "ABSENT",
+      "drivers_peripheral_sensor_feature_qemu_external": "ABSENT",
+      "device_status_sensor_enable": "ABSENT",
+      "device_status_allow_mock_fallback": "ABSENT"
+    },
+    "relevant_actual": {
+      "device_status_interaction_coordination": false,
+      "drivers_peripheral_sensor_feature_model": true
+    }
+  }
+}
