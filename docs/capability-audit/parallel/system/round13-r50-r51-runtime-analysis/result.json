@@ -1,0 +1,81 @@
+{
+  "scope": "docs_only_readonly_R50_R51_diagnosis_NOT_product_fix_or_runtime_pass",
+  "first_artifact_behavior_gate_passed": false,
+  "closed": [],
+  "findings": [
+    {
+      "id": "R50-PID-ownership",
+      "certainty": "raw_hilog_proven",
+      "conclusion": "Native freeze belongs to old capabilityaudit22958; HiTrace23526/23854 are separate spawn attempts aborted on connection close."
+    },
+    {
+      "id": "R50-root-cause",
+      "certainty": "insufficient",
+      "conclusion": "Client disconnect cause, appspawn delay and RS wait cause not captured. No proof any HiTrace API was entered then hung."
+    },
+    {
+      "id": "R51-rendering",
+      "certainty": "raw_stacks_and_existing_build_ID_symbolication",
+      "conclusion": "RS main waits PostAndWait while UniRender runs softpipe/TGSI. Specific shader, scheduling cause and complete duration unknown."
+    },
+    {
+      "id": "R51-watchdog-exit",
+      "certainty": "current_fixed_source_mechanism_compatible_NOT_old_DSO_bound",
+      "conclusion": "SERVICE_BLOCK path calls KillPeerBinderProcess, then non-foundation LeftTimeExitProcess/sleep10/_exit0 despite report-twice wording."
+    },
+    {
+      "id": "R51-suspend-feature",
+      "certainty": "current_source_and_mixed_ninja_only",
+      "conclusion": "Existing false-default boolean adds sleep-delta check plus 5s lateness reset. s2idle bypasses syscore timekeeping; dual-clock sleep detection is not guaranteed."
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "root",
+      "target": "existing hicollie GN feature and complete source_set",
+      "request": "Consider hicollie_suspend_check_enable=true as bounded candidate with real final GN/macro/DSO evidence; retain normal awake watchdog and PID gates. No claim it closes s2idle."
+    },
+    {
+      "owner": "root",
+      "target": "current Mesa LLVM candidate/new representative archive",
+      "request": "Complete current task; bind actual compositor backend and new image DSO before full boot+HiTrace workload acceptance."
+    },
+    {
+      "owner": "root",
+      "target": "future failed representative diagnostics",
+      "request": "If failure recurs retain actual dual clocks/due-now, exit reason, live appspawn/client stacks and exact old/new app process identities; batch confirmed source repairs afterward."
+    }
+  ],
+  "remaining_gaps": [
+    "R50 exact RS backlog cause and appspawn client disconnect/timeout cause.",
+    "R51 actual exit reason and packaged libhicollie Build-ID/source binding.",
+    "Historical watchdog now/nextTickTime/BOOTTIME/MONOTONIC samples, so false-positive catch-up remains a hypothesis.",
+    "R51 exact expensive shader/workload vs scheduler contribution.",
+    "Fresh representative normal awake, actual s2idle/wake and full ordinary HiTrace runtime gate; all remaining packages still gated."
+  ],
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 docs/capability-audit/parallel/system/round13-r50-r51-runtime-analysis/replay_watchdog_schedule.py",
+      "result": "pass_all_embedded_assertions",
+      "scope": "Python arithmetic examples bound to frozen source excerpts only; not native or guest tests"
+    },
+    {
+      "command": "JSON parse + 21 original file byte/SHA recheck + replay output equality",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "operations_not_run": [
+    "native compiler",
+    "SDK",
+    "GN",
+    "Ninja",
+    "QEMU",
+    "HDC",
+    "package build",
+    "permission mutation"
+  ]
+}

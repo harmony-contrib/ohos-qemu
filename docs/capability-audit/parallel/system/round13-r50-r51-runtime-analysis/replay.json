@@ -1,0 +1,43 @@
+{
+  "scope": "Python_source_arithmetic_examples_NOT_extracted_native_function_test_NOT_runtime_fix",
+  "source_snapshot_sha256": "83b9dab33ee7d127124d3fc1994a49e4b88e6a9cc7800ddc00370bbb8cbc01be",
+  "historical_now_and_nextTickTime_not_captured": true,
+  "example_only_interval_ms": 5000,
+  "example_only_overdue_ms": 8000,
+  "default_macro_absent": [
+    {
+      "now_ms": 28000,
+      "old_due_ms": 20000,
+      "action": "half_warning"
+    },
+    {
+      "now_ms": 28000,
+      "old_due_ms": 25000,
+      "action": "full_report_then_recovery"
+    }
+  ],
+  "macro_present_same_lateness": [
+    {
+      "now_ms": 28000,
+      "old_due_ms": 20000,
+      "action": "reset_due_without_checker_evaluation"
+    }
+  ],
+  "awake_pending_checker_half_then_full": [
+    {
+      "now_ms": 20000,
+      "old_due_ms": 20000,
+      "action": "half_warning"
+    },
+    {
+      "now_ms": 25000,
+      "old_due_ms": 25000,
+      "action": "full_report_then_recovery"
+    }
+  ],
+  "sleep_comparison_examples_initialized_non_appspawn_non_kick_task": {
+    "boot_8000_mono_0_skip": true,
+    "boot_8000_mono_8000_skip": false
+  },
+  "first_artifact_behavior_gate_passed": false
+}
