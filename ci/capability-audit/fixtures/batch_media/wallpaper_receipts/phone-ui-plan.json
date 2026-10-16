@@ -1,0 +1,17 @@
+{
+  "scope": "source_defined_phone_selectors_actual_new_guest_visibility_required",
+  "device_type": "phone",
+  "settings_ability": "com.ohos.settings.MainAbility",
+  "settings_main": {"bundle": "com.ohos.settings", "identifier": "theme_settings"},
+  "settings_navigation": [{"bundle": "com.ohos.settings", "identifier": "theme_settings"}],
+  "photos_ability": "com.ohos.photos.MainAbility",
+  "photos_main": {"bundle": "com.ohos.photos", "identifier": "TabPhotos"},
+  "photos_navigation": [{"identifier": "TabPhotos"}],
+  "save_ui_bundle": "org.harmonycontrib.wallpaperchallenge",
+  "picker_ui_bundle": "com.ohos.settings",
+  "screens": {
+    "desktop": {"bundle": "com.ohos.sceneboard", "identifier": "SCBDesktop_Flex_Desktop"},
+    "lock": {"bundle": "com.ohos.sceneboard", "identifier": "ScreenLockRootComponent"}
+  },
+  "lock_navigation": []
+}

@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-17",
+  "scope": "light_host_wrapper_receipt_protocol_and_actual_root_artifact_read_ONLY_NOT_runtime_gate",
+  "baseline_commit": "3db477007a51002b8960ccc9dd77dd9c4bac6ec7",
+  "source_files": {
+    "ci/capability-audit/batch_media_wallpaper_coordinator.py": "d66b919434a8795b6d76ad9ac144e2e165472e50e2406266378bfdc66955520b",
+    "ci/capability-audit/test_batch_media_wallpaper_coordinator.py": "9eb1dfede4fb8e16d1f3cc4a4fa38c007449a9ad25714720310a05767e8f6fdb",
+    "ci/capability-audit/batch_media_wallpaper_suite.py": "96460d46322f2c2ae25d7b57feb3f2fc963d8952325ba26efb5469a5ef6ae6f4",
+    "ci/capability-audit/batch_media_wallpaper_artifacts.py": "97ef2f43911949b66fb17c015b8deda65c251c046b6cc30244cdf37cf14ffc2e",
+    "ci/capability-audit/test_batch_media_wallpaper_suite.py": "cfe65b89aa8d460d7b16771a7d2a684efb651dbc9ce66c7a9ac72aadf58caa0a",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_receipts/phone-ui-plan.json": "ffbe231f1fccf985dcab5134c29a0d401ba990196c466e5cb6a6345a501d5573",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_receipts/ui-source-contract.json": "2440e3268654bd669e58759129095e70d7ef46255ce8cd26cb5b6bd7cb33cdb8"
+  },
+  "tests": [
+    {
+      "command": [
+        "env",
+        "LC_ALL=C",
+        "LC_CTYPE=C",
+        "LANG=C",
+        "PYTHONPATH=ci/capability-audit",
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "-m",
+        "unittest",
+        "test_batch_media_wallpaper_suite",
+        "test_batch_media_wallpaper_coordinator",
+        "-v"
+      ],
+      "exit_code": 0,
+      "tests": 23,
+      "test_seconds": 1.453,
+      "tool_wall_seconds": 1.468415834,
+      "log": {
+        "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/host-tests-06.log",
+        "sha256": "86b2972e861307293c2d3b86b0449e132394b7c3d48517133f8804f1657f7550"
+      },
+      "scope": "host orchestration/negative fixture tests and actual API26 declaration check; real tiny host Python subprocesses only; no guest/signing/native/SDK execution"
+    }
+  ],
+  "retained_attempts": [
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/host-tests-01.log",
+      "sha256": "22cf39e283fe4ac08b6bc23de757bc6da4dfeb9aaf398ee6e904209e927f45ee"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/host-tests-02.log",
+      "sha256": "8bcdab689ed28243b8d923adc9e4c10a18de968a2ed48c56d55c34223bb6c7e4"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/host-tests-03.log",
+      "sha256": "953ddb4d511c494d42ef6216dcfb594b966e2eea714316cd72b40d6f17cc4594"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/host-tests-04.log",
+      "sha256": "2d32b5d9cb5fa3f427d10d3f69e40156a49fe51f431b742958e5629c666abf83"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/host-tests-05.log",
+      "sha256": "cdfd422239e1a3ff4867943c81bb8a38fdd57a22f441fd05cb956bd98443096a"
+    }
+  ],
+  "initial_failure": "host PowerMgr fixture used one space where actual strict parser expects two; corrected fixture, actual parser unchanged",
+  "actual_root_artifact_adaptations": [
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/actual-query-project-adapter.json",
+      "sha256": "fc47e9801210fe194c396560730a976e4ab36474153c8e208b12c6945bee777c"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/actual-wallpaper_default_resolver-adapter.json",
+      "sha256": "1018ace5e8d63658fcf37693388daccf8525144eb89092285b9a5595948a8c79"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/actual-wallpaper_token_query-adapter.json",
+      "sha256": "29816b4d2949a3ffd7cf3afd322d57c78785b3d4db270071915a8a6bcde1f48f"
+    }
+  ],
+  "actual_adaptation_limits": [
+    "Root query SDK batch exit1 retained; exact wallpaper-query commands and all selected source hashes succeeded",
+    "Root helper original01 statusfail and SHA remain unchanged; recheck02 pass_compile_link_ONLY is the new evidence",
+    "Host adapter read actual ELF/logs/mapped private artifacts; Linux /ohos headers/compiler/DSOs were not reopened on host",
+    "Expected helper builder/fixture HERE used actual read-only parent source directory because that new root-owned builder is absent from this private baseline",
+    "No actual Java/CMS signature, BMS/token, UI operation, actual guest DSO comparison or pixel gate executed here"
+  ],
+  "cli_help": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/cli-help.txt",
+    "sha256": "b595c939831d15926b293fd01f24fd0a505c8163f46a72cae9805ba5a9090c29"
+  },
+  "handoff": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round14-wallpaper-suite/HANDOFF.md",
+    "sha256": "a09877af75b7e13c1700f0854b9ebc9af5fd8fc9fb720df3f04335e350887456"
+  },
+  "root_integration": {
+    "family": "wallpaper",
+    "module": "batch_media_wallpaper_suite",
+    "command_prefix": [
+      "PYTHON",
+      "ci/capability-audit/batch_media_wallpaper_suite.py"
+    ],
+    "required_flags": [
+      "--boot",
+      "--archive",
+      "--hdc",
+      "--artifacts",
+      "--suite-evidence",
+      "--output"
+    ],
+    "report": "evidence.json",
+    "verifier": "verify_evidence(evidence_path, archive_path, boot_path)",
+    "shared_normal_signer_commit": "a3e0347",
+    "root_owned_frozen_runtime_verifier": true,
+    "extension_connection_witness": "root/apps follow-up is separate; wrapper alone does not assert ThemeService absence/extension connection"
+  },
+  "executed_here": {
+    "readonly_inspector_queries": true,
+    "native_compile": false,
+    "signing": false,
+    "sdk_or_hap_build": false,
+    "hdc": false,
+    "qemu": false,
+    "guest_runtime": false
+  },
+  "remaining_gates": [
+    "Root integrate common apps signer and media wrapper; provide exact signer paths/SDK artifacts/helpers receipts/UI plan",
+    "Root actual product/native/package attestation plus fallback/extension-connection witness",
+    "Run on same fresh first artifact ARM64 phone guest; independently verify signature/BMS/actual token/Photos consent/five URI queries/persistence/desktop and lock pixels/default restore/cleanup/owned policy",
+    "Collect and fix all actual failures before next representative packaging; no remaining package matrix before its complete runtime gate"
+  ],
+  "closed_requirement_ids": [],
+  "first_artifact_behavior_gate_passed": false
+}
