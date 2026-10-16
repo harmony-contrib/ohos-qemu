@@ -80,7 +80,11 @@ class CaptureRuntime:
         self.value['guest_libraries'] = {}
         for name, library in (('alsa_inject', 'libasound.so'), ('audio_capture_token', 'libaccesstoken_sdk.z.so')):
             local = self.output / library
-            remote = '/system/' + ('lib' if self.args.arch == 'armv7a' else 'lib64') + '/' + library
+            directory = 'vendor/' if name == 'alsa_inject' else 'system/'
+            directory += 'lib' if self.args.arch == 'armv7a' else 'lib64'
+            if name == 'audio_capture_token':
+                directory += '/platformsdk'
+            remote = '/' + directory + '/' + library
             self.command([self.args.hdc, '-t', self.args.target, 'file', 'recv', remote, local],
                          'read-actual-package-library-' + name)
             identity = runtime_identity(local.read_bytes(), self.args.arch)
@@ -116,7 +120,7 @@ class CaptureRuntime:
         self.save()
 
     def token(self, uid, phase):
-        result = json.loads(self.actual_shell(f'{self.remote}/audio_capture_token {self.run} {uid} query',
+        result = json.loads(self.actual_shell(f'unset LD_LIBRARY_PATH LD_PRELOAD; {self.remote}/audio_capture_token {self.run} {uid} query',
                                               'independent-MIC-token-' + phase))
         if (result.get('uid') != uid or result.get('run_id') != self.run or result.get('result') != 0 or
                 result.get('operation') != 'query' or type(result.get('before')) is not int or
@@ -138,7 +142,7 @@ class CaptureRuntime:
         if not self.denied:
             wrapper = ('echo "$$" > ' + self.remote + '/producer.pid; '
                 'awk \'{print $22}\' /proc/$$/stat > ' + self.remote + '/producer.start; '
-                'exec ' + self.remote + '/alsa_inject --input ' + self.remote +
+                'unset LD_LIBRARY_PATH LD_PRELOAD; exec ' + self.remote + '/alsa_inject --input ' + self.remote +
                 '/challenge.pcm --rate 48000 --channels 2 --repeat 20 --timeout-ms 30000')
             argv = [str(self.args.hdc), '-t', self.args.target, 'shell', 'sh -c ' + shlex.quote(wrapper)]
             self.producer_log = (self.output / 'producer.log').open('xb')
