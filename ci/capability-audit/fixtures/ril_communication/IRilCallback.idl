@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @addtogroup Ril
+ * @{
+ *
+ * @brief Defines Ril-related APIs.
+ *
+ * The radio interface layer (RIL) module provides APIs and callbacks for upper-layer telephony services,
+ * including call, SMS, MMS, network search, and SIM card services.
+ *
+ * @since 6.0
+ * @version 1.0
+ */
+
+/**
+ * @file IRilCallback.idl
+ *
+ * @brief Declares callback APIs of the RIL module.
+ *
+ * @since 6.0
+ * @version 1.0
+ */
+
+/**
+ * @brief Defines the path for the package of the RIL module APIs.
+ *
+ * @since 6.0
+ * @version 1.0
+ */
+package ohos.hdi.ril.v1_5;
+
+import ohos.hdi.ril.v1_4.IRilCallback;
+import ohos.hdi.ril.v1_5.Types;
+
+/**
+ * @brief Declares callback APIs of the RIL module.
+ *
+ * These APIs provide the callback functions for making calls, sending SMS and MMS messages,
+ * activating SIM cards, and accessing the Internet. The caller needs to implement these callbacks.
+ *
+ * @since 6.0
+ * @version 1.0
+ */
+[callback] interface IRilCallback extends ohos.hdi.ril.v1_4.IRilCallback {
+    /**
+     * @brief Callback for the response of getting the data service main card slot.
+     *
+     * @param responseInfo Common response information, such as the card slot ID and request sequence ID.
+     * For details, see {@link RilRadioResponseInfo}.
+     * @param primarySlotId.
+     *
+     * @since 6.0
+     * @version 1.0
+     */
+    [oneway] GetPrimarySlotResponse([in] struct RilRadioResponseInfo responseInfo, [in] int primarySlotId);
+
+    /**
+     * @brief Callback for the response of setting the data service main card slot when the modem does not require a 
+     * software power on/off.
+     *
+     * @param responseInfo Common response information, such as the card slot ID and request sequence ID.
+     * For details, see {@link RilRadioResponseInfo}.
+     *
+     * @since 6.0
+     * @version 1.0
+     */
+    [oneway] SetPrimarySlotResponse([in] struct RilRadioResponseInfo responseInfo);
+}
+/** @} */

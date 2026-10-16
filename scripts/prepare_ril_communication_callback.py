@@ -28,12 +28,15 @@ APPEND = '''
 
 
 def transform(data):
+    separator = b'\r\n' if b'\r\n' in data else b'\n'
+    anchor = ANCHOR.encode().replace(b'\n', separator)
+    append = APPEND.encode().replace(b'\n', separator)
     original = data
-    if data.count(APPEND.encode()) == 1:
-        original = data.replace(APPEND.encode(), b'')
-    if hashlib.sha256(original).hexdigest() != BEFORE_SHA or original.count(ANCHOR.encode()) != 1:
+    if data.count(append) == 1:
+        original = data.replace(append, b'')
+    if hashlib.sha256(original).hexdigest() != BEFORE_SHA or original.count(anchor) != 1:
         raise ValueError('unknown or partial RIL callback IDL; preserving source')
-    final = original.replace(ANCHOR.encode(), (ANCHOR + APPEND).encode())
+    final = original.replace(anchor, anchor + append)
     if data not in (original, final):
         raise ValueError('noncanonical RIL callback extension; preserving source')
     return final
