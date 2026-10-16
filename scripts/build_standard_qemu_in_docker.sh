@@ -3250,6 +3250,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
   bash "${SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_refresh_rate_component.log"
+  bash "${PATCH_ROOT}/common/applications/standard/settings/share_picker/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_share_picker.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
     --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/settings-source-dependencies" \
     --evidence "${CACHE_ROOT}/logs/settings-source-preparation.json" \
@@ -3264,6 +3266,14 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_admin_hap_provider_component.log"
   python3 "${PATCH_ROOT}/lib/admin_provider.py" --source-root "${OHOS_ROOT}" --prepare \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_admin_signing_policy.log"
+  bash "${PATCH_ROOT}/common/applications/standard/mms/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/mms/send_data_text/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_send_data_text.log"
+  bash "${PATCH_ROOT}/common/applications/standard/hap/mms_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_hap_provider.log"
+  python3 "${PATCH_ROOT}/lib/mms_provider.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_mms_signing_policy.log"
   bash "${PHOTOS_FACARD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

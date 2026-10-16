@@ -18,7 +18,8 @@
     "patches/common/kernel",
     "patches/common/foundation/graphic/graphic_2d",
     "patches/common/third_party/mesa3d",
-    "device/qemu except media vendor_capture.c and system common/virt_full/external_gnss new provider sources; parent retains all shared BUILD/init/SELinux/launch changes"
+    "device/qemu except media vendor_capture.c and system common/virt_full/external_gnss new provider sources; parent retains all shared BUILD/init/SELinux/launch changes",
+    "MMS source BUILD.gn/build-profile.json5, HAP source selection and source signer/grant transaction (apps retains only its 3 MMS business files)"
   ],
   "parent_acceptance_failures": [
     "R50-full-suite-HiTrace-ordinary-launch-timeout",
@@ -1773,10 +1774,9 @@
     ]
   },
   "current_resource_lease": {
-    "owner": "system",
-    "container": "ohos-system-gnss-ohos-abi-r6-20261016-01",
+    "owner": "root",
+    "scope": "serial official Settings/MMS SDK batch",
     "cpu": 2,
-    "memory": "5g",
-    "scope": "single actual OHOS GNSS CFI/ABI consumer and bounded QEMU-user diagnostic; source/out RO; no package build"
+    "node_max_old_space_mib": 2048
   }
 }

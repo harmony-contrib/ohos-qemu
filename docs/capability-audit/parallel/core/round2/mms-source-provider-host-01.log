@@ -1,0 +1,17 @@
+test_full_HAP_stack_replays_and_unknown_successor_fails_without_mutation (test_mms_source_provider.MmsSourceProvider.test_full_HAP_stack_replays_and_unknown_successor_fails_without_mutation) ... FAIL
+test_signer_rebinding_preserves_grants_and_rejects_unknown_privilege_or_signer (test_mms_source_provider.MmsSourceProvider.test_signer_rebinding_preserves_grants_and_rejects_unknown_privilege_or_signer) ... ok
+test_source_unsigned_build_preserves_original_profile_and_rejects_partial_state (test_mms_source_provider.MmsSourceProvider.test_source_unsigned_build_preserves_original_profile_and_rejects_partial_state) ... ok
+
+======================================================================
+FAIL: test_full_HAP_stack_replays_and_unknown_successor_fails_without_mutation (test_mms_source_provider.MmsSourceProvider.test_full_HAP_stack_replays_and_unknown_successor_fails_without_mutation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_mms_source_provider.py", line 32, in test_full_HAP_stack_replays_and_unknown_successor_fails_without_mutation
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : b'Traceback (most recent call last):\n  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/hap/photos_provider/prepare.py", line 41, in <module>\n    prepare(args.source_root / \'applications/standard/hap/BUILD.gn\', args.require_patched)\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/hap/photos_provider/prepare.py", line 19, in prepare\n    raise ValueError(\'refuse redirected Photos prebuilt graph\')\nValueError: refuse redirected Photos prebuilt graph\n'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.376s
+
+FAILED (failures=1)

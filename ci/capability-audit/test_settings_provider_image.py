@@ -48,7 +48,11 @@ class SettingsImageBoundary(unittest.TestCase):
         for name, key, value in (('SettingsExtService', 'permissions', []),
                                  ('IgnoreRepeatClickExtService', 'permissions', []),
                                  ('ExternalCommonUIExtensionAbility', 'extensionProcessMode', 'bundle'),
-                                 ('ExternalCommonUIExtensionAbility', 'exported', False)):
+                                 ('ExternalCommonUIExtensionAbility', 'exported', False),
+                                 ('SharePickerExtensionAbility', 'srcEntry', './ets/Unrelated.ets'),
+                                 ('SharePickerExtensionAbility', 'extensionProcessMode', 'bundle'),
+                                 ('SharePickerExtensionAbility', 'exported', False),
+                                 ('SharePickerExtensionAbility', 'permissions', ['ohos.permission.READ_CONTACTS'])):
             self.module = copy.deepcopy(original)
             next(row for row in self.module['module']['extensionAbilities'] if row['name'] == name)[key] = value
             self.write()
@@ -66,6 +70,9 @@ class SettingsImageBoundary(unittest.TestCase):
                 entry['permissions'] = ['ohos.permission.ACCESS_SYSTEM_SETTINGS']
             if entry['name'] == 'ExternalCommonUIExtensionAbility':
                 entry.update(exported=True, extensionProcessMode='instance')
+            if entry['name'] == 'SharePickerExtensionAbility':
+                entry.update(srcEntry='./ets/Setting/SharePicker/SharePickerExtension.ets', exported=True,
+                             extensionProcessMode='instance')
         self.entries = {'ets/modules.abc': b'actual-fixture-bytecode', 'resources.index': b'resources'}
         for abi, elf_class, machine in provider.ABIS.values():
             raw = bytearray(64)
@@ -228,4 +235,3 @@ class SettingsImageBoundary(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

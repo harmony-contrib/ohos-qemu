@@ -21,6 +21,7 @@ PROFILE_ISSUER_SHA = 'BF9771B891CF2DF55B50BDC7F1D583D842DC8CC68E99C381680BD6D25E
 ABIS = {'armv7a': ('armeabi-v7a', 1, 40), 'arm64': ('arm64-v8a', 2, 183),
         'x86_64': ('x86_64', 2, 62)}
 EXTENSIONS = {
+    "SharePickerExtensionAbility": "sysPicker/share",
     "SettingsStatusReportSchedulerExtensionAbility": "workScheduler",
     "WifiUnSaveNetDialogAbility": "sysDialog/common",
     "BluetoothUIExtensionSettingsAbility": "sys/commonUI",
@@ -104,6 +105,11 @@ def inspect_hap(hap):
         if len(actual) != len(extensions) or actual != EXTENSIONS:
             raise ValueError('Settings provider extensions missing, duplicated or incompatible')
         for entry in extensions:
+            if entry['name'] == 'SharePickerExtensionAbility' and (
+                    entry.get('srcEntry') != './ets/Setting/SharePicker/SharePickerExtension.ets' or
+                    entry.get('exported') is not True or entry.get('extensionProcessMode') != 'instance' or
+                    entry.get('permissions', []) != []):
+                raise ValueError('Settings real modal share picker contract changed')
             if entry['name'] in ('SettingsExtService', 'IgnoreRepeatClickExtService'):
                 if entry.get('permissions') != ['ohos.permission.ACCESS_SYSTEM_SETTINGS']:
                     raise ValueError('Settings service permission changed')
@@ -272,4 +278,3 @@ def main():
 
 if __name__ == '__main__':
     raise SystemExit(main())
-

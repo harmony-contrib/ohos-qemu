@@ -256,3 +256,5 @@ GNSS系统Linux测试4288e492已scope检查合入30774b8：GNU11.4/Werror/ASan/U
 根集成 network 47f535f→8a712b9，五组路径互斥scope通过；18项host回归通过。ready等待真实event_ready完成，journal只允许当前尾项2s短写重试并保留原始字节，最终collect严格复核。根另发现fresh PCM回复仍有CREATE/短写竞争，调整为先等唯一实际event_fresh_reply再收JSON/PCM；独立重放绑定当时完成日志、最终native日志、私有文件和时钟，27项相关核心检查通过。此处均非guest验收，82未关、0/6、首包门禁false。
 
 本批apps独占Settings share picker5文件与MMS text sendData3文件（详见parallel-work-plan.json）；ACTION_CHOOSE/HMS/Bluetooth及未实现附件链仍明确缺失。system获唯一CPU2/mem5g租约，仅做真实OHOS GNSS DSO ABI/CFI消费端；Settings/MMS官方SDK编译排队，不并发重型任务。
+
+apps324d17f经五组upstream互斥scope通过后合入38c630e：真实Settings sysPicker/share与MMS text/plain草稿路由。根新增MMS固定26df98e源码ohos_app、QEMU原mms_hap选择接到源码目标，保留非QEMU预编译分支；仅将原MMS normal/system-app profile的分发证书和到期时间接到现有公共OS签名者，原ACL/受限项、两份原预装能力/四项授权的字段全部精确保留。未知签名/额外权限/重复条目拒绝；Admin完整已知MMS后继哈希允许整栈重放。33项相关source/策略/Share/Settings包检查PASS；01最初mac /var符号路径fixture失败保留，修正fixture.resolve后02/03通过。Settings/MMS官方SDK及实际签名/BMS/界面仍待验，分享不宣称消息发送成功，旧ACTION_CHOOSE/HMS/file-attachment缺口保留。
