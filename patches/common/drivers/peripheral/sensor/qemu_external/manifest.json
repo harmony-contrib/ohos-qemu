@@ -1,0 +1,38 @@
+{
+  "project": "drivers/peripheral",
+  "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+  "feature": "drivers_peripheral_sensor_feature_qemu_external",
+  "originals": {
+    "drivers/peripheral/sensor/sensor.gni": {
+      "before": "a997c12d5a68797fcce3f8db7e92eaea71da10735e32a4b38a8f12bce93c8e5a",
+      "after": "5f27090088cc517bafc94ebc99e8f36219e5095dc05091bdbe2323c007d720f2"
+    },
+    "drivers/peripheral/sensor/bundle.json": {
+      "before": "412d4eb7ea791efb70fbf37a7147f80d56c1dcc7f3815c2c094cf72bd0e517d7",
+      "after": "e64d8644d1e1888be7d69e2a47db3364c5450b7223b7bcfdd92c7f629763f9c0"
+    },
+    "drivers/peripheral/sensor/hdi_impl/BUILD.gn": {
+      "before": "593dc5799e8a6317cce6ce9ce911aa95640fd6eafa12d0ac7f88bd6321e52acc",
+      "after": "74f826f2d93caa088f95153932861d8957230689071431a18be16742f2f5a549"
+    }
+  },
+  "files": {
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp": {
+      "component_file": "files/hdi_impl/qemu_sensor_input.cpp",
+      "sha256": "c5b22821e22a87bb2b17613b21ec6c2f91d0980b9d8584af7bcafcb1c1b440c0"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h": {
+      "component_file": "files/hdi_impl/qemu_sensor_input.h",
+      "sha256": "01954d0d3e04ccc47d1cc376a52764d6dabc01646dc27d61d39e1f0aa51fba69"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h": {
+      "component_file": "files/hdi_impl/qemu_sensor_protocol.h",
+      "sha256": "4c0f8e9a1a2cc85aac9b62ccd5aed97ae0de3d051ba79009f2fb102dee9236f1"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp": {
+      "component_file": "files/hdi_impl/qemu_sensor_vdi.cpp",
+      "sha256": "40a0ad3a6ac7e16d6b4c3ed7d337b25e538e81ea78639c0545c7b2544b305fac"
+    }
+  },
+  "patch_sha256": "0d9cf91c1ed0cc029180d3c380d27872864748d0135c1a334aa55323a2536569"
+}

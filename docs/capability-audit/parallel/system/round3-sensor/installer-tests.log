@@ -1,0 +1,13 @@
+test_component_tamper_refused (test_batch_system_sensor_installers.ExactInstallerTests.test_component_tamper_refused) ... ok
+test_full_installer_applies_twice (test_batch_system_sensor_installers.ExactInstallerTests.test_full_installer_applies_twice) ... ok
+test_mixed_state_preserved (test_batch_system_sensor_installers.ExactInstallerTests.test_mixed_state_preserved) ... ok
+test_rollback_after_replaced_file (test_batch_system_sensor_installers.ExactInstallerTests.test_rollback_after_replaced_file) ... ok
+test_symlink_and_parent_symlink_preserved (test_batch_system_sensor_installers.ExactInstallerTests.test_symlink_and_parent_symlink_preserved) ... ok
+test_unknown_overlay_preserved (test_batch_system_sensor_installers.ExactInstallerTests.test_unknown_overlay_preserved) ... ok
+test_unknown_source_preserved (test_batch_system_sensor_installers.ExactInstallerTests.test_unknown_source_preserved) ... ok
+test_wrong_project_revision_preserved (test_batch_system_sensor_installers.ExactInstallerTests.test_wrong_project_revision_preserved) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.835s
+
+OK

@@ -1,0 +1,289 @@
+{
+  "status": "pass_real_host_sensor_input",
+  "platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+  "compiler": "Apple clang version 16.0.0 (clang-1600.0.26.6)",
+  "source_sha256": {
+    "qemu_sensor_input.cpp": "c5b22821e22a87bb2b17613b21ec6c2f91d0980b9d8584af7bcafcb1c1b440c0",
+    "qemu_sensor_input.h": "01954d0d3e04ccc47d1cc376a52764d6dabc01646dc27d61d39e1f0aa51fba69",
+    "qemu_sensor_protocol.h": "4c0f8e9a1a2cc85aac9b62ccd5aed97ae0de3d051ba79009f2fb102dee9236f1",
+    "qemu_sensor_vdi.cpp": "40a0ad3a6ac7e16d6b4c3ed7d337b25e538e81ea78639c0545c7b2544b305fac"
+  },
+  "compile_argv": [
+    "c++",
+    "-std=c++17",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pthread",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "-g",
+    "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/drivers/peripheral/sensor/qemu_external/files/hdi_impl",
+    "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/drivers/peripheral/sensor/qemu_external/files/hdi_impl/qemu_sensor_input.cpp",
+    "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_qemu_sensor_harness.cpp",
+    "-o",
+    "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input"
+  ],
+  "binary_sha256": "a05a45cd6de843e6e6b4f4824caa157fcdedfce01265bb6f35a13fe6a5af59b4",
+  "cases": [
+    {
+      "scenario": "roundtrip",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "roundtrip",
+        "/tmp/qsi-gus8kpam/0.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "fragmented",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "fragmented",
+        "/tmp/qsi-gus8kpam/1.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "range_edges",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "range_edges",
+        "/tmp/qsi-gus8kpam/2.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "duplicate_register",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "duplicate_register",
+        "/tmp/qsi-gus8kpam/3.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "sampling_limit",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "sampling_limit",
+        "/tmp/qsi-gus8kpam/4.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "wrong_nonce",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "wrong_nonce",
+        "/tmp/qsi-gus8kpam/5.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "wrong_magic",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "wrong_magic",
+        "/tmp/qsi-gus8kpam/6.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "wrong_version",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "wrong_version",
+        "/tmp/qsi-gus8kpam/7.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "zero_sequence",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "zero_sequence",
+        "/tmp/qsi-gus8kpam/8.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "repeated_sequence",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "repeated_sequence",
+        "/tmp/qsi-gus8kpam/9.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "nan",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "nan",
+        "/tmp/qsi-gus8kpam/10.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "infinity",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "infinity",
+        "/tmp/qsi-gus8kpam/11.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "out_of_range",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "out_of_range",
+        "/tmp/qsi-gus8kpam/12.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "short_frame",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "short_frame",
+        "/tmp/qsi-gus8kpam/13.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "disconnect_replay",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "disconnect_replay",
+        "/tmp/qsi-gus8kpam/14.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "disable_replay",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "disable_replay",
+        "/tmp/qsi-gus8kpam/15.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "unauthorized",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "unauthorized",
+        "/tmp/qsi-gus8kpam/16.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "callback_reentry",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "callback_reentry",
+        "/tmp/qsi-gus8kpam/17.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "callback_destroy",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "callback_destroy",
+        "/tmp/qsi-gus8kpam/18.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "disable_backpressure",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "disable_backpressure",
+        "/tmp/qsi-gus8kpam/19.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "callback_limit",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "callback_limit",
+        "/tmp/qsi-gus8kpam/20.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "file_protection",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "file_protection",
+        "/tmp/qsi-gus8kpam/21.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "symlink_protection",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "symlink_protection",
+        "/tmp/qsi-gus8kpam/22.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "active_path_protection",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "active_path_protection",
+        "/tmp/qsi-gus8kpam/23.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "stale_path",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "stale_path",
+        "/tmp/qsi-gus8kpam/24.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "path_replacement",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "path_replacement",
+        "/tmp/qsi-gus8kpam/25.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "scenario": "external_controller",
+      "argv": [
+        "/private/tmp/ohos-system-qemu-sensor-host-03/sensor_input",
+        "external_controller",
+        "/tmp/qsi-gus8kpam/controller.sock"
+      ],
+      "controller_argv": [
+        "/opt/homebrew/opt/python@3.13/bin/python3.13",
+        "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_qemu_sensor_controller.py",
+        "--unix-path",
+        "/tmp/qsi-gus8kpam/controller.sock",
+        "--input",
+        "/private/tmp/ohos-system-qemu-sensor-host-03/external-controller-input.json",
+        "--output",
+        "/private/tmp/ohos-system-qemu-sensor-host-03/external-controller-sent.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "authorized_host_test_uid": 501,
+  "product_vdi_writer_uid": 0,
+  "runtime_tested": false,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "limitations": "Actual shipped transport/protocol and real peer credentials/sockets executed; host tests explicitly authorize the host UID. Product VDI pins UID 0. No official HDI headers/TU, SensorService/MSDP API, SELinux or packaged guest has been validated by this host transport test."
+}

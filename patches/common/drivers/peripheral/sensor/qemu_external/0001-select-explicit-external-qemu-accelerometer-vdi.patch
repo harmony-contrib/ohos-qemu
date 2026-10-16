@@ -1,0 +1,40 @@
+--- a/drivers/peripheral/sensor/sensor.gni
++++ b/drivers/peripheral/sensor/sensor.gni
+@@ -1,5 +1,6 @@
+ declare_args() {
+   drivers_peripheral_sensor_feature_community = true
++  drivers_peripheral_sensor_feature_qemu_external = false
+   drivers_peripheral_sensor_feature_lite_support_test = false
+   drivers_peripheral_sensor_feature_model = false
+   drivers_peripheral_sensor_feature_tv_flag = false
+--- a/drivers/peripheral/sensor/bundle.json
++++ b/drivers/peripheral/sensor/bundle.json
+@@ -15,6 +15,7 @@
+     "features": [
+       "drivers_peripheral_sensor_feature_model",
+       "drivers_peripheral_sensor_feature_community",
++      "drivers_peripheral_sensor_feature_qemu_external",
+       "drivers_peripheral_sensor_feature_lite_support_test",
+       "drivers_peripheral_sensor_feature_tv_flag"
+     ],
+--- a/drivers/peripheral/sensor/hdi_impl/BUILD.gn
++++ b/drivers/peripheral/sensor/hdi_impl/BUILD.gn
+@@ -22,8 +22,16 @@
+     "../hal/include",
+   ]
+ 
+-  sources = [ "sensor_impl.cpp" ]
+-  deps = [ "../hal:hdi_sensor" ]
++  if (drivers_peripheral_sensor_feature_qemu_external) {
++    sources = [
++      "qemu_sensor_input.cpp",
++      "qemu_sensor_vdi.cpp",
++    ]
++    deps = []
++  } else {
++    sources = [ "sensor_impl.cpp" ]
++    deps = [ "../hal:hdi_sensor" ]
++  }
+ 
+   cflags = [
+     "-Wall",
