@@ -1,0 +1,18 @@
+test_actual_new_dispatch_cancels_connected_before_blocking_stop (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_new_dispatch_cancels_connected_before_blocking_stop) ... FAIL
+
+======================================================================
+FAIL: test_actual_new_dispatch_cancels_connected_before_blocking_stop (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_new_dispatch_cancels_connected_before_blocking_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/ci/capability-audit/test_batch_network_vpn_broker.py", line 136, in test_actual_new_dispatch_cancels_connected_before_blocking_stop
+    compile_run(async_declarations+actual+native_cases,root,extra=('-pthread',))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/ci/capability-audit/test_batch_network_openvpn_lifecycle.py", line 52, in compile_run
+    raise AssertionError(ran.stderr)
+AssertionError: Assertion failed: (restarted->states.size()==oldStates+1 && !restarted->states.back() && restarted->owners.back()=="closing.owner"), function main, file probe.cpp, line 969.
+
+
+----------------------------------------------------------------------
+Ran 1 test in 5.320s
+
+FAILED (failures=1)

@@ -160,6 +160,23 @@
       "result": "PASS: 13 collected, 11 passed, 2 actual Linux-only broker process tests skipped. Only four fixture control-flow blocks received braces; all assertions and runtime behavior unchanged.",
       "evidence": "docs/capability-audit/parallel/network/fixture-indentation-host-tests-20261016.txt",
       "limits": "This run does not prove GCC warning elimination or Linux subreaper/PDEATHSIG execution. Parent will rerun with CXX=/usr/bin/g++ CC=/usr/bin/gcc. No Docker, SDK, QEMU/HDC, product source or shared CFG/GN/policy changes."
+    },
+    {
+      "command": "Host callback regression with newly exercised emitted native main, before fixture repair",
+      "result": "EXPECTED REPRODUCTION: the asynchronous serial-worker host double aborts at the exact original closing.owner/count assertion, matching the real target failure.",
+      "evidence": "docs/capability-audit/parallel/network/callback-fixture-before-fix-host-reproduction-20261016.txt",
+      "limits": "Diagnostic before-fix evidence; not the final test result or real FFRT proof."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_vpn_broker test_batch_network_vpn_broker_health test_batch_network_vpn_callbacks -v",
+      "result": "PASS: 10 collected, 8 passed, 2 Linux-only process tests skipped on macOS; unchanged -Wall -Wextra -Werror and ASan/UBSan. Callback test now executes both deterministic host main and emitted native main using an explicit asynchronous serial-worker FFRT double. Original owner/count/stopping assertions preserved and single-VPN exclusion boundary added.",
+      "evidence": "docs/capability-audit/parallel/network/callback-fixture-host-tests-20261016.txt",
+      "limits": "Target FFRT callback rerun remains necessary. No Docker, SDK compilation, QEMU/HDC or shared source changes by this agent."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python ci/capability-audit/batch_network_emit_vpn_broker_native.py --output-dir .network-scratch/broker-native-callback-fixture",
+      "result": "PASS: two generator regressions. Repaired callback SHA256 da52abb3f26a2db4187b763fd743f18add45ecbe02c8e9b3f3be5461607841f7; health probe remains c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2.",
+      "evidence": "docs/capability-audit/parallel/network/callback-fixture-native-emission-20261016.txt"
     }
   ],
   "integration_requests": [
@@ -177,11 +194,13 @@
     },
     {
       "owner": "parent",
-      "action": "Run PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_network_vpn_broker test_batch_network_vpn_broker_controllers test_batch_network_vpn_broker_health test_batch_network_openvpn_lifecycle test_batch_network_session_contract -v in private Linux scratch. In particular the two new Linux broker tests and older exec parent-death case must not skip. Fixed source/out stays read-only."
+      "action": "Run PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_network_vpn_broker test_batch_network_vpn_broker_controllers test_batch_network_vpn_broker_health test_batch_network_openvpn_lifecycle test_batch_network_session_contract -v in private Linux scratch. In particular the two new Linux broker tests and older exec parent-death case must not skip. Fixed source/out stays read-only.",
+      "status": "Prior 41-test Linux suite passed per parent. Rerun the changed callback test after this fixture-only commit as appropriate."
     },
     {
       "owner": "parent",
-      "action": "Run batch_network_emit_vpn_broker_native.py --output-dir PRIVATE_DIR; target-compile and execute both callback and health probes against real FFRT with bounded timeouts. Account/IPC/backend doubles remain explicit; additionally exercise real service IPC and guest process death."
+      "action": "Run batch_network_emit_vpn_broker_native.py --output-dir PRIVATE_DIR; target-compile and execute both callback and health probes against real FFRT with bounded timeouts. Account/IPC/backend doubles remain explicit; additionally exercise real service IPC and guest process death.",
+      "status": "Health real-FFRT proof passed; original callback probe failed due to fixture single-VPN precondition. Regenerate repaired callback hash da52abb3... and repeat actual target/libffrt run; original count/owner/stopping assertions retained."
     },
     {
       "owner": "parent",
@@ -469,6 +488,10 @@
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-fixture-before-fix-host-reproduction-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-fixture-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-fixture-native-emission-20261016.txt",
+    "docs/capability-audit/parallel/network/callback-probe-fixture-20261016.md",
     "docs/capability-audit/parallel/network/fixture-indentation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/host-tests.txt",
     "docs/capability-audit/parallel/network/result.json",
@@ -534,7 +557,7 @@
     "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "a5e9fc5022d2417f4f072325ab3b476fde6ece38",
+  "round_base_commit": "d9c44dc087f3726975a621e6b98bcd71ed770f85",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
@@ -569,6 +592,18 @@
     {
       "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-broker-complete-Linux-host-02/artifacts/parsed-evidence.json",
       "scope": "Preceding a5e9fc5: actual Linux collected all 41 without skips, 34 passed; four fixture compiles failed under GCC misleading-indentation and three tests lacked CC=.../gcc. This round only fixes the four reported fixture blocks; parent owns rerun and launcher evidence formatting."
+    },
+    {
+      "source": "Parent NEW_TASK received after d9c44dc integration",
+      "scope": "Parent reports all 41 actual Linux host tests pass without skips and both current helper complete platform TUs plus links pass. No new-package/runtime capability closure."
+    },
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-vpn-broker-callback-and-health-real-FFRT-01/artifacts/callback/evidence.json",
+      "scope": "Original actual API26/ARM64/libffrt callback probe: compile PASS, runtime exit -6 at closing.owner assertion. Preserved unchanged; root cause is native fixture leaving non-system single VPN active. Repaired callback rerun pending."
+    },
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-vpn-broker-callback-and-health-real-FFRT-01/artifacts/health/evidence.json",
+      "scope": "Actual API26/ARM64/libffrt health probe PASS. Its generated source is byte-identical after this fixture repair; does not prove full platform service IPC or new guest."
     }
   ],
   "broker_contract": {
@@ -612,15 +647,18 @@
     "fake_connection_entrypoint": false
   },
   "latest_round": {
-    "scope": "Four C++ test-fixture control-flow blocks made explicit for GCC -Werror=misleading-indentation. No assertion, runtime logic, compiler/sanitizer flag or product source changed.",
+    "scope": "Repair the real-FFRT callback probe fixture: its prior single non-system VPN suppressed the multi-owner disconnected event by the actual product exclusion rule. Preserve that rule, exercise suppression explicitly, destroy the prior single owner successfully, and retain every original stopping/owner assertion. Execute the emitted native main on the host with a real threaded serial-queue double in addition to the deterministic host main.",
     "upstream_targets": [],
     "changed_files": [
-      "ci/capability-audit/test_batch_network_bluetooth_oob.py",
-      "ci/capability-audit/test_batch_network_bluetooth_service.py",
       "ci/capability-audit/test_batch_network_vpn_broker.py",
-      "docs/capability-audit/parallel/network/fixture-indentation-host-tests-20261016.txt",
+      "docs/capability-audit/parallel/network/callback-fixture-before-fix-host-reproduction-20261016.txt",
+      "docs/capability-audit/parallel/network/callback-fixture-host-tests-20261016.txt",
+      "docs/capability-audit/parallel/network/callback-fixture-native-emission-20261016.txt",
+      "docs/capability-audit/parallel/network/callback-probe-fixture-20261016.md",
       "docs/capability-audit/parallel/network/result.json"
     ],
-    "acceptance": "Parent must repeat actual Linux tests with CXX=/usr/bin/g++ and CC=/usr/bin/gcc. macOS cannot supply Linux subreaper/PDEATHSIG runtime proof. All 9 requirements remain open."
+    "callback_probe_sha256": "da52abb3f26a2db4187b763fd743f18add45ecbe02c8e9b3f3be5461607841f7",
+    "health_probe_sha256": "c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2",
+    "acceptance": "Parent must repeat real ARM64/libffrt callback probe. Health source/probe and all product patches are unchanged. No product/package runtime closure; all 9 remain open."
   }
 }
