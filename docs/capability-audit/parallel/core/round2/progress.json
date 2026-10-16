@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T22:47:50.960152+08:00",
+  "updated_at": "2026-10-16T23:06:28.464100+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "afa564a",
+  "checkpoint_commit": "882084b",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -1325,6 +1325,12 @@
       "sha256": "d9bac79a982285238282a685bcd14c296f3e1e5ef36c8dea778da48b739d86e4",
       "status": "pass",
       "scope": "same actual signed MMS HAP private ext4 positive and 3 uninstall counterexamples ONLY NOT product image BMS or guest"
+    },
+    "Contacts_Theme_actual_product_SDK01_initial_failure": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-actual-product-Linux-SDK-01/evidence.json",
+      "sha256": "6f2fa09dc6b543d583971e21a6e11bb4995ae43dc4f8f6ee83b685d17be2a2d3",
+      "status": "fail",
+      "findings": "3 real new Contacts lifecycle ArkTS type errors; both Theme modules obsolete buildOption.arkEnable schema; full batch finished; no HAP artifact"
     }
   },
   "agents": {
@@ -1355,5 +1361,11 @@
     "Root batched audio clock/error/short-ready fixes pass11host tests; new3HAPs queued",
     "Contacts/Theme lifecycle source batch active; missing real wallpaper settings UI and other provider backends remain open",
     "Legitimate OEM DeviceAttest, AudioVivid, Ads, SecurityGuard, geocoder/modem/HCI inputs still unsupplied"
+  ],
+  "next_required": [
+    "Batch corrected Contacts types and Theme schema then rebuild three complete official product SDK HAPs",
+    "Resolve Contacts public caller framing/errors and finish Wallpaper settings and backend route",
+    "Integrate full source graph/signing/preinstall and new genuine GNSS/Sensor/Contacts/Wallpaper runtime verifiers",
+    "Build/package one ARM64 phone and validate actual runtime and regressions before remaining five"
   ]
 }

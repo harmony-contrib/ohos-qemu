@@ -1396,7 +1396,9 @@
         "ci/capability-audit/batch_media_",
         "ci/capability-audit/test_batch_media_",
         "ci/capability-audit/fixtures/batch_media/",
-        "docs/capability-audit/parallel/media/"
+        "docs/capability-audit/parallel/media/",
+        "patches/common/applications/standard/settings/wallpaper_settings/",
+        "patches/common/base/theme/wallpaper_mgr/qemu_renderer/"
       ],
       "requirements": [
         {
@@ -1531,6 +1533,14 @@
       ],
       "count": 7,
       "upstream_files": [
+        "applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+        "applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+        "applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets",
+        "applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+        "applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+        "applications/standard/settings/product/phone/src/main/module.json5",
+        "base/theme/wallpaper_mgr/services/BUILD.gn",
+        "base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp",
         "device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
       ]
     },
@@ -1804,6 +1814,46 @@
       "agent": "system",
       "read_only_source": true,
       "write_prefix": "docs/capability-audit/parallel/system/round8-first-build-readiness/"
+    },
+    "media_wallpaper_settings": {
+      "agent": "media",
+      "baseline_root_commit": "6a580c86a41034532c16f2b73b75ea76a4fe7fc2",
+      "targets": [
+        "applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+        "applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets",
+        "applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+        "applications/standard/settings/product/phone/src/main/module.json5",
+        "applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+        "applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+        "base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp",
+        "base/theme/wallpaper_mgr/services/BUILD.gn"
+      ],
+      "no_heavy_tasks": true,
+      "handoff": "phone manifest prior SharePicker work complete and integrated; apps active scope excludes it; root freezes these eight files until integration"
+    },
+    "apps_contacts_protocol": {
+      "agent": "apps",
+      "targets": [
+        "applications/standard/contacts_data/contacts/src/contact.js",
+        "applications/standard/contacts_data/contacts/src/contacts_api.cpp",
+        "applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp",
+        "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h",
+        "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h"
+      ],
+      "no_heavy_without_lease": true
+    },
+    "system_live_inputs": {
+      "agent": "system",
+      "new_files": [
+        "ci/capability-audit/batch_system_live_inputs.py",
+        "ci/capability-audit/batch_system_build_live_hap.py",
+        "ci/capability-audit/batch_system_run_live_inputs.py",
+        "ci/capability-audit/batch_system_verify_live_inputs.py",
+        "ci/capability-audit/batch_system_test_live_inputs.py"
+      ],
+      "fixture_prefix": "ci/capability-audit/fixtures/batch_system/live_inputs/",
+      "no_shared_suite_or_closure_edits": true,
+      "no_heavy_tasks": true
     }
   }
 }
