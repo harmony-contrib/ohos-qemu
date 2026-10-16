@@ -1,0 +1,96 @@
+// No coordinates, acceleration trace or expected algorithm states are compiled in.
+import location from '@ohos.geoLocationManager';
+import sensor from '@ohos.sensor';
+import stationary from '@ohos.stationary';
+import fs from '@ohos.file.fs';
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import common from '@ohos.app.ability.common';
+import { BusinessError } from '@ohos.base';
+import native from 'libliveinputaudit.so';
+interface Row { schema: number; run_id: string; seq: number; kind: string; generation: number;
+  boot_ns: string; values: number[]; text: string; }
+@Entry
+@Component
+struct Index {
+  @State private note: string = 'Ready for independent external input';
+  private readonly runId: string = '__LIVE_RUN_ID__';
+  private readonly logPath: string = '/data/storage/el2/base/files/live-__LIVE_RUN_ID__.jsonl';
+  private sequence: number = 0;
+  private generation: number = 0;
+  private active: boolean = false;
+  private rawCount: number = 0;
+  private locationCb: (v: location.Location) => void = () => {};
+  private sensorCb: (v: sensor.AccelerometerResponse) => void = () => {};
+  private stillCb: (v: stationary.ActivityResponse) => void = () => {};
+  private record(kind: string, values: number[] = [], text: string = ''): void {
+    if (this.sequence >= 20000) { throw new Error('bounded raw result limit exceeded'); }
+    const row: Row = { schema: 1, run_id: this.runId, seq: ++this.sequence, kind,
+      generation: this.generation, boot_ns: native.clock(), values, text };
+    const file = fs.openSync(this.logPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
+    try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
+    this.note = kind;
+  }
+  private async permissions(): Promise<void> {
+    try {
+      const answer = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(
+        getContext(this) as common.UIAbilityContext,
+        ['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']);
+      this.record('permissions', answer.authResults, answer.permissions.join(','));
+    } catch (e) { this.record('error', [(e as BusinessError).code], 'permissions'); }
+  }
+  private start(): void {
+    if (this.active) { this.record('error', [], 'duplicate start'); return; }
+    this.active = true; this.generation++;
+    const current = this.generation;
+    this.locationCb = (v: location.Location): void => {
+      this.record('location', [current, v.latitude, v.longitude, v.altitude, v.accuracy, v.speed,
+        v.timeStamp, v.timeSinceBoot, v.isFromMock === true ? 1 : 0,
+        typeof v.isFromMock === 'boolean' ? 1 : 0, v.sourceType === undefined ? -1 : v.sourceType]);
+    };
+    this.sensorCb = (v: sensor.AccelerometerResponse): void => {
+      this.rawCount++; this.record('sensor', [current, v.x, v.y, v.z, v.timestamp]);
+    };
+    this.stillCb = (v: stationary.ActivityResponse): void => { this.record('still', [current, v.state]); };
+    this.record('start');
+    try {
+      location.on('locationChange', { priority: location.LocationRequestPriority.ACCURACY,
+        timeInterval: 0, distanceInterval: 0, maxAccuracy: 0 }, this.locationCb);
+      this.record('subscribed', [], 'location');
+    } catch (e) { this.record('error', [(e as BusinessError).code], 'location.on'); }
+    try {
+      sensor.on(sensor.SensorId.ACCELEROMETER, this.sensorCb, { interval: 10000000 });
+      this.record('subscribed', [], 'sensor');
+    } catch (e) { this.record('error', [(e as BusinessError).code], 'sensor.on'); }
+    try {
+      stationary.on('still', stationary.ActivityEvent.ENTER_EXIT, 1000000000, this.stillCb);
+      this.record('subscribed', [], 'stationary');
+    } catch (e) { this.record('error', [(e as BusinessError).code], 'stationary.on'); }
+    this.record('start_complete');
+  }
+  private stop(): void {
+    this.record('stop_begin');
+    try { location.off('locationChange', this.locationCb); } catch (e) {
+      this.record('error', [(e as BusinessError).code], 'location.off'); }
+    try { sensor.off(sensor.SensorId.ACCELEROMETER, this.sensorCb); } catch (e) {
+      this.record('error', [(e as BusinessError).code], 'sensor.off'); }
+    try { stationary.off('still', stationary.ActivityEvent.ENTER_EXIT, this.stillCb); } catch (e) {
+      this.record('error', [(e as BusinessError).code], 'stationary.off'); }
+    this.active = false; this.record('stopped');
+  }
+  aboutToAppear(): void {
+    const file = fs.openSync(this.logPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
+    fs.closeSync(file); this.record('ready'); this.record('socket_denials', [], native.denials());
+  }
+  aboutToDisappear(): void { if (this.active) { this.stop(); } }
+  build() {
+    Column() {
+      Text(this.note)
+      Button('Request actual location permission').id('live-permissions').onClick(() => { this.permissions(); })
+      Button('Start real public observers').id('live-start').onClick(() => { this.start(); })
+      Button('Stop real public observers').id('live-stop').onClick(() => { this.stop(); })
+      Button('Record actual UID socket refusal').id('live-denials').onClick(() => { this.record('socket_denials', [], native.denials()); })
+      Button('Record quiet interval').id('live-quiet').onClick(() => { this.record('quiet_marker'); })
+      Button('Finish').id('live-finish').onClick(() => { this.record('finished'); })
+    }.width('100%').height('100%')
+  }
+}

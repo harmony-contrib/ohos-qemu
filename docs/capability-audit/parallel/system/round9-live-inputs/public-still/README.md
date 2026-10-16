@@ -74,3 +74,15 @@ after checking all actual member uses. It preserves warning settings. The real
 stationary-server label has manager/client objects, no service object; the
 platform contract now lists exactly 15 real objects. Current-source native
 recompilation and all 13 host cases remain pending a root-scheduled batch.
+
+## Current host-03 result
+
+The next authorized batch froze commit `3510df8` (input archive SHA
+`09af5cfb31f6512645058c348e1291f3b9b91a3dd3d66ca112b52a2c818f11e0`).
+Both GNU ASan/UBSan/Werror compile commands and all 13 cases passed, including
+`external_callback_quiesce` in 1.221 seconds. `host-03/` preserves commands, input
+hashes, logs and evidence SHA
+`a185ced126645be2f825c418973532aa3736f0dd911be1a87f3f58bb4361ef64`.
+The container was removed and its exclusive heavy lease released immediately.
+This supersedes the earlier pending host-13 note only. Actual product15-object
+recompilation, CFI links and new-package ordinary API tests remain pending.

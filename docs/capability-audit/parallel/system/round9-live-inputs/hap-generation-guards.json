@@ -1,0 +1,24 @@
+{
+  "actual_sdk": "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony",
+  "project": "/tmp/ohos-system-live-hap-prepare-r9-20261017-05",
+  "actual_source_contract": "/tmp/ohos-system-live-hap-prepare-r9-20261017-05/live-inputs-contract.json",
+  "compiler_invoked": false,
+  "hap_built": false,
+  "checks": [
+    {
+      "case": "actual API26 metadata/declarations and generated source contract",
+      "status": "pass"
+    },
+    {
+      "case": "changed source rejected: entry/src/main/ets/pages/Index.ets",
+      "status": "pass",
+      "rejection": "actual compiled public caller/source/SDK fixture changed"
+    },
+    {
+      "case": "changed source rejected: entry/src/main/module.json5",
+      "status": "pass",
+      "rejection": "actual compiled public caller/source/SDK fixture changed"
+    }
+  ],
+  "contract_sha256": "1af438d06a78c38fbeccfc3ffcc03441c894a2afac3740118d61af3d325a7730"
+}

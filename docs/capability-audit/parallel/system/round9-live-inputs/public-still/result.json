@@ -2,7 +2,7 @@
   "agent": "system",
   "baseline_commit": "463c90fe80cc238dc4491b805448a783aa19ab44",
   "reviewed_on": "2026-10-17 Asia/Shanghai",
-  "status": "public_still_platform01_feedback_repaired_bounded_drain_current_native_recheck_pending",
+  "status": "public_still_current_host13_verified_product_CFI_and_new_package_pending",
   "requirements_total": 10,
   "requirements_closed": 0,
   "first_artifact_behavior_gate_passed": false,
@@ -79,7 +79,7 @@
       "action": "No additional kernel/token identity patch guessed from stale evidence."
     },
     "behavior:msdp-device-status-mock-or-missing-clients": {
-      "status": "public_still_candidate_bounded_wait_delta_native_recheck_pending",
+      "status": "public_still_current_host13_verified_product_and_ordinary_API_runtime_pending",
       "fixed_source_findings": [
         "InitMsdpImpl first tries sensor HDI, then sensor-enabled algorithm, then explicitly falls back to MockHandle.",
         "The tree contains real devicestatus_algo sources for absolute-still/horizontal/vertical and sensor callback integration; existence alone does not show QEMU runtime input.",
@@ -120,7 +120,6 @@
       ],
       "remaining": [
         "Recompile all15 actual product objects after root platform01 unused private-field cleanup and bounded callback drain delta; previous12 successful object results do not prove current full product linkage.",
-        "Run the complete current 13-case GNU ASan/UBSan host batch including actual blocked external callback quiesce; preserved 12-case host-02 PASS applies only before this bounded-wait delta.",
         "Root must apply public_still after sensor_input, compile all affected actual product TUs in sensor-enabled/no-mock, sensor-enabled/default and sensor-disabled configurations, and link actual CFI/LTO DSOs with corrected internal Destroy function type.",
         "Need same newly packaged ARM64 phone actual external random acceleration challenge matched through actual VDI -> Sensor HDI -> SensorAgent -> independent public still threshold algorithm -> ordinary stationary API callbacks; archive/signature/BMS UID/same-boot binding and failure/stop/restart/old-generation boundaries remain unvalidated.",
         "Public still uses the existing five-event acceleration magnitude heuristic. This batch does not validate physical immobility accuracy, implement relativeStill or other missing motion/sensor capabilities, or close the assigned MSDP requirement.",
@@ -282,17 +281,21 @@
       "command": "Root frozen a9189eb actual ARM64 product MSDP 15-object platform01 batch",
       "result": "12 PASS,3 manager variants FAIL: obsolete unused type_/event_/arrs_ private fields. Exact logs retained; cleanup and bounded drain now await consolidated recompile. Nonexistent 16th intention service object excluded as diagnostic scope error.",
       "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/public-still/platform-01/summary.json"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C docker run --name ohos-system-public-still-host-r9-20261017-03 --rm --platform linux/amd64 --cpus=2 --memory=5g --network=none -v /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/system-public-still-host-r9-20261017-03/inputs:/work:ro -v /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/system-public-still-host-r9-20261017-03:/evidence --tmpfs /tmp:exec,mode=1777,size=1g ohos-qemu-build-env:7.0-release-gn-qemu-user bash -lc 'timeout -k 3s 60s python3 /work/ci/capability-audit/batch_system_public_still.py --output /evidence/run --compile-and-run --cxx /usr/bin/g++' > /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/system-public-still-host-r9-20261017-03/container.log 2>&1",
+      "result": "PASS:2GNU ASan/UBSan/Werror compiles; current13/13 scenarios pass, including real blocked callback one-second truthful failure/owner and DSO retention/no Deactivate followed by release/retry/actual worker join and dlclose. Only host actual algorithms/extracted service methods; current actual product full-TU/CFI linking and guest remain pending.",
+      "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/public-still/host-03/run/evidence.json"
     }
   ],
   "integration_requests": [
     "Apply new patches/common/base/msdp/device_status/public_still/apply.py after existing sensor_input exact final hashes; original component/fixtures are unchanged. Root owns shared preparation/builder hook.",
     "Compile/link actual product objects and configs in round9-live-inputs/public-still/platform-compilation-contract.json, preserving CFI/LTO/fno-exceptions, including real mock Destroy export consistency; no public SDK signature change.",
     "Build/sign/run ordinary API HAP and challenge controller only against a fresh archived ARM64 phone representative package; root owns SDK/HAP signing, ordinary suite and closure integration. Live tools follow this source batch.",
-    "Keep the frozen platform01 attempt and host-02 evidence. Batch current bounded-wait delta and all platform compile failures before the next native diagnostic; do not substitute old twelve-case PASS for the new thirteen-case test."
+    "Current13 host cases passed from frozen3510df8. Retain platform01 failures and batch the actual product15-object recompile/CFI links with other known root fixes before the new representative package."
   ],
   "remaining_gaps": [
     "Root platform01: obsolete private-field compile failures repaired in current candidate; full15-object native recheck remains pending.",
-    "Run the complete current 13-case GNU ASan/UBSan host batch including actual blocked external callback quiesce; preserved 12-case host-02 PASS applies only before this bounded-wait delta.",
     "Root must apply public_still after sensor_input, compile all affected actual product TUs in sensor-enabled/no-mock, sensor-enabled/default and sensor-disabled configurations, and link actual CFI/LTO DSOs with corrected internal Destroy function type.",
     "Need same newly packaged ARM64 phone actual external random acceleration challenge matched through actual VDI -> Sensor HDI -> SensorAgent -> independent public still threshold algorithm -> ordinary stationary API callbacks; archive/signature/BMS UID/same-boot binding and failure/stop/restart/old-generation boundaries remain unvalidated.",
     "Public still uses the existing five-event acceleration magnitude heuristic. This batch does not validate physical immobility accuracy, implement relativeStill or other missing motion/sensor capabilities, or close the assigned MSDP requirement.",
@@ -322,6 +325,18 @@
       0
     ],
     "cases_passed": 12,
+    "container_released": true
+  },
+  "native_batch_03": {
+    "container": "ohos-system-public-still-host-r9-20261017-03",
+    "archive_sha256": "09af5cfb31f6512645058c348e1291f3b9b91a3dd3d66ca112b52a2c818f11e0",
+    "evidence_sha256": "a185ced126645be2f825c418973532aa3736f0dd911be1a87f3f58bb4361ef64",
+    "both_compiler_exit_codes": [
+      0,
+      0
+    ],
+    "cases_passed": 13,
+    "frozen_source_commit": "3510df8b39ba2efdc914535ce7fcd9725b0fa6fe",
     "container_released": true
   }
 }

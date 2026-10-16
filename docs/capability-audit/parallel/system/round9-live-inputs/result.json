@@ -1,0 +1,278 @@
+{
+  "agent": "system",
+  "baseline_commit": "3510df8b39ba2efdc914535ce7fcd9725b0fa6fe",
+  "status": "new_package_live_tools_prepared_host_contract_tests_only_NOT_runtime",
+  "requirements_total": 10,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "upstream_targets": [
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+    "foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp",
+    "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp",
+    "drivers/peripheral/sensor/sensor.gni",
+    "drivers/peripheral/sensor/bundle.json",
+    "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+    "base/msdp/device_status/device_status.gni",
+    "base/msdp/device_status/bundle.json",
+    "base/msdp/device_status/services/BUILD.gn",
+    "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+    "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h",
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp",
+    "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h",
+    "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+    "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h",
+    "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+    "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h",
+    "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h",
+    "base/msdp/device_status/services/native/include/devicestatus_manager.h",
+    "base/msdp/device_status/services/native/src/devicestatus_manager.cpp",
+    "base/msdp/device_status/libs/include/algorithm/algo_base.h",
+    "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+    "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+    "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
+  ],
+  "requirements_review": {
+    "behavior:access-token-api26-kernel-abi": {
+      "status": "open_runtime_identity_proof_pending",
+      "fixed_source_findings": [
+        "AppSpawn SetUserId is a real implementation and SetUidGid calls it before setresuid in the baseline; do not re-fix the old weak success stub.",
+        "SpmGetVersion clears the version and propagates ioctl errno on failure; the prior SPM handshake repair is present."
+      ],
+      "source_paths": [
+        "base/startup/appspawn/modules/common/appspawn_common.c",
+        "base/security/access_token/interfaces/innerkits/token_setproc/src/spm_setproc.c"
+      ],
+      "remaining": [
+        "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+        "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+      ],
+      "action": "No additional kernel/token identity patch guessed from stale evidence."
+    },
+    "behavior:msdp-device-status-mock-or-missing-clients": {
+      "status": "public_still_current_host13_verified_product_and_ordinary_API_runtime_pending",
+      "fixed_source_findings": [
+        "InitMsdpImpl first tries sensor HDI, then sensor-enabled algorithm, then explicitly falls back to MockHandle.",
+        "The tree contains real devicestatus_algo sources for absolute-still/horizontal/vertical and sensor callback integration; existence alone does not show QEMU runtime input.",
+        "Sensor HDI V3 service tries libhdi_product_sensor_impl.z.so then libhdi_sensor_impl.z.so, validates VDI version 1 and calls its Init/enumeration; sensor_host has UID3033 and supplementary GIDs3033/3066.",
+        "SensorAgent accelerometer payload is exactly three float32 axes in m/s^2. Existing MSDP algorithms already transform x=data.y/y=data.x/z=-data.z and reject magnitude above160.",
+        "Actual sensor callback previously accepted NaN/wrong-type/short payloads and unbounded pending events, and leaked subscription after SetBatch/Activate failure.",
+        "API26 public stationary ActivityType still is documented Absolutely still; actual NAPI routes still to TYPE_STILL while only undocumented absoluteStill previously had an algorithm backend.",
+        "Round9 uses an independent TYPE_STILL AlgoAbsoluteStill instance and preserves its exact existing acceleration magnitude threshold (7 < magnitude < 11 for five events) and actual data.type; relativeStill remains unsupported.",
+        "Actual manager previously enabled per listener and disabled only when global listeners empty; event_ was shared across listener types, so per logical type lifetime and individual event filters were not preserved.",
+        "Round9 retirement waits for the actual algorithm worker join on service-side thread before destroying/unloading the algorithm DSO; internal Destroy pointers now match actual void(const IMsdp*) exports. Actual product CFI type verification remains required."
+      ],
+      "source_paths": [
+        "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+        "base/msdp/device_status/libs/BUILD.gn",
+        "drivers/peripheral/sensor/sensor.gni",
+        "drivers/peripheral/sensor/bundle.json",
+        "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+        "base/msdp/device_status/device_status.gni",
+        "base/msdp/device_status/bundle.json",
+        "base/msdp/device_status/services/BUILD.gn",
+        "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+        "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h",
+        "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+        "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h",
+        "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+        "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h",
+        "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h",
+        "base/msdp/device_status/services/native/include/devicestatus_manager.h",
+        "base/msdp/device_status/services/native/src/devicestatus_manager.cpp",
+        "base/msdp/device_status/libs/include/algorithm/algo_base.h",
+        "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+        "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+        "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
+      ],
+      "remaining": [
+        "Recompile all15 actual product objects after root platform01 unused private-field cleanup and bounded callback drain delta; previous12 successful object results do not prove current full product linkage.",
+        "Root must apply public_still after sensor_input, compile all affected actual product TUs in sensor-enabled/no-mock, sensor-enabled/default and sensor-disabled configurations, and link actual CFI/LTO DSOs with corrected internal Destroy function type.",
+        "Need same newly packaged ARM64 phone actual external random acceleration challenge matched through actual VDI -> Sensor HDI -> SensorAgent -> independent public still threshold algorithm -> ordinary stationary API callbacks; archive/signature/BMS UID/same-boot binding and failure/stop/restart/old-generation boundaries remain unvalidated.",
+        "Public still uses the existing five-event acceleration magnitude heuristic. This batch does not validate physical immobility accuracy, implement relativeStill or other missing motion/sensor capabilities, or close the assigned MSDP requirement.",
+        "Manager Binder lifetime cases use actual extracted function bodies with a host Binder scaffold; actual platform Binder death and cross-process callbacks remain package checks."
+      ],
+      "action": "Round9 public_still composes after the immutable sensor_input final hashes. It connects public still to the genuine threshold algorithm, keeps separate logical instances/first-last references, shares one accelerometer, rolls back failed registrations/listeners and quiesces callback slots/worker before actual DSO unload. No synthetic sensor/API events or relativeStill implementation. Follow-up bounds external callback drain to one second, retains inactive slot/owner and stopping type on timeout, returns real failure and retries quiesce before physical stop/worker retirement."
+    },
+    "behavior:native-child-process-phone-boundary": {
+      "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+      "fixed_source_findings": [
+        "Both Create entrypoints retain the startup callback after dispatch; synchronous terminal notification can remove nothing and then be retained forever.",
+        "Null child/proxy allocation failure do not release retention consistently; unsynchronized callback_ permits reentrant or concurrent duplicate delivery.",
+        "SDK declares StartMode as export const enum; missing NAPI runtime enum object alone is not sufficient failure evidence. Existing typed const-enum compilation is the relevant boundary.",
+        "Main reports full actual child product TU compilation passes for the round-1 repair; final linking and newly packaged IPC/lifecycle/identity validation remain pending."
+      ],
+      "source_paths": [
+        "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+        "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+        "foundation/ability/ability_runtime/frameworks/js/napi/js_child_process_manager/js_child_process_manager.cpp",
+        "interface/sdk-js/api/@ohos.app.ability.childProcessManager.d.ts"
+      ],
+      "action": "Added 0004 terminal callback lifecycle patch: retain before dispatch, clean immediate failure, take callback once under a short mutex, release retained reference and hold a local strong reference while calling user code outside locks. Invalid child/proxy failures truthfully return NCP_ERR_INTERNAL once.",
+      "remaining": [
+        "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+        "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+      ]
+    },
+    "behavior:session-manager-profile-gap": {
+      "status": "open_profile_and_sceneboard_runtime_pending",
+      "fixed_source_findings": [
+        "Pinned window_manager bundle declares SessionManager=false and includes scene/session/screen-session manager libraries.",
+        "Repository baseline already selects real SceneBoard implementation/profile through patches/lib/graphics_features.py and phone/2in1 product adapters."
+      ],
+      "source_paths": [
+        "foundation/window/window_manager/bundle.json"
+      ],
+      "remaining": [
+        "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+        "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+      ],
+      "action": "Avoided a duplicate profile declaration-only patch and avoided the main-agent RenderService ownership."
+    },
+    "behavior:calendar-lifecycle-device-difference": {
+      "status": "open_provider_ui_and_packaged_runtime_pending",
+      "fixed_source_findings": [
+        "Fixed calendar source actually declares calendardata_whole and ReminderCallbackExtAbility with specific whole-calendar and update-rrule permissions.",
+        "Native editEvent still explicitly targets missing EditorUIExtensionAbility; ReminderAgentHelper targets com.ohos.calendar.",
+        "The baseline has source-provider HAP/signature preparation; old prebuilt absence must not be re-repaired by fabricating a provider."
+      ],
+      "source_paths": [
+        "applications/standard/calendardata/entry/src/main/module.json5",
+        "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+        "applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets"
+      ],
+      "remaining": [
+        "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+        "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+      ],
+      "action": "Calendar provider, actual Editor UI and app routing implementation are exclusively apps-agent owned in the active parent batch. This group avoids calendar changes; final HAP registration and packaged lifecycle evidence remain pending."
+    },
+    "behavior:device-attest-uninitialized": {
+      "status": "open_oem_provisioning_dependency",
+      "fixed_source_findings": [
+        "OEMGetProductId and OEMGetProductKey have intentionally empty product ID/key buffers in the fixed OEM adapter."
+      ],
+      "source_paths": [
+        "test/xts/device_attest/services/oem_adapter/src/device_attest_oem_adapter.c"
+      ],
+      "remaining": [
+        "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+        "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+      ],
+      "action": "No fabricated credentials, success result or ticket introduced."
+    },
+    "behavior:advertising-service-provider-missing": {
+      "status": "open_real_ad_provider_dependency",
+      "fixed_source_findings": [
+        "Fixed ads config targets com.samples.AdsServiceDemo/AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService.",
+        "AdLoadService additionally requires providerApiAbilityName before connecting, and the shipped config omits that key."
+      ],
+      "source_paths": [
+        "domains/advertising/advertising/frameworks/js/napi/ads/resource/ad_service_config.json",
+        "domains/advertising/advertising/frameworks/js/napi/ads/src/ad_load_service.cpp"
+      ],
+      "remaining": [
+        "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+        "Adding a name or returning synthetic ad data alone would not repair this capability."
+      ],
+      "action": "No fictional provider configuration or mock ad service added."
+    },
+    "behavior:graphics3d-scene-manager-unavailable": {
+      "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
+      "fixed_source_findings": [
+        "Scene.load failure maps to RenderContextJS::CreateScene line 881: CreateSceneManager(uri) returns null before scene creation.",
+        "Public module/library presence is not proof the META scene plugin registry, task queues, renderer and scene importer initialized."
+      ],
+      "source_paths": [
+        "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp"
+      ],
+      "remaining": [
+        "Main reports all actual ARM64 product TUs including split-LTO modules pass for the round-2 change; final linking and a newly packaged runtime path remain pending.",
+        "Need actual Scene.load/create/render/destroy/recreate with a valid asset, plugin load/retry diagnostics and stable RenderService/software-render context from the new package."
+      ],
+      "action": "Round 2 repairs actual engine/plugin load and retry state, truthful complete initialization, partial object rollback and JS queue lifetime; see round2-graphics3d/result.json. This does not yet prove the original guest failure fully resolved."
+    },
+    "behavior:security-guard-empty-model-config": {
+      "status": "open_real_risk_model_dependency",
+      "fixed_source_findings": [
+        "Fixed OEM security_guard_model.cfg is exactly an empty modelcfg array.",
+        "Framework model configuration parser caches supplied model IDs and associated event lists; no actual OEM risk model is supplied by the current config."
+      ],
+      "source_paths": [
+        "base/security/security_guard/oem_property/hos/security_guard_model.cfg"
+      ],
+      "remaining": [
+        "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+        "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+      ],
+      "action": "No invented model IDs, fake score or permission relaxation introduced."
+    },
+    "behavior:app-domain-verification-extension-missing": {
+      "status": "open_real_verification_routing_evidence_pending",
+      "fixed_source_findings": [
+        "CompleteVerifyRefresh and ExecuteVerifyTask already fall back to the real VerifyTask path on E_EXTENSIONS_LIB_NOT_FOUND.",
+        "ConvertToExplicitWant fallback constructs an empty TargetInfo and invokes OnConvert(0,...); optional extension absence alone is not proof all verification is broken."
+      ],
+      "source_paths": [
+        "foundation/bundlemanager/app_domain_verify/services/src/agent/core/app_domain_verify_agent_service.cpp"
+      ],
+      "remaining": [
+        "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+        "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+      ],
+      "action": "No optional-library dependency fabricated and no trust/signature rule weakened."
+    }
+  },
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p batch_system_test_live_inputs.py -v",
+      "result": "14 host validator boundary tests PASS with explicitly constructed data; NOT guest execution or API runtime proof.",
+      "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/live-host-tests.log"
+    },
+    {
+      "command": "Generate ordinary caller only against actual installed API26 SDK, verify actual contract, reject changed ETS/module source",
+      "result": "3 source-only guards PASS; SDK metadata/declarations read, no native compile/HAP/signature/guest execution.",
+      "evidence": "docs/capability-audit/parallel/system/round9-live-inputs/hap-generation-guards.json"
+    }
+  ],
+  "integration_requests": [
+    "Compile new ordinary live caller with actual API26 SDK under root lease, sign with legitimate normal/hos_normal_app profile without ACL/restricted grants, run new external input tools inside same fresh ARM64 phone acceptance boot and preserve raw trace/API/nonce/DSO/signature results.",
+    "Wire independent live verifier into root suite/closure only after actual pass; msdp-source uses shared verify_qemu_msdp_image.py real contract. Observer Stop/Start is not native service process restart; root must supply additional actual process/reboot recovery cases."
+  ],
+  "remaining_gaps": [
+    "Actual API26 native/HAP build and legitimate normal-profile signature have not run for this caller.",
+    "No new package/guest has run these probes; all real provider/service/API callbacks and ordinary UID socket denials remain pending.",
+    "Native process crash/restart/reboot recovery is root-owned and is not implemented by the two observer generations.",
+    "Need root product15-TU recompile and CFI links after source3510df8; current host13 PASS does not replace them.",
+    "Public still proves only the original five-event magnitude heuristic path; physical immobility accuracy, relativeStill and all other assigned requirements remain open."
+  ],
+  "owned_files": [
+    "ci/capability-audit/batch_system_build_live_hap.py",
+    "ci/capability-audit/batch_system_live_inputs.py",
+    "ci/capability-audit/batch_system_run_live_inputs.py",
+    "ci/capability-audit/batch_system_test_live_inputs.py",
+    "ci/capability-audit/batch_system_verify_live_inputs.py",
+    "ci/capability-audit/fixtures/batch_system/live_inputs/EntryAbility.ets",
+    "ci/capability-audit/fixtures/batch_system/live_inputs/Index.ets.in",
+    "ci/capability-audit/fixtures/batch_system/live_inputs/fixed_sources.json",
+    "ci/capability-audit/fixtures/batch_system/live_inputs/socket_probe.cpp"
+  ],
+  "guarded_public_still_source_commit": "3510df8b39ba2efdc914535ce7fcd9725b0fa6fe",
+  "actual_sdk_contract_sha256": "1af438d06a78c38fbeccfc3ffcc03441c894a2afac3740118d61af3d325a7730"
+}
