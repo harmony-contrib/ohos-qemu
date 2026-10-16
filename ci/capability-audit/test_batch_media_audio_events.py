@@ -32,7 +32,128 @@ printf("actual PCM/interrupt/error functions and genuine entropy/fresh nonce/ack
   with tempfile.TemporaryDirectory() as temp:
    root=Path(temp);path=root/'events.cpp';path.write_text(harness)
    subprocess.run(flags+['-fsanitize=address,undefined',str(path),'-o',str(root/'test')],check=True)
-   subprocess.run([str(root/'test'),str(root)],check=True,timeout=10,env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0' if os.uname().sysname!='Linux' else 'detect_leaks=1'))
+   subprocess.run([str(root/'test'),str(root)],check=True,timeout=10,env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0' if os.uname().sysname!='Linux' else 'detect_leaks=1',UBSAN_OPTIONS='halt_on_error=1:print_stacktrace=1'))
+ def test_actual_fresh_request_PCM_reply_and_live_callback_under_sanitizers(self):
+  source=(HERE/'batch_media_audio_event_probe.cpp').read_text();prefix=source[:source.index('namespace {')]
+  decl=source[source.index('constexpr size_t CAPACITY'):source.index('int64_t Now()')].replace('constexpr const char *PRIVATE="/data/storage/el2/base/files/";','const char *PRIVATE=nullptr;')
+  keys=['int64_t Now()', 'void Read(', 'void Interrupt(', 'void Error(', 'bool Snapshot(', 'bool WritePrivate(', 'bool Nonce(', 'bool Ack(', 'bool SnapshotRequest(', 'bool WriteSnapshotPrivate(', 'bool ReadFreshQueries(', 'int FreshError(', 'int FreshQueryError(', 'int FreshSnapshotReply(', 'bool Handshake(', 'bool Persist(']
+  actual='\n'.join(function(source,key) for key in keys)
+  fake=r'''
+#include <cassert>
+#include <fstream>
+#include <iterator>
+#include <thread>
+static std::atomic<int> fakeState{AUDIOSTREAM_STATE_RUNNING},fakeSource{AUDIOSTREAM_SOURCE_TYPE_MIC},fakeRate{48000},fakeChannels{2},fakeFormat{AUDIOSTREAM_SAMPLE_S16LE},failGetter{0},getterCalls{0};
+static std::atomic<int64_t> fakeFrames{100000},fakePosition{100000};
+static std::atomic<bool> wrongOwner{false};
+static uid_t ProbeUid(){return wrongOwner.load()?::getuid()+1: ::getuid();}
+OH_AudioStream_Result OH_AudioCapturer_GetCurrentState(OH_AudioCapturer*,OH_AudioStream_State *out){++getterCalls;if(failGetter==1)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*out=static_cast<OH_AudioStream_State>(fakeState.load());return AUDIOSTREAM_SUCCESS;}
+OH_AudioStream_Result OH_AudioCapturer_GetFramesRead(OH_AudioCapturer*,int64_t *out){++getterCalls;if(failGetter==2)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*out=fakeFrames;return AUDIOSTREAM_SUCCESS;}
+OH_AudioStream_Result OH_AudioCapturer_GetTimestamp(OH_AudioCapturer*,clockid_t,int64_t *position,int64_t *stamp){++getterCalls;if(failGetter==3)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*position=fakePosition;timespec time{};assert(clock_gettime(CLOCK_MONOTONIC,&time)==0);*stamp=static_cast<int64_t>(time.tv_sec)*1000000000+time.tv_nsec;return AUDIOSTREAM_SUCCESS;}
+OH_AudioStream_Result OH_AudioCapturer_GetCapturerInfo(OH_AudioCapturer*,OH_AudioStream_SourceType *out){++getterCalls;if(failGetter==4)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*out=static_cast<OH_AudioStream_SourceType>(fakeSource.load());return AUDIOSTREAM_SUCCESS;}
+OH_AudioStream_Result OH_AudioCapturer_GetSamplingRate(OH_AudioCapturer*,int32_t *out){++getterCalls;if(failGetter==5)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*out=fakeRate;return AUDIOSTREAM_SUCCESS;}
+OH_AudioStream_Result OH_AudioCapturer_GetChannelCount(OH_AudioCapturer*,int32_t *out){++getterCalls;if(failGetter==6)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*out=fakeChannels;return AUDIOSTREAM_SUCCESS;}
+OH_AudioStream_Result OH_AudioCapturer_GetSampleFormat(OH_AudioCapturer*,OH_AudioStream_SampleFormat *out){++getterCalls;if(failGetter==7)return AUDIOSTREAM_ERROR_ILLEGAL_STATE;*out=static_cast<OH_AudioStream_SampleFormat>(fakeFormat.load());return AUDIOSTREAM_SUCCESS;}
+#define getuid ProbeUid
+'''
+  harness=prefix+decl+fake+actual+r'''
+#undef getuid
+static std::string ReadFile(const std::string &name){std::ifstream in(name,std::ios::binary);return {std::istreambuf_iterator<char>(in),std::istreambuf_iterator<char>()};}
+static bool Exists(const std::string &name){struct stat info{};return lstat(name.c_str(),&info)==0;}
+static std::string Run(unsigned index){char text[33]{};assert(snprintf(text,sizeof(text),"%032x",index)==32);return text;}
+static void Reset(Context &c,int phase){c.size=0;c.phase=phase;c.invalid=0;c.chunks.clear();c.events.clear();cancelled=false;fakeState=AUDIOSTREAM_STATE_RUNNING;fakeSource=AUDIOSTREAM_SOURCE_TYPE_MIC;fakeRate=48000;fakeChannels=2;fakeFormat=AUDIOSTREAM_SAMPLE_S16LE;fakeFrames=100000;fakePosition=100000;failGetter=0;wrongOwner=false;}
+static void Audio(Context &c,size_t size,uint8_t seed){std::vector<uint8_t> bytes(size);for(size_t i=0;i<size;++i)bytes[i]=static_cast<uint8_t>(seed+i%173);fakeFrames+=size/4;fakePosition+=size/4;Read(nullptr,&c,bytes.data(),static_cast<int>(bytes.size()));}
+static bool WaitFor(const std::string &path,const std::string &needle){for(int i=0;i<100;++i){if(ReadFile(path).find(needle)!=std::string::npos)return true;usleep(10000);}return false;}
+int main(int argc,char **argv){assert(argc==2);const std::string directory=std::string(argv[1])+"/";PRIVATE=directory.c_str();
+ const std::string nonce="0123456789abcdef0123456789abcdef",input=nonce+"\n";bool pending=false;
+ const std::string request=directory+"request";assert(!SnapshotRequest(request,nonce,pending)&&pending);
+ assert(WritePrivate(request,input.data(),input.size()));assert(SnapshotRequest(request,nonce,pending)&&!pending);
+ assert(!SnapshotRequest(request,std::string(32,'f'),pending)&&!pending);wrongOwner=true;assert(!SnapshotRequest(request,nonce,pending));wrongOwner=false;
+ assert(chmod(request.c_str(),0400)==0);assert(!SnapshotRequest(request,nonce,pending));assert(chmod(request.c_str(),0644)==0);assert(!SnapshotRequest(request,nonce,pending));assert(chmod(request.c_str(),0600)==0);
+ assert(symlink(request.c_str(),(request+"-link").c_str())==0);assert(!SnapshotRequest(request+"-link",nonce,pending));
+ assert(mkfifo((request+"-fifo").c_str(),0600)==0);assert(!SnapshotRequest(request+"-fifo",nonce,pending));
+ assert(WritePrivate(request+"-short",input.data(),32));assert(!SnapshotRequest(request+"-short",nonce,pending));
+ assert(WritePrivate(request+"-long",(input+"x").data(),34));assert(!SnapshotRequest(request+"-long",nonce,pending));
+ Context c;OH_AudioCapturer *capturer=reinterpret_cast<OH_AudioCapturer*>(1);FILE *out=tmpfile();assert(out);
+ for(int phase:{1,0}){Reset(c,phase);Audio(c,192000,11);const std::string run=Run(10+phase),action=phase?"focus_begin":"contender_start",base=directory+"audio-event-"+run+"-"+action;
+  FreshSnapshot fresh;const auto created=Now();assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==0&&!fresh.requested);
+  assert(WritePrivate(base+"-snapshot-request",input.data(),input.size()));assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==0&&fresh.requested);assert(fresh.offset==192000);
+  usleep(3000);assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==0); // a timer cannot republish old PCM
+  Audio(c,48000,91);assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==0);
+  Audio(c,48000,127);assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==1&&fresh.replied);
+  const std::string pcm=directory+"audio-event-"+run+"-"+action+"-snapshot-"+nonce+".pcm",reply=base+"-snapshot-reply.json";
+  assert(ReadFile(pcm)==std::string(reinterpret_cast<const char*>(c.bytes.data()+192000),96000));const std::string saved=ReadFile(reply);const int calls=getterCalls;
+  Audio(c,96000,77);assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==1);assert(ReadFile(reply)==saved&&getterCalls==calls); // one request/reply only
+ }
+ // All failure cases execute the actual handler. Getter values are controlled dependencies, never real audio backend proof.
+ for(int fault=0;fault<20;++fault){Reset(c,1);Audio(c,192000,11);const std::string run=Run(100+fault),action="focus_begin",base=directory+"audio-event-"+run+"-"+action;
+  FreshSnapshot fresh;const auto created=Now();assert(WritePrivate(base+"-snapshot-request",input.data(),input.size()));assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,created,capturer,c,fresh)==0);
+  Audio(c,96000,91);
+  if(fault==0)c.invalid=1;else if(fault==1)c.phase=2;else if(fault==2)c.chunks.back().time=fresh.seen;
+  else if(fault==3)c.chunks.back().offset=c.size+1;else if(fault==4)c.chunks.back().length=-1;
+  else if(fault==5){fakeFrames=fresh.base.frames;fakePosition=fresh.base.position;}
+  else if(fault==6)fakeState=AUDIOSTREAM_STATE_STOPPED;else if(fault==7)fakeSource=AUDIOSTREAM_SOURCE_TYPE_VOICE_COMMUNICATION;
+  else if(fault==8)fakeRate=44100;else if(fault==9)fakeChannels=1;else if(fault==10)fakeFormat=AUDIOSTREAM_SAMPLE_F32LE;
+  else if(fault==11)cancelled=true;else if(fault==12)c.chunks.resize(fresh.chunks);
+  else if(fault==13)c.chunks.back().time=Now()+1000000000LL;
+  else if(fault==14){const std::string pcm=directory+"audio-event-"+run+"-"+action+"-snapshot-"+nonce+".pcm";assert(WritePrivate(pcm,"old",3));}
+  else if(fault==15)assert(WritePrivate(base+"-snapshot-reply.json","old",3));
+  else if(fault==16)c.size=c.bytes.size()+1;else if(fault==17)c.chunks.back().phase=0;else if(fault==19){++c.size;++c.chunks.back().offset;}
+  const int64_t start=fault==18?Now()-15000000000LL:created;
+  assert(FreshSnapshotReply(out,run.c_str(),action.c_str(),base,nonce,start,capturer,c,fresh)==-1&&!fresh.replied);
+  if(fault==14)assert(ReadFile(directory+"audio-event-"+run+"-"+action+"-snapshot-"+nonce+".pcm")=="old");
+  if(fault==15)assert(ReadFile(base+"-snapshot-reply.json")=="old");
+ }
+ for(int getter=1;getter<=7;++getter){Reset(c,1);Audio(c,192000,11);const std::string run=Run(200+getter),base=directory+"audio-event-"+run+"-focus_begin";FreshSnapshot fresh;
+  assert(WritePrivate(base+"-snapshot-request",input.data(),input.size()));failGetter=getter;
+  assert(FreshSnapshotReply(out,run.c_str(),"focus_begin",base,nonce,Now(),capturer,c,fresh)==-1&&!fresh.replied);
+ }
+ assert(fclose(out)==0);
+ // Actual Snapshot last_callback is null before events and exactly matches final Persist's real callback details afterwards.
+ Reset(c,1);Audio(c,192000,7);const std::string callbackLog=directory+"callback.log";out=fopen(callbackLog.c_str(),"wx");assert(out);
+ assert(Snapshot(out,Run(300).c_str(),capturer,c,"await_action"));Interrupt(nullptr,&c,AUDIOSTREAM_INTERRUPT_FORCE,AUDIOSTREAM_INTERRUPT_HINT_STOP);
+ assert(Snapshot(out,Run(300).c_str(),capturer,c,"await_action"));assert(Persist(out,Run(300).c_str(),1,c));assert(fclose(out)==0);
+ // Actual Handshake integration: legacy/other-action behavior, premature ACK rejection, cancellation, and fresh reply before ACK.
+ for(int scenario=0;scenario<5;++scenario){Reset(c,1);Audio(c,192000,23);const std::string run=Run(400+scenario),action=scenario==1?"revoke":"focus_begin",base=directory+"audio-event-"+run+"-"+action,log=directory+"handshake-"+std::to_string(scenario)+".log";
+  out=fopen(log.c_str(),"wx");assert(out);std::atomic<bool> done{false};bool accepted=false;
+  std::thread worker([&]{accepted=Handshake(out,run.c_str(),action.c_str(),capturer,c);done=true;});
+  assert(WaitFor(base+"-ready.json","\"nonce\":\""));const std::string ready=ReadFile(base+"-ready.json");const size_t where=ready.find("\"nonce\":\"")+9;const std::string key=ready.substr(where,32),ack=key+"\n";assert(key.size()==32);
+  if(scenario==0)assert(WritePrivate(base+"-ack",ack.data(),ack.size()));
+  else if(scenario==1){assert(WritePrivate(base+"-snapshot-request","bad",3));assert(WritePrivate(base+"-ack",ack.data(),ack.size()));}
+  else if(scenario==2){assert(WritePrivate(base+"-snapshot-request",ack.data(),ack.size()));assert(WritePrivate(base+"-ack",ack.data(),ack.size()));}
+  else if(scenario==3){assert(WritePrivate(base+"-snapshot-request",ack.data(),ack.size()));assert(WaitFor(log,"event_fresh_request"));cancelled=true;}
+  else {assert(WritePrivate(base+"-snapshot-request",ack.data(),ack.size()));assert(WaitFor(log,"event_fresh_request"));Audio(c,96000,131);
+   assert(WaitFor(log,"event_fresh_reply"));assert(!done);assert(WritePrivate(base+"-ack",ack.data(),ack.size()));}
+  worker.join();assert(fclose(out)==0);assert(accepted==(scenario==0||scenario==1||scenario==4));
+  if(scenario==0||scenario==1)assert(!Exists(base+"-snapshot-reply.json"));
+ }
+ printf("actual fresh request/PCM/reply and Snapshot callbacks passed: strict nonce/owner/mode/size/NOFOLLOW/FIFO; new-callback half-second;20 refusal/collision/deadline cases;7 getter failures; one reply; legacy/early ACK/cancel/positive handshake. Controlled getters are not runtime proof.\n");
+}
+'''
+  with tempfile.TemporaryDirectory(prefix='batch-media-fresh-snapshot-') as temp:
+   root=Path(temp);path=root/'fresh.cpp';path.write_text(harness)
+   flags=['clang++','-std=c++17','-Wall','-Wextra','-Werror','-pthread','-idirafter',str(SDK),'-fsanitize=address,undefined']
+   subprocess.run(flags+[str(path),'-o',str(root/'test')],check=True)
+   subprocess.run([str(root/'test'),str(root)],check=True,timeout=12,env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0' if os.uname().sysname!='Linux' else 'detect_leaks=1',UBSAN_OPTIONS='halt_on_error=1:print_stacktrace=1'))
+   for phase in [0,1]:
+    action='focus_begin' if phase else 'contender_start';run=f'{10+phase:032x}';reply=json.loads((root/f'audio-event-{run}-{action}-snapshot-reply.json').read_text())
+    self.assertEqual(reply['request_nonce'],reply['ready_nonce']);self.assertEqual(reply['phase'],phase);self.assertEqual(reply['bytes'],96000)
+    self.assertEqual(reply['offset'],reply['requested_offset']);self.assertEqual(reply['end_offset']-reply['offset'],96000)
+    self.assertGreater(reply['first_callback_ns'],reply['request_seen_ns']);self.assertGreaterEqual(reply['last_callback_ns'],reply['first_callback_ns'])
+    self.assertGreaterEqual(reply['copy_before_ns'],reply['last_callback_ns']);self.assertGreaterEqual(reply['query_before_ns'],reply['copy_after_ns']);self.assertGreater(reply['frames'],reply['request_frames'])
+    self.assertEqual((root/reply['pcm_basename']).stat().st_mode&0o7777,0o600)
+   rows=[json.loads(line) for line in (root/'callback.log').read_text().splitlines()];snapshots=[r for r in rows if r['type']=='event_snapshot'];persisted=next(r for r in rows if r['type']=='event_callback')
+   self.assertIsNone(snapshots[0]['last_callback']);self.assertEqual(snapshots[1]['last_callback'],{key:persisted[key] for key in ['kind','code','hint','monotonic_ns']})
+   self.assertEqual((persisted['kind'],persisted['code'],persisted['hint']),(1,0,3))
+
+ def test_existing_oracle_accepts_extra_fresh_reply_observations_without_closure(self):
+  for mode in [1,2]:
+   with tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);rows,results,identity,challenge=self.prepare(root,mode)
+    rows.insert(-1,{'type':'event_fresh_reply','run_id':RUN,'action':'focus_begin' if mode==1 else 'contender_start','phase':1 if mode==1 else 0,'request_nonce':'a'*32,'persisted':True})
+    results.write_text(''.join(json.dumps(r)+'\n' for r in rows));report=self.verify(root,results,identity,challenge,mode)
+    self.assertEqual(report['closed_requirements'],0);self.assertTrue(report['external_token_or_second_app_policy_evidence_required'])
+
  def prepare(self,root,mode):
   challenge=root/'challenge';oracle.pcm.generate(challenge,RUN);_,reference=oracle.pcm.load_reference(challenge/'challenge.json',challenge/'challenge.pcm',RUN)
   start=10000000000;ready_time=start+1300000000;ack_time=ready_time+200000000

@@ -1,0 +1,9 @@
+test_actual_fresh_request_PCM_reply_and_live_callback_under_sanitizers (test_batch_media_audio_events.Events.test_actual_fresh_request_PCM_reply_and_live_callback_under_sanitizers) ... actual fresh request/PCM/reply and Snapshot callbacks passed: strict nonce/owner/mode/size/NOFOLLOW/FIFO; new-callback half-second;20 refusal/collision/deadline cases;7 getter failures; one reply; legacy/early ACK/cancel/positive handshake. Controlled getters are not runtime proof.
+ok
+test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries (test_batch_media_audio_events.Events.test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries) ... actual PCM/interrupt/error functions and genuine entropy/fresh nonce/ack/mode/no-overwrite/NOFOLLOW passed
+ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 4.180s
+
+OK
