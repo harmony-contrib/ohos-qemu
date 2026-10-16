@@ -55,7 +55,7 @@ GROUPS = {
     'calendar_editor': {
         'project': 'applications/standard/calendardata',
         'revision': 'f922427ca0dc20895a0e254ae41382e5b03299a4',
-        'components': ['source_provider', 'event_editor'],
+        'components': ['source_provider', 'event_editor', 'editor_callback_dispatch'],
         'extra_checkout': ['build-profile.json5'],
         'units': ['calendar_manager_napi'],
         'sources': {'calendar_manager_napi': 'calendarmanager/napi/src/calendar_manager_napi.cpp'},
