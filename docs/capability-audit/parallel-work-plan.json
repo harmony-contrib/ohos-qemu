@@ -877,6 +877,7 @@
         "foundation/communication/netmanager_base/services/netmanagernative/src/manager/multi_vpn_manager.cpp",
         "foundation/communication/netmanager_ext/qemu_openvpn/broker_protocol.h",
         "foundation/communication/netmanager_ext/qemu_openvpn/broker_runtime.h",
+        "foundation/communication/netmanager_ext/services/vpnmanager/include/net_vpn_impl.h",
         "foundation/communication/netmanager_ext/services/vpnmanager/src/multi_vpn_helper.cpp",
         "src/openvpn/dns.c",
         "src/openvpn/dns.h",

@@ -73,6 +73,10 @@ parser.add_argument("--userid-only", action="store_true",
                     help="Test real AppSpawn account tagging and ordinary-app ioctl denial")
 parser.add_argument("--audio-stream-only", action="store_true",
                     help="Test normal-app OHAudio renderer PCM callbacks, states and recreation")
+parser.add_argument('--audio-capture-only', action='store_true',
+                    help='Capture actual public MIC PCM; requires external producer and independent verification')
+parser.add_argument('--audio-capture-expect-denied', action='store_true',
+                    help='Expect an independently observed denied microphone token in the capture persona')
 parser.add_argument("--avc-media-only", action="store_true",
                     help="Test ordinary-app software AVC encode/decode pixels, timestamps, IDR and EOS")
 parser.add_argument("--audio-suite-effects-only", action="store_true",
@@ -141,11 +145,14 @@ dedicated_contract_only = dedicated_contract_only or args.completion_handler_onl
 dedicated_contract_only = dedicated_contract_only or args.image_metadata_only or args.wifi_scan_only or args.network_accounting_only
 dedicated_contract_only = dedicated_contract_only or args.router_observer_only or args.observer_info_only
 dedicated_contract_only = dedicated_contract_only or args.spring_loading_only or args.arkui_components_only
+dedicated_contract_only = dedicated_contract_only or args.audio_capture_only
+if args.audio_capture_expect_denied and not args.audio_capture_only:
+    parser.error('--audio-capture-expect-denied requires --audio-capture-only')
 if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only or dedicated_contract_only) or
                                      not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
     parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
 if sum((args.rpc_runtime_only, args.arkui_components_only, args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
-        args.userid_only, args.audio_stream_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.storage_stats_only, args.optional_phone_profile_only, args.photos_recent_only, args.photos_asset_only, args.settings_navigation_only)) > 1:
+        args.userid_only, args.audio_stream_only, args.audio_capture_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.storage_stats_only, args.optional_phone_profile_only, args.photos_recent_only, args.photos_asset_only, args.settings_navigation_only)) > 1:
     parser.error("provider and ordinary probe personas are mutually exclusive")
 if args.image_metadata_only and args.image_metadata_fixtures is None:
     parser.error('--image-metadata-only requires --image-metadata-fixtures')
@@ -2268,6 +2275,16 @@ if args.audio_stream_only:
           Path(__file__).with_name("audio_stream_probe.ets").read_text().replace("__AUDIO_RUN_ID__", challenge))
     write("audio-stream-probe-inputs.json", {"schema_version": 1, "run_id": challenge,
                                            "arch": args.arch, "role": "ordinary_app"})
+if args.audio_capture_only:
+    from audio_capture_contract import PERMISSIONS as capture_permissions, source as capture_source
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/pages/Index.ets', capture_source(challenge, args.audio_capture_expect_denied))
+    write('entry/src/main/cpp/types/libbatchmediacapture/index.d.ts',
+          'interface Probe { run: (runId: string, expectedDenied: boolean) => boolean; }\n'
+          'declare const probe: Probe;\nexport default probe;\n')
+    microphone_module = json.loads((root / 'entry/src/main/module.json5').read_text())
+    microphone_module['module']['requestPermissions'] = capture_permissions
+    write('entry/src/main/module.json5', microphone_module)
 if args.audio_suite_effects_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write("entry/src/main/ets/pages/Index.ets",
@@ -2355,6 +2372,9 @@ if args.audio_stream_only:
 if args.avc_media_only:
     from avc_media_contract import compile_command as avc_compile_command
     command = avc_compile_command(root, args.sdk, args.arch)
+if args.audio_capture_only:
+    from audio_capture_contract import compile_command as capture_compile_command
+    command = capture_compile_command(root, args.sdk, args.arch)
 if args.audio_suite_effects_only:
     flags = ["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"] if args.arch == "armv7a" else []
     command = [str(native / "llvm/bin/clang++"), "--target=" + triple,
@@ -2397,6 +2417,10 @@ if not (args.rpc_runtime_only or args.arkui_components_only or args.spring_loadi
     if args.avc_media_only:
         from avc_media_contract import inputs as avc_inputs
         write('avc-media-probe-inputs.json', avc_inputs(root, args.sdk, args.arch, challenge))
+    if args.audio_capture_only:
+        from audio_capture_contract import inputs as capture_inputs
+        write('audio-capture-probe-inputs.json', capture_inputs(
+            root, args.sdk, args.arch, challenge, args.audio_capture_expect_denied))
 
 environment = dict(os.environ, OHOS_SDK_HOME=str(args.sdk))
 if args.arkui_components_only:
