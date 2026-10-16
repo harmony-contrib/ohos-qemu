@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "reviewed_commit": "f82275e38321b10fc6429d2727d3ea9c90f8f44a",
+  "scope": "host repository tracked source ONLY; no source/out/container access",
+  "tracked_inventory": {
+    "command": [
+      "git",
+      "ls-tree",
+      "-r",
+      "--name-only",
+      "f82275e38321b10fc6429d2727d3ea9c90f8f44a"
+    ],
+    "path_count": 3734,
+    "path_list_sha256": "34d77c95f8fc4ccdaff9f6c4f19e8dd7a0b862266cd36e8c4469757e9b46b068",
+    "calendar_asset_filename_regex": "\\.(ics|ical|ifb)(\\.(gz|zip|b64))?$",
+    "matching_calendar_assets": []
+  },
+  "files": {
+    "scripts/prepare_qemu_knowledge_resource.py": {
+      "sha256": "37d1c46d4cad247a314311dbf9db78eb3e2d1314da904078fd107dd9f576123d",
+      "bytes": 5726,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 26,
+          "text": "def contract(asset):"
+        },
+        {
+          "line": 29,
+          "text": "        'asset_sha256': sha(asset) if asset is not None else None}, indent=2) + '\\n').encode()"
+        },
+        {
+          "line": 32,
+          "text": "def apply(root, asset=None):"
+        },
+        {
+          "line": 66,
+          "text": "    if asset is not None:"
+        },
+        {
+          "line": 100,
+          "text": "    return {'status': 'source_asset_binding_ONLY_NOT_calendar_runtime_or_package', 'asset': marker,"
+        }
+      ]
+    },
+    "scripts/prepare_qemu_sensor_runtime.py": {
+      "sha256": "6b81b09dc6f97477eaac4f665b57a2b60e1c08514bdb87ef4224d9f1704ba849",
+      "bytes": 8305,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 29,
+          "text": "KNOWLEDGE_BLOCK = '''# Trusted optional KnowledgeContent configuration, without fabricated dates."
+        },
+        {
+          "line": 40,
+          "text": "KNOWLEDGE_ASSET_BLOCK = '''ohos_prebuilt_etc(\"qemu_knowledge_holidays\") {"
+        },
+        {
+          "line": 49,
+          "text": "KNOWLEDGE_ASSET_DEPENDENCY = '    \":qemu_knowledge_holidays\",\\n'"
+        },
+        {
+          "line": 50,
+          "text": "KNOWLEDGE_GN = ((KNOWLEDGE_BLOCK, KNOWLEDGE_DEPENDENCY),"
+        },
+        {
+          "line": 51,
+          "text": "                (KNOWLEDGE_ASSET_BLOCK, KNOWLEDGE_ASSET_DEPENDENCY))"
+        }
+      ]
+    },
+    "scripts/verify_qemu_runtime_assets_image.py": {
+      "sha256": "a9cf45ea094af3212c547e8ec614b9c000aea8401c57bd344629668cd72354a8",
+      "bytes": 10911,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 63,
+          "text": "def inventory(source, product):"
+        },
+        {
+          "line": 93,
+          "text": "def check_inventory(value, product, directory):"
+        },
+        {
+          "line": 112,
+          "text": "        raise ValueError('calendar contract/actual resource/source digest disagree')"
+        },
+        {
+          "line": 137,
+          "text": "            raise ValueError('unexpected unbound calendar data in the actual image')"
+        }
+      ]
+    },
+    "scripts/build_standard_qemu_in_docker.sh": {
+      "sha256": "e0392059cf6f6846a0d5efb75f88761dd05dba87cfc49c2ddf398325d884d57a",
+      "bytes": 170289,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 3411,
+          "text": "    knowledge_resource_args=(--source-root \"${OHOS_ROOT}\")"
+        },
+        {
+          "line": 3412,
+          "text": "    if [ -n \"${QEMU_KNOWLEDGE_ICS:-}\" ]; then"
+        },
+        {
+          "line": 3413,
+          "text": "      knowledge_resource_args+=(--asset \"${QEMU_KNOWLEDGE_ICS}\")"
+        }
+      ]
+    },
+    "scripts/run_2in1_full_build_docker.sh": {
+      "sha256": "057a7747c52cb16f50462388151b78ae35c1c01e2321b7d016f18606598300d1",
+      "bytes": 24051,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 445,
+          "text": "exec docker run --rm \\"
+        },
+        {
+          "line": 515,
+          "text": "  -e QEMU_BUILD_INPUT_MANIFEST=/work/build-inputs.json \\"
+        },
+        {
+          "line": 516,
+          "text": "  -v \"${CACHE_ROOT}:${CACHE_ROOT}\" \\"
+        }
+      ]
+    },
+    "scripts/package_standard_qemu.sh": {
+      "sha256": "5274e5653538d2e1a5de249345bd77f538d5c91535246e6158a1a7e2748a7b95",
+      "bytes": 122127,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 3139,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_qemu_runtime_assets_image.py\" \\"
+        }
+      ]
+    },
+    "scripts/verify_device_type_package.sh": {
+      "sha256": "f68d7737e3e8b3d79ccdfe2f3c82de3f8a7858525860c067b0f4c21870174a14",
+      "bytes": 37118,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 220,
+          "text": "  if ! python3 \"${SCRIPT_DIR}/verify_qemu_runtime_assets_image.py\" \\"
+        }
+      ]
+    },
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/README.md": {
+      "sha256": "7fd296c01352d90c0170405d8139d29c5d850e796e62319269e71b8f9148da6f",
+      "bytes": 7718,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 16,
+          "text": "An absent optional resource produces a real empty table. ENOENT replaces an old"
+        },
+        {
+          "line": 65,
+          "text": "Holiday field 7 joins the real index to Photos.date_day and the existing"
+        },
+        {
+          "line": 84,
+          "text": "Visitor ACL, OHOS service scheduling, HAP or device/backend acceptance. Test ICS"
+        }
+      ]
+    },
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_holiday_index.cpp": {
+      "sha256": "0858f5406dc651091a9fa1f4cc264ef32b9f94d8c0cd6106dd138aa267caf6bd",
+      "bytes": 26392,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 25,
+          "text": "constexpr size_t MAX_BYTES = 1024 * 1024;"
+        },
+        {
+          "line": 32,
+          "text": "constexpr const char *DIRECTORY = \"/system/etc/knowledge-content\";"
+        },
+        {
+          "line": 33,
+          "text": "constexpr const char *FILENAME = \"holidays.ics\";"
+        },
+        {
+          "line": 123,
+          "text": "    if (bytes.empty() || bytes.size() > MAX_BYTES || bytes.find('\\0') != std::string::npos) return false;"
+        },
+        {
+          "line": 161,
+          "text": "bool ParseCalendar(const std::string &bytes, std::vector<Entry> &entries)"
+        },
+        {
+          "line": 233,
+          "text": "bool Trusted(const struct stat &info, bool directory)"
+        },
+        {
+          "line": 238,
+          "text": "int Load(Resource &resource)"
+        },
+        {
+          "line": 249,
+          "text": "    if (fstat(fd,&before) != 0 || !Trusted(before,false) || before.st_size <= 0 || static_cast<uint64_t>(before.st_size) > MAX_BYTES) {"
+        },
+        {
+          "line": 281,
+          "text": "int Synchronize(NativeRdb::RdbStore &store)"
+        }
+      ]
+    },
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_query.cpp": {
+      "sha256": "0a00a86f279afa6c436bec01396167a2908964ae707619d079d14d892f47c1ae",
+      "bytes": 7234,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 40,
+          "text": " FROM eligible p JOIN KnowledgeHoliday h ON h.civil_date=p.date_day"
+        }
+      ]
+    },
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_napi.cpp": {
+      "sha256": "fc166b8a9a6d26a992974c5cdfdef3b4e03f9e4e4436bb434696a84cc9dc91fe",
+      "bytes": 19552,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 385,
+          "text": "        return Throw(env, access, \"System application and READ_IMAGEVIDEO required\");"
+        },
+        {
+          "line": 453,
+          "text": "        return Throw(env, access, \"System application and READ_IMAGEVIDEO required\");"
+        }
+      ]
+    },
+    "patches/common/applications/standard/calendardata/source_provider/README.md": {
+      "sha256": "f03152bc986cff55b7f3f058fa51ed4f70ba371276af1039d6a81fa3fc59f162",
+      "bytes": 2410,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 6,
+          "text": "HAR dependencies, lower/whole-calendar permissions, token checks, proxy scopes,"
+        },
+        {
+          "line": 33,
+          "text": "This restores the candidate whole-calendar and reminder provider inputs only."
+        }
+      ]
+    },
+    "patches/common/applications/standard/calendardata/event_editor/README.md": {
+      "sha256": "2460d2f6f487d3b8a7df8f3a5dbccce521cec21568b9c75dc790cdf343d092c7",
+      "bytes": 4463,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 8,
+          "text": "the real CalendarManager/DataShare `getCalendar` and `addEvent` only on Save."
+        },
+        {
+          "line": 15,
+          "text": "READ/WRITE_CALENDAR permission requirement. Opening the extension never saves an"
+        },
+        {
+          "line": 32,
+          "text": "The separate full Calendar launcher UI, Cangjie callback implementation and"
+        }
+      ]
+    },
+    "ci/capability-audit/test_qemu_knowledge_resource.py": {
+      "sha256": "8c9705b8ad85bb2a0ae15dad79d857e8d25f5ef111dcf45acc573d375d49c34d",
+      "bytes": 3228,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 40,
+          "text": "        # A labeled synthetic configuration tests the importer, not a real-world holiday date."
+        },
+        {
+          "line": 42,
+          "text": "        data = b'BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nEND:VCALENDAR\\r\\n'"
+        }
+      ]
+    },
+    "ci/capability-audit/test_qemu_runtime_assets_image.py": {
+      "sha256": "2e768227f9121315f960b0b99f6734ad2f7916d704a81e1e66b9e90ee7a15f3d",
+      "bytes": 4217,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 51,
+          "text": "            data = b'BEGIN:VCALENDAR\\nVERSION:2.0\\nEND:VCALENDAR\\n'"
+        }
+      ]
+    },
+    "ci/capability-audit/test_batch_media_knowledge_holiday.py": {
+      "sha256": "d9e6afb0d9ec63db966a1e95723cf65e7bd2547e7a8a35c4ba0a2b882f0b047b",
+      "bytes": 12845,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 60,
+          "text": "    def calendar(self,events):return 'BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//Independent host calendar challenge//EN\\r\\n'+''.join(events)+'END:VCALENDAR\\r\\n'"
+        }
+      ]
+    },
+    "docs/capability-audit/parallel/media/round2/HANDOFF.md": {
+      "sha256": "2852a3ad7fd73635ea53f14950aafdaa78f2caec541c1406e0debfadf161af2d",
+      "bytes": 8014,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 73,
+          "text": "A further real holiday component was found: base/global/i18n/frameworks/intl/"
+        },
+        {
+          "line": 77,
+          "text": "producer or a packaged calendar data source. Bounded checks found no .ics files"
+        }
+      ]
+    },
+    "LICENSE": {
+      "sha256": "8429d1f2b861d6f7d27f9cb9364af836f234d927f11da0c01455cea828a921c3",
+      "bytes": 1073,
+      "frozen_commit_bytes_match_working_copy": true,
+      "locations": [
+        {
+          "line": 1,
+          "text": "MIT License"
+        }
+      ]
+    }
+  },
+  "formal_launcher_contains_QEMU_KNOWLEDGE_ICS": false,
+  "source_out_read": false
+}
