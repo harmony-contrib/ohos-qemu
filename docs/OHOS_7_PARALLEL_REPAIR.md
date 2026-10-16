@@ -248,3 +248,7 @@ GNSS系统Linux测试4288e492已scope检查合入30774b8：GNU11.4/Werror/ASan/U
 完整Rust ANI首轮进入实际ld.lld，但旧产品 libtel_state_registry_api.z.so 缺新增虚方法/调整thunk而失败；r52-communication-full-Rust-01 原日志保留，正用真实新对象与原solink recipe闭合私有依赖，禁止用stub/放宽no-undefined替代。根已核对后台服务1903/ANS3203实际源码并增加严格task UID/pid/未挂起状态与notification OwnerUid/Id/Label联合观测；双UID焦点运行编排与独立验收继续进行。82未关、新核销0、首包完整门禁false、六包0/6、其余五包未启动。
 
 通信完整结果二次核对：04真实objects为11 PASS/6 FAIL，05仅复验并通过其中3个权限consumer加wrapper；另2个proxy与registry service仍待集中修复/复验。此前14/3为根统计错误，已纠正正文与progress，不使用任何失败对象进行API/Rust链接。
+
+根已接入实际双UID焦点运行入口和独立核心重放：两个正常APL/空ACL的签名HAP，各自真实MIC/通知授权与normal KEEP_BACKGROUND_RUNNING token，联合1903/3203服务和两次请求后的新0.5s PCM，随后VOIP真实Start才允许归因owner forced STOP；contender真实Stop/Release和后台任务清理后才允许owner重新Start。核心重放逐字节关联snapshot与最终callback PCM，重新做独立挑战相关，严格检查token/进程/时钟/ACK/事件归因/通知与任务退出，不接受计数或先前checkpoint。已纳入正式suite/首包离线门禁，42项相关核心host检查PASS（不是guest验收）。根另修前台revoke的ready完成标记与ACK原子发布竞争；网络独占runner正在同批修相同ready/journal读取完成竞争。
+
+真实当前子进程libchild_process.so及3D的lib3dWidgetAdapter.z.so、libKitHelper.z.so完整链接通过（r52-child-Graphics3D-actual-CFI-links-02，18.356s）；KitHelper链接本批新adapter库。原flags/全部输入SHA保留，child的CFI符号核对通过；两个3D原目标仅选LTO，不伪称它们选择CFI。01原先对3D误加CFI符号断言的失败证据保留，未修改产品保护选项。新fresh-PCM/last_callback媒体caller的三个实际API26 unsigned event HAP再次全部通过（r52-three-audio-event-fresh-PCM-HAP-roles-03）。本轮仍无新guest运行通过、0/6/82未闭合。

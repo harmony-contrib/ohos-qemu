@@ -39,6 +39,15 @@ def verify_revocation(value, runtime, result, uid, run):
     actual = checked_file(runtime['files']['audio-event-' + run + '-mode0-baseline.pcm'])
     if sha(checkpoint) != sha(actual):
         raise ValueError('before-revoke PCM differs from the actual native checkpoint')
+    controls = value['ack_files']
+    prefix = 'audio-event-' + run + '-revoke-ack'
+    if len(controls) != 2 or controls[0] != prefix or not controls[1].startswith(prefix + '.publish-'):
+        raise ValueError('actual exclusive revocation ACK publication evidence missing')
+    for name in controls:
+        record = runtime['files'][name]
+        if (record.get('uid') != uid or record.get('mode') != 600 or record.get('bytes') != 33 or
+                checked_file(record).read_bytes() != (signal['nonce'] + '\n').encode()):
+            raise ValueError('actual revocation ACK was not private and owned by the ordinary caller')
     return {'token_id': token_id, 'actual_revoke_interval_ns': [observation['before_ns'], observation['after_ns']],
             'same_live_process': process}
 

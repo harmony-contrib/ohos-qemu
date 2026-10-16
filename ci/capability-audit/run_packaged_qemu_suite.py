@@ -604,6 +604,26 @@ def run(args):
                 verify_batch(batch, args.package_archive, environment['boot_id'], arch)
                 batch_path.write_text(json.dumps(batch, indent=2) + '\n')
                 check(persona, batch_path, records)
+        focus_output = work / 'audio-focus'
+        def focus_health(label):
+            same_guest(label)
+            if label.startswith('after-'):
+                if report['commands'][-1].get('timed_out'):
+                    raise ValueError('timed-out two-UID focus cleanup is not certified; stop batch')
+                path = focus_output / 'focus/runtime.json'
+                if path.is_file() and json.loads(path.read_text()).get('cleanup_errors') != []:
+                    raise ValueError('owned focus producer/app cleanup failed; stop batch')
+                path = focus_output / 'result.json'
+                if path.is_file() and any('cleanup' in str(v).lower() for v in json.loads(path.read_text()).get('failures', [])):
+                    raise ValueError('two-UID focus application cleanup failed; stop batch')
+        with independent_probe(report, 'audio-focus', focus_health, save):
+            record = command([sys.executable, Path(__file__).with_name('run_audio_focus_probe.py'),
+                '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                '--arch', arch, '--device', device, '--target', target, '--hdc', hdc,
+                '--boot-id', environment['boot_id'], '--boot', work / 'boot/boot.json',
+                '--output', focus_output, '--source-volume', source_volume, '--docker-image', docker_image],
+                'ordinary-two-UID-MIC-VOIP-real-focus-and-background-notifications', timeout=4800, env=child_env)
+            check('audio-focus', focus_output / 'result.json', [record])
         normal_results = {}
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                     'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset', 'storage-stats')

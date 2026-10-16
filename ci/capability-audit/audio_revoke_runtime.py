@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import re
+import secrets
 import time
 
 from audio_capture_runtime import CaptureRuntime, BUNDLE
@@ -14,6 +15,7 @@ class RevokeRuntime(CaptureRuntime):
     def __init__(self, *args):
         super().__init__(*args)
         self.value.update(kind='active-microphone-revocation', revoke_runner_sha256=sha(Path(__file__)))
+        self.control_names = []
         self.save()
 
     def process_identity(self, label):
@@ -49,9 +51,20 @@ class RevokeRuntime(CaptureRuntime):
         ready_path = prefix + '-revoke-ready.json'
         deadline = time.monotonic() + 10
         while True:
-            raw = self.actual_shell('if test -f ' + ready_path + '; then cat ' + ready_path + '; fi', 'actual-live-revoke-readiness')
-            if raw:
-                ready = json.loads(raw)
+            native_log = prefix + '-mode0-results.log'
+            raw = self.actual_shell('if test -f ' + native_log + '; then cat ' + native_log + '; fi',
+                                    'actual-live-revoke-readiness-completion')
+            rows = []
+            for line in raw.splitlines(keepends=True):
+                if line.endswith('\n'):
+                    rows.append(json.loads(line))
+            completed = [r for r in rows if r.get('type') == 'event_ready' and r.get('action') == 'revoke']
+            if len(completed) > 1:
+                raise ValueError('duplicate live revocation readiness')
+            if completed:
+                ready = json.loads(self.actual_shell('cat ' + ready_path, 'completed-live-revoke-readiness'))
+                if any(ready.get(k) != completed[0].get(k) for k in ('run_id', 'action', 'nonce', 'monotonic_ns')):
+                    raise ValueError('native revocation readiness file differs from its completed log')
                 break
             if time.monotonic() >= deadline:
                 raise ValueError('actual live public microphone did not reach revoke handshake')
@@ -76,19 +89,23 @@ class RevokeRuntime(CaptureRuntime):
         if before != after:
             raise ValueError('MIC revoke killed or replaced the actual app process')
         ack = prefix + '-revoke-ack'
-        self.actual_shell('test ! -e ' + ack + ' && (umask 077; printf "%s\\n" ' + ready['nonce'] +
-            ' > ' + ack + ') && chown ' + str(self.uid) + ':' + str(self.uid) + ' ' + ack + ' && chmod 0600 ' + ack,
+        backing = ack + '.publish-' + secrets.token_hex(16)
+        self.actual_shell('test ! -e ' + ack + ' && test ! -L ' + ack +
+            ' && (set -C; umask 077; printf "%s\\n" ' + ready['nonce'] + ' > ' + backing +
+            ') && chown ' + str(self.uid) + ':' + str(self.uid) + ' ' + backing +
+            ' && chmod 0600 ' + backing + ' && ln ' + backing + ' ' + ack,
             'acknowledge-only-committed-live-revocation')
+        self.control_names = [Path(p).name for p in (ack, backing)]
         self.value['revocation'] = {'ready': ready, 'token': observation, 'process_before': before, 'process_after': after,
             'checkpoint': {'path': str(checkpoint), 'sha256': sha(checkpoint)}, 'correlation': correlation,
-            'ack_nonce': ready['nonce']}
+            'ack_nonce': ready['nonce'], 'ack_files': self.control_names}
         self.save()
 
     def collect(self, app_files):
         private = self.output / 'private'
         private.mkdir(exist_ok=False)
         stem = 'audio-event-' + self.run + '-mode0'
-        names = [stem + '-permission.json', stem + '.pcm', stem + '-baseline.pcm']
+        names = [stem + '-permission.json', stem + '.pcm', stem + '-baseline.pcm', *self.control_names]
         # Completion and cleanup are separate immutable files. Poll only our
         # nonce-scoped sequence, then retain every actual lifecycle record.
         deadline = time.monotonic() + 10
@@ -100,7 +117,25 @@ class RevokeRuntime(CaptureRuntime):
                 name = remote.removeprefix(app_files)
                 if not re.fullmatch(re.escape(stem) + '-background-[0-9]{3}\\.json', name):
                     raise ValueError('unexpected ordinary event lifecycle path')
-            values = [json.loads(self.actual_shell('cat ' + remote, 'actual-revocation-lifecycle')) for remote in records]
+            values = []
+            for index, remote in enumerate(records):
+                marker = '__REVOKE_JOURNAL_' + secrets.token_hex(16) + '__'
+                text = self.actual_shell('cat ' + remote + ' && printf "%s" ' + marker,
+                                         'actual-revocation-lifecycle')
+                if not text.endswith(marker):
+                    raise ValueError('actual revocation lifecycle transfer incomplete')
+                text = text[:-len(marker)]
+                try:
+                    if not text.endswith('\n'):
+                        raise ValueError('lifecycle record is still being written')
+                    values.append(json.loads(text))
+                except ValueError:
+                    if index != len(records) - 1:
+                        raise
+                    # The newest immutable record can be visible between the
+                    # ArkTS create and checked write/close. Its raw HDC read is
+                    # retained by command(); only this final record may retry.
+                    break
             if any(v.get('event') == 'native_finished' for v in values):
                 break
             if time.monotonic() >= deadline:
@@ -112,7 +147,7 @@ class RevokeRuntime(CaptureRuntime):
             raw = self.actual_shell('test -f ' + remote + ' && test ! -L ' + remote + ' && stat -c "%u %a %s" ' + remote,
                                     'actual-active-revoke-private-file-identity')
             uid, mode, size = map(int, raw.split())
-            if uid != self.uid or (name.endswith('.pcm') and mode != 600) or not 0 < size <= 7680000:
+            if uid != self.uid or ((name.endswith('.pcm') or name in self.control_names) and mode != 600) or not 0 < size <= 7680000:
                 raise ValueError('active-revocation actual private file identity/size invalid')
             self.command([self.args.hdc, '-t', self.args.target, 'file', 'recv', remote, local], 'receive-actual-' + name)
             if local.stat().st_size != size:

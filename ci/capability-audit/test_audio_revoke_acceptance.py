@@ -23,9 +23,12 @@ class LiveRevokeBoundary(unittest.TestCase):
                 'result': 0, 'before': 0, 'after': -1, 'before_ns': 20, 'after_ns': 30}
             process = {'pid': 1234, 'starttime': 125, 'uid': uid}
             value = {'ready': ready, 'token': observation, 'process_before': process, 'process_after': dict(process),
-                     'checkpoint': file, 'ack_nonce': ready['nonce']}
+                     'checkpoint': file, 'ack_nonce': ready['nonce'], 'ack_files': ['audio-event-' + run + '-revoke-ack', 'audio-event-' + run + '-revoke-ack.publish-' + 'd' * 32]}
             runtime = {'tokens': [{'observation': {'token_id': token_id}}],
                        'files': {'audio-event-' + run + '-mode0-baseline.pcm': file}}
+            for name in value['ack_files']:
+                control = Path(directory) / name; control.write_text(ready['nonce'] + '\n')
+                runtime['files'][name] = {'path': str(control), 'sha256': sha(control), 'uid': uid, 'mode': 600, 'bytes': 33}
             result = {'signals': [{'nonce': ready['nonce'], 'monotonic_ns': 10}], 'acks': [{'monotonic_ns': 40}]}
             self.assertEqual(verify_revocation(value, runtime, result, uid, run)['token_id'], token_id)
             for mutation in ('grant', 'root', 'dead', 'PID_reuse', 'too_early', 'too_late', 'stopped', 'stale', 'wrong_token'):
