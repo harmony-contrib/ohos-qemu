@@ -3067,6 +3067,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_location_public_enums_component.log"
   bash "${LOCATION_RUNTIME_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_location_runtime_component.log"
+  bash "${PATCH_ROOT}/common/device/qemu/external_gnss/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_external_gnss_component.log"
+  python3 "${SCRIPT_DIR}/prepare_qemu_gnss_runtime.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_gnss_runtime.log"
   bash "${NETMANAGER_API26_FEATURES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_netmanager_api26_features_component.log"
   bash "${VPN_DIALOG_BUNDLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
