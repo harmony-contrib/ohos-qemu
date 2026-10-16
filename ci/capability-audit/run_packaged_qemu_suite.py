@@ -339,6 +339,7 @@ def run(args):
             '--sdk', sdk / 'native', '--output', exit_probes, '--arch', arch], 'build-real-link-order-probes', env=child_env)
         runtime = command([sys.executable, Path(__file__).with_name('run_library_exit_probes.py'),
             '--probes', exit_probes, '--arch', arch, '--device', device, '--target', target,
+            '--archive', args.package_archive, '--boot', work / 'boot/boot.json',
             '--hdc', hdc, '--output', work / 'library-exit'], 'system-DSO-exit-regressions', env=child_env)
         check('issue20-library-exit', work / 'library-exit/result.json', [build, runtime])
         same_guest('after-system-exit')

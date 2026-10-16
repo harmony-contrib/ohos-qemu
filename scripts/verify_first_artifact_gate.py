@@ -31,6 +31,8 @@ def verified_payload(name, path, identity, environment):
     if payload.get('status') != 'pass':
         raise ValueError('inner behavior evidence did not pass: ' + name)
     if name == 'boot':
+        if not isinstance(payload.get('test_environment'), dict):
+            raise ValueError('actual boot test environment is missing')
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
         from watchdog_boot_clocks import verify as verify_boot_clocks
         verify_boot_clocks(payload, required=True)
@@ -96,6 +98,9 @@ def verified_payload(name, path, identity, environment):
         if before_policy['override_ms'] not in ((None, 10000) if before == 'locked' else (None,)):
             raise ValueError('home setup attempted to replace an unknown power override')
     elif name == 'issue20-library-exit':
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+        from library_exit_binding import verify_evidence as verify_library_exit
+        verify_library_exit(payload, identity, environment)
         rows = payload.get('results', [])
         cases = {'empty', 'udmf', 'pasteboard', 'avplayer', 'udmf-pasteboard',
                  'pasteboard-udmf', 'avplayer-udmf', 'udmf-avplayer'}
@@ -488,6 +493,9 @@ def verified_payload(name, path, identity, environment):
                     set(payload.get('closed', {})) != expected or
                     payload.get('audit_baseline_sha256') != checksum(baseline_path)):
                 raise ValueError('complete C++/ArkTS1.1 audit closure is missing; narrow samples are insufficient')
+            from verify_gap_closure import verify_evidence as verify_gap_closure_evidence
+            verify_gap_closure_evidence(payload, Path(identity['archive']), path.parent / 'boot/boot.json',
+                                        path.parent, environment['device_type'])
     return payload
 
 

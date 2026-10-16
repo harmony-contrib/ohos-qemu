@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build three read-only guest helpers with actual ARM64 product innerkit/CFI ABI.
+"""Build read-only guest helpers with actual ARM64 product innerkit/CFI ABI.
 
 Only root may run the compiler under its resource lease. --plan-only queries the
 existing Ninja graph but never invokes clang or regenerates/builds that graph.
@@ -46,6 +46,8 @@ HELPERS = {
         'libraries': ['customization/config_policy/libconfigpolicy_util.z.so', 'thirdparty/cJSON/libcjson.z.so'],
         'headers': [WALLPAPER['header'], 'third_party/cJSON/cJSON.h'], 'extra_includes': []},
     'wallpaper_token_query': {'fixture': 'batch_media/wallpaper_receipts/token_query.cpp', 'anchors': [TOKEN],
+        'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []},
+    'knowledge_token_query': {'fixture': 'batch_media/knowledge_runtime/knowledge_token_query.cpp', 'anchors': [TOKEN],
         'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []}}
 ABI_GUARD = '''#include <string>
 #include <type_traits>
@@ -582,7 +584,7 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product', choices=[PRODUCT], required=True)
-    parser.add_argument('--helper', choices=HELPERS, action='append', help='Repeat to select; default all three')
+    parser.add_argument('--helper', choices=HELPERS, action='append', help='Repeat to select; default all registered helpers')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
     parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')
     parser.add_argument('--existing-report-sha256', help='Required external SHA256 binding of the original report')

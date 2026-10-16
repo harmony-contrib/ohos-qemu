@@ -1,0 +1,54 @@
+{
+  "scope": "actual fresh full GN-only preflight and independent gate repair tests ONLY NOT native/images/package/guest",
+  "GN_preflight": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-GN-preflight-01/evidence.json",
+    "sha256": "37581f4a9e366443208164260472e29531ce5ee9b5d1fe700e6338a65831a03b"
+  },
+  "GN_exit_code": 0,
+  "GN_seconds": 424.22790122032166,
+  "GN_preservation_note": "actual args, raw build/error logs, profile features and GNSS BUILD retained; out/hb_args/buildargs.json was absent and that cp failure is retained, not treated as build evidence",
+  "input_tree_sha256": "e6adc4cb17dd9ea44518a847f07c7f3b73998787b159b052b8d84f4589bca49b",
+  "GN_docker_resource": {
+    "cpus": 4,
+    "memory_gib": 10,
+    "memory_and_swap_limit_gib": 20,
+    "native_compilation": false
+  },
+  "gate_review_commit": "b1ce467",
+  "repairs": [
+    "independent first gate recomputes every registered gap closure from raw child proofs, then requires exact complete summary equality",
+    "library exit runner validates actual enclosing QEMU and records this boot before/after EACH invocation, actual probe/manifest/transport/output hashes and owned-directory cleanup; independent first gate rechecks raw scripts, boot snapshots and actual exit values",
+    "formal images invocation explicitly disables inherited GN-only state"
+  ],
+  "regressions": [
+    {
+      "tests": 50,
+      "scope": "synthetic raw mutation/old guest/summary/exit/clock and suite contracts; no guest",
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/gate-raw-proof-and-exit-binding-03.log",
+      "sha256": "88d982d171044e1a61d48ca44f727020830ca8927c49546facee398535ad09e3"
+    },
+    {
+      "tests": 49,
+      "scope": "helper registration and Knowledge project/protocol host tests ONLY",
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/knowledge-helper-registration-01.log",
+      "sha256": "72a912a4263cfb824d572072ce702eaf9cd603de5d2635b2c17e10a70b2a2348"
+    }
+  ],
+  "preserved_failed_host_batch": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/gate-raw-proof-and-exit-binding-02.log",
+    "sha256": "ba8eff6ac81ce07be444f5a873fa4815949d23e14c685ea607be904eb59ec22d"
+  },
+  "host_failure_reason": "synthetic ELF omitted executable type and new three-line wrapper initially passed all lines to an exit-only parser; fixed and actual Linux shell replayed",
+  "actual_Linux_shell": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-exit-binding-Linux-shell-01/evidence.json",
+    "sha256": "12477cda86e229b1a242f2120a5028c6c7b2bc77ca207e50fb52994a5f243e8a"
+  },
+  "Linux_shell_scope": "actual dash boot marker/status preservation for exits0/7/139 and cleanup ONLY NOT OHOS runtime",
+  "Knowledge_first_actual_SDK105": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-01/evidence.json",
+    "sha256": "15f7aa1b09cadfd1d26ff1840c3badf68db60aae1deb1e087dd70afb38f7b6a2"
+  },
+  "Knowledge_SDK105_status": "all4 dependencies exit0; all4 compiles failed255 at unsupported multi-device syscap intersection; agent repairs batched source before retry",
+  "remaining_five_started": false,
+  "first_artifact_behavior_gate_passed": false
+}

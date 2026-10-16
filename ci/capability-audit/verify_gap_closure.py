@@ -1204,32 +1204,51 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
     return closed
 
 
-def run(args):
+def collect(archive, boot_path, runtime_root, device):
+    """Re-read registered raw proofs; never write or trust an old summary."""
+    archive, boot_path, runtime_root = map(Path, (archive, boot_path, runtime_root))
+    for path in (archive, boot_path, LEDGER):
+        if path.is_symlink() or not path.is_file():
+            raise ValueError('regular unchanged closure input required: ' + str(path))
+    if boot_path.resolve() != (runtime_root / 'boot/boot.json').resolve():
+        raise ValueError('closure boot must belong to this exact runtime evidence directory')
     baseline = json.loads(LEDGER.read_text())
-    expected = requirements(baseline['devices'][args.device])
+    expected = requirements(baseline['devices'][device])
     original_count = len(expected)
-    exclusions = exclusion_record(args.device, expected)
+    exclusions = exclusion_record(device, expected)
     expected = {key: row for key, row in expected.items() if key not in exclusions['ids']}
-    boot = json.loads(args.boot.read_text())
+    boot = json.loads(boot_path.read_text())
     environment = boot.get('test_environment', {})
-    archive_sha = digest(args.archive)
+    archive_sha = digest(archive)
     if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or
-            boot.get('archive_sha256') != archive_sha or environment.get('device_type') != args.device or
+            boot.get('archive_sha256') != archive_sha or environment.get('device_type') != device or
             environment.get('external_keepalive') is not False or not environment.get('boot_id')):
         raise ValueError('complete audit closure requires the actual new unassisted package boot')
-    closed = behavior_results(args.runtime_root, environment['boot_id'], archive_sha, args.device)
+    closed = behavior_results(runtime_root, environment['boot_id'], archive_sha, device)
     closed = {key: row for key, row in closed.items() if key in expected}
     unresolved = [{'id': key, 'requirement': row,
                    'reason': 'no complete registered new-package behavior/ABI/permission proof'}
                   for key, row in expected.items() if key not in closed]
     result = {'schema_version': 2, 'scope': SCOPE,
-        'status': 'fail' if unresolved else 'pass', 'device': args.device,
-        'archive': str(args.archive.resolve()), 'archive_sha256': archive_sha,
+        'status': 'fail' if unresolved else 'pass', 'device': device,
+        'archive': str(archive.resolve()), 'archive_sha256': archive_sha,
         'boot_id': environment['boot_id'], 'audit_baseline': str(LEDGER), 'audit_baseline_sha256': digest(LEDGER),
         'expected_count': len(expected), 'closed_count': len(closed), 'closed': closed,
         'unresolved': unresolved, 'excluded': ['ArkTS Static', 'CloudSync', 'imageGeneration'],
         'original_expected_count': original_count, 'release_exclusions': exclusions,
         'first_artifact_behavior_gate_passed': False}
+    return result
+
+
+def verify_evidence(value, archive, boot_path, runtime_root, device):
+    actual = collect(archive, boot_path, runtime_root, device)
+    if actual['status'] != 'pass' or value != actual:
+        raise ValueError('complete audit closure raw proofs are missing, changed or differ from the summary')
+    return actual
+
+
+def run(args):
+    result = collect(args.archive, args.boot, args.runtime_root, args.device)
     args.output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
     return result
 

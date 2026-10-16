@@ -1,0 +1,34 @@
+.....FE.....................................
+======================================================================
+ERROR: test_synthetic_receipt_structure_can_be_rechecked (test_library_exit_binding.LibraryExitBindingTests.test_synthetic_receipt_structure_can_be_rechecked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_library_exit_binding.py", line 70, in test_synthetic_receipt_structure_can_be_rechecked
+    self.assertEqual(binding.verify_evidence(self.payload, self.identity, self.environment), self.payload)
+                     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/library_exit_binding.py", line 110, in verify_evidence
+    execution_result(command.get('stdout', '').replace('\r', ''), nonce, environment['boot_id']) != 0):
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/library_exit_binding.py", line 34, in execution_result
+    code = parse_exit(text, nonce)
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_root_probe.py", line 125, in parse_exit
+    raise ValueError("missing, mixed or stale actual guest process exit record")
+ValueError: missing, mixed or stale actual guest process exit record
+
+======================================================================
+FAIL: test_outer_labels_cannot_replace_per_invocation_boot_observations (test_library_exit_binding.LibraryExitBindingTests.test_outer_labels_cannot_replace_per_invocation_boot_observations)
+----------------------------------------------------------------------
+ValueError: missing, mixed or stale actual guest process exit record
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_library_exit_binding.py", line 75, in test_outer_labels_cannot_replace_per_invocation_boot_observations
+    with self.assertRaisesRegex(ValueError, 'exact guest boot'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "exact guest boot" does not match "missing, mixed or stale actual guest process exit record"
+
+----------------------------------------------------------------------
+Ran 44 tests in 0.224s
+
+FAILED (failures=1, errors=1)

@@ -15,6 +15,7 @@ from verify_shared_fence_owner import needed_libraries, verify_pair
 
 from build_library_exit_probes import CASES
 from run_root_probe import digest, parse_exit, validate_elf, validate_identity
+from library_exit_binding import SCOPE, execution_script, execution_result, cleanup_script
 
 
 def verify(rows, repeats):
@@ -22,7 +23,7 @@ def verify(rows, repeats):
     observed = [(row["case"], row["repeat"]) for row in rows]
     if len(observed) != len(set(observed)) or set(observed) != expected:
         raise ValueError("missing, duplicate, or unexpected link-order executions")
-    failures = [row for row in rows if row["guest_exit_code"] != 0]
+    failures = [row for row in rows if type(row["guest_exit_code"]) is not int or row["guest_exit_code"] != 0]
     return {"status": "fail" if failures else "pass", "executions": len(rows),
             "failures": failures, "first_artifact_behavior_gate_passed": False,
             "scope": "isolated_root_empty_main_exit_cleanup_only"}
@@ -70,8 +71,11 @@ def run(args):
                 "commands": [], "results": [], "failures": [],
                 "first_artifact_behavior_gate_passed": False,
                 "archive_binding": "not_attested_by_this_diagnostic_runner"}
+    bound_guest = None
 
     def command(argv):
+        if bound_guest is not None:
+            bound_guest.healthy()
         record = {"argv": [str(value) for value in argv]}
         evidence["commands"].append(record)
         result = subprocess.run(record["argv"], capture_output=True, text=True,
@@ -86,10 +90,27 @@ def run(args):
 
     try:
         candidate = candidate_inputs(args)
+        archive, boot = getattr(args, 'archive', None), getattr(args, 'boot', None)
+        if bool(archive) != bool(boot) or candidate and boot:
+            raise ValueError('acceptance requires both archive and boot; private candidates remain diagnostic only')
+        if boot:
+            from enclosing_acceptance_guest import EnclosingAcceptanceGuest
+            bound_guest = EnclosingAcceptanceGuest(boot, archive, args.hdc, args.output / 'bound-transport').start()
+            environment = bound_guest.env
+            if (environment['guest_arch'], environment['device_type'], environment['target']) != (args.arch, args.device, args.target):
+                raise ValueError('exit runner arguments differ from actual enclosing guest')
+            snapshot = args.output / 'bound-boot.json'
+            snapshot.write_bytes(Path(boot).read_bytes())
+            evidence.update(schema_version=2, scope=SCOPE, archive_sha256=digest(archive),
+                boot_id=environment['boot_id'], bound_boot={'path': str(snapshot.resolve()), 'sha256': digest(snapshot)},
+                hdc=str(args.hdc), repeats=args.repeats,
+                archive_binding='actual_enclosing_guest_before_each_exit_and_after')
         if candidate:
             evidence.update(scope="private_candidate_DSOs_on_old_guest_NOT_new_package_acceptance",
                             candidate_inputs=candidate)
         manifest = json.loads((args.probes / "manifest.json").read_text())
+        evidence['probe_manifest'] = {'path': str((args.probes / 'manifest.json').resolve()),
+                                      'sha256': digest(args.probes / 'manifest.json')}
         command([args.hdc, "tconn", args.target])
         validate_identity(shell("id -u; param get const.product.devicetype; uname -m"), args.arch, args.device)
         evidence["environment"] = shell("param get const.ohos.fullname; uname -a; ls /data/log/faultlog/faultlogger")
@@ -165,20 +186,38 @@ def run(args):
                 nonce = secrets.token_hex(16)
                 stem = destination + "-" + str(repeat)
                 library_environment = ("LD_LIBRARY_PATH=" + shlex.quote(remote + "/candidate") + " ") if candidate else ""
-                code = parse_exit(shell("unset LD_LIBRARY_PATH LD_PRELOAD; " + library_environment + shlex.quote(destination) +
+                if bound_guest is not None:
+                    index = len(evidence['commands'])
+                    code = execution_result(shell(execution_script(remote, case, repeat, nonce, bound=True)),
+                                            nonce, bound_guest.env['boot_id'])
+                else:
+                    code = parse_exit(shell("unset LD_LIBRARY_PATH LD_PRELOAD; " + library_environment + shlex.quote(destination) +
                     " >" + shlex.quote(stem + ".out") + " 2>" + shlex.quote(stem + ".err") +
                     "; probe_status=$?; printf '__OHOS_PROBE_EXIT_" + nonce + "=%s\\n' \"$probe_status\""), nonce)
                 row = {"case": case, "repeat": repeat, "guest_exit_code": code, "probe_sha256": sha,
                        "link_order": record["link_order"], "nonce": nonce}
                 evidence["results"].append(row)
+                if bound_guest is not None: row['command_index'] = index
                 for suffix in ("out", "err"):
-                    (args.output / (case + "-" + str(repeat) + "." + suffix)).write_text(shell("cat " + shlex.quote(stem + "." + suffix)))
+                    captured = args.output / (case + "-" + str(repeat) + "." + suffix)
+                    captured.write_text(shell("cat " + shlex.quote(stem + "." + suffix)))
+                    row[suffix] = {'path': str(captured.resolve()), 'sha256': digest(captured)}
         evidence["result"] = verify(evidence["results"], args.repeats)
         if candidate:
             evidence["result"]["scope"] = "private_candidate_empty_main_exit_only_NOT_packaged_system_DSOs"
         evidence["status"] = evidence["result"]["status"]
         evidence["fault_files_after"] = shell("ls /data/log/faultlog/faultlogger")
+        if bound_guest is not None:
+            if bound_guest.shell('cat /proc/sys/kernel/random/boot_id', 'boot-after').strip() != bound_guest.env['boot_id']:
+                raise ValueError('exit batch finished on another guest boot')
+            evidence['cleanup_command_index'] = len(evidence['commands'])
+            if shell(cleanup_script(remote, run_id)) != '__OHOS_LIBRARY_CLEANED_' + run_id + '\n':
+                raise ValueError('owned exit directory cleanup failed')
+            evidence.update(cleanup_complete=True, cleanup_errors=[])
+            from library_exit_binding import verify_evidence
+            verify_evidence(evidence, {'sha256': digest(archive)}, bound_guest.env)
     except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired) as exc:
+        evidence['status'] = 'fail'
         evidence["failures"].append(str(exc))
     finally:
         (args.output / "result.json").write_text(json.dumps(evidence, indent=2) + "\n")
@@ -192,6 +231,8 @@ if __name__ == "__main__":
     parser.add_argument("--device", choices=("phone", "2in1"), required=True)
     parser.add_argument("--target", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument('--archive', type=Path, help='Actual enclosing acceptance archive; requires --boot')
+    parser.add_argument('--boot', type=Path, help='Actual suite-owned guest; requires --archive and disallows candidates')
     parser.add_argument("--repeats", type=int, choices=range(3, 11), default=3)
     parser.add_argument("--candidate-surface", type=Path,
                         help="diagnostic only: stage a new libsurface in a private guest directory")
