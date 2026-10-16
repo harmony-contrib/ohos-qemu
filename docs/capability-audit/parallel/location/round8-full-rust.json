@@ -1,0 +1,468 @@
+{
+  "schema_version": 1,
+  "base_commit": "4bfbb7811fa82969665cdf360a091f3f5ccc4721",
+  "status": "pass",
+  "scope": "complete_current_Rust_dylib_compile_link_source_bound_CXX_private_registry_API_existing_other_dependencies_NOT_fresh_GN_package_runtime",
+  "upstream_targets_added_in_this_commit": [],
+  "fixed_project_HEADs": {
+    "base/telephony/core_service": "504dcba74da128ed446967e328e5c7162bfebbe2",
+    "base/telephony/ril_adapter": "81fac83292857fcd9bee90808a81d8ad7224b4e0",
+    "base/telephony/state_registry": "2327cba6f48f4274b269e530c48a919e2eed28b7",
+    "build": "5c0623072ed9c2ee93ab909a7a01f428fee95082",
+    "third_party/rust/crates/cxx": "b5b9ba474068c480dfff89176f539c6de2de12f2",
+    "foundation/communication/netmanager_base": "9831989d54f490d046a632ab13d309580d2fa710",
+    "drivers/interface": "42289d3f8e46f5a112bd7ea6d36e4baaeac0718d",
+    "foundation/communication/ipc": "b8d3e96cfcf382c8fae54502679ac8b3d827b428"
+  },
+  "test_environment": {
+    "host_architecture": "arm64",
+    "container_image": "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "container_image_id": "sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55",
+    "container_architecture": "linux/amd64 under Docker host emulation",
+    "product_target": "aarch64-unknown-linux-ohos",
+    "source_out_recipe_checkpoints": "read-only mounts",
+    "cpu_limit": 2,
+    "memory_limit": "5g",
+    "container_removed": true,
+    "heavy_lease_returned": true
+  },
+  "host_launch_argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "ohos-location-rust-20261016-03",
+    "--cpus",
+    "2",
+    "--memory",
+    "5g",
+    "--memory-swap",
+    "5g",
+    "--mount",
+    "type=volume,source=ohos-qemu-7_0-release-source,target=/ohos,readonly",
+    "--mount",
+    "type=volume,source=ohos-qemu-7_0-release-out,target=/ohos/out,readonly",
+    "--mount",
+    "type=bind,source=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-03/recipe,target=/recipe,readonly",
+    "--mount",
+    "type=bind,source=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-batched-platform-fixes-05/artifacts/communication_state,target=/checkpoint,readonly",
+    "--mount",
+    "type=bind,source=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-complete-platform-04/artifacts/communication_state,target=/observer-checkpoint,readonly",
+    "--mount",
+    "type=bind,source=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-proxy-service-platform-06/artifacts/communication_state,target=/proxy-checkpoint,readonly",
+    "--mount",
+    "type=bind,source=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-03,target=/work",
+    "--env",
+    "LC_ALL=C",
+    "--env",
+    "LC_CTYPE=C",
+    "--env",
+    "LANG=C",
+    "--env",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "python3",
+    "/recipe/ci/capability-audit/compile_communication_rust.py",
+    "--source-root",
+    "/ohos",
+    "--consumer-evidence",
+    "/checkpoint/evidence.json",
+    "--registry-api-evidence",
+    "/proxy-checkpoint/evidence.json",
+    "--registry-observer-evidence",
+    "/observer-checkpoint/evidence.json",
+    "--output",
+    "/work/artifacts",
+    "--lto-jobs",
+    "2"
+  ],
+  "attempts": [
+    {
+      "number": 1,
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-01",
+      "evidence_sha256": "2841274a64e99e9368f742cbd5e57d598e713e18e4ef518b93137ef340d03a6d",
+      "status": "fail",
+      "error": "ValueError: real command failed: complete-Rust-dylib; complete log retained",
+      "reason": "Real six-module Rust reaches real ld.lld; old product registry API lacks new virtual and non-virtual thunk. No linker flag suppression.",
+      "script_sha256": "726d961a1bf3e5687ab6fa5ff12ca48be11694ec7efcbc887d3b5b9b466c0ce4",
+      "freeze": {
+        "base_commit": "631b2dadf6bd13892d509f28e8ded0b78dfd480b",
+        "base_git_archive_sha256": "02a398506c982aa84c8dfd8d72fc74725cb3c0be19288a98787e64b4fac39a99",
+        "additional_frozen_files": {
+          "ci/capability-audit/compile_communication_rust.py": "726d961a1bf3e5687ab6fa5ff12ca48be11694ec7efcbc887d3b5b9b466c0ce4"
+        },
+        "scope": "frozen HEAD archive plus exact new diagnostic helper; no source modifications"
+      }
+    },
+    {
+      "number": 2,
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-02",
+      "evidence_sha256": "f30895fe459befcf00c770caab477630fb252494f19ddd66ab51ae8b5bd0141b",
+      "status": "fail",
+      "error": "ValueError: selected current object did not pass: telephony_observer_proxy__tel_state_registry_api",
+      "reason": "Preflight correctly rejects failed batch04 API proxy before any compiler command.",
+      "script_sha256": "ddb715db97a9a8da2f3562b75b1ca89c5f9c0985a44d551fb9536b4919539323",
+      "freeze": {
+        "base_commit": "631b2dadf6bd13892d509f28e8ded0b78dfd480b",
+        "base_git_archive_sha256": "02a398506c982aa84c8dfd8d72fc74725cb3c0be19288a98787e64b4fac39a99",
+        "additional_frozen_files": {
+          "ci/capability-audit/compile_communication_rust.py": "ddb715db97a9a8da2f3562b75b1ca89c5f9c0985a44d551fb9536b4919539323",
+          "docs/capability-audit/parallel/location/round8-registry-api-link-map.json": "486604443c997e9e1b273ecfc97d531ef34ba05214993327238e223f0321dcf9"
+        },
+        "scope": "frozen HEAD archive plus exact new diagnostic helper and actual solink map; no source modifications"
+      }
+    },
+    {
+      "number": 3,
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-03",
+      "evidence_sha256": "2320364200791a1fb6835996898b24e46433effb4390cf0f313e4b18a4364bfc",
+      "status": "pass",
+      "error": null,
+      "reason": "Complete current six-module Rust dylib and complete private original-flags registry API solink pass.",
+      "script_sha256": "6457a1610e7caea712bb8c39fc2ce4c58619e6e834d4887084288cbb2091ef91",
+      "freeze": {
+        "base_commit": "4bfbb7811fa82969665cdf360a091f3f5ccc4721",
+        "base_git_archive_sha256": "6b0ade6593a8ccbdd2c4b5583041d9d2d48f26be4ba82e0c8da2dfbe31dc2d87",
+        "additional_frozen_files": {
+          "ci/capability-audit/compile_communication_rust.py": "6457a1610e7caea712bb8c39fc2ce4c58619e6e834d4887084288cbb2091ef91",
+          "docs/capability-audit/parallel/location/round8-registry-api-link-map.json": "486604443c997e9e1b273ecfc97d531ef34ba05214993327238e223f0321dcf9"
+        },
+        "scope": "frozen HEAD archive plus exact new diagnostic helper and actual solink map; no source modifications"
+      }
+    }
+  ],
+  "reused_complete_TU_checkpoints": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-complete-platform-04/artifacts/communication_state/evidence.json",
+      "sha256": "4b4f56eb62b7d11042e936b7b85a3174a4b0fc9d0407250e6ab3be1a4321d880",
+      "status": "fail",
+      "coverage": {
+        "declared_group_units": [
+          "telephony_state_registry_client__tel_core_service_api",
+          "telephony_state_registry_proxy__tel_core_service_api",
+          "tel_ril_callback__tel_core_service",
+          "tel_ril_network__tel_core_service",
+          "hril_network__hril",
+          "vendor_report__ril_vendor",
+          "observer_ani__observer_ani_cxx",
+          "event_listener_handler__observer",
+          "event_listener_manager__observer",
+          "napi_state_registry__observer",
+          "napi_telephony_observer__observer",
+          "telephony_observer__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry",
+          "telephony_state_registry_service__tel_state_registry",
+          "telephony_state_registry_stub__tel_state_registry",
+          "generated_wrapper"
+        ],
+        "selected_units": [
+          "telephony_state_registry_client__tel_core_service_api",
+          "telephony_state_registry_proxy__tel_core_service_api",
+          "tel_ril_callback__tel_core_service",
+          "tel_ril_network__tel_core_service",
+          "hril_network__hril",
+          "vendor_report__ril_vendor",
+          "observer_ani__observer_ani_cxx",
+          "event_listener_handler__observer",
+          "event_listener_manager__observer",
+          "napi_state_registry__observer",
+          "napi_telephony_observer__observer",
+          "telephony_observer__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry",
+          "telephony_state_registry_service__tel_state_registry",
+          "telephony_state_registry_stub__tel_state_registry",
+          "generated_wrapper"
+        ],
+        "all_group_units_tested": true
+      },
+      "note": "Observer successful individual object only; overall batch remains11 PASS/6 FAIL",
+      "objects": [
+        {
+          "unit": "telephony_state_registry_client__tel_core_service_api",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "521d6a6ff3ac44942a7f02c585f7fbc7124e49aba55ad1bc5ef24b3bb239dc00"
+        },
+        {
+          "unit": "telephony_state_registry_proxy__tel_core_service_api",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "12d198e236f7bf09d96f91887b4377aceecc625c15753d271d598bafcb8d8da8"
+        },
+        {
+          "unit": "tel_ril_callback__tel_core_service",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "dace2a5ed1023448d56bd4a692bb628ebc53bffdbbcc75b9a27911213d5f0d34"
+        },
+        {
+          "unit": "tel_ril_network__tel_core_service",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "20f05a4911d0daa5e0e70eeed351f86d462f2ac5bfd58fc115d0e25adf2a7d0f"
+        },
+        {
+          "unit": "hril_network__hril",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "6b5250447e8da130427228d30bb82b9a1c4bba1131f149fe2d612c85dc6dd2ec"
+        },
+        {
+          "unit": "vendor_report__ril_vendor",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "aefe1c116c8da2a6d253b893e9d3fe37516c4f709e9374d323bd9201163298ef"
+        },
+        {
+          "unit": "observer_ani__observer_ani_cxx",
+          "status": "fail",
+          "exit_code": 1,
+          "object_sha256": null
+        },
+        {
+          "unit": "event_listener_handler__observer",
+          "status": "fail",
+          "exit_code": 1,
+          "object_sha256": null
+        },
+        {
+          "unit": "event_listener_manager__observer",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "35182321c2842ac2d560ec4fa74c4f871b4803b82fb1db6760018b4acac42a1d"
+        },
+        {
+          "unit": "napi_state_registry__observer",
+          "status": "fail",
+          "exit_code": 1,
+          "object_sha256": null
+        },
+        {
+          "unit": "napi_telephony_observer__observer",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "0d5d465a6d9ffb14eb4c8bc696f3d7dffc404a7e6c1f1af03f46c014296fe0c7"
+        },
+        {
+          "unit": "telephony_observer__tel_state_registry_api",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "cb6366cc926005208f0e064aed65647b133b343f6b8797fefbb83404514556f9"
+        },
+        {
+          "unit": "telephony_observer_proxy__tel_state_registry_api",
+          "status": "fail",
+          "exit_code": 1,
+          "object_sha256": null
+        },
+        {
+          "unit": "telephony_observer_proxy__tel_state_registry",
+          "status": "fail",
+          "exit_code": 1,
+          "object_sha256": null
+        },
+        {
+          "unit": "telephony_state_registry_service__tel_state_registry",
+          "status": "fail",
+          "exit_code": 1,
+          "object_sha256": null
+        },
+        {
+          "unit": "telephony_state_registry_stub__tel_state_registry",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "7563ed0d6ef7770a28776bc56a7089b17dffe650ecfa8aac565e9edbaeaa02d8"
+        },
+        {
+          "unit": "generated_wrapper",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "b8f35f543b9749e13c788d3419b8eafcf20b189728816b443642b877e96f9720"
+        }
+      ]
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-batched-platform-fixes-05/artifacts/communication_state/evidence.json",
+      "sha256": "a5e2d6663366a52966f845d98e57b5491ef4721b66defa9c098c582bc6944de0",
+      "status": "pass",
+      "coverage": {
+        "declared_group_units": [
+          "telephony_state_registry_client__tel_core_service_api",
+          "telephony_state_registry_proxy__tel_core_service_api",
+          "tel_ril_callback__tel_core_service",
+          "tel_ril_network__tel_core_service",
+          "hril_network__hril",
+          "vendor_report__ril_vendor",
+          "observer_ani__observer_ani_cxx",
+          "event_listener_handler__observer",
+          "event_listener_manager__observer",
+          "napi_state_registry__observer",
+          "napi_telephony_observer__observer",
+          "telephony_observer__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry",
+          "telephony_state_registry_service__tel_state_registry",
+          "telephony_state_registry_stub__tel_state_registry",
+          "generated_wrapper"
+        ],
+        "selected_units": [
+          "event_listener_handler__observer",
+          "napi_state_registry__observer",
+          "observer_ani__observer_ani_cxx",
+          "generated_wrapper"
+        ],
+        "all_group_units_tested": false
+      },
+      "note": "four selected successful consumer/wrapper objects; not all17",
+      "objects": [
+        {
+          "unit": "event_listener_handler__observer",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "bf1d658786ea6c740ebf1824124a0509ac9c60d262818977656e237fd8a5b134"
+        },
+        {
+          "unit": "napi_state_registry__observer",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "fd1e71c554fb403da59def9350a954c6c3e51b534ebf67f03c72da061603743a"
+        },
+        {
+          "unit": "observer_ani__observer_ani_cxx",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "8c83b8c49a644e166d474b0d6cbeb1ee71a2a5da5e2ed9ecf6c9519a8c9e60b1"
+        },
+        {
+          "unit": "generated_wrapper",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "b8f35f543b9749e13c788d3419b8eafcf20b189728816b443642b877e96f9720"
+        }
+      ]
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-proxy-service-platform-06/artifacts/communication_state/evidence.json",
+      "sha256": "ac752eba07708671132c7ca5718fb46e6268220343ce341972f127a30ceee1ef",
+      "status": "pass",
+      "coverage": {
+        "declared_group_units": [
+          "telephony_state_registry_client__tel_core_service_api",
+          "telephony_state_registry_proxy__tel_core_service_api",
+          "tel_ril_callback__tel_core_service",
+          "tel_ril_network__tel_core_service",
+          "hril_network__hril",
+          "vendor_report__ril_vendor",
+          "observer_ani__observer_ani_cxx",
+          "event_listener_handler__observer",
+          "event_listener_manager__observer",
+          "napi_state_registry__observer",
+          "napi_telephony_observer__observer",
+          "telephony_observer__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry",
+          "telephony_state_registry_service__tel_state_registry",
+          "telephony_state_registry_stub__tel_state_registry",
+          "generated_wrapper"
+        ],
+        "selected_units": [
+          "telephony_observer_proxy__tel_state_registry_api",
+          "telephony_observer_proxy__tel_state_registry",
+          "telephony_state_registry_service__tel_state_registry"
+        ],
+        "all_group_units_tested": false
+      },
+      "note": "three selected successful proxy API+service variants and registry service",
+      "objects": [
+        {
+          "unit": "telephony_observer_proxy__tel_state_registry_api",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "8560a6aa58f5cdccd44bab12b0dad79395effdeb93630010238c136a3250b2e3"
+        },
+        {
+          "unit": "telephony_observer_proxy__tel_state_registry",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "434d82116938d326bfe84e1ee46e688c77d51eee9bea7997d18937c55233cbfd"
+        },
+        {
+          "unit": "telephony_state_registry_service__tel_state_registry",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "08279de6a335eaf76dca6021842af20a13f3a2325465a00e6ddf4b9069460082"
+        }
+      ]
+    }
+  ],
+  "complete_evidence": {
+    "external_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-full-Rust-03/artifacts/evidence.json",
+    "repository_copy": "docs/capability-audit/parallel/location/round8-rust-complete-evidence.json",
+    "sha256": "2320364200791a1fb6835996898b24e46433effb4390cf0f313e4b18a4364bfc",
+    "contains": "Exact executed source-bound original/modified commands,6 complete Rust source SHA,generated CXX SHA,all4 reused objects provenance and dep hashes,129 existing native/Rust library checksums,12 tool checksums,private archive/API and Rust output checksums."
+  },
+  "artifacts": {
+    "depfile": {
+      "path": "/work/artifacts/observer.so.d",
+      "sha256": "17ba9a2a1f2076861b59f6a05233657acfdbf6d8d35c9193988021f74aa364d7",
+      "size_bytes": 541
+    },
+    "rsp": {
+      "path": "/work/artifacts/observer.rsp",
+      "sha256": "8933145fd7080bab0293e8eb350e6e7e251e983210e985c57c203fed8a1fbbfa",
+      "size_bytes": 4177
+    },
+    "output": {
+      "path": "/work/artifacts/libtelephony_observer_ani.so",
+      "sha256": "2fc7e3c3ff02e60cd8591c8e3561e1cfdb5e2694cbcf5ac3b73464a521853ee6",
+      "size_bytes": 678448
+    },
+    "unstripped-file": {
+      "path": "/work/artifacts/unstripped/libtelephony_observer_ani.so",
+      "sha256": "ec27ae311d51b4edafdaf7f4fcffcec6db8224d29c17a4dcc272006661ff54e3",
+      "size_bytes": 10058632
+    }
+  },
+  "private_API_artifacts": {
+    "output": {
+      "path": "/work/artifacts/registry-api/libtel_state_registry_api.z.so",
+      "sha256": "805968e37d54383dc3ac70ded2f03550ef8734a99ca02f3c28548770fbf27e54",
+      "size_bytes": 97800
+    },
+    "unstripped": {
+      "path": "/work/artifacts/registry-api/unstripped/libtel_state_registry_api.z.so",
+      "sha256": "f8c32e2ff79ab84c9675e09eb9ceb4d6295059c603c23a09be018bb0b6467db7",
+      "size_bytes": 1667920
+    },
+    "rsp": {
+      "path": "/work/artifacts/registry-api/api.rsp",
+      "sha256": "8054825e24aab9ce99b81358c23386b674936c9e964a5d210fa7fa00651efa85",
+      "size_bytes": 2177
+    }
+  },
+  "dependency_input_count": 129,
+  "metadata_tests": {
+    "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/compile_communication_rust.py --self-test",
+    "pass": 5,
+    "elapsed_seconds": 0.017,
+    "log_sha256": "a5dbac1f8741c97e7cdf33bd50956f0e5bb8928b95698972a026ef9265467e56",
+    "scope": "metadata validation only; no API mock/compiler proof"
+  },
+  "validation_limits": [
+    "Private current API solink replaces only the two successfully compiled source-bound observer objects; its two other unchanged objects and all other product libraries are preserved.",
+    "The SDK native library is selected from actual frozen GN public target and actual solink output; fresh GN dependency selection was not executed.",
+    "No fresh complete product build,package,modem/IMS peer or runtime test.",
+    "All22 requirements remain open; source/host/compile/link successes close0 behavior gaps."
+  ],
+  "fresh_GN_tested": false,
+  "runtime_tested": false,
+  "first_artifact_behavior_gate_passed": false,
+  "closed_requirements": 0,
+  "remaining_assigned_requirements": 22,
+  "integration_requests": [
+    "Integrate helper/documentation commit after source fixes; actual full product GN/build must propagate current native API/SDK dependencies.",
+    "Batch all known fixes for new ARM64 phone representative artifact,boot and validate full positive/boundary behavior before remaining five packages."
+  ]
+}
