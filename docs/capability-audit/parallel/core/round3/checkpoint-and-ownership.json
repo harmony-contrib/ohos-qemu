@@ -192,10 +192,12 @@
   "ownership_overrides": {
     "apps_excludes": [
       "patches/common/applications/standard/settings/wallpaper_settings/",
-      "patches/common/applications/standard/calendar/"
+      "patches/common/applications/standard/calendar/",
+      "patches/common/applications/standard/calendardata/"
     ],
     "system_adds": [
-      "patches/common/applications/standard/calendar/"
+      "patches/common/applications/standard/calendar/",
+      "patches/common/applications/standard/calendardata/"
     ],
     "root_only": [
       "scripts/ (all)",

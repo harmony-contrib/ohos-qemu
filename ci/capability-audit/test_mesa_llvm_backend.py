@@ -5,8 +5,10 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
@@ -21,6 +23,36 @@ RECIPE = "1" * 64
 
 
 class MesaLLVMCompositionTests(unittest.TestCase):
+    def test_action_is_executable_after_install_and_replay_and_preserves_unknown_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "source"
+            for name in BACKEND.GN_FILES:
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(SOURCES[name])
+            artifacts = Path(temporary) / "artifacts"
+            product = artifacts / "arm64_virt"
+            (product / "include").mkdir(parents=True)
+            (product / "lib").mkdir()
+            (product / "manifest.json").write_text("{}")
+            # This fixture exercises installer publication, not LLVM validation.
+            with mock.patch.object(BACKEND, "validate"):
+                BACKEND.apply(root, artifacts, ["arm64_virt"])
+                action = root / BACKEND.SOURCE_SCRIPT
+                self.assertEqual(action.stat().st_mode & 0o777, 0o755)
+                result = subprocess.run([str(action)], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("usage: build_qemu_mesa_llvm.py OUT_DIR", result.stderr)
+                action.chmod(0o644)
+                BACKEND.apply(root, artifacts, ["arm64_virt"])
+                self.assertEqual(action.stat().st_mode & 0o777, 0o755)
+                action.write_bytes(b"caller-owned bytes\n")
+                action.chmod(0o640)
+                with self.assertRaisesRegex(ValueError, "preserving user changes"):
+                    BACKEND.apply(root, artifacts, ["arm64_virt"])
+                self.assertEqual(action.read_bytes(), b"caller-owned bytes\n")
+                self.assertEqual(action.stat().st_mode & 0o777, 0o640)
+
     def test_empty_cross_abi_and_aliased_cached_objects_are_rejected(self):
         spec = importlib.util.spec_from_file_location('mesa_native_consumer',
             REPO / 'patches/common/third_party/mesa3d/llvm_backend/files/build_qemu_mesa_llvm.py')
