@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from test_batch_apps_contact_picker_runtime import ams_fixture
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -31,6 +32,7 @@ class ModelGuest:
         self.case, self.launch = '', ''
         self.provider, self.caller = False, False
         self.pid = 100
+        self.generation = 0
         self.count = 0
         self.pending = []
         self.result_ids = []
@@ -50,6 +52,7 @@ class ModelGuest:
         self.rows.append(row)
 
     def begin(self):
+        self.generation += 1
         case = driver.verifier.MATRIX[self.case]
         for slot in case['slots']:
             invocation = self.launch + '/' + slot
@@ -86,6 +89,10 @@ class ModelGuest:
         if argv[:2] == ['/observer', 'processes']:
             return json.dumps({'api': 'AppMgrClient::GetAllRunningProcesses', 'error_code': 0,
                 'processes': [{'pid': self.pid, 'bundleNames': [driver.CALLER]}] if self.caller else []})
+        if script == 'aa dump -a -u 100':
+            sessions = ([self.generation * 10 + (2 if inv.endswith('/b') else 1) for _, inv in self.pending]
+                        if self.provider and self.pending else [self.generation * 10 + 1] if self.provider else [])
+            return ams_fixture(sessions, self.pid)
         if script == 'hilog -x':
             return driver.PROVIDER + ' ' + driver.verifier.CONTRACT['provider_ability'] + ' ' + self.case + '\n'
         return ''
@@ -95,6 +102,7 @@ class ModelUi:
     def __init__(self, root, guest):
         self.root, self.guest, self.sequence = root, guest, 0
         self.targets = {}
+        self.host_owned = False
 
     def layout(self, label):
         self.sequence += 1
@@ -112,6 +120,17 @@ class ModelUi:
                 node(driver.PROVIDER, 'name', r['name']['fullName'], 160 + i * 40, False)])
                 for i, r in enumerate(g.records[:5])]
             layout = node(driver.PROVIDER, 'root', clickable=False, children=children)
+            if self.host_owned:
+                for index, child in enumerate(children):
+                    for nested in driver.verifier.objects(child):
+                        attrs = nested.get('attributes')
+                        if isinstance(attrs, dict):
+                            attrs.pop('bundleName', None)
+                            attrs.update(hostWindowId='42', accessibilityId=str(100000000100 + index))
+                session = g.generation * 10 + (2 if g.pending and g.pending[0][1].endswith('/b') else 1)
+                extension = node(driver.CALLER, '', clickable=False, children=children)
+                extension['attributes'].update(type='UIExtensionComponent', hostWindowId='42', accessibilityId=str(session))
+                layout = node(driver.CALLER, 'root', clickable=False, children=[extension])
         self.targets = {}
         for current, bundle, ancestors in driver.walk(layout):
             attrs = current['attributes']
@@ -167,6 +186,7 @@ class RuntimeDriver(unittest.TestCase):
         self.guest = ModelGuest(self.root, self.records)
         self.ui = ModelUi(self.root, self.guest)
         self.driver = driver.Driver(self.guest, self.ui, self.root, 'host_model', '/observer', sleep=lambda _: None)
+        self.driver.caller_uid, self.driver.contacts_uid = 20000100, 20010011
         self.seed = {'contacts': self.records}
 
     def test_seed_project_only_two_user_permissions_and_real_startup_resources(self):
@@ -230,6 +250,27 @@ class RuntimeDriver(unittest.TestCase):
         self.assertEqual(self.guest.clicks.count('contact_case_start'), len(cases))
         self.assertEqual(self.guest.clicks.count('doneButton'), 6)
 
+    def test_host_owned_driver_uses_bound_remote_tree_for_six_overloads_cancel_and_dual(self):
+        self.ui.host_owned = True
+        for case in ['select-promise', 'select-callback', 'options-promise-205', 'options-callback-205',
+                     'legacy-promise', 'legacy-callback', 'cancel-default', 'dual-session']:
+            self.driver.case(case, self.seed)
+        actions = [row for row in self.driver.evidence['events'] if row['kind'] in ('done', 'cancel')]
+        self.assertEqual(len(actions), 9)
+        for action in actions:
+            binding = driver.verifier.closed_session(action, 20010011, 20000100)
+            self.assertEqual(binding['host_pid'], self.guest.pid)
+            view = driver.verifier.picker_view(json.loads(Path(action['layout']['path']).read_text()))
+            self.assertTrue(view['host_owned'])
+            after = json.loads(Path(action['layout_after']['path']).read_text())
+            self.assertFalse(any(row.get('type') == 'UIExtensionComponent' and row.get('accessibilityId') == view['extension_id']
+                                 for row in driver.verifier.objects(after)))
+
+    def test_list_root_scoping_preserves_provider_inherited_owner(self):
+        roots = [node(driver.PROVIDER, 'root', children=[node(driver.PROVIDER, 'selectedText', 'Selected 0/205'),
+                                                      node(driver.PROVIDER, 'doneButton')])]
+        self.assertEqual(driver.selected_count(roots), 0)
+
     def test_ambiguous_duplicate_names_and_malformed_counts_fail(self):
         layout = node(driver.PROVIDER, 'root', children=[node(driver.PROVIDER, 'row', children=[
             node(driver.PROVIDER, 'name', 'duplicate', clickable=False), node(driver.PROVIDER, 'name', 'duplicate', clickable=False)])])
@@ -237,7 +278,7 @@ class RuntimeDriver(unittest.TestCase):
         for text in ['Selected 205', 'Selected 206/205', 'Selected 1/2 and 3/4']:
             with self.assertRaises(driver.verifier.EvidenceError):
                 driver.selected_count(node(driver.PROVIDER, 'selectedText', text))
-        self.assertEqual(driver.selected_count(node(driver.PROVIDER, 'selectedText', 'Selected 0/205')), 0)
+        self.assertEqual(driver.selected_count(node(driver.PROVIDER, 'root', children=[node(driver.PROVIDER, 'selectedText', 'Selected 0/205'), node(driver.PROVIDER, 'doneButton')])), 0)
 
     def test_completion_before_real_input_fails_without_clicking_done(self):
         self.driver.caller_ready('select-promise', 'early', self.seed)
