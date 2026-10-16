@@ -461,20 +461,31 @@ class AudioFocusRuntime:
         after = self.token(actor, 'clock-after-fresh-request-' + ready['action'])
         interval = [before['after_ns'], after['before_ns']]
         remote = prefix + '-snapshot-reply.json'
-        self.wait('fresh-native-reply', lambda: self.present(remote, 'focus-fresh-reply-existence'), 3)
+        def completed(rows):
+            found = [row for row in rows if row.get('type') == 'event_fresh_reply']
+            if len(found) > 1:
+                raise ValueError('duplicate native fresh PCM completion')
+            if not found:
+                return None
+            return validate_fresh(found[0], ready, actor['uid'], interval, self.constants)
+        # The native completion follows checked fsync/close of both files.
+        # Seeing CREATE alone does not prove the reply JSON has been written.
+        completion = self.wait_native(actor, 'fresh-reply-native-log', completed)
+        completion_log = dict(actor['latest_native_log'])
         reply_file = self.collect_file(actor, remote)
         reply = validate_fresh(strict_json(Path(reply_file['path']).read_text()), ready, actor['uid'],
                                interval, self.constants)
+        if reply != completion:
+            raise ValueError('native fresh PCM completion and private reply differ')
         pcm_file = self.collect_file(actor, actor['app_files'] + reply['pcm_basename'])
         if pcm_file['bytes'] != reply['bytes']:
             raise ValueError('actual fresh PCM transfer length differs')
         correlation = phase_content(Path(pcm_file['path']).read_bytes(), self.reference)
-        self.wait_native(actor, 'fresh-reply-native-log', lambda rows: next((row for row in rows
-            if row.get('type') == 'event_fresh_reply' and row == reply), None))
         actor['fresh_snapshots'].append(dict(action=ready['action'], nonce=ready['nonce'],
             request_file=Path(request['path']).name, reply_file=Path(reply_file['path']).name,
             pcm_file=Path(pcm_file['path']).name, request_clock_interval=interval,
-            observation=reply, correlation=correlation))
+            observation=reply, correlation=correlation, native_completion=completion,
+            completion_log=completion_log))
         self.note('actual-fresh-PCM-correlated', uid=actor['uid'], action=ready['action'])
         return reply
 

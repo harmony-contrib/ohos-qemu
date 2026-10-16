@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import Mock
 
 import batch_media_audio_capture_challenge as P
+import audio_focus_runtime as R
 import verify_audio_focus_results as V
 
 RUN, UID = 'a' * 32, 20010001
@@ -13,7 +15,7 @@ RUN, UID = 'a' * 32, 20010001
 
 def file(root, name, data):
     path = root / name;path.write_bytes(data)
-    return {'path': str(path), 'sha256': V.sha(path)}
+    return {'path': str(path), 'sha256': V.sha(path), 'bytes': len(data)}
 
 
 class FreshFocusEvidence(unittest.TestCase):
@@ -41,10 +43,12 @@ class FreshFocusEvidence(unittest.TestCase):
                  'audio-event-' + RUN + '-mode1.pcm': file(root, 'full.pcm', data)}
         results = root / 'native.log'
         results.write_text(''.join(json.dumps(r) + '\n' for r in [*chunks, value]))
+        completion = file(root, 'completion.log', results.read_bytes())
         actor = {'mode': 1, 'uid': UID, 'files': files, 'native_results_path': str(results),
                  'native_results_sha256': V.sha(results), 'fresh_snapshots': [{'action': 'focus_begin', 'nonce': nonce,
                     'request_file': 'request', 'reply_file': 'reply', 'pcm_file': 'fresh', 'observation': value,
-                    'request_clock_interval': [1480000000, 1495000000], 'correlation': P.phase_content(data[96000:], reference)}]}
+                    'request_clock_interval': [1480000000, 1495000000], 'correlation': P.phase_content(data[96000:], reference),
+                    'native_completion': value, 'completion_log': completion}]}
         native = {'signals': [{'action': 'focus_begin', 'nonce': nonce, 'monotonic_ns': 1400000000}]}
         return actor, native, reference, chunks
 
@@ -62,6 +66,9 @@ class FreshFocusEvidence(unittest.TestCase):
                 broken['files']['reply']['sha256'] = V.sha(reply)
                 log = Path(broken['native_results_path']);log.write_text(''.join(json.dumps(r) + '\n' for r in [*chunks, point['observation']]))
                 broken['native_results_sha256'] = V.sha(log)
+                point['native_completion'] = point['observation']
+                completion = Path(point['completion_log']['path']);completion.write_bytes(log.read_bytes())
+                point['completion_log']['sha256'] = V.sha(completion)
                 with self.subTest(change=change), self.assertRaises(ValueError):
                     V.verify_fresh_snapshot(broken, native, reference, RUN)
 
@@ -70,6 +77,45 @@ class FreshFocusEvidence(unittest.TestCase):
             actor, native, reference, _ = self.fixture(Path(directory))
             fresh = Path(actor['files']['fresh']['path']);fresh.write_bytes(bytes(96000));actor['files']['fresh']['sha256'] = V.sha(fresh)
             with self.assertRaises(ValueError): V.verify_fresh_snapshot(actor, native, reference, RUN)
+
+    def test_runtime_waits_for_native_completion_before_reading_new_reply_inode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            actor, _, reference, _ = self.fixture(Path(directory))
+            runtime = object.__new__(R.AudioFocusRuntime)
+            runtime.run, runtime.reference, runtime.constants = RUN, reference, {'MIC': 0, 'S16LE': 1}
+            runtime.token = Mock(side_effect=[{'after_ns': 1480000000}, {'before_ns': 1495000000}])
+            runtime.write_nonce = Mock(return_value=actor['files']['request'])
+            runtime.collect_file = Mock(side_effect=[actor['files']['reply'], actor['files']['fresh']])
+            runtime.note = Mock()
+            point = actor['fresh_snapshots'].pop()
+            actor.update(app_files='/owned/', latest_native_log=point['completion_log'])
+            order = []
+            def wait_native(who, label, callback):
+                runtime.collect_file.assert_not_called()
+                self.assertIsNone(callback([]))
+                with self.assertRaises(ValueError): callback([point['observation']] * 2)
+                result = callback([point['observation']])
+                order.append('completed')
+                return result
+            runtime.wait_native = Mock(side_effect=wait_native)
+            ready = dict(run_id=RUN, action='focus_begin', nonce='b' * 32, uid=UID,
+                         monotonic_ns=1400000000, state_result=0, state=2, frames_result=0, frames=20000, copied_bytes=80000)
+            self.assertEqual(runtime.fresh_snapshot(actor, ready), point['observation'])
+            self.assertEqual(order, ['completed'])
+            self.assertEqual(actor['fresh_snapshots'][0]['native_completion'], point['observation'])
+
+    def test_independent_completion_replay_requires_unique_matching_marker_and_preserved_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            expected = dict(type='event_ready', run_id=RUN, action='focus_begin', nonce='b' * 32, monotonic_ns=100)
+            row = {'native_completion': expected, 'completion_log': file(root, 'live.log', (json.dumps(expected) + '\n{').encode())}
+            V.completed_native(row, 'event_ready', expected)
+            for raw in ('{\n' + json.dumps(expected), json.dumps(expected) + '\n' + json.dumps(expected),
+                        json.dumps(dict(expected, nonce='c' * 32)), ''):
+                path = Path(row['completion_log']['path']);path.write_text(raw)
+                row['completion_log']['sha256'] = V.sha(path)
+                with self.subTest(raw=raw), self.assertRaises(ValueError):
+                    V.completed_native(row, 'event_ready', expected)
 
 
 if __name__ == '__main__': unittest.main()

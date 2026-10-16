@@ -34,6 +34,28 @@ def interval(value):
     return value
 
 
+def completed_native(row, kind, expected):
+    log = row['completion_log']
+    path = Path(log['path'])
+    if not path.is_absolute() or sha(path) != log['sha256']:
+        raise ValueError('native focus completion log changed')
+    lines = path.read_text().splitlines()
+    found = []
+    for index, line in enumerate(lines):
+        try:
+            value = json.loads(line)
+        except ValueError:
+            if index == len(lines) - 1:
+                break  # The live log may already contain the next partial row.
+            raise ValueError('malformed middle row in native focus completion log')
+        if not isinstance(value, dict) or value.get('run_id') != expected['run_id']:
+            raise ValueError('foreign native focus completion log')
+        if value.get('type') == kind and value.get('action') == expected['action']:
+            found.append(value)
+    if found != [expected] or row.get('native_completion') != expected:
+        raise ValueError('actual native focus completion missing, duplicated or different')
+
+
 def actor_tokens(actor, run):
     uid, bundle = actor['uid'], actor['bundle']
     rows = actor['tokens']
@@ -246,12 +268,14 @@ def verify_causality(actors, native, active):
                 raise ValueError('actual native focus readiness file changed')
             v = row['observation']
             signal = ready[role][row['action']]
+            completed_native(row, 'event_ready', signal)
             if v.get('run_id') != evidence['run_id']:
                 raise ValueError('actual native focus run changed')
             if (v.get('uid') != actor['uid'] or v.get('action') != row['action'] or
                     v.get('nonce') != signal['nonce'] or v.get('monotonic_ns') != signal['monotonic_ns']):
                 raise ValueError('actual native focus readiness differs from its native log')
-            interval(row['actual_clock_interval'])
+            if interval(row['actual_clock_interval'])[0] < signal['monotonic_ns']:
+                raise ValueError('focus readiness collected before its native completion')
         for row in actor['acks']:
             action = row['action']
             low, high = interval(row['actual_clock_interval'])
@@ -310,6 +334,7 @@ def verify_fresh_snapshot(actor, native, reference, run):
     replies = [r for r in rows if r.get('type') == 'event_fresh_reply']
     if replies != [value] or any(r.get('type') == 'event_fresh_error' for r in rows):
         raise ValueError('fresh PCM reply differs from actual native completion/error log')
+    completed_native(point, 'event_fresh_reply', value)
     for key in ('state_result', 'frames_result', 'timestamp_result', 'source_result', 'rate_result', 'channels_result', 'format_result'):
         if type(value.get(key)) is not int or value[key] != 0:
             raise ValueError('fresh MIC public getter failed: ' + key)

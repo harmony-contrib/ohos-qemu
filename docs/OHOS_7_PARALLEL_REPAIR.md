@@ -252,3 +252,7 @@ GNSS系统Linux测试4288e492已scope检查合入30774b8：GNU11.4/Werror/ASan/U
 根已接入实际双UID焦点运行入口和独立核心重放：两个正常APL/空ACL的签名HAP，各自真实MIC/通知授权与normal KEEP_BACKGROUND_RUNNING token，联合1903/3203服务和两次请求后的新0.5s PCM，随后VOIP真实Start才允许归因owner forced STOP；contender真实Stop/Release和后台任务清理后才允许owner重新Start。核心重放逐字节关联snapshot与最终callback PCM，重新做独立挑战相关，严格检查token/进程/时钟/ACK/事件归因/通知与任务退出，不接受计数或先前checkpoint。已纳入正式suite/首包离线门禁，42项相关核心host检查PASS（不是guest验收）。根另修前台revoke的ready完成标记与ACK原子发布竞争；网络独占runner正在同批修相同ready/journal读取完成竞争。
 
 真实当前子进程libchild_process.so及3D的lib3dWidgetAdapter.z.so、libKitHelper.z.so完整链接通过（r52-child-Graphics3D-actual-CFI-links-02，18.356s）；KitHelper链接本批新adapter库。原flags/全部输入SHA保留，child的CFI符号核对通过；两个3D原目标仅选LTO，不伪称它们选择CFI。01原先对3D误加CFI符号断言的失败证据保留，未修改产品保护选项。新fresh-PCM/last_callback媒体caller的三个实际API26 unsigned event HAP再次全部通过（r52-three-audio-event-fresh-PCM-HAP-roles-03）。本轮仍无新guest运行通过、0/6/82未闭合。
+
+根集成 network 47f535f→8a712b9，五组路径互斥scope通过；18项host回归通过。ready等待真实event_ready完成，journal只允许当前尾项2s短写重试并保留原始字节，最终collect严格复核。根另发现fresh PCM回复仍有CREATE/短写竞争，调整为先等唯一实际event_fresh_reply再收JSON/PCM；独立重放绑定当时完成日志、最终native日志、私有文件和时钟，27项相关核心检查通过。此处均非guest验收，82未关、0/6、首包门禁false。
+
+本批apps独占Settings share picker5文件与MMS text sendData3文件（详见parallel-work-plan.json）；ACTION_CHOOSE/HMS/Bluetooth及未实现附件链仍明确缺失。system获唯一CPU2/mem5g租约，仅做真实OHOS GNSS DSO ABI/CFI消费端；Settings/MMS官方SDK编译排队，不并发重型任务。

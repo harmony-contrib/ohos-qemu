@@ -664,7 +664,17 @@
           "next_required": "修复声明与实际实现，完整验证所有对应接口和插件调用；保留用户要求能力"
         }
       ],
-      "count": 34
+      "count": 34,
+      "exclusive_current_batch_upstream_targets": [
+        "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
+        "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
+        "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets",
+        "applications/standard/settings/product/phone/src/main/module.json5",
+        "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
+        "applications/standard/mms/entry/src/main/module.json5",
+        "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets",
+        "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets"
+      ]
     },
     "network": {
       "groups": [
@@ -1761,5 +1771,12 @@
       "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c",
       "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c"
     ]
+  },
+  "current_resource_lease": {
+    "owner": "system",
+    "container": "ohos-system-gnss-ohos-abi-r6-20261016-01",
+    "cpu": 2,
+    "memory": "5g",
+    "scope": "single actual OHOS GNSS CFI/ABI consumer and bounded QEMU-user diagnostic; source/out RO; no package build"
   }
 }
