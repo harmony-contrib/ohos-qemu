@@ -1,0 +1,469 @@
+{
+  "scope": "Official API26 Release unsigned HAP compile and exact source composition; no system signing/BMS/guest acceptance",
+  "container": "ohos-qemu-parallel-source-20261016-02",
+  "source_revision": "352a226f5c969a14be6f711fb41c8d02fddce2d7",
+  "source_tar": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/fixed-admin-source.tar",
+  "source_tar_sha256": "8ede2de8c21baa6954baa1874e7aa7af0bd07e0075375ffcf75e72ac6f96527c",
+  "environment": {
+    "project": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-04/applications/standard/admin_provisioning",
+    "sdk": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0",
+    "node": "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+    "lease": "exclusive parent SDK lease after report fix 33cc68a",
+    "environment": {
+      "LC_ALL": "C",
+      "LC_CTYPE": "C",
+      "LANG": "C",
+      "NODE_OPTIONS": "--max-old-space-size=2048 --require=/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/cpu-cap.cjs",
+      "HVIGOR_USER_HOME": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/home/.hvigor",
+      "OHPM_HOME": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/home/.ohpm"
+    }
+  },
+  "sdk_metadata": {
+    "ets": {
+      "metadata": {
+        "apiVersion": "26",
+        "displayName": "Ets",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "ets",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab"
+    },
+    "native": {
+      "metadata": {
+        "apiVersion": "26",
+        "displayName": "Native",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "native",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "sha256": "3dbc4a06ffd3b1be6b45c3c346a7900ca42f8a81a5b0454dc7f5cc1e5a9509a8"
+    },
+    "toolchains": {
+      "metadata": {
+        "apiVersion": "26",
+        "displayName": "Toolchains",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "toolchains",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "sha256": "62e6845edf9b6436334e64f69f9251a2ee37c9c5217f1c63716298ff6b636fa9"
+    }
+  },
+  "commands": [
+    [
+      {
+        "stage": "dependencies",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+          "install",
+          "--all",
+          "--registry",
+          "http://127.0.0.1:9",
+          "--fetch_timeout",
+          "10000",
+          "--retry_times",
+          "0"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-01/applications/standard/admin_provisioning",
+        "exit_code": 0,
+        "duration_seconds": 0.7218999862670898,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/dependencies-01.log",
+        "log_sha256": "acefd4316e49da2b45f43dcba8c440d8d8ae347bd3056d16a522a050a150d481"
+      },
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=adminprovisioning",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-01/applications/standard/admin_provisioning",
+        "exit_code": 255,
+        "duration_seconds": 3.5765600204467773,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/compile-01.log",
+        "log_sha256": "c6d7b68b7694d9265d85cb28e6105be31f847e94ffbe23d783971e4617f2d133"
+      }
+    ],
+    [
+      {
+        "stage": "dependencies",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+          "install",
+          "--all",
+          "--registry",
+          "http://127.0.0.1:9",
+          "--fetch_timeout",
+          "10000",
+          "--retry_times",
+          "0"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-02/applications/standard/admin_provisioning",
+        "exit_code": 0,
+        "duration_seconds": 0.5026979446411133,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/dependencies-02.log",
+        "log_sha256": "14dd94b6453b9c3f019e0c6226e2e8a9cbcb174d30b5cf252f54338d27b1b52f"
+      },
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=adminprovisioning",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-02/applications/standard/admin_provisioning",
+        "exit_code": 255,
+        "duration_seconds": 5.043522119522095,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/compile-02.log",
+        "log_sha256": "7833b11afe42dc7e8c2dd9015d0b16dea554a2b21ebe1721874e8177ddf3701a"
+      }
+    ],
+    [
+      {
+        "stage": "dependencies",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+          "install",
+          "--all",
+          "--registry",
+          "http://127.0.0.1:9",
+          "--fetch_timeout",
+          "10000",
+          "--retry_times",
+          "0"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-03/applications/standard/admin_provisioning",
+        "exit_code": 0,
+        "duration_seconds": 0.6089427471160889,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/dependencies-03.log",
+        "log_sha256": "1a05c1bdb319fabe940dfc34f77777c0eea2a1c81a9dfe7d9b572484e3648c34"
+      },
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=adminprovisioning",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-03/applications/standard/admin_provisioning",
+        "exit_code": 255,
+        "duration_seconds": 5.0102219581604,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/compile-03.log",
+        "log_sha256": "7fb296c8ea7beda9df1e4258307f1a531558fdfa2217e9bea6d5ffdb34b9fbfe"
+      }
+    ],
+    [
+      {
+        "stage": "dependencies",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+          "install",
+          "--all",
+          "--registry",
+          "http://127.0.0.1:9",
+          "--fetch_timeout",
+          "10000",
+          "--retry_times",
+          "0"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-04/applications/standard/admin_provisioning",
+        "exit_code": 0,
+        "duration_seconds": 0.6561760902404785,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/dependencies-04.log",
+        "log_sha256": "700893a0fed70a197bcd5915024d0e499d666a6e96219fb90b1291bd44a3c502"
+      },
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=adminprovisioning",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-04/applications/standard/admin_provisioning",
+        "exit_code": 0,
+        "duration_seconds": 7.116620063781738,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/compile-04.log",
+        "log_sha256": "94a8acd49e28a6b0deb21a188c3b93dafb268e4f071df507127d78ad5cf18bc9"
+      }
+    ]
+  ],
+  "input_snapshots": {
+    "01": {
+      "manifest": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-01.json",
+      "archive": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-01.tar.gz",
+      "frozen_before_build": true
+    },
+    "02": {
+      "manifest": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-02.json",
+      "archive": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-02.tar.gz",
+      "frozen_before_build": true
+    },
+    "03": {
+      "manifest": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-03.json",
+      "archive": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-03.tar.gz",
+      "frozen_before_build": true
+    },
+    "04": {
+      "manifest": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-04.json",
+      "archive": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-04.tar.gz",
+      "frozen_before_build": true
+    }
+  },
+  "staging_00_failure": "An earlier private source directory retained new config files from a prior candidate after re-extracting the original tar; exact guard correctly rejected mixed state before compile. Preserved as source/. Subsequent attempts each use fresh source-NN directory. No shared source changed.",
+  "failures": {
+    "01": "PreBuild: old srcEntrance fields and UIExtension type=ui unsupported; corrected together to real Stage srcEntry/sys/commonUI while preserving names/export/permissions.",
+    "02": "18 concrete ArkTS type errors: untyped JSON config, optional admin/enterprise/Want, optional bundleName overload; collected and repaired together with explicit config validation and real refusal paths.",
+    "03": "One concrete ArkTS restriction: inline object type in ProvisionConfig; replaced with named interface. All previous failures retained.",
+    "04": "BUILD SUCCESSFUL, compile exit0. Existing deprecation warnings and private component input warnings retained; require real UI acceptance."
+  },
+  "payload_sha256": {
+    "BUILD.gn": "f347219abe4a4dac7ff187cb2229bcad0905e12c4c051e41f1999c5ae2ca3f64",
+    "build-profile.json5": "58d7612b9bde9939302ffcb2ea0c6bb75243cb1379c87c065b25e36d17a2cf0c",
+    "entry/src/main/module.json5": "5f6c49998711f1c8da257227aa22f29f7dfb5719c4967c0bb9f8fa53d8b63e3c",
+    "entry/src/main/ets/MainAbility/MainAbility.ts": "3021ff6079650e37cf8c734ad72a81a55ce5224dbd8672991dbb6dbb9c97a50c",
+    "entry/src/main/ets/pages/applicationInfo.ets": "7309c50e415241bc1a52f9a13d77f32a85a5bda78134251b26ceb548f16ea955",
+    "entry/src/main/ets/common/appManagement/appDetailData.ets": "76f2be2958be261512bceeb9f6ff75ad2347003704d9f49bb3e3fd1e8be0bcbe",
+    "hvigorfile.js": "e9179e21f4c28986b2240029126b05d9cade6345fbae32f5c3c7ba009a6cb31f",
+    "entry/hvigorfile.js": "9c9df267b2c365015e85fa68b79d756f906feec260fd3179728f8a7a07625761",
+    "entry/src/main/ets/MainAbility/UIExtensionAbility.ets": "690c6652d081e2703fc1e3c95aa9cb78a21a93071462141a8ffa60b2354aaaa8",
+    "entry/src/main/ets/pages/component/deployComponent.ets": "ebc5029948c0c7691b4bd0e341a2a4702aa5b5fbe1c63e149d81e175990997fd",
+    "entry/src/main/ets/pages/autoManager/managerStart.ets": "594bdb5dd5ccde5590c2d3cc5f80e2ad1c80ed715f670b1127fa12ec48ace337",
+    "entry/src/main/ets/pages/custProvisioning/custProvisioning.ets": "5c14542fb585c4a32bb2b5ffe4bc1801160496c3eac6fed1355b87b2263f89a0",
+    "oh-package.json5": "b497f9b90dc658e3e4ba2978ffc4778baa814762a1c68d18ef40bfc539d3fa8e",
+    "entry/oh-package.json5": "45a6a5ef18bdb6a5b173af26a094a1165cda3f576990b48b6a84cca914f96526",
+    "hvigor/hvigor-config.json5": "19fd4e493f941f2dc8d7f4d0da03cbe22fcd2f7fe3adc099cbbb2bdc2656e88b"
+  },
+  "artifact": {
+    "path": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-04/applications/standard/admin_provisioning/entry/build/default/outputs/default/adminprovisioning-default-unsigned.hap",
+    "sha256": "5482df458fc63930cbdb6f0894662587d05ce8437391dbe9322e54137b95d24e",
+    "size": 273317,
+    "bundle": "com.ohos.adminprovisioning",
+    "module": "adminprovisioning",
+    "compile_sdk": "26.0.0.105",
+    "api_release": "Release",
+    "abilities": [
+      {
+        "iconId": 16777317,
+        "startWindowIconId": 16777320,
+        "visible": false,
+        "icon": "$media:icon",
+        "startWindowIcon": "$media:transparent",
+        "startWindowBackgroundId": 16777264,
+        "description": "$string:description_mainability",
+        "label": "$string:entry_MainAbility",
+        "skills": [
+          {
+            "entities": [
+              "entity.system.home"
+            ],
+            "actions": [
+              "action.system.home"
+            ]
+          }
+        ],
+        "srcEntry": "./ets/MainAbility/MainAbility.ts",
+        "descriptionId": 16777234,
+        "labelId": 16777240,
+        "startWindowBackground": "$color:color_00000000_transparent",
+        "removeMissionAfterTerminate": true,
+        "name": "com.ohos.adminprovisioning.MainAbility",
+        "launchType": "singleton"
+      },
+      {
+        "iconId": 16777317,
+        "startWindowIconId": 16777320,
+        "visible": true,
+        "icon": "$media:icon",
+        "startWindowIcon": "$media:transparent",
+        "startWindowBackgroundId": 16777264,
+        "description": "$string:description_autoManagerAbility",
+        "srcEntry": "./ets/MainAbility/AutoManagerAbility.ts",
+        "descriptionId": 16777233,
+        "startWindowBackground": "$color:color_00000000_transparent",
+        "removeMissionAfterTerminate": true,
+        "permissions": [
+          "ohos.permission.PROVISIONING_MESSAGE"
+        ],
+        "name": "com.ohos.automanager.AutoManagerAbility",
+        "launchType": "singleton"
+      },
+      {
+        "exported": true,
+        "iconId": 16777317,
+        "startWindowIconId": 16777320,
+        "icon": "$media:icon",
+        "startWindowIcon": "$media:transparent",
+        "startWindowBackgroundId": 16777264,
+        "description": "$string:description_ByodAdminProvisionAbility",
+        "srcEntry": "./ets/MainAbility/ByodAdminProvisionAbility.ts",
+        "descriptionId": 16777231,
+        "startWindowBackground": "$color:color_00000000_transparent",
+        "removeMissionAfterTerminate": true,
+        "permissions": [
+          "ohos.permission.START_PROVISIONING_MESSAGE"
+        ],
+        "name": "ByodAdminProvisionAbility",
+        "launchType": "singleton"
+      }
+    ],
+    "extension_abilities": [
+      {
+        "exported": false,
+        "iconId": 16777317,
+        "srcEntry": "./ets/MainAbility/UIExtensionAbility.ets",
+        "name": "MDMUIExtensionAbility",
+        "icon": "$media:icon",
+        "description": "UIExtensionAbility",
+        "type": "sys/commonUI"
+      }
+    ],
+    "request_permissions": [
+      {
+        "name": "ohos.permission.MANAGE_LOCAL_ACCOUNTS"
+      },
+      {
+        "name": "ohos.permission.GET_BUNDLE_INFO"
+      },
+      {
+        "name": "ohos.permission.MANAGE_ENTERPRISE_DEVICE_ADMIN"
+      },
+      {
+        "name": "ohos.permission.FACTORY_RESET"
+      },
+      {
+        "name": "ohos.permission.INTERNET"
+      }
+    ],
+    "contains_modules_abc": true,
+    "modules_abc_sha256": "8ca7ec86cba899ec2eba65417f1c78ec9f19a58b32f5f1074eec3c9a3f275b4b",
+    "native_elf_members": [],
+    "signature_status": "unsigned; normal GN app_sign with existing profile and main-owned exact signer/preinstall/pregrant required"
+  },
+  "unchanged_profile": {
+    "path": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/source-04/applications/standard/admin_provisioning/signature/adminprovisioning.p7b",
+    "sha256": "8543f8be10e076b37a640aff8f817575cc0b6baa4aa2378ded514eccb9f9e38e",
+    "certificate_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5",
+    "apl": "normal",
+    "app_feature": "hos_system_app",
+    "acls": {
+      "allowed-acls": [
+        "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+        "ohos.permission.MANAGE_ENTERPRISE_DEVICE_ADMIN",
+        "ohos.permission.FACTORY_RESET"
+      ]
+    },
+    "permissions": {
+      "restricted-permissions": []
+    }
+  },
+  "resources": {
+    "lease": "parent granted after 33cc68a, explicitly returned after compile04; no more heavy work",
+    "parallel": false,
+    "cpu_resource_detection_cap": 2,
+    "node_heap_mb": 2048,
+    "global_configuration_modified": false,
+    "pnpm": "Hvigor automatically prepared pnpm10.27.0 inside private HVIGOR_USER_HOME; original SDK/compiler unchanged"
+  },
+  "tools_and_snapshots_sha256": {
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node": "b98965e9a1cb8efffde21f63d360d5e99d6ef1b0b826dad922c1554d5c86e644",
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js": "11798a97fd537d2cf8bdea90f66dbf650cbeefd328493bf2f552f2fae75e6911",
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/hvigor/package.json": "2b710cd84b2124f043c01365642fb5c493f3637879f1120681ffb6b018a60c9a",
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/hvigor-ohos-plugin/package.json": "ddcb9a0ddfd4622fac2bb1378bf2d29fac95a972cf51250fd69f575a1296add5",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/build-tools/ets-loader/package.json": "9ec821062584134f7035d6cd289f9358bedad86256832d0ee8d0f6d7f43c85a0",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/build-tools/ets-loader/bin/ark/build-mac/bin/es2abc": "4d921b123d050309231436be967860a2facb79cd2c241b5b37f3b08f74b54bca",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/toolchains/restool": "63d7881461ce7bb902b3404c7278b5bfeb01bc21416b540bed030a1cff3fe85b",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata/signature/Calendardata.p7b": "51ddd6d112a5c749050910e617a730fc81043e2921f5854bcb6a695a5886bcc4",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/cpu-cap.cjs": "259c712061471734d6dad545e406622dd23d0ea2aae3fa26cf2e6772c11f5830",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/cpu-cap.cjs": "259c712061471734d6dad545e406622dd23d0ea2aae3fa26cf2e6772c11f5830",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/run-02.py": "7a8a707509f059641423729f872dc1962c57636e287d8192107dc163b832eca5",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/run-03.py": "71276524bc36abb2418dc181d24311301a3415b686cc89471ee2db07cceed028",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/run-04.py": "ea0ce059b75c3d70be928e143cedde5429ad40f7d8c45bdd8b7c76c7606a6a35",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/run-01.py": "e6f53b840b7a2e6ba368945e1efac90aeea497dd4736255920f394cb79442fa2",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-01.json": "c676c78be4561320aac04727db31348ed61b825d00a94000eadbbf862b201e06",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-02.json": "a61adf7d495a8ed1501cdc2091bbbe838e0a9ac242fcaa4cefcaec380ee40bf7",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-03.json": "6b1c895fdb292770aac9ecf7dafb6ca895d46f83155987a5ccc6d8372fce6cdc",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-04.json": "d9c365fe15fdcc4327df8ad37824328207a26333c245512969d1a71dd6979646",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-01.tar.gz": "e660107a3d21eca72287267fce9c2bc9445bccc61d3da60bb30401f3193b002f",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-03.tar.gz": "7ec1831fa8c670b9740948f7c308dcb1eeb353f5c5d366c36f651d4c2eae15b7",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-04.tar.gz": "465ce2506c6d3ae7b9396de652017ef881862b5a517d03bf872460afa7f66ca6",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/admin-provider-sdk-01/input-02.tar.gz": "57bc53de8039b8aaf2f96b9e7ee2a125953e6dffad5ed40b439e5da2b02b7d76"
+  },
+  "ledger_closed": 0
+}
