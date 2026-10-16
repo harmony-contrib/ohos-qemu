@@ -159,10 +159,25 @@ class KnowledgeRuntimeTests(unittest.TestCase):
             self.assertEqual(value['apl_required_at_signing'], apl)
             self.assertEqual(value['allowed_acls'], [])
             self.assertFalse(value['runtime_acceptance'])
+            self.assertEqual(module['deviceTypes'], ['default'])
+            self.assertEqual(value['sdk_device_types'], ['default'])
+            self.assertEqual(value['acceptance_device'], 'phone')
+            self.assertEqual(value['sdk']['device_default'], project.record(SDK/'ets/api/device-define/default.json'))
+
+    def test_missing_real_device_capability_fails_before_preparation(self):
+        sdk = self.root/'profile-unit-input'
+        file = sdk/'ets/api/device-define/default.json'
+        project.write(file, {'SysCaps': sorted(project.REQUIRED_SYSCAPS-{'SystemCapability.FileManagement.PhotoAccessHelper.Core'})})
+        with self.assertRaisesRegex(ValueError, 'lacks a required caller capability'):
+            project.check_device_profile(sdk)
+        file.write_text(json.dumps({'SysCaps': sorted(project.REQUIRED_SYSCAPS)}))
+        self.assertEqual(project.check_device_profile(sdk), project.record(file))
 
     def test_published_phase_contract_matches_actual_factory(self):
         contract = json.loads((project.FIX/'protocol.json').read_text())
         self.assertEqual(contract['steps'], [list(step) for step in runtime.STEPS])
+        self.assertEqual(contract['sdk_device_types'], project.SDK_DEVICE_TYPES)
+        self.assertEqual(contract['acceptance_device'], project.ACCEPTANCE_DEVICE)
         self.assertFalse(contract['acceptance']['ledger_closed'])
 
     def test_wrong_date_day_fails(self):
