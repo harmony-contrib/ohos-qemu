@@ -107,8 +107,8 @@ def run(args):
             row.update(link_exit_code=result.returncode, link_log_sha256=digest(log))
             if result.returncode:
                 raise ValueError('actual native executable link failed')
-            header = binary.read_bytes()[:64]
-            if header[:6] != bytes((127, 69, 76, 70, elf_class, 1)) or int.from_bytes(header[18:20], 'little') != machine:
+            elf_header = binary.read_bytes()[:64]
+            if elf_header[:6] != bytes((127, 69, 76, 70, elf_class, 1)) or int.from_bytes(elf_header[18:20], 'little') != machine:
                 raise ValueError('linked executable has wrong actual ABI')
             row.update(status='pass', binary_sha256=digest(binary), dependency_sha256=digest(dep))
         except Exception as error:

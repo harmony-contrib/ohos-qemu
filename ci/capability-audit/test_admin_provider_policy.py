@@ -14,7 +14,7 @@ class AdminPolicyTests(unittest.TestCase):
     def test_prepare_preserves_other_apps_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as temporary:
             for name in M.POLICIES:
-                path = Path(temporary) / name
+                path = Path(temporary).resolve() / name
                 other = {'bundleName': 'unrelated', 'app_signature': ['existing']}
                 document = {'install_list': [other]} if name.startswith('install_list_capability') else [other]
                 path.write_text(json.dumps(document))
@@ -28,7 +28,7 @@ class AdminPolicyTests(unittest.TestCase):
     def test_unknown_signer_extra_permission_and_duplicate_app_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             for name, expected in M.POLICIES.items():
-                path = Path(temporary) / name
+                path = Path(temporary).resolve() / name
                 bad_signer = {**expected, 'app_signature': ['*']}
                 broader = {**expected, 'allowUnexpectedPrivilege': True}
                 for rows in ([bad_signer], [broader], [expected, expected]):
@@ -39,7 +39,7 @@ class AdminPolicyTests(unittest.TestCase):
 
     def test_missing_and_redirected_evidence_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / 'policy.json'
+            path = Path(temporary).resolve() / 'policy.json'
             path.write_text('[]')
             with self.assertRaisesRegex(ValueError, 'missing'):
                 M.policy_bytes(path, 'install_list_permissions.json')

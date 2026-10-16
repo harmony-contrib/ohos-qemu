@@ -79,7 +79,8 @@ def inspect_hap(hap):
                 'hap_sha256': file_sha256(hap)}
 
 
-def verify_signature(hap, source, scratch):
+def verify_signature(hap, source, scratch,
+                     profile_relative='applications/standard/photos/signature/photos.p7b'):
     dist = source / 'developtools/hapsigner/dist'
     jar = dist / 'hap-sign-tool.jar'
     if file_sha256(jar) != SIGNER_JAR_SHA:
@@ -98,7 +99,7 @@ def verify_signature(hap, source, scratch):
     match = re.search(r'SHA256:\s*([0-9A-Fa-f:]+)', re.split(r'certificate #1\b', leaf[1], maxsplit=1)[0])
     if (not all(marker in output for marker in required) or not match or
             match[1].replace(':', '').upper() != SIGNATURE or not chain.is_file() or
-            profile.read_bytes() != (source / 'applications/standard/photos/signature/photos.p7b').read_bytes()):
+            profile.read_bytes() != (source / profile_relative).read_bytes()):
         raise ValueError('Photos signature/digest/permissions or exact source profile mismatch')
     return {'application_signer_sha256': SIGNATURE, 'embedded_profile_sha256': file_sha256(profile),
             'digest_codesign_permission_verification': 'pass'}
