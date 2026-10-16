@@ -1571,6 +1571,9 @@ PY
     ./build.sh
     --product-name "${product}"
     --build-target images
+    # Always regenerate the graph for this source snapshot. hb otherwise may
+    # inherit fast_rebuild from an earlier invocation and retain old JS/ABC paths.
+    --fast-rebuild=false
     --ccache
     "--ninja-args=-j${BUILD_JOBS}"
     --load-test-config=false
@@ -1586,6 +1589,12 @@ PY
     # One product linker at a time shares the coordinator's heavy-work lease.
     # Ninja still uses BUILD_JOBS for compilation; target LTO/CFI stay enabled.
     build_args+=(--gn-args "concurrent_links=1")
+    if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
+      # Use HiCollie's existing suspend-aware scheduling for QEMU s2idle. This
+      # retains real awake half/full checks and recovery; new guest wake/health
+      # acceptance remains mandatory, including s2idle's dual-clock boundary.
+      build_args+=(--gn-args "hicollie_suspend_check_enable=true")
+    fi
     case "${DEVICE_TYPE}" in
       phone) build_args+=(--gn-args "target_platform=phone") ;;
       # AccessToken and other platform branches use pc, not the BMS device type
@@ -1628,13 +1637,30 @@ PY
   if [ "${BUILD_ONLY_LOAD}" != "1" ] && { [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; }; then
     python3 "${SCRIPT_DIR}/qemu_msdp_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
     python3 "${SCRIPT_DIR}/qemu_wallpaper_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
+    python3 "${SCRIPT_DIR}/qemu_contacts_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
   fi
+  local build_argv_json="${OHOS_ROOT}/out/${product}/qemu-full-build-argv.json"
+  mkdir -p "$(dirname "${build_argv_json}")"
+  python3 - "${build_argv_json}" "${build_args[@]}" <<'PY'
+import json
+from pathlib import Path
+import sys
+Path(sys.argv[1]).write_text(json.dumps(sys.argv[2:], indent=2) + '\n')
+PY
   "${build_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
   if [ "${BUILD_ONLY_LOAD}" != "1" ] && { [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; }; then
-    python3 "${SCRIPT_DIR}/qemu_msdp_build_witness.py" finish --source-root "${OHOS_ROOT}" --product "${product}" \
-      --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
-    python3 "${SCRIPT_DIR}/qemu_wallpaper_build_witness.py" finish --source-root "${OHOS_ROOT}" --product "${product}" \
-      --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
+    local witness witness_failed=0
+    for witness in qemu_msdp_build_witness qemu_wallpaper_build_witness qemu_contacts_build_witness; do
+      local witness_args=(finish --source-root "${OHOS_ROOT}" --product "${product}"
+        --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log")
+      if [ "${witness}" = qemu_contacts_build_witness ]; then
+        witness_args+=(--build-argv-json "${build_argv_json}" --build-exit-code 0)
+      fi
+      if ! python3 "${SCRIPT_DIR}/${witness}.py" "${witness_args[@]}"; then
+        witness_failed=1
+      fi
+    done
+    [ "${witness_failed}" = 0 ] || return 1
   fi
   if [ "${DEVICE_TYPE}" = "phone" ] || [ "${DEVICE_TYPE}" = "2in1" ]; then
     python3 "${PATCH_ROOT}/lib/permission_profile.py" \

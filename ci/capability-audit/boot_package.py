@@ -106,6 +106,7 @@ class QemuGuest:
         self.socket_directory = None
         self.diagnostic_process = None
         self.diagnostic_log = None
+        self.clock_observer = None
         self.report = {'schema_version': 1, 'scope': 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate',
             'status': 'fail', 'purpose': args.purpose, 'archive': str(args.archive.resolve()),
             'test_environment': {'external_keepalive': False, 'host_system': platform.system(),
@@ -373,6 +374,13 @@ class QemuGuest:
             before = self.shell('pidof render_service', 'render-service-before-stability').strip()
             if re.fullmatch(r'[1-9][0-9]*', before) is None:
                 raise ValueError('actual RenderService unavailable')
+            if getattr(args, 'clock_probe', None) or getattr(args, 'clock_probe_build', None):
+                if not getattr(args, 'clock_probe', None) or not getattr(args, 'clock_probe_build', None):
+                    raise ValueError('clock helper requires its actual compiler receipt')
+                from watchdog_boot_clocks import Observer
+                self.clock_observer = Observer(self, args.clock_probe, args.clock_probe_build)
+                self.clock_observer.prepare()
+                self.clock_observer.sample('before-unassisted-stability')
             if args.purpose == 'diagnostic':
                 if getattr(args, 'kernel_diagnostic', None) == 'power-trace':
                     self.shell('hilog -b D -D D002511,D002901; '
@@ -433,6 +441,12 @@ class QemuGuest:
             self.command([args.hdc, 'tconn', self.target], 'reconnect-owned-forward-after-quiet-stability')
             if self.shell('cat /proc/sys/kernel/random/boot_id', 'same-kernel-after-quiet-stability').strip() != boot_id:
                 raise ValueError('kernel rebooted during no-input stability or power-key wake')
+            if self.clock_observer is not None:
+                self.clock_observer.sample('after-unassisted-stability')
+                self.clock_observer.cleanup()
+                clocks = self.report['watchdog_clocks']
+                if clocks['cleanup_complete'] is not True or clocks['cleanup_errors'] != []:
+                    raise ValueError('actual clock helper cleanup incomplete')
             if self.shell('pidof render_service', 'render-service-after-stability').strip() != before:
                 raise ValueError('RenderService restarted during unassisted boot stability')
             self.healthy()
@@ -469,6 +483,12 @@ class QemuGuest:
             raise
 
     def close(self):
+        if self.clock_observer is not None:
+            self.clock_observer.cleanup()
+            try:
+                self.save()
+            except BaseException:
+                pass  # Evidence I/O must not prevent terminating this owned VM.
         # start_new_session owns this process group, including a legacy
         # launcher's non-exec child. Never read a PID file or select a process
         # by name; do not kill a shared HDC server/another emulator.
@@ -529,6 +549,8 @@ def main():
                         help='candidate diagnosis only: one GPIO power key after actual traced kernel sleep')
     parser.add_argument('--wait-seconds', type=int, default=1800)
     parser.add_argument('--stable-seconds', type=int, default=60)
+    parser.add_argument('--clock-probe', type=Path, help='actual SDK-built foreground dual-clock helper')
+    parser.add_argument('--clock-probe-build', type=Path, help='original three-ABI compiler/ELF receipt')
     parser.add_argument('--hold', action='store_true', help='retain this owned VM until interrupted for separate diagnostics')
     args = parser.parse_args()
     if args.power_diagnostic_wakeup and (args.purpose != 'diagnostic' or args.kernel_diagnostic != 'power-trace'):

@@ -235,6 +235,12 @@ PY
     echo "FAIL: packaged Wallpaper fallback graph, actual build or DSO differs" >&2
     FAIL=1
   fi
+  if ! python3 "${SCRIPT_DIR}/qemu_contacts_build_witness.py" verify \
+    --system-image "${PACKAGE}/images/system.img" --product "${MANIFEST_PRODUCT}" \
+    --directory "${PACKAGE}/contacts-native"; then
+    echo "FAIL: packaged Contacts source, ABC, protected build or image payload differs" >&2
+    FAIL=1
+  fi
   if ! python3 "${SCRIPT_DIR}/verify_qemu_gnss_image.py" \
     --system-image "${PACKAGE}/images/system.img" --vendor-image "${PACKAGE}/images/vendor.img" \
     --product "${MANIFEST_PRODUCT}" --packaged-provenance "${PACKAGE}/gnss-source"; then

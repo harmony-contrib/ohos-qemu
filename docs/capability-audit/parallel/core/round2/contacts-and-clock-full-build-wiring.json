@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "scope": "batched full-build native image and quiet/wake clock acceptance wiring ONLY; actual product build/package/guest still pending",
+  "files_sha256": {
+    "scripts/build_standard_qemu_in_docker.sh": "e0392059cf6f6846a0d5efb75f88761dd05dba87cfc49c2ddf398325d884d57a",
+    "scripts/package_standard_qemu.sh": "5274e5653538d2e1a5de249345bd77f538d5c91535246e6158a1a7e2748a7b95",
+    "scripts/verify_device_type_package.sh": "f68d7737e3e8b3d79ccdfe2f3c82de3f8a7858525860c067b0f4c21870174a14",
+    "scripts/verify_first_artifact_gate.py": "6f9333b80d051372c93b84014629c079bb1809ce1b88448b33cf8fe74d567460",
+    "ci/capability-audit/boot_package.py": "dc35e329b43ff53b80ea350e7ee8a6142e255cd02a9738b249d52ab1ddb0544f",
+    "ci/capability-audit/run_packaged_qemu_suite.py": "7f329f9c04cbb424eabd0885a72a18e32bb0f68cb8d75c06beccf58905cb43c0",
+    "ci/capability-audit/watchdog_boot_clocks.py": "5899cd542e5ae3340c3dd817f906c43ffd861fe99000e558c7ca2f075661ab7f",
+    "ci/capability-audit/test_watchdog_boot_clocks.py": "c328e6b3d2e0367e9962dcd1b41055f65b5b9db770423cea88289c62b626de12"
+  },
+  "Contacts_native_witness": "begin archives18owned; actual images argv and pipeline exit0 preserved; all3 finish witnesses attempted before any failure abort; package/verify reconsume Contacts native evidence and current system.img",
+  "graph_regeneration": "explicit --fast-rebuild=false in load/full common args; cannot inherit old JS/ABC absolute graph paths",
+  "HiCollie_candidate": "existing hicollie_suspend_check_enable=true only QEMU phone/2in1; unchanged awake half/full and recovery; not declared runtime fix",
+  "clock_observations": "foreground nonce+same-boot C helper before/after unchanged quiet wait, actual build-receipt/native ELF identity required; no command during quiet interval, raw signed intervals preserve s2idle uncertainty; exact owned helper cleanup; original RenderService/kernel health required",
+  "required_runtime_inputs": [
+    "QEMU_TEST_CLOCK_PROBE selected actual arch binary",
+    "QEMU_TEST_CLOCK_PROBE_BUILD original actual3ABI build.json",
+    "existing QEMU_TEST_CAPABILITY_INPUTS exact three families",
+    "host compatible JDK8 PATH/JAVA_HOME and json5==0.12.1 private venv"
+  ],
+  "actual_clock_compilation_performed": false,
+  "host_tests": {
+    "tests": 102,
+    "exit_code": 0,
+    "path": ".tmp/parallel-capability-20261016/full-build-clock-contacts-wiring-01.log",
+    "sha256": "cce122888286aa1feffb9f6ff346362e9ab7f4de0de80dfe9dde2119f22a9d9d"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "new_closures": 0,
+  "accepted_packages": 0,
+  "remaining_five_started": false
+}

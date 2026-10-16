@@ -31,6 +31,9 @@ def verified_payload(name, path, identity, environment):
     if payload.get('status') != 'pass':
         raise ValueError('inner behavior evidence did not pass: ' + name)
     if name == 'boot':
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+        from watchdog_boot_clocks import verify as verify_boot_clocks
+        verify_boot_clocks(payload, required=True)
         actual_environment = payload.get('test_environment', {})
         if (payload.get('scope') != 'fresh_packaged_QEMU_boot_NOT_full_behavior_gate' or
                 payload.get('purpose') != 'acceptance' or

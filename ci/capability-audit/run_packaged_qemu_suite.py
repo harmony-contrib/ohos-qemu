@@ -114,11 +114,16 @@ def run(args):
         if hdc is None:
             raise ValueError('an actual HDC executable is required')
         sdk = test_sdk()
+        clock_probe = os.environ.get('QEMU_TEST_CLOCK_PROBE')
+        clock_build = os.environ.get('QEMU_TEST_CLOCK_PROBE_BUILD')
+        if not clock_probe or not clock_build:
+            raise ValueError('actual QEMU_TEST_CLOCK_PROBE and QEMU_TEST_CLOCK_PROBE_BUILD are required for quiet/wake observations')
         port = int(os.environ.get('QEMU_TEST_HDC_PORT', unused_port()))
         boot_args = argparse.Namespace(archive=args.package_archive, output=work / 'boot', hdc=hdc,
             hdc_port=port, accel=os.environ.get('QEMU_TEST_ACCEL', 'auto'), resolution='1280x800',
             purpose='acceptance', wait_seconds=1800, stable_seconds=60,
             kernel_diagnostic=None, power_diagnostic_wakeup=False, hold=False)
+        boot_args.clock_probe, boot_args.clock_probe_build = Path(clock_probe), Path(clock_build)
         guest = QemuGuest(boot_args).start()
         environment = guest.report['test_environment']
         report.update(package={'archive': str(args.package_archive.resolve()),
