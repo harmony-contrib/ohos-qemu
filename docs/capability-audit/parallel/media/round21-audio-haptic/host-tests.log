@@ -1,0 +1,19 @@
+test_active_final_state_cannot_prove_cleanup (test_batch_media_audio_haptic.AudioHapticTests.test_active_final_state_cannot_prove_cleanup) ... ok
+test_alignment_reports_uncertainty_and_no_gate (test_batch_media_audio_haptic.AudioHapticTests.test_alignment_reports_uncertainty_and_no_gate) ... ok
+test_boolean_numeric_result_rejected (test_batch_media_audio_haptic.AudioHapticTests.test_boolean_numeric_result_rejected) ... ok
+test_callback_overflow_and_late_callback_fail (test_batch_media_audio_haptic.AudioHapticTests.test_callback_overflow_and_late_callback_fail) ... ok
+test_empty_muted_trace_is_not_a_start (test_batch_media_audio_haptic.AudioHapticTests.test_empty_muted_trace_is_not_a_start) ... ok
+test_failed_rpc_is_not_false (test_batch_media_audio_haptic.AudioHapticTests.test_failed_rpc_is_not_false) ... ok
+test_foreign_boot_and_reordered_samples_rejected (test_batch_media_audio_haptic.AudioHapticTests.test_foreign_boot_and_reordered_samples_rejected) ... ok
+test_hap_parser_does_not_infer_hdi_or_audio_success (test_batch_media_audio_haptic.AudioHapticTests.test_hap_parser_does_not_infer_hdi_or_audio_success) ... ok
+test_missing_complete_rejected (test_batch_media_audio_haptic.AudioHapticTests.test_missing_complete_rejected) ... ok
+test_no_clock_fallback_or_mutating_driver_calls (test_batch_media_audio_haptic.AudioHapticTests.test_no_clock_fallback_or_mutating_driver_calls) ... ok
+test_public_sdk_does_not_gain_invented_state_getter (test_batch_media_audio_haptic.AudioHapticTests.test_public_sdk_does_not_gain_invented_state_getter) ... ok
+test_real_getter_bounds_are_conservative (test_batch_media_audio_haptic.AudioHapticTests.test_real_getter_bounds_are_conservative) ... ok
+test_real_sdk_export_and_complete_source_projects (test_batch_media_audio_haptic.AudioHapticTests.test_real_sdk_export_and_complete_source_projects) ... ok
+test_truncation_or_nonzero_exit_rejected (test_batch_media_audio_haptic.AudioHapticTests.test_truncation_or_nonzero_exit_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.938s
+
+OK
