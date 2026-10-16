@@ -207,6 +207,12 @@ class RuntimeVerifier(unittest.TestCase):
         self.assertEqual(module['requestPermissions'], [])
         self.assertEqual(module['deviceTypes'], ['default', 'tablet', '2in1'])
         self.assertNotIn('extensionAbilities', module)
+        ability = module['abilities'][0]
+        self.assertEqual(ability['startWindowIcon'], '$media:app_icon')
+        self.assertTrue((self.root / 'project/AppScope/resources/base/media/app_icon.svg').is_file())
+        self.assertEqual(ability['startWindowBackground'], '$color:start_window_background')
+        colors = runtime.document(self.root / 'project/entry/src/main/resources/base/element/color.json')['color']
+        self.assertEqual(colors, [{'name': 'start_window_background', 'value': '#FFFFFF'}])
         with self.assertRaises(runtime.EvidenceError): runtime.prepare_project(self.root / 'project')
         self.assertEqual(len(runtime.document(self.root / 'project/caller-source-manifest.json')['fixture_hashes']), 6)
 

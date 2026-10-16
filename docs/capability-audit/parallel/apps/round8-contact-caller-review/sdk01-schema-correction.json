@@ -1,0 +1,10 @@
+{
+  "kind": "SDK39 feedback source correction, not HAP acceptance",
+  "upstream_targets_added": [],
+  "actual_sdk_failure": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-ordinary-caller-Linux-SDK-01/compile.log",
+  "correction": ["reference existing app_icon for startWindowIcon", "generate and reference start_window_background color for startWindowBackground"],
+  "caller_business_fixtures_changed": false,
+  "requested_permissions": [],
+  "runtime_acceptance": false,
+  "tests": ["LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_apps_contact_picker_runtime.py -v"]
+}

@@ -102,8 +102,11 @@ def prepare_project(output):
           'installationFree': False, 'pages': '$profile:main_pages', 'requestPermissions': [],
           'abilities': [{'name': 'EntryAbility', 'srcEntry': './ets/entryability/EntryAbility.ets',
                          'launchType': 'singleton', 'exported': True, 'label': '$string:app_name',
-                         'icon': '$media:app_icon', 'skills': [{'entities': ['entity.system.home'],
+                         'icon': '$media:app_icon', 'startWindowIcon': '$media:app_icon',
+                         'startWindowBackground': '$color:start_window_background', 'skills': [{'entities': ['entity.system.home'],
                          'actions': ['ohos.want.action.home']}]}]}})
+    write('entry/src/main/resources/base/element/color.json', {'color': [
+          {'name': 'start_window_background', 'value': '#FFFFFF'}]})
     write('entry/src/main/resources/base/profile/main_pages.json', {'src': ['pages/Index']})
     mapping = {'EntryAbility.ets': 'entry/src/main/ets/entryability/EntryAbility.ets',
                'Index.ets': 'entry/src/main/ets/pages/Index.ets',
