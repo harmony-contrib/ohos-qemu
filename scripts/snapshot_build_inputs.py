@@ -10,7 +10,13 @@ import subprocess
 from pathlib import Path
 
 INPUT_DIRECTORIES = ("scripts", "patches", "ci/capability-audit", "ci/qemu-smoke")
-INPUT_FILES = ("docs/capability-audit/native-arkts11-gap-ledger.json",)
+INPUT_FILES = (
+    "docs/capability-audit/native-arkts11-gap-ledger.json",
+    # Runtime and diagnostic helpers read these fixed-source contracts. Freeze
+    # their exact bytes with the scripts that consume them.
+    "docs/capability-audit/parallel/network/audio-observation-20261016.json",
+    "docs/capability-audit/parallel/location/round7-communication-build-map.json",
+)
 
 
 def digest_files(root: Path) -> dict[str, str]:
