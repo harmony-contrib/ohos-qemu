@@ -1,0 +1,1095 @@
+--- a/base/location/location/frameworks/base_module/source/request_config.cpp
++++ b/base/location/location/frameworks/base_module/source/request_config.cpp
+@@ -52,6 +52,7 @@
+
+ void RequestConfig::Set(RequestConfig& requestConfig)
+ {
++    sportsType_ = requestConfig.GetSportsType();
+     scenario_ = requestConfig.GetScenario();
+     priority_ = requestConfig.GetPriority();
+     timeInterval_ = requestConfig.GetTimeInterval();
+@@ -67,7 +68,8 @@
+
+ bool RequestConfig::IsSame(RequestConfig& requestConfig)
+ {
+-    if (locationSourceType_ != requestConfig.GetLocationSourceType()) {
++    if (sportsType_ != requestConfig.GetSportsType() ||
++        locationSourceType_ != requestConfig.GetLocationSourceType()) {
+         return false;
+     }
+     if (scenario_ != requestConfig.GetScenario()) {
+@@ -81,6 +83,7 @@
+
+ void RequestConfig::ReadFromParcel(Parcel& parcel)
+ {
++    sportsType_ = 0; // Old parcels never contain the separate sports-mode argument.
+     scenario_ = parcel.ReadInt32();
+     priority_ = parcel.ReadInt32();
+     timeInterval_ = parcel.ReadInt32();
+@@ -131,6 +134,7 @@
+ {
+     std::string str = "scenario : " + std::to_string(scenario_) +
+         ", location priority : " + std::to_string(priority_) +
++        ", sportsType : " + std::to_string(sportsType_) +
+         ", locationSourceType_ : " + std::to_string(locationSourceType_) +
+         ", timeInterval : " + std::to_string(timeInterval_) +
+         ", distanceInterval : " + std::to_string(distanceInterval_) +
+--- a/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
++++ b/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
+@@ -30,6 +30,8 @@
+ namespace Location {
+ napi_value StartBluetoothSearch(napi_env env, napi_callback_info info);
+ napi_value StopBluetoothSearch(napi_env env, napi_callback_info info);
++napi_value GetCurrentDistrict(napi_env env, napi_callback_info info);
++napi_value GetPostProcessingTrack(napi_env env, napi_callback_info info);
+ napi_value GetLocationIconStatus(napi_env env, napi_callback_info info);
+ napi_value GetLastLocation(napi_env env, napi_callback_info info);
+ napi_value IsLocationEnabled(napi_env env, napi_callback_info info);
+--- a/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
+@@ -243,6 +243,152 @@
+     return UndefinedNapiValue(env);
+ }
+
++struct DistrictAsyncContext final : AsyncContext {
++    explicit DistrictAsyncContext(napi_env env) : AsyncContext(env) {}
++    std::shared_ptr<LocatorImpl> client;
++    std::string locale;
++    int32_t timeoutMs = DEFAULT_TIMEOUT_5S;
++    std::shared_ptr<GeoAddress> address;
++};
++
++struct TrackAsyncContext final : AsyncContext {
++    explicit TrackAsyncContext(napi_env env) : AsyncContext(env) {}
++    std::shared_ptr<LocatorImpl> client;
++    int32_t sportsType = 0;
++    std::vector<Location> track;
++};
++
++static bool ReadOptionalDistrictRequest(napi_env env, napi_value request, DistrictAsyncContext& context)
++{
++    napi_valuetype type = napi_undefined;
++    if (napi_typeof(env, request, &type) != napi_ok) {
++        return false;
++    }
++    if (type == napi_undefined) {
++        return true;
++    }
++    if (type != napi_object) {
++        return false;
++    }
++    for (const auto* name : {"locale", "timeoutMs"}) {
++        bool present = false;
++        napi_value value = nullptr;
++        if (napi_has_named_property(env, request, name, &present) != napi_ok) {
++            return false;
++        }
++        if (!present) {
++            continue;
++        }
++        if (napi_get_named_property(env, request, name, &value) != napi_ok ||
++            napi_typeof(env, value, &type) != napi_ok) {
++            return false;
++        }
++        if (type == napi_undefined) {
++            continue;
++        }
++        if (std::string(name) == "locale") {
++            size_t length = 0;
++            if (type != napi_string || napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok ||
++                length > MAX_BUF_LEN) {
++                return false;
++            }
++            std::vector<char> buffer(length + 1);
++            if (napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &length) != napi_ok) {
++                return false;
++            }
++            context.locale.assign(buffer.data(), length);
++        } else {
++            double timeout = 0;
++            if (type != napi_number || napi_get_value_double(env, value, &timeout) != napi_ok ||
++                !std::isfinite(timeout) || std::trunc(timeout) != timeout ||
++                timeout < std::numeric_limits<int32_t>::min() || timeout > std::numeric_limits<int32_t>::max()) {
++                return false;
++            }
++            context.timeoutMs = static_cast<int32_t>(timeout);
++        }
++    }
++    return true;
++}
++
++napi_value GetCurrentDistrict(napi_env env, napi_callback_info info)
++{
++    size_t argc = 2;
++    napi_value argv[2] = {nullptr};
++    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
++    auto context = std::make_unique<DistrictAsyncContext>(env);
++    if (argc > 1 || (argc == 1 && !ReadOptionalDistrictRequest(env, argv[0], *context))) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    context->client = Locator::GetInstance();
++    NAPI_CALL(env, napi_create_string_utf8(env, "getCurrentDistrict", NAPI_AUTO_LENGTH, &context->resourceName));
++    context->executeFunc = [](void* data) {
++        auto context = static_cast<DistrictAsyncContext*>(data);
++        context->errCode = context->client == nullptr ? ERRCODE_SERVICE_UNAVAILABLE :
++            context->client->GetCurrentDistrictV9(context->locale, context->timeoutMs, context->address);
++    };
++    context->completeFunc = [](void* data) {
++        auto context = static_cast<DistrictAsyncContext*>(data);
++        if (context->errCode != ERRCODE_SUCCESS || context->address == nullptr) {
++            return;
++        }
++        NAPI_CALL_RETURN_VOID(context->env, napi_create_object(context->env, &context->result[PARAM1]));
++        const auto& address = context->address;
++        for (const auto& field : std::vector<std::pair<const char*, std::string>> {
++            {"locale", address->locale_}, {"countryCode", address->countryCode_}, {"countryName", address->countryName_},
++            {"administrativeArea", address->administrativeArea_}, {"subAdministrativeArea", address->subAdministrativeArea_},
++            {"locality", address->locality_}, {"subLocality", address->subLocality_}}) {
++            if (!field.second.empty()) {
++                SetValueUtf8String(context->env, field.first, field.second.c_str(), context->result[PARAM1]);
++            }
++        }
++    };
++    // Promise-only API: its optional request is never treated as a JS callback.
++    return DoAsyncWork(env, context.release(), 0, argv, 0);
++}
++
++napi_value GetPostProcessingTrack(napi_env env, napi_callback_info info)
++{
++    size_t argc = 2;
++    napi_value argv[2] = {nullptr};
++    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
++    napi_valuetype type = napi_undefined;
++    double sportsType = 0;
++    if (argc != 1 || napi_typeof(env, argv[0], &type) != napi_ok || type != napi_number ||
++        napi_get_value_double(env, argv[0], &sportsType) != napi_ok || !std::isfinite(sportsType) ||
++        std::trunc(sportsType) != sportsType || sportsType < std::numeric_limits<int32_t>::min() ||
++        sportsType > std::numeric_limits<int32_t>::max()) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    auto context = std::make_unique<TrackAsyncContext>(env);
++    context->client = Locator::GetInstance();
++    context->sportsType = static_cast<int32_t>(sportsType);
++    NAPI_CALL(env, napi_create_string_utf8(env, "getPostProcessingTrack", NAPI_AUTO_LENGTH, &context->resourceName));
++    context->executeFunc = [](void* data) {
++        auto context = static_cast<TrackAsyncContext*>(data);
++        context->errCode = context->client == nullptr ? ERRCODE_SERVICE_UNAVAILABLE :
++            context->client->GetPostProcessingTrackV9(context->sportsType, context->track);
++    };
++    context->completeFunc = [](void* data) {
++        auto context = static_cast<TrackAsyncContext*>(data);
++        if (context->errCode != ERRCODE_SUCCESS) {
++            return;
++        }
++        NAPI_CALL_RETURN_VOID(context->env,
++            napi_create_array_with_length(context->env, context->track.size(), &context->result[PARAM1]));
++        for (size_t index = 0; index < context->track.size(); ++index) {
++            napi_value value = nullptr;
++            NAPI_CALL_RETURN_VOID(context->env, napi_create_object(context->env, &value));
++            auto location = std::make_unique<Location>(context->track[index]);
++            LocationToJs(context->env, location, value);
++            NAPI_CALL_RETURN_VOID(context->env,
++                napi_set_element(context->env, context->result[PARAM1], index, value));
++        }
++    };
++    return DoAsyncWork(env, context.release(), 0, argv, 0);
++}
++
+ napi_value GetLocationIconStatus(napi_env env, napi_callback_info info)
+ {
+     int32_t status = 0;
+--- a/base/location/location/frameworks/js/napi/source/napi_util.cpp
++++ b/base/location/location/frameworks/js/napi/source/napi_util.cpp
+@@ -14,6 +14,8 @@
+  */
+
+ #include "napi_util.h"
++
++#include <cmath>
+
+ #include "securec.h"
+ #include "string_ex.h"
+@@ -425,6 +427,23 @@
+     }
+     if (JsObjectToDouble(env, object, "distanceInterval", valueDouble) == SUCCESS) {
+         requestConfig->SetDistanceInterval(valueDouble);
++    }
++    bool hasSportsType = false;
++    napi_value sportsValue = nullptr;
++    napi_valuetype sportsValueType = napi_undefined;
++    if (napi_has_named_property(env, object, "sportsType", &hasSportsType) == napi_ok && hasSportsType) {
++        double sports = 0;
++        if (napi_get_named_property(env, object, "sportsType", &sportsValue) != napi_ok ||
++            napi_typeof(env, sportsValue, &sportsValueType) != napi_ok) {
++            requestConfig->SetSportsType(-1);
++        } else if (sportsValueType != napi_undefined) {
++            if (sportsValueType != napi_number || napi_get_value_double(env, sportsValue, &sports) != napi_ok ||
++                sports < RUNNING || sports > SKIING || std::floor(sports) != sports) {
++                requestConfig->SetSportsType(-1);
++            } else {
++                requestConfig->SetSportsType(static_cast<int32_t>(sports));
++            }
++        }
+     }
+     if (JsObjectToBool(env, object, "needPoi", valueBool) == SUCCESS) {
+         requestConfig->SetIsNeedPoi(valueBool);
+--- a/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
+@@ -413,6 +413,8 @@
+         DECLARE_NAPI_FUNCTION("removeBeaconFence", RemoveBeaconFence),
+         DECLARE_NAPI_FUNCTION("isBeaconFenceSupported", IsBeaconFenceSupported),
+         DECLARE_NAPI_FUNCTION("getActiveGeoFences", GetActiveGeoFences),
++        DECLARE_WRITABLE_NAPI_FUNCTION("getCurrentDistrict", GetCurrentDistrict),
++        DECLARE_WRITABLE_NAPI_FUNCTION("getPostProcessingTrack", GetPostProcessingTrack),
+         DECLARE_NAPI_FUNCTION("getLocationIconStatus", GetLocationIconStatus),
+         DECLARE_WRITABLE_NAPI_FUNCTION("startBluetoothSearch", StartBluetoothSearch),
+         DECLARE_WRITABLE_NAPI_FUNCTION("stopBluetoothSearch", StopBluetoothSearch),
+--- a/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
++++ b/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
+@@ -91,4 +91,8 @@
+     [ipccode 65] void GetLocationIconStatus([out] int status);
+     [ipccode 66] void StartBluetoothSearch([in] List<String> deviceIds, [in] boolean hasRssiThreshold, [in] int rssiThreshold, [in] IBluetoothScanResultCallback cb);
+     [ipccode 67] void StopBluetoothSearch([in] IBluetoothScanResultCallback cb);
++    [ipccode 68] void StartDistrictLocating([in] RequestConfig requestConfig, [in] ILocatorCallback cb);
++    [ipccode 69] void StartLocatingWithSportsType([in] RequestConfig requestConfig, [in] int sportsType, [in] ILocatorCallback cb);
++    [ipccode 70] void GetPostProcessingTrack([in] int sportsType, [out] List<Location> track);
++    [ipccode 71] void CheckDistrictAccess();
+ }
+\ No newline at end of file
+--- a/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
++++ b/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
+@@ -14,6 +14,13 @@
+  */
+
+ #include "locator_impl.h"
++
++#include <algorithm>
++#include <chrono>
++#include <cmath>
++#include <condition_variable>
++#include "parameters.h"
++#include "locator_callback_host.h"
+ #include "if_system_ability_manager.h"
+ #include "ipc_skeleton.h"
+ #include "iservice_registry.h"
+@@ -34,6 +41,17 @@
+
+ namespace OHOS {
+ namespace Location {
++static LocationErrCode LocationRuntimeErrCode(ErrCode code)
++{
++    // Backends can return public parameter/capability errors as well as encoded
++    // IPC permission errors. The legacy mapper only accepts the encoded form.
++    if (code == ERRCODE_PERMISSION_DENIED || code == ERRCODE_SYSTEM_PERMISSION_DENIED ||
++        code == ERRCODE_EDM_POLICY_ABANDON || code == ERRCODE_INVALID_PARAM || code == ERRCODE_NOT_SUPPORTED) {
++        return static_cast<LocationErrCode>(code);
++    }
++    return CommonUtils::ErrCodeToLocationErrCode(code);
++}
++
+ constexpr uint32_t WAIT_MS = 1000;
+ constexpr uint32_t MAX_REQUEST_COUNT = 30;
+ std::shared_ptr<LocatorImpl> LocatorImpl::instance_ = nullptr;
+@@ -145,7 +163,8 @@
+         return;
+     }
+     AddLocationCallBack(requestConfig, callback);
+-    int errCode = proxy->StartLocating(*requestConfig, callback);
++    int errCode = requestConfig->GetSportsType() == 0 ? proxy->StartLocating(*requestConfig, callback) :
++        proxy->StartLocatingWithSportsType(*requestConfig, requestConfig->GetSportsType(), callback);
+     if (errCode != ERRCODE_SUCCESS) {
+         RemoveLocationCallBack(callback);
+     }
+@@ -758,8 +777,10 @@
+         return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+     AddLocationCallBack(requestConfig, callback);
+-    ErrCode errorCodeValue = proxy->StartLocating(*requestConfig, callback);
+-    LocationErrCode locationErrCode = CommonUtils::ErrCodeToLocationErrCode(errorCodeValue);
++    ErrCode errorCodeValue = requestConfig->GetSportsType() == 0 ?
++        proxy->StartLocating(*requestConfig, callback) :
++        proxy->StartLocatingWithSportsType(*requestConfig, requestConfig->GetSportsType(), callback);
++    LocationErrCode locationErrCode = LocationRuntimeErrCode(errorCodeValue);
+     if (locationErrCode != ERRCODE_SUCCESS) {
+         RemoveLocationCallBack(callback);
+     }
+@@ -1926,7 +1947,7 @@
+     if (proxy == nullptr) {
+         return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+-    return CommonUtils::ErrCodeToLocationErrCode(
++    return LocationRuntimeErrCode(
+         proxy->StartBluetoothSearch(deviceIds, hasRssiThreshold, rssiThreshold, callback));
+ }
+
+@@ -1939,7 +1960,193 @@
+     if (proxy == nullptr) {
+         return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+-    return CommonUtils::ErrCodeToLocationErrCode(proxy->StopBluetoothSearch(callback));
++    return LocationRuntimeErrCode(proxy->StopBluetoothSearch(callback));
++}
++
++namespace {
++using DistrictDeadline = std::chrono::steady_clock::time_point;
++
++class DistrictLocationHost final : public LocatorCallbackHost {
++public:
++    void OnLocationReport(const std::unique_ptr<Location>& location) override
++    {
++        if (location == nullptr) {
++            return;
++        }
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (!done_) {
++            location_ = std::make_unique<Location>(*location);
++            done_ = true;
++            condition_.notify_all();
++        }
++    }
++    void OnErrorReport(const int errorCode) override
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (!done_) {
++            error_ = errorCode == LOCATING_FAILED_LOCATION_SWITCH_OFF ? ERRCODE_SWITCH_OFF :
++                errorCode == LOCATING_FAILED_LOCATION_PERMISSION_DENIED ? ERRCODE_PERMISSION_DENIED :
++                ERRCODE_SERVICE_UNAVAILABLE;
++            done_ = true;
++            condition_.notify_all();
++        }
++    }
++    LocationErrCode Wait(DistrictDeadline deadline, std::unique_ptr<Location>& location)
++    {
++        std::unique_lock<std::mutex> lock(mutex_);
++        if (!condition_.wait_until(lock, deadline, [this] { return done_; })) {
++            return ERRCODE_SERVICE_UNAVAILABLE;
++        }
++        location = std::move(location_);
++        return error_;
++    }
++private:
++    std::mutex mutex_;
++    std::condition_variable condition_;
++    bool done_ = false;
++    LocationErrCode error_ = ERRCODE_SUCCESS;
++    std::unique_ptr<Location> location_;
++};
++
++class DistrictAddressHost final : public GeoConvertCallbackHost {
++public:
++    void OnResults(std::list<std::shared_ptr<GeoAddress>>& results) override
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (!done_) {
++            for (const auto& result : results) {
++                if (result != nullptr) {
++                    address_ = std::make_shared<GeoAddress>(*result);
++                    break;
++                }
++            }
++            done_ = true;
++            condition_.notify_all();
++        }
++    }
++    void OnErrorReport(const int errorCode) override
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        done_ = true;
++        condition_.notify_all();
++    }
++    std::shared_ptr<GeoAddress> Wait(DistrictDeadline deadline)
++    {
++        std::unique_lock<std::mutex> lock(mutex_);
++        condition_.wait_until(lock, deadline, [this] { return done_; });
++        return address_;
++    }
++private:
++    std::mutex mutex_;
++    std::condition_variable condition_;
++    bool done_ = false;
++    std::shared_ptr<GeoAddress> address_;
++};
++
++bool IsFreshDistrictLocation(const std::unique_ptr<Location>& location)
++{
++    if (location == nullptr || !std::isfinite(location->GetLatitude()) ||
++        !std::isfinite(location->GetLongitude()) || std::fabs(location->GetLatitude()) > 90 ||
++        std::fabs(location->GetLongitude()) > 180) {
++        return false;
++    }
++    constexpr int64_t MAX_AGE_NS = 30LL * 1000000000LL;
++    auto age = CommonUtils::GetSinceBootTime() - location->GetTimeSinceBoot();
++    return location->GetTimeSinceBoot() > 0 && age >= 0 && age <= MAX_AGE_NS;
++}
++} // namespace
++
++LocationErrCode LocatorImpl::GetCurrentDistrictV9(const std::string& locale, int32_t timeoutMs,
++    std::shared_ptr<GeoAddress>& address)
++{
++    address.reset();
++    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(0, timeoutMs));
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    sptr<DistrictLocationHost> host = new (std::nothrow) DistrictLocationHost();
++    if (host == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    RequestConfig request;
++    request.SetFixNumber(1);
++    request.SetTimeOut(std::max(0, timeoutMs));
++    request.SetPriority(PRIORITY_FAST_FIRST_FIX);
++    // Service authorizes location permission/current user/switch before any
++    // cache is exposed. This start uses the caller's real one-shot request.
++    auto error = LocationRuntimeErrCode(proxy->StartDistrictLocating(request, host));
++    if (error != ERRCODE_SUCCESS) {
++        return error;
++    }
++    // StartLocatingProcess already offers only the caller-permitted recent
++    // cache (25s), otherwise a live fix, through this same owned callback.
++    std::unique_ptr<Location> location;
++    error = host->Wait(deadline, location);
++    auto stopError = LocationRuntimeErrCode(proxy->StopLocating(host));
++    if (error != ERRCODE_SUCCESS) {
++        return error;
++    }
++    if (stopError != ERRCODE_SUCCESS) {
++        return stopError;
++    }
++    if (!IsFreshDistrictLocation(location)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    if (std::chrono::steady_clock::now() >= deadline) {
++        return ERRCODE_COUNTRYCODE_FAIL;
++    }
++    bool available = false;
++    error = IsGeoServiceAvailableV9(available);
++    if (error != ERRCODE_SUCCESS) {
++        return error;
++    }
++    if (!available) {
++        return ERRCODE_NOT_SUPPORTED;
++    }
++    sptr<DistrictAddressHost> geocoder = new (std::nothrow) DistrictAddressHost();
++    if (geocoder == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    GeocodeConvertLocationRequest query;
++    // Use the same system locale key watched by the country-code service. An explicit
++    // locale stays part of the existing reverse-geocoder cache/request key.
++    query.SetLocale(locale.empty() ? system::GetParameter(LOCALE_KEY, "") : locale);
++    query.SetLatitude(location->GetLatitude());
++    query.SetLongitude(location->GetLongitude());
++    query.SetMaxItems(1);
++    query.SetTransId(CommonUtils::GenerateUuid());
++    error = LocationRuntimeErrCode(proxy->GetAddressByCoordinate(geocoder->AsObject(), query));
++    if (error != ERRCODE_SUCCESS) {
++        return error == ERRCODE_SERVICE_UNAVAILABLE ? error : ERRCODE_COUNTRYCODE_FAIL;
++    }
++    address = geocoder->Wait(deadline);
++    if (address == nullptr || (address->countryCode_.empty() && address->countryName_.empty() &&
++        address->administrativeArea_.empty() && address->subAdministrativeArea_.empty() &&
++        address->locality_.empty() && address->subLocality_.empty())) {
++        address.reset();
++        return ERRCODE_COUNTRYCODE_FAIL;
++    }
++    error = LocationRuntimeErrCode(proxy->CheckDistrictAccess());
++    if (error != ERRCODE_SUCCESS || std::chrono::steady_clock::now() >= deadline) {
++        address.reset();
++        return error == ERRCODE_SUCCESS ? ERRCODE_COUNTRYCODE_FAIL : error;
++    }
++    return ERRCODE_SUCCESS;
++}
++
++LocationErrCode LocatorImpl::GetPostProcessingTrackV9(int32_t sportsType, std::vector<Location>& track)
++{
++    track.clear();
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto proxy = GetProxy();
++    return proxy == nullptr ? ERRCODE_SERVICE_UNAVAILABLE :
++        LocationRuntimeErrCode(proxy->GetPostProcessingTrack(sportsType, track));
+ }
+
+ LocationErrCode LocatorImpl::GetLocationIconStatus(int32_t& status)
+@@ -1951,7 +2158,7 @@
+     if (proxy == nullptr) {
+         return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+-    return CommonUtils::ErrCodeToLocationErrCode(proxy->GetLocationIconStatus(status));
++    return LocationRuntimeErrCode(proxy->GetLocationIconStatus(status));
+ }
+
+ LocationErrCode LocatorImpl::GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList)
+@@ -2025,7 +2232,11 @@
+         auto requestConfig = std::make_unique<RequestConfig>();
+         requestConfig->Set(iter->second);
+         LBSLOGW(LOCATOR_STANDARD, "ResumeLocating requestConfig = %{public}s", requestConfig->ToString().c_str());
+-        proxy->StartLocating(*requestConfig, locatorCallback);
++        if (requestConfig->GetSportsType() == 0) {
++            proxy->StartLocating(*requestConfig, locatorCallback);
++        } else {
++            proxy->StartLocatingWithSportsType(*requestConfig, requestConfig->GetSportsType(), locatorCallback);
++        }
+     }
+ }
+
+--- a/base/location/location/interfaces/inner_api/include/constant_definition.h
++++ b/base/location/location/interfaces/inner_api/include/constant_definition.h
+@@ -241,6 +241,7 @@
+     RUNNING = 1,
+     WALKING,
+     CYCLING,
++    SKIING = 4,
+ };
+
+ typedef struct {
+--- a/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
++++ b/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
+@@ -83,6 +83,10 @@
+     GET_LOCATION_ICON_STATUS = 65,
+     START_BLUETOOTH_SEARCH = 66,
+-    STOP_BLUETOOTH_SEARCH = 67
++    STOP_BLUETOOTH_SEARCH = 67,
++    START_DISTRICT_LOCATING = 68,
++    START_LOCATING_WITH_SPORTS_TYPE = 69,
++    GET_POST_PROCESSING_TRACK = 70,
++    CHECK_DISTRICT_ACCESS = 71
+ };
+
+ enum class GeoConvertInterfaceCode {
+--- a/base/location/location/interfaces/inner_api/include/locator_impl.h
++++ b/base/location/location/interfaces/inner_api/include/locator_impl.h
+@@ -731,6 +731,9 @@
+      * @return Returns ERRCODE_SUCCESS if Get perform locating app list.
+      */
+     LocationErrCode GetLocationIconStatus(int32_t& status);
++    LocationErrCode GetCurrentDistrictV9(const std::string& locale, int32_t timeoutMs,
++        std::shared_ptr<GeoAddress>& address);
++    LocationErrCode GetPostProcessingTrackV9(int32_t sportsType, std::vector<Location>& track);
+     LocationErrCode StartBluetoothSearch(const std::vector<std::string>& deviceIds, bool hasRssiThreshold,
+         int32_t rssiThreshold, const sptr<IBluetoothScanResultCallback>& callback);
+     LocationErrCode StopBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback);
+--- a/base/location/location/interfaces/inner_api/include/request_config.h
++++ b/base/location/location/interfaces/inner_api/include/request_config.h
+@@ -137,6 +137,11 @@
+         locationSourceType_ = locationSourceType;
+     }
+
++    // Transported as a separate field by StartLocatingWithSportsType. Legacy
++    // RequestConfig parcel layout remains byte-for-byte compatible.
++    inline int32_t GetSportsType() const { return sportsType_; }
++    inline void SetSportsType(int32_t sportsType) { sportsType_ = sportsType; }
++
+     void ReadFromParcel(Parcel& parcel);
+     bool Marshalling(Parcel& parcel) const override;
+     std::string ToString() const;
+@@ -156,6 +161,7 @@
+     bool isNeedPoi_;
+     bool isNeedLocation_;
+     int32_t locationSourceType_;
++    int32_t sportsType_ = 0;
+ };
+ } // namespace Location
+ } // namespace OHOS
+--- a/base/location/location/services/location_locator/locator/include/locator_ability.h
++++ b/base/location/location/services/location_locator/locator/include/locator_ability.h
+@@ -162,6 +162,11 @@
+     ErrCode AddGnssGeofence(const GeofenceRequest& request) override;
+     ErrCode RemoveGnssGeofence(const GeofenceRequest& request) override;
+     ErrCode StartLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb) override;
++    ErrCode StartDistrictLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb) override;
++    ErrCode CheckDistrictAccess() override;
++    ErrCode StartLocatingWithSportsType(const RequestConfig& requestConfig, int32_t sportsType,
++        const sptr<ILocatorCallback>& cb) override;
++    ErrCode GetPostProcessingTrack(int32_t sportsType, std::vector<Location>& track) override;
+     ErrCode StopLocating(const sptr<ILocatorCallback>& cb) override;
+     ErrCode GetCacheLocation(Location& location) override;
+     ErrCode IsGeoConvertAvailable(bool& isAvailable) override;
+--- a/base/location/location/services/location_locator/locator/include/report_manager.h
++++ b/base/location/location/services/location_locator/locator/include/report_manager.h
+@@ -20,6 +20,11 @@
+ #include <string>
+ #include <time.h>
+ #include <map>
++#include <deque>
++#include <tuple>
++#include <vector>
++#include "app_identity.h"
++#include "constant_definition.h"
+
+ #include "i_locator_callback.h"
+ #include "location.h"
+@@ -48,8 +53,20 @@
+     bool IsAppBackground(std::string bundleName, uint32_t tokenId, uint64_t tokenIdEx, pid_t uid, pid_t pid);
+     static ReportManager* GetInstance();
+     bool IsCacheGnssLocationValid();
++    LocationErrCode GetPostProcessingTrack(const AppIdentity& identity, std::vector<Location>& track);
+
+ private:
++    struct SkiingHistory {
++        std::shared_ptr<Location> last;
++        double variance = 0;
++        uint64_t sequence = 0;
++        uint64_t cursor = 0;
++        std::deque<std::pair<uint64_t, std::shared_ptr<Location>>> unread;
++    };
++    std::mutex trackMutex_;
++    std::map<std::tuple<int32_t, uint32_t, uint32_t>, SkiingHistory> skiingTracks_;
++    void RecordSkiingTrack(const std::shared_ptr<Request>& request, const std::unique_ptr<Location>& location);
++    void PruneSkiingTracks(int64_t now);
+     struct timespec lastUpdateTime_;
+     double offsetRandom_;
+     std::map<int, std::shared_ptr<Location>> lastLocationsMap_;
+--- a/base/location/location/services/location_locator/locator/include/request_manager.h
++++ b/base/location/location/services/location_locator/locator/include/request_manager.h
+@@ -75,6 +75,7 @@
+     static RequestManager* GetInstance();
+     void IsStandby();
+     bool IsLocatingInCurrentAccount();
++    bool IsSkiingRequestActive(const std::shared_ptr<Request>& request);
+     void UpdateLocationError(std::shared_ptr<Request> request);
+
+ private:
+--- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+@@ -1444,6 +1444,85 @@
+         static_cast<int>(LocatorInterfaceCode::SET_MOCKED_LOCATIONS));
+ }
+
++ErrCode LocatorAbility::StartDistrictLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!CheckRequestAvailable(LocatorInterfaceCode::START_DISTRICT_LOCATING, identity) ||
++        (!PermissionManager::CheckApproximatelyPermission(identity.GetTokenId(), identity.GetFirstTokenId()) &&
++        !PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId()))) {
++        return LOCATION_ERRCODE_PERMISSION_DENIED;
++    }
++    RequestConfig single;
++    single.Set(const_cast<RequestConfig&>(requestConfig));
++    single.SetFixNumber(1);
++    single.SetSportsType(0);
++    single.SetIsNeedPoi(false);
++    single.SetIsNeedLocation(true);
++    return StartLocating(single, cb);
++}
++
++ErrCode LocatorAbility::CheckDistrictAccess()
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!CheckRequestAvailable(LocatorInterfaceCode::START_DISTRICT_LOCATING, identity) ||
++        (!PermissionManager::CheckApproximatelyPermission(identity.GetTokenId(), identity.GetFirstTokenId()) &&
++        !PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId()))) {
++        return LOCATION_ERRCODE_PERMISSION_DENIED;
++    }
++    return GetLocationSwitchIgnoredFlag(identity.GetTokenId()) || CheckLocationSwitchState() ?
++        ERRCODE_SUCCESS : ERRCODE_SWITCH_OFF;
++}
++
++ErrCode LocatorAbility::StartLocatingWithSportsType(const RequestConfig& requestConfig, int32_t sportsType,
++    const sptr<ILocatorCallback>& cb)
++{
++    if (sportsType < RUNNING || sportsType > SKIING) {
++        return ERRCODE_INVALID_PARAM;
++    }
++    RequestConfig continuous;
++    continuous.Set(const_cast<RequestConfig&>(requestConfig));
++    // SDK sportsType is effective only for UserActivityScenario.SPORT.
++    continuous.SetSportsType(requestConfig.GetScenario() == LOCATION_SCENE_SPORT ? sportsType : 0);
++    if (continuous.GetSportsType() == SKIING) {
++#ifndef FEATURE_GNSS_SUPPORT
++        return ERRCODE_NOT_SUPPORTED;
++#else
++        AppIdentity identity;
++        GetAppIdentityInfo(identity);
++        if (!PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId())) {
++            return LOCATION_ERRCODE_PERMISSION_DENIED;
++        }
++        continuous.SetLocationSourceType(GNSS_TYPE);
++        continuous.SetFixNumber(0);
++#endif
++    }
++    return StartLocating(continuous, cb);
++}
++
++ErrCode LocatorAbility::GetPostProcessingTrack(int32_t sportsType, std::vector<Location>& track)
++{
++    track.clear();
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!CheckRequestAvailable(LocatorInterfaceCode::GET_POST_PROCESSING_TRACK, identity) ||
++        !PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId())) {
++        return LOCATION_ERRCODE_PERMISSION_DENIED;
++    }
++    if (!GetLocationSwitchIgnoredFlag(identity.GetTokenId()) && !CheckLocationSwitchState()) {
++        return ERRCODE_SWITCH_OFF;
++    }
++#ifndef FEATURE_GNSS_SUPPORT
++    return ERRCODE_NOT_SUPPORTED;
++#else
++    if (sportsType != SKIING) {
++        return ERRCODE_LOCATING_FAIL;
++    }
++    return ReportManager::GetInstance()->GetPostProcessingTrack(identity, track);
++#endif
++}
++
+ ErrCode LocatorAbility::StartLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb)
+ {
+     AppIdentity identity;
+@@ -1558,48 +1637,24 @@
+ bool LocatorAbility::ReportSingleCacheLocation(const std::shared_ptr<Request>& request,
+     const sptr<ILocatorCallback>& callback, std::unique_ptr<Location>& cacheLocation)
+ {
+-    requestManager_->IncreaseWorkingPidsCount(request->GetPid());
+-    if (requestManager_->IsNeedStartUsingPermission(request->GetPid())) {
+-        int ret = PrivacyKit::StartUsingPermission(
+-            request->GetTokenId(), ACCESS_APPROXIMATELY_LOCATION, request->GetPid());
+-        if (ret != ERRCODE_SUCCESS && ret != Security::AccessToken::ERR_PERMISSION_ALREADY_START_USING &&
+-            IsHapCaller(request->GetTokenId())) {
+-            requestManager_->DecreaseWorkingPidsCount(request->GetPid());
+-            LBSLOGE(LOCATOR, "StartUsingPermission failed ret=%{public}d", ret);
+-            return false;
+-        }
+-    }
+-    // add location permission using record
+-    int recordResult = UpdatePermissionUsedRecord(request->GetTokenId(), ACCESS_APPROXIMATELY_LOCATION,
+-        request->GetPermUsedType(), 1, 0);
+-    if (recordResult != ERRCODE_SUCCESS && IsHapCaller(request->GetTokenId())) {
+-        requestManager_->DecreaseWorkingPidsCount(request->GetPid());
+-        LBSLOGE(LOCATOR, "UpdatePermissionUsedRecord failed ret=%{public}d", recordResult);
++    if (!requestManager_->UpdateUsingPermission(request, true)) {
+         return false;
+     }
+-    LBSLOGI(LOCATOR, "report cache location to %{public}s, uuid: %{private}s",
+-        request->GetPackageName().c_str(), request->GetUuid().c_str());
+     callback->OnLocationReport(cacheLocation);
+-    requestManager_->DecreaseWorkingPidsCount(request->GetPid());
+-    if (requestManager_->IsNeedStopUsingPermission(request->GetPid())) {
+-        PrivacyKit::StopUsingPermission(request->GetTokenId(), ACCESS_APPROXIMATELY_LOCATION, request->GetPid());
+-    }
++    // Preserve the request/actual permission state until asynchronous release has
++    // completed, including a failed PrivacyKit stop which needs a retry.
++    locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_SUCCESS, request, 0);
+     return true;
+ }
+
+ bool LocatorAbility::ReportCacheLocation(const std::shared_ptr<Request>& request,
+     const sptr<ILocatorCallback>& callback, std::unique_ptr<Location>& cacheLocation)
+ {
+-    // add location permission using record
+-    int ret = UpdatePermissionUsedRecord(request->GetTokenId(), ACCESS_APPROXIMATELY_LOCATION,
+-        request->GetPermUsedType(), 1, 0);
+-    if (ret != ERRCODE_SUCCESS && IsHapCaller(request->GetTokenId())) {
+-        LBSLOGE(LOCATOR, "UpdatePermissionUsedRecord failed ret=%{public}d", ret);
+-        return false;
+-    }
+-    LBSLOGI(LOCATOR, "report cache location to %{public}s, uuid: %{public}s",
+-        request->GetPackageName().c_str(), request->GetUuid().c_str());
+-    callback->OnLocationReport(cacheLocation);
++    if (requestManager_->UpdateUsingPermission(request, true)) {
++        callback->OnLocationReport(cacheLocation);
++    }
++    // This is the first sample of a continuous request; its normal request owns
++    // the matching stop and cannot be decremented by a separate cache event.
+     return false;
+ }
+
+@@ -1665,29 +1720,21 @@
+     sptr<ILocatorCallback> callback;
+     std::shared_ptr<Request> request = std::make_shared<Request>(requestConfig, callback, identity);
+     std::unique_ptr<Location> loc = reportManager_->GetPermittedLocation(request, lastLocation);
+-    std::shared_ptr<AppIdentity> identityInfo = std::make_shared<AppIdentity>(identity);
+     if (loc == nullptr) {
+-        locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_FAILED, identityInfo, 0);
++        locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_FAILED, request, 0);
+         return ERRCODE_LOCATING_CACHE_FAIL;
+     }
+     reportManager_->UpdateLocationByRequest(identity.GetTokenId(), identity.GetTokenIdEx(), loc);
+     location = *loc;
+-    requestManager_->IncreaseWorkingPidsCount(identity.GetPid());
+-    if (requestManager_->IsNeedStartUsingPermission(identity.GetPid())) {
+-        int ret = PrivacyKit::StartUsingPermission(
+-            identity.GetTokenId(), ACCESS_APPROXIMATELY_LOCATION, identity.GetPid());
+-        if (ret != ERRCODE_SUCCESS && ret != Security::AccessToken::ERR_PERMISSION_ALREADY_START_USING &&
+-            IsHapCaller(request->GetTokenId())) {
+-            LBSLOGE(LOCATOR, "StartUsingPermission failed ret=%{public}d", ret);
+-            locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_FAILED, identityInfo, 0);
+-            return ERRCODE_LOCATING_FAIL;
+-        }
++    if (!requestManager_->UpdateUsingPermission(request, true)) {
++        locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_FAILED, request, 0);
++        return ERRCODE_LOCATING_FAIL;
+     }
+     // add location permission using record
+     LBSLOGW(REPORT_MANAGER, "report last location to %{public}d, TimeSinceBoot : %{public}s, SourceType : %{public}d",
+             identity.GetTokenId(), std::to_string(loc->GetTimeSinceBoot()).c_str(),
+             loc->GetLocationSourceType());
+-    locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_SUCCESS, identityInfo, 0);
++    locatorHandler_->SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_SUCCESS, request, 0);
+     return ERRCODE_SUCCESS;
+ }
+
+@@ -3065,51 +3112,28 @@
+
+ void LocatorHandler::GetCachedLocationSuccess(const AppExecFwk::InnerEvent::Pointer& event)
+ {
+-    std::shared_ptr<AppIdentity> identity = event->GetSharedObject<AppIdentity>();
+-    if (identity == nullptr) {
+-        LBSLOGE(LOCATOR, "%{public}s get identity failed", __func__);
+-        return;
+-    }
+-    int64_t tokenId = identity->GetTokenId();
+-    OHOS::Security::AccessToken::PermUsedTypeEnum type =
+-        Security::AccessToken::AccessTokenKit::GetPermissionUsedType(tokenId, ACCESS_APPROXIMATELY_LOCATION);
+-    auto locatorAbility = LocatorAbility::GetInstance();
+-    int ret;
+-    if (locatorAbility != nullptr) {
+-        ret = locatorAbility->UpdatePermissionUsedRecord(tokenId, ACCESS_APPROXIMATELY_LOCATION,
+-            static_cast<int>(type), 1, 0);
+-        LBSLOGD(LOCATOR, "UpdatePermissionUsedRecord, ret=%{public}d", ret);
+-    }
+-    auto requestManager = RequestManager::GetInstance();
+-    requestManager->DecreaseWorkingPidsCount(identity->GetPid());
+-    if (requestManager->IsNeedStopUsingPermission(identity->GetPid())) {
+-        ret = PrivacyKit::StopUsingPermission(tokenId, ACCESS_APPROXIMATELY_LOCATION, identity->GetPid());
+-        LBSLOGD(LOCATOR, "StopUsingPermission, ret=%{public}d", ret);
++    auto request = event->GetSharedObject<Request>();
++    if (request == nullptr) {
++        return;
++    }
++    if (!RequestManager::GetInstance()->UpdateUsingPermission(request, false)) {
++        SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_SUCCESS, request, MILLI_PER_SEC);
+     }
+ }
+
+ void LocatorHandler::GetCachedLocationFailed(const AppExecFwk::InnerEvent::Pointer& event)
+ {
+-    std::shared_ptr<AppIdentity> identity = event->GetSharedObject<AppIdentity>();
+-    if (identity == nullptr) {
+-        LBSLOGE(LOCATOR, "%{public}s get identity failed", __func__);
+-        return;
+-    }
+-    int64_t tokenId = identity->GetTokenId();
+-    OHOS::Security::AccessToken::PermUsedTypeEnum type =
+-        Security::AccessToken::AccessTokenKit::GetPermissionUsedType(tokenId, ACCESS_APPROXIMATELY_LOCATION);
+-    auto locatorAbility = LocatorAbility::GetInstance();
+-    int ret;
+-    if (locatorAbility != nullptr) {
+-        ret = locatorAbility->UpdatePermissionUsedRecord(tokenId, ACCESS_APPROXIMATELY_LOCATION,
+-            static_cast<int>(type), 0, 1);
+-        LBSLOGD(LOCATOR, "UpdatePermissionUsedRecord, ret=%{public}d", ret);
+-    }
+-    auto requestManager = RequestManager::GetInstance();
+-    requestManager->DecreaseWorkingPidsCount(identity->GetPid());
+-    if (requestManager->IsNeedStopUsingPermission(identity->GetPid())) {
+-        ret = PrivacyKit::StopUsingPermission(tokenId, ACCESS_APPROXIMATELY_LOCATION, identity->GetPid());
+-        LBSLOGD(LOCATOR, "StopUsingPermission, ret=%{public}d", ret);
++    auto request = event->GetSharedObject<Request>();
++    if (request == nullptr) {
++        return;
++    }
++    auto permission = PermissionManager::CheckApproximatelyPermission(request->GetTokenId(),
++        request->GetFirstTokenId()) ? ACCESS_APPROXIMATELY_LOCATION : ACCESS_LOCATION;
++    auto type = Security::AccessToken::AccessTokenKit::GetPermissionUsedType(request->GetTokenId(), permission);
++    LocatorAbility::GetInstance()->UpdatePermissionUsedRecord(request->GetTokenId(), permission,
++        static_cast<int>(type), 0, 1);
++    if (!RequestManager::GetInstance()->UpdateUsingPermission(request, false)) {
++        SendHighPriorityEvent(EVENT_GET_CACHED_LOCATION_SUCCESS, request, MILLI_PER_SEC);
+     }
+ }
+
+--- a/base/location/location/services/location_locator/locator/source/report_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/report_manager.cpp
+@@ -16,6 +16,7 @@
+ #include "report_manager.h"
+
+ #include <cmath>
++#include <algorithm>
+ #include "privacy_kit.h"
+ #include "common_utils.h"
+ #include "bundle_mgr_helper.h"
+@@ -196,7 +197,8 @@
+         // add location permission using record
+         auto locatorAbility = LocatorAbility::GetInstance();
+         int ret = locatorAbility->UpdatePermissionUsedRecord(request->GetTokenId(),
+-            ACCESS_APPROXIMATELY_LOCATION, request->GetPermUsedType(), 1, 0);
++            request->GetLocationPermState() ? ACCESS_LOCATION : ACCESS_APPROXIMATELY_LOCATION,
++            request->GetPermUsedType(), 1, 0);
+         if (ret != ERRCODE_SUCCESS && locatorAbility->IsHapCaller(request->GetTokenId())) {
+             LBSLOGE(REPORT_MANAGER, "UpdatePermissionUsedRecord failed ret=%{public}d", ret);
+             RequestManager::GetInstance()->ReportLocationError(LOCATING_FAILED_LOCATION_PERMISSION_DENIED, request);
+@@ -206,10 +208,125 @@
+             "uid : %{public}d, TimeSinceBoot : %{public}s, SourceType : %{public}d",
+             request->GetTokenId(), request->GetUuid().c_str(), request->GetPackageName().c_str(), request->GetUid(),
+             std::to_string(finalLocation->GetTimeSinceBoot()).c_str(), finalLocation->GetLocationSourceType());
++        RecordSkiingTrack(request, finalLocation);
+         locatorCallback->OnLocationReport(finalLocation);
+         RequestManager::GetInstance()->UpdateLocationError(request);
+     }
+     return true;
++}
++
++namespace {
++constexpr int64_t TRACK_RETENTION_NS = 24LL * 60 * 60 * 1000000000LL;
++constexpr double TRACK_PI = 3.14159265358979323846;
++constexpr double TRACK_EARTH_RADIUS_M = 6371008.8;
++
++double TrackDistance(double lat1, double lon1, double lat2, double lon2)
++{
++    const auto radians = TRACK_PI / 180.0;
++    const auto dlat = (lat2 - lat1) * radians;
++    const auto dlon = std::remainder(lon2 - lon1, 360.0) * radians;
++    const auto a = std::pow(std::sin(dlat / 2), 2) + std::cos(lat1 * radians) *
++        std::cos(lat2 * radians) * std::pow(std::sin(dlon / 2), 2);
++    return 2 * TRACK_EARTH_RADIUS_M * std::asin(std::sqrt(std::clamp(a, 0.0, 1.0)));
++}
++} // namespace
++
++void ReportManager::RecordSkiingTrack(const std::shared_ptr<Request>& request,
++    const std::unique_ptr<Location>& location)
++{
++    if (location == nullptr || !RequestManager::GetInstance()->IsSkiingRequestActive(request) ||
++        location->GetIsFromMock() ||
++        (location->GetLocationSourceType() != GNSS_TYPE && location->GetLocationSourceType() != RTK_TYPE) ||
++        !PermissionManager::CheckLocationPermission(request->GetTokenId(), request->GetFirstTokenId())) {
++        return;
++    }
++    auto now = CommonUtils::GetSinceBootTime();
++    auto timestamp = location->GetTimeSinceBoot();
++    if (timestamp <= 0 || timestamp > now || now - timestamp > TRACK_RETENTION_NS ||
++        !std::isfinite(location->GetLatitude()) || !std::isfinite(location->GetLongitude()) ||
++        !std::isfinite(location->GetAltitude()) || !std::isfinite(location->GetAccuracy()) ||
++        std::fabs(location->GetLatitude()) > 90 || std::fabs(location->GetLongitude()) > 180 ||
++        location->GetAccuracy() < 0) {
++        return;
++    }
++    std::lock_guard<std::mutex> lock(trackMutex_);
++    PruneSkiingTracks(now);
++    auto& history = skiingTracks_[{request->GetUid(), request->GetTokenId(), request->GetFirstTokenId()}];
++    if (history.last != nullptr && timestamp <= history.last->GetTimeSinceBoot()) {
++        return; // Same GNSS fix delivered to multiple requests, or out-of-order input.
++    }
++    auto processed = std::make_shared<Location>(*location);
++    const auto measurementVariance = std::max(1.0, std::pow(location->GetAccuracy(), 2));
++    if (history.last != nullptr) {
++        auto dt = (timestamp - history.last->GetTimeSinceBoot()) / 1e9;
++        const auto distance = TrackDistance(history.last->GetLatitude(), history.last->GetLongitude(),
++            location->GetLatitude(), location->GetLongitude());
++        // Reject isolated GNSS teleports, accounting for stated uncertainty.
++        if (distance > std::max(120.0 * dt, 3 * (location->GetAccuracy() + history.last->GetAccuracy()))) {
++            return;
++        }
++        if (dt <= 60) {
++            auto priorVariance = history.variance + 36 * dt * dt;
++            auto gain = std::clamp(priorVariance / (priorVariance + measurementVariance), 0.2, 0.95);
++            processed->SetLatitude(history.last->GetLatitude() + gain *
++                (location->GetLatitude() - history.last->GetLatitude()));
++            processed->SetLongitude(std::remainder(history.last->GetLongitude() + gain *
++                std::remainder(location->GetLongitude() - history.last->GetLongitude(), 360.0), 360.0));
++            processed->SetAltitude(history.last->GetAltitude() + gain *
++                (location->GetAltitude() - history.last->GetAltitude()));
++            processed->SetAccuracy(std::sqrt((1 - gain) * priorVariance));
++            processed->SetSpeed(TrackDistance(history.last->GetLatitude(), history.last->GetLongitude(),
++                processed->GetLatitude(), processed->GetLongitude()) / dt);
++            const auto radians = TRACK_PI / 180.0;
++            const auto dlon = std::remainder(processed->GetLongitude() - history.last->GetLongitude(), 360.0) * radians;
++            const auto y = std::sin(dlon) * std::cos(processed->GetLatitude() * radians);
++            const auto x = std::cos(history.last->GetLatitude() * radians) * std::sin(processed->GetLatitude() * radians) -
++                std::sin(history.last->GetLatitude() * radians) * std::cos(processed->GetLatitude() * radians) * std::cos(dlon);
++            processed->SetDirection(std::fmod(std::atan2(y, x) / radians + 360.0, 360.0));
++            history.variance = (1 - gain) * priorVariance;
++        } else {
++            history.variance = measurementVariance;
++        }
++    } else {
++        history.variance = measurementVariance;
++    }
++    history.last = processed;
++    history.unread.emplace_back(++history.sequence, processed);
++}
++
++void ReportManager::PruneSkiingTracks(int64_t now)
++{
++    for (auto iter = skiingTracks_.begin(); iter != skiingTracks_.end();) {
++        auto& history = iter->second;
++        while (!history.unread.empty() && now - history.unread.front().second->GetTimeSinceBoot() > TRACK_RETENTION_NS) {
++            history.unread.pop_front();
++        }
++        if (history.last == nullptr || now - history.last->GetTimeSinceBoot() > TRACK_RETENTION_NS) {
++            iter = skiingTracks_.erase(iter);
++        } else {
++            ++iter;
++        }
++    }
++}
++
++LocationErrCode ReportManager::GetPostProcessingTrack(const AppIdentity& identity, std::vector<Location>& track)
++{
++    track.clear();
++    std::lock_guard<std::mutex> lock(trackMutex_);
++    PruneSkiingTracks(CommonUtils::GetSinceBootTime());
++    auto iter = skiingTracks_.find({identity.GetUid(), identity.GetTokenId(), identity.GetFirstTokenId()});
++    if (iter == skiingTracks_.end()) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto& history = iter->second;
++    for (const auto& record : history.unread) {
++        if (record.first > history.cursor) {
++            track.push_back(*record.second);
++        }
++    }
++    history.cursor = history.sequence;
++    history.unread.clear(); // Already-consumed records never replay and do not occupy the 24h queue.
++    return ERRCODE_SUCCESS;
+ }
+
+ void ReportManager::LocationReportDelayTimeCheck(const std::unique_ptr<Location>& location,
+--- a/base/location/location/services/location_locator/locator/source/request_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/request_manager.cpp
+@@ -100,6 +100,11 @@
+     }
+     auto tokenId = request->GetTokenId();
+     auto firstTokenId = request->GetFirstTokenId();
++    auto config = request->GetRequestConfig();
++    if (config != nullptr && config->GetSportsType() == SKIING &&
++        PermissionManager::CheckLocationPermission(tokenId, firstTokenId)) {
++        return UpdateUsingApproximatelyPermission(request, false) && UpdateUsingFinePermission(request, true);
++    }
+     if (PermissionManager::CheckApproximatelyPermission(tokenId, firstTokenId)) {
+         return UpdateUsingFinePermission(request, false) && UpdateUsingApproximatelyPermission(request, true);
+     }
+@@ -180,6 +185,9 @@
+         if (isNeedStop) {
+             ret = PrivacyKit::StopUsingPermission(callingTokenId, ACCESS_APPROXIMATELY_LOCATION, request->GetPid());
+             if (ret != ERRCODE_SUCCESS && locatorAbility->IsHapCaller(callingTokenId)) {
++                // Keep the reference owned by this request until the backend
++                // acknowledges stop; a later retry must not decrement twice.
++                IncreaseWorkingPidsCount(request->GetPid());
+                 LBSLOGE(REQUEST_MANAGER, "StopUsingPermission failed ret=%{public}d", ret);
+                 return false;
+             }
+@@ -541,6 +549,14 @@
+         return false;
+     }
+     return true;
++}
++
++bool RequestManager::IsSkiingRequestActive(const std::shared_ptr<Request>& request)
++{
++    std::scoped_lock<ffrt::mutex, ffrt::mutex> lock(requestMutex_, permissionRecordMutex_);
++    auto config = request == nullptr ? nullptr : request->GetRequestConfig();
++    return config != nullptr && config->GetSportsType() == SKIING &&
++        request->GetIsRequesting() && request->GetLocationPermState();
+ }
+
+ bool RequestManager::IsLocatingInCurrentAccount()

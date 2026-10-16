@@ -54,6 +54,7 @@ PREAMBLE = r'''
 namespace ffrt { using mutex=std::mutex; }
 using ErrCode=int; using LocationErrCode=int;
 const int ERRCODE_SUCCESS=0,ERRCODE_SERVICE_UNAVAILABLE=3301000,LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED=3300202;
+const int SKIING=4,ERRCODE_PERMISSION_DENIED=201,ERRCODE_SYSTEM_PERMISSION_DENIED=202,ERRCODE_EDM_POLICY_ABANDON=203,ERRCODE_INVALID_PARAM=401,ERRCODE_NOT_SUPPORTED=801,LOCATION_ERRCODE_MIN=3300000;
 const int ENABLED=1,MILLI_PER_SEC=1000,LBS_REQUEST_FAIL_DETAIL=0,ERRCODE_LOCATING_FREEZE=1,LOCATION_ERRCODE_NOT_CURRENT_USER_ID=2,LOCATION_ERRCODE_REQUEST_TIMEOUT=3,LOCATION_LOCATOR_SA_ID=2802;
 const std::string GNSS_ABILITY="gps",NETWORK_ABILITY="network",FUSED_ABILITY="fused";
 #define LBSLOGD(...) ((void)0)
@@ -87,7 +88,7 @@ struct PrivacyKit {
 std::map<std::pair<int,std::string>,int> PrivacyKit::starts,PrivacyKit::stops;
 std::map<int,bool> switches;
 bool systemPermission=true,callerAvailable=true,saAvailable=true;
-struct RequestConfig { int fix=0,timeout=5000;int64_t timestamp=100; int GetFixNumber(){return fix;}int GetTimeOut(){return timeout;}int64_t GetTimeStamp(){return timestamp;} };
+struct RequestConfig { int sports=0;int GetSportsType(){return sports;}int fix=0,timeout=5000;int64_t timestamp=100; int GetFixNumber(){return fix;}int GetTimeOut(){return timeout;}int64_t GetTimeStamp(){return timestamp;} };
 struct Request {
     bool usingPermission=true,usingFine=false,requesting=true; int uid=100001,pid=1;uint32_t token=1,first=0;
     std::shared_ptr<RequestConfig> config=std::make_shared<RequestConfig>();
@@ -103,7 +104,7 @@ struct CommonUtils {
     static bool IsAppBelongCurrentAccount(AppIdentity identity){return GetUserIdByUid(identity.uid)==currentUser;}
     static bool IsAppBelongActiveAccounts(AppIdentity identity,std::vector<int> ids){for(int id:ids)if(GetUserIdByUid(identity.uid)==id)return true;return false;}
     static int64_t GetCurrentTime(){return now;}
-    static LocationErrCode ErrCodeToLocationErrCode(int code){return code;}
+    static LocationErrCode ErrCodeToLocationErrCode(ErrCode errorCode);
 };
 struct PermissionManager {
     static bool CheckSystemPermission(uint32_t,uint64_t){return systemPermission;}
@@ -138,6 +139,7 @@ public:
     bool IsNeedStartUsingPermission(pid_t);bool IsNeedStopUsingPermission(pid_t);
     bool IsRequestAvailable(std::shared_ptr<Request>&);
     bool IsLocatingInCurrentAccount();
+    bool IsSkiingRequestActive(const std::shared_ptr<Request>&);
 };
 ffrt::mutex RequestManager::requestMutex_;
 struct SaLoadWithStatistic {static bool InitLocationSa(int){return saAvailable;}};
@@ -183,6 +185,10 @@ int main(){
     assert(PrivacyKit::starts[std::make_pair(1,ACCESS_LOCATION)]==1);
     assert(manager->UpdateUsingPermission(fine,false));activeIcon();assert(PrivacyKit::stops[std::make_pair(1,ACCESS_LOCATION)]==0);
     assert(manager->UpdateUsingPermission(second,false));noIcon();assert(PrivacyKit::stops[std::make_pair(1,ACCESS_LOCATION)]==1);
+    permissions[1]=true;finePermissions[1]=true;fine->config->sports=SKIING;
+    assert(manager->UpdateUsingPermission(fine,true)&&fine->usingFine&&!fine->usingPermission);activeIcon();
+    assert(manager->IsSkiingRequestActive(fine));fine->requesting=false;assert(!manager->IsSkiingRequestActive(fine));fine->requesting=true;assert(!manager->IsSkiingRequestActive(nullptr));
+    assert(manager->UpdateUsingPermission(fine,false));fine->config->sports=0;
     permissions[1]=true;finePermissions[1]=false;
     assert(manager->UpdateUsingPermission(fine,true) && fine->usingPermission && !fine->usingFine);activeIcon();
     finePermissions[1]=true;assert(manager->UpdateUsingPermission(fine,true));activeIcon();
@@ -194,7 +200,7 @@ int main(){
     finePermissions[2]=true;assert(manager->UpdateUsingPermission(fine,true));activeIcon();
     finePermissions[2]=false;noIcon();assert(manager->UpdateUsingPermission(fine,false));
     bool sawDelegation=false;for(const auto& check:Security::AccessToken::checked)if(std::get<0>(check)==1&&std::get<1>(check)==2)sawDelegation=true;assert(sawDelegation);
-    systemPermission=false;assert(!query() && env.error==LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED);systemPermission=true;
+    systemPermission=false;assert(!query() && env.error==ERRCODE_SYSTEM_PERMISSION_DENIED);systemPermission=true;
     callerAvailable=false;assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);callerAvailable=true;
     saAvailable=false;assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);saAvailable=true;
     g_locatorClient->proxy=nullptr;assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);g_locatorClient->proxy=locator;
@@ -210,13 +216,15 @@ class LocationIconStateTests(unittest.TestCase):
         source = new_source()
         original_guard = json.loads(FIXTURE.read_text())['availability_guard']
         permission_functions = json.loads(FIXTURE.read_text())['permission_functions']
-        actual = permission_functions + original_guard + ''.join(function(source, signature) for signature in [
+        actual = json.loads(FIXTURE.read_text())['common_error_mapping'] + permission_functions + original_guard + ''.join(function(source, signature) for signature in [
             'bool RequestManager::UpdateUsingPermission(', 'bool RequestManager::UpdateUsingFinePermission(',
             'bool RequestManager::UpdateUsingApproximatelyPermission(',
             'void RequestManager::IncreaseWorkingPidsCount(', 'void RequestManager::DecreaseWorkingPidsCount(',
             'bool RequestManager::IsNeedStartUsingPermission(', 'bool RequestManager::IsNeedStopUsingPermission(',
+            'bool RequestManager::IsSkiingRequestActive(',
             'bool RequestManager::IsLocatingInCurrentAccount()',
             'ErrCode LocatorAbility::GetLocationIconStatus(',
+            'static LocationErrCode LocationRuntimeErrCode(',
             'LocationErrCode LocatorImpl::GetLocationIconStatus(',
             'napi_value GetLocationIconStatus(napi_env env, napi_callback_info info)\n{',
         ])
@@ -244,9 +252,20 @@ class LocationIconStateTests(unittest.TestCase):
         for path, mapping in [(idl_path, idl), (enum_path, codes)]:
             original = frozen['inputs']['base/location/location/' + path]['mapping']
             self.assertEqual(original, {key: mapping[key] for key in original})
+        prior = runtime_sources(prefix=2)
+        prior_idl = {name: int(code) for code, name in re.findall(
+            r'\[ipccode (\d+)\] void (\w+)\(', prior[idl_path])}
+        prior_codes = {name: int(value) for name, value in re.findall(
+            r'\b([A-Z_0-9]+)\s*=\s*(\d+)', function(prior[enum_path], 'enum class LocatorInterfaceCode'))}
+        self.assertEqual(prior_idl, {name: idl[name] for name in prior_idl})
+        self.assertEqual(prior_codes, {name: codes[name] for name in prior_codes})
         for name, enum, value in [('GetLocationIconStatus', 'GET_LOCATION_ICON_STATUS', 65),
                                   ('StartBluetoothSearch', 'START_BLUETOOTH_SEARCH', 66),
-                                  ('StopBluetoothSearch', 'STOP_BLUETOOTH_SEARCH', 67)]:
+                                  ('StopBluetoothSearch', 'STOP_BLUETOOTH_SEARCH', 67),
+                                  ('StartDistrictLocating', 'START_DISTRICT_LOCATING', 68),
+                                  ('StartLocatingWithSportsType', 'START_LOCATING_WITH_SPORTS_TYPE', 69),
+                                  ('GetPostProcessingTrack', 'GET_POST_PROCESSING_TRACK', 70),
+                                  ('CheckDistrictAccess', 'CHECK_DISTRICT_ACCESS', 71)]:
             self.assertEqual(value, idl[name])
             self.assertEqual(value, codes[enum])
             for original in frozen['inputs'].values():
