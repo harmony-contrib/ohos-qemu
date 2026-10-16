@@ -52,9 +52,10 @@
     }
   ],
   "sanitizer_note": "first UBSan diagnostics preserved in host01; fixed safe enum defaults and valid alternate-format negative fixture, final UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1; no check disabled",
-  "root_reported_previous_evidence": "3 previous event unsigned HAPs pass; mode0 actual same PID/token/PCM active revoke gate passed. These do not validate the new snapshot caller bytes.",
+  "root_reported_previous_evidence": "3 previous event unsigned HAPs pass; mode0 same PID/token/PCM active revoke acceptance wiring and host mutation tests pass, no actual guest run. These do not validate the new snapshot caller bytes.",
   "heavy_jobs_started": 0,
   "Docker_QEMU_HDC_product_HAP_build_started": false,
   "closed_requirements": 0,
-  "first_artifact_behavior_gate_passed": false
+  "first_artifact_behavior_gate_passed": false,
+  "parent_evidence_description_correction": "The initial agent interpretation incorrectly called mode0 a passed actual gate; corrected against root records (0/6, no representative guest gate). Raw local test logs unchanged."
 }
