@@ -381,3 +381,9 @@ the next batch. No new guest acceptance or audit closure is claimed.
 2026-10-17 00:15 +0800：Contacts/Theme real OS signing01 完成：3 个源码HAP真实签名，手机与平板私有ext4正例通过，11个反例均拒绝，共13case。固定profile原APL/ACL/已有授权不变，证据完整归档 core/round2/Contacts-Theme-real-OS-signing-and-policy-01；尚不是新产品镜像/BMS/UI。普通Contacts调用方真实SDK01在启动窗口schema处失败，缺startWindowIcon与startWindowBackground，日志保留；已集成ec51d1a补齐真实资源，尚待后续实际编译。
 
 MSDP public_still源码批 scope PASS，集成 b8a2087：原14文件独占、无新核销。host01两编译失败已留证；host02两次GNU ASan/UBSan编译及12场景通过。根发现旧sensor_input在新public_still状态重放会误拒绝，已仅接受完整14文件精确后继并验证其余旧状态；包含原子回滚/未知改动/软链的15回归通过，普通Contacts/Wallpaper工具合批29检查通过。增加MSDP强制新源码/GN/两真实DSO与镜像绑定；这项护栏的元数据拒绝测试明确使用合成字节，不能当ELF/运行证据。准备实际完整平台TU与真实调用方SDK合批，首包gate仍false、0/6。
+
+2026-10-17 00:55 +0800：当前 MSDP 15 个实际平台目标已覆盖通过：01 中12/15成功、3 manager因已废弃私有字段触发-Werror，另误列不存在的第16对象；39fb095/db7e73c集中修复有界外线程drain及清理旧字段，02对4个变更源码/头影响的7个完整TU全部通过，8个旧对象的真实依赖文件均不含这些变更且字节保持。完整覆盖证明和两轮原报告在 core/round2/current-provider-platform-TUs；未将失败原报告改写PASS。Contacts两TU编译均exit0，其中api的错误头依赖断言由独立实际depfile复核纠正；Wallpaper两规则完整TU均PASS。当前仍非fresh GN/完整DSO/新guest。
+
+Root审阅新增MSDP镜像护栏时，通过apps只读复核发现原metadata路径可误收64字节伪ELF及自选CFI=false。已增加完整ELF programheader/可执行dynamic segment/实际dynsym和固定CFI门；算法要求真实Create/Destroy，service要求实际version-script导出的singleton符号，移除会被正常map local化的private RetireAlgo误要求，未改产品导出。完整构建前将仅9个明确MSDP objects、2个库的linked/unstripped/staging共15个生成物移入独立保留区，强制真实Ninja重建；完成后核实际源码、CFI编译命令、raw GN/link依赖、object/linked/staged字节、时间及完整9CXX/2SOLINK build log，包携带可复验witness。元数据/保留边界和伪ELF拒绝测试通过；该实际before/build/finish路径尚待首包完整执行，不称已验证运行。
+
+普通Contacts caller与Wallpaper importer真实产品SDK批02两HAP成功，完整SHA/命令见 Contacts-Wallpaper-callers-SDK02.json。新增seed/query/live三HAP批01在准备阶段发现跨snapshot绝对模板路径误拒，未执行任何SDK命令；原attempt保留，改为核对固定内容/哈希，未知模板或runner重新计算哈希仍拒绝。Root 64项运行工具集成回归及20项护栏回归通过。Contacts执行driver、壁纸21步协调器、GNSS/Sensor/still真实运行驱动已整合，但签名/安装/同新guest门禁仍待跑；状态仍199/281、82未核销、0/6包验收。

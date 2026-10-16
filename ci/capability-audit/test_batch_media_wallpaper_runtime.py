@@ -18,6 +18,19 @@ fixture = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(fixture
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_template_from_another_snapshot_requires_exact_trusted_bytes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            challenge = json.loads(runtime.prepare(root / 'challenge', 360, 640).read_text())
+            copied = root / 'other-frozen-snapshot/Index.ets';copied.parent.mkdir()
+            copied.write_bytes(runtime.FIXTURE.joinpath('Index.ets').read_bytes())
+            challenge['template'] = {'path': str(copied.resolve()), 'sha256': verifier.sha(copied)}
+            verifier.check_challenge(challenge)
+            copied.write_bytes(copied.read_bytes() + b'\n// changed template\n')
+            challenge['template']['sha256'] = verifier.sha(copied)
+            with self.assertRaisesRegex(ValueError, 'original seed/denial source'):
+                verifier.check_challenge(challenge)
+
     def test_actual_API26_caller_declarations(self):
         sdk = Path('/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0')
         typescript = sdk/'ets/build-tools/ets-loader/node_modules/typescript'
@@ -31,6 +44,17 @@ class RuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             case = fixture.Fixture(temp)
             self.assertEqual('pass', verifier.verify(case.path)['status'])
+            copied_runner = Path(temp) / 'other-frozen-runner.py'
+            copied_runner.write_bytes(runtime.HERE.joinpath('batch_media_wallpaper_runtime.py').read_bytes())
+            case.value['runner'] = {'path': str(copied_runner.resolve()), 'sha256': verifier.sha(copied_runner)}
+            case.save()
+            self.assertEqual('pass', verifier.verify(case.path)['status'])
+            copied_runner.write_bytes(copied_runner.read_bytes() + b'\n# changed runner\n')
+            case.value['runner']['sha256'] = verifier.sha(copied_runner);case.save()
+            with self.assertRaisesRegex(ValueError, 'original runner evidence'):verifier.verify(case.path)
+            case.value['runner'] = {'path': str(runtime.HERE / 'batch_media_wallpaper_runtime.py'),
+                                    'sha256': verifier.sha(runtime.HERE / 'batch_media_wallpaper_runtime.py')}
+            case.save()
             mutations = [
                 ('old boot', lambda v: v.update(boot_id='22222222-2222-2222-2222-222222222222')),
                 ('no remote commands', lambda v: v.update(commands=[])),

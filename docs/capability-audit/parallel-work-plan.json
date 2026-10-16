@@ -1897,6 +1897,37 @@
       "fixture_prefix": "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/",
       "no_source_or_shared_suite_edits": true,
       "no_heavy_tasks": true
+    },
+    "apps_contact_runtime_driver": {
+      "agent": "apps",
+      "new_files": [
+        "ci/capability-audit/batch_apps_run_contact_picker_runtime.py",
+        "ci/capability-audit/test_batch_apps_run_contact_picker_runtime.py"
+      ],
+      "fixture_prefix": "ci/capability-audit/fixtures/batch_apps/contact_picker_seed/",
+      "no_shared_suite_edits": true,
+      "native_compile_requires_root_lease": true,
+      "narrow_existing_tool_change": "actual AppMgrClient::GetAllRunningProcesses raw API identity accepted alongside existing JS; start-window schema config fixed separately"
+    },
+    "media_wallpaper_coordinator": {
+      "agent": "media",
+      "new_files": [
+        "ci/capability-audit/batch_media_wallpaper_coordinator.py",
+        "ci/capability-audit/test_batch_media_wallpaper_coordinator.py"
+      ],
+      "fixture_prefix": "ci/capability-audit/fixtures/batch_media/wallpaper_receipts/",
+      "no_frozen_source_or_runtime_tool_changes": true,
+      "native_and_SDK_compile_requires_root_lease": true
+    },
+    "system_runtime_helpers": {
+      "agent": "system",
+      "new_files": [
+        "ci/capability-audit/batch_system_build_runtime_helpers.py",
+        "ci/capability-audit/test_batch_system_build_runtime_helpers.py"
+      ],
+      "write_prefix": "docs/capability-audit/parallel/system/round10-runtime-helpers/",
+      "native_compile_requires_root_lease": true,
+      "no_shared_suite_edits": true
     }
   }
 }

@@ -49,7 +49,9 @@ def check_challenge(value):
             not 320 <= value['width'] <= 4096 or not 320 <= value['height'] <= 4096 or value['width']*value['height'] > 8_000_000):
         raise ValueError('bounded actual-display challenge dimensions required')
     template = checked(value['template'])
-    if template.resolve() != (HERE / 'fixtures/batch_media/wallpaper_runtime/Index.ets').resolve():
+    # Build and acceptance snapshots have different absolute roots. Bind the
+    # exact trusted template bytes, while retaining its actual original path.
+    if sha(template) != sha(HERE / 'fixtures/batch_media/wallpaper_runtime/Index.ets'):
         raise ValueError('original seed/denial source required')
     if checked(value['generated_page']).read_text() != template.read_text().replace('__WALLPAPER_RUN__', value['run_id']):
         raise ValueError('generated source differs from actual run/template')
@@ -314,7 +316,7 @@ def verify(path):
     value = json.loads(Path(path).read_text())
     if (value.get('schema_version') != 1 or value.get('scope') != SCOPE or value.get('status') != 'collected' or
             value.get('failures') != [] or value.get('first_artifact_behavior_gate_passed') is not False or
-            checked(value['runner']).resolve() != (HERE / 'batch_media_wallpaper_runtime.py').resolve()):
+            sha(checked(value['runner'])) != sha(HERE / 'batch_media_wallpaper_runtime.py')):
         raise ValueError('complete original runner evidence required')
     boot = json.loads(checked(value['boot']).read_text())
     env = validate_binding(boot, sha(checked(value['archive'])))

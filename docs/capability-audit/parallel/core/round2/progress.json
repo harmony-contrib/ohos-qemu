@@ -1396,5 +1396,8 @@
   "Contacts_Theme_signing_wiring": "source GN+exact profiles+typed original installs+mandatory image guard implemented; 12 host tests PASS; real OS signing ext4 pending",
   "Contacts_Theme_real_OS_signing": "01 PASS 3 signed sourceHAP +13 privateext4 cases; source grant/APL preserved NOT BMS/runtime",
   "MSDP_public_still": "b8a2087 integrated; host01 two compilerfail preserved; host02 GNU ASan/UBSan two compiles and12casesPASS; root composition15 checksPASS; real16platformTUs/GN/link/guest pending",
-  "runtime_tools": "ordinary Contacts and challenged Wallpaper tools integrated; caller SDK01 startup-schema fail fixed ec51d1a, next actualSDK pending; actualguestNOTexecuted"
+  "runtime_tools": "ordinary Contacts and challenged Wallpaper tools integrated; caller SDK01 startup-schema fail fixed ec51d1a, next actualSDK pending; actualguestNOTexecuted",
+  "MSDP_current_platform_coverage": "15actualtargetsPASS via01unaffected8+02changed7; private fields genuine failures repaired; freshGN/link/newguest pending",
+  "MSDP_image_guard_review": "64byte fake and CFIfalse false accept repaired; strong before/build/finish witness+rawGN/log+ELF implemented testsPASS; actual full pipeline pending",
+  "runtime_extension_HAPs": "Contacts caller +Wallpaper importer SDK02PASS; seed/query/live01 preparation path error preserved SDK0executed; fixed exactbytes crosssnapshot acceptance nextbatchpending"
 }

@@ -445,6 +445,7 @@ exec > >(tee -a "${LOG_FILE}") 2>&1
 exec docker run --rm \
   --platform "${DOCKER_PLATFORM}" \
   --name "ohos-qemu-${DEVICE_TYPE}-build" \
+  --cpus "${DOCKER_BUILD_CPUS:-2}" --memory "${DOCKER_BUILD_MEMORY:-5g}" \
   --ulimit nofile=1048576:1048576 \
   -e LANG=C.UTF-8 \
   -e LC_ALL=C.UTF-8 \

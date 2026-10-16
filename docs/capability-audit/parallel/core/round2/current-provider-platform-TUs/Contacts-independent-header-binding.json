@@ -1,0 +1,42 @@
+{
+  "status": "pass",
+  "raw_evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Wallpaper-MSDP-complete-TUs-01/artifacts/contacts_picker/evidence.json",
+  "raw_evidence_sha256": "5bc7480b17a8c5d6b6f8893d68b71b72d45e52c2fa2f4057ba9316ca501ec751",
+  "initial_report_status": "fail",
+  "correction": "contacts_api consumes actual contacts_napi_utils.h; only contacts_napi_utils.cpp directly consumes contact_picker_protocol.h. Both compilers exited0. No recompile/raw-evidence edits.",
+  "rows": [
+    {
+      "unit": "contacts_api",
+      "status": "pass_actual_existing_compilation_and_correct_header_binding",
+      "object_sha256": "a29fa8e93a074258767499a1bee752615093bb20ce54b8792f650289985eb096",
+      "depfile_sha256": "e218bf6f2e36e0aaf053808002262f0ceb0a7925443c2ddfe7155eb68d7585f7",
+      "required_actual_header": "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h",
+      "llvm_modules": [
+        {
+          "file": "arm64_virt-contacts_api.ll",
+          "target_triple": "target triple = \"aarch64-unknown-linux-ohos\"",
+          "sha256": "98b578a2ab55cde68437866d82b3bc9ef03e66ab37934028592cb92226f1fdb8"
+        }
+      ]
+    },
+    {
+      "unit": "contacts_napi_utils",
+      "status": "pass_actual_existing_compilation_and_correct_header_binding",
+      "object_sha256": "5c624210011dc5e075832249c43ddbab53a54b2d0d8082cf076a181706311979",
+      "depfile_sha256": "21b7270f0d81c001b9b672aaa0e0dc25219478c87567d9afc88f29484e256bbf",
+      "required_actual_header": "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h",
+      "llvm_modules": [
+        {
+          "file": "arm64_virt-contacts_napi_utils.ll",
+          "target_triple": "target triple = \"aarch64-unknown-linux-ohos\"",
+          "sha256": "799fc0c20aa861bf6ef0f28475487d35c5087993972b042e89760b370dbfd9cc"
+        }
+      ]
+    }
+  ],
+  "external_header_sha256": {
+    "third_party/json/single_include/nlohmann/json.hpp": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "scope": "two complete actual compiler outputs correct independent depfile binding ONLY NOT link/GN/guest"
+}

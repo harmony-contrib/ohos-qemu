@@ -1,0 +1,97 @@
+{
+  "source_commit": "a9189eb3d50118d750f2b765d98e36ef9eda38b5",
+  "archive_sha256": "1113a485dc808134799081a4d8c945f0e58e7e574a6420c6473db060a8346e1a",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "--name",
+    "ohos-qemu-r52-Contacts-Wallpaper-MSDP-TUs-01",
+    "--network",
+    "none",
+    "--read-only",
+    "--cpus",
+    "2",
+    "--memory",
+    "5g",
+    "--pids-limit",
+    "512",
+    "--tmpfs",
+    "/tmp:rw,exec,nosuid,nodev,size=1g",
+    "--mount",
+    "type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly",
+    "--mount",
+    "type=volume,src=ohos-qemu-7_0-release-out,dst=/ohos/out,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Wallpaper-MSDP-complete-TUs-01/frozen,dst=/frozen,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Wallpaper-MSDP-complete-TUs-01/artifacts,dst=/work",
+    "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "python3",
+    "-c",
+    "from pathlib import Path\nimport subprocess,json,time\nrows=[]\nfor group in ['contacts_picker','wallpaper_renderer','msdp_sensor']:\n argv=['python3','/frozen/ci/capability-audit/compile_native_repair_batch.py','--source-root','/ohos','--group',group,'--product','arm64_virt','--output','/work/'+group]\n start=time.time()\n with Path('/work/'+group+'-driver.log').open('xb') as stream:r=subprocess.run(argv,stdout=stream,stderr=subprocess.STDOUT,timeout=5400)\n row={'group':group,'argv':argv,'exit_code':r.returncode,'seconds':time.time()-start};rows.append(row)\n Path('/work/batch.json').write_text(json.dumps({'rows':rows,'first_artifact_behavior_gate_passed':False},indent=2)+'\\n')\n print(json.dumps(row),flush=True)\nraise SystemExit(any(row['exit_code'] for row in rows))\n"
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "scope": "20 current complete platform TU compile diagnostics ONLY NOT freshGN/link/guest",
+  "exit_code": 1,
+  "seconds": 236.52732491493225,
+  "container_log_sha256": "2008be8ab09f5ae47f2b9550a8a64cd6651b011c18e0f39c50925958be1bdd10",
+  "batch": {
+    "rows": [
+      {
+        "group": "contacts_picker",
+        "argv": [
+          "python3",
+          "/frozen/ci/capability-audit/compile_native_repair_batch.py",
+          "--source-root",
+          "/ohos",
+          "--group",
+          "contacts_picker",
+          "--product",
+          "arm64_virt",
+          "--output",
+          "/work/contacts_picker"
+        ],
+        "exit_code": 1,
+        "seconds": 44.52541470527649
+      },
+      {
+        "group": "wallpaper_renderer",
+        "argv": [
+          "python3",
+          "/frozen/ci/capability-audit/compile_native_repair_batch.py",
+          "--source-root",
+          "/ohos",
+          "--group",
+          "wallpaper_renderer",
+          "--product",
+          "arm64_virt",
+          "--output",
+          "/work/wallpaper_renderer"
+        ],
+        "exit_code": 0,
+        "seconds": 26.194957971572876
+      },
+      {
+        "group": "msdp_sensor",
+        "argv": [
+          "python3",
+          "/frozen/ci/capability-audit/compile_native_repair_batch.py",
+          "--source-root",
+          "/ohos",
+          "--group",
+          "msdp_sensor",
+          "--product",
+          "arm64_virt",
+          "--output",
+          "/work/msdp_sensor"
+        ],
+        "exit_code": 1,
+        "seconds": 163.46738529205322
+      }
+    ],
+    "first_artifact_behavior_gate_passed": false
+  }
+}

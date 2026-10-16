@@ -327,7 +327,8 @@ GROUPS['contacts_picker'] = {
     'sources': {name: 'contacts/src/' + name + '.cpp' for name in ('contacts_api', 'contacts_napi_utils')},
     'targets': {name: 'obj/applications/standard/contacts_data/contacts/src/contact/' + name + '.o'
                 for name in ('contacts_api', 'contacts_napi_utils')},
-    'required_header': 'contacts/include/contact_picker_protocol.h',
+    'required_headers': {'contacts_api': 'contacts/include/contacts_napi_utils.h',
+                         'contacts_napi_utils': 'contacts/include/contact_picker_protocol.h'},
     'source_header_inputs': ['third_party/json/single_include/nlohmann/json.hpp'],
     'supported_products': ['arm64_virt'],
 }
@@ -356,11 +357,13 @@ for unit in ('algo_absolute_still', 'algo_base', 'algo_horizontal', 'algo_vertic
     msdp['targets'][unit] = 'obj/base/msdp/device_status/libs/src/' + subdir + target + '/' + unit + '.o'
 for target in ('devicestatus_service', 'devicestatus_static_service', 'intention_stationary_server'):
     for source in ('devicestatus_manager', 'devicestatus_service'):
+        if target == 'intention_stationary_server' and source == 'devicestatus_service':
+            continue  # This rule has no devicestatus_service.cpp object.
         unit = target + '__' + source
         msdp['units'].append(unit)
         msdp['sources'][unit] = 'services/native/src/' + source + '.cpp'
         msdp['targets'][unit] = 'obj/base/msdp/device_status/services/native/src/' + target + '/' + source + '.o'
-msdp['scope'] = 'sixteen_current_MSDP_product_TUs_explicit_Sensor_noMock_defines_NOT_fresh_GN_link_runtime'
+msdp['scope'] = 'fifteen_current_MSDP_product_TUs_explicit_Sensor_noMock_defines_NOT_fresh_GN_link_runtime'
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
