@@ -1,0 +1,3386 @@
+{
+  "evidence_scope": "read-only fixed source and mutable build staging; no archive/guest acceptance",
+  "source_root": "/ohos",
+  "system_root": "/ohos/out/arm64_virt/packages/phone/system",
+  "source_files": {
+    "applications/standard/hap/BUILD.gn": {
+      "exists": true,
+      "sha256": "3c9db915d35742864f493c1c3f502314d43ebc85d6e79321e3647db25eb88df4",
+      "selected_lines": [
+        {
+          "line": 16,
+          "text": "hap_src_dir = \"\""
+        },
+        {
+          "line": 18,
+          "text": "  hap_src_dir = \"sceneboard/\""
+        },
+        {
+          "line": 22,
+          "text": "  source = \"Launcher.hap\""
+        },
+        {
+          "line": 29,
+          "text": "  source = \"Launcher_Settings.hap\""
+        },
+        {
+          "line": 36,
+          "text": "  source = \"Note.hap\""
+        },
+        {
+          "line": 43,
+          "text": "  source = \"SettingsData.hap\""
+        },
+        {
+          "line": 50,
+          "text": "  source = \"SystemUI-NavigationBar.hap\""
+        },
+        {
+          "line": 57,
+          "text": "  source = \"SystemUI-StatusBar.hap\""
+        },
+        {
+          "line": 64,
+          "text": "  source = \"SystemUI-ScreenLock.hap\""
+        },
+        {
+          "line": 71,
+          "text": "  source = \"SystemUI-NotificationManagement.hap\""
+        },
+        {
+          "line": 78,
+          "text": "  source = \"SystemUI-VolumePanel.hap\""
+        },
+        {
+          "line": 85,
+          "text": "  source = \"SystemUI-DropdownPanel.hap\""
+        },
+        {
+          "line": 92,
+          "text": "  source = \"SystemUI.hap\""
+        },
+        {
+          "line": 99,
+          "text": "  source = \"SystemUI-SystemDialog.hap\""
+        },
+        {
+          "line": 106,
+          "text": "  source = \"ScreenShot.hap\""
+        },
+        {
+          "line": 113,
+          "text": "  source = hap_src_dir + \"Clock_Demo.hap\""
+        },
+        {
+          "line": 120,
+          "text": "  source = hap_src_dir + \"Calc_Demo.hap\""
+        },
+        {
+          "line": 127,
+          "text": "  source = \"Music_Demo.hap\""
+        },
+        {
+          "line": 134,
+          "text": "  source = \"resources/demo.wav\""
+        },
+        {
+          "line": 140,
+          "text": "  source = \"resources/dynamic.wav\""
+        },
+        {
+          "line": 146,
+          "text": "  source = hap_src_dir + \"Camera.hap\""
+        },
+        {
+          "line": 153,
+          "text": "  source = \"resources/capture.ogg\""
+        },
+        {
+          "line": 159,
+          "text": "  source = \"kikaInput.hap\""
+        },
+        {
+          "line": 166,
+          "text": "  source = \"Media_Library.hap\""
+        },
+        {
+          "line": 173,
+          "text": "  source = \"Media_Scanner.hap\""
+        },
+        {
+          "line": 180,
+          "text": "  source = hap_src_dir + \"CallUI.hap\""
+        },
+        {
+          "line": 187,
+          "text": "  source = \"MobileDataSettings.hap\""
+        },
+        {
+          "line": 194,
+          "text": "  source = hap_src_dir + \"CallSetting.hap\""
+        },
+        {
+          "line": 201,
+          "text": "  source = hap_src_dir + \"EmergencyCommunication.hap\""
+        },
+        {
+          "line": 208,
+          "text": "  source = hap_src_dir + \"CommunicationSetting.hap\""
+        },
+        {
+          "line": 215,
+          "text": "  source = hap_src_dir + \"CallRecorder.hap\""
+        },
+        {
+          "line": 222,
+          "text": "  source = hap_src_dir + \"Mms.hap\""
+        },
+        {
+          "line": 229,
+          "text": "  source = hap_src_dir + \"Contacts.hap\""
+        },
+        {
+          "line": 236,
+          "text": "  source = \"Settings_FaceAuth.hap\""
+        },
+        {
+          "line": 243,
+          "text": "  source = \"FilePicker.hap\""
+        },
+        {
+          "line": 250,
+          "text": "  source = hap_src_dir + \"SecurityPrivacyCenter.hap\""
+        },
+        {
+          "line": 257,
+          "text": "  source = \"UpdateApp.hap\""
+        },
+        {
+          "line": 264,
+          "text": "  source = hap_src_dir + \"PrintSpooler.hap\""
+        },
+        {
+          "line": 271,
+          "text": "  source = \"Ringtone_Library_Ext.hap\""
+        },
+        {
+          "line": 278,
+          "text": "  source = \"AudioPicker.hap\""
+        },
+        {
+          "line": 285,
+          "text": "  source = hap_src_dir + \"FileManager.hap\""
+        },
+        {
+          "line": 292,
+          "text": "  source = hap_src_dir + \"NotificationManagement.hap\""
+        },
+        {
+          "line": 299,
+          "text": "  source = hap_src_dir + \"ThemeService.hap\""
+        },
+        {
+          "line": 306,
+          "text": "  source = hap_src_dir + \"ThemeComponent.hap\""
+        },
+        {
+          "line": 313,
+          "text": "  source = hap_src_dir + \"SceneBoard.hap\""
+        },
+        {
+          "line": 320,
+          "text": "  source = hap_src_dir + \"cameraPicker.hap\""
+        },
+        {
+          "line": 327,
+          "text": "  source = hap_src_dir + \"Floatingnavigation.hap\""
+        },
+        {
+          "line": 334,
+          "text": "  source = hap_src_dir + \"Intelligent_Scene.hap\""
+        },
+        {
+          "line": 341,
+          "text": "  source = hap_src_dir + \"PortalLogin.hap\""
+        },
+        {
+          "line": 348,
+          "text": "  source = hap_src_dir + \"mediacontroller.hap\""
+        },
+        {
+          "line": 355,
+          "text": "  source = hap_src_dir + \"Calendar.hap\""
+        },
+        {
+          "line": 362,
+          "text": "  source = hap_src_dir + \"simcardmanagement.hap\""
+        },
+        {
+          "line": 369,
+          "text": "  source = hap_src_dir + \"SoundRecorder.hap\""
+        },
+        {
+          "line": 376,
+          "text": "  source = hap_src_dir + \"Startup_guide.hap\""
+        },
+        {
+          "line": 383,
+          "text": "  source = hap_src_dir + \"Tips.hap\""
+        },
+        {
+          "line": 452,
+          "text": "  if (defined(product_name) && product_name == \"watchos\") {"
+        },
+        {
+          "line": 480,
+          "text": "  } else if (defined(product_name) && product_name == \"rk3568\") {"
+        },
+        {
+          "line": 482,
+          "text": "        [ \"//applications/standard/admin_provisioning:adminprovisioning_hap\" ]"
+        },
+        {
+          "line": 483,
+          "text": "  } else if (defined(product_name) && product_name == \"ohos-arm64\") {"
+        },
+        {
+          "line": 485,
+          "text": "        [ \"//applications/standard/admin_provisioning:adminprovisioning_hap\" ]"
+        }
+      ]
+    },
+    "applications/standard/settings/common/src/main/ets/utils/SettingsDataUtils.ts": {
+      "exists": true,
+      "sha256": "904dfc9ccf87c2b209a542097716bee0570208ae1d002baffeb84e6f366b89bd",
+      "selected_lines": [
+        {
+          "line": 46,
+          "text": "function setValueSync(key: string, value: string, domain: string, context: common.Context): void {"
+        },
+        {
+          "line": 49,
+          "text": "    Settings.setValueSync(context, key, value ?? '', domain);"
+        },
+        {
+          "line": 51,
+          "text": "  Settings.setValueSync(context, key, value ?? '');"
+        },
+        {
+          "line": 190,
+          "text": "  static setSettingsData(key: string, value: string, domain: string = null): boolean {"
+        },
+        {
+          "line": 203,
+          "text": "        return Settings.setValueSync(context, key, value ?? '', domain);"
+        },
+        {
+          "line": 205,
+          "text": "        return Settings.setValueSync(context, key, value ?? '');"
+        },
+        {
+          "line": 240,
+          "text": "  static setSecureValue(key: string, value: string): void {"
+        },
+        {
+          "line": 241,
+          "text": "    SettingsDataUtils.setSettingsData(key, value, Settings.domainName.USER_SECURITY);"
+        },
+        {
+          "line": 245,
+          "text": "    SettingsDataUtils.setSettingsData(key, value, domainName);"
+        },
+        {
+          "line": 308,
+          "text": "    SettingsDataUtils.setSettingsData(key, value);"
+        },
+        {
+          "line": 492,
+          "text": "      Settings.setValueSync(context, key, value ?? '', domain);"
+        },
+        {
+          "line": 494,
+          "text": "      Settings.setValueSync(context, key, value ?? '');"
+        }
+      ]
+    },
+    "foundation/ability/ability_runtime/frameworks/native/appkit/ability_runtime/service_extension_context.cpp": {
+      "exists": true,
+      "sha256": "9dea6ca51aa4193d06a4eb44597fa99db683497dc86592d3dfaeebe22858ce21",
+      "selected_lines": [
+        {
+          "line": 231,
+          "text": "ErrCode ServiceExtensionContext::TerminateAbility()"
+        },
+        {
+          "line": 234,
+          "text": "    ErrCode err = AAFwk::AbilityManagerClient::GetInstance()->TerminateAbility(token_, -1, nullptr);"
+        }
+      ]
+    },
+    "applications/standard/settings/BUILD.gn": {
+      "exists": true,
+      "sha256": "6e2870d79724d8a57d8ea1f4c5e5d11a6a674c310a55b7f28c1aa43fbdefd788",
+      "selected_lines": []
+    },
+    "applications/standard/settings/product/phone/src/main/module.json5": {
+      "exists": true,
+      "sha256": "f347664ff4039db0970d58b72ebe28c668d8ab62d950100b8925df68b6351b70",
+      "name_tokens": [
+        "phone",
+        "ArkTSPartialUpdate",
+        "partialUpdateStrictCheck",
+        "license_file_path",
+        "netmanager_enhance_statement",
+        "action.settings.app.can_not_disable",
+        "client_id",
+        "com.ohos.settings.MainAbility",
+        "ohos.ability.shortcuts",
+        "support_jump_to_password_page",
+        "support_wallet_password_config",
+        "com.ohos.settings.ExternalWifiSettingsAbility",
+        "OobeLocalUserTestAbility",
+        "SettingsStatusReportSchedulerExtensionAbility",
+        "WifiUnSaveNetDialogAbility",
+        "BluetoothUIExtensionSettingsAbility",
+        "action.systemui.plugin.TOGGLE",
+        "WifiUIExtensionSettingsAbility",
+        "action.systemui.plugin.TOGGLE",
+        "NotDisturbUIExtensionSettingsAbility",
+        "OobeLocalUserAbility",
+        "ExternalCommonUIExtensionAbility",
+        "OpenNetworkUIExtensionAbility",
+        "BluetoothOppServiceUIExtensionAbility",
+        "IntelligentSceneAppSelectExtensionAbility",
+        "DarkModeExtensionSettingsAbility",
+        "HotspotExtensionAbility",
+        "SoundExtensionAbility",
+        "com.ohos.settings.OobeWifiSettingsExtensionAbility",
+        "WifiNotAvailableDialog",
+        "BluetoothPairDialog",
+        "BluetoothPbapPseDialog",
+        "BluetoothAutoPlayAuthDialog",
+        "BluetoothMapAuthDialog",
+        "BluetoothSwitchDialog",
+        "bluetooth",
+        "OOBEPasswordSettingExtensionAbility",
+        "PasswordSettingExtensionAbility",
+        "OobePasswordExtensionAbility",
+        "AccessibilityShortKeyDialog",
+        "AccessibilityReConfirmDialog",
+        "AccessibilityIgnoreConfirmDialog",
+        "USBDebugDialog",
+        "SettingsExtService",
+        "IgnoreRepeatClickExtService",
+        "SettingsInstantShareService",
+        "DisableToastService",
+        "com.ohos.settings.NotDisturbService",
+        "com.ohos.settings.ScheduledPowerOffService",
+        "com.ohos.settings.ScheduledPowerOffNowService",
+        "com.ohos.settings.ScheduledPowerOnService",
+        "com.ohos.settings.ScheduledPowerCheckService",
+        "ScheduledPowerOffDialogAbility",
+        "ResetLogoutLoadingAbility",
+        "com.ohos.settings.TimeChangeInitSubscriber",
+        "ohos.extension.staticSubscriber",
+        "com.ohos.settings.SettingsDataRestoreFinishSubscriber",
+        "ohos.extension.staticSubscriber",
+        "NotDisturbDialogAbility",
+        "DeveloperModeSettingsAbility",
+        "ohos.permission.ACCESS_LOWPOWER_MANAGER",
+        "ohos.permission.ACCESS_SYSTEM_SETTINGS",
+        "ohos.permission.MANAGE_ACCESSORY",
+        "ohos.permission.ACCESS_HIVIEWX",
+        "ohos.permission.ACCESS_ACCOUNT_KIT_UI",
+        "ohos.permission.ACCESS_USER_ACCOUNT_INFO",
+        "ohos.permission.GET_WIFI_INFO",
+        "ohos.permission.SET_WIFI_INFO",
+        "ohos.permission.MANAGE_WIFI_CONNECTION",
+        "ohos.permission.SET_WIFI_CONFIG",
+        "ohos.permission.GET_WIFI_CONFIG",
+        "ohos.permission.GET_WIFI_INFO_INTERNAL",
+        "ohos.permission.GET_WIFI_PEERS_MAC",
+        "ohos.permission.GET_WIFI_LOCAL_MAC",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.POWER_OPTIMIZATION",
+        "ohos.permission.USE_BLUETOOTH",
+        "ohos.permission.DISCOVER_BLUETOOTH",
+        "ohos.permission.GET_BLUETOOTH_PEERS_MAC",
+        "ohos.permission.MANAGE_BLUETOOTH",
+        "ohos.permission.ACCESS_BLUETOOTH",
+        "ohos.permission.ACCESS_PIN_AUTH",
+        "ohos.permission.SET_TIME",
+        "ohos.permission.UPDATE_CONFIGURATION",
+        "ohos.permission.LISTEN_BUNDLE_CHANGE",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "ohos.permission.INSTALL_BUNDLE",
+        "ohos.permission.CLEAN_APPLICATION_DATA",
+        "ohos.permission.REMOVE_CACHE_FILES",
+        "ohos.permission.GET_RUNNING_INFO",
+        "ohos.permission.KILL_APP_PROCESSES",
+        "ohos.permission.CLEAN_BACKGROUND_PROCESSES",
+        "ohos.permission.RUNNING_STATE_OBSERVER",
+        "ohos.permission.STORAGE_MANAGER",
+        "ohos.permission.MANAGE_USER_IDM",
+        "ohos.permission.USE_USER_IDM",
+        "ohos.permission.ACCESS_USER_AUTH_INTERNAL",
+        "ohos.permission.ACCESS_NOTIFICATION_POLICY",
+        "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS_EXTENSION",
+        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+        "ohos.permission.FACTORY_RESET",
+        "ohos.permission.MANAGE_SECURE_SETTINGS",
+        "ohos.permission.MANAGE_SETTINGS",
+        "ohos.permission.GET_LOCAL_ACCOUNTS",
+        "ohos.permission.MANAGE_DISTRIBUTED_ACCOUNTS",
+        "ohos.permission.GET_DISTRIBUTED_ACCOUNTS",
+        "ohos.permission.sec.ACCESS_UDID",
+        "ohos.permission.START_INVISIBLE_ABILITY",
+        "ohos.permission.SET_TIME_ZONE",
+        "ohos.permission.PERMISSION_USED_STATS",
+        "ohos.permission.WRITE_ACCESSIBILITY_CONFIG",
+        "ohos.permission.READ_ACCESSIBILITY_CONFIG",
+        "ohos.permission.CONNECTIVITY_INTERNAL",
+        "ohos.permission.READ_CLOUD_SYNC_CONFIG",
+        "ohos.permission.READ_ACCOUNT_LOGIN_STATE",
+        "ohos.permission.ACCESS_SUBSCRIPTION_CAPSULE_DATA",
+        "ohos.permission.ACCESS_ACCOUNT_RECOMMENDATION_DATA",
+        "ohos.permission.GET_INSTALLED_BUNDLE_LIST",
+        "ohos.permission.GET_BUNDLE_RESOURCES",
+        "ohos.permission.GET_NETWORK_INFO",
+        "ohos.permission.NETWORK_SIMULATE",
+        "ohos.permission.GET_TELEPHONY_STATE",
+        "ohos.permission.MANAGE_NET_STRATEGY",
+        "ohos.permission.GET_TELEPHONY_ESIM_STATE",
+        "ohos.permission.SET_TELEPHONY_ESIM_STATE",
+        "ohos.permission.VIBRATE",
+        "ohos.permission.PRIVACY_WINDOW",
+        "ohos.permission.ACCESS_OUC",
+        "ohos.permission.MANAGE_WIFI_HOTSPOT",
+        "ohos.permission.NOTIFICATION_CONTROLLER",
+        "ohos.permission.SET_TELEPHONY_STATE",
+        "ohos.permission.ACTIVATE_THEME_PACKAGE",
+        "ohos.permission.CONNECT_IME_ABILITY",
+        "ohos.permission.SET_DEVELOPER_MODE",
+        "ohos.permission.REBOOT",
+        "ohos.permission.MANAGE_USB_CONFIG",
+        "ohos.permission.NFC_CARD_EMULATION",
+        "ohos.permission.GET_DEFAULT_APPLICATION",
+        "ohos.permission.SET_DEFAULT_APPLICATION",
+        "ohos.permission.READ_HIVIEW_SYSTEM",
+        "ohos.permission.GET_BLUETOOTH_LOCAL_MAC",
+        "ohos.permission.APPROXIMATELY_LOCATION",
+        "ohos.permission.LOCATION",
+        "ohos.permission.GET_NEARLINK_PEER_MAC",
+        "ohos.permission.GET_NEARLINK_LOCAL_MAC",
+        "ohos.permission.MANAGE_NEARLINK",
+        "ohos.permission.ACCESS_PRIVATE_SPACE_PASSWORD_PROTECT",
+        "ohos.permission.ACCESS_NEARLINK",
+        "ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
+        "ohos.permission.ACCESS_SEARCH_SERVICE",
+        "ohos.permission.ACCESS_CERT_MANAGER",
+        "ohos.permission.MANAGE_FINDSERVICE",
+        "ohos.permission.INSTALL_CLONE_BUNDLE",
+        "ohos.permission.UNINSTALL_CLONE_BUNDLE",
+        "ohos.permission.READ_CONTACTS",
+        "ohos.permission.WRITE_CONTACTS",
+        "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        "ohos.permission.CHANGE_ABILITY_ENABLED_STATE",
+        "ohos.permission.MICROPHONE",
+        "ohos.permission.MANAGE_SYSTEM_AUDIO_EFFECTS",
+        "ohos.permission.BUNDLE_ACTIVE_INFO",
+        "ohos.permission.ACCESS_DISTRIBUTED_MODEM",
+        "ohos.permission.MANAGE_PRINT_JOB",
+        "ohos.permission.MANAGE_VPN",
+        "ohos.permission.UPDATE_MIGRATE",
+        "ohos.permission.WRITE_APP_LOCK",
+        "ohos.permission.READ_APP_LOCK",
+        "ohos.permission.READ_FINDSERVICE",
+        "ohos.permission.ACCESS_BIOMETRIC",
+        "ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",
+        "ohos.permission.SYSTEM_FLOAT_WINDOW",
+        "ohos.permission.UPDATE_FONT",
+        "ohos.permission.ACCESS_SERVICE_DM",
+        "ohos.permission.WRITE_RINGTONE",
+        "ohos.permission.ACCESS_CUSTOM_RINGTONE",
+        "ohos.permission.DEVICE_STANDBY_EXEMPTION",
+        "ohos.permission.WRITE_APP_LOCK",
+        "ohos.permission.READ_APP_LOCK",
+        "ohos.permission.ACCESS_ACCOUNT_SERVICE_EXTENSION_ABILITY",
+        "ohos.permission.ACCESS_ACCOUNT_RECOMMENDATION_DATA",
+        "ohos.permission.ACCESS_CUSTOM_RINGTONE",
+        "ohos.permission.ACCESS_USER_ACCOUNT_INFO"
+      ]
+    },
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets": {
+      "exists": true,
+      "sha256": "b0e94b08aaaba4414d41a175f047252e5b50be93e284a5ace50cc15592972d1f",
+      "selected_lines": [
+        {
+          "line": 28,
+          "text": "const DISABLE_IGNORE_REPEAT_CLICK_SWITCH: string = 'disableIgnoreRepeatClick';"
+        },
+        {
+          "line": 29,
+          "text": "const DISABLE_IGNORE_REPEAT_CLICK_NOTIFICATION: string = 'disableNotificaiton';"
+        },
+        {
+          "line": 31,
+          "text": "const REOPEN_TRANSITION_ANIMATIONS_SWITCH: string = 'reOpenTransitionAnimations';"
+        },
+        {
+          "line": 32,
+          "text": "const DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION: string = 'disableTransitionAnimationsNotification';"
+        },
+        {
+          "line": 43,
+          "text": "      this.disableIgnoreRepeatClickSwitch();"
+        },
+        {
+          "line": 44,
+          "text": "      LogUtil.warn(`${TAG} disableIgnoreRepeatClickSwitch`);"
+        },
+        {
+          "line": 46,
+          "text": "      this.disableIgnoreRepeatClickNotification();"
+        },
+        {
+          "line": 47,
+          "text": "      LogUtil.warn(`${TAG} disableIgnoreRepeatClickNotification`);"
+        },
+        {
+          "line": 50,
+          "text": "      LogUtil.warn(`${TAG} reOpenTransitionAnimations`);"
+        },
+        {
+          "line": 52,
+          "text": "      this.disableTransitionAnimationsNotification();"
+        },
+        {
+          "line": 53,
+          "text": "      LogUtil.warn(`${TAG} disableTransitionAnimationsNotification`);"
+        },
+        {
+          "line": 67,
+          "text": "  private disableIgnoreRepeatClickSwitch() {"
+        },
+        {
+          "line": 70,
+          "text": "      config.ignoreRepeatClick.set(false);"
+        },
+        {
+          "line": 81,
+          "text": "  private disableIgnoreRepeatClickNotification() {"
+        },
+        {
+          "line": 82,
+          "text": "    SettingsDataUtils.setSecureValue(DISABLE_IGNORE_REPEAT_CLICK_NOTIFICATION_KEY, CLICK_SWITCH_OFF);"
+        },
+        {
+          "line": 87,
+          "text": "      config.animationOff.set(false);"
+        },
+        {
+          "line": 98,
+          "text": "  private disableTransitionAnimationsNotification() {"
+        },
+        {
+          "line": 99,
+          "text": "    SettingsDataUtils.setSecureValue(DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION_KEY, CLICK_SWITCH_OFF);"
+        }
+      ]
+    },
+    "applications/standard/contacts/entry/src/main/module.json5": {
+      "exists": true,
+      "sha256": "45337d351839a70185504b0fa2c256e76b68e33d034dea2e530acaee88c48ef7",
+      "name_tokens": [
+        "entry",
+        "ArkTSPartialUpdate",
+        "action.settings.app.can_not_disable",
+        "com.ohos.contacts.MainAbility",
+        "ohos.ability.shortcuts",
+        "com.ohos.contacts.EntryAbility",
+        "DiologEntryAbility",
+        "com.ohos.contacts.SpeedDialAbility",
+        "ShortcutCardAbility",
+        "SpeedDialCardAbility",
+        "MissedCallCardAbility",
+        "FormEditExtensionAbility",
+        "ohos.extension.staticSubscriber",
+        "Subscriber",
+        "EntryFormAbility",
+        "ohos.extension.form",
+        "ContactUiExtentionAbility",
+        "InterceptionCallsExtAbility",
+        "SyncContactsExtAbility",
+        "CardDialogServiceExtAbility",
+        "ContactWorkSchedulerExtensionAbility",
+        "BackupLogWorkSchedulerExtensionAbility",
+        "PrivacyAbility",
+        "metadata.access.business_and_privacy_statement",
+        "BackupExtensionAbility",
+        "ohos.extension.backup",
+        "ohos.permission.ACCESS_CAR_DISTRIBUTED_ENGINE",
+        "ohos.permission.VIBRATE",
+        "ohos.permission.READ_CONTACTS",
+        "ohos.permission.WRITE_CONTACTS",
+        "ohos.permission.READ_CALL_LOG",
+        "ohos.permission.WRITE_CALL_LOG",
+        "ohos.permission.PLACE_CALL",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "ohos.permission.CONNECT_IME_ABILITY",
+        "ohos.permission.GET_TELEPHONY_STATE",
+        "ohos.permission.NOTIFICATION_CONTROLLER",
+        "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+        "ohos.permission.GET_NETWORK_INFO",
+        "ohos.permission.SET_TELEPHONY_STATE",
+        "ohos.permission.SET_NETWORK_INFO",
+        "ohos.permission.INTERNET",
+        "ohos.permission.READ_CLOUD_SYNC_CONFIG",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.START_SYSTEM_DIALOG",
+        "ohos.permission.PERMISSION_USED_STATS",
+        "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
+        "ohos.permission.GET_BUNDLE_RESOURCES",
+        "ohos.permission.sec.ACCESS_UDID",
+        "ohos.permission.ACCESS_SEARCH_SERVICE",
+        "ohos.permission.LAUNCH_DATA_PRIVACY_CENTER",
+        "ohos.permission.SECURE_PASTE",
+        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+        "ohos.permission.WRITE_RINGTONE",
+        "ohos.permission.MANAGE_SECURE_SETTINGS",
+        "ohos.permission.CALLED_BELOW_LOCK_SCREEN",
+        "ohos.permission.ACCESS_LEARN_MORE_DIALOG",
+        "ohos.permission.ACCESS_BIOMETRIC",
+        "ohos.permission.READ_APP_LOCK",
+        "ohos.permission.WRITE_APP_LOCK",
+        "ohos.permission.ACCESS_USER_AUTH_INTERNAL",
+        "ohos.permission.MANAGE_INTELLIGENT_VOICE",
+        "ohos.permission.ACCESS_HIVIEWCARE",
+        "ohos.permission.GET_TELEPHONY_ESIM_STATE"
+      ]
+    },
+    "applications/standard/camera/product/picker/src/main/module.json5": {
+      "exists": true,
+      "sha256": "d58328f9ebea1f8482af5eb63dce0f408d9035300aa2aea45abed4824c9a5fd5",
+      "name_tokens": [
+        "picker",
+        "ArkTSPartialUpdate",
+        "client_id",
+        "action.settings.app.can_not_disable",
+        "ohos.graphics2d.text.adapter_text_height",
+        "license_file_path",
+        "ohos.permission.CALLED_BELOW_LOCK_SCREEN",
+        "ohos.permission.MODIFY_AUDIO_SETTINGS",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.CAMERA",
+        "ohos.permission.MICROPHONE",
+        "ohos.permission.VIBRATE",
+        "ohos.permission.RUNNING_STATE_OBSERVER",
+        "ohos.permission.PERMISSION_USED_STATS",
+        "ohos.permission.POWER_MANAGER",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "ohos.permission.READ_IMAGEVIDEO",
+        "ohos.permission.WRITE_IMAGEVIDEO",
+        "ohos.permission.PROXY_AUTHORIZATION_URI",
+        "ohos.permission.PRIVACY_WINDOW",
+        "ohos.permission.ACCESS_LEARN_MORE_DIALOG",
+        "PickerAbility",
+        "collaborationService",
+        "com.ohos.camera.ExtensionPickerAbility",
+        "collaborationService",
+        "com.ohos.camera.VideoEffectsExtAbility"
+      ]
+    },
+    "applications/standard/photos/product/phone/src/main/module.json5": {
+      "exists": true,
+      "sha256": "e6950fad82596b82f46b37ee55591ebbbc4e8b917f730cdf3ea7d45a51fd298b",
+      "name_tokens": [
+        "phone_photos",
+        "avoid_cutout",
+        "ArkTSPartialUpdate",
+        "client_id",
+        "action.settings.app.can_not_disable",
+        "action.calender.app.support_schedule",
+        "ohos.permission.VIBRATE",
+        "ohos.permission.ACCESS_MEDIALIB_THUMB_DB",
+        "ohos.permission.READ_IMAGEVIDEO",
+        "ohos.permission.WRITE_IMAGEVIDEO",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.GET_NETWORK_INFO",
+        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+        "ohos.permission.INTERNET",
+        "ohos.permission.CLOUDFILE_SYNC",
+        "ohos.permission.USE_CLOUD_COMMON_SERVICE",
+        "ohos.permission.PROXY_AUTHORIZATION_URI",
+        "ohos.permission.PRINT",
+        "ohos.permission.PRIVACY_WINDOW",
+        "ohos.permission.FILE_ACCESS_PERSIST",
+        "ohos.permission.FILE_ACCESS_MANAGER",
+        "ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY",
+        "ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY",
+        "ohos.permission.MEDIA_LOCATION",
+        "ohos.permission.READ_CLOUD_SYNC_CONFIG",
+        "ohos.permission.MANAGE_CLOUD_SYNC_CONFIG",
+        "ohos.permission.MANAGE_SETTINGS",
+        "ohos.permission.ACTIVATE_THEME_PACKAGE",
+        "ohos.permission.ACCESS_SEARCH_SERVICE",
+        "ohos.permission.PERMISSION_USED_STATS",
+        "ohos.permission.LAUNCH_DATA_PRIVACY_CENTER",
+        "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO",
+        "ohos.permission.ACCESS_LEARN_MORE_DIALOG",
+        "ohos.permission.STORAGE_MANAGER",
+        "ohos.permission.READ_APP_LOCK",
+        "ohos.permission.WRITE_APP_LOCK",
+        "ohos.permission.VISIBLE_WINDOW_INFO",
+        "ohos.permission.ACCESS_BIOMETRIC",
+        "ohos.permission.MANAGE_SECURE_SETTINGS",
+        "ohos.permission.LOCATION",
+        "ohos.permission.APPROXIMATELY_LOCATION",
+        "ohos.permission.DLP_GET_HIDE_STATUS",
+        "ohos.permission.READ_PROTECTION_ADVICE_POLICY",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "ohos.permission.ACCESS_SCAN_SERVICE",
+        "ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
+        "com.ohos.photos.MainAbility",
+        "GalleryCleanupAbility",
+        "PrivacyStatementAbility",
+        "metadata.access.business_and_privacy_statement",
+        "FormAbility",
+        "ohos.extension.form",
+        "FacardDataShareAbility",
+        "AuthExtensionAbility",
+        "RecentUIExtensionAbility",
+        "PickerUIExtensionAbility",
+        "DeleteUIExtensionAbility",
+        "SaveUIExtensionAbility",
+        "BackupExtensionAbility",
+        "ohos.extension.backup",
+        "MusicServiceAbility",
+        "FACardServiceAbility",
+        "RecentPhotoInfoAbility",
+        "SettingCardDataShareAbility",
+        "ohos.extension.dataShare",
+        "GalleryCleanupUIExtensionAbility",
+        "DefaultAlbumNameUIExtensionAbility",
+        "dataProperties"
+      ]
+    },
+    "applications/standard/admin_provisioning/BUILD.gn": {
+      "exists": true,
+      "sha256": "0e1722e635b14bf54a9a12a79d6c2ccf40acbd95b5b64a2dd1b43492f0bf8ee4",
+      "selected_lines": [
+        {
+          "line": 16,
+          "text": "ohos_hap(\"adminprovisioning_hap\") {"
+        }
+      ]
+    },
+    "applications/standard/admin_provisioning/entry/src/main/module.json": {
+      "exists": true,
+      "sha256": "20b013710a4ac0ae3cb8d1e2a53f008ea98c549d42020c6d80f61fe96a3f9943",
+      "name_tokens": [
+        "adminprovisioning",
+        "com.ohos.adminprovisioning.MainAbility",
+        "com.ohos.automanager.AutoManagerAbility",
+        "ByodAdminProvisionAbility",
+        "MDMUIExtensionAbility",
+        "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.MANAGE_ENTERPRISE_DEVICE_ADMIN",
+        "ohos.permission.FACTORY_RESET",
+        "ohos.permission.INTERNET"
+      ]
+    },
+    "applications/standard/theme/product/phone/src/main/module.json5": {
+      "exists": true,
+      "sha256": "d6e2a5dc505588688c8c93152715729899832523839fe612cd169868408e830d",
+      "name_tokens": [
+        "phone-wallpaper",
+        "ohos.permission.GET_WALLPAPER",
+        "ohos.permission.READ_USER_STORAGE",
+        "WallpaperExtAbility"
+      ]
+    },
+    "applications/standard/launcher/product/phone/src/main/module.json5": {
+      "exists": true,
+      "sha256": "183a44a7b03a8385cbb3c772a363ef04b7f66d918f4f7bbbdaf4c30ca3d39166",
+      "name_tokens": [
+        "phone_launcher",
+        "ArkTSPartialUpdate",
+        "com.ohos.launcher.MainAbility",
+        "ohos.permission.INJECT_INPUT_EVENT",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "ohos.permission.INSTALL_BUNDLE",
+        "ohos.permission.LISTEN_BUNDLE_CHANGE",
+        "ohos.permission.MANAGE_MISSIONS",
+        "ohos.permission.REQUIRE_FORM",
+        "ohos.permission.INPUT_MONITORING",
+        "ohos.permission.NOTIFICATION_CONTROLLER",
+        "ohos.permission.MANAGE_SECURE_SETTINGS",
+        "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+        "ohos.permission.GET_WALLPAPER"
+      ]
+    },
+    "applications/standard/user_certificate_manager/certmanager/src/main/module.json5": {
+      "exists": true,
+      "sha256": "957362f7abd60ba86a75c99c9ed25d54cd16764f42262f613720b2328f51424a",
+      "name_tokens": [
+        "CertManager",
+        "ArkTSPartialUpdate",
+        "partialUpdateStrictCheck",
+        "MainAbility",
+        "MainExtensionAbility",
+        "metadata.access.privacy.center",
+        "CertPickerUIExtAbility",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.ACCESS_CERT_MANAGER_INTERNAL",
+        "ohos.permission.ACCESS_CERT_MANAGER",
+        "ohos.permission.GET_BUNDLE_RESOURCES",
+        "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER",
+        "ohos.permission.ACCESS_BIOMETRIC",
+        "ohos.permission.PRIVACY_WINDOW",
+        "ohos.permission.ACCESS_SYSTEM_APP_CERT",
+        "ohos.permission.ACCESS_USER_TRUSTED_CERT",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED"
+      ]
+    },
+    "foundation/barrierfree/accessibility/services/aams_ext/src/accessibility_notification_helper.cpp": {
+      "exists": true,
+      "sha256": "e0a5a687f6b5a273ad61923322eb51157327a44f3317b8b095c0716a1889e67d",
+      "selected_lines": [
+        {
+          "line": 56,
+          "text": "const std::string SERVICE_EXTENSION_ABILITY_NAME = \"IgnoreRepeatClickExtService\";"
+        },
+        {
+          "line": 98,
+          "text": "    want->SetAction(\"disableIgnoreRepeatClick\");"
+        },
+        {
+          "line": 114,
+          "text": "    want->SetAction(\"disableNotificaiton\");"
+        },
+        {
+          "line": 351,
+          "text": "    want->SetAction(\"reOpenTransitionAnimations\");"
+        },
+        {
+          "line": 367,
+          "text": "    want->SetAction(\"disableTransitionAnimationsNotification\");"
+        }
+      ]
+    },
+    "prebuilts/ohos-sdk/linux/26.0.0/ets/api/@ohos.accessibility.config.d.ts": {
+      "exists": true,
+      "sha256": "f62ca4e56ae8565408d0f57b6b19d858ee226bdc0e855d6b9cd7b7ce5802c443",
+      "selected_lines": [
+        {
+          "line": 578,
+          "text": "        set(value: T): Promise<void>;"
+        }
+      ]
+    },
+    "prebuilts/ohos-sdk/linux/26.0.0/ets/api/application/ServiceExtensionContext.d.ts": {
+      "exists": true,
+      "sha256": "a9f2c2e20d4b552b1b3aa6615c67b5131139a0e67026629cfc3010e211d0a9bd",
+      "selected_lines": [
+        {
+          "line": 760,
+          "text": "    terminateSelf(callback: AsyncCallback<void>): void;"
+        },
+        {
+          "line": 777,
+          "text": "    terminateSelf(): Promise<void>;"
+        }
+      ]
+    }
+  },
+  "staged_haps": [
+    {
+      "bundle": "com.ohos.bluetooth",
+      "path": "app/Bluetooth/Bluetooth.hap",
+      "module": "entry",
+      "abilities": [
+        "EntryAbility",
+        "BluetoothReceiveUIAbility",
+        "BluetoothSendUIAbility"
+      ],
+      "extensions": [
+        {
+          "name": "BluetoothServiceAbility",
+          "type": "share",
+          "permissions": [
+            "ohos.permission.KEEP_BACKGROUND_RUNNING"
+          ]
+        },
+        {
+          "name": "BluetoothReceiveServiceUIAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.MANAGE_BLUETOOTH"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.dhardwareui",
+      "path": "app/DHardware_UI/DHardware_UI.hap",
+      "module": "entry",
+      "abilities": [
+        "DHardwareUIAbility"
+      ],
+      "extensions": [
+        {
+          "name": "MechExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "MechFirstConnectAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.locationdialog",
+      "path": "app/LocationDialog/LocationDialog.hap",
+      "module": "entry",
+      "abilities": [
+        "EntryAbility"
+      ],
+      "extensions": [
+        {
+          "name": "ConfirmUIExtAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.LOCATION_IN_BACKGROUND"
+          ]
+        },
+        {
+          "name": "LocationPrivacyExtAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.LOCATION_IN_BACKGROUND",
+            "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS"
+          ]
+        },
+        {
+          "name": "WifiUIExtAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ]
+        },
+        {
+          "name": "WifiServiceAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ]
+        },
+        {
+          "name": "HotSpotServiceAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.SET_WIFI_CONFIG"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.wifiservice.portallogin",
+      "path": "app/PortalLogin/PortalLogin.hap",
+      "module": "entry",
+      "abilities": [
+        "EntryAbility"
+      ],
+      "extensions": []
+    },
+    {
+      "bundle": "com.ohos.sceneboard",
+      "path": "app/SceneBoard/NotificationManagement.hap",
+      "module": "default_notificationmanagement",
+      "abilities": [],
+      "extensions": [
+        {
+          "name": "NotificationUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "NotificationManangerUIExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.sceneboard",
+      "path": "app/SceneBoard/SceneBoard.hap",
+      "module": "phone_sceneboard",
+      "abilities": [
+        "DesktopIntentBackgroundUiAbility",
+        "ScbIntentUIAbility"
+      ],
+      "extensions": [
+        {
+          "name": "com.ohos.sceneboard.MainAbility",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "DesktopProviderService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED"
+          ]
+        },
+        {
+          "name": "OobeService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED"
+          ]
+        },
+        {
+          "name": "PageRouterService",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "ScbIntentUIExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "ReportWorkSchedulerExtensionAbility",
+          "type": "workScheduler",
+          "permissions": []
+        },
+        {
+          "name": "EditModeIconAbilityPhone",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "DesktopSettingUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "ThreeButtonUpgradeDSExtAbility",
+          "type": "dataShare",
+          "permissions": []
+        },
+        {
+          "name": "ThreeButtonUpgradeUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ALLOW_UPGRADE_GUIDE_ACCESS"
+          ]
+        },
+        {
+          "name": "SceneBoardFormAbility",
+          "type": "form",
+          "permissions": []
+        },
+        {
+          "name": "ExtHomeProviderService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SCREEN_LOCK_INNER"
+          ]
+        },
+        {
+          "name": "SinglePocketProviderService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "StatusBarExtensionService",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "ScreenLockExtensionService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SCREEN_LOCK"
+          ]
+        },
+        {
+          "name": "RestoringTipsAbility",
+          "type": "sysDialog/common",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.sceneboard.systemdialog",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_SYSTEM_DIALOG"
+          ]
+        },
+        {
+          "name": "com.ohos.sceneboard.cfwksystemdialog",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_SYSTEM_DIALOG"
+          ]
+        },
+        {
+          "name": "PoweroffAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.REBOOT"
+          ]
+        },
+        {
+          "name": "com.ohos.sceneboard.alert",
+          "type": "sysDialog/common",
+          "permissions": []
+        },
+        {
+          "name": "OneHandModeDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.sceneboard",
+      "path": "app/SceneBoard/ThemeComponent.hap",
+      "module": "themecomponent",
+      "abilities": [
+        "ThemeComponentAbility",
+        "AigcAbility"
+      ],
+      "extensions": [
+        {
+          "name": "SettingThemeComponentExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACTIVATE_THEME_PACKAGE"
+          ]
+        },
+        {
+          "name": "HomeThemeComponentExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACTIVATE_THEME_PACKAGE"
+          ]
+        },
+        {
+          "name": "PhotoThemeComponentExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACTIVATE_THEME_PACKAGE"
+          ]
+        },
+        {
+          "name": "ThemeManagerComponentExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACTIVATE_THEME_PACKAGE"
+          ]
+        },
+        {
+          "name": "ThemeComponentExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACTIVATE_THEME_PACKAGE"
+          ]
+        },
+        {
+          "name": "AigcServiceAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.sceneboard",
+      "path": "app/SceneBoard/ThemeService.hap",
+      "module": "themeservice_core",
+      "abilities": [],
+      "extensions": [
+        {
+          "name": "ThemeServiceAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACTIVATE_THEME_PACKAGE"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.vpndialog",
+      "path": "app/VpnDialog/VpnDialog.hap",
+      "module": "vpn_dialog",
+      "abilities": [
+        "MainAbility"
+      ],
+      "extensions": [
+        {
+          "name": "VpnServiceExtAbility",
+          "type": "service",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.hmos.mediacontroller",
+      "path": "app/com.hmos.mediacontroller/mediacontroller.hap",
+      "module": "phone_deviceswitch",
+      "abilities": [],
+      "extensions": [
+        {
+          "name": "UIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "AVVolumeExtension",
+          "type": "sysPicker/mediaControl",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.callsetting",
+      "path": "app/com.ohos.callsetting/CallSetting.hap",
+      "module": "default",
+      "abilities": [
+        "com.ohos.callsetting.CallSettingAbility",
+        "DefaultIntentBackgroundUiAbility",
+        "ExternalCallSettingDialogAbility",
+        "com.ohos.callsetting.SatelliteUIAbility"
+      ],
+      "extensions": [
+        {
+          "name": "com.ohos.callsetting.MainAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.CallBannerAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.START_SYSTEM_DIALOG"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.SatelliteServiceNetworkAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.CallSettingDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.SatelliteLocationDataShareAbility",
+          "type": "dataShare",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.SatelliteService",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "NumberIdentityPrivacyStatementUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.NumberIdentityPrivacyCenterUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ]
+        },
+        {
+          "name": "DefaultIntentUiExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.SatelliteUiExtentionAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.callsetting.ReportWorkSchedulerExtension",
+          "type": "workScheduler",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.callsetting.SatellitePrivacyStatementUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.PhonePrivacyCenterUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.CallSettingUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "VideoRingtoneSettingsAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "VideoRingtoneViewAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "com.ohos.callsetting.SatelliteFormAbility",
+          "type": "form",
+          "permissions": []
+        },
+        {
+          "name": "SatelliteServiceExtAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.GET_TELEPHONY_STATE"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.camera",
+      "path": "app/com.ohos.camera/Camera.hap",
+      "module": "phone",
+      "abilities": [
+        "com.ohos.camera.MainAbility"
+      ],
+      "extensions": [
+        {
+          "name": "AuthorizeExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "FormAbility",
+          "type": "form",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.camera.ServiceExtAbility",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.camera.SysDialogCallServiceExtAbility",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "AccessAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "RemoteCaptureDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.camera",
+      "path": "app/com.ohos.camera/cameraPicker.hap",
+      "module": "picker",
+      "abilities": [
+        "PickerAbility"
+      ],
+      "extensions": [
+        {
+          "name": "com.ohos.camera.ExtensionPickerAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.camera.VideoEffectsExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.certmanager",
+      "path": "app/com.ohos.certificatemanager/CertificateManager.hap",
+      "module": "CertManager",
+      "abilities": [
+        "MainAbility"
+      ],
+      "extensions": [
+        {
+          "name": "MainExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_CERT_MANAGER"
+          ]
+        },
+        {
+          "name": "CertPickerUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_CERT_MANAGER"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.communicationsetting",
+      "path": "app/com.ohos.communicationsetting/CommunicationSetting.hap",
+      "module": "entry",
+      "abilities": [],
+      "extensions": [
+        {
+          "name": "CommunicationSettingAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_INSTALLED_BUNDLE_LIST",
+            "ohos.permission.MANAGE_SECURE_SETTINGS"
+          ]
+        },
+        {
+          "name": "ConnectionExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.GET_NETWORK_STATS"
+          ]
+        },
+        {
+          "name": "UIExtensionProvider",
+          "type": "sysDialog/common",
+          "permissions": []
+        },
+        {
+          "name": "DisableMobileDataDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.SET_TELEPHONY_STATE"
+          ]
+        },
+        {
+          "name": "StaticSubscriber",
+          "type": "staticSubscriber",
+          "permissions": []
+        },
+        {
+          "name": "SettingsSearchServiceExtAbility",
+          "type": "service",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.contacts",
+      "path": "app/com.ohos.contacts/Contacts.hap",
+      "module": "entry",
+      "abilities": [
+        "com.ohos.contacts.MainAbility",
+        "com.ohos.contacts.EntryAbility",
+        "DiologEntryAbility",
+        "com.ohos.contacts.SpeedDialAbility"
+      ],
+      "extensions": [
+        {
+          "name": "ShortcutCardAbility",
+          "type": "formEdit",
+          "permissions": []
+        },
+        {
+          "name": "SpeedDialCardAbility",
+          "type": "formEdit",
+          "permissions": []
+        },
+        {
+          "name": "MissedCallCardAbility",
+          "type": "formEdit",
+          "permissions": []
+        },
+        {
+          "name": "FormEditExtensionAbility",
+          "type": "formEdit",
+          "permissions": []
+        },
+        {
+          "name": "Subscriber",
+          "type": "staticSubscriber",
+          "permissions": [
+            "ohos.permission.READ_CONTACTS",
+            "ohos.permission.WRITE_CONTACTS"
+          ]
+        },
+        {
+          "name": "EntryFormAbility",
+          "type": "form",
+          "permissions": []
+        },
+        {
+          "name": "ContactUiExtentionAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "InterceptionCallsExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.READ_CONTACTS",
+            "ohos.permission.WRITE_CONTACTS"
+          ]
+        },
+        {
+          "name": "SyncContactsExtAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "CardDialogServiceExtAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.READ_CONTACTS",
+            "ohos.permission.WRITE_CONTACTS"
+          ]
+        },
+        {
+          "name": "ContactWorkSchedulerExtensionAbility",
+          "type": "workScheduler",
+          "permissions": []
+        },
+        {
+          "name": "BackupLogWorkSchedulerExtensionAbility",
+          "type": "workScheduler",
+          "permissions": []
+        },
+        {
+          "name": "PrivacyAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ]
+        },
+        {
+          "name": "BackupExtensionAbility",
+          "type": "backup",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.intelligentscene",
+      "path": "app/com.ohos.intelligentscene/Intelligent_Scene.hap",
+      "module": "phone",
+      "abilities": [
+        "EntryAbility",
+        "DefaultIntentBackgroundUiAbility"
+      ],
+      "extensions": [
+        {
+          "name": "SceneStatusReportSchedulerExtensionAbility",
+          "type": "workScheduler",
+          "permissions": []
+        },
+        {
+          "name": "DataExtAbility",
+          "type": "dataShare",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "EntryBackupAbility",
+          "type": "backup",
+          "permissions": []
+        },
+        {
+          "name": "IntelligentSceneUIExtSettingAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "IntelligentSceneGreetUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "DefaultInitIntelligentSceneAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "IntelligentSceneServiceExtAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.intelligentscene.NotDisturbService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        },
+        {
+          "name": "IntelligentSceneActionServiceAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.intelligentscene.SceneTimeScheduleService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.intelligentscene.TimeChangeScheduleSubscriber",
+          "type": "staticSubscriber",
+          "permissions": []
+        },
+        {
+          "name": "SceneControlUIExtAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "ModeEnableConfirmDialogUIExtAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.intelligentscene.SettingDndDataRestoreFinishSubscriber",
+          "type": "staticSubscriber",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.intelligentscene.SettingDataTimeRestoreFinishSubscriber",
+          "type": "staticSubscriber",
+          "permissions": []
+        },
+        {
+          "name": "AiDispatchServerRemoteAbility",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.launcher",
+      "path": "app/com.ohos.launcher/Launcher.hap",
+      "module": "phone_launcher",
+      "abilities": [],
+      "extensions": [
+        {
+          "name": "com.ohos.launcher.MainAbility",
+          "type": "service",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.launcher",
+      "path": "app/com.ohos.launcher/Launcher_Settings.hap",
+      "module": "launcher_settings",
+      "abilities": [
+        "com.ohos.launcher.settings.MainAbility"
+      ],
+      "extensions": []
+    },
+    {
+      "bundle": "com.ohos.photos",
+      "path": "app/com.ohos.photos/Photos.hap",
+      "module": "phone_photos",
+      "abilities": [
+        "com.ohos.photos.MainAbility",
+        "GalleryCleanupAbility"
+      ],
+      "extensions": [
+        {
+          "name": "PrivacyStatementAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SECURITY_PRIVACY_CENTER"
+          ]
+        },
+        {
+          "name": "FormAbility",
+          "type": "form",
+          "permissions": []
+        },
+        {
+          "name": "FacardDataShareAbility",
+          "type": "dataShare",
+          "permissions": []
+        },
+        {
+          "name": "AuthExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "RecentUIExtensionAbility",
+          "type": "recentPhoto",
+          "permissions": []
+        },
+        {
+          "name": "PickerUIExtensionAbility",
+          "type": "sysPicker/photoPicker",
+          "permissions": []
+        },
+        {
+          "name": "DeleteUIExtensionAbility",
+          "type": "sysDialog/common",
+          "permissions": []
+        },
+        {
+          "name": "SaveUIExtensionAbility",
+          "type": "sysDialog/common",
+          "permissions": []
+        },
+        {
+          "name": "BackupExtensionAbility",
+          "type": "backup",
+          "permissions": []
+        },
+        {
+          "name": "MusicServiceAbility",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "FACardServiceAbility",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "RecentPhotoInfoAbility",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "SettingCardDataShareAbility",
+          "type": "dataShare",
+          "permissions": []
+        },
+        {
+          "name": "GalleryCleanupUIExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "DefaultAlbumNameUIExtensionAbility",
+          "type": "sysDialog/common",
+          "permissions": []
+        }
+      ]
+    },
+    {
+      "bundle": "com.ohos.settings",
+      "path": "app/com.ohos.settings/Settings.hap",
+      "module": "phone",
+      "abilities": [
+        "com.ohos.settings.MainAbility",
+        "com.ohos.settings.ExternalWifiSettingsAbility",
+        "OobeLocalUserTestAbility"
+      ],
+      "extensions": [
+        {
+          "name": "SettingsStatusReportSchedulerExtensionAbility",
+          "type": "workScheduler",
+          "permissions": []
+        },
+        {
+          "name": "WifiUnSaveNetDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "BluetoothUIExtensionSettingsAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "WifiUIExtensionSettingsAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "NotDisturbUIExtensionSettingsAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "OobeLocalUserAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "ExternalCommonUIExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "OpenNetworkUIExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": []
+        },
+        {
+          "name": "BluetoothOppServiceUIExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "IntelligentSceneAppSelectExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "DarkModeExtensionSettingsAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "HotspotExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "SoundExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.OobeWifiSettingsExtensionAbility",
+          "type": "sys/commonUI",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "WifiNotAvailableDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "BluetoothPairDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "BluetoothPbapPseDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "BluetoothAutoPlayAuthDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "BluetoothMapAuthDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "BluetoothSwitchDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "bluetooth",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "OOBEPasswordSettingExtensionAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "PasswordSettingExtensionAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "OobePasswordExtensionAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "AccessibilityShortKeyDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "AccessibilityReConfirmDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "AccessibilityIgnoreConfirmDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "USBDebugDialog",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "SettingsExtService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "IgnoreRepeatClickExtService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "SettingsInstantShareService",
+          "type": "service",
+          "permissions": []
+        },
+        {
+          "name": "DisableToastService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.NotDisturbService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.ScheduledPowerOffService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.ScheduledPowerOffNowService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.ScheduledPowerOnService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.ScheduledPowerCheckService",
+          "type": "service",
+          "permissions": [
+            "ohos.permission.START_ABILITIES_FROM_BACKGROUND"
+          ]
+        },
+        {
+          "name": "ScheduledPowerOffDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "ResetLogoutLoadingAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "com.ohos.settings.TimeChangeInitSubscriber",
+          "type": "staticSubscriber",
+          "permissions": []
+        },
+        {
+          "name": "com.ohos.settings.SettingsDataRestoreFinishSubscriber",
+          "type": "staticSubscriber",
+          "permissions": []
+        },
+        {
+          "name": "NotDisturbDialogAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        },
+        {
+          "name": "DeveloperModeSettingsAbility",
+          "type": "sysDialog/common",
+          "permissions": [
+            "ohos.permission.ACCESS_SYSTEM_SETTINGS"
+          ]
+        }
+      ]
+    },
+    {
+      "bundle": "com.wifiservice.portallogin",
+      "path": "app/com.wifiservice.portallogin/PortalLogin.hap",
+      "module": "entry",
+      "abilities": [
+        "EntryAbility"
+      ],
+      "extensions": []
+    }
+  ],
+  "staged_missing_bundles": [
+    "com.hmos.hsdr",
+    "com.huawei.hmos.location",
+    "com.numberidentity",
+    "com.ohos.adminprovisioning",
+    "com.ohos.hmos.screenreader",
+    "com.ohos.mediacontroller",
+    "com.ohos.screenreader",
+    "com.ohos.sharepickerdialog",
+    "com.ohos.vassistant",
+    "com.ohos.wallpaper",
+    "com.spamshield"
+  ],
+  "staged_libraries": {
+    "expanded_menu/libexpanded_menu.z.so": {
+      "lib": false,
+      "lib64": false
+    },
+    "libsystemshare_innerkits.z.so": {
+      "lib": false,
+      "lib64": false
+    },
+    "libai_text_translation_innerapi.z.so": {
+      "lib": false,
+      "lib64": false
+    },
+    "libai_text_analyzer_innerapi.z.so": {
+      "lib": false,
+      "lib64": false
+    }
+  },
+  "etc/app/install_list.json": {
+    "sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+    "content": {
+      "install_list": [
+        {
+          "app_dir": "/system/app/SceneBoard",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.systemui",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.launcher",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.settings",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.note",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.settingsdata",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.screenshot",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.samples.clock",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.samples.airquality",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.example.distributedcalc",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.samples.flashlight",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.samples.ecg",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.photos",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.distributedmusicplayer",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.camera",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.devicemanagerui",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.dlpmanager",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.example.kikakeyboard",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.medialibrary.MediaLibraryData",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.ringtonelibrary.RingtoneLibraryData",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.callui",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.mms",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.contacts",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.permissionmanager",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.settings.faceauth",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.useriam.authwidget",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.adminprovisioning",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.filepicker",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.global.systemres",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.contactsdataability",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.arkwebcore",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.telephony.resources",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.download",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.telephonydataability",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.UserFile.ExternalFileManager",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.gameperceptio",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.backgroundtaskmgr.resources",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/ohos.sample.shopping",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.wallpaper",
+          "removable": true
+        },
+        {
+          "app_dir": "/system/app/com.ohos.inputmethodchoosedialog",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.sharepickerdialog",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.pasteboarddialog",
+          "removable": true
+        },
+        {
+          "app_dir": "/system/app/com.ohos.amsdialog",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.usb.right",
+          "removable": true
+        },
+        {
+          "app_dir": "/system/app/com.ohos.certificatemanager",
+          "removable": true
+        },
+        {
+          "app_dir": "/system/app/com.ohos.powerdialog",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.notificationdialog",
+          "removable": true
+        },
+        {
+          "app_dir": "/system/app/com.ohos.formrenderservice",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.updateapp",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.spooler",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.ohos.calendardata",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/com.usb.function",
+          "removable": true
+        },
+        {
+          "app_dir": "/system/app/VpnDialog",
+          "removable": false
+        },
+        {
+          "app_dir": "/system/app/DHardware_UI",
+          "removable": true
+        }
+      ]
+    }
+  },
+  "etc/syscap.json": {
+    "sha256": "41686f0c57e2ff618c72877780302a8fb6b9f249cfa81ef13350a66daf1302c2",
+    "content": {
+      "components": [
+        {
+          "component": "ability_base",
+          "syscap": [
+            "SystemCapability.Ability.AbilityBase"
+          ]
+        },
+        {
+          "component": "ability_runtime",
+          "syscap": [
+            "SystemCapability.Ability.AbilityRuntime.AbilityCore",
+            "SystemCapability.Ability.AbilityRuntime.Core",
+            "SystemCapability.Ability.AbilityRuntime.FAModel",
+            "SystemCapability.Ability.AbilityRuntime.Mission",
+            "SystemCapability.Ability.AbilityRuntime.QuickFix",
+            "SystemCapability.Ability.AbilityTools.AbilityAssistant",
+            "SystemCapability.Ability.AgentRuntime.Core",
+            "SystemCapability.Ability.AppExtension.PhotoEditorExtension",
+            "SystemCapability.Ability.AppExtension.VerticalPanel",
+            "SystemCapability.Ability.AppStartup"
+          ]
+        },
+        {
+          "component": "access_token",
+          "syscap": [
+            "SystemCapability.Security.AccessToken",
+            "SystemCapability.Security.ScreenLockFileManager"
+          ]
+        },
+        {
+          "component": "accessibility",
+          "syscap": [
+            "SystemCapability.BarrierFree.Accessibility.Core",
+            "SystemCapability.BarrierFree.Accessibility.Hearing",
+            "SystemCapability.BarrierFree.Accessibility.Vision"
+          ]
+        },
+        {
+          "component": "ace_engine",
+          "syscap": [
+            "SystemCapability.ArkUI.ArkUI.Circle",
+            "SystemCapability.ArkUI.ArkUI.Full",
+            "SystemCapability.ArkUI.ArkUI.Lite"
+          ]
+        },
+        {
+          "component": "advertising",
+          "syscap": [
+            "SystemCapability.Advertising.Ads"
+          ]
+        },
+        {
+          "component": "app_domain_verify",
+          "syscap": [
+            "SystemCapability.BundleManager.AppDomainVerify"
+          ]
+        },
+        {
+          "component": "app_file_service",
+          "syscap": [
+            "SystemCapability.FileManagement.AppFileService",
+            "SystemCapability.FileManagement.AppFileService.FolderAuthorization",
+            "SystemCapability.FileManagement.StorageService.Backup"
+          ]
+        },
+        {
+          "component": "arkxtest",
+          "syscap": [
+            "SystemCapability.Test.PerfTest",
+            "SystemCapability.Test.UiTest"
+          ]
+        },
+        {
+          "component": "asset",
+          "syscap": [
+            "SystemCapability.Security.Asset"
+          ]
+        },
+        {
+          "component": "audio_framework",
+          "syscap": [
+            "SystemCapability.Multimedia.Audio.Capturer",
+            "SystemCapability.Multimedia.Audio.Communication",
+            "SystemCapability.Multimedia.Audio.Core",
+            "SystemCapability.Multimedia.Audio.Device",
+            "SystemCapability.Multimedia.Audio.Interrupt",
+            "SystemCapability.Multimedia.Audio.PlaybackCapture",
+            "SystemCapability.Multimedia.Audio.Renderer",
+            "SystemCapability.Multimedia.Audio.Spatialization",
+            "SystemCapability.Multimedia.Audio.SuiteEngine",
+            "SystemCapability.Multimedia.Audio.Tone",
+            "SystemCapability.Multimedia.Audio.Volume"
+          ]
+        },
+        {
+          "component": "av_codec",
+          "syscap": [
+            "SystemCapability.Multimedia.Media.AudioCodec",
+            "SystemCapability.Multimedia.Media.AudioDecoder",
+            "SystemCapability.Multimedia.Media.AudioEncoder",
+            "SystemCapability.Multimedia.Media.CodecBase",
+            "SystemCapability.Multimedia.Media.Muxer",
+            "SystemCapability.Multimedia.Media.Spliter",
+            "SystemCapability.Multimedia.Media.VideoDecoder",
+            "SystemCapability.Multimedia.Media.VideoEncoder"
+          ]
+        },
+        {
+          "component": "av_session",
+          "syscap": [
+            "SystemCapability.Multimedia.AVSession.AVCast",
+            "SystemCapability.Multimedia.AVSession.AVInputCast",
+            "SystemCapability.Multimedia.AVSession.Core",
+            "SystemCapability.Multimedia.AVSession.ExtendedDisplayCast",
+            "SystemCapability.Multimedia.AVSession.Manager"
+          ]
+        },
+        {
+          "component": "background_task_mgr",
+          "syscap": [
+            "SystemCapability.ResourceSchedule.BackgroundTaskManager.ContinuousTask",
+            "SystemCapability.ResourceSchedule.BackgroundTaskManager.EfficiencyResourcesApply",
+            "SystemCapability.ResourceSchedule.BackgroundTaskManager.TransientTask"
+          ]
+        },
+        {
+          "component": "battery_manager",
+          "syscap": [
+            "SystemCapability.PowerManager.BatteryManager.Core"
+          ]
+        },
+        {
+          "component": "battery_statistics",
+          "syscap": [
+            "SystemCapability.PowerManager.BatteryStatistics"
+          ]
+        },
+        {
+          "component": "bluetooth",
+          "syscap": [
+            "SystemCapability.Communication.Bluetooth.Core",
+            "SystemCapability.Communication.Bluetooth.Lite"
+          ]
+        },
+        {
+          "component": "bundle_framework",
+          "syscap": [
+            "SystemCapability.BundleManager.BundleFramework",
+            "SystemCapability.BundleManager.BundleFramework.AppControl",
+            "SystemCapability.BundleManager.BundleFramework.Core",
+            "SystemCapability.BundleManager.BundleFramework.DefaultApp",
+            "SystemCapability.BundleManager.BundleFramework.FreeInstall",
+            "SystemCapability.BundleManager.BundleFramework.Launcher",
+            "SystemCapability.BundleManager.BundleFramework.Overlay",
+            "SystemCapability.BundleManager.BundleFramework.Resource",
+            "SystemCapability.BundleManager.Zlib"
+          ]
+        },
+        {
+          "component": "calendar_data",
+          "syscap": [
+            "SystemCapability.Applications.CalendarData"
+          ]
+        },
+        {
+          "component": "call_manager",
+          "syscap": [
+            "SystemCapability.Applications.Contacts",
+            "SystemCapability.Telephony.CallManager"
+          ]
+        },
+        {
+          "component": "camera_framework",
+          "syscap": [
+            "SystemCapability.Multimedia.Camera.Core"
+          ]
+        },
+        {
+          "component": "cellular_data",
+          "syscap": [
+            "SystemCapability.Telephony.CellularData"
+          ]
+        },
+        {
+          "component": "certificate_framework",
+          "syscap": [
+            "SystemCapability.Security.Cert"
+          ]
+        },
+        {
+          "component": "certificate_manager",
+          "syscap": [
+            "SystemCapability.Security.CertificateManager",
+            "SystemCapability.Security.CertificateManagerDialog"
+          ]
+        },
+        {
+          "component": "common_event_service",
+          "syscap": [
+            "SystemCapability.Notification.CommonEvent"
+          ]
+        },
+        {
+          "component": "companion_device_auth",
+          "syscap": [
+            "SystemCapability.UserIAM.UserAuth.CompanionDeviceAuth"
+          ]
+        },
+        {
+          "component": "config_policy",
+          "syscap": [
+            "SystemCapability.Customization.ConfigPolicy",
+            "SystemCapability.Customization.CustomConfig"
+          ]
+        },
+        {
+          "component": "contacts_data",
+          "syscap": [
+            "SystemCapability.Applications.ContactsData"
+          ]
+        },
+        {
+          "component": "core_service",
+          "syscap": [
+            "SystemCapability.Telephony.CoreService",
+            "SystemCapability.Telephony.CoreService.Esim"
+          ]
+        },
+        {
+          "component": "crypto_framework",
+          "syscap": [
+            "SystemCapability.Security.CryptoFramework",
+            "SystemCapability.Security.CryptoFramework.Cipher",
+            "SystemCapability.Security.CryptoFramework.Kdf",
+            "SystemCapability.Security.CryptoFramework.Key",
+            "SystemCapability.Security.CryptoFramework.Key.AsymKey",
+            "SystemCapability.Security.CryptoFramework.Key.SymKey",
+            "SystemCapability.Security.CryptoFramework.KeyAgreement",
+            "SystemCapability.Security.CryptoFramework.Mac",
+            "SystemCapability.Security.CryptoFramework.MessageDigest",
+            "SystemCapability.Security.CryptoFramework.Rand",
+            "SystemCapability.Security.CryptoFramework.Signature"
+          ]
+        },
+        {
+          "component": "data_object",
+          "syscap": [
+            "SystemCapability.DistributedDataManager.DataObject.DistributedObject"
+          ]
+        },
+        {
+          "component": "data_share",
+          "syscap": [
+            "SystemCapability.DistributedDataManager.DataShare.Consumer",
+            "SystemCapability.DistributedDataManager.DataShare.Core",
+            "SystemCapability.DistributedDataManager.DataShare.Provider"
+          ]
+        },
+        {
+          "component": "device_attest",
+          "syscap": [
+            "SystemCapability.XTS.DeviceAttest"
+          ]
+        },
+        {
+          "component": "device_manager",
+          "syscap": [
+            "SystemCapability.DistributedHardware.DeviceManager"
+          ]
+        },
+        {
+          "component": "device_standby",
+          "syscap": [
+            "SystemCapability.ResourceSchedule.DeviceStandby"
+          ]
+        },
+        {
+          "component": "device_status",
+          "syscap": [
+            "SystemCapability.Msdp.DeviceStatus.Cooperate",
+            "SystemCapability.Msdp.DeviceStatus.Drag",
+            "SystemCapability.Msdp.DeviceStatus.Stationary",
+            "SystemCapability.MultimodalAwareness.DeviceStatus",
+            "SystemCapability.MultimodalAwareness.DistanceMeasurement",
+            "SystemCapability.MultimodalAwareness.MetadataBinding",
+            "SystemCapability.MultimodalAwareness.Motion",
+            "SystemCapability.MultimodalAwareness.OnScreenAwareness",
+            "SystemCapability.MultimodalAwareness.UserStatus"
+          ]
+        },
+        {
+          "component": "device_usage_statistics",
+          "syscap": [
+            "SystemCapability.ResourceSchedule.UsageStatistics.App",
+            "SystemCapability.ResourceSchedule.UsageStatistics.AppGroup"
+          ]
+        },
+        {
+          "component": "dfs_service",
+          "syscap": [
+            "SystemCapability.FileManagement.DistributedFileService.CloudSync.Core",
+            "SystemCapability.FileManagement.DistributedFileService.CloudSyncManager"
+          ]
+        },
+        {
+          "component": "display_manager",
+          "syscap": [
+            "SystemCapability.PowerManager.DisplayPowerManager",
+            "SystemCapability.PowerManager.DisplayPowerManager.Lite"
+          ]
+        },
+        {
+          "component": "distributed_bundle_framework",
+          "syscap": [
+            "SystemCapability.BundleManager.DistributedBundleFramework"
+          ]
+        },
+        {
+          "component": "distributed_hardware_fwk",
+          "syscap": [
+            "SystemCapability.DistributedHardware.DistributedHardwareFWK"
+          ]
+        },
+        {
+          "component": "distributed_notification_service",
+          "syscap": [
+            "SystemCapability.Notification.Notification",
+            "SystemCapability.Notification.NotificationSettings",
+            "SystemCapability.Notification.ReminderAgent"
+          ]
+        },
+        {
+          "component": "dlp_permission_service",
+          "syscap": [
+            "SystemCapability.Security.DataLossPrevention"
+          ]
+        },
+        {
+          "component": "dmsfwk",
+          "syscap": [
+            "SystemCapability.Ability.DistributedAbilityManager",
+            "SystemCapability.DistributedSched.AppCollaboration"
+          ]
+        },
+        {
+          "component": "drm_framework",
+          "syscap": [
+            "SystemCapability.Multimedia.Drm.Core"
+          ]
+        },
+        {
+          "component": "dsoftbus",
+          "syscap": [
+            "SystemCapability.Communication.SoftBus.Core"
+          ]
+        },
+        {
+          "component": "ecological_rule_manager",
+          "syscap": [
+            "SystemCapability.BundleManager.EcologicalRuleManager"
+          ]
+        },
+        {
+          "component": "enterprise_device_management",
+          "syscap": [
+            "SystemCapability.Customization.EnterpriseDeviceManager"
+          ]
+        },
+        {
+          "component": "ets_utils",
+          "syscap": [
+            "SystemCapability.Utils.Lang"
+          ]
+        },
+        {
+          "component": "eventhandler",
+          "syscap": [
+            "SystemCapability.Notification.Emitter"
+          ]
+        },
+        {
+          "component": "external_device_manager",
+          "syscap": [
+            "SystemCapability.Driver.DDK.Extension",
+            "SystemCapability.Driver.ExternalDevice",
+            "SystemCapability.Driver.HID.Extension",
+            "SystemCapability.Driver.SCSI.Extension",
+            "SystemCapability.Driver.USB.Extension",
+            "SystemCapability.Driver.UsbSerial.Extension"
+          ]
+        },
+        {
+          "component": "face_auth",
+          "syscap": [
+            "SystemCapability.UserIAM.UserAuth.FaceAuth"
+          ]
+        },
+        {
+          "component": "ffrt",
+          "syscap": [
+            "SystemCapability.Resourceschedule.Ffrt.Core"
+          ]
+        },
+        {
+          "component": "file_api",
+          "syscap": [
+            "SystemCapability.FileManagement.File.Environment",
+            "SystemCapability.FileManagement.File.FileIO",
+            "SystemCapability.FileManagement.File.FileIO.Lite",
+            "SystemCapability.FileManagement.File.Swapfs"
+          ]
+        },
+        {
+          "component": "font_manager",
+          "syscap": [
+            "SystemCapability.Global.FontManager"
+          ]
+        },
+        {
+          "component": "form_fwk",
+          "syscap": [
+            "SystemCapability.Ability.Form"
+          ]
+        },
+        {
+          "component": "fusion_connectivity",
+          "syscap": [
+            "SystemCapability.Communication.FusionConnectivity.Core"
+          ]
+        },
+        {
+          "component": "game_controller_framework",
+          "syscap": [
+            "SystemCapability.Game.GameController"
+          ]
+        },
+        {
+          "component": "graphic_2d",
+          "syscap": [
+            "SystemCapability.Graphic.Graphic2D.ColorManager.Core",
+            "SystemCapability.Graphic.Graphic2D.EGL",
+            "SystemCapability.Graphic.Graphic2D.GLES2",
+            "SystemCapability.Graphic.Graphic2D.GLES3",
+            "SystemCapability.Graphic.Graphic2D.HyperGraphicManager",
+            "SystemCapability.Graphic.Graphic2D.NativeBuffer",
+            "SystemCapability.Graphic.Graphic2D.NativeDrawing",
+            "SystemCapability.Graphic.Graphic2D.NativeImage",
+            "SystemCapability.Graphic.Graphic2D.NativeVsync",
+            "SystemCapability.Graphic.Graphic2D.NativeWindow",
+            "SystemCapability.Graphic.Graphic2D.WebGL",
+            "SystemCapability.Graphic.Graphic2D.WebGL2",
+            "SystemCapability.Graphic.Vulkan",
+            "SystemCapability.Graphics.Drawing"
+          ]
+        },
+        {
+          "component": "graphic_3d",
+          "syscap": [
+            "SystemCapability.ArkUi.Graphics3D"
+          ]
+        },
+        {
+          "component": "hiappevent",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiAppEvent"
+          ]
+        },
+        {
+          "component": "hichecker",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiChecker"
+          ]
+        },
+        {
+          "component": "hicollie",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiCollie"
+          ]
+        },
+        {
+          "component": "hilog",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiLog"
+          ]
+        },
+        {
+          "component": "hiprofiler",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiProfiler.HiDebug"
+          ]
+        },
+        {
+          "component": "hisysevent",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiSysEvent"
+          ]
+        },
+        {
+          "component": "hitrace",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiTrace"
+          ]
+        },
+        {
+          "component": "hiview",
+          "syscap": [
+            "SystemCapability.HiviewDFX.HiRetrieval",
+            "SystemCapability.HiviewDFX.Hiview.FaultLogger",
+            "SystemCapability.HiviewDFX.Hiview.LogLibrary"
+          ]
+        },
+        {
+          "component": "huks",
+          "syscap": [
+            "SystemCapability.Security.Cipher",
+            "SystemCapability.Security.Huks.Core",
+            "SystemCapability.Security.Huks.Extension"
+          ]
+        },
+        {
+          "component": "i18n",
+          "syscap": [
+            "SystemCapability.Global.I18n"
+          ]
+        },
+        {
+          "component": "image_effect",
+          "syscap": [
+            "SystemCapability.Multimedia.ImageEffect.Core"
+          ]
+        },
+        {
+          "component": "image_framework",
+          "syscap": [
+            "SystemCapability.Multimedia.Image.Core",
+            "SystemCapability.Multimedia.Image.ImageCreator",
+            "SystemCapability.Multimedia.Image.ImagePacker",
+            "SystemCapability.Multimedia.Image.ImageReceiver",
+            "SystemCapability.Multimedia.Image.ImageSource"
+          ]
+        },
+        {
+          "component": "imf",
+          "syscap": [
+            "SystemCapability.MiscServices.InputMethodFramework"
+          ]
+        },
+        {
+          "component": "init",
+          "syscap": [
+            "SystemCapability.Base",
+            "SystemCapability.Startup.SystemInfo",
+            "SystemCapability.Startup.SystemInfo.Lite"
+          ]
+        },
+        {
+          "component": "input",
+          "syscap": [
+            "SystemCapability.MultimodalInput.Input.Cooperator",
+            "SystemCapability.MultimodalInput.Input.Core",
+            "SystemCapability.MultimodalInput.Input.InfraredEmitter",
+            "SystemCapability.MultimodalInput.Input.InputConsumer",
+            "SystemCapability.MultimodalInput.Input.InputDevice",
+            "SystemCapability.MultimodalInput.Input.InputMonitor",
+            "SystemCapability.MultimodalInput.Input.InputSimulator",
+            "SystemCapability.MultimodalInput.Input.Pointer",
+            "SystemCapability.MultimodalInput.Input.ShortKey"
+          ]
+        },
+        {
+          "component": "intelligent_voice_framework",
+          "syscap": [
+            "SystemCapability.AI.IntelligentVoice.Core"
+          ]
+        },
+        {
+          "component": "ipc",
+          "syscap": [
+            "SystemCapability.Communication.IPC.Core"
+          ]
+        },
+        {
+          "component": "jsvm",
+          "syscap": [
+            "SystemCapability.ArkCompiler.JSVM"
+          ]
+        },
+        {
+          "component": "kv_store",
+          "syscap": [
+            "SystemCapability.DistributedDataManager.KVStore.Core",
+            "SystemCapability.DistributedDataManager.KVStore.DistributedKVStore"
+          ]
+        },
+        {
+          "component": "libuv",
+          "syscap": [
+            "SystemCapability.ArkUI.ArkUI.Libuv"
+          ]
+        },
+        {
+          "component": "location",
+          "syscap": [
+            "SystemCapability.Location.Location.Core",
+            "SystemCapability.Location.Location.Geocoder",
+            "SystemCapability.Location.Location.Geofence",
+            "SystemCapability.Location.Location.Gnss",
+            "SystemCapability.Location.Location.Lite"
+          ]
+        },
+        {
+          "component": "mechbody_controller",
+          "syscap": [
+            "SystemCapability.Mechanic.Core"
+          ]
+        },
+        {
+          "component": "media_foundation",
+          "syscap": [
+            "SystemCapability.Multimedia.Media.Core"
+          ]
+        },
+        {
+          "component": "media_library",
+          "syscap": [
+            "SystemCapability.FileManagement.PhotoAccessHelper.Core",
+            "SystemCapability.FileManagement.UserFileManager.Core",
+            "SystemCapability.FileManagement.UserFileManager.Core",
+            "SystemCapability.FileManagement.UserFileManager.DistributedCore",
+            "SystemCapability.FileManagement.UserFileManager.DistributedCore"
+          ]
+        },
+        {
+          "component": "midi_framework",
+          "syscap": [
+            "SystemCapability.Multimedia.Audio.MIDI"
+          ]
+        },
+        {
+          "component": "mindspore",
+          "syscap": [
+            "SystemCapability.AI.MindSporeLite",
+            "SystemCapability.Ai.MindSpore"
+          ]
+        },
+        {
+          "component": "miscdevice",
+          "syscap": [
+            "SystemCapability.Sensors.MiscDevice",
+            "SystemCapability.Sensors.MiscDevice.Lite"
+          ]
+        },
+        {
+          "component": "napi",
+          "syscap": [
+            "SystemCapability.ArkUI.ArkUI.Napi"
+          ]
+        },
+        {
+          "component": "netmanager_base",
+          "syscap": [
+            "SystemCapability.Communication.NetManager.Core"
+          ]
+        },
+        {
+          "component": "netmanager_ext",
+          "syscap": [
+            "SystemCapability.Communication.NetManager.Ethernet",
+            "SystemCapability.Communication.NetManager.MDNS",
+            "SystemCapability.Communication.NetManager.NetSharing",
+            "SystemCapability.Communication.NetManager.Vpn"
+          ]
+        },
+        {
+          "component": "netstack",
+          "syscap": [
+            "SystemCapability.Communication.NetStack"
+          ]
+        },
+        {
+          "component": "neural_network_runtime",
+          "syscap": [
+            "SystemCapability.AI.NeuralNetworkRuntime"
+          ]
+        },
+        {
+          "component": "oaid",
+          "syscap": [
+            "SystemCapability.Advertising.OAID"
+          ]
+        },
+        {
+          "component": "object_editor",
+          "syscap": [
+            "SystemCapability.ContentEmbed.ObjectEditor"
+          ]
+        },
+        {
+          "component": "os_account",
+          "syscap": [
+            "SystemCapability.Account.AppAccount",
+            "SystemCapability.Account.OsAccount"
+          ]
+        },
+        {
+          "component": "pasteboard",
+          "syscap": [
+            "SystemCapability.MiscServices.Pasteboard"
+          ]
+        },
+        {
+          "component": "player_framework",
+          "syscap": [
+            "SystemCapability.Multimedia.AudioHaptic.Core",
+            "SystemCapability.Multimedia.Media.AVImageGenerator",
+            "SystemCapability.Multimedia.Media.AVMetadataExtractor",
+            "SystemCapability.Multimedia.Media.AVPlayer",
+            "SystemCapability.Multimedia.Media.AVRecorder",
+            "SystemCapability.Multimedia.Media.AVScreenCapture",
+            "SystemCapability.Multimedia.Media.AVTranscoder",
+            "SystemCapability.Multimedia.Media.AudioPlayer",
+            "SystemCapability.Multimedia.Media.AudioRecorder",
+            "SystemCapability.Multimedia.Media.LowPowerAVSink",
+            "SystemCapability.Multimedia.Media.SoundPool",
+            "SystemCapability.Multimedia.Media.VideoPlayer",
+            "SystemCapability.Multimedia.Media.VideoRecorder",
+            "SystemCapability.Multimedia.SystemSound.Core"
+          ]
+        },
+        {
+          "component": "power_manager",
+          "syscap": [
+            "SystemCapability.PowerManager.PowerManager.Core"
+          ]
+        },
+        {
+          "component": "preferences",
+          "syscap": [
+            "SystemCapability.DistributedDataManager.Preferences.Core",
+            "SystemCapability.DistributedDataManager.Preferences.Core.Lite"
+          ]
+        },
+        {
+          "component": "print_fwk",
+          "syscap": []
+        },
+        {
+          "component": "qos_manager",
+          "syscap": [
+            "SystemCapability.Resourceschedule.QoS.Core"
+          ]
+        },
+        {
+          "component": "relational_store",
+          "syscap": [
+            "SystemCapability.DistributedDataManager.CloudSync.Client",
+            "SystemCapability.DistributedDataManager.CloudSync.Config",
+            "SystemCapability.DistributedDataManager.CloudSync.Server",
+            "SystemCapability.DistributedDataManager.CommonType",
+            "SystemCapability.DistributedDataManager.RelationalStore.Core"
+          ]
+        },
+        {
+          "component": "request",
+          "syscap": [
+            "SystemCapability.MiscServices.Download",
+            "SystemCapability.MiscServices.Upload",
+            "SystemCapability.Request.FileTransferAgent"
+          ]
+        },
+        {
+          "component": "resource_management",
+          "syscap": [
+            "SystemCapability.Global.ResourceManager"
+          ]
+        },
+        {
+          "component": "resource_schedule_service",
+          "syscap": [
+            "SystemCapability.ResourceSchedule.SystemLoad",
+            "SystemCapability.Resourceschedule.BackgroundProcessManager"
+          ]
+        },
+        {
+          "component": "runtime_core",
+          "syscap": [
+            "SystemCapability.ArkCompiler.ANI"
+          ]
+        },
+        {
+          "component": "screenlock_mgr",
+          "syscap": [
+            "SystemCapability.MiscServices.ScreenLock"
+          ]
+        },
+        {
+          "component": "security_guard",
+          "syscap": [
+            "SystemCapability.Security.SecurityGuard"
+          ]
+        },
+        {
+          "component": "selectionfwk",
+          "syscap": []
+        },
+        {
+          "component": "sensor",
+          "syscap": [
+            "SystemCapability.Sensors.Sensor",
+            "SystemCapability.Sensors.Sensor.Lite"
+          ]
+        },
+        {
+          "component": "settings",
+          "syscap": [
+            "SystemCapability.Applications.IntelligentScene",
+            "SystemCapability.Applications.Settings.Core"
+          ]
+        },
+        {
+          "component": "sms_mms",
+          "syscap": [
+            "SystemCapability.Telephony.SmsMms"
+          ]
+        },
+        {
+          "component": "state_registry",
+          "syscap": [
+            "SystemCapability.Telephony.StateRegistry"
+          ]
+        },
+        {
+          "component": "storage_service",
+          "syscap": [
+            "SystemCapability.FileManagement.StorageService.Encryption",
+            "SystemCapability.FileManagement.StorageService.SpatialStatistics",
+            "SystemCapability.FileManagement.StorageService.Volume"
+          ]
+        },
+        {
+          "component": "syscap_codec",
+          "syscap": [
+            "SystemCapability.Developtools.Syscap"
+          ]
+        },
+        {
+          "component": "tee_client",
+          "syscap": []
+        },
+        {
+          "component": "thermal_manager",
+          "syscap": [
+            "SystemCapability.PowerManager.ThermalManager"
+          ]
+        },
+        {
+          "component": "time_service",
+          "syscap": [
+            "SystemCapability.MiscServices.Time"
+          ]
+        },
+        {
+          "component": "udmf",
+          "syscap": [
+            "SystemCapability.DistributedDataManager.UDMF.Core"
+          ]
+        },
+        {
+          "component": "ui_appearance",
+          "syscap": [
+            "SystemCapability.ArkUI.UiAppearance"
+          ]
+        },
+        {
+          "component": "ui_lite",
+          "syscap": [
+            "SystemCapability.Applications.Settings.Core.Lite"
+          ]
+        },
+        {
+          "component": "update_service",
+          "syscap": [
+            "SystemCapability.Update.UpdateService"
+          ]
+        },
+        {
+          "component": "usb_manager",
+          "syscap": [
+            "SystemCapability.USB.USBManager"
+          ]
+        },
+        {
+          "component": "user_auth_framework",
+          "syscap": [
+            "SystemCapability.UserIAM.UserAuth.Core"
+          ]
+        },
+        {
+          "component": "user_file_service",
+          "syscap": [
+            "SystemCapability.FileManagement.CloudDiskManager",
+            "SystemCapability.FileManagement.UserFileService",
+            "SystemCapability.FileManagement.UserFileService.FolderSelection"
+          ]
+        },
+        {
+          "component": "wallpaper_mgr",
+          "syscap": [
+            "SystemCapability.MiscServices.Wallpaper"
+          ]
+        },
+        {
+          "component": "webview",
+          "syscap": [
+            "SystemCapability.Web.Webview.Core"
+          ]
+        },
+        {
+          "component": "wifi",
+          "syscap": [
+            "SystemCapability.Communication.WiFi.AP.Core",
+            "SystemCapability.Communication.WiFi.Core",
+            "SystemCapability.Communication.WiFi.P2P",
+            "SystemCapability.Communication.WiFi.STA"
+          ]
+        },
+        {
+          "component": "window_manager",
+          "syscap": [
+            "SystemCapability.Window.SessionManager",
+            "SystemCapability.WindowManager.WindowManager.Core"
+          ]
+        },
+        {
+          "component": "work_scheduler",
+          "syscap": [
+            "SystemCapability.ResourceSchedule.WorkScheduler"
+          ]
+        }
+      ]
+    }
+  },
+  "etc/multimodalinput/ability_launch_config.json": {
+    "sha256": "58c6dc256f38c5270ab271bf0a3af594bb1c382d7a6385f293c18ded1e64fcc8",
+    "content": {
+      "Shortkeys": [
+        {
+          "businessId": "qemu.settings",
+          "preKey": [
+            2076
+          ],
+          "finalKey": 2025,
+          "trigger": "key_down",
+          "keyDownDuration": 500,
+          "statusConfig": "",
+          "ability": {
+            "bundleName": "com.ohos.settings",
+            "abilityName": "com.ohos.settings.MainAbility"
+          }
+        }
+      ],
+      "Sequences": [],
+      "RepeatKeys": [
+        {
+          "keyCode": 18,
+          "times": 5,
+          "delay": 500,
+          "statusConfig": "",
+          "ability": {
+            "bundleName": "com.ohos.emergencycommunication",
+            "abilityName": "com.ohos.emergencycommunication.SOSEmergencyCallAbility"
+          }
+        }
+      ]
+    }
+  },
+  "container": "ohos-qemu-parallel-source-20261016-02"
+}

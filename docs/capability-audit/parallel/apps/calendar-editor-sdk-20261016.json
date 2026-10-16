@@ -1,0 +1,268 @@
+{
+  "scope": "Official API26 Release unsigned HAP compilation and package inspection; no signature/BMS/guest acceptance",
+  "sdk": {
+    "container_source": "ohos-qemu-parallel-source-20261016-02",
+    "project_revision": "f922427ca0dc20895a0e254ae41382e5b03299a4",
+    "source_tar_sha256": "998f384688d239f23ba12f978b179271d5d37435d68c8ebaaa023dbbbc4a5cc4",
+    "sdk": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0",
+    "node": "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+    "project": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata",
+    "lease": "parent granted unique SDK heavy resource lease",
+    "kind": "official SDK/HAP compile only, not runtime",
+    "environment": {
+      "LC_ALL": "C",
+      "LC_CTYPE": "C",
+      "LANG": "C",
+      "NODE_OPTIONS": "--max-old-space-size=2048",
+      "HVIGOR_USER_HOME": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/home/.hvigor",
+      "OHPM_HOME": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/home/.ohpm"
+    },
+    "root": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01",
+    "ets": {
+      "metadata": {
+        "apiVersion": "26",
+        "displayName": "Ets",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "ets",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab"
+    },
+    "native": {
+      "metadata": {
+        "apiVersion": "26",
+        "displayName": "Native",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "native",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "sha256": "3dbc4a06ffd3b1be6b45c3c346a7900ca42f8a81a5b0454dc7f5cc1e5a9509a8"
+    },
+    "toolchains": {
+      "metadata": {
+        "apiVersion": "26",
+        "displayName": "Toolchains",
+        "meta": {
+          "metaVersion": "3.0.2"
+        },
+        "path": "toolchains",
+        "platformVersion": "26.0.0",
+        "releaseType": "Release",
+        "version": "26.0.0.105"
+      },
+      "sha256": "62e6845edf9b6436334e64f69f9251a2ee37c9c5217f1c63716298ff6b636fa9"
+    }
+  },
+  "attempts": [
+    [
+      {
+        "stage": "dependencies",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+          "install",
+          "--all",
+          "--registry",
+          "http://127.0.0.1:9",
+          "--fetch_timeout",
+          "2000",
+          "--retry_times",
+          "0"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata",
+        "exit_code": 1,
+        "duration_seconds": 0.38477587699890137,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/dependencies-01.log",
+        "log_sha256": "3a83bce70fe1c1edf950ff2e28c053e7de19f3645da6c26a937c7bbcc34f2e69"
+      }
+    ],
+    [
+      {
+        "stage": "dependencies",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+          "install",
+          "--all",
+          "--registry",
+          "http://127.0.0.1:9",
+          "--fetch_timeout",
+          "10000",
+          "--retry_times",
+          "0"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata",
+        "exit_code": 0,
+        "duration_seconds": 0.4242417812347412,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/dependencies-02.log",
+        "log_sha256": "3bd0b9b745b38b4988653ae7f5dad664382f7baf681d0ce39f8941691b7c7bac"
+      },
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=entry",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata",
+        "exit_code": 255,
+        "duration_seconds": 3.767488956451416,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/compile-02.log",
+        "log_sha256": "706569cec9f8b365d5da36e4f53969ddb3b6835714422b949bba2396cfb60d4d"
+      }
+    ],
+    [
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=entry",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata",
+        "exit_code": 255,
+        "duration_seconds": 9.587162256240845,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/compile-03.log",
+        "log_sha256": "431f8da212a3a8ab88a89cdd2d5dfa475ac1df19d66d417751bb914e162468d5"
+      }
+    ],
+    [
+      {
+        "stage": "compile",
+        "command": [
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+          "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+          "assembleHap",
+          "--mode",
+          "module",
+          "-p",
+          "product=default",
+          "-p",
+          "module=entry",
+          "-p",
+          "debuggable=false",
+          "-p",
+          "hvigor-obfuscation=false",
+          "--no-daemon",
+          "--no-parallel",
+          "--no-incremental",
+          "--max-old-space-size",
+          "2048"
+        ],
+        "cwd": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata",
+        "exit_code": 0,
+        "duration_seconds": 8.316845178604126,
+        "log": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/compile-04.log",
+        "log_sha256": "52124395e10fa15d8f8f2cec5af37947fb88f535bc3d28f01c3fe16759d3858c"
+      }
+    ]
+  ],
+  "source_payload_sha256": {
+    "calendarmanager/napi/src/calendar_manager_napi.cpp": "72662beb41d84ad4c1495c945c7de5ffface89ad429e0d2cfea5e0faabc604d2",
+    "calendarmanager/napi/include/calendar_manager_napi.h": "ed18774b7833582490af121f2a02d69481cbac276f4c29636479017c0b4c1b10",
+    "entry/src/main/module.json5": "ff618ccd9b045e512e190e65724cff864e7e91307404e6cd0a7ba10d778b3ab7",
+    "entry/src/main/resources/base/profile/main_pages.json": "0b970b526b5b8f85df45fe6190e6f6343965d9c533614bd997bf0625a234ead7",
+    "entry/src/main/ets/editor/EventEditorController.ets": "bbb821e311fdbfb0deb1ddd3e436ec632f58e08127518a8da90473b27420a463",
+    "entry/src/main/ets/EditorUIExtensionAbility.ets": "a11b7906d7f22282935aceff9d23272d7d9ccaab314ba6eb5043063fb68682c2",
+    "entry/src/main/ets/pages/EventEditor.ets": "4da0af1e1f4aeb77edc2916e1d7cd487d0ae68541277a9ef012a6740f715f843"
+  },
+  "failed_03_source_manifest": {
+    "path": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/failed-03-source-manifest.json",
+    "sha256": "5a6f8b2aa11712361e454dbc5d14d57facf55988b2cee840ffeedeeaa4168eba"
+  },
+  "artifact": {
+    "path": "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata/entry/build/default/outputs/default/entry-default-unsigned.hap",
+    "sha256": "e84c14146072bad27991c70b2f81dde95f0a0a7129c44f7f92688f9f644cd323",
+    "size": 515319,
+    "bundle": "com.ohos.calendardata",
+    "module": "entry",
+    "editor": {
+      "exported": true,
+      "srcEntry": "./ets/EditorUIExtensionAbility.ets",
+      "name": "EditorUIExtensionAbility",
+      "extensionProcessMode": "instance",
+      "type": "sys/commonUI"
+    },
+    "data_share_endpoints": [
+      {
+        "exported": true,
+        "srcEntry": "./ets/DataAbility/DataShareLowerExtAbility.ets",
+        "readPermission": "ohos.permission.READ_CALENDAR",
+        "name": "DataShareLowerExtAbility",
+        "type": "dataShare",
+        "uri": "datashare://calendardata",
+        "writePermission": "ohos.permission.WRITE_CALENDAR"
+      },
+      {
+        "exported": true,
+        "srcEntry": "./ets/DataAbility/DataShareHighExtAbility.ets",
+        "readPermission": "ohos.permission.READ_WHOLE_CALENDAR",
+        "name": "DataShareHighExtAbility",
+        "type": "dataShare",
+        "uri": "datashare://calendardata_whole",
+        "writePermission": "ohos.permission.WRITE_WHOLE_CALENDAR"
+      }
+    ],
+    "contains_modules_abc": true,
+    "native_elf_members": [],
+    "signature_status": "unsigned; standard GN app_sign and platform certificate/preinstall binding still required"
+  },
+  "tools": {
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node": "b98965e9a1cb8efffde21f63d360d5e99d6ef1b0b826dad922c1554d5c86e644",
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js": "11798a97fd537d2cf8bdea90f66dbf650cbeefd328493bf2f552f2fae75e6911",
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/hvigor/package.json": "2b710cd84b2124f043c01365642fb5c493f3637879f1120681ffb6b018a60c9a",
+    "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/hvigor-ohos-plugin/package.json": "ddcb9a0ddfd4622fac2bb1378bf2d29fac95a972cf51250fd69f575a1296add5",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/build-tools/ets-loader/package.json": "9ec821062584134f7035d6cd289f9358bedad86256832d0ee8d0f6d7f43c85a0",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/build-tools/ets-loader/bin/ark/build-mac/bin/es2abc": "4d921b123d050309231436be967860a2facb79cd2c241b5b37f3b08f74b54bca",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/toolchains/restool": "63d7881461ce7bb902b3404c7278b5bfeb01bc21416b540bed030a1cff3fe85b",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/source/applications/standard/calendardata/signature/Calendardata.p7b": "51ddd6d112a5c749050910e617a730fc81043e2921f5854bcb6a695a5886bcc4",
+    "/Volumes/PSSD/qemu/validation/parallel-apps-20261016/calendar-editor-sdk-01/cpu-cap.cjs": "259c712061471734d6dad545e406622dd23d0ea2aae3fa26cf2e6772c11f5830"
+  },
+  "patch_sha256": "0dc88640725547601b9367df68d9f71ea7b400f69f41ee738c01517a7fd2c711",
+  "resource_limits": {
+    "node_heap_mb": 2048,
+    "parallel": false,
+    "incremental": false,
+    "reported_cpus": 2,
+    "method": "private Node preload caps os.cpus()/availableParallelism resource detection only; compiler and SDK unchanged",
+    "unsupported_config_failure_preserved": "execution.maxWorkers is not supported by this Hvigor schema; removed from private build config before actual compiler run"
+  }
+}

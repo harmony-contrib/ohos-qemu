@@ -5,66 +5,86 @@
   "branch": "codex/capability-apps-20261015",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
   "requirements_count": 34,
-  "summary": "34项逐项复核；Settings provider异步完成/错误处理源码候选已修复；完整账本无核销，service安全退出保留为后续工作。",
-  "acceptance_status": "host regression passed; official SDK/HAP compile and newly packaged runtime acceptance pending",
+  "summary": "第二批新增真实CalendarData editEvent UIExtension/用户编辑写入及NAPI生命周期修复，官方API26 Release unsigned HAP编译通过。继续保留完整34项映射，82项账本不核销。",
+  "acceptance_status": "Official API26 Release unsigned HAP compile passed; full platform NAPI TU, system signing and new-package runtime acceptance pending",
   "upstream_targets": [
-    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets"
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h",
+    "applications/standard/calendardata/entry/src/main/module.json5",
+    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
+    "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
+    "applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets",
+    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets"
   ],
   "tests": [
     {
-      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_accessibility_service.py",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_calendar_editor.py",
       "result": "PASS",
       "test_cases": 4,
-      "executed_behavior_scenarios": 10,
-      "duration_seconds": 0.728,
-      "coverage": [
-        "original full-file reproduces premature cache/event success",
-        "exact patch twice and SHA256",
-        "drift/symlink reject before writing",
-        "delayed real completion",
-        "synchronous throw and asynchronous rejection",
-        "queue continues after rejection",
-        "queued and synchronous reentrant onRequest",
-        "notification preferences and failure",
-        "unknown action",
-        "no unconditional terminateSelf in any request, including synchronous reentry"
-      ],
-      "scope": "host-only complete patched class execution with explicit backend/context doubles; no SDK/guest claim"
+      "duration_seconds": 3.301,
+      "actual_controller_scenarios": 11,
+      "actual_napi_callback_scenarios": 13,
+      "scope": "Host only; exact patched class/functions executed with explicit service/UI/NAPI doubles; no runtime proof"
     },
     {
-      "command": "docker exec -i ohos-qemu-parallel-source-20261015-01 python3 - --source-root /ohos --system-root /ohos/out/arm64_virt/packages/phone/system < ci/capability-audit/batch_apps_collect_static_evidence.py",
-      "result": "PASS; 17 source files and 22 selected staged HAP modules inspected",
-      "evidence": "docs/capability-audit/parallel/apps/static-evidence.json",
-      "scope": "read-only mixed-profile staging; cannot substitute archive/BMS/runtime evidence"
+      "command": "Official API26 Release Hvigor assembleHap --mode module -p product=default -p module=entry -p debuggable=false -p hvigor-obfuscation=false --no-daemon --no-parallel --no-incremental --max-old-space-size 2048",
+      "result": "PASS; exit0; 6.32 seconds",
+      "evidence": "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+      "scope": "Actual SDK compilation and unsigned HAP package inspection; no system signature/BMS/new-package UI validation"
+    },
+    {
+      "command": "read-only fixed source/staging inventory via batch_apps_collect_static_evidence.py",
+      "result": "PASS",
+      "evidence": "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+      "scope": "Mixed-profile staging only; all34 runtime gaps remain open"
     }
   ],
   "integration_requests": [
     {
-      "id": "apps-settings-a11y-component",
+      "id": "apps-calendar-editor-component",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "request": "Wire event_editor/apply.sh after calendardata/source_provider and before the CalendarData HAP/native build. Do not repeat/replace existing lower/whole URI providers.",
+      "component": "patches/common/applications/standard/calendardata/event_editor",
+      "native_target": "//applications/standard/calendardata/calendarmanager:calendarmanager",
+      "native_source": "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+      "changed_header": "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h"
+    },
+    {
+      "id": "apps-calendar-editor-exact-guard",
       "owner": "main",
       "required_for_this_candidate": true,
       "files": [
-        "scripts/build_standard_qemu_in_docker.sh"
+        "patches/lib/calendar_provider.py",
+        "ci/capability-audit/test_calendar_provider.py"
       ],
-      "request": "Add settings/accessibility_service_completion/apply.sh to Settings source preparation after pinned source preparation and before HAP build; use existing --source-root contract. Only the one declared upstream file changes."
+      "allowed_new_extension": {
+        "name": "EditorUIExtensionAbility",
+        "srcEntry": "./ets/EditorUIExtensionAbility.ets",
+        "type": "sys/commonUI",
+        "exported": true,
+        "extensionProcessMode": "instance"
+      },
+      "request": "Permit only this exact extra EditorUIExtensionAbility contract when the matching candidate is assembled. Retain exact lower/whole URI+read/write permission checks, Reminder service permission, profile ACLs/system-core identity, signer and preinstall binding. The two existing whole-permission usedScene lists add this UIExtension; no new permission names/ACLs.",
+      "result_contract": {
+        "save": "Real CalendarManager.getCalendar().addEvent(user-edited-event) -> positive database ID -> terminateSelfWithResult(resultCode=0, want.parameters.eventId=id)",
+        "cancel": "No database operation -> resultCode=0,eventId=-1",
+        "invalid_input": "resultCode=401,errorCode=401",
+        "provider_write_failure": "Keep UI with error; never emit success; explicit retry required",
+        "native_failure": "Promise rejects BusinessError code; no retained napi_value; result/release/error/destroy single-settlement"
+      }
     },
     {
-      "id": "apps-core-validation",
+      "id": "apps-calendar-editor-system-image-validation",
       "owner": "main",
       "required_for_this_candidate": true,
-      "request": "Official API26 Settings HAP compile; add new host regression to concentrated checks; validate four actual accessibility notification actions, config/error completion, permissions, continuous requests and extension destruction/restart on the first new representative package. Keep all34 ledger rows open until the whole run passes."
+      "request": "Compile the full native target with actual platform headers, use standard source CalendarData GN app_sign and existing pinned platform signer/preinstall chain. On the first representative new package: ordinary caller without read/write permissions opens real editor, cancel creates no row, change title/time/note and Save returns actual positive ID; separately authorized whole-calendar CRUD finds/updates/deletes that row; caller direct read/write remains denied. Include repeat/reminder, malformed/forbidden fields, failed write/results, caller exit before/during commit, simultaneous sessions, repeated save, Back/Cancel and service restart. Inspect actual UI nodes/pixels/inputs. Unsigned HAP compile cannot close a ledger row."
     },
     {
-      "id": "apps-cross-domain-next-wave",
-      "owner": "main",
+      "id": "apps-calendar-full-ui-and-cj",
+      "owner": "apps",
       "required_for_this_candidate": false,
-      "request": "Use per-item findings to assign unique owners for vendor/HAP preinstall/signature wiring and network/telephony/location/media/notification caller contracts. Similar names do not guarantee compatible protocols; no blanket bundle replacements."
-    },
-    {
-      "id": "apps-safe-service-lifetime",
-      "owner": "main",
-      "required_for_this_candidate": false,
-      "request": "Fixed ServiceExtensionContext::TerminateAbility passes token_,-1 with no latest-startId guard. Do not add unconditional async self-termination to this notification service: a new onRequest can arrive while termination is outstanding. Validate existing lifetime and select an atomic/conditional stop contract before claiming idle exit; notification helpers are synchronous setValueSync and need no await."
+      "request": "This batch provides the real public editEvent creation UI only. Full standalone Calendar launcher UI/expanded text date routing and existing Cangjie completion implementation remain separate work; none are covered by unsigned HAP compilation."
     }
   ],
   "requirements_review": {
@@ -76,7 +96,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "arkts_export:@ohos.accessibility.config:stopBlinking": {
@@ -87,7 +108,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:phone-published-capabilities-not-declared": {
@@ -98,7 +120,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:phone-avinputcast-not-declared": {
@@ -109,7 +132,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:accessibility-qemu-input-e2e": {
@@ -120,19 +144,22 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:api26-runtime-export-mismatches-phone": {
       "status": "coverage_refresh_and_cross_domain_implementation_required",
-      "finding": "聚合约40个syscap的API26导出差异；基线有分模块修复，旧R49导出面不能按源码候选扣减。",
+      "finding": "聚合约40个syscap的API26导出差异；基线有分模块修复，旧R49导出面不能按源码候选扣减。 第二批新增真实CalendarData.editEvent provider及NAPI结果/错误/销毁处理，实际API26 Release unsigned源HAP编译通过；其余模块仍需统一新包导出/行为刷新。",
       "next_required": "同包刷新arkts-export-surface，并按模块把剩余真实导出/值/行为差异分给唯一所有者；不注册空函数。",
       "ledger_closed": false,
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
         "docs/capability-audit/system-bundle-provider-audit.json",
-        "docs/capability-audit/runtime/arm64-phone/arkts-export-surface-latest.json"
+        "docs/capability-audit/runtime/arm64-phone/arkts-export-surface-latest.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+        "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json"
       ]
     },
     "behavior:intelligent-scene-notification-query-fails": {
@@ -143,7 +170,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:shortkey-empty-launch-config": {
@@ -154,7 +182,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:certificate-dialog-device-result": {
@@ -165,7 +194,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:ability-share-picker-system-provider-missing": {
@@ -176,7 +206,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:ability-send-data-action-has-no-enabled-handler": {
@@ -187,7 +218,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:avcast-media-controller-provider-mismatch": {
@@ -198,7 +230,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:media-control-volume-provider-activation": {
@@ -209,7 +242,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:distributed-hardware-ui-preinstall-path-mismatch": {
@@ -220,7 +254,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:photo-provider-not-activated-2in1": {
@@ -231,7 +266,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:enterprise-provisioning-provider-missing": {
@@ -242,7 +278,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:wallpaper-ui-provider-missing": {
@@ -253,7 +290,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:accessibility-screen-reader-provider-missing": {
@@ -264,7 +302,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:accessibility-caption-provider-missing": {
@@ -275,7 +314,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:vpn-dialog-provider-prefix-mismatch": {
@@ -286,7 +326,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:network-policy-settings-providers-missing": {
@@ -297,7 +338,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:telephony-apn-settings-provider-missing": {
@@ -308,7 +350,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:wifi-system-ui-providers-not-activated": {
@@ -319,7 +362,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:camera-picker-entrypoint-missing-phone": {
@@ -330,7 +374,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:notification-extension-settings-entrypoint-missing": {
@@ -341,7 +386,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:accessibility-settings-entrypoints-unavailable": {
@@ -354,7 +400,8 @@
         "docs/OHOS_7_BATCH_REPAIR.md",
         "docs/capability-audit/system-bundle-provider-audit.json",
         "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
-        "ci/capability-audit/test_batch_apps_accessibility_service.py"
+        "ci/capability-audit/test_batch_apps_accessibility_service.py",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:notification-manager-settings-provider-missing-phone": {
@@ -365,7 +412,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:avsession-desktop-lyrics-provider-missing": {
@@ -376,7 +424,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:location-privacy-ui-providers-unavailable": {
@@ -387,7 +436,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:telephony-number-identity-provider-missing": {
@@ -398,7 +448,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:settings-navigation-provider-mismatch": {
@@ -409,7 +460,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:contacts-picker-entrypoint-missing-phone": {
@@ -420,7 +472,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:arkui-expanded-text-menu-providers-missing": {
@@ -431,7 +484,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     },
     "behavior:arkui-text-service-runtime-plugins-missing": {
@@ -442,7 +496,8 @@
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json"
+        "docs/capability-audit/system-bundle-provider-audit.json",
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
       ]
     }
   },
@@ -619,17 +674,30 @@
     }
   ],
   "changed_files": [
-    "ci/capability-audit/batch_apps_collect_static_evidence.py",
-    "ci/capability-audit/fixtures/batch_apps/accessibility_service/IgnoreRepeatClickService.before.ets",
-    "ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs",
-    "ci/capability-audit/fixtures/batch_apps/accessibility_service/provenance.json",
-    "ci/capability-audit/test_batch_apps_accessibility_service.py",
-    "docs/capability-audit/parallel/apps/README.md",
-    "docs/capability-audit/parallel/apps/static-evidence.json",
-    "patches/common/applications/standard/settings/accessibility_service_completion/0001-await-accessibility-actions-before-reporting-success.patch",
-    "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
-    "patches/common/applications/standard/settings/accessibility_service_completion/apply.sh",
-    "patches/common/applications/standard/settings/accessibility_service_completion/verify_source.py",
-    "docs/capability-audit/parallel/apps/result.json"
-  ]
+    ".hvigor/outputs/build-logs/build.log",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/00-calendar_manager_napi.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/01-calendar_manager_napi.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/02-module.json5.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/03-main_pages.json.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+    "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+    "patches/common/applications/standard/calendardata/event_editor/0001-provide-user-confirmed-calendar-event-editor.patch",
+    "patches/common/applications/standard/calendardata/event_editor/README.md",
+    "patches/common/applications/standard/calendardata/event_editor/apply.sh",
+    "patches/common/applications/standard/calendardata/event_editor/verify_source.py"
+  ],
+  "previous_batch_commit": "b88407cb7e9f93c1d58b4def55c64385e143f865",
+  "parent_integration_baseline": "8bf5840",
+  "additional_candidate": {
+    "surface": "calendarManager.CalendarManager.editEvent",
+    "requirements_closed": 0,
+    "artifact_evidence": "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+    "full_calendar_ui_remains_missing": true,
+    "native_cj_completion_unchanged": true
+  }
 }
