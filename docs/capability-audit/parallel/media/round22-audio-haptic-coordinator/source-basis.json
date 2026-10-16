@@ -1,0 +1,856 @@
+{
+  "scope": "read_only_frozen_source_and_real_SDK_bytes_ONLY_NOT_runtime",
+  "first_frame_export": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/evidence.json",
+    "sha256": "c41d0774e6d08fd3e25b4572fd020a8e36312349884c6a2ccc7c1e806c0de04f"
+  },
+  "first_frame_files": [
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/include/audio_renderer_firstFrame_mock_test.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/include/audio_renderer_firstFrame_mock_test.h",
+        "sha256": "1539ce4bbabfbf2647d740c132ca8cbe2e3da1fe8f59180b7ca0a0f874cbc5aa"
+      },
+      "hits": [
+        {
+          "line": 43,
+          "text": "    MOCK_METHOD(void, OnFirstFrameWriting, (uint64_t latency), (override));"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/src/audio_renderer_extra_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/src/audio_renderer_extra_unit_test.cpp",
+        "sha256": "5309e64e65189abfcd0855cbee331572a131f491fbff69bc6e62723ca66a7597"
+      },
+      "hits": [
+        {
+          "line": 60,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override {}"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/src/audio_renderer_firstFrame_mock_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/src/audio_renderer_firstFrame_mock_test.cpp",
+        "sha256": "0cdd5faedd58d5b907ac28dc51715c3a0052f3f6c673077576e572aaf3a46439"
+      },
+      "hits": [
+        {
+          "line": 33,
+          "text": " * @tc.desc  : Test MockAudioRendererFirstFrameWritingCallback::OnFirstFrameWriting is called correctly"
+        },
+        {
+          "line": 42,
+          "text": "    EXPECT_CALL(*mockCallback, OnFirstFrameWriting(testLatency))"
+        },
+        {
+          "line": 50,
+          "text": "    mockCallback->OnFirstFrameWriting(testLatency);"
+        },
+        {
+          "line": 74,
+          "text": "    EXPECT_CALL(*mockCallback, OnFirstFrameWriting(latency1))"
+        },
+        {
+          "line": 80,
+          "text": "    EXPECT_CALL(*mockCallback, OnFirstFrameWriting(latency2))"
+        },
+        {
+          "line": 86,
+          "text": "    mockCallback->OnFirstFrameWriting(latency1);"
+        },
+        {
+          "line": 87,
+          "text": "    mockCallback->OnFirstFrameWriting(latency2);"
+        },
+        {
+          "line": 124,
+          "text": "    EXPECT_CALL(*mockFirstFrameCallback, OnFirstFrameWriting(_))"
+        },
+        {
+          "line": 175,
+          "text": "    EXPECT_CALL(*mockFirstFrameCallback, OnFirstFrameWriting(_))"
+        },
+        {
+          "line": 215,
+          "text": "    EXPECT_CALL(*mockFirstFrameCallback, OnFirstFrameWriting(_))"
+        },
+        {
+          "line": 272,
+          "text": "    EXPECT_CALL(*mockFirstFrameCallback, OnFirstFrameWriting(_))"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/src/renderer_in_client_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/renderer_test/src/renderer_in_client_unit_test.cpp",
+        "sha256": "21864afd7406db942b6d59f8922f6a6a341b09bda8ec94ff44628db1ee6b3cbf"
+      },
+      "hits": [
+        {
+          "line": 215,
+          "text": "    virtual void OnFirstFrameWriting(uint64_t latency) {}"
+        },
+        {
+          "line": 4637,
+          "text": " * @tc.name  : Test OnFirstFrameWriting with ipcStream"
+        },
+        {
+          "line": 4639,
+          "text": " * @tc.number: OnFirstFrameWriting_001"
+        },
+        {
+          "line": 4640,
+          "text": " * @tc.desc  : Test OnFirstFrameWriting gets latency from ipcStream."
+        },
+        {
+          "line": 4642,
+          "text": "HWTEST(RendererInClientPublicNewUnitTest, OnFirstFrameWriting_001, TestSize.Level1)"
+        },
+        {
+          "line": 4647,
+          "text": "    rendererInClientInner->OnFirstFrameWriting();"
+        },
+        {
+          "line": 4652,
+          "text": " * @tc.name  : Test OnFirstFrameWriting without ipcStream"
+        },
+        {
+          "line": 4654,
+          "text": " * @tc.number: OnFirstFrameWriting_002"
+        },
+        {
+          "line": 4655,
+          "text": " * @tc.desc  : Test OnFirstFrameWriting uses default latency without ipcStream."
+        },
+        {
+          "line": 4657,
+          "text": "HWTEST(RendererInClientPublicNewUnitTest, OnFirstFrameWriting_002, TestSize.Level1)"
+        },
+        {
+          "line": 4662,
+          "text": "    rendererInClientInner->OnFirstFrameWriting();"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/src/audio_renderer_wrapper_aiut.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiorenderer/test/unittest/src/audio_renderer_wrapper_aiut.cpp",
+        "sha256": "6c9153966e6b4953c248d6b793036c39c166a74df5015da4e159430dec9e77b8"
+      },
+      "hits": [
+        {
+          "line": 59,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override {}"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiostream/include/fast_audio_stream.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiostream/include/fast_audio_stream.h",
+        "sha256": "b30594cb50cda8c14e9071054bf2be21afecd705a0b00805cb2fc1eb408a196b"
+      },
+      "hits": [
+        {
+          "line": 68,
+          "text": "    void OnFirstFrameWriting() override;"
+        },
+        {
+          "line": 131,
+          "text": "    void OnFirstFrameWriting() override;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/frameworks/native/audiostream/include/i_audio_stream.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/frameworks/native/audiostream/include/i_audio_stream.h",
+        "sha256": "22ffc7cdbda7baa4220e55352b20df0d3f913257d3215127af72883ed44c7200"
+      },
+      "hits": [
+        {
+          "line": 240,
+          "text": "    virtual void OnFirstFrameWriting() = 0;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include/audio_renderer.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include/audio_renderer.h",
+        "sha256": "0e655c03ceb2ad7725982496253bc70ce713392c7492c350659e35f586bdb29f"
+      },
+      "hits": [
+        {
+          "line": 123,
+          "text": "    virtual void OnFirstFrameWriting(uint64_t latency) = 0;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/include/audio_process_in_client.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/include/audio_process_in_client.h",
+        "sha256": "9012bfc26a057d0dabb7911d6d695c2677ee1d62b405ca40be4c6b4831bf3b70"
+      },
+      "hits": [
+        {
+          "line": 56,
+          "text": "    virtual void OnFirstFrameWriting() = 0;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/include/capturer_in_client_inner.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/include/capturer_in_client_inner.h",
+        "sha256": "76826151505bafd71c10568c2a5fb1557fdea6c9194629c1f9b2574394ba0570"
+      },
+      "hits": [
+        {
+          "line": 155,
+          "text": "    void OnFirstFrameWriting() override;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/include/renderer_in_client_private.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/include/renderer_in_client_private.h",
+        "sha256": "df9198078891c5b7fc9529d907cb0db6453459ea547a716deacb1b5fec6a0511"
+      },
+      "hits": [
+        {
+          "line": 101,
+          "text": "    void OnFirstFrameWriting() override;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/src/audio_process_in_client.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/src/audio_process_in_client.cpp",
+        "sha256": "2d593abf56ee980a832bc9a8ab1ae4dc5dbf3ff70b08a9ca8d40917c954757bd"
+      },
+      "hits": [
+        {
+          "line": 2012,
+          "text": "            cb->OnFirstFrameWriting();"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/src/capturer_in_client.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/src/capturer_in_client.cpp",
+        "sha256": "cd434230855a7ba3ee018701424c8d9a701bc40ef6c1a78b1a8ee30b05cd9c1c"
+      },
+      "hits": [
+        {
+          "line": 1817,
+          "text": "void CapturerInClientInner::OnFirstFrameWriting()"
+        },
+        {
+          "line": 1819,
+          "text": "    AUDIO_ERR_LOG(\"OnFirstFrameWriting is not supported for capturer\");"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/src/fast_audio_stream.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/src/fast_audio_stream.cpp",
+        "sha256": "604d2d4321312a76400fe71df0f000101ec566b643e0aa1b1fed0bf752bbd112"
+      },
+      "hits": [
+        {
+          "line": 1195,
+          "text": "void FastAudioStream::OnFirstFrameWriting()"
+        },
+        {
+          "line": 1200,
+          "text": "    firstFrameWritingCb_->OnFirstFrameWriting(latency);"
+        },
+        {
+          "line": 1224,
+          "text": "        audioStreamImpl_.OnFirstFrameWriting();"
+        },
+        {
+          "line": 1252,
+          "text": "void FastStaticFirstFrameCallbackImpl::OnFirstFrameWriting()"
+        },
+        {
+          "line": 1254,
+          "text": "    audioStreamImpl_.OnFirstFrameWriting();"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client.cpp",
+        "sha256": "30e71a566d670383a6d3fd105723159b0b06eba03b84a4cccbf054f2aae3d2f2"
+      },
+      "hits": [
+        {
+          "line": 881,
+          "text": "    if (!hasFirstFrameWrited_.exchange(true)) { OnFirstFrameWriting(); }"
+        },
+        {
+          "line": 1452,
+          "text": "        OnFirstFrameWriting();"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client_public.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client_public.cpp",
+        "sha256": "342a0f4006d08190ccf3816cd187591fb5bd89cead743da5d5bd7ab8f896431c"
+      },
+      "hits": [
+        {
+          "line": 64,
+          "text": "const uint64_t AUDIO_FIRST_FRAME_LATENCY = 120; //ms"
+        },
+        {
+          "line": 758,
+          "text": "void RendererInClientInner::OnFirstFrameWriting()"
+        },
+        {
+          "line": 760,
+          "text": "    Trace trace(\"RendererInClientInner::OnFirstFrameWriting\");"
+        },
+        {
+          "line": 762,
+          "text": "    uint64_t latency = AUDIO_FIRST_FRAME_LATENCY;"
+        },
+        {
+          "line": 773,
+          "text": "    AUDIO_INFO_LOG(\"OnFirstFrameWriting: latency %{public}\" PRIu64 \"\", latency);"
+        },
+        {
+          "line": 774,
+          "text": "    cb->OnFirstFrameWriting(latency);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/test/unittest/client/fast_audio_stream_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/test/unittest/client/fast_audio_stream_unit_test.cpp",
+        "sha256": "e5f6fdd8ed0d12bfe7fad53e853c062157df408cb1bc066f2e7b8e7d1f5dc49b"
+      },
+      "hits": [
+        {
+          "line": 174,
+          "text": "    virtual void OnFirstFrameWriting(uint64_t latency) {}"
+        },
+        {
+          "line": 1085,
+          "text": " * @tc.name  : Test OnFirstFrameWriting API"
+        },
+        {
+          "line": 1087,
+          "text": " * @tc.number: OnFirstFrameWriting_001"
+        },
+        {
+          "line": 1088,
+          "text": " * @tc.desc  : Test OnFirstFrameWriting interface."
+        },
+        {
+          "line": 1090,
+          "text": "HWTEST_F(FastSystemStreamUnitTest, OnFirstFrameWriting_001, TestSize.Level1)"
+        },
+        {
+          "line": 1096,
+          "text": "    AUDIO_INFO_LOG(\"AudioSystemManagerUnitTest OnFirstFrameWriting_001 start\");"
+        },
+        {
+          "line": 1097,
+          "text": "    fastAudioStream->OnFirstFrameWriting();"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/audio_framework/services/audio_service/test/unittest/client/src/stream/capturer_in_client_third_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/audio_framework/services/audio_service/test/unittest/client/src/stream/capturer_in_client_third_unit_test.cpp",
+        "sha256": "89ad8413e7fa21029eea02392ef60a018e2838bf2ce359969171bb22a62788aa"
+      },
+      "hits": [
+        {
+          "line": 46,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override {}"
+        },
+        {
+          "line": 661,
+          "text": " * @tc.name  : Test OnFirstFrameWriting API"
+        },
+        {
+          "line": 663,
+          "text": " * @tc.number: OnFirstFrameWriting_001"
+        },
+        {
+          "line": 664,
+          "text": " * @tc.desc  : Test OnFirstFrameWriting logs error for capturer"
+        },
+        {
+          "line": 666,
+          "text": "HWTEST(CapturerInClientThirdUnitTest, OnFirstFrameWriting_001, TestSize.Level1)"
+        },
+        {
+          "line": 669,
+          "text": "    capturerInClientInner->OnFirstFrameWriting();"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.cpp",
+        "sha256": "a6198066e31ce68afbdd131975b8c03515033aa09109a4af3b68aae945f8cf75"
+      },
+      "hits": [
+        {
+          "line": 748,
+          "text": "void AudioHapticSoundCallbackImpl::OnFirstFrameWriting(uint64_t latency)"
+        },
+        {
+          "line": 750,
+          "text": "    MEDIA_LOGI(\"OnFirstFrameWriting from audio haptic sound. Latency %{public}\" PRIu64 \"\", latency);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.h",
+        "sha256": "a787da7f0a11631de508bdc36a3e2f1d75efa36d6a57b85c36f786bc96927dd7"
+      },
+      "hits": [
+        {
+          "line": 119,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_low_latency_impl.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_low_latency_impl.cpp",
+        "sha256": "e4cadeab9fa199e86b8b6db32c346ef4e649679110f3eee6381c1ff36f170f37"
+      },
+      "hits": [
+        {
+          "line": 334,
+          "text": "        cb->OnFirstFrameWriting(latency);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.cpp",
+        "sha256": "cd42f8c73e9c0bf96058b3b936f540203a8d92e55dba6a264829e4994d6e4ff7"
+      },
+      "hits": [
+        {
+          "line": 345,
+          "text": "        cb->OnFirstFrameWriting(latency);"
+        },
+        {
+          "line": 420,
+          "text": "    } else if (type == INFO_TYPE_AUDIO_FIRST_FRAME) {"
+        },
+        {
+          "line": 422,
+          "text": "        HandleAudioFirstFrameEvent(extra, infoBody);"
+        },
+        {
+          "line": 493,
+          "text": "void AHSoundNormalCallback::HandleAudioFirstFrameEvent(int32_t extra, const Format &infoBody)"
+        },
+        {
+          "line": 496,
+          "text": "    (void)infoBody.GetLongValue(PlayerKeys::AUDIO_FIRST_FRAME, value);"
+        },
+        {
+          "line": 498,
+          "text": "    MEDIA_LOGI(\"HandleAudioFirstFrameEvent from AVPlayer. Latency %{public}\" PRIu64 \"\", latency);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.h",
+        "sha256": "a77cc1e605bc212ea92b3e4dfc29aa7a48d3eacbfa1ef2082c2dd3bab5a623ff"
+      },
+      "hits": [
+        {
+          "line": 93,
+          "text": "    void HandleAudioFirstFrameEvent(int32_t extra, const Format &infoBody);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/soundpool/audio_stream.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/soundpool/audio_stream.cpp",
+        "sha256": "ee44a7f5251608f19dbd59d33cc1f7db671ee341a1e7eb4bf9ec1343e81c6f3e"
+      },
+      "hits": [
+        {
+          "line": 406,
+          "text": "void AudioStream::OnFirstFrameWriting(uint64_t latency)"
+        },
+        {
+          "line": 408,
+          "text": "    MEDIA_LOGI(\"AudioStream::OnFirstFrameWriting, streamID_ is %{public}d\", streamID_);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/soundpool/audio_stream.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/soundpool/audio_stream.h",
+        "sha256": "54b17fb57522a771cb06b92ce9372b14084afd91831a27a7a8afa64c2d41ef31"
+      },
+      "hits": [
+        {
+          "line": 79,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/soundpool/stream.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/soundpool/stream.cpp",
+        "sha256": "c6dcbfed19aac4168e7fe53cdb59bfae4861eab173c8e8c41c6757319f7fccb4"
+      },
+      "hits": [
+        {
+          "line": 421,
+          "text": "void Stream::OnFirstFrameWriting(uint64_t latency)"
+        },
+        {
+          "line": 423,
+          "text": "    MEDIA_LOGI(\"Stream::OnFirstFrameWriting, streamID_:%{public}d\", streamID_);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/frameworks/native/soundpool/stream.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/frameworks/native/soundpool/stream.h",
+        "sha256": "77b13bea805aa59c65f2cc2041316418d91f9454b71b8cd24a17835bf24d0fb8"
+      },
+      "hits": [
+        {
+          "line": 57,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/interfaces/inner_api/native/player.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/interfaces/inner_api/native/player.h",
+        "sha256": "e6346df7915f2ba5879940c79af08647e07aebf8b3e2f9f3ddf6a5a797272d1f"
+      },
+      "hits": [
+        {
+          "line": 308,
+          "text": "    static constexpr std::string_view AUDIO_FIRST_FRAME = \"audio_first_frame\";"
+        },
+        {
+          "line": 550,
+          "text": "    INFO_TYPE_AUDIO_FIRST_FRAME,"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/interfaces/inner_api/native/audio_haptic/include/audio_haptic_sound.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/interfaces/inner_api/native/audio_haptic/include/audio_haptic_sound.h",
+        "sha256": "65d44a81b3eb72846eef0c9227deff3f359d8972d90c36fa752d97f3ccbc4ef7"
+      },
+      "hits": [
+        {
+          "line": 32,
+          "text": "    virtual void OnFirstFrameWriting(uint64_t latency) = 0;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/services/engine/histreamer/lpp/lpp_audio_streamer/lpp_audio_render_adapter.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/services/engine/histreamer/lpp/lpp_audio_streamer/lpp_audio_render_adapter.h",
+        "sha256": "656f9fd01cd1e4e0c5084792d3fe993a0afe96ddb2d325eca53eb340d4afd178"
+      },
+      "hits": [
+        {
+          "line": 70,
+          "text": "    void OnFirstFrameWriting(uint64_t latency);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/services/engine/histreamer/lpp/lpp_audio_streamer/src/lpp_audio_render_adapter.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/services/engine/histreamer/lpp/lpp_audio_streamer/src/lpp_audio_render_adapter.cpp",
+        "sha256": "704c6d328bdd275b259d1ac0091b7f082e60db2d1e5f23f83ed8a94d412af589"
+      },
+      "hits": [
+        {
+          "line": 128,
+          "text": "    void OnFirstFrameWriting(uint64_t latency) override"
+        },
+        {
+          "line": 130,
+          "text": "        MEDIA_LOG_I(\"OnFirstFrameWriting latency: \" PUBLIC_LOG_U64, latency);"
+        },
+        {
+          "line": 804,
+          "text": "void LppAudioRenderAdapter::OnFirstFrameWriting(uint64_t latency)"
+        },
+        {
+          "line": 807,
+          "text": "    eventReceiver_->OnEvent({\"AudioRender\", EventType::EVENT_AUDIO_FIRST_FRAME, latency});"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/services/engine/histreamer/player/hiplayer_impl.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/services/engine/histreamer/player/hiplayer_impl.cpp",
+        "sha256": "3bb7f9e9220411f0c20323274d0b45ca9a5a95f800bff1a91d2a13bb6c3700db"
+      },
+      "hits": [
+        {
+          "line": 2860,
+          "text": "        case EventType::EVENT_AUDIO_FIRST_FRAME: {"
+        },
+        {
+          "line": 3762,
+          "text": "    (void)format.PutLongValue(PlayerKeys::AUDIO_FIRST_FRAME, latency);"
+        },
+        {
+          "line": 3763,
+          "text": "    callbackLooper_.OnInfo(INFO_TYPE_AUDIO_FIRST_FRAME, 0, format);"
+        },
+        {
+          "line": 4330,
+          "text": "    initialAVStates_.emplace_back(std::make_pair(EventType::EVENT_AUDIO_FIRST_FRAME, false));"
+        },
+        {
+          "line": 5148,
+          "text": "    HandleInitialPlayingStateChange(EventType::EVENT_AUDIO_FIRST_FRAME);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/audio_haptic_test/audio_haptic_player_impl_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/audio_haptic_test/audio_haptic_player_impl_unit_test.cpp",
+        "sha256": "ece99bcb3087500d9f36fbc66b75f0d158f09aecf756536b5457b9c9c6fe1129"
+      },
+      "hits": [
+        {
+          "line": 1064,
+          "text": " * @tc.desc  : Test AudioHapticSoundCallbackImpl::OnFirstFrameWriting()"
+        },
+        {
+          "line": 1077,
+          "text": "    audioHapticSoundCallbackImpl->OnFirstFrameWriting(latency);"
+        },
+        {
+          "line": 1083,
+          "text": " * @tc.desc  : Test AudioHapticSoundCallbackImpl::OnFirstFrameWriting()"
+        },
+        {
+          "line": 1095,
+          "text": "    audioHapticSoundCallbackImpl->OnFirstFrameWriting(latency);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/audio_haptic_test/audio_haptic_sound_normal_impl_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/audio_haptic_test/audio_haptic_sound_normal_impl_unit_test.cpp",
+        "sha256": "cd48f287b3a67b003a58fd8b19290653a4e0341315a8be90081a328d792f2476"
+      },
+      "hits": [
+        {
+          "line": 906,
+          "text": "    Media::PlayerOnInfoType type = PlayerOnInfoType::INFO_TYPE_AUDIO_FIRST_FRAME;"
+        },
+        {
+          "line": 910,
+          "text": "    // HandleAudioFirstFrameEvent with expired impl returns early"
+        },
+        {
+          "line": 1193,
+          "text": " * @tc.desc  : Test AHSoundNormalCallback::HandleAudioFirstFrameEvent()"
+        },
+        {
+          "line": 1215,
+          "text": "    aHSoundNormalCallback->HandleAudioFirstFrameEvent(extra, infoBody);"
+        },
+        {
+          "line": 1216,
+          "text": "    // With valid impl, HandleAudioFirstFrameEvent calls NotifyFirstFrameEvent"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/lpp_unit_test/engine/lpp_astream_impl_unit_test/mock/audio_renderer.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/lpp_unit_test/engine/lpp_astream_impl_unit_test/mock/audio_renderer.h",
+        "sha256": "6c08db8a5fda93c60eab44aaa26143445e41b100af89f2f2fe6a2cae8731a93a"
+      },
+      "hits": [
+        {
+          "line": 99,
+          "text": "    virtual void OnFirstFrameWriting(uint64_t latency) = 0;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/lpp_unit_test/engine/lpp_astream_impl_unit_test/mock/lpp_audio_render_adapter.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/lpp_unit_test/engine/lpp_astream_impl_unit_test/mock/lpp_audio_render_adapter.h",
+        "sha256": "07d2dd43f2f21620507fa0a7d300542dc0ec01a89822b00d34e81af4a4dd6b17"
+      },
+      "hits": [
+        {
+          "line": 57,
+          "text": "    MOCK_METHOD(void, OnFirstFrameWriting, (uint64_t latency));"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/lpp_unit_test/module/lpp_audio_render_adapter_unit_test/lpp_audio_render_adapter_unit_test.cpp",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/lpp_unit_test/module/lpp_audio_render_adapter_unit_test/lpp_audio_render_adapter_unit_test.cpp",
+        "sha256": "840d6d4aa8701e3dcff680f5d48c148a908547df391b442db3d3c9090477b2cf"
+      },
+      "hits": [
+        {
+          "line": 1431,
+          "text": "* @tc.name    : Test OnFirstFrameWriting API"
+        },
+        {
+          "line": 1432,
+          "text": "* @tc.number  : OnFirstFrameWriting_001"
+        },
+        {
+          "line": 1433,
+          "text": "* @tc.desc    : Test OnFirstFrameWriting when eventReceiver_ is nullptr"
+        },
+        {
+          "line": 1435,
+          "text": "HWTEST_F(LppAudioRenderAdapterUnitTest, OnFirstFrameWriting_001, TestSize.Level1)"
+        },
+        {
+          "line": 1438,
+          "text": "    renderAdapter_->OnFirstFrameWriting(0);"
+        },
+        {
+          "line": 1442,
+          "text": " * @tc.name    : Test OnFirstFrameWriting API"
+        },
+        {
+          "line": 1443,
+          "text": " * @tc.number  : OnFirstFrameWriting_002"
+        },
+        {
+          "line": 1444,
+          "text": " * @tc.desc    : Test OnFirstFrameWriting with valid eventReceiver_"
+        },
+        {
+          "line": 1446,
+          "text": "HWTEST_F(LppAudioRenderAdapterUnitTest, OnFirstFrameWriting_002, TestSize.Level1)"
+        },
+        {
+          "line": 1451,
+          "text": "    renderAdapter_->OnFirstFrameWriting(1000);"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/lpp_unit_test/module/lpp_audio_render_adapter_unit_test/mock/audio_renderer.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/lpp_unit_test/module/lpp_audio_render_adapter_unit_test/mock/audio_renderer.h",
+        "sha256": "4c326d147ecd3107086782093496c449816fe5db2fe44e2e9ed3ae40d41bd5df"
+      },
+      "hits": [
+        {
+          "line": 106,
+          "text": "    virtual void OnFirstFrameWriting(uint64_t latency) = 0;"
+        }
+      ]
+    },
+    {
+      "upstream_path": "foundation/multimedia/player_framework/test/unittest/lpp_unit_test/module/lpp_audio_render_adapter_unit_test/mock/lpp_audio_render_adapter.h",
+      "actual": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Audio-first-frame-source-01/source/foundation/multimedia/player_framework/test/unittest/lpp_unit_test/module/lpp_audio_render_adapter_unit_test/mock/lpp_audio_render_adapter.h",
+        "sha256": "b00bc79e0670d9f2451aa304f53e55c0e818fab424689fc6640da0d79bc60af6"
+      },
+      "hits": [
+        {
+          "line": 75,
+          "text": "    void OnFirstFrameWriting(uint64_t latency);"
+        }
+      ]
+    }
+  ],
+  "SDK": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/oh-uni-package.json",
+      "sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.multimedia.audioHaptic.d.ts",
+      "sha256": "e215ec31796baf0fedb4a080139be29b263cdff384d86e15b47836bc8a7e275f"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.multimedia.audio.d.ts",
+      "sha256": "642942345f7e5d65be254085d49f5d50d50e0711929496c9f470e73acc46340e"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.resourceschedule.backgroundTaskManager.d.ts",
+      "sha256": "f2843ed35c5c12514882390b617f48435005ed87cf90ae383dd1fa2e3f5d8ad6"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.notificationManager.d.ts",
+      "sha256": "9c0a2523b3687f1ecbeca3289047d859f30f24cdcb218b6f68d586a2447b51ad"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.systemDateTime.d.ts",
+      "sha256": "2d75126fbc0f76be1b0f1f2fb7a55cf2add691fd03197df97cc859c0a539dd70"
+    }
+  ],
+  "prior_source_export": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-audio-haptic-source-inputs-01/evidence.json",
+    "sha256": "d6792cdf15365c7d0f10aff948784a59993d45aba882ffb60da13a598db85e0c"
+  },
+  "selected_GN_receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-selected-GN-suspend-and-haptic-01/evidence.json",
+    "sha256": "d2fd6e9093e9cfef54d438c9b9d0e80ddc55d94cb97afb07460d665023335636"
+  },
+  "notification_contract": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/network/audio-observation-20261016.json",
+    "sha256": "dc6c6a8d35f36f749f683b169c0b0ca06eb9db20ab1c643bc4c7342b2d504eac"
+  },
+  "actual_source_out_or_Docker_read_performed_by_this_batch": false,
+  "runtime_validated": false
+}
