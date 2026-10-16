@@ -1870,7 +1870,8 @@
         "base/msdp/device_status/services/native/src/devicestatus_manager.cpp",
         "base/msdp/device_status/libs/include/algorithm/algo_base.h",
         "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
-        "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp"
+        "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+        "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
       ],
       "component": "patches/common/base/msdp/device_status/public_still/",
       "preserve_original_sensor_input_component": true,

@@ -3181,6 +3181,9 @@ PY
     python3 "${SCRIPT_DIR}/verify_mms_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/mms-provider-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_contacts_theme_provider_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
+      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/contacts-theme-provider-evidence.json"
     python3 "${SCRIPT_DIR}/verify_font_assets_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --output "${PACKAGE_DIR}/font-assets-evidence.json"
     python3 "${SCRIPT_DIR}/verify_boot_assets_image.py" \

@@ -1,0 +1,133 @@
+{
+  "source_commit": "336512fb9927c3960438c5519fc5eaa84f0e67ae",
+  "repo_archive_sha256": "e755714af4e3a8cc774592187be834c2c5a1fcf74b45fea403aa96dfcb3fe335",
+  "runner_sha256": "8ae5b4d2a38c5dce5c7844b885f2707bcee31c7375ca55e1e92b7e7e50fdef43",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "--name",
+    "ohos-qemu-r52-Theme-real-SDK-04",
+    "--network",
+    "none",
+    "--read-only",
+    "--cpus",
+    "2",
+    "--memory",
+    "5g",
+    "--pids-limit",
+    "512",
+    "--tmpfs",
+    "/tmp:rw,exec,nosuid,nodev,size=1g",
+    "--tmpfs",
+    "/root:rw,exec,nosuid,nodev,size=512m",
+    "--mount",
+    "type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly",
+    "--mount",
+    "type=volume,src=ohos-qemu-7_0-release-out,dst=/ohos/out,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04,dst=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04",
+    "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "python3",
+    "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/runner.py"
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "scope": "actual two Theme renderer HAPs actual product SDK26.0.0.39 ONLY NOT signing BMS guest",
+  "exit_code": 0,
+  "seconds": 38.86561894416809,
+  "container_log_sha256": "877bd6796eefc96a00c002415b692b714c64e7be024af7d76812dd7d7d526363",
+  "commands": [
+    {
+      "project": "theme",
+      "label": "dependencies",
+      "argv": [
+        "/ohos/prebuilts/build-tools/common/nodejs/node-v18.20.1-linux-x64/bin/node",
+        "/ohos/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+        "install",
+        "--all",
+        "--registry",
+        "http://127.0.0.1:9",
+        "--fetch_timeout",
+        "10000",
+        "--retry_times",
+        "0"
+      ],
+      "exit_code": 0,
+      "seconds": 1.7073757648468018,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/theme-dependencies.log",
+      "sha256": "d08d5b266e9f4864b616175c4336581c649144bc577c1d3d1469bc7c915814a2"
+    },
+    {
+      "project": "theme",
+      "label": "phone_wallpaper",
+      "argv": [
+        "/ohos/prebuilts/build-tools/common/nodejs/node-v18.20.1-linux-x64/bin/node",
+        "/ohos/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+        "assembleHap",
+        "--mode",
+        "module",
+        "-p",
+        "product=default",
+        "-p",
+        "module=phone_wallpaper",
+        "-p",
+        "debuggable=false",
+        "-p",
+        "hvigor-obfuscation=false",
+        "--no-daemon",
+        "--no-parallel",
+        "--no-incremental",
+        "--max-old-space-size",
+        "2048"
+      ],
+      "exit_code": 0,
+      "seconds": 17.195785522460938,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/theme-phone_wallpaper.log",
+      "sha256": "48411cbd2fdfc58057e7a7be2607255682322620a5d7df3292752f5e7baf12d0"
+    },
+    {
+      "project": "theme",
+      "label": "pad_wallpaper",
+      "argv": [
+        "/ohos/prebuilts/build-tools/common/nodejs/node-v18.20.1-linux-x64/bin/node",
+        "/ohos/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+        "assembleHap",
+        "--mode",
+        "module",
+        "-p",
+        "product=default",
+        "-p",
+        "module=pad_wallpaper",
+        "-p",
+        "debuggable=false",
+        "-p",
+        "hvigor-obfuscation=false",
+        "--no-daemon",
+        "--no-parallel",
+        "--no-incremental",
+        "--max-old-space-size",
+        "2048"
+      ],
+      "exit_code": 0,
+      "seconds": 15.041287660598755,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/theme-pad_wallpaper.log",
+      "sha256": "fa52d1a65398fed9cc4cbfb9ef8f51dd11be531daa1beb139e74e42ccb0d9c10"
+    }
+  ],
+  "haps": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/source/applications/standard/theme/product/phone/build/default/outputs/default/phone_wallpaper-default-unsigned.hap",
+      "sha256": "35ee357b7b109fabe731ad44d18a1629d3c59aaa49d0d85f5ee49bfdea04dc71",
+      "bytes": 84803
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/source/applications/standard/theme/product/pad/build/default/outputs/default/pad_wallpaper-default-unsigned.hap",
+      "sha256": "5db8411bd8696f96e31b63a3a1fb785ffeede5d5efe7ea4f9db26796dde10c31",
+      "bytes": 82988
+    }
+  ],
+  "full_evidence_sha256": "c7f8049f402c093c219d7f7bfd8ab3b52c92414727c39c9d34840a1f5f734059",
+  "full_evidence_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/evidence.json"
+}

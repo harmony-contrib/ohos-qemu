@@ -42,14 +42,14 @@ class MmsSourceProvider(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             path = root / 'applications/standard/hap/BUILD.gn';path.parent.mkdir(parents=True);path.write_bytes(data)
-            components = ['calendar_provider', 'photos_provider', 'settings_provider', 'admin_provider', 'mms_provider']
+            components = ['calendar_provider', 'photos_provider', 'settings_provider', 'admin_provider', 'mms_provider', 'contacts_theme_provider']
             for cycle in range(3):
                 for name in components:
                     result = subprocess.run(['bash', str(ROOT / 'patches/common/applications/standard/hap' / name / 'apply.sh'),
                                              '--source-root', str(root)], capture_output=True)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             changed = path.read_bytes() + b'\n# unknown edit\n';path.write_bytes(changed)
-            for name in ('admin_provider', 'mms_provider'):
+            for name in ('admin_provider', 'mms_provider', 'contacts_theme_provider'):
                 result = subprocess.run(['bash', str(ROOT / 'patches/common/applications/standard/hap' / name / 'apply.sh'),
                                          '--source-root', str(root)], capture_output=True)
                 self.assertNotEqual(result.returncode, 0)

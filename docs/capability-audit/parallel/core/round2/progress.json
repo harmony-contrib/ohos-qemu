@@ -1390,5 +1390,8 @@
     "Resolve Contacts public caller framing/errors and finish Wallpaper settings and backend route",
     "Integrate full source graph/signing/preinstall and new genuine GNSS/Sensor/Contacts/Wallpaper runtime verifiers",
     "Build/package one ARM64 phone and validate actual runtime and regressions before remaining five"
-  ]
+  ],
+  "Contacts_Theme_current_SDK": "Contacts SDK02 + Theme SDK04 phone/pad complete real API26 product builds PASS; unsigned only",
+  "Settings_current_SDK": "SDK06 wallpaper UI full HAP PASS; actual 44 extensions, 6 ELF, exact permissions SET_WALLPAPER once PASS; signing/BMS/pixels pending",
+  "Contacts_Theme_signing_wiring": "source GN+exact profiles+typed original installs+mandatory image guard implemented; 12 host tests PASS; real OS signing ext4 pending"
 }

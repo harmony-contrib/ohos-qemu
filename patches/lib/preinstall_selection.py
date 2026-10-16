@@ -19,14 +19,15 @@ def same_json(actual, expected):
     return actual == expected
 
 
-def entry(data, bundle):
+def entry(data, bundle, removable=False):
+    if type(removable) is not bool: raise ValueError('expected removability must be a JSON boolean')
     value = json.loads(data, object_pairs_hook=unique)
     rows = value.get('install_list') if isinstance(value, dict) else None
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise ValueError('invalid BMS preinstall selection list')
-    expected = {'app_dir': '/system/app/' + bundle, 'removable': False}
+    expected = {'app_dir': '/system/app/' + bundle, 'removable': removable}
     if not same_json([row for row in rows if row.get('app_dir') == expected['app_dir']], [expected]):
-        raise ValueError('unique original nonremovable preinstall directory required: ' + bundle)
+        raise ValueError('unique original preinstall directory/removability required: ' + bundle)
     return expected
 
 

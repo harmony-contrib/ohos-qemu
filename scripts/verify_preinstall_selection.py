@@ -8,9 +8,9 @@ from ext_image_entries import dump_unique_file
 from verify_alsa_config_image import debugfs_path, file_sha256
 
 
-def verify_selection(source, bundle, image=None, scratch=None):
+def verify_selection(source, bundle, image=None, scratch=None, removable=False):
     path = source / 'vendor/ohemu/virt/preinstall-config/install_list.json'
-    expected = entry(path.read_bytes(), bundle)
+    expected = entry(path.read_bytes(), bundle, removable)
     result = {'entry': expected, 'source_sha256': file_sha256(path)}
     veto = path.with_name('uninstall_list.json')
     policy = uninstall_policy(veto.read_bytes(), bundle)
@@ -19,7 +19,7 @@ def verify_selection(source, bundle, image=None, scratch=None):
         directory = scratch / 'install-selection';directory.mkdir()
         actual, identity = dump_unique_file(image, ('/etc/app/install_list.json', '/system/etc/app/install_list.json'),
                                            directory, debugfs_path())
-        entry(actual.read_bytes(), bundle)
+        entry(actual.read_bytes(), bundle, removable)
         result.update(identity)
         result['image_file_sha256'] = file_sha256(actual)
         actual, identity = dump_unique_file(image, ('/etc/app/uninstall_list.json', '/system/etc/app/uninstall_list.json'),

@@ -373,3 +373,7 @@ types recursively; numeric 0/1 cannot replace BMS boolean fields. Six focused
 host tests pass, including missing, duplicated, changed-path, removable and
 numeric-boolean counterexamples. Real OS signing and ext4 counterexamples are
 the next batch. No new guest acceptance or audit closure is claimed.
+
+2026-10-16 23:55 +0800：当前 336512f 源码的 Theme SDK04 手机／平板完整 HAP 均通过，Settings SDK06 新壁纸设置页完整 HAP 通过。独立读取实际 Settings HAP 验证 44 个扩展、3 ABI 的 6 个 ELF、源码权限列表及唯一 SET_WALLPAPER 均通过。便携证据见 core/round2/Theme-SDK04-result.json、Settings-SDK06-result.json、Settings-SDK06-actual-HAP-contract.json。
+
+根接通 Contacts 三组源码补丁、Theme 五组源码补丁及共享 HAP 图，设备分别选择单一真实 Wallpaper 模块；增加真实源码 profile 重签与镜像检查。原 Contacts profile 叶指纹为 D5F3BA…400E4，原 Contacts 安装策略 pin 为 04AC9C…5EA04；原 Wallpaper profile 已使用 OS 叶 8E9386…024B5，但有效期过期。分别固定原始完整 profile 哈希和各自叶，保留原 APL/ACL/权限/系统应用身份，仅替换 OS 叶与有限有效期；Contacts 现存授权策略只更新 pin。Wallpaper 原 removable=true 必须保留，不能套用其他应用 false。初次新单测因错误假设两 profile 同为 04AC 而拒绝，已据真实 CMS 修正；12 项 profile/策略/六层图重放/实际 ext4 选择回归现均通过。真实签名／新整机启动尚未完成，计数仍为 199/281，首包 gate=false，0/6 验收。

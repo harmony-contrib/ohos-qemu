@@ -3283,6 +3283,26 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_hap_provider.log"
   python3 "${PATCH_ROOT}/lib/mms_provider.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_mms_signing_policy.log"
+  bash "${PATCH_ROOT}/common/applications/standard/contacts/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_contacts_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/contacts/production_manifest/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_contacts_production_manifest.log"
+  bash "${PATCH_ROOT}/common/applications/standard/contacts/picker_session_lifecycle/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_contacts_picker_session_lifecycle.log"
+  bash "${PATCH_ROOT}/common/applications/standard/theme/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_theme_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/theme/sdk_schema/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_theme_sdk_schema.log"
+  bash "${PATCH_ROOT}/common/applications/standard/theme/module_names/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_theme_module_names.log"
+  bash "${PATCH_ROOT}/common/applications/standard/theme/api26_compat/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_theme_api26_compat.log"
+  bash "${PATCH_ROOT}/common/applications/standard/theme/renderer_lifecycle/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_theme_renderer_lifecycle.log"
+  bash "${PATCH_ROOT}/common/applications/standard/hap/contacts_theme_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_hap_contacts_theme_provider.log"
+  python3 "${PATCH_ROOT}/lib/contacts_theme_providers.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_contacts_theme_signing_policy.log"
   bash "${PHOTOS_FACARD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
