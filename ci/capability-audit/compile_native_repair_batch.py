@@ -68,6 +68,33 @@ def patch_paths(components):
     return sorted(paths)
 
 
+def verify_object(obj, disassembler, arch, machine, elf_class):
+    data = obj.read_bytes()[:20]
+    if data.startswith(b'BC\xc0\xde'):
+        ir = obj.with_suffix('.ll')
+        subprocess.run([str(disassembler), str(obj), '-o', str(ir)], check=True)
+        # CFI can make one product .o contain split-LTO modules. LLVM's real
+        # disassembler writes .ll.0/.ll.1 in that case; verify every module.
+        modules = [ir] if ir.is_file() else sorted(
+            p for p in ir.parent.glob(ir.name + '.*')
+            if re.fullmatch(re.escape(ir.name) + r'\.\d+', p.name))
+        if not modules:
+            raise ValueError('LLVM disassembler produced no actual modules')
+        verified = []
+        ir_arch = r'arm(?:v7a?)?' if arch == 'arm' else arch
+        for module in modules:
+            with module.open() as stream:
+                triple = next((line.strip() for line in stream if line.startswith('target triple = ')), '')
+            if not re.fullmatch('target triple = "' + ir_arch + '(?:-unknown)?-linux-ohos"', triple):
+                raise ValueError('actual product LLVM target required for every module')
+            verified.append({'file': module.name, 'target_triple': triple, 'sha256': sha(module)})
+        return {'object_format': 'LLVM_bitcode', 'llvm_modules': verified}
+    if (data[:6] == bytes([127, 69, 76, 70, elf_class, 1]) and
+            int.from_bytes(data[18:20], 'little') == machine):
+        return {'object_format': 'ELF'}
+    raise ValueError('product ELF/LLVM output required')
+
+
 def run(args):
     root, output = args.source_root.resolve(), args.output.absolute()
     if any(not os.statvfs(p).f_flag & os.ST_RDONLY for p in [root, root / 'out']):
@@ -152,21 +179,8 @@ def run(args):
                 row['exit_code'] = result.returncode
                 if result.returncode:
                     raise ValueError('product compilation failed; full log retained')
-                data = obj.read_bytes()[:20]
-                if data.startswith(b'BC\xc0\xde'):
-                    disassembler = (cwd / argv[0]).resolve().parent / 'llvm-dis'
-                    ir = output / f'{product}-{unit}.ll'
-                    subprocess.run([str(disassembler), str(obj), '-o', str(ir)], check=True)
-                    with ir.open() as stream:
-                        triple = next((line.strip() for line in stream if line.startswith('target triple = ')), '')
-                    ir_arch = r'arm(?:v7a?)?' if arch == 'arm' else arch
-                    if not re.fullmatch('target triple = "' + ir_arch + '(?:-unknown)?-linux-ohos"', triple):
-                        raise ValueError('actual product LLVM target required')
-                    row.update(object_format='LLVM_bitcode', target_triple=triple, llvm_ir_sha256=sha(ir))
-                elif data[:6] == bytes([127, 69, 76, 70, elf_class, 1]) and int.from_bytes(data[18:20], 'little') == machine:
-                    row['object_format'] = 'ELF'
-                else:
-                    raise ValueError('product ELF/LLVM output required')
+                disassembler = (cwd / argv[0]).resolve().parent / 'llvm-dis'
+                row.update(verify_object(obj, disassembler, arch, machine, elf_class))
                 dependency = dep.read_text()
                 required = group['required_header']
                 if str(staged / source) not in dependency or (required and str(private / required) not in dependency):
