@@ -36,7 +36,8 @@ def validate(root,require_patched=False):
         spec=importlib.util.spec_from_file_location('knowledge_calendar_forward',forward)
         overlay=importlib.util.module_from_spec(spec);spec.loader.exec_module(overlay)
         try:
-            if overlay.validate(root,True):return True
+            overlay.validate(root)
+            return True
         except ValueError:pass
     root=Path(root).resolve();project=root/transforms.PROJECT
     if (project/'.git').exists():

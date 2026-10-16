@@ -1,3 +1,21 @@
+--- a/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
++++ b/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
+@@ -707,6 +707,7 @@
+     "ability_runtime:abilitykit_native",
+     "ability_runtime:napi_base_context",
+     "ability_runtime:napi_common",
++    "access_token:libaccesstoken_sdk",
+     "bundle_framework:appexecfwk_core",
+     "c_utils:utils",
+     "data_share:datashare_common",
+@@ -716,6 +717,7 @@
+     "hiappevent:hiappevent_innerapi",
+     "hilog:libhilog",
+     "i18n:intl_util",
++    "ipc:ipc_core",
+     "ipc:ipc_napi",
+     "media_foundation:media_foundation",
+     "napi:ace_napi",
 --- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
 +++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
 @@ -417,7 +417,7 @@
@@ -341,10 +359,11 @@
 +#endif
 --- /dev/null
 +++ b/foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp
-@@ -0,0 +1,444 @@
+@@ -0,0 +1,445 @@
 +/* SPDX-License-Identifier: Apache-2.0 */
 +#include "knowledge_holiday_index.h"
-+#include "medialibrary_log.h"
++#define MLOG_TAG "KnowledgeHolidayIndex"
++#include "media_log.h"
 +#include "rdb_errno.h"
 +#include "transaction.h"
 +#include <algorithm>

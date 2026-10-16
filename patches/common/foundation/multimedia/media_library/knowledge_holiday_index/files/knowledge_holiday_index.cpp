@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "knowledge_holiday_index.h"
-#include "medialibrary_log.h"
+#define MLOG_TAG "KnowledgeHolidayIndex"
+#include "media_log.h"
 #include "rdb_errno.h"
 #include "transaction.h"
 #include <algorithm>

@@ -1,6 +1,7 @@
 """Exact hooks into the previously installed KnowledgeContent and fixed media service."""
 PROJECT='foundation/multimedia/media_library'
 HOOKS={
+ 'interfaces/kits/js/BUILD.gn':None,
  'frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp':(
     '    return store == nullptr ? nullptr : store->QueryByStep(sql, args);',
     '    return store == nullptr ? nullptr : store->QueryByStep(sql, args, false);'),
@@ -12,7 +13,18 @@ HOOKS={
 def repair(name,data):
     crlf=b'\r\n' in data
     text=data.decode().replace('\r\n','\n')
-    if name in HOOKS:
+    if name=='interfaces/kits/js/BUILD.gn':
+        start=text.index('ohos_shared_library("photoaccesshelpernative") {')
+        end=text.index('\n}',start)+2
+        block=text[start:end]
+        before='    "bundle_framework:appexecfwk_core",'
+        if block.count(before)!=1:raise ValueError('unknown direct KnowledgeContent AccessToken dependency hook')
+        block=block.replace(before,'    "access_token:libaccesstoken_sdk",\n'+before)
+        before='    "ipc:ipc_napi",'
+        if block.count(before)!=1:raise ValueError('unknown direct KnowledgeContent IPC dependency hook')
+        block=block.replace(before,'    "ipc:ipc_core",\n'+before)
+        text=text[:start]+block+text[end:]
+    elif name in HOOKS:
         before,after=HOOKS[name]
         if text.count(before)!=1:raise ValueError('unknown exact knowledge calendar hook: '+name)
         text=text.replace(before,after)
