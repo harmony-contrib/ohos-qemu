@@ -1,0 +1,12 @@
+test_actual_parser_target_optional_selection_async_capture_and_errors (test_batch_network_bluetooth_oob.BluetoothOobTests.test_actual_parser_target_optional_selection_async_capture_and_errors) ... ok
+test_exact_stack_export_and_idempotence (test_batch_network_bluetooth_oob.BluetoothOobTests.test_exact_stack_export_and_idempotence) ... ok
+test_actual_classic_and_le_handlers_consume_match_and_reject_late_requests (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_classic_and_le_handlers_consume_match_and_reject_late_requests) ... ok
+test_actual_extended_gap_task_and_hci_parameters_and_errors (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_extended_gap_task_and_hci_parameters_and_errors) ... ok
+test_actual_peer_type_single_use_expiry_cancel_and_off (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_peer_type_single_use_expiry_cancel_and_off) ... ok
+test_actual_service_permissions_target_shape_off_and_failure_propagation (test_batch_network_bluetooth_service.BluetoothServiceTests.test_actual_service_permissions_target_shape_off_and_failure_propagation) ... ok
+test_exact_service_gap_stack_and_unknown_edit (test_batch_network_bluetooth_service.BluetoothServiceTests.test_exact_service_gap_stack_and_unknown_edit) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 6.042s
+
+OK
