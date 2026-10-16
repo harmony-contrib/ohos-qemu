@@ -19,10 +19,15 @@ def repair(name,data):
         block=text[start:end]
         before='    "bundle_framework:appexecfwk_core",'
         if block.count(before)!=1:raise ValueError('unknown direct KnowledgeContent AccessToken dependency hook')
-        block=block.replace(before,'    "access_token:libaccesstoken_sdk",\n'+before)
+        if '"access_token:libaccesstoken_sdk"' not in block:
+            block=block.replace(before,'    "access_token:libaccesstoken_sdk",\n'+before)
         before='    "ipc:ipc_napi",'
         if block.count(before)!=1:raise ValueError('unknown direct KnowledgeContent IPC dependency hook')
-        block=block.replace(before,'    "ipc:ipc_core",\n'+before)
+        if '"ipc:ipc_core"' not in block:
+            block=block.replace(before,'    "ipc:ipc_core",\n'+before)
+        before='    "relational_store:native_rdb",'
+        if block.count(before)!=1:raise ValueError('unknown direct KnowledgeContent RDB adapter dependency hook')
+        block=block.replace(before,before+'\n    "relational_store:rdb_data_share_adapter",')
         text=text[:start]+block+text[end:]
     elif name in HOOKS:
         before,after=HOOKS[name]

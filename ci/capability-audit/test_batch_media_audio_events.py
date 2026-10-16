@@ -14,9 +14,10 @@ class Events(unittest.TestCase):
   subprocess.run(flags+['-fsyntax-only',str(HERE/'batch_media_audio_event_probe.cpp'),str(HERE/'batch_media_audio_event_hap.cpp')],check=True)
   source=(HERE/'batch_media_audio_event_probe.cpp').read_text();prefix=source[:source.index('namespace {')];decl=source[source.index('constexpr size_t CAPACITY'):source.index('int64_t Now()')]
   functions='\n'.join(function(source,key) for key in ['int64_t Now()', 'void Read(', 'void Interrupt(', 'void Error(', 'bool WritePrivate(', 'bool Nonce(', 'bool Ack('])
+  functions+='\n'+'\n'.join(line for line in source.splitlines() if line.startswith('extern "C" void ') and 'BatchMediaAudioEventProbe()' in line)
   harness=prefix+decl+functions+r'''
 #include <cassert>
-int main(int argc,char **argv){assert(argc==2);assert(std::string(PRIVATE)=="/data/storage/el2/base/files/");Context context;uint8_t data[9]={1,2,3,4,5,6,7,8,9};
+int main(int argc,char **argv){assert(argc==2);assert(std::string(PRIVATE)=="/data/storage/el2/base/files/");CancelBatchMediaAudioEventProbe();assert(cancelled.load());PrepareBatchMediaAudioEventProbe();assert(!cancelled.load());Context context;uint8_t data[9]={1,2,3,4,5,6,7,8,9};
 Read(nullptr,&context,data+1,8);assert(context.size==8&&context.chunks.size()==1&&context.chunks[0].phase==1);for(int i=0;i<8;++i)assert(context.bytes[i]==i+2);
 Read(nullptr,&context,nullptr,8);Read(nullptr,&context,data,0);Read(nullptr,&context,data,-1);Read(nullptr,&context,data,7);assert(context.invalid==4&&context.size==8);
 context.size=CAPACITY-4;Read(nullptr,&context,data,4);assert(context.size==CAPACITY);Read(nullptr,&context,data,4);assert(context.invalid==5);
@@ -42,7 +43,7 @@ printf("actual PCM/interrupt/error functions and genuine entropy/fresh nonce/ack
   add('event_start_interval',actual=0,before_ns=start,after_ns=start+1000)
   signals=['revoke'] if mode==0 else ['focus_begin','focus_end'] if mode==1 else ['contender_start','contender_stop']
   for index,action in enumerate(signals):
-   nonce=('a' if index==0 else 'b')*32;add('event_ready',action=action,nonce=nonce,monotonic_ns=ready_time+(index-(1 if mode==2 else 0))*1200000000);add('event_ack',action=action,nonce=nonce,monotonic_ns=ack_time+(index-(1 if mode==2 else 0))*1200000000)
+   nonce=('a' if index==0 else 'b')*32;add('event_ready',action=action,nonce=nonce,monotonic_ns=ready_time+(index-(1 if mode==2 else 0))*(2000000000 if mode==2 else 1200000000));add('event_ack',action=action,nonce=nonce,monotonic_ns=ack_time+(index-(1 if mode==2 else 0))*(2000000000 if mode==2 else 1200000000))
   for i in range(50):
    t=start+(220+i*20)*1000000;add('event_snapshot',point='baseline',phase=1,state_result=0,state=2,frames_result=0,timestamp_result=0,position=(220+i*20)*48,timestamp_ns=t,invalid=0,before_ns=t,after_ns=t+1000)
   data=bytearray();chunks=[]
@@ -56,6 +57,16 @@ printf("actual PCM/interrupt/error functions and genuine entropy/fresh nonce/ack
   if mode==0:add('event_restart_after_revoke',actual=2,monotonic_ns=ack_time+1600000000)
   if mode==1:
    add('event_callback',kind=1,code=0,hint=3,monotonic_ns=ready_time+100000000);add('event_step',name='restart_after_focus',actual=0,monotonic_ns=ack_time+1200000000);audio(3,48000,ack_time+1200000000,12345)
+  if mode==2:
+   primer_start=start-2000000000
+   for index,name in enumerate(steps):add('event_primer_step',name=name,actual=0,monotonic_ns=primer_start+index*1000)
+   for index,name in enumerate(['stop','release','destroy']):add('event_primer_step',name=name,actual=0,monotonic_ns=start-400000000+index*1000)
+   for i in range(50):
+    t=primer_start+(220+i*20)*1000000;add('event_snapshot',point='primer_baseline',phase=0,state_result=0,state=2,frames_result=0,timestamp_result=0,position=(220+i*20)*48,timestamp_ns=t,invalid=0,before_ns=t,after_ns=t+1000)
+   primer=array('h',(reference[((i+17159)%48000)*2+c] for i in range(76800) for c in range(2))).tobytes()
+   for byte in range(0,len(primer),1920):add('event_primer_chunk',offset=byte,bytes=min(1920,len(primer)-byte),phase=0,monotonic_ns=primer_start+(byte//4+480)*1000000000//48000)
+   name=f'audio-event-{RUN}-mode2-primer-full.pcm';(root/name).write_bytes(primer);add('event_primer_pcm',basename=name,bytes=len(primer),persisted=True,invalid=0)
+   name=f'audio-event-{RUN}-mode2-primer.pcm';(root/name).write_bytes(primer[:57600*4]);add('event_primer_checkpoint',basename=name,bytes=57600*4,persisted=True,monotonic_ns=start-700000000)
   add('event_step',name='release',actual=0,monotonic_ns=start+7000000000);add('event_step',name='destroy',actual=0,monotonic_ns=start+7100000000)
   checkpoint_name=f'audio-event-{RUN}-mode{mode}-baseline.pcm';checkpoint=bytes(data[:57600*4]);(root/checkpoint_name).write_bytes(checkpoint);add('event_checkpoint',basename=checkpoint_name,bytes=len(checkpoint),persisted=True,monotonic_ns=ready_time)
   rows.extend(chunks);name=f'audio-event-{RUN}-mode{mode}.pcm';(root/name).write_bytes(data);add('event_pcm',basename=name,bytes=len(data),persisted=True,invalid=0)
@@ -68,6 +79,14 @@ printf("actual PCM/interrupt/error functions and genuine entropy/fresh nonce/ack
    with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:
     root=Path(temp);_,results,identity,challenge=self.prepare(root,mode);report=self.verify(root,results,identity,challenge,mode)
     self.assertEqual(report['closed_requirements'],0);self.assertTrue(report['external_token_or_second_app_policy_evidence_required'])
+ def test_primer_missing_silence_counter_only_and_stopped_are_rejected(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);rows,results,identity,challenge=self.prepare(root,2)
+   for event,key,value in [('event_primer_step','actual',2),('event_snapshot','state',3),('event_primer_checkpoint','persisted',False),('event_primer_chunk','bytes',0)]:
+    bad=copy.deepcopy(rows);next(r for r in bad if r['type']==event and (event!='event_snapshot' or r.get('point')=='primer_baseline'))[key]=value;results.write_text(''.join(json.dumps(r)+'\n' for r in bad))
+    with self.assertRaises(ValueError):self.verify(root,results,identity,challenge,2)
+   results.write_text(''.join(json.dumps(r)+'\n' for r in rows));path=root/f'audio-event-{RUN}-mode2-primer.pcm';path.write_bytes(bytes(path.stat().st_size))
+   with self.assertRaises(ValueError):self.verify(root,results,identity,challenge,2)
  def test_counter_silence_bad_nonce_missing_focus_and_denied_restart_rejected(self):
   for mode in [0,1]:
    with tempfile.TemporaryDirectory() as temp:

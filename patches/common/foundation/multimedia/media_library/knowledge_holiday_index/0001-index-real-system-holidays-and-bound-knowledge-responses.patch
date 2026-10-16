@@ -8,7 +8,7 @@
      "bundle_framework:appexecfwk_core",
      "c_utils:utils",
      "data_share:datashare_common",
-@@ -716,6 +717,7 @@
+@@ -716,12 +717,14 @@
      "hiappevent:hiappevent_innerapi",
      "hilog:libhilog",
      "i18n:intl_util",
@@ -16,6 +16,13 @@
      "ipc:ipc_napi",
      "media_foundation:media_foundation",
      "napi:ace_napi",
+     "player_framework:media_client",
+     "relational_store:native_dataability",
+     "relational_store:native_rdb",
++    "relational_store:rdb_data_share_adapter",
+     "window_manager:libwmutil",
+   ]
+ 
 --- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
 +++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
 @@ -417,7 +417,7 @@

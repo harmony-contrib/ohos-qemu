@@ -1,0 +1,60 @@
+{
+  "scope": "fixed_read_only_GN_declared_dependency_and_public_config_review_only_no_GN_generation_or_platform_compile",
+  "export_root": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-media-fixed-GN-dependencies",
+  "fixed_files": {
+    "foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb_data_share_adapter/BUILD.gn": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-media-fixed-GN-dependencies/foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb_data_share_adapter/BUILD.gn",
+      "sha256": "5482422b6111b9ca475d47c67324ff4481fe12b9e54baeaa345795b0d84a2ce1"
+    },
+    "foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb_data_share_adapter/include/rdb_utils.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-media-fixed-GN-dependencies/foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb_data_share_adapter/include/rdb_utils.h",
+      "sha256": "e40b1e4f47608b920ecbf4857268225c4ddc8bba691b313379a44ea10fc433f8"
+    },
+    "third_party/openssl/BUILD.gn": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-media-fixed-GN-dependencies/third_party/openssl/BUILD.gn",
+      "sha256": "2499459000bf3e6badd75c7f1ca7a5a1765f13857f8776e4849f4e40a644eb8b"
+    }
+  },
+  "dependencies": [
+    {
+      "consumer": "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn:photoaccesshelpernative",
+      "direct_external_dep": "relational_store:rdb_data_share_adapter",
+      "upstream_target": "foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb_data_share_adapter: rdb_data_share_adapter",
+      "public_configs": [
+        ":rdb_data_share_adapter_public_config"
+      ],
+      "exported_include_dirs": [
+        "include"
+      ],
+      "header": "include/rdb_utils.h",
+      "change": "new direct dep; existing native_rdb and native_dataability exports preserved"
+    },
+    {
+      "consumer": "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn:medialibrary_data_extension",
+      "direct_external_dep": "openssl:libcrypto_shared",
+      "upstream_target": "third_party/openssl:libcrypto_shared",
+      "public_configs": [
+        ":crypto_config_public"
+      ],
+      "exported_include_dirs": [
+        "include",
+        "${target_out_dir}/build_all_generated/include"
+      ],
+      "header": "include/openssl/sha.h",
+      "change": "dependency already present in complete previous and current media patch; older compiler flags lack its public config"
+    }
+  ],
+  "root_actual_platform_diagnostics": {
+    "knowledge_content_napi": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-capability-full-TUs-and-helpers-01/artifacts/knowledge_content/arm64_virt-knowledge_content_napi-compile.log",
+      "sha256": "791718508ab68414634dfd19e35d425728b6f00320e2c1baf6a93ff9cbff192d",
+      "status": "failed_missing_dependency_header_retry_required"
+    },
+    "knowledge_holiday_index": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-capability-full-TUs-and-helpers-01/artifacts/knowledge_content/arm64_virt-knowledge_holiday_index-compile.log",
+      "sha256": "b02648e84699f505d7da2fb44439c0a63e781bba35228d920b8e4bf6a97a1d00",
+      "status": "failed_missing_dependency_header_retry_required"
+    }
+  },
+  "runtime_or_package_gate_passed": false
+}

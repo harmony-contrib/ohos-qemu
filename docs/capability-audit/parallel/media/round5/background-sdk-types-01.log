@@ -1,0 +1,8 @@
+../../../../../../tmp/media-audio-review/background-controller.ts(47,12): warning TS28040: Function may throw exceptions. Special handling is required.
+../../../../../../tmp/media-audio-review/background-controller.ts(50,23): warning TS28040: Function may throw exceptions. Special handling is required.
+../../../../../../tmp/media-audio-review/background-controller.ts(53,14): warning TS28040: Function may throw exceptions. Special handling is required.
+../../../../../../tmp/media-audio-review/background-controller.ts(56,10): warning TS28040: Function may throw exceptions. Special handling is required.
+../../../../../../tmp/media-audio-review/background-controller.ts(58,10): warning TS28040: Function may throw exceptions. Special handling is required.
+../../../../../../tmp/media-audio-review/background-controller.ts(78,54): error TS2339: Property 'id' does not exist on type 'ContinuousTaskSuspendInfo'.
+../../../../../../tmp/media-audio-review/background-controller.ts(120,11): error TS2322: Type 'import("/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.wantAgent").default.OperationType' is not assignable to type 'import("/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.wantAgent").default.OperationType'.
+  Property 'START_SERVICE_EXTENSION' is missing in type 'import("/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.wantAgent").default.OperationType'.

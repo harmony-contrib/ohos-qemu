@@ -19,7 +19,8 @@ __BATCH_MEDIA_RECORDER_EXPECT_DENIED__ (literal boolean). Normal foreground HAP,
 ordinary MICROPHONE user grant, awaited real dialog and token evidence only.
 The template persists actual authorization answers before invoking native code.
 Native two-source full host syntax checks use installed actual API26 headers;
-actual NDK three-ABI compilation/link and ArkTS/HAP compile are still pending.
+Round5 actual NDK three-ABI compilation/link with --no-undefined passed;
+ArkTS/HAP compile and product/runtime validation are still pending.
 
 Before launch generate independent new input:
 

@@ -6,7 +6,7 @@
   "files": {
     "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn": {
       "before": "e15166a983196618d1f1b490c78c0b1fc02e6bcf9170c9e026cb853ce8ba3fc8",
-      "after": "8e0c5000133c221f1508d921e532f6b3a8458db01dfd1ed823f9e8debdcb3460",
+      "after": "a1a8837cc24b435ae4916bca1232ed1a1e4152766217675e0d03f378a6a1e284",
       "transform": "interfaces/kits/js/BUILD.gn"
     },
     "foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp": {
