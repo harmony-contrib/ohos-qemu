@@ -61,6 +61,7 @@ REQUIRED_2IN1_PARTS = {
     "hdf:drivers_peripheral_input",
     "hdf:drivers_interface_serial",
     "hdf:drivers_peripheral_serial",
+    "msdp:device_status",
     "multimodalinput:input",
     "security:dlp_permission_service",
     "window:window_manager",
@@ -172,6 +173,9 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # phone camera hardware. Their owning part must also be built on 2in1.
     add_component(effective, "applications", "photos")
     add_component(effective, "thirdparty", "alsa-lib")
+    # Keep the public service in the product graph with its real sensor
+    # algorithm; feature overrides alone cannot introduce a missing owner.
+    add_component(effective, "msdp", "device_status")
     # The release manifest omits the Serial SIG repository. Its fixed source
     # is imported before profile generation; select the real service and HDI
     # together rather than retaining only the SDK/SysCap declaration.

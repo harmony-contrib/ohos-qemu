@@ -67,6 +67,7 @@ REQUIRED_PHONE_PARTS = {
     "communication:netmanager_ext",
     "contacts_data:contacts_data",
     "hdf:drivers_peripheral_display",
+    "msdp:device_status",
     "multimodalinput:input",
     "multimedia:audio_framework",
     "multimedia:av_session",
@@ -184,6 +185,9 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     add_component(effective, "thirdparty", "alsa-lib")
     # Selecting only the HDI leaves no dynamically loaded VDI/config closure.
     add_component(effective, "hdf", "drivers_peripheral_camera")
+    # The public device-status service owns the real sensor algorithm selected
+    # below. It is absent from the generic phone inheritance on this release.
+    add_component(effective, "msdp", "device_status")
 
     # These parts are already selected by the QEMU rich base, not newly
     # introduced phone capabilities. Carry their exact rich settings so the

@@ -1,0 +1,26 @@
+{
+  "scope": "explicit actual service selection and existing real sensor/no-mock profile overrides; actual readonly phone/2in1 profile merge ONLY NOT fresh GN or runtime",
+  "original_failure": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-source-prepare-04/evidence.json",
+    "sha256": "cb89184ddf2064d8e7a759d53942c4eeadc04c96e5a040a078097955c85f6c0d"
+  },
+  "actual_readonly_profiles": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-actual-phone-2in1-profile-msdp-owner-01/evidence.json",
+    "sha256": "60ccaf8e5e9191010cf217190a5b8e73ea0c726fe86491613dabcfaada00dc0b"
+  },
+  "actual_profile_results": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-actual-phone-2in1-profile-msdp-owner-01/profiles.json",
+    "sha256": "1188e8de802b5bc40c8142f90f0d32e00a715ae8e3994bc48a2e04a2182651d2"
+  },
+  "host_regressions": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/msdp-profile-owner-02.log",
+    "sha256": "a20a1ae64006adf6cf9c32eec6d4164862e7a6b1200c09ccf3496205055a20b2"
+  },
+  "host_tests": 30,
+  "failed_test_invocation_preserved": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/msdp-profile-owner-01.log",
+    "sha256": "c58eb707f14b2e86b8d53fc35022ed3a6d64e21a845d66756dd1e54e23e76fc0"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining": "full source preparation, fresh GN/full images/three native witnesses/new package/full guest acceptance"
+}
