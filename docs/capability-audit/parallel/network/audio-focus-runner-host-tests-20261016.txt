@@ -12,3 +12,52 @@ test_ready_rejects_foreign_uid_nonce_and_nonrunning (__main__.FocusHostGuards.te
 Ran 9 tests in 0.006s
 
 OK
+
+File completion follow-up to 4ff4b79
+{
+  "base_commit": "4ff4b79c45d1fa49adb722284d1d0eeb30ccc985",
+  "command": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/docs/capability-audit/parallel/network/audio-focus-runner-host-regression.py",
+    "--dependency-root",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu"
+  ],
+  "environment": {
+    "LC_ALL": "C",
+    "LC_CTYPE": "C",
+    "LANG": "C"
+  },
+  "input_sha256": {
+    "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/ci/capability-audit/audio_focus_runtime.py": "aa51ffa3b74a10862f86f6c8e8e18ac2a7e7a1c4a25bc6426d1351309fbe4987",
+    "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/ci/capability-audit/run_audio_focus_probe.py": "86aaae9bdbc329c62eabe84e1f08706b0fe4020325cc15a814ad681cfedda83e",
+    "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/docs/capability-audit/parallel/network/audio-focus-runner-host-regression.py": "15ab6b117d57db9fa7b9fdf88d2dee4e29024c2dc78fdbf47cc71aa4b1319b96",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audio_capture_runtime.py": "e6016d4ab78b67911b25538298b0c22057606d3bf806b4be7fa153c80389f678",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audio_focus_observation.py": "a1085190cd72544a1a75962b91d0d3793e6621416c239d23623890c6746db771",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_audio_capture_results.py": "fdb6d9cf52fc42ebea873d4b396ec5a63f93338438bb68f8b88cac6f1cf4e3fe"
+  },
+  "scope": "pure host guards with actual runtime methods and transport/stat doubles; no Docker/SDK/HAP/HDC/guest",
+  "ast_and_schema_parse": "pass"
+}
+test_duplicate_json_evidence_rejected (__main__.FocusHostGuards.test_duplicate_json_evidence_rejected) ... ok
+test_expired_ack_refuses_before_any_control_write (__main__.FocusHostGuards.test_expired_ack_refuses_before_any_control_write) ... ok
+test_expired_fresh_request_refuses_before_any_control_write (__main__.FocusHostGuards.test_expired_fresh_request_refuses_before_any_control_write) ... ok
+test_final_collect_refuses_unfinished_tail_and_rechecks_immutable_remote (__main__.FocusHostGuards.test_final_collect_refuses_unfinished_tail_and_rechecks_immutable_remote) ... ok
+test_forced_stop_requires_actual_force_hint_and_start_causality (__main__.FocusHostGuards.test_forced_stop_requires_actual_force_hint_and_start_causality) ... ok
+test_fresh_reply_rejects_replay_identity_stale_callbacks_and_bool_results (__main__.FocusHostGuards.test_fresh_reply_rejects_replay_identity_stale_callbacks_and_bool_results) ... ok
+test_identity_rejects_shared_system_and_other_account (__main__.FocusHostGuards.test_identity_rejects_shared_system_and_other_account) ... ok
+test_journal_never_retries_middle_damage_or_complete_malformed_tail (__main__.FocusHostGuards.test_journal_never_retries_middle_damage_or_complete_malformed_tail) ... ok
+test_journal_owner_and_session_failure_stay_fatal (__main__.FocusHostGuards.test_journal_owner_and_session_failure_stay_fatal) ... ok
+test_journal_stable_partial_tail_has_fixed_deadline_and_retains_all_reads (__main__.FocusHostGuards.test_journal_stable_partial_tail_has_fixed_deadline_and_retains_all_reads) ... ok
+test_journal_tail_retries_changed_stat_or_content_without_freezing_partial (__main__.FocusHostGuards.test_journal_tail_retries_changed_stat_or_content_without_freezing_partial) ... ok
+test_journal_tail_retries_empty_short_and_unterminated_json_preserving_raw (__main__.FocusHostGuards.test_journal_tail_retries_empty_short_and_unterminated_json_preserving_raw) ... ok
+test_missing_preflight_never_launches_commands_or_stops_bundles (__main__.FocusHostGuards.test_missing_preflight_never_launches_commands_or_stops_bundles) ... ok
+test_native_private_mode_rejects_before_file_transfer (__main__.FocusHostGuards.test_native_private_mode_rejects_before_file_transfer) ... ok
+test_pending_tail_becoming_middle_requires_immediate_strict_complete_read (__main__.FocusHostGuards.test_pending_tail_becoming_middle_requires_immediate_strict_complete_read) ... ok
+test_ready_rejects_completed_log_file_mismatch_and_duplicate_markers (__main__.FocusHostGuards.test_ready_rejects_completed_log_file_mismatch_and_duplicate_markers) ... ok
+test_ready_rejects_foreign_uid_nonce_and_nonrunning (__main__.FocusHostGuards.test_ready_rejects_foreign_uid_nonce_and_nonrunning) ... ok
+test_ready_waits_for_completed_log_before_collecting_private_json (__main__.FocusHostGuards.test_ready_waits_for_completed_log_before_collecting_private_json) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.030s
+
+OK

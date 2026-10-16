@@ -2,6 +2,7 @@
 """Light host guard regressions; never Docker, HAP build, HDC, or guest execution."""
 import argparse
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -50,7 +51,192 @@ def fresh():
         pcm_basename='audio-event-' + 'a' * 32 + '-focus_begin-snapshot-' + 'b' * 32 + '.pcm')
 
 
+def journal_fixture(directory, bodies, *, count=1, stats=None):
+    """Model HDC bytes/stat only; exercise the real runtime collection methods."""
+    value = object.__new__(runtime.AudioFocusRuntime)
+    value.run, value.serial = 'a' * 32, 0
+    value.args = SimpleNamespace(output=Path(directory), hdc='host-double', target='host-double')
+    value.capture = SimpleNamespace(process=None)
+    value.save = Mock()
+    for name in ('private', 'live'):
+        (value.args.output / 'owner' / name).mkdir(parents=True)
+    actor = dict(uid=20010001, mode=1, app_files='/owned/', files={}, background_journal=[])
+    paths = ['/owned/audio-event-' + value.run + '-mode1-background-' + str(i).zfill(3) + '.json'
+             for i in range(count)]
+    def metadata(body, remote=paths[0], uid=20010001):
+        return str(uid) + ' 644 ' + str(len(body)) + ' 100 200 200\n' + hashlib.sha256(body).hexdigest() + '  ' + remote
+    observations = stats or [metadata(body) for body in bodies for _ in range(2)]
+    stat_values, received = iter(observations), iter(bodies)
+    def actual(script, label):
+        if label in ('focus-background-journal-list', 'focus-all-own-private-evidence'):
+            return '\n'.join(paths)
+        if label != 'focus-background-journal-stat':
+            raise AssertionError('unexpected host fixture command: ' + label)
+        return next(stat_values, observations[-1])
+    def transfer(argv, label):
+        if label != 'focus-background-journal-receive':
+            raise AssertionError('unexpected host fixture transfer: ' + label)
+        Path(argv[-1]).write_bytes(next(received, bodies[-1]))
+    value.actual, value.command = Mock(side_effect=actual), Mock(side_effect=transfer)
+    return value, actor, paths, metadata
+
+
 class FocusHostGuards(unittest.TestCase):
+    def test_ready_waits_for_completed_log_before_collecting_private_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            value, actor, _, _ = journal_fixture(directory, [b''])
+            actor['ready_json'] = []
+            marker = {key: ready()[key] for key in ('run_id', 'action', 'nonce', 'monotonic_ns')}
+            marker['type'] = 'event_ready'
+            text = json.dumps(marker)
+            value.actual = Mock(side_effect=['', text[:-5], text])
+            path = value.args.output / 'ready.json'
+            path.write_bytes(b'{')  # Existence precedes native fsync/close.
+            def transfer_ready(owner, remote):
+                self.assertEqual(value.actual.call_count, 3)
+                path.write_text(json.dumps(ready()) + '\n')
+                return dict(path=str(path), sha256=runtime.sha(path))
+            value.collect_file = Mock(side_effect=transfer_ready)
+            value.bracket = lambda owner, label, operation: (operation(), [1100000000, 1200000000])
+            value.present = Mock(side_effect=AssertionError('file existence cannot establish readiness'))
+            with patch.object(runtime.time, 'sleep'):
+                self.assertEqual(value.ready(actor, 'focus_begin'), ready())
+            self.assertEqual(actor['ready_json'][0]['native_completion'], marker)
+            log = actor['ready_json'][0]['completion_log']
+            self.assertEqual(runtime.sha(Path(log['path'])), log['sha256'])
+            self.assertIn(text, Path(log['path']).read_text())
+            value.collect_file.assert_called_once()
+            value.present.assert_not_called()
+
+    def test_ready_rejects_completed_log_file_mismatch_and_duplicate_markers(self):
+        for mutation in ({'nonce': 'c' * 32}, {'monotonic_ns': 1000000001}, {'duplicate': True}):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
+                value, actor, _, _ = journal_fixture(directory, [b''])
+                actor['ready_json'] = []
+                marker = {key: ready()[key] for key in ('run_id', 'action', 'nonce', 'monotonic_ns')}
+                marker.update(type='event_ready', **{key: item for key, item in mutation.items() if key != 'duplicate'})
+                line = json.dumps(marker)
+                value.actual = Mock(return_value=line + ('\n' + line if mutation.get('duplicate') else ''))
+                path = value.args.output / 'ready.json'
+                path.write_text(json.dumps(ready()) + '\n')
+                value.collect_file = Mock(return_value=dict(path=str(path), sha256=runtime.sha(path)))
+                value.bracket = lambda owner, label, operation: (operation(), [1100000000, 1200000000])
+                with self.assertRaises(ValueError):
+                    value.ready(actor, 'focus_begin')
+                self.assertEqual(actor['ready_json'], [])
+                if mutation.get('duplicate'):
+                    value.collect_file.assert_not_called()
+
+    def test_journal_tail_retries_empty_short_and_unterminated_json_preserving_raw(self):
+        body = (json.dumps(dict(run_id='a' * 32, mode=1, event='notification_initial')) + '\n').encode()
+        for partial in (b'', b'{"run_id":', body[:-1]):
+            with self.subTest(partial=partial), tempfile.TemporaryDirectory() as directory:
+                value, actor, paths, _ = journal_fixture(directory, [partial, body])
+                def pending_sleep(seconds):
+                    self.assertEqual(actor['files'], {})
+                    self.assertEqual(list((value.args.output / 'owner/private').iterdir()), [])
+                with patch.object(runtime.time, 'sleep', side_effect=pending_sleep):
+                    self.assertEqual(value.journal(actor), [json.loads(body)])
+                reads = actor['journal_reads']
+                self.assertEqual(len(reads), 2)
+                self.assertEqual(Path(reads[0]['path']).read_bytes(), partial)
+                self.assertEqual(reads[0]['sha256'], hashlib.sha256(partial).hexdigest())
+                self.assertFalse(reads[0]['complete'])
+                self.assertTrue(reads[1]['complete'])
+                self.assertEqual(Path(actor['files'][Path(paths[0]).name]['path']).read_bytes(), body)
+
+    def test_journal_tail_retries_changed_stat_or_content_without_freezing_partial(self):
+        body = (json.dumps(dict(run_id='a' * 32, mode=1, event='background_started')) + '\n').encode()
+        with tempfile.TemporaryDirectory() as directory:
+            value, actor, _, metadata = journal_fixture(directory, [body, body])
+            original = value.actual.side_effect
+            stats = iter([metadata(body).replace(' 100 200 200\n', ' 100 199 200\n'),
+                          metadata(body), metadata(body), metadata(body)])
+            value.actual.side_effect = lambda script, label: (next(stats) if label == 'focus-background-journal-stat'
+                                                               else original(script, label))
+            with patch.object(runtime.time, 'sleep'):
+                self.assertEqual(value.journal(actor), [json.loads(body)])
+            self.assertEqual(actor['journal_reads'][0]['pending_reason'], 'stat-or-content-changed')
+            self.assertEqual(len(actor['files']), 1)
+
+    def test_pending_tail_becoming_middle_requires_immediate_strict_complete_read(self):
+        body = (json.dumps(dict(run_id='a' * 32, mode=1, event='notification_initial')) + '\n').encode()
+        for last in (b'{', body):
+            with self.subTest(last=last), tempfile.TemporaryDirectory() as directory:
+                value, actor, paths, _ = journal_fixture(directory, [b'{', last], count=2)
+                original = value.actual.side_effect
+                listed = iter([paths[0], '\n'.join(paths)])
+                value.actual.side_effect = lambda script, label: (next(listed) if label == 'focus-background-journal-list'
+                                                                   else original(script, label))
+                with patch.object(runtime.time, 'sleep') as sleep:
+                    if last == b'{':
+                        with self.assertRaisesRegex(ValueError, 'incomplete'):
+                            value.journal(actor)
+                        self.assertEqual(actor['files'], {})
+                    else:
+                        self.assertEqual(value.journal(actor), [json.loads(body)])
+                    sleep.assert_not_called()
+                self.assertEqual(len(actor['journal_reads']), 2)
+
+    def test_journal_stable_partial_tail_has_fixed_deadline_and_retains_all_reads(self):
+        with tempfile.TemporaryDirectory() as directory:
+            value, actor, _, _ = journal_fixture(directory, [b'{'])
+            with patch.object(runtime.time, 'monotonic', side_effect=[10.0, 10.1, 12.1]), \
+                    patch.object(runtime.time, 'sleep'), self.assertRaisesRegex(ValueError, 'timed out'):
+                value.journal(actor)
+            self.assertEqual(len(actor['journal_reads']), 2)
+            self.assertEqual(actor['files'], {})
+            for read in actor['journal_reads']:
+                self.assertEqual(Path(read['path']).read_bytes(), b'{')
+
+    def test_journal_never_retries_middle_damage_or_complete_malformed_tail(self):
+        for body, count in [(b'{', 2), (b'{"run_id":\n', 1), (b'{"uid":1,"uid":2}\n', 1),
+                            (b'\xff\n', 1), (b'[]\n', 1)]:
+            with self.subTest(body=body, count=count), tempfile.TemporaryDirectory() as directory:
+                value, actor, _, _ = journal_fixture(directory, [body], count=count)
+                with patch.object(runtime.time, 'sleep') as sleep, self.assertRaises((ValueError, UnicodeError)):
+                    value.journal(actor)
+                sleep.assert_not_called()
+                self.assertEqual(len(actor['journal_reads']), 1)
+                self.assertEqual(actor['files'], {})
+
+    def test_journal_owner_and_session_failure_stay_fatal(self):
+        for uid, row in [(0, dict(run_id='a' * 32, mode=1)),
+                         (20010001, dict(run_id='b' * 32, mode=1)),
+                         (20010001, dict(run_id='a' * 32, mode=True)),
+                         (20010001, dict(run_id='a' * 32, mode=1, event='startup_failed'))]:
+            with self.subTest(uid=uid, row=row), tempfile.TemporaryDirectory() as directory:
+                body = (json.dumps(row) + '\n').encode()
+                value, actor, _, metadata = journal_fixture(directory, [body])
+                if uid == 0:
+                    value.actual.side_effect = iter(['/owned/audio-event-' + 'a' * 32 + '-mode1-background-000.json',
+                                                     metadata(body, uid=uid)])
+                with self.assertRaises(ValueError):
+                    value.journal(actor)
+                if uid == 0:
+                    value.command.assert_not_called()
+
+    def test_final_collect_refuses_unfinished_tail_and_rechecks_immutable_remote(self):
+        body = (json.dumps(dict(run_id='a' * 32, mode=1, event='background_stopped')) + '\n').encode()
+        with tempfile.TemporaryDirectory() as directory:
+            value, actor, _, _ = journal_fixture(directory, [body[:-1]])
+            with patch.object(runtime.time, 'sleep') as sleep, self.assertRaisesRegex(ValueError, 'incomplete'):
+                value.collect_actor(actor)
+            sleep.assert_not_called()
+            self.assertEqual(actor['files'], {})
+        with tempfile.TemporaryDirectory() as directory:
+            value, actor, paths, _ = journal_fixture(directory, [body])
+            self.assertEqual(value.journal(actor), [json.loads(body)])
+            original = value.actual.side_effect
+            def altered_remote(script, label):
+                if label == 'focus-private-stat-and-content':
+                    return '20010001 644 ' + str(len(body)) + '\n' + 'f' * 64 + '  ' + paths[0]
+                return original(script, label)
+            value.actual.side_effect = altered_remote
+            with self.assertRaisesRegex(ValueError, 'immutable focus evidence changed'):
+                value.collect_actor(actor)
+            self.assertEqual(Path(actor['files'][Path(paths[0]).name]['path']).read_bytes(), body)
+
     def test_ready_rejects_foreign_uid_nonce_and_nonrunning(self):
         good = ready()
         self.assertEqual(runtime.validate_ready(good, 'a' * 32, 'focus_begin', 20010001, True), good)
