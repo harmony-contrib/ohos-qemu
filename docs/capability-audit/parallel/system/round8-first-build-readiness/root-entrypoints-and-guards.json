@@ -1,0 +1,1095 @@
+{
+  "review_initial_root_commit": "afa564ae0f4a603d933f63e9cff78674ed8e3cbf",
+  "review_final_root_commit": "f2ddb5142274fd5328587a66c200bc300a0cf905",
+  "observed_at_utc": "2026-10-16T14:54:34.278531+00:00",
+  "main_repository": "/Volumes/PSSD/code/ohos-rs/ohos-qemu",
+  "files": {
+    "scripts/snapshot_build_inputs.py": {
+      "exists": true,
+      "sha256": "1f74f5e3162c64ebdf2e53e134ed4a10b64ecb75518ec9d8514d40e843f0f156",
+      "lines": 72,
+      "anchors": [
+        {
+          "line": 12,
+          "text": "INPUT_DIRECTORIES = (\"scripts\", \"patches\", \"ci/capability-audit\", \"ci/qemu-smoke\")"
+        },
+        {
+          "line": 13,
+          "text": "INPUT_FILES = ("
+        },
+        {
+          "line": 26,
+          "text": "        for directory in INPUT_DIRECTORIES"
+        },
+        {
+          "line": 31,
+          "text": "                  for name in INPUT_FILES if (root / name).is_file()})"
+        },
+        {
+          "line": 35,
+          "text": "def snapshot(source: Path, destination: Path) -> dict:"
+        },
+        {
+          "line": 36,
+          "text": "    source, destination = source.resolve(), destination.resolve()"
+        },
+        {
+          "line": 37,
+          "text": "    if destination == source or destination.is_relative_to(source):"
+        },
+        {
+          "line": 38,
+          "text": "        raise ValueError(\"build input snapshot must be outside the source repository\")"
+        },
+        {
+          "line": 39,
+          "text": "    if not destination.is_dir() or any(destination.iterdir()):"
+        },
+        {
+          "line": 40,
+          "text": "        raise ValueError(\"snapshot destination must be an existing empty directory\")"
+        },
+        {
+          "line": 42,
+          "text": "    for directory in INPUT_DIRECTORIES:"
+        },
+        {
+          "line": 44,
+          "text": "            shutil.copytree(source / directory, destination / directory,"
+        },
+        {
+          "line": 46,
+          "text": "    for name in INPUT_FILES:"
+        },
+        {
+          "line": 48,
+          "text": "            (destination / name).parent.mkdir(parents=True, exist_ok=True)"
+        },
+        {
+          "line": 49,
+          "text": "            shutil.copy2(source / name, destination / name)"
+        },
+        {
+          "line": 50,
+          "text": "    copied = digest_files(destination)"
+        },
+        {
+          "line": 59,
+          "text": "        \"tree_sha256\": hashlib.sha256(json.dumps(copied, sort_keys=True).encode()).hexdigest(),"
+        },
+        {
+          "line": 62,
+          "text": "    (destination / \"build-inputs.json\").write_text(json.dumps(document, indent=2) + \"\\n\", encoding=\"utf-8\")"
+        },
+        {
+          "line": 69,
+          "text": "    parser.add_argument(\"--destination\", type=Path, required=True)"
+        },
+        {
+          "line": 71,
+          "text": "    result = snapshot(args.source, args.destination)"
+        },
+        {
+          "line": 72,
+          "text": "    print(f\"frozen build inputs: {args.destination} sha256={result['tree_sha256']}\")"
+        }
+      ]
+    },
+    "scripts/run_2in1_full_build_docker.sh": {
+      "exists": true,
+      "sha256": "379082936f2070c414cee367717d2c06d7015b4bb233dcc95c7780afe1721523",
+      "lines": 528,
+      "anchors": [
+        {
+          "line": 23,
+          "text": "DEVICE_TYPE=\"${DEVICE_TYPE:-2in1}\""
+        },
+        {
+          "line": 80,
+          "text": "BUILD_ONLY_LOAD=\"${BUILD_ONLY_LOAD:-0}\""
+        },
+        {
+          "line": 82,
+          "text": "PREPARE_ONLY=\"${PREPARE_ONLY:-0}\""
+        },
+        {
+          "line": 83,
+          "text": "SOURCE_PREPARE_ONLY=\"${SOURCE_PREPARE_ONLY:-0}\""
+        },
+        {
+          "line": 84,
+          "text": "PRODUCTS=\"${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}\""
+        },
+        {
+          "line": 299,
+          "text": "    --mount \"type=volume,src=${DOCKER_SOURCE_VOLUME},dst=/target\" \\"
+        },
+        {
+          "line": 357,
+          "text": "echo \"DEVICE_TYPE=${DEVICE_TYPE}\""
+        },
+        {
+          "line": 358,
+          "text": "echo \"PRODUCTS=${PRODUCTS}\""
+        },
+        {
+          "line": 375,
+          "text": "echo \"BUILD_ONLY_LOAD=${BUILD_ONLY_LOAD}\""
+        },
+        {
+          "line": 377,
+          "text": "echo \"PREPARE_ONLY=${PREPARE_ONLY}\""
+        },
+        {
+          "line": 436,
+          "text": "BUILD_INPUT_ROOT=\"$(mktemp -d \"${CACHE_ROOT}/build-inputs/${DEVICE_TYPE}-XXXXXX\")\""
+        },
+        {
+          "line": 437,
+          "text": "python3 \"${SCRIPT_DIR}/snapshot_build_inputs.py\" \\"
+        },
+        {
+          "line": 438,
+          "text": "  --source \"${REPO_ROOT}\" --destination \"${BUILD_INPUT_ROOT}\""
+        },
+        {
+          "line": 468,
+          "text": "  -e DEVICE_TYPE=\"${DEVICE_TYPE}\" \\"
+        },
+        {
+          "line": 482,
+          "text": "  -e SOURCE_PREPARE_ONLY=\"${SOURCE_PREPARE_ONLY}\" \\"
+        },
+        {
+          "line": 495,
+          "text": "  -e BUILD_ONLY_LOAD=\"${BUILD_ONLY_LOAD}\" \\"
+        },
+        {
+          "line": 497,
+          "text": "  -e PREPARE_ONLY=\"${PREPARE_ONLY}\" \\"
+        },
+        {
+          "line": 519,
+          "text": "  --mount \"type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}\" \\"
+        },
+        {
+          "line": 520,
+          "text": "  --mount \"type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out\" \\"
+        },
+        {
+          "line": 521,
+          "text": "  -v \"${BUILD_INPUT_ROOT}:/work:ro\" \\"
+        }
+      ]
+    },
+    "scripts/build_standard_qemu_in_docker.sh": {
+      "exists": true,
+      "sha256": "62d6b21f6a17e3f045c497a8dec7c50c2b2aa91e16d63bc83aebc1e99914a604",
+      "lines": 3415,
+      "anchors": [
+        {
+          "line": 57,
+          "text": "  BUILD_ONLY_LOAD     Pass --build-only-load=true to build.sh, default: 0"
+        },
+        {
+          "line": 58,
+          "text": "  PREPARE_ONLY        Sync, patch, and validate the selected source products,"
+        },
+        {
+          "line": 445,
+          "text": "PREPARE_ONLY=\"${PREPARE_ONLY:-0}\""
+        },
+        {
+          "line": 446,
+          "text": "SOURCE_PREPARE_ONLY=\"${SOURCE_PREPARE_ONLY:-0}\""
+        },
+        {
+          "line": 447,
+          "text": "PATCH_COMPONENTS_ONLY=\"${PATCH_COMPONENTS_ONLY:-0}\""
+        },
+        {
+          "line": 517,
+          "text": "if [ \"${PREPARE_ONLY}\" != \"0\" ] && [ \"${PREPARE_ONLY}\" != \"1\" ]; then"
+        },
+        {
+          "line": 518,
+          "text": "  echo \"PREPARE_ONLY must be 0 or 1\" >&2"
+        },
+        {
+          "line": 521,
+          "text": "if [ \"${SOURCE_PREPARE_ONLY}\" != \"0\" ] && [ \"${SOURCE_PREPARE_ONLY}\" != \"1\" ]; then"
+        },
+        {
+          "line": 522,
+          "text": "  echo \"SOURCE_PREPARE_ONLY must be 0 or 1\" >&2"
+        },
+        {
+          "line": 525,
+          "text": "case \"${PATCH_COMPONENTS_ONLY}\" in 0|1) ;; *) echo 'PATCH_COMPONENTS_ONLY must be 0 or 1' >&2; exit 2 ;; esac"
+        },
+        {
+          "line": 1504,
+          "text": "build_product() {"
+        },
+        {
+          "line": 1573,
+          "text": "    --build-target images"
+        },
+        {
+          "line": 1605,
+          "text": "    \"${build_args[@]}\" --device-type default --build-only-load=true 2>&1 | tee \"${CACHE_ROOT}/logs/load_${product}_${DEVICE_TYPE}.log\""
+        },
+        {
+          "line": 1614,
+          "text": "    python3 \"${PATCH_ROOT}/lib/sensor_features.py\" \\"
+        },
+        {
+          "line": 1621,
+          "text": "    build_args+=(--device-type default --build-only-load=true)"
+        },
+        {
+          "line": 1623,
+          "text": "    build_args+=(--build-only-load=false)"
+        },
+        {
+          "line": 1635,
+          "text": "package_product() {"
+        },
+        {
+          "line": 2786,
+          "text": "  echo \"prepare only: ${PREPARE_ONLY}\""
+        },
+        {
+          "line": 2841,
+          "text": "  if [ \"${SOURCE_PREPARE_ONLY}\" = 1 ]; then"
+        },
+        {
+          "line": 2853,
+          "text": "  python3 \"${PATCH_ROOT}/common/third_party/mesa3d/llvm_backend/apply_backend.py\" \\"
+        },
+        {
+          "line": 2974,
+          "text": "  python3 \"${PATCH_ROOT}/common/third_party/mesa3d/llvm_backend/apply_backend.py\" \\"
+        },
+        {
+          "line": 2976,
+          "text": "    2>&1 | tee \"${CACHE_ROOT}/logs/apply_mesa_llvm_backend.log\""
+        },
+        {
+          "line": 3070,
+          "text": "  bash \"${PATCH_ROOT}/common/device/qemu/external_gnss/apply.sh\" --source-root \"${OHOS_ROOT}\" \\"
+        },
+        {
+          "line": 3071,
+          "text": "    2>&1 | tee \"${CACHE_ROOT}/logs/apply_qemu_external_gnss_component.log\""
+        },
+        {
+          "line": 3072,
+          "text": "  python3 \"${SCRIPT_DIR}/prepare_qemu_gnss_runtime.py\" --source-root \"${OHOS_ROOT}\" \\"
+        },
+        {
+          "line": 3073,
+          "text": "    2>&1 | tee \"${CACHE_ROOT}/logs/prepare_qemu_gnss_runtime.log\""
+        },
+        {
+          "line": 3340,
+          "text": "  bash \"${PATCH_ROOT}/common/drivers/peripheral/sensor/qemu_external/apply.sh\" --source-root \"${OHOS_ROOT}\" \\"
+        },
+        {
+          "line": 3342,
+          "text": "  bash \"${PATCH_ROOT}/common/base/msdp/device_status/sensor_input/apply.sh\" --source-root \"${OHOS_ROOT}\" \\"
+        },
+        {
+          "line": 3343,
+          "text": "    2>&1 | tee \"${CACHE_ROOT}/logs/apply_msdp_real_sensor_input_component.log\""
+        },
+        {
+          "line": 3345,
+          "text": "    python3 \"${SCRIPT_DIR}/prepare_qemu_sensor_runtime.py\" --source-root \"${OHOS_ROOT}\" \\"
+        },
+        {
+          "line": 3346,
+          "text": "      2>&1 | tee \"${CACHE_ROOT}/logs/prepare_qemu_sensor_runtime.log\""
+        },
+        {
+          "line": 3365,
+          "text": "  if [ \"${PATCH_COMPONENTS_ONLY}\" = 1 ]; then"
+        },
+        {
+          "line": 3385,
+          "text": "  if [ \"${SOURCE_PREPARE_ONLY}\" = 1 ]; then return 0; fi"
+        },
+        {
+          "line": 3388,
+          "text": "  if [ \"${PREPARE_ONLY}\" = \"1\" ]; then"
+        }
+      ]
+    },
+    "scripts/package_standard_qemu.sh": {
+      "exists": true,
+      "sha256": "07109650de99cd1d0d88b375f8eba639e872684461addd241007b2ad7236f226",
+      "lines": 3329,
+      "anchors": [
+        {
+          "line": 3128,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_mesa_llvm_image.py\" \\"
+        },
+        {
+          "line": 3139,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_qemu_runtime_assets_image.py\" \\"
+        },
+        {
+          "line": 3144,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_qemu_gnss_image.py\" \\"
+        },
+        {
+          "line": 3172,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_photos_provider_image.py\" \\"
+        },
+        {
+          "line": 3175,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_settings_provider_image.py\" \\"
+        },
+        {
+          "line": 3178,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_admin_provider_image.py\" \\"
+        },
+        {
+          "line": 3181,
+          "text": "    python3 \"${SCRIPT_DIR}/verify_mms_provider_image.py\" \\"
+        }
+      ]
+    },
+    "scripts/prepare_qemu_gnss_runtime.py": {
+      "exists": true,
+      "sha256": "75ee9aec5802bad1a60e1f341601f8fc8f4ad9663e25b8233386b169bdcb729f",
+      "lines": 133,
+      "anchors": [
+        {
+          "line": 18,
+          "text": "DIRECTORY = 'device/qemu/common/virt_full/qemu_gnss_runtime/'"
+        },
+        {
+          "line": 20,
+          "text": "DEPENDENCY = '    \"//device/qemu/common/virt_full/qemu_gnss_runtime:qemu_gnss_runtime\",\\n'"
+        },
+        {
+          "line": 32,
+          "text": "group(\"qemu_gnss_runtime\") {"
+        },
+        {
+          "line": 36,
+          "text": "    \"//device/qemu/common/virt_full/external_gnss:qemu_external_gnss\","
+        },
+        {
+          "line": 49,
+          "text": "    DIRECTORY + 'qemu_gnss.para': 'const.location.supl_mode=1\\n',"
+        },
+        {
+          "line": 52,
+          "text": "            'mkdir /dev/unix/socket/qemu_gnss 0700 location_host location_host',"
+        }
+      ]
+    },
+    "scripts/verify_qemu_gnss_image.py": {
+      "exists": true,
+      "sha256": "9c1c9824ca42ae739cd4e4df09e3ae6dd4280b23840094d62d5d543dfa10bda2",
+      "lines": 165,
+      "anchors": [
+        {
+          "line": 26,
+          "text": "LIBRARIES = {'provider.so': ('vendor', 'vendorGnssAdapter.so'),"
+        },
+        {
+          "line": 27,
+          "text": "             'bridge.so': ('vendor', 'libgnss_interface_service_2.0.z.so'),"
+        },
+        {
+          "line": 28,
+          "text": "             'service.so': ('system', 'liblbsservice_gnss.z.so')}"
+        },
+        {
+          "line": 29,
+          "text": "GRAPHS = {"
+        },
+        {
+          "line": 30,
+          "text": "    'obj/device/qemu/common/virt_full/external_gnss/qemu_external_gnss.ninja':"
+        },
+        {
+          "line": 35,
+          "text": "        ('/gnss_ability.o', '/gnss_event_callback.o'),"
+        },
+        {
+          "line": 75,
+          "text": "    for name, terms in GRAPHS.items():"
+        },
+        {
+          "line": 83,
+          "text": "                for name, (image, library) in LIBRARIES.items()}"
+        },
+        {
+          "line": 86,
+          "text": "    for name in LIBRARIES:"
+        },
+        {
+          "line": 87,
+          "text": "        elf(payloads[name], product, name == 'provider.so')"
+        },
+        {
+          "line": 98,
+          "text": "            set(value.get('GN_sha256', {})) != set(GRAPHS) or"
+        },
+        {
+          "line": 100,
+          "text": "            set(value.get('files_sha256', {})) != {*LIBRARIES, 'init.json', 'gnss.para'}):"
+        },
+        {
+          "line": 107,
+          "text": "    for name in LIBRARIES:"
+        },
+        {
+          "line": 108,
+          "text": "        elf(directory / name, product, name == 'provider.so')"
+        },
+        {
+          "line": 115,
+          "text": "              for name, (image, library) in LIBRARIES.items()}"
+        }
+      ]
+    },
+    "scripts/prepare_qemu_sensor_runtime.py": {
+      "exists": true,
+      "sha256": "6b81b09dc6f97477eaac4f665b57a2b60e1c08514bdb87ef4224d9f1704ba849",
+      "lines": 183,
+      "anchors": [
+        {
+          "line": 16,
+          "text": "ohos_prebuilt_etc(\"qemu_sensor_input_cfg\") {"
+        },
+        {
+          "line": 17,
+          "text": "  source = \"qemu_sensor_input.cfg\""
+        },
+        {
+          "line": 18,
+          "text": "  output = \"qemu_sensor_input.cfg\""
+        },
+        {
+          "line": 25,
+          "text": "DEPENDENCY = '    \":qemu_sensor_input_cfg\",\\n'"
+        },
+        {
+          "line": 52,
+          "text": "POLICY = 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/'"
+        },
+        {
+          "line": 54,
+          "text": "    'vendor/ohemu/virt/etc/qemu_sensor_input.cfg': json.dumps({'jobs': [{"
+        },
+        {
+          "line": 57,
+          "text": "            'mkdir /dev/unix/socket/qemu_sensor 0700 sensor_host sensor_host',"
+        },
+        {
+          "line": 58,
+          "text": "            'restorecon /dev/unix/socket/qemu_sensor']} ]}, indent=4) + '\\n',"
+        },
+        {
+          "line": 60,
+          "text": "type qemu_sensor_input_dir, dev_attr, file_attr;"
+        },
+        {
+          "line": 61,
+          "text": "type qemu_sensor_input_socket, dev_attr, file_attr;"
+        },
+        {
+          "line": 64,
+          "text": "/dev/unix/socket/qemu_sensor          -d u:object_r:qemu_sensor_input_dir:s0"
+        },
+        {
+          "line": 65,
+          "text": "/dev/unix/socket/qemu_sensor/input    -s u:object_r:qemu_sensor_input_socket:s0"
+        },
+        {
+          "line": 69,
+          "text": "type_transition init dev_unix_socket:dir qemu_sensor_input_dir \"qemu_sensor\";"
+        },
+        {
+          "line": 70,
+          "text": "type_transition sensor_host qemu_sensor_input_dir:sock_file qemu_sensor_input_socket \"input\";"
+        },
+        {
+          "line": 71,
+          "text": "allow init qemu_sensor_input_dir:dir { create getattr setattr search relabelto };"
+        },
+        {
+          "line": 72,
+          "text": "allow sensor_host qemu_sensor_input_dir:dir { getattr search write add_name remove_name };"
+        },
+        {
+          "line": 73,
+          "text": "allow sensor_host qemu_sensor_input_socket:sock_file { create getattr setattr write unlink };"
+        },
+        {
+          "line": 80,
+          "text": "    allow su qemu_sensor_input_dir:dir search;"
+        },
+        {
+          "line": 81,
+          "text": "    allow su qemu_sensor_input_socket:sock_file { getattr write };"
+        },
+        {
+          "line": 107,
+          "text": "    path.parent.mkdir(parents=True, exist_ok=True)"
+        }
+      ]
+    },
+    "scripts/verify_qemu_runtime_assets_image.py": {
+      "exists": true,
+      "sha256": "a9cf45ea094af3212c547e8ec614b9c000aea8401c57bd344629668cd72354a8",
+      "lines": 195,
+      "anchors": [
+        {
+          "line": 26,
+          "text": "from sensor_features import EXPECTED, validate as verify_features"
+        },
+        {
+          "line": 48,
+          "text": "             ROOT / 'patches/lib/sensor_features.py']"
+        },
+        {
+          "line": 59,
+          "text": "    if 'hdfVdiDesc' not in read_elf(path).defined:"
+        },
+        {
+          "line": 67,
+          "text": "    features = json.loads(regular(source / 'out/preloader' / product / 'features.json').read_text())['features']"
+        },
+        {
+          "line": 69,
+          "text": "    ninja = source / 'out' / product / 'obj/drivers/peripheral/sensor/hdi_impl/libhdi_sensor_impl.ninja'"
+        },
+        {
+          "line": 74,
+          "text": "    library = source / 'out' / product / 'packages/phone/vendor' / libdir / 'libhdi_sensor_impl.z.so'"
+        },
+        {
+          "line": 130,
+          "text": "        wanted = {'sensor.so': (vendor, tuple(p + '/' + libdir + '/libhdi_sensor_impl.z.so' for p in ('', '/vendor'))),"
+        }
+      ]
+    },
+    "patches/lib/sensor_features.py": {
+      "exists": true,
+      "sha256": "20c9ddc55addb1a4ed0b7cfbb804b36262933aae73995884d465618c06663eb7",
+      "lines": 27,
+      "anchors": [
+        {
+          "line": 7,
+          "text": "EXPECTED = {'drivers_peripheral_sensor_feature_community': True,"
+        },
+        {
+          "line": 8,
+          "text": "            'drivers_peripheral_sensor_feature_qemu_external': True,"
+        },
+        {
+          "line": 9,
+          "text": "            'device_status_sensor_enable': True, 'device_status_allow_mock_fallback': False}"
+        }
+      ]
+    },
+    "patches/phone/product_profile/apply.py": {
+      "exists": true,
+      "sha256": "df74de3dc0194ef792083f60458364e4c70d361d7b390bfad4aa94733488be92",
+      "lines": 436,
+      "anchors": [
+        {
+          "line": 247,
+          "text": "                \"drivers_peripheral_sensor_feature_community\": True,"
+        },
+        {
+          "line": 248,
+          "text": "                \"drivers_peripheral_sensor_feature_qemu_external\": True,"
+        },
+        {
+          "line": 251,
+          "text": "                \"device_status_sensor_enable\": True,"
+        },
+        {
+          "line": 252,
+          "text": "                \"device_status_allow_mock_fallback\": False,"
+        }
+      ]
+    },
+    "patches/common/device/qemu/external_gnss/files/BUILD.gn": {
+      "exists": true,
+      "sha256": "436e42030c3e582156b8f9e11a265b4e153890c2c72a4f5d7ed2907245175330",
+      "lines": 24,
+      "anchors": [
+        {
+          "line": 5,
+          "text": "ohos_shared_library(\"qemu_external_gnss\") {"
+        },
+        {
+          "line": 6,
+          "text": "  output_name = \"vendorGnssAdapter\""
+        },
+        {
+          "line": 9,
+          "text": "  output_extension = \"so\""
+        },
+        {
+          "line": 17,
+          "text": "    cfi = true"
+        },
+        {
+          "line": 18,
+          "text": "    cfi_cross_dso = true"
+        },
+        {
+          "line": 21,
+          "text": "  install_images = [ chipset_base_dir ]"
+        }
+      ]
+    },
+    "patches/common/applications/standard/contacts/source_provider/0001-build-fixed-real-provider-sources.patch": {
+      "exists": true,
+      "sha256": "8ec479dfa7fa8c96dbb13a51ce105ad4b497906032be49081d3940e14d6c3fe4",
+      "lines": 35,
+      "anchors": [
+        {
+          "line": 11,
+          "text": "+ohos_app(\"contacts_hap\") {"
+        },
+        {
+          "line": 13,
+          "text": "+  certificate_profile = \"signature/contacts.p7b\""
+        },
+        {
+          "line": 14,
+          "text": "+  hap_name = \"Contacts\""
+        }
+      ]
+    },
+    "patches/common/applications/standard/theme/source_provider/0001-build-fixed-real-provider-sources.patch": {
+      "exists": true,
+      "sha256": "69b364a9e0fc17750ffad0a35b3d26e11e6e1e2134a932a8bd9741a756f19dce",
+      "lines": 167,
+      "anchors": [
+        {
+          "line": 12,
+          "text": "+ohos_app(\"wallpaper_phone_hap\") {"
+        },
+        {
+          "line": 14,
+          "text": "+  certificate_profile = \"signature/wallpaper.p7b\""
+        },
+        {
+          "line": 15,
+          "text": "+  hap_name = \"Wallpaper\""
+        },
+        {
+          "line": 27,
+          "text": "+ohos_app(\"wallpaper_pad_hap\") {"
+        },
+        {
+          "line": 29,
+          "text": "+  certificate_profile = \"signature/wallpaper.p7b\""
+        },
+        {
+          "line": 30,
+          "text": "+  hap_name = \"Wallpaper\""
+        }
+      ]
+    },
+    "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md": {
+      "exists": true,
+      "sha256": "d1ebbe73a1e150de1cc144414bca357355d43dd87ddd10d6335dce1807318d36",
+      "lines": 56,
+      "anchors": [
+        {
+          "line": 1,
+          "text": "# Contacts / Theme packaging preparation, 2026-10-16"
+        },
+        {
+          "line": 4,
+          "text": "previous Settings/MMS business candidates or any shared HAP GN, signing,"
+        },
+        {
+          "line": 10,
+          "text": "Contacts revision `65de33df8d6d7aaa5797a5625ed0e5938e5cb050` already provides"
+        },
+        {
+          "line": 17,
+          "text": "`ContactsPickerSelect` targetUrl flow; final API26 caller/provider alignment,"
+        },
+        {
+          "line": 23,
+          "text": "Contacts retains the original seven module graph, 38 request permissions and"
+        },
+        {
+          "line": 24,
+          "text": "`com.ohos.security.pickersheet/pickersheetlibrary` external HSP dependency."
+        },
+        {
+          "line": 26,
+          "text": "signature must be checked rather than deleting its declaration. The original"
+        },
+        {
+          "line": 28,
+          "text": "must preserve that policy while integrating its exact OS signer and preinstall."
+        },
+        {
+          "line": 30,
+          "text": "Theme revision `a436a43f1c0948fa12df6d520ec695ae4388a057` has two real source"
+        },
+        {
+          "line": 33,
+          "text": "candidate exposes two GN targets without choosing either in the shared graph."
+        },
+        {
+          "line": 36,
+          "text": "Theme retains its original runtime-compatible/target 9 while compiling with"
+        },
+        {
+          "line": 41,
+          "text": "The expired Theme OS profile retains APL `system_basic` and restricted"
+        },
+        {
+          "line": 44,
+          "text": "`com.ohos.launcher/WallpaperExtAbility` when ThemeService is absent; the Theme"
+        },
+        {
+          "line": 54,
+          "text": "signing profiles, remain identical after applying the candidates. These checks"
+        },
+        {
+          "line": 56,
+          "text": "parent's system-signed representative ARM64 phone package and runtime gate."
+        }
+      ]
+    },
+    "ci/capability-audit/run_packaged_qemu_suite.py": {
+      "exists": true,
+      "sha256": "777302033a94bbb30993772c277aafa3e54dbd7f5b1ef4bb2c0bbfff4c271358",
+      "lines": 861,
+      "anchors": [
+        {
+          "line": 120,
+          "text": "            purpose='acceptance', wait_seconds=1800, stable_seconds=60,"
+        },
+        {
+          "line": 142,
+          "text": "            '--boot', work / 'boot/boot.json', '--output', work / 'power-suspend', '--hdc', hdc],"
+        },
+        {
+          "line": 144,
+          "text": "        check('power-suspend', work / 'power-suspend/evidence.json', [power_record])"
+        },
+        {
+          "line": 396,
+          "text": "                'typed-LazyColumn-native-scroll-reset-remove-and-recreate-stable-pixels',"
+        },
+        {
+          "line": 692,
+          "text": "        hitrace_record = command([sys.executable, Path(__file__).with_name('run_hitrace_diagnostic.py'),"
+        },
+        {
+          "line": 796,
+          "text": "            '--source', os.environ.get('OHOS_NATIVE_BINDINGS', str(ROOT.parent / 'ohos-native-bindings')),"
+        },
+        {
+          "line": 807,
+          "text": "        closure_record = command([sys.executable, Path(__file__).with_name('verify_gap_closure.py'),"
+        },
+        {
+          "line": 849,
+          "text": "def main():"
+        },
+        {
+          "line": 851,
+          "text": "    parser.add_argument('--package-archive', type=Path, required=True)"
+        },
+        {
+          "line": 853,
+          "text": "    parser.add_argument('--evidence-output', type=Path, required=True)"
+        }
+      ]
+    },
+    "ci/capability-audit/verify_gap_closure.py": {
+      "exists": true,
+      "sha256": "7ce8f003f94a14cf14f790c6034f6b2378958c4890786e486de61e0ac9a3cbde",
+      "lines": 1241,
+      "anchors": [
+        {
+          "line": 6,
+          "text": "gaps remain unresolved. The checked-in old ledger establishes requirements,"
+        },
+        {
+          "line": 113,
+          "text": "def behavior_results(runtime, boot_id, archive_sha, device_type=None):"
+        },
+        {
+          "line": 706,
+          "text": "                               'not_claimed': 'contacts_sync_storage_or_provider_backend'}"
+        },
+        {
+          "line": 717,
+          "text": "                    'not_claimed': 'contacts_database_sync_picker_provider_or_permission_behavior'}"
+        },
+        {
+          "line": 1212,
+          "text": "    unresolved = [{'id': key, 'requirement': row,"
+        },
+        {
+          "line": 1216,
+          "text": "        'status': 'fail' if unresolved else 'pass', 'device': args.device,"
+        },
+        {
+          "line": 1219,
+          "text": "        'expected_count': len(expected), 'closed_count': len(closed), 'closed': closed,"
+        },
+        {
+          "line": 1220,
+          "text": "        'unresolved': unresolved, 'excluded': ['ArkTS Static', 'CloudSync', 'imageGeneration'],"
+        },
+        {
+          "line": 1221,
+          "text": "        'original_expected_count': original_count, 'release_exclusions': exclusions,"
+        },
+        {
+          "line": 1236,
+          "text": "    print(json.dumps({key: result[key] for key in ('status', 'expected_count', 'closed_count')}))"
+        }
+      ]
+    },
+    "scripts/validate_packaged_qemu.sh": {
+      "exists": true,
+      "sha256": "011e480d53f4a9f6cf7445c46fd27152a25cdff572d61b098bcd14f190cf0204",
+      "lines": 26,
+      "anchors": [
+        {
+          "line": 8,
+          "text": "  environment_root=\"${QEMU_TEST_PYTHON_ENV:-${cache_root}/tools/qemu-runtime-validation-python}\""
+        },
+        {
+          "line": 17,
+          "text": "      echo 'incomplete validation Python environment; select a fresh QEMU_TEST_PYTHON_ENV' >&2; return 1;"
+        },
+        {
+          "line": 24,
+          "text": "  exec \"${python}\" \"${script_dir}/../ci/capability-audit/run_with_owned_hdc.py\" \"$@\""
+        }
+      ]
+    },
+    "scripts/verify_first_artifact_gate.py": {
+      "exists": true,
+      "sha256": "b26b6ee550a2d4dadb267e776dcab082cac699e7c4b18765a476c7cce1061136",
+      "lines": 562,
+      "anchors": [
+        {
+          "line": 555,
+          "text": "    parser.add_argument(\"--archive\", type=Path, required=True)"
+        },
+        {
+          "line": 556,
+          "text": "    parser.add_argument(\"--evidence\", type=Path, required=True)"
+        },
+        {
+          "line": 557,
+          "text": "    parser.add_argument(\"--repository\", type=Path, required=True)"
+        },
+        {
+          "line": 558,
+          "text": "    parser.add_argument(\"--product\", required=True)"
+        },
+        {
+          "line": 559,
+          "text": "    parser.add_argument(\"--device-type\", choices=(\"phone\", \"2in1\"), required=True)"
+        }
+      ]
+    },
+    "ci/capability-audit/run_hitrace_diagnostic.py": {
+      "exists": true,
+      "sha256": "7dc335bd0adf6882a2b46454a336883427dd3260efd6e6e0ad3f4ffdf1d8ade7",
+      "lines": 201,
+      "anchors": [
+        {
+          "line": 36,
+          "text": "from hitrace_failure_snapshot import capture as capture_failure"
+        },
+        {
+          "line": 131,
+          "text": "    reply = guest.shell('aa start -a EntryAbility -b ' + BUNDLE, 'launch-real-ordinary-app')"
+        },
+        {
+          "line": 133,
+          "text": "    deadline = time.monotonic() + 90"
+        },
+        {
+          "line": 138,
+          "text": "        if time.monotonic() >= deadline:"
+        },
+        {
+          "line": 139,
+          "text": "            raise ValueError('ordinary trace caller did not finish')"
+        },
+        {
+          "line": 158,
+          "text": "        report['failure_snapshot'] = capture_failure(guest.shell, remote)"
+        }
+      ]
+    },
+    "ci/capability-audit/hitrace_failure_snapshot.py": {
+      "exists": true,
+      "sha256": "39ed56562b411697469a6b2fecfc4194107994574715ff1fbbbca426f16c9f6e",
+      "lines": 31,
+      "anchors": [
+        {
+          "line": 5,
+          "text": "def capture(shell, remote):"
+        },
+        {
+          "line": 25,
+          "text": "            shell(script, 'failure-' + label)"
+        }
+      ]
+    },
+    "patches/common/third_party/mesa3d/llvm_backend/README.md": {
+      "exists": true,
+      "sha256": "a1d4019bcc7cee718430e2691a2e37d6c5b711d00d908c8744fc231bf01cf664",
+      "lines": 33,
+      "anchors": [
+        {
+          "line": 22,
+          "text": "The consumer enables real llvmpipe, retains softpipe, uses private static LLVM"
+        },
+        {
+          "line": 23,
+          "text": "and exports `mesa-llvm-build-provenance.json` beside its six libraries. Full"
+        },
+        {
+          "line": 24,
+          "text": "packages require `verify_mesa_llvm_image.py` to match all six actual image"
+        },
+        {
+          "line": 29,
+          "text": "These manifests explicitly have no runtime acceptance authority. The fresh"
+        },
+        {
+          "line": 32,
+          "text": "first-artifact behavior gate. Surfaceless EGL and QEMU user-mode diagnostics"
+        }
+      ]
+    },
+    "patches/common/third_party/mesa3d/llvm_backend/files/build_qemu_mesa_llvm.py": {
+      "exists": true,
+      "sha256": "3c2da47604fba575418051c2e1a6350c126a18531d7571f3db345c4ab6f43a6a",
+      "lines": 201,
+      "anchors": [
+        {
+          "line": 149,
+          "text": "        \"-Dgallium-drivers=swrast,virgl\", \"-Dvulkan-drivers=\", \"-Dgbm=enabled\","
+        },
+        {
+          "line": 151,
+          "text": "        \"-Dglx=disabled\", \"-Dtools=\", \"-Dllvm=enabled\", \"-Ddraw-use-llvm=true\","
+        },
+        {
+          "line": 162,
+          "text": "        \"llvm\", \"draw-use-llvm\", \"shared-llvm\", \"cpp_std\")}"
+        },
+        {
+          "line": 163,
+          "text": "    if selected != {\"llvm\": \"enabled\", \"draw-use-llvm\": True,"
+        },
+        {
+          "line": 183,
+          "text": "    if \"llvmpipe_create_screen\" not in symbols or \"tgsi_exec_machine_run\" not in symbols:"
+        },
+        {
+          "line": 184,
+          "text": "        raise ValueError(\"Mesa is missing llvmpipe or the software fallback\")"
+        }
+      ]
+    },
+    "scripts/verify_mesa_llvm_image.py": {
+      "exists": true,
+      "sha256": "408fb6b9c0cd633a4c6b7c54c2f1bd19eee694b74b4348ec46aec481ea670b6e",
+      "lines": 198,
+      "anchors": [
+        {
+          "line": 2,
+          "text": "\"\"\"Bind the six installed Mesa libraries to the current private LLVM recipe."
+        },
+        {
+          "line": 4,
+          "text": "This checks build provenance and image bytes. It never proves guest behavior."
+        },
+        {
+          "line": 21,
+          "text": "LIBRARIES = ("
+        },
+        {
+          "line": 61,
+          "text": "        raise ValueError(\"Mesa LLVM manifest differs from the current product/source recipe\")"
+        },
+        {
+          "line": 73,
+          "text": "            build.get(\"dependency\") != identity[\"recipe_sha256\"] or"
+        },
+        {
+          "line": 75,
+          "text": "            build.get(\"actual_options\") != expected_options or"
+        },
+        {
+          "line": 85,
+          "text": "    if set(inventory) != set(LIBRARIES):"
+        },
+        {
+          "line": 102,
+          "text": "        for name in LIBRARIES:"
+        },
+        {
+          "line": 121,
+          "text": "    inventory = {name: elf_record(source_build / name, product) for name in LIBRARIES}"
+        },
+        {
+          "line": 172,
+          "text": "              \"scope\": \"offline current Mesa/LLVM source provenance and six image libraries ONLY\","
+        }
+      ]
+    }
+  },
+  "literal_registration_search": {
+    "ci/capability-audit/run_packaged_qemu_suite.py": {
+      "behavior:msdp-device-status-mock-or-missing-clients": 0,
+      "behavior:location-provider-backends-missing": 0,
+      "behavior:contacts-picker-entrypoint-missing-phone": 0,
+      "behavior:wallpaper-ui-provider-missing": 0,
+      "qemu_gnss": 0,
+      "qemu_sensor": 0,
+      "addFusionFence": 0,
+      "msdp-device-status-mock-or-missing-clients": 0,
+      "location-provider-backends-missing": 0,
+      "contacts-picker-entrypoint-missing-phone": 0,
+      "wallpaper-ui-provider-missing": 0
+    },
+    "ci/capability-audit/verify_gap_closure.py": {
+      "behavior:msdp-device-status-mock-or-missing-clients": 0,
+      "behavior:location-provider-backends-missing": 0,
+      "behavior:contacts-picker-entrypoint-missing-phone": 0,
+      "behavior:wallpaper-ui-provider-missing": 0,
+      "qemu_gnss": 0,
+      "qemu_sensor": 0,
+      "addFusionFence": 0,
+      "msdp-device-status-mock-or-missing-clients": 0,
+      "location-provider-backends-missing": 0,
+      "contacts-picker-entrypoint-missing-phone": 0,
+      "wallpaper-ui-provider-missing": 0
+    }
+  },
+  "registration_search_limit": "Literal ID search plus direct review of ordinary suite calls and behavior_results; existing contacts export/collection proof explicitly excludes picker/provider/database behavior. No claim of auditing every unrelated gate. Both behavior-prefixed and bare IDs are counted. Existing sensor-health metadata is legacy permission declaration proof only, explicitly not physical sensor input or public MSDP backend.",
+  "bindings_checkout_exists": true
+}

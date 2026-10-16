@@ -1,0 +1,256 @@
+{
+  "agent": "system",
+  "round": 8,
+  "scope": "read_only_first_arm64_phone_full_build_readiness_and_R50_R51_failure_evidence_review",
+  "baseline_commit": "04fd21b93aac9ae575c14ef97d73af2f66ed2dba",
+  "reviewed_root_commit_initial": "afa564ae0f4a603d933f63e9cff78674ed8e3cbf",
+  "reviewed_root_commit_final": "f2ddb5142274fd5328587a66c200bc300a0cf905",
+  "status": "entrypoints_present_source_graph_stale_contacts_theme_and_formal_runtime_provider_wiring_incomplete_no_package_gate_claim",
+  "requirements_total": 10,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "upstream_targets": [
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+    "foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp",
+    "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp",
+    "drivers/peripheral/sensor/sensor.gni",
+    "drivers/peripheral/sensor/bundle.json",
+    "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+    "base/msdp/device_status/device_status.gni",
+    "base/msdp/device_status/bundle.json",
+    "base/msdp/device_status/services/BUILD.gn",
+    "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+    "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h",
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp"
+  ],
+  "upstream_targets_changed": [],
+  "requirements_review": {
+    "behavior:access-token-api26-kernel-abi": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "New packaged kernel/token UID/parent-child/permission allow-deny identity boundaries remain runtime work."
+      ]
+    },
+    "behavior:msdp-device-status-mock-or-missing-clients": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Existing candidate source/TU/link/mini-ext4 evidence is bounded. Fresh full GN/image, real HDF loaded VDI and public SensorAgent/MSDP challenge, permissions and lifecycle remain pending; external acceleration does not implement every multimodal client."
+      ]
+    },
+    "behavior:native-child-process-phone-boundary": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Actual candidate lifecycle TUs and host tests do not replace new-package disabled/enabled profile, AppMgr/AppSpawn IPC, identity, limits, transport and exit/recreate tests."
+      ]
+    },
+    "behavior:session-manager-profile-gap": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "New image SysCap/SceneBoard agreement and real session/window paths require stable RenderService and full packaged runtime."
+      ]
+    },
+    "behavior:calendar-lifecycle-device-difference": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Apps owns the actual editor/routing source changes. Final current HAP signature/BMS registration, public editor/reminder/calendar permissions and lifecycle require the new package; this review does not re-audit apps implementation."
+      ]
+    },
+    "behavior:device-attest-uninitialized": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Legitimate OEM identity/key provisioning and reachable attestation service remain external prerequisites; no fabricated credentials/ticket."
+      ]
+    },
+    "behavior:advertising-service-provider-missing": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Real signed provider/API/UI/JS service and real ad retrieval/render/callback behavior remain unclosed; names or synthetic data cannot supply it."
+      ]
+    },
+    "behavior:graphics3d-scene-manager-unavailable": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Actual product TUs passed previously; complete new package plugin initialization, valid Scene.load/render/destroy/recreate and retry require runtime."
+      ]
+    },
+    "behavior:security-guard-empty-model-config": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Meaningful real OEM risk model and collector/event/ACL contract plus live query/lifecycle validation remain prerequisites."
+      ]
+    },
+    "behavior:app-domain-verification-extension-missing": {
+      "status": "open_new_package_runtime_or_real_dependency_pending",
+      "round8_review_scope": "Carry-forward system requirement, no new all-source audit or closure; build/runtime implications only.",
+      "remaining": [
+        "Controlled genuine HTTP/HTTPS association, bundle signer matching/mismatch, cache/refresh and actual routing evidence remain required; optional library absence alone is not proof."
+      ]
+    }
+  },
+  "remaining_gaps": [
+    {
+      "id": "behavior:access-token-api26-kernel-abi",
+      "dependencies": [
+        "New packaged kernel/token UID/parent-child/permission allow-deny identity boundaries remain runtime work."
+      ]
+    },
+    {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "dependencies": [
+        "Existing candidate source/TU/link/mini-ext4 evidence is bounded. Fresh full GN/image, real HDF loaded VDI and public SensorAgent/MSDP challenge, permissions and lifecycle remain pending; external acceleration does not implement every multimodal client."
+      ]
+    },
+    {
+      "id": "behavior:native-child-process-phone-boundary",
+      "dependencies": [
+        "Actual candidate lifecycle TUs and host tests do not replace new-package disabled/enabled profile, AppMgr/AppSpawn IPC, identity, limits, transport and exit/recreate tests."
+      ]
+    },
+    {
+      "id": "behavior:session-manager-profile-gap",
+      "dependencies": [
+        "New image SysCap/SceneBoard agreement and real session/window paths require stable RenderService and full packaged runtime."
+      ]
+    },
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "dependencies": [
+        "Apps owns the actual editor/routing source changes. Final current HAP signature/BMS registration, public editor/reminder/calendar permissions and lifecycle require the new package; this review does not re-audit apps implementation."
+      ]
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "dependencies": [
+        "Legitimate OEM identity/key provisioning and reachable attestation service remain external prerequisites; no fabricated credentials/ticket."
+      ]
+    },
+    {
+      "id": "behavior:advertising-service-provider-missing",
+      "dependencies": [
+        "Real signed provider/API/UI/JS service and real ad retrieval/render/callback behavior remain unclosed; names or synthetic data cannot supply it."
+      ]
+    },
+    {
+      "id": "behavior:graphics3d-scene-manager-unavailable",
+      "dependencies": [
+        "Actual product TUs passed previously; complete new package plugin initialization, valid Scene.load/render/destroy/recreate and retry require runtime."
+      ]
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "dependencies": [
+        "Meaningful real OEM risk model and collector/event/ACL contract plus live query/lifecycle validation remain prerequisites."
+      ]
+    },
+    {
+      "id": "behavior:app-domain-verification-extension-missing",
+      "dependencies": [
+        "Controlled genuine HTTP/HTTPS association, bundle signer matching/mismatch, cache/refresh and actual routing evidence remain required; optional library absence alone is not proof."
+      ]
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "main",
+      "request": "Batch Contacts/Theme installer/shared GN selection, legal signing/HSP/ACL/preinstall/BMS/image guard, and actual wallpaper UI/native routing before final source freeze; do not equate renderer feature with picker/provider UI."
+    },
+    {
+      "owner": "main",
+      "request": "Register controlled real GNSS/Sensor public observers and Contacts/Wallpaper UI/permission checks plus strict closure verifiers in the full ordinary suite before freeze. Bind archive, acceptance boot and nonce; existing transport/host/QEMU-user proofs are insufficient."
+    },
+    {
+      "owner": "main",
+      "request": "Run the whole source plan, load feature checks, fresh GN/images graph for single ARM64 phone. Preserve all three actual GNSS DSO inputs/links and new sensor VDI objects/exports/features, actual init/policy and image-byte bindings; mixed old inspector out is not an artifact."
+    },
+    {
+      "owner": "main",
+      "request": "After all known source fixes/dependencies are batched, freeze/build/package exactly one representative ARM64 phone. Run full same-package same-boot runtime including no-input boot, suspend/wake RS stability and original ordinary HiTrace sequence. Preserve failures together and iterate representative only until full first-artifact gate passes before remaining five."
+    },
+    {
+      "owner": "main",
+      "request": "Resolve genuine remaining service prerequisites such as OEM attestation provisioning, ads provider and SecurityGuard model within the user completion scope; do not add fake success, credentials, broaden permissions or release exclusions."
+    }
+  ],
+  "tests": [
+    {
+      "name": "read_only_source_graph_and_staging_inventory",
+      "result": "23 precise existing/absent paths and four preloader feature values recorded; no build",
+      "evidence": "docs/capability-audit/parallel/system/round8-first-build-readiness/readonly-source-out.json"
+    },
+    {
+      "name": "existing_failure_and_candidate_evidence_integrity",
+      "result": "14 historical files and five candidate evidence files read/hashed; R50 aa start exit0 independently confirmed; no tests rerun",
+      "evidence": [
+        "docs/capability-audit/parallel/system/round8-first-build-readiness/historical-failures.json",
+        "docs/capability-audit/parallel/system/round8-first-build-readiness/prior-candidate-evidence.json"
+      ]
+    },
+    {
+      "name": "report_scope_and_json_check",
+      "result": "pass",
+      "details": "All written paths confined to this round8 directory; ten assigned requirement IDs appear exactly once in requirements_review and remaining_gaps; all JSON parsed; referenced actual file hashes recomputed; git diff --check."
+    }
+  ],
+  "resources": {
+    "heavy_lease_requested": false,
+    "heavy_tasks_started": 0,
+    "new_containers_started": 0,
+    "existing_inspector": "ohos-qemu-parallel-source-20261016-02",
+    "inspector_queries": "bounded read-only Python path/hash/features query",
+    "source_out_read_only": true,
+    "products_built": 0,
+    "guest_runs": 0,
+    "gn_or_ninja_runs": 0,
+    "permissions_changed": 0
+  },
+  "changed_files": [
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/README.md",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/historical-failures.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/prior-candidate-evidence.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/readonly-source-out.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/root-entrypoints-and-guards.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/result.json"
+  ],
+  "evidence_files": [
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/README.md",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/historical-failures.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/prior-candidate-evidence.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/readonly-source-out.json",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/root-entrypoints-and-guards.json"
+  ],
+  "evidence_sha256": {
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/readonly-source-out.json": "c4b9a1d82ef8ab1e78effac422b7059018a793850c04b5946ba578a5b99820b0",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/README.md": "268c098d72d05f420e64c2e6f95e9224747fd250592fbfc12ff7551cd3f73408",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/prior-candidate-evidence.json": "789bdda67193d0c22b9a19794c3d6096ed4e9af5aaae37e0f2ef6fedce5c22f4",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/historical-failures.json": "79aea9e43973f38f6329b3ad9c9472c9e4e012b67958ba0bf27589cc289c1143",
+    "docs/capability-audit/parallel/system/round8-first-build-readiness/root-entrypoints-and-guards.json": "4da95dbb58852c30b360bd1e32c8e493a513e5d10fd4d0e19de2a3163a98dbcc"
+  },
+  "readiness_classification": {
+    "already_wired_but_old_graph": "GNSS provider/runtime group, three-DSO verifier and sensor/MSDP source/features/runtime assets are wired in main; absent or stale in RO source/out.",
+    "missing_integration": "Contacts/Theme shared GN/build/sign/BMS/native UI routing and formal provider runtime challenge/closure registration.",
+    "candidate_not_runtime_closure": "Mesa LLVM consumer/link/render, sensor VDI link/ext4, GNSS two CFI DSOs and QEMU-user ABI tests.",
+    "historical_failures": "R50 ordinary caller completion timeout after successful aa start; R51 same-kernel RenderService PID restart. Neither closed."
+  }
+}
