@@ -79,6 +79,7 @@ def argv(name, plan, boot, archive, hdc, output, suite_evidence):
     command = [sys.executable, str(Path(__file__).with_name(module + '.py')),
         '--boot', str(boot), '--archive', str(archive), '--hdc', str(hdc), '--output', str(output)]
     for key, value in plan['families'][name].items(): command += ['--' + key, value]
+    if name == 'contacts-picker': command += ['--full-boundaries']
     if name == 'wallpaper': command += ['--suite-evidence', str(suite_evidence)]
     return command
 
@@ -100,7 +101,10 @@ def verify_family(name, path, archive, environment):
     # Every family rechecks signatures, raw observations and source/build inputs.
     # A hash-consistent invented outer status is never a behavior proof.
     module = importlib.import_module(FAMILIES[name][0])
-    return module.verify_evidence(path, archive, boot)
+    result = module.verify_evidence(path, archive, boot)
+    if name == 'contacts-picker' and (not isinstance(result, dict) or result.get('full_boundaries_verified') is not True):
+        raise ValueError('actual Contacts deadline/navigation boundary observations are incomplete')
+    return result
 
 
 def verified_closures(name, evidence, archive, environment):
@@ -109,7 +113,7 @@ def verified_closures(name, evidence, archive, environment):
     # GNSS/accelerometer/public still covers a subset of the broad original
     # MSDP finding. It must never close missing clients or other modalities.
     identifiers = {'contacts-picker': ('behavior:contacts-picker-entrypoint-missing-phone',),
-                   'wallpaper': ('behavior:wallpaper-ui-provider-missing',), 'external-inputs': ()}[name]
+                   'wallpaper': (), 'external-inputs': ()}[name]
     return {identifier: {'evidence': str(evidence), 'sha256': digest(evidence),
         'verifier': FAMILIES[name][0] + '.verify_evidence',
         'not_claimed': 'unrelated providers, APIs or broad MSDP client completion'} for identifier in identifiers}

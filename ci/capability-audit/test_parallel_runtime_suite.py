@@ -80,6 +80,14 @@ class ParallelRuntimeSuiteTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'raw session'): suite.verify_family('contacts-picker', path, self.archive, self.env)
         verifier.assert_called_once_with(path, self.archive, self.boot_dir / 'contacts-picker-boot.json')
 
+    def test_partial_contacts_results_cannot_satisfy_complete_boundary_gate(self):
+        path = self.result('contacts-picker')
+        for partial in ({}, {'full_boundaries_verified': False}, None):
+            with patch.object(suite.importlib, 'import_module', return_value=types.SimpleNamespace(
+                    verify_evidence=Mock(return_value=partial))):
+                with self.assertRaisesRegex(ValueError, 'deadline/navigation'):
+                    suite.verify_family('contacts-picker', path, self.archive, self.env)
+
     def test_matching_boot_id_cannot_hide_replaced_VM_or_failed_cleanup(self):
         path = self.result('external-inputs')
         for changed in (dict(self.env, qemu_pid=1000), dict(self.env, target='127.0.0.1:5678')):

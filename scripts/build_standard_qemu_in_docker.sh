@@ -1627,10 +1627,13 @@ PY
   fi
   if [ "${BUILD_ONLY_LOAD}" != "1" ] && { [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; }; then
     python3 "${SCRIPT_DIR}/qemu_msdp_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
+    python3 "${SCRIPT_DIR}/qemu_wallpaper_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
   fi
   "${build_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
   if [ "${BUILD_ONLY_LOAD}" != "1" ] && { [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; }; then
     python3 "${SCRIPT_DIR}/qemu_msdp_build_witness.py" finish --source-root "${OHOS_ROOT}" --product "${product}" \
+      --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
+    python3 "${SCRIPT_DIR}/qemu_wallpaper_build_witness.py" finish --source-root "${OHOS_ROOT}" --product "${product}" \
       --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
   fi
   if [ "${DEVICE_TYPE}" = "phone" ] || [ "${DEVICE_TYPE}" = "2in1" ]; then

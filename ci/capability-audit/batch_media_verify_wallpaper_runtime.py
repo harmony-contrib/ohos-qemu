@@ -314,7 +314,7 @@ def photos_provider(dump, host):
 
 def layout_transition_unavailable(argv, raw):
     """Only GuestUi's exact window-enumeration retry, never a failed action."""
-    if len(argv) < 5 or argv[3] != 'shell': return False
+    if len(argv) != 5 or argv[3] != 'shell': return False
     markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
     if len(markers) != 1: return False
     marker = markers[0]

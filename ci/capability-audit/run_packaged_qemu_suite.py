@@ -199,7 +199,7 @@ def run(args):
                         if not evidence.is_file():
                             raise ValueError('capability child cleanup evidence missing; stop batch: ' + family)
                         child = json.loads(evidence.read_text())
-                        if child.get('cleanup_complete') is not True or child.get('cleanup_errors'):
+                        if child.get('cleanup_complete') is not True or child.get('cleanup_errors') != []:
                             raise ValueError('owned capability cleanup failed; stop batch: ' + family)
                 with independent_probe(report, family, capability_health, save):
                     if capability_plan is None:

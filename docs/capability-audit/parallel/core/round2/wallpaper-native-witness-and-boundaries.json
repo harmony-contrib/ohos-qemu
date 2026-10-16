@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scope": "root build/image witness and capability acceptance wiring ONLY NOT actual native build, package or guest acceptance",
+  "files_sha256": {
+    "scripts/qemu_wallpaper_build_witness.py": "ba51be2ea7118be55eea18bfb56971435007402a65d1ccedd9339059773cefd6",
+    "ci/capability-audit/test_qemu_wallpaper_build_witness.py": "3cc4db24154fd5fd4a7b38394b358991c425c69ed9c56664ab7248bbc0b7113f",
+    "scripts/build_standard_qemu_in_docker.sh": "15e5b243e9fa7ca389c6c72a21cbe0360d5524d97b09597eb33851130809f6b1",
+    "scripts/package_standard_qemu.sh": "746b3ff3359cd78fda0344bb8cc95a7dd80aca3f0cb78693438c8ab25deadc96",
+    "scripts/verify_device_type_package.sh": "5ed089e0d63a794cf008a5fa8e38a5173509424045fb45dfb7c1e2be7fc11282",
+    "ci/capability-audit/parallel_runtime_suite.py": "2d5ff6e0a2013db8803c10a9a1ffa466e328b28d76e50504eeaed300e0d75e11",
+    "ci/capability-audit/run_packaged_qemu_suite.py": "38d4c6f0c793b9b25948fef2ab3be2acf593bd34cb7e06e991e467ca61a6536a",
+    "ci/capability-audit/batch_media_verify_wallpaper_runtime.py": "a4b508d076147696115dfe12061ed61de55b9837525001f8282fa6801b44a5f2",
+    "ci/capability-audit/test_parallel_runtime_suite.py": "7a7ff42880edd39c4fa9a0628de74c2b03082c106b5f0c42e9568e3913c3fe86"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "accepted_packages": 0,
+  "remaining_other_packages_started": 0,
+  "wallpaper_native_contract": [
+    "fixed complete 4-source composition",
+    "actual selected theme_service=false GN query argv/raw bytes",
+    "both current CXX source/object edges and service SOLINK",
+    "effective final cross-DSO CFI vcall/icall, LTO, no exceptions and no RTTI",
+    "five owned build outputs preserved and rebuilt after preparation",
+    "exact staged and linked DSO, full ELF program headers and __cfi_check",
+    "package six raw provenance payloads and unique system.img DSO hash"
+  ],
+  "independent_review_fixes": [
+    "ordered effective compiler flags reject trailing protection disable",
+    "GN false belongs to unique theme_service argument block and exact source/product query",
+    "Contacts full_boundaries flag and independent full_boundaries_verified true",
+    "missing/None/object cleanup_errors cannot certify guest reuse",
+    "Wallpaper ledger closure remains disabled pending native and actual AMS proof"
+  ],
+  "host_checks": [
+    {
+      "path": ".tmp/parallel-capability-20261016/new-family-and-wallpaper-witness-02.log",
+      "sha256": "336882305e5077e1b046a3577580a72cbfaa95c84327909a1316b71bc56b45ee",
+      "tests": 70,
+      "status": "pass"
+    },
+    {
+      "path": ".tmp/parallel-capability-20261016/apps-full-boundaries-integrated-01.log",
+      "sha256": "2aee615d9d9cc625950a72af93d448b76537bc828badffc130f5f40848056996",
+      "status": "pass"
+    }
+  ],
+  "runtime_remaining": [
+    "new full product build and package",
+    "actual Contacts 600000ms deadline and all navigation/CRUD/permission cases",
+    "actual wallpaper double change, cancellation, denied caller, both defaults, actual SERVICE connection and complete cleanup",
+    "actual public GNSS/accelerometer/still two generation input and ownership/cleanup",
+    "all other full-suite gates and known R50/R51 regression collection"
+  ]
+}
