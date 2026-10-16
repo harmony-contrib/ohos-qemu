@@ -1,0 +1,511 @@
+{
+  "agent": "system",
+  "round": 6,
+  "scope": "actual_OHOS_ARM64_QEMU_user_public_vendor_ABI_positive_cross_DSO_CFI_consumer_only",
+  "baseline_commit": "4288e492a7ef887541e68233cfcfac47c5c77d7d",
+  "status": "actual_ohos_qemu_user_abi_cfi_positive_calls_passed_new_packaged_guest_pending",
+  "requirements_total": 10,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "upstream_targets": [
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+    "foundation/ability/ability_runtime/frameworks/native/child_process/include/native_child_callback.h",
+    "foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp",
+    "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp",
+    "drivers/peripheral/sensor/sensor.gni",
+    "drivers/peripheral/sensor/bundle.json",
+    "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+    "base/msdp/device_status/device_status.gni",
+    "base/msdp/device_status/bundle.json",
+    "base/msdp/device_status/services/BUILD.gn",
+    "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+    "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h",
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp"
+  ],
+  "upstream_targets_changed": [],
+  "changed_files": [
+    "docs/capability-audit/parallel/system/round6-ohos-abi/README.md",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-compile.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-consumer.elf.txt.gz.b64",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-driver.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-link.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-stderr.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-stdout.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-version.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-result.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-runtime-closure.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-wire-inputs.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-compile.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-consumer.disassembly.txt",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-consumer.elf.txt.gz.b64",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-driver.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-link.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-qemu-stderr.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-qemu-stdout.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-qemu-version.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-result.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-runtime-closure.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-wire-inputs.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/candidate01-source-recovery.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/candidate02-freeze.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/container-create.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/container-inspect.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/container-removal.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/freeze.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/independent-checks.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/private-artifacts.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/r52-real-product-links.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/resource-final.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/result.json",
+    "patches/common/drivers/peripheral/gnss/qemu_provider/tests/README.md",
+    "patches/common/drivers/peripheral/gnss/qemu_provider/tests/ohos_abi_consumer.cpp",
+    "patches/common/drivers/peripheral/gnss/qemu_provider/tests/validate_ohos_abi.py"
+  ],
+  "requirements_review": {
+    "behavior:access-token-api26-kernel-abi": {
+      "status": "open_runtime_identity_proof_pending",
+      "fixed_source_findings": [
+        "AppSpawn SetUserId is a real implementation and SetUidGid calls it before setresuid in the baseline; do not re-fix the old weak success stub.",
+        "SpmGetVersion clears the version and propagates ioctl errno on failure; the prior SPM handshake repair is present."
+      ],
+      "source_paths": [
+        "base/startup/appspawn/modules/common/appspawn_common.c",
+        "base/security/access_token/interfaces/innerkits/token_setproc/src/spm_setproc.c"
+      ],
+      "remaining": [
+        "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+        "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+      ],
+      "action": "No additional kernel/token identity patch guessed from stale evidence."
+    },
+    "behavior:msdp-device-status-mock-or-missing-clients": {
+      "status": "candidate_real_external_sensor_input_and_truthful_msdp_boundaries_host_verified_runtime_pending",
+      "fixed_source_findings": [
+        "InitMsdpImpl first tries sensor HDI, then sensor-enabled algorithm, then explicitly falls back to MockHandle.",
+        "The tree contains real devicestatus_algo sources for absolute-still/horizontal/vertical and sensor callback integration; existence alone does not show QEMU runtime input.",
+        "Sensor HDI V3 service tries libhdi_product_sensor_impl.z.so then libhdi_sensor_impl.z.so, validates VDI version 1 and calls its Init/enumeration; sensor_host has UID3033 and supplementary GIDs3033/3066.",
+        "SensorAgent accelerometer payload is exactly three float32 axes in m/s^2. Existing MSDP algorithms already transform x=data.y/y=data.x/z=-data.z and reject magnitude above160.",
+        "Actual sensor callback previously accepted NaN/wrong-type/short payloads and unbounded pending events, and leaked subscription after SetBatch/Activate failure."
+      ],
+      "source_paths": [
+        "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+        "base/msdp/device_status/libs/BUILD.gn",
+        "drivers/peripheral/sensor/sensor.gni",
+        "drivers/peripheral/sensor/bundle.json",
+        "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+        "base/msdp/device_status/device_status.gni",
+        "base/msdp/device_status/bundle.json",
+        "base/msdp/device_status/services/BUILD.gn",
+        "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+        "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp"
+      ],
+      "remaining": [
+        "Main must install/link the actual VDI, enable drivers_peripheral_sensor_feature_qemu_external and sensor community packaging, disable device_status_allow_mock_fallback, retain real sensor clients, and create a dedicated 0700 sensor_host directory plus narrow SELinux socket access before host startup.",
+        "Need same newly packaged ARM64 phone Sensor API observations matched to a fresh externally chosen acceleration challenge through actual loaded VDI -> Sensor HDI -> SensorAgent -> real MSDP algorithms; transport send/host tests are insufficient.",
+        "Need all declared MSDP/multimodal clients/capabilities: this batch implements only external acceleration and preserves unsupported other types as errors. Absolute-still/horizontal/vertical simultaneous subscriptions, transition, permissions, disable/restart/worker-semaphore lifecycle and no-old-event behavior remain runtime requirements."
+      ],
+      "action": "Round 3 adds opt-in actual externally supplied accelerometer VDI using existing Sensor HDI/SensorAgent delivery, authenticated Unix sessions and bounded lifecycle; adds QEMU-selectable no-MockHandle fallback, real event validation, queue bound and partial-registration rollback. No sensor events are produced without the external source. See round3-sensor/result.json."
+    },
+    "behavior:native-child-process-phone-boundary": {
+      "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+      "fixed_source_findings": [
+        "Both Create entrypoints retain the startup callback after dispatch; synchronous terminal notification can remove nothing and then be retained forever.",
+        "Null child/proxy allocation failure do not release retention consistently; unsynchronized callback_ permits reentrant or concurrent duplicate delivery.",
+        "SDK declares StartMode as export const enum; missing NAPI runtime enum object alone is not sufficient failure evidence. Existing typed const-enum compilation is the relevant boundary.",
+        "Main reports full actual child product TU compilation passes for the round-1 repair; final linking and newly packaged IPC/lifecycle/identity validation remain pending."
+      ],
+      "source_paths": [
+        "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+        "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+        "foundation/ability/ability_runtime/frameworks/js/napi/js_child_process_manager/js_child_process_manager.cpp",
+        "interface/sdk-js/api/@ohos.app.ability.childProcessManager.d.ts"
+      ],
+      "action": "Added 0004 terminal callback lifecycle patch: retain before dispatch, clean immediate failure, take callback once under a short mutex, release retained reference and hold a local strong reference while calling user code outside locks. Invalid child/proxy failures truthfully return NCP_ERR_INTERNAL once.",
+      "remaining": [
+        "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+        "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+      ]
+    },
+    "behavior:session-manager-profile-gap": {
+      "status": "open_profile_and_sceneboard_runtime_pending",
+      "fixed_source_findings": [
+        "Pinned window_manager bundle declares SessionManager=false and includes scene/session/screen-session manager libraries.",
+        "Repository baseline already selects real SceneBoard implementation/profile through patches/lib/graphics_features.py and phone/2in1 product adapters."
+      ],
+      "source_paths": [
+        "foundation/window/window_manager/bundle.json"
+      ],
+      "remaining": [
+        "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+        "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+      ],
+      "action": "Avoided a duplicate profile declaration-only patch and avoided the main-agent RenderService ownership."
+    },
+    "behavior:calendar-lifecycle-device-difference": {
+      "status": "open_provider_ui_and_packaged_runtime_pending",
+      "fixed_source_findings": [
+        "Fixed calendar source actually declares calendardata_whole and ReminderCallbackExtAbility with specific whole-calendar and update-rrule permissions.",
+        "Native editEvent still explicitly targets missing EditorUIExtensionAbility; ReminderAgentHelper targets com.ohos.calendar.",
+        "The baseline has source-provider HAP/signature preparation; old prebuilt absence must not be re-repaired by fabricating a provider."
+      ],
+      "source_paths": [
+        "applications/standard/calendardata/entry/src/main/module.json5",
+        "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+        "applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets"
+      ],
+      "remaining": [
+        "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+        "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+      ],
+      "action": "Calendar provider, actual Editor UI and app routing implementation are exclusively apps-agent owned in the active parent batch. This group avoids calendar changes; final HAP registration and packaged lifecycle evidence remain pending."
+    },
+    "behavior:device-attest-uninitialized": {
+      "status": "open_oem_provisioning_dependency",
+      "fixed_source_findings": [
+        "OEMGetProductId and OEMGetProductKey have intentionally empty product ID/key buffers in the fixed OEM adapter."
+      ],
+      "source_paths": [
+        "test/xts/device_attest/services/oem_adapter/src/device_attest_oem_adapter.c"
+      ],
+      "remaining": [
+        "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+        "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+      ],
+      "action": "No fabricated credentials, success result or ticket introduced."
+    },
+    "behavior:advertising-service-provider-missing": {
+      "status": "open_real_ad_provider_dependency",
+      "fixed_source_findings": [
+        "Fixed ads config targets com.samples.AdsServiceDemo/AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService.",
+        "AdLoadService additionally requires providerApiAbilityName before connecting, and the shipped config omits that key."
+      ],
+      "source_paths": [
+        "domains/advertising/advertising/frameworks/js/napi/ads/resource/ad_service_config.json",
+        "domains/advertising/advertising/frameworks/js/napi/ads/src/ad_load_service.cpp"
+      ],
+      "remaining": [
+        "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+        "Adding a name or returning synthetic ad data alone would not repair this capability."
+      ],
+      "action": "No fictional provider configuration or mock ad service added."
+    },
+    "behavior:graphics3d-scene-manager-unavailable": {
+      "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
+      "fixed_source_findings": [
+        "Scene.load failure maps to RenderContextJS::CreateScene line 881: CreateSceneManager(uri) returns null before scene creation.",
+        "Public module/library presence is not proof the META scene plugin registry, task queues, renderer and scene importer initialized."
+      ],
+      "source_paths": [
+        "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp"
+      ],
+      "remaining": [
+        "Main reports all actual ARM64 product TUs including split-LTO modules pass for the round-2 change; final linking and a newly packaged runtime path remain pending.",
+        "Need actual Scene.load/create/render/destroy/recreate with a valid asset, plugin load/retry diagnostics and stable RenderService/software-render context from the new package."
+      ],
+      "action": "Round 2 repairs actual engine/plugin load and retry state, truthful complete initialization, partial object rollback and JS queue lifetime; see round2-graphics3d/result.json. This does not yet prove the original guest failure fully resolved."
+    },
+    "behavior:security-guard-empty-model-config": {
+      "status": "open_real_risk_model_dependency",
+      "fixed_source_findings": [
+        "Fixed OEM security_guard_model.cfg is exactly an empty modelcfg array.",
+        "Framework model configuration parser caches supplied model IDs and associated event lists; no actual OEM risk model is supplied by the current config."
+      ],
+      "source_paths": [
+        "base/security/security_guard/oem_property/hos/security_guard_model.cfg"
+      ],
+      "remaining": [
+        "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+        "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+      ],
+      "action": "No invented model IDs, fake score or permission relaxation introduced."
+    },
+    "behavior:app-domain-verification-extension-missing": {
+      "status": "open_real_verification_routing_evidence_pending",
+      "fixed_source_findings": [
+        "CompleteVerifyRefresh and ExecuteVerifyTask already fall back to the real VerifyTask path on E_EXTENSIONS_LIB_NOT_FOUND.",
+        "ConvertToExplicitWant fallback constructs an empty TargetInfo and invokes OnConvert(0,...); optional extension absence alone is not proof all verification is broken."
+      ],
+      "source_paths": [
+        "foundation/bundlemanager/app_domain_verify/services/src/agent/core/app_domain_verify_agent_service.cpp"
+      ],
+      "remaining": [
+        "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+        "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+      ],
+      "action": "No optional-library dependency fabricated and no trust/signature rule weakened."
+    }
+  },
+  "remaining_gaps": [
+    {
+      "id": "behavior:access-token-api26-kernel-abi",
+      "status": "open_runtime_identity_proof_pending",
+      "dependencies": [
+        "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+        "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+      ]
+    },
+    {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "status": "candidate_real_external_sensor_input_and_truthful_msdp_boundaries_host_verified_runtime_pending",
+      "dependencies": [
+        "Main must install/link the actual VDI, enable drivers_peripheral_sensor_feature_qemu_external and sensor community packaging, disable device_status_allow_mock_fallback, retain real sensor clients, and create a dedicated 0700 sensor_host directory plus narrow SELinux socket access before host startup.",
+        "Need same newly packaged ARM64 phone Sensor API observations matched to a fresh externally chosen acceleration challenge through actual loaded VDI -> Sensor HDI -> SensorAgent -> real MSDP algorithms; transport send/host tests are insufficient.",
+        "Need all declared MSDP/multimodal clients/capabilities: this batch implements only external acceleration and preserves unsupported other types as errors. Absolute-still/horizontal/vertical simultaneous subscriptions, transition, permissions, disable/restart/worker-semaphore lifecycle and no-old-event behavior remain runtime requirements."
+      ]
+    },
+    {
+      "id": "behavior:native-child-process-phone-boundary",
+      "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+      "dependencies": [
+        "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+        "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+      ]
+    },
+    {
+      "id": "behavior:session-manager-profile-gap",
+      "status": "open_profile_and_sceneboard_runtime_pending",
+      "dependencies": [
+        "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+        "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+      ]
+    },
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "status": "open_provider_ui_and_packaged_runtime_pending",
+      "dependencies": [
+        "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+        "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+      ]
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "status": "open_oem_provisioning_dependency",
+      "dependencies": [
+        "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+        "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+      ]
+    },
+    {
+      "id": "behavior:advertising-service-provider-missing",
+      "status": "open_real_ad_provider_dependency",
+      "dependencies": [
+        "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+        "Adding a name or returning synthetic ad data alone would not repair this capability."
+      ]
+    },
+    {
+      "id": "behavior:graphics3d-scene-manager-unavailable",
+      "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
+      "dependencies": [
+        "Main reports all actual ARM64 product TUs including split-LTO modules pass for the round-2 change; final linking and a newly packaged runtime path remain pending.",
+        "Need actual Scene.load/create/render/destroy/recreate with a valid asset, plugin load/retry diagnostics and stable RenderService/software-render context from the new package."
+      ]
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "status": "open_real_risk_model_dependency",
+      "dependencies": [
+        "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+        "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+      ]
+    },
+    {
+      "id": "behavior:app-domain-verification-extension-missing",
+      "status": "open_real_verification_routing_evidence_pending",
+      "dependencies": [
+        "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+        "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "command": "validate_ohos_abi.py --output /work/attempt01; unchanged real R52 DSOs and actual source headers",
+      "result": "source guards, 13 genuine ARM64 runtime dependencies, full original OHOS product compiler/CFI/LTO flags and consumer link PASS; runtime exit1 due new consumer ordering error, preserved below",
+      "evidence": "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-result.json"
+    },
+    {
+      "command": "validate_ohos_abi.py --output /work/attempt02",
+      "result": "same unchanged R52 product DSOs; actual OHOS ARM64 consumer compile/link PASS with empty logs; QEMU-user 6.2 exit0 in 1.613073s; real vendor data ABI, generated public configuration/normal start/normal stop, typed two-generation callbacks, callback-reentrant cleanup, actual unload/reload, old nonce rejection/reconnect and no-input observations PASS",
+      "evidence": "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-result.json"
+    },
+    {
+      "command": "independent host parsing of raw stdout/strace/input frames, immutable hashes and llvm-objdump actual consumer",
+      "result": "2 provider opens and 2 corresponding 45056-byte munmaps, 2 expected external-vector callbacks with increasing UTC/boot ns, 3 distinct nonces and old-frame peer EOF, final input endpoint absent; true consumer __cfi_check and 12 static __cfi_slowpath callsites; no deliberate wrong-type CFI negative test",
+      "evidence": "docs/capability-audit/parallel/system/round6-ohos-abi/independent-checks.json"
+    }
+  ],
+  "failed_attempts": [
+    {
+      "attempt": "attempt01",
+      "exit_code": 1,
+      "elapsed_seconds": 0.39774513244628906,
+      "stdout_stage": "FAIL stage=public-config",
+      "cause": "New consumer called public SetGnssConfigPara before vendor enable. Actual provider Configure calls SetBatch, which truthfully fails while input is not running. This explanation comes from the existing fixed source; the first consumer did not print the numeric return. No product source/ABI/runtime was changed.",
+      "batch_test_repairs": [
+        "Enable before public configuration, including after reload",
+        "Use actual product SOCK_STREAM transport with complete hello reads",
+        "After old nonce rejection, require EOF and reconnect for a fresh nonce before new frame",
+        "Accept only an already correct private 1022:1022/0700 directory and no existing endpoint",
+        "Wait for actual retiring-session completion before trying reloaded table"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-stdout.log",
+        "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-stderr.log"
+      ]
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "main",
+      "request": "Use the retained actual OHOS consumer as an additional guest diagnostic if useful. Product DSOs and their CFI/LTO settings were untouched. Consumer binary SHA256 a0c08e06103cab0a46e1a3647e49ad2a7a2685cd0751978fb8c35fbaeb81ed28 is retained under the private attempt02 directory. This positive QEMU-user ABI/CFI evidence does not replace booting and validating the newly packaged representative artifact."
+    },
+    {
+      "owner": "main",
+      "request": "Verify actual GN selection/installation, namespace loading and real location_host UID/GID1022/domain, init-created 0700 directory and 0600 socket SELinux boundary in the new image. This private test process and external peer ran as root on Linux; it proves neither ordinary-app access nor deployed host identity."
+    },
+    {
+      "owner": "main",
+      "request": "Complete genuine public EnableGnss/hdi_objcast/IPC callback, HDF service discovery, Locator/normal-HAP/fusion-fence and permission/lifecycle tests with legitimate live measurement or explicit genuine replay input. This consumer exercised public config/start/stop and the real vendor callback table, not those public IPC/service paths."
+    },
+    {
+      "owner": "main",
+      "request": "The unique heavy lease was returned and the container was removed successfully at 2026-10-16T13:52:11.966038+00:00. All failure/success/runtime inputs and source hashes remain available. No more Docker/SDK/QEMU work will run in this batch."
+    }
+  ],
+  "hardware_subtask_remaining_gaps": [
+    "No guest kernel or freshly packaged image was booted; representative artifact/archive checksum and full runtime gate remain root work.",
+    "No public EnableGnss/Binder callback, GNSS HDF discovery, complete location/Locator/normal-app/fusion-fence behavior or SELinux/normal-app permission boundary was tested.",
+    "No deliberate wrong-type CFI rejection test. Positive actual instrumented calls and static 12 callsites alone do not establish every CFI rejection boundary.",
+    "The real parameter shared region and HiLog server are absent in QEMU-user; their failures are retained. This specific path continued successfully without any stub or replacement.",
+    "The external input consists of explicit protocol test vectors, not real-world position observations. It does not establish positioning accuracy or close location-group requirements."
+  ],
+  "resources": {
+    "container": "ohos-system-gnss-ohos-abi-r6-20261016-01",
+    "container_removed": true,
+    "heavy_lease_returned": true,
+    "removed_utc": "2026-10-16T13:52:11.966038+00:00",
+    "cpu_limit": 2,
+    "memory_limit_bytes": 5368709120,
+    "memory_peak_bytes": 340975616,
+    "source_out_read_only": true,
+    "r52_artifacts_read_only": true,
+    "root_filesystem_read_only": true,
+    "tmp_exec": true,
+    "network": "none",
+    "image": "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "host_container_arch": "Linux x86_64 on ARM64 host",
+    "consumer_target": "aarch64-linux-ohos",
+    "qemu_version": "6.2.0 Debian 1:6.2+dfsg-2ubuntu6.31",
+    "products_built": 0,
+    "packages_created": 0,
+    "private_socket_directory": {
+      "memory_peak": "340975616",
+      "socket_dir_uid": 1022,
+      "socket_dir_gid": 1022,
+      "socket_dir_mode": "0o700",
+      "endpoint_exists_after_cleanup": false
+    }
+  },
+  "private_evidence_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/system-gnss-ohos-abi-r6-20261016-01",
+  "consumer_sha256": "a0c08e06103cab0a46e1a3647e49ad2a7a2685cd0751978fb8c35fbaeb81ed28",
+  "actual_product_dsos": [
+    {
+      "name": "vendorGnssAdapter.so",
+      "source": "/r52/vendorGnssAdapter.so",
+      "sha256": "ccdded90a93f95f27928f3d3a8fd8834da689ee2e68d4f32566bab0beebfce4e",
+      "needed": [
+        "libc.so",
+        "libc++.so"
+      ]
+    },
+    {
+      "name": "libgnss_interface_service_2.0.z.so",
+      "source": "/r52/libgnss_interface_service_2.0.z.so",
+      "sha256": "c8f7a26c745039983ad366633861f7b690b1222cacb9fb425a3c12685aede6c0",
+      "needed": [
+        "libutils.z.so",
+        "libhilog.so",
+        "libc.so",
+        "libc++.so"
+      ]
+    }
+  ],
+  "actual_runtime_dependency_closure": "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-runtime-closure.json",
+  "evidence_files": [
+    "docs/capability-audit/parallel/system/round6-ohos-abi/README.md",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-compile.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-consumer.elf.txt.gz.b64",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-driver.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-link.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-stderr.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-stdout.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-qemu-version.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-result.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-runtime-closure.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-wire-inputs.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-compile.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-consumer.disassembly.txt",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-consumer.elf.txt.gz.b64",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-driver.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-link.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-qemu-stderr.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-qemu-stdout.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-qemu-version.log",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-result.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-runtime-closure.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-wire-inputs.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/candidate01-source-recovery.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/candidate02-freeze.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/container-create.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/container-inspect.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/container-removal.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/freeze.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/independent-checks.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/private-artifacts.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/r52-real-product-links.json",
+    "docs/capability-audit/parallel/system/round6-ohos-abi/resource-final.json"
+  ],
+  "source_guards": {
+    "manifest_before_after_overlay": "pass",
+    "r52_product_dso_hashes": "pass",
+    "r52_target_ninja_hash": "pass",
+    "final_test_sources_equal_executed_candidate02": "pass",
+    "all_compiler_consumed_headers": "full SHA256 map in attempt02-result.json",
+    "product_source_changed": false
+  },
+  "evidence_encoding": [
+    {
+      "file": "docs/capability-audit/parallel/system/round6-ohos-abi/attempt02-consumer.elf.txt.gz.b64",
+      "decoded_sha256": "0ba41f3fd6a48cdc8cb93ec136b2d35f5de9b10fb29c40fa1940ffef792ec44f",
+      "reason": "llvm-readelf raw trailing spaces retained losslessly without diff whitespace errors"
+    },
+    {
+      "file": "docs/capability-audit/parallel/system/round6-ohos-abi/attempt01-consumer.elf.txt.gz.b64",
+      "decoded_sha256": "adba2b73f016bdf5d679cc3f2af9bdbd2683f181d98cafc0ed363c51f473624f",
+      "reason": "llvm-readelf raw trailing spaces retained losslessly without diff whitespace errors"
+    }
+  ],
+  "verification": {
+    "git_diff_check": "pass after lossless encoding of raw readelf text",
+    "scope": "only 3 new test files under the explicitly owned GNSS tests prefix and 33 new evidence/report files under system/round6-ohos-abi",
+    "source_guard": "real pinned original source/overlay and immutable r52 hashes passed before compile",
+    "executed_candidate_hashes": "final two code files exactly equal tested candidate02; README/report only changes thereafter"
+  }
+}

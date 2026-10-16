@@ -1,0 +1,522 @@
+{
+  "private_root": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/system-gnss-ohos-abi-r6-20261016-01",
+  "baseline_archive_sha256": "735c938847abe62c2bc92019bcc70715701556b61497e4617a56e983aac5e861",
+  "files": {
+    "artifacts/attempt01/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/attempt01/compile.log.json": {
+      "bytes": 5249,
+      "sha256": "7d4ecd25cb4222371006ae9597955f7394ae79c33c9c87a61bdf7e189b3a1b9d"
+    },
+    "artifacts/attempt01/consumer.d": {
+      "bytes": 72544,
+      "sha256": "773ccb7b7a1580d8c4fdbce12aa8f304d4b6e87c362057d8edc232d60d92b9ce"
+    },
+    "artifacts/attempt01/consumer.elf.txt": {
+      "bytes": 7946,
+      "sha256": "adba2b73f016bdf5d679cc3f2af9bdbd2683f181d98cafc0ed363c51f473624f"
+    },
+    "artifacts/attempt01/consumer.elf.txt.json": {
+      "bytes": 465,
+      "sha256": "262b4f1decd89172d700b8d37941dd4e6d176dd17affd9cd7ab2e5b3f3873c51"
+    },
+    "artifacts/attempt01/gnss-ohos-abi-consumer": {
+      "bytes": 145168,
+      "sha256": "af8d9f6c4f706558fb23b58ac7bb1142e2f12cdefd10b983d208635cedf6b753"
+    },
+    "artifacts/attempt01/header-overlay.log": {
+      "bytes": 259,
+      "sha256": "46c4af39eb670096e475dcebcccc5c617641ddcf472a200ea3fc1201643c006e"
+    },
+    "artifacts/attempt01/header-overlay.log.json": {
+      "bytes": 455,
+      "sha256": "e2e253d53cb802acd4044e4020d8351f674dc04f4d3471aeb6c3e149f5ef425a"
+    },
+    "artifacts/attempt01/headers/drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp": {
+      "bytes": 30706,
+      "sha256": "6d94a8ac1c8a28f1475467975e1bd058fbab1a22e2cff22d062795c6bc83c75b"
+    },
+    "artifacts/attempt01/headers/drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.h": {
+      "bytes": 3775,
+      "sha256": "9de3605d8cd0ed8ec7ec8ba1b2cdf6991756894a22d7de579d579ce86d2e6184"
+    },
+    "artifacts/attempt01/headers/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp": {
+      "bytes": 11648,
+      "sha256": "a4fad337702457a3b1a744b2907d6e271798ccfb5639776ff81bcdcfa77234f4"
+    },
+    "artifacts/attempt01/headers/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h": {
+      "bytes": 1419,
+      "sha256": "ef47e8ba4634d171418d85efddb8ec87c82e919cca678f3275454241d01488a1"
+    },
+    "artifacts/attempt01/headers/drivers/peripheral/location/gnss/hdi_service/location_vendor_lib.h": {
+      "bytes": 34218,
+      "sha256": "f0df806ff59b5cad6a793a25191b36f546e77c72afb638681fbe1261e39035b5"
+    },
+    "artifacts/attempt01/libbegetutil.z.so.elf.txt": {
+      "bytes": 28100,
+      "sha256": "036501a147dc2e47c93b538834bd73440b70efbfa2cde99960f395ab163e238e"
+    },
+    "artifacts/attempt01/libbegetutil.z.so.elf.txt.json": {
+      "bytes": 524,
+      "sha256": "fd1646084606a59e6488573afb3c31f252d23ecb31ff03e9fd9d10de40fcf1e5"
+    },
+    "artifacts/attempt01/libc++.so.elf.txt": {
+      "bytes": 269851,
+      "sha256": "ec16b6f88c1b1e193634b2de02b1193d10f45dee4edd86cbc2a475f01ecf652f"
+    },
+    "artifacts/attempt01/libc++.so.elf.txt.json": {
+      "bytes": 514,
+      "sha256": "fbff37f75b6976815c79e553db1f4ab80ca7dd1630db61c22f40dd5ae008f6f8"
+    },
+    "artifacts/attempt01/libc.so.elf.txt": {
+      "bytes": 140850,
+      "sha256": "f58b3bf653cc52192e88c362e73bf769259298a2533bae2434a2e8fe465f6a99"
+    },
+    "artifacts/attempt01/libc.so.elf.txt.json": {
+      "bytes": 512,
+      "sha256": "0c71b0258a124a7dfcf17f3974e5a9bf2f14e678f645d3ca2be84cfe8d0b6cd0"
+    },
+    "artifacts/attempt01/libcjson.z.so.elf.txt": {
+      "bytes": 12004,
+      "sha256": "434c6037872b35e035fad9c1f0ca674208797a726eb9f2b2ac06b5c20cea2370"
+    },
+    "artifacts/attempt01/libcjson.z.so.elf.txt.json": {
+      "bytes": 516,
+      "sha256": "a360332fb618ed9d68b5654a64e59e8b956b2193b0662fe76f5e9553f5e0fae1"
+    },
+    "artifacts/attempt01/libclang_rt.ubsan_minimal.so.elf.txt": {
+      "bytes": 9625,
+      "sha256": "2127187e3bfd9020de9d7517e2fbabc615917f7349a0d70b1b0bf1e74e987615"
+    },
+    "artifacts/attempt01/libclang_rt.ubsan_minimal.so.elf.txt.json": {
+      "bytes": 546,
+      "sha256": "b70917e7977246ae23d762f04deb6ed5a3ce69d2225bf84fab99691f2bcbe420"
+    },
+    "artifacts/attempt01/libconfigpolicy_util.z.so.elf.txt": {
+      "bytes": 6720,
+      "sha256": "f481ed2ce8e0f8af3e7800144cf0dff822b8bb91fe688b0ed4d9fa58dad008f0"
+    },
+    "artifacts/attempt01/libconfigpolicy_util.z.so.elf.txt.json": {
+      "bytes": 540,
+      "sha256": "0822970e47e14ff8747fc9a49507a3f0df8998814124f654f7b638cad6e53b8d"
+    },
+    "artifacts/attempt01/libgnss_interface_service_2.0.z.so.elf.txt": {
+      "bytes": 17952,
+      "sha256": "dff022991cca3c5e2d0d7329430b7205deb654b619c0bf8f47155b293b8afe04"
+    },
+    "artifacts/attempt01/libgnss_interface_service_2.0.z.so.elf.txt.json": {
+      "bytes": 503,
+      "sha256": "059b7be8cbf93fb65cae978d551ddd396903eba50835a05998a40f2ff0414424"
+    },
+    "artifacts/attempt01/libhilog.so.elf.txt": {
+      "bytes": 35070,
+      "sha256": "c2cc4a335be977cd807aa6d4870b7eaf81236b8aab4fed30a3ad4f8f15a16074"
+    },
+    "artifacts/attempt01/libhilog.so.elf.txt.json": {
+      "bytes": 487,
+      "sha256": "0422f5746917f651373cf396e163b80d9316944451da2d1aac88b30e5cf63030"
+    },
+    "artifacts/attempt01/libsandboxlog.so.elf.txt": {
+      "bytes": 17088,
+      "sha256": "5365de34645dce14ac707fa2efd0ef70a326708ff59f364b98c1a67c492d34a5"
+    },
+    "artifacts/attempt01/libsandboxlog.so.elf.txt.json": {
+      "bytes": 522,
+      "sha256": "0e97b4d471f4ebe338b5edf1d7120d9f1665cb5c3c445536d9ec4bed71c1480e"
+    },
+    "artifacts/attempt01/libsec_shared.z.so.elf.txt": {
+      "bytes": 9953,
+      "sha256": "efd5c204b535e4f299df4a356fa01490ce65d57055afff59537660413a51eab1"
+    },
+    "artifacts/attempt01/libsec_shared.z.so.elf.txt.json": {
+      "bytes": 522,
+      "sha256": "e9aba447c3888776b2054a086da8e0a455cfa079b25aa074b7f92072e65778a9"
+    },
+    "artifacts/attempt01/libsystemparam.z.so.elf.txt": {
+      "bytes": 12469,
+      "sha256": "33efa8657ef11c14e8a607f0225e66a16a3117c0e88e1adbfbaef334f5257140"
+    },
+    "artifacts/attempt01/libsystemparam.z.so.elf.txt.json": {
+      "bytes": 527,
+      "sha256": "361ebf006a905de0d77b785f2e7f9d46920bf85aee3c4b4c6a0c8efc6539ea61"
+    },
+    "artifacts/attempt01/libutils.z.so.elf.txt": {
+      "bytes": 78474,
+      "sha256": "081043eda0a1d876dbc6f910f13d44a3bf355b1e3706eda8e4a420d461d3efc7"
+    },
+    "artifacts/attempt01/libutils.z.so.elf.txt.json": {
+      "bytes": 498,
+      "sha256": "6e275e8b6d0057b59dcbc846fe8b57e7d86b555745e3f77ae3a833cc8a32be12"
+    },
+    "artifacts/attempt01/link.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/attempt01/link.log.json": {
+      "bytes": 2935,
+      "sha256": "a2d828b97f0bafb3f8164ebdcbb345007739f555ec82d0bab3afaaba23aaeb10"
+    },
+    "artifacts/attempt01/qemu-stderr.log": {
+      "bytes": 53446,
+      "sha256": "22df11fb8f7f3f0056d808aee834143d50c5e21db64facef67a648af4b60b7fc"
+    },
+    "artifacts/attempt01/qemu-stdout.log": {
+      "bytes": 85,
+      "sha256": "089703c69f2e63e464338466f2e83e40a0128ba243055688d21cfa1acabc9d26"
+    },
+    "artifacts/attempt01/qemu-version.log": {
+      "bytes": 131,
+      "sha256": "b5fab7f07302be3ba38b41023c22cf46c1aab00c42457bd63124d8502bb30768"
+    },
+    "artifacts/attempt01/qemu-version.log.json": {
+      "bytes": 328,
+      "sha256": "ceccfee99f0e4f8203593ddf909530d2ebb3228efcf6a0ac15f39423842c6035"
+    },
+    "artifacts/attempt01/result.json": {
+      "bytes": 145963,
+      "sha256": "82fddcfc5a3fb5830e03b6feb8720897f6f5176af00c7243bd899d2c7da30476"
+    },
+    "artifacts/attempt01/rootfs/system/bin/ld-musl-aarch64.so.1": {
+      "bytes": 1470800,
+      "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libbegetutil.z.so": {
+      "bytes": 148048,
+      "sha256": "c9df6db40b7c58b5d085e5634a8c662ccb1a3e8e1fa1996c67f2a433bb929b60"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libc++.so": {
+      "bytes": 9229256,
+      "sha256": "5f8714f769bb5ff8e921f6e958e2a48c0af507f56ec88089d3f0a1b7870d2f32"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libc.so": {
+      "bytes": 1470800,
+      "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libcjson.z.so": {
+      "bytes": 32944,
+      "sha256": "281feec1cc507bf6cbb9da3f019bdbc160b9fc9544b2e0f3b496a375aaa8d0b6"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libclang_rt.ubsan_minimal.so": {
+      "bytes": 15256,
+      "sha256": "9fb28ee9a387286ae3583f6b6ffee0e0318930290deb56e3ccc04cab633d55b8"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libconfigpolicy_util.z.so": {
+      "bytes": 11680,
+      "sha256": "7ebd033c241b4b168c4a6adcbc73f19375aae0acefbed52fd71985e1088503e4"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libgnss_interface_service_2.0.z.so": {
+      "bytes": 1172544,
+      "sha256": "c8f7a26c745039983ad366633861f7b690b1222cacb9fb425a3c12685aede6c0"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libhilog.so": {
+      "bytes": 195024,
+      "sha256": "d259d5181e279aca8e82ac4f8c2c2ff6a375ee76abcae6b0cdbddc415b8ce673"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libsandboxlog.so": {
+      "bytes": 114680,
+      "sha256": "3fd460bcd22d4ab9c52b1acfe76c2b4169f656803979c2415cb1ef38ed7b37e6"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libsec_shared.z.so": {
+      "bytes": 59576,
+      "sha256": "5095e9d05c3816ad3ea53d9f457fc46d8b763f36de65c2a7b0663396536123f5"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libsystemparam.z.so": {
+      "bytes": 57664,
+      "sha256": "50fc5b75dc5844f59119675884011fa56fa76464c52729730bc237fb6f6f96a1"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/libutils.z.so": {
+      "bytes": 226752,
+      "sha256": "2dd01443121134bce1612deccb61934f6730b5749e645a18ba6221c92199588e"
+    },
+    "artifacts/attempt01/rootfs/system/lib64/vendorGnssAdapter.so": {
+      "bytes": 343272,
+      "sha256": "ccdded90a93f95f27928f3d3a8fd8834da689ee2e68d4f32566bab0beebfce4e"
+    },
+    "artifacts/attempt01/runtime-closure.json": {
+      "bytes": 3716,
+      "sha256": "f269f11374c8991ec59bc9186785e709584cd48e7bfa1a8cb4713b918d68d64d"
+    },
+    "artifacts/attempt01/vendorGnssAdapter.so.elf.txt": {
+      "bytes": 9998,
+      "sha256": "488ba85761f81a9a95266eb2545202f581fa4bcb12eb35044cc70b50b97e203d"
+    },
+    "artifacts/attempt01/vendorGnssAdapter.so.elf.txt.json": {
+      "bytes": 474,
+      "sha256": "791a8bd679b98197a28ee60581e0c865fa5c3d3c4ba1c15aea19e77a02ed03e1"
+    },
+    "artifacts/attempt01/wire-inputs.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "artifacts/attempt02/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/attempt02/compile.log.json": {
+      "bytes": 5249,
+      "sha256": "98efebd503c35d90e194fec18b36ca735bde9de48e56b3761e013c67bbd8341a"
+    },
+    "artifacts/attempt02/consumer.d": {
+      "bytes": 72544,
+      "sha256": "552843ed62c48a6e4c2f42a3b3341f78e06f2b2eee7a649708b07dfa003af991"
+    },
+    "artifacts/attempt02/consumer.disassembly.txt": {
+      "bytes": 71687,
+      "sha256": "e0765e09d95a645ee97fe03cf95fa4462bb69326a2e8b720ed4201524d257f0f"
+    },
+    "artifacts/attempt02/consumer.elf.txt": {
+      "bytes": 7946,
+      "sha256": "0ba41f3fd6a48cdc8cb93ec136b2d35f5de9b10fb29c40fa1940ffef792ec44f"
+    },
+    "artifacts/attempt02/consumer.elf.txt.json": {
+      "bytes": 463,
+      "sha256": "f7860528a044fb09ab71aa434b7ff60623284ee8e2de0b13451b5eeb1b8a86c8"
+    },
+    "artifacts/attempt02/gnss-ohos-abi-consumer": {
+      "bytes": 145760,
+      "sha256": "a0c08e06103cab0a46e1a3647e49ad2a7a2685cd0751978fb8c35fbaeb81ed28"
+    },
+    "artifacts/attempt02/header-overlay.log": {
+      "bytes": 259,
+      "sha256": "46c4af39eb670096e475dcebcccc5c617641ddcf472a200ea3fc1201643c006e"
+    },
+    "artifacts/attempt02/header-overlay.log.json": {
+      "bytes": 456,
+      "sha256": "68a5a930582a1922bfda558ae41136861048f12f4d8eca915a7c027e4e549227"
+    },
+    "artifacts/attempt02/headers/drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp": {
+      "bytes": 30706,
+      "sha256": "6d94a8ac1c8a28f1475467975e1bd058fbab1a22e2cff22d062795c6bc83c75b"
+    },
+    "artifacts/attempt02/headers/drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.h": {
+      "bytes": 3775,
+      "sha256": "9de3605d8cd0ed8ec7ec8ba1b2cdf6991756894a22d7de579d579ce86d2e6184"
+    },
+    "artifacts/attempt02/headers/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp": {
+      "bytes": 11648,
+      "sha256": "a4fad337702457a3b1a744b2907d6e271798ccfb5639776ff81bcdcfa77234f4"
+    },
+    "artifacts/attempt02/headers/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h": {
+      "bytes": 1419,
+      "sha256": "ef47e8ba4634d171418d85efddb8ec87c82e919cca678f3275454241d01488a1"
+    },
+    "artifacts/attempt02/headers/drivers/peripheral/location/gnss/hdi_service/location_vendor_lib.h": {
+      "bytes": 34218,
+      "sha256": "f0df806ff59b5cad6a793a25191b36f546e77c72afb638681fbe1261e39035b5"
+    },
+    "artifacts/attempt02/libbegetutil.z.so.elf.txt": {
+      "bytes": 28100,
+      "sha256": "036501a147dc2e47c93b538834bd73440b70efbfa2cde99960f395ab163e238e"
+    },
+    "artifacts/attempt02/libbegetutil.z.so.elf.txt.json": {
+      "bytes": 523,
+      "sha256": "3247f6ca7372ebb4f451b33c22cc12a384d1f87a525635810486b0da8200b4e4"
+    },
+    "artifacts/attempt02/libc++.so.elf.txt": {
+      "bytes": 269851,
+      "sha256": "ec16b6f88c1b1e193634b2de02b1193d10f45dee4edd86cbc2a475f01ecf652f"
+    },
+    "artifacts/attempt02/libc++.so.elf.txt.json": {
+      "bytes": 513,
+      "sha256": "ee5f56e6aea6f5725dadb0d8b5448547f6beae33b47c161b37229b2443d23e3b"
+    },
+    "artifacts/attempt02/libc.so.elf.txt": {
+      "bytes": 140850,
+      "sha256": "f58b3bf653cc52192e88c362e73bf769259298a2533bae2434a2e8fe465f6a99"
+    },
+    "artifacts/attempt02/libc.so.elf.txt.json": {
+      "bytes": 510,
+      "sha256": "42ad9adff07a537091c4f535183b7d7b8536d60c19cdf15ff2f3e01f88cfb4d0"
+    },
+    "artifacts/attempt02/libcjson.z.so.elf.txt": {
+      "bytes": 12004,
+      "sha256": "434c6037872b35e035fad9c1f0ca674208797a726eb9f2b2ac06b5c20cea2370"
+    },
+    "artifacts/attempt02/libcjson.z.so.elf.txt.json": {
+      "bytes": 516,
+      "sha256": "4705641268d1c3ec0d1e81e86a621c4e4037e5b60656961341c55b1dc656039c"
+    },
+    "artifacts/attempt02/libclang_rt.ubsan_minimal.so.elf.txt": {
+      "bytes": 9625,
+      "sha256": "2127187e3bfd9020de9d7517e2fbabc615917f7349a0d70b1b0bf1e74e987615"
+    },
+    "artifacts/attempt02/libclang_rt.ubsan_minimal.so.elf.txt.json": {
+      "bytes": 546,
+      "sha256": "4ca00f599396884f81fa7d6ff5a55127978d331c0b80b6941e65c024d8966dec"
+    },
+    "artifacts/attempt02/libconfigpolicy_util.z.so.elf.txt": {
+      "bytes": 6720,
+      "sha256": "f481ed2ce8e0f8af3e7800144cf0dff822b8bb91fe688b0ed4d9fa58dad008f0"
+    },
+    "artifacts/attempt02/libconfigpolicy_util.z.so.elf.txt.json": {
+      "bytes": 539,
+      "sha256": "8abd896e907fdf3dd74cdfea3eea7620b1408f47edc102b4af3230fd537f69ad"
+    },
+    "artifacts/attempt02/libgnss_interface_service_2.0.z.so.elf.txt": {
+      "bytes": 17952,
+      "sha256": "dff022991cca3c5e2d0d7329430b7205deb654b619c0bf8f47155b293b8afe04"
+    },
+    "artifacts/attempt02/libgnss_interface_service_2.0.z.so.elf.txt.json": {
+      "bytes": 501,
+      "sha256": "dcd8c6dd24f53a7bff10cddefd0a38cfa9d90fae9e200dccb3f87f7baa7899bf"
+    },
+    "artifacts/attempt02/libhilog.so.elf.txt": {
+      "bytes": 35070,
+      "sha256": "c2cc4a335be977cd807aa6d4870b7eaf81236b8aab4fed30a3ad4f8f15a16074"
+    },
+    "artifacts/attempt02/libhilog.so.elf.txt.json": {
+      "bytes": 487,
+      "sha256": "5e4781300206fae358cfb035ecde0ff7cc688c32b37213274a539e850a5dfc0e"
+    },
+    "artifacts/attempt02/libsandboxlog.so.elf.txt": {
+      "bytes": 17088,
+      "sha256": "5365de34645dce14ac707fa2efd0ef70a326708ff59f364b98c1a67c492d34a5"
+    },
+    "artifacts/attempt02/libsandboxlog.so.elf.txt.json": {
+      "bytes": 522,
+      "sha256": "e8e937a2520863401edf69492aa02adce839f3a09775c7b294da147900d21783"
+    },
+    "artifacts/attempt02/libsec_shared.z.so.elf.txt": {
+      "bytes": 9953,
+      "sha256": "efd5c204b535e4f299df4a356fa01490ce65d57055afff59537660413a51eab1"
+    },
+    "artifacts/attempt02/libsec_shared.z.so.elf.txt.json": {
+      "bytes": 521,
+      "sha256": "0dc251a27b07056dac8875c23f2f9680a32d2acb4f14cefda37481ee8c5fa16a"
+    },
+    "artifacts/attempt02/libsystemparam.z.so.elf.txt": {
+      "bytes": 12469,
+      "sha256": "33efa8657ef11c14e8a607f0225e66a16a3117c0e88e1adbfbaef334f5257140"
+    },
+    "artifacts/attempt02/libsystemparam.z.so.elf.txt.json": {
+      "bytes": 526,
+      "sha256": "9930f6f8a9d76f18a5744dc8d4ff95da0afbeeba25064e54825e671d5744f4ea"
+    },
+    "artifacts/attempt02/libutils.z.so.elf.txt": {
+      "bytes": 78474,
+      "sha256": "081043eda0a1d876dbc6f910f13d44a3bf355b1e3706eda8e4a420d461d3efc7"
+    },
+    "artifacts/attempt02/libutils.z.so.elf.txt.json": {
+      "bytes": 498,
+      "sha256": "7594953a993284069a236ffad723378985ee4c72e26d627407a8168db7b09c32"
+    },
+    "artifacts/attempt02/link.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "artifacts/attempt02/link.log.json": {
+      "bytes": 2938,
+      "sha256": "11129c2d370605428ff3b623125d90f45da2695d0f0785e26510dff2316c1ada"
+    },
+    "artifacts/attempt02/qemu-stderr.log": {
+      "bytes": 82957,
+      "sha256": "8880dac301031a620a59a0fd910fe6bc2026fc9eccfb7d586f2c1284a06bb905"
+    },
+    "artifacts/attempt02/qemu-stdout.log": {
+      "bytes": 623,
+      "sha256": "baaa9929f07e377884db48a5be238fa788e3d80d902d5bf2044cd40f3288e566"
+    },
+    "artifacts/attempt02/qemu-version.log": {
+      "bytes": 131,
+      "sha256": "b5fab7f07302be3ba38b41023c22cf46c1aab00c42457bd63124d8502bb30768"
+    },
+    "artifacts/attempt02/qemu-version.log.json": {
+      "bytes": 328,
+      "sha256": "3116afce30089bd1695a9553e1a5a8ee7c5bc59593c99007fcd3265a958fa458"
+    },
+    "artifacts/attempt02/result.json": {
+      "bytes": 145928,
+      "sha256": "8072d47061ce5a2dd0807a3b51215828356de8abd595c9a116ff75484b3a6ee0"
+    },
+    "artifacts/attempt02/rootfs/system/bin/ld-musl-aarch64.so.1": {
+      "bytes": 1470800,
+      "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libbegetutil.z.so": {
+      "bytes": 148048,
+      "sha256": "c9df6db40b7c58b5d085e5634a8c662ccb1a3e8e1fa1996c67f2a433bb929b60"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libc++.so": {
+      "bytes": 9229256,
+      "sha256": "5f8714f769bb5ff8e921f6e958e2a48c0af507f56ec88089d3f0a1b7870d2f32"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libc.so": {
+      "bytes": 1470800,
+      "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libcjson.z.so": {
+      "bytes": 32944,
+      "sha256": "281feec1cc507bf6cbb9da3f019bdbc160b9fc9544b2e0f3b496a375aaa8d0b6"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libclang_rt.ubsan_minimal.so": {
+      "bytes": 15256,
+      "sha256": "9fb28ee9a387286ae3583f6b6ffee0e0318930290deb56e3ccc04cab633d55b8"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libconfigpolicy_util.z.so": {
+      "bytes": 11680,
+      "sha256": "7ebd033c241b4b168c4a6adcbc73f19375aae0acefbed52fd71985e1088503e4"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libgnss_interface_service_2.0.z.so": {
+      "bytes": 1172544,
+      "sha256": "c8f7a26c745039983ad366633861f7b690b1222cacb9fb425a3c12685aede6c0"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libhilog.so": {
+      "bytes": 195024,
+      "sha256": "d259d5181e279aca8e82ac4f8c2c2ff6a375ee76abcae6b0cdbddc415b8ce673"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libsandboxlog.so": {
+      "bytes": 114680,
+      "sha256": "3fd460bcd22d4ab9c52b1acfe76c2b4169f656803979c2415cb1ef38ed7b37e6"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libsec_shared.z.so": {
+      "bytes": 59576,
+      "sha256": "5095e9d05c3816ad3ea53d9f457fc46d8b763f36de65c2a7b0663396536123f5"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libsystemparam.z.so": {
+      "bytes": 57664,
+      "sha256": "50fc5b75dc5844f59119675884011fa56fa76464c52729730bc237fb6f6f96a1"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/libutils.z.so": {
+      "bytes": 226752,
+      "sha256": "2dd01443121134bce1612deccb61934f6730b5749e645a18ba6221c92199588e"
+    },
+    "artifacts/attempt02/rootfs/system/lib64/vendorGnssAdapter.so": {
+      "bytes": 343272,
+      "sha256": "ccdded90a93f95f27928f3d3a8fd8834da689ee2e68d4f32566bab0beebfce4e"
+    },
+    "artifacts/attempt02/runtime-closure.json": {
+      "bytes": 3716,
+      "sha256": "f269f11374c8991ec59bc9186785e709584cd48e7bfa1a8cb4713b918d68d64d"
+    },
+    "artifacts/attempt02/vendorGnssAdapter.so.elf.txt": {
+      "bytes": 9998,
+      "sha256": "488ba85761f81a9a95266eb2545202f581fa4bcb12eb35044cc70b50b97e203d"
+    },
+    "artifacts/attempt02/vendorGnssAdapter.so.elf.txt.json": {
+      "bytes": 474,
+      "sha256": "9192e0498c9a7e00f291d85e183a0f7d73e65a1dafdc9701884111295093167f"
+    },
+    "artifacts/attempt02/wire-inputs.json": {
+      "bytes": 1325,
+      "sha256": "04d90aa34e30c9489c4d8e66efe94c09f57b615bc5fa062ddf534bfe602446e5"
+    },
+    "candidate01-source/ohos_abi_consumer.cpp": {
+      "bytes": 8876,
+      "sha256": "4a021e226d00b26fcf7fb8da6a894ee5ba48c60e48e9aa984e3f3ac7e57e291d"
+    },
+    "candidate01-source/validate_ohos_abi.py": {
+      "bytes": 15993,
+      "sha256": "490809625a0d9b4e5e35f1c3f91db99858a54e214a207b379829913c05fde674"
+    },
+    "candidate02/ohos_abi_consumer.cpp": {
+      "bytes": 9309,
+      "sha256": "38fed640a17abaa2dd007e9a7e7098f248d0b7f3c3df0fe14cead5c5de5dedd3"
+    },
+    "candidate02/validate_ohos_abi.py": {
+      "bytes": 17167,
+      "sha256": "33bee0a53e77f54ab098e51e30a53667ad1abe221cc0949856fd7caa0baa7bfa"
+    }
+  }
+}
