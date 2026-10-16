@@ -3,7 +3,7 @@
   "date": "2026-10-15",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-location-20261015",
-  "summary": "Implemented actual icon/BLE/district/skiing routes, fusion GNSS/CELL/WLAN fence business and explicit modem 5A producer/observer paths; RTT lifecycle repairs retained. All 22 requirements remain open pending centralized platform/provider/new-package runtime acceptance.",
+  "summary": "Implemented icon/BLE/district/skiing/fusion and explicit modem5A routes with RTT repairs; removes synthetic GNSS satellites and initializes real request-derived configuration with start/error gates. All22 remain open pending centralized platform/provider/new-package runtime acceptance.",
   "upstream_targets": [
     "base/location/location/frameworks/base_module/source/request_config.cpp",
     "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
@@ -20,6 +20,9 @@
     "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h",
     "base/location/location/interfaces/inner_api/include/locator_impl.h",
     "base/location/location/interfaces/inner_api/include/request_config.h",
+    "base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h",
+    "base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp",
+    "base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp",
     "base/location/location/services/location_locator/locator/BUILD.gn",
     "base/location/location/services/location_locator/locator/include/locator_ability.h",
     "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h",
@@ -85,12 +88,15 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
       "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
-      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied.",
+      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
       "evidence": [
         "round4-fusion-communication.md",
         "round4-freeze-inputs.json",
         "round4-platform-build-request.json",
-        "host-tests.log"
+        "host-tests.log",
+        "round5-gnss.md",
+        "round5-freeze-inputs.json",
+        "round5-platform-build-request.json"
       ],
       "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
@@ -101,12 +107,15 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_district_route_pending_compile_provider_and_packaged_validation",
       "classification": "new_binding_to_real_location_and_reverse_geocoder",
-      "finding": "Promise-only optional/undefined request now starts an owned authorized one-shot location request, uses its permitted recent cache or real fix, always stops a started request, queries the real reverse-geocoder/cache within one deadline, and rechecks fine/approximate/firstToken/current-account/switch access before publishing district fields. SDK area-query errors use 3301500. Batch4 repairs the parent-found undeclared MAX_BUF_LEN TU error using the same fixed 100-byte locale bound and actual100/101-byte parser regression.",
+      "finding": "Promise-only optional/undefined request now starts an owned authorized one-shot location request, uses its permitted recent cache or real fix, always stops a started request, queries the real reverse-geocoder/cache within one deadline, and rechecks fine/approximate/firstToken/current-account/switch access before publishing district fields. SDK area-query errors use 3301500. Batch4 repairs the parent-found undeclared MAX_BUF_LEN TU error using the same fixed 100-byte locale bound and actual100/101-byte parser regression. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
       "evidence": [
         "round3-business.md",
         "round3-geocoder-peer-abi.md",
         "ci/capability-audit/test_batch_location_business_runtime.py",
-        "round2-freeze-inputs.json"
+        "round2-freeze-inputs.json",
+        "round5-gnss.md",
+        "round5-freeze-inputs.json",
+        "round5-platform-build-request.json"
       ],
       "next_required": "Generate new IDL68/71, compile complete native/service/NAPI TUs, provide actual GNSS and configured geocoder ability over externally challenged data using documented peer ABI; validate new-package cache/current-fix/locale/deadline/permission/user/stop behavior."
     },
@@ -133,12 +142,15 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_skiing_route_pending_compile_provider_and_packaged_validation",
       "classification": "new_binding_and_real_GNSS_post_processing_history",
-      "finding": "SKIING travels through a new explicit IPC sports argument while legacy RequestConfig wire remains unchanged. SPORT requests use fine PrivacyKit state and real GNSS reports; accuracy/time-driven processing produces geometry, altitude, speed and direction. UID/token/firstToken history has 24h monotonic retention and incremental cursors with source/mock/out-of-order/privacy/lifecycle checks.",
+      "finding": "SKIING travels through a new explicit IPC sports argument while legacy RequestConfig wire remains unchanged. SPORT requests use fine PrivacyKit state and real GNSS reports; accuracy/time-driven processing produces geometry, altitude, speed and direction. UID/token/firstToken history has 24h monotonic retention and incremental cursors with source/mock/out-of-order/privacy/lifecycle checks. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
       "evidence": [
         "round3-business.md",
         "ci/capability-audit/test_batch_location_business_runtime.py",
         "ci/capability-audit/test_batch_location_icon_state.py",
-        "round2-freeze-inputs.json"
+        "round2-freeze-inputs.json",
+        "round5-gnss.md",
+        "round5-freeze-inputs.json",
+        "round5-platform-build-request.json"
       ],
       "next_required": "Generate IDL69/70, rebuild RequestConfig consumers and complete listed TUs, then new-package GNSS challenge tracks with SPORT-only mode, ordinary/system fine permissions, background/revoke/switch, multiple owners/delegation, stop/late samples, retention and cursor boundaries. Assess processing behavior on actual virtual peripheral input."
     },
@@ -383,9 +395,12 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "remaining_implementation_and_validation",
       "classification": "device_profile_backend_boundary",
-      "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport.",
+      "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
       "evidence": [
-        "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence"
+        "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence",
+        "round5-gnss.md",
+        "round5-freeze-inputs.json",
+        "round5-platform-build-request.json"
       ],
       "next_required": "Parent controlled GNSS vendor ABI, real geocoder remote provider and real HCI/controller/WLAN/CELL peer routes must feed the actual service paths in a newly packaged representative artifact; source implementations and negative hardware boundaries do not close this behavior."
     },
@@ -496,6 +511,20 @@
       "command": "Private complete fixed originals with production source manifests; apply actual4 location patches and actual binary/text communication patch",
       "result": "PASS: location24 and communication42 raw original states both validate, actual patches apply, and exact full final hashes validate. Final communication strict HEAD/unknown/mixed/symlink/patch guard2 also passed after patch context formatting.",
       "evidence": "host-tests.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_location_*.py' -v",
+      "result": "PASS:27 tests in37.870s. Added actual GNSS callbacks/configuration/start/request/handler under ASan/UBSan with frozen actual generated POD and production SatelliteStatus. Original real callback independently reproduces synthetic satellite assertion failure; patched no/0/1/3/4/64/128 SV and malformed-vector cases pass. No receiver/runtime proof.",
+      "evidence": "host-tests.log and round5-gnss.md"
+    },
+    {
+      "command": "Live read-only27 original SHA256+projectHEAD comparison; actual full-file five-patch application through every production manifest state",
+      "result": "PASS exact original/prefix1/prefix2/prefix3/prefix4/final bytes. Strict guard5 tests also pass all six valid states/reapply and unknown/mixed/HEAD/patch/symlink/missing-target rejection. No source-container writes.",
+      "evidence": "round5-freeze-inputs.json and host-tests.log"
+    },
+    {
+      "command": "Full platform GNSS TUs/link/HDI/provider and newly packaged representative runtime",
+      "result": "NOT RUN by subagent; parent/system own platform integration/provider and parent owns all heavy tasks/package/runtime gate."
     }
   ],
   "integration_requests": [
@@ -516,7 +545,7 @@
     {
       "kind": "patch_component",
       "path": "common/base/location/location/api26_runtime",
-      "action": "Use latest four-patch strict component at pinned full24-target original/prefix1/prefix2/prefix3/final states; new originally-absent fusion header is explicit. Apply through its own apply.sh; no shared helper change is needed. Append locator transactions72..75 while preserving all old1..71."
+      "action": "Use latest five-patch strict component with full27-target original/prefix1/prefix2/prefix3/prefix4/final states; originally absent fusion header remains explicit. Apply via own apply.sh. GNSS fifth patch adds3 targets; no driver edits or transaction changes."
     },
     {
       "kind": "host_regression",
@@ -551,6 +580,10 @@
     {
       "kind": "representative_runtime",
       "action": "Root must build, boot and fully validate a new ARM64 phone representative artifact with positive and boundary proofs before remaining five packages. All22 IDs remain open and source/host successes close0 behavior gaps."
+    },
+    {
+      "kind": "round5_gnss_complete_platform_and_runtime",
+      "action": "Run round5-platform-build-request.json two complete TUs and real lbsservice_gnss link with frozen actual generated GNSS declarations; integrate system-owned actual driver bridge/vendor independently and prove external fix/SV/config/start/stop through a new representative package before remaining five. Legacy GNSS SendMessage reply denotes event acceptance, not synchronous hardware startup result."
     }
   ],
   "remaining_gaps": [
@@ -685,6 +718,50 @@
   },
   "validation_limit": "All22 assigned IDs remain open. Host/source/IDL/TU checks cannot satisfy AGENTS.md newly packaged representative runtime gate. Parent-only exact platform full-module/ANI/provider/new-package acceptance remains required; no six-package delivery is claimed.",
   "changed_files": [
+    "ci/capability-audit/fixtures/batch_location/gnss_abi_before.json",
+    "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
+    "ci/capability-audit/test_batch_location_gnss_runtime.py",
+    "ci/capability-audit/test_batch_location_runtime_source_guard.py",
+    "docs/capability-audit/parallel/location/host-tests.log",
+    "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/round2-freeze-inputs.json",
+    "docs/capability-audit/parallel/location/round5-freeze-inputs.json",
+    "docs/capability-audit/parallel/location/round5-gnss.md",
+    "docs/capability-audit/parallel/location/round5-platform-build-request.json",
+    "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch",
+    "patches/common/base/location/location/api26_runtime/README.md",
+    "patches/common/base/location/location/api26_runtime/source_states.json"
+  ],
+  "followup_date": "2026-10-16",
+  "followup_review": "followup-review.json",
+  "round2_base_commit": "72bad25b78c86bb7be2033f057bd3990984da3b8",
+  "patch_sha256_by_path": {
+    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec",
+    "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch": "80244fe9981f57694d685a979ee06f4060d7ce793618b062ecbadc1505fbbdb4",
+    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b",
+    "patches/common/base/location/location/api26_runtime/0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
+    "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch": "c0bf33c522e59759810ab13de3a8215c53d6c9a33d3b4c4d6e1754b43a2d9ccd",
+    "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144"
+  },
+  "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
+  "round2_batch_date": "2026-10-16",
+  "round3_base_commit": "4b329553506a1ba71a33c5c4ad631f6e4fe51513",
+  "round3_date": "2026-10-16",
+  "round3_implementation": "round3-business.md",
+  "round4_base_commit": "c77dddccc28c8e9f1fb67a380646fb875eac4a9d",
+  "round4_date": "2026-10-16",
+  "round4_implementation": "round4-fusion-communication.md",
+  "round4_counts": {
+    "location_modified_this_batch": 17,
+    "communication_modified_this_batch": 42,
+    "location_cumulative_targets": 24,
+    "communication_cumulative_targets": 42,
+    "previous_rtt_targets": 4,
+    "all_cumulative_targets": 70,
+    "full_cumulative_location_communication_TUs_requested": 26,
+    "behavior_closures": 0
+  },
+  "round4_changed_files": [
     "ci/capability-audit/batch_location_runtime_fixture.py",
     "ci/capability-audit/fixtures/batch_location/communication_runtime_before.json",
     "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
@@ -712,32 +789,17 @@
     "patches/common/base/telephony/state_registry/communication_state/source_states.json",
     "patches/common/base/telephony/state_registry/communication_state/verify_source.py"
   ],
-  "followup_date": "2026-10-16",
-  "followup_review": "followup-review.json",
-  "round2_base_commit": "72bad25b78c86bb7be2033f057bd3990984da3b8",
-  "patch_sha256_by_path": {
-    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec",
-    "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch": "80244fe9981f57694d685a979ee06f4060d7ce793618b062ecbadc1505fbbdb4",
-    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b",
-    "patches/common/base/location/location/api26_runtime/0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
-    "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch": "c0bf33c522e59759810ab13de3a8215c53d6c9a33d3b4c4d6e1754b43a2d9ccd"
-  },
-  "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
-  "round2_batch_date": "2026-10-16",
-  "round3_base_commit": "4b329553506a1ba71a33c5c4ad631f6e4fe51513",
-  "round3_date": "2026-10-16",
-  "round3_implementation": "round3-business.md",
-  "round4_base_commit": "c77dddccc28c8e9f1fb67a380646fb875eac4a9d",
-  "round4_date": "2026-10-16",
-  "round4_implementation": "round4-fusion-communication.md",
-  "round4_counts": {
-    "location_modified_this_batch": 17,
-    "communication_modified_this_batch": 42,
-    "location_cumulative_targets": 24,
+  "round5_base_commit": "6096a405356c538006c284b894af058e2be7e240",
+  "round5_date": "2026-10-16",
+  "round5_implementation": "round5-gnss.md",
+  "round5_counts": {
+    "new_location_targets": 3,
+    "location_cumulative_targets": 27,
     "communication_cumulative_targets": 42,
     "previous_rtt_targets": 4,
-    "all_cumulative_targets": 70,
-    "full_cumulative_location_communication_TUs_requested": 26,
+    "all_cumulative_targets": 73,
+    "additional_full_TUs_requested": 2,
+    "cumulative_full_location_communication_TUs_requested": 28,
     "behavior_closures": 0
   }
 }

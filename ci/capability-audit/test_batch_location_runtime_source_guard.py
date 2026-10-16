@@ -23,9 +23,8 @@ class RuntimeSourceGuardTests(unittest.TestCase):
     def setUpClass(cls):
         cls.states = {
             'original': json.loads(FIXTURE.read_text())['files'],
-            'prefix_1': runtime_sources(prefix=1),
-            'prefix_2': runtime_sources(prefix=2),
-            'prefix_3': runtime_sources(prefix=3),
+            **{'prefix_' + str(index): runtime_sources(prefix=index)
+               for index in range(1, len(list(COMPONENT.glob('*.patch'))))},
             'final': runtime_sources(),
         }
 

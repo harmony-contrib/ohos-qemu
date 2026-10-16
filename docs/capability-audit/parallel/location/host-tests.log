@@ -224,3 +224,80 @@ Ran 2 tests in 5.848s
 OK
 
 Production manifests on private complete fixed originals: location24 original -> real4patches -> exact final PASS; communication42 raw original -> real binary/text patch -> exact final PASS. Project HEAD checks are separately covered by strict guard tests; no source-container writes.
+
+=== Round5 GNSS measurement/configuration; base6096a405; read-only source; no heavy tasks ===
+
+gnss-tests.log
+test_abi_frozen_and_production_dummy_removed (__main__.GnssRuntimeTests.test_abi_frozen_and_production_dummy_removed) ... ok
+test_actual_callbacks_configuration_and_request_dispatch (__main__.GnssRuntimeTests.test_actual_callbacks_configuration_and_request_dispatch) ... ok
+test_fixed_original_reproduces_synthetic_satellite_regression (__main__.GnssRuntimeTests.test_fixed_original_reproduces_synthetic_satellite_regression) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 7.391s
+
+OK
+Actual GNSS callbacks preserve no/zero/1/3/4/64/128 SV measurements and every field; malformed vectors rejected. Generated POD configuration, intervals, real error gates and start types passed. Host boundaries only.
+Original fixed callback reproduces synthetic SV assertion failure; patched function passes.
+
+guard-tests.log
+test_all_legal_prefixes_and_idempotence (__main__.RuntimeSourceGuardTests.test_all_legal_prefixes_and_idempotence) ... ok
+test_production_revision_and_frozen_targets_are_consistent (__main__.RuntimeSourceGuardTests.test_production_revision_and_frozen_targets_are_consistent) ... ok
+test_symlink_target_and_parent_rejected (__main__.RuntimeSourceGuardTests.test_symlink_target_and_parent_rejected) ... ok
+test_unknown_and_mixed_edits_rejected_before_mutation (__main__.RuntimeSourceGuardTests.test_unknown_and_mixed_edits_rejected_before_mutation) ... ok
+test_wrong_head_and_changed_patch_rejected (__main__.RuntimeSourceGuardTests.test_wrong_head_and_changed_patch_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 9.063s
+
+OK
+
+complete-source-tests.log
+PASS complete raw27 targets; live pinned HEAD/original hashes; actual five-patch stack; exact legal states: original,prefix_1,prefix_2,prefix_3,prefix_4,final
+
+all-tests.log
+test_execute_actual_napi_and_callback_functions (test_batch_location_ble_napi.BluetoothNapiTests.test_execute_actual_napi_and_callback_functions) ... BLE actual NAPI functions: parser/integer/undefined, callback identity, payload, queued cancellation/reentry, environment and error/ref lifetime boundaries passed
+ok
+test_execute_backend_and_service (test_batch_location_ble_runtime.BluetoothRuntimeTests.test_execute_backend_and_service) ... BLE real functions: exact payload/filter/RSSI, permission/delegation/user/freeze, startup/stop failures, owner and stale scan-task boundaries passed
+BLE absent feature: real API reports 801
+ok
+test_cache_permission_release_and_retry (test_batch_location_business_runtime.LocationBusinessRuntimeTests.test_cache_permission_release_and_retry) ... Actual cache fast paths: fine-only/approx accounting, retained Request stop retry, no premature continuous decrement, duplicate release passed
+ok
+test_district_native_and_service (test_batch_location_business_runtime.LocationBusinessRuntimeTests.test_district_native_and_service) ... Actual district native/service: current-fix/cache/deadline/stop/late callbacks/locale/geocoder errors and sports wire route passed
+ok
+test_district_track_napi_and_sports_parser (test_batch_location_business_runtime.LocationBusinessRuntimeTests.test_district_track_napi_and_sports_parser) ... Actual business NAPI: Promise-only optional/undefined/strict int32, district optional fields/errors, track payload/errors and continuous sports parser passed
+ok
+test_legacy_request_wire_and_sports_copy (test_batch_location_business_runtime.LocationBusinessRuntimeTests.test_legacy_request_wire_and_sports_copy) ... Actual RequestConfig: old ten wire fields and following parcel data preserved, sports default/copy/equality passed
+ok
+test_skiing_processing_history (test_batch_location_business_runtime.LocationBusinessRuntimeTests.test_skiing_processing_history) ... Actual skiing processing: changed geometry/altitude/accuracy/derived speed, dedup, outlier, source/privacy/lifecycle gates, owner/delegation, 24h and cursor/antimeridian passed
+ok
+test_actual_napi_slot_callbacks_queue_and_env_cleanup (test_batch_location_communication_runtime.CommunicationRuntimeTests.test_actual_napi_slot_callbacks_queue_and_env_cleanup) ... ok
+test_actual_vendor_notification_hril_and_registry (test_batch_location_communication_runtime.CommunicationRuntimeTests.test_actual_vendor_notification_hril_and_registry) ... ok
+test_original_final_and_idempotence (test_batch_location_communication_source_guard.CommunicationGuardTests.test_original_final_and_idempotence) ... ok
+test_unknown_mixed_head_symlink_and_patch_rejected (test_batch_location_communication_source_guard.CommunicationGuardTests.test_unknown_mixed_head_symlink_and_patch_rejected) ... ok
+test_actual_core_cell_query_slots_timestamp_and_identity (test_batch_location_fusion_runtime.FusionRuntimeTests.test_actual_core_cell_query_slots_timestamp_and_identity) ... ok
+test_actual_napi_parser_promise_callback_queue_and_failures (test_batch_location_fusion_runtime.FusionRuntimeTests.test_actual_napi_parser_promise_callback_queue_and_failures) ... ok
+test_actual_wire_geometry_owner_and_service_lifecycle (test_batch_location_fusion_runtime.FusionRuntimeTests.test_actual_wire_geometry_owner_and_service_lifecycle) ... ok
+test_public_binding_and_wire_contract (test_batch_location_fusion_runtime.FusionRuntimeTests.test_public_binding_and_wire_contract) ... ok
+test_abi_frozen_and_production_dummy_removed (test_batch_location_gnss_runtime.GnssRuntimeTests.test_abi_frozen_and_production_dummy_removed) ... ok
+test_actual_callbacks_configuration_and_request_dispatch (test_batch_location_gnss_runtime.GnssRuntimeTests.test_actual_callbacks_configuration_and_request_dispatch) ... ok
+test_fixed_original_reproduces_synthetic_satellite_regression (test_batch_location_gnss_runtime.GnssRuntimeTests.test_fixed_original_reproduces_synthetic_satellite_regression) ... ok
+test_execute_live_query (test_batch_location_icon_state.LocationIconStateTests.test_execute_live_query) ... Live icon/query/PrivacyKit route: fine/approx/both/revoked/delegated, shared pid, GNSS/network/fused, locks, freeze/account/timeout/switch/service boundaries passed
+ok
+test_transaction_number_is_new_and_stable (test_batch_location_icon_state.LocationIconStateTests.test_transaction_number_is_new_and_stable) ... ok
+test_component_applies_idempotently (test_batch_location_rtt_lifecycle.RttLifecycleTest.test_component_applies_idempotently) ... ok
+test_execute_patched_lifecycle (test_batch_location_rtt_lifecycle.RttLifecycleTest.test_execute_patched_lifecycle) ... RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed
+ok
+test_all_legal_prefixes_and_idempotence (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_all_legal_prefixes_and_idempotence) ... ok
+test_production_revision_and_frozen_targets_are_consistent (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_production_revision_and_frozen_targets_are_consistent) ... ok
+test_symlink_target_and_parent_rejected (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_symlink_target_and_parent_rejected) ... ok
+test_unknown_and_mixed_edits_rejected_before_mutation (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_unknown_and_mixed_edits_rejected_before_mutation) ... ok
+test_wrong_head_and_changed_patch_rejected (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_wrong_head_and_changed_patch_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 37.870s
+
+OK
+Actual GNSS callbacks preserve no/zero/1/3/4/64/128 SV measurements and every field; malformed vectors rejected. Generated POD configuration, intervals, real error gates and start types passed. Host boundaries only.
+Original fixed callback reproduces synthetic SV assertion failure; patched function passes.
+
+Scope: actual extracted production functions execute with explicit host HDI/IPC/request/hook boundaries; original callback assertion failure is expected regression reproduction. ASan/UBSan, detect_leaks=0 on macOS. Not full-platform/vendor/HDI/QEMU/new-package runtime proof; closed0/22.
