@@ -16,6 +16,36 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'location': {
+        'project': 'base/location/location',
+        'revision': '5a0c49c2adb0623fdac73f76e4f98f2e57674c00',
+        'components': ['api26_public_enums', 'api26_runtime'],
+        'extra_checkout': ['frameworks/native/locator_sdk/type/IDataTypes.idl'],
+        'units': ['locator_impl', 'locator_ability', 'request_manager',
+                  'locator_required_data_manager', 'location_napi_adapter',
+                  'location_napi_entry', 'bluetooth_scan_result_callback_napi',
+                  'ohos.geoLocationManager.impl', 'locator_service_proxy', 'locator_service_stub'],
+        'sources': {
+            'locator_impl': 'frameworks/native/locator_sdk/source/locator_impl.cpp',
+            'locator_ability': 'services/location_locator/locator/source/locator_ability.cpp',
+            'request_manager': 'services/location_locator/locator/source/request_manager.cpp',
+            'locator_required_data_manager': 'services/location_locator/locator/source/locator_required_data_manager.cpp',
+            'location_napi_adapter': 'frameworks/js/napi/source/location_napi_adapter.cpp',
+            'location_napi_entry': 'frameworks/js/napi/source/location_napi_entry.cpp',
+            'bluetooth_scan_result_callback_napi': 'frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp',
+            'ohos.geoLocationManager.impl': 'frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp'},
+        'targets': {
+            'locator_impl': 'obj/base/location/location/frameworks/native/locator_sdk/source/locator_sdk/locator_impl.o',
+            **{name: 'obj/base/location/location/services/location_locator/locator/source/lbsservice_locator/' + name + '.o'
+               for name in ('locator_ability', 'request_manager', 'locator_required_data_manager')},
+            **{name: 'obj/base/location/location/frameworks/js/napi/source/geolocationmanager/' + name + '.o'
+               for name in ('location_napi_adapter', 'location_napi_entry', 'bluetooth_scan_result_callback_napi')},
+            'ohos.geoLocationManager.impl': 'obj/base/location/location/frameworks/ets/taihe/locator_sdk/src/location_framework_taihe_native/ohos.geoLocationManager.impl.o',
+            **{'locator_service_' + kind: 'obj/out/arm64_virt/gen/base/location/location/frameworks/native/locator_sdk/liblocator_interface_' + kind + '/locator_service_' + kind + '.o'
+               for kind in ('proxy', 'stub')}},
+        'generate_idl': True,
+        'supported_products': ['arm64_virt'],
+    },
     'audio_capture': {
         'project': 'foundation/multimedia/av_codec',
         'revision': 'e5c525670d1f6622d441c9e5bf975ea0579ea177',
@@ -110,18 +140,73 @@ def verify_object(obj, disassembler, arch, machine, elf_class):
     raise ValueError('product ELF/LLVM output required')
 
 
+def generate_location_idl(root, output, staged, product):
+    """Use the product's real generator rule, redirecting all generated files."""
+    cwd = root / 'out' / product
+    suffix = 'base/location/location/frameworks/native/locator_sdk/ILocatorService.idl'
+    lines = (cwd / 'toolchain.ninja').read_text().splitlines()
+    commands = [line.strip().removeprefix('command = ') for line in lines
+                if line.strip().startswith('command = ') and '--src-idl ' in line and suffix in line]
+    if len(commands) != 1:
+        raise ValueError('one actual product locator IDL rule required')
+    original = shlex.split(commands[0])
+    argv = original[:]
+    old_idl = argv[argv.index('--src-idl') + 1]
+    if not old_idl.endswith('/' + suffix):
+        raise ValueError('canonical original IDL source required')
+    old_root = old_idl[:-len(suffix)]
+    gen_relative = 'out/' + product + '/gen/base/location/location/frameworks/native/locator_sdk'
+    old_gen = old_root + gen_relative
+    if argv[argv.index('--dst-path') + 1] != old_gen:
+        raise ValueError('actual locator generator destination differs')
+    old_files = argv[argv.index('--dst-file') + 1].split(',')
+    names = [str(Path(path).relative_to(old_gen)) for path in old_files]
+    expected = {'ilocator_service.h', 'locator_service_proxy.cpp', 'locator_service_stub.cpp',
+                'locator_service_proxy.h', 'locator_service_stub.h', 'type/idata_types.h', 'type/idata_types.cpp'}
+    if set(names) != expected or len(names) != len(expected):
+        raise ValueError('complete real locator generator output set required')
+    generated = output / ('generated-' + product)
+    generated.mkdir()
+    argv[argv.index('--src-idl') + 1] = str(staged / suffix)
+    argv[argv.index('--dst-path') + 1] = str(generated)
+    argv[argv.index('--dst-file') + 1] = ','.join(str(generated / name) for name in names)
+    tool = root / 'out' / product / 'clang_x64/ability/idl_tool'
+    argv[argv.index('--idl-tool-path') + 1] = str(tool)
+    if (argv[:2] != ['/usr/bin/env', '../../build/config/components/idl_tool/idl.py'] or
+            argv[-4:] != ['--log-domainid', '0xD002300', '--log-tag', 'Locator'] or
+            argv[argv.index('--language') + 1] != 'cpp'):
+        raise ValueError('actual fixed IDL generator options required')
+    with (output / ('idl-' + product + '.log')).open('xb') as log:
+        subprocess.run(argv, cwd=cwd, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
+    for name in names:
+        if not (generated / name).is_file():
+            raise ValueError('actual IDL generator omitted ' + name)
+    interface = (generated / 'ilocator_service.h').read_text()
+    if not all(name in interface for name in ('GetLocationIconStatus', 'StartBluetoothSearch', 'StopBluetoothSearch')):
+        raise ValueError('generated interface omits candidate methods')
+    return generated, root / gen_relative, {
+        'original_argv': original, 'executed_argv': argv,
+        'generator_sha256': sha(tool / 'idl'),
+        'driver_sha256': sha(root / 'build/config/components/idl_tool/idl.py'),
+        'generated_sha256': {name: sha(generated / name) for name in names},
+        'prior_generated_sha256': {name: sha(root / gen_relative / name) for name in names}}
+
+
 def run(args):
     root, output = args.source_root.resolve(), args.output.absolute()
     if any(not os.statvfs(p).f_flag & os.ST_RDONLY for p in [root, root / 'out']):
         raise ValueError('fixed source and product out must be read-only')
     group = GROUPS[args.group]
+    if not set(args.product) <= set(group.get('supported_products', PRODUCTS)):
+        raise ValueError('this diagnostic group lacks real commands for the requested product')
     project = Path(group['project'])
     revision = subprocess.check_output(['git', '-C', str(root / project), 'rev-parse', 'HEAD'], text=True).strip()
     if revision != group['revision']:
         raise ValueError('fixed source revision required')
     output.mkdir(parents=True, exist_ok=False)
     components = [ROOT / 'patches/common' / project / name for name in group['components']]
-    owned = patch_paths(components)
+    owned = sorted(set(patch_paths(components)) |
+                   {str(project / name) for name in group.get('extra_checkout', [])})
     if any(not Path(name).is_relative_to(project) for name in owned):
         raise ValueError('component targets a different project')
     before = {name: sha(root / name) if (root / name).is_file() else None for name in owned}
@@ -149,15 +234,28 @@ def run(args):
                 subprocess.run(['bash', str(component / 'apply.sh'), '--source-root', str(staged)],
                                stdout=log, stderr=subprocess.STDOUT, check=True)
     headers = [name for name in owned if Path(name).suffix in ('.h', '.hpp')]
+    generated = {}
+    generated_report = {}
+    if group.get('generate_idl'):
+        for product in args.product:
+            directory, original_directory, proof = generate_location_idl(root, output, staged, product)
+            generated[product] = (directory, original_directory)
+            generated_report[product] = proof
     overlay = output / 'headers.json'
     overlay.write_text(json.dumps({'version': 0, 'roots': [
         {'type': 'file', 'name': str(root / name), 'external-contents': str(staged / name),
-         'use-external-name': True} for name in headers]}) + '\n')
+         'use-external-name': True} for name in headers] + [
+        {'type': 'file', 'name': str(original_directory / name),
+         'external-contents': str(directory / name), 'use-external-name': True}
+        for product, (directory, original_directory) in generated.items()
+        for name in generated_report[product]['generated_sha256'] if name.endswith('.h')]}) + '\n')
     report = {'status': 'fail', 'group': args.group, 'source_revision': revision,
               'scope': 'complete_patched_product_TUs_ONLY_NOT_link_package_runtime',
               'components': group['components'], 'source_before_sha256': before,
               'candidate_sha256': {name: sha(staged / name) for name in owned},
               'recipe_sha256': recipe_before, 'objects': [], 'first_artifact_behavior_gate_passed': False}
+    if generated_report:
+        report['actual_idl_generation'] = generated_report
     for product in args.product:
         cwd = root / 'out' / product
         arch, machine, elf_class = PRODUCTS[product]
@@ -172,21 +270,26 @@ def run(args):
                 argv = shlex.split(query.stdout.splitlines()[-1])
                 if Path(argv[0]).name == 'ccache':
                     argv.pop(0)
-                source = project / (group['sources'][unit] if 'sources' in group else
-                                    group['directory'] + '/' + unit + '.cpp')
+                if group.get('generate_idl') and unit in ('locator_service_proxy', 'locator_service_stub'):
+                    source = generated[product][1] / (unit + '.cpp')
+                    candidate_source = generated[product][0] / (unit + '.cpp')
+                else:
+                    source = root / project / (group['sources'][unit] if 'sources' in group else
+                                              group['directory'] + '/' + unit + '.cpp')
+                    candidate_source = staged / source.relative_to(root)
                 if (Path(argv[0]).name != 'clang++' or '--target=' + arch + '-linux-ohos' not in argv or
                         argv.count('-c') != 1 or argv.count('-o') != 1 or argv.count('-MF') != 1 or
                         any(v in argv for v in ('&&', ';', '|')) or
-                        (cwd / argv[argv.index('-c') + 1]).resolve() != root / source):
+                        (cwd / argv[argv.index('-c') + 1]).resolve() != source):
                     raise ValueError('exact real product TU command required')
                 row['original_argv'] = argv[:]
                 obj = output / f'{product}-{unit}.o'
                 dep = output / f'{product}-{unit}.d'
-                argv[argv.index('-c') + 1] = str(staged / source)
+                argv[argv.index('-c') + 1] = str(candidate_source)
                 argv[argv.index('-o') + 1] = str(obj)
                 argv[argv.index('-MF') + 1] = str(dep)
-                argv += ['-iquote', str((root / source).parent)]
-                if headers:
+                argv += ['-iquote', str(source.parent)]
+                if headers or generated:
                     argv += ['-ivfsoverlay', str(overlay)]
                 row['executed_argv'] = argv
                 with (output / f'{product}-{unit}-compile.log').open('xb') as log:
@@ -198,7 +301,7 @@ def run(args):
                 row.update(verify_object(obj, disassembler, arch, machine, elf_class))
                 dependency = dep.read_text()
                 required = group.get('required_headers', {}).get(unit, group.get('required_header'))
-                if str(staged / source) not in dependency or (required and str(private / required) not in dependency):
+                if str(candidate_source) not in dependency or (required and str(private / required) not in dependency):
                     raise ValueError('compiler did not consume actual candidate source/header')
                 row.update(status='pass', object_sha256=sha(obj), dependency_sha256=sha(dep))
             except Exception as error:
@@ -208,7 +311,17 @@ def run(args):
     report['source_inputs_unchanged'] = all(
         (sha(root / name) if (root / name).is_file() else None) == checksum for name, checksum in before.items())
     report['recipe_inputs_unchanged'] = all(sha(Path(name)) == checksum for name, checksum in recipe_before.items())
+    report['candidate_inputs_unchanged'] = all(sha(staged / name) == checksum
+                                               for name, checksum in report['candidate_sha256'].items())
+    report['generated_inputs_unchanged'] = all(
+        sha(generated[product][0] / name) == checksum
+        for product, proof in generated_report.items()
+        for name, checksum in proof['generated_sha256'].items()) and all(
+        sha(generated[product][1] / name) == checksum
+        for product, proof in generated_report.items()
+        for name, checksum in proof['prior_generated_sha256'].items())
     if (report['source_inputs_unchanged'] and report['recipe_inputs_unchanged'] and
+            report['candidate_inputs_unchanged'] and report['generated_inputs_unchanged'] and
             report['objects'] and all(x['status'] == 'pass' for x in report['objects'])):
         report['status'] = 'pass'
     (output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')

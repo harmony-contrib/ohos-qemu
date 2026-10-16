@@ -671,16 +671,17 @@
         "网络与外设"
       ],
       "prefixes": [
+        "ci/capability-audit/batch_network_",
+        "ci/capability-audit/fixtures/batch_network/",
+        "ci/capability-audit/test_batch_network_",
+        "docs/capability-audit/parallel/network/",
+        "patches/common/base/usb/",
+        "patches/common/foundation/communication/bluetooth/",
+        "patches/common/foundation/communication/bluetooth_service/",
         "patches/common/foundation/communication/netmanager_base/",
         "patches/common/foundation/communication/netmanager_ext/",
         "patches/common/foundation/communication/wifi/",
-        "patches/common/foundation/communication/bluetooth/",
-        "patches/common/base/usb/",
-        "patches/common/third_party/openvpn/",
-        "ci/capability-audit/batch_network_",
-        "ci/capability-audit/test_batch_network_",
-        "ci/capability-audit/fixtures/batch_network/",
-        "docs/capability-audit/parallel/network/"
+        "patches/common/third_party/openvpn/"
       ],
       "files": [
         "scripts/build_openvpn_ohos.py",
@@ -856,7 +857,27 @@
           "next_required": "完成 GN/init/netsys 接线、配置执行策略、DNS/IPv6/路由与多所有者生命周期；在新包对真实 TLS peer 验证连接、数据、失败、退出及角色/账号边界"
         }
       ],
-      "count": 9
+      "count": 9,
+      "upstream_files": [
+        "configure.ac",
+        "foundation/communication/bluetooth_service/services/bluetooth/ipc/src/bluetooth_host_stub.cpp",
+        "foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp",
+        "foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h",
+        "src/openvpn/dns.c",
+        "src/openvpn/dns.h",
+        "src/openvpn/syshead.h",
+        "src/openvpn/tun_afunix.c"
+      ],
+      "external_source_patch_scope": {
+        "source_lock": "scripts/openvpn_source_lock.json",
+        "reason": "Exact paths in the locked OpenVPN archive; these are not OpenHarmony source-root paths."
+      }
     },
     "location": {
       "groups": [
