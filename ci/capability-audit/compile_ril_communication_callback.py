@@ -56,8 +56,11 @@ def run(root, output):
             source.apply(candidate)
         directory = output / name
         argv = [str(tool), '--intf-type', 'hdi', '--system', 'full', '--mode', 'ipc', '-d', str(directory), '--gen-cpp']
-        for filename in ('IRil.idl', 'IRilCallback.idl', 'Types.idl'):
-            argv += ['-c', str(interface / 'ril/v1_5' / filename)]
+        # The product's v1_5 rule emits v1_5 only. Explicitly generate every
+        # inherited version as well, with the same actual generator/options,
+        # so the transaction comparison covers the complete old contract.
+        for filename in sorted((interface / 'ril').glob('v1_*/*.idl')):
+            argv += ['-c', str(filename)]
         argv += ['-r', 'ohos.hdi:' + str(interface)]
         with (output / (name + '-generator.log')).open('xb') as log:
             subprocess.run(argv, cwd=cwd, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
