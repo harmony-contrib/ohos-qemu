@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "root_export": {
+    "path": "docs/capability-audit/parallel/system/round20-calendar-filter-async-lifetime/frozen-source-export.json",
+    "sha256": "5f0be44f25943e329eb88c7214a42de2e95a720628be255695cec6966b591018",
+    "size": 5386
+  },
+  "root_export_original": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-filter-NAPI-source-01/evidence.json",
+    "sha256": "5f0be44f25943e329eb88c7214a42de2e95a720628be255695cec6966b591018",
+    "size": 5386
+  },
+  "frozen_source_root": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-filter-NAPI-source-01/source",
+  "eight_exported_files_verified": true,
+  "native_dispatch_dependency_origin": "Exact installed postimages retained by calendar_main from existing root editor_callback_dispatch reviewed patch; untouched here.",
+  "sdk_header": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include/napi/native_api.h",
+    "sha256": "c7d241f14ecd4d3e7c9b9ae34eff1f5da40bec53686717870227285b2e97f56a",
+    "size": 153439,
+    "version": "26.0.0.105",
+    "role": "NAPI declaration/contract only, not the actual product compiler/runtime",
+    "excerpts": [
+      {
+        "first_line": 188,
+        "last_line": 216,
+        "text": "\n/**\n * @brief Registers a clean-up hook for releasing resources when the environment exits.\n *\n * @param env Current running virtual machine context.\n * @param fun Function pointer which will be triggered when environment is destroy.\n * @param arg The argument is passed to the function pointer 'fun'.\n *\n * @return Returns the function execution status.\n * @since 11\n */\nNAPI_EXTERN napi_status napi_add_env_cleanup_hook(napi_env env,\n                                                  void (*fun)(void* arg),\n                                                  void* arg);\n\n/**\n * @brief Unregisters the clean-up hook.\n *\n * @param env Current running virtual machine context.\n * @param fun Function pointer which will be triggered when environment is destroy.\n * @param arg The argument is passed to the function pointer 'fun'.\n *\n * @return Returns the function execution status.\n * @since 11\n */\nNAPI_EXTERN napi_status napi_remove_env_cleanup_hook(napi_env env,\n                                                     void (*fun)(void* arg),\n                                                     void* arg);\n"
+      },
+      {
+        "first_line": 1301,
+        "last_line": 1331,
+        "text": "\n/**\n * @brief Throws an ArkTS error.\n * @param env Current running virtual machine context.\n * @param error The ArkTS error to be thrown.\n *\n * @return Returns the function execution status.\n *         {@link napi_ok } If the function executed successfully.\\n\n *         {@link napi_invalid_arg } If env or error is nullptr, or error is not an error object.\\n\n * @since 10\n */\nNAPI_EXTERN napi_status napi_throw(napi_env env, napi_value error);\n\n/**\n * @brief Throws an ArkTS Error with text information.\n * @param env Current running virtual machine context.\n * @param code Optional error code to set on the error.\n * @param msg C string representing the text to be associated with the error.\n *\n * @return Returns the function execution status.\n *         {@link napi_ok } If the function executed successfully.\\n\n *         {@link napi_invalid_arg } If env or msg is nullptr.\\n\n * @since 10\n */\nNAPI_EXTERN napi_status napi_throw_error(napi_env env,\n                                         const char* code,\n                                         const char* msg);\n\n/**\n * @brief Throws an ArkTS TypeError with text information.\n * @param env Current running virtual machine context."
+      },
+      {
+        "first_line": 2784,
+        "last_line": 2850,
+        "text": "/**\n * @brief Allocate a work object that is used to execute logic asynchronously.\n * @param env Current running virtual machine context.\n * @param async_resource Not supported, can be ignored by passing nullptr.\n * @param async_resource_name  Identifier for the kind of resource that is being provided for diagnostic information\n *                             exposed by the HiTrace.\n * @param execute The native function which should be called to execute the logic asynchronously. The given function\n *                is called from a worker pool thread and can execute in parallel with the main event loop thread.\n * @param complete The native function which will be called when the asynchronous logic is completed or is cancelled.\n *                 The given function is called from the main event loop thread.\n * @param data User-provided data context. This will be passed back into the execute and complete functions.\n * @param result The handle to the newly created async work.\n *\n * @return Returns the function execution status.\n *         {@link napi_ok } If the function executed successfully.\\n\n *         {@link napi_invalid_arg } If the param env, async_resource_name, execute, complete and(or) result is\\n\n *                                   nullptr.\\n\n * @since 10\n */\nNAPI_EXTERN napi_status napi_create_async_work(napi_env env,\n                                               napi_value async_resource,\n                                               napi_value async_resource_name,\n                                               napi_async_execute_callback execute,\n                                               napi_async_complete_callback complete,\n                                               void* data,\n                                               napi_async_work* result);\n\n/**\n * @brief Free a previously allocated work object.\n * @param env Current running virtual machine context.\n * @param work The handle returned by the call to napi_create_async_work.\n *\n * @return Returns the function execution status.\n *         {@link napi_ok } If the function executed successfully.\\n\n *         {@link napi_invalid_arg } If the param env and(or) work is nullptr.\\n\n * @since 10\n */\nNAPI_EXTERN napi_status napi_delete_async_work(napi_env env,\n                                               napi_async_work work);\n\n/**\n * @brief Requests that the previously allocated work be scheduled for execution. Once it returns successfully,\n *        this API must not be called again with the same napi_async_work item or the result will be undefined.\n * @param env Current running virtual machine context.\n * @param work The handle returned by the call to napi_create_async_work.\n *\n * @return Returns the function execution status.\n *         {@link napi_ok } If the function executed successfully.\\n\n *         {@link napi_invalid_arg } If the param env and(or) work is nullptr.\\n\n * @since 10\n */\nNAPI_EXTERN napi_status napi_queue_async_work(napi_env env,\n                                              napi_async_work work);\n\n/**\n * @brief Cancels queued work if it has not yet been started. If it has already started executing, it cannot be\n *        cancelled. If successful, the complete callback will be invoked with a status value of napi_cancelled.\n *        The work should not be deleted before the complete callback invocation, even if it has been successfully\n *        cancelled.\n * @param env Current running virtual machine context.\n * @param work The handle returned by the call to napi_create_async_work.\n *\n * @return Returns the function execution status.\n *         {@link napi_ok } If the function executed successfully.\\n\n *         {@link napi_invalid_arg } If the param env and(or) work is nullptr.\\n\n * @since 10\n */"
+      }
+    ]
+  },
+  "active_source_out_accessed_by_this_agent": false
+}
