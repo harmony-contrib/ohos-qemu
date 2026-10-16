@@ -93,8 +93,9 @@ def transform(name: str, content: bytes, recipe: str, build_id_backport: bool = 
     return text.encode()
 
 
-def atomic_write(path: Path, content: bytes, expected=UNCHECKED) -> None:
-    mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
+def atomic_write(path: Path, content: bytes, expected=UNCHECKED, mode: int | None = None) -> None:
+    if mode is None:
+        mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
         temporary = Path(stream.name)
@@ -192,7 +193,11 @@ def apply(root: Path, artifacts: Path, products: list[str]) -> None:
         if (path.read_bytes() if path.exists() else None) != before:
             raise ValueError("Mesa source changed while staging LLVM; preserving caller changes")
     for name, content in payloads.items():
-        atomic_write(checked_path(root, name), content, snapshots[name])
+        # GN executes its action script directly through /usr/bin/env. A new
+        # file otherwise receives 0644, and a previously staged 0644 helper
+        # retains that broken mode on every replay.
+        atomic_write(checked_path(root, name), content, snapshots[name],
+                     mode=0o755 if name == SOURCE_SCRIPT else None)
     for name, (original, repaired) in planned.items():
         atomic_write(checked_path(root, name), repaired, snapshots[name])
     record = {

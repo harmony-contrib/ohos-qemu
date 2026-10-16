@@ -1,0 +1,37 @@
+{
+  "scope": "completed full build02 actual GN/native attempt; build failed before images/package/runtime",
+  "source_commit": "2c6a5c2502b6d7feb5d4ffdef34955b40296bd59",
+  "actual_build": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-arm64-phone-full-build-02/evidence.json",
+    "sha256": "f702eda1b9e5e9ded4d4f3345456298c0d3d6e29b846e11c7a7888be560b2963"
+  },
+  "actual_exit_code": 1,
+  "seconds": 2114.3686690330505,
+  "actual_GN": "pass; 89553 targets from9512files,194.56s",
+  "actual_Ninja_failure": "qemu_mesa_build action ret126; /usr/bin/env ../../third_party/mesa3d/build_qemu_mesa_llvm.py Permission denied",
+  "actual_script_mode": "0644",
+  "preservation": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-arm64-phone-full-build-02/ninja-failure/preservation.json",
+    "sha256": "e89ef4311ed2c929a7493d8e917dec10ba1387f3dcae48a8418fdf004854a4b2"
+  },
+  "native_scope": "980 Ninja operations observed including native compiler/link commands; not complete product or witness success",
+  "repair": "Set0755 on the known executable action payload via atomic staging for both new and replayed copies; preserve other file modes and reject changed source bytes before mutation",
+  "host_checks": {
+    "count": 14,
+    "exit_code": 0,
+    "seconds": 1.549,
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Mesa-action-mode-host-01.log",
+      "sha256": "aafe5974d2de5e7f4ef0b825ef18970bfc7078d9e0a415c4567a6e2daa4827db"
+    }
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "packages_validated": 0,
+  "remaining_five_started": false,
+  "remaining": [
+    "actual Linux no-build execution-permission replay",
+    "batch all ready candidate fixes and complete SDK/native validation",
+    "one next representative full images/package attempt",
+    "actual new package full runtime gate before remaining five"
+  ]
+}

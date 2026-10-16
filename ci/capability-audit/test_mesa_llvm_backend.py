@@ -5,6 +5,8 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import stat
+import subprocess
 import tempfile
 import unittest
 
@@ -21,6 +23,34 @@ RECIPE = "1" * 64
 
 
 class MesaLLVMCompositionTests(unittest.TestCase):
+    def test_action_script_exec_mode_new_and_replayed_without_overwriting_unknown_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            script = root / 'build_qemu_mesa_llvm.py'
+            payload = b'#!/usr/bin/env python3\nprint("actual exec permission probe")\n'
+            for previous_mode in (None, 0o644, 0o755):
+                if previous_mode is not None:
+                    script.write_bytes(payload)
+                    script.chmod(previous_mode)
+                else:
+                    script.unlink(missing_ok=True)
+                before = script.read_bytes() if script.exists() else None
+                BACKEND.atomic_write(script, payload, before, mode=0o755)
+                self.assertEqual(stat.S_IMODE(script.stat().st_mode), 0o755)
+                result = subprocess.run(['/usr/bin/env', str(script)], capture_output=True, text=True, timeout=5)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(result.stdout.strip(), 'actual exec permission probe')
+            original = script.read_bytes() + b'# unrecognized concurrent edit\n'
+            script.write_bytes(original)
+            script.chmod(0o640)
+            with self.assertRaisesRegex(ValueError, 'source changed'):
+                BACKEND.atomic_write(script, payload, payload, mode=0o755)
+            self.assertEqual(script.read_bytes(), original)
+            self.assertEqual(stat.S_IMODE(script.stat().st_mode), 0o640)
+            data = root / 'metadata.json'
+            BACKEND.atomic_write(data, b'{}\n', None)
+            self.assertEqual(stat.S_IMODE(data.stat().st_mode), 0o644)
+
     def test_empty_cross_abi_and_aliased_cached_objects_are_rejected(self):
         spec = importlib.util.spec_from_file_location('mesa_native_consumer',
             REPO / 'patches/common/third_party/mesa3d/llvm_backend/files/build_qemu_mesa_llvm.py')
