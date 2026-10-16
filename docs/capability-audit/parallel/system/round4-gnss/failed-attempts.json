@@ -1,0 +1,10 @@
+[
+  {
+    "evidence": "docs/capability-audit/parallel/system/round4-gnss/bridge-host-02-setup-failure.log",
+    "reason": "Before-only test scaffold constant was unused under -Werror; corrected the test-only maybe_unused annotation. Not counted as product defect reproduction."
+  },
+  {
+    "evidence": "docs/capability-audit/parallel/system/round4-gnss/bridge-host-04-reload-failure.log",
+    "reason": "An additional same-process unload/reload attempt failed Darwin ASan global ODR registration for HostUnusedProductDevice. No sanitizer checks were weakened. The uncompleted extra reload test extension was removed; the completed bridge-host-03 results remain the six original completed loader cases and six actual-function cases. No reload pass is claimed. Requires official Linux/ARM64 reload validation."
+  }
+]

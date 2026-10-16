@@ -1,0 +1,200 @@
+{
+  "agent": "system",
+  "round": 4,
+  "scope": "root_hardware_subtask_external_gnss_provider_and_approved_vendor_bridge",
+  "baseline_commit": "ada50919417bda47f832df5d9cb272aef3e3b40a",
+  "requirements_total": 10,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "status": "bounded_local_candidate_ready_platform_and_new_package_runtime_pending_reload_attempt_failed",
+  "changed_files": [
+    "ci/capability-audit/batch_system_gnss.py",
+    "ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+    "ci/capability-audit/batch_system_gnss_bridge.py",
+    "ci/capability-audit/batch_system_gnss_bridge_functions_harness.cpp",
+    "ci/capability-audit/batch_system_gnss_bridge_harness.cpp",
+    "ci/capability-audit/batch_system_gnss_controller.py",
+    "ci/capability-audit/batch_system_gnss_harness.cpp",
+    "ci/capability-audit/batch_system_gnss_loader.cpp",
+    "ci/capability-audit/batch_system_gnss_test_dso.inc",
+    "ci/capability-audit/fixtures/batch_system/external_gnss/BUILD.gn.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/external_gnss/gnss_interface_impl.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/external_gnss/location_vendor_interface.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/external_gnss/location_vendor_interface.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/external_gnss/location_vendor_lib.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_system/external_gnss/provenance.json",
+    "ci/capability-audit/test_batch_system_gnss_installers.py",
+    "docs/capability-audit/parallel/system/result.json",
+    "docs/capability-audit/parallel/system/round4-gnss/bridge-host-02-setup-failure.log",
+    "docs/capability-audit/parallel/system/round4-gnss/bridge-host-03.json",
+    "docs/capability-audit/parallel/system/round4-gnss/bridge-host-03.log",
+    "docs/capability-audit/parallel/system/round4-gnss/bridge-host-04-reload-failure.log",
+    "docs/capability-audit/parallel/system/round4-gnss/failed-attempts.json",
+    "docs/capability-audit/parallel/system/round4-gnss/installer-tests.log",
+    "docs/capability-audit/parallel/system/round4-gnss/provider-host-04.json",
+    "docs/capability-audit/parallel/system/round4-gnss/provider-host-04.log",
+    "docs/capability-audit/parallel/system/round4-gnss/result.json",
+    "patches/common/device/qemu/external_gnss/0001-fix-real-gnss-vendor-bridge-lifecycle.patch",
+    "patches/common/device/qemu/external_gnss/README.md",
+    "patches/common/device/qemu/external_gnss/apply.py",
+    "patches/common/device/qemu/external_gnss/apply.sh",
+    "patches/common/device/qemu/external_gnss/files/BUILD.gn",
+    "patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+    "patches/common/device/qemu/external_gnss/files/qemu_gnss_input.h",
+    "patches/common/device/qemu/external_gnss/files/qemu_gnss_protocol.h",
+    "patches/common/device/qemu/external_gnss/files/qemu_gnss_vendor.cpp",
+    "patches/common/device/qemu/external_gnss/manifest.json"
+  ],
+  "upstream_targets": [
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h",
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp"
+  ],
+  "manifest": "patches/common/device/qemu/external_gnss/manifest.json",
+  "requirements_review": {
+    "behavior:access-token-api26-kernel-abi": {
+      "status": "open_runtime_identity_proof_pending",
+      "remaining": [
+        "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+        "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+      ]
+    },
+    "behavior:msdp-device-status-mock-or-missing-clients": {
+      "status": "candidate_real_external_sensor_input_and_truthful_msdp_boundaries_host_verified_runtime_pending",
+      "remaining": [
+        "Main must install/link the actual VDI, enable drivers_peripheral_sensor_feature_qemu_external and sensor community packaging, disable device_status_allow_mock_fallback, retain real sensor clients, and create a dedicated 0700 sensor_host directory plus narrow SELinux socket access before host startup.",
+        "Need same newly packaged ARM64 phone Sensor API observations matched to a fresh externally chosen acceleration challenge through actual loaded VDI -> Sensor HDI -> SensorAgent -> real MSDP algorithms; transport send/host tests are insufficient.",
+        "Need all declared MSDP/multimodal clients/capabilities: this batch implements only external acceleration and preserves unsupported other types as errors. Absolute-still/horizontal/vertical simultaneous subscriptions, transition, permissions, disable/restart/worker-semaphore lifecycle and no-old-event behavior remain runtime requirements."
+      ]
+    },
+    "behavior:native-child-process-phone-boundary": {
+      "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+      "remaining": [
+        "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+        "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+      ]
+    },
+    "behavior:session-manager-profile-gap": {
+      "status": "open_profile_and_sceneboard_runtime_pending",
+      "remaining": [
+        "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+        "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+      ]
+    },
+    "behavior:calendar-lifecycle-device-difference": {
+      "status": "open_provider_ui_and_packaged_runtime_pending",
+      "remaining": [
+        "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+        "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+      ]
+    },
+    "behavior:device-attest-uninitialized": {
+      "status": "open_oem_provisioning_dependency",
+      "remaining": [
+        "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+        "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+      ]
+    },
+    "behavior:advertising-service-provider-missing": {
+      "status": "open_real_ad_provider_dependency",
+      "remaining": [
+        "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+        "Adding a name or returning synthetic ad data alone would not repair this capability."
+      ]
+    },
+    "behavior:graphics3d-scene-manager-unavailable": {
+      "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
+      "remaining": [
+        "Main reports all actual ARM64 product TUs including split-LTO modules pass for the round-2 change; final linking and a newly packaged runtime path remain pending.",
+        "Need actual Scene.load/create/render/destroy/recreate with a valid asset, plugin load/retry diagnostics and stable RenderService/software-render context from the new package."
+      ]
+    },
+    "behavior:security-guard-empty-model-config": {
+      "status": "open_real_risk_model_dependency",
+      "remaining": [
+        "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+        "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+      ]
+    },
+    "behavior:app-domain-verification-extension-missing": {
+      "status": "open_real_verification_routing_evidence_pending",
+      "remaining": [
+        "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+        "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+      ]
+    }
+  },
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/batch_system_gnss.py --output /tmp/system-gnss-host-04",
+      "result": "35 actual provider/function/socket/true ABI export cases pass ASan/UBSan; host Provider config explicitly authorizes host UID while exported product device remains UID0/path fixed",
+      "evidence": "docs/capability-audit/parallel/system/round4-gnss/provider-host-04.json"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/batch_system_gnss_bridge.py --output /tmp/system-gnss-bridge-host-03",
+      "result": "24 completed cases: six actual bridge functions before/after and six actual dlopen/dlsym/dlclose DSO cases before/after. Six original function failures including reentry deadlock, three bad-load failures and two premature cleanup failures reproduced; repaired scenarios pass ASan/UBSan. Extra same-process reload extension is separately failed/unvalidated.",
+      "evidence": "docs/capability-audit/parallel/system/round4-gnss/bridge-host-03.json"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_system_gnss_installers.py -v",
+      "result": "10 tests pass: exact ABI/project/source/payload guards, idempotence, unknown/mixed/symlink protection and rollback after atomic replacement",
+      "evidence": "docs/capability-audit/parallel/system/round4-gnss/installer-tests.log"
+    },
+    {
+      "command": "component load_manifest plus validate(/tmp/system-gnss-bridge-host-03/after, require_patched=True)",
+      "result": "Final component payload/patch hashes and all completed candidate source hashes exactly match; actual read-only vendor ABI dependency unchanged"
+    },
+    {
+      "command": "git diff --cached --check -- . ':!*.patch' ':!ci/capability-audit/fixtures/batch_system/**'",
+      "result": "pass; full diff --check additionally reports only whitespace in newly stored unified-patch context/removal lines preserving the exact upstream originals; no product/test/report whitespace failures remain"
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "main",
+      "request": "Integrate this exact component installer and root-owned dependency //device/qemu/common/virt_full/external_gnss:qemu_external_gnss. Verify vendorGnssAdapter.so naming, actual ELF/data symbol GnssVendorInterface, loader namespace visibility and linkage against unchanged actual location_vendor_lib.h. New GN target includes output_prefix_override=true/output_extension=so; official GN/ARM64/CFI compile and link remain pending."
+    },
+    {
+      "owner": "main",
+      "request": "Create /dev/unix/socket/qemu_gnss 0700 location_host:location_host (UID/GID1022), with exact directory/socket labeling and location_host creation/cleanup plus UID0 su controller connection only. The provider creates /input0600; do not widen /dev/unix/socket0755 or ordinary App access. Host/driver/service source is vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs:557–589: location_host, liblocation_gnss_hdi_driver.z.so, gnss_interface_service, preload2; passwd:22/group:23 map1022; domain declaration drivers/adapter/public/type.te:56."
+    },
+    {
+      "owner": "main",
+      "request": "Combine location-agent base commit94d765b with these three HDI bridge targets and provider. Select legitimate standalone mode1; normal public sequence Enable→Config→Start1, minInterval0..3600000ms. Base fusion fences consume only genuine nonmock GNSS/RTK fresh fixes. No virtual satellites/NMEA/cache/AGNSS are provided; retain honest unsupported behavior and review optional module build/config requirements."
+    },
+    {
+      "owner": "main",
+      "request": "Run official full product TUs for qemu_gnss_input.cpp/qemu_gnss_vendor.cpp/gnss_interface_impl.cpp/location_vendor_interface.cpp, link new provider and GNSS HDI service with existing CFI, then validate the first newly packaged ARM64 phone via actual loaded mappings, host identity/DAC/SELinux and controlled external measurement trace to ordinary public GNSS/locator/fusion-fence observers and allow/deny/lifecycle boundaries."
+    },
+    {
+      "owner": "main",
+      "request": "Preserve and resolve the additional Darwin ASan same-process unload/reload ODR failure in round4-gnss/bridge-host-04-reload-failure.log during official Linux/ARM64 reload validation; no reload pass is claimed and no sanitizer checks were weakened. Completed actual DSO callback/external cleanup, failed load and repeat-cleanup cases passed before this uncompleted extension. Any later matrix must still wait for complete representative new-package runtime gate."
+    },
+    {
+      "owner": "main",
+      "request": "Register own batch_system_gnss scripts/test_batch_system_gnss_installers only through root-owned public runner if desired. The bridge additionally retains mappings after disable failure or unscoped optional module pointer borrowing; review wider non-QEMU vendor behavior explicitly. All module pointers from this provider are null."
+    }
+  ],
+  "known_incomplete": [
+    "No official GN/SDK/ARM64/CFI compile/link, guest input wiring, ordinary permission/API or newly packaged end-to-end behavior validation performed by this subagent.",
+    "Historical location UTC is preserved and rejects stale replay; no historical sample is relabeled as a fresh measured fix.",
+    "Darwin ASan same-process reload ODR registration failed in an uncompleted extra extension; full log retained, no pass claimed or sanitizer suppression applied.",
+    "Optional GNSS modules, cache, satellites/NMEA/assistance are unsupported; source only implements normal standalone external position measurements.",
+    "The unchanged ten system IDs and all location IDs remain unclosed. This is a root-owned hardware input subtask, not an extra accounting closure."
+  ],
+  "resources": {
+    "heavy_tasks_started": 0,
+    "source_or_out_mutation": false,
+    "out_consumed": false,
+    "build_packages_created": 0,
+    "external_services_or_VMs_operated": false,
+    "source_queries": "bounded read-only fixed-source queries earlier in batch; stopped after final narrowing instruction",
+    "local_checks": "private bounded host ASan/UBSan builds and Unix socket/ABI tests only; no further test expansion after narrowing instruction"
+  },
+  "evidence_notes": "Combined text logs remove terminal trailing spaces only; raw individual execution-log SHA256 values remain in evidence JSON and private scratch. Exact upstream sources and patch context are preserved by hashes."
+}
