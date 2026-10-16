@@ -65,7 +65,7 @@ def generate(repo, root, staged, output, ril):
                '--cc', str(cpp), '--header', str(hpp), '--', str(staged / CXX)]
     with (output / 'cxxbridge-generate.log').open('xb') as log:
         subprocess.run(command, cwd=root / 'out/arm64_virt', stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
-    if 'CommunicationStateInfo' not in hpp.read_text() or 'CommunicationStateInfo' not in cpp.read_text():
+    if 'on_communication_state_updated' not in hpp.read_text() or 'on_communication_state_updated' not in cpp.read_text():
         raise ValueError('actual regenerated CXX outputs omit the new communication state')
     old = root / 'out/arm64_virt/gen' / Path(CXX + '.h')
     overlay.append({'type': 'file', 'name': str(old), 'external-contents': str(hpp), 'use-external-name': True})
