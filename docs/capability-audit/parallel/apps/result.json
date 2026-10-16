@@ -148,6 +148,14 @@
       "native_lifecycle_adapters": 17,
       "LSan_supported": false,
       "runtime_acceptance": false
+    },
+    {
+      "name": "ordinary Contacts caller recorder/verifier candidate",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_contact_picker_runtime.py -v",
+      "exit_code": 0,
+      "host_tests": 8,
+      "seconds": 0.249,
+      "real_SDK_or_runtime": false
     }
   ],
   "integration_requests": [
@@ -426,6 +434,13 @@
         "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h": "3066f698312815e0bbfba4d71fb54e49d589641cd4947ba98859092dc8b1efc8",
         "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h": "722ead111840a4ecdc0336eec4511fa43790228f9decb2155bee08a5a2fa60c1"
       }
+    },
+    {
+      "owner": "root",
+      "action": "Use existing SDK39 runner to compile prepare-generated ordinary Contacts caller; real normal/non-system signature and installed HAP+BMS/token checks, public CRUD rootseed/readback/delete/readback, actual UI/input-before journal snapshots and AppMgr restart captures. Wire shared suite/closure without editing the eight exclusive tool/fixture files. Complete exact evidence schema is runtime-evidence-contract.md. No extra upstream target or product BUILD change in this batch.",
+      "runtime_contract": "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-evidence-contract.md",
+      "required_cases": 15,
+      "required_invocations": 16
     }
   ],
   "requirements_review": {
@@ -812,8 +827,8 @@
       ]
     },
     "behavior:contacts-picker-entrypoint-missing-phone": {
-      "status": "real_provider_HAP_compiled_public_caller_protocol_candidate_runtime_pending",
-      "finding": "根实际产品SDK39批02已完整编译真Contacts HAP；本批补齐真实public selectContacts/selectContact caller链的BusinessError/Promise/callback、严格100分批及205完整聚合、默认取消、独立UV通知/有界超时/环境与窗口清理。86 JS +44 native helper +17 native lifecycle host场景通过；Darwin无LSan，未核销。",
+      "status": "real_provider_HAP_compiled_caller_protocol_and_ordinary_test_candidate_runtime_pending",
+      "finding": "根实际产品SDK39批02已完整编译真Contacts HAP；本批补齐真实public selectContacts/selectContact caller链的BusinessError/Promise/callback、严格100分批及205完整聚合、默认取消、独立UV通知/有界超时/环境与窗口清理。86 JS +44 native helper +17 native lifecycle host场景通过；Darwin无LSan，未核销。 本批新增normal/非systemApp/零读写权限普通caller源码与独立证据checker，15必需用例/16 invocation、两项可选边界；8 host checks通过。尚未官方SDK/签名/安装/真UI，不以source权限声明或合成测试核销。",
       "next_required": "根真实产品两TU/ABC编译、sync_mode精确后继guard和重放，普通非systemApp零读写权限caller实际签名/BMS/token校验及新包UI全部重载/205/取消默认/部分帧非零错误/双session退出后重开；legacy import/save传输仍独立未验收。",
       "ledger_closed": false,
       "evidence": [
@@ -824,7 +839,11 @@
         "docs/capability-audit/parallel/apps/round8-contact-caller-review/review.md",
         "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
         "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/candidate-hashes.json",
-        "ci/capability-audit/test_batch_apps_contact_picker_protocol.py"
+        "ci/capability-audit/test_batch_apps_contact_picker_protocol.py",
+        "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-evidence-contract.md",
+        "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-candidate.json",
+        "ci/capability-audit/batch_apps_contact_picker_runtime.py",
+        "ci/capability-audit/test_batch_apps_contact_picker_runtime.py"
       ]
     },
     "behavior:arkui-expanded-text-menu-providers-missing": {
@@ -1030,6 +1049,7 @@
   ],
   "changed_files": [
     "ci/capability-audit/batch_apps_contact_picker_protocol_host.py",
+    "ci/capability-audit/batch_apps_contact_picker_runtime.py",
     "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
     "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
     "ci/capability-audit/batch_apps_prepare_contact_picker_protocol.py",
@@ -1074,6 +1094,12 @@
     "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/protocol_test.cpp",
     "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/select_impl.js",
     "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/selection_native.cpp.txt",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/EntryAbility.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/Index.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/PickerCases.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/ResultJournal.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/case-matrix.json",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/project-contract.json",
     "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
     "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
     "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
@@ -1091,6 +1117,7 @@
     "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
     "ci/capability-audit/test_batch_apps_contact_picker_protocol.py",
+    "ci/capability-audit/test_batch_apps_contact_picker_runtime.py",
     "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py",
     "ci/capability-audit/test_batch_apps_provider_lifecycle.py",
     "ci/capability-audit/test_batch_apps_share_provider.py",
@@ -1106,6 +1133,8 @@
     "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
     "docs/capability-audit/parallel/apps/round8-contact-caller-review/policy-and-lifecycle-evidence.json",
     "docs/capability-audit/parallel/apps/round8-contact-caller-review/review.md",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-candidate.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-evidence-contract.md",
     "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
     "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
@@ -1154,7 +1183,7 @@
     "patches/common/applications/standard/theme/source_provider/apply.sh",
     "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
-  "previous_batch_commit": "7070c91",
+  "previous_batch_commit": "41040fc7c1405b113218b1b31d42c2cc540a7a57",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -1165,7 +1194,7 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership; latest batch modifies five authorized ContactsData caller protocol targets, while Contacts/Theme provider business files and metadata remain frozen",
+  "report_scope": "cumulative apps ownership; latest batch adds only ordinary caller runtime/test tools and six fixtures/docs; no product upstream target changed",
   "contacts_theme_batch": {
     "scope": "8 build metadata upstream targets only; no business fix or acceptance claim",
     "fixed_source_container": "read-only ohos-qemu-parallel-source-20261016-02",
@@ -1214,6 +1243,64 @@
     "host_evidence": "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
     "official_product_build_attempted": false,
     "heavy_lease": "one host clang compile 6.314s; initial unsupported Darwin LSan run -6 preserved; separate granted unchanged-binary ASan/UBSan retry exit0 0.409s; all leases released",
+    "requirements_closed": 0,
+    "first_artifact_behavior_gate_passed": false
+  },
+  "contact_caller_runtime_batch": {
+    "schema_version": 1,
+    "kind": "ordinary caller source + independent evidence verifier candidate",
+    "upstream_targets_this_batch": [],
+    "changed_code_files": [
+      "ci/capability-audit/batch_apps_contact_picker_runtime.py",
+      "ci/capability-audit/test_batch_apps_contact_picker_runtime.py",
+      "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/EntryAbility.ets",
+      "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/Index.ets",
+      "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/PickerCases.ets",
+      "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/ResultJournal.ets",
+      "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/case-matrix.json",
+      "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/project-contract.json"
+    ],
+    "fixture_hashes": {
+      "EntryAbility.ets": "1d16c9b47811a0bb892f627ee351b47a2b720dff21f8e807b4507a7083f5a4b9",
+      "Index.ets": "cc4b2ce0197fc8afc17cfc6c0ce962a968d9548796d8fe97c8cad17529f8d167",
+      "PickerCases.ets": "d1125d26bab292d6ba04a171dee21400c31c8365461c969eb91ccc33a9e3aef7",
+      "ResultJournal.ets": "8012f44a97abe0696e36692681b4c1d2b59fb5afd1624138304c8d98d6ec9511",
+      "case-matrix.json": "4a4ae93bd43d5bda74e86a08f49e67ee89228b1837ed22a389670bd14a625352",
+      "project-contract.json": "e6b2b506d8bbe3b64d4355f3b5d0e9daec8774a89adaf4bb657a250ea3d1caf3"
+    },
+    "required_cases": 15,
+    "required_invocations": 16,
+    "optional_cases": [
+      "deadline",
+      "navigation-dismiss"
+    ],
+    "prepare_output_payload_files": 16,
+    "prepare_output_manifest_files": 1,
+    "host_tests": {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_contact_picker_runtime.py -v",
+      "exit_code": 0,
+      "tests": 8,
+      "seconds": 0.249,
+      "boundaries": [
+        "actual extracted recorder: unmodified result/raw bare-number error/late callback identity/duplicate count/dispose/watchdog does not invent result",
+        "synthetic verifier fixtures challenge partial205/wrong key-name-phone/duplicate IDs/missing or duplicate callbacks",
+        "reject pre-input result, missing cancel mutation, nonnormal BMS/token, installed payload mismatch, old package/missing cleanup",
+        "synthetic positive result never closes ledger or representative package gate"
+      ],
+      "initial_adapter_failure": "Mock manually fired timeout but retained its already-fired timer entry; corrected adapter retirement to match setTimeout. No SDK/HAP runtime was run."
+    },
+    "build_status": {
+      "sdk_compile_attempted": false,
+      "signature_verified": false,
+      "installed": false,
+      "runtime_verified": false,
+      "owner": "root dedicated SDK39/sign/install/UI/rootseed/shared suite"
+    },
+    "limitations": [
+      "No HAP compilation or real system UI result claimed",
+      "Actual normal signature/BMS/token, public-CRUD root seed, installed payload and boot package evidence are required",
+      "Verifier checks raw evidence linkage; cryptographic verify-app, hidden window/session leak and full capability acceptance remain root gates"
+    ],
     "requirements_closed": 0,
     "first_artifact_behavior_gate_passed": false
   }
