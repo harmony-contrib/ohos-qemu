@@ -1,0 +1,9 @@
+test_actual_photo_date_join_live_visibility_deletion_and_uid_relation (test_batch_media_knowledge_holiday.Holiday.test_actual_photo_date_join_live_visibility_deletion_and_uid_relation) ... ok
+test_folded_text_duplicate_uid_rules_and_resource_bounds (test_batch_media_knowledge_holiday.Holiday.test_folded_text_duplicate_uid_rules_and_resource_bounds) ... ok
+test_invalid_io_permission_and_transaction_failure_keep_complete_previous_version (test_batch_media_knowledge_holiday.Holiday.test_invalid_io_permission_and_transaction_failure_keep_complete_previous_version) ... ok
+test_real_schema_legacy_upgrade_unicode_dates_replacement_and_deletion (test_batch_media_knowledge_holiday.Holiday.test_real_schema_legacy_upgrade_unicode_dates_replacement_and_deletion) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 4.281s
+
+OK
