@@ -19,6 +19,25 @@ ROOT = HERE.parents[1]
 FIX = HERE / 'fixtures/batch_media/knowledge_runtime'
 READ = 'ohos.permission.READ_IMAGEVIDEO'
 WRITE = 'ohos.permission.WRITE_IMAGEVIDEO'
+# SDK105 does not ship device-define/phone.json. Its own diagnostic selects
+# default for the phone family; the acceptance runner still requires phone.
+SDK_DEVICE_TYPES = ['default']
+ACCEPTANCE_DEVICE = 'phone'
+REQUIRED_SYSCAPS = {
+    'SystemCapability.Base',
+    'SystemCapability.ArkUI.ArkUI.Full',
+    'SystemCapability.Ability.AbilityRuntime.Core',
+    'SystemCapability.WindowManager.WindowManager.Core',
+    'SystemCapability.BundleManager.BundleFramework.Core',
+    'SystemCapability.Security.AccessToken',
+    'SystemCapability.Utils.Lang',
+    'SystemCapability.FileManagement.File.FileIO',
+    'SystemCapability.FileManagement.AppFileService',
+    'SystemCapability.FileManagement.PhotoAccessHelper.Core',
+    'SystemCapability.DistributedDataManager.DataShare.Core',
+    'SystemCapability.Multimedia.Image.Core',
+    'SystemCapability.Multimedia.Image.ImageSource',
+}
 ROLES = {
     'importer': ('org.harmonycontrib.knowledgeimporter', 'normal', [], 'Importer.ets'),
     'denied': ('org.harmonycontrib.knowledgedenied', 'normal', [], 'Denied.ets'),
@@ -107,6 +126,15 @@ def expected_entities(events, day):
                    for e in events if e['start'] <= day < e['end']], key=lambda e: e['id'])
 
 
+def check_device_profile(sdk):
+    """Read the real SDK profile; never synthesize or override capabilities."""
+    profile = Path(sdk) / 'ets/api/device-define/default.json'
+    capabilities = json.loads(profile.read_text()).get('SysCaps')
+    require(isinstance(capabilities, list) and all(isinstance(value, str) for value in capabilities) and
+            REQUIRED_SYSCAPS <= set(capabilities), 'actual SDK105 default profile lacks a required caller capability')
+    return record(profile)
+
+
 def check_sdk(sdk):
     sdk = Path(sdk).resolve()
     metadata = sdk / 'ets/oh-uni-package.json'
@@ -118,7 +146,8 @@ def check_sdk(sdk):
                  'showAssetsCreationDialog(srcFileUris:', 'recoverAssetsWithUri(assetUris:', 'deleteAssetsWithUri(assetUris:']:
         require(text in source, 'actual SDK declaration missing: ' + text)
     return {'metadata': record(metadata), 'photoAccessHelper': record(declaration),
-            'image': record(sdk / 'ets/api/@ohos.multimedia.image.d.ts')}
+            'image': record(sdk / 'ets/api/@ohos.multimedia.image.d.ts'),
+            'device_default': check_device_profile(sdk)}
 
 
 def make_challenge(output, calendar, provenance, run=None):
@@ -203,7 +232,7 @@ def prepare_project(output, role, challenge, sdk):
     put('entry/build-profile.json5', {'apiType': 'stageMode', 'targets': [{'name': 'default'}]})
     put('entry/oh-package.json5', {'name': 'entry', 'version': '1.0.0', 'dependencies': {}})
     put('entry/src/main/module.json5', {'module': {'name': 'entry', 'type': 'entry', 'mainElement': 'EntryAbility',
-        'deviceTypes': ['phone', 'tablet', '2in1'], 'deliveryWithInstall': True, 'installationFree': False,
+        'deviceTypes': list(SDK_DEVICE_TYPES), 'deliveryWithInstall': True, 'installationFree': False,
         'pages': '$profile:main_pages', 'requestPermissions': [{'name': p, 'reason': '$string:permission_reason',
         'usedScene': {'abilities': ['EntryAbility'], 'when': 'inuse'}} for p in permissions],
         'abilities': [{'name': 'EntryAbility', 'srcEntry': './ets/entryability/EntryAbility.ets', 'launchType': 'singleton',
@@ -216,6 +245,7 @@ def prepare_project(output, role, challenge, sdk):
         put('entry/src/main/ets/' + target, (FIX / source).read_text().replace('__KNOWLEDGE_RUN__', run).replace('__KNOWLEDGE_ROLE__', role))
     manifest = {'schema_version': 1, 'role': role, 'run_id': run, 'bundle_name': bundle,
         'requested_permissions': permissions, 'apl_required_at_signing': apl, 'system_app_required_at_install': apl != 'normal',
+        'sdk_device_types': list(SDK_DEVICE_TYPES), 'acceptance_device': ACCEPTANCE_DEVICE,
         'allowed_acls': [], 'restricted_permissions': [], 'challenge': record(challenge), 'sdk': sdk_proof,
         'fixture_hashes': {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
         'source_hashes': {str(p.relative_to(output)): sha(p) for p in sorted(output.rglob('*')) if p.is_file()},

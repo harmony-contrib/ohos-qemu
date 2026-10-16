@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "scope": "SDK105_original_failure_review_and_host_profile_contract_checks_ONLY",
+  "original_report": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-01/evidence.json",
+    "sha256": "15f7aa1b09cadfd1d26ff1840c3badf68db60aae1deb1e087dd70afb38f7b6a2"
+  },
+  "original_compile_commands": [
+    {
+      "project": "knowledge-importer",
+      "exit_code": 255,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-01/knowledge-importer-compile.log",
+        "sha256": "a54c351f560de48592742a4c0cf1b9b32139898f2a77adaf99c7aa146920a5d3"
+      }
+    },
+    {
+      "project": "knowledge-denied",
+      "exit_code": 255,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-01/knowledge-denied-compile.log",
+        "sha256": "290219e4e9ecda8cb1fd6325376b69d043b2aea36c4d1fb7e343a5a7892a2d0f"
+      }
+    },
+    {
+      "project": "knowledge-query",
+      "exit_code": 255,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-01/knowledge-query-compile.log",
+        "sha256": "545681512c0a7de2b7f876b7b9fb6ae71df73bcae9864309c03a7bc2aede1bb6"
+      }
+    },
+    {
+      "project": "knowledge-curator",
+      "exit_code": 255,
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-01/knowledge-curator-compile.log",
+        "sha256": "901cb324d6d95179720dafe3a1b92b0a830754176e83e27cff3e2751c1d7335b"
+      }
+    }
+  ],
+  "actual_default_profile": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/device-define/default.json",
+    "sha256": "9fc6cd7512b7fdf772a18796e6ddf8ed094599b4042d0d25141ba75e0f2c13cf"
+  },
+  "sdk_device_types": [
+    "default"
+  ],
+  "acceptance_device": "phone",
+  "commands": [
+    {
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "-m",
+        "unittest",
+        "-v",
+        "test_batch_media_knowledge_runtime.py"
+      ],
+      "cwd": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit",
+      "exit_code": 0,
+      "seconds": 2.0925484999315813,
+      "log": {
+        "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round20-knowledge-runtime/sdk-profile-fix/host-tests.log",
+        "sha256": "e1e9756b6aad7f17ea79bffef7ff0b870d37a2d7d3b103ecb3d484b1e1822dff"
+      }
+    }
+  ],
+  "changed_sources": {
+    "ci/capability-audit/batch_media_knowledge_project.py": "3a781798a1408bc43d3f40a1005138133c2ef7b6458a0de9fd1721f64ec9b95e",
+    "ci/capability-audit/test_batch_media_knowledge_runtime.py": "4520f57e5ae4461a7302423c70115ce1bf1084bd04ddd4c8a21cbd1133425a1c",
+    "ci/capability-audit/fixtures/batch_media/knowledge_runtime/protocol.json": "3bf504a6c58d6d782bbe90260a62bcf6f95e33c2f93c42dade559aa767bf909f"
+  },
+  "compiled": false,
+  "runtime_validated": false,
+  "ledger_closed": false,
+  "first_artifact_behavior_gate_passed": false
+}
