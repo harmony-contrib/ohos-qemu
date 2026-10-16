@@ -23,6 +23,7 @@ SCOPE = 'ordinary_dual_UID_MIC_VOIP_focus_with_real_BG_ANS_and_independent_PCM'
 PRODUCER = dict(rate=48000, channels=2, repeat=60, timeout_ms=90000,
                 source_frames=48000, expected_frames=2880000)
 NATIVE_LIMIT = 48000 * 4 * 40
+JOURNAL_PENDING_SECONDS = 2
 
 
 def strict_json(text):
@@ -233,21 +234,117 @@ class AudioFocusRuntime:
         self.save()
         return value
 
-    def journal(self, actor):
+    def journal_record(self, actor, remote, *, pending=False):
+        """Keep live bytes separate from the immutable, completed journal set."""
+        def stat():
+            text = self.actual('test -f ' + shlex.quote(remote) + ' && test ! -L ' + shlex.quote(remote) +
+                ' && stat -c "%u %a %s %i %Y %Z" ' + shlex.quote(remote) +
+                ' && sha256sum ' + shlex.quote(remote), 'focus-background-journal-stat')
+            lines = text.splitlines()
+            if (len(lines) != 2 or re.fullmatch(r'[0-9]+ [0-7]+ [0-9]+ [0-9]+ [0-9]+ [0-9]+', lines[0]) is None or
+                    re.fullmatch('[0-9a-f]{64}  ' + re.escape(remote), lines[1]) is None):
+                raise ValueError('actual background journal stat invalid')
+            uid, mode, size, inode, mtime, ctime = map(int, lines[0].split())
+            if uid != actor['uid'] or not 0 <= size <= NATIVE_LIMIT * 3 or inode <= 0:
+                raise ValueError('actual background journal owner/size/inode invalid')
+            return dict(uid=uid, mode=mode, bytes=size, inode=inode, mtime=mtime, ctime=ctime,
+                        sha256=lines[1].split()[0])
+
+        before = stat()
+        self.serial += 1
+        role = 'owner' if actor['mode'] == 1 else 'contender'
+        local = self.args.output / role / 'live' / (str(self.serial).zfill(5) + '-journal-read.bin')
+        started = time.monotonic_ns()
+        self.command([self.args.hdc, '-t', self.args.target, 'file', 'recv', remote, local],
+                     'focus-background-journal-receive')
+        raw = local.read_bytes()
+        read = dict(remote=remote, path=str(local.resolve()), sha256=sha(local), bytes=len(raw),
+                    before=before, host_monotonic_interval=[started, time.monotonic_ns()],
+                    complete=False)
+        actor.setdefault('journal_reads', []).append(read)
+        # Save before any subsequent command or parse can fail, including an
+        # owner change or disappearance while the app was writing this inode.
+        self.save()
+        after = stat()
+        read['after'] = after
+        reason = None
+        if before != after or len(raw) != after['bytes'] or read['sha256'] != after['sha256']:
+            reason = 'stat-or-content-changed'
+        elif not raw:
+            reason = 'empty'
+        elif not raw.endswith(b'\n'):
+            reason = 'missing-final-newline'
+        if reason is not None:
+            read['pending_reason'] = reason
+            self.save()
+            if pending:
+                return None
+            raise ValueError('incomplete or changed background journal: ' + reason)
+        try:
+            row = strict_json(raw.decode('utf-8'))
+            if (not isinstance(row, dict) or row.get('run_id') != self.run or
+                    type(row.get('mode')) is not int or row['mode'] != actor['mode']):
+                raise ValueError('background journal belongs to another run')
+        except (ValueError, UnicodeError) as error:
+            read['parse_error'] = str(error)
+            self.save()
+            # A stable newline-terminated record is complete, so malformed JSON
+            # or a wrong session is never hidden as an in-progress tail write.
+            raise
+        destination = self.args.output / role / 'private' / Path(remote).name
+        with destination.open('xb') as output:
+            output.write(raw)
+        value = dict(path=str(destination.resolve()), sha256=read['sha256'], remote=remote,
+                     uid=after['uid'], mode=after['mode'], bytes=len(raw))
+        actor['files'][destination.name] = value
+        read['complete'] = True
+        self.save()
+        return value, row
+
+    def journal(self, actor, *, final=False):
         stem = 'audio-event-' + self.run + '-mode' + str(actor['mode'])
-        raw = self.actual('find ' + actor['app_files'] + ' -maxdepth 1 -name "' + stem +
-                          '-background-*.json" | sort', 'focus-background-journal-list')
-        values = []
-        for index, remote in enumerate(raw.splitlines()):
-            if remote != actor['app_files'] + stem + '-background-' + str(index).zfill(3) + '.json':
+        def listed():
+            raw = self.actual('find ' + actor['app_files'] + ' -maxdepth 1 -name "' + stem +
+                              '-background-*.json" | sort', 'focus-background-journal-list')
+            paths = raw.splitlines()
+            if len(paths) > 512:
+                raise ValueError('unbounded background journal sequence')
+            if any(remote != actor['app_files'] + stem + '-background-' + str(index).zfill(3) + '.json'
+                   for index, remote in enumerate(paths)):
                 raise ValueError('missing, duplicate or foreign background journal sequence')
+            return paths
+        paths = listed()
+        values = []
+        for index, remote in enumerate(paths):
             name = Path(remote).name
             # HAP writes these nonce-scoped records with CREATE and refuses
             # overwrites. Recheck remote hashes when collecting the final set,
             # rather than repeating an HDC round-trip per immutable old record.
-            value = actor['files'].get(name) or self.collect_file(actor, remote, native=False)
-            row = strict_json(Path(value['path']).read_text())
-            if row.get('run_id') != self.run or row.get('mode') != actor['mode']:
+            value = actor['files'].get(name)
+            if value is None:
+                if not final and index == len(paths) - 1:
+                    def tail():
+                        result = self.journal_record(actor, remote, pending=True)
+                        if result is None:
+                            current = listed()
+                            if remote not in current:
+                                raise ValueError('pending background journal disappeared')
+                            if current[-1] != remote:
+                                # A later CREATE proves this record's writer
+                                # finished. It must now pass one strict read.
+                                return self.journal_record(actor, remote)
+                        return result
+                    value, row = self.wait('background-journal-tail-completion',
+                                           tail, JOURNAL_PENDING_SECONDS)
+                else:
+                    value, row = self.journal_record(actor, remote)
+            else:
+                content = Path(value['path']).read_bytes()
+                if not content.endswith(b'\n'):
+                    raise ValueError('immutable background journal lacks its final newline')
+                row = strict_json(content.decode('utf-8'))
+            if (not isinstance(row, dict) or row.get('run_id') != self.run or
+                    type(row.get('mode')) is not int or row['mode'] != actor['mode']):
                 raise ValueError('background journal belongs to another run')
             if name not in actor['background_journal']:
                 actor['background_journal'].append(name)
@@ -296,13 +393,30 @@ class AudioFocusRuntime:
 
     def ready(self, actor, action, running=True):
         remote = self.paths(actor, action) + '-ready.json'
-        self.wait('native-' + action, lambda: self.present(remote, 'focus-ready-existence'))
+        def completed(rows):
+            found = [row for row in rows if row.get('type') == 'event_ready' and row.get('action') == action]
+            if len(found) > 1:
+                raise ValueError('duplicate native action readiness completion')
+            if not found:
+                return None
+            row = found[0]
+            if (row.get('run_id') != self.run or re.fullmatch('[0-9a-f]{32}', row.get('nonce', '')) is None or
+                    type(row.get('monotonic_ns')) is not int or row['monotonic_ns'] <= 0):
+                raise ValueError('invalid native readiness completion identity')
+            return row
+        # Native emits this only after WritePrivate succeeds through fsync and
+        # close; a newly created ready inode alone can still contain short JSON.
+        completion = self.wait_native(actor, 'ready-complete-' + action, completed)
+        completion_log = dict(actor['latest_native_log'])
         file, interval = self.bracket(actor, 'ready-' + action, lambda: self.collect_file(actor, remote))
         ready = validate_ready(strict_json(Path(file['path']).read_text()), self.run, action, actor['uid'], running)
+        if any(ready[key] != completion[key] for key in ('run_id', 'action', 'nonce', 'monotonic_ns')):
+            raise ValueError('native readiness completion and private file differ')
         if ready['nonce'] in [row['observation']['nonce'] for row in actor['ready_json']]:
             raise ValueError('reused native action nonce')
         actor['ready_json'].append(dict(action=action, path=file['path'], sha256=file['sha256'],
-            observation=ready, actual_clock_interval=interval))
+            observation=ready, actual_clock_interval=interval, native_completion=completion,
+            completion_log=completion_log))
         self.save()
         return ready
 
@@ -555,6 +669,8 @@ class AudioFocusRuntime:
         self.note('actor-native-background-observers-clean', uid=actor['uid'])
 
     def collect_actor(self, actor, partial=False):
+        if not partial:
+            self.journal(actor, final=True)
         stem = 'audio-event-' + self.run + '-'
         raw = self.actual('if test -d ' + actor['app_files'] + '; then find ' + actor['app_files'] +
             ' -maxdepth 1 -name "' + stem + '*" | sort; fi', 'focus-all-own-private-evidence')
@@ -565,7 +681,10 @@ class AudioFocusRuntime:
             arkts = bool(re.fullmatch(re.escape(stem) + r'mode[12]-(?:permission|background-[0-9]{3})\.json',
                                      Path(remote).name))
             try:
-                value = self.collect_file(actor, remote, native=not arkts)
+                if arkts and '-background-' in Path(remote).name and Path(remote).name not in actor['files']:
+                    value, _ = self.journal_record(actor, remote)
+                else:
+                    value = self.collect_file(actor, remote, native=not arkts)
                 if remote.endswith('-results.log'):
                     actor['native_results_path'] = value['path']
                     actor['native_results_sha256'] = value['sha256']

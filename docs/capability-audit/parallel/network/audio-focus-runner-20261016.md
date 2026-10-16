@@ -141,3 +141,43 @@ Start causality, expired ACK/request refusing before control mutation, private
 native mode rejection before transfer, ordinary identity boundaries, duplicate
 JSON rejection and preflight failure without any subprocess/guest cleanup.
 The retained transcript is `audio-focus-runner-host-tests-20261016.txt`.
+
+## File completion follow-up to 4ff4b79
+
+Readiness now waits for the actual native `event_ready` for this action before
+receiving its private JSON. The native writer emits that event only after
+`WritePrivate` has successfully written, fsynced and closed the file. The
+runtime requires exactly one matching marker and checks its run ID, action,
+nonce and creation monotonic time against the received file. Each ready entry
+retains that marker and the path/hash of the actual live log snapshot containing
+it. File existence alone does not permit collection or an ACK. The existing
+fresh-reply completion marker and all permission, producer and focus boundaries
+are unchanged.
+
+ArkTS background journal files are created before their bytes have finished
+writing. New records are therefore first received into uniquely named
+`ROLE/live/NNNNN-journal-read.bin` files. `actor.journal_reads` retains every
+received byte sequence, including zero-length files, with its hash, size,
+before/after guest UID/mode/size/inode/mtime/ctime/hash and host receive interval.
+These are raw read observations, not completed journal records.
+
+Only the current last journal file may wait for completion. Empty, unterminated
+or changing content retries for a fixed two-second polling deadline. Each
+pending read is preserved; no incomplete bytes enter `actor.files` or replace
+an immutable private file. A stable complete newline-terminated JSON record
+must have the actual run/mode and owner before it is promoted to `ROLE/private`.
+Stable malformed complete JSON, a foreign session/owner, a missing sequence or
+an actual lifecycle failure remains fatal. If another journal file appears
+during the wait, the former tail must pass one immediate strict read; an
+incomplete middle item cannot continue waiting. A stable incomplete tail fails
+at the deadline. Final `collect_actor` allows no pending tail and retains the
+existing remote hash/UID/mode/size consistency check for every completed file.
+
+The expanded suite runs 18 pure host tests. The additional cases execute the
+actual runtime methods with byte-transfer and guest-stat doubles: readiness
+JSON exists while the native marker is absent/partial, marker/file mismatch and
+duplicates, zero/short/unterminated tail writes, stat changes, exact partial byte
+retention, bounded stable-tail failure, tail becoming a middle record, complete
+malformed/intermediate records, owner/run/lifecycle failures, and strict final
+collection including remote mutation. This follow-up performs no Docker, SDK,
+HAP, HDC or guest run, and supplies no new runtime acceptance evidence.
