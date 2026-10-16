@@ -5,41 +5,49 @@
   "branch": "codex/capability-apps-20261015",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
   "requirements_count": 34,
-  "summary": "第五批在现有Settings phone提供真实modal share picker候选，并修复MMS纯文本sendData到真实收件人/草稿UI；8个业务源目标，未编译HAP。保留ACTION_CHOOSE/HMS-Bluetooth/MMS附件解析缺口，完整34项映射仍不核销。",
-  "acceptance_status": "Latest share/plain-text receiver batch passed lightweight host checks only; root owns official SDK build, exact signing/preinstall and fresh representative ARM64 phone runtime acceptance.",
+  "summary": "第六批为固定Contacts真picker与Theme既有壁纸渲染扩展新增独立源码构建候选；仅8个构建元数据目标，4项轻量主机检查通过，未运行SDK/HAP。Contacts外部pickersheet HSP/会话清理与Theme缺设置UI/Launcher路由等缺口明确保留；34项不核销。",
+  "acceptance_status": "Latest Contacts/Theme batch is packaging-only preparation with host exact-state/schema checks; no official SDK compilation, signing, HAP installation, representative package or runtime acceptance. All 34 assigned requirements remain unclosed.",
   "upstream_targets": [
-    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
-    "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
-    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h",
-    "applications/standard/calendardata/entry/src/main/module.json5",
-    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
-    "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
-    "applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets",
-    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets",
     "applications/standard/admin_provisioning/BUILD.gn",
     "applications/standard/admin_provisioning/build-profile.json5",
-    "applications/standard/admin_provisioning/entry/src/main/module.json5",
-    "applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts",
-    "applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets",
-    "applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets",
-    "applications/standard/admin_provisioning/hvigorfile.js",
     "applications/standard/admin_provisioning/entry/hvigorfile.js",
-    "applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets",
-    "applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets",
-    "applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets",
-    "applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets",
-    "applications/standard/admin_provisioning/oh-package.json5",
     "applications/standard/admin_provisioning/entry/oh-package.json5",
+    "applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts",
+    "applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets",
+    "applications/standard/admin_provisioning/entry/src/main/module.json5",
     "applications/standard/admin_provisioning/hvigor/hvigor-config.json5",
+    "applications/standard/admin_provisioning/hvigorfile.js",
+    "applications/standard/admin_provisioning/oh-package.json5",
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h",
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+    "applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets",
+    "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
+    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets",
+    "applications/standard/calendardata/entry/src/main/module.json5",
+    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
+    "applications/standard/contacts/BUILD.gn",
+    "applications/standard/contacts/build-profile.json5",
     "applications/standard/hap/BUILD.gn",
-    "applications/standard/settings/product/phone/src/main/module.json5",
-    "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
-    "applications/standard/mms/entry/src/main/module.json5",
+    "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets",
     "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets",
+    "applications/standard/mms/entry/src/main/module.json5",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
     "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
     "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
     "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets",
-    "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets"
+    "applications/standard/settings/product/phone/src/main/module.json5",
+    "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
+    "applications/standard/theme/BUILD.gn",
+    "applications/standard/theme/build-profile.json5",
+    "applications/standard/theme/hvigor/hvigor-config.json5",
+    "applications/standard/theme/oh-package.json5",
+    "applications/standard/theme/product/pad/oh-package.json5",
+    "applications/standard/theme/product/phone/oh-package.json5"
   ],
   "tests": [
     {
@@ -99,6 +107,14 @@
       "exit_code": 0,
       "result": "7 tests passed; exact component hash/replay2/drift, unchanged manifest/permissions, source mirror, SDK import existence only, actual picker18/MMS5/session4 scenarios",
       "scope": "Light host only; no official SDK/HAP/runtime validation for this batch"
+    },
+    {
+      "name": "contacts_theme_source_provider_exact_metadata",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_apps_contacts_theme_source_provider.py -v",
+      "exit_code": 0,
+      "result": "4 tests passed: exact apply plus two full replays; unknown/partial/symlink refusal before mutation; original local HAR/HSP graph, identity, permissions and API26 project schema; actual picker/result versus wallpaper renderer source contracts. Contacts build profile changes precisely one signingConfig line. All non-target fixture hashes unchanged.",
+      "scope": "Light host fixtures and prepared schema only. No official SDK/HAP/BMS/QEMU execution.",
+      "evidence": "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py"
     }
   ],
   "integration_requests": [
@@ -256,6 +272,71 @@
         "other_profiles": "Candidate adds phone Settings provider only. Tablet/2in1 modules and any other packages require their own actual registration and runtime proof.",
         "sdk_and_guest": "Root serial official SDK/build and new-package execution pending. No 82-item ledger row closed."
       }
+    },
+    {
+      "id": "apps-contacts-theme-source-packaging",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "components": [
+        "patches/common/applications/standard/contacts/source_provider",
+        "patches/common/applications/standard/theme/source_provider"
+      ],
+      "source_revisions": {
+        "applications/standard/contacts": "65de33df8d6d7aaa5797a5625ed0e5938e5cb050",
+        "applications/standard/theme": "a436a43f1c0948fa12df6d520ec695ae4388a057"
+      },
+      "final_sha256": {
+        "applications/standard/contacts/BUILD.gn": "acf6f0814077df6e45864c46787c99241a17336af8eaf53657a4c6e73b9e6bb4",
+        "applications/standard/contacts/build-profile.json5": "4c690458a9d6f14ee1401698fbcb9fa1faabf44a253c1da1b3d9f53bccb18249",
+        "applications/standard/theme/BUILD.gn": "8540390751f1ce9af524b18fa4c56b754daedfe9fe3c37e618c45dca147f2189",
+        "applications/standard/theme/build-profile.json5": "c04f0d01df54b1aa237b4f5a964f43afc5d82b2a45bdb2c635a37f0a8b5a53a4",
+        "applications/standard/theme/oh-package.json5": "56098c75618b559c50ec6c97c5358e448b29a548cdcb685d98bed460aae2eb83",
+        "applications/standard/theme/hvigor/hvigor-config.json5": "19fd4e493f941f2dc8d7f4d0da03cbe22fcd2f7fe3adc099cbbb2bdc2656e88b",
+        "applications/standard/theme/product/phone/oh-package.json5": "c3e4f0dab9b0ea195e33141cb8d6d0f2637b29da23c8671cfafc436c32fadf18",
+        "applications/standard/theme/product/pad/oh-package.json5": "c3e4f0dab9b0ea195e33141cb8d6d0f2637b29da23c8671cfafc436c32fadf18"
+      },
+      "upstream_targets_this_batch": [
+        "applications/standard/contacts/BUILD.gn",
+        "applications/standard/contacts/build-profile.json5",
+        "applications/standard/theme/BUILD.gn",
+        "applications/standard/theme/build-profile.json5",
+        "applications/standard/theme/hvigor/hvigor-config.json5",
+        "applications/standard/theme/oh-package.json5",
+        "applications/standard/theme/product/pad/oh-package.json5",
+        "applications/standard/theme/product/phone/oh-package.json5"
+      ],
+      "gn_targets": {
+        "Contacts": "//applications/standard/contacts:contacts_hap",
+        "Wallpaper_phone": "//applications/standard/theme:wallpaper_phone_hap",
+        "Wallpaper_tablet": "//applications/standard/theme:wallpaper_pad_hap"
+      },
+      "shared_hap_graph_request": "Root selects Contacts source target instead of old phone/SceneBoard Contacts prebuilt. Root may select at most one real Theme module target per image, after verifying phone/tablet device compatibility and feature-only HAP installation; never package both Wallpaper targets together. Both new BUILD.gn files belong to existing prebuilt_hap part, no bundle.json invented.",
+      "install_paths": {
+        "Contacts": "/system/app/com.ohos.contacts/Contacts.hap",
+        "Wallpaper": "/system/app/com.ohos.wallpaper/Wallpaper.hap"
+      },
+      "contacts_contract": "Original com.ohos.contacts/ContactUiExtentionAbility sys/commonUI exported, no extension permission; real ContactUiExtentionIndex/ContactsPickerPage/ContactsPickerPresenter, selected data + 100-item pickerData/index/total batches and terminateSelfWithResult; cancel/default-selection return retained. No business changes.",
+      "dependencies": {
+        "Contacts_local_HAR_modules": [
+          "common",
+          "account",
+          "call",
+          "contact",
+          "dialpad",
+          "phonenumber"
+        ],
+        "Contacts_root_dev_dependency": "@ohos/hypium 1.0.16 (unchanged)",
+        "Contacts_external_HSP": {
+          "bundleName": "com.ohos.security.pickersheet",
+          "moduleName": "pickersheetlibrary",
+          "status": "original manifest dependency retained; no matching project in fixed .repo/project.list nor named HAP/target in applications/standard/hap; root must supply lawful compatible payload/signature or separately resolve actual source contract, not delete as a build workaround"
+        },
+        "Theme_model6_production_dependencies": []
+      },
+      "signing": "Root retains original profile identity/APL/ACL/request/restricted permissions and provides exact OS signer/preinstall authorization. Contacts APL normal + hos_system_app; Theme APL system_basic + hos_system_app, restricted GET_WALLPAPER/READ_USER_STORAGE, expired original profile. No profile bytes changed.",
+      "native_wallpaper_request": "Root separately owns base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp fallback to com.ohos.launcher/WallpaperExtAbility without ThemeService. Installing com.ohos.wallpaper cannot satisfy this distinct target.",
+      "required_runtime": "Official full product API26 SDK compilation and BMS/system-signing checks, then newly packaged ARM64 phone. Contacts public picker overloads/one-many/empty/filter/default-selection/cancel/error/permission denial/caller exit/provider restart/reentry; observe timer/display-listener/session cleanup. Wallpaper renderer load/change/error/window teardown, independent real settings UI and set/restore/cancel plus Launcher fallback; 2in1 compatibility remains unproved.",
+      "acceptance_limit": "Theme is a renderer-only feature HAP, not wallpaper selection/settings UI; no capability closed by package name/build metadata."
     }
   ],
   "requirements_review": {
@@ -460,15 +541,15 @@
       ]
     },
     "behavior:wallpaper-ui-provider-missing": {
-      "status": "source_provider_build_and_contract_missing",
-      "finding": "theme/product/phone有com.ohos.wallpaper/WallpaperExtAbility真源码，暂存缺bundle；Launcher源码也没WallpaperExtAbility。",
-      "next_required": "构建签名预装theme provider，核对ThemeService缺席时launcher fallback合同，再验证图片设置/还原/取消。",
+      "status": "renderer_packaging_candidate_only_UI_and_native_route_unresolved",
+      "finding": "固定Theme a436a43f phone/pad仅feature型wallpaper渲染extension：getPixelMap→全屏Image，没有选择/设置/还原/取消UI。本批只新增两源码GN目标及model6构建元数据，保留原manifest/deviceTypes/业务与权限；原profile已过期，错误分支Log/TAG未定义、onDestroy不销毁window。无ThemeService时native仍连接com.ohos.launcher/WallpaperExtAbility，此独立bundle无法满足。",
+      "next_required": "根串行API26 SDK及feature-only BMS/设备兼容、原policy续签与精确预装；独立实现真实Wallpaper设置UI、renderer错误/窗口清理及Launcher fallback接线，再新包验证设置/还原/取消/退出/服务重启与2in1。",
       "ledger_closed": false,
       "evidence": [
-        "docs/capability-audit/parallel/apps/static-evidence.json",
-        "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json",
-        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
+        "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
+        "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
+        "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py"
       ]
     },
     "behavior:accessibility-screen-reader-provider-missing": {
@@ -642,15 +723,15 @@
       ]
     },
     "behavior:contacts-picker-entrypoint-missing-phone": {
-      "status": "source_provider_build_and_signing_missing",
-      "finding": "Contacts真源码有ContactUiExtentionAbility，混合暂存也有；源码无GN source_provider构建，HAP图仍按SceneBoard选择预编译Contacts，旧phone可能缺入口。",
-      "next_required": "为phone准备固定Contacts源码构建、依赖和精确签名预装，实测所有picker overload、选择/取消/权限/退出及2in1回归。",
+      "status": "fixed_source_packaging_candidate_uncompiled_external_HSP_and_lifecycle_gaps",
+      "finding": "固定Contacts 65de33df真sys/commonUI ContactUiExtentionAbility与真实picker已存在；本批新增ohos_app contacts_hap、移除产品IDE signingConfig引用，保留SDK26/target23及七模块图/38权限/原profile。外部com.ohos.security.pickersheet/pickersheetlibrary HSP在固定项目索引与HAP命名图中未找到；原picker还存在未清理计时器/显示监听与全局session，onSessionDestroy仅日志。",
+      "next_required": "根接共享HAP选择/精确OS签名预授权，提供合法外部HSP，完整SDK和BMS核对；独立修复真实生命周期后，用最终API26 NAPI和新包实测所有picker overload、数据/默认选择/取消/拒绝/退出/重入及2in1。",
       "ledger_closed": false,
       "evidence": [
-        "docs/capability-audit/parallel/apps/static-evidence.json",
-        "docs/OHOS_7_BATCH_REPAIR.md",
-        "docs/capability-audit/system-bundle-provider-audit.json",
-        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
+        "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
+        "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
+        "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py"
       ]
     },
     "behavior:arkui-expanded-text-menu-providers-missing": {
@@ -761,8 +842,8 @@
     },
     {
       "id": "behavior:wallpaper-ui-provider-missing",
-      "status": "source_provider_build_and_contract_missing",
-      "reason": "构建签名预装theme provider，核对ThemeService缺席时launcher fallback合同，再验证图片设置/还原/取消。"
+      "status": "renderer_packaging_candidate_only_UI_and_native_route_unresolved",
+      "reason": "根串行API26 SDK及feature-only BMS/设备兼容、原policy续签与精确预装；独立实现真实Wallpaper设置UI、renderer错误/窗口清理及Launcher fallback接线，再新包验证设置/还原/取消/退出/服务重启与2in1。"
     },
     {
       "id": "behavior:accessibility-screen-reader-provider-missing",
@@ -836,8 +917,8 @@
     },
     {
       "id": "behavior:contacts-picker-entrypoint-missing-phone",
-      "status": "source_provider_build_and_signing_missing",
-      "reason": "为phone准备固定Contacts源码构建、依赖和精确签名预装，实测所有picker overload、选择/取消/权限/退出及2in1回归。"
+      "status": "fixed_source_packaging_candidate_uncompiled_external_HSP_and_lifecycle_gaps",
+      "reason": "根接共享HAP选择/精确OS签名预授权，提供合法外部HSP，完整SDK和BMS核对；独立修复真实生命周期后，用最终API26 NAPI和新包实测所有picker overload、数据/默认选择/取消/拒绝/退出/重入及2in1。"
     },
     {
       "id": "behavior:arkui-expanded-text-menu-providers-missing",
@@ -853,6 +934,7 @@
   "changed_files": [
     "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
     "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
+    "ci/capability-audit/batch_apps_prepare_contacts_theme_candidate.py",
     "ci/capability-audit/batch_apps_prepare_share_candidate.py",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-BUILD.gn.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-build-profile.json5.gz.b64",
@@ -884,6 +966,8 @@
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
+    "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
     "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SendDataPayload.ets",
     "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePicker.ets",
     "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerController.ets",
@@ -895,11 +979,13 @@
     "ci/capability-audit/test_batch_apps_admin_provider.py",
     "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py",
     "ci/capability-audit/test_batch_apps_share_provider.py",
     "docs/capability-audit/parallel/apps/README.md",
     "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json",
+    "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
     "docs/capability-audit/parallel/apps/result.json",
     "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
     "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json",
@@ -916,6 +1002,10 @@
     "patches/common/applications/standard/calendardata/event_editor/README.md",
     "patches/common/applications/standard/calendardata/event_editor/apply.sh",
     "patches/common/applications/standard/calendardata/event_editor/verify_source.py",
+    "patches/common/applications/standard/contacts/source_provider/0001-build-fixed-real-provider-sources.patch",
+    "patches/common/applications/standard/contacts/source_provider/README.md",
+    "patches/common/applications/standard/contacts/source_provider/apply.sh",
+    "patches/common/applications/standard/contacts/source_provider/verify_source.py",
     "patches/common/applications/standard/hap/admin_provider/0001-build-real-admin-provider-and-verify-user-actions.patch",
     "patches/common/applications/standard/hap/admin_provider/README.md",
     "patches/common/applications/standard/hap/admin_provider/apply.sh",
@@ -927,9 +1017,13 @@
     "patches/common/applications/standard/settings/share_picker/0001-provide-real-modal-sharing-and-text-receiver.patch",
     "patches/common/applications/standard/settings/share_picker/README.md",
     "patches/common/applications/standard/settings/share_picker/apply.sh",
-    "patches/common/applications/standard/settings/share_picker/verify_source.py"
+    "patches/common/applications/standard/settings/share_picker/verify_source.py",
+    "patches/common/applications/standard/theme/source_provider/0001-build-fixed-real-provider-sources.patch",
+    "patches/common/applications/standard/theme/source_provider/README.md",
+    "patches/common/applications/standard/theme/source_provider/apply.sh",
+    "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
-  "previous_batch_commit": "fca7055",
+  "previous_batch_commit": "324d17f67e246ba6a114e841a065c2ba4a840fda",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -940,5 +1034,15 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership: original Settings/Calendar/Admin candidates plus bounded modal share and MMS text candidate; latest batch source only"
+  "report_scope": "cumulative apps ownership: previous Settings/Calendar/Admin/share/MMS candidates plus bounded Contacts/Theme build metadata preparation; no shared HAP GN/signing/preinstall edits in latest batch",
+  "contacts_theme_batch": {
+    "scope": "8 build metadata upstream targets only; no business fix or acceptance claim",
+    "fixed_source_container": "read-only ohos-qemu-parallel-source-20261016-02",
+    "fixture_sha256": "5e265952ca91e2a7b1bee2b5de473c79705f04e6964e8d63bb5d69c21cd93f0c",
+    "candidate_hash_manifest_sha256": "9d7d0c7d63fd7a61cd011d723879df70fd13da71151c98efc7b3b4af9613143a",
+    "official_SDK_build_attempted": false,
+    "heavy_resource_use": "none; unique heavy lease remains with root Settings/MMS batch",
+    "requirements_closed": 0,
+    "first_artifact_behavior_gate_passed": false
+  }
 }

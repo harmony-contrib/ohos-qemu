@@ -1,0 +1,10 @@
+{
+  "applications/standard/contacts/BUILD.gn": "acf6f0814077df6e45864c46787c99241a17336af8eaf53657a4c6e73b9e6bb4",
+  "applications/standard/contacts/build-profile.json5": "4c690458a9d6f14ee1401698fbcb9fa1faabf44a253c1da1b3d9f53bccb18249",
+  "applications/standard/theme/BUILD.gn": "8540390751f1ce9af524b18fa4c56b754daedfe9fe3c37e618c45dca147f2189",
+  "applications/standard/theme/build-profile.json5": "c04f0d01df54b1aa237b4f5a964f43afc5d82b2a45bdb2c635a37f0a8b5a53a4",
+  "applications/standard/theme/oh-package.json5": "56098c75618b559c50ec6c97c5358e448b29a548cdcb685d98bed460aae2eb83",
+  "applications/standard/theme/hvigor/hvigor-config.json5": "19fd4e493f941f2dc8d7f4d0da03cbe22fcd2f7fe3adc099cbbb2bdc2656e88b",
+  "applications/standard/theme/product/phone/oh-package.json5": "c3e4f0dab9b0ea195e33141cb8d6d0f2637b29da23c8671cfafc436c32fadf18",
+  "applications/standard/theme/product/pad/oh-package.json5": "c3e4f0dab9b0ea195e33141cb8d6d0f2637b29da23c8671cfafc436c32fadf18"
+}
