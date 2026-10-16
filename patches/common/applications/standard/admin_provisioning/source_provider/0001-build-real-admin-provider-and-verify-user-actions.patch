@@ -1,0 +1,967 @@
+diff --git a/applications/standard/admin_provisioning/BUILD.gn b/applications/standard/admin_provisioning/BUILD.gn
+--- a/applications/standard/admin_provisioning/BUILD.gn
++++ b/applications/standard/admin_provisioning/BUILD.gn
+@@ -1,43 +1,19 @@
+-# Copyright (c) 2022 Huawei Device Co., Ltd.
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
+ import("//build/ohos.gni")
+ 
+-ohos_hap("adminprovisioning_hap") {
+-  hap_profile = "entry/src/main/module.json"
+-  deps = [
+-    ":adminprovisioning_js_assets",
+-    ":adminprovisioning_resources",
+-  ]
++# Compile the real provisioning UI; GN app_sign retains its existing OS profile.
++ohos_app("adminprovisioning_hap") {
++  deps = []
+   certificate_profile = "signature/adminprovisioning.p7b"
+   hap_name = "adminprovisioning"
+   subsystem_name = "applications"
+   part_name = "prebuilt_hap"
+   module_install_dir = "app/com.ohos.adminprovisioning"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  build_modules = [ "adminprovisioning" ]
++  js_build_mode = "release"
+ }
+-
+-ohos_js_assets("adminprovisioning_js_assets") {
+-  ets2abc = true
+-  source_dir = "entry/src/main/ets"
+-}
+-
+-ohos_app_scope("adminprovisioning_app_profile") {
+-  app_profile = "AppScope/app.json"
+-  sources = [ "AppScope/resources" ]
+-}
+-
+-ohos_resources("adminprovisioning_resources") {
+-  sources = [ "entry/src/main/resources" ]
+-  deps = [ ":adminprovisioning_app_profile" ]
+-  hap_profile = "entry/src/main/module.json"
+-}
+diff --git a/applications/standard/admin_provisioning/build-profile.json5 b/applications/standard/admin_provisioning/build-profile.json5
+--- a/applications/standard/admin_provisioning/build-profile.json5
++++ b/applications/standard/admin_provisioning/build-profile.json5
+@@ -1,14 +1,12 @@
+ {
+   "app": {
+-    "signingConfigs": [],
+     "products": [
+       {
+         "name": "default",
+-        "signingConfig": "default",
+-        "compileSdkVersion": 11,
++        "compileSdkVersion": "26.0.0",
+         "compatibleSdkVersion": 11,
+-        "targetSdkVersion": 11,
+-        "runtimeOS": "OpenHarmony",
++        "targetSdkVersion": "26.0.0",
++        "runtimeOS": "OpenHarmony"
+       }
+     ]
+   },
+@@ -26,4 +24,4 @@
+       ]
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/applications/standard/admin_provisioning/entry/src/main/module.json5 b/applications/standard/admin_provisioning/entry/src/main/module.json5
+--- a/applications/standard/admin_provisioning/entry/src/main/module.json5
++++ b/applications/standard/admin_provisioning/entry/src/main/module.json5
+@@ -2,7 +2,6 @@
+   "module": {
+     "name": "adminprovisioning",
+     "type": "entry",
+-    "srcEntrance": "./ets/Application/AbilityStage.ts",
+     "description": "$string:description_adminProvisioning",
+     "mainElement": "com.ohos.adminprovisioning.MainAbility",
+     "deviceTypes": [
+@@ -13,7 +12,6 @@
+     "deliveryWithInstall": true,
+     "installationFree": false,
+     "pages": "$profile:main_pages",
+-    "uiSyntax": "ets",
+     "abilities": [
+       {
+         "skills": [
+@@ -28,26 +26,42 @@
+         ],
+         "removeMissionAfterTerminate": true,
+         "name": "com.ohos.adminprovisioning.MainAbility",
+-        "srcEntrance": "./ets/MainAbility/MainAbility.ts",
+         "description": "$string:description_mainability",
+         "icon": "$media:icon",
+         "label": "$string:entry_MainAbility",
+         "visible": false,
+         "launchType": "singleton",
+         "startWindowIcon": "$media:transparent",
+-        "startWindowBackground": "$color:color_00000000_transparent"
++        "startWindowBackground": "$color:color_00000000_transparent",
++        "srcEntry": "./ets/MainAbility/MainAbility.ts"
+       },
+       {
+         "removeMissionAfterTerminate": true,
+         "name": "com.ohos.automanager.AutoManagerAbility",
+-        "srcEntrance": "./ets/MainAbility/AutoManagerAbility.ts",
+         "description": "$string:description_autoManagerAbility",
+         "icon": "$media:icon",
+         "visible": true,
+         "launchType": "singleton",
+-        "permissions": ["ohos.permission.PROVISIONING_MESSAGE"],
++        "permissions": [
++          "ohos.permission.PROVISIONING_MESSAGE"
++        ],
+         "startWindowIcon": "$media:transparent",
+-        "startWindowBackground": "$color:color_00000000_transparent"
++        "startWindowBackground": "$color:color_00000000_transparent",
++        "srcEntry": "./ets/MainAbility/AutoManagerAbility.ts"
++      },
++      {
++        "removeMissionAfterTerminate": true,
++        "name": "ByodAdminProvisionAbility",
++        "description": "$string:description_ByodAdminProvisionAbility",
++        "icon": "$media:icon",
++        "exported": true,
++        "launchType": "singleton",
++        "permissions": [
++          "ohos.permission.START_PROVISIONING_MESSAGE"
++        ],
++        "startWindowIcon": "$media:transparent",
++        "startWindowBackground": "$color:color_00000000_transparent",
++        "srcEntry": "./ets/MainAbility/ByodAdminProvisionAbility.ts"
+       }
+     ],
+     "extensionAbilities": [
+@@ -56,8 +70,8 @@
+         "icon": "$media:icon",
+         "description": "UIExtensionAbility",
+         "exported": false,
+-        "type": "ui",
+-        "srcEntrance": "./ets/MainAbility/UIExtensionAbility.ets"
++        "type": "sys/commonUI",
++        "srcEntry": "./ets/MainAbility/UIExtensionAbility.ets"
+       }
+     ],
+     "requestPermissions": [
+@@ -76,6 +90,7 @@
+       {
+         "name": "ohos.permission.INTERNET"
+       }
+-    ]
++    ],
++    "srcEntry": "./ets/Application/AbilityStage.ts"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts b/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts
+@@ -15,13 +15,16 @@
+ 
+ import UIAbility from '@ohos.app.ability.UIAbility';
+ import Logger from '../common/logger';
++import Want from '@ohos.app.ability.Want';
++import window from '@ohos.window';
+ 
+ const TAG = 'MainAbility';
+ 
+ export default class MainAbility extends UIAbility {
+   private localStorage: LocalStorage = new LocalStorage();
++  private windowStage: window.WindowStage | undefined = undefined;
+ 
+-  onCreate(want, launchParam): void {
++  onCreate(want: Want): void {
+     Logger.info(TAG, 'onCreate');
+     this.localStorage.setOrCreate('adminProvisioningWant', want);
+   }
+@@ -30,13 +33,26 @@
+     Logger.info(TAG, 'onDestroy');
+   }
+ 
+-  onWindowStageCreate(windowStage): void {
++  onNewWant(want: Want): void {
++    this.localStorage.setOrCreate('adminProvisioningWant', want);
++    this.loadPage();
++  }
++
++  private loadPage(): void {
++    this.windowStage?.loadContent('pages/applicationInfo', this.localStorage).catch(error => {
++      Logger.info(TAG, 'Provisioning page could not load: ' + error?.message);
++    });
++  }
++
++  onWindowStageCreate(windowStage: window.WindowStage): void {
+     // Main window is created, set main page for this ability
+     Logger.info(TAG, 'onWindowStageCreate');
+-    windowStage.setUIContent(this.context, 'pages/applicationInfo', this.localStorage);
++    this.windowStage = windowStage;
++    this.loadPage();
+   }
+ 
+   onWindowStageDestroy(): void {
++    this.windowStage = undefined;
+     // Main window is destroyed, release UI related resources
+     Logger.info(TAG, 'onWindowStageDestroy');
+   }
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets b/applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets
+@@ -28,17 +28,12 @@
+ import { BusinessError } from '@ohos.base';
+ import common from '@ohos.app.ability.common';
+ 
+-let appInfo: MyApplicationInfo;
+-let elementNameVal: Want;
+-let isAdminTypeVal: adminManager.AdminType;
+-let isActiveState: boolean;
+-let enterInfo: adminManager.EnterpriseInfo;
+ const TAG = 'ApplicationInfo';
+ 
+-@Entry
++@Entry({ useSharedStorage: true })
+ @Component
+ struct ApplicationInfo {
+-  @StorageLink('applicationInfo') applicationInfo: MyApplicationInfo = {
++  @State applicationInfo: MyApplicationInfo = {
+     appIcon: '',
+     appTitle: '',
+     appBundleName: '',
+@@ -46,7 +41,14 @@
+   };
+   @State isShowActive: boolean = false;
+   @State isEnableButton: boolean = false;
+-  @StorageLink('activeType') isAdminType: number = 0;
++  @State operationPending: boolean = false;
++  @State operationError: string = '';
++  private pageActive: boolean = true;
++  private requestReady: boolean = false;
++  private request: Want | undefined = undefined;
++  private elementNameVal: Want = { bundleName: '', abilityName: '' };
++  private enterInfo: adminManager.EnterpriseInfo = { name: '', description: '' };
++  @State isAdminType: number = 0;
+   @State deviceAdminActive: string = '';
+   @State deviceAdminDisActive: string = '';
+   @State enterpriseName: string = '';
+@@ -55,6 +57,9 @@
+ 
+   build() {
+     Column() {
++      if (this.operationError.length > 0) {
++        Text(this.operationError).fontColor(Color.Red).id('admin-provisioning-error');
++      }
+       Column() {
+         GridContainer({
+           columns: utils.isLargeDevice(),
+@@ -158,7 +163,8 @@
+                 .fontSize($r('sys.float.ohos_id_text_size_button1'))
+                 .fontColor($r('sys.color.ohos_id_color_text_primary_activated'))
+             }
+-            .enabled(this.isEnableButton)
++            .enabled(this.requestReady && this.isEnableButton && !this.operationPending)
++            .id('admin-provisioning-activate')
+             .backgroundColor($r('sys.color.ohos_id_color_button_normal'))
+             .height($r('app.float.button_height'))
+             .margin({
+@@ -185,9 +191,11 @@
+               left: $r('app.float.wh_value_6'),
+               bottom: $r('app.float.wh_value_24')
+             })
++            .enabled(!this.operationPending)
++            .id('admin-provisioning-cancel')
+             .onClick(() => {
+               logger.info(TAG, 'button cancel in isShowActive:' + this.isShowActive);
+-              appDetailData.terminateAbilityPage();
++              this.cancelAdmin();
+             })
+             .useSizeType({
+               xs: { span: 3, offset: 4 }, sm: { span: 3, offset: 4 },
+@@ -210,63 +218,93 @@
+   }
+ 
+   async aboutToAppear(): Promise<void> {
+-    elementNameVal = {
++    this.pageActive = true;
++    this.requestReady = false;
++    this.request = this.storage.get<Want>('adminProvisioningWant');
++    this.elementNameVal = {
+       abilityName: '',
+       bundleName: '',
+     };
+ 
+-    enterInfo = {
++    this.enterInfo = {
+       name: '',
+       description: '',
+     };
+ 
+-    isAdminTypeVal = 0;
+     logger.info(TAG, 'aboutToAppear in');
+-    await this.getCheckAbilityList(this.applicationInfo, elementNameVal, isAdminTypeVal);
++    try {
++      await this.getCheckAbilityList(this.applicationInfo);
++    } catch (error) {
++      this.isEnableButton = false;
++      this.operationError = `加载失败：${error?.message ?? '服务不可用'}`;
++    }
+     logger.info(TAG, 'aboutToAppear out');
+   }
+ 
+   aboutToDisappear(): void {
++    this.pageActive = false;
+     logger.info(TAG, 'aboutToDisappear');
+   }
+ 
+-  onPageShow(): void {
+-    logger.info(TAG, 'onPageShow in');
+-    this.isAdminActive();
+-    logger.info(TAG, 'onPageShow isActiveState =' + isActiveState);
+-    if (!utils.isValid(isActiveState)) {
+-      return;
+-    }
+-    this.isShowActive = isActiveState;
+-    logger.info(TAG, 'onPageShow out');
++  async onPageShow(): Promise<void> {
++    if (!this.requestReady || !this.isCurrentRequest()) {
++      return;
++    }
++    try {
++      await this.isAdminActive();
++    } catch (error) {
++      this.isEnableButton = false;
++      this.operationError = `查询管理状态失败：${error?.message ?? '服务不可用'}`;
++      logger.error(TAG, this.operationError);
++    }
+   }
+ 
+   onPageHide() {
+     logger.info(TAG, 'onPageHide');
+   }
+ 
+-  onBackPress() {
+-    logger.info(TAG, 'onBackPress');
+-    router.back();
++  private isCurrentRequest(): boolean {
++    return this.pageActive && this.storage.get<Want>('adminProvisioningWant') === this.request;
++  }
++
++  async cancelAdmin(): Promise<void> {
++    if (!this.operationPending && this.isCurrentRequest()) {
++      try {
++        await appDetailData.terminateAbilityPage();
++      } catch (error) {
++        this.operationError = `取消失败：${error?.message ?? '界面退出失败'}`;
++      }
++    }
++  }
++
++  onBackPress(): boolean {
++    this.cancelAdmin();
++    return true;
+   }
+ 
+   async isAdminActive() {
+     let wantTemp: Want = {
+-      bundleName: elementNameVal.bundleName,
+-      abilityName: elementNameVal.abilityName,
++      bundleName: this.elementNameVal.bundleName,
++      abilityName: this.elementNameVal.abilityName,
+     };
+     let retAppState: boolean;
+     let retSuperState: boolean;
+-    logger.info(TAG, 'isAdminActive elementNameVal.bundleName=' + elementNameVal.bundleName +
+-    ' | elementNameVal.abilityName=' + elementNameVal.abilityName);
+-    if (elementNameVal.bundleName === baseData.EMPTY_STR || elementNameVal.abilityName === baseData.EMPTY_STR) {
+-      logger.info(TAG, 'isAdminActive elementNameVal is null');
++    logger.info(TAG, 'isAdminActive this.elementNameVal.bundleName=' + this.elementNameVal.bundleName +
++    ' | this.elementNameVal.abilityName=' + this.elementNameVal.abilityName);
++    if (this.elementNameVal.bundleName === baseData.EMPTY_STR || this.elementNameVal.abilityName === baseData.EMPTY_STR) {
++      logger.info(TAG, 'isAdminActive this.elementNameVal is null');
+       return;
+     }
+ 
+     retAppState = await edmEnterpriseDeviceManager.isAdminEnabled(wantTemp);
+-    let name: string = elementNameVal.bundleName;
++    const name: string | undefined = wantTemp.bundleName;
++    if (typeof name !== 'string' || name.length === 0) {
++      throw new Error('设备管理应用名称缺失');
++    }
+     retSuperState = await edmEnterpriseDeviceManager.isSuperAdmin(name);
++    if (!this.isCurrentRequest()) {
++      return;
++    }
+     if (!retAppState) {
+       this.isShowActive = false;
+       this.isEnableButton = true;
+@@ -279,44 +317,55 @@
+       this.isShowActive = true;
+     }
+     logger.info(TAG, 'isAdminActive retAppState:' + retAppState + ' | retSuperState:' + retSuperState);
+-    isActiveState = this.isShowActive;
+-  }
+-
+-  async activateAdmin(adminType: adminManager.AdminType) {
+-    logger.info(TAG, 'activateAdmin isShowActive:' + this.isShowActive);
+-    let wantTemp: Want = {
+-      bundleName: elementNameVal.bundleName,
+-      abilityName: elementNameVal.abilityName,
+-    };
+-    await this.isAdminActive();
+-    let ret = true;
+-    if (!this.isShowActive) {
+-      if (adminType === edmEnterpriseDeviceManager.AdminType.ADMIN_TYPE_NORMAL) {
+-        await edmEnterpriseDeviceManager.enableAdmin(wantTemp,
+-          { name: enterInfo.name, description: enterInfo.description },
+-        edmEnterpriseDeviceManager.AdminType.ADMIN_TYPE_NORMAL)
+-          .catch((error: BusinessError) => {
+-            ret = false;
+-            logger.info(TAG, 'errorCode : ' + error.code + 'errorMessage : ' + error.message);
+-          });
++  }
++
++  async activateAdmin(adminType: adminManager.AdminType): Promise<void> {
++    if (this.operationPending || !this.requestReady || !this.isCurrentRequest()) {
++      return;
++    }
++    this.operationPending = true;
++    this.operationError = '';
++    try {
++      const want: Want = {
++        bundleName: this.elementNameVal.bundleName,
++        abilityName: this.elementNameVal.abilityName
++      };
++      const enterprise: adminManager.EnterpriseInfo = { name: this.enterInfo.name, description: this.enterInfo.description };
++      if (!want.bundleName || !want.abilityName) {
++        throw new Error('请选择有效的设备管理应用');
++      }
++      await this.isAdminActive();
++      if (!this.isCurrentRequest()) {
++        return;
++      }
++      if (!this.isEnableButton) {
++        throw new Error('当前设备管理员不允许执行此操作');
++      }
++      const enable: boolean = !this.isShowActive;
++      if (enable) {
++        if (adminType !== edmEnterpriseDeviceManager.AdminType.ADMIN_TYPE_NORMAL) {
++          throw new Error('此页面只支持普通设备管理员激活');
++        }
++        await edmEnterpriseDeviceManager.enableAdmin(want,
++          enterprise,
++          edmEnterpriseDeviceManager.AdminType.ADMIN_TYPE_NORMAL);
+       } else {
+-        logger.warn(TAG, 'not support AdminType.ADMIN_TYPE_SUPER enable Admin')
+-      }
+-      logger.info(TAG, 'activateAdmin Activate admin end');
+-    } else {
+-      if (this.isEnableButton) {
+-        await edmEnterpriseDeviceManager.disableAdmin(wantTemp)
+-          .catch((error: BusinessError) => {
+-            ret = false;
+-            logger.info(TAG, 'errorCode : ' + error.code + 'errorMessage : ' + error.message);
+-          });
+-      } else {
+-        logger.info(TAG, 'activateAdmin not support super admin active');
+-      }
+-    }
+-    logger.info(TAG, 'activateAdmin adminType:' + adminType + ' | ret:' + ret);
+-    if (ret) {
+-      appDetailData.terminateAbilityPage();
++        await edmEnterpriseDeviceManager.disableAdmin(want);
++      }
++      const actual: boolean = await edmEnterpriseDeviceManager.isAdminEnabled(want);
++      if (actual !== enable) {
++        throw new Error('设备管理服务未确认请求的状态');
++      }
++      // A new singleton Want may already have replaced this page.
++      if (this.isCurrentRequest()) {
++        this.isShowActive = actual;
++        await appDetailData.terminateAbilityPage();
++      }
++    } catch (error) {
++      this.operationError = `操作失败：${error?.message ?? '设备管理服务不可用'}`;
++      logger.error(TAG, this.operationError);
++    } finally {
++      this.operationPending = false;
+     }
+   }
+ 
+@@ -331,54 +380,60 @@
+     return value;
+   }
+ 
+-  async getAbilityWantVal(appInfo: MyApplicationInfo, elementNameVal: Want, adminType: adminManager.AdminType) {
++  async getAbilityWantVal(appInfo: MyApplicationInfo) {
+     logger.info(TAG, 'getAbilityWantVal in:');
+     this.storage = LocalStorage.getShared();
+-    let data = this.storage.get<Want>('adminProvisioningWant');
+-
+-    if (!utils.checkObjPropertyValid(data, 'parameters.elementName.abilityName') ||
+-    !utils.checkObjPropertyValid(data, 'parameters.enterprise.name') ||
+-    !utils.isValid((data.parameters?.elementName as Record<string, string>).bundleName) ||
+-    !utils.isValid(data.parameters?.activeType) ||
+-    !utils.isValid((data.parameters?.enterprise as Record<string, string>).description)) {
+-      logger.warn(TAG, 'data.parameters = ' + JSON.stringify(data.parameters));
+-      (getContext(this) as common.UIAbilityContext)?.terminateSelf();
+-      return;
+-    }
+-
+-    elementNameVal.abilityName = (data.parameters?.elementName as Record<string, string>).abilityName;
+-    elementNameVal.bundleName = (data.parameters?.elementName as Record<string, string>).bundleName;
++    const data: Want | undefined = this.request;
++    if (!data || !data.parameters || !this.isCurrentRequest()) {
++      throw new Error('无效的设备管理请求');
++    }
++    const element = data.parameters.elementName as Record<string, string>;
++    const enterprise = data.parameters.enterprise as Record<string, string>;
++    if (!element || typeof element.bundleName !== 'string' || !element.bundleName ||
++        typeof element.abilityName !== 'string' || !element.abilityName ||
++        !enterprise || typeof enterprise.name !== 'string' || typeof enterprise.description !== 'string' ||
++        (data.parameters.activeType !== adminManager.AdminType.ADMIN_TYPE_NORMAL &&
++         data.parameters.activeType !== adminManager.AdminType.ADMIN_TYPE_SUPER)) {
++      throw new Error('设备管理应用、类型或企业信息无效');
++    }
++
++    this.elementNameVal.abilityName = (data.parameters?.elementName as Record<string, string>).abilityName;
++    this.elementNameVal.bundleName = (data.parameters?.elementName as Record<string, string>).bundleName;
+     appInfo.appBundleName = (data.parameters?.elementName as Record<string, string>).bundleName;
+-    adminType = data.parameters?.activeType as adminManager.AdminType;
+-    AppStorage.SetOrCreate('activeType', adminType);
+-
+-    enterInfo.name = (data.parameters?.enterprise as Record<string, string>).name.substring(0, baseData.MAX_LEN);
+-    enterInfo.description =
++    this.isAdminType = data.parameters?.activeType as adminManager.AdminType;
++
++    this.enterInfo.name = (data.parameters?.enterprise as Record<string, string>).name.substring(0, baseData.MAX_LEN);
++    this.enterInfo.description =
+       (data.parameters?.enterprise as Record<string, string>).description.substring(0, baseData.MAX_LEN);
+-    logger.info(TAG, 'getAbilityWantVal out isAdminTypeVal.admintype:' + isAdminTypeVal +
+-    ' enter.name=' + enterInfo.name + ' enter.des=' + enterInfo.description);
+-  }
+-
+-  async getCheckAbilityList(appInfo: MyApplicationInfo, elementNameVal: Want, adminType: adminManager.AdminType) {
++    logger.info(TAG, 'getAbilityWantVal out isAdminTypeVal.admintype:' + this.isAdminType +
++    ' enter.name=' + this.enterInfo.name + ' enter.des=' + this.enterInfo.description);
++  }
++
++  async getCheckAbilityList(appInfo: MyApplicationInfo) {
+     let deviceActiveOne = '';
+     let deviceActiveTwo = '';
+     let deviceDeactivate = '';
+     let getName = '';
+     let getDescription = '';
+     logger.info(TAG, 'getCheckAbilityList in:');
+-    await this.getAbilityWantVal(appInfo, elementNameVal, adminType);
+-
+-    let ret = await appDetailData.checkAppItem(elementNameVal);
++    await this.getAbilityWantVal(appInfo);
++
++    let ret = await appDetailData.checkAppItem(this.elementNameVal);
+     if (!ret) {
+       logger.info(TAG, 'aboutToAppear not exist bundleName:' + appInfo.appBundleName);
+-      appDetailData.terminateAbilityPage();
+-      return;
++      throw new Error('未找到有效的设备管理扩展');
+     }
+ 
+     await this.isAdminActive();
++    if (!this.isCurrentRequest()) {
++      return;
++    }
+ 
+     if (appInfo.appBundleName) {
+       await appDetailData.getBundleInfoItem(appInfo.appBundleName, appInfo);
++    }
++    if (!this.isCurrentRequest()) {
++      return;
+     }
+     try {
+       this.deviceAdminActive = getContext()?.resourceManager
+@@ -390,8 +445,8 @@
+     }
+ 
+     let want: Want = {
+-      bundleName: elementNameVal.bundleName,
+-      abilityName: elementNameVal.abilityName,
++      bundleName: this.elementNameVal.bundleName,
++      abilityName: this.elementNameVal.abilityName,
+     };
+     let getEnterInfo: adminManager.EnterpriseInfo = {
+       name: '',
+@@ -402,6 +457,9 @@
+       getEnterInfo = await edmEnterpriseDeviceManager.getEnterpriseInfo(want);
+     }
+ 
++    if (!this.isCurrentRequest()) {
++      return;
++    }
+     logger.info(TAG, 'getCheckAbilityList start enterpriseName=' + getEnterInfo.name +
+     ' enterpriseDescription=' + getEnterInfo.description);
+     if (utils.isValid(getEnterInfo.name)) {
+@@ -419,13 +477,14 @@
+           .getStringSync($r('app.string.enterprise_description').id, getDescription);
+       } else {
+         this.enterpriseName = getContext()?.resourceManager
+-          .getStringSync($r('app.string.enterprise_name').id, enterInfo.name);
++          .getStringSync($r('app.string.enterprise_name').id, this.enterInfo.name);
+         this.enterpriseDescription = getContext()?.resourceManager
+-          .getStringSync($r('app.string.enterprise_description').id, enterInfo.description);
++          .getStringSync($r('app.string.enterprise_description').id, this.enterInfo.description);
+       }
+     } catch (e) {
+       logger.error(TAG, 'getStringSync err =' + e.message);
+     }
++    this.requestReady = true;
+     logger.info(TAG, 'getCheckAbilityList enterpriseName=' + this.enterpriseName + ' enterpriseDescription=' +
+     this.enterpriseDescription);
+   }
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets b/applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets
+@@ -38,6 +38,7 @@
+   public ret: boolean = true;
+ 
+   async checkAppItem(elementNameVal: Want) {
++    this.ret = false;
+     logger.info(TAG, 'checkAppItem in bundleName:' + elementNameVal.bundleName + ' | abilityName:' +
+     elementNameVal.abilityName);
+     let want: Want = {
+@@ -66,7 +67,8 @@
+       return this.ret;
+     }
+     logger.info(TAG, 'checkAppItem success');
+-    return this.ret;
++    this.ret = true;
++    return true;
+   }
+ 
+   async getBundleInfoItem(bundleName: string, appInfo: MyApplicationInfo) {
+diff --git a/applications/standard/admin_provisioning/hvigorfile.js b/applications/standard/admin_provisioning/hvigorfile.js
+--- a/applications/standard/admin_provisioning/hvigorfile.js
++++ b/applications/standard/admin_provisioning/hvigorfile.js
+@@ -14,4 +14,4 @@
+  */
+ 
+ // Script for compiling build behavior. It is built in the build plug-in and cannot be modified currently.
+-module.exports = require('@ohos/hvigor-ohos-plugin').appTasks;
+\ No newline at end of file
++module.exports = { system: require('@ohos/hvigor-ohos-plugin').appTasks, plugins: [] };
+\ No newline at end of file
+diff --git a/applications/standard/admin_provisioning/entry/hvigorfile.js b/applications/standard/admin_provisioning/entry/hvigorfile.js
+--- a/applications/standard/admin_provisioning/entry/hvigorfile.js
++++ b/applications/standard/admin_provisioning/entry/hvigorfile.js
+@@ -14,4 +14,4 @@
+  */
+ 
+ // Script for compiling build behavior. It is built in the build plug-in and cannot be modified currently.
+-module.exports = require('@ohos/hvigor-ohos-plugin').hapTasks;
++module.exports = { system: require('@ohos/hvigor-ohos-plugin').hapTasks, plugins: [] };
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets b/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets
+@@ -21,65 +21,72 @@
+ import fs from '@ohos.file.fs';
+ import adminManager from '@ohos.enterprise.adminManager';
+ import { BusinessError } from '@ohos.base';
++import baseData from '../common/baseData';
+ 
+ const TAG = 'AutoDeployAbility';
+ 
++interface ProvisionAdmin {
++  admin: Want;
++  admin_type: string;
++}
++interface ProvisionEnterprise {
++  organization_name: string;
++  description: string;
++}
++interface ProvisionConfig {
++  admin_info: ProvisionAdmin[];
++  enterprise_info: ProvisionEnterprise;
++}
++
+ export default class AutoDeployAbility extends UIExtensionAbility {
+-  private localStorage: LocalStorage = new LocalStorage();
++  private sessions: Set<UIExtensionContentSession> = new Set();
+ 
+   async onSessionCreate(want: Want, session: UIExtensionContentSession): Promise<void> {
+-    logger.info(TAG, 'onSessionCreate');
+-    let admin: Want = {
+-      bundleName: '',
+-      abilityName: ''
+-    };
+-    let enterpriseInfo: adminManager.EnterpriseInfo = {
+-      name: '',
+-      description: ''
+-    };
+-    let adminType: adminManager.AdminType;
++    if (this.sessions.has(session)) {
++      return;
++    }
++    this.sessions.add(session);
++    const storage: LocalStorage = new LocalStorage();
+     try {
+-      let realpath = 'etc/edm/edm_provision_config.json';
+-      await configPolicy.getOneCfgFile(realpath).then((value: string) => {
+-        logger.info(TAG, 'getOneCfgFile value is : ' + value);
+-        let configStr = fs.readTextSync(value);
+-        logger.info(TAG, 'getOneCfgFile configStr is ' + JSON.stringify(configStr));
+-        if (configStr) {
+-          let jsonArray = JSON.parse(configStr);
+-          admin.abilityName = jsonArray.admin_info[0].admin.abilityName;
+-          admin.bundleName = jsonArray.admin_info[0].admin.bundleName;
+-          enterpriseInfo.name = jsonArray.enterprise_info.organization_name;
+-          enterpriseInfo.description = jsonArray.enterprise_info.description;
+-          if (jsonArray.admin_info[0].admin_type == 'SDA') {
+-            adminType = adminManager.AdminType.ADMIN_TYPE_SUPER;
+-          }
+-          this.localStorage.setOrCreate('adminInfo', admin);
+-          this.localStorage.setOrCreate('enterpriseInfo', enterpriseInfo);
+-          this.localStorage.setOrCreate('adminType', adminType);
++      const path: string = await configPolicy.getOneCfgFile('etc/edm/edm_provision_config.json');
++      const config: ProvisionConfig = JSON.parse(fs.readTextSync(path)) as ProvisionConfig;
++      if (!config || !Array.isArray(config.admin_info) || config.admin_info.length === 0 ||
++          !config.admin_info[0] || !config.admin_info[0].admin ||
++          typeof config.admin_info[0].admin.bundleName !== 'string' || !config.admin_info[0].admin.bundleName ||
++          typeof config.admin_info[0].admin.abilityName !== 'string' || !config.admin_info[0].admin.abilityName ||
++          config.admin_info[0].admin_type !== 'SDA' || !config.enterprise_info ||
++          typeof config.enterprise_info.organization_name !== 'string' ||
++          typeof config.enterprise_info.description !== 'string') {
++        throw new Error('Invalid enterprise provisioning configuration');
++      }
++      if (!this.sessions.has(session)) {
++        return;
++      }
++      storage.setOrCreate('adminInfo', config.admin_info[0].admin);
++      storage.setOrCreate('enterpriseInfo', {
++        name: config.enterprise_info.organization_name,
++        description: config.enterprise_info.description
++      } as adminManager.EnterpriseInfo);
++      storage.setOrCreate('adminType', adminManager.AdminType.ADMIN_TYPE_SUPER);
++      storage.setOrCreate('session', session);
++      await session.loadContent('pages/custProvisioning/custProvisioning', storage);
++    } catch (error) {
++      logger.error(TAG, `Provisioning configuration/page failed: ${(error as BusinessError).message}`);
++      if (this.sessions.has(session)) {
++        try {
++          await session.terminateSelfWithResult({ resultCode: baseData.ENABLE_ADMIN_FAILED });
++        } catch (deliveryError) {
++          logger.error(TAG, `Cannot deliver provisioning failure: ${(deliveryError as BusinessError).message}`);
+         }
+-      }).catch((err: BusinessError) => {
+-        logger.error(`getOneCfgFile edm_provision_config.json fail, errCode: ${err.code}, errMessage: ${err.message}`);
+-      })
+-    } catch (error) {
+-      let code = (error as BusinessError).code;
+-      let message = (error as BusinessError).message;
+-      logger.info(TAG, 'getOneCfgFile error: ' + code + message);
++      }
+     }
+-    this.localStorage.setOrCreate('session', session);
+-    session.loadContent('pages/custProvisioning/custProvisioning', this.localStorage);
++  }
++
++  onSessionDestroy(session: UIExtensionContentSession): void {
++    this.sessions.delete(session);
+   }
+ 
+   onDestroy(): void {
+-    logger.info(TAG, 'onDestroy');
++    this.sessions.clear();
+   }
+-
+-  onForeground(): void {
+-    // Ability has brought to foreground
+-    logger.info(TAG, 'onForeground');
+-  }
+-
+-  onBackground(): void {
+-    // Ability has back to background
+-    logger.info(TAG, 'onBackground');
+-  }
+-};
++}
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets b/applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets
+@@ -33,6 +33,9 @@
+   private enterpriseInfo: adminManager.EnterpriseInfo | undefined;
+   private adminType: adminManager.AdminType | undefined;
+   private session: UIExtensionContentSession | undefined;
++  @State operationPending: boolean = false;
++  private pageActive: boolean = false;
++  private sessionFinished: boolean = false;
+ 
+   build() {
+     PageComponent({
+@@ -249,6 +252,7 @@
+   }
+ 
+   aboutToAppear() {
++    this.pageActive = true;
+     logger.info(TAG, 'aboutToAppear');
+     this.storage = LocalStorage.getShared();
+     this.abilityInfo = this.storage.get<Want>('adminInfo');
+@@ -257,31 +261,55 @@
+     this.session = this.storage.get<UIExtensionContentSession>('session');
+   }
+ 
+-  private terminateAbility(flag: number) {
+-    this.session?.terminateSelfWithResult({
+-      resultCode: flag,
+-      want: this.abilityInfo
+-    });
+-    this.storage.clear();
+-  }
+-
+-  private EnableAdmin() {
+-    let admin: Want = this.abilityInfo;
+-    let entInfo: adminManager.EnterpriseInfo = this.enterpriseInfo;
++  aboutToDisappear(): void {
++    this.pageActive = false;
++  }
++
++  private async terminateAbility(flag: number): Promise<void> {
++    if (!this.pageActive || this.sessionFinished || !this.session ||
++        (this.operationPending && flag === baseData.OOBE_PRE_STEP_CODE)) {
++      return;
++    }
++    this.sessionFinished = true;
+     try {
+-      adminManager.enableAdmin(admin, entInfo, this.adminType).then(() => {
+-        logger.info(TAG, 'enableAdmin success');
+-        this.terminateAbility(baseData.OOBE_NEXT_STEP_CODE);
+-      }).catch((err: BusinessError) => {
+-        logger.error(TAG, `enableAdmin failed, errCode: ${err.code}, errMessage: ${err.message}`);
+-        this.terminateAbility(baseData.ENABLE_ADMIN_FAILED);
+-      })
+-    } catch (err) {
+-      logger.error(TAG, `enableAdmin failed, errCode: ${err.code}, errMessage: ${err.message}`);
+-      this.terminateAbility(baseData.ENABLE_ADMIN_FAILED);
++      await this.session.terminateSelfWithResult({ resultCode: flag, want: this.abilityInfo });
++      this.storage.clear();
++    } catch (error) {
++      this.sessionFinished = false;
++      logger.error(TAG, `Cannot deliver provisioning result: ${(error as BusinessError).message}`);
++    }
++  }
++
++  private async EnableAdmin(): Promise<void> {
++    if (this.operationPending || !this.pageActive || this.sessionFinished) {
++      return;
++    }
++    this.operationPending = true;
++    try {
++      const admin: Want | undefined = this.abilityInfo;
++      const enterprise: adminManager.EnterpriseInfo | undefined = this.enterpriseInfo;
++      const type: adminManager.AdminType | undefined = this.adminType;
++      if (!admin || !admin.bundleName || !admin.abilityName || !enterprise ||
++          (type !== adminManager.AdminType.ADMIN_TYPE_NORMAL && type !== adminManager.AdminType.ADMIN_TYPE_SUPER)) {
++        throw new Error('Missing administrator, enterprise or activation type');
++      }
++      const enabled: boolean = await adminManager.isAdminEnabled(admin);
++      if (!this.pageActive) {
++        return;
++      }
++      if (!enabled) {
++        await adminManager.enableAdmin(admin, enterprise, type);
++      }
++      const actual: boolean = await adminManager.isAdminEnabled(admin);
++      if (!actual) {
++        throw new Error('Enterprise service did not confirm administrator activation');
++      }
++      await this.terminateAbility(baseData.OOBE_NEXT_STEP_CODE);
++    } catch (error) {
++      logger.error(TAG, `enableAdmin failed: ${(error as BusinessError).message}`);
++      await this.terminateAbility(baseData.ENABLE_ADMIN_FAILED);
++    } finally {
++      this.operationPending = false;
+     }
+   }
+ }
+-
+-
+-
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets b/applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets
+@@ -178,7 +178,12 @@
+ 
+   parseManageParameter() {
+     this.storage = LocalStorage.getShared();
+-    let data = this.storage.get<Want>('autoManagerAbilityWant');
++    const data: Want | undefined = this.storage.get<Want>('autoManagerAbilityWant');
++    if (!data || !data.parameters) {
++      logger.error(TAG, 'Missing auto-manager provisioning request');
++      (getContext(this) as common.UIAbilityContext).terminateSelf();
++      return;
++    }
+ 
+     if (!utils.checkObjPropertyValid(data, 'parameters.elementName.abilityName') ||
+     !utils.checkObjPropertyValid(data, 'parameters.enterprise.name') ||
+diff --git a/applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets b/applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets
+--- a/applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets
++++ b/applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets
+@@ -15,7 +15,7 @@
+ 
+ import {deployComponent} from '../component/deployComponent'
+ 
+-@Entry
++@Entry({ useSharedStorage: true })
+ @Component
+ struct custProvisioning {
+   build() {
+diff --git a/applications/standard/admin_provisioning/oh-package.json5 b/applications/standard/admin_provisioning/oh-package.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/admin_provisioning/oh-package.json5
+@@ -0,0 +1,7 @@
++{
++  "modelVersion": "6.0.0",
++  "name": "adminprovisioning",
++  "version": "1.0.1",
++  "dependencies": {},
++  "devDependencies": {}
++}
+diff --git a/applications/standard/admin_provisioning/entry/oh-package.json5 b/applications/standard/admin_provisioning/entry/oh-package.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/admin_provisioning/entry/oh-package.json5
+@@ -0,0 +1,5 @@
++{
++  "name": "adminprovisioning",
++  "version": "1.0.1",
++  "dependencies": {}
++}
+diff --git a/applications/standard/admin_provisioning/hvigor/hvigor-config.json5 b/applications/standard/admin_provisioning/hvigor/hvigor-config.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/admin_provisioning/hvigor/hvigor-config.json5
+@@ -0,0 +1,8 @@
++{
++  "modelVersion": "6.0.0",
++  "dependencies": {},
++  "execution": {
++    "daemon": false,
++    "parallel": false
++  }
++}

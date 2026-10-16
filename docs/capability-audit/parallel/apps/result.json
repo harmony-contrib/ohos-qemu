@@ -5,8 +5,8 @@
   "branch": "codex/capability-apps-20261015",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
   "requirements_count": 34,
-  "summary": "累计报告修正：upstream_targets保留第一批IgnoreRepeat和第二/三批Calendar全部8个实际目标；guard重放小补不清空此前归属。全部34项映射保留，82项账本不核销。",
-  "acceptance_status": "Exact native-function host regressions passed; final platform NAPI TU and fresh representative system-signed ARM64 phone package runtime acceptance pending",
+  "summary": "第四批新增真实AdminProvisioning官方API26源码HAP和QEMU图，修复真实启停/确认/拒绝/取消/并发请求与部署session；SDK04 Release unsigned编译通过。累计24个实际上游文件；34项完整映射保持，82项账本不核销。",
+  "acceptance_status": "Calendar and Admin official API26 Release unsigned HAP compile passed; main owns complete native TU, exact system signing/preinstall/pregrant and fresh representative ARM64 phone runtime acceptance.",
   "upstream_targets": [
     "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
     "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
@@ -15,7 +15,23 @@
     "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
     "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
     "applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets",
-    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets"
+    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets",
+    "applications/standard/admin_provisioning/BUILD.gn",
+    "applications/standard/admin_provisioning/build-profile.json5",
+    "applications/standard/admin_provisioning/entry/src/main/module.json5",
+    "applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/MainAbility.ts",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/applicationInfo.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/common/appManagement/appDetailData.ets",
+    "applications/standard/admin_provisioning/hvigorfile.js",
+    "applications/standard/admin_provisioning/entry/hvigorfile.js",
+    "applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/UIExtensionAbility.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/component/deployComponent.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/autoManager/managerStart.ets",
+    "applications/standard/admin_provisioning/entry/src/main/ets/pages/custProvisioning/custProvisioning.ets",
+    "applications/standard/admin_provisioning/oh-package.json5",
+    "applications/standard/admin_provisioning/entry/oh-package.json5",
+    "applications/standard/admin_provisioning/hvigor/hvigor-config.json5",
+    "applications/standard/hap/BUILD.gn"
   ],
   "tests": [
     {
@@ -53,6 +69,21 @@
       "exit_code": 0,
       "result": "8 tests passed; pinned pristine source_provider graph + editor + dispatch then two whole-stack replays, exact mixed-native and unknown-UI rejection, native dispatch 23 scenarios",
       "scope": "Host source composition/function regression only; native candidate payload unchanged from ca8d140"
+    },
+    {
+      "name": "admin_source_and_real_ui_methods",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest ci/capability-audit/test_batch_apps_admin_provider.py -v",
+      "exit_code": 0,
+      "result": "5 tests passed, 4.227s; actual extracted main ETS methods13 scenarios and actual UIExtension/deploy methods15 scenarios; exact CRLF/pre/post hashes and real HAP predecessor chain plus two full replays",
+      "not_runtime_acceptance": true
+    },
+    {
+      "name": "admin_official_api26_release_hap",
+      "command": "See preserved exact dependency/compile commands and all four frozen input archives in admin-provider-sdk-20261016.json",
+      "exit_code": 0,
+      "artifact_sha256": "5482df458fc63930cbdb6f0894662587d05ce8437391dbe9322e54137b95d24e",
+      "result": "Attempt04 BUILD SUCCESSFUL 4.949s; API26.0.0.105 Release; unsigned real adminprovisioning module, modules.abc, original requested permissions/entry names",
+      "not_runtime_acceptance": true
     }
   ],
   "integration_requests": [
@@ -122,6 +153,44 @@
         "handle-scope failure cannot emit success"
       ],
       "failure_boundary": "If JS event delivery or handle-scope allocation fails, the native request is cancelled/closed without reporting success; an inaccessible JS environment cannot safely receive Promise settlement. Cleanup hook holds a weak request reference, so this path retains no request cycle."
+    },
+    {
+      "id": "apps-admin-source-provider-system-wiring",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "components": [
+        "patches/common/applications/standard/admin_provisioning/source_provider",
+        "patches/common/applications/standard/hap/admin_provider"
+      ],
+      "hap_graph_order": "hap/calendar_provider -> hap/photos_provider -> hap/settings_provider -> hap/admin_provider; source provider before compile",
+      "native_target": "//applications/standard/admin_provisioning:adminprovisioning_hap",
+      "request": "Wire real source ohos_app into QEMU HAP graph and run GN app_sign with existing signature/adminprovisioning.p7b. Add exact com.ohos.adminprovisioning platform-leaf signer/preauthorization under main-owned vendor scope. Keep normal APL, hos_system_app, original ACL/permission lists and entry visibility. No wildcard or added privilege. Static HAP deviceTypes remain original default/tablet/2in1 under current BMS compatibility contract.",
+      "profile_leaf_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5",
+      "existing_acls": [
+        "ohos.permission.MANAGE_LOCAL_ACCOUNTS",
+        "ohos.permission.MANAGE_ENTERPRISE_DEVICE_ADMIN",
+        "ohos.permission.FACTORY_RESET"
+      ],
+      "result_contract": {
+        "main": "explicit user action -> actual enableAdmin(normal)/disableAdmin -> actual isAdminEnabled verification -> current page closes; unsupported/super/query/write/state mismatch stays with error; cancel writes nothing",
+        "deploy": "existing trusted etc/edm/edm_provision_config.json SDA config -> actual page/user Continue -> query/enableAdmin -> state verification -> resultCode100; Previous101; invalid/missing config or activation failure102; no result to destroyed session",
+        "entrypoints": [
+          "com.ohos.adminprovisioning.MainAbility",
+          "com.ohos.automanager.AutoManagerAbility guarded PROVISIONING_MESSAGE",
+          "ByodAdminProvisionAbility guarded START_PROVISIONING_MESSAGE",
+          "MDMUIExtensionAbility type sys/commonUI exported=false"
+        ]
+      },
+      "runtime_cases": [
+        "normal admin valid extension user activate/disable, actual service state and restart persistence",
+        "unsupported/super refusal and ordinary caller missing permission",
+        "Main singleton new Want before write/during commit; repeated click; caller/page exit",
+        "user cancel/Back no write; backend/query/state mismatch remains truthful",
+        "auto-manager/Byod actual UI strings, nodes, permission rows; existing private component-input SDK warnings must be reviewed in real UI",
+        "missing/invalid deploy config returns102, legitimate SDA config actual activation and100, previous101; repeated/destroyed/multiple sessions",
+        "result delivery failure cannot cause a second enableAdmin"
+      ],
+      "boundary": "An explicit user-authorized backend commit already in flight may finish after page exit; old async work neither retargets nor closes a replacement page. No new runtime acceptance or ledger closure is claimed."
     }
   ],
   "requirements_review": {
@@ -309,15 +378,16 @@
       ]
     },
     "behavior:enterprise-provisioning-provider-missing": {
-      "status": "source_provider_build_and_preinstall_missing",
-      "finding": "AdminProvisioning真源码存在，但HAP图只在rk3568/ohos-arm64添加目标，未覆盖QEMU；暂存预装有目录但缺payload。旧JSON和JSON5入口还不同。",
-      "next_required": "准备API26可构建provider、精确签名/权限和QEMU构建图；真实EDM provisioning/授权/取消/退出验证。",
+      "status": "source_provider_sdk_passed_needs_system_wiring_and_new_package",
+      "finding": "第四批真实AdminProvisioning源码Stage HAP已官方API26 Release编译通过，原profile normal APL/三项ACL/五个请求权限/真实Main/Auto/Byod与MDMUIExtension均保留。真实enableAdmin/disableAdmin和状态确认、防重、缺配置/权限/取消/session销毁已补；SDK旧字段/可选值错误已修，185条既有弃用和private输入警告留待UI验收。",
+      "next_required": "main接入两个组件及精确平台leaf 8E9386...24B5的preinstall/pregrant，保持normal APL和原ACL；新phone包验证BMS所有入口、真实EDM普通管理员启停/状态持久化、super拒绝、用户取消、错误、双请求/退出/重启、部署配置缺失与结果协议；检查UI实际文字/节点/输入。",
       "ledger_closed": false,
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
         "docs/capability-audit/system-bundle-provider-audit.json",
-        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+        "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json"
       ]
     },
     "behavior:wallpaper-ui-provider-missing": {
@@ -617,8 +687,8 @@
     },
     {
       "id": "behavior:enterprise-provisioning-provider-missing",
-      "status": "source_provider_build_and_preinstall_missing",
-      "reason": "准备API26可构建provider、精确签名/权限和QEMU构建图；真实EDM provisioning/授权/取消/退出验证。"
+      "status": "source_provider_sdk_passed_needs_system_wiring_and_new_package",
+      "reason": "main接入两个组件及精确平台leaf 8E9386...24B5的preinstall/pregrant，保持normal APL和原ACL；新phone包验证BMS所有入口、真实EDM普通管理员启停/状态持久化、super拒绝、用户取消、错误、双请求/退出/重启、部署配置缺失与结果协议；检查UI实际文字/节点/输入。"
     },
     {
       "id": "behavior:wallpaper-ui-provider-missing",
@@ -712,9 +782,65 @@
     }
   ],
   "changed_files": [
-    "docs/capability-audit/parallel/apps/result.json"
+    "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
+    "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-BUILD.gn.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-build-profile.json5.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_hvigorfile.js.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_MainAbility_MainAbility.ts.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_MainAbility_UIExtensionAbility.ets.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_common_appManagement_appDetailData.ets.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_pages_applicationInfo.ets.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_pages_autoManager_managerStart.ets.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_pages_component_deployComponent.ets.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_ets_pages_custProvisioning_custProvisioning.ets.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_module.json.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_src_main_module.json5.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-hvigorfile.js.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/hap-BUILD.gn.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/hap-pristine.json",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/methods.cjs",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/provenance.json",
+    "ci/capability-audit/fixtures/batch_apps/admin_provider/sessions.cjs",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/00-calendar_manager_napi.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/01-calendar_manager_napi.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/napi_harness.cpp",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/provenance.json",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/source-provider-pristine.json",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/00-calendar_manager_napi.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/01-calendar_manager_napi.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/02-module.json5.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/03-main_pages.json.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/test_batch_apps_admin_provider.py",
+    "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
+    "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "docs/capability-audit/parallel/apps/README.md",
+    "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json",
+    "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+    "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json",
+    "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+    "patches/common/applications/standard/admin_provisioning/source_provider/0001-build-real-admin-provider-and-verify-user-actions.patch",
+    "patches/common/applications/standard/admin_provisioning/source_provider/README.md",
+    "patches/common/applications/standard/admin_provisioning/source_provider/apply.sh",
+    "patches/common/applications/standard/admin_provisioning/source_provider/verify_source.py",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/0001-dispatch-editor-results-with-native-lifetime-cancellation.patch",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/README.md",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/verify_source.py",
+    "patches/common/applications/standard/calendardata/event_editor/0001-provide-user-confirmed-calendar-event-editor.patch",
+    "patches/common/applications/standard/calendardata/event_editor/README.md",
+    "patches/common/applications/standard/calendardata/event_editor/apply.sh",
+    "patches/common/applications/standard/calendardata/event_editor/verify_source.py",
+    "patches/common/applications/standard/hap/admin_provider/0001-build-real-admin-provider-and-verify-user-actions.patch",
+    "patches/common/applications/standard/hap/admin_provider/README.md",
+    "patches/common/applications/standard/hap/admin_provider/apply.sh",
+    "patches/common/applications/standard/hap/admin_provider/verify_source.py"
   ],
-  "previous_batch_commit": "ca8d140",
+  "previous_batch_commit": "33cc68a6bf6d7fc4761465edca34189d30bca46a",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -725,5 +851,5 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps changes since first Settings batch b88407c; dispatch reuses the existing two Calendar native targets"
+  "report_scope": "cumulative apps ownership since original b88407c Settings batch, plus Calendar editor/dispatch and Admin source/HAP components"
 }
