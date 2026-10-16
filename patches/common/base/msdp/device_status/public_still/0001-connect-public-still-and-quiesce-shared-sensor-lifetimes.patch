@@ -19,12 +19,13 @@
      }
      bool CheckSensorTypeId(int32_t sensorTypeId);
      bool StartSensor(Type type);
-@@ -59,11 +60,12 @@
+@@ -59,11 +60,13 @@
      int32_t type_[Type::TYPE_MAX] { 0 };
      std::shared_ptr<MsdpAlgoCallback> callback_ { nullptr };
      std::mutex mutex_;
 +    std::shared_ptr<AlgoAbsoluteStill> publicStill_ { nullptr };
 +    std::set<Type> stoppingTypes_;
++    std::set<Type> quiescedTypes_;
      std::shared_ptr<AlgoAbsoluteStill> still_ { nullptr };
      std::shared_ptr<AlgoHorizontal> horizontalPosition_ { nullptr };
      std::shared_ptr<AlgoVertical> verticalPosition_ { nullptr };
@@ -98,7 +99,7 @@
          case Type::TYPE_ABSOLUTE_STILL: {
              return SensorTypeId::SENSOR_TYPE_ID_ACCELEROMETER;
          }
-@@ -136,116 +119,79 @@
+@@ -136,116 +119,84 @@
  
  ErrCode AlgoMgr::Enable(Type type)
  {
@@ -230,7 +231,11 @@
 +        case TYPE_VERTICAL_POSITION: instance = verticalPosition_; break;
 +        default: return RET_ERR;
 +    }
-+    if (stoppingTypes_.insert(type).second && instance != nullptr) { instance->Unsubscribe(type); }
++    stoppingTypes_.insert(type);
++    if (instance != nullptr && quiescedTypes_.count(type) == 0) {
++        if (!SENSOR_DATA_CB.UnsubscribeSensorEvent(type, nullptr)) { return RET_ERR; }
++        quiescedTypes_.insert(type);
++    }
 +    // Failed physical teardown remains retryable; never claim it was stopped.
 +    if (UnregisterSensor(type) != RET_OK) { return RET_ERR; }
 +    switch (type) {
@@ -241,6 +246,7 @@
 +        default: return RET_ERR;
 +    }
 +    stoppingTypes_.erase(type);
++    quiescedTypes_.erase(type);
 +    callAlgoNums_.erase(found);
      return RET_OK;
  }
@@ -395,7 +401,15 @@
  } // namespace DeviceStatus
 --- a/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp
 +++ b/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp
-@@ -31,89 +31,113 @@
+@@ -16,6 +16,7 @@
+ #ifdef DEVICE_STATUS_SENSOR_ENABLE
+ #include "sensor_data_callback.h"
+ 
++#include <chrono>
+ #include <cmath>
+ #include <cstdio>
+ #include <cstring>
+@@ -31,89 +32,115 @@
  namespace DeviceStatus {
  namespace {
  constexpr int32_t RATE_MILLISEC { 100100100 };
@@ -532,11 +546,13 @@
 +    if (found == algoMap_.end()) { return false; }
 +    auto slot = found->second;
 +    slot->active = false;
-+    algoMap_.erase(found);
 +    // The callback itself holds Slot::owner until it returns; never wait on self.
-+    if (currentSensorCallback != this) {
-+        slot->drained.wait(lock, [&slot] { return slot->inFlight == 0; });
++    // Timeout leaves the inactive slot/owner registered so teardown can be retried.
++    if (currentSensorCallback != this && !slot->drained.wait_for(lock, std::chrono::seconds(1),
++        [&slot] { return slot->inFlight == 0; })) {
++        return false;
 +    }
++    algoMap_.erase(found);
 +    return true;
 +}
 +
@@ -569,7 +585,7 @@
      }
      return true;
  }
-@@ -136,19 +160,20 @@
+@@ -136,19 +163,20 @@
      }
      {
          std::lock_guard lock(dataMutex_);
@@ -596,7 +612,7 @@
  {
      CALL_DEBUG_ENTER;
      if (sensorTypeId != SENSOR_TYPE_ID_ACCELEROMETER) {
-@@ -160,7 +185,8 @@
+@@ -160,7 +188,8 @@
          FI_HILOGE("No accel data");
          return false;
      }
@@ -606,7 +622,7 @@
      accelDataList_.pop_front();
      FI_HILOGD("ACCEL popData:x:%{public}f, y:%{public}f, z:%{public}f, PopData sensorTypeId:%{public}d",
          data.x, data.y, data.z, sensorTypeId);
-@@ -182,69 +208,69 @@
+@@ -182,69 +211,69 @@
  
  bool SensorDataCallback::RegisterCallbackSensor(int32_t sensorTypeId)
  {
