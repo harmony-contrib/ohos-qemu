@@ -16,6 +16,7 @@ INPUT_FILES = (
     # their exact bytes with the scripts that consume them.
     "docs/capability-audit/parallel/network/audio-observation-20261016.json",
     "docs/capability-audit/parallel/location/round7-communication-build-map.json",
+    "docs/capability-audit/parallel/location/round8-registry-api-link-map.json",
 )
 
 

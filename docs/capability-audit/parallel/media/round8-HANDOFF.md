@@ -4,7 +4,7 @@ Base2b308a73d60c095926bb6dc34612de87947269b2. Only the existing
 batch_media_audio_event_probe.cpp and test_batch_media_audio_events.py change,
 plus round8-* evidence. No ETS/HAP wrapper, product component, shared runner or
 verifier changed. Root reported the previous3 event unsigned HAPs passed and
-mode0 actual live-revoke PID/token/PCM gate passed. This changed caller still
+mode0 live-revoke PID/token/PCM acceptance wiring and host mutation tests passed; no guest execution has occurred. This changed caller still
 needs root's actual rebuild and two-UID focus run; this agent closes0 IDs.
 
 ## Request and completion
