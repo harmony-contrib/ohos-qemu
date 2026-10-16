@@ -1,0 +1,369 @@
+{
+  "review_commit": "e51e3fed3cabcaf605db46f46eb31962fa4a1150",
+  "snapshot_archive_sha256": "e6711d36e2f5d9cf7e1e437874a7f33714914034b8b48cfc7aac7c08b04aa034",
+  "fixed_originals_sha256": "aa70e4171ed3dc3883ff1c40eb55808904c197ff7edca8b38a9135c1fccdd598",
+  "scope": "real_fixed_source_patch_replay_and_read_only_rules_only",
+  "products_built": 0,
+  "haps_signed": 0,
+  "images_tested": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "commands": [
+    {
+      "component": "settings/source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/accessibility_service_completion",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: accessibility_service_completion\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/external_input",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: external_input\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/input_2in1_navigation",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: input_2in1_navigation\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/refresh_rate_page",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: refresh_rate_page\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/share_picker",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: share_picker\n",
+      "stderr": ""
+    },
+    {
+      "component": "mms/source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "mms/send_data_text",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: send_data_text\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/calendar_provider",
+      "exit_code": 0,
+      "stdout": "applied component patch: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/calendar_provider/0001-stop-packaging-stale-calendar-data-hap.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/photos_provider",
+      "exit_code": 0,
+      "stdout": "applied component patch: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/photos_provider/0001-stop-packaging-the-stale-Photos-prebuilt.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/settings_provider",
+      "exit_code": 0,
+      "stdout": "applied component patch: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/settings_provider/0001-stop-packaging-the-stale-Settings-prebuilt.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/admin_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: admin_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/mms_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: mms_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/accessibility_service_completion",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: accessibility_service_completion\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/external_input",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: external_input\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/input_2in1_navigation",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: input_2in1_navigation\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/refresh_rate_page",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: refresh_rate_page\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/share_picker",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: share_picker\n",
+      "stderr": ""
+    },
+    {
+      "component": "mms/source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "mms/send_data_text",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: send_data_text\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/calendar_provider",
+      "exit_code": 0,
+      "stdout": "component patch already applied: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/calendar_provider/0001-stop-packaging-stale-calendar-data-hap.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/photos_provider",
+      "exit_code": 0,
+      "stdout": "component patch already applied: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/photos_provider/0001-stop-packaging-the-stale-Photos-prebuilt.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/settings_provider",
+      "exit_code": 0,
+      "stdout": "component patch already applied: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/settings_provider/0001-stop-packaging-the-stale-Settings-prebuilt.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/admin_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: admin_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/mms_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: mms_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/accessibility_service_completion",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: accessibility_service_completion\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/external_input",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: external_input\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/input_2in1_navigation",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: input_2in1_navigation\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/refresh_rate_page",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: refresh_rate_page\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/share_picker",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: share_picker\n",
+      "stderr": ""
+    },
+    {
+      "component": "mms/source_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: source_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "mms/send_data_text",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: send_data_text\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/calendar_provider",
+      "exit_code": 0,
+      "stdout": "component patch already applied: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/calendar_provider/0001-stop-packaging-stale-calendar-data-hap.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/photos_provider",
+      "exit_code": 0,
+      "stdout": "component patch already applied: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/photos_provider/0001-stop-packaging-the-stale-Photos-prebuilt.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/settings_provider",
+      "exit_code": 0,
+      "stdout": "component patch already applied: /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/hap/settings_provider/0001-stop-packaging-the-stale-Settings-prebuilt.patch\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/admin_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: admin_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "hap/mms_provider",
+      "exit_code": 0,
+      "stdout": "verified complete exact component: mms_provider\n",
+      "stderr": ""
+    },
+    {
+      "component": "settings/external_input",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/lib/apply_exact_component.py\", line 95, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/lib/apply_exact_component.py\", line 74, in main\n    if not baseline.validate(root):\n           ~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/settings/external_input/verify_source.py\", line 35, in validate\n    successor.validate(root, require_patched=True)\n    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/settings/share_picker/verify_source.py\", line 12, in validate\n    return validate_component(root, PROJECT, REVISION, FILES, require_patched)\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/lib/exact_source_states.py\", line 29, in validate_component\n    raise ValueError('missing patched component file: ' + relative)\nValueError: missing patched component file: product/phone/src/main/ets/pages/SharePicker.ets\n"
+    },
+    {
+      "component": "settings/external_input",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/lib/apply_exact_component.py\", line 95, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/lib/apply_exact_component.py\", line 74, in main\n    if not baseline.validate(root):\n           ~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/settings/external_input/verify_source.py\", line 35, in validate\n    successor.validate(root, require_patched=True)\n    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/common/applications/standard/settings/share_picker/verify_source.py\", line 12, in validate\n    return validate_component(root, PROJECT, REVISION, FILES, require_patched)\n  File \"/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round7-source-provider-review/.review-scratch-xg0oxujw/repository/patches/lib/exact_source_states.py\", line 38, in validate_component\n    raise ValueError('unknown/incomplete component edit; preserving source: ' + relative)\nValueError: unknown/incomplete component edit; preserving source: product/phone/src/main/ets/pages/SharePicker.ets\n"
+    }
+  ],
+  "full_stack_cycles": 3,
+  "final_source_hashes": {
+    "applications/standard/hap/BUILD.gn": "d35f62e7f04aee85749b3ab9c7ba25261ddf2fa71395d0b829e0e71cef40f18b",
+    "applications/standard/mms/BUILD.gn": "ff3a2fde79e76a3dc126f4898800f4e1a0459c96d73a13a1bf8f9a14f9d60d2f",
+    "applications/standard/mms/build-profile.json5": "3c6cae55eb0e01133e8bad7af37d35eee0163a337dd40cc0d3416da5627e1aa8",
+    "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets": "d0acb0b25a2d9f8f7553cb14c8732d8eab8b7e5ae9c59b7811a533bfeb9522fa",
+    "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets": "9c4bddf3b65cc57e909e38527f5ce92927fa4219c5141d39451f4cad5f063eda",
+    "applications/standard/mms/entry/src/main/module.json5": "67ce57d6262cffd662be30497c9bdcd60be1acef87418c04801de6623438187f",
+    "applications/standard/mms/oh-package.json5": "c7b6d942a923f3203c8e46a2c379bca931b80392aed24f6301960555f46a525c",
+    "applications/standard/settings/BUILD.gn": "6e2870d79724d8a57d8ea1f4c5e5d11a6a674c310a55b7f28c1aa43fbdefd788",
+    "applications/standard/settings/build-profile.json5": "b294f8c2e7cad4132cc59cb7e5d5c58397b614284b80653b47c3c17ad1d3b79b",
+    "applications/standard/settings/bundle.json": "bb72dba04410b24a381dc716bfd816e1df79d44fc82010c8eb405d70d0361254",
+    "applications/standard/settings/feature/uikit/oh-package.json5": "762bd3cc3b98bf41b752f928d9eee9aee7385365a0df4266a17c7122c873d0f6",
+    "applications/standard/settings/hvigor/hvigor-config.json5": "62bc74f13ae070fc8bd2df03abfe93ba080f552091ef0b18803d100291df07c0",
+    "applications/standard/settings/napi/settings/open_network_settings/napi_open_settings_page_util.cpp": "055ad2e78d2e97be9266ad93f29515d0d970376019dd897d908b23cfee3ec8ee",
+    "applications/standard/settings/native_api/build-profile.json5": "3959a9089919b4c477d605908e868c9e5fbab2bcded0b91fb8b706a38e68d439",
+    "applications/standard/settings/oh-package.json5": "1fd2d29e695adf34b8b582aaa76730f24f791ab36f19590e8afafc66dca3971e",
+    "applications/standard/settings/product/phone/build-profile.json5": "a490e34c5c450ace81c70422cab4eb644559cefa0ab6eac853ca8134f88f4090",
+    "applications/standard/settings/product/phone/oh-package.json5": "bc2d2960c1d3aeae31e7e831fea7d986134ba608d347d2fdbf2eb9572c83fdea",
+    "applications/standard/settings/product/phone/src/main/ets/MainAbility/ExternalCommonUIExtensionAbility.ets": "a70db90fcdc0f1338536e1e665d7715de6905e1eb61607d669100e512d92d600",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets": "43cd3c20f832909a5c346ea02fe9bad00bb5097bd77c438ad5d522572a10c131",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets": "dbf5f593cb417bee28381889909ce201bf1cda0123e6a46eae51ee4c87478d45",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets": "955a59607a4e035db56f32e7b2a58020e01b855f71a89d78ef118a5e6c74ff84",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758",
+    "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd",
+    "applications/standard/settings/product/phone/src/main/ets/pages/home/controller/PageRouteController.ets": "341843b39aade298de963d61345a39d3b39e1001a79132f79d3c553bb4f453b6",
+    "applications/standard/settings/product/phone/src/main/ets/pages/input/ExternalInputSettings.ets": "6a408cc8edb5ee202cd516177fa742d5741271c928e5384064251d3c4b107ce4",
+    "applications/standard/settings/product/phone/src/main/module.json5": "fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62",
+    "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d"
+  },
+  "missing_unknown_share_successor_rejected_without_mutation": true,
+  "original_cms_profile_verified": true,
+  "desired_profile_changes_only_leaf_and_finite_expiry": true,
+  "exact_existing_policy_rows_rebound_idempotently": true,
+  "image_preinstall_selection_missing_in_reviewed_guard": {
+    "status": "confirmed_read_only_control_flow_gap",
+    "image_install_list_read": false,
+    "source_install_list_read": true,
+    "scope": "AST/source observation; no synthetic successful image/signature substituted"
+  },
+  "reviewed_file_hashes": {
+    "scripts/package_standard_qemu.sh": "07109650de99cd1d0d88b375f8eba639e872684461addd241007b2ad7236f226",
+    "scripts/verify_mms_provider_image.py": "305e4bbcc7ce68e92551444ca7d6484bd6d58698b2cfe4d1657a1852ff2b5f27",
+    "patches/lib/exact_source_states.py": "d876f46528b81323414866a97987ac72d82a5b7e748cddda8d8fef01e239e1a2",
+    "patches/lib/graphics_features.py": "0c03cf05c5cf1cbf71b87cfdafbce403a7594b7dc4a9d4d34e96e3e5ab4eaec0",
+    "patches/lib/permission_profile.py": "04cb6c25f5666f616a723e28978857a2f5736ebe6d97418433fad199c3d9bee3",
+    "patches/lib/kernel_evidence.py": "f52a24c7019ff2d3ec2a55eda2e14f52951ba66829bba83dde4631176ee7e5ef",
+    "patches/lib/sceneboard_profile.py": "df6f024abe5dbee5df11fd92fc7df29fa1b8eea5a4a3159b282010567c8855d2",
+    "patches/lib/avc_artifacts.py": "a1c459bc53b50fc3ea0aa9345d48f196fb112f7e7b80a1fddbfa03e45068be8b",
+    "patches/lib/sceneboard_assets.py": "b8554ffcc116a56828e4d82f15cb359469ddddeeacbdb52930b6a0901426ecb7",
+    "patches/lib/device_contract.py": "8b5576d01a73d4e9256f012297bc704d6e93de3fdf75762388b5cab558da61cc",
+    "patches/lib/package_validation.py": "ee257ed37fcc238ba79aee5d1373a12de64fde84b6ebda9a922474a53fe87326",
+    "patches/lib/audio_features.py": "6b744dfbc54f868533d6d6178b5590d03b5815b902ce9f7083490a5d1758346a",
+    "patches/lib/apply_component_stack.py": "5d8947c3809e13880e9a508f88656de3a60e1fa7a6b11a9db0bb41c0c18a2341",
+    "patches/lib/apply_patch.sh": "5f9d706caf77fa385e12370cc764dd6663aa7ec099a4d4fbb99e46a12ad691d6",
+    "patches/lib/init_account_tables.py": "d8df14348d336626da47ad1ac0f615c83ed74efe526f1a2651456e9e38f1d9e5",
+    "patches/lib/calendar_provider.py": "2f03c410ce505088bfa7c06d8f11892479aa1613276b83683edb5db099682ce8",
+    "patches/lib/admin_provider.py": "92eb6eb92b29d0234a838bea85132da007ac9c3ac2f96405d97ae8e85c0e994b",
+    "patches/lib/apply_component_dir.sh": "ea2ccfac19b8a566df019b0a952c47187e4b876aae155496d863cd2fb038bfc8",
+    "patches/lib/mms_provider.py": "1ece6414e4bea49c924dd2bd0922f285d6f08ce56955232f1c4f5d73cc0d5474",
+    "patches/lib/camera_features.py": "76b27441e0af37616a88ec048680b72be4ef8b11170cb0af837f3d0fdcfda246",
+    "patches/lib/network_features.py": "da3f28d7c4a1a3ceb7b117848b1ed5d4f5aab3a060a8ba63213a3c723bf453b8",
+    "patches/lib/sensor_features.py": "20c9ddc55addb1a4ed0b7cfbb804b36262933aae73995884d465618c06663eb7",
+    "patches/lib/apply_exact_component.py": "705b41d74190f3bd5f7dc057f96031da4460d13101eabc0ce8a2bafb18a68d69",
+    "patches/lib/apply_device_type.sh": "86711f2b00c5e53008f10d9216148c0661b5f5b7e47914c01e0c88c20ef49b0f",
+    "patches/common/applications/standard/mms/send_data_text/verify_source.py": "30e69a596884c62424dba6ffdc19fec374ce081151529673805dc6d08a5a505a",
+    "patches/common/applications/standard/mms/send_data_text/0001-provide-real-modal-sharing-and-text-receiver.patch": "ce013527985c29208f0d60720572de4f877f3ae6ba92cd362cbe868f6ffd8106",
+    "patches/common/applications/standard/mms/send_data_text/apply.sh": "0c5a2d3ead431707d60d31ec38291b412e5907de1b670f63574cfc5b798f34c2",
+    "patches/common/applications/standard/mms/source_provider/verify_source.py": "8a284fb7154f5064789f9f3cbb84b4718df99cb2280a6ed4f125d8b3080f31b5",
+    "patches/common/applications/standard/mms/source_provider/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/mms/source_provider/0001-build-current-source-provider.patch": "927745affea3230ec7f1a21c191b3ff38d6a323992c12ac9a78eb8ab7baa1666",
+    "patches/common/applications/standard/mms/source_provider/prepare_dependencies.py": "a423c70ec3d4aa739694426125587bddfd0af4f5bfbf3836354f3fb9320f91b7",
+    "patches/common/applications/standard/hap/admin_provider/verify_source.py": "8c7474401dd15790450c7e10311d17457d266b8b6bdb927442095aae337e71f0",
+    "patches/common/applications/standard/hap/admin_provider/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/hap/admin_provider/0001-build-real-admin-provider-and-verify-user-actions.patch": "f6edf69fa5c896ec1e3c0b50c0f7eeefa38e908e9567f19f4322f68fe21f46ab",
+    "patches/common/applications/standard/hap/settings_provider/0001-stop-packaging-the-stale-Settings-prebuilt.patch": "2d2d3054a335c1fee325d5be5227b5aca3c13ab8e3f9e99e51a490a82843c0cf",
+    "patches/common/applications/standard/hap/settings_provider/apply.sh": "d22201946ed0c17f4f2dadcd1bb25b5385775b5615ff83ba00e44bad53ed1de7",
+    "patches/common/applications/standard/hap/settings_provider/prepare.py": "57a7fa6152771e63f775a90cdbb093c5a562e5b9e5c474fb4e9bbd6851a4bc4a",
+    "patches/common/applications/standard/hap/mms_provider/verify_source.py": "c32097ecb2e7e735e0453be114a0e3aa77ee63cbd8337787459802a77444dd43",
+    "patches/common/applications/standard/hap/mms_provider/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/hap/mms_provider/0001-build-current-source-provider.patch": "dd37cfd68ff3eccb0dea190c08a605277c4d3f9be21e87317c79c5a4e6ce8146",
+    "patches/common/applications/standard/hap/calendar_provider/apply.sh": "320f02f5b68c052745dfbac1f01e1f877723bf3f4ae9f71ea6aa2aaab3588ca8",
+    "patches/common/applications/standard/hap/calendar_provider/0001-stop-packaging-stale-calendar-data-hap.patch": "e2fa002292d12bdc3b5d538bef6b08aace87a16fd587b26d9058c7402b8f9a6f",
+    "patches/common/applications/standard/hap/photos_provider/apply.sh": "d22201946ed0c17f4f2dadcd1bb25b5385775b5615ff83ba00e44bad53ed1de7",
+    "patches/common/applications/standard/hap/photos_provider/0001-stop-packaging-the-stale-Photos-prebuilt.patch": "d14b9ee35b763b135822a4255cd9dadc74de3e9446e7bda0a84672707b32a78b",
+    "patches/common/applications/standard/hap/photos_provider/prepare.py": "a6ed64c9eafc9870ab913ce24f56d6a6cecbd667d13e5f15d30fcd1810c7ffe9",
+    "patches/common/applications/standard/settings/share_picker/verify_source.py": "ce35e5749f9ed98891bafdb77fcdb403810ba116b75451cff8bfb63a4b24b509",
+    "patches/common/applications/standard/settings/share_picker/0001-provide-real-modal-sharing-and-text-receiver.patch": "f772d252022300243d50d6143d830ccca8105d4ce1d3e77a40093bc3fbfa0790",
+    "patches/common/applications/standard/settings/share_picker/apply.sh": "0c5a2d3ead431707d60d31ec38291b412e5907de1b670f63574cfc5b798f34c2",
+    "patches/common/applications/standard/settings/input_2in1_navigation/verify_source.py": "135cc9f2e04cebbb8623d87adcbf79548979c2dc6e06095341b2e7f89fba9dd0",
+    "patches/common/applications/standard/settings/input_2in1_navigation/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/settings/input_2in1_navigation/0001-enable-existing-input-pages-for-qemu-2in1.patch": "91271c7292cdca71b8785c89a4a51537a48359a138fab384ce7cd7d971c73782",
+    "patches/common/applications/standard/settings/accessibility_service_completion/verify_source.py": "0f841f4bd615cc5fabc4edde637d94d1bcbf6089ac3909cd654f2eddf30e32ca",
+    "patches/common/applications/standard/settings/accessibility_service_completion/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/settings/accessibility_service_completion/0001-await-accessibility-actions-before-reporting-success.patch": "38699ccfc91c6faeec03fd064b7683c259c7907882b055b746899e1c096fda08",
+    "patches/common/applications/standard/settings/refresh_rate_page/verify_source.py": "1014691efbef2b663bf8c4505eaa602bd4852faf81e5269f19162002b7d41a76",
+    "patches/common/applications/standard/settings/refresh_rate_page/0001-route-to-actual-screen-refresh-modes.patch": "1b5985b227d9d4281e5849b210955073a975764bd1e18eaec5413826b49a42a7",
+    "patches/common/applications/standard/settings/refresh_rate_page/apply.sh": "f237712a0bbefbf23183ef7f4da02eef9d2cb0c21b4fae86a4d12824629798af",
+    "patches/common/applications/standard/settings/refresh_rate_page/0002-compile-dynamic-page-and-use-mode-indices.patch": "54d0ebf082e865b73d37b1d3cce4d9f863516ef769d7d61b3c43eafe1b247ee1",
+    "patches/common/applications/standard/settings/refresh_rate_page/upgrade_previous.py": "bdd7b287ca430575dd6049b787e9ca7e17b2c36a6dc43ec43aa40dc0c4b14d16",
+    "patches/common/applications/standard/settings/external_input/verify_source.py": "7ec2a3fffe1f0ca8f9ef1026838f04bc6a9f8205b0af04a372a72846a480cd11",
+    "patches/common/applications/standard/settings/external_input/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/settings/external_input/0001-route-public-input-settings-to-real-pages.patch": "fa5e5956c683e992db112238e166029e837dfe70a21a6f7fe07f0f40dc615d33",
+    "patches/common/applications/standard/settings/source_provider/verify_source.py": "1d44373760580caa0e531155df126a7c497374e55165d66a17a6e107dcd5dfc2",
+    "patches/common/applications/standard/settings/source_provider/apply.sh": "5ea3319dba72a74e9db3670197e16bc4c5b99d619c73e41d590f69d0a39cd820",
+    "patches/common/applications/standard/settings/source_provider/0001-build-fixed-release-Settings-for-all-QEMU-ABIs.patch": "acade6b479be0fa73671c4575cc7d4b2a439d10302636468d1b4f0d31151bf02",
+    "patches/common/applications/standard/settings/source_provider/prepare_dependencies.py": "7b55413710045d08f5d0fa4248588ecef771d38e244e80ada500eb23c5102da1"
+  },
+  "status": "pass",
+  "scratch_removed": true
+}
