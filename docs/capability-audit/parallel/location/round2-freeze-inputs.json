@@ -122,6 +122,21 @@
       "sha256": "6a7103d84ec91f572aa50aa49caf87af4cb749e227ddcbd8aca9912b53092d0f",
       "originally_absent": false,
       "crlf_count": 0
+    },
+    "base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp": {
+      "sha256": "aaaf88b88b1c3b99ea5a25559b18d4928d82e3f06af722ad37508aafe533ee03",
+      "originally_absent": false,
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h": {
+      "sha256": "a22355966d2eaf0ebeabe72a7b30b7d6f84f085f8c7e16d2fb31fabbfd6d9d1a",
+      "originally_absent": false,
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp": {
+      "sha256": "31a10e85f0af933cfdb36c78a809f7404a838e502b2756f822c4b03da236f4b8",
+      "originally_absent": false,
+      "crlf_count": 0
     }
   },
   "freeze_inputs": {

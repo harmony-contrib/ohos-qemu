@@ -1,6 +1,6 @@
 # API 26 location runtime routes
 
-Apply after `api26_public_enums`, using this component's `apply.sh`. The four-patch
+Apply after `api26_public_enums`, using this component's `apply.sh`. The five-patch
 stack adds live icon, filtered BLE search, district, skiing-track and fusion-fence routes.
 Transactions 65 through 75 are appended while all original numbers are preserved.
 
@@ -35,9 +35,9 @@ The cache fast paths retain actual permission-use ownership through stop retries
 See `docs/capability-audit/parallel/location/round3-business.md` in this repository
 for the algorithm, authorization, compatibility and centralized build details.
 
-The guard pins the location project HEAD and the complete raw bytes of all 24
+The guard pins the location project HEAD and the complete raw bytes of all 27
 upstream targets. It accepts only the original component state (after the enum
-prerequisite), the complete first/second/third patch prefixes, or the final state. Unknown or mixed
+prerequisite), the complete first/second/third/fourth patch prefixes, or the final state. Unknown or mixed
 edits, changed patches, unexpected new-header bytes, missing existing files and source/ancestor symlinks fail before
 source writes. A private suffix preflight must produce the exact final
 bytes and revalidate the source snapshot before atomic owned-file replacement.
@@ -46,7 +46,7 @@ source concurrently with patching.
 
 Host tests execute the actual patched functions under ASan/UBSan, using explicit
 scanner/NAPI boundaries. Separate guard tests exercise legal prefixes and reject
-unknown bytes, mixed states, symlinks and wrong HEADs. The complete 24-target source
+unknown bytes, mixed states, symlinks and wrong HEADs. The complete 27-target source
 copies also pass real patch application and exact final hashes. These checks do
 not replace full generated-IDL/TU builds or packaged GNSS/BLE/device validation.
 The integrating agent owns shared wiring and representative-package acceptance.
@@ -60,3 +60,14 @@ failed permission stops retain ownership for retry. Unsupported BLE bitmap8
 returns801 because this SDK has no BLE matching payload. See round4-fusion-
 communication.md and round4-platform-build-request.json for supported behavior,
 remaining provider/runtime gates, all new targets and complete build requests.
+
+
+The fifth patch removes production-generated dummy satellite reports and preserves
+all real measurement fields/counts. It bounds every satellite input vector and
+value-initializes normal/cache HDI configuration. Normal intervals come from the
+fastest actual WorkRecord (seconds converted to ms); HDI configuration failures
+prevent starts, and active interval updates must configure successfully. See
+round5-gnss.md, round5-freeze-inputs.json and round5-platform-build-request.json
+for the actual generated POD contract, regression reproduction, and two added
+complete platform TU requirements. The external vendor/driver bridge is owned
+by the integrating/system agents and is not modified by this component.
