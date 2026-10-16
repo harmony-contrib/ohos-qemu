@@ -1,0 +1,56 @@
+diff --git a/base/theme/wallpaper_mgr/services/BUILD.gn b/base/theme/wallpaper_mgr/services/BUILD.gn
+--- a/base/theme/wallpaper_mgr/services/BUILD.gn
++++ b/base/theme/wallpaper_mgr/services/BUILD.gn
+@@ -86,6 +86,13 @@
+   branch_protector_ret = "pac_ret"
+ 
+   defines = []
++  # Match the existing QEMU OpenVPN adapter's actual standard product names.
++  # Do not redirect stock products or a real ThemeService implementation.
++  if (!theme_service &&
++      (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
++       product_name == "x86_64_virt")) {
++    defines += [ "QEMU_WALLPAPER_RENDERER" ]
++  }
+   if (theme_service) {
+     defines += [ "THEME_SERVICE" ]
+   } else {
+@@ -163,6 +170,13 @@
+   branch_protector_ret = "pac_ret"
+ 
+   defines = []
++  # Match the existing QEMU OpenVPN adapter's actual standard product names.
++  # Do not redirect stock products or a real ThemeService implementation.
++  if (!theme_service &&
++      (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
++       product_name == "x86_64_virt")) {
++    defines += [ "QEMU_WALLPAPER_RENDERER" ]
++  }
+   if (theme_service) {
+     defines += [ "THEME_SERVICE" ]
+   } else {
+diff --git a/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp b/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp
+--- a/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp
++++ b/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp
+@@ -78,7 +78,12 @@
+ constexpr const char *LIVE_WALLPAPER_LOCK_ORIG = "live_wallpaper_lock_orig";
+ constexpr const char *CUSTOM_WALLPAPER_LOCK = "custom_lock.zip";
+ constexpr const char *CUSTOM_WALLPAPER_SYSTEM = "custom_system.zip";
++#ifdef QEMU_WALLPAPER_RENDERER
++// Only the three QEMU standard products build the separate real renderer HAP.
++constexpr const char *OHOS_WALLPAPER_BUNDLE_NAME = "com.ohos.wallpaper";
++#else
+ constexpr const char *OHOS_WALLPAPER_BUNDLE_NAME = "com.ohos.launcher";
++#endif
+ constexpr const char *SHOW_SYSTEM_SCREEN = "SHOW_SYSTEMSCREEN";
+ constexpr const char *SHOW_LOCK_SCREEN = "SHOW_LOCKSCREEN";
+ constexpr const char *SYSTEM_RES_TYPE = "SystemResType";
+@@ -1291,7 +1296,7 @@
+     }
+     auto ret = AAFwk::AbilityManagerClient::GetInstance()->ConnectExtensionAbility(want, connection_, DEFAULT_VALUE);
+     HILOG_INFO("ConnectExtensionAbility errCode=%{public}d", ret);
+-    return ret;
++    return ret == ERR_OK;
+ }
+ #endif
+ 
