@@ -17,7 +17,7 @@
     "behavior:audio-capture-and-dependent-pipelines": {
       "status": "candidate_prepared",
       "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
-      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component.",
+      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render.",
       "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence.",
       "gap_closed": false
     },
@@ -58,6 +58,11 @@
     }
   },
   "upstream_targets": [
+    "device/qemu/common/virt_full/audio_alsa/vendor_capture.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c",
     "foundation/multimedia/av_codec/interfaces/inner_api/native/audio_capture_filter.h",
     "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp",
     "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp",
@@ -134,6 +139,20 @@
       "actual_function_cases": 40,
       "evidence": "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log",
       "scope": "ASan/UBSan actual module/filter method bodies plus exact full source installer; controlled dependencies are not backend/runtime evidence"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_alsa_capture.py",
+      "result": "passed",
+      "tests": 6,
+      "evidence": "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log",
+      "scope": "ASan/UBSan actual source/functions with controlled ALSA dependencies; JSON uses pinned real cJSON; no guest/HDI capability closure"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_alsa_inject.py",
+      "result": "passed",
+      "tests": 1,
+      "evidence": "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log",
+      "scope": "ASan/UBSan actual source/functions with controlled ALSA dependencies; JSON uses pinned real cJSON; no guest/HDI capability closure"
     }
   ],
   "integration_requests": [
@@ -171,6 +190,11 @@
       "id": "media-audio-integrity",
       "owner": "parent",
       "request": "Apply av_codec/audio_capture_integrity after existing av_codec components; compile both actual full cpp TUs and both changed headers with true product flags, then ordinary Capturer/Recorder Stop/Pause/Resume/Release/denial and injected real PCM on new representative package. Task::IsTaskRunning is scheduler state only; actual worker readiness still needs product observation."
+    },
+    {
+      "id": "media-alsa-capture-loopback",
+      "owner": "parent",
+      "request": "Apply drivers/peripheral/audio/capture_loopback after old audio 0001..0007. Compile full alsa_soundcard.c, alsa_snd_capture.c, both driver and device/qemu vendor_capture.c, plus alsa_soundcard.h. Parent kernel/JSON/launch contract is card0 ES1370 render, card1 QemuCapture capture D0/sub0, producer playback D1/sub0. Build batch_media_alsa_inject.c with actual guest libasound and sysroot. Read README for fresh challenge injection, public Capturer/Recorder independent output validation; verify honest unsupported mixer ops do not abort usable PCM service startup. Preserve representative gate."
     }
   ],
   "remaining_gaps": [
@@ -201,7 +225,8 @@
     {
       "id": "behavior:video-encoder-dependent-media-pipelines",
       "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers."
-    }
+    },
+    "New capture components and real ALSA diagnostic require actual full target TU/link and representative kernel/HDI/service/HAP/runtime validation. Controlled host ALSA tests cannot establish a working backend, worker readiness, focus/interrupt/recording/haptic/MIDI/voice pipelines."
   ],
   "gap_closures": 0,
   "package_created": false,
@@ -233,12 +258,21 @@
     "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log": "d7f45b3039c41689f1f658c654c30f826bc0ecf3818aa9c5bb78dfc1764dc7bf",
     "docs/capability-audit/parallel/media/round2/knowledge-status.json": "652bb0c8c4493be4063650fb9a201688d447f4493b4c6b22f438f2519312f903",
     "docs/capability-audit/parallel/media/round2/audio-integrity-host-01.log": "6d900236f15b38da7bf427a7a7c7df8e0985a4aaab180e386730acb75e2322ed",
-    "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log": "543a3eacbb5a7a81e9e576867e3391a7ec34cbf43094755357c378223be56563"
+    "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log": "543a3eacbb5a7a81e9e576867e3391a7ec34cbf43094755357c378223be56563",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-01.log": "4eaf6e5946a2c2e7e85bf87ba18c1a8a84add37f3946d21fc5d87aa7963e4f8f",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-02.log": "91a60040bd6ae8a0acd510fea84efed7666322432d53a1a929a797a820c1579d",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-03.log": "c6aa9f24b9c8ebbd5aa50eff93af7eded3ce641dcac356087830076067be60e6",
+    "docs/capability-audit/parallel/media/round2/alsa-inject-host-01.log": "32977d26d34487cd00f093ebf7b773d042d16030eb23b2c0fe7166a7c7e7c5ea",
+    "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log": "a90c13487e87d6441c67875fd67ec354ed4b6021a5c6462d97d264ccf09f8d02",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log": "09c39f4beb3927783c34fbf9fd8825f29b95472658e6e974d0c46d078f12c4c7"
   },
   "changed_files": [
+    "ci/capability-audit/batch_media_alsa_inject.c",
     "ci/capability-audit/batch_media_knowledge_query_cli.cpp",
     "ci/capability-audit/batch_media_review_source.py",
+    "ci/capability-audit/fixtures/batch_media/audio/alsa_shim.h",
     "ci/capability-audit/fixtures/batch_media/audio/baseline.json",
+    "ci/capability-audit/fixtures/batch_media/audio/cjson.json",
     "ci/capability-audit/fixtures/batch_media/audio/integrity_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
@@ -246,6 +280,8 @@
     "ci/capability-audit/fixtures/batch_media/knowledge/baseline.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/guard-context.json",
     "ci/capability-audit/fixtures/batch_media/manifest.json",
+    "ci/capability-audit/test_batch_media_alsa_capture.py",
+    "ci/capability-audit/test_batch_media_alsa_inject.py",
     "ci/capability-audit/test_batch_media_audio_integrity.py",
     "ci/capability-audit/test_batch_media_avc_surface_layout.py",
     "ci/capability-audit/test_batch_media_knowledge_content.py",
@@ -259,14 +295,31 @@
     "docs/capability-audit/parallel/media/host-checks-03.log",
     "docs/capability-audit/parallel/media/host-checks-04.log",
     "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-01.log",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-02.log",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-03.log",
+    "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log",
+    "docs/capability-audit/parallel/media/round2/alsa-inject-host-01.log",
+    "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log",
     "docs/capability-audit/parallel/media/round2/audio-integrity-host-01.log",
     "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log",
+    "docs/capability-audit/parallel/media/round2/audio-status.json",
     "docs/capability-audit/parallel/media/round2/knowledge-host-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-install-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-status.json",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
+    "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
+    "patches/common/drivers/peripheral/audio/capture_loopback/README.md",
+    "patches/common/drivers/peripheral/audio/capture_loopback/apply.py",
+    "patches/common/drivers/peripheral/audio/capture_loopback/apply.sh",
+    "patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_snd_capture.c",
+    "patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.c",
+    "patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.h",
+    "patches/common/drivers/peripheral/audio/capture_loopback/files/qemu_vendor_capture.c",
+    "patches/common/drivers/peripheral/audio/capture_loopback/files/vendor_capture.c",
+    "patches/common/drivers/peripheral/audio/capture_loopback/manifest.json",
     "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/0001-validate-capture-data-and-lifecycle.patch",
     "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/README.md",
     "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.py",
@@ -300,5 +353,5 @@
     "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py"
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
-  "round2_status": "knowledge_content_and_audio_integrity_prepared_ALSA_capture_route_in_progress"
+  "round2_status": "knowledge_audio_integrity_and_real_ALSA_capture_candidates_prepared_actual_product_build_and_runtime_required"
 }

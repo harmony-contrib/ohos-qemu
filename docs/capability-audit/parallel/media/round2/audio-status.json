@@ -1,0 +1,28 @@
+{
+  "base_commit": "a68de06e01438e00d8c4494c1c8d04352dbaca1a",
+  "closed_requirements": 0,
+  "upstream_targets": [
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c",
+    "device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
+  ],
+  "component": "patches/common/drivers/peripheral/audio/capture_loopback",
+  "test_evidence": [
+    "alsa-capture-host-04.log",
+    "alsa-inject-host-02.log"
+  ],
+  "parent_contract": {
+    "render": "card0 AudioPCI existing flat cardId/cardName",
+    "capture": "card1 QemuCapture device0 subdevice0; optional config captureCardId=1/captureCardName=QemuCapture/captureDevice=0",
+    "producer": "hw:CARD=QemuCapture,DEV=1,SUBDEV=0 external fresh S16LE file",
+    "kernel": "CONFIG_SND_ALOOP=y; index1 idQemuCapture pcm_substreams1; parent-owned"
+  },
+  "remaining": [
+    "Actual product five-source/header compile/link and real guest injector build",
+    "Guest actual cards/PCMs, kernel cable and AudioService startup when mixer controls return not-supported",
+    "New package ordinary public PCM capture challenge/permissions/interrupt/pause/resume/stop/recreate and independent Recorder decode/AV synchronization",
+    "KnowledgeContent remaining producer/default/ranking/display/ACL compatibility; AudioVivid real external algorithm library still absent"
+  ]
+}
