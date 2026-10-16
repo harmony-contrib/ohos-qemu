@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "bundle_name": "com.ohos.qemu.contactpickerseed",
+  "main_ability": "EntryAbility",
+  "module": "entry",
+  "apl": "normal",
+  "system_app": false,
+  "requested_permissions": ["ohos.permission.READ_CONTACTS", "ohos.permission.WRITE_CONTACTS"],
+  "extra_acl": [],
+  "permission_grant": "actual user permission dialog, observed UITest input; no atm/bm grant or root ACL",
+  "want_parameters": {"runId": "[A-Za-z0-9_-]{1,64}", "operationId": "[A-Za-z0-9_-]{1,64}", "mode": ["create", "cleanup"]},
+  "start_node": "contact_seed_start",
+  "seed_count": 205,
+  "seed_namespace": "QCP_{runId}_{index padded to three digits}",
+  "create_api": "contact.addContact(context, Contact)",
+  "read_api": "contact.queryContacts(context)",
+  "delete_api": "contact.deleteContact(context, real readback key)",
+  "journal": "filesDir/contact-seed-{runId}.jsonl",
+  "raw_events": ["begin", "permission_result", "query_before", "created", "deleted", "query_after", "readback", "error", "complete"],
+  "observer": {
+    "kind": "separate root-owned read-only native test executable, never linked into normal seed HAP",
+    "commands": ["processes BUNDLE", "permissions BUNDLE TOKEN"],
+    "allowed_bundles": ["com.ohos.qemu.contactpickercaller", "com.ohos.qemu.contactpickerseed"],
+    "process_api": "AppMgrClient::GetAllRunningProcesses",
+    "process_dto": "RunningProcessInfo.pid_ and bundleNames",
+    "token_binding_api": "AccessTokenKit::GetHapTokenInfo",
+    "permission_api": "AccessTokenKit::VerifyAccessToken",
+    "permission_names": ["ohos.permission.READ_CONTACTS", "ohos.permission.WRITE_CONTACTS"],
+    "error_policy": "preserve native client error_code, return nonzero; failed queries are not empty success"
+  },
+  "acceptance": {"host_checks_are_runtime_proof": false, "ledger_closed": false, "first_artifact_behavior_gate_passed": false}
+}

@@ -288,7 +288,10 @@ def verify_process_restart(ui):
     ids = {}
     for phase in ['before_exit', 'after_exit', 'after_reopen']:
         raw = raw_json(artifact(captures[phase]))
-        require(raw.get('api') == 'appManager.getRunningProcessInformation', 'caller process proof is not AppMgr output')
+        require(raw.get('api') in {'appManager.getRunningProcessInformation', 'AppMgrClient::GetAllRunningProcesses'},
+                'caller process proof is not AppMgr output')
+        if raw['api'] == 'AppMgrClient::GetAllRunningProcesses':
+            require(raw.get('error_code') == 0, 'native AppMgr process query failed')
         matches = [process for process in raw.get('processes', []) if BUNDLE in process.get('bundleNames', [])]
         if phase == 'after_exit':
             require(matches == [], 'ordinary caller remained running after force-stop')

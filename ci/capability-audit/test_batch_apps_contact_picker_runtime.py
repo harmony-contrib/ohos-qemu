@@ -202,6 +202,20 @@ class RuntimeVerifier(unittest.TestCase):
         self.cleanup['remaining_contacts'] = [self.records[0]]
         with self.assertRaisesRegex(runtime.EvidenceError, 'cleanup'): self.verify('select-promise')
 
+    def test_native_appmgr_query_keeps_actual_api_and_rejects_failures_or_ps(self):
+        for case in ['exit-pending', 'reopen']: self.make_case(case)
+        for phase in self.ui['caller_processes']:
+            path = self.root / (phase + '.json')
+            value = runtime.document(path)
+            value.update(api='AppMgrClient::GetAllRunningProcesses', error_code=0)
+            self.ui['caller_processes'][phase] = self.json_artifact(phase + '.json', value)
+        runtime.verify_process_restart(self.ui)
+        for api, code in [('ps', 0), ('AppMgrClient::GetAllRunningProcesses', 7)]:
+            value = runtime.document(self.root / 'after_exit.json')
+            value.update(api=api, error_code=code)
+            self.ui['caller_processes']['after_exit'] = self.json_artifact('after_exit.json', value)
+            with self.assertRaises(runtime.EvidenceError): runtime.verify_process_restart(self.ui)
+
     def test_prepare_is_normal_permissionless_and_preserves_prior_output(self):
         module = runtime.document(self.root / 'project/entry/src/main/module.json5')['module']
         self.assertEqual(module['requestPermissions'], [])
