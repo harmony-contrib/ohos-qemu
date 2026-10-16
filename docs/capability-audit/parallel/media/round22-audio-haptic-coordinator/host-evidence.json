@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "scope": "light_host_protocol_source_generation_PCM_fixture_counterexamples_ONLY",
+  "command": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "ci/capability-audit",
+    "-p",
+    "test_batch_media_audio_haptic*.py",
+    "-v"
+  ],
+  "cwd": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
+  "locale": {
+    "LC_ALL": "C",
+    "LC_CTYPE": "C",
+    "LANG": "C"
+  },
+  "exit_code": 1,
+  "seconds": 0.474657625076361,
+  "log": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round22-audio-haptic-coordinator/host-tests-01.log",
+    "sha256": "d75fcff84958253c6003444a9ac84a985b93c8118e1dc5b57daa94265f994be7"
+  },
+  "source_files": {
+    "ci/capability-audit/batch_media_audio_haptic_coordinator.py": {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_coordinator.py",
+      "sha256": "7bfaa80b3e0f89d8917e3b66af4373d773eaf58f430fc1ae1f326810c80d6abf"
+    },
+    "ci/capability-audit/test_batch_media_audio_haptic_coordinator.py": {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_haptic_coordinator.py",
+      "sha256": "c4efd4fe0cb6e8604bd0b2ffa6cb0f027bfd17f3ad562787f78db856f025a93f"
+    }
+  },
+  "frozen_dependency_source_files": {
+    "ci/capability-audit/batch_media_audio_haptic.py": {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_audio_haptic.py",
+      "sha256": "a9e4e94aed58d63beeba398c10083b02f008920e637c0905fbfd9fcce05cce65"
+    },
+    "ci/capability-audit/batch_media_audio_haptic_probe.ets": {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_probe.ets",
+      "sha256": "17c45ca0320bf407b87304ccfb0fec4821c5a7ce7cdceb2c029086c3f77545db"
+    },
+    "ci/capability-audit/batch_media_audio_haptic_hdi_observer.cpp": {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_hdi_observer.cpp",
+      "sha256": "f4a266ddd9fde64acf1a289637a7a05ef5479bfeedc93a0e6f8f5fd6064c4e63"
+    },
+    "ci/capability-audit/batch_media_audio_capture_challenge.py": {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_audio_capture_challenge.py",
+      "sha256": "aa3a74622acf4789925ffe9c30d1e25c76434813da5973e30d8a5bb61716a48f"
+    }
+  },
+  "source_basis": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round22-audio-haptic-coordinator/source-basis.json",
+    "sha256": "e8f93e19f66f0921befe66156c63220af207afc23176f9c5f75bdf69476e7b53"
+  },
+  "SDK_or_native_compilation_performed": false,
+  "signing_performed": false,
+  "VM_or_guest_commands_executed": false,
+  "runtime_validated": false,
+  "first_artifact_behavior_gate_passed": false,
+  "ledger_closed": false,
+  "limitations": [
+    "PCM tests use explicitly named host fixtures, never claim guest playback.",
+    "Generated ArkTS and token helper have not been compiled.",
+    "Actual source-image provenance and real onset MONOTONIC anchor are pending.",
+    "Collection and verify CLI cannot return successful full acceptance."
+  ]
+}
