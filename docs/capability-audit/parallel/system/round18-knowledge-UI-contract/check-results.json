@@ -1,0 +1,13 @@
+{
+  "status": "pass_host_source_contract_consistency_ONLY",
+  "source_evidence_sha256": "d3ff9ac992cc5c3370148cc58ecc921c1258b747fee21a00337a2012c58e2c53",
+  "ui_contract_sha256": "e65ed60b7d4f022b19c2ebe5ca836992bce595d1d72ba0dc6b81b36a2e4b54df",
+  "source_files_hashed": 38,
+  "permission_group_title_and_buttons": true,
+  "save_one_other_templates_and_count_spacing": true,
+  "browser_toolbar_actual_route_and_case": true,
+  "ordinary_delete_vs_permanent_delete_resources": true,
+  "no_fixed_advanced_semantic_button_ID_claim": true,
+  "runtime_or_native_or_SDK_test_run": false,
+  "first_artifact_behavior_gate_passed": false
+}
