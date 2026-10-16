@@ -1,0 +1,24 @@
+--- a/foundation/multimedia/player_framework/frameworks/native/capi/recorder/native_avrecorder.cpp
++++ b/foundation/multimedia/player_framework/frameworks/native/capi/recorder/native_avrecorder.cpp
+@@ -463,7 +463,8 @@
+         config->maxDuration = INT32_MAX;
+         MEDIA_LOGI("maxDuration = %{public}d is invalid, set to default", config->maxDuration);
+     }
+-    recorderObj->recorder_->SetMaxDuration(config->maxDuration);
++    int32_t durationResult = recorderObj->recorder_->SetMaxDuration(config->maxDuration);
++    CHECK_AND_RETURN_RET_LOG(durationResult == MSERR_OK, AV_ERR_INVALID_VAL, "Set max duration failed!");
+ 
+     CHECK_AND_RETURN_RET_LOG(IsLocationValid(config->metadata.location), AV_ERR_INVALID_VAL,
+         "Invalid latitude or longitude");
+@@ -520,8 +521,9 @@
+         recorderObj->withAudio_ = false;
+     }
+ 
+-    int32_t ret = Configure(recorder, config);
+-    ret = recorderObj->recorder_->Prepare();
++    OH_AVErrCode configured = Configure(recorder, config);
++    CHECK_AND_RETURN_RET_LOG(configured == AV_ERR_OK, configured, "recorder Configure failed");
++    int32_t ret = recorderObj->recorder_->Prepare();
+     CHECK_AND_RETURN_RET_LOG(ret == MSERR_OK, AV_ERR_INVALID_VAL, "recorder Prepare failed");
+ 
+     CHECK_AND_RETURN_RET_LOG(recorderObj->callback_ != nullptr, AV_ERR_INVALID_VAL,

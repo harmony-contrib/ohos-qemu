@@ -1,0 +1,16 @@
+{
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "upstream_path": "foundation/multimedia/audio_framework/services/audio_policy/server/infra/config/file/audio_interrupt_policy_config.xml",
+  "sha256": "dec8b8decf138a930d14d1cb7777753aefbb2ce2fafd564f059f9ebff87f2c4a",
+  "actual_product_config_still_required": true,
+  "rows": [
+    {
+      "existing": "SOURCE_TYPE_MIC",
+      "table": "private",
+      "value": "SOURCE_TYPE_VOICE_COMMUNICATION",
+      "is_forced": "true",
+      "action_type": "STOP",
+      "action_on": "existing"
+    }
+  ]
+}

@@ -37,7 +37,7 @@ class Holiday(unittest.TestCase):
         for path in (FIX/'holiday').glob('*.h'):(cls.root/path.name).write_bytes(path.read_bytes())
         (cls.root/'transaction.h').write_text('#include "rdb_store.h"\n')
         (cls.root/'rdb_errno.h').write_text('#include "rdb_store.h"\n')
-        (cls.root/'medialibrary_log.h').write_text('#define MEDIA_ERR_LOG(...)\n')
+        (cls.root/'media_log.h').write_text('#define MEDIA_ERR_LOG(...)\n')
         for name in ['knowledge_holiday_index.h','knowledge_content_query.h']:(cls.root/name).write_bytes((COMP/'files'/name).read_bytes())
         source=(FIX/'holiday/producer_harness.cpp').read_text().replace('// ACTUAL_PRODUCER',(COMP/'files/knowledge_holiday_index.cpp').read_text())
         (cls.root/'producer.cpp').write_text(source)

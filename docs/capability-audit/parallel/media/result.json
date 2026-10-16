@@ -10,29 +10,29 @@
     "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent": {
       "status": "candidate_prepared",
       "source_finding": "SDK defines getRelatedEntity/getSearchSuggestion with system+READ_IMAGEVIDEO authorization. Exact class/method tokens absent in 4066 scoped media_library source/config files. Existing Photos/geographic knowledge joins do not implement Entity/alias/ranking or all suggestion types.",
-      "candidate": "Round 3: real service-owned fixed trusted all-day ICS producer, same MediaLibrary RDB schema/transaction/hash/version, legacy open/upgrade/reopen plus cancellable managed configuration observer; HOLIDAY joins actual Photos.date_day, NONE sentinel rejects with 13900020; omitted count streams all budgeted candidates, weighted vote/display project semantics defined. Native caller/account/VISITOR/token/visibility constraints retained.",
-      "remaining": "Actual product producer/service/NAPI/query/helper compilation and link, populated public three-role new-package asset/calendar/alias/count/delete/account/VISITOR ACL and permission revocation/runtime acceptance; no host adapter or generated ICS is real-world holiday evidence.",
+      "candidate": "Round 3: real service-owned fixed trusted all-day ICS producer, same MediaLibrary RDB schema/transaction/hash/version, legacy open/upgrade/reopen plus cancellable managed configuration observer; HOLIDAY joins actual Photos.date_day, NONE sentinel rejects with 13900020; omitted count streams all budgeted candidates, weighted vote/display project semantics defined. Native caller/account/VISITOR/token/visibility constraints retained. Actual GN/header compile gaps repaired: real media_log.h and direct access_token:libaccesstoken_sdk + ipc:ipc_core on photoaccesshelpernative; exact previous-complete overlay upgrade supported without admitting mixed states.",
+      "remaining": "Parent actual full6-TU batch02: four passed (native_module/query/media_asset_rdbstore/medialibrary_rdbstore), producer/NAPI failed missing log/AccessToken headers. Candidate fixes those source/GN gaps; retry those two with true GN dependency exports and actual links. Public three-role populated asset/calendar/account/VISITOR/permission-revocation runtime still required.",
       "gap_closed": false
     },
     "behavior:audio-capture-and-dependent-pipelines": {
       "status": "candidate_prepared",
       "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
-      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render. Round 3 public native ordinary-MIC HAP with awaited real grant dialog, actual callback PCM/timestamps/lifecycle/private evidence and independent fresh host challenge diagnostic; parent reports actual SDK26 native compile/link 3ABI and HAP02 compile passed.",
+      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render. Round 3 public native ordinary-MIC HAP with awaited real grant dialog, actual callback PCM/timestamps/lifecycle/private evidence and independent fresh host challenge diagnostic; parent reports actual SDK26 native compile/link 3ABI and HAP02 compile passed. Round4 ordinary public active-revocation/event caller records real MIC PCM/frames/clock/state/errors with fresh nonce and private baseline checkpoint; actual token mutation remains external to the app.",
       "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence.",
       "gap_closed": false
     },
     "behavior:media-recording-input-backends-missing": {
       "status": "candidate_prepared",
       "source_finding": "Actual audio/video capture filters require capture producer/surface. Shared AVC input ignores AVMemory offset and accepts incompatible surface byte ranges/layouts.",
-      "candidate": "Real AVC input offset, surface geometry/stride/UV capacity checks and validation-error surface release, preserving existing encoder backend.",
-      "remaining": "Actual AVRecorder audio+video producer to decodable file, timestamp and pause/stop/release/recreate/authorization validation on the representative package.",
+      "candidate": "Real AVC input offset, surface geometry/stride/UV capacity checks and validation-error surface release, preserving existing encoder backend. Round 4 exact public C Recorder Prepare configuration/max-duration error propagation plus actual public MIC AAC+surface AVC file caller, native state/error/lifecycle/private outputs and independent external AAC/AVC decode/pixels/PTS/PCM challenge diagnostic.",
+      "remaining": "Actual full public Recorder product TU/library build, official NDK caller link/ordinary HAP build, actual external ffprobe/ffmpeg decoder availability, challenged new-image audio/video file decode and timestamps/pause/stop/reset/release/recreate/permissions/runtime acceptance. Native/host self-report is not proof.",
       "gap_closed": false
     },
     "behavior:audio-interrupt-haptic-renderer-dependency": {
-      "status": "unresolved",
+      "status": "candidate_prepared",
       "source_finding": "AudioHapticPlayerImpl Start calls actual audioPlayer Start; independent Renderer PCM callbacks cannot demonstrate interrupt focus or audio/vibration synchronization.",
-      "candidate": "No fake callback/focus success introduced.",
-      "remaining": "Two real ordinary callers competing for focus, actual interruption/resume callbacks and synchronized vibration/playback, lifecycle and denial boundaries on a new package.",
+      "candidate": "Public two-normal-UID MIC owner/VOICE_COMMUNICATION contender candidate with actual interrupt/error callbacks, real PCM/checkpoints/states/native timestamps, precise Start interval and fresh action nonce handshake. Actual fixed source policy row/provenance recorded; no self-induced background stop is accepted as focus evidence.",
+      "remaining": "Official NDK/HAP builds and distinct normal-UID actual grant/foreground/background/service-policy/timing/full PCM focus/stop/resume runtime on the new representative package; if background audio is needed use a genuinely legal ordinary background task and revalidate. Real audio/haptic synchronized playback/vibration remains unimplemented/unaccepted.",
       "gap_closed": false
     },
     "behavior:media-codec-base-partial": {
@@ -81,7 +81,8 @@
     "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h",
     "foundation/multimedia/media_library/services/media_rdbstore/include/rdbstore/knowledge_holiday_index.h",
     "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp",
-    "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp"
+    "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp",
+    "foundation/multimedia/player_framework/frameworks/native/capi/recorder/native_avrecorder.cpp"
   ],
   "ownership": "Both complete upstream paths exclusively assigned by parent before edits; no shared source/out writes or other agent files changed.",
   "tests": [
@@ -178,6 +179,34 @@
       "tests": 33,
       "evidence": "docs/capability-audit/parallel/media/round3/holiday-prior-guards-01.log",
       "scope": "Existing whole photo/Knowledge exact-source guards, installer repeat and real query regressions after new forward-state recognition"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_media_recorder*.py' -v",
+      "result": "passed",
+      "tests": 8,
+      "evidence": "docs/capability-audit/parallel/media/round4/recorder-host-02.log",
+      "scope": "Actual six configuration bodies+17 failure steps/old bug reproduction, full public callers host syntax with actual SDK26 headers, actual native surface/challenge functions ASan/UBSan; inner dependencies and oracle PCM/pixel/PTS fixtures are controlled synthetic unit inputs, actual HAP/decode/backend pending"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_media_knowledge_holiday*.py' -v",
+      "result": "passed",
+      "tests": 11,
+      "evidence": "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-03.log",
+      "scope": "Actual producer/cursor/query functions and precise13-state installer including whole previous e0d1137 upgrade/mixed-version rejection; underlying RDB/NAPI controlled, actual product failed-TU retry pending"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_audio_events.py -v",
+      "result": "passed",
+      "tests": 3,
+      "evidence": "docs/capability-audit/parallel/media/round4/audio-events-host-04.log",
+      "scope": "Both actual complete public SDK26 caller sources host syntax, actual PCM/interrupt/error/nonce/private Ack functions ASan/UBSan; explicit synthetic event/PCM oracle inputs reject silence/replay/missing focus/successful revoked restart; not actual token/service/two-HAP runtime"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_media_knowledge_content test_batch_media_knowledge_install test_photo_public_enums test_photo_fusion_asset_type test_photos_recent_info test_photo_result_set_export test_photo_record_classes -v",
+      "result": "passed",
+      "tests": 33,
+      "evidence": "docs/capability-audit/parallel/media/round4/knowledge-prior-guards-01.log",
+      "scope": "Original whole photo/Knowledge source guards after exact previous/current calendar upgrade recognition"
     }
   ],
   "integration_requests": [
@@ -234,12 +263,27 @@
       "id": "media-real-holiday-producer",
       "owner": "parent",
       "request": "Apply knowledge_holiday_index after complete knowledge_content. Freeze all13 exact source manifest and component/test bytes. Compile actual full producer/service/NAPI/query/helper TUs+headers with real product GN/link (OpenSSL dependency added to existing medialibrary_data_extension target). Parent optional trusted holidays.ics packaging/hash/provenance at fixed /system/etc/knowledge-content/holidays.ics; no dates invented, absent asset is legitimate no-data. Runtime actual populated photos/calendar replacement/deletion/query snapshot/3 roles/account/Visitor/revocation. See round3/HOLIDAY_HANDOFF.md and component README; if .patch context requires whitespace exception, parent should add exact path only."
+    },
+    {
+      "id": "media-recorder-real-product-and-public-caller",
+      "owner": "parent",
+      "request": "See round4/RECORDER_CANDIDATE.md. Apply player_framework/recorder_configuration, compile full approved native_avrecorder.cpp under real product flags/library link. Official SDK26 compile+link two batch_media_recorder cpp sources with -lavrecorder -lnative_window -lnative_buffer -lace_napi.z, actual grant-dialog ETS HAP. Parent runner/root ALSA gets fresh external NRZ64 PCM only; normal private HAP receives only7680-byte fresh tile video challenge. Two real AAC/AVC MP4 outputs, explicit actual external ffprobe/ffmpeg AAC/AVC decoder needed (not present in media host PATH). Parent shared final verifier checks real decode/content/PTS/sync/lifecycle/roles/new representative runtime gate. Exact review .patch context and CRLF full payload may need parent-owned precise .gitattributes entries."
+    },
+    {
+      "id": "media-knowledge-two-actual-TU-retry",
+      "owner": "parent",
+      "request": "Use current knowledge_holiday_index real media_log.h and direct GN AccessTokenKit/IPCSkeleton deps, preserve 4 batch02 successful objects, regenerate correct target dependency flags and retry producer/NAPI full TUs+actual links. Include previous-complete-state.json in frozen inputs; source installer handles exact complete e0d1137 upgrade, rejects mixed prior/current states. No manual compiler -I workaround."
+    },
+    {
+      "id": "media-public-audio-events",
+      "owner": "parent",
+      "request": "See round4/AUDIO_EVENTS_CANDIDATE.md. Compile/link batch_media_audio_event_probe.cpp + hap.cpp with actual SDK26 -lohaudio -lace_napi.z as libbatchmediaaudioevent.so and actual permission ETS HAP. Modes0=revoke MIC,1=focus MIC owner,2=VOICE_COMMUNICATION contender; fresh0600 uid private ACTION-ready.json/nonce ack and real baseline PCM checkpoint. Root actual token query/live revoke/query; focus needs distinct ordinary bundles/UIDs and true grants; prepare/grant contender first, then validate owner actual RUNNING/progressing/fresh PCM before contender_start ack. Parent shared verifier must bind actual packaged policy/session/callback Start intervals and fail any owner background stop before competitor Start. Background task adaptation, if needed, is not yet implemented; no fake foreground/system APL. No lease/build/package/runtime performed here."
     }
   ],
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
-      "remaining": "Actual product producer/service/NAPI/query/helper compilation and link, populated public three-role new-package asset/calendar/alias/count/delete/account/VISITOR ACL and permission revocation/runtime acceptance; no host adapter or generated ICS is real-world holiday evidence."
+      "remaining": "Parent actual full6-TU batch02: four passed (native_module/query/media_asset_rdbstore/medialibrary_rdbstore), producer/NAPI failed missing log/AccessToken headers. Candidate fixes those source/GN gaps; retry those two with true GN dependency exports and actual links. Public three-role populated asset/calendar/account/VISITOR/permission-revocation runtime still required."
     },
     {
       "id": "behavior:audio-capture-and-dependent-pipelines",
@@ -247,11 +291,11 @@
     },
     {
       "id": "behavior:media-recording-input-backends-missing",
-      "remaining": "Actual AVRecorder audio+video producer to decodable file, timestamp and pause/stop/release/recreate/authorization validation on the representative package."
+      "remaining": "Actual full public Recorder product TU/library build, official NDK caller link/ordinary HAP build, actual external ffprobe/ffmpeg decoder availability, challenged new-image audio/video file decode and timestamps/pause/stop/reset/release/recreate/permissions/runtime acceptance. Native/host self-report is not proof."
     },
     {
       "id": "behavior:audio-interrupt-haptic-renderer-dependency",
-      "remaining": "Two real ordinary callers competing for focus, actual interruption/resume callbacks and synchronized vibration/playback, lifecycle and denial boundaries on a new package."
+      "remaining": "Official NDK/HAP builds and distinct normal-UID actual grant/foreground/background/service-policy/timing/full PCM focus/stop/resume runtime on the new representative package; if background audio is needed use a genuinely legal ordinary background task and revalidate. Real audio/haptic synchronized playback/vibration remains unimplemented/unaccepted."
     },
     {
       "id": "behavior:media-codec-base-partial",
@@ -264,8 +308,7 @@
     {
       "id": "behavior:video-encoder-dependent-media-pipelines",
       "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers."
-    },
-    "No new package/runtime gate has passed. Public Recorder, interruption/focus/haptic, active revocation and dependent pipelines still need real candidates and runtime evidence. AudioVivid real licensed metadata algorithm/plugin dependency not found; parent queried user. No silent PCM/empty holiday/mock backend is counted as closure."
+    }
   ],
   "gap_closures": 0,
   "package_created": false,
@@ -316,7 +359,20 @@
     "docs/capability-audit/parallel/media/round3/holiday-host-05.log": "173d1d92e128ae023621aec8ba8e8846718521299cfa91b7b09c215ab5729361",
     "docs/capability-audit/parallel/media/round3/holiday-host-01.log": "7d6478df35904d8209acbc9ae6d23a39400c2e4cf4e97df4d8729e357b60163f",
     "docs/capability-audit/parallel/media/round3/holiday-host-02.log": "307c7f02413cf4a0540dba2fccfe93dd7531fbd3d01f058da9365182dafbb6aa",
-    "docs/capability-audit/parallel/media/round3/holiday-host-03.log": "9ef1cfd64a084ca9ff3fcef2d4c1f234eeca8bf4f1d12da4e6b8bd60c7c2f42a"
+    "docs/capability-audit/parallel/media/round3/holiday-host-03.log": "9ef1cfd64a084ca9ff3fcef2d4c1f234eeca8bf4f1d12da4e6b8bd60c7c2f42a",
+    "docs/capability-audit/parallel/media/round4/recorder-host-01.log": "f4a250553036210f13d8cccd0a8b988c831008a9e8b9b4413a81b41fb8cb0470",
+    "docs/capability-audit/parallel/media/round4/recorder-host-02.log": "d94d6c05a855013b61915ab7336ea4db09563fb8386a8e796c40998d3f81fb84",
+    "docs/capability-audit/parallel/media/round4/recorder-config-host-01.log": "fb3e381b39a1a3745864241950f647c091d1f948dc57d2de0d0fa30c2d97e7d7",
+    "docs/capability-audit/parallel/media/round4/RECORDER_CANDIDATE.md": "8e767e5b08a6fcbb87b8109e909e265dffea7e5c4d7ddbd919978bfbf63d9fd6",
+    "docs/capability-audit/parallel/media/round4/knowledge-prior-guards-01.log": "c26d9734501abf8627ccd06467853c839f86dfa56022e2fe308d2cef8e238467",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-01.log": "f2e482060954df8783d3e3bb15f5e60a4564d3a8e7ca73b38b67a0ddfc7df203",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-03.log": "40c89ea04f80de9c3f0fdfe7a7e4ed693834c725152a891e3c52448b442ac214",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-02.log": "77637e52d7d92bcc51984f38709ee6f2e861d96b561de604959629afadbf49e5",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-04.log": "e245e77fe41aac2f629531d3580eb3503425591c70690ac823feb312284958c4",
+    "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-01.log": "3a77795c13459b6f76a1b2337bbb5de0a33895e5a2a9bb881a57798e3414fc7d",
+    "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-03.log": "002fed5da8200c5c1b761485e0df10fe43905eaf51a158d17b36c6c514cc5ec6",
+    "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-02.log": "1241347f380e9c3a0bfbe7b88bd98d8378b615752dfabfcea98265454fe28d0c",
+    "docs/capability-audit/parallel/media/round4/AUDIO_EVENTS_CANDIDATE.md": "41a4ca1a6cac791715dacf8176ee61acddbecd37772d3feb391964c441e7ddb3"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
@@ -324,32 +380,49 @@
     "ci/capability-audit/batch_media_audio_capture_hap.cpp",
     "ci/capability-audit/batch_media_audio_capture_probe.cpp",
     "ci/capability-audit/batch_media_audio_capture_probe.ets",
+    "ci/capability-audit/batch_media_audio_event_challenge.py",
+    "ci/capability-audit/batch_media_audio_event_hap.cpp",
+    "ci/capability-audit/batch_media_audio_event_probe.cpp",
+    "ci/capability-audit/batch_media_audio_event_probe.ets",
     "ci/capability-audit/batch_media_knowledge_query_cli.cpp",
+    "ci/capability-audit/batch_media_recorder_challenge.py",
+    "ci/capability-audit/batch_media_recorder_hap.cpp",
+    "ci/capability-audit/batch_media_recorder_probe.cpp",
+    "ci/capability-audit/batch_media_recorder_probe.ets",
     "ci/capability-audit/batch_media_review_source.py",
     "ci/capability-audit/fixtures/batch_media/audio/alsa_shim.h",
     "ci/capability-audit/fixtures/batch_media/audio/baseline.json",
     "ci/capability-audit/fixtures/batch_media/audio/cjson.json",
     "ci/capability-audit/fixtures/batch_media/audio/integrity_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/audio_capture/public_sdk.json",
+    "ci/capability-audit/fixtures/batch_media/audio_events/fixed-focus-policy.json",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
     "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/knowledge/baseline.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/guard-context.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday-baseline.json",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday-previous.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday/cursor_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday/producer_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday/rdb_store.h",
     "ci/capability-audit/fixtures/batch_media/manifest.json",
+    "ci/capability-audit/fixtures/batch_media/recorder/configuration_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/recorder/native-baseline.json",
+    "ci/capability-audit/fixtures/batch_media/recorder/public-sdk26-hashes.json",
+    "ci/capability-audit/fixtures/batch_media/recorder/surface_harness.cpp",
     "ci/capability-audit/test_batch_media_alsa_capture.py",
     "ci/capability-audit/test_batch_media_alsa_inject.py",
     "ci/capability-audit/test_batch_media_audio_capture.py",
+    "ci/capability-audit/test_batch_media_audio_events.py",
     "ci/capability-audit/test_batch_media_audio_integrity.py",
     "ci/capability-audit/test_batch_media_avc_surface_layout.py",
     "ci/capability-audit/test_batch_media_knowledge_content.py",
     "ci/capability-audit/test_batch_media_knowledge_holiday.py",
     "ci/capability-audit/test_batch_media_knowledge_holiday_install.py",
     "ci/capability-audit/test_batch_media_knowledge_install.py",
+    "ci/capability-audit/test_batch_media_recorder.py",
+    "ci/capability-audit/test_batch_media_recorder_configuration.py",
     "docs/capability-audit/parallel/media/REVIEW.md",
     "docs/capability-audit/parallel/media/environment.json",
     "docs/capability-audit/parallel/media/existing-avc-checks-01.log",
@@ -385,6 +458,19 @@
     "docs/capability-audit/parallel/media/round3/holiday-host-06.log",
     "docs/capability-audit/parallel/media/round3/holiday-host-07.log",
     "docs/capability-audit/parallel/media/round3/holiday-prior-guards-01.log",
+    "docs/capability-audit/parallel/media/round4/AUDIO_EVENTS_CANDIDATE.md",
+    "docs/capability-audit/parallel/media/round4/RECORDER_CANDIDATE.md",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-01.log",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-02.log",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-03.log",
+    "docs/capability-audit/parallel/media/round4/audio-events-host-04.log",
+    "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-01.log",
+    "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-02.log",
+    "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-03.log",
+    "docs/capability-audit/parallel/media/round4/knowledge-prior-guards-01.log",
+    "docs/capability-audit/parallel/media/round4/recorder-config-host-01.log",
+    "docs/capability-audit/parallel/media/round4/recorder-host-01.log",
+    "docs/capability-audit/parallel/media/round4/recorder-host-02.log",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
     "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
@@ -435,15 +521,24 @@
     "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_holiday_index.cpp",
     "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_holiday_index.h",
     "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/manifest.json",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/previous-complete-state.json",
     "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/transforms.py",
     "patches/common/foundation/multimedia/media_library/photos_recent_info/verify_source.py",
     "patches/common/foundation/multimedia/media_library/public_record_classes/verify_source.py",
-    "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py"
+    "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py",
+    "patches/common/foundation/multimedia/player_framework/recorder_configuration/0001-stop-preparation-after-real-configuration-failure.patch",
+    "patches/common/foundation/multimedia/player_framework/recorder_configuration/README.md",
+    "patches/common/foundation/multimedia/player_framework/recorder_configuration/apply.py",
+    "patches/common/foundation/multimedia/player_framework/recorder_configuration/apply.sh",
+    "patches/common/foundation/multimedia/player_framework/recorder_configuration/files/native_avrecorder.cpp",
+    "patches/common/foundation/multimedia/player_framework/recorder_configuration/manifest.json"
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
   "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
-  "handoff": "docs/capability-audit/parallel/media/round3/HOLIDAY_HANDOFF.md",
+  "handoff": "docs/capability-audit/parallel/media/round4/RECORDER_CANDIDATE.md; docs/capability-audit/parallel/media/round4/AUDIO_EVENTS_CANDIDATE.md",
   "round3_base_commit": "d4e74c00caa47127906075c57d59500d60844f04",
   "round3_status": "Capturer_public_caller_SDK_HAP_parent_compile_passed_real_HOLIDAY_service_producer_host_passed_all7_runtime_open",
-  "round3_holiday_base_commit": "bb34c6f7f1534be701e64337f0708e49f6b50bc9"
+  "round3_holiday_base_commit": "bb34c6f7f1534be701e64337f0708e49f6b50bc9",
+  "round4_base_commit": "e0d1137035d1283aa6a5b7849b86e262256fe272",
+  "round4_status": "Recorder8_Knowledge11_AudioEvents3_and_prior33_host_tests_passed_product_SDK_links_and_actual_token_twoApp_decode_runtime_pending"
 }

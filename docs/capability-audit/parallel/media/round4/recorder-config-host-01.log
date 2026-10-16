@@ -1,0 +1,10 @@
+test_actual_six_functions_all_failures_success_and_old_false_success (test_batch_media_recorder_configuration.Recorder.test_actual_six_functions_all_failures_success_and_old_false_success) ... old actual Configure failure reproduced as false prepared success
+actual SetProfile/ConfigureUrl/Configure/Prepare: 17 error steps, 3 source modes, invalid inputs, native Prepare failure passed
+ok
+test_exact_full_source_install_repeat_unknown_and_symlink (test_batch_media_recorder_configuration.Recorder.test_exact_full_source_install_repeat_unknown_and_symlink) ... ok
+test_review_patch_produces_exact_payload (test_batch_media_recorder_configuration.Recorder.test_review_patch_produces_exact_payload) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 3.734s
+
+OK

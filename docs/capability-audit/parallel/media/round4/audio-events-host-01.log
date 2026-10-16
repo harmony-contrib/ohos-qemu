@@ -1,0 +1,52 @@
+test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries (test_batch_media_audio_events.Events.test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries) ... /var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmp7xf338d8/events.cpp:30:6: error: redefinition of 'Read'
+   30 | void Read(OH_AudioCapturer*,void *user,void *audio,int length)
+      |      ^
+/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmp7xf338d8/events.cpp:24:6: note: previous definition is here
+   24 | void Read(OH_AudioCapturer*,void *user,void *audio,int length)
+      |      ^
+1 error generated.
+ERROR
+test_counter_silence_bad_nonce_missing_focus_and_denied_restart_rejected (test_batch_media_audio_events.Events.test_counter_silence_bad_nonce_missing_focus_and_denied_restart_rejected) ... ERROR
+test_revoke_and_real_focus_protocol_diagnostic_fixtures (test_batch_media_audio_events.Events.test_revoke_and_real_focus_protocol_diagnostic_fixtures) ... 
+  test_revoke_and_real_focus_protocol_diagnostic_fixtures (test_batch_media_audio_events.Events.test_revoke_and_real_focus_protocol_diagnostic_fixtures) (mode=1) ... ERROR
+
+======================================================================
+ERROR: test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries (test_batch_media_audio_events.Events.test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_events.py", line 33, in test_actual_public_sdk_callers_nonce_ack_and_pcm_callback_boundaries
+    subprocess.run(flags+['-fsanitize=address,undefined',str(path),'-o',str(root/'test')],check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['clang++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-pthread', '-idirafter', '/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include', '-fsanitize=address,undefined', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmp7xf338d8/events.cpp', '-o', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmp7xf338d8/test']' returned non-zero exit status 1.
+
+======================================================================
+ERROR: test_counter_silence_bad_nonce_missing_focus_and_denied_restart_rejected (test_batch_media_audio_events.Events.test_counter_silence_bad_nonce_missing_focus_and_denied_restart_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_events.py", line 72, in test_counter_silence_bad_nonce_missing_focus_and_denied_restart_rejected
+    root=Path(temp);rows,results,identity,challenge=self.prepare(root,mode);path=root/f'audio-event-{RUN}-mode{mode}.pcm';data=path.read_bytes()
+                                                    ~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_events.py", line 57, in prepare
+    add('event_callback',kind=1,code=0,hint=3,monotonic_ns=ready_time+100000000);add('event_step',name='restart_after_focus',actual=0,monotonic_ns=ack_time+1200000000);audio(3,48000,ack_time+1200000000,12345)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Events.prepare.<locals>.add() got multiple values for argument 'kind'
+
+======================================================================
+ERROR: test_revoke_and_real_focus_protocol_diagnostic_fixtures (test_batch_media_audio_events.Events.test_revoke_and_real_focus_protocol_diagnostic_fixtures) (mode=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_events.py", line 67, in test_revoke_and_real_focus_protocol_diagnostic_fixtures
+    root=Path(temp);_,results,identity,challenge=self.prepare(root,mode);report=self.verify(root,results,identity,challenge,mode)
+                                                 ~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_audio_events.py", line 57, in prepare
+    add('event_callback',kind=1,code=0,hint=3,monotonic_ns=ready_time+100000000);add('event_step',name='restart_after_focus',actual=0,monotonic_ns=ack_time+1200000000);audio(3,48000,ack_time+1200000000,12345)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Events.prepare.<locals>.add() got multiple values for argument 'kind'
+
+----------------------------------------------------------------------
+Ran 3 tests in 2.397s
+
+FAILED (errors=3)

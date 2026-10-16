@@ -1,0 +1,12 @@
+{
+  "source": "actual installed official API26 SDK used for host syntax only",
+  "include_root": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include",
+  "files": {
+    "multimedia/player_framework/avrecorder.h": "143824d691b234d091b24c54ce1340bc39d2d44fb2ddf13fd6169bfa3a987b62",
+    "multimedia/player_framework/avrecorder_base.h": "1b358b1749e10d1e221e9391f5df68b44744a339a778d67ff808c3fa823eeb9e",
+    "native_buffer/native_buffer.h": "a48479e0e3e10d629e5819ff6843d0945bfa7780df46483fb79920294e525292",
+    "native_window/external_window.h": "9a88d967d26ba641ace0fe41239d455ab0e21d1cf45301a202d3ff1c465b4840",
+    "native_window/buffer_handle.h": "630e3c2b0d8834ff608c3f1f941a4435811f70e6339b5ba3848e3dd2988ec037",
+    "napi/native_api.h": "c7d241f14ecd4d3e7c9b9ae34eff1f5da40bec53686717870227285b2e97f56a"
+  }
+}

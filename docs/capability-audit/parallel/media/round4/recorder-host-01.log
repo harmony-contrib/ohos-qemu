@@ -1,0 +1,11 @@
+test_fresh_external_audio_and_video_hash_contract (test_batch_media_recorder.Recorder.test_fresh_external_audio_and_video_hash_contract) ... ok
+test_full_public_callers_and_actual_surface_private_input_functions (test_batch_media_recorder.Recorder.test_full_public_callers_and_actual_surface_private_input_functions) ... actual recorder surface tiles/stride/last byte and rejection/abort/unmap + private challenge bounds passed
+ok
+test_independent_rgb_pixels_reject_frame_replay_silence_and_truncation (test_batch_media_recorder.Recorder.test_independent_rgb_pixels_reject_frame_replay_silence_and_truncation) ... ok
+test_lossy_pcm_unit_fixture_still_requires_fresh_stereo_content (test_batch_media_recorder.Recorder.test_lossy_pcm_unit_fixture_still_requires_fresh_stereo_content) ... ok
+test_packet_pts_real_input_pause_and_stream_contract (test_batch_media_recorder.Recorder.test_packet_pts_real_input_pause_and_stream_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 4.882s
+
+OK

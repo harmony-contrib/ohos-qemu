@@ -2,8 +2,9 @@
 
 Apply `knowledge_content/apply.sh` first, then this component's `apply.sh OHOS_ROOT`.
 The installer checks the exact media_library revision and all 13 source states
-before writing. It permits only a complete before or complete after state;
-unknown/partial/symlink inputs fail before mutation. The predecessor installer
+before writing. It permits a complete original before state, the exact previous
+complete overlay, or the complete current after state; unknown/partial/symlink
+inputs fail before mutation. The predecessor installer
 recognizes this complete forward state so the full stack remains repeatable.
 The review patch uses LF; the installer preserves existing CRLF hook files.
 
@@ -82,3 +83,10 @@ joins. Native cursor tests execute real NAPI-boundary function bodies with
 controlled cursor/token/NAPI dependencies. These are not actual NativeRdb pool,
 Visitor ACL, OHOS service scheduling, HAP or device/backend acceptance. Test ICS
 is an independent generated input challenge, not a real-world holiday dataset.
+
+The exact previous complete e0d1137 overlay is also a recognized upgrade input;
+previous/current mixed files still fail before mutation. The current overlay
+uses actual media_log.h and declares AccessTokenKit/IPCSkeleton's direct
+access_token:libaccesstoken_sdk and ipc:ipc_core GN dependencies for the native
+photoaccesshelpernative target, rather than relying on transitive headers or
+manually patched compiler include options.

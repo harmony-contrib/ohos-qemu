@@ -15,6 +15,7 @@ spec=importlib.util.spec_from_file_location('knowledge_calendar_transforms',HERE
 transforms=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(transforms)
 MANIFEST=json.loads((HERE/'manifest.json').read_text())
+PREVIOUS=json.loads((HERE/'previous-complete-state.json').read_text())['files']
 
 
 def sha(data):return hashlib.sha256(data).hexdigest()
@@ -42,10 +43,10 @@ def validate(root,require_patched=False):
         path=path_for(root,name)
         if path.exists() and not path.is_file():raise ValueError('regular knowledge calendar file required: '+name)
         actual[name]=sha(path.read_bytes()) if path.exists() else None
-        if actual[name] not in (entry['before'],entry['after']):
+        if actual[name] not in (entry['before'],entry['after'],PREVIOUS.get(name)):
             raise ValueError('unknown knowledge calendar source; preserving edits: '+name)
     if all(actual[name]==entry['after'] for name,entry in MANIFEST['files'].items()):return True
-    if not require_patched and all(actual[name]==entry['before'] for name,entry in MANIFEST['files'].items()):return False
+    if not require_patched and (all(actual[name]==entry['before'] for name,entry in MANIFEST['files'].items()) or all(actual[name]==PREVIOUS[name] for name in MANIFEST['files'])):return False
     raise ValueError('partial knowledge calendar state; preserving source')
 
 
@@ -64,7 +65,8 @@ def run(root):
             path=path_for(root,name)
             original=path.read_bytes() if path.exists() else None
             snapshots[name]=original
-            if 'payload' in entry:data=(HERE/'files'/entry['payload']).read_bytes()
+            if original is not None and sha(original)==entry['after']:data=original
+            elif 'payload' in entry:data=(HERE/'files'/entry['payload']).read_bytes()
             elif 'transform' in entry:data=transforms.repair(entry['transform'],original)
             else:data=original
             if sha(data)!=entry['after']:raise ValueError('knowledge calendar payload differs from manifest: '+name)
