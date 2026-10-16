@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "scope": "actual SDK39 exact strip and host proof; actual source composition guards ONLY NOT new package/runtime acceptance",
+  "status": "pass_for_recorded_subset",
+  "evidence": {
+    "actual_SDK39_NativeStrip_replay": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-live-SDK03-NativeStrip-01/evidence.json",
+      "sha256": "d524914991c78cb74b259e208656d6f8e04810d7c8e52438d39abd9868bcd0b4"
+    },
+    "exact_all_native_members": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-live-SDK03-NativeStrip-01/recheck/receipt.json",
+      "sha256": "ec99f8fe5597d642eba8f66b1f3fe4994cf6f4b3b8809737ef97ddf0500580d9"
+    },
+    "actual_host_SDK03_adapter": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-runtime-inputs-01/live-SDK03-adapter.json",
+      "sha256": "50ef332374726af4e45fcb88e4e13b0cb6beef3207942fbbd08eea474730bc34"
+    },
+    "actual_runtime_input_plan": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-first-runtime-inputs-01/configuration-update-02.json",
+      "sha256": "641800ed65256f9f613ab83a4376d714cf8ad7aad8bfaf92cddb0ee23d1b0521"
+    },
+    "failed_source_preparation_03": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-source-prepare-03/evidence.json",
+      "sha256": "d07a74fa1b3bad650c2a06085ad6ddd31ecd8784719c92c476b4cc6053f19f1e"
+    },
+    "actual_private_kernel_composition_cases": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-kernel-capture-WLAN-composition-01/evidence.json",
+      "sha256": "5f37e178a696b113b743e745c1e7407bbc11518052952e94ec39505ac185b8fc"
+    }
+  },
+  "regression": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/live-native-strip-wrapper-01.log",
+    "sha256": "f271aeb30b483d7594f634b871b03136be26a5916c6478e19a3b04c36cf5fe10"
+  },
+  "regression_tests": 35,
+  "source_composition_cases": 8,
+  "native_member_byte_identity": "main 6744 bytes SHA34cdb84e824701bc8e736b763337cb8f74bda0bca496510da6ce219e6112b516 and runtime1262248 bytes SHAbff501a19fadbc9a006d7f26a9bf62137cb5ec124959d3fdb701e9278f3df274",
+  "original_SDK03_unchanged": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-live-inputs-Linux-SDK-03/evidence.json",
+    "sha256": "e4571778786fe5181eb1a0015d6168d2ed4b4c3f3ba60609d7a50f04f6c73276"
+  },
+  "new_hap_compilation": false,
+  "new_guest_run": false,
+  "packages_validated": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "next_required": [
+    "full source preparation retry after exact ALSA+WLAN states repair",
+    "full ARM64 phone GN/native witnesses/package",
+    "fresh product helper receipt, actual new guest full acceptance",
+    "only after representative gate pass, other five packages"
+  ]
+}

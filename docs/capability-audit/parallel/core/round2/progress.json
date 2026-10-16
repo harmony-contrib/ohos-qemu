@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-17T03:06:48.292063+08:00",
+  "updated_at": "2026-10-17T03:12:33.376364+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
   "checkpoint_commit": "7b25af8",
   "ledger": {
@@ -1394,11 +1394,15 @@
       "exit_code": 1,
       "status": null,
       "scope": "failed at canonical repo .git metadata symlink rejection in ALSA selector; no full build/package"
+    },
+    "live_exact_NativeStrip_and_kernel_composition": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/live-NativeStrip-and-kernel-composition.json",
+      "sha256": "8b45dc87f1391bd045272ca86ce138cba88f7b57a2821e04dc4399fe7300160a"
     }
   },
   "agents": {
-    "apps": "9041107 clock builder integrated; current host-only readonly full-build wiring review",
-    "media": "2216577 Wallpaper wrapper integrated; narrow new NativeStrip replay utility pending; no source/out reads",
+    "apps": "9041107 integrated; readonly fullbuild wiring review completed, no confirmed representative wiring blocker; explicit one product required",
+    "media": "f15c8a2 narrow exact SDK strip utility integrated; root actual replay plus host adapter PASS; no active lease",
     "system": "7b25af8 fixed default Chinese foreground consent source contract integrated; no active source/out reads",
     "network": "prior source/API/focus fixes integrated; no active write or heavy lease",
     "location": "prior 17 TUs/full Rust/API coverage integrated; no active write or heavy lease"
@@ -1426,11 +1430,10 @@
     "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied"
   ],
   "next_required": [
-    "Fix canonical repo metadata handling and finish current full source patch preparation; preserve all failures",
-    "Finish exact SDK NativeStrip replay and independent live adapter, assemble three family actual runtime inputs",
-    "Freeze final code, full ARM64 phone build, all three native witnesses and newly packaged artifact",
-    "Run actual clock/default suspend-wake/ordinary HiTrace and full capability boundary regressions, collect all failures before next build",
-    "Only after first complete behavior gate PASS build/package/accept remaining five architecture/profile packages"
+    "full source preparation retry after exact ALSA+WLAN states repair",
+    "full ARM64 phone GN/native witnesses/package",
+    "fresh product helper receipt, actual new guest full acceptance",
+    "only after representative gate pass, other five packages"
   ],
   "Contacts_Theme_current_SDK": "Contacts SDK02 + Theme SDK04 phone/pad complete real API26 product builds PASS; unsigned only",
   "Settings_current_SDK": "SDK06 wallpaper UI full HAP PASS; actual 44 extensions, 6 ELF, exact permissions SET_WALLPAPER once PASS; signing/BMS/pixels pending",
@@ -1440,11 +1443,12 @@
   "runtime_tools": "Actual 3ABI clock CLI build+host verify PASS; current Contacts/MSDP/Wallpaper fullbuild witnesses and boot clock fullsuite wired; actual fullbuild/newguest pending",
   "MSDP_current_platform_coverage": "15actualtargetsPASS via01unaffected8+02changed7; private fields genuine failures repaired; freshGN/link/newguest pending",
   "MSDP_image_guard_review": "64byte fake and CFIfalse false accept repaired; strong before/build/finish witness+rawGN/log+ELF implemented testsPASS; actual full pipeline pending",
-  "runtime_extension_HAPs": "Contacts/Wallpaper/seed/query and live SDK03 full unsigned HAP PASS; live verifier must accept exact official NativeStrip replay, repair in progress; no new guest",
+  "runtime_extension_HAPs": "All required Contacts/Wallpaper/seed/query/live full unsigned HAPs PASS; SDK03 exact NativeStrip replay and host adapter PASS; signing/new guest pending",
   "representative_runtime_integration": "fixed3families, immutable same-directory boot copies, strict raw re-verification and exact cleanup_errors=[]; Contacts mandatory full deadline/navigation; Wallpaper finding closure disabled pending freshnative+AMS; current70host testsPASS and integrated Apps testsPASS; guest pending",
   "SDK_seed_query_live02": "Contacts seed and Wallpaper query actual SDK39 HAP PASS individually; overall batch FAIL from live nonexistent CMake task; original records preserved; tool fix integrated and live-only actual retry pending",
   "engine_dependency_refresh": "090fd4 actual native and official signed HAP both exit0; all5 native transformation replays PASS; ArkWebCore.hap SHA b70307d2c84d48b336e1609d8647a08e6ae414474c4b9d53c34fef834a740e80; NOT QEMU guest acceptance",
   "Wallpaper_native_image_guard": "14ebd31 forced-owned2object+3DSO witness+actualGNselectedfalse/protectedcommands/rawlogs/ELF/image implemented; independently reviewed and7host guard testsPASS; no actual full build/image execution yet",
   "runtime_helpers": "actual3 product helper CFI compile/link PASS; original parser failure preserved; independent actual readonly recheck02 PASS unchanged compiler/header/DSO/ELF; true guest DSO hash match still mandatory",
-  "runtime_inputs_prepared": "r52-first-runtime-inputs-01 exact Contacts/Wallpaper real SDK source adapters PASS; controlled virtual vectors explicitly NOT physical measurement or guest result; freshboot sign/permission/newVM still pending"
+  "runtime_inputs_prepared": "All 3 family configs ready; actual SDK03 adapter and private-copy PASS after exact SDK39 strip replay; Chinese source consent label still requires actual node; helpers must bind new product DSOs",
+  "source_preparation": "03 actual ALSA applied, WLAN full-file guard rejected exact ALSA successor; fixed whole-file pre/post pair, 8 actual-byte private guard cases PASS; next04 required"
 }

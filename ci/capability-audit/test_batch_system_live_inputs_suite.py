@@ -185,13 +185,18 @@ class SuiteTests(unittest.TestCase):
         hap = self.put('unit.hap', b'unit descriptor only, not compiled HAP')
         manifest = source / 'live-inputs-contract.json'; rows = {'live-inputs-contract.json': s.digest(manifest)}
         spec = {'caller': {'sdk_evidence': {'path': '/unit/sdk-report', 'sha256': 'a' * 64}, 'unsigned_hap': s.descriptor(hap)}}
-        result = {'source_project': str(source), 'native_binary': s.descriptor(native)}
+        result = {'source_project': str(source), 'native_binary': s.descriptor(native),
+                  'native_strip': {'scope': 'unit copy metadata ONLY, not an SDK replay'}}
         before = manifest.read_bytes(); destination = s.capture_project(self.root / 'private-copy', spec, result, [], rows)
         self.assertEqual(manifest.read_bytes(), before)
         self.assertIn('NOT_new_compilation', s.read_json(destination / 'live-inputs-build.json')['scope'])
         self.assertFalse((source / 'live-inputs-build.json').exists())
         s.verify_capture_project(destination, spec, result, [], rows)
         receipt = destination / 'live-inputs-build.json'; value = s.read_json(receipt)
+        changed = copy.deepcopy(value); changed['native_strip'] = {'status': 'invented'}
+        receipt.write_text(json.dumps(changed))
+        with self.assertRaisesRegex(ValueError, 'native strip proof differs'):
+            s.verify_capture_project(destination, spec, result, [], rows)
         value['commands'] = [{'expected_status': 'pass', 'not_actual_command': True}]; receipt.write_text(json.dumps(value))
         with self.assertRaisesRegex(ValueError, 'original verified SDK commands'):
             s.verify_capture_project(destination, spec, result, [], rows)

@@ -7,7 +7,6 @@ offline. This does not build/boot, grant permissions or close the package gate.
 """
 import argparse
 import importlib
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -20,7 +19,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import zipfile
 
 from batch_system_live_inputs import (BUNDLE, FIXTURES, PERMISSIONS, SCOPE, digest,
     nonce, read_json, trace, verify_project, write_json)
@@ -30,6 +28,7 @@ FAMILY = 'external-inputs'
 CONTROLLED = 'controlled_virtual_protocol_vectors'
 TOOLS = ['batch_system_live_inputs_suite.py', 'batch_system_run_live_inputs.py',
     'batch_system_verify_live_inputs.py', 'batch_system_live_inputs.py',
+    'batch_system_sdk_native_strip.py',
     'batch_system_gnss_controller.py', 'batch_system_qemu_sensor_controller.py',
     'batch_apps_contact_picker_coordinator.py', 'sign_web_probe.py', 'enclosing_acceptance_guest.py']
 
@@ -173,12 +172,14 @@ def sdk_caller(spec, sdk):
             re.fullmatch('[a-f0-9]{64}', build['compiler']['sha256']) and
             build['sdk_native_metadata_sha256'] == contract['sdk']['native_metadata']['sha256'],
             'actual native SDK source/compiler/header/metadata receipt missing')
-    with zipfile.ZipFile(checked(caller['unsigned_hap'])) as hap:
-        member = 'libs/arm64-v8a/libliveinputaudit.so'
-        require(hap.namelist().count(member) == 1 and hashlib.sha256(hap.read(member)).hexdigest() == digest(binary),
-                'actual SDK native DSO not preserved in compiled HAP')
+    # Official Hvigor NativeStrip changes the DSO's non-loadable sections.
+    # Independently replay the exact SDK tool into a private output and bind
+    # every main/runtime library to its actual packaged member, byte for byte.
+    # This reads the separately captured replay; it never rebuilds the caller
+    # or rewrites the original successful SDK report.
+    native_strip = importlib.import_module('batch_system_sdk_native_strip').verify(caller, build, binary)
     result.update(source_project=str(project), contract=descriptor(project / 'live-inputs-contract.json'),
-        native_binary=elf64_arm64(binary), native_build_receipt=build,
+        native_binary=elf64_arm64(binary), native_build_receipt=build, native_strip=native_strip,
         native_tool_header_hash_scope='Actual Linux SDK reads recorded by the original frozen SDK runner, not host tool rereads',
         run_id=contract['run_id'])
     return result, commands, api.source_rows(evidence, caller['sdk_project'])
@@ -199,7 +200,8 @@ def capture_project(destination, spec, sdk_result, commands, rows):
     write_json(destination / 'live-inputs-build.json', {'status': 'pass',
         'scope': 'derived_verified_actual_SDK_receipts_NOT_new_compilation', 'original_sdk_evidence': spec['caller']['sdk_evidence'],
         'unsigned_hap': str(checked(spec['caller']['unsigned_hap'])), 'unsigned_hap_sha256': spec['caller']['unsigned_hap']['sha256'],
-        'commands': commands, 'native_library': str(target), 'native_sha256': digest(target)})
+        'commands': commands, 'native_library': str(target), 'native_sha256': digest(target),
+        'native_strip': sdk_result['native_strip']})
     return destination
 
 
@@ -216,6 +218,8 @@ def verify_capture_project(project, spec, sdk_result, commands, rows):
     contract = read_json(project / 'live-inputs-contract.json'); native = project / contract['native_packaging']['relative_library']
     require(regular(build['native_library']) == native and digest(native) == build['native_sha256'] == sdk_result['native_binary']['sha256'],
             'private native library differs from actual SDK/HAP output')
+    require(build.get('native_strip') == sdk_result['native_strip'],
+            'private native strip proof differs from independently verified SDK replay')
 
 
 class Commands:

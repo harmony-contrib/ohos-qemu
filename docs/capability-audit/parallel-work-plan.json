@@ -40,7 +40,9 @@
       "remaining_gaps"
     ],
     "no_agent_full_package_or_matrix": true,
-    "closure_only_parent_fresh_package_full_runtime": true
+    "closure_only_parent_fresh_package_full_runtime": true,
+    "source_out_write_lease": "root only, agents cease source/out reads during complete preparation and full image build",
+    "representative_products": "arm64_virt ONLY until complete freshly packaged runtime gate PASS"
   },
   "agents": {
     "apps": {
