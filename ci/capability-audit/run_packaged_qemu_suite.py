@@ -564,6 +564,43 @@ def run(args):
             'ordinary-FA-service-constant-and-existing-calls', timeout=2400, env=child_env)
         check('fa-particle', work / 'fa-particle/evidence.json', [fa_record])
         same_guest('after-FA-service')
+        # A denied generic audio error alone is ambiguous. Require actual PCM
+        # controls on both sides of the real denied-token/UI case, all on this
+        # unchanged newly packaged VM and with freshly installed normal callers.
+        from verify_audio_capture_results import SCOPE as capture_scope, verify_batch as verify_capture_batch
+        microphone_path = work / 'audio-capture-batch.json'
+        last_microphone_output = None
+        def microphone_health(label):
+            same_guest(label)
+            if label.startswith('after-') and last_microphone_output is not None:
+                if report['commands'][-1].get('timed_out'):
+                    raise ValueError('timed-out microphone child cleanup is not certified; stop batch')
+                path = last_microphone_output / 'evidence.json'
+                if path.is_file() and any('cleanup failed' in str(value) for value in json.loads(path.read_text()).get('failures', [])):
+                    raise ValueError('owned microphone producer cleanup failed; stop batch')
+        with independent_probe(report, 'audio-capture', microphone_health, save):
+            cases, records = [], []
+            for index, denied in enumerate((False, True, False)):
+                output = work / ('audio-capture-' + str(index))
+                last_microphone_output = output
+                argv = [sys.executable, Path(__file__).with_name('run_normal_hap_probe.py'),
+                    '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                    '--persona', 'audio-capture', '--arch', arch, '--device', device, '--target', target,
+                    '--hdc', hdc, '--boot-id', environment['boot_id'], '--boot', work / 'boot/boot.json',
+                    '--output', output, '--source-volume', source_volume, '--docker-image', docker_image]
+                if denied:
+                    argv += ['--audio-capture-expect-denied']
+                record = command(argv, 'ordinary-microphone-' + str(index), timeout=2400, env=child_env)
+                path = output / 'evidence.json'
+                records.append(record)
+                cases.append({'evidence': str(path), 'sha256': checksum(path)})
+                same_guest('after-ordinary-microphone-' + str(index))
+            batch = {'status': 'pass', 'scope': capture_scope + '_grant_deny_grant',
+                'archive_sha256': report['package']['sha256'], 'boot_id': environment['boot_id'],
+                'arch': arch, 'cases': cases, 'first_artifact_behavior_gate_passed': False}
+            verify_capture_batch(batch, args.package_archive, environment['boot_id'], arch)
+            microphone_path.write_text(json.dumps(batch, indent=2) + '\n')
+            check('audio-capture', microphone_path, records)
         normal_results = {}
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                     'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset', 'storage-stats')

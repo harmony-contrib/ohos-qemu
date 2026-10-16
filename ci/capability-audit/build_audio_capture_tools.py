@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from audio_capture_contract import sha, verify_elf
+from audio_capture_contract import sha, verify_elf, runtime_identity
 
 HERE = Path(__file__).resolve().parent
 TARGETS = {'arm64': ('arm64_virt', 'aarch64-linux-ohos', 'ohos-arm64'),
@@ -64,7 +64,8 @@ def build(root, output, arch):
                 raise ValueError('complete tool compile/link failed')
             verify_elf((output / name).read_bytes(), arch)
             row.update(status='pass', binary_sha256=sha(output / name), source_sha256=sha(sources[name]),
-                       linked_library_sha256=sha(libraries[name]))
+                       linked_library_sha256=sha(libraries[name]),
+                       linked_library_runtime_sha256=runtime_identity(libraries[name].read_bytes(), arch))
         except (OSError, ValueError, subprocess.SubprocessError) as error:
             row['error'] = str(error)
         report['tools'][name] = row

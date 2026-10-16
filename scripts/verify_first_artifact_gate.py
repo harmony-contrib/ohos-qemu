@@ -21,6 +21,7 @@ REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
                              "application-home", "photos-asset", "photo-result-set", "settings-navigation", "settings-all-navigation", "fa-particle", "screen-modes", "storage-stats", "project-quota", "completion-handler", "rpc-runtime", "thermal", "network-accounting", "hitrace", "graphics-memory", "image-metadata", "observer-info", "spring-loading", "arkui-components", "sys-vpn-store", "screen-blink", "luminance-sampler", "ethernet-control", "insight-contract", "lazy-column", "lazy-layouts", "selection", "env-reader"))
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 REQUIRED_CHECKS |= frozenset(('child-default-profile',))
+REQUIRED_CHECKS |= frozenset(('audio-capture',))
 
 
 def verified_payload(name, path, identity, environment):
@@ -329,6 +330,11 @@ def verified_payload(name, path, identity, environment):
             from verify_avc_media_results import verify_evidence
             verify_evidence(payload, identity['sha256'], environment['boot_id'], environment['guest_arch'],
                             environment['device_type'], environment['target'])
+        elif name == 'audio-capture':
+            audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
+            sys.path.insert(0, str(audit))
+            from verify_audio_capture_results import verify_batch
+            verify_batch(payload, Path(identity['archive']), environment['boot_id'], environment['guest_arch'])
         elif name == 'observer-info':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

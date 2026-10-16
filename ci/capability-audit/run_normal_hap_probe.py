@@ -72,6 +72,7 @@ PERSONAS = {
     'arkts-exports': ('--arkts-exports-only', 'arkts-exports-{run}-results.log',
                       '"export_collection_complete":true', 'verify_arkts_exports_results.py'),
     'audio-stream': ('--audio-stream-only', 'audio-stream-{run}-results.log', '"summary"', 'verify_audio_stream_results.py'),
+    'audio-capture': ('--audio-capture-only', 'audio-capture-{run}-results.log', '"summary"', 'verify_audio_capture_results.py'),
     'avc-media': ('--avc-media-only', 'avc-media-{run}-results.log', '"summary"', 'verify_avc_media_results.py'),
     'audio-suite-effects': ('--audio-suite-effects-only', 'audio-suite-effects-{run}-results.log', '"summary"',
                             'verify_audio_suite_effects_results.py'),
@@ -165,7 +166,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('audio-capture', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -192,6 +193,7 @@ def run(args):
     args.output.mkdir(parents=True, exist_ok=False)
     challenge = secrets.token_hex(16)
     network_peer = None
+    capture_runtime = None
     report = {'schema_version': 1, 'status': 'fail', 'scope': 'one_fresh_ordinary_HAP_regression_NOT_full_gate',
         'persona': args.persona, 'run_id': challenge, 'archive': str(args.archive.resolve()),
         'target': args.target, 'arch': args.arch, 'device': args.device, 'commands': [], 'failures': [],
@@ -233,6 +235,9 @@ def run(args):
         return command([args.hdc, '-t', args.target, 'shell', script], label, accepted_failure=accepted_failure)
 
     try:
+        if args.persona == 'audio-capture' and (
+                getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
+            raise ValueError('microphone content requires the actual enclosing package-owned acceptance boot')
         if args.persona == 'spring-loading' and (
                 getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
             raise ValueError('spring physical input requires the actual enclosing package-owned boot')
@@ -269,6 +274,8 @@ def run(args):
         project = args.output / 'project'
         build = [sys.executable, str(Path(__file__).with_name('build_hap_probe.py')), flag,
                  '--arch', args.arch, '--sdk', args.sdk, '--udid', args.udid, '--output', project]
+        if args.persona == 'audio-capture' and getattr(args, 'audio_capture_expect_denied', False):
+            build += ['--audio-capture-expect-denied']
         if args.persona == 'network-accounting':
             from network_accounting_endpoint import Endpoint
             network_peer = Endpoint(challenge)
@@ -300,6 +307,10 @@ def run(args):
             '--bundle-name', BUNDLE, '--udid', args.udid, '--sign-code', '1']
         command(sign, 'docker-sign-and-verify', timeout=300)
         report['hap_sha256'] = checksum(signed)
+        if args.persona == 'audio-capture':
+            from audio_capture_runtime import CaptureRuntime
+            capture_runtime = CaptureRuntime(args, command, shell, report, challenge, boot_id)
+            capture_runtime.prepare()
         # Only our dedicated audit bundle is stopped/replaced. A successful
         # uninstall alone can leave asynchronous old-session teardown queued
         # against the next app with the same bundle name.
@@ -321,12 +332,16 @@ def run(args):
         stale = shell('if test -e ' + shlex.quote(remote) + '; then echo STALE; else echo ABSENT; fi', 'result-absent-before-launch')
         if stale.strip() != 'ABSENT':
             raise ValueError('pre-existing result is not a fresh app execution')
+        if capture_runtime is not None:
+            capture_runtime.before_launch(report['ordinary_uid'])
         # A single requested wake is ordinary test setup, never a periodic
         # external QMP keepalive and never proof of unattended boot.
         shell('power-shell wakeup', 'single-test-wakeup')
         launched = shell('aa start -a EntryAbility -b ' + BUNDLE, 'launch-ordinary-app')
         if not re.search(r'start ability successfully', launched, re.I):
             raise ValueError('ordinary ability did not launch successfully')
+        if capture_runtime is not None:
+            capture_runtime.permission()
         def poll_result(marker):
             deadline = time.monotonic() + args.wait_seconds
             while time.monotonic() < deadline:
@@ -445,6 +460,13 @@ def run(args):
             report['actual_surface_captures'] = captures
         results = args.output / 'results.log'
         results.write_text(result)
+        if capture_runtime is not None:
+            runtime = capture_runtime.collect(app_files)
+            capture_runtime.close()
+            inputs = project / 'audio-capture-probe-inputs.json'
+            report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs),
+                          capture_runtime=str(runtime), capture_runtime_sha256=checksum(runtime))
+            ui_arguments += ['--inputs', str(inputs), '--runtime', str(runtime), '--hap', str(signed), '--boot-id', boot_id]
         verification = args.output / 'verified-result.json'
         if args.persona in ('avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
@@ -505,6 +527,12 @@ def run(args):
             except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as capture_error:
                 report['failure_diagnostics_error'] = str(capture_error)
     finally:
+        if capture_runtime is not None and not capture_runtime.finished:
+            try:
+                capture_runtime.close()
+            except Exception as error:
+                report['status'] = 'fail'
+                report['failures'].append('owned microphone cleanup failed: ' + str(error))
         if network_peer is not None and not network_peer.closed:
             try:
                 network_peer.finish(args.output / 'http-peer.json')
@@ -529,11 +557,15 @@ def main():
     parser.add_argument('--boot', type=Path, help='original enclosing acceptance boot evidence for image-bound discovery')
     parser.add_argument('--hdc', default='hdc')
     parser.add_argument('--source-volume', default='ohos-qemu-7_0-release-source')
+    parser.add_argument('--out-volume', default='ohos-qemu-7_0-release-out')
+    parser.add_argument('--audio-capture-expect-denied', action='store_true')
     parser.add_argument('--docker-image', default='ohos-qemu-m144-build-env:7.0-release')
     parser.add_argument('--wait-seconds', type=int, choices=range(60, 1801), default=300)
     args = parser.parse_args()
     if re.fullmatch('[0-9A-Fa-f]{64}', args.udid) is None:
         parser.error('actual guest UDID must be 64 hex digits')
+    if args.audio_capture_expect_denied and args.persona != 'audio-capture':
+        parser.error('denied microphone expectation requires the public capture persona')
     report = run(args)
     print(json.dumps({'persona': report['persona'], 'status': report['status'], 'failures': report['failures']}))
     return 0 if report['status'] == 'pass' else 1
