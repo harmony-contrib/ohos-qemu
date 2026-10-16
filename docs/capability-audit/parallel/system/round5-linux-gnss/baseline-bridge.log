@@ -1,0 +1,92 @@
+after/bad_device/execution.log
+
+after/bad_device/vendorGnssAdapter.so.compile.log
+
+after/bad_table/execution.log
+
+after/bad_table/vendorGnssAdapter.so.compile.log
+
+after/bridge_functions.compile.log
+
+after/bridge_harness.compile.log
+
+after/callback_cleanup/execution.log
+READY
+callback_cleanup: callbackDone&&count==1&&std::ifstream(std::getenv("GNSS_TEST_UNLOADED")).good()
+
+after/callback_cleanup/vendorGnssAdapter.so.compile.log
+
+after/function-cache.log
+cache: pass
+
+after/function-callback_reentry.log
+callback_reentry: pass
+
+after/function-callback_size.log
+callback_size: pass
+
+after/function-config_size.log
+config_size: pass
+
+after/function-interval.log
+interval: pass
+
+after/function-invalid_mode.log
+
+after/missing_symbol/execution.log
+
+after/missing_symbol/vendorGnssAdapter.so.compile.log
+
+before/bad_device/execution.log
+bad_device: !table
+
+before/bad_device/vendorGnssAdapter.so.compile.log
+
+before/bad_table/execution.log
+bad_table: !table
+
+before/bad_table/vendorGnssAdapter.so.compile.log
+
+before/bridge_functions.compile.log
+
+before/bridge_harness.compile.log
+
+before/callback_cleanup/execution.log
+READY
+callback_cleanup: callbackDone&&count==1&&std::ifstream(std::getenv("GNSS_TEST_UNLOADED")).good()
+
+before/callback_cleanup/vendorGnssAdapter.so.compile.log
+
+before/external_cleanup/execution.log
+READY
+terminate called without an active exception
+
+before/external_cleanup/vendorGnssAdapter.so.compile.log
+
+before/function-cache.log
+cache: captured.size==sizeof(captured)&&captured.startCategory==2&&captured.u.gnssCacheConfig.size==sizeof(GnssCachingConfig)&&captured.u.gnssCacheConfig.interval==217&&captured.u.gnssCacheConfig.fifoFullNotify
+
+before/function-callback_reentry.log
+actual original callback holds g_mutex while reentrant callback requests the same mutex; bounded 2s timeout
+
+before/function-callback_size.log
+callback_size: cb.size==sizeof(cb)
+
+before/function-config_size.log
+config_size: captured.size==sizeof(captured)
+
+before/function-interval.log
+interval: captured.u.gnssBasicConfig.minInterval==1327
+
+before/function-invalid_mode.log
+invalid_mode: impl.SetGnssConfigPara(config)==HDF_ERR_INVALID_PARAM
+
+before/missing_symbol/execution.log
+missing_symbol: std::ifstream(std::getenv("GNSS_TEST_UNLOADED")).good()
+
+before/missing_symbol/vendorGnssAdapter.so.compile.log
+
+before/repeated_cleanup/execution.log
+repeated_cleanup: Unloads()==1
+
+before/repeated_cleanup/vendorGnssAdapter.so.compile.log

@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "provider_cases": 35,
+  "bridge_cases": 24,
+  "same_process_reload_verified": true,
+  "gnu_unique_symbols": 0,
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false
+}
