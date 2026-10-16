@@ -1,0 +1,25 @@
+test_ABC_header_magic_file_size_and_checksum_rejected (test_batch_apps_contact_payload.PayloadTests.test_ABC_header_magic_file_size_and_checksum_rejected) ... ok
+test_CLI_preserves_failure_and_never_overwrites_report (test_batch_apps_contact_payload.PayloadTests.test_CLI_preserves_failure_and_never_overwrites_report) ... ok
+test_all_three_product_ELF_classes (test_batch_apps_contact_payload.PayloadTests.test_all_three_product_ELF_classes) ... ok
+test_boundary_size_and_unbacked_VA_rejected (test_batch_apps_contact_payload.PayloadTests.test_boundary_size_and_unbacked_VA_rejected) ... ok
+test_conflicting_boundary_symbol_rejected (test_batch_apps_contact_payload.PayloadTests.test_conflicting_boundary_symbol_rejected) ... ok
+test_foreign_blob_object_rejected (test_batch_apps_contact_payload.PayloadTests.test_foreign_blob_object_rejected) ... ok
+test_image_changed_after_stage_rejected (test_batch_apps_contact_payload.PayloadTests.test_image_changed_after_stage_rejected) ... ok
+test_missing_or_undefined_dynamic_exports_rejected (test_batch_apps_contact_payload.PayloadTests.test_missing_or_undefined_dynamic_exports_rejected) ... ok
+test_nonexecutable_export_rejected (test_batch_apps_contact_payload.PayloadTests.test_nonexecutable_export_rejected) ... ok
+test_overlapping_load_mapping_rejected (test_batch_apps_contact_payload.PayloadTests.test_overlapping_load_mapping_rejected) ... ok
+test_same_wrong_image_and_linked_payload_rejected (test_batch_apps_contact_payload.PayloadTests.test_same_wrong_image_and_linked_payload_rejected) ... ok
+test_stripped_file_cannot_supply_unstripped_boundaries (test_batch_apps_contact_payload.PayloadTests.test_stripped_file_cannot_supply_unstripped_boundaries) ... ok
+test_synthetic_identity_has_explicit_limited_scope (test_batch_apps_contact_payload.PayloadTests.test_synthetic_identity_has_explicit_limited_scope) ... ok
+test_truncated_ELF_and_program_header_rejected (test_batch_apps_contact_payload.PayloadTests.test_truncated_ELF_and_program_header_rejected) ... ok
+test_valid_but_different_ABC_rejected (test_batch_apps_contact_payload.PayloadTests.test_valid_but_different_ABC_rejected) ... ok
+test_wrong_current_JS_and_old_blob_rejected (test_batch_apps_contact_payload.PayloadTests.test_wrong_current_JS_and_old_blob_rejected) ... ok
+test_wrong_machine_rejected (test_batch_apps_contact_payload.PayloadTests.test_wrong_machine_rejected) ... ok
+test_actual_public_js_overloads_and_error_propagation (test_batch_apps_contact_picker_protocol.CallerProtocol.test_actual_public_js_overloads_and_error_propagation) ... ok
+test_drift_or_partial_state_fails_before_other_inputs_mutate (test_batch_apps_contact_picker_protocol.CallerProtocol.test_drift_or_partial_state_fails_before_other_inputs_mutate) ... ok
+test_exact_component_replay_and_unchanged_build (test_batch_apps_contact_picker_protocol.CallerProtocol.test_exact_component_replay_and_unchanged_build) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.641s
+
+OK

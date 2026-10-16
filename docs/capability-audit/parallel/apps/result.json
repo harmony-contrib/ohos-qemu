@@ -187,6 +187,15 @@
       "result": "83 apps host tests +13 frozen root tests PASS; real retained observer adapter PASS; no compiler/signing/guest execution",
       "evidence": "docs/capability-audit/parallel/apps/round11-root-integration-review/host-checks.json",
       "additional_command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ci/capability-audit -p 'test_batch_apps_wallpaper_connection.py' -v"
+    },
+    {
+      "name": "contact_embedded_JS_ABC_payload_and_actual_public_JS_wrapper",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_apps_contact_payload test_batch_apps_contact_picker_protocol -v",
+      "exit_code": 0,
+      "test_cases": 20,
+      "actual_JS_scenarios": 86,
+      "scope": "Pure Python synthetic ELF/Panda counterexamples and existing actual JS wrapper host execution; no compiler/native/SDK/guest run",
+      "evidence": "docs/capability-audit/parallel/apps/round12-contact-ABC/host-checks.json"
     }
   ],
   "integration_requests": [
@@ -500,6 +509,14 @@
     {
       "owner": "root",
       "action": "Apply shared MSDP real ELF/CFI/forced object+link witness fixes and use real exported service singleton symbols instead of private RetireAlgo. Original counterexample preserved in apps report; actual build and runtime remain root responsibility."
+    },
+    {
+      "id": "apps-contact-fresh-ABC-object-link-image-witness",
+      "owner": "main/system",
+      "required_for_this_candidate": true,
+      "request": "Implement actual representative full-build witness around explicit 18 outputs and independently extract unique system.img contact DSO; reuse new payload checker. Keep moduleRecordIdx/literal/public-runtime separate and pending actual proof.",
+      "contract": "docs/capability-audit/parallel/apps/round12-contact-ABC/fresh-build-contract.json",
+      "helper": "ci/capability-audit/batch_apps_contact_payload.py"
     }
   ],
   "requirements_review": {
@@ -1107,6 +1124,8 @@
     }
   ],
   "changed_files": [
+    "ci/capability-audit/batch_apps_contact_payload.py",
+    "ci/capability-audit/batch_apps_contact_picker_coordinator.py",
     "ci/capability-audit/batch_apps_contact_picker_protocol_host.py",
     "ci/capability-audit/batch_apps_contact_picker_runtime.py",
     "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
@@ -1116,6 +1135,7 @@
     "ci/capability-audit/batch_apps_prepare_provider_lifecycle.py",
     "ci/capability-audit/batch_apps_prepare_share_candidate.py",
     "ci/capability-audit/batch_apps_run_contact_picker_runtime.py",
+    "ci/capability-audit/batch_apps_wallpaper_connection.py",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-BUILD.gn.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-build-profile.json5.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_hvigorfile.js.gz.b64",
@@ -1181,12 +1201,15 @@
     "ci/capability-audit/test_batch_apps_admin_provider.py",
     "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "ci/capability-audit/test_batch_apps_contact_payload.py",
+    "ci/capability-audit/test_batch_apps_contact_picker_coordinator.py",
     "ci/capability-audit/test_batch_apps_contact_picker_protocol.py",
     "ci/capability-audit/test_batch_apps_contact_picker_runtime.py",
     "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py",
     "ci/capability-audit/test_batch_apps_provider_lifecycle.py",
     "ci/capability-audit/test_batch_apps_run_contact_picker_runtime.py",
     "ci/capability-audit/test_batch_apps_share_provider.py",
+    "ci/capability-audit/test_batch_apps_wallpaper_connection.py",
     "docs/capability-audit/parallel/apps/README.md",
     "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
@@ -1194,6 +1217,26 @@
     "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
     "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
     "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/README.md",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-tests.log",
+    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/inputs.example.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/README.md",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/contacts-full-boundaries.log",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/host-checks.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/real-observer-readonly-check.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-host-tests.log",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-review.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/source-dump-contract.json",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/source-query.log",
+    "docs/capability-audit/parallel/apps/round11-root-integration-review/wallpaper-AMS-connection.log",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/README.md",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/collect_readonly.py",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/fresh-build-contract.json",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/host-checks.json",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/host-checks.log",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/loader-source-contract.json",
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/readonly-snapshot.json",
     "docs/capability-audit/parallel/apps/round8-contact-caller-review/asan-01-darwin-retry.json",
     "docs/capability-audit/parallel/apps/round8-contact-caller-review/asan-01.json",
     "docs/capability-audit/parallel/apps/round8-contact-caller-review/executable-driver-and-seed.json",
@@ -1254,24 +1297,7 @@
     "patches/common/applications/standard/theme/source_provider/0001-build-fixed-real-provider-sources.patch",
     "patches/common/applications/standard/theme/source_provider/README.md",
     "patches/common/applications/standard/theme/source_provider/apply.sh",
-    "patches/common/applications/standard/theme/source_provider/verify_source.py",
-    "ci/capability-audit/batch_apps_contact_picker_coordinator.py",
-    "ci/capability-audit/test_batch_apps_contact_picker_coordinator.py",
-    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/README.md",
-    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/inputs.example.json",
-    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-checks.json",
-    "docs/capability-audit/parallel/apps/round10-contact-suite-wrapper/host-tests.log",
-    "ci/capability-audit/batch_apps_wallpaper_connection.py",
-    "ci/capability-audit/test_batch_apps_wallpaper_connection.py",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/README.md",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/contacts-full-boundaries.log",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/host-checks.json",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/real-observer-readonly-check.json",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-host-tests.log",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/root20b-review.json",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/source-dump-contract.json",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/source-query.log",
-    "docs/capability-audit/parallel/apps/round11-root-integration-review/wallpaper-AMS-connection.log"
+    "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
   "previous_batch_commit": "5eac5fe063fc813a0912857555f97439e023893b",
   "parent_integration_baseline": "8bf5840",
@@ -1688,6 +1714,81 @@
       "No actual new package/guest deadline/navigation/Wallpaper connection runtime evidence exists in this agent batch.",
       "Full original MSDP missing clients finding remains unresolved by the external-inputs subset."
     ],
+    "first_artifact_behavior_gate_passed": false,
+    "ledger_closed": false
+  },
+  "contact_ABC_packaging_review_batch": {
+    "status": "read_only_chain_review_and_payload_checker_host_checked_NOT_fresh_ABC_or_runtime",
+    "parent_integrated_previous_candidate": "0652db2",
+    "upstream_targets_added": [],
+    "changed_files": [
+      "ci/capability-audit/batch_apps_contact_payload.py",
+      "ci/capability-audit/test_batch_apps_contact_payload.py",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/README.md",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/collect_readonly.py",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/fresh-build-contract.json",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/host-checks.json",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/host-checks.log",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/loader-source-contract.json",
+      "docs/capability-audit/parallel/apps/round12-contact-ABC/readonly-snapshot.json"
+    ],
+    "source_chain": "contact.js -> actual product es2abc -> contact.abc -> contact.o/contact_abc.o -> full contact DSO -> staged module -> unique system.img inode",
+    "review_evidence": "docs/capability-audit/parallel/apps/round12-contact-ABC/readonly-snapshot.json",
+    "loader_source_evidence": "docs/capability-audit/parallel/apps/round12-contact-ABC/loader-source-contract.json",
+    "first_build_contract": "docs/capability-audit/parallel/apps/round12-contact-ABC/fresh-build-contract.json",
+    "preserve_then_remove_outputs_count": 18,
+    "final_JS_sha256": "ae22907681082d8f7ccdaeaa81ee80d3da31114353bf2b167a060c2cf946b759",
+    "observed_old_JS_sha256": "37a2627df3602a73c71b0568c0b163333f6db404a7aa9dd2ffa3015353f434f2",
+    "observed_old_ABC_sha256": "08d3d2c9d9c1b91235a7935bbe9e50ef2c35310c02e6fce7bad9e4a1fb474d49",
+    "helper": "batch_apps_contact_payload.verify_payloads(*,source_js,abc,js_object,abc_object,unstripped,linked,staged,image_dso,arch=arm64)",
+    "helper_acceptance_scope": "pass_payload_identity_ONLY; all fresh-build/compiler/image-extraction/literal/public-runtime claims explicitly false",
+    "tests": {
+      "schema_version": 1,
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "test_batch_apps_contact_payload",
+        "test_batch_apps_contact_picker_protocol",
+        "-v"
+      ],
+      "environment": {
+        "LC_ALL": "C",
+        "LC_CTYPE": "C",
+        "LANG": "C",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "ci/capability-audit"
+      },
+      "started_unix_ns": 1792175321037927000,
+      "exit_code": 0,
+      "duration_seconds": 0.706,
+      "python_tests": 20,
+      "actual_public_JS_wrapper_scenarios": 86,
+      "parser_counterexamples": "Synthetic ELF/Panda files only; no native compiler or ELF execution",
+      "raw_log": {
+        "path": "docs/capability-audit/parallel/apps/round12-contact-ABC/host-checks.log",
+        "sha256": "4b473dbbcb59e1a2bdb52d6d8d14c204d1655fb25920f06fc3ea49340f7bbe1c"
+      },
+      "new_payload_tool_sha256": "1a56df225aef25d249b88dacc4c9d3d41b1cf9b185a4dae4dbc4ff35609caef0",
+      "native_or_SDK_build_run": false,
+      "guest_or_QEMU_run": false,
+      "first_artifact_behavior_gate_passed": false,
+      "ledger_closed": false
+    },
+    "integration_requests": [
+      "Root/system exclusively implement qemu_contacts_build_witness.py, preserve exact 18 generated outputs, force full fresh GN/ABC/blob/native/link/image and bind actual commands/input hashes.",
+      "Root explicitly pass --fast-rebuild=false or independently prove effective false and actual GN execution; old graph has host absolute paths in ABC, both objcopy commands and native version script.",
+      "Root extract actual unique libcontact.z.so inode from new system.img and call payload checker with fresh source/ABC/object/unstripped/linked/staged/image files, then run ordinary caller full-boundaries acceptance."
+    ],
+    "remaining_gaps": [
+      "No actual new es2abc/ABC, contact full-build witness, image inode or guest runtime was generated by this batch.",
+      "ABC moduleRecordIdx/literal-array binding and actual public loader execution are not established by embedded-byte identity or a source/HSP dependency scan.",
+      "All 34 apps rows remain unclosed; broader unrelated interfaces are outside this bounded Contacts chain review."
+    ],
+    "new_native_or_SDK_build": false,
+    "native_or_guest_execution": false,
+    "actual_new_es2abc_execution_observed": false,
+    "module_record_and_literal_binding_verified": false,
     "first_artifact_behavior_gate_passed": false,
     "ledger_closed": false
   }
