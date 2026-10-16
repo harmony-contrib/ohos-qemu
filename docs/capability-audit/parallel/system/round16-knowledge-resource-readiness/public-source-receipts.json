@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "scope": "Official primary websites only; no third-party calendar used",
+  "response_html_archived": false,
+  "hash_scope": "SHA256 of the entire actually received HTTP response body; response bytes were inspected in memory and not stored as a redistributable website copy",
+  "method": "Python urllib.request HTTPS GET with normal certificate verification, User-Agent Mozilla/5.0, 12s timeout, bounded 1MiB read; public web tool for law content",
+  "retrievals": [
+    {
+      "source": "notice",
+      "url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+      "retrieved_utc": "2026-10-16T19:31:50.870801+00:00",
+      "status": 200,
+      "bytes": 27692,
+      "sha256": "0b9d4b2b07360bc0915ff929709a738f1297abf3d11d3a606861faee7e9be535",
+      "final_url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+      "content_type": "text/html"
+    },
+    {
+      "source": "gazette",
+      "url": "https://www.gov.cn/gongbao/2025/issue_12406/202511/content_7048922.html",
+      "retrieved_utc": "2026-10-16T19:31:53.900773+00:00",
+      "status": 200,
+      "bytes": 24769,
+      "sha256": "f48897fe8de94b809179dd1a7ff80e1428d4947f893ec4d1ba5c2a7e33d1bce4",
+      "content_type": "text/html"
+    },
+    {
+      "source": "notice-recheck",
+      "url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+      "retrieved_utc": "2026-10-16T19:32:57.771611+00:00",
+      "status": 200,
+      "bytes": 27692,
+      "sha256": "0b9d4b2b07360bc0915ff929709a738f1297abf3d11d3a606861faee7e9be535",
+      "required_text_found": {
+        "document_number": true,
+        "document_date": true,
+        "all_seven_interval_starts": true,
+        "last_two_makeup_days": true
+      }
+    },
+    {
+      "source": "copyright_law-direct-fetch",
+      "url": "https://www.ncac.gov.cn/xxfb/flfg/flfg_532/202103/t20210309_50530.html",
+      "retrieved_utc": "2026-10-16T19:32:59.010561+00:00",
+      "status": "failed",
+      "error": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>"
+    },
+    {
+      "source": "website_statement",
+      "url": "https://www.gov.cn/home/2014-02/23/content_5046258.htm",
+      "retrieved_utc": "2026-10-16T19:33:00.544912+00:00",
+      "status": 200,
+      "bytes": 23495,
+      "sha256": "35a655fb198ed41eb643c2c25ec6fbdd45943e637bba662dbcffea0b176733d4",
+      "copyright_statement_found": true,
+      "third_party_supplier_authorization_clause_found": true
+    },
+    {
+      "source": "copyright_law-web-tool",
+      "url": "https://www.ncac.gov.cn/xxfb/flfg/flfg_532/202103/t20210309_50530.html",
+      "retrieval_local_date": "2026-10-17",
+      "status": "primary_full_page_read_success",
+      "tool_exposed_body_sha256": null,
+      "tool_exposed_exact_fetch_timestamp": null,
+      "title": "中华人民共和国著作权法-法律法规-国家版权局",
+      "version": "2020 third amendment",
+      "observed_article5_lines": [
+        95,
+        97,
+        99,
+        101
+      ],
+      "article5_interpretation": "Administrative-nature official documents, mere facts and calendars are excluded from application of this law; use only official notification date/name facts and our independent format."
+    }
+  ],
+  "failed_web_tool_reads": [
+    {
+      "url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+      "failure": "web open Internal Error; separate normal HTTPS direct GET succeeded twice"
+    },
+    {
+      "url": "https://big5.www.gov.cn/gate/big5/www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+      "failure": "web open redirect loop; no traditional mirror text used as candidate input"
+    },
+    {
+      "url": "https://www.gov.cn/gongbao/2025/issue_12406/202511/content_7048922.html",
+      "failure": "web open 403; separate normal HTTPS direct GET succeeded"
+    }
+  ],
+  "limitations": [
+    "No archived raw HTML body; do not claim independent offline raw-response rehash",
+    "HTTPS retrieval receipt is not a publisher digital signature",
+    "Copyright applicability rationale is not a CC0 license or a license to copy site design or third-party content",
+    "Candidate is a derived factual encoding, not an official government ICS"
+  ]
+}
