@@ -21,6 +21,16 @@ spec.loader.exec_module(provider)
 
 
 class SettingsImageBoundary(unittest.TestCase):
+    def test_compiled_wallpaper_permission_must_match_actual_source(self):
+        grants = [{'name': 'ohos.permission.SET_WALLPAPER'}]
+        source = {'requestPermissions': grants}
+        self.module['module']['requestPermissions'] = copy.deepcopy(grants)
+        self.write();provider.inspect_hap(self.hap, source)
+        for changed in ([], grants + grants, grants + [{'name': 'ohos.permission.READ_CONTACTS'}]):
+            self.module['module']['requestPermissions'] = changed;self.write()
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                provider.inspect_hap(self.hap, source)
+
     def test_profile_cannot_promote_APL_or_expand_existing_policy(self):
         original = {'bundle-info': {'bundle-name': 'com.ohos.settings', 'apl': 'system_basic',
                     'app-feature': 'hos_system_app', 'distribution-certificate': 'old'},

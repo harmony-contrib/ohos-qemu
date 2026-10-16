@@ -27,12 +27,17 @@ FILES = (
 def validate(root, require_patched=False):
     files = FILES
     module = Path(root) / PROJECT / FILES[0][0]
-    if module.is_file() and hashlib.sha256(module.read_bytes()).hexdigest() == 'fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62':
+    if module.is_file() and hashlib.sha256(module.read_bytes()).hexdigest() in (
+            'fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62',
+            'ec1d3c1525d7298209346cb8f47715f781c1a6cc52b058cadef5e57d211db6bf'):
         # The share successor changes the two shared manifests. Require its
         # entire exact five-file state before accepting either new hash.
         spec = importlib.util.spec_from_file_location('settings_share_successor', Path(__file__).parent.parent / 'share_picker/verify_source.py')
         successor = importlib.util.module_from_spec(spec);spec.loader.exec_module(successor)
         successor.validate(root, require_patched=True)
         hashes = {name: repaired for name, _, repaired in successor.FILES}
+        # The share guard accepts the later wallpaper manifest only after
+        # validating its complete six-file source state too.
+        hashes[FILES[0][0]] = hashlib.sha256(module.read_bytes()).hexdigest()
         files = tuple((name, original, hashes.get(name, repaired)) for name, original, repaired in FILES)
     return validate_component(root, PROJECT, REVISION, files, require_patched)

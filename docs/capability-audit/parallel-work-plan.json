@@ -1875,6 +1875,27 @@
       "component": "patches/common/base/msdp/device_status/public_still/",
       "preserve_original_sensor_input_component": true,
       "native_compile_needs_short_root_lease": true
+    },
+    "apps_contact_runtime": {
+      "agent": "apps",
+      "new_files": [
+        "ci/capability-audit/batch_apps_contact_picker_runtime.py",
+        "ci/capability-audit/test_batch_apps_contact_picker_runtime.py"
+      ],
+      "fixture_prefix": "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/",
+      "ordinary_normal_no_READ_WRITE_CONTACTS": true,
+      "no_heavy_tasks": true
+    },
+    "media_wallpaper_runtime": {
+      "agent": "media",
+      "new_files": [
+        "ci/capability-audit/batch_media_wallpaper_runtime.py",
+        "ci/capability-audit/batch_media_verify_wallpaper_runtime.py",
+        "ci/capability-audit/test_batch_media_wallpaper_runtime.py"
+      ],
+      "fixture_prefix": "ci/capability-audit/fixtures/batch_media/wallpaper_runtime/",
+      "no_source_or_shared_suite_edits": true,
+      "no_heavy_tasks": true
     }
   }
 }

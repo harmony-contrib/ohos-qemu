@@ -78,7 +78,7 @@ def unique_object(pairs):
     return result
 
 
-def inspect_hap(hap):
+def inspect_hap(hap, source_module=None):
     with zipfile.ZipFile(hap) as archive:
         seen = set()
         if len(archive.infolist()) > 10000 or sum(item.file_size for item in archive.infolist()) > 512 * 1024 * 1024:
@@ -96,6 +96,11 @@ def inspect_hap(hap):
         if not archive.read('ets/modules.abc') or not archive.read('resources.index'):
             raise ValueError('empty compiled Settings provider')
         module = json.loads(archive.read('module.json'), object_pairs_hook=unique_object)
+        permissions = [entry['name'] for entry in module.get('module', {}).get('requestPermissions', [])]
+        if source_module is not None and (len(set(permissions)) != len(permissions) or
+                permissions != [entry['name'] for entry in source_module.get('requestPermissions', [])] or
+                permissions.count('ohos.permission.SET_WALLPAPER') != 1):
+            raise ValueError('Settings compiled permissions differ from exact wallpaper source')
         if (module.get('app', {}).get('bundleName') != 'com.ohos.settings' or
                 module.get('module', {}).get('name') != 'phone' or
                 module['module'].get('type') != 'entry' or
@@ -127,7 +132,7 @@ def inspect_hap(hap):
                     raise ValueError('Settings native library has wrong ABI/type: ' + member)
                 machines[member] = {'elf_machine': machine, 'sha256': hashlib.sha256(raw).hexdigest()}
         return {'bundle': 'com.ohos.settings', 'extensions': actual, 'native_libraries': machines,
-                'hap_sha256': file_sha256(hap)}
+                'hap_sha256': file_sha256(hap), 'permissions': permissions}
 
 
 def verify_signature(hap, source, scratch):
@@ -204,7 +209,7 @@ def verify_source(source):
     spec.loader.exec_module(guard)
     guard.validate(source, require_patched=True)
     for component in ('accessibility_service_completion', 'external_input', 'input_2in1_navigation',
-                      'refresh_rate_page', 'share_picker'):
+                      'refresh_rate_page', 'share_picker', 'wallpaper_settings'):
         route_spec = importlib.util.spec_from_file_location('settings_guard_' + component,
             verifier.parent.parent / component / 'verify_source.py')
         route_guard = importlib.util.module_from_spec(route_spec)
@@ -267,12 +272,15 @@ def main():
                     scratch, debugfs_path())
                 result.update(identity)
                 result['system_image_sha256'] = file_sha256(args.system_image)
-            result.update(inspect_hap(hap))
+            import json5
+            source_module = json5.loads((args.source_root / 'applications/standard/settings/product/phone/src/main/module.json5').read_text(),
+                                       allow_duplicate_keys=False)['module']
+            result.update(inspect_hap(hap, source_module))
             result.update(verify_signature(hap, args.source_root, scratch))
             result['profile_policy'] = verify_profile_policy(args.source_root, scratch)
             result['preinstall_policies'] = verify_preinstall_policies(args.source_root, args.system_image, scratch)
         result['status'] = 'pass'
-    except (OSError, ValueError, KeyError, TypeError, struct.error, zipfile.BadZipFile,
+    except (OSError, ValueError, KeyError, TypeError, ImportError, struct.error, zipfile.BadZipFile,
             subprocess.SubprocessError) as error:
         result['failures'].append(str(error))
     args.output.write_text(json.dumps(result, indent=2) + '\n')

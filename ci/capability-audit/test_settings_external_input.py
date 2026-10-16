@@ -78,6 +78,26 @@ class SettingsExternalInputTests(unittest.TestCase):
         self.assertNotEqual(self.apply().returncode, 0)
         self.assertEqual(before, self.snapshot())
 
+    def test_entire_wallpaper_successor_replays_and_requires_all_companions(self):
+        self.assertEqual(self.apply().returncode, 0)
+        share = ROOT / 'patches/common/applications/standard/settings/share_picker/apply.sh'
+        wallpaper = ROOT / 'patches/common/applications/standard/settings/wallpaper_settings/apply.sh'
+        self.assertEqual(subprocess.run(['bash', str(share), '--source-root', str(self.root)], capture_output=True).returncode, 0)
+        before = ROOT / 'ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/applications/standard/settings/feature'
+        shutil.copytree(before, self.project / 'feature')
+        for _ in range(3):
+            for script in (wallpaper, share, COMPONENT / 'apply.sh'):
+                r = subprocess.run(['bash', str(script), '--source-root', str(self.root)], capture_output=True)
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        target = self.project / 'feature/theme/src/main/ets/utils/WallpaperSelectionController.ets'
+        for bad in (None, target.read_bytes() + b'\n// unknown companion\n'):
+            if bad is None:target.unlink()
+            else:target.write_bytes(bad)
+            current = self.snapshot()
+            for script in (share, COMPONENT / 'apply.sh'):
+                self.assertNotEqual(subprocess.run(['bash', str(script), '--source-root', str(self.root)], capture_output=True).returncode, 0)
+                self.assertEqual(current, self.snapshot())
+
     def test_real_pages_session_local_storage_and_no_permission_change(self):
         self.assertEqual(self.apply().returncode, 0)
         page = (self.project / baseline.FILES[-1][0]).read_text()

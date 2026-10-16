@@ -1,0 +1,6 @@
+{
+  "status": "fail",
+  "agent": "media",
+  "failure": "patch changes undeclared upstream files: applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets, applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets, applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets, applications/standard/settings/feature/theme/src/main/resources/base/element/string.json, applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json, applications/standard/settings/product/phone/src/main/module.json5, base/theme/wallpaper_mgr/services/BUILD.gn, base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp",
+  "first_artifact_behavior_gate_passed": false
+}

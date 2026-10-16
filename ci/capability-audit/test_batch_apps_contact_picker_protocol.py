@@ -50,6 +50,21 @@ class CallerProtocol(unittest.TestCase):
         record = json.loads((FIX / 'inspection.json').read_text())['files']['contacts/BUILD.gn']
         self.assertEqual(hashlib.sha256((self.root / PROJECT / 'contacts/BUILD.gn').read_bytes()).hexdigest(), record['sha256'])
 
+    def test_sync_mode_and_complete_protocol_successor_replay_together(self):
+        sync = ROOT / 'patches/common/applications/standard/contacts_data/sync_mode'
+        r = subprocess.run(['git', '-C', str(self.root), 'apply', '--reverse',
+            str(sync / '0001-register-the-api26-contact-sync-mode-enum.patch')], capture_output=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for _ in range(3):
+            r = subprocess.run(['bash', str(sync / 'apply.sh'), '--source-root', str(self.root)], capture_output=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertEqual(apply(self.root).returncode, 0)
+        target = self.root / PROJECT / 'contacts/include/contact_picker_protocol.h'
+        target.unlink();before = (self.root / PROJECT / 'contacts/src/contacts_api.cpp').read_bytes()
+        r = subprocess.run(['bash', str(sync / 'apply.sh'), '--source-root', str(self.root)], capture_output=True)
+        self.assertNotEqual(r.returncode, 0);self.assertFalse(target.exists())
+        self.assertEqual(before, (self.root / PROJECT / 'contacts/src/contacts_api.cpp').read_bytes())
+
     def test_drift_or_partial_state_fails_before_other_inputs_mutate(self):
         self.assertEqual(apply(self.root).returncode, 0)
         target = self.root / PROJECT / 'contacts/include/contact_picker_protocol.h'

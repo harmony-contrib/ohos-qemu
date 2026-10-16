@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T23:21:26.836919+08:00",
+  "updated_at": "2026-10-16T23:35:56.004442+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "198007d",
+  "checkpoint_commit": "654c223",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -1342,6 +1342,18 @@
         "bytes": 8780214
       },
       "scope": "actual source HAP compile ONLY NOT OS sign BMS guest; Contacts metadata38permissions real exported sys/commonUI picker; Theme no output"
+    },
+    "Theme_actual_product_SDK03_failure": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-03/evidence.json",
+      "sha256": "3d52ded6ebd9dd43434510b1b679a9502d328ed2fc13b7244e1850819ca5f849",
+      "status": "fail",
+      "findings": "phone has no real SDK device definition; pad removed AbilityStage namespace; both repaired together for next actual build"
+    },
+    "Wallpaper_Contacts_composition_30_host_checks": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/Wallpaper-Contacts-composition-host-01.log",
+      "sha256": "8ba19099c49294d6c9203931c001155662f4a39691eecc3439213dd9e3133358",
+      "status": "pass",
+      "scope": "source exact successor composition and HAP metadata unit boundaries ONLY NOT new guest"
     }
   },
   "agents": {

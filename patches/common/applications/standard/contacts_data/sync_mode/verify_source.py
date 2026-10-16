@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Reject unknown ContactsData source states before the API26 enum repair."""
 import argparse
+import hashlib
+import importlib.util
 from pathlib import Path
 import sys
 
@@ -15,7 +17,16 @@ FILES = (('contacts/src/contacts_api.cpp',
 
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    files = FILES
+    path = Path(root) / PROJECT / FILES[0][0]
+    final = 'e4d8a123de6ba2e943c6fda5e0258960376998f54fd61565e81e8b224beeb4d8'
+    if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == final:
+        spec = importlib.util.spec_from_file_location('contacts_picker_protocol_successor',
+            Path(__file__).parent.parent / 'picker_result_protocol/verify_source.py')
+        guard = importlib.util.module_from_spec(spec);spec.loader.exec_module(guard)
+        guard.validate(root, require_patched=True)
+        files = ((FILES[0][0], FILES[0][1], final),)
+    return validate_component(root, PROJECT, REVISION, files, require_patched)
 
 
 if __name__ == '__main__':

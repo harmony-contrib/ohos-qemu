@@ -3154,6 +3154,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_certificate_empty_lists_component.log"
   bash "${CONTACT_SYNC_MODE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_contact_sync_mode_component.log"
+  bash "${PATCH_ROOT}/common/applications/standard/contacts_data/picker_result_protocol/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_contact_picker_result_protocol.log"
   bash "${CONTACT_RECORD_CLASSES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_contact_record_classes.log"
   bash "${CONTACT_ATTRIBUTE_MAPPING_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3252,6 +3254,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_refresh_rate_component.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings/share_picker/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_share_picker.log"
+  bash "${PATCH_ROOT}/common/applications/standard/settings/wallpaper_settings/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_wallpaper_settings.log"
+  bash "${PATCH_ROOT}/common/base/theme/wallpaper_mgr/qemu_renderer/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_wallpaper_qemu_renderer.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
     --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/settings-source-dependencies" \
     --evidence "${CACHE_ROOT}/logs/settings-source-preparation.json" \
