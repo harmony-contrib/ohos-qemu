@@ -1,0 +1,167 @@
+diff --git a/applications/standard/theme/BUILD.gn b/applications/standard/theme/BUILD.gn
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/theme/BUILD.gn
+@@ -0,0 +1,35 @@
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
++import("//build/ohos.gni")
++
++# Renderers only: neither target supplies a wallpaper selection/settings UI.
++# The shared HAP graph must select one device module, never install both.
++ohos_app("wallpaper_phone_hap") {
++  deps = []
++  certificate_profile = "signature/wallpaper.p7b"
++  hap_name = "Wallpaper"
++  part_name = "prebuilt_hap"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.wallpaper"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  build_modules = [ "phone-wallpaper" ]
++  js_build_mode = "release"
++}
++
++ohos_app("wallpaper_pad_hap") {
++  deps = []
++  certificate_profile = "signature/wallpaper.p7b"
++  hap_name = "Wallpaper"
++  part_name = "prebuilt_hap"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.wallpaper"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  build_modules = [ "pad-wallpaper" ]
++  js_build_mode = "release"
++}
+diff --git a/applications/standard/theme/build-profile.json5 b/applications/standard/theme/build-profile.json5
+--- a/applications/standard/theme/build-profile.json5
++++ b/applications/standard/theme/build-profile.json5
+@@ -1,38 +1,39 @@
+-{
+-  "app": {
+-    "compileSdkVersion": 9,
+-    "compatibleSdkVersion": 9,
+-    "products": [
+-      {
+-        "name": "default",
+-        "signingConfig": "default"
+-      },
+-    ],
+-  },
+-  "modules": [
+-    {
+-      "name": "phone-wallpaper",
+-      "srcPath": "./product/phone",
+-      "targets": [
+-        {
+-          "name": "default",
+-          "applyToProducts": [
+-            "default"
+-          ]
+-        }
+-      ]
+-    },
+-    {
+-      "name": "pad-wallpaper",
+-      "srcPath": "./product/pad",
+-      "targets": [
+-        {
+-          "name": "default",
+-          "applyToProducts": [
+-            "default"
+-          ]
+-        }
+-      ]
+-    }
+-  ],
+-}
+\ No newline at end of file
++{
++  "app": {
++    "products": [
++      {
++        "name": "default",
++        "compileSdkVersion": "26.0.0",
++        "compatibleSdkVersion": 9,
++        "targetSdkVersion": 9,
++        "runtimeOS": "OpenHarmony"
++      }
++    ]
++  },
++  "modules": [
++    {
++      "name": "phone-wallpaper",
++      "srcPath": "./product/phone",
++      "targets": [
++        {
++          "name": "default",
++          "applyToProducts": [
++            "default"
++          ]
++        }
++      ]
++    },
++    {
++      "name": "pad-wallpaper",
++      "srcPath": "./product/pad",
++      "targets": [
++        {
++          "name": "default",
++          "applyToProducts": [
++            "default"
++          ]
++        }
++      ]
++    }
++  ]
++}
+diff --git a/applications/standard/theme/oh-package.json5 b/applications/standard/theme/oh-package.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/theme/oh-package.json5
+@@ -0,0 +1,7 @@
++{
++  "modelVersion": "6.0.0",
++  "name": "wallpaper",
++  "version": "1.0.0",
++  "dependencies": {},
++  "devDependencies": {}
++}
+diff --git a/applications/standard/theme/hvigor/hvigor-config.json5 b/applications/standard/theme/hvigor/hvigor-config.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/theme/hvigor/hvigor-config.json5
+@@ -0,0 +1,8 @@
++{
++  "modelVersion": "6.0.0",
++  "dependencies": {},
++  "execution": {
++    "daemon": false,
++    "parallel": false
++  }
++}
+diff --git a/applications/standard/theme/product/phone/oh-package.json5 b/applications/standard/theme/product/phone/oh-package.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/theme/product/phone/oh-package.json5
+@@ -0,0 +1,5 @@
++{
++  "name": "wallpaper",
++  "version": "1.0.0",
++  "dependencies": {}
++}
+diff --git a/applications/standard/theme/product/pad/oh-package.json5 b/applications/standard/theme/product/pad/oh-package.json5
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/theme/product/pad/oh-package.json5
+@@ -0,0 +1,5 @@
++{
++  "name": "wallpaper",
++  "version": "1.0.0",
++  "dependencies": {}
++}
