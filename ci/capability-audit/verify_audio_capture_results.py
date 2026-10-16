@@ -98,7 +98,7 @@ def checked_file(record):
     return path
 
 
-def verify_transport(args, recorder=False):
+def verify_transport(args, recorder=False, audio_event=False):
     run, arch = args.run_id, args.arch
     runtime = json.loads(args.runtime.read_text())
     archive_sha = sha(args.archive)
@@ -113,11 +113,12 @@ def verify_transport(args, recorder=False):
         raise ValueError('microphone acceptance boot changed')
     binding(json.loads(boot_path.read_text()), archive_sha, args.boot_id, arch, runtime['device'], runtime['target'])
     value = json.loads(args.inputs.read_text())
-    if recorder:
+    if recorder or audio_event:
         import media_capture_contract as media_contract
-        if (value.get('kind') != 'recorder' or value.get('run_id') != run or value.get('arch') != arch or
-                value.get('expected_denied') is not denied):
-            raise ValueError('Recorder compiled role/run differs')
+        if (value.get('kind') != ('audio-event' if audio_event else 'recorder') or value.get('run_id') != run or
+                value.get('arch') != arch or value.get('expected_denied') is not denied or
+                (audio_event and (value.get('mode') != 0 or denied))):
+            raise ValueError('ordinary media compiled role/run differs')
         media_contract.verify_inputs(value)
         media_contract.verify_hap(args.hap, value)
     else:
@@ -136,7 +137,8 @@ def verify_transport(args, recorder=False):
         if token_id is None:
             token_id = current
         if (current != token_id or row['observation']['before_ns'] < token_time or
-                (index == 0 and state != -1) or (index == len(observations) - 1 and state != (-1 if denied else 0))):
+                (index == 0 and state != -1) or
+                (index == len(observations) - 1 and state != (-1 if denied or audio_event else 0))):
             raise ValueError('microphone token changed or was not independently granted/denied')
         token_time = row['observation']['after_ns']
     if token(observations[-2]['observation'], run, uid)[0] != (-1 if denied else 0):
@@ -158,9 +160,11 @@ def verify_transport(args, recorder=False):
         if (path.name != name or path.stat().st_size != item.get('bytes') or item.get('uid') != uid or
                 (name.endswith(('.pcm', '.mp4')) and item.get('mode') != 600)):
             raise ValueError('actual microphone files are truncated, stale or owned by another caller')
-    permission_name = ('recorder' if recorder else 'audio-capture') + '-' + run + '-permission.json'
+    permission_name = ('audio-event-' + run + '-mode0-permission.json' if audio_event else
+                       ('recorder' if recorder else 'audio-capture') + '-' + run + '-permission.json')
     permission = json.loads(checked_file(files[permission_name]).read_text())
-    if (permission.get('run_id') != run or permission.get('expected_denied') is not denied or
+    if (permission.get('run_id') != run or
+            (permission.get('mode') != 0 if audio_event else permission.get('expected_denied') is not denied) or
             permission.get('permissions') != ['ohos.permission.MICROPHONE'] or
             permission.get('auth_results') != [-1 if denied else 0] or
             any(type(v) is not int for v in permission.get('auth_results', [])) or

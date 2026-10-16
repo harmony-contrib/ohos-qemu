@@ -608,6 +608,7 @@ def run(args):
         personas = ('web', 'web-factory', 'vulkan-window', 'userid', 'i18n', 'matrix4', 'factory-objects', 'curve', 'binding', 'const-enum', 'contact-sync-mode', 'runtime-enum', 'arkts-exports',
                     'worker-legacy', 'worker-thread', 'audio-stream', 'avc-media', 'audio-suite-effects', 'camera', 'settings-navigation', 'photos-recent', 'photos-asset', 'storage-stats')
         personas += ('completion-handler',)
+        personas += ('audio-revoke',)
         personas += ('rpc-runtime',)
         personas += ('image-metadata',)
         personas += ('thermal',)

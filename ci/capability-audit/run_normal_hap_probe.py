@@ -74,6 +74,7 @@ PERSONAS = {
     'audio-stream': ('--audio-stream-only', 'audio-stream-{run}-results.log', '"summary"', 'verify_audio_stream_results.py'),
     'audio-capture': ('--audio-capture-only', 'audio-capture-{run}-results.log', '"summary"', 'verify_audio_capture_results.py'),
     'media-recorder': ('--media-recorder-only', 'recorder-{run}-results.log', '"recorder_summary"', 'verify_media_recorder_results.py'),
+    'audio-revoke': ('--media-audio-event-only', 'audio-event-{run}-mode0-results.log', '"event_summary"', 'verify_audio_revoke_results.py'),
     'avc-media': ('--avc-media-only', 'avc-media-{run}-results.log', '"summary"', 'verify_avc_media_results.py'),
     'audio-suite-effects': ('--audio-suite-effects-only', 'audio-suite-effects-{run}-results.log', '"summary"',
                             'verify_audio_suite_effects_results.py'),
@@ -167,7 +168,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('audio-capture', 'media-recorder', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('audio-capture', 'media-recorder', 'audio-revoke', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -236,7 +237,7 @@ def run(args):
         return command([args.hdc, '-t', args.target, 'shell', script], label, accepted_failure=accepted_failure)
 
     try:
-        if args.persona in ('audio-capture', 'media-recorder') and (
+        if args.persona in ('audio-capture', 'media-recorder', 'audio-revoke') and (
                 getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
             raise ValueError('microphone content requires the actual enclosing package-owned acceptance boot')
         if args.persona == 'spring-loading' and (
@@ -310,11 +311,14 @@ def run(args):
             '--bundle-name', BUNDLE, '--udid', args.udid, '--sign-code', '1']
         command(sign, 'docker-sign-and-verify', timeout=300)
         report['hap_sha256'] = checksum(signed)
-        if args.persona in ('audio-capture', 'media-recorder'):
+        if args.persona in ('audio-capture', 'media-recorder', 'audio-revoke'):
             from audio_capture_runtime import CaptureRuntime
             if args.persona == 'media-recorder':
                 from media_recorder_runtime import RecorderRuntime
                 runtime_type = RecorderRuntime
+            elif args.persona == 'audio-revoke':
+                from audio_revoke_runtime import RevokeRuntime
+                runtime_type = RevokeRuntime
             else:
                 runtime_type = CaptureRuntime
             capture_runtime = runtime_type(args, command, shell, report, challenge, boot_id)
@@ -471,7 +475,7 @@ def run(args):
         if capture_runtime is not None:
             runtime = capture_runtime.collect(app_files)
             capture_runtime.close()
-            inputs = project / (args.persona + '-probe-inputs.json')
+            inputs = project / (('media-audio-event' if args.persona == 'audio-revoke' else args.persona) + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs),
                           capture_runtime=str(runtime), capture_runtime_sha256=checksum(runtime))
             ui_arguments += ['--inputs', str(inputs), '--runtime', str(runtime), '--hap', str(signed), '--boot-id', boot_id]

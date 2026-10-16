@@ -238,3 +238,5 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 根完成 Recorder 普通应用权限 UI/token、私有输入/输出、两个录制生命周期与独立 ffmpeg/ffprobe 实际 AAC/AVC 解码验收接线，首包门禁要求同一新归档、同一 boot、三个新 nonce 的 grant/deny/grant；离线门禁重新运行解码而不接受旧 pass 字段。36 项相关权限边界/证据/调度回归通过（recorder-acceptance-host-01.log），不是 guest 或包验收。真实 ffmpeg/ffprobe 9.0.1 工具及 SHA 另存 r52-independent-media-decoder-tools/evidence.json。
 
 截至此处仍为 281/199/82，新核销 0、交付验收 0/6、首包完整运行门禁 false，其余五包未启动。
+
+根追加前台 active MIC revoke 实际运行与严格重放：真实 UI 启动普通 public Capturer，经原系统 MIC 允许对话框、真实 RUNNING/PCM checkpoint 后，仅对自有实际 token 调用 RevokePermission（不杀进程），验证前后同 PID/starttime/UID，再回传新 nonce ACK。验收要求撤权发生在该新 handshake 区间内、后续真实 PCM 静默、Start 被拒绝、同一源的 producer 成功完成以及实际 native Release/Destroy/UIAbility completion。首包正式 suite/离线门禁已纳入 audio-revoke；37 项相关 mutation/既有证据调度回归 PASS，实际 guest 尚未执行，不核销82项中的任何记录。
