@@ -3,7 +3,8 @@
 
 Apply every component patch to private fixed-revision source before compiling
 all changed TUs. Keep successful objects and all failures. No source/out writes,
-feature overrides, link result, package or runtime gate is implied.
+link result, package or runtime gate is implied. Explicit new GN feature defines
+are labeled diagnostic additions and never prove fresh GN feature selection.
 """
 import argparse
 import hashlib
@@ -16,6 +17,23 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'msdp_sensor': {
+        'project': 'base/msdp/device_status',
+        'revision': '96335211bea5ca348325d55746e14e102208354f',
+        'components': ['sensor_input'],
+        'units': ['devicestatus_service', 'devicestatus_static_service', 'intention_stationary_server',
+                  'sensor_data_callback'],
+        'sources': {**{name: 'services/native/src/devicestatus_msdp_client_impl.cpp' for name in (
+            'devicestatus_service', 'devicestatus_static_service', 'intention_stationary_server')},
+            'sensor_data_callback': 'libs/src/datahub/sensor_data_callback.cpp'},
+        'targets': {**{name: 'obj/base/msdp/device_status/services/native/src/' + name + '/devicestatus_msdp_client_impl.o'
+            for name in ('devicestatus_service', 'devicestatus_static_service', 'intention_stationary_server')},
+            'sensor_data_callback': 'obj/base/msdp/device_status/libs/src/datahub/devicestatus_algo/sensor_data_callback.o'},
+        'diagnostic_feature_defines': ['DEVICE_STATUS_SENSOR_ENABLE', 'DEVICE_STATUS_DISABLE_MOCK_FALLBACK'],
+        'required_header': None,
+        'supported_products': ['arm64_virt'],
+        'scope': 'four_whole_MSDP_product_TUs_with_explicit_new_GN_Sensor_noMock_defines_NOT_fresh_GN_link_runtime',
+    },
     'knowledge_content': {
         'project': 'foundation/multimedia/media_library',
         'revision': '564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380',
@@ -428,6 +446,17 @@ def run(args):
                         (cwd / argv[argv.index('-c') + 1]).resolve() != template):
                     raise ValueError('exact real product TU command required')
                 row['original_argv'] = argv[:]
+                additions = []
+                for define in group.get('diagnostic_feature_defines', []):
+                    flag = '-D' + define
+                    if any(value.startswith(flag + '=') for value in argv):
+                        raise ValueError('conflicting product feature define; preserving original command')
+                    if flag not in argv:
+                        additions.append(flag)
+                if additions:
+                    argv += additions
+                    row['diagnostic_feature_defines_added'] = additions
+                    row['fresh_GN_feature_selection_tested'] = False
                 if template != source:
                     row['command_template_source'] = str(template)
                     row['fresh_GN_source_selection_tested'] = False
