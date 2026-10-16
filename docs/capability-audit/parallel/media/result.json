@@ -17,8 +17,8 @@
     "behavior:audio-capture-and-dependent-pipelines": {
       "status": "candidate_prepared",
       "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
-      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render. Round 3 public native ordinary-MIC HAP with awaited real grant dialog, actual callback PCM/timestamps/lifecycle/private evidence and independent fresh host challenge diagnostic; parent reports actual SDK26 native compile/link 3ABI and HAP02 compile passed. Round4 ordinary public active-revocation/event caller records real MIC PCM/frames/clock/state/errors with fresh nonce and private baseline checkpoint; actual token mutation remains external to the app. Round5 actual final event native candidate links all3ABIs. Ordinary focus actors request a real audioRecording task only after real MIC readiness, actual notification authorization and normal install permission; matching cancellation/suspension aborts and actual worker completion triggers real cleanup.",
-      "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence.",
+      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render. Round 3 public native ordinary-MIC HAP with awaited real grant dialog, actual callback PCM/timestamps/lifecycle/private evidence and independent fresh host challenge diagnostic; parent reports actual SDK26 native compile/link 3ABI and HAP02 compile passed. Round4 ordinary public active-revocation/event caller records real MIC PCM/frames/clock/state/errors with fresh nonce and private baseline checkpoint; actual token mutation remains external to the app. Round5 actual final event native candidate links all3ABIs. Ordinary focus actors request a real audioRecording task only after real MIC readiness, actual notification authorization and normal install permission; matching cancellation/suspension aborts and actual worker completion triggers real cleanup. Round6 actual official HAP TS87 arbitrary-catch-throw errors repaired using genuine new Error with explicit lossless BusinessError details; official helper types, focused Error-only constraint guard and8 controlled cleanup scenarios pass. Actual3 event HAP rebuild still root-owned.",
+      "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence. Root actual6-persona HAP batch passed Capture/Recorder/RecorderDenied, failed3 event personas on TS87; corrected event source must pass real unchanged ArkTS checker and runtime before closure. Normal KEEP_BACKGROUND_RUNNING at equal normal APL needs no extra ACL/profile exception; actual installed GRANTED still mandatory.",
       "gap_closed": false
     },
     "behavior:media-recording-input-backends-missing": {
@@ -31,8 +31,8 @@
     "behavior:audio-interrupt-haptic-renderer-dependency": {
       "status": "candidate_prepared",
       "source_finding": "AudioHapticPlayerImpl Start calls actual audioPlayer Start; independent Renderer PCM callbacks cannot demonstrate interrupt focus or audio/vibration synchronization.",
-      "candidate": "Public two-normal-UID MIC owner/VOICE_COMMUNICATION contender candidate with actual interrupt/error callbacks, real PCM/checkpoints/states/native timestamps, precise Start interval and fresh action nonce handshake. Actual fixed source policy row/provenance recorded; no self-induced background stop is accepted as focus evidence. Round5 implements legitimate normal audioRecording tasks/WantAgent/notification user consent and true MIC primer for contender before VOIP; actual officialSDK3ABI links and helper official types pass. No fake foreground or privileged ACL/API. Fresh readiness/PCM and real task service/token checks remain root-owned.",
-      "remaining": "Full ordinary UI HAP builds, actual normal KEEP_BACKGROUND_RUNNING install/profile grant, real notification/MIC user answers, two-UID task/service/session/focus timing and fresh PCM through actual background transitions on new representative image. Foreground restoration before resume if required must be real UI; any pre-contender background stop/cancellation fails. Actual audio/haptic synchronized playback/vibration remains unimplemented/unaccepted.",
+      "candidate": "Public two-normal-UID MIC owner/VOICE_COMMUNICATION contender candidate with actual interrupt/error callbacks, real PCM/checkpoints/states/native timestamps, precise Start interval and fresh action nonce handshake. Actual fixed source policy row/provenance recorded; no self-induced background stop is accepted as focus evidence. Round5 implements legitimate normal audioRecording tasks/WantAgent/notification user consent and true MIC primer for contender before VOIP; actual officialSDK3ABI links and helper official types pass. No fake foreground or privileged ACL/API. Fresh readiness/PCM and real task service/token checks remain root-owned. Round6 actual official HAP TS87 arbitrary-catch-throw errors repaired using genuine new Error with explicit lossless BusinessError details; official helper types, focused Error-only constraint guard and8 controlled cleanup scenarios pass. Actual3 event HAP rebuild still root-owned.",
+      "remaining": "Full ordinary UI HAP builds, actual normal KEEP_BACKGROUND_RUNNING install/profile grant, real notification/MIC user answers, two-UID task/service/session/focus timing and fresh PCM through actual background transitions on new representative image. Foreground restoration before resume if required must be real UI; any pre-contender background stop/cancellation fails. Actual audio/haptic synchronized playback/vibration remains unimplemented/unaccepted. Root actual6-persona HAP batch passed Capture/Recorder/RecorderDenied, failed3 event personas on TS87; corrected event source must pass real unchanged ArkTS checker and runtime before closure. Normal KEEP_BACKGROUND_RUNNING at equal normal APL needs no extra ACL/profile exception; actual installed GRANTED still mandatory.",
       "gap_closed": false
     },
     "behavior:media-codec-base-partial": {
@@ -242,6 +242,13 @@
       "tests": 33,
       "evidence": "docs/capability-audit/parallel/media/round5/knowledge-prior-guards-01.log",
       "scope": "Prior real query/NAPI body and exact whole-source photo/Knowledge composition regressions after new GN and known-state upgrade change; controlled RDB/token dependencies are not product runtime."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_audio_background.py -v",
+      "result": "passed",
+      "tests": 1,
+      "evidence": "docs/capability-audit/parallel/media/round6/background-host-01.log",
+      "scope": "Actual officialSDK helper types, focused Error-only throw constraint guard with3 rejected negative cases,8 controlled actual-helper lifecycle scenarios including all3 original BusinessError preservation paths. Complete real ArkTS/HAP and device runtime remain root gates."
     }
   ],
   "integration_requests": [
@@ -303,7 +310,7 @@
       "id": "media-recorder-real-product-and-public-caller",
       "owner": "parent",
       "request": "See round4/RECORDER_CANDIDATE.md. Apply player_framework/recorder_configuration, compile full approved native_avrecorder.cpp under real product flags/library link. Official SDK26 compile+link two batch_media_recorder cpp sources with -lavrecorder -lnative_window -lnative_buffer -lace_napi.z, actual grant-dialog ETS HAP. Parent runner/root ALSA gets fresh external NRZ64 PCM only; normal private HAP receives only7680-byte fresh tile video challenge. Two real AAC/AVC MP4 outputs, explicit actual external ffprobe/ffmpeg AAC/AVC decoder needed (not present in media host PATH). Parent shared final verifier checks real decode/content/PTS/sync/lifecycle/roles/new representative runtime gate. Exact review .patch context and CRLF full payload may need parent-owned precise .gitattributes entries. Round5 standard CLI is --source-root PATH [--product PRODUCT] [--require-patched]; native SDK evidence and output hashes are in round5/native-sdk-01.json.",
-      "status": "official_public_SDK_three_ABI_links_passed_product_TU_library_HAP_decode_and_guest_runtime_pending"
+      "status": "parent_reports_actual_Recorder_and_RecorderDenied_HAP_builds_passed_fresh_product_decode_runtime_pending"
     },
     {
       "id": "media-knowledge-two-actual-TU-retry",
@@ -313,8 +320,8 @@
     {
       "id": "media-public-audio-events",
       "owner": "parent",
-      "request": "See round5/HANDOFF.md (supersedes idle mode2). Actual final SDK26 three-ABI libraries link, official ETS helper types pass. Root HAP adds status/abort declarations, ordinary KEEP_BACKGROUND_RUNNING install/profile allowance, EntryAbility audioRecording backgroundModes and real Start button/notification/MIC dialogs. Mode2 is real MIC primer->nonce ACK->Stop/Release->actual VOIP. Wait actual background_started plus independent service task/notification/token; after second HAP grant verify owner latest actual RUNNING/advancing/fresh PCM before contender_start ACK. Preserve own primer files/events and fail pre-VOIP background stops. Root controls all actual UI/token/runner/verifier and new representative runtime; no capability closure.",
-      "status": "candidate_ready_actual_normal_background_authorization_HAP_two_UID_runtime_pending"
+      "request": "See round6/HANDOFF.md and round5 operational protocol. Retry3 actual official event HAP personas after TS87 catch conversion; strict host TS alone was insufficient, no checker downgrade. Keep normal signer ACL[], no extra normal permission profile exception; actual token query-background GRANTED, notification/MIC consent, BGT task/notification and latest real owner RUNNING/fresh PCM after second-app setup remain root gates. All native source/library hashes unchanged; no native recompile required.",
+      "status": "corrected_ETS_ready_root_actual3_event_HAP_retry_and_runtime_pending"
     }
   ],
   "remaining_gaps": [
@@ -324,7 +331,7 @@
     },
     {
       "id": "behavior:audio-capture-and-dependent-pipelines",
-      "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence."
+      "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence. Root actual6-persona HAP batch passed Capture/Recorder/RecorderDenied, failed3 event personas on TS87; corrected event source must pass real unchanged ArkTS checker and runtime before closure. Normal KEEP_BACKGROUND_RUNNING at equal normal APL needs no extra ACL/profile exception; actual installed GRANTED still mandatory."
     },
     {
       "id": "behavior:media-recording-input-backends-missing",
@@ -332,7 +339,7 @@
     },
     {
       "id": "behavior:audio-interrupt-haptic-renderer-dependency",
-      "remaining": "Full ordinary UI HAP builds, actual normal KEEP_BACKGROUND_RUNNING install/profile grant, real notification/MIC user answers, two-UID task/service/session/focus timing and fresh PCM through actual background transitions on new representative image. Foreground restoration before resume if required must be real UI; any pre-contender background stop/cancellation fails. Actual audio/haptic synchronized playback/vibration remains unimplemented/unaccepted."
+      "remaining": "Full ordinary UI HAP builds, actual normal KEEP_BACKGROUND_RUNNING install/profile grant, real notification/MIC user answers, two-UID task/service/session/focus timing and fresh PCM through actual background transitions on new representative image. Foreground restoration before resume if required must be real UI; any pre-contender background stop/cancellation fails. Actual audio/haptic synchronized playback/vibration remains unimplemented/unaccepted. Root actual6-persona HAP batch passed Capture/Recorder/RecorderDenied, failed3 event personas on TS87; corrected event source must pass real unchanged ArkTS checker and runtime before closure. Normal KEEP_BACKGROUND_RUNNING at equal normal APL needs no extra ACL/profile exception; actual installed GRANTED still mandatory."
     },
     {
       "id": "behavior:media-codec-base-partial",
@@ -356,14 +363,16 @@
     "source_out_modified": false,
     "heavy_jobs_started": 0,
     "qemu_hdc_used": false,
-    "round5": "No Docker/Ninja/product build/QEMU/HDC. Parent explicitly authorized sequential light local actual public API26 SDK compiles and host checks; no heavy lease used."
+    "round5": "No Docker/Ninja/product build/QEMU/HDC. Parent explicitly authorized sequential light local actual public API26 SDK compiles and host checks; no heavy lease used.",
+    "round6": "Only local official SDK TypeChecker/helper compile and controlled host cleanup; no Docker/HAP/product/native compiler/QEMU/HDC/heavy jobs."
   },
   "preserved_failures": [
     "docs/capability-audit/parallel/media/host-checks-01.log: missing fixture manifest and unsupported macOS leak detector; fixed without relaxing ASan/UBSan or pixel assertions",
     "docs/capability-audit/parallel/media/source-review-01.failure.json: git show needed HEAD:./path inside nested drivers/peripheral/audio directory; read-only query fixed",
     "docs/capability-audit/parallel/media/round5/background-sdk-types-01..04.log: actual SDK module/type mismatch and explicitly handled file exceptions repaired; official helper types now pass",
     "docs/capability-audit/parallel/media/round5/background-host-01.log: controlled disk EIO originally rejected async cleanup Promise; actual stop/unsubscribe now guaranteed and error reported, host02 passes",
-    "round5/gn-dependencies.json: parent actual current6-TU diagnostics,4pass/2missing header; actual retry/link pending"
+    "round5/gn-dependencies.json: parent actual current6-TU diagnostics,4pass/2missing header; actual retry/link pending",
+    "round6/arkts-throw-fix.json records all3 parent real official event HAP TS87 failures and frozen input SHA; source repaired, actual unchanged ArkTS/HAP recheck pending"
   ],
   "evidence_sha256": {
     "docs/capability-audit/parallel/media/REVIEW.md": "5303bdca065383dd8a80ab47a181e0a66f02a73040430921a0f18f4533f22f7f",
@@ -414,7 +423,7 @@
     "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-03.log": "002fed5da8200c5c1b761485e0df10fe43905eaf51a158d17b36c6c514cc5ec6",
     "docs/capability-audit/parallel/media/round4/knowledge-build-fix-host-02.log": "1241347f380e9c3a0bfbe7b88bd98d8378b615752dfabfcea98265454fe28d0c",
     "docs/capability-audit/parallel/media/round4/AUDIO_EVENTS_CANDIDATE.md": "41a4ca1a6cac791715dacf8176ee61acddbecd37772d3feb391964c441e7ddb3",
-    "docs/capability-audit/parallel/media/round5/HANDOFF.md": "22fc0d08164d5bcb5c84d38667f690fad30d6eea01fc4e5c0063552a5bb52933",
+    "docs/capability-audit/parallel/media/round5/HANDOFF.md": "8eee8fe8b58fcaf1b2501bc54adb3703196c9b821d90a08539c80d3dfd790776",
     "docs/capability-audit/parallel/media/round5/audio-events-host-01.log": "dc7b4fd45c233673e47e0cad6b6aa8fcf5399cf4d973e22bb11d6d6830194562",
     "docs/capability-audit/parallel/media/round5/audio-events-host-02.log": "fc525469b91d104339e0dee792731cdd6e92eb17da1cb09a67310a41b41f7e5a",
     "docs/capability-audit/parallel/media/round5/background-host-01.log": "df589150a71d763bd620e62ad0fc23a4a8b442a797587e91ac6919701c3eb600",
@@ -440,7 +449,10 @@
     "docs/capability-audit/parallel/media/round5/native-sdk-02-audio-event-x86_64-audio_event.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "docs/capability-audit/parallel/media/round5/native-sdk-02-audio-event.json": "7fda053d2f5081a86567cb709a30ddf722c96d782ee1f5456006a9ab7276b4fc",
     "docs/capability-audit/parallel/media/round5/native-sdk-driver-01.log": "de2a29319edb3101f206323e7a6c0b2e6c7be94a3fb70b3db2cc10806bb90b07",
-    "docs/capability-audit/parallel/media/round5/native-sdk-driver-02.log": "b6176e114cda0c2cffcd72cd9e0d29737a56b53fc07f23697cd55f5c46710e7b"
+    "docs/capability-audit/parallel/media/round5/native-sdk-driver-02.log": "b6176e114cda0c2cffcd72cd9e0d29737a56b53fc07f23697cd55f5c46710e7b",
+    "docs/capability-audit/parallel/media/round6/HANDOFF.md": "82a56e7f41a2d0d69278c53c65aec48545029c6dff99190720312dbf3901b8a8",
+    "docs/capability-audit/parallel/media/round6/arkts-throw-fix.json": "cd6efc377c3d7bd7e107bacdea503c386f3d8e087f0b5fcf4d8c1d873c5f6c4e",
+    "docs/capability-audit/parallel/media/round6/background-host-01.log": "9511a7a146fe5868e8c79d94a4dd28ee518dd22fa454a5fbd4dd37744277bab6"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
@@ -465,6 +477,7 @@
     "ci/capability-audit/fixtures/batch_media/audio_capture/public_sdk.json",
     "ci/capability-audit/fixtures/batch_media/audio_events/background_lifecycle_harness.js",
     "ci/capability-audit/fixtures/batch_media/audio_events/fixed-focus-policy.json",
+    "ci/capability-audit/fixtures/batch_media/audio_events/limited_throw_guard.js",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
     "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
@@ -569,6 +582,9 @@
     "docs/capability-audit/parallel/media/round5/native-sdk-02-audio-event.json",
     "docs/capability-audit/parallel/media/round5/native-sdk-driver-01.log",
     "docs/capability-audit/parallel/media/round5/native-sdk-driver-02.log",
+    "docs/capability-audit/parallel/media/round6/HANDOFF.md",
+    "docs/capability-audit/parallel/media/round6/arkts-throw-fix.json",
+    "docs/capability-audit/parallel/media/round6/background-host-01.log",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
     "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
@@ -633,12 +649,14 @@
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
   "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
-  "handoff": "docs/capability-audit/parallel/media/round5/HANDOFF.md",
+  "handoff": "docs/capability-audit/parallel/media/round6/HANDOFF.md; docs/capability-audit/parallel/media/round5/HANDOFF.md",
   "round3_base_commit": "d4e74c00caa47127906075c57d59500d60844f04",
   "round3_status": "Capturer_public_caller_SDK_HAP_parent_compile_passed_real_HOLIDAY_service_producer_host_passed_all7_runtime_open",
   "round3_holiday_base_commit": "bb34c6f7f1534be701e64337f0708e49f6b50bc9",
   "round4_base_commit": "e0d1137035d1283aa6a5b7849b86e262256fe272",
   "round4_status": "Recorder8_Knowledge11_AudioEvents3_and_prior33_host_tests_passed_product_SDK_links_and_actual_token_twoApp_decode_runtime_pending",
   "round5_base_commit": "caeaf60ba125eb06cdece16735aa89886003cf8e",
-  "round5_status": "47_host_checks_and_final_public_SDK_6_links_passed_normal_background_candidate_prepared_all7_runtime_open"
+  "round5_status": "47_host_checks_and_final_public_SDK_6_links_passed_normal_background_candidate_prepared_all7_runtime_open",
+  "round6_base_commit": "63395d37424f03d6894d83fb3e1fd8b335d5527f",
+  "round6_status": "actual3_event_HAP_TS87_failures_fixed_host_types_Error_guard8_cleanup_scenarios_pass_root_real_HAP_retry_pending_all7_open"
 }

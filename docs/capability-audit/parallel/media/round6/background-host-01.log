@@ -1,0 +1,8 @@
+test_actual_ETS_helper_official_API26_types_and_failure_cleanup (test_batch_media_audio_background.Background.test_actual_ETS_helper_official_API26_types_and_failure_cleanup) ... Official SDK TypeChecker Error-only host guard: real candidate passes; catch unknown/string/any throw regressions rejected. Full real ArkTS/HAP recheck required.
+Actual ETS helper with controlled SDK dependencies:8 scenarios passed, including original BusinessError code/message/name/stack/data retained through all3 converted Error paths and abort/cleanup; not runtime proof
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.685s
+
+OK

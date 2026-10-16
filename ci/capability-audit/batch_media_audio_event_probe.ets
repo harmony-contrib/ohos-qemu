@@ -71,7 +71,11 @@ class AudioRecordingSession {
       }
     } catch (error) {
       // SDK file errors propagate. Evidence failure must never imply task success.
-      throw error;
+      const actual = error as BusinessError;
+      // ArkTS requires a real Error. Preserve the original BusinessError fields
+      // in its message even when the SDK rejected with a plain business object.
+      throw new Error(JSON.stringify({ name: actual.name, code: actual.code,
+        message: actual.message, stack: actual.stack, data: actual.data }));
     }
     hilog.info(0xD003900, 'BatchMediaAudioEvent', '%{public}s', text);
   }
@@ -136,7 +140,11 @@ class AudioRecordingSession {
       }
       throw new Error('Native microphone readiness timed out or task canceled');
     } catch (error) {
-      throw error;
+      const actual = error as BusinessError;
+      // ArkTS requires a real Error. Preserve the original BusinessError fields
+      // in its message even when the SDK rejected with a plain business object.
+      throw new Error(JSON.stringify({ name: actual.name, code: actual.code,
+        message: actual.message, stack: actual.stack, data: actual.data }));
     }
   }
 
@@ -200,7 +208,8 @@ class AudioRecordingSession {
           this.finish(-1, false);
         }
       }
-      throw error;
+      throw new Error(JSON.stringify({ name: actual.name, code: actual.code,
+        message: actual.message, stack: actual.stack, data: actual.data }));
     }
   }
 

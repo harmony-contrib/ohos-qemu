@@ -28,11 +28,12 @@ not real task/notification/MIC permission proof.
 
 Root builder changes required for both distinct ordinary focus bundles:
 
-- Request normal ohos.permission.KEEP_BACKGROUND_RUNNING with a valid ordinary
-  signing/profile allowance; keep ordinary APL, actual unique UIDs and MIC user
-  grant. Actual fixed permission definition is system_grant/normal/NORMAL,
-  provisionEnable=true, since8. This is install/system grant of a normal
-  permission, not the privileged SYSTEM or SPECIAL_SCENARIO permissions.
+- Request normal ohos.permission.KEEP_BACKGROUND_RUNNING; retain the normal
+  signer with ACL[], ordinary APL, actual unique UIDs and MIC user grant. Root
+  verified actual IsAclSatisfied: equal normal APL/availableLevel requires no
+  extra ACL/profile exception. Independently query the real installed grant.
+  The permission is system_grant/normal/NORMAL, provisionEnable=true, since8;
+  no privileged SYSTEM or SPECIAL_SCENARIO permission is needed.
 - Set EntryAbility backgroundModes to ["audioRecording"]. Preserve actual
   normal UIAbility Context; the WantAgent targets that context's actual bundle,
   ability and module. No APL elevation, system identity, foreground override or
@@ -47,7 +48,7 @@ Root builder changes required for both distinct ordinary focus bundles:
   the actual MIC dialog. If notifications are disabled, the public
   requestEnableNotification(Context) dialog must also be answered by the real
   permission controller/user; disabled/denied remains failure. This additional
-  real notification consent and normal install permission may be required.
+  real notification consent and actual normal install grant must be verified.
 
 Modes1/2 request a real public audioRecording task only after their actual native
 private ready record has stateResult0/RUNNING, positive real frames and copied
