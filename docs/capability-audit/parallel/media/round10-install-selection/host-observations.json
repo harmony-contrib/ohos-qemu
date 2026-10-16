@@ -1,0 +1,110 @@
+{
+  "scope": "isolated_policy_and_source_type_checks_with_controlled_dependencies_NOT_image_or_guest_acceptance",
+  "baseline_commit": "afa564ae0f4a603d933f63e9cff78674ed8e3cbf",
+  "image_policy_checks": [
+    {
+      "provider": "settings",
+      "fault": "missing_target",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "settings",
+      "fault": "wrong_directory",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "settings",
+      "fault": "removable_true",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "settings",
+      "fault": "uninstall_veto",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "photos",
+      "fault": "missing_target",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "photos",
+      "fault": "wrong_directory",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "photos",
+      "fault": "removable_true",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    },
+    {
+      "provider": "photos",
+      "fault": "uninstall_veto",
+      "source_install_list_absent": true,
+      "requested_image_files": [
+        "install_list_capability.json",
+        "install_list_permissions.json"
+      ],
+      "isolated_policy_check_accepted": true
+    }
+  ],
+  "admin_source_type_checks": [
+    {
+      "removable": false,
+      "python_type": "bool",
+      "actual_selection_branch_accepted": true
+    },
+    {
+      "removable": 0,
+      "python_type": "int",
+      "actual_selection_branch_accepted": true
+    },
+    {
+      "removable": 0.0,
+      "python_type": "float",
+      "actual_selection_branch_accepted": true
+    },
+    {
+      "removable": true,
+      "python_type": "bool",
+      "actual_selection_branch_accepted": false
+    }
+  ],
+  "closed_requirements": [],
+  "first_artifact_behavior_gate_passed": false
+}
