@@ -88,5 +88,24 @@ class MmsSourceProvider(unittest.TestCase):
                 with self.assertRaises(ValueError): M.policy(json.dumps([row]).encode(), expected)
             with self.assertRaises(ValueError): M.policy(json.dumps([expected, expected]).encode(), expected)
 
+    def test_BMS_boolean_policy_fields_reject_numeric_lookalikes(self):
+        for field, numeric in (('singleton', 1), ('keepAlive', 0)):
+            row = copy.deepcopy(M.CAPABILITY);row[field] = numeric
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                M.policy(json.dumps([row]), M.CAPABILITY)
+        for index in range(len(M.GRANTS['permissions'])):
+            row = copy.deepcopy(M.GRANTS)
+            row['permissions'][index]['userCancellable'] = int(row['permissions'][index]['userCancellable'])
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                M.policy(json.dumps([row]), M.GRANTS)
+
+    def test_actual_BMS_install_selection_requires_the_unique_original_directory(self):
+        entry = {'app_dir': '/system/app/com.ohos.mms', 'removable': False}
+        self.assertEqual(M.install_entry(json.dumps({'install_list': [entry]})), entry)
+        for rows in ([], [dict(entry, removable=True)], [dict(entry, removable=0)], [entry, entry],
+                     [dict(entry, app_dir='/system/app/Mms')]):
+            with self.subTest(rows=rows), self.assertRaises(ValueError):
+                M.install_entry(json.dumps({'install_list': rows}))
+
 
 if __name__ == '__main__': unittest.main()

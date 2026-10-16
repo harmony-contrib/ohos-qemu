@@ -272,3 +272,12 @@ Settings05实际完整产品Linux26.0.0.39 SDK编译PASS（256.309s），真实5
 根修复external_input在share_picker后继全五文件已完整时的整栈重放，拒绝缺文件/未知共享后继；Settings镜像检查同时要求所有当前候选组件完整。MMS新增只读源/原profile/OS signer/原两份授权校验及强制镜像HAP检查；26项相关package/source mutation检查PASS。实际签名/镜像检查尚待执行，不把上述unsigned HAP当交付或运行验收。
 
 最新ETS ready短写修复后，3个普通音频event HAP在真实API26 unsigned构建和native/权限/后台合同中全部PASS（r52-three-audio-event-ready-completion-HAP-roles-04）；仍待guest。根自查MMS签名helper提取公共输入函数后 certificates lambda 作用域错误，提升为模块函数并补外部签名/Git/CMS超时；将用真实公共OS key/profile/HAP和独立ext4反例完成签名与镜像检查，未提前称通过。
+# MMS actual preinstall selection follow-up (2026-10-16)
+
+The image verifier now extracts the actual install_list.json and requires the
+unique original /system/app/com.ohos.mms entry with removable=false. Source-only
+checks did not cover BMS image selection. The policy matcher also checks JSON
+types recursively; numeric 0/1 cannot replace BMS boolean fields. Six focused
+host tests pass, including missing, duplicated, changed-path, removable and
+numeric-boolean counterexamples. Real OS signing and ext4 counterexamples are
+the next batch. No new guest acceptance or audit closure is claimed.

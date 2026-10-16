@@ -45,6 +45,16 @@ def unique(pairs):
     return result
 
 
+def same_json(actual, expected):
+    """Match BMS JSON types as well as values (Python bool equals int)."""
+    if type(actual) is not type(expected): return False
+    if isinstance(expected, dict):
+        return actual.keys() == expected.keys() and all(same_json(actual[k], v) for k, v in expected.items())
+    if isinstance(expected, list):
+        return len(actual) == len(expected) and all(same_json(a, b) for a, b in zip(actual, expected))
+    return actual == expected
+
+
 def cms(path, signer=None):
     command = ['openssl', 'cms', '-verify', '-inform', 'DER', '-noverify', '-in', str(path)]
     if signer is not None: command += ['-signer', str(signer)]
@@ -74,10 +84,19 @@ def policy(data, expected, require_current=False):
     rows = value['install_list'] if isinstance(value, dict) else value
     matches = [r for r in rows if r.get('bundleName') == 'com.ohos.mms']
     desired = dict(expected, app_signature=[SIGNATURE])
-    if matches not in (([desired],) if require_current else ([expected], [desired])):
+    allowed = ([desired],) if require_current else ([expected], [desired])
+    if not any(same_json(matches, row) for row in allowed):
         raise ValueError('unknown MMS preinstall capability/grants; preserving source')
     matches[0]['app_signature'] = [SIGNATURE]
     return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode()
+
+
+def install_entry(data):
+    installs = json.loads(data, object_pairs_hook=unique)['install_list']
+    expected = {'app_dir': '/system/app/com.ohos.mms', 'removable': False}
+    if not same_json([r for r in installs if r.get('app_dir') == expected['app_dir']], [expected]):
+        raise ValueError('unique original MMS preinstall directory required')
+    return expected
 
 
 def replace(path, data):
@@ -174,10 +193,7 @@ def verify(root):
     directory = root / 'vendor/ohemu/virt/preinstall-config'
     for name, expected in (('install_list_capability.json', CAPABILITY), ('install_list_permissions.json', GRANTS)):
         policy(read(directory / name), expected, require_current=True)
-    installs = json.loads(read(directory / 'install_list.json'), object_pairs_hook=unique)['install_list']
-    if [r for r in installs if r.get('app_dir') == '/system/app/com.ohos.mms'] != [
-            {'app_dir': '/system/app/com.ohos.mms', 'removable': False}]:
-        raise ValueError('unique original MMS preinstall directory required')
+    install_entry(read(directory / 'install_list.json'))
     return actual
 
 

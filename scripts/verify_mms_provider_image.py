@@ -83,6 +83,12 @@ def main():
             result.update(inspect_hap(hap, source_module))
             result.update(verify_signature(hap, args.source_root, scratch, provider.PROJECT + '/signature/mms.p7b'))
             if args.system_image:
+                directory = scratch / 'install_list.json';directory.mkdir()
+                path, inode = dump_unique_file(args.system_image, tuple(prefix + '/etc/app/install_list.json'
+                    for prefix in ('', '/system')), directory, debugfs_path())
+                provider.install_entry(path.read_bytes())
+                result['image_install_entry'] = {**inode, 'sha256': file_sha256(path),
+                                                'entry': provider.install_entry(path.read_bytes())}
                 for name, expected in (('install_list_capability.json', provider.CAPABILITY),
                                        ('install_list_permissions.json', provider.GRANTS)):
                     directory = scratch / name;directory.mkdir()
