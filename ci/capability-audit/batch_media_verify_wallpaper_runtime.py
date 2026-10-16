@@ -525,8 +525,9 @@ def verify_external_observations(value, env, challenge, uris, seed_uid, settings
         tree = json.loads(checked(action['layout']).read_text())
         if action['ui_bundle'] not in (PHOTOS, SEED):
             raise ValueError('actual import Photos provider/ordinary host owner required')
-        node = select_node(tree, action['ui_bundle'], identifier='advanced_dialog_button_1', clickable=True)
-        if node != action['node']:
+        from photos_dialog_contract import select_dialog
+        node, contract = select_dialog(tree, action['ui_bundle'], 'save', label=imported['app_label'], count=1)
+        if node != action['node'] or action.get('dialog') != contract or action.get('selector') != {'text': contract['allow']}:
             raise ValueError('actual Photos save consent control required')
         photos_provider(checked(action['provider_dump']).read_text(), SEED)
         checked(action['screenshot'])
@@ -593,11 +594,19 @@ def verify_external_observations(value, env, challenge, uris, seed_uid, settings
     query = json.loads(checked(cleanup['actual_asset_query']).read_text())
     if set(query) != {'queried_uris', 'active_uris'} or query['queried_uris'] != uris or query['active_uris'] != []:
         raise ValueError('independent real media query must show created assets removed from active library')
-    if not cleanup['ui_actions']:
-        raise ValueError('actual user Photos delete confirmation evidence required')
-    for action in cleanup['ui_actions']:
+    if len(cleanup['ui_actions']) != 10:
+        raise ValueError('five actual Photos browser delete actions and titled confirmations required')
+    for index,action in enumerate(cleanup['ui_actions']):
         tree = json.loads(checked(action['layout']).read_text())
-        node = select_node(tree, PHOTOS, **action['selector'], clickable=True)
+        if index % 2:
+            from photos_dialog_contract import select_dialog
+            node, contract = select_dialog(tree, PHOTOS, 'delete')
+            if action['dialog'] != contract or action['selector'] != {'text':contract['allow']}:
+                raise ValueError('delete confirmation differs from actual Photos single-image dialog')
+        else:
+            if action['selector'] != {'identifier':'ToolBarButtonDelete'} or action.get('dialog'):
+                raise ValueError('actual Photos browser delete toolbar action required')
+            node = select_node(tree, PHOTOS, **action['selector'], clickable=True)
         if node != action['node']:
             raise ValueError('cleanup action differs from actual Photos UI control')
         checked(action['screenshot'])

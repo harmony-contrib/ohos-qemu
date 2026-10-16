@@ -251,6 +251,19 @@ class Coordinator(Runtime):
                 'selector':selector,'ui_bundle':bundle,'host_ns':time.monotonic_ns()}
         self.value['ui_actions'].append(action); self.save(); return action
 
+    def photos_dialog(self,owner,kind,*,host=None):
+        from photos_dialog_contract import select_dialog
+        end=min(time.monotonic()+30,self.deadline or float('inf'))
+        while time.monotonic()<end:
+            try:
+                tree,path=self.ui.layout(label='actual-Photos-'+kind+'-dialog')
+                node,contract=select_dialog(tree,owner,kind,**(
+                    {'label':self.haps['seed']['app_label'],'count':1} if kind=='save' else {}))
+                action=self.observed_click(owner,{'text':contract['allow']},host=host,frame=(tree,path,node))
+                action['dialog']=contract;self.save();return action
+            except (LayoutNotReady,NodeNotReady):time.sleep(.2)
+        raise ValueError('actual titled Photos confirmation unavailable')
+
     def receipt(self,request,name):
         supplied=request['details'].get('output',request['details'].get('required_output'))
         expected=self.runtime_output/name
@@ -560,7 +573,7 @@ class Coordinator(Runtime):
                 self.observed_click(SEED,{'identifier':'wallpaper_import_'+case})
                 owner=self.plan.get('save_ui_bundle',SEED)
                 if owner not in (SEED,PHOTOS):raise ValueError('wrong Photos save provider/host')
-                control=self.observed_click(owner,{'identifier':'advanced_dialog_button_1'},host=SEED)
+                control=self.photos_dialog(owner,'save',host=SEED)
                 control['case']=case;actions.append(control);self.read_log((index+1)*2)
             raw=self.read_log(10);_,self.uris=seed_rows(raw,self.run)
             write_json(destination,{'run_id':self.run,'boot_id':self.boot_id,'seed_uid':self.uids['seed'],
@@ -616,7 +629,7 @@ class Coordinator(Runtime):
                 selections.append({'case':case,'layout':record(path),'screenshot':record(image),'node':node,'metrics':metrics})
                 for selector in self.plan.get('photo_browser_navigation',[]):self.observed_click(PHOTOS,selector)
                 actions.append(self.observed_click(PHOTOS,{'identifier':'ToolBarButtonDelete'}))
-                actions.append(self.observed_click(PHOTOS,{'identifier':'advanced_dialog_button_1'}))
+                actions.append(self.photos_dialog(PHOTOS,'delete'))
             after=self.query_assets('after')
             write_json(destination,{'run_id':self.run,'boot_id':self.boot_id,'deleted_uris':self.uris,
                 'actual_asset_query':after,'before_asset_query':before,'ui_actions':actions,'challenge_selections':selections,

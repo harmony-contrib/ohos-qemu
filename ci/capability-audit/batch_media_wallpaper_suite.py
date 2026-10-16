@@ -363,7 +363,9 @@ def verify_evidence(evidence_path, archive_path, boot_path):
         for role,bundle,permissions in [('seed',SEED,[]),('query',QUERY,[READ])]:
             item=caller_sources(artifacts[role]);signed=checked(inputs[role]['signed_hap'])
             contract=Path(temporary)/('contract-'+role);contract.mkdir()
-            validate_hap(inputs[role],role,challenge,env['udid'],contract)
+            actual_hap=validate_hap(inputs[role],role,challenge,env['udid'],contract)
+            if role=='seed' and json.loads(checked(runtime['import_observation']).read_text()).get('app_label')!=actual_hap['app_label']:
+                raise ValueError('Photos consent caller label differs from the actual SDK-bound label')
             proof=value[role+'_signing'];checked(proof['signature_verification']);checked(proof['decoded_profile'])
             if signatures.hap_contents(checked(item['unsigned_hap']))[1]!=signatures.hap_contents(signed)[1]:raise ValueError('actual signed compiled payload changed')
             actual=signatures.verify_signed_hap_artifacts(signed,bundle,permissions,env['udid'],dist,jar,Path(temporary)/role,

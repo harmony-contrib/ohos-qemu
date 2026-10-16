@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-17T04:16:34.512713+08:00",
+  "updated_at": "2026-10-17T04:36:21.675869+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "2801220",
+  "checkpoint_commit": "dac4b7f",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -1420,12 +1420,16 @@
     "actual_GN_preflight_and_gate_raw_batch": {
       "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/GN-preflight-and-raw-gate-binding-batch.json",
       "sha256": "bce20353281de40aeb651626933384f4b57baddd3fced447fe6d04099b0be5ca"
+    },
+    "Knowledge_SDK105_and_source_dialog_batch": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/Knowledge-SDK105-and-source-dialog-batch.json",
+      "sha256": "0aeb0f4fccf18c63f24aa589b303d2c1c6c44d891577531285563435b3b48feb"
     }
   },
   "agents": {
-    "apps": "b1ce467 independent first gate gaps reproduced/integrated by root; new same-guest Knowledge collector active, exclusive new files",
-    "media": "2801220 integrated Knowledge four-role projects+raw oracle; actual SDK10501 all4 failed device profile; current own generator/ETS fixes in progress",
-    "system": "official calendar source already integrated by root; open82 ledger actionable categorization in progress, docs only",
+    "apps": "new Knowledge same-guest collector and actual SDK/helper adapter review finishing; root owns all shared suite/build edits",
+    "media": "four actual SDK105 HAPs and independent adapter PASS; separate audio-haptic passive observer/caller candidate under development, no source/out lease",
+    "system": "82-ID handoff and actual source UI contract integrated; source RO lease released; separate Calendar MainAbility candidate development only",
     "network": "prior source/API/focus fixes integrated; no active write or heavy lease",
     "location": "prior 17 TUs/full Rust/API coverage integrated; no active write or heavy lease"
   },
@@ -1449,10 +1453,11 @@
     "Native/HAP dependency success is not new package runtime proof",
     "Actual new fullbuild required for fresh Contacts JS/ABC, MSDP, Wallpaper and HiCollie macro/DSO witness",
     "SDK03 actual HAP and exact strip replay adapter PASS; actual signing/BMS/new guest pending",
-    "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied"
+    "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied",
+    "Knowledge22phase guest still requires fresh helper03, actual four signed roles/Photos consent/READ+WRITE/EXIF-date readback/lifecycle and strict cleanup"
   ],
   "next_required": [
-    "Complete known acceptance fixes plus Knowledge actual SDK/collector integration, then freeze ONE ARM64 phone full images build02; GN-only success does not release remaining five",
+    "Integrate final independent Knowledge collector; freeze ONE full ARM64 phone images build02 using actual GN preflight0; keep future independent source candidates off running source/out",
     "One full ARM64 phone image build, all3 native witnesses and package guards",
     "Fresh helper DSO binding and complete new packaged guest acceptance",
     "Only after representative gate PASS build and accept the other five"
@@ -1466,7 +1471,7 @@
   "MSDP_current_platform_coverage": "15actualtargetsPASS via01unaffected8+02changed7; private fields genuine failures repaired; freshGN/link/newguest pending",
   "MSDP_image_guard_review": "64byte fake and CFIfalse false accept repaired; strong before/build/finish witness+rawGN/log+ELF implemented testsPASS; actual full pipeline pending",
   "runtime_extension_HAPs": "All required Contacts/Wallpaper/seed/query/live full unsigned HAPs PASS; SDK03 exact NativeStrip replay and host adapter PASS; signing/new guest pending",
-  "representative_runtime_integration": "fixed3families, immutable same-directory boot copies, strict raw re-verification and exact cleanup_errors=[]; Contacts mandatory full deadline/navigation; Wallpaper finding closure disabled pending freshnative+AMS; current70host testsPASS and integrated Apps testsPASS; guest pending",
+  "representative_runtime_integration": "fixed4families includes Knowledge22 real phases, strict signed role/observer/transport return proofs, cleanup and sameboot; exact original two Contacts/Wallpaper closures only; newguest pending",
   "SDK_seed_query_live02": "Contacts seed and Wallpaper query actual SDK39 HAP PASS individually; overall batch FAIL from live nonexistent CMake task; original records preserved; tool fix integrated and live-only actual retry pending",
   "engine_dependency_refresh": "090fd4 actual native and official signed HAP both exit0; all5 native transformation replays PASS; ArkWebCore.hap SHA b70307d2c84d48b336e1609d8647a08e6ae414474c4b9d53c34fef834a740e80; NOT QEMU guest acceptance",
   "Wallpaper_native_image_guard": "14ebd31 forced-owned2object+3DSO witness+actualGNselectedfalse/protectedcommands/rawlogs/ELF/image implemented; independently reviewed and7host guard testsPASS; no actual full build/image execution yet",

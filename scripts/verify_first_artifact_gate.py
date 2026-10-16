@@ -22,7 +22,7 @@ REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 REQUIRED_CHECKS |= frozenset(('child-default-profile',))
 REQUIRED_CHECKS |= frozenset(('audio-capture', 'media-recorder', 'audio-revoke', 'audio-focus'))
-REPRESENTATIVE_CHECKS = frozenset(('contacts-picker', 'wallpaper', 'external-inputs'))
+REPRESENTATIVE_CHECKS = frozenset(('contacts-picker', 'wallpaper', 'external-inputs', 'knowledge-holiday'))
 
 
 def verified_payload(name, path, identity, environment):

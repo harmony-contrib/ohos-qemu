@@ -16,8 +16,9 @@ FAMILIES = {
         ('inputs', 'signer-dist', 'observer-local', 'observer-receipt'), ('signer-jar',)),
     'wallpaper': ('batch_media_wallpaper_suite', ('artifacts',), ()),
     'external-inputs': ('batch_system_live_inputs_suite', ('artifacts',), ()),
+    'knowledge-holiday': ('batch_media_knowledge_suite', ('artifacts',), ()),
 }
-TIMEOUTS = {'contacts-picker': 3600, 'wallpaper': 5400, 'external-inputs': 1800}
+TIMEOUTS = {'contacts-picker': 3600, 'wallpaper': 5400, 'external-inputs': 1800, 'knowledge-holiday': 3600}
 REQUIRED = frozenset(FAMILIES)
 
 
@@ -106,6 +107,10 @@ def verify_family(name, path, archive, environment):
         raise ValueError('actual Contacts deadline/navigation boundary observations are incomplete')
     if name == 'wallpaper' and (not isinstance(result, dict) or result.get('native_fallback_and_renderer_verified') is not True):
         raise ValueError('actual Wallpaper native/image/source HAP and renderer connections are incomplete')
+    if name == 'knowledge-holiday' and (not isinstance(result, dict) or
+            result.get('all_phases_verified') is not True or result.get('role_identity_and_signatures_verified') is not True or
+            result.get('observer_product_ABI_verified') is not True or result.get('transport_guest_binding_verified') is not True):
+        raise ValueError('actual Knowledge API phases, signed roles, product observer and guest transport are incomplete')
     return result
 
 
@@ -115,7 +120,8 @@ def verified_closures(name, evidence, archive, environment):
     # GNSS/accelerometer/public still covers a subset of the broad original
     # MSDP finding. It must never close missing clients or other modalities.
     identifiers = {'contacts-picker': ('behavior:contacts-picker-entrypoint-missing-phone',),
-                   'wallpaper': ('behavior:wallpaper-ui-provider-missing',), 'external-inputs': ()}[name]
+                   'wallpaper': ('behavior:wallpaper-ui-provider-missing',), 'external-inputs': (),
+                   'knowledge-holiday': ()}[name]
     return {identifier: {'evidence': str(evidence), 'sha256': digest(evidence),
         'verifier': FAMILIES[name][0] + '.verify_evidence',
         'not_claimed': 'unrelated providers, APIs or broad MSDP client completion'} for identifier in identifiers}

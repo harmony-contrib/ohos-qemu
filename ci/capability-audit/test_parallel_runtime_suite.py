@@ -49,6 +49,7 @@ class ParallelRuntimeSuiteTests(unittest.TestCase):
         suite.load_plan(self.plan_path(self.plan), self.env)
         for mutation in (lambda d: d.update(executable='arbitrary'),
                          lambda d: d['families'].pop('wallpaper'),
+                         lambda d: d['families'].pop('knowledge-holiday'),
                          lambda d: d['families']['wallpaper'].update(argv=['arbitrary']),
                          lambda d: d['families']['contacts-picker'].pop('observer-receipt'),
                          lambda d: d['families']['external-inputs'].update(artifacts='relative.json')):
@@ -118,6 +119,19 @@ class ParallelRuntimeSuiteTests(unittest.TestCase):
         with patch.object(suite, 'verify_family', side_effect=ValueError('raw failure')):
             with self.assertRaisesRegex(ValueError, 'raw failure'):
                 suite.verified_closures('external-inputs', path, self.archive, self.env)
+
+    def test_knowledge_raw_journals_alone_cannot_replace_actual_guest_roles_and_observer(self):
+        path = self.result('knowledge-holiday')
+        complete = dict(all_phases_verified=True, role_identity_and_signatures_verified=True,
+                        observer_product_ABI_verified=True, transport_guest_binding_verified=True)
+        for key in complete:
+            partial = dict(complete); partial[key] = False
+            with patch.object(suite.importlib, 'import_module', return_value=types.SimpleNamespace(
+                    verify_evidence=Mock(return_value=partial))):
+                with self.assertRaisesRegex(ValueError, 'Knowledge API'):
+                    suite.verify_family('knowledge-holiday', path, self.archive, self.env)
+        with patch.object(suite, 'verify_family'):
+            self.assertEqual(suite.verified_closures('knowledge-holiday', path, self.archive, self.env), {})
 
 
 if __name__ == '__main__': unittest.main()

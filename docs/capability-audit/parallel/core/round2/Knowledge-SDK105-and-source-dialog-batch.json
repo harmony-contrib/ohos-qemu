@@ -1,0 +1,71 @@
+{
+  "scope": "actual four caller unsigned SDK builds/helper diagnostic link and source-bound UI/family guard batch ONLY NOT new package/guest",
+  "SDK105": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/evidence.json",
+    "sha256": "8d80201702abf12418060f452e6eff6ca3e5bce605e5ae24d695ce36adef461f"
+  },
+  "SDK_seconds": 28.363567113876343,
+  "haps": [
+    {
+      "project": "knowledge-importer",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-importer/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "09649eddd50b140d6c347e15cbb3a82d88593ad703ce647ec1cd509f9bec360d",
+      "bytes": 81386
+    },
+    {
+      "project": "knowledge-denied",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-denied/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "54929d9436e86e70fafca6c4a6887a7bf2239365648d57a65c8d0b5fcc300599",
+      "bytes": 77328
+    },
+    {
+      "project": "knowledge-query",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-query/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "f348f5f2830613d2f1abdc780cae6da1ef910fd66d7fca1ed6e8c5bc69b5fb67",
+      "bytes": 83462
+    },
+    {
+      "project": "knowledge-curator",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-curator/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "d5713a6f3775fadd1f0289bef1ad5a317cf356b484cf902bd82c24cfd32f2bfa",
+      "bytes": 81163
+    }
+  ],
+  "independent_actual_SDK_adapter": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-SDK105-adapters-02/evidence.json",
+    "sha256": "b005226d833ee19cec61cfcb7418b85973817da03aecc326f28ef7cee423124a"
+  },
+  "initial_adapter_environment_failure": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-SDK105-adapters-01/evidence.json",
+    "sha256": "9a39e6a6b90bb865c622b3380b1dae9665ad7d3fcb6f9ba298a75d097898c877"
+  },
+  "helper_compile_link": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/evidence.json",
+    "sha256": "727a8a632ef48dd03e5f9ea7db44f28ba4276293fd490fc01b8c85c4fbad58d1"
+  },
+  "helper_scope": "fresh GN and existing old product DSOs ONLY; recompile and guest DSO binding after actual full image remains mandatory",
+  "source_UI_contract": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round18-knowledge-UI-contract/ui-contract.json",
+    "sha256": "e65ed60b7d4f022b19c2ebe5ca836992bce595d1d72ba0dc6b81b36a2e4b54df"
+  },
+  "UI_repairs": [
+    "select real source-derived Photos caller/count title and confirm/deny Button subtrees; never use dynamic button numeric suffix as identity",
+    "normal single-image browser deletion preserves actual ToolBarButtonDelete and requires five true titled confirmations plus exact post-delete queries",
+    "SDK-bound actual caller label is independently rechecked"
+  ],
+  "host_regression": {
+    "tests": 56,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round2/Photos-dialog-and-four-family-01.log",
+    "sha256": "52bbe1869e63f417884f53f68a39c014bc6690e18702d784985e020775413399"
+  },
+  "representative_families": [
+    "contacts-picker",
+    "wallpaper",
+    "external-inputs",
+    "knowledge-holiday"
+  ],
+  "knowledge_broad_ledger_closure": false,
+  "source_out_read_leases_released": true,
+  "remaining_five_started": false,
+  "first_artifact_behavior_gate_passed": false
+}

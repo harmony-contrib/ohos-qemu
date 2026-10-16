@@ -90,12 +90,14 @@ class Fixture:
         signed.write_bytes(unsigned.read_bytes())
         consent = []
         for case in runtime.CASES:
-            tree = node(runtime.SEED, 'advanced_dialog_button_1')
-            consent.append({'case': case, 'layout': self.js(tree), 'node': verify.select_node(tree, runtime.SEED,
-                identifier='advanced_dialog_button_1', clickable=True), 'ui_bundle': runtime.SEED,
+            from photos_dialog_contract import select_dialog
+            tree = self.dialog(runtime.SEED, 'save')
+            selected,contract=select_dialog(tree,runtime.SEED,'save',label='Wallpaper challenge',count=1)
+            consent.append({'case': case, 'layout': self.js(tree), 'node': selected, 'dialog':contract,
+                'selector':{'text':contract['allow']}, 'ui_bundle': runtime.SEED,
                 'screenshot': self.challenge['images']['cancel'], 'provider_dump': self.put(provider(runtime.SEED))})
         self.value['import_observation'] = self.js({'run_id': self.run, 'boot_id': self.boot, 'uris': self.uris,
-            'seed_uid': self.seed_uid, 'compiled_module': self.js(module), 'compiled_page': self.challenge['generated_page'],
+            'seed_uid': self.seed_uid, 'app_label':'Wallpaper challenge', 'compiled_module': self.js(module), 'compiled_page': self.challenge['generated_page'],
             'unsigned_hap': runtime.record(unsigned), 'signed_hap': runtime.record(signed), 'consent_actions': consent,
             'build_receipt': self.js({'status': 'pass', 'generated_page_sha256': self.challenge['generated_page']['sha256'],
                                       'unsigned_sha256': runtime.sha(unsigned)}),
@@ -111,12 +113,18 @@ class Fixture:
                                     'permission': 'ohos.permission.SET_WALLPAPER', 'grant': -1}),
             'settings_token_query': self.js({'bundle': runtime.SETTINGS, 'uid': self.settings_uid, 'token_id': 11,
                                              'permission': 'ohos.permission.SET_WALLPAPER', 'grant': 0})})
-        delete = node(runtime.PHOTOS, 'delete-confirm')
+        deletion=[]
+        for _ in runtime.CASES:
+            toolbar=node(runtime.PHOTOS,'ToolBarButtonDelete')
+            deletion.append({'layout':self.js(toolbar),'selector':{'identifier':'ToolBarButtonDelete'},
+                'node':verify.select_node(toolbar,runtime.PHOTOS,identifier='ToolBarButtonDelete',clickable=True),
+                'screenshot':self.challenge['images']['cancel']})
+            tree=self.dialog(runtime.PHOTOS,'delete');selected,contract=select_dialog(tree,runtime.PHOTOS,'delete')
+            deletion.append({'layout':self.js(tree),'selector':{'text':contract['allow']},'dialog':contract,
+                'node':selected,'screenshot':self.challenge['images']['cancel']})
         self.value['cleanup_observation'] = self.js({'run_id': self.run, 'boot_id': self.boot,
             'deleted_uris': self.uris, 'actual_asset_query': self.js({'queried_uris': self.uris, 'active_uris': []}),
-            'ui_actions': [{'layout': self.js(delete), 'selector': {'identifier': 'delete-confirm'},
-                           'node': verify.select_node(delete, runtime.PHOTOS, identifier='delete-confirm', clickable=True),
-                           'screenshot': self.challenge['images']['cancel']}]})
+            'ui_actions': deletion})
         self.value['private_cleanup'] = self.put('')
         self.value['back_return_layout'] = self.js(node(runtime.SETTINGS, 'settings_wallpaper_entry'))
         actions = ['verify-package-identities-and-permissions', 'resolve-service-default-resources',
@@ -157,6 +165,15 @@ class Fixture:
             'for wallpaper_name in desktop-1 desktop-2 lock-1 lock-2 cancel; do test ! -e fixture; done; printf '+marker],
             'exit_code': 0, 'label': 'owned-private-inputs-absent', **self.put(marker+'0\n')})
         self.save()
+
+    def dialog(self,owner,kind):
+        from photos_dialog_contract import ZH
+        spec=ZH[kind];title=spec['title']%('Wallpaper challenge',1) if kind=='save' else spec['title']
+        children=[]
+        for text,identifier in ((title,'title'),(spec['allow'],'advanced_dialog_button_0'),(spec['deny'],'advanced_dialog_button_7')):
+            child=node(owner,identifier,kind='Text' if identifier=='title' else 'Button')
+            child['attributes']['text']=text;children.append(child)
+        return node(owner,'dialog',kind='Column',children=children)
 
     def put(self, content):
         self.index += 1; path = self.root/(str(self.index)+'.raw')
