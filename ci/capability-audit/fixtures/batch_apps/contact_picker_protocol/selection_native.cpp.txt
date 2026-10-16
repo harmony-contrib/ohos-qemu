@@ -1,0 +1,256 @@
+namespace {
+struct SelectionRequest {
+    std::mutex mutex;
+    ContactPickerProtocol protocol;
+    napi_env env = nullptr;
+    napi_deferred deferred = nullptr;
+    napi_ref callback = nullptr;
+    std::weak_ptr<AbilityRuntime::AbilityContext> ability;
+    std::weak_ptr<AbilityRuntime::UIExtensionContext> extension;
+    Ace::UIContent *content = nullptr; // identity only; never dereference after onDestroy
+    int32_t session = 0;
+    bool alive = true;
+    bool settled = false;
+    bool closed = false;
+    uv_async_t *delivery = nullptr;
+    uv_timer_t *deadline = nullptr;
+    std::weak_ptr<SelectionRequest> *cleanup = nullptr;
+};
+using Selection = std::shared_ptr<SelectionRequest>;
+constexpr uint64_t SELECTION_TIMEOUT_MS = 10 * 60 * 1000;
+
+void CloseSelection(const Selection &state)
+{
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->closed || state->content == nullptr || state->session <= 0) { return; }
+    state->closed = true;
+    auto ability = state->ability.lock();
+    auto extension = state->extension.lock();
+    auto content = ability != nullptr ? ability->GetUIContent() :
+        (extension != nullptr ? extension->GetUIContent() : nullptr);
+    if (content != nullptr && content == state->content) {
+        // UIContentImpl posts a native session-id task. onDestroy invalidates
+        // this identity under the same lock before any later close can use it.
+        content->CloseModalUIExtension(state->session);
+    }
+}
+
+void CloseSelectionHandles(const Selection &state)
+{
+    // Only invoked on the env's loop (completion or cleanup), never from UI.
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->deadline != nullptr) {
+        uv_timer_stop(state->deadline);
+        uv_close(reinterpret_cast<uv_handle_t *>(state->deadline), [](uv_handle_t *handle) {
+            delete static_cast<Selection *>(handle->data);
+            delete reinterpret_cast<uv_timer_t *>(handle);
+        });
+        state->deadline = nullptr;
+    }
+    if (state->delivery != nullptr) {
+        uv_close(reinterpret_cast<uv_handle_t *>(state->delivery), [](uv_handle_t *handle) {
+            delete static_cast<Selection *>(handle->data);
+            delete reinterpret_cast<uv_async_t *>(handle);
+        });
+        state->delivery = nullptr;
+    }
+}
+
+void CleanupSelection(void *data)
+{
+    std::unique_ptr<std::weak_ptr<SelectionRequest>> cleanup(static_cast<std::weak_ptr<SelectionRequest> *>(data));
+    auto state = cleanup->lock();
+    if (state == nullptr) { return; }
+    {
+        std::lock_guard<std::mutex> lock(state->mutex);
+        state->alive = false;
+        state->env = nullptr;
+        state->deferred = nullptr;
+        state->callback = nullptr; // env now owns disposal of its references
+        state->cleanup = nullptr;
+    }
+    state->protocol.Fail();
+    CloseSelection(state);
+    {
+        std::lock_guard<std::mutex> lock(state->mutex);
+        state->content = nullptr;
+        state->closed = true;
+    }
+    CloseSelectionHandles(state);
+}
+
+void CompleteSelection(const Selection &state)
+{
+    const auto result = state->protocol.Snapshot();
+    if (!result.ready) { return; }
+    napi_env env;
+    napi_deferred deferred;
+    napi_ref callback;
+    std::weak_ptr<SelectionRequest> *cleanup;
+    {
+        std::lock_guard<std::mutex> lock(state->mutex);
+        if (!state->alive || state->settled) { return; }
+        state->settled = true;
+        env = state->env;
+        deferred = state->deferred;
+        callback = state->callback;
+        cleanup = state->cleanup;
+        state->deferred = nullptr;
+        state->callback = nullptr;
+    }
+    CloseSelectionHandles(state);
+    if (cleanup != nullptr && napi_remove_env_cleanup_hook(env, CleanupSelection, cleanup) == napi_ok) {
+        {
+            std::lock_guard<std::mutex> lock(state->mutex);
+            state->cleanup = nullptr;
+        }
+        delete cleanup;
+    }
+    CloseSelection(state);
+    napi_handle_scope scope = nullptr;
+    if (napi_open_handle_scope(env, &scope) != napi_ok) {
+        if (callback != nullptr) { napi_delete_reference(env, callback); }
+        HILOG_ERROR("Cannot open contact picker result scope");
+        return;
+    }
+    napi_value value = nullptr;
+    napi_value error = nullptr;
+    napi_get_undefined(env, &error);
+    napi_get_undefined(env, &value);
+    // The internal result remains explicit even for failures. The public JS
+    // wrapper maps it to a BusinessError, never to a partial successful array.
+    napi_value code = nullptr;
+    napi_value total = nullptr;
+    napi_value json = nullptr;
+    napi_create_object(env, &value);
+    napi_create_int32(env, result.code, &code);
+    napi_create_int32(env, result.total, &total);
+    napi_create_string_utf8(env, result.data.c_str(), result.data.size(), &json);
+    napi_set_named_property(env, value, "resultCode", code);
+    napi_set_named_property(env, value, "total", total);
+    napi_set_named_property(env, value, "pickerData", json);
+    if (deferred != nullptr) {
+        napi_resolve_deferred(env, deferred, value);
+    } else if (callback != nullptr) {
+        napi_value function = nullptr;
+        napi_value receiver = nullptr;
+        napi_value ignored = nullptr;
+        napi_get_reference_value(env, callback, &function);
+        napi_get_undefined(env, &receiver);
+        napi_value args[] = { error, value };
+        napi_call_function(env, receiver, function, 2, args, &ignored);
+        napi_delete_reference(env, callback);
+    }
+    napi_close_handle_scope(env, scope);
+}
+
+void NotifySelection(const Selection &state)
+{
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->alive && !state->settled && state->delivery != nullptr) {
+        // uv_async_send is thread safe; all NAPI work happens on this env's loop.
+        // A pending notification is coalesced, and the terminal result is immutable.
+        if (uv_async_send(state->delivery) != 0) { HILOG_ERROR("Contact picker result delivery unavailable"); }
+    }
+}
+} // namespace
+
+napi_value ContactsNapiUtils::StartContactSelection(napi_env env,
+    const std::shared_ptr<AbilityRuntime::AbilityContext> &ability,
+    const std::shared_ptr<AbilityRuntime::UIExtensionContext> &extension,
+    const AAFwk::Want &want, napi_ref callback)
+{
+    auto state = std::make_shared<SelectionRequest>();
+    state->env = env;
+    state->ability = ability;
+    state->extension = extension;
+    state->callback = callback;
+    napi_value promise = nullptr;
+    napi_get_undefined(env, &promise);
+    if (callback == nullptr && napi_create_promise(env, &state->deferred, &promise) != napi_ok) {
+        napi_throw_error(env, nullptr, "Cannot create contact picker promise");
+        return nullptr;
+    }
+    state->cleanup = new std::weak_ptr<SelectionRequest>(state);
+    if (napi_add_env_cleanup_hook(env, CleanupSelection, state->cleanup) != napi_ok) {
+        delete state->cleanup;
+        state->cleanup = nullptr;
+        state->protocol.Fail();
+        CompleteSelection(state);
+        return promise;
+    }
+    uv_loop_t *loop = nullptr;
+    if (napi_get_uv_event_loop(env, &loop) != napi_ok || loop == nullptr) {
+        state->protocol.Fail(); CompleteSelection(state); return promise;
+    }
+    auto delivery = new uv_async_t {};
+    if (uv_async_init(loop, delivery, [](uv_async_t *handle) {
+        auto state = *static_cast<Selection *>(handle->data);
+        CompleteSelection(state);
+    }) != 0) {
+        delete delivery;
+        state->protocol.Fail(); CompleteSelection(state); return promise;
+    }
+    delivery->data = new Selection(state);
+    state->delivery = delivery;
+    uv_unref(reinterpret_cast<uv_handle_t *>(delivery));
+    auto deadline = new uv_timer_t {};
+    if (uv_timer_init(loop, deadline) != 0) {
+        delete deadline;
+        state->protocol.Fail(); CompleteSelection(state); return promise;
+    }
+    deadline->data = new Selection(state);
+    state->deadline = deadline;
+    uv_unref(reinterpret_cast<uv_handle_t *>(deadline));
+    if (uv_timer_start(deadline, [](uv_timer_t *handle) {
+        auto state = *static_cast<Selection *>(handle->data);
+        state->protocol.Fail();
+        CompleteSelection(state);
+    }, SELECTION_TIMEOUT_MS, 0) != 0) {
+        state->protocol.Fail(); CompleteSelection(state); return promise;
+    }
+    state->content = ability != nullptr ? ability->GetUIContent() :
+        (extension != nullptr ? extension->GetUIContent() : nullptr);
+    if (state->content == nullptr) {
+        state->protocol.Fail(); CompleteSelection(state); return promise;
+    }
+    Ace::ModalUIExtensionCallbacks callbacks {
+        .onRelease = [state](int32_t) { state->protocol.Fail(); NotifySelection(state); },
+        .onResult = [state](int32_t code, const AAFwk::Want &) {
+            state->protocol.Finish(code); NotifySelection(state);
+        },
+        .onReceive = [state](const AAFwk::WantParams &params) {
+            const bool valid = AAFwk::IInteger::Query(params.GetParam("index")) != nullptr &&
+                AAFwk::IInteger::Query(params.GetParam("total")) != nullptr &&
+                AAFwk::IString::Query(params.GetParam("pickerData")) != nullptr;
+            if (state->protocol.Receive(valid, params.GetIntParam("index", -1),
+                params.GetIntParam("total", -1), valid ? params.GetStringParam("pickerData") : "")) {
+                NotifySelection(state);
+            }
+        },
+        .onError = [state](int32_t, const std::string &, const std::string &) {
+            state->protocol.Fail(); NotifySelection(state);
+        },
+        .onRemoteReady = [](const std::shared_ptr<Ace::ModalUIExtensionProxy> &) {},
+        .onDestroy = [state] {
+            {
+                std::lock_guard<std::mutex> lock(state->mutex);
+                state->content = nullptr;
+                state->closed = true;
+            }
+            state->protocol.Fail(); NotifySelection(state);
+        },
+    };
+    Ace::ModalUIExtensionConfig config;
+    config.isProhibitBack = true;
+    const bool dismiss = want.GetBoolParam("isAutoDismissOnNavigation", false);
+    config.prohibitedRemoveByRouter = !dismiss;
+    config.prohibitedRemoveByNavigation = !dismiss;
+    const int32_t session = state->content->CreateModalUIExtension(want, callbacks, config);
+    {
+        std::lock_guard<std::mutex> lock(state->mutex);
+        state->session = session;
+    }
+    if (session <= 0) { state->protocol.Fail(); NotifySelection(state); }
+    return promise;
+}

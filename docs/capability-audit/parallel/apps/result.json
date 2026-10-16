@@ -38,6 +38,11 @@
     "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets",
     "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets",
     "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets",
+    "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h",
+    "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h",
+    "applications/standard/contacts_data/contacts/src/contact.js",
+    "applications/standard/contacts_data/contacts/src/contacts_api.cpp",
+    "applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp",
     "applications/standard/hap/BUILD.gn",
     "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets",
     "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets",
@@ -131,6 +136,18 @@
       "result": "3 tests pass, including 38 actual extracted class/page-method scenarios: scoped worker audit/reply cancellation, actual 205-item/empty/legacy result frames, duplicate/partial/terminal retry, old/new requests and queries/searches, account and window await races, exact listener/timer/subscriber cleanup, old event versus new page, wallpaper window and image generations. Exact metadata->business stack initial+2 replays; unknown business edits refused without mutation; original metadata/manifests/profiles preserved. Added actual legacy save accessor, private/public flag mirroring and busy-state compatibility checks.",
       "scope": "Deferred host adapters executing actual source methods; no ArkUI, NAPI, database provider, official SDK, HAP or image runtime proof.",
       "evidence": "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/lifecycles.cjs"
+    },
+    {
+      "name": "contact caller protocol batch",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_contact_picker_protocol.py -v",
+      "exit_code": 0,
+      "tests": 3,
+      "public_JS_scenarios": 86,
+      "native_sanitizer_evidence": "docs/capability-audit/parallel/apps/round8-contact-caller-review/asan-01-darwin-retry.json",
+      "native_challenges": 44,
+      "native_lifecycle_adapters": 17,
+      "LSan_supported": false,
+      "runtime_acceptance": false
     }
   ],
   "integration_requests": [
@@ -398,6 +415,17 @@
       "wallpaper": "Existing wallpaper renderer only. Correct error identifiers; owned window generation and late-image fences; no settings/picker UI. Parent still owns expired profile, feature-only/device compatibility, Launcher fallback and missing settings UI.",
       "required_validation": "Root applies these 8 exact business targets to private fixed source, performs full official product Linux SDK26.0.0.39 compile and actual compiled import checks, preserves OS policy/signing and preinstall, then new representative ARM64 phone: all documented contact picker overloads, without broad READ_CONTACTS grant, one/many/empty/filter/default/cancel/error/partial chunks/caller exit/provider restart/overlap; real ArkUI window/listeners and renderer set/change/destroy boundaries. Other save/edit/MeeTime app flows are not claimed fixed.",
       "evidence": "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md"
+    },
+    {
+      "owner": "root",
+      "action": "Integrate contacts_data/sync_mode -> picker_result_protocol; update only sync_mode predecessor guard to accept this exact complete five-file successor, then replay whole stack twice. Product labels //applications/standard/contacts_data/contacts:contact and :gen_contact_abc; actual src/contacts_api.cpp and src/contacts_napi_utils.cpp TUs. NAPI public libuv and existing project nlohmann headers require no BUILD change. Preserve signing/permissions.",
+      "hashes": {
+        "applications/standard/contacts_data/contacts/src/contact.js": "ae22907681082d8f7ccdaeaa81ee80d3da31114353bf2b167a060c2cf946b759",
+        "applications/standard/contacts_data/contacts/src/contacts_api.cpp": "e4d8a123de6ba2e943c6fda5e0258960376998f54fd61565e81e8b224beeb4d8",
+        "applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp": "ffd0180bf9632f6adc7fff2721d865446f27c65a3013f5b09b01433b484d4358",
+        "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h": "3066f698312815e0bbfba4d71fb54e49d589641cd4947ba98859092dc8b1efc8",
+        "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h": "722ead111840a4ecdc0336eec4511fa43790228f9decb2155bee08a5a2fa60c1"
+      }
     }
   ],
   "requirements_review": {
@@ -784,15 +812,19 @@
       ]
     },
     "behavior:contacts-picker-entrypoint-missing-phone": {
-      "status": "real_source_picker_lifecycle_candidate_official_SDK_and_runtime_pending",
-      "finding": "保留固定Contacts真ContactUiExtentionAbility/真实选取UI/DTO协议；新增每session presenter/LocalStorage、可选worker请求scope、账户/查询/搜索代次、chunk终结幂等与定时器/监听/页面重入清理；38个host实际源码场景通过。完整1074项固定跟踪源码引用审查显示pickerSheet仅历史manifest活引用，先前私有HSP外部阻塞判断不再成立；真实ABC是否导入尚未证明。",
-      "next_required": "根完整Linux SDK39编译/实际ABC及HAP依赖核对后，若无执行依赖则窄删除过时HSP声明，精确OS签名/预装，新包实测全部picker overload/无广泛读权限/数据与非零错误映射/取消默认选择/部分chunk/并发退出/服务重启及2in1；save/edit/MeeTime其他流程独立验收。",
+      "status": "real_provider_HAP_compiled_public_caller_protocol_candidate_runtime_pending",
+      "finding": "根实际产品SDK39批02已完整编译真Contacts HAP；本批补齐真实public selectContacts/selectContact caller链的BusinessError/Promise/callback、严格100分批及205完整聚合、默认取消、独立UV通知/有界超时/环境与窗口清理。86 JS +44 native helper +17 native lifecycle host场景通过；Darwin无LSan，未核销。",
+      "next_required": "根真实产品两TU/ABC编译、sync_mode精确后继guard和重放，普通非systemApp零读写权限caller实际签名/BMS/token校验及新包UI全部重载/205/取消默认/部分帧非零错误/双session退出后重开；legacy import/save传输仍独立未验收。",
       "ledger_closed": false,
       "evidence": [
         "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
         "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/inspection.json",
         "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
-        "ci/capability-audit/test_batch_apps_provider_lifecycle.py"
+        "ci/capability-audit/test_batch_apps_provider_lifecycle.py",
+        "docs/capability-audit/parallel/apps/round8-contact-caller-review/review.md",
+        "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
+        "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/candidate-hashes.json",
+        "ci/capability-audit/test_batch_apps_contact_picker_protocol.py"
       ]
     },
     "behavior:arkui-expanded-text-menu-providers-missing": {
@@ -990,11 +1022,17 @@
       "id": "behavior:arkui-text-service-runtime-plugins-missing",
       "status": "real_runtime_plugin_backends_missing",
       "reason": "提供与ArkUI dlopen接口/ABI匹配的真实服务后端，验证目标/内容/实体范围及错误/取消/释放，不加空符号。"
+    },
+    {
+      "id": "behavior:contacts-picker-entrypoint-missing-phone",
+      "gap": "Public caller HAP/normal signature+BMS/token/real UI+fresh package tests remain pending. Legacy save/import native helper transport is unchanged and retains separate raw callbacks/polling/splice hazards; no claim of full Contacts capability closure."
     }
   ],
   "changed_files": [
+    "ci/capability-audit/batch_apps_contact_picker_protocol_host.py",
     "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
     "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
+    "ci/capability-audit/batch_apps_prepare_contact_picker_protocol.py",
     "ci/capability-audit/batch_apps_prepare_contacts_theme_candidate.py",
     "ci/capability-audit/batch_apps_prepare_provider_lifecycle.py",
     "ci/capability-audit/batch_apps_prepare_share_candidate.py",
@@ -1028,6 +1066,14 @@
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/caller_test.cjs",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/candidate-hashes.json",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/contact_picker_protocol.h",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/inspection.json",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/native_lifecycle_test.cpp",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/protocol_test.cpp",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/select_impl.js",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/selection_native.cpp.txt",
     "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
     "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
     "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
@@ -1044,6 +1090,7 @@
     "ci/capability-audit/test_batch_apps_admin_provider.py",
     "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "ci/capability-audit/test_batch_apps_contact_picker_protocol.py",
     "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py",
     "ci/capability-audit/test_batch_apps_provider_lifecycle.py",
     "ci/capability-audit/test_batch_apps_share_provider.py",
@@ -1054,6 +1101,11 @@
     "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
     "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
     "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/asan-01-darwin-retry.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/asan-01.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/policy-and-lifecycle-evidence.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/review.md",
     "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
     "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
@@ -1077,6 +1129,10 @@
     "patches/common/applications/standard/contacts/source_provider/README.md",
     "patches/common/applications/standard/contacts/source_provider/apply.sh",
     "patches/common/applications/standard/contacts/source_provider/verify_source.py",
+    "patches/common/applications/standard/contacts_data/picker_result_protocol/0001-validate-and-complete-public-contact-selection.patch",
+    "patches/common/applications/standard/contacts_data/picker_result_protocol/README.md",
+    "patches/common/applications/standard/contacts_data/picker_result_protocol/apply.sh",
+    "patches/common/applications/standard/contacts_data/picker_result_protocol/verify_source.py",
     "patches/common/applications/standard/hap/admin_provider/0001-build-real-admin-provider-and-verify-user-actions.patch",
     "patches/common/applications/standard/hap/admin_provider/README.md",
     "patches/common/applications/standard/hap/admin_provider/apply.sh",
@@ -1098,7 +1154,7 @@
     "patches/common/applications/standard/theme/source_provider/apply.sh",
     "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
-  "previous_batch_commit": "7e23f4196ff12c261725375405821a024e7286be",
+  "previous_batch_commit": "7070c91",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -1109,7 +1165,7 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership; latest batch fixes only 3 SDK-reported ArkTS type errors in the existing Contacts lifecycle component; 5 other business payload hashes unchanged",
+  "report_scope": "cumulative apps ownership; latest batch modifies five authorized ContactsData caller protocol targets, while Contacts/Theme provider business files and metadata remain frozen",
   "contacts_theme_batch": {
     "scope": "8 build metadata upstream targets only; no business fix or acceptance claim",
     "fixed_source_container": "read-only ohos-qemu-parallel-source-20261016-02",
@@ -1138,11 +1194,27 @@
     "heavy_resource_use": "none; only small host tests and fixed source read-only inspection",
     "requirements_closed": 0,
     "first_artifact_behavior_gate_passed": false,
-    "official_SDK_build_status": "parent actual-product Linux SDK39 attempt 01 failed with three Contacts ArkTS diagnostics, corrected in this batch; parent SDK rebuild pending, no HAP artifact or runtime acceptance",
+    "official_SDK_build_status": "parent actual-product Linux SDK39 batch02 Contacts full HAP PASS (parent report 162s); Theme schema batch pending; no fresh package/runtime acceptance",
     "sdk_type_corrections": [
       "PickerSessionStorage names the LocalStorage initialization object type",
       "openSession rethrows an actual Error with the original error message for outer session cleanup",
       "legacy subscriber guard removes an unreachable request.active access after request was proven undefined; scope and request identity guards retained"
     ]
+  },
+  "contact_caller_protocol_batch": {
+    "component": "patches/common/applications/standard/contacts_data/picker_result_protocol",
+    "upstream_targets_this_batch": {
+      "applications/standard/contacts_data/contacts/src/contact.js": "ae22907681082d8f7ccdaeaa81ee80d3da31114353bf2b167a060c2cf946b759",
+      "applications/standard/contacts_data/contacts/src/contacts_api.cpp": "e4d8a123de6ba2e943c6fda5e0258960376998f54fd61565e81e8b224beeb4d8",
+      "applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp": "ffd0180bf9632f6adc7fff2721d865446f27c65a3013f5b09b01433b484d4358",
+      "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h": "3066f698312815e0bbfba4d71fb54e49d589641cd4947ba98859092dc8b1efc8",
+      "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h": "722ead111840a4ecdc0336eec4511fa43790228f9decb2155bee08a5a2fa60c1"
+    },
+    "source_predecessor": "contacts_data/sync_mode final hash for contacts_api.cpp, remaining original four files",
+    "host_evidence": "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
+    "official_product_build_attempted": false,
+    "heavy_lease": "one host clang compile 6.314s; initial unsupported Darwin LSan run -6 preserved; separate granted unchanged-binary ASan/UBSan retry exit0 0.409s; all leases released",
+    "requirements_closed": 0,
+    "first_artifact_behavior_gate_passed": false
   }
 }
