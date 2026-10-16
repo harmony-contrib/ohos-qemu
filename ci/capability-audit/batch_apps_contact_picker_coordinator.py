@@ -106,7 +106,7 @@ def source_rows(evidence, project):
     return {key[len(project) + 1:]: value for key, value in rows.items() if key.startswith(project + '/')}
 
 
-def verify_sdk_project(spec, *, fixture=None, source_manifest=None):
+def verify_sdk_project(spec, *, fixture=None, source_manifest=None, module_name=None):
     """A successful project may belong to a failed multi-project batch."""
     evidence_path = checked_artifact(spec['sdk_evidence']); evidence = load(evidence_path)
     project = spec['sdk_project']; source = Path(spec['source_project'])
@@ -115,7 +115,10 @@ def verify_sdk_project(spec, *, fixture=None, source_manifest=None):
     require(type(evidence.get('exit_code')) is int and re.fullmatch('[0-9a-f]{40}', evidence.get('source_commit', '')) and
             HEX.fullmatch(evidence.get('runner_sha256', '')), 'actual SDK batch provenance absent')
     rows = source_rows(evidence, project)
-    require(rows and 'entry/src/main/module.json5' in rows, 'SDK project source inventory absent')
+    require(module_name is None or project == 'theme' and module_name in ('phone_wallpaper', 'pad_wallpaper'),
+            'only explicit actual Theme product modules may select a shared SDK project')
+    product_directory = ('product/' + ('phone' if module_name == 'phone_wallpaper' else 'pad')) if module_name else 'entry'
+    require(rows and product_directory + '/src/main/module.json5' in rows, 'SDK project source inventory absent')
     for name, expected in rows.items():
         p = PurePosixPath(name)
         require(not p.is_absolute() and '..' not in p.parts and p.as_posix() == name and '\\' not in name,
@@ -126,7 +129,14 @@ def verify_sdk_project(spec, *, fixture=None, source_manifest=None):
     commands = [row for row in evidence['commands'] if row.get('project') == project]
     require(commands and all(type(row.get('exit_code')) is int and row['exit_code'] == 0 for row in commands),
             'this SDK project has a failed or incomplete command')
-    compile_rows = [row for row in commands if 'assembleHap' in row.get('argv', [])]
+    def selected_compile(row):
+        argv = row.get('argv', [])
+        if 'assembleHap' not in argv: return False
+        if module_name is None: return True
+        selected = 'module=' + module_name
+        return ([flag for flag in argv if flag.startswith('module=')] == [selected] and
+                argv.index(selected) > 0 and argv[argv.index(selected) - 1] == '-p')
+    compile_rows = [row for row in commands if selected_compile(row)]
     require(len(compile_rows) == 1, 'one actual project assembleHap command required')
     for row in commands:
         log = checked_artifact({'path': row['log'], 'sha256': row['sha256']})
@@ -137,6 +147,8 @@ def verify_sdk_project(spec, *, fixture=None, source_manifest=None):
     # real path under this already-verified source project in that format.
     haps = [row for row in evidence['haps'] if row.get('project') == project or
             ('project' not in row and Path(row['path']).resolve().is_relative_to(source.resolve()))]
+    if module_name is not None:
+        haps = [row for row in haps if Path(row['path']).resolve().is_relative_to((source / product_directory).resolve())]
     require(len(haps) == 1 and checked_artifact(haps[0]) == hap and haps[0].get('bytes') == hap.stat().st_size,
             'SDK HAP artifact/project binding differs')
     if fixture is not None:
@@ -333,37 +345,75 @@ def verify_observer(binary, receipt, path_map=None):
             'path_map': path_map, 'container_product_inputs_rechecked_by_builder_only': True, 'runtime_validated': False}
 
 
-def provider_from_image(boot, spec, output, signer_dist, signer_jar, command):
+def verify_provider_release_profile(profile, source_project, provider_name, signer_dist, output, command):
+    """Recompute exact original OS release policy using fixed public issuers."""
+    sys.path.insert(0, str(ROOT / 'scripts'))
+    image_guard = importlib.import_module('verify_contacts_theme_provider_image')
+    require(provider_name in ('contacts', 'theme'), 'fixed source provider role required')
+    config = image_guard.provider.PROFILES[provider_name]
+    output, dist = Path(output), Path(signer_dist)
+    original = regular(Path(source_project) / config['profile'])
+    release = regular(dist / 'OpenHarmonyProfileRelease.pem')
+    application_path = regular(dist / 'OpenHarmonyApplication.pem')
+    require(verifier.sha(original) == config['sha256'] and
+            all(verifier.sha(path) == image_guard.provider.SIGNING_INPUTS[path.name]
+                for path in (release, application_path)),
+            'fixed original provider profile or public OS release signer differs')
+    certs = re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', release.read_text(), re.S)
+    require(len(certs) == 3, 'fixed OS release issuer chain differs')
+    leaf = output / 'OS-release-leaf.pem'; leaf.write_text(certs[-1] + '\n')
+    decoded, old_decoded = output / 'OS-release-profile.json', output / 'original-release-profile.json'
+    command(['openssl', 'cms', '-verify', '-inform', 'DER', '-in', str(profile), '-nointern', '-certfile', str(leaf),
+             '-noverify', '-out', str(decoded)], 'image-provider-release-CMS')
+    command(['openssl', 'cms', '-verify', '-inform', 'DER', '-in', str(original), '-noverify', '-out', str(old_decoded)],
+            'image-provider-original-CMS')
+    application = re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', application_path.read_text(), re.S)
+    require(len(application) == 3, 'fixed application signer chain differs')
+    expected = image_guard.provider.desired_profile(load(old_decoded), (application[-1] + '\n').encode(), config)
+    actual = load(decoded); require(actual == expected, 'image provider changed original release permissions/APL/ACL policy')
+    require(actual['validity']['not-before'] <= int(time.time()) < actual['validity']['not-after'],
+            'image provider release profile is outside its valid interval')
+    return {'OS_release_issuer': descriptor(release), 'original_source_profile': descriptor(original),
+            'decoded_release_profile': descriptor(decoded)}
+
+
+def provider_from_image(boot, spec, output, signer_dist, signer_jar, command, *, provider_name='contacts', device='phone'):
     """Only the immutable system.img of the actual enclosing package is used."""
     sys.path.insert(0, str(ROOT / 'scripts'))
     image_guard = importlib.import_module('verify_contacts_theme_provider_image')
+    require(provider_name in ('contacts', 'theme') and device in ('phone', '2in1') and
+            (provider_name != 'contacts' or device == 'phone'), 'explicit Contacts phone or Wallpaper product role required')
+    config = image_guard.provider.PROFILES[provider_name]
+    module_name = ('pad_wallpaper' if device == '2in1' else 'phone_wallpaper') if provider_name == 'theme' else None
+    relative = ('product/' + ('pad' if device == '2in1' else 'phone') if provider_name == 'theme' else 'entry')
+    filename = 'Wallpaper.hap' if provider_name == 'theme' else 'Contacts.hap'
     ext = importlib.import_module('ext_image_entries')
     debugfs = importlib.import_module('verify_alsa_config_image').debugfs_path()
     boot_value = load(boot); env = boot_value['test_environment']
     directory = Path(env['freshly_extracted_directory']).resolve()
     image = regular(directory / 'images/system.img')
-    require(str(image) in env['qemu_command'] and verifier.sha(image) == boot_value['initial_package_file_sha256']['images/system.img'],
+    require(env['device_type'] == device and str(image) in env['qemu_command'] and verifier.sha(image) == boot_value['initial_package_file_sha256']['images/system.img'],
             'system image differs from actual freshly booted archive')
     guard_path = regular(directory / 'contacts-theme-provider-evidence.json')
     require(verifier.sha(guard_path) == boot_value['initial_package_file_sha256']['contacts-theme-provider-evidence.json'],
             'archive provider guard changed')
-    guard = load(guard_path); row = guard['providers']['contacts']
-    require(guard.get('status') == 'pass' and guard.get('failures') == [] and guard.get('device') == 'phone' and
+    guard = load(guard_path); row = guard['providers'][provider_name]
+    require(guard.get('status') == 'pass' and guard.get('failures') == [] and guard.get('device') == device and
             guard.get('system_image_sha256') == verifier.sha(image), 'current package provider guard failed or mismatched')
     output = Path(output); output.mkdir()
-    hap, inode = ext.dump_unique_file(image, ('/app/com.ohos.contacts/Contacts.hap',
-        '/system/app/com.ohos.contacts/Contacts.hap'), output, debugfs)
-    require(verifier.sha(hap) == row['hap_sha256'] and all(inode[key] == row[key] for key in inode), 'actual current-image Contacts differs from archive guard')
-    sdk = verify_sdk_project(spec)
-    source = Path(spec['source_project']) / 'entry/src/main/module.json5'
+    hap, inode = ext.dump_unique_file(image, tuple(prefix + '/app/' + config['bundle'] + '/' + filename
+        for prefix in ('', '/system')), output, debugfs)
+    require(verifier.sha(hap) == row['hap_sha256'] and all(inode[key] == row[key] for key in inode), 'actual current-image provider differs from archive guard')
+    sdk = verify_sdk_project(spec, module_name=module_name)
+    source = Path(spec['source_project']) / relative / 'src/main/module.json5'
     # The full SDK source inventory above binds this actual module, not a
     # standalone hand-written manifest. json5 rejects duplicate keys.
     import json5
     source_module = json5.loads(source.read_text(), allow_duplicate_keys=False)['module']
-    image_guard.inspect_hap(hap, source_module, 'contacts', 'phone')
+    image_guard.inspect_hap(hap, source_module, provider_name, device)
     unsigned = checked_artifact(spec['unsigned_hap'])
     require(hap_contents(hap)[1] == hap_contents(unsigned)[1], 'image provider ABC/resources/module differ from actual SDK HAP')
-    _, jar, pins = signer_inputs(signer_dist, signer_jar)
+    dist, jar, pins = signer_inputs(signer_dist, signer_jar)
     chain, profile = output / 'verified-chain.cer', output / 'embedded-profile.p7b'
     argv = ['java', '-jar', str(jar), 'verify-app', '-inFile', str(hap), '-outCertChain', str(chain), '-outProfile', str(profile)]
     log = command(argv, 'image-provider-verify-app')
@@ -373,8 +423,14 @@ def provider_from_image(boot, spec, output, signer_dist, signer_jar, command):
     require(regular(chain).stat().st_size and verifier.sha(regular(profile)) == row['embedded_profile_sha256'] and
             row.get('application_signer_sha256') == APP_LEAF and row.get('digest_codesign_permission_verification') == 'pass',
             'image provider profile/signature differs from exact source/image guard')
+    # Independently reproduce the exact original OS release policy. The source
+    # profile and fixed public issuer are pinned, including original permissions,
+    # ACLs and APL; an internally consistent hand-written package guard cannot
+    # introduce a different release policy.
+    release_proof = verify_provider_release_profile(profile, spec['source_project'], provider_name, dist, output, command)
     return {'hap': descriptor(hap), 'system_image': descriptor(image), 'image_identity': inode,
-            'archive_guard': descriptor(guard_path), 'sdk': sdk, 'signer_inputs': pins, 'embedded_profile': descriptor(profile)}
+            'archive_guard': descriptor(guard_path), 'sdk': sdk, 'signer_inputs': pins, 'embedded_profile': descriptor(profile),
+            **release_proof}
 
 
 class Commands:

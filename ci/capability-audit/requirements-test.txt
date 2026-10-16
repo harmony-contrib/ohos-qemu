@@ -1,2 +1,3 @@
-# Screenshot readback checks only; install into a task-specific virtualenv.
+# Screenshot and actual source module readback; use a task-specific virtualenv.
 Pillow==12.3.0
+json5==0.12.1
