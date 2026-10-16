@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-16T08:34:32.327062+08:00",
+  "status": "active_all_remaining_repairs_and_six_package_acceptance",
+  "checkpoint_commit": "3833ed12e74218ee93f775fb7b0439029e3be468",
+  "ledger": {
+    "total": 281,
+    "closed": 199,
+    "unresolved": 82,
+    "exports": 26,
+    "behavior": 56,
+    "new_closures": 0,
+    "additional_acceptance_failures": [
+      "R50-HiTrace-ordinary-launch-timeout",
+      "R51-RenderService-suspend-wake-restart"
+    ],
+    "independent_bug_count": "not determined; audit records overlap"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "packages_validated": 0,
+  "remaining_five_started": false,
+  "environment": {
+    "image_id": "sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55",
+    "source_volume": "ohos-qemu-7_0-release-source",
+    "out_volume": "ohos-qemu-7_0-release-out",
+    "diagnostic_source_and_out_readonly": true,
+    "max_heavy_jobs": 1,
+    "compiler_jobs": 2
+  },
+  "evidence": {
+    "mesa_current_consumer": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-mesa-integrated-consumer-01/evidence.json",
+      "sha256": "1c595433e0f36ee82f00e4c45d8689388505fad18c8b0a27fd6b53493ea3871b",
+      "reported_status": "pass_actual_current_consumer_build_ONLY_NOT_guest",
+      "scope": "current-source actual Mesa build ONLY_NOT_package_or_guest"
+    },
+    "avc_full_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-native-repair-full-TUs-01/avc/evidence.json",
+      "sha256": "87938e50dc4cc39b54a615482e94f989cd8e188767b1c55ff5c2ff565bc5051f",
+      "reported_status": "pass",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "avc_encoder",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "6aab30203d80600a83ab1a188d4074e6268391ee5c8cba90008ac405b900f5bd"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "avc_encoder_util",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "1f118c047d179edc10cce7ee56423d7632fbb44f66b79e3b21b661c05730ccbb"
+        }
+      ]
+    },
+    "child_full_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-native-repair-full-TUs-01/child/evidence.json",
+      "sha256": "d35d55a64fa607f35469f739f932ffe9dfb6d90adaf4ccb3f3b43a5493a1c607",
+      "reported_status": "pass",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "native_child_process",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "195852cb8776467e054eba5a0d4212ad09eca037cc6d05b8454ce95aca4075e8"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "native_child_callback",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "fbdd70753ad447c6135ec9e21cba2b500d91e5a607a791174390db49242353db"
+        }
+      ]
+    },
+    "graphics3d_original_compilation_and_failed_validator": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-graphics3d-full-TUs-01/graphics3d/evidence.json",
+      "sha256": "05483329cbd1dd948b098e3339c2539add37674a2f1e3c3f952e6d5b076c9b93",
+      "reported_status": "fail",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "scene_adapter",
+          "status": "fail",
+          "exit_code": 0,
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/evidence/graphics3d/arm64_virt-scene_adapter.ll'",
+          "object_sha256": null
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "RenderContextJS",
+          "status": "fail",
+          "exit_code": 0,
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/evidence/graphics3d/arm64_virt-RenderContextJS.ll'",
+          "object_sha256": null
+        }
+      ]
+    },
+    "graphics3d_all_split_LTO_module_verification": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-graphics3d-full-TUs-01/validation-02/evidence.json",
+      "sha256": "8fc18c2411e0da8e546b5acb2ba19587085ab5379e8b92b9d110889c824fd54f",
+      "reported_status": "pass_actual_two_complete_product_TUs_and_all_split_LTO_modules_ONLY_NOT_link_or_runtime",
+      "scope": null,
+      "objects": [
+        {
+          "product": null,
+          "unit": "scene_adapter",
+          "status": null,
+          "exit_code": null,
+          "error": null,
+          "object_sha256": "46259535fad3ecf74ecb9220cf4e1ee58debabb4baa3b30503acada0a5d79076"
+        },
+        {
+          "product": null,
+          "unit": "RenderContextJS",
+          "status": null,
+          "exit_code": null,
+          "error": null,
+          "object_sha256": "cd8fbfae23ddc87cbf93c01b6a9d8f0c301aca43f68d001089e391c1cc5d4c89"
+        }
+      ]
+    },
+    "avc_API26_three_ABI_callers": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-avc-offset-SDK-3ABI-01/evidence.json",
+      "sha256": "108e9c6a54301cc6715175c0b5fc7b512846fe509d18e7f000db625b947c9103",
+      "reported_status": "pass_actual_API26_public_probe_three_ABI_compile_link_ONLY_NOT_runtime",
+      "scope": "compile_and_link_actual_API26_public_probe_only_NOT_HAP_or_guest",
+      "ABI_results": [
+        {
+          "arch": "arm64",
+          "exit_code": 0,
+          "sha256": "5fb6fbe32557428b7b4d6954809bf041d5aea483f2ca1a3c128c88a5087136a3",
+          "bytes": 57192
+        },
+        {
+          "arch": "armv7a",
+          "exit_code": 0,
+          "sha256": "6cbda477b9dd6f528724fc36cbb9143a22c3a82ccbcda233cf48dffe49c31377",
+          "bytes": 63860
+        },
+        {
+          "arch": "x86_64",
+          "exit_code": 0,
+          "sha256": "1ecc9fd5011f1c0102d2daae4e503799fa250a688cf95482f538667c66c03cea",
+          "bytes": 59248
+        }
+      ]
+    },
+    "audio_capture_full_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-audio-capture-full-TUs-01/artifacts/audio_capture/evidence.json",
+      "sha256": "4c2e4102f30a84011d3e3c9ee56e406e35fcfac101e1daba34066bf2538ee1c9",
+      "reported_status": "pass",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "audio_capture_filter",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "ad048127bff9efd93fef35c603729df3806d08454a21764c6de160e4c77b9dcb"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "audio_capture_module",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "c7bce50d28b56b41f9a5480a763a4d3ea3149fff844826e92d88ab1bbb585ff7"
+        }
+      ]
+    },
+    "location_actual_IDL_and_ten_full_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-location-full-TUs-01/artifacts/location/evidence.json",
+      "sha256": "8d82cb429f971b5bbf1549ded37dba856d665f76e72ac3d1878536e06b3cf8de",
+      "reported_status": "pass",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "locator_impl",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "38d0b41ee0c6cfec0d5ea1e3a752852a0aea6a733636d73d74400a9cde25fbaa"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_ability",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "e4a316cd6b039f65dec8a9e5f3044b7d5244d8d389bdabedb0ae486902b1694a"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "request_manager",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "17e7d576f5001f99d4694b3f5ceeaad381c32b960966ebd6ca92b393e82b058e"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_required_data_manager",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "f17a5d01dfa15503b59e0891cab6c7f106668d953b65dc9a4a6ef227113f2d0b"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "location_napi_adapter",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "1b79d8193a2b14f08b7928427a776b608c910cc3888f28ab219cb5df8644599f"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "location_napi_entry",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "9e445c54ff833b4ba8a4a3c632ee454acd47306e0d238e5d7360ae5ac2f7b49d"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "bluetooth_scan_result_callback_napi",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "eab43159ca23e43ca8a984f18b7fc9cd31abecf8b71fca5575e376b01088693e"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "ohos.geoLocationManager.impl",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "c97bdd409df03fdeb5078b119a560a5de5871deb40d0b44bbeba81b26f209e8d"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_service_proxy",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "025fab3237ffb2449f7fa4a45af5092239fbd35f2d3396ba48ca4f37bffc93a0"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_service_stub",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "de1dca78a6c0f30a3f537a472aabaab47a2967460ce7a0426570ef71e59eef2b"
+        }
+      ],
+      "actual_generated_products": [
+        "arm64_virt"
+      ]
+    },
+    "alsa_real_pinned_source_inputs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-alsa-loopback-source-01/evidence.json",
+      "sha256": "3258beb894c5d8ba01f955bd1d1dcc1260a08ce7378a3b10b59c0f7895fb3770",
+      "reported_status": "source_selection_only_NOT_kernel_build_or_guest_capture",
+      "scope": "actual_four_pinned_complete_source_inputs_and_reapply_ONLY_NOT_kernel_compile_or_guest"
+    }
+  },
+  "agents": {
+    "apps": "Calendar Editor candidate; owns official SDK HAP compile lease",
+    "network": "session/negotiation and API26 OOB NAPI integrated; actual service/GAP OOB and callback lifecycle in progress",
+    "location": "icon/BLE and product IDL+10TUs pass; district/fence/track/5A/virtual GNSS-HCI-RIL-IMS pending",
+    "media": "capture/query candidates integrated; remaining Knowledge semantics and AudioVivid dependency queued",
+    "system": "resumed MSDP and other system providers after media slot release"
+  },
+  "external_dependencies": {
+    "device_attest": "Legitimate OEM identity/key/service location requested; no supplied configuration yet. Do not fabricate attestation.",
+    "audio_vivid": "Actual compatible builder/algorithm implementation or legitimate provider dependency still missing; loader or video HDR metadata is not an implementation."
+  },
+  "remaining_core_acceptance": [
+    "actual links and final GN/product selection",
+    "current Mesa actual GL and RenderService/suspend stability",
+    "ordinary-caller complete suite including HiTrace launch",
+    "fresh representative ARM64 phone package with archive checksum and full changed-behavior boundaries",
+    "remaining five ABI/profile packages only after first-artifact behavior gate"
+  ]
+}
