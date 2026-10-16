@@ -1,0 +1,21 @@
+/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_alsa_inject.c:56:48: error: use of undeclared identifier 'O_NOFOLLOW'
+   56 |     int fd = open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+      |                                                ^
+1 error generated.
+E
+======================================================================
+ERROR: test_actual_full_diagnostic_and_error_paths (test_batch_media_alsa_inject.Inject.test_actual_full_diagnostic_and_error_paths)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/test_batch_media_alsa_inject.py", line 49, in test_actual_full_diagnostic_and_error_paths
+    exe=root/'inject';subprocess.run(['clang','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',str(root),str(ROOT/'ci/capability-audit/batch_media_alsa_inject.c'),'-o',str(exe)],check=True)
+                      ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['clang', '-std=c11', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/batch-media-alsa-inject-2x97cmin', '/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit/batch_media_alsa_inject.c', '-o', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/batch-media-alsa-inject-2x97cmin/inject']' returned non-zero exit status 1.
+
+----------------------------------------------------------------------
+Ran 1 test in 0.074s
+
+FAILED (errors=1)

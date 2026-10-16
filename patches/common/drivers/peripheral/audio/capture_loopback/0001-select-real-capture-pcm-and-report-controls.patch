@@ -1,0 +1,657 @@
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c
+@@ -15,6 +15,7 @@
+ 
+ #include "alsa_soundcard.h"
+ #include <ctype.h>
++#include <pthread.h>
+ #include "cJSON.h"
+ 
+ #define HDF_LOG_TAG HDF_AUDIO_HAL_SND
+@@ -30,6 +31,10 @@
+     char adapterName[MAX_CARD_NAME_LEN];
+     int32_t cardId;
+     char cardName[MAX_CARD_NAME_LEN];
++    bool hasCaptureRoute;
++    int32_t captureCardId;
++    char captureCardName[MAX_CARD_NAME_LEN];
++    int32_t captureDevice;
+ };
+ struct AlsaAdapterList {
+     int32_t num;
+@@ -48,6 +53,7 @@
+     struct AlsaDevInfo alsaDevIns[MAX_CARD_NUM];
+ };
+ static struct AlsaCardsList g_alsaCardsDevList;
++static pthread_mutex_t g_alsaConfigMutex = PTHREAD_MUTEX_INITIALIZER;
+ 
+ 
+ static char *CfgReadAdapterFile(const char *fpath)
+@@ -186,6 +192,38 @@
+     return HDF_SUCCESS;
+ }
+ 
++static int32_t CfgSaveCaptureRoute(cJSON *adapter, struct AlsaAdapterCfgInfo *info)
++{
++    cJSON *card = cJSON_GetObjectItem(adapter, "captureCardId");
++    cJSON *name = cJSON_GetObjectItem(adapter, "captureCardName");
++    cJSON *device = cJSON_GetObjectItem(adapter, "captureDevice");
++    info->hasCaptureRoute = false;
++    info->captureCardId = -1;
++    info->captureDevice = -1;
++    info->captureCardName[0] = '\0';
++    if (card == NULL && name == NULL && device == NULL) {
++        return HDF_SUCCESS; // Old product configurations retain their existing capture route.
++    }
++    if (!cJSON_IsNumber(card) || !cJSON_IsString(name) || !cJSON_IsNumber(device) ||
++        name->valuestring == NULL || name->valuestring[0] == '\0' ||
++        strlen(name->valuestring) >= MAX_CARD_NAME_LEN ||
++        !(card->valuedouble >= 0 && card->valuedouble < MAX_CARD_NUM) ||
++        !(device->valuedouble >= 0 && device->valuedouble <= MIXER_CTL_MAX_NUM)) {
++        return HDF_FAILURE;
++    }
++    // Range checks precede conversion, including NaN/infinity rejection.
++    int32_t cardId = (int32_t)card->valuedouble;
++    int32_t pcmDevice = (int32_t)device->valuedouble;
++    if (card->valuedouble != cardId || device->valuedouble != pcmDevice ||
++        strcpy_s(info->captureCardName, sizeof(info->captureCardName), name->valuestring) != EOK) {
++        return HDF_FAILURE;
++    }
++    info->captureCardId = cardId;
++    info->captureDevice = pcmDevice;
++    info->hasCaptureRoute = true;
++    return HDF_SUCCESS;
++}
++
+ static int32_t CfgSaveAdapterStruct(cJSON *adapter, struct AlsaAdapterCfgInfo *info)
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(adapter);
+@@ -220,7 +258,7 @@
+         return HDF_FAILURE;
+     }
+ 
+-    return HDF_SUCCESS;
++    return CfgSaveCaptureRoute(adapter, info);
+ }
+ 
+ static int32_t CfgParseAdapterItems(cJSON *adapterObj)
+@@ -424,7 +462,7 @@
+     return HDF_SUCCESS;
+ }
+ 
+-int32_t SndSaveCardListInfo(snd_pcm_stream_t stream, int32_t device)
++static int32_t SndSaveCardListInfoUnlocked(snd_pcm_stream_t stream, int32_t device)
+ {
+     (void)memset_s(&g_alsaAdapterList, sizeof(struct AlsaAdapterList) * SND_CARD_MAX,
+         0, sizeof(struct AlsaAdapterList) * SND_CARD_MAX);
+@@ -464,7 +502,7 @@
+     return HDF_SUCCESS;
+ }
+ 
+-int32_t SndMatchSelAdapter(struct AlsaSoundCard *cardIns, const char *adapterName)
++static int32_t SndMatchSelAdapterUnlocked(struct AlsaSoundCard *cardIns, const char *adapterName)
+ {
+     struct AlsaDevInfo *devInfo = NULL;
+     struct AlsaAdapterCfgInfo *info = NULL;
+@@ -509,6 +547,79 @@
+     }
+ 
+     return HDF_SUCCESS;
++}
++
++int32_t SndSaveCardListInfo(snd_pcm_stream_t stream, int32_t device)
++{
++    pthread_mutex_lock(&g_alsaConfigMutex);
++    int32_t ret = SndSaveCardListInfoUnlocked(stream, device);
++    pthread_mutex_unlock(&g_alsaConfigMutex);
++    return ret;
++}
++
++int32_t SndMatchSelAdapter(struct AlsaSoundCard *cardIns, const char *adapterName)
++{
++    pthread_mutex_lock(&g_alsaConfigMutex);
++    int32_t ret = SndMatchSelAdapterUnlocked(cardIns, adapterName);
++    pthread_mutex_unlock(&g_alsaConfigMutex);
++    return ret;
++}
++
++static int32_t SndMatchExplicitCapture(struct AlsaSoundCard *cardIns,
++    const struct AlsaAdapterCfgInfo *info, enum SndCardType cardType)
++{
++    snd_ctl_t *ctl = NULL;
++    snd_ctl_card_info_t *cardInfo;
++    snd_pcm_info_t *pcmInfo;
++    snd_ctl_card_info_alloca(&cardInfo);
++    snd_pcm_info_alloca(&pcmInfo);
++    char control[MAX_CARD_NAME_LEN] = {0};
++    if (snprintf_s(control, sizeof(control), sizeof(control) - 1, "hw:%d", info->captureCardId) < 0 ||
++        snd_ctl_open(&ctl, control, 0) < 0) {
++        return HDF_FAILURE;
++    }
++    int32_t ret = HDF_FAILURE;
++    if (snd_ctl_card_info(ctl, cardInfo) < 0 ||
++        strcmp(snd_ctl_card_info_get_id(cardInfo), info->captureCardName) != 0) {
++        goto done;
++    }
++    // A fresh direction-specific PCM query cannot accidentally select a render enumeration.
++    snd_pcm_info_set_device(pcmInfo, (unsigned int)info->captureDevice);
++    snd_pcm_info_set_subdevice(pcmInfo, 0);
++    snd_pcm_info_set_stream(pcmInfo, SND_PCM_STREAM_CAPTURE);
++    if (snd_ctl_pcm_info(ctl, pcmInfo) < 0) {
++        goto done;
++    }
++    if (snprintf_s(cardIns->devName, MAX_CARD_NAME_LEN, MAX_CARD_NAME_LEN - 1,
++        "hw:%d,%d,0", info->captureCardId, info->captureDevice) < 0 ||
++        strcpy_s(cardIns->ctrlName, MAX_CARD_NAME_LEN, control) != EOK ||
++        strcpy_s(cardIns->alsaCardId, MAX_CARD_NAME_LEN, snd_ctl_card_info_get_id(cardInfo)) != EOK) {
++        goto done;
++    }
++    cardIns->cardType = cardType;
++    ret = HDF_SUCCESS;
++done:
++    snd_ctl_close(ctl);
++    return ret;
++}
++
++int32_t SndMatchSelCaptureAdapter(struct AlsaSoundCard *cardIns, const char *adapterName)
++{
++    CHECK_NULL_PTR_RETURN_DEFAULT(cardIns);
++    CHECK_NULL_PTR_RETURN_DEFAULT(adapterName);
++    pthread_mutex_lock(&g_alsaConfigMutex);
++    struct AlsaAdapterCfgInfo *info = CfgGetAdapterInfo(adapterName);
++    enum SndCardType type = CfgGetAdapterCardType(adapterName);
++    int32_t ret = HDF_FAILURE;
++    if (info != NULL && type != SND_CARD_UNKNOWN) {
++        if (info->hasCaptureRoute) {
++            ret = SndMatchExplicitCapture(cardIns, info, type);
++        } else {
++            ret = SndMatchSelAdapterUnlocked(cardIns, adapterName);
++        }
++    }
++    pthread_mutex_unlock(&g_alsaConfigMutex);
++    return ret;
+ }
+ 
+ int32_t SndConverAlsaPcmFormat(const struct AudioPcmHwParams *hwParams, snd_pcm_format_t *alsaPcmFormat)
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h
+@@ -108,6 +108,7 @@
+ struct HdfIoService *HdfIoServiceBindName(const char *serviceName);
+ 
+ int32_t SndMatchSelAdapter(struct AlsaSoundCard *cardIns, const char *adapterName);
++int32_t SndMatchSelCaptureAdapter(struct AlsaSoundCard *cardIns, const char *adapterName);
+ int32_t SndConverAlsaPcmFormat(const struct AudioPcmHwParams *hwParams,
+     snd_pcm_format_t *alsaPcmFormat);
+ int32_t SndSaveCardListInfo(snd_pcm_stream_t stream, int32_t device);
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c
+@@ -455,7 +455,7 @@
+         return NULL;
+     }
+ 
+-    ret = SndMatchSelAdapter(&captureIns->soundCard, adapterName);
++    ret = SndMatchSelCaptureAdapter(&captureIns->soundCard, adapterName);
+     if (ret != HDF_SUCCESS) {
+         SndCloseHandle(&captureIns->soundCard);
+         CaptureFreeMemory();
+@@ -535,51 +535,39 @@
+ 
+ static int32_t CapturePcmReadi(snd_pcm_t *pcm, uint64_t *frameCnt, char *dataBuf, snd_pcm_uframes_t bufSize)
+ {
+-    int32_t tryNum = AUDIO_ALSALIB_RETYR;
+     CHECK_NULL_PTR_RETURN_DEFAULT(pcm);
+     CHECK_NULL_PTR_RETURN_DEFAULT(frameCnt);
+     CHECK_NULL_PTR_RETURN_DEFAULT(dataBuf);
++    *frameCnt = 0;
+     if (bufSize == 0) {
+-        AUDIO_FUNC_LOGE("Capture data buf is empty.");
+-        return HDF_FAILURE;
+-    }
+-
+-    do {
+-        int32_t ret = HDF_SUCCESS;
+-        /* Read interleaved frames to a PCM. */
+-        long frames = snd_pcm_readi(pcm, dataBuf, bufSize);
++        return HDF_FAILURE;
++    }
++    for (int32_t attempt = 0; attempt < AUDIO_ALSALIB_RETYR; ++attempt) {
++        snd_pcm_sframes_t frames = snd_pcm_readi(pcm, dataBuf, bufSize);
+         if (frames > 0) {
++            if ((snd_pcm_uframes_t)frames > bufSize) {
++                return HDF_FAILURE;
++            }
+             *frameCnt = (uint64_t)frames;
+             return HDF_SUCCESS;
+         }
+-
+-        if (frames == -EBADFD) {
+-            AUDIO_FUNC_LOGE("Capture PCM is not in the right state: %{public}s", snd_strerror(frames));
+-            ret = snd_pcm_prepare(pcm);
+-            if (ret < 0) {
+-                AUDIO_FUNC_LOGE("Capture snd_pcm_prepare fail: %{public}s", snd_strerror(ret));
++        if (frames == 0 || frames == -EAGAIN || frames == -EINTR) {
++            // Nonblocking capture may have no frames yet; wait only a bounded interval.
++            if (snd_pcm_wait(pcm, 100) < 0) {
+                 return HDF_FAILURE;
+             }
+-        } else {
+-            /* -ESTRPIPE: a suspend event occurred,
+-             * stream is suspended and waiting for an application recovery.
+-             * -EPIPE: an underrun occurred.
+-             */
+-            ret = snd_pcm_recover(pcm, frames, 0); // 0 for open capture recover log.
+-            if (ret < 0) {
+-                AUDIO_FUNC_LOGE("snd_pcm_readi failed: %{public}s", snd_strerror(ret));
+-                return HDF_FAILURE;
+-            }
+-        }
+-        ret = snd_pcm_start(pcm);
+-        if (ret < 0) {
+-            AUDIO_FUNC_LOGE("snd_pcm_start fail. %{public}s", snd_strerror(ret));
++            continue;
++        }
++        if (frames != -EPIPE && frames != -ESTRPIPE) {
+             return HDF_FAILURE;
+         }
+-        tryNum--;
+-    } while (tryNum > 0);
+-
+-    return HDF_SUCCESS;
++        int32_t ret = snd_pcm_recover(pcm, (int)frames, 0);
++        if (ret < 0 || snd_pcm_start(pcm) < 0) {
++            return HDF_FAILURE;
++        }
++    }
++    // Never claim that an empty retry sequence filled the caller's buffer.
++    return HDF_FAILURE;
+ }
+ 
+ static int32_t CaptureDataCopy(struct AudioHwCaptureParam *handleData, char *buffer, uint64_t frames)
+@@ -636,6 +624,10 @@
+         return HDF_FAILURE;
+     }
+ 
++    // The verified ALSA loopback card exposes a PCM cable, not physical mixer controls.
++    if (strcmp(captureIns->soundCard.alsaCardId, "QemuCapture") == 0) {
++        return HDF_SUCCESS;
++    }
+     ret = SndOpenMixer(&captureIns->soundCard);
+     if (ret != HDF_SUCCESS) {
+         AUDIO_FUNC_LOGE("SndOpenMixer failed");
+@@ -658,6 +650,12 @@
+ static int32_t CaptureCheckMmapMode(struct AlsaSoundCard *cardIns)
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(cardIns);
++    if (strcmp(cardIns->alsaCardId, "QemuCapture") == 0) {
++        // Only explicit Start may start this PCM; an old read must not undo Stop/drop.
++        return !cardIns->pauseState && cardIns->mmapFlag && cardIns->pcmHandle != NULL &&
++            snd_pcm_state(cardIns->pcmHandle) == SND_PCM_STATE_RUNNING ? HDF_SUCCESS : HDF_FAILURE;
++    }
++
+ 
+     if (!cardIns->mmapFlag) {
+         int32_t ret = ResetCaptureParams(cardIns, SND_PCM_ACCESS_RW_INTERLEAVED);
+@@ -672,6 +670,17 @@
+             return HDF_FAILURE;
+         }
+         cardIns->mmapFlag = true;
++    }
++    return HDF_SUCCESS;
++}
++
++static int32_t CheckCapturePeriodCapacity(snd_pcm_t *pcm, snd_pcm_uframes_t frames)
++{
++    CHECK_NULL_PTR_RETURN_DEFAULT(pcm);
++    snd_pcm_sframes_t bytesPerFrame = snd_pcm_frames_to_bytes(pcm, 1);
++    if (bytesPerFrame <= 0 || bytesPerFrame > ALSA_CAP_BUFFER_SIZE || frames == 0 ||
++        frames > ALSA_CAP_BUFFER_SIZE / (snd_pcm_uframes_t)bytesPerFrame) {
++        return HDF_FAILURE;
+     }
+     return HDF_SUCCESS;
+ }
+@@ -705,7 +714,15 @@
+         AUDIO_FUNC_LOGE("CheckCapFrameBufferSize failed.");
+         return HDF_FAILURE;
+     }
+-    if (CheckPcmStatus(cardIns->pcmHandle) != HDF_SUCCESS) {
++    if (CheckCapturePeriodCapacity(cardIns->pcmHandle, periodSize) != HDF_SUCCESS) {
++        return HDF_FAILURE;
++    }
++    if (strcmp(cardIns->alsaCardId, "QemuCapture") == 0) {
++        // No unbounded ARM wait or implicit prepare after Stop for the explicit PCM cable.
++        if (snd_pcm_wait(cardIns->pcmHandle, 100) <= 0) {
++            return HDF_FAILURE;
++        }
++    } else if (CheckPcmStatus(cardIns->pcmHandle) != HDF_SUCCESS) {
+         AUDIO_FUNC_LOGE("CheckPcmStatus failed.");
+         return HDF_FAILURE;
+     }
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
+@@ -24,8 +24,43 @@
+     long tempVolume;
+ } CaptureData;
+ 
++static bool IsQemuLoopbackCapture(const struct AlsaCapture *captureIns)
++{
++    return captureIns != NULL && strcmp(captureIns->soundCard.alsaCardId, "QemuCapture") == 0;
++}
++
++static int32_t StartQemuLoopbackCapture(struct AlsaCapture *captureIns)
++{
++    struct AlsaSoundCard *card = &captureIns->soundCard;
++    CHECK_NULL_PTR_RETURN_DEFAULT(card->pcmHandle);
++    if (snd_pcm_state(card->pcmHandle) != SND_PCM_STATE_RUNNING) {
++        if (snd_pcm_prepare(card->pcmHandle) < 0 || snd_pcm_start(card->pcmHandle) < 0) {
++            return HDF_FAILURE;
++        }
++    }
++    card->mmapFlag = true;
++    card->pauseState = false;
++    return HDF_SUCCESS;
++}
++
++static int32_t StopQemuLoopbackCapture(struct AlsaCapture *captureIns)
++{
++    struct AlsaSoundCard *card = &captureIns->soundCard;
++    CHECK_NULL_PTR_RETURN_DEFAULT(card->pcmHandle);
++    if (snd_pcm_drop(card->pcmHandle) < 0) {
++        return HDF_FAILURE;
++    }
++    card->mmapFlag = false;
++    card->pauseState = true;
++    return HDF_SUCCESS;
++}
++
+ static int32_t CaptureInitImpl(struct AlsaCapture* captureIns)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_SUCCESS; // No mixer exists; PCM open/parameters/start each perform their own checks.
++    }
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     if (captureIns->priData != NULL) {
+         return HDF_SUCCESS;
+@@ -51,13 +86,17 @@
+ static int32_t CaptureSelectSceneImpl(struct AlsaCapture *captureIns, const struct AudioHwCaptureParam *handleData)
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+-    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
+-    captureIns->descPins = handleData->captureMode.hwInfo.deviceDescript.pins;
++    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
++    captureIns->descPins = handleData->captureMode.hwInfo.deviceDescript.pins;
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureGetVolThresholdImpl(struct AlsaCapture *captureIns, long *volMin, long *volMax)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     CHECK_NULL_PTR_RETURN_DEFAULT(volMin);
+     CHECK_NULL_PTR_RETURN_DEFAULT(volMax);
+@@ -83,6 +122,10 @@
+ static int32_t CaptureGetVolumeImpl(struct AlsaCapture *captureIns, long *volume)
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     CHECK_NULL_PTR_RETURN_DEFAULT(volume);
+     int32_t ret = HDF_SUCCESS;
+     long volLeft = 0;
+@@ -110,6 +153,10 @@
+ static int32_t CaptureSetVolumeImpl(struct AlsaCapture *captureIns, long volume)
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     int32_t ret = HDF_SUCCESS;
+     struct AlsaSoundCard *cardIns = (struct AlsaSoundCard *)captureIns;
+     CaptureData *priData = CaptureGetPriData(captureIns);
+@@ -131,6 +178,10 @@
+ 
+ static int32_t CaptureSetMuteImpl(struct AlsaCapture *captureIns, bool muteFlag)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     int32_t ret = HDF_SUCCESS;
+     long vol = 0;
+@@ -150,7 +201,7 @@
+     } else {
+         setVol = priData->tempVolume;
+     }
+-    captureIns->SetVolume(captureIns, setVol);
++    ret = captureIns->SetVolume(captureIns, setVol);
+     if (ret != HDF_SUCCESS) {
+         AUDIO_FUNC_LOGE("SetVolume failed!");
+         return HDF_FAILURE;
+@@ -161,30 +212,50 @@
+ 
+ static int32_t CaptureStartImpl(struct AlsaCapture *captureIns, const struct AudioHwCaptureParam *handleData)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return StartQemuLoopbackCapture(captureIns);
++    }
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureStopImpl(struct AlsaCapture *captureIns)
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return StopQemuLoopbackCapture(captureIns);
++    }
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     snd_pcm_drop(captureIns->soundCard.pcmHandle);
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureGetGainThresholdImpl(struct AlsaCapture *captureIns, float *gainMin, float *gainMax)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     AUDIO_FUNC_LOGE("emulator not support gain operation");
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureGetGainImpl(struct AlsaCapture *captureIns, float *volume)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     AUDIO_FUNC_LOGE("emulator not support gain operation");
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureSetGainImpl(struct AlsaCapture *captureIns, float volume)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     AUDIO_FUNC_LOGE("emulator not support gain operation");
+     return HDF_SUCCESS;
+ }
+@@ -218,10 +289,10 @@
+     }
+     
+     return HDF_SUCCESS;
+-}
+-
+-int32_t CaptureGetSceneDev(enum AudioCategory scene)
+-{
+-    (void)scene;
+-    return -1;
+-}
++}
++
++int32_t CaptureGetSceneDev(enum AudioCategory scene)
++{
++    (void)scene;
++    return -1;
++}
+--- a/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
++++ b/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
+@@ -24,8 +24,43 @@
+     long tempVolume;
+ } CaptureData;
+ 
++static bool IsQemuLoopbackCapture(const struct AlsaCapture *captureIns)
++{
++    return captureIns != NULL && strcmp(captureIns->soundCard.alsaCardId, "QemuCapture") == 0;
++}
++
++static int32_t StartQemuLoopbackCapture(struct AlsaCapture *captureIns)
++{
++    struct AlsaSoundCard *card = &captureIns->soundCard;
++    CHECK_NULL_PTR_RETURN_DEFAULT(card->pcmHandle);
++    if (snd_pcm_state(card->pcmHandle) != SND_PCM_STATE_RUNNING) {
++        if (snd_pcm_prepare(card->pcmHandle) < 0 || snd_pcm_start(card->pcmHandle) < 0) {
++            return HDF_FAILURE;
++        }
++    }
++    card->mmapFlag = true;
++    card->pauseState = false;
++    return HDF_SUCCESS;
++}
++
++static int32_t StopQemuLoopbackCapture(struct AlsaCapture *captureIns)
++{
++    struct AlsaSoundCard *card = &captureIns->soundCard;
++    CHECK_NULL_PTR_RETURN_DEFAULT(card->pcmHandle);
++    if (snd_pcm_drop(card->pcmHandle) < 0) {
++        return HDF_FAILURE;
++    }
++    card->mmapFlag = false;
++    card->pauseState = true;
++    return HDF_SUCCESS;
++}
++
+ static int32_t CaptureInitImpl(struct AlsaCapture *captureIns)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_SUCCESS; // No mixer exists; PCM open/parameters/start each perform their own checks.
++    }
+     if (captureIns->priData != NULL) {
+         return HDF_SUCCESS;
+     }
+@@ -59,6 +94,10 @@
+ 
+ static int32_t CaptureGetVolThresholdImpl(struct AlsaCapture *captureIns, long *volMin, long *volMax)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     int32_t ret;
+     long _volMin = 0;
+     long _volMax = 0;
+@@ -80,6 +119,10 @@
+ 
+ static int32_t CaptureGetVolumeImpl(struct AlsaCapture *captureIns, long *volume)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     int32_t ret;
+     long volLeft = 0;
+     long volRight = 0;
+@@ -105,6 +148,10 @@
+ 
+ static int32_t CaptureSetVolumeImpl(struct AlsaCapture *captureIns, long volume)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     int32_t ret;
+     struct AlsaSoundCard *cardIns = (struct AlsaSoundCard *)captureIns;
+     CaptureData *priData = CaptureGetPriData(captureIns);
+@@ -126,6 +173,10 @@
+ 
+ static int32_t CaptureSetMuteImpl(struct AlsaCapture *captureIns, bool muteFlag)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     int32_t ret;
+     long vol;
+     long setVol;
+@@ -144,7 +195,7 @@
+     } else {
+         setVol = priData->tempVolume;
+     }
+-    captureIns->SetVolume(captureIns, setVol);
++    ret = captureIns->SetVolume(captureIns, setVol);
+     if (ret != HDF_SUCCESS) {
+         AUDIO_FUNC_LOGE("SetVolume failed!");
+         return HDF_FAILURE;
+@@ -159,6 +210,10 @@
+     (void)handleData;
+     struct AlsaMixerCtlElement mixerItem;
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return StartQemuLoopbackCapture(captureIns);
++    }
+ 
+     SndElementItemInit(&mixerItem);
+     mixerItem.numid = SND_NUMID_CAPUTRE_MIC_PATH;
+@@ -171,6 +226,10 @@
+ 
+ static int32_t CaptureStopImpl(struct AlsaCapture *captureIns)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return StopQemuLoopbackCapture(captureIns);
++    }
+     struct AlsaMixerCtlElement mixerItem;
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+     CHECK_NULL_PTR_RETURN_DEFAULT(&captureIns->soundCard);
+@@ -187,18 +246,30 @@
+ 
+ static int32_t CaptureGetGainThresholdImpl(struct AlsaCapture *captureIns, float *gainMin, float *gainMax)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     AUDIO_FUNC_LOGE("8541e not support gain operation");
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureGetGainImpl(struct AlsaCapture *captureIns, float *volume)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     AUDIO_FUNC_LOGE("8541e not support gain operation");
+     return HDF_SUCCESS;
+ }
+ 
+ static int32_t CaptureSetGainImpl(struct AlsaCapture *captureIns, float volume)
+ {
++    CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
++    if (IsQemuLoopbackCapture(captureIns)) {
++        return HDF_ERR_NOT_SUPPORT;
++    }
+     AUDIO_FUNC_LOGE("8541e not support gain operation");
+     return HDF_SUCCESS;
+ }

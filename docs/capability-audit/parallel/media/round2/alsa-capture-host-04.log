@@ -1,0 +1,11 @@
+actual capture period: physical ALSA frame bytes and allocated tail checked without multiplication overflow
+.actual JSON/directional selection: legacy/render preserved; malformed and nonexistent capture rejected
+.actual capture open: PCM-only needs no fictitious mixer; old read cannot restart a dropped PCM
+.actual nonblocking PCM read: bounded waits, recovery, zero/error/overflow and stopped-state rejection
+.actual vendor capture: PCM start/drop errors propagated; absent mixer capabilities rejected
+actual vendor capture: PCM start/drop errors propagated; absent mixer capabilities rejected
+..
+----------------------------------------------------------------------
+Ran 6 tests in 3.197s
+
+OK
