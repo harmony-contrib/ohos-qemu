@@ -5,8 +5,8 @@
   "branch": "codex/capability-apps-20261015",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
   "requirements_count": 34,
-  "summary": "第六批为固定Contacts真picker与Theme既有壁纸渲染扩展新增独立源码构建候选；仅8个构建元数据目标，4项轻量主机检查通过，未运行SDK/HAP。Contacts外部pickersheet HSP/会话清理与Theme缺设置UI/Launcher路由等缺口明确保留；34项不核销。",
-  "acceptance_status": "Latest Contacts/Theme batch is packaging-only preparation with host exact-state/schema checks; no official SDK compilation, signing, HAP installation, representative package or runtime acceptance. All 34 assigned requirements remain unclosed.",
+  "summary": "第七批修复Contacts真picker的session/presenter/worker scope、账户与查询代次、分批结果与页面/监听清理；修复Theme既有renderer的错误路径/窗口异步生命周期。仅8个业务目标，3项host检查含38个实际提取源码场景通过，未SDK/HAP构建。pickerSheet改判为源中未使用的历史manifest声明，待根实际ABC导入确认后窄删除；34项仍不核销。",
+  "acceptance_status": "Latest Contacts/Theme lifecycle source candidates pass scoped lightweight host checks only. Official product Linux SDK39 compilation, ABC dependency inspection, OS-signing/BMS and fresh representative ARM64 phone runtime acceptance remain root-owned and uncompleted.",
   "upstream_targets": [
     "applications/standard/admin_provisioning/BUILD.gn",
     "applications/standard/admin_provisioning/build-profile.json5",
@@ -32,6 +32,12 @@
     "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
     "applications/standard/contacts/BUILD.gn",
     "applications/standard/contacts/build-profile.json5",
+    "applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets",
+    "applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets",
+    "applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets",
+    "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets",
+    "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets",
+    "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets",
     "applications/standard/hap/BUILD.gn",
     "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets",
     "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets",
@@ -47,7 +53,9 @@
     "applications/standard/theme/hvigor/hvigor-config.json5",
     "applications/standard/theme/oh-package.json5",
     "applications/standard/theme/product/pad/oh-package.json5",
-    "applications/standard/theme/product/phone/oh-package.json5"
+    "applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts",
+    "applications/standard/theme/product/phone/oh-package.json5",
+    "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts"
   ],
   "tests": [
     {
@@ -115,6 +123,14 @@
       "result": "4 tests passed: exact apply plus two full replays; unknown/partial/symlink refusal before mutation; original local HAR/HSP graph, identity, permissions and API26 project schema; actual picker/result versus wallpaper renderer source contracts. Contacts build profile changes precisely one signingConfig line. All non-target fixture hashes unchanged.",
       "scope": "Light host fixtures and prepared schema only. No official SDK/HAP/BMS/QEMU execution.",
       "evidence": "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py"
+    },
+    {
+      "name": "contacts_picker_and_theme_renderer_real_source_lifetimes",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_apps_provider_lifecycle.py -v",
+      "exit_code": 0,
+      "result": "3 tests pass, including 38 actual extracted class/page-method scenarios: scoped worker audit/reply cancellation, actual 205-item/empty/legacy result frames, duplicate/partial/terminal retry, old/new requests and queries/searches, account and window await races, exact listener/timer/subscriber cleanup, old event versus new page, wallpaper window and image generations. Exact metadata->business stack initial+2 replays; unknown business edits refused without mutation; original metadata/manifests/profiles preserved. Added actual legacy save accessor, private/public flag mirroring and busy-state compatibility checks.",
+      "scope": "Deferred host adapters executing actual source methods; no ArkUI, NAPI, database provider, official SDK, HAP or image runtime proof.",
+      "evidence": "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/lifecycles.cjs"
     }
   ],
   "integration_requests": [
@@ -329,7 +345,7 @@
         "Contacts_external_HSP": {
           "bundleName": "com.ohos.security.pickersheet",
           "moduleName": "pickersheetlibrary",
-          "status": "original manifest dependency retained; no matching project in fixed .repo/project.list nor named HAP/target in applications/standard/hap; root must supply lawful compatible payload/signature or separately resolve actual source contract, not delete as a build workaround"
+          "status": "Superseded by later complete source-reference review: apparently unused manifest declaration, not a proven external runtime dependency; root decides narrow removal after official compiled ABC/HSP import verification."
         },
         "Theme_model6_production_dependencies": []
       },
@@ -337,6 +353,51 @@
       "native_wallpaper_request": "Root separately owns base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp fallback to com.ohos.launcher/WallpaperExtAbility without ThemeService. Installing com.ohos.wallpaper cannot satisfy this distinct target.",
       "required_runtime": "Official full product API26 SDK compilation and BMS/system-signing checks, then newly packaged ARM64 phone. Contacts public picker overloads/one-many/empty/filter/default-selection/cancel/error/permission denial/caller exit/provider restart/reentry; observe timer/display-listener/session cleanup. Wallpaper renderer load/change/error/window teardown, independent real settings UI and set/restore/cancel plus Launcher fallback; 2in1 compatibility remains unproved.",
       "acceptance_limit": "Theme is a renderer-only feature HAP, not wallpaper selection/settings UI; no capability closed by package name/build metadata."
+    },
+    {
+      "id": "apps-contacts-picker-and-wallpaper-renderer-lifetimes",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "components": [
+        "patches/common/applications/standard/contacts/picker_session_lifecycle",
+        "patches/common/applications/standard/theme/renderer_lifecycle"
+      ],
+      "apply_order": [
+        "contacts/source_provider -> contacts/picker_session_lifecycle",
+        "theme/source_provider -> theme/renderer_lifecycle"
+      ],
+      "source_revisions": {
+        "applications/standard/contacts": "65de33df8d6d7aaa5797a5625ed0e5938e5cb050",
+        "applications/standard/theme": "a436a43f1c0948fa12df6d520ec695ae4388a057"
+      },
+      "upstream_targets_this_batch": [
+        "applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets",
+        "applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets",
+        "applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets",
+        "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets",
+        "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets",
+        "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets",
+        "applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts",
+        "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts"
+      ],
+      "final_sha256": {
+        "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets": "56e07145ba8eaeb37ccfebf10cae714070f70707e7704c24f0efce27086e0ecf",
+        "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets": "df4609bbad3281abfeb922c3e1f86ff53dddab2ec18f00425e774c0a5c8aafee",
+        "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets": "1b6adb88192ade5cc160098956bd44dd5874fc7ddbe4f780e95d8aa2f58ec3c2",
+        "applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets": "b1327fb0c6f3872cb16ec84785aad01a9795bb0a4045b9725a4e38d790c25f51",
+        "applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets": "7195c647807b778b7ed3179de30ee22ca71375b8b1407e4ae79b9d1c5a07cb17",
+        "applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets": "32dc4a208dc5dff759ea68f9d7cf3a853209ee2dfa65d2243d1acd64ad2b525d",
+        "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts": "84cde2fbed244e1e6e3562096f66d5948d9124c4030e7d1bd54b3fa39e761dac",
+        "applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts": "84cde2fbed244e1e6e3562096f66d5948d9124c4030e7d1bd54b3fa39e761dac"
+      },
+      "metadata_unchanged": true,
+      "manifest_permissions_identity_profiles_unchanged": true,
+      "contracts": "Original ContactUiExtentionAbility sys/commonUI, selected DTOs/URI/contact IDs, 100-item pickerData/index/total, single/multiple Want conventions, 0 success / 1 cancel / original 401 filter failure retained. Default-selection cancellation invalidates old pending query. Backend/transport errors use nonzero -1; root must verify final native/public caller error mapping and partial-frame rejection. No fake query data or success.",
+      "worker": "Optional fourth WorkerRequestScope argument; old unscoped path unchanged. Cancelling a request unregisters only its own callback, including across audit await; never terminates shared workers. Real taskpool queries attempt only owned cancellation and reject late generations.",
+      "picker_sheet_update": "The prior source-packaging report is superseded on external HSP: 1074 fixed tracked files, all reference lines, no tracked native/archive/ABC inputs, related imports/calls commented; live identity only in historical main/test module dependencies. Generic share-plugin is unregistered by real hvigor files. Root should inspect actual SDK-produced ABC module-request/import tables and HAP/HSP dependency metadata; if no live import exists, separately remove exact obsolete dependency tuples without changing permissions/other entries. Do not demand a private HSP from declaration alone. No manifest deletion in this commit.",
+      "wallpaper": "Existing wallpaper renderer only. Correct error identifiers; owned window generation and late-image fences; no settings/picker UI. Parent still owns expired profile, feature-only/device compatibility, Launcher fallback and missing settings UI.",
+      "required_validation": "Root applies these 8 exact business targets to private fixed source, performs full official product Linux SDK26.0.0.39 compile and actual compiled import checks, preserves OS policy/signing and preinstall, then new representative ARM64 phone: all documented contact picker overloads, without broad READ_CONTACTS grant, one/many/empty/filter/default/cancel/error/partial chunks/caller exit/provider restart/overlap; real ArkUI window/listeners and renderer set/change/destroy boundaries. Other save/edit/MeeTime app flows are not claimed fixed.",
+      "evidence": "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md"
     }
   ],
   "requirements_review": {
@@ -541,15 +602,15 @@
       ]
     },
     "behavior:wallpaper-ui-provider-missing": {
-      "status": "renderer_packaging_candidate_only_UI_and_native_route_unresolved",
-      "finding": "固定Theme a436a43f phone/pad仅feature型wallpaper渲染extension：getPixelMap→全屏Image，没有选择/设置/还原/取消UI。本批只新增两源码GN目标及model6构建元数据，保留原manifest/deviceTypes/业务与权限；原profile已过期，错误分支Log/TAG未定义、onDestroy不销毁window。无ThemeService时native仍连接com.ohos.launcher/WallpaperExtAbility，此独立bundle无法满足。",
-      "next_required": "根串行API26 SDK及feature-only BMS/设备兼容、原policy续签与精确预装；独立实现真实Wallpaper设置UI、renderer错误/窗口清理及Launcher fallback接线，再新包验证设置/还原/取消/退出/服务重启与2in1。",
+      "status": "real_renderer_lifecycle_candidate_settings_UI_and_native_route_missing",
+      "finding": "修复Theme phone/pad真实renderer的未定义错误变量、窗口创建/load/show/destroy代次与销毁后的PixelMap回调；构建元数据、feature/wallpaper manifest和原权限零改。仍只渲染全屏现有壁纸，没有选择/设置/还原/取消UI；原profile过期和native Launcher fallback仍待根。",
+      "next_required": "根完整产品SDK39/BMS/设备兼容/OS签名续期；实现真实Wallpaper设置UI及Launcher fallback，再新包验证真实renderer生命周期/壁纸变化/错误、设置/还原/取消/退出/服务重启及2in1。",
       "ledger_closed": false,
       "evidence": [
-        "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
-        "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
-        "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
-        "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py"
+        "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
+        "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/inspection.json",
+        "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
+        "ci/capability-audit/test_batch_apps_provider_lifecycle.py"
       ]
     },
     "behavior:accessibility-screen-reader-provider-missing": {
@@ -723,15 +784,15 @@
       ]
     },
     "behavior:contacts-picker-entrypoint-missing-phone": {
-      "status": "fixed_source_packaging_candidate_uncompiled_external_HSP_and_lifecycle_gaps",
-      "finding": "固定Contacts 65de33df真sys/commonUI ContactUiExtentionAbility与真实picker已存在；本批新增ohos_app contacts_hap、移除产品IDE signingConfig引用，保留SDK26/target23及七模块图/38权限/原profile。外部com.ohos.security.pickersheet/pickersheetlibrary HSP在固定项目索引与HAP命名图中未找到；原picker还存在未清理计时器/显示监听与全局session，onSessionDestroy仅日志。",
-      "next_required": "根接共享HAP选择/精确OS签名预授权，提供合法外部HSP，完整SDK和BMS核对；独立修复真实生命周期后，用最终API26 NAPI和新包实测所有picker overload、数据/默认选择/取消/拒绝/退出/重入及2in1。",
+      "status": "real_source_picker_lifecycle_candidate_official_SDK_and_runtime_pending",
+      "finding": "保留固定Contacts真ContactUiExtentionAbility/真实选取UI/DTO协议；新增每session presenter/LocalStorage、可选worker请求scope、账户/查询/搜索代次、chunk终结幂等与定时器/监听/页面重入清理；38个host实际源码场景通过。完整1074项固定跟踪源码引用审查显示pickerSheet仅历史manifest活引用，先前私有HSP外部阻塞判断不再成立；真实ABC是否导入尚未证明。",
+      "next_required": "根完整Linux SDK39编译/实际ABC及HAP依赖核对后，若无执行依赖则窄删除过时HSP声明，精确OS签名/预装，新包实测全部picker overload/无广泛读权限/数据与非零错误映射/取消默认选择/部分chunk/并发退出/服务重启及2in1；save/edit/MeeTime其他流程独立验收。",
       "ledger_closed": false,
       "evidence": [
-        "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
-        "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
-        "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
-        "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py"
+        "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
+        "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/inspection.json",
+        "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
+        "ci/capability-audit/test_batch_apps_provider_lifecycle.py"
       ]
     },
     "behavior:arkui-expanded-text-menu-providers-missing": {
@@ -842,8 +903,8 @@
     },
     {
       "id": "behavior:wallpaper-ui-provider-missing",
-      "status": "renderer_packaging_candidate_only_UI_and_native_route_unresolved",
-      "reason": "根串行API26 SDK及feature-only BMS/设备兼容、原policy续签与精确预装；独立实现真实Wallpaper设置UI、renderer错误/窗口清理及Launcher fallback接线，再新包验证设置/还原/取消/退出/服务重启与2in1。"
+      "status": "real_renderer_lifecycle_candidate_settings_UI_and_native_route_missing",
+      "reason": "根完整产品SDK39/BMS/设备兼容/OS签名续期；实现真实Wallpaper设置UI及Launcher fallback，再新包验证真实renderer生命周期/壁纸变化/错误、设置/还原/取消/退出/服务重启及2in1。"
     },
     {
       "id": "behavior:accessibility-screen-reader-provider-missing",
@@ -917,8 +978,8 @@
     },
     {
       "id": "behavior:contacts-picker-entrypoint-missing-phone",
-      "status": "fixed_source_packaging_candidate_uncompiled_external_HSP_and_lifecycle_gaps",
-      "reason": "根接共享HAP选择/精确OS签名预授权，提供合法外部HSP，完整SDK和BMS核对；独立修复真实生命周期后，用最终API26 NAPI和新包实测所有picker overload、数据/默认选择/取消/拒绝/退出/重入及2in1。"
+      "status": "real_source_picker_lifecycle_candidate_official_SDK_and_runtime_pending",
+      "reason": "根完整Linux SDK39编译/实际ABC及HAP依赖核对后，若无执行依赖则窄删除过时HSP声明，精确OS签名/预装，新包实测全部picker overload/无广泛读权限/数据与非零错误映射/取消默认选择/部分chunk/并发退出/服务重启及2in1；save/edit/MeeTime其他流程独立验收。"
     },
     {
       "id": "behavior:arkui-expanded-text-menu-providers-missing",
@@ -935,6 +996,7 @@
     "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
     "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
     "ci/capability-audit/batch_apps_prepare_contacts_theme_candidate.py",
+    "ci/capability-audit/batch_apps_prepare_provider_lifecycle.py",
     "ci/capability-audit/batch_apps_prepare_share_candidate.py",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-BUILD.gn.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-build-profile.json5.gz.b64",
@@ -968,6 +1030,9 @@
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
     "ci/capability-audit/fixtures/batch_apps/contacts_theme/candidate-hashes.json",
     "ci/capability-audit/fixtures/batch_apps/contacts_theme/inspection.json",
+    "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
+    "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/inspection.json",
+    "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/lifecycles.cjs",
     "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SendDataPayload.ets",
     "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePicker.ets",
     "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerController.ets",
@@ -980,12 +1045,14 @@
     "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
     "ci/capability-audit/test_batch_apps_contacts_theme_source_provider.py",
+    "ci/capability-audit/test_batch_apps_provider_lifecycle.py",
     "ci/capability-audit/test_batch_apps_share_provider.py",
     "docs/capability-audit/parallel/apps/README.md",
     "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/contacts-theme-source-preparation.md",
+    "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
     "docs/capability-audit/parallel/apps/result.json",
     "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
     "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json",
@@ -1002,6 +1069,10 @@
     "patches/common/applications/standard/calendardata/event_editor/README.md",
     "patches/common/applications/standard/calendardata/event_editor/apply.sh",
     "patches/common/applications/standard/calendardata/event_editor/verify_source.py",
+    "patches/common/applications/standard/contacts/picker_session_lifecycle/0001-isolate-provider-lifetimes-and-release-owned-resources.patch",
+    "patches/common/applications/standard/contacts/picker_session_lifecycle/README.md",
+    "patches/common/applications/standard/contacts/picker_session_lifecycle/apply.sh",
+    "patches/common/applications/standard/contacts/picker_session_lifecycle/verify_source.py",
     "patches/common/applications/standard/contacts/source_provider/0001-build-fixed-real-provider-sources.patch",
     "patches/common/applications/standard/contacts/source_provider/README.md",
     "patches/common/applications/standard/contacts/source_provider/apply.sh",
@@ -1018,12 +1089,16 @@
     "patches/common/applications/standard/settings/share_picker/README.md",
     "patches/common/applications/standard/settings/share_picker/apply.sh",
     "patches/common/applications/standard/settings/share_picker/verify_source.py",
+    "patches/common/applications/standard/theme/renderer_lifecycle/0001-isolate-provider-lifetimes-and-release-owned-resources.patch",
+    "patches/common/applications/standard/theme/renderer_lifecycle/README.md",
+    "patches/common/applications/standard/theme/renderer_lifecycle/apply.sh",
+    "patches/common/applications/standard/theme/renderer_lifecycle/verify_source.py",
     "patches/common/applications/standard/theme/source_provider/0001-build-fixed-real-provider-sources.patch",
     "patches/common/applications/standard/theme/source_provider/README.md",
     "patches/common/applications/standard/theme/source_provider/apply.sh",
     "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
-  "previous_batch_commit": "324d17f67e246ba6a114e841a065c2ba4a840fda",
+  "previous_batch_commit": "d3823b82bbc31fb2ee3962bcf3474c918c7cb1c5",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -1034,7 +1109,7 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership: previous Settings/Calendar/Admin/share/MMS candidates plus bounded Contacts/Theme build metadata preparation; no shared HAP GN/signing/preinstall edits in latest batch",
+  "report_scope": "cumulative apps ownership; latest batch touches only 6 Contacts business files and 2 Theme renderer files, not previous 8 build metadata targets or Settings/MMS/shared integration",
   "contacts_theme_batch": {
     "scope": "8 build metadata upstream targets only; no business fix or acceptance claim",
     "fixed_source_container": "read-only ohos-qemu-parallel-source-20261016-02",
@@ -1042,6 +1117,25 @@
     "candidate_hash_manifest_sha256": "9d7d0c7d63fd7a61cd011d723879df70fd13da71151c98efc7b3b4af9613143a",
     "official_SDK_build_attempted": false,
     "heavy_resource_use": "none; unique heavy lease remains with root Settings/MMS batch",
+    "requirements_closed": 0,
+    "first_artifact_behavior_gate_passed": false
+  },
+  "provider_lifecycle_batch": {
+    "upstream_targets_this_batch": [
+      "applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets",
+      "applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets",
+      "applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets",
+      "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets",
+      "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets",
+      "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets",
+      "applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts",
+      "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts"
+    ],
+    "fixture_sha256": "2c271b1ce635c007b68ffc498b885b57ff5e5920b433dee4b0c1974a50d8b2c6",
+    "hash_manifest_sha256": "6780c8635b81b67e606531f70d0b11b520826c94f9b18b74cc193cee0f399bf1",
+    "host_scenarios": 38,
+    "official_SDK_build_attempted": false,
+    "heavy_resource_use": "none; only small host tests and fixed source read-only inspection",
     "requirements_closed": 0,
     "first_artifact_behavior_gate_passed": false
   }

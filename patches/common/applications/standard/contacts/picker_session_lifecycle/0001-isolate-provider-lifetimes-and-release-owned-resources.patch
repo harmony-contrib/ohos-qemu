@@ -1,0 +1,1683 @@
+diff --git a/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets b/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets
+@@ -0,0 +1,93 @@
++/* Copyright (c) 2026 Harmony Contrib
++ * SPDX-License-Identifier: Apache-2.0 */
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import { common } from '@kit.AbilityKit';
++import ability from '@ohos.ability.ability';
++import type { UiExtentionParam } from './ContactUiExtentionAbility';
++import WorkerWrapper, { WorkerRequestScope } from '../workers/base/WorkerWrapper';
++
++// No module/global result destination. Every callback retains this exact session.
++export default class PickerSession {
++  private static sequence: number = 0;
++  public readonly id: number = ++PickerSession.sequence;
++  public readonly scope: WorkerRequestScope = new WorkerRequestScope();
++  public readonly storage: LocalStorage;
++  private resultClaimed: boolean = false;
++  private closing: boolean = false;
++  private pendingResult: ability.AbilityResult | undefined = undefined;
++  public readonly session: UIExtensionContentSession;
++  public readonly context: common.UIExtensionContext;
++  public readonly worker: WorkerWrapper;
++  public params: UiExtentionParam;
++
++  constructor(session: UIExtensionContentSession, context: common.UIExtensionContext,
++    params: UiExtentionParam, worker: WorkerWrapper) {
++    this.session = session;
++    this.context = context;
++    this.params = params;
++    this.worker = worker;
++    this.storage = new LocalStorage({
++      uiExtentionSession: session, parameters: params, pickerSession: this,
++      isGettingPickerData: false, isShowBindSheet: false, isPickerSearch: false,
++      isShowAccountants: false, isFromSaveContactPicker: params.isSaveContact,
++      isSaveExistContact: params.isSaveExistContact
++    });
++    if (params.contact !== undefined) { this.storage.setOrCreate('contactFromPicker', params.contact); }
++  }
++
++  get active(): boolean { return this.scope.active; }
++
++  addCleanup(cleanup: () => void): () => void {
++    return this.scope.onDispose(cleanup);
++  }
++
++  delay(action: () => void, milliseconds: number): number {
++    let remove: () => void = () => {};
++    const timer = setTimeout(() => {
++      remove();
++      if (this.active) { action(); }
++    }, milliseconds);
++    remove = this.addCleanup(() => clearTimeout(timer));
++    return timer;
++  }
++
++  dispose(): void {
++    this.scope.dispose();
++  }
++
++  async finish(result: ability.AbilityResult): Promise<boolean> {
++    if (!this.active || this.closing) { return false; }
++    this.resultClaimed = true;
++    // Retry only the terminal frame, never resend already delivered chunks.
++    this.pendingResult = this.pendingResult ?? result;
++    this.closing = true;
++    try {
++      await this.session.terminateSelfWithResult(this.pendingResult);
++      this.dispose();
++      return true;
++    } catch (error) {
++      console.error('Contact picker result delivery failed: ' + error?.message);
++      return false;
++    } finally {
++      this.closing = false;
++    }
++  }
++
++  async deliver(chunks: Record<string, Object>[], result: ability.AbilityResult): Promise<boolean> {
++    if (!this.active) { return false; }
++    if (this.resultClaimed) {
++      return this.pendingResult !== undefined ? this.finish(this.pendingResult) : false;
++    }
++    this.resultClaimed = true;
++    try {
++      for (const chunk of chunks) {
++        if (!this.active) { return false; }
++        this.session.sendData(chunk);
++      }
++    } catch (error) {
++      console.error('Contact picker chunk delivery failed: ' + error?.message);
++      return this.finish({ resultCode: -1 });
++    }
++    return this.finish(result);
++  }
++}
+diff --git a/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets b/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets
+--- a/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets
++++ b/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets
+@@ -40,6 +40,7 @@
+ // import { AppLockManager } from '@hw-hmos/pickersheet'
+ import { osAccount } from '@kit.BasicServicesKit'
+ import ContactsPickerPresenter from '../presenter/contact/batchselectcontacts/ContactsPickerPresenter'
++import PickerSession from './PickerSession';
+ 
+ const TAG = 'ContactUiExtentionAbility'
+ 
+@@ -83,32 +84,20 @@
+   public mContactListPresenter: ContactListPresenter = ContactListPresenter.getInstance();
+   public listenerManager: ListenerManager | null = null;
+   private processorId: number = 0;
+-  private runTime: number[] = [];
+-  private sumTime: number = 0;
+-  private succCount: number = 0;
+-  private errCodes: Record<string, number> = {};
+-  private startTime: number = 0;
+-  private endTime: number = 0
+-  private localId: number = 100;
+-  private userId: number = 100;
+   private startAbilityCallerBundleName: string = '';
+-
+-  constructor() {
+-    super();
+-    osAccount.getAccountManager().getOsAccountLocalId().then((localId) => {
+-      this.localId = localId;
+-    })
+-  }
++  private sessions: Map<UIExtensionContentSession, PickerSession> = new Map();
++  private destroyed: boolean = false;
++
++  constructor() { super(); }
+ 
+   parseContactParam(want: Want) {
+     let uiExtentionParam: UiExtentionParam = new UiExtentionParam();
+-    this.startTime = new Date().getTime()
+     HiLog.i(TAG, 'Receive parameters');
+     uiExtentionParam.urlType = want.parameters?.targetUrl as string
+     uiExtentionParam.phoneNumber = want.parameters?.phoneNumber as string
+     uiExtentionParam.contactId = want.parameters?.contactId as number
+-    uiExtentionParam.callerBundleName = want.parameters!['ohos.aafwk.param.callerBundleName'] as string
+-    uiExtentionParam.callerToken = want.parameters!['ohos.aafwk.param.callerToken'] as number
++    uiExtentionParam.callerBundleName = want.parameters?.['ohos.aafwk.param.callerBundleName'] as string
++    uiExtentionParam.callerToken = want.parameters?.['ohos.aafwk.param.callerToken'] as number
+     uiExtentionParam.from = want.parameters?.from as string;
+     uiExtentionParam.meetimeDeviceType = want.parameters?.meetimeDeviceType as DeviceTypeEnum;
+     // 数据库调 picker 标志位
+@@ -121,7 +110,6 @@
+     uiExtentionParam.isSaveContact = (want.parameters?.isSaveContact as boolean) ?? false;
+     uiExtentionParam.contact = want.parameters?.contact as contact.Contact;
+     uiExtentionParam.userId = want.parameters?.userId as number;
+-    this.userId = want.parameters?.userId as number;
+     uiExtentionParam.source = want.parameters?.source as string;
+     uiExtentionParam.intelliGroupName = want.parameters?.intelliGroupName as string;
+ 
+@@ -130,20 +118,6 @@
+      selectLimit: ${want?.parameters?.selectLimit}, isDisplayByName: ${want?.parameters?.isDisplayByName},
+       isSaveExistContact: ${want?.parameters?.isSaveExistContact}, isSaveContact: ${want?.parameters?.isSaveContact},
+        source: ${want?.parameters?.source}`);
+-
+-    this.endTime = new Date().getTime()
+-    // 统计运行时间和成功次数
+-    this.runTime.push(this.endTime - this.startTime);
+-    this.sumTime += this.endTime - this.startTime;
+-    this.succCount++;
+-    if (!this.startTime) {
+-      this.startTime = this.startTime;
+-    }
+-    setInterval(() => {
+-      HiLog.w(TAG, `use DotUtil selectContact`)
+-      HiAppEvent.getInstance().SchedulerUpload(this.processorId, uiExtentionParam.callerBundleName, this.startTime,
+-        this.runTime, this.succCount, this.sumTime, -1)
+-    }, 1000)
+ 
+     HiLog.i(TAG, 'uiExtentionParam parse finish ')
+     return uiExtentionParam
+@@ -175,6 +149,9 @@
+   }
+ 
+   onDestroy() {
++    this.destroyed = true;
++    for (const request of Array.from(this.sessions.values())) { request.dispose(); }
++    this.sessions.clear();
+     HiLog.i(TAG, `ContactUiExtentionAbility onDestroy`)
+     try {
+       // AppLockManager.Helper.setPickerProtectedState([{ bundleName: this.startAbilityCallerBundleName, appIndex: 0 }],
+@@ -229,6 +206,55 @@
+   }
+ 
+   async onSessionCreate(want: Want, session: UIExtensionContentSession) {
++    if (this.destroyed || this.sessions.has(session)) { return; }
++    let request: PickerSession | undefined = undefined;
++    try {
++      const started = Date.now();
++      const params = this.parseContactParam(want);
++      const duration = Date.now() - started;
++      const durations: number[] = [duration];
++      request = new PickerSession(session, this.context, params, this.mDataWorker);
++      const current = request;
++      this.sessions.set(session, current);
++      current.addCleanup(() => {
++        if (this.sessions.get(session) === current) { this.sessions.delete(session); }
++        const globals = ContactsGlobalThisHelper.GetGlobalThis();
++        if (globals.getUIExtensionContentSession() === session) {
++          globals.remove(ContactsGlobalThisHelper.UiExtentionAbilityUIExtensionContentSession);
++          if (globals.getValue<UiExtentionParam>(ContactsGlobalThisHelper.UiExtentionAbilityParams) === params) {
++            globals.remove(ContactsGlobalThisHelper.UiExtentionAbilityParams);
++          }
++        }
++        if (this.sessions.size === 0 && globals.getValue(ContactsGlobalThisHelper.UIContextName) === this.context) {
++          globals.remove(ContactsGlobalThisHelper.UIContextName);
++        }
++      });
++      current.storage.setOrCreate('pickerPresenter', ContactsPickerPresenter.createForSession(current));
++      current.storage.setOrCreate('callerPid', String(want.parameters?.['ohos.aafwk.param.callerPid'] ?? ''));
++      const timer = setInterval(() => {
++        if (!current.active) { return; }
++        HiAppEvent.getInstance().SchedulerUpload(this.processorId, params.callerBundleName,
++          started, durations, 1, duration, -1);
++      }, 1000);
++      current.addCleanup(() => clearInterval(timer));
++      const localAccountId = await osAccount.getAccountManager().getOsAccountLocalId();
++      if (!current.active) { return; }
++      await this.openSession(want, current, localAccountId);
++    } catch (error) {
++      HiLog.e(TAG, 'Contact picker session failed: ' + error?.message);
++      if (request !== undefined) {
++        await request.finish({ resultCode: -1 });
++        request.dispose();
++      } else {
++        try { await session.terminateSelfWithResult({ resultCode: -1 }); } catch (_) {}
++      }
++    }
++  }
++
++  private async openSession(want: Want, request: PickerSession, localAccountId: number) {
++    const session = request.session;
++    const uiExtentionParam = request.params;
++    const storage = request.storage;
+     try {
+       HiLog.i(TAG, `ContactUiExtentionAbility onSessionCreate`)
+       // 安全截屏设置
+@@ -246,7 +272,7 @@
+       AccessibilityUtil.getInstance().getAccessibilitySwitchState();
+ 
+       // 参数解析
+-      let uiExtentionParam: UiExtentionParam = this.parseContactParam(want)
++      if (!request.active) { return; }
+ 
+       // 设置全局参数
+       ContactsGlobalThisHelper.GetGlobalThis()
+@@ -273,20 +299,19 @@
+       AppStorage.setOrCreate('currentColorMode', this.context?.config?.colorMode);
+ 
+       // 设置全局 storage
+-      let storageParamObj: LooseObject = {
+-        'uiExtentionSession': session,
+-        'parameters': uiExtentionParam,
++      const foldChanged = (status: display.FoldStatus) => {
++        if (request.active) { AppStorage.setOrCreate('isVerdeModel', ScreenFormUtil.isNewFormSmallFoldScreen()); }
+       };
+-      let storage: LocalStorage = new LocalStorage(storageParamObj);
+-
+-      // 判断设备形态
+-      ScreenFormUtil.addFoldStatusRegister();
++      foldChanged(display.getFoldStatus());
++      display.on('foldStatusChange', foldChanged);
++      request.addCleanup(() => display.off('foldStatusChange', foldChanged));
+ 
+       // 判断是否显示子窗
+       let subWindow: window.Window | undefined = undefined;
+-      if(this.localId === 100 && this.userId !== undefined && this.userId !== 100) {
++      if(localAccountId === 100 && uiExtentionParam.userId !== undefined && uiExtentionParam.userId !== 100) {
+         HiLog.i(TAG,'ContactUiExtentionAbility onSessionCreate terminateSelf')
+-        this.context.terminateSelf()
++        await request.finish({ resultCode: 1 });
++        return;
+       }
+ 
+       // 加载窗口页面
+@@ -294,7 +319,7 @@
+         (!(uiExtentionParam.isSaveContact || uiExtentionParam.isSaveExistContact))) {
+         AppStorage.setOrCreate('callerPid', String(want?.parameters?.['ohos.aafwk.param.callerPid']));
+         HiLog.w(TAG, `subWindow`);
+-        const subWindowName = 'subWindowPicker'
++        const subWindowName = 'subWindowPicker' + request.id
+         //创建子窗
+         subWindow = await extensionWindow.createSubWindowWithOptions(subWindowName, {
+           title: subWindowName,
+@@ -302,23 +327,35 @@
+           isModal: false,
+         });
+ 
+-        display.on('change', async (data) => {
+-          HiLog.w(TAG, `Succeeded in enabling the listener for display changes.`);
+-          let newDisplay: display.Display = display.getDefaultDisplaySync();
+-          HiLog.w(TAG, `newDisplay.orientation: ${newDisplay.orientation}, newDisplay.width: ${newDisplay.width},
+-           newDisplay.height: ${newDisplay.height}`);
+-          await subWindow?.resize(newDisplay.width, newDisplay.height)
+-        })
++        const ownedWindow = subWindow;
++        request.addCleanup(() => { ownedWindow.destroyWindow().catch((error: Error) => {
++          HiLog.w(TAG, 'Contact subwindow closed: ' + error?.message);
++        }); });
++        if (!request.active) { return; }
++        const displayChanged = async (id: number) => {
++          if (!request.active) { return; }
++          try {
++            const size = display.getDefaultDisplaySync();
++            await ownedWindow.resize(size.width, size.height);
++          } catch (error) { HiLog.w(TAG, 'Display resize failed: ' + error?.message); }
++        };
++        display.on('change', displayChanged);
++        request.addCleanup(() => display.off('change', displayChanged));
+ 
+         let newDisplay: display.Display = display.getDefaultDisplaySync();
+         await subWindow?.resize(newDisplay.width, newDisplay.height)
++        if (!request.active) { return; }
+         await subWindow.setWindowTouchable(true);
++        if (!request.active) { return; }
+         // 在SubWindowPage中拉起PIcker
+         await subWindow?.loadContent('pages/ContactUiExtentionIndex', storage);
++        if (!request.active) { return; }
+         subWindow?.setWindowBackgroundColor('#00000000'); //设置窗口透明
+         subWindow?.setShadow(0.0); // 禁止子窗阴影边框
+         await subWindow?.showWindow();
++        if (!request.active) { return; }
+         await subWindow.setFollowParentWindowLayoutEnabled(true);
++        if (!request.active) { return; }
+       } else if (URL_TYPE_CONTACT_LIST == uiExtentionParam?.urlType ||
+         URL_TYPE_CONTACT_DETAIL === uiExtentionParam?.urlType) {
+         this.initSplitInfo(uiExtentionParam?.meetimeDeviceType);
+@@ -326,6 +363,7 @@
+         AppStorage.setOrCreate('isMeetimePC', uiExtentionParam?.meetimeDeviceType === DeviceTypeEnum.PC);
+         AppStorage.setOrCreate('isMeetimePhone', uiExtentionParam?.meetimeDeviceType === DeviceTypeEnum.HANDSET);
+         session?.setReceiveDataCallback((data) => {
++          if (!request.active) { return; }
+           const action = data?.action as string;
+           const extraInfo = data?.extraInfo as string;
+           HiLog.i(TAG, 'receivedata: ' + extraInfo);
+@@ -335,14 +373,17 @@
+             this.handleJumpToCspButtonVisibility(isNeedSplit);
+           }
+         })
+-        this.listenerManager = new ListenerManager();
+-        this.listenerManager.registerListeners();
++        request.addCleanup(() => session.setReceiveDataCallback(() => {}));
++        const listeners = new ListenerManager();
++        listeners.registerListeners();
++        request.addCleanup(() => listeners.unRegisterListeners());
+         CallServiceManager.getInstance().updateMeetimeLoginFlag();
+         if (URL_TYPE_CONTACT_DETAIL === uiExtentionParam?.urlType) {
+           AppStorage.setOrCreate('isFromMeeTimeDetail', uiExtentionParam?.from === 'meetime');
+         }
+         // 获取联系人列表第一页的数据后再加载页面，避免闪烁
+         this.mContactListPresenter.startPreInit(() => {
++          if (!request.active) { return; }
+           session.loadContent('pages/ContactUiExtentionIndex', storage);
+           session.setWindowBackgroundColor('#00000000');
+         });
+@@ -352,6 +393,7 @@
+         session.setWindowBackgroundColor('#00000000');
+       }
+ 
++      if (!request.active) { return; }
+       // 设置窗口监听
+       try {
+         if (subWindow) {
+@@ -360,24 +402,30 @@
+             subWindow.getWindowProperties().windowRect, subWindow.getWindowProperties().displayId));
+           BreakpointUtil.judgingVerdeBreakpoint(
+             subWindow.getWindowProperties().windowRect, subWindow.getWindowProperties().displayId);
+-          subWindow.on('windowSizeChange', (data) => {
++          const subSizeChanged = (data: window.Size) => {
++            if (!request.active) { return; }
+             AppStorage.setOrCreate('breakpoint',
+               BreakpointUtil.getWidthBreakpoint(data, subWindow?.getWindowProperties().displayId));
+             BreakpointUtil.judgingVerdeBreakpoint(data, subWindow?.getWindowProperties().displayId);
+-          });
++          };
++          subWindow.on('windowSizeChange', subSizeChanged);
++          request.addCleanup(() => subWindow?.off('windowSizeChange', subSizeChanged));
+ 
+           // 窗口内容规避区域
+           let avoidArea = subWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+           let navigationArea = subWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+           this.updateWindowFullScreenPadding(avoidArea.topRect.height, navigationArea.bottomRect.height)
+-          subWindow.on('avoidAreaChange', (data) => {
++          const subAvoidChanged = (data: window.AvoidAreaOptions) => {
++            if (!request.active) { return; }
+             if (window.AvoidAreaType.TYPE_SYSTEM === data.type) {
+               this.updateWindowFullScreenPadding(data.area.topRect.height, -1);
+             }
+             if (window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR === data.type) {
+               this.updateWindowFullScreenPadding(-1, data.area.bottomRect.height)
+             }
+-          });
++          };
++          subWindow.on('avoidAreaChange', subAvoidChanged);
++          request.addCleanup(() => subWindow?.off('avoidAreaChange', subAvoidChanged));
+         } else {
+           let windowProxy = session.getUIExtensionHostWindowProxy();
+ 
+@@ -387,31 +435,37 @@
+           AppStorage.setOrCreate('meetimeCurBp',
+             BreakpointUtil.getWidthBreakpoint(windowProxy.properties.uiExtensionHostWindowProxyRect));
+           BreakpointUtil.judgingVerdeBreakpoint(windowProxy.properties.uiExtensionHostWindowProxyRect);
+-          windowProxy.on('windowSizeChange', (data) => {
++          const hostSizeChanged = (data: window.Size) => {
++            if (!request.active) { return; }
+             AppStorage.setOrCreate('breakpoint', BreakpointUtil.getWidthBreakpoint(data));
+             AppStorage.setOrCreate('meetimeCurBp', BreakpointUtil.getWidthBreakpoint(data));
+             BreakpointUtil.judgingVerdeBreakpoint(data);
+             DisplaySplitUtil.updateSplitStatus(data.width, data.height);
+-          });
++          };
++          windowProxy.on('windowSizeChange', hostSizeChanged);
++          request.addCleanup(() => windowProxy?.off('windowSizeChange', hostSizeChanged));
+ 
+           // 窗口内容规避区域
+           let avoidArea = windowProxy.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+           let navigationArea = windowProxy.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+           this.updateWindowFullScreenPadding(avoidArea.topRect.height, navigationArea.bottomRect.height)
+-          windowProxy.on('avoidAreaChange', (data) => {
++          const hostAvoidChanged = (data: window.AvoidAreaOptions) => {
++            if (!request.active) { return; }
+             if (window.AvoidAreaType.TYPE_SYSTEM === data.type) {
+               this.updateWindowFullScreenPadding(data.area.topRect.height, -1);
+             }
+             if (window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR === data.type) {
+               this.updateWindowFullScreenPadding(-1, data.area.bottomRect.height)
+             }
+-          });
++          };
++          windowProxy.on('avoidAreaChange', hostAvoidChanged);
++          request.addCleanup(() => windowProxy?.off('avoidAreaChange', hostAvoidChanged));
+         }
+       } catch (err) {
+         HiLog.e(TAG, `Failed to obtain the area. err: ${err?.message}`);
+       }
+     } catch (err) {
+-      HiLog.e(TAG, `onSessionCreate err: ${err.message} ,err code: ${err.code}`)
++      throw err;
+     }
+   }
+ 
+@@ -449,6 +503,7 @@
+   }
+ 
+   onSessionDestroy(session: UIExtensionContentSession) {
++    this.sessions.get(session)?.dispose();
+     HiLog.i(TAG, `ContactUiExtentionAbility onSessionDestroy`)
+   }
+ }
+diff --git a/applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets b/applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets
+--- a/applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets
++++ b/applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets
+@@ -40,6 +40,30 @@
+  *
+  * Processes sending tasks to workers and receiving work processing results.
+  */
++// Optional request ownership; disposing one scope never closes a shared worker.
++export class WorkerRequestScope {
++  public active: boolean = true;
++  private cleanups: Set<() => void> = new Set();
++
++  onDispose(cleanup: () => void): () => void {
++    if (!this.active) { cleanup(); return () => {}; }
++    this.cleanups.add(cleanup);
++    return () => { this.cleanups.delete(cleanup); };
++  }
++
++  dispose(): void {
++    if (!this.active) { return; }
++    this.active = false;
++    const cleanups = Array.from(this.cleanups).reverse();
++    this.cleanups.clear();
++    for (const cleanup of cleanups) {
++      try { cleanup(); } catch (error) {
++        HiLog.e(TAG, 'Request cleanup failed: ' + error?.message);
++      }
++    }
++  }
++}
++
+ export default class WorkerWrapper {
+   protected mWorker?: worker.ThreadWorker;
+   private callBacks: Map<string, Function> = new Map();
+@@ -128,7 +152,11 @@
+    * @param {Object} requestData  request param Data
+    * @param {Object} callBack Call back from worker
+    */
+-  public async sendRequest (request: string, requestData?: LooseObject, callBack?: Function) {
++  public async sendRequest (request: string, requestData?: LooseObject, callBack?: Function,
++    scope?: WorkerRequestScope) {
++    if (scope !== undefined) {
++      return this.sendScopedRequest(request, requestData, callBack, scope);
++    }
+     let log: UtilAuditLog = await assembleLogUtils(request, requestData);
+     try {
+       if (!this.useWorker) {
+@@ -180,6 +208,54 @@
+   /**
+    * Close  close worker thread.
+    */
++  private async sendScopedRequest(request: string, requestData: LooseObject | undefined,
++    callBack: Function | undefined, scope: WorkerRequestScope): Promise<void> {
++    let target: Function | undefined = callBack;
++    let key: string | undefined = undefined;
++    let complete: boolean = false;
++    let remove: () => void = () => {};
++    remove = scope.onDispose(() => {
++      target = undefined;
++      if (key !== undefined) { this.callBacks.delete(key); }
++    });
++    const reply = (data: Object | undefined): void => {
++      if (complete || !scope.active) { return; }
++      complete = true;
++      const callback = target;
++      target = undefined;
++      remove();
++      if (key !== undefined) { this.callBacks.delete(key); }
++      callback?.(data);
++    };
++    // Drop the original closure even while audit logging is pending.
++    callBack = undefined;
++    if (!scope.active) { return; }
++    try {
++      const log = await assembleLogUtils(request, requestData);
++      if (!scope.active) { return; }
++      if (!this.useWorker) {
++        const task = WorkFactory.getTask(this.getWorkerType());
++        if (task === undefined) { throw new Error('Contact data task unavailable'); }
++        task.runInWorker(request, reply, requestData);
++      } else if (this.mWorker) {
++        const message = new WorkerMessage();
++        message.request = request;
++        message.callBackId = this.requestIndex++;
++        message.type = this.getWorkerType();
++        message.param = requestData;
++        message.log = log;
++        key = this.getCallBackKey(message);
++        this.callBacks.set(key, reply);
++        this.mWorker.postMessage(message);
++      } else {
++        await this.sendRequestUiThread(request, requestData, reply);
++      }
++    } catch (error) {
++      HiLog.e(TAG, 'Scoped contact query failed: ' + error?.message);
++      reply(undefined);
++    }
++  }
++
+   public async close () {
+     HiLog.i(TAG, `${this.getWorkerType()} worker close!`);
+     await this.sendRequest('close');
+diff --git a/applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets b/applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets
+--- a/applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets
++++ b/applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets
+@@ -31,7 +31,8 @@
+ import { CustomizedParams, SingleSelectContact } from '../../../model/type';
+ import { ContactsGlobalThisHelper } from '../../../../../../../common/src/main/ets/util/ContactsGlobalThisHelper';
+ import ability from '@ohos.ability.ability';
+-import WorkerWrapper from '../../../workers/base/WorkerWrapper';
++import WorkerWrapper, { WorkerRequestScope } from '../../../workers/base/WorkerWrapper';
++import type PickerSession from '../../../uiExtentionAbility/PickerSession';
+ import Want from '@ohos.app.ability.Want';
+ import emitter from '@ohos.events.emitter';
+ import PhoneAccountType from '../../../../../../../feature/account/src/main/ets/type/PhoneAccountType';
+@@ -92,8 +93,7 @@
+   public hasChecked: boolean = false;
+   public URI: string = '';
+   // 外部需传入的参数
+-  public uiExtentionParam = ContactsGlobalThisHelper.GetGlobalThis()
+-    .getValue<UiExtentionParam>(ContactsGlobalThisHelper.UiExtentionAbilityParams);
++  public uiExtentionParam: UiExtentionParam | undefined = undefined;
+   public isContactsPicker: boolean = false;
+   public isMultiSelect: boolean = true;
+   public isDisplayByName: boolean = false;
+@@ -143,11 +143,92 @@
+   private isOnePageShow = true;
+   private onePageDataLength = 200;
+ 
++  private static sequence: number = 0;
++  public readonly selectionChangedEvent: string = 'ContactPickerSelection.' + (++ContactsPickerPresenter.sequence);
++  public resultPending: boolean = false;
++  private disposed: boolean = false;
++  private generation: number = 0;
++  private searchGeneration: number = 0;
++  private resultGeneration: number = 0;
++  private request?: PickerSession;
++  private queryScope: WorkerRequestScope = new WorkerRequestScope();
++  private resultScope?: WorkerRequestScope;
++  private tasks: Set<taskpool.Task> = new Set();
++
++  public static createForSession(request: PickerSession): ContactsPickerPresenter {
++    const presenter = new ContactsPickerPresenter();
++    presenter.request = request;
++    presenter.uiExtentionParam = request.params;
++    // Existing save/edit UI still resolves its presenter through this accessor.
++    // Public selection sessions never replace that legacy navigation instance.
++    if (request.params.isSaveContact || request.params.isSaveExistContact) {
++      ContactsPickerPresenter.sInstance = presenter;
++    }
++    request.addCleanup(() => presenter.dispose());
++    return presenter;
++  }
++
++  public isActive(): boolean {
++    return !this.disposed && (this.request === undefined || this.request.active);
++  }
++
++  private getContext(): common.UIAbilityContext | common.UIExtensionContext {
++    return this.request?.context ?? ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext();
++  }
++
++  private getWorker(): WorkerWrapper {
++    return this.request?.worker ?? ContactsGlobalThisHelper.GetGlobalThis()
++      .getValue<WorkerWrapper>(ContactsGlobalThisHelper.DataWorkerName);
++  }
++
++  private setBusy(value: boolean): void {
++    this.resultPending = value;
++    if (this.request !== undefined) {
++      this.request.storage.setOrCreate('isGettingPickerData', value);
++    } else {
++      AppStorage.setOrCreate('isGettingPickerData', value);
++    }
++    this.refreshUI();
++  }
++
++  private queryFailed(): void {
++    if (!this.isActive()) { return; }
++    this.setBusy(false);
++    if (this.request !== undefined) {
++      this.request.finish({ resultCode: -1 });
++    }
++  }
++
++  public dispose(): void {
++    if (this.disposed) { return; }
++    this.disposed = true;
++    this.generation++;
++    this.searchGeneration++;
++    this.resultGeneration++;
++    this.queryScope.dispose();
++    this.resultScope?.dispose();
++    for (const task of this.tasks) {
++      try { taskpool.cancel(task); } catch (error) { HiLog.w(TAG, 'Query already running'); }
++    }
++    this.tasks.clear();
++    this.refreshUI = () => {};
++    this.clearAllData();
++    this.favoriteContactIdSet.clear();
++    this.defaultSelectContactMap.clear();
++    this.contactSearchList = [];
++    this.inputKeyword = '';
++    this.selectedCount = 0;
++    this.contactsSource = new ContactPickerDataSource();
++    this.favoriteSource = new ContactPickerDataSource();
++    this.selectedSource = new ContactPickerDataSource();
++    this.searchContactsSource = new ContactPickerDataSource();
++  }
++
+   private constructor() {
+   }
+ 
+   public static getInstance(): ContactsPickerPresenter {
+-    if (ContactsPickerPresenter.sInstance == null) {
++    if (ContactsPickerPresenter.sInstance == null || ContactsPickerPresenter.sInstance.disposed) {
+       ContactsPickerPresenter.sInstance = new ContactsPickerPresenter();
+     }
+     return ContactsPickerPresenter.sInstance;
+@@ -179,9 +260,10 @@
+     }, isDisplayByName: ${this.isDisplayByName}, selectLimit: ${this.selectLimit
+     }, filter is None: ${this.filter === undefined}, isSaveExistContact: ${this.isSaveExistContact}`)
+     this.checkTheParameterType();
++    if (!this.isActive()) { return; }
+     this.preInitContactList(this.userId);
+     this.refreshPageMessage();
+-    AppStorage.setOrCreate('isGettingPickerData', false);
++    this.setBusy(false);
+   }
+ 
+   clearAllData() {
+@@ -197,7 +279,7 @@
+ 
+   aboutToDisAppear() {
+     HiLog.w(TAG, `aboutToDisAppear...`);
+-    this.clearAllData();
++    if (this.request === undefined) { this.dispose(); }
+   }
+ 
+   initNavPaths(pageInfos: NavPathStack) {
+@@ -271,7 +353,7 @@
+       AccessibilityUtil.getInstance().sendAllSelectedOrDeselected(false, this.selectedCount);
+       this.selectedCount = 0;
+     }
+-    emitter.emit(ContactsPickerPresenter.BATCH_SELECT_ITEM_CHECKED);
++    emitter.emit(this.selectionChangedEvent);
+     this.refreshPageMessage();
+   }
+ 
+@@ -293,7 +375,7 @@
+     let eventData: emitter.EventData = {
+       data: { 'contactId': contactId }
+     };
+-    emitter.emit(ContactsPickerPresenter.BATCH_SELECT_ITEM_CHECKED, eventData);
++    emitter.emit(this.selectionChangedEvent, eventData);
+     this.refreshPageMessage();
+   }
+ 
+@@ -383,7 +465,7 @@
+         this.selectedContactsMap.set(contactId, subData);
+       }
+     }
+-    emitter.emit(ContactsPickerPresenter.BATCH_SELECT_ITEM_CHECKED);
++    emitter.emit(this.selectionChangedEvent);
+   }
+ 
+   initSelectedDataSource() {
+@@ -422,7 +504,8 @@
+   }
+ 
+   // picker 返回数据
+-  confirm(contactIdPickerDataMap: Map<number, contact.Contact>, isFinish: boolean = true) {
++  async confirm(contactIdPickerDataMap: Map<number, contact.Contact>, isFinish: boolean = true) {
++    if (!this.isActive()) { return; }
+     try {
+       HiLog.w(TAG, `confirm! isContactsPicker: ${this.isContactsPicker}`);
+ 
+@@ -455,9 +538,10 @@
+         'want': want
+       };
+ 
++      const chunks: Record<string, Object>[] = [];
+       if (!this.isContactsPicker) {
+         // 兼容 uiExtension 方式 调用联系人picker，不支持大数据量传输
+-        ContactsGlobalThisHelper.GetGlobalThis().getUIExtensionContentSession()?.sendData(resultData);
++        chunks.push(resultData);
+       } else {
+         // 兼容 数据库方式 调用联系人picker，大数据量分批传输
+         let index = 0;
+@@ -477,21 +561,20 @@
+             'index': index,
+             'total': total
+           };
+-          ContactsGlobalThisHelper.GetGlobalThis().getUIExtensionContentSession()?.sendData(parameters);
++          chunks.push(parameters);
+           index++;
+         } while (pickerDataResult.length > 0)
+         HiLog.w(TAG, `sendData end`);
+       }
+ 
+-      // 兼容 通过 startAbility 方式调用数据（只支持单选）
+-      ContactsGlobalThisHelper.GetGlobalThis()
+-        .getDefaultUIContext()?.terminateSelfWithResult(result)
+-        .then(() => {
+-          HiLog.w(TAG, 'terminateSelfWithResult Operation succeeded ');
+-        })
+-        .catch((error: BusinessError) => {
+-          HiLog.e(TAG, 'Operation failed. Cause: %s', error?.message);
+-        });
++      if (this.request !== undefined) {
++        const delivered = await this.request.deliver(chunks, result);
++        if (!delivered) { return; }
++      } else {
++        const session = ContactsGlobalThisHelper.GetGlobalThis().getUIExtensionContentSession();
++        for (const chunk of chunks) { session?.sendData(chunk); }
++        await this.getContext()?.terminateSelfWithResult(result);
++      }
+ 
+       // 点击完成才增加访问记录
+       if (isFinish) {
+@@ -499,9 +582,10 @@
+       }
+     } catch (error) {
+       HiLog.e(TAG, `confirm error: ${error?.message}`);
++      this.queryFailed();
+     } finally {
+       HiLog.w(TAG, 'isGettingPickerData set false.');
+-      AppStorage.setOrCreate('isGettingPickerData', false);
++      if (this.isActive()) { this.setBusy(false); }
+     }
+   }
+ 
+@@ -614,13 +698,15 @@
+ 
+   // 初始化数据
+   initContactList() {
++    if (!this.isActive()) { return; }
++    const generation = this.generation;
+     HiLog.w(TAG, `initContactsList start! page: ${this.page}`);
+     ContactListPresenter.getInstance().getPhotosInfoAsync(this.userId).then(() => {
++      if (!this.isActive() || generation !== this.generation) { return; }
+       if (!this.hasChecked) {
+         // 先查下收藏联系人
+-        ContactsGlobalThisHelper.GetGlobalThis()
+-          .getValue<WorkerWrapper>(ContactsGlobalThisHelper.DataWorkerName)?.sendRequest('getPickerContacts', {
+-          'context': ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext(),
++        this.getWorker()?.sendRequest('getPickerContacts', {
++          'context': this.getContext(),
+           'isDisplayByName': this.isDisplayByName,
+           'contactSelectionFilter': this.filter,
+           'userId': this.userId,
+@@ -628,6 +714,8 @@
+           'isFavorite': true,
+           'isOnePageShow': false,
+         }, (result: PickerContactList) => {
++          if (!this.isActive() || generation !== this.generation) { return; }
++          if (!result) { this.queryFailed(); return; }
+           HiLog.i(TAG, `favoritecontactList size: ${result.contactList.length}`);
+           let favoriteContactListTmp = this.favoriteContactList;
+           let favoriteContactIdListTmp = this.favoriteContactIdSet;
+@@ -665,12 +753,11 @@
+               this.defaultSelectContactMap.set(key, value);
+             }
+           });
+-        })
+-      }
+-
+-      ContactsGlobalThisHelper.GetGlobalThis()
+-        .getValue<WorkerWrapper>(ContactsGlobalThisHelper.DataWorkerName)?.sendRequest('getPickerContacts', {
+-        'context': ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext(),
++        }, this.queryScope)
++      }
++
++      this.getWorker()?.sendRequest('getPickerContacts', {
++        'context': this.getContext(),
+         'isDisplayByName': this.isDisplayByName,
+         'contactSelectionFilter': this.filter,
+         'userId': this.userId,
+@@ -678,6 +765,8 @@
+         'isFavorite': false,
+         'isOnePageShow': this.isOnePageShow,
+       }, (result: PickerContactList) => {
++          if (!this.isActive() || generation !== this.generation) { return; }
++          if (!result) { this.queryFailed(); return; }
+         HiLog.w(TAG, `getPickerContacts success. page: ${this.page}, isEnd: ${result.isEnd}, contactList size:
+           ${result.contactList.length}, defaultSelectContactMap size: ${result.defaultSelectContactMap.size}`);
+         if (this.page == 0 && !this.isOnePageShow && this.totalCount <= this.onePageDataLength) {
+@@ -750,70 +839,63 @@
+           if (this.page == 0 && this.totalCount <= this.onePageDataLength && this.isOnePageShow) {
+             this.page = 0;
+             this.isOnePageShow = false;
+-            setTimeout(() => {
++            const update = () => {
++              if (!this.isActive() || generation !== this.generation) { return; }
+               this.contactsListInited = true;
+               this.refreshPageMessage();
+-            }, 750)
++            };
++            if (this.request !== undefined) { this.request.delay(update, 750); }
++            else { setTimeout(update, 750); }
+           } else {
+             this.page++;
+           }
+           HiLog.w(TAG, `initContactList again, page: ${this.page}`);
+           this.initContactList();
+         }
+-      });
+-    });
++      }, this.queryScope);
++    }).catch(() => { if (generation === this.generation) { this.queryFailed(); } });
+   }
+ 
+   // 初始化数据
+   async preInitContactList(userId: number) {
+-    // 查询数据前先给原来数据全清空掉
++    const generation = ++this.generation;
++    this.queryScope.dispose();
++    this.queryScope = new WorkerRequestScope();
++    this.searchGeneration++;
++    for (const task of this.tasks) {
++      try { taskpool.cancel(task); } catch (error) { HiLog.w(TAG, 'Prior query already running'); }
++    }
++    this.tasks.clear();
+     this.clearAllData();
+-    HiLog.w(TAG, `preInitContactList start! filter is undefined: ${this.filter == undefined}, userId: ${userId}`);
+-    ContactListPresenter.getInstance().getPhotosInfoAsync(userId);
+-    // 先查一遍总数
+-    let countAlphabetIndex = await ContactAbilityModel.getAllContactSizeSync(userId, true);
+-    let total = (countAlphabetIndex as CountAlphabetIndex).count;
+-    let forNum: number = Math.ceil(total / 10000);
+-    HiLog.i(TAG, `preInitContactList getAllContactSizeSync current total: ${total}, forNum: ${forNum}`);
+-    let result: PickerContactList = {
+-      contactList: [],
+-      defaultSelectContactMap: new Map(),
+-      isEnd: false
+-    };
+-    let resultMap: Map<number, PickerContactList> = new Map<number, PickerContactList>();
+-    let promiseList: Promise<boolean>[] = []
+-    for (let i = 0; i < forNum; i++) {
+-      promiseList.push(new Promise(async (resolve) => {
+-        let task1: taskpool.Task;
+-        this.isOnePageShow = i == 0 ? true : false;
+-        if (this.filter !== undefined) {
+-          task1 = new taskpool.Task(getPickerContactsByFilter, this.isDisplayByName, this.filter, userId, i, false,
+-            this.isOnePageShow, ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext());
+-        } else {
+-          task1 = new taskpool.Task(getPickerContactsNoFilter, this.isDisplayByName, userId, i, false,
+-            this.isOnePageShow, ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext());
+-        }
+-        taskpool.execute(task1).then((data: object) => {
+-          let pickerContactList = data as PickerContactList;
+-          resultMap.set(i, pickerContactList);
+-          HiLog.w(TAG, `initContactList page: ${i} queryAllEnd: ${pickerContactList.isEnd},
+-            contactListSize: ${pickerContactList.contactList.length}`);
+-          resolve(true);
+-        });
+-      }));
+-    }
+-    await Promise.all(promiseList).then(() => {
+-      for (let i = 0; i < resultMap.size; i++) {
+-        let temp = resultMap.get(i) as PickerContactList;
+-        result.contactList.push(...temp.contactList);
+-        temp.defaultSelectContactMap.forEach((value, key) => {
+-          result.defaultSelectContactMap.set(key, value);
+-        })
++    try {
++      const count = await ContactAbilityModel.getAllContactSizeSync(userId, true) as CountAlphabetIndex;
++      if (!this.isActive() || generation !== this.generation) { return; }
++      const pageCount = Math.ceil(count.count / 10000);
++      const queries: Promise<PickerContactList>[] = [];
++      for (let page = 0; page < pageCount; page++) {
++        const task = this.filter !== undefined ?
++          new taskpool.Task(getPickerContactsByFilter, this.isDisplayByName, this.filter, userId,
++            page, false, page === 0, this.getContext()) :
++          new taskpool.Task(getPickerContactsNoFilter, this.isDisplayByName, userId,
++            page, false, page === 0, this.getContext());
++        this.tasks.add(task);
++        queries.push(taskpool.execute(task).then((data: Object) => data as PickerContactList)
++          .finally(() => { this.tasks.delete(task); }));
++      }
++      const pages = await Promise.all(queries);
++      if (!this.isActive() || generation !== this.generation) { return; }
++      const result: PickerContactList = { contactList: [], defaultSelectContactMap: new Map(), isEnd: true };
++      for (const page of pages) {
++        result.contactList.push(...page.contactList);
++        page.defaultSelectContactMap.forEach((value, key) => result.defaultSelectContactMap.set(key, value));
+       }
+       this.refreshContactPickerList(result);
+-    }).catch((error: Error) => {
+-      HiLog.e(TAG, `Error in Promise.all: ${error?.message}`);
+-    });
++    } catch (error) {
++      if (generation === this.generation && this.isActive()) {
++        HiLog.e(TAG, 'Contact query failed: ' + error?.message);
++        this.queryFailed();
++      }
++    }
+   }
+ 
+   refreshContactPickerList(result: PickerContactList) {
+@@ -920,6 +1002,8 @@
+   * Search for Contacts
+    */
+   getSearchContactResultFromDb(value: string) {
++    if (!this.isActive()) { return; }
++    this.searchGeneration++;
+     HiLog.w(TAG, 'getSearchContactResultFromDb start!!');
+     this.contactSearchList = [];
+     this.contactSearchOffset = 0;
+@@ -952,9 +1036,14 @@
+   }
+ 
+   contactSearchTaskFromDb() {
++    if (!this.isActive()) { return; }
++    const generation = this.searchGeneration;
+     HiLog.w(TAG, `contactSearchTaskFromDb start, contactSearchOffset: ${this.contactSearchOffset}`);
+-    this.task = new taskpool.Task(updateSearchPickerListFromDb, this.inputKeyword, this.contactSearchOffset,ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext());
++    this.task = new taskpool.Task(updateSearchPickerListFromDb, this.inputKeyword, this.contactSearchOffset,this.getContext());
++    const task = this.task;
++    this.tasks.add(task);
+     taskpool.executeDelayed(DELAY_TIME, this.task, taskpool.Priority.HIGH).then((searchResultsObject: Object) => {
++      if (!this.isActive() || generation !== this.searchGeneration) { return; }
+       let searchResults: SearchContactResult[] = searchResultsObject as SearchContactResult[];
+       HiLog.w(TAG, `contactSearchTaskFromDb searchResults size: ${searchResults.length}`);
+       this.contactSearchOffset += searchResults.length;
+@@ -1001,8 +1090,9 @@
+       //   this.contactSearchTask();
+       // }
+     }).catch((error: BusinessError) => {
++      if (this.isActive() && generation === this.searchGeneration) { this.queryFailed(); }
+       HiLog.e(TAG, `contactSearchTaskFromDb error: ${error.message}`);
+-    })
++    }).finally(() => { this.tasks.delete(task); });
+   }
+ 
+ 
+@@ -1098,28 +1188,25 @@
+   //   })
+   // }
+ 
+-  getPickerDataByIds(
+-    contactIds: Set<number>, callBack: (contactIdPickerDataMap: Map<number, contact.Contact>) => void) {
+-    HiLog.w(TAG, `getPickerDataByIds all start, contactIds size: ${contactIds.size}.`);
+-    if (AppStorage.get<boolean>('isGettingPickerData')) {
+-      HiLog.w(TAG, `is getting picker data.`);
+-      return;
+-    }
+-    AppStorage.setOrCreate('isGettingPickerData', true);
+-
+-    ContactsGlobalThisHelper.GetGlobalThis()
+-      .getValue<WorkerWrapper>(ContactsGlobalThisHelper.DataWorkerName)
+-      .sendRequest('getPickerDataByIds', {
+-        context: ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext(),
+-        contactIds: Array.from(contactIds),
+-        userId: this.userId,
+-      }, (contactIdPickerDataMap: Map<number, contact.Contact>) => {
+-        if (contactIdPickerDataMap.size <= 0) {
+-          HiLog.e(TAG, 'getPickerDataByIds failed , result is null ');
+-        }
+-        HiLog.w(TAG, 'getPickerDataByIds end');
+-        callBack(contactIdPickerDataMap);
+-      })
++  getPickerDataByIds(contactIds: Set<number>,
++    callBack: (contactIdPickerDataMap: Map<number, contact.Contact>) => void) {
++    if (!this.isActive() || this.resultPending) { return; }
++    const generation = ++this.resultGeneration;
++    const scope = new WorkerRequestScope();
++    this.resultScope?.dispose();
++    this.resultScope = scope;
++    this.setBusy(true);
++    if (contactIds.size === 0) { scope.dispose(); callBack(new Map()); return; }
++    const worker = this.getWorker();
++    if (worker === undefined) { scope.dispose(); this.queryFailed(); return; }
++    worker.sendRequest('getPickerDataByIds', {
++      context: this.getContext(), contactIds: Array.from(contactIds), userId: this.userId
++    }, (data: Map<number, contact.Contact> | undefined) => {
++      scope.dispose();
++      if (!this.isActive() || generation !== this.resultGeneration) { return; }
++      if (data === undefined) { this.queryFailed(); return; }
++      callBack(data);
++    }, scope);
+   }
+ 
+   checkTheParameterType() {
+@@ -1159,10 +1246,12 @@
+     HiLog.w(TAG, `checkTheParameterType result code: ${result?.code}, name: ${result?.name},
+      message: ${result?.message}`);
+     if (result.code !== 0) {
+-      ContactsGlobalThisHelper.GetGlobalThis()
+-        .getDefaultUIContext()?.terminateSelfWithResult({
+-        resultCode: result.code
+-      })
++      if (this.request !== undefined) {
++        this.request.finish({ resultCode: result.code });
++      } else {
++        this.getContext()?.terminateSelfWithResult({ resultCode: result.code });
++      }
++      this.dispose();
+     }
+   }
+ 
+@@ -1206,6 +1295,10 @@
+   }
+ 
+   returnDefaultSelectContactData() {
++    if (!this.isActive()) { return; }
++    this.resultScope?.dispose();
++    this.resultGeneration++;
++    this.setBusy(false);
+     HiLog.w(TAG, `returnDefaultSelectContactData. defaultSelectContactMap size: ${this.defaultSelectContactMap.size}`);
+     this.selectedContactsMap.clear();
+     let ids: Set<number> = new Set();
+@@ -1220,6 +1313,7 @@
+ 
+   public static unInstance(): void {
+     HiLog.i(TAG, 'unInstance...');
++    ContactsPickerPresenter.sInstance?.dispose();
+     ContactsPickerPresenter.sInstance = null;
+   }
+ }
+diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets b/applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets
+--- a/applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets
++++ b/applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets
+@@ -50,6 +50,8 @@
+ import { PhoneNumber } from '../../../../../../../feature/phonenumber/src/main/ets/PhoneNumber';
+ import { ContactVo } from '../../../model/bean/ContactVo';
+ import ContactsPickerPresenter from '../../../presenter/contact/batchselectcontacts/ContactsPickerPresenter';
++import PickerSession from '../../../uiExtentionAbility/PickerSession';
++import { WorkerRequestScope } from '../../../workers/base/WorkerWrapper';
+ import { BusinessError, commonEventManager, osAccount } from '@kit.BasicServicesKit';
+ import IndexPresenter from '../../../presenter/IndexPresenter';
+ import CallRecordPresenter from '../../../presenter/dialer/callRecord/CallRecordPresenter';
+@@ -96,7 +98,6 @@
+   ContactsPickerPage({ isContactMultiSelect: false });
+ }
+ 
+-let subscriber: commonEventManager.CommonEventSubscriber;
+ 
+ let subscribeInfo: commonEventManager.CommonEventSubscribeInfo = {
+   events: ['event.custom.contacts.VCARD_SHARE']
+@@ -119,15 +120,40 @@
+  */
+ @Component
+ export default struct ContactsPickerPage {
++  @LocalStorageLink('pickerSession') private pickerSession: PickerSession | undefined = undefined;
++  @LocalStorageLink('parameters') private sessionParameters: UiExtentionParam | undefined = undefined;
++  @LocalStorageLink('pickerPresenter') private sessionPresenter: ContactsPickerPresenter | undefined = undefined;
++  private pageScope: WorkerRequestScope = new WorkerRequestScope();
++
++  private mirrorLegacyFlags(propertyName: string): void {
++    const params = this.sessionParameters;
++    if (this.pickerSession !== undefined && !(params?.isSaveContact || params?.isSaveExistContact ||
++      params?.urlType === 'ContactList' || params?.urlType === 'ContactDetail')) { return; }
++    if (propertyName === 'isShowBindSheet') { AppStorage.setOrCreate('isShowBindSheet', this.isShowBindSheet); }
++    if (propertyName === 'isShowAccountants') { AppStorage.setOrCreate('isShowAccountants', this.isShowAccountants); }
++    if (propertyName === 'isSearching') { AppStorage.setOrCreate('isPickerSearch', this.isSearching); }
++  }
++  private subscriber?: commonEventManager.CommonEventSubscriber;
++  private titleMethodClass: TitleMethodClass = new TitleMethodClass();
++
++  private delay(action: () => void, milliseconds: number): void {
++    const scope = this.pageScope;
++    let remove: () => void = () => {};
++    const timer = setTimeout(() => {
++      remove();
++      if (scope.active && (this.pickerSession === undefined || this.pickerSession.active)) { action(); }
++    }, milliseconds);
++    remove = scope.onDispose(() => clearTimeout(timer));
++  }
++
+   // 启动能力的调用者包名
+   private startAbilityCallerBundleName =  AppStorage.get('startAbilityCallerBundleName') || '';
+   // 调用者进程ID
+   private callerPid =  AppStorage.get('callerPid') || '';
+   // UI扩展参数，用于获取扩展能力相关信息
+-  private uiExtentionParam = ContactsGlobalThisHelper.GetGlobalThis()
+-    .getValue<UiExtentionParam>(ContactsGlobalThisHelper.UiExtentionAbilityParams);
++  private uiExtentionParam: UiExtentionParam | undefined = undefined;
+   // UI扩展内容会话，用于与扩展能力通信
+-  private session: UIExtensionContentSession = ContactsGlobalThisHelper.GetGlobalThis().getUIExtensionContentSession();
++  private session: UIExtensionContentSession | undefined = undefined;
+   // 是否为多选模式
+   private isContactMultiSelect: boolean = true;
+   // 是否按名称显示联系人
+@@ -175,13 +201,13 @@
+   @State selectedViewOffsetY: Length = '100%';
+ 
+   // 是否显示账号列表
+-  @StorageLink('isShowAccountants') isShowAccountants: boolean = false;
++  @LocalStorageLink('isShowAccountants') @Watch('mirrorLegacyFlags') isShowAccountants: boolean = false;
+   // 是否显示绑定表单
+-  @StorageLink('isShowBindSheet') isShowBindSheet: boolean = false;
++  @LocalStorageLink('isShowBindSheet') @Watch('mirrorLegacyFlags') isShowBindSheet: boolean = false;
+   // 搜索框输入值
+   @State changeValue: string = '';
+   // 是否正在进行搜索
+-  @StorageLink('isPickerSearch') isSearching: boolean = false;
++  @LocalStorageLink('isPickerSearch') @Watch('mirrorLegacyFlags') isSearching: boolean = false;
+   // 已选联系人数量
+   @State selectedCount: number = 0;
+   // 联系人总数
+@@ -193,7 +219,7 @@
+   // 是否启用加载视图
+   @State loadingViewEnabled: boolean = false;
+   // 是否正在获取选择器数据
+-  @StorageProp('isGettingPickerData') isGettingPickerData: boolean = false;
++  @State isGettingPickerData: boolean = false;
+   // 是否为PC设备
+   private isPC: boolean = EnvironmentProp.isPC();
+   // 是否为Verde设备
+@@ -225,7 +251,7 @@
+   //       // type: IconStyleMode.SMALL,
+   //       isEnabled: !this.isGettingPickerData,//返回按钮是否可用
+   //       action: () => {
+-  //         titleMethodClass.closeOnClick();//关闭页面
++  //         this.titleMethodClass.closeOnClick();//关闭页面
+   //       }
+   //     }
+   //   }
+@@ -248,7 +274,7 @@
+       .backgroundColor(this.isPC ? Color.Transparent : $r('app.color.skin_ohos_id_color_button_normal'))
+       .id('Settings_close_btn')
+       .onClick(() => {
+-        titleMethodClass.closeOnClick();
++        this.titleMethodClass.closeOnClick();
+       })
+     }
+     .justifyContent(FlexAlign.End)
+@@ -271,8 +297,9 @@
+   private handleVcardShareSubscribeCB: (err: BusinessError, data: commonEventManager.CommonEventData) => void =
+     (err: BusinessError, data: commonEventManager.CommonEventData) => {
+       HiLog.i(TAG, `commonEvent subscribe event: ${data?.event}, bundleName: ${data?.bundleName}, code: ${data?.code}`);
+-      if (data) {
+-        titleMethodClass.closeOnClick();
++      if (data && this.pageScope.active &&
++        this.pickerSession === undefined) {
++        this.titleMethodClass.closeOnClick();
+       } else {
+         HiLog.i(TAG, 'commonEvent subscribe err:' + err?.message + ', stack: ' + err?.stack);
+       }
+@@ -284,30 +311,36 @@
+    * @param err - 创建订阅者过程中可能出现的错误
+    * @param commonEventSubscriber - 创建成功的公共事件订阅者实例
+    */
+-  private createCB: (err: BusinessError, commonEventSubscriber: commonEventManager.CommonEventSubscriber) => void =
+-    (err: BusinessError, commonEventSubscriber: commonEventManager.CommonEventSubscriber) => {
+-      if (!err) {
+-        subscriber = commonEventSubscriber;
+-        try {
+-          commonEventManager.subscribe(subscriber, this.handleVcardShareSubscribeCB);
+-        } catch (error) {
+-          HiLog.e(TAG, `Failed to subscribe. Code is ${error?.code}, message is ${error?.message}`);
+-        }
+-      } else {
+-        HiLog.e(TAG, `Failed to create subscriber. Code is ${err.code}, message is ${err.message}`);
+-      }
+-    }
+-
+   /**
+    * 注册公共事件订阅者
+    * 用于订阅VCARD_SHARE事件，处理联系人分享功能
+    */
+   public async registerSubscriber() {
++    const scope = this.pageScope;
++    const request = this.pickerSession;
++    // The ordinary Contacts import UI emits this unaddressed broadcast.
++    // It cannot authorize terminating an independent public picker request.
++    if (request !== undefined) { return; }
+     try {
+-      commonEventManager.createSubscriber(subscribeInfo, this.createCB);
+-    } catch (error) {
+-      HiLog.e(TAG, `Failed to create subscriber. Code is ${error?.code}, message is ${error?.message}`);
+-    }
++      commonEventManager.createSubscriber(subscribeInfo, (error, subscriber) => {
++        if (error) { HiLog.e(TAG, 'Subscriber creation failed: ' + error.message); return; }
++        if (!scope.active || scope !== this.pageScope || request !== this.pickerSession ||
++          (request !== undefined && !request.active)) {
++          try { commonEventManager.unsubscribe(subscriber, this.unsubscribeCB); } catch (_) {}
++          return;
++        }
++        this.subscriber = subscriber;
++        scope.onDispose(() => {
++          if (this.subscriber === subscriber) {
++            this.subscriber = undefined;
++            commonEventManager.unsubscribe(subscriber, this.unsubscribeCB);
++          }
++        });
++        commonEventManager.subscribe(subscriber, (err, data) => {
++          if (scope.active && scope === this.pageScope) { this.handleVcardShareSubscribeCB(err, data); }
++        });
++      });
++    } catch (error) { HiLog.e(TAG, 'Subscriber registration failed: ' + error?.message); }
+   }
+ 
+   /**
+@@ -336,7 +369,9 @@
+    */
+   public unsubscribe() {
+     try {
+-      commonEventManager.unsubscribe(subscriber, this.unsubscribeCB);
++      const subscriber = this.subscriber;
++      this.subscriber = undefined;
++      if (subscriber !== undefined) { commonEventManager.unsubscribe(subscriber, this.unsubscribeCB); }
+     } catch (error) {
+       HiLog.e(TAG, `Failed to unsubscribe. Code is ${error?.code}, message is ${error?.message}`);
+     }
+@@ -364,14 +399,27 @@
+    * 9. 配置滑动多选工具
+    */
+   async aboutToAppear() {
++    this.pageScope.dispose();
++    this.pageScope = new WorkerRequestScope();
++    const scope = this.pageScope;
++    this.pickerSession?.addCleanup(() => scope.dispose());
++    this.uiExtentionParam = this.sessionParameters;
++    this.session = this.pickerSession?.session;
++    this.mPresenter = this.sessionPresenter ?? ContactsPickerPresenter.getInstance();
+     this.init();
+     // 控制loading 页面闪屏
+-    setTimeout(() => {
++    this.delay(() => {
+       this.loadingViewEnabled = true;
+       AccessibilityUtil.getInstance()
+         .sendAccessibilityEvent(this.isOpenAccessibility, 'select_contact_title', 100);
+     }, 2);
+-    this.localId = await osAccount.getAccountManager().getOsAccountLocalId();
++    try {
++      this.localId = await osAccount.getAccountManager().getOsAccountLocalId();
++    } catch (error) {
++      if (scope.active) { this.pickerSession?.finish({ resultCode: -1 }); }
++      return;
++    }
++    if (!scope.active || (this.pickerSession !== undefined && !this.pickerSession.active)) { return; }
+     HiLog.w(TAG, `localId: ${this.localId}`);
+ 
+     // 参数处理逻辑：根据不同的调用方式初始化页面参数
+@@ -403,6 +451,8 @@
+     // UI刷新回调配置：设置Presenter的UI刷新回调函数
+     // 当数据发生变化时，Presenter会调用此回调更新页面UI
+     this.mPresenter.refreshUI = () => {
++      if (!scope.active) { return; }
++      this.isGettingPickerData = this.mPresenter.resultPending;
+       this.contactsListInited = this.mPresenter.contactsListInited;
+       this.contactsTotal = this.mPresenter.totalCount;
+       this.selectedCount = this.mPresenter.selectedCount;
+@@ -420,18 +470,19 @@
+     this.mPresenter.aboutToAppear(this.isContactMultiSelect);
+     this.showOnlyAccessedAlert();
+ 
+-    titleMethodClass.backOnClick = () => {
++    this.titleMethodClass.backOnClick = () => {
+       this.backToListView();
+     }
+     // 标题栏关闭按钮点击事件处理
+-    titleMethodClass.closeOnClick = () => {
++    this.titleMethodClass.closeOnClick = () => {
+       HiLog.w(TAG, `close button click, isGettingPickerData: ${this.isGettingPickerData}
+         , isSaveExistContact: ${this.isSaveExistContact}, isShowBindSheet = ${this.isShowBindSheet}`);
+       // 确保没有正在获取数据的操作
+-      if (!this.isGettingPickerData) {
++      if (this.mPresenter.isActive()) {
+         if (this.isSaveExistContact) {
+           // 保存现有联系人模式：直接关闭并返回结果
+-          this.session?.terminateSelfWithResult({ resultCode: 1 }).then(() => {
++          (this.pickerSession !== undefined ? this.pickerSession.finish({ resultCode: 1 }) :
++            this.session?.terminateSelfWithResult({ resultCode: 1 }))?.then(() => {
+             HiLog.i(TAG, 'terminateSelfWithResult Operation succeeded ');
+           }).catch((error: BusinessError) => {
+             HiLog.e(TAG, `Operation failed. Cause: ${error?.message}`);
+@@ -439,9 +490,7 @@
+         } else {
+           // 联系人选择器模式：返回默认选中的数据
+           this.isShowBindSheet = false;
+-          setTimeout(() => {
+-            this.mPresenter.returnDefaultSelectContactData();
+-          }, 100);
++          this.mPresenter.returnDefaultSelectContactData();
+         }
+       }
+     }
+@@ -518,7 +567,9 @@
+   aboutToDisappear() {
+     HiLog.w(TAG, 'aboutToDisappear')
+     this.unInit();
+-    emitter.off(ContactsPickerPresenter.BATCH_SELECT_ITEM_CHECKED);
++    this.pageScope.dispose();
++    this.mPresenter.refreshUI = () => {};
++    this.intelligenceGroupAddContactDialogControler?.close();
+   }
+ 
+   showOnlyAccessedAlert() {
+@@ -584,8 +635,10 @@
+     if (this.mPresenter.searchSerInitStatus != 0) {
+       let task = new taskpool.Task(initFusionSearchService);
+       taskpool.execute(task).then((res: Object) => {
+-        this.mPresenter.searchSerInitStatus = Number(res.toString());
+-      });
++        if (this.pageScope.active && this.mPresenter.isActive()) {
++          this.mPresenter.searchSerInitStatus = Number(res.toString());
++        }
++      }).catch((error: Error) => HiLog.w(TAG, 'Search service unavailable: ' + error?.message));
+     }
+     if (this.isSearching) {
+       return;
+@@ -785,9 +838,7 @@
+                 })
+                } else {
+                 this.isShowBindSheet = false;
+-                setTimeout(() => {
+-                  this.mPresenter.selectBatchContact();
+-                }, 100);
++                this.mPresenter.selectBatchContact();
+               }
+             })
+             .alignRules({
+@@ -1532,9 +1583,9 @@
+ 
+ @Component
+ struct SecureAccessPopupTip {
++  @LocalStorageLink('parameters') private sessionParameters: UiExtentionParam | undefined = undefined;
+   @Link isShowLearnMore: boolean
+-  private uiExtentionParam = ContactsGlobalThisHelper.GetGlobalThis()
+-    .getValue<UiExtentionParam>(ContactsGlobalThisHelper.UiExtentionAbilityParams);
++  private uiExtentionParam: UiExtentionParam | undefined = undefined;
+   @Link isShowOnlyAccessedAlert: boolean;
+   private isPC: boolean = EnvironmentProp.isPC();
+   // 是否启动无障碍
+@@ -1594,7 +1645,7 @@
+           .height(18)
+           .onClick(() => {
+             let list: string[] = AppStorage.get('showAccessedList') as string[];
+-            let name: string = this.uiExtentionParam?.callerBundleName ?? '';
++            let name: string = this.sessionParameters?.callerBundleName ?? '';
+             HiLog.w(TAG, `SecureAccessPopupTip xmark onClick, name: ${name}`);
+             if (!StringUtil.isEmpty(name) && name !== 'com.ohos.contacts') {
+               list.push(name);
+@@ -1815,35 +1866,67 @@
+     .opacity(1)
+   }
+ 
++  private itemGeneration: number = 0;
++  private selectionEvent: string | undefined = undefined;
++
++  private bindSelection(): void {
++    this.unbindSelection();
++    this.selectionEvent = this.presenter.selectionChangedEvent;
++    emitter.on(this.selectionEvent, this.selectionChanged);
++  }
++
++  private unbindSelection(): void {
++    if (this.selectionEvent !== undefined) {
++      emitter.off(this.selectionEvent, this.selectionChanged);
++      this.selectionEvent = undefined;
++    }
++  }
++  private itemActive: boolean = false;
++  private selectionChanged = (eventData: emitter.EventData): void => {
++    if (!this.itemActive || !this.presenter.isActive()) { return; }
++      let contactId = eventData.data?.contactId as number;
++
++      if (!this.isMultiSelect || !contactId || this.item.contactId === contactId) {
++        this.checkedSet = this.presenter.selectedContactsMap.get(this.item.contactId) ?? new Set();
++      }
++  };
++
+   updateInfo() {
++    const generation = ++this.itemGeneration;
++    const contactId = this.item.contactId;
+     this.checkedSet = this.presenter.selectedContactsMap.get(this.item.contactId) ?? new Set();
+     getPixelMapFromFileForContactPicker(this.item.contactId.toString(), this.localId, this.userId,
+       (res: PixelMap | null) => {
++        if (!this.itemActive || !this.presenter.isActive() || generation !== this.itemGeneration ||
++          contactId !== this.item.contactId) { return; }
+         this.photoPixelMap = res;
+-      }, ContactsGlobalThisHelper.GetGlobalThis().getDefaultUIContext(), false)
++      }, this.getUIContext().getHostContext(), false)
+   }
+ 
+   aboutToAppear() {
+-    emitter.on(ContactsPickerPresenter.BATCH_SELECT_ITEM_CHECKED, (eventData: emitter.EventData) => {
+-      let contactId = eventData.data?.contactId as number;
+-
+-      if (!this.isMultiSelect || !contactId || this.item.contactId === contactId) {
+-        this.checkedSet = this.presenter.selectedContactsMap.get(this.item.contactId) ?? new Set();
+-      }
+-    })
++    this.itemActive = true;
++    this.bindSelection();
+     this.updateInfo();
+     HiLog.i(TAG,`ContactsPickerListItem headChar:${this.item.headChar}, namePrefix:${this.item.namePrefix}
+     ,isSearch:${this.isSearch}`)
+   }
+ 
+   aboutToReuse(): void {
++    this.bindSelection();
++    this.itemActive = true;
+     this.updateInfo();
+   }
+ 
+   aboutToRecycle(): void {
++    this.unbindSelection();
++    this.itemActive = false;
++    this.itemGeneration++;
+   }
+ 
+   aboutToDisappear(): void {
++    this.itemActive = false;
++    this.itemGeneration++;
++    this.unbindSelection();
+   }
+ 
+ 
+@@ -2106,10 +2189,9 @@
+   }
+ }
+ 
+-let titleMethodClass = new TitleMethodClass()
+ 
+ @Builder
+-export function PickerTitleView($$: TitleVariableClass) {
++export function PickerTitleView($$: TitleVariableClass, methods: TitleMethodClass) {
+   Row() {
+     Row({ space: 8 }) {
+       Button({ type: ButtonType.Circle, stateEffect: true }) {
+@@ -2121,7 +2203,7 @@
+       }
+       .onClick(() => {
+         HiLog.w(TAG, 'onBackButtonClick');
+-        titleMethodClass.backOnClick();
++        methods.backOnClick();
+       })
+       .accessibilityText(ContactsGlobalThisHelper.GetGlobalThis()
+         .getDefaultUIContext()
+@@ -2166,7 +2248,7 @@
+       .backgroundColor(EnvironmentProp.isPC() ? Color.Transparent : $r('app.color.skin_ohos_id_color_button_normal'))
+       .draggable(false)
+       .onClick(() => {
+-        titleMethodClass.closeOnClick();
++        methods.closeOnClick();
+       })
+       .enabled(!$$.isGettingPickerData)
+       .accessibilityText(AccessibilityUtil.getInstance()
+diff --git a/applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets b/applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets
+--- a/applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets
++++ b/applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets
+@@ -40,6 +40,8 @@
+ // import appLock from '@hms.security.appLock';
+ import { Constants } from '../data/Constants';
+ import ContactsPickerPresenter from '../presenter/contact/batchselectcontacts/ContactsPickerPresenter';
++import PickerSession from '../uiExtentionAbility/PickerSession';
++import { WorkerRequestScope } from '../workers/base/WorkerWrapper';
+ // import { HdsNavigation, HdsNavigationAttribute } from '@kit.UIDesignKit'
+ 
+ const TAG = 'ContactUiExtentionIndex';
+@@ -47,32 +49,43 @@
+ /**
+  * Contact list Entry
+  */
+-let storage = LocalStorage.getShared()
+-
+-@Entry(storage)
++@Entry({ useSharedStorage: true })
+ @Component
+ export default struct ContactUiExtentionIndex {
+ 
+   @Provide('pathInfos') pathInfos: NavPathStack = new NavPathStack();
+   private isPC: boolean = EnvironmentProp.isPC();
+-  private uiExtentionParam = ContactsGlobalThisHelper.GetGlobalThis()
+-    .getValue<UiExtentionParam>(ContactsGlobalThisHelper.UiExtentionAbilityParams);
+-  private mPresenter: ContactsPickerPresenter = ContactsPickerPresenter.getInstance();
+-  @StorageLink('isShowBindSheet') isShowBindSheet: boolean = false;
++  @LocalStorageLink('parameters') private uiExtentionParam: UiExtentionParam = new UiExtentionParam();
++  @LocalStorageLink('pickerSession') private pickerSession: PickerSession | undefined = undefined;
++  private pageScope: WorkerRequestScope = new WorkerRequestScope();
++  @StorageProp('isGettingPickerData') private legacyGettingPickerData: boolean = false;
++  @StorageLink('isShowAccountants') private legacyShowAccountants: boolean = false;
++
++  private isLegacyFlow(): boolean {
++    return this.uiExtentionParam.isSaveContact || this.uiExtentionParam.isSaveExistContact ||
++      this.uiExtentionParam.urlType === URL_TYPE_CONTACT_LIST ||
++      this.uiExtentionParam.urlType === URL_TYPE_CONTACT_DETAIL;
++  }
++
++  private get currentBusy(): boolean {
++    return this.isLegacyFlow() ? this.legacyGettingPickerData : this.isGettingPickerData;
++  }
++  @LocalStorageLink('pickerPresenter') private mPresenter: ContactsPickerPresenter = ContactsPickerPresenter.getInstance();
++  @LocalStorageLink('isShowBindSheet') isShowBindSheet: boolean = false;
+   @State isPageReady : boolean = false;
+   @StorageLink('isShowPickerMaskLayer') isShowPickerMaskLayer: boolean = false;
+   @StorageLink('breakpoint') curBp: string = 'sm';
+   @StorageProp('isThemeActive') isThemeActive: boolean = false;
+-  @StorageProp('isGettingPickerData') isGettingPickerData: boolean = false;
++  @LocalStorageProp('isGettingPickerData') isGettingPickerData: boolean = false;
+   // 是否启动无障碍
+   @StorageProp(AccessibilityUtil.ISOPENACCESSIBILITY) isOpenAccessibility: boolean = false;
+   @StorageProp('fontSizeScale') fontSizeScale: number = 0;
+-  @StorageProp('isFromSaveContactPicker') isFromSaveContactPicker: boolean = false;
+-  @StorageProp('isSaveExistContact') isSaveExistContact: boolean = false;
++  @LocalStorageProp('isFromSaveContactPicker') isFromSaveContactPicker: boolean = false;
++  @LocalStorageProp('isSaveExistContact') isSaveExistContact: boolean = false;
+   @StorageProp('isPickerSearch') isSearching: boolean = false;
+-  @StorageLink('isShowAccountants') isShowAccountants: boolean = false;
++  @LocalStorageLink('isShowAccountants') isShowAccountants: boolean = false;
+   @StorageProp('accountantTitleClass') accountantTitleClass: AccountantTitleClass = new AccountantTitleClass();
+-  @StorageProp('contactFromPicker') contactFromPicker: contact.Contact = {
++  @LocalStorageProp('contactFromPicker') contactFromPicker: contact.Contact = {
+     id: 0,
+     key: '',
+     emails: [],
+@@ -115,6 +128,10 @@
+   }
+ 
+   aboutToAppear() {
++    this.pageScope.dispose();
++    this.pageScope = new WorkerRequestScope();
++    const scope = this.pageScope;
++    this.pickerSession?.addCleanup(() => scope.dispose());
+     HiLog.w(TAG, `aboutToAppear! isPC: ${this.isPC}`);
+     try {
+       // 畅连拉起联系人列表页
+@@ -181,11 +198,14 @@
+   }
+ 
+   onPageShow(): void {
++    const scope = this.pageScope;
+     HiLog.i(TAG, 'onPageShow')
+-    setTimeout(() => {
++    const timer = setTimeout(() => {
++      if (!scope.active || !this.pickerSession?.active) { return; }
+       HiLog.i(TAG, 'show bind sheet')
+       this.isShowBindSheet = true;
+-    }, 100)
++    }, 100);
++    scope.onDispose(() => clearTimeout(timer));
+   }
+ 
+   onPageHide() {
+@@ -193,6 +213,7 @@
+   }
+ 
+   aboutToDisappear() {
++    this.pageScope.dispose();
+     HiLog.i(TAG, 'aboutToDisappear!');
+     if (this.uiExtentionParam?.urlType === URL_TYPE_CONTACT_LIST ||
+       this.uiExtentionParam?.urlType === URL_TYPE_CONTACT_DETAIL) {
+@@ -217,7 +238,7 @@
+   ShowContactsPickerPageView() {
+     Stack() {
+       ContactsPickerPage({ isContactMultiSelect: this.uiExtentionParam?.isContactMultiSelect })
+-        .hitTestBehavior(this.isGettingPickerData ? HitTestMode.Block : HitTestMode.Default)
++        .hitTestBehavior(this.currentBusy ? HitTestMode.Block : HitTestMode.Default)
+     }
+     .width('100%').height('100%')
+   }
+@@ -235,7 +256,7 @@
+         relationships: [],
+         contactId: this.contactFromPicker.id as number,
+       } })
+-        .hitTestBehavior(this.isGettingPickerData ? HitTestMode.Block : HitTestMode.Default)
++        .hitTestBehavior(this.currentBusy ? HitTestMode.Block : HitTestMode.Default)
+ 
+       // 新建联系人picker 应用锁
+       if (this.isShowPickerMaskLayer) {
+@@ -255,7 +276,11 @@
+   @Builder
+   ShowAccountantsView() {
+     Column() {
+-      Accountants({ isShowAccountants: $isShowAccountants })
++      if (this.isLegacyFlow()) {
++        Accountants({ isShowAccountants: $legacyShowAccountants })
++      } else {
++        Accountants({ isShowAccountants: $isShowAccountants })
++      }
+     }.width('100%').height('100%')
+   }
+ 
+@@ -290,13 +315,12 @@
+           backgroundColor: this.isThemeActive ? $r('app.color.skin_background_secondary') : undefined,
+           preferType: this.curBp === 'sm' ? SheetType.BOTTOM : SheetType.CENTER,
+           shouldDismiss: (sheetDismiss: SheetDismiss) => {
+-            HiLog.w(TAG, `shouldDismiss, isGettingPickerData: ${this.isGettingPickerData
++            HiLog.w(TAG, `shouldDismiss, isGettingPickerData: ${this.currentBusy
+             }, isSaveExistContact: ${this.isSaveExistContact}`);
+-            if (!this.isGettingPickerData) {
++            if (this.pickerSession?.active && (!this.isLegacyFlow() || !this.currentBusy)) {
+               this.isShowBindSheet = false;
+               if (this.isSaveExistContact) {
+-                ContactsGlobalThisHelper.GetGlobalThis()
+-                  .getDefaultUIContext()?.terminateSelfWithResult({ resultCode: 1 })
++this.pickerSession?.finish({ resultCode: 1 })
+                   .then(() => {
+                     HiLog.i(TAG, 'terminateSelfWithResult Operation succeeded ');
+                   })
+@@ -305,10 +329,7 @@
+                   });
+               } else {
+                 this.isShowBindSheet = false;
+-                setTimeout(() => {
+-                  // 选择联系人Picker，侧滑返回，返回默认选中的数据
+-                  this.mPresenter.returnDefaultSelectContactData();
+-                }, 100);
++                this.mPresenter.returnDefaultSelectContactData();
+               }
+             }
+           },
+@@ -340,10 +361,9 @@
+           preferType: this.curBp === 'sm' ? SheetType.BOTTOM : SheetType.CENTER,
+           shouldDismiss: (sheetDismiss: SheetDismiss) => {
+             HiLog.i(TAG, 'save picker shouldDismiss')
+-            if (!this.isGettingPickerData) {
++            if (this.pickerSession?.active && (!this.isLegacyFlow() || !this.currentBusy)) {
+               HiLog.i(TAG, 'save picker shouldDismiss, is not get picker data')
+-              ContactsGlobalThisHelper.GetGlobalThis()
+-                .getDefaultUIContext()?.terminateSelfWithResult({ resultCode: 1 })
++this.pickerSession?.finish({ resultCode: 1 })
+                 .then(() => {
+                   HiLog.i(TAG, 'terminateSelfWithResult Operation succeeded ');
+                 })
+@@ -363,7 +383,7 @@
+       Column() {
+       }.backgroundColor('#0000000')
+       .height(0).width(0).zIndex(0)
+-      .bindSheet(this.isShowAccountants, this.ShowAccountantsView(), {
++      .bindSheet(this.isLegacyFlow() ? this.legacyShowAccountants : this.isShowAccountants, this.ShowAccountantsView(), {
+         title: NavDestinationHeaderView({
+           isThemeActive: this.accountantTitleClass.isThemeActive,
+           isOpenAccessibility: this.accountantTitleClass.isOpenAccessibility,
