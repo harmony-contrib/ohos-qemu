@@ -1,0 +1,15 @@
+test_actual_identity_requires_both_nics_and_two_different_udids_and_boots (test_batch_network_peer_lan.PeerLanTests.test_actual_identity_requires_both_nics_and_two_different_udids_and_boots) ... ok
+test_archive_binding_rejects_mutation_and_linked_inputs (test_batch_network_peer_lan.PeerLanTests.test_archive_binding_rejects_mutation_and_linked_inputs) ... ok
+test_bad_peer_configuration_refuses_before_qemu_invocation (test_batch_network_peer_lan.PeerLanTests.test_bad_peer_configuration_refuses_before_qemu_invocation) ... ok
+test_default_without_peer_preserves_existing_global_management_mac (test_batch_network_peer_lan.PeerLanTests.test_default_without_peer_preserves_existing_global_management_mac) ... ok
+test_missing_stream_backend_is_explicit_failure_not_nat_fallback (test_batch_network_peer_lan.PeerLanTests.test_missing_stream_backend_is_explicit_failure_not_nat_fallback) ... ok
+test_observation_timeout_preserves_actual_partial_transport_evidence (test_batch_network_peer_lan.PeerLanTests.test_observation_timeout_preserves_actual_partial_transport_evidence) ... ok
+test_plan_unique_ports_macs_qmp_serial_uuid_and_private_subnet (test_batch_network_peer_lan.PeerLanTests.test_plan_unique_ports_macs_qmp_serial_uuid_and_private_subnet) ... ok
+test_prepare_clones_real_independent_inodes_and_never_boots (test_batch_network_peer_lan.PeerLanTests.test_prepare_clones_real_independent_inodes_and_never_boots) ... ok
+test_static_config_is_peer_only_and_routes_reject_management_nat (test_batch_network_peer_lan.PeerLanTests.test_static_config_is_peer_only_and_routes_reject_management_nat) ... ok
+test_three_product_real_generated_arguments_default_and_two_stream_endpoints (test_batch_network_peer_lan.PeerLanTests.test_three_product_real_generated_arguments_default_and_two_stream_endpoints) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 15.643s
+
+OK
