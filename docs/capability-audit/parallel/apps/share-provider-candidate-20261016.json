@@ -1,0 +1,104 @@
+{
+  "scope": "Bounded source candidates only; reuse real Settings phone and MMS apps. No new HAP/SDK/Docker/QEMU build or runtime acceptance.",
+  "source": "readonly fixed container ohos-qemu-parallel-source-20261016-02",
+  "projects": {
+    "applications/standard/settings": "0aba461c750fda71977c2f5186ca0e756ecfc6ca",
+    "applications/standard/mms": "26df98e3738f4219aa45efe6a3e7f6b1be55c051"
+  },
+  "components": [
+    "patches/common/applications/standard/settings/share_picker",
+    "patches/common/applications/standard/mms/send_data_text"
+  ],
+  "upstream_paths": {
+    "applications/standard/settings/product/phone/src/main/module.json5": {
+      "absolute": "/ohos/applications/standard/settings/product/phone/src/main/module.json5",
+      "before_sha256": "f347664ff4039db0970d58b72ebe28c668d8ab62d950100b8925df68b6351b70",
+      "after_sha256": "fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62"
+    },
+    "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json": {
+      "absolute": "/ohos/applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
+      "before_sha256": "0a3e4a1f4856400dfaef882375159a053caa1f3e45e70cc68570c2e000f70906",
+      "after_sha256": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d"
+    },
+    "applications/standard/mms/entry/src/main/module.json5": {
+      "absolute": "/ohos/applications/standard/mms/entry/src/main/module.json5",
+      "before_sha256": "67c6b55f3817af6f9bfab4f8696cf18766b9e07e821b44dbe60417aa215b8b51",
+      "after_sha256": "67ce57d6262cffd662be30497c9bdcd60be1acef87418c04801de6623438187f"
+    },
+    "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets": {
+      "absolute": "/ohos/applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets",
+      "before_sha256": "e80c63b3e30ab9baa1daa4189909df523a6b65adc26a7fdf30350083983a74fa",
+      "after_sha256": "9c4bddf3b65cc57e909e38527f5ce92927fa4219c5141d39451f4cad5f063eda"
+    },
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": {
+      "absolute": "/ohos/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
+      "before_sha256": null,
+      "after_sha256": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d"
+    },
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": {
+      "absolute": "/ohos/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
+      "before_sha256": null,
+      "after_sha256": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758"
+    },
+    "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets": {
+      "absolute": "/ohos/applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets",
+      "before_sha256": null,
+      "after_sha256": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd"
+    },
+    "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets": {
+      "absolute": "/ohos/applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets",
+      "before_sha256": null,
+      "after_sha256": "d0acb0b25a2d9f8f7553cb14c8732d8eab8b7e5ae9c59b7811a533bfeb9522fa"
+    }
+  },
+  "source_contract": "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json",
+  "sdk_api_declarations": {
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.UIExtensionContentSession.d.ts": "7fb192fbde8499770706b90599aee77b5d2ed0cfeaec87d0bcd1d7fa2ee83904",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.wantConstant.d.ts": "a582881ec0c896069e804ca9ca267f049c8ee6659b1d57bdbeecaaac3a466466",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.bundle.bundleManager.d.ts": "9eb16dc9d886672b8f7add1ae74cc2272f32ab1cfff642bdadbb8b5883e24e21",
+    "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.uri.d.ts": "5a6af9f962500b01f0b1924d7c74de9b2159223ecc4670c227bcb73e9522adda"
+  },
+  "contract": {
+    "modal_route": "startAbilityByType(share) -> AMS query sysPicker/share -> com.ohos.settings/SharePickerExtensionAbility -> actual BMS enabled/exported sendData UIAbility enumeration -> user choice -> same action/MIME/URI BMS requery -> startAbilityAsCaller -> real selected receiver",
+    "supported_payload": "Flat WantParams type,uri,ability.params.stream,ability.subject; raw text or bounded file URI array. Native startAbilityByType moves ability.want.params.uriPermissionFlag into incoming Want.flags. File reads require caller READ; WRITE is never forwarded. Reserved/caller/component/account parameters are not forwarded.",
+    "uri_authority": "Native sessionInfo callerToken -> UpdateAsCallerInfoFromCallerRecord -> original caller token stored in Want -> SceneBoard ProcessForegroundAbility -> GrantUriPermission. Settings never opens/copies file or uses its own grant API. Host does not prove real permission enforcement; actual negative cases remain required.",
+    "results": {
+      "selected": "resultCode0,outcome=launched only after successful native start; selected component names returned; no claim of actual send/save/receipt",
+      "cancel": "resultCode1,outcome=cancelled, no launch; also available during target query",
+      "invalid": "401 constructor payload error",
+      "load_failure": "16000050 page-load error",
+      "return_retry": "Same successful launch outcome retried without relaunch, even if user presses Cancel after an unsuccessful return"
+    },
+    "receiver": "MMS text/plain new skill -> actual validated text -> existing buildThirdParam -> real DynamicLoader(TransmitMsg) -> existing recipient/draft UI. No send API or arbitrary recipient injection. New Want invalidates stale async draft navigation."
+  },
+  "tests": {
+    "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest ci/capability-audit/test_batch_apps_share_provider.py -v",
+    "exit_code": 0,
+    "result": "7 tests passed; exact component hash/replay2/drift, unchanged manifest/permissions, source mirror, SDK import existence only, actual picker18/MMS5/session4 scenarios",
+    "json5_parser": "Existing Hvigor json5 library used only to parse test manifests, with override BATCH_APPS_JSON5_MODULE; no build tool/compiler invocation.",
+    "host_limitations": "Mocked platform APIs and URI parser in host functions; real SDK type/syntax checking, BMS/query/grant and guest behavior pending root."
+  },
+  "integration_requests": [
+    "Apply exact Settings share_picker after existing Settings source/profile/navigation preparation, before source HAP compilation and final guard. Main must accept only this exact added extension and pages entry, without weakening original boundary checks.",
+    "Main owns MMS source BUILD/build-profile/hvigor/oh-package packaging, HAP selection, original profile renewal/signing and exact preinstall/preauthorization. Apps changes only the three assigned business targets.",
+    "Ensure exactly one intended sysPicker/share provider in final phone BMS; verify registered name/type/component. Do not claim com.ohos.sharepickerdialog bundle installed.",
+    "Serial official API26 Release compile of final Settings and MMS sources, then fresh representative system-signed ARM64 phone UI/permission/lifetime tests. No package gate passed by this host batch."
+  ],
+  "runtime_cases": [
+    "ordinary caller startAbilityByType share opens real UI, empty payload and query-empty cancel return1 without launching",
+    "plain-text stream and single-text array: picker user selects MMS; real recipient UI preserves body, cancel/back sends no message; user send only under real telephony backend validation",
+    "enabled/exported matching receivers enumerate; disappeared/disabled/MIME-changed receiver after listing fails second BMS query or native launch; permission denial leaves error",
+    "two authorized file URIs with READ|WRITE input reach selected receiver using original caller READ only; unauthorized foreign URI and WRITE-only flags cannot acquire access via Settings",
+    "malformed MIME/URI/array, spoof reserved caller/component/account input rejected/stripped without launch or permission escalation",
+    "cancel during pending list query; repeated select, return failure/retry, multiple simultaneous sessions, caller exit during list/revalidation/launch and service restart",
+    "MMS delayed DynamicLoader replaced by newer Want cannot open stale draft; actual load error is visible"
+  ],
+  "remaining_dependencies": {
+    "legacy_ACTION_CHOOSE": "AMS separate ShowPickerDialog uses const.system.sharePicker bundle/ability defaults com.ohos.sharepickerdialog/PickerDialog, still absent. A real UIAbility implementation/caller authorization/result design is separate; do not alias to this UIExtension.",
+    "share_extension_bluetooth": "Real BluetoothServiceAbility is outside apps scope and accepts only ReasonMessage_SystemShare, dynamically calls @hms:collaboration.systemShare. No complete replacement backend is provided by this open-source candidate; Bluetooth HAP presence does not establish runtime module availability.",
+    "mms_attachments": "Fixed MMS buildTransmitParam attachment construction is commented out and may yield empty content; this text-only candidate does not validate or repair that file/UTD path. Original advertised skills remain, and gap is not closed.",
+    "other_profiles": "Candidate adds phone Settings provider only. Tablet/2in1 modules and any other packages require their own actual registration and runtime proof.",
+    "sdk_and_guest": "Root serial official SDK/build and new-package execution pending. No 82-item ledger row closed."
+  },
+  "ledger_closed": 0
+}
