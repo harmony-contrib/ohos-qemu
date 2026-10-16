@@ -7,7 +7,7 @@
 #include <string_view>
 
 namespace OhosOpenvpn {
-enum class Event { Ignore, Connected, Disconnected, Failure, Malformed };
+enum class Event { Ignore, Connected, Reconnecting, Disconnected, Failure, Malformed };
 
 inline bool Unsigned(std::string_view text, uint32_t maximum, bool zero = true)
 {
@@ -54,7 +54,8 @@ inline Event ParseState(std::string_view line)
     auto second = line.find(',', first + 1);
     if (second == std::string_view::npos) return Event::Malformed;
     auto state = line.substr(first + 1, second - first - 1);
-    if (state == "EXITING" || state == "RECONNECTING") return Event::Disconnected;
+    if (state == "EXITING") return Event::Disconnected;
+    if (state == "RECONNECTING") return Event::Reconnecting;
     for (auto pending : {"CONNECTING", "WAIT", "AUTH", "GET_CONFIG", "ASSIGN_IP",
                          "ADD_ROUTES", "RESOLVE", "TCP_CONNECT", "AUTH_PENDING"})
         if (state == pending) return Event::Ignore;

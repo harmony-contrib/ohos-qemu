@@ -22,7 +22,7 @@ inline bool ValidateProfile(std::string_view profile)
         "client", "tls-client", "pull", "dev", "dev-type", "proto", "remote", "port",
         "rport", "lport", "local", "nobind", "bind", "resolv-retry", "connect-retry",
         "connect-retry-max", "connect-timeout", "server-poll-timeout", "remote-random",
-        "remote-random-hostname", "float", "persist-key", "persist-tun", "persist-local-ip",
+        "remote-random-hostname", "float", "persist-key", "persist-local-ip",
         "persist-remote-ip", "auth", "cipher", "data-ciphers", "data-ciphers-fallback",
         "tls-version-min", "tls-version-max", "tls-cipher", "tls-ciphersuites",
         "remote-cert-tls", "remote-cert-ku", "remote-cert-eku", "verify-x509-name",
@@ -36,7 +36,7 @@ inline bool ValidateProfile(std::string_view profile)
         "inactive", "ifconfig", "ifconfig-ipv6", "ifconfig-nowarn", "topology",
         "route", "route-ipv6", "route-gateway", "route-metric", "route-delay",
         "redirect-gateway", "redirect-private", "route-nopull", "pull-filter",
-        "dhcp-option", "block-ipv6", "verb", "mute", "mute-replay-warnings",
+        "dhcp-option", "dns", "block-ipv6", "verb", "mute", "mute-replay-warnings",
         "replay-window", "auth-gen-token", "push-peer-info",
     };
     std::string credential;

@@ -9,4 +9,15 @@ FILES = (('services/vpnmanager/include/open_vpn_ctl.h', '620adda4312c23320de8170
 CRLF_FILES = ('foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h', 'foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp')
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    try:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    except ValueError as original_error:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('qemu_openvpn_session_following',
+            Path(__file__).resolve().parent.parent / 'openvpn_session/verify_source.py')
+        following = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(following)
+        try:
+            return following.validate_preceding(root, FILES)
+        except (ValueError, FileNotFoundError):
+            raise original_error
