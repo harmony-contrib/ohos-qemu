@@ -1,0 +1,48 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//device/qemu/common/virt_full/device.gni")
+
+ohos_prebuilt_etc("para_for_chip_prod") {
+  source = "./param/hardware_virt.para"
+  install_images = [ chip_prod_base_dir ]
+  relative_install_dir = "param"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+
+ohos_prebuilt_etc("para_for_sys_prod") {
+  source = "./param/product_virt.para"
+  install_images = [ sys_prod_base_dir ]
+  relative_install_dir = "param"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+
+# QEMU headless SceneBoard needs first-user unlock notifications.
+ohos_prebuilt_etc("qemu_sceneboard_unlock_cfg") {
+  source = "qemu_sceneboard_unlock.cfg"
+  output = "qemu_sceneboard_unlock.cfg"
+  relative_install_dir = "init"
+  subsystem_name = virt_subsystem_name
+  part_name = virt_part_name
+}
+
+group("product_etc_conf") {
+  deps = [
+    ":qemu_sceneboard_unlock_cfg",
+    ":para_for_chip_prod",
+    ":para_for_sys_prod",
+  ]
+}

@@ -1607,6 +1607,8 @@ PY
       --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
     python3 "${PATCH_ROOT}/lib/camera_features.py" \
       --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
+    python3 "${PATCH_ROOT}/lib/sensor_features.py" \
+      --features "${OHOS_ROOT}/out/preloader/${product}/features.json" --device "${DEVICE_TYPE}"
     if [ "${BUILD_ONLY_LOAD}" = "1" ]; then
       return
     fi
@@ -3292,6 +3294,14 @@ apply_qemu_capability_patch_plan() {
   serialize_shared_arkoala_generator
   fix_virtiofs_kernel_source_copy
   configure_qemu_product_features
+  bash "${PATCH_ROOT}/common/drivers/peripheral/sensor/qemu_external/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_external_sensor_component.log"
+  bash "${PATCH_ROOT}/common/base/msdp/device_status/sensor_input/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_msdp_real_sensor_input_component.log"
+  if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
+    python3 "${SCRIPT_DIR}/prepare_qemu_sensor_runtime.py" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_sensor_runtime.log"
+  fi
   ensure_flexlexer_header
   clean_corrupt_hvigor_state
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.

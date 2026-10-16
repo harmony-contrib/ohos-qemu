@@ -243,6 +243,14 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             ),
         },
         {
+            ("hdf", "drivers_peripheral_sensor"): {
+                "drivers_peripheral_sensor_feature_community": True,
+                "drivers_peripheral_sensor_feature_qemu_external": True,
+            },
+            ("msdp", "device_status"): {
+                "device_status_sensor_enable": True,
+                "device_status_allow_mock_fallback": False,
+            },
             # Both ends of the native IPC ABI must use the same switches.
             # Enabling only ext builds callers whose implementations are absent
             # from NetsysController / NetsysNativeService.

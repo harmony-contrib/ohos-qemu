@@ -250,6 +250,14 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
                 "netmanager_base_enable_feature_net_firewall": True,
                 "netmanager_base_enable_feature_sysvpn": True,
             },
+            ("hdf", "drivers_peripheral_sensor"): {
+                "drivers_peripheral_sensor_feature_community": True,
+                "drivers_peripheral_sensor_feature_qemu_external": True,
+            },
+            ("msdp", "device_status"): {
+                "device_status_sensor_enable": True,
+                "device_status_allow_mock_fallback": False,
+            },
             ("communication", "netmanager_ext"): {
                 "netmanager_ext_feature_net_firewall": True,
                 "netmanager_ext_feature_sysvpn": True,
