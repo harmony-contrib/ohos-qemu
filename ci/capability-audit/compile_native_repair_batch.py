@@ -19,7 +19,9 @@ GROUPS = {
     'knowledge_content': {
         'project': 'foundation/multimedia/media_library',
         'revision': '564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380',
-        'components': ['fusion_asset_type', 'photos_facard', 'public_record_classes',
+        'components': ['fusion_asset_type', 'api26_photo_enums', 'api26_photo_search_enums',
+                       'photos_recent_info', 'business_error', 'result_set_boundaries',
+                       'photos_facard', 'public_record_classes',
                        'result_set_export', 'knowledge_content', 'knowledge_holiday_index'],
         'units': ['native_module_ohos_photoaccess_helper', 'knowledge_content_napi', 'knowledge_content_query',
                   'media_asset_rdbstore', 'medialibrary_rdbstore', 'knowledge_holiday_index'],
