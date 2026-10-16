@@ -1,0 +1,33 @@
+{
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "project": "applications/standard/calendardata",
+  "revision": "f922427ca0dc20895a0e254ae41382e5b03299a4",
+  "scope": "fixed source fixture; not runtime evidence",
+  "files": {
+    "calendarmanager/napi/src/calendar_manager_napi.cpp": {
+      "sha256": "c5916ba82058f0f5af4ed3c00e74f671b3db2763d023820d221e9bad266e8d80",
+      "fixture": "00-calendar_manager_napi.cpp.gz.b64"
+    },
+    "calendarmanager/napi/include/calendar_manager_napi.h": {
+      "sha256": "d9d594ecf1b3a25d47fc02edcc65896c04407c89d9cf2bc9b4fc5021e241bdf4",
+      "fixture": "01-calendar_manager_napi.h.gz.b64"
+    },
+    "entry/src/main/module.json5": {
+      "sha256": "2be9cdaa75fa46a08c82d56e9a8da2571b9550e1af9a6268875f33cacc7a3610",
+      "fixture": "02-module.json5.gz.b64"
+    },
+    "entry/src/main/resources/base/profile/main_pages.json": {
+      "sha256": "ed151c09ec9351c32a3a7652342b01457c6ef3ef5ea2821a3385b94a78b29685",
+      "fixture": "03-main_pages.json.gz.b64"
+    }
+  },
+  "patched_sha256": {
+    "calendarmanager/napi/src/calendar_manager_napi.cpp": "72662beb41d84ad4c1495c945c7de5ffface89ad429e0d2cfea5e0faabc604d2",
+    "calendarmanager/napi/include/calendar_manager_napi.h": "ed18774b7833582490af121f2a02d69481cbac276f4c29636479017c0b4c1b10",
+    "entry/src/main/module.json5": "ff618ccd9b045e512e190e65724cff864e7e91307404e6cd0a7ba10d778b3ab7",
+    "entry/src/main/resources/base/profile/main_pages.json": "0b970b526b5b8f85df45fe6190e6f6343965d9c533614bd997bf0625a234ead7",
+    "entry/src/main/ets/editor/EventEditorController.ets": "bbb821e311fdbfb0deb1ddd3e436ec632f58e08127518a8da90473b27420a463",
+    "entry/src/main/ets/EditorUIExtensionAbility.ets": "a11b7906d7f22282935aceff9d23272d7d9ccaab314ba6eb5043063fb68682c2",
+    "entry/src/main/ets/pages/EventEditor.ets": "4da0af1e1f4aeb77edc2916e1d7cd487d0ae68541277a9ef012a6740f715f843"
+  }
+}

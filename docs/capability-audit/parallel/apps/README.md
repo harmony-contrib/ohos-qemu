@@ -23,3 +23,17 @@ Settings、Photos、Camera、Contacts 均有比历史 R49 描述更多的入口�
 AdminProvisioning、Wallpaper、Contacts/Camera 等provider源码构建、签名、设备
 配置和预装链需独立准备；网络、定位、通知、媒体调用者与UI协议须按原契约验证，
 不能只改包名或伪造响应。具体拆分和下一步见逐项记录。
+
+## 2026-10-16 第二批
+
+新增 `calendardata/event_editor`：真实公开 `editEvent` 表单/保存/取消和同进程
+NAPI单次结算，复用真实CalendarManager/DataShare后端。4项宿主回归包含11个
+controller场景和13个真实native回调体场景；正式API26 Release unsigned HAP
+已编译通过，产物和失败记录见 `calendar-editor-sdk-20261016.json`。成功SDK输入
+七个文件的SHA256与最终补丁完全匹配。未宣称系统签名、BMS或新包UI验收通过。
+
+原三个ArkTS错误输入已按记录的确定性修改逆向复原并保存在私有构建证据目录
+`failed-03-source`，其来源明确标注为重建，未冒充编译前冻结快照。03失败日志、
+04成功日志和各输入/产物hash均保留。NAPI完整平台TU、精确shared-guard接线和
+真实来宾验收由主agent串行执行。完整34项仍未核销；独立Calendar launcher UI
+及Cangjie completion不属于这批已完成实现，继续保留缺口。

@@ -1,0 +1,509 @@
+diff --git a/applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp b/applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp
+--- a/applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp
++++ b/applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp
+@@ -251,84 +251,115 @@
+ 
+ napi_value CalendarManagerNapi::EditEvent(napi_env env, napi_callback_info info)
+ {
+-    LOG_INFO("editEvent called");
+-    napi_value eventId = nullptr;
+-    NapiUtil::SetValue(env, INVALID_EVENT_ID, eventId);
+     auto ctxt = std::make_shared<EditEventContext>();
+     auto input = [env, ctxt](size_t argc, napi_value* argv) {
+         CHECK_ARGS_RETURN_VOID(ctxt, argc == ARGS_INDEX_THREE, PARAMETER_INVALID, "invalid arguments!");
+-        ctxt-> _jsContext = argv[0];
+-        NapiUtil::GetValue(env, argv[ARGS_INDEX_ONE], ctxt->event);
+-        NapiUtil::GetValue(env, argv[ARGS_INDEX_TWO], ctxt->caller);
++        ctxt->_jsContext = argv[0];
++        ctxt->status = NapiUtil::GetValue(env, argv[ARGS_INDEX_ONE], ctxt->event);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid event JSON");
++        ctxt->status = NapiUtil::GetValue(env, argv[ARGS_INDEX_TWO], ctxt->caller);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid caller");
+     };
+     ctxt->GetCbInfo(env, info, input, true);
+-    
++    if (ctxt->status != napi_ok || ctxt->error.code != NO_ERROR) {
++        return LaunchEditorPage(env, ctxt);
++    }
+     bool isStageMode = false;
+-    auto jsContext = ctxt->_jsContext;
+-    auto status = OHOS::AbilityRuntime::IsStageContext(env, jsContext, isStageMode);
++    auto status = OHOS::AbilityRuntime::IsStageContext(env, ctxt->_jsContext, isStageMode);
+     if (status != napi_ok || !isStageMode) {
+-        LOG_ERROR("editEvent No support FA Model");
+-        return eventId;
+-    }
+-    auto stageContext = OHOS::AbilityRuntime::GetStageModeContext(env, jsContext);
+-    if (stageContext == nullptr) {
+-        LOG_ERROR("editEvent stageContext == nullptr.");
+-        return eventId;
+-    }
++        ctxt->error = {"editEvent requires a Stage UIAbility context", PARAMETER_INVALID};
++        return LaunchEditorPage(env, ctxt);
++    }
++    auto stageContext = OHOS::AbilityRuntime::GetStageModeContext(env, ctxt->_jsContext);
+     auto abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(stageContext);
+     if (abilityContext == nullptr) {
+-        LOG_ERROR("editEvent only support for UIAbility Context.");
+-        return eventId;
++        ctxt->error = {"editEvent requires a UIAbility context", PARAMETER_INVALID};
++        return LaunchEditorPage(env, ctxt);
+     }
+     ctxt->_uiContent = abilityContext->GetUIContent();
+     return LaunchEditorPage(env, ctxt);
+ }
+ 
++void CalendarManagerNapi::FinishEditor(napi_env env, std::shared_ptr<EditEventContext> ctxt,
++    napi_deferred deferred, bool failed, int32_t code, const std::string &message, bool closeModal)
++{
++    if (ctxt->settled) {
++        return;
++    }
++    // Callbacks may reenter while CloseModalUIExtension destroys the session.
++    ctxt->settled = true;
++    napi_value result = nullptr;
++    if (failed) {
++        napi_value text = nullptr;
++        napi_value errorCode = nullptr;
++        napi_create_string_utf8(env, message.c_str(), NAPI_AUTO_LENGTH, &text);
++        napi_create_error(env, nullptr, text, &result);
++        napi_create_int32(env, code, &errorCode);
++        napi_set_named_property(env, result, "code", errorCode);
++        napi_reject_deferred(env, deferred, result);
++    } else {
++        // Never retain a napi_value beyond its callback/handle scope.
++        napi_create_int32(env, ctxt->eventId, &result);
++        napi_resolve_deferred(env, deferred, result);
++    }
++    if (closeModal && !ctxt->closed && ctxt->_uiContent != nullptr && ctxt->_sessionId > 0) {
++        ctxt->closed = true;
++        ctxt->_uiContent->CloseModalUIExtension(ctxt->_sessionId);
++    }
++}
++
+ napi_value CalendarManagerNapi::LaunchEditorPage(napi_env env, std::shared_ptr<EditEventContext> ctxt)
+ {
+     napi_value promise = nullptr;
+     napi_deferred deferred = nullptr;
+-    napi_create_promise(env, &deferred, &promise);
++    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
++        napi_throw_error(env, nullptr, "Cannot create calendar editor promise");
++        return nullptr;
++    }
++    if (ctxt->error.code != NO_ERROR || ctxt->status != napi_ok || ctxt->_uiContent == nullptr) {
++        int32_t code = ctxt->error.code == NO_ERROR ? INTERNAL_ERROR : ctxt->error.code;
++        FinishEditor(env, ctxt, deferred, true, code, "Calendar editor context is unavailable", false);
++        return promise;
++    }
+     AAFwk::Want want;
+     want.SetElementName("com.ohos.calendardata", "EditorUIExtensionAbility");
+-    const std::string uiExtType = "sys/commonUI";
+-    want.SetParam("ability.want.params.uiExtensionType", uiExtType);
++    want.SetParam("ability.want.params.uiExtensionType", std::string("sys/commonUI"));
+     want.SetParam("event", ctxt->event);
+-    want.SetParam("caller", ctxt->caller);
++    // Caller identity is display-only input and is never used to authorize a write.
+     Ace::ModalUIExtensionCallbacks callbacks;
+     callbacks = {
+         .onRelease = [env, ctxt, deferred](int32_t code) {
+-            LOG_INFO("editEvent onRelease callback.");
+-            ctxt->_uiContent->CloseModalUIExtension(ctxt->_sessionId);
+-            napi_resolve_deferred(env, deferred, ctxt->id);
+-            LOG_INFO("editEvent onRelease done.");
++            FinishEditor(env, ctxt, deferred, code != 0, INTERNAL_ERROR, "Calendar editor was released", true);
+         },
+         .onResult = [env, ctxt, deferred](int32_t code, const AAFwk::Want &wantRes) {
+-            auto eventId = wantRes.GetIntParam("eventId", INVALID_EVENT_ID);
+-            LOG_INFO("editEvent onResult. eventId=%{public}d", eventId);
+-            NapiUtil::SetValue(env, eventId, ctxt->id);
++            int32_t eventId = wantRes.GetIntParam("eventId", INVALID_EVENT_ID);
++            bool failed = code != 0 || eventId == 0;
++            ctxt->eventId = eventId > 0 ? eventId : INVALID_EVENT_ID;
++            int32_t errorCode = wantRes.GetIntParam("errorCode", code > 0 ? code : INTERNAL_ERROR);
++            FinishEditor(env, ctxt, deferred, failed, errorCode, "Calendar editor operation failed", true);
+         },
+-        .onReceive = [env, ctxt](const AAFwk::WantParams &wantParams) {
+-            LOG_INFO("editEvent onReceive.");
++        .onReceive = [](const AAFwk::WantParams &) {},
++        .onError = [env, ctxt, deferred](int32_t code, const std::string &, const std::string &msg) {
++            FinishEditor(env, ctxt, deferred, true, code > 0 ? code : INTERNAL_ERROR, msg, true);
+         },
+-        .onError = [env, ctxt, deferred](int32_t code, const std::string &event, const std::string &msg) {
+-            LOG_ERROR("editEvent onError.%{public}s", msg.c_str());
+-            ctxt->_uiContent->CloseModalUIExtension(ctxt->_sessionId);
+-            napi_reject_deferred(env, deferred, ctxt->id);
++        .onRemoteReady = [](const std::shared_ptr<Ace::ModalUIExtensionProxy> &) {},
++        .onDestroy = [env, ctxt, deferred] {
++            // The host owns UIContent; never dereference it after destruction.
++            ctxt->closed = true;
++            ctxt->_uiContent = nullptr;
++            FinishEditor(env, ctxt, deferred, false, 0, "", false);
+         },
+-        .onRemoteReady = [env, ctxt, deferred](const std::shared_ptr<Ace::ModalUIExtensionProxy> &proxy) {
+-            LOG_INFO("editEvent onRemoteReady.");
+-        },
+-        .onDestroy = [env, ctxt, deferred]{
+-            LOG_INFO("editEvent onDestroy.");
+-        },
+     };
+     Ace::ModalUIExtensionConfig config;
+-    config = {
+-        .isProhibitBack = false,
+-    };
++    config = { .isProhibitBack = false };
+     ctxt->_sessionId = ctxt->_uiContent->CreateModalUIExtension(want, callbacks, config);
+-    LOG_INFO("editEvent CreateModalUI sessionId=%{public}d", ctxt->_sessionId);
++    if (ctxt->_sessionId <= 0) {
++        FinishEditor(env, ctxt, deferred, true, INTERNAL_ERROR, "Cannot create calendar editor session", false);
++    } else if (ctxt->settled && !ctxt->closed && ctxt->_uiContent != nullptr) {
++        // Also handle a synchronous failure/result during session creation.
++        ctxt->closed = true;
++        ctxt->_uiContent->CloseModalUIExtension(ctxt->_sessionId);
++    }
+     return promise;
+ }
+ 
+diff --git a/applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h b/applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h
+--- a/applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h
++++ b/applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h
+@@ -40,11 +40,13 @@
+ public:
+     struct EditEventContext : public ContextBase {
+         string event;
+-        napi_value _jsContext;
++        napi_value _jsContext = nullptr;
+         string caller;
+         int32_t _sessionId = 0;
+         Ace::UIContent *_uiContent = nullptr;
+-        napi_value id;
++        int32_t eventId = -1;
++        bool settled = false;
++        bool closed = false;
+     };
+     
+     static napi_value New(napi_env env, napi_callback_info info);
+@@ -55,6 +57,8 @@
+     static napi_value EditEvent(napi_env env, napi_callback_info info);
+     static napi_value Init(napi_env env, napi_value exports);
+ private:
++    static void FinishEditor(napi_env env, std::shared_ptr<EditEventContext> ctxt, napi_deferred deferred,
++        bool failed, int32_t code, const std::string &message, bool closeModal);
+     static napi_value LaunchEditorPage(napi_env env, std::shared_ptr<EditEventContext> ctxt);
+ };
+ 
+diff --git a/applications/standard/calendardata/entry/src/main/module.json5 b/applications/standard/calendardata/entry/src/main/module.json5
+--- a/applications/standard/calendardata/entry/src/main/module.json5
++++ b/applications/standard/calendardata/entry/src/main/module.json5
+@@ -35,6 +35,13 @@
+     ],
+     "extensionAbilities": [
+       {
++        "name": "EditorUIExtensionAbility",
++        "srcEntry": "./ets/EditorUIExtensionAbility.ets",
++        "type": "sys/commonUI",
++        "exported": true,
++        "extensionProcessMode": "instance"
++      },
++      {
+         "name": "DataShareLowerExtAbility",
+         "srcEntry": "./ets/DataAbility/DataShareLowerExtAbility.ets",
+         "type": "dataShare",
+@@ -94,7 +101,8 @@
+           "abilities": [
+             "DataShareLowerExtAbility",
+             "DataShareHighExtAbility",
+-            "ReminderCallbackExtAbility"
++            "ReminderCallbackExtAbility",
++            "EditorUIExtensionAbility"
+           ],
+           "when": "inuse"
+         }
+@@ -106,7 +114,8 @@
+           "abilities": [
+             "DataShareLowerExtAbility",
+             "DataShareHighExtAbility",
+-            "ReminderCallbackExtAbility"
++            "ReminderCallbackExtAbility",
++            "EditorUIExtensionAbility"
+           ],
+           "when": "inuse"
+         }
+diff --git a/applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json b/applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json
+--- a/applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json
++++ b/applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json
+@@ -1,5 +1,6 @@
+ {
+   "src": [
+-    "pages/index"
++    "pages/index",
++    "pages/EventEditor"
+   ]
+ }
+diff --git a/applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets b/applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets
+@@ -0,0 +1,118 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import calendarManager from '@ohos.calendarManager';
++import common from '@ohos.app.ability.common';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++
++// A new event is written only after the user presses Save in this session.
++// The caller cannot select an existing ID or send a command that saves a form.
++export class EventEditorController {
++  public event: calendarManager.Event;
++  public eventId: number = -1;
++  public error: string = '';
++  private active: boolean = true;
++  private busy: boolean = false;
++  private finishing: boolean = false;
++
++  private context: common.Context;
++  private session: UIExtensionContentSession;
++
++  constructor(context: common.Context, session: UIExtensionContentSession, serialized: string) {
++    this.context = context;
++    this.session = session;
++    if (typeof serialized !== 'string' || serialized.length > 65536) {
++      throw new Error('Invalid event data');
++    }
++    const event: calendarManager.Event = JSON.parse(serialized) as calendarManager.Event;
++    if (event === null || typeof event !== 'object' || Array.isArray(event) ||
++      event.type !== calendarManager.EventType.NORMAL || event.id !== undefined ||
++      event.instanceStartTime !== undefined || event.instanceEndTime !== undefined ||
++      event.identifier !== undefined || event.attendee !== undefined || event.service !== undefined ||
++      event.isLunar !== undefined || event.timeZone !== undefined ||
++      !Number.isSafeInteger(event.startTime) || !Number.isSafeInteger(event.endTime) ||
++      event.startTime < 0 || event.endTime > 8640000000000000 || event.endTime <= event.startTime ||
++      (event.title !== undefined && (typeof event.title !== 'string' || event.title.length > 5000)) ||
++      (event.description !== undefined && (typeof event.description !== 'string' || event.description.length > 5000))) {
++      throw new Error('Invalid or unsupported event fields');
++    }
++    this.event = event;
++  }
++
++  public dispose(): void {
++    this.active = false;
++  }
++
++  public async save(title: string, start: string, end: string, description: string): Promise<void> {
++    if (!this.active || this.busy || this.finishing) {
++      return;
++    }
++    this.busy = true;
++    this.error = '';
++    try {
++      // A failed result delivery may be retried without inserting a duplicate.
++      if (this.eventId < 0) {
++        const startTime: number = Date.parse(start);
++        const endTime: number = Date.parse(end);
++        if (title.length > 5000 || description.length > 5000 || !Number.isSafeInteger(startTime) ||
++          !Number.isSafeInteger(endTime) || startTime < 0 || endTime <= startTime) {
++          throw new Error('请检查标题、开始时间和结束时间');
++        }
++        const event: calendarManager.Event = {
++          type: calendarManager.EventType.NORMAL,
++          title: title,
++          startTime: startTime,
++          endTime: endTime,
++          description: description,
++          isAllDay: this.event.isAllDay,
++          location: this.event.location,
++          reminderTime: this.event.reminderTime,
++          recurrenceRule: this.event.recurrenceRule
++        };
++        const manager: calendarManager.CalendarManager = calendarManager.getCalendarManager(this.context);
++        const calendar: calendarManager.Calendar = await manager.getCalendar();
++        // Host/caller death before the write starts is cancellation, not consent.
++        if (!this.active) {
++          return;
++        }
++        const id: number = await calendar.addEvent(event);
++        if (!Number.isInteger(id) || id <= 0 || id > 2147483647) {
++          throw new Error('日历服务没有返回有效的日程编号');
++        }
++        this.eventId = id;
++      }
++      // If the host died during a user-confirmed commit, do not report success
++      // to a destroyed session. The committed user event remains in the calendar.
++      if (this.active) {
++        await this.finish(this.eventId);
++      }
++    } catch (error) {
++      this.error = `保存失败：${error?.message ?? '日历服务不可用'}`;
++    } finally {
++      this.busy = false;
++    }
++  }
++
++  public async cancel(): Promise<void> {
++    if (!this.active || this.busy || this.finishing) {
++      return;
++    }
++    this.error = '';
++    try {
++      await this.finish(this.eventId);
++    } catch (error) {
++      this.error = `关闭失败：${error?.message ?? '请重试'}`;
++    }
++  }
++
++  private async finish(eventId: number): Promise<void> {
++    this.finishing = true;
++    try {
++      await this.session.terminateSelfWithResult({
++        resultCode: 0,
++        want: { parameters: { eventId: eventId } }
++      });
++      this.active = false;
++    } finally {
++      this.finishing = false;
++    }
++  }
++}
+diff --git a/applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets b/applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets
+@@ -0,0 +1,46 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import UIExtensionAbility from '@ohos.app.ability.UIExtensionAbility';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import Want from '@ohos.app.ability.Want';
++import { EventEditorController } from './editor/EventEditorController';
++
++export default class EditorUIExtensionAbility extends UIExtensionAbility {
++  private editors: Map<UIExtensionContentSession, EventEditorController> = new Map();
++
++  onSessionCreate(want: Want, session: UIExtensionContentSession): void {
++    let editor: EventEditorController;
++    try {
++      editor = new EventEditorController(this.context, session, want.parameters?.event as string);
++    } catch (error) {
++      this.fail(session, 401, 'Invalid calendar event');
++      return;
++    }
++    this.editors.set(session, editor);
++    try {
++      const storage: LocalStorage = new LocalStorage();
++      storage.setOrCreate<EventEditorController>('editor', editor);
++      session.loadContent('pages/EventEditor', storage);
++    } catch (error) {
++      editor.dispose();
++      this.editors.delete(session);
++      this.fail(session, 23900004, 'Calendar editor could not be displayed');
++    }
++  }
++
++  onSessionDestroy(session: UIExtensionContentSession): void {
++    this.editors.get(session)?.dispose();
++    this.editors.delete(session);
++  }
++
++  onDestroy(): void {
++    this.editors.forEach((editor: EventEditorController) => editor.dispose());
++    this.editors.clear();
++  }
++
++  private fail(session: UIExtensionContentSession, code: number, message: string): void {
++    session.terminateSelfWithResult({
++      resultCode: code,
++      want: { parameters: { errorCode: code, errorMessage: message } }
++    }).catch(() => console.error('Calendar editor result delivery failed'));
++  }
++}
+diff --git a/applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets b/applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets
+@@ -0,0 +1,89 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import { EventEditorController } from '../editor/EventEditorController';
++
++@Entry({ useSharedStorage: true })
++@Component
++struct EventEditor {
++  @LocalStorageProp('editor') private editor: EventEditorController | undefined = undefined;
++  @State private title: string = '';
++  @State private start: string = '';
++  @State private end: string = '';
++  @State private description: string = '';
++  @State private error: string = '';
++  @State private saving: boolean = false;
++  @State private persisted: boolean = false;
++
++  aboutToAppear(): void {
++    if (this.editor !== undefined) {
++      this.title = this.editor.event.title ?? '';
++      this.start = new Date(this.editor.event.startTime).toISOString();
++      this.end = new Date(this.editor.event.endTime).toISOString();
++      this.description = this.editor.event.description ?? '';
++    }
++  }
++
++  private async save(): Promise<void> {
++    if (this.editor === undefined || this.saving) {
++      return;
++    }
++    this.saving = true;
++    await this.editor.save(this.title, this.start, this.end, this.description);
++    this.error = this.editor.error;
++    this.persisted = this.editor.eventId > 0;
++    this.saving = false;
++  }
++
++  private async cancel(): Promise<void> {
++    await this.editor?.cancel();
++    this.error = this.editor?.error ?? '';
++  }
++
++  onBackPress(): boolean {
++    if (!this.saving) {
++      this.cancel();
++    }
++    return true;
++  }
++
++  build() {
++    Scroll() {
++      Column({ space: 12 }) {
++        Text('新建日程').fontSize(24).fontWeight(FontWeight.Bold).id('calendar-editor-title');
++        Text('应用请求创建日程，请检查内容后保存。取消不会创建日程。').fontSize(16);
++        TextInput({ text: this.title, placeholder: '标题' }).id('calendar-editor-event-title')
++          .maxLength(5000).enabled(!this.saving && !this.persisted)
++          .onChange((value: string) => this.title = value);
++        Text('开始时间（UTC，ISO 8601）');
++        TextInput({ text: this.start }).id('calendar-editor-start').enabled(!this.saving && !this.persisted)
++          .onChange((value: string) => this.start = value);
++        Text('结束时间（UTC，ISO 8601）');
++        TextInput({ text: this.end }).id('calendar-editor-end').enabled(!this.saving && !this.persisted)
++          .onChange((value: string) => this.end = value);
++        TextArea({ text: this.description, placeholder: '备注' }).id('calendar-editor-description')
++          .maxLength(5000).enabled(!this.saving && !this.persisted)
++          .onChange((value: string) => this.description = value);
++        if (this.editor?.event.isAllDay) {
++          Text('全天日程');
++        }
++        if (this.editor?.event.location !== undefined) {
++          Text(`地点：${this.editor?.event.location?.location ?? ''}`);
++        }
++        if (this.editor?.event.reminderTime !== undefined) {
++          Text(`提醒（提前分钟）：${this.editor?.event.reminderTime?.join(', ')}`);
++        }
++        if (this.editor?.event.recurrenceRule !== undefined) {
++          Text(`重复规则：${JSON.stringify(this.editor?.event.recurrenceRule)}`);
++        }
++        if (this.error.length > 0) {
++          Text(this.error).fontColor(Color.Red).id('calendar-editor-error');
++        }
++        Row({ space: 16 }) {
++          Button(this.persisted ? '返回日程' : '保存').id('calendar-editor-save')
++            .enabled(!this.saving && this.editor !== undefined).onClick(() => this.save());
++          Button('取消').id('calendar-editor-cancel').enabled(!this.saving && !this.persisted)
++            .onClick(() => this.cancel());
++        }
++      }.padding(24).width('100%').alignItems(HorizontalAlign.Start);
++    }.width('100%').height('100%').backgroundColor(Color.White);
++  }
++}
