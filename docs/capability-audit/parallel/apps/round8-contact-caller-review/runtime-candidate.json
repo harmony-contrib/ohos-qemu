@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "kind": "ordinary caller source + independent evidence verifier candidate",
+  "upstream_targets_this_batch": [],
+  "changed_code_files": [
+    "ci/capability-audit/batch_apps_contact_picker_runtime.py",
+    "ci/capability-audit/test_batch_apps_contact_picker_runtime.py",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/EntryAbility.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/Index.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/PickerCases.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/ResultJournal.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/case-matrix.json",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/project-contract.json"
+  ],
+  "fixture_hashes": {
+    "EntryAbility.ets": "1d16c9b47811a0bb892f627ee351b47a2b720dff21f8e807b4507a7083f5a4b9",
+    "Index.ets": "cc4b2ce0197fc8afc17cfc6c0ce962a968d9548796d8fe97c8cad17529f8d167",
+    "PickerCases.ets": "d1125d26bab292d6ba04a171dee21400c31c8365461c969eb91ccc33a9e3aef7",
+    "ResultJournal.ets": "8012f44a97abe0696e36692681b4c1d2b59fb5afd1624138304c8d98d6ec9511",
+    "case-matrix.json": "4a4ae93bd43d5bda74e86a08f49e67ee89228b1837ed22a389670bd14a625352",
+    "project-contract.json": "e6b2b506d8bbe3b64d4355f3b5d0e9daec8774a89adaf4bb657a250ea3d1caf3"
+  },
+  "required_cases": 15,
+  "required_invocations": 16,
+  "optional_cases": [
+    "deadline",
+    "navigation-dismiss"
+  ],
+  "prepare_output_payload_files": 16,
+  "prepare_output_manifest_files": 1,
+  "host_tests": {
+    "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_apps_contact_picker_runtime.py -v",
+    "exit_code": 0,
+    "tests": 8,
+    "seconds": 0.249,
+    "boundaries": [
+      "actual extracted recorder: unmodified result/raw bare-number error/late callback identity/duplicate count/dispose/watchdog does not invent result",
+      "synthetic verifier fixtures challenge partial205/wrong key-name-phone/duplicate IDs/missing or duplicate callbacks",
+      "reject pre-input result, missing cancel mutation, nonnormal BMS/token, installed payload mismatch, old package/missing cleanup",
+      "synthetic positive result never closes ledger or representative package gate"
+    ],
+    "initial_adapter_failure": "Mock manually fired timeout but retained its already-fired timer entry; corrected adapter retirement to match setTimeout. No SDK/HAP runtime was run."
+  },
+  "build_status": {
+    "sdk_compile_attempted": false,
+    "signature_verified": false,
+    "installed": false,
+    "runtime_verified": false,
+    "owner": "root dedicated SDK39/sign/install/UI/rootseed/shared suite"
+  },
+  "limitations": [
+    "No HAP compilation or real system UI result claimed",
+    "Actual normal signature/BMS/token, public-CRUD root seed, installed payload and boot package evidence are required",
+    "Verifier checks raw evidence linkage; cryptographic verify-app, hidden window/session leak and full capability acceptance remain root gates"
+  ],
+  "requirements_closed": 0,
+  "first_artifact_behavior_gate_passed": false
+}
