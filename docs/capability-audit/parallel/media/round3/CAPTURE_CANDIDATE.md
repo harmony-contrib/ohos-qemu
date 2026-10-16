@@ -12,8 +12,14 @@ must declare run(runId:string, expectedDenied:boolean):boolean. Replace exactly
 __BATCH_MEDIA_CAPTURE_RUN_ID__ (fresh 32 lowercase hex) and
 __BATCH_MEDIA_CAPTURE_EXPECT_DENIED__ (true/false). Declare MICROPHONE as an ordinary
 user grant permission, reason/usedScene EntryAbility/inuse. Keep the application
-foreground. Parent independently grants/denies/revokes the real application token;
-the template does not silently grant itself or request a system source.
+foreground. The template awaits the public requestPermissionsFromUser call with
+the actual UIAbilityContext before invoking native capture. Parent drives the real
+grant/deny dialog and independently checks/revokes the application token. Returned
+permissions/authResults/dialogShownResults are saved in a fresh private
+audio-capture-RUN-permission.json and hilog. Existing permission evidence is preserved.
+An answer contrary to expectedDenied still proceeds to the real native call and
+must be rejected by actual lifecycle/content/token verification; the template
+does not silently grant itself or request a system source.
 
 Native APIs are public OH_AudioStreamBuilder/OH_AudioCapturer, using real MIC,
 48kHz S16LE stereo, normal latency and the API20+ read-data/error callbacks.
