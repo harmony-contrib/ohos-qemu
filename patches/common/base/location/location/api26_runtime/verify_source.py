@@ -27,7 +27,9 @@ def manifest():
         path = PurePosixPath(name)
         if path.is_absolute() or '..' in path.parts or '\\' in name:
             raise ValueError('unsafe location source target')
-    if set(data['states']) != {'original', 'prefix_1', 'prefix_2', 'final'} or any(
+    expected_states = {'original', 'final'} | {
+        'prefix_' + str(index) for index in range(1, len(data['patches']))}
+    if set(data['states']) != expected_states or any(
             set(state) != set(data['files']) for state in data['states'].values()):
         raise ValueError('incomplete location whole-component state')
     patches = sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))
@@ -53,10 +55,12 @@ def validate(root, require_patched=False, check_revision=True):
         while cursor != root:
             if cursor.is_symlink():
                 raise ValueError('location input contains a symlink: ' + name)
+            if cursor != target and cursor.exists() and not cursor.is_dir():
+                raise ValueError('location input ancestor must be a directory: ' + name)
             cursor = cursor.parent
-        if not target.is_file() or not target.resolve().is_relative_to(root):
+        if target.exists() and (not target.is_file() or not target.resolve().is_relative_to(root)):
             raise ValueError('location input must be an owned regular file: ' + name)
-        values[name] = digest(target.read_bytes())
+        values[name] = digest(target.read_bytes()) if target.exists() else None
     if check_revision:
         if not (project / '.git').exists():
             raise ValueError('location project Git HEAD is required')

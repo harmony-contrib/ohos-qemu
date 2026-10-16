@@ -5,90 +5,122 @@
   "targets": {
     "base/location/location/frameworks/base_module/source/request_config.cpp": {
       "sha256": "ce53f9bbb79e4d8ad7978f43a94c8da74aa5eb2ede61f1cd2888229c259c3eb5",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp": {
       "sha256": "7f921b19e87a20ff24053cbf78e95d5d18689483363d98a9378e558c71f54c9d",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h": {
       "sha256": "d23ab24104b996f25f6ee47e8b2b965cdfb3741b6debeb8d4004a9f179862d22",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/js/napi/include/location_napi_adapter.h": {
       "sha256": "df3a6935369feb2b0f186e24f8ab9177d6207dea0482541f38c1c20ad289f990",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp": {
       "sha256": "a3ad0ab918bccf1fdfa2c4a2e17aa7930d2ab7af2ad1cdd4dddeac6f8296662e",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp": {
       "sha256": "10f006e05e6acd07d360f5473110f032fc82a1b060d4c52dfb7b93afc72636c5",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp": {
       "sha256": "10b3d9a118b6abd5fe9e2bc3aaf8c0c4e11d35d6bf99bfc933e62deb8d74515e",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/js/napi/source/napi_util.cpp": {
       "sha256": "36406ece4437d0ebb7cfb0c361b90035ae422bad312237945a7f29607caa71f0",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl": {
       "sha256": "082dc98ff2d23395c4b18533ef6574dd50c2d331f35a3dcdd038d2b582dbba9d",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp": {
       "sha256": "88f399fd86a5cf15383c074e0d84e2c1ef4e5f22e1f6df9452a7f3f1d4dc33bc",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/interfaces/inner_api/include/constant_definition.h": {
       "sha256": "66413a57e9914ce2850ac268297d4924ed630ec7aa830336bd7a1b73adbbfe36",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h": {
       "sha256": "b55ec5e3afe9de9eef869e414a1f87b2621e6ad2447270b0ac6f771ccb9585e1",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/interfaces/inner_api/include/locator_impl.h": {
       "sha256": "64b3c6e816e046b3bf2161afeb2cc9a8a8008ffa99447bf331cc1d3c7fa6ef8d",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/interfaces/inner_api/include/request_config.h": {
       "sha256": "d890828f8496ed04739d2ebb3b5b68ac748284755627b4faa2b4f717477f64a4",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/include/locator_ability.h": {
       "sha256": "f18ef92972cafd8f0c0198c93a7f1f8120f03d3bf28d5cff9d5d99d78b8765d8",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h": {
       "sha256": "4e6da25f6e689033cd68ddf5d0661ab2bb446c91f91daa4ecd572fb926fbba05",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/include/report_manager.h": {
       "sha256": "59ee6ab5679e88a3351f8200ff49b364ed2ccda144e4710496b77326c3b35462",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/include/request_manager.h": {
       "sha256": "9323e1dcca912bb48a7ef0d8ae4df901eb7cdc3f576cc9484d9dca3aeaaa6327",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/source/locator_ability.cpp": {
       "sha256": "942a8a3d327d1dded66ad65c35e6fea0931280119992502b93e54bfc0a5513c9",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp": {
       "sha256": "02b59695678a6ef244f8a1b42c034b9759c9f2390060858241197e7b275c8155",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/source/report_manager.cpp": {
       "sha256": "1a945bcf7974898496400ea1cbe22461548e8228701b5d2c639b539742182db2",
+      "originally_absent": false,
       "crlf_count": 0
     },
     "base/location/location/services/location_locator/locator/source/request_manager.cpp": {
       "sha256": "8617a90d00307e8018e72d87942b4a6c8a8e7d077cf854b6d68040f4716fd4ee",
+      "originally_absent": false,
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/fusion_fence_request.h": {
+      "sha256": null,
+      "originally_absent": true,
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/BUILD.gn": {
+      "sha256": "6a7103d84ec91f572aa50aa49caf87af4cb749e227ddcbd8aca9912b53092d0f",
+      "originally_absent": false,
       "crlf_count": 0
     }
   },

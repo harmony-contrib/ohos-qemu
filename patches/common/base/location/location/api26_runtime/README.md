@@ -1,8 +1,8 @@
 # API 26 location runtime routes
 
-Apply after `api26_public_enums`, using this component's `apply.sh`. The three-patch
-stack adds live icon, filtered BLE search, district and skiing-track routes.
-Transactions 65 through 71 are appended while all original numbers are preserved.
+Apply after `api26_public_enums`, using this component's `apply.sh`. The four-patch
+stack adds live icon, filtered BLE search, district, skiing-track and fusion-fence routes.
+Transactions 65 through 75 are appended while all original numbers are preserved.
 
 The icon query snapshots the current account's GNSS, network and fused requests.
 It excludes inactive, frozen, expired, unpermitted, passive-only and switched-off
@@ -35,17 +35,28 @@ The cache fast paths retain actual permission-use ownership through stop retries
 See `docs/capability-audit/parallel/location/round3-business.md` in this repository
 for the algorithm, authorization, compatibility and centralized build details.
 
-The guard pins the location project HEAD and the complete raw bytes of all 22
+The guard pins the location project HEAD and the complete raw bytes of all 24
 upstream targets. It accepts only the original component state (after the enum
-prerequisite), the complete first/second patch prefixes, or the final state. Unknown or mixed
-edits, changed patches, missing files and source/ancestor symlinks fail before
-source writes. A private full-stack preflight must produce the exact final
-bytes before the guarded shared runner writes the source. Existing cooperating
-patch locks remain in use; do not modify the source concurrently with patching.
+prerequisite), the complete first/second/third patch prefixes, or the final state. Unknown or mixed
+edits, changed patches, unexpected new-header bytes, missing existing files and source/ancestor symlinks fail before
+source writes. A private suffix preflight must produce the exact final
+bytes and revalidate the source snapshot before atomic owned-file replacement.
+An explicitly absent original fusion header is supported. Do not modify the
+source concurrently with patching.
 
 Host tests execute the actual patched functions under ASan/UBSan, using explicit
 scanner/NAPI boundaries. Separate guard tests exercise legal prefixes and reject
-unknown bytes, mixed states, symlinks and wrong HEADs. The complete 22-file source
+unknown bytes, mixed states, symlinks and wrong HEADs. The complete 24-target source
 copies also pass real patch application and exact final hashes. These checks do
 not replace full generated-IDL/TU builds or packaged GNSS/BLE/device validation.
 The integrating agent owns shared wiring and representative-package acceptance.
+
+
+Fusion fences use real owner GNSS requests, fine-use accounting, actual WLAN
+scans and fresh CoreServiceClient cell information. Lifecycle RPC75 checks the
+original callback object, protecting later same-id registrations. Expiry and
+permission/account/switch changes stop consumers even with a silent provider;
+failed permission stops retain ownership for retry. Unsupported BLE bitmap8
+returns801 because this SDK has no BLE matching payload. See round4-fusion-
+communication.md and round4-platform-build-request.json for supported behavior,
+remaining provider/runtime gates, all new targets and complete build requests.

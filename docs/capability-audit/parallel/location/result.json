@@ -3,7 +3,7 @@
   "date": "2026-10-15",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-location-20261015",
-  "summary": "Implement live icon, real filtered BLE search, permission-correct district/current-fix/reverse-geocoder orchestration, skiing GNSS processing/history/cursors, and RTT listener lifecycle. All 22 assigned runtime requirements remain open until new-package acceptance.",
+  "summary": "Implemented actual icon/BLE/district/skiing routes, fusion GNSS/CELL/WLAN fence business and explicit modem 5A producer/observer paths; RTT lifecycle repairs retained. All 22 requirements remain open pending centralized platform/provider/new-package runtime acceptance.",
   "upstream_targets": [
     "base/location/location/frameworks/base_module/source/request_config.cpp",
     "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
@@ -16,9 +16,11 @@
     "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl",
     "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp",
     "base/location/location/interfaces/inner_api/include/constant_definition.h",
+    "base/location/location/interfaces/inner_api/include/fusion_fence_request.h",
     "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h",
     "base/location/location/interfaces/inner_api/include/locator_impl.h",
     "base/location/location/interfaces/inner_api/include/request_config.h",
+    "base/location/location/services/location_locator/locator/BUILD.gn",
     "base/location/location/services/location_locator/locator/include/locator_ability.h",
     "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h",
     "base/location/location/services/location_locator/locator/include/report_manager.h",
@@ -30,7 +32,49 @@
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h",
     "base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp",
-    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+    "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp",
+    "base/telephony/core_service/frameworks/native/src/telephony_state_registry_client.cpp",
+    "base/telephony/core_service/frameworks/native/src/telephony_state_registry_proxy.cpp",
+    "base/telephony/core_service/interfaces/innerkits/include/i_telephony_state_notify.h",
+    "base/telephony/core_service/interfaces/innerkits/include/state_registry_ipc_interface_code.h",
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h",
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_client.h",
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_proxy.h",
+    "base/telephony/core_service/services/tel_ril/include/tel_ril_callback.h",
+    "base/telephony/core_service/services/tel_ril/include/tel_ril_network.h",
+    "base/telephony/core_service/services/tel_ril/src/tel_ril_callback.cpp",
+    "base/telephony/core_service/services/tel_ril/src/tel_ril_network.cpp",
+    "base/telephony/ril_adapter/interfaces/innerkits/include/hril_notification.h",
+    "base/telephony/ril_adapter/services/hril/include/hril_network.h",
+    "base/telephony/ril_adapter/services/hril/include/hril_notification_map.h",
+    "base/telephony/ril_adapter/services/hril/src/hril_network.cpp",
+    "base/telephony/ril_adapter/services/vendor/src/vendor_report.c",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/lib.rs",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs",
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs",
+    "base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h",
+    "base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h",
+    "base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h",
+    "base/telephony/state_registry/frameworks/js/napi/include/telephony_callback_event_id.h",
+    "base/telephony/state_registry/frameworks/js/napi/include/telephony_update_event_type.h",
+    "base/telephony/state_registry/frameworks/js/napi/include/update_contexts.h",
+    "base/telephony/state_registry/frameworks/js/napi/include/update_infos.h",
+    "base/telephony/state_registry/frameworks/js/napi/src/event_listener_handler.cpp",
+    "base/telephony/state_registry/frameworks/js/napi/src/event_listener_manager.cpp",
+    "base/telephony/state_registry/frameworks/js/napi/src/napi_state_registry.cpp",
+    "base/telephony/state_registry/frameworks/js/napi/src/napi_telephony_observer.cpp",
+    "base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h",
+    "base/telephony/state_registry/frameworks/native/observer/src/telephony_observer.cpp",
+    "base/telephony/state_registry/frameworks/native/observer/src/telephony_observer_proxy.cpp",
+    "base/telephony/state_registry/interfaces/innerkits/observer/telephony_observer.h",
+    "base/telephony/state_registry/services/include/telephony_state_registry_service.h",
+    "base/telephony/state_registry/services/include/telephony_state_registry_stub.h",
+    "base/telephony/state_registry/services/src/telephony_state_registry_service.cpp",
+    "base/telephony/state_registry/services/src/telephony_state_registry_stub.cpp"
   ],
   "patch_sha256": "e6d28f731f540d715bd15064b4dcf355f9a2d6ca438601288e411987f3659180",
   "requirements_review": [
@@ -39,14 +83,16 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
+      "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+      "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
+      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "round4-fusion-communication.md",
+        "round4-freeze-inputs.json",
+        "round4-platform-build-request.json",
+        "host-tests.log"
       ],
-      "next_required": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+      "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
@@ -55,7 +101,7 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_district_route_pending_compile_provider_and_packaged_validation",
       "classification": "new_binding_to_real_location_and_reverse_geocoder",
-      "finding": "Promise-only optional/undefined request now starts an owned authorized one-shot location request, uses its permitted recent cache or real fix, always stops a started request, queries the real reverse-geocoder/cache within one deadline, and rechecks fine/approximate/firstToken/current-account/switch access before publishing district fields. SDK area-query errors use 3301500.",
+      "finding": "Promise-only optional/undefined request now starts an owned authorized one-shot location request, uses its permitted recent cache or real fix, always stops a started request, queries the real reverse-geocoder/cache within one deadline, and rechecks fine/approximate/firstToken/current-account/switch access before publishing district fields. SDK area-query errors use 3301500. Batch4 repairs the parent-found undeclared MAX_BUF_LEN TU error using the same fixed 100-byte locale bound and actual100/101-byte parser regression.",
       "evidence": [
         "round3-business.md",
         "round3-geocoder-peer-abi.md",
@@ -71,7 +117,7 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_live_state_pending_compile_and_packaged_validation",
       "classification": "new_binding_to_live_request_and_permission_state",
-      "finding": "NAPI and Taihe now call a service-side system-permission checked IPC query. Current-account GNSS/network/fused requests must have active privacy-use state, valid lifetime, permission and switch state; frozen, passive-only and other-account requests are excluded. No HD provider is present, so HD status is not inferred. Fine-only callers now use actual ACCESS_LOCATION PrivacyKit start/stop accounting; approximate callers retain approximate accounting. Query snapshots under request/permission locks, then checks permissions/accounts/freeze/RDB after releasing them.",
+      "finding": "NAPI and Taihe now call a service-side system-permission checked IPC query. Current-account GNSS/network/fused requests must have active privacy-use state, valid lifetime, permission and switch state; frozen, passive-only and other-account requests are excluded. No HD provider is present, so HD status is not inferred. Fine-only callers now use actual ACCESS_LOCATION PrivacyKit start/stop accounting; approximate callers retain approximate accounting. Query snapshots under request/permission locks, then checks permissions/accounts/freeze/RDB after releasing them. Radio-only active fusion fences now contribute only while their real fine-permission-use request remains active and current-account eligible; retired stop retries do not claim an active fence.",
       "evidence": [
         "source-evidence.json: symbols",
         "backend-excerpts.json: icon producer audit where applicable",
@@ -101,28 +147,32 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
+      "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+      "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
+      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "round4-fusion-communication.md",
+        "round4-freeze-inputs.json",
+        "round4-platform-build-request.json",
+        "host-tests.log"
       ],
-      "next_required": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+      "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
+      "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+      "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
+      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "round4-fusion-communication.md",
+        "round4-freeze-inputs.json",
+        "round4-platform-build-request.json",
+        "host-tests.log"
       ],
-      "next_required": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+      "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
@@ -299,28 +349,32 @@
       "group": "电话与通信",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "new_sdk_contract_missing_fixed_source_backend",
-      "finding": "No on/offCommunicationStateChange implementation or export appears in the 43 production state_registry files scanned. SDK describes a boolean 5A state, so mapping generic call state or network-present to this event would change the contract.",
+      "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
+      "classification": "real_vendor_to_registry_dataflow_and_bindings_implemented",
+      "finding": "Strict independent AT +OHOS5A:0/1 reaches HRil notification1412, parent actual-generated RIL callback162, TelRilNetwork, native-telephony-only registry publication, slot/permission checks and dynamic plus ANI bool observers. Unknown is not initial false. Dynamic unregister/env cleanup owns exact slot/callback generations and silences queued old work. No NR-state inference or public mock success.",
       "evidence": [
-        "source-evidence.json: symbols and scanned_production_files",
-        "backend-excerpts.json: @ohos.telephony.observer.d.ts 1054-1068"
+        "round4-fusion-communication.md",
+        "round4-platform-build-request.json",
+        "round4-freeze-inputs.json",
+        "host-tests.log"
       ],
-      "next_required": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+      "next_required": "Parent register component, regenerate/compile/link all complete business TUs and ANI bridge, then deliver independent peer challenges through actual AT/HDI/registry/public API. Verify permissions, slots, duplicate off, env/queued callbacks and provider false-state/reset discipline in a newly packaged representative image."
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
       "group": "电话与通信",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "new_sdk_contract_missing_fixed_source_backend",
-      "finding": "No on/offCommunicationStateChange implementation or export appears in the 43 production state_registry files scanned. SDK describes a boolean 5A state, so mapping generic call state or network-present to this event would change the contract.",
+      "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
+      "classification": "real_vendor_to_registry_dataflow_and_bindings_implemented",
+      "finding": "Strict independent AT +OHOS5A:0/1 reaches HRil notification1412, parent actual-generated RIL callback162, TelRilNetwork, native-telephony-only registry publication, slot/permission checks and dynamic plus ANI bool observers. Unknown is not initial false. Dynamic unregister/env cleanup owns exact slot/callback generations and silences queued old work. No NR-state inference or public mock success.",
       "evidence": [
-        "source-evidence.json: symbols and scanned_production_files",
-        "backend-excerpts.json: @ohos.telephony.observer.d.ts 1054-1068"
+        "round4-fusion-communication.md",
+        "round4-platform-build-request.json",
+        "round4-freeze-inputs.json",
+        "host-tests.log"
       ],
-      "next_required": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+      "next_required": "Parent register component, regenerate/compile/link all complete business TUs and ANI bridge, then deliver independent peer challenges through actual AT/HDI/registry/public API. Verify permissions, slots, duplicate off, env/queued callbacks and provider false-state/reset discipline in a newly packaged representative image."
     },
     {
       "id": "behavior:location-provider-backends-missing",
@@ -333,7 +387,7 @@
       "evidence": [
         "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence"
       ],
-      "next_required": "Add a real GNSS/location provider and QEMU device/transport route; package and validate current-location callbacks, trajectory, fences and disabled/permission cases."
+      "next_required": "Parent controlled GNSS vendor ABI, real geocoder remote provider and real HCI/controller/WLAN/CELL peer routes must feed the actual service paths in a newly packaged representative artifact; source implementations and negative hardware boundaries do not close this behavior."
     },
     {
       "id": "behavior:telephony-no-modem-or-sim",
@@ -346,7 +400,7 @@
       "evidence": [
         "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence"
       ],
-      "next_required": "Provide actual modem/SIM/radio plus IMS transport for QEMU; validate calls, SMS, data and RTT sessions with positive service outcomes and device-absent errors."
+      "next_required": "Parent real configured AT/RIL virtual peripheral must supply challenged SIM/radio/network identities and explicit 5A URCs; actual IMS SA/peer must support negotiated RTT. Peer state reset/off must terminate true5A state; no direct public API fixture injection."
     }
   ],
   "tests": [
@@ -407,6 +461,41 @@
     {
       "command": "Third-patch full OpenHarmony IDL/TU build and new-package runtime",
       "result": "NOT RUN by subagent; parent owns centralized full source compilation and representative package gate."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_location_*.py' -v",
+      "result": "PASS: 24 tests in31.481s; actual patched C++ ASan/UBSan function execution, fence wire/geometry/service/Promise/queue ownership, actual per-slot CELL query identity/timestamp, explicit vendor/HRil/registry and 5A listener queue/slot/permission, existing RTT/BLE/district/track/icon, strict whole-source guards. Final focused direct invocation after the last supported-capability guard change: fusion4 PASS6.111s and communication2 PASS2.423s.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_location_enum_export.py' -v",
+      "result": "PASS: 2 existing enum tests1.112s",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "Bounded docker exec Python read_bytes SHA256 against all cumulative location24+communication42 targets",
+      "result": "PASS: all66 original raw states including explicit absent fusion header match the live read-only fixed source; one original CRLF enum is preserved with Git binary diff.",
+      "evidence": "round4-freeze-inputs.json"
+    },
+    {
+      "command": "rustfmt --edition2021 --emit stdout on4 modified ANI bridge Rust modules",
+      "result": "PASS parser only. No Rust compilation, ANI linking or static runtime claimed.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "Parent-owned inherited RIL generation and complete generated proxy/stub platform TUs",
+      "result": "Parent reported PASS: new callback162, real bool/oneway ABI, all old inherited mappings unchanged. Business/platform/provider/runtime remains unvalidated here.",
+      "evidence": "round4-freeze-inputs.json: parent_hdi_evidence"
+    },
+    {
+      "command": "Final focused fusion4 plus location exact-state guard5 after compensation-release fix",
+      "result": "PASS; includes successful worker followed by failed/cancelled completion, service-record compensation by exact callback identity, no retained callback/reference; all legal source prefixes and repeat apply remain exact.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "Private complete fixed originals with production source manifests; apply actual4 location patches and actual binary/text communication patch",
+      "result": "PASS: location24 and communication42 raw original states both validate, actual patches apply, and exact full final hashes validate. Final communication strict HEAD/unknown/mixed/symlink/patch guard2 also passed after patch context formatting.",
+      "evidence": "host-tests.log"
     }
   ],
   "integration_requests": [
@@ -427,11 +516,7 @@
     {
       "kind": "patch_component",
       "path": "common/base/location/location/api26_runtime",
-      "action": "Register after location/api26_public_enums. This complete two-patch icon+BLE component has a strict full-file/HEAD prefix guard; use apply.sh and freeze every actual target/dependency in round2-freeze-inputs.json."
-    },
-    {
-      "kind": "complete_translation_units",
-      "action": "Regenerate //base/location/location/frameworks/native/locator_sdk:locator_interface from updated ILocatorService.idl (new 65/66/67, preserved old mappings), then compile/link complete locator_impl.cpp and generated proxy/stub; //base/location/location/services/location_locator/locator:lbsservice_locator locator_ability.cpp, request_manager.cpp, locator_required_data_manager.cpp; //base/location/location/frameworks/js/napi:geolocationmanager location_napi_adapter.cpp, location_napi_entry.cpp, bluetooth_scan_result_callback_napi.cpp; //base/location/location/frameworks/ets/taihe/locator_sdk:location_framework_taihe_native ohos.geoLocationManager.impl.cpp. Freeze exact inputs listed in round2-freeze-inputs.json. No new BUILD.gn/source-list changes are required. Phone BT enabled must compile; disabled feature must preserve 801. Representative runtime follows full TU/IDL checks."
+      "action": "Use latest four-patch strict component at pinned full24-target original/prefix1/prefix2/prefix3/final states; new originally-absent fusion header is explicit. Apply through its own apply.sh; no shared helper change is needed. Append locator transactions72..75 while preserving all old1..71."
     },
     {
       "kind": "host_regression",
@@ -443,23 +528,36 @@
       "action": "Coordinate GNSS vendorGnssAdapter.so/GnssVendorInterface, BLE libbt_vendor.z.so/BLUETOOTH_VENDOR_LIB_INTERFACE H4 channel, and real RIL AT transport plus IMS service endpoint. Exact fixed source entry points and proposed challenge protocol boundaries are in round2-virtual-peripheral-handoff.md; follow-up implementation remains required."
     },
     {
-      "kind": "round3_complete_translation_units",
-      "action": "Regenerate locator_interface for appended68/69/70/71 and complete proxy/stub. In addition to previous full location TU list, compile frameworks/base_module/source/request_config.cpp (//base/location/location/frameworks/base_module:lbsbase_module), frameworks/js/napi/source/napi_util.cpp (//base/location/location/frameworks/js/napi:geolocationmanager), services/location_locator/locator/source/report_manager.cpp (//base/location/location/services/location_locator/locator:lbsservice_locator). Rebuild all RequestConfig/header consumers against the same version. Freeze all expanded round2-freeze-inputs.json targets and dependencies."
-    },
-    {
       "kind": "geocoder_provider_peer",
       "action": "Install/configure an actual reverse-geocoder ability via const.location.geocode_service_name / const.location.geocode_ability_name, preserving existing IPC/cache. Exact transaction2 request, callback1/2 and GeoAddress wire ABI are documented in round3-geocoder-peer-abi.md. Consume external geographic challenge data; no fixed district result or mock API."
     },
     {
       "kind": "continuation_implementation",
       "action": "Fusion fence shape/radio evaluation, add/remove/events and owner lifecycle; actual 5A radio producer/observer; positive GNSS/HCI/RIL/IMS routes still require further implementation. No behavior gap closes from this source batch."
+    },
+    {
+      "kind": "patch_component",
+      "path": "common/base/telephony/state_registry/communication_state",
+      "action": "Register new guarded cross-project42-file component after baseline core_service/state_registry/ril_adapter prerequisites and parent RIL callback162 IDL adapter. Use apply.sh; one Git binary diff preserves original CRLF enum bytes. Scope-check all source_states.json files, not only +++ text headers."
+    },
+    {
+      "kind": "round4_complete_translation_units",
+      "action": "Execute exact26-TU/generated-source/GN/feature request in round4-platform-build-request.json. New conditional locator core_service API dependency must be represented by the real generated build graph. Rebuild/link affected modules; root alone runs Docker/SDK/QEMU/HDC/packages."
+    },
+    {
+      "kind": "virtual_peripheral_peer",
+      "action": "Use explicit vendor +OHOS5A:0|1 over actual configured AT device, ReportInfo HRIL_NOTIFICATION/errorSUCCESS/notify1412 with int32payload4bytes and real slots. Preserve unknown until explicit data; peer reports false when state ends/off/reset. GNSS/geocoder/HCI/CELL inputs must come through real provider ABI/services and external challenges; no direct API injection."
+    },
+    {
+      "kind": "representative_runtime",
+      "action": "Root must build, boot and fully validate a new ARM64 phone representative artifact with positive and boundary proofs before remaining five packages. All22 IDs remain open and source/host successes close0 behavior gaps."
     }
   ],
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+      "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+      "dependency": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
@@ -478,13 +576,13 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+      "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+      "dependency": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
+      "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+      "dependency": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
@@ -548,23 +646,23 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+      "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
+      "dependency": "Parent register component, regenerate/compile/link all complete business TUs and ANI bridge, then deliver independent peer challenges through actual AT/HDI/registry/public API. Verify permissions, slots, duplicate off, env/queued callbacks and provider false-state/reset discipline in a newly packaged representative image."
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
+      "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
+      "dependency": "Parent register component, regenerate/compile/link all complete business TUs and ANI bridge, then deliver independent peer challenges through actual AT/HDI/registry/public API. Verify permissions, slots, duplicate off, env/queued callbacks and provider false-state/reset discipline in a newly packaged representative image."
     },
     {
       "id": "behavior:location-provider-backends-missing",
       "status": "remaining_implementation_and_validation",
-      "dependency": "Add a real GNSS/location provider and QEMU device/transport route; package and validate current-location callbacks, trajectory, fences and disabled/permission cases."
+      "dependency": "Parent controlled GNSS vendor ABI, real geocoder remote provider and real HCI/controller/WLAN/CELL peer routes must feed the actual service paths in a newly packaged representative artifact; source implementations and negative hardware boundaries do not close this behavior."
     },
     {
       "id": "behavior:telephony-no-modem-or-sim",
       "status": "remaining_implementation_and_validation",
-      "dependency": "Provide actual modem/SIM/radio plus IMS transport for QEMU; validate calls, SMS, data and RTT sessions with positive service outcomes and device-absent errors."
+      "dependency": "Parent real configured AT/RIL virtual peripheral must supply challenged SIM/radio/network identities and explicit 5A URCs; actual IMS SA/peer must support negotiated RTT. Peer state reset/off must terminate true5A state; no direct public API fixture injection."
     }
   ],
   "counts": {
@@ -573,50 +671,46 @@
     "event_requirements_with_lifecycle_repairs": 6,
     "existing_operation_implementations_requiring_new_package_proof": 4,
     "location_binding_or_provider_requirements": 9,
-    "communication_state_missing_backend_requirements": 2,
     "telephony_missing_device_transport_requirements": 1,
     "closed_by_this_round": 0,
-    "new_location_bindings_implemented_pending_validation": 5
+    "new_location_bindings_implemented_pending_validation": 8,
+    "communication_state_implemented_pending_validation": 2
   },
   "resource_use": {
     "source_container": "ohos-qemu-parallel-source-20261016-02",
     "container_operations": "bounded read-only git/Python queries only; no compilation or source writes",
-    "compile": "bounded local clang++ harness only",
-    "build_package_qemu_hdc": "none"
+    "compile": "bounded sequential local clang++ ASan/UBSan harnesses and Rust parser only, private scratch; CPU<=2",
+    "build_package_qemu_hdc": "none",
+    "heavy_resource_lease": "not requested; none held"
   },
-  "validation_limit": "Host lifecycle execution and fixed-source review do not satisfy AGENTS.md representative package/runtime gate. All 22 requirements remain open until genuine behavior and package evidence are accepted.",
+  "validation_limit": "All22 assigned IDs remain open. Host/source/IDL/TU checks cannot satisfy AGENTS.md newly packaged representative runtime gate. Parent-only exact platform full-module/ANI/provider/new-package acceptance remains required; no six-package delivery is claimed.",
   "changed_files": [
     "ci/capability-audit/batch_location_runtime_fixture.py",
-    "ci/capability-audit/fixtures/batch_location/icon_source.json",
+    "ci/capability-audit/fixtures/batch_location/communication_runtime_before.json",
     "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
-    "ci/capability-audit/fixtures/batch_location/rtt_before.json",
-    "ci/capability-audit/test_batch_location_ble_napi.py",
-    "ci/capability-audit/test_batch_location_ble_runtime.py",
     "ci/capability-audit/test_batch_location_business_runtime.py",
+    "ci/capability-audit/test_batch_location_communication_runtime.py",
+    "ci/capability-audit/test_batch_location_communication_source_guard.py",
+    "ci/capability-audit/test_batch_location_fusion_runtime.py",
     "ci/capability-audit/test_batch_location_icon_state.py",
-    "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
     "ci/capability-audit/test_batch_location_runtime_source_guard.py",
-    "docs/capability-audit/parallel/location/backend-excerpts.json",
-    "docs/capability-audit/parallel/location/followup-review.json",
     "docs/capability-audit/parallel/location/host-tests.log",
     "docs/capability-audit/parallel/location/result.json",
     "docs/capability-audit/parallel/location/round2-freeze-inputs.json",
-    "docs/capability-audit/parallel/location/round2-ipc-baseline.json",
-    "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md",
-    "docs/capability-audit/parallel/location/round3-business.md",
-    "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md",
-    "docs/capability-audit/parallel/location/source-evidence.json",
-    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch",
-    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch",
-    "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch",
+    "docs/capability-audit/parallel/location/round4-freeze-inputs.json",
+    "docs/capability-audit/parallel/location/round4-fusion-communication.md",
+    "docs/capability-audit/parallel/location/round4-platform-build-request.json",
+    "patches/common/base/location/location/api26_runtime/0004-connect-fusion-fence-owner-lifecycle.patch",
     "patches/common/base/location/location/api26_runtime/README.md",
-    "patches/common/base/location/location/api26_runtime/apply.sh",
     "patches/common/base/location/location/api26_runtime/apply_runtime.py",
     "patches/common/base/location/location/api26_runtime/source_states.json",
     "patches/common/base/location/location/api26_runtime/verify_source.py",
-    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
-    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
-    "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
+    "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+    "patches/common/base/telephony/state_registry/communication_state/README.md",
+    "patches/common/base/telephony/state_registry/communication_state/apply.sh",
+    "patches/common/base/telephony/state_registry/communication_state/apply_runtime.py",
+    "patches/common/base/telephony/state_registry/communication_state/source_states.json",
+    "patches/common/base/telephony/state_registry/communication_state/verify_source.py"
   ],
   "followup_date": "2026-10-16",
   "followup_review": "followup-review.json",
@@ -624,11 +718,26 @@
   "patch_sha256_by_path": {
     "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec",
     "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch": "80244fe9981f57694d685a979ee06f4060d7ce793618b062ecbadc1505fbbdb4",
-    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b"
+    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b",
+    "patches/common/base/location/location/api26_runtime/0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
+    "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch": "c0bf33c522e59759810ab13de3a8215c53d6c9a33d3b4c4d6e1754b43a2d9ccd"
   },
   "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
   "round2_batch_date": "2026-10-16",
   "round3_base_commit": "4b329553506a1ba71a33c5c4ad631f6e4fe51513",
   "round3_date": "2026-10-16",
-  "round3_implementation": "round3-business.md"
+  "round3_implementation": "round3-business.md",
+  "round4_base_commit": "c77dddccc28c8e9f1fb67a380646fb875eac4a9d",
+  "round4_date": "2026-10-16",
+  "round4_implementation": "round4-fusion-communication.md",
+  "round4_counts": {
+    "location_modified_this_batch": 17,
+    "communication_modified_this_batch": 42,
+    "location_cumulative_targets": 24,
+    "communication_cumulative_targets": 42,
+    "previous_rtt_targets": 4,
+    "all_cumulative_targets": 70,
+    "full_cumulative_location_communication_TUs_requested": 26,
+    "behavior_closures": 0
+  }
 }

@@ -15,7 +15,7 @@ from batch_location_runtime_fixture import COMPONENT, FIXTURE, PREFIX, ROOT, run
 
 
 def digest(text):
-    return hashlib.sha256(text.encode()).hexdigest()
+    return hashlib.sha256(text.encode()).hexdigest() if text is not None else None
 
 
 class RuntimeSourceGuardTests(unittest.TestCase):
@@ -25,6 +25,7 @@ class RuntimeSourceGuardTests(unittest.TestCase):
             'original': json.loads(FIXTURE.read_text())['files'],
             'prefix_1': runtime_sources(prefix=1),
             'prefix_2': runtime_sources(prefix=2),
+            'prefix_3': runtime_sources(prefix=3),
             'final': runtime_sources(),
         }
 
@@ -50,7 +51,8 @@ class RuntimeSourceGuardTests(unittest.TestCase):
         for name, text in self.states[state].items():
             target = root / (PREFIX + name)
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(text)
+            if text is not None:
+                target.write_text(text)
         return root, component
 
     def apply(self, root, component):
@@ -58,7 +60,7 @@ class RuntimeSourceGuardTests(unittest.TestCase):
                               capture_output=True, text=True)
 
     def contents(self, root):
-        return {name: (root / (PREFIX + name)).read_bytes() for name in self.states['original']}
+        return {name: (root / (PREFIX + name)).read_bytes() if (root / (PREFIX + name)).exists() else None for name in self.states['original']}
 
     def test_all_legal_prefixes_and_idempotence(self):
         for state in self.states:
