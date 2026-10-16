@@ -133,6 +133,112 @@ class RuntimeHelperBuilderTests(unittest.TestCase):
         self.assertTrue(b.defined_symbol('4: 0000001000 4096 FUNC GLOBAL DEFAULT 12 __cfi_check', '__cfi_check'))
         self.assertFalse(b.defined_symbol('failure: expected __cfi_check', '__cfi_check'))
 
+    def test_actual_batch01_LLVM_structured_output_and_needed(self):
+        directory = b.ROOT / 'docs/capability-audit/parallel/system/round10-runtime-helpers/tool-repair-02'
+        receipt = json.loads((directory / 'original-receipt.json').read_text())
+        self.assertEqual(receipt['original_report']['status'], 'fail')
+        for name, record in receipt['logs'].items():
+            snippet = directory / record['snippet']; self.assertEqual(b.sha(snippet), record['snippet_sha256'])
+            text = snippet.read_text()
+            self.assertTrue(b.defined_symbol(text, '__cfi_check'))
+            self.assertIn('std::__h::', text); self.assertNotIn('std::__n1::', text)
+            self.assertLessEqual({Path(p).name for p in b.HELPERS[name]['libraries']}, b.dynamic_needed(text))
+            undefined = text.replace('Section: .text ', 'Section: Undefined ')
+            self.assertFalse(b.defined_symbol(undefined, '__cfi_check'))
+            no_section = '\n'.join(line for line in text.splitlines() if 'Section:' not in line)
+            self.assertFalse(b.defined_symbol(no_section, '__cfi_check'))
+            self.assertFalse(b.defined_symbol(text.replace('Name: __cfi_check ', 'Name: different '), '__cfi_check'))
+
+    def test_GNU_and_LLVM_needed_require_actual_dynamic_row(self):
+        self.assertEqual(b.dynamic_needed('  0x0000000000000001 (NEEDED) Shared library: [libreal.so]\n'), {'libreal.so'})
+        self.assertEqual(b.dynamic_needed('  0x0000000000000001 NEEDED Shared library: [libreal.so]\n'), {'libreal.so'})
+        for text in ['expected (NEEDED) [libreal.so]', 'Name: NEEDED Shared library: [libreal.so]',
+                     '0x0000000000000001 SONAME Shared library: [libreal.so]', 'NEEDED libreal.so']:
+            self.assertEqual(b.dynamic_needed(text), set())
+
+    def test_tool_symlink_argv0_preserved_but_input_target_hashed(self):
+        actual = self.root / 'llvm-readobj'; actual.write_bytes(b'unit path selector only, never executed')
+        selector = self.root / 'llvm-readelf'; selector.symlink_to(actual.name)
+        self.assertEqual(b.regular(selector), selector)
+        self.assertNotEqual(b.regular(selector), actual)
+        with patch.object(b, 'require_ro'):
+            self.assertEqual(b.input_record(selector)['path'], str(actual))
+            self.assertEqual(b.input_record(selector)['sha256'], b.sha(actual))
+
+    def test_recorded_argument_must_be_present_exactly_once(self):
+        self.assertEqual(b.argument(['clang++', '-o', 'private.o'], '-o'), 'private.o')
+        for command in [[], ['clang++', '-o'], ['-o', 'one', '-o', 'two'], 'clang++ -o one']:
+            with self.assertRaises(ValueError): b.argument(command, '-o')
+
+    def test_existing_report_hash_must_match_before_output_or_native_command(self):
+        report = self.root / 'original.json'; report.write_text('{}')
+        with patch.object(b, 'require_ro'), patch.object(b.Builder, '__init__', side_effect=AssertionError('no builder yet')):
+            for wrong in ['bad', '0' * 64]:
+                with self.assertRaisesRegex(ValueError, 'report SHA256 mismatch'):
+                    b.ExistingVerifier(self.root, self.root / 'output', list(b.HELPERS), report, wrong)
+        self.assertFalse((self.root / 'output').exists())
+
+    def test_existing_artifact_hash_prefix_and_symlink_escape(self):
+        verifier = b.ExistingVerifier.__new__(b.ExistingVerifier)
+        verifier.artifact_origin = Path('/original/private')
+        verifier.previous_root = self.root / 'original'; verifier.previous_root.mkdir()
+        artifact = verifier.previous_root / 'object.o'; artifact.write_bytes(b'unit artifact binding')
+        verifier.root = self.root / 'source'; verifier.inputs = {}
+        with patch.object(b, 'require_ro'):
+            row = verifier.bound_artifact('/original/private/object.o', b.sha(artifact))
+            self.assertEqual(row['path'], str(artifact))
+            for path, expected in [('/elsewhere/object.o', None), ('/original/private/../escape', None),
+                                   ('relative.o', None), ('/original/private/object.o', '0' * 64)]:
+                with self.assertRaises(ValueError): verifier.bound_artifact(path, expected)
+            outside = self.root / 'outside'; outside.write_bytes(b'unit path escape')
+            (verifier.previous_root / 'escape').symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, 'symlink escapes'):
+                verifier.bound_artifact('/original/private/escape')
+
+    def test_existing_mode_forbids_Ninja_compiler_linker_or_guest_execution(self):
+        verifier = b.ExistingVerifier.__new__(b.ExistingVerifier); verifier.readelf = Path('/actual/llvm-readelf')
+        with patch.object(b.Builder, 'command', side_effect=AssertionError('native must not launch')):
+            for argv in [['clang++', '-c', 'file.cpp'], ['ninja', '-t', 'commands'], ['guest-helper'],
+                         ['/actual/llvm-readelf', '--arbitrary-option', 'file']]:
+                with self.assertRaisesRegex(ValueError, 'only read-only actual ELF'):
+                    verifier.command(argv, 'unit forbidden')
+
+    def test_existing_receipt_commands_must_match_full_argv(self):
+        verifier = b.ExistingVerifier.__new__(b.ExistingVerifier)
+        verifier.previous = {'commands': [{'label': 'unit', 'argv': ['original', 'arguments']}]}
+        self.assertEqual(verifier.prior_command('unit', ['original', 'arguments'])['label'], 'unit')
+        for label, argv in [('absent', None), ('unit', ['changed'])]:
+            with self.assertRaises(ValueError): verifier.prior_command(label, argv)
+        verifier.previous['commands'] *= 2
+        with self.assertRaises(ValueError): verifier.prior_command('unit')
+
+    def test_shared_ELF_contract_reaches_linked_DSO_checks_and_keeps_CFI_gate(self):
+        # Only parser/control flow: recorded real text, no ELF/native execution.
+        directory = b.ROOT / 'docs/capability-audit/parallel/system/round10-runtime-helpers/tool-repair-02'
+        name = 'wallpaper_token_query'; text = (directory / ('llvm-01-' + name + '.txt')).read_text()
+        builder = b.Builder.__new__(b.Builder); builder.readelf = Path('/actual/llvm-readelf')
+        direct = [Path('/actual/libaccesstoken_sdk.z.so')]
+        for library_text, should_pass in [(text, True), (text.replace('Section: .text ', 'Section: Undefined '), False)]:
+            row = {}
+            with patch.object(b, 'elf_header', return_value={'unit': 'parser seam, not real ELF proof'}), \
+                 patch.object(builder, 'command', side_effect=[text, library_text]) as command:
+                if should_pass: builder.check_elf(name, Path('/unit/helper'), direct, row)
+                else:
+                    with self.assertRaisesRegex(ValueError, 'AccessToken DSO lacks'):
+                        builder.check_elf(name, Path('/unit/helper'), direct, row)
+                self.assertEqual(command.call_count, 2)
+                self.assertEqual(command.call_args.args[1], name + '-linked-libaccesstoken_sdk.z.so')
+
+    def test_shared_ELF_contract_rejects_missing_needed_and_SDK_ABI(self):
+        directory = b.ROOT / 'docs/capability-audit/parallel/system/round10-runtime-helpers/tool-repair-02'
+        name = 'wallpaper_token_query'; text = (directory / ('llvm-01-' + name + '.txt')).read_text()
+        builder = b.Builder.__new__(b.Builder); builder.readelf = Path('/actual/llvm-readelf')
+        for wrong in [text.replace('std::__h::', 'std::__n1::'), text.replace('NEEDED', 'SONAME'),
+                      text.replace('libaccesstoken_sdk.z.so', 'different.so')]:
+            with patch.object(b, 'elf_header', return_value={'unit': 'parser seam, not real ELF proof'}), \
+                 patch.object(builder, 'command', return_value=wrong):
+                with self.assertRaises(ValueError): builder.check_elf(name, Path('/unit/helper'), [], {})
+
     def test_synthetic_elf_parser_boundaries_never_claim_product_proof(self):
         path = self.root / 'ELF-parser-only'
         data = bytearray(64); data[:7] = b'\x7fELF\x02\x01\x01'

@@ -4,6 +4,8 @@
 Only root may run the compiler under its resource lease. --plan-only queries the
 existing Ninja graph but never invokes clang or regenerates/builds that graph.
 These new helpers are diagnostics, not targets selected by a fresh product GN.
+--verify-existing reads immutable prior compile/link artifacts and checks their
+ELF/DSO contracts; it never invokes Ninja, clang, a linker or a guest executable.
 """
 import argparse
 import hashlib
@@ -74,11 +76,13 @@ def require_ro(path):
 def regular(path):
     path = Path(path)
     if not path.is_file(): raise ValueError('actual regular input missing: ' + str(path))
-    return path.resolve()
+    # LLVM tools select their driver/output format using argv[0]. Keep clang++
+    # and llvm-readelf, while input_record hashes their canonical file targets.
+    return path.absolute()
 
 
 def input_record(path, root=None):
-    path = regular(path)
+    path = regular(path).resolve()
     if root is not None and not within(path, root): raise ValueError('input escapes actual source/out: ' + str(path))
     require_ro(path)
     return {'path': str(path), 'sha256': sha(path), 'bytes': path.stat().st_size}
@@ -201,7 +205,31 @@ def defined_symbol(text, name):
         fields = line.split(maxsplit=7)
         if len(fields) == 8 and fields[0].endswith(':') and fields[6] != 'UND' and fields[7].split('@')[0] == name:
             return True
+    # llvm-readobj's actual LLVM format (including an llvm-readelf symlink whose
+    # argv[0] was canonicalized by the original builder). A Name mention alone,
+    # a missing Section, or an undefined symbol never satisfies this check.
+    for block in re.findall(r'(?ms)^\s*Symbol \{\s*\n(.*?)^\s*\}\s*$', text):
+        names = re.findall(r'(?m)^\s*Name: (.+)$', block)
+        sections = re.findall(r'(?m)^\s*Section: (.+)$', block)
+        if len(names) != 1 or len(sections) != 1: continue
+        symbol = re.sub(r' \([0-9]+\)$', '', names[0]).split('@')[0]
+        section = sections[0].split(' (', 1)[0]
+        if symbol == name and section not in ('Undefined', 'UND', ''): return True
     return False
+
+
+def dynamic_needed(text):
+    """Actual GNU readelf and LLVM readobj dynamic-table rows, not mentions."""
+    return set(re.findall(r'(?m)^\s*0x[0-9A-Fa-f]+\s+\(?NEEDED\)?\s+Shared library: \[([^\]\n]+)\]\s*$', text))
+
+
+def argument(argv, option):
+    if not isinstance(argv, list) or not all(isinstance(word, str) for word in argv):
+        raise ValueError('invalid recorded command arguments')
+    positions = [i for i, word in enumerate(argv) if word == option]
+    if len(positions) != 1 or positions[0] + 1 == len(argv):
+        raise ValueError('one recorded command argument required: ' + option)
+    return argv[positions[0] + 1]
 
 
 def elf_header(path, executable=False):
@@ -289,6 +317,24 @@ class Builder:
         v['actual_command'] = lines[0]; v['graph'] = self.remember(graph); v['object_target'] = spec['object']
         return v
 
+    def check_elf(self, name, binary, direct, row):
+        """Shared strict contract for fresh builds and immutable artifact rechecks."""
+        spec = HELPERS[name]
+        row['elf'] = elf_header(binary, executable=True)
+        info = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle', binary], name + '-actual-ELF-ABI')
+        if not defined_symbol(info, '__cfi_check') or 'std::__h::' not in info or 'std::__n1::' in info:
+            raise ValueError('actual guest ELF lacks system __h ABI/CFI or exposes SDK __n1 ABI')
+        needed = dynamic_needed(info)
+        if not {Path(n).name for n in spec['libraries']} <= needed:
+            raise ValueError('actual helper does not bind its required product SONAMEs')
+        row['DT_NEEDED'] = sorted(needed)
+        for p in direct:
+            if p.name not in {Path(value).name for value in spec['libraries']}: continue
+            elf_header(p)
+            symbols = self.command([self.readelf, '-h', '-d', '--dyn-syms', '--wide', '--demangle', p], name + '-linked-' + p.name)
+            if p.name == 'libaccesstoken_sdk.z.so' and not defined_symbol(symbols, '__cfi_check'):
+                raise ValueError('actual product AccessToken DSO lacks its selected cross-DSO CFI')
+
     def helper(self, name):
         spec = HELPERS[name]; private = self.output / name; private.mkdir()
         row = {'status': 'fail', 'fixture': spec['fixture']}; self.report['helpers'][name] = row; self.save()
@@ -360,19 +406,7 @@ class Builder:
             if not any('libc++' in p.name for p in opened): raise ValueError('actual system libc++ link identity absent')
             if any(not within(p, self.root) and not within(p, private) for p in opened):
                 raise ValueError('linker consumed an input outside read-only product/private helper')
-            row['elf'] = elf_header(binary, executable=True)
-            info = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle', binary], name + '-actual-ELF-ABI')
-            if not defined_symbol(info, '__cfi_check') or 'std::__h::' not in info or 'std::__n1::' in info:
-                raise ValueError('actual guest ELF lacks system __h ABI/CFI or exposes SDK __n1 ABI')
-            needed = set(re.findall(r'\(NEEDED\).*?\[([^]\n]+)\]', info))
-            if not {Path(n).name for n in spec['libraries']} <= needed:
-                raise ValueError('actual helper does not bind its required product SONAMEs')
-            row['DT_NEEDED'] = sorted(needed)
-            for p in direct:
-                if p.name not in {Path(value).name for value in spec['libraries']}: continue
-                symbols = self.command([self.readelf, '-h', '-d', '--dyn-syms', '--wide', '--demangle', p], name + '-linked-' + p.name)
-                if p.name == 'libaccesstoken_sdk.z.so' and not defined_symbol(symbols, '__cfi_check'):
-                    raise ValueError('actual product AccessToken DSO lacks its selected cross-DSO CFI')
+            self.check_elf(name, binary, direct, row)
             if sha(source) != row['source']['sha256'] or sha(guard) != row['abi_guard_sha256']:
                 raise ValueError('private source/ABI guard changed during compiler invocation')
             row.update(status='pass_compile_link_ONLY', binary=str(binary), binary_sha256=sha(binary), runtime_validated=False)
@@ -396,6 +430,153 @@ class Builder:
         self.save(); return self.report
 
 
+class ExistingVerifier(Builder):
+    """No compilation: bind old receipts, immutable artifacts and unchanged DSOs."""
+    def __init__(self, source, output, helpers, report, expected_sha256):
+        self.previous_path = regular(report).resolve(); self.previous_root = self.previous_path.parent
+        require_ro(self.previous_path)
+        if not re.fullmatch(r'[0-9a-f]{64}', expected_sha256 or '') or sha(self.previous_path) != expected_sha256:
+            raise ValueError('original build report SHA256 mismatch')
+        self.previous = json.loads(self.previous_path.read_text())
+        old = self.previous
+        if (old.get('product') != PRODUCT or old.get('plan_only') is not False or old.get('changed_inputs') != [] or
+                old.get('source_root') != str(Path(source).resolve()) or
+                old.get('build_directory') != str(Path(source).resolve() / 'out' / PRODUCT) or
+                not re.fullmatch(r'[0-9a-f]{64}', old.get('builder_sha256', ''))):
+            raise ValueError('original product/source/complete unchanged-input receipt required')
+        if within(output, self.previous_root): raise ValueError('new recheck output must be outside original artifacts')
+        super().__init__(source, output, helpers)
+        self.report.update(scope='read_only_recheck_of_prior_compile_link_artifacts_and_actual_product_DSO_ELF_ONLY_NOT_runtime',
+            verify_existing=True, original_report={'path': str(self.previous_path), 'sha256': expected_sha256,
+                'status': old['status'], 'builder_sha256': old['builder_sha256'], 'rewritten': False},
+            original_commands=[], original_input_count=len(old.get('inputs', {})),
+            object_hash_provenance='Captured during recheck; original report did not hash objects. No retroactive object hash claim.')
+        self.artifact_origin = None
+        self.save()
+        self.remember(self.previous_path, source=False)
+        for command in old.get('commands', []):
+            log = Path(command['log'])
+            if not log.is_absolute() or command.get('exit_code') != 0:
+                raise ValueError('successful original command receipts required')
+            if self.artifact_origin is None: self.artifact_origin = log.parent
+            if log.parent != self.artifact_origin or log.name in ('.', '..'):
+                raise ValueError('original command log escapes artifact directory')
+            record = self.bound_artifact(log, command['sha256'])
+            self.report['original_commands'].append(dict(command, verified_log=record))
+        if self.artifact_origin is None or str(self.artifact_origin) == '/':
+            raise ValueError('original complete command logs absent')
+        allowed_fixtures = {(HERE / 'fixtures' / spec['fixture']).resolve() for spec in HELPERS.values()}
+        if not old.get('inputs'): raise ValueError('original complete source/header/DSO input hashes absent')
+        for key, record in old['inputs'].items():
+            path = Path(key)
+            if record.get('path') != key or not path.is_absolute() or (not within(path, self.root) and path.resolve() not in allowed_fixtures):
+                raise ValueError('original input is outside actual source/out or known fixtures')
+            actual = self.remember(path, source=within(path, self.root))
+            if actual != record:
+                self.report['preflight_error'] = 'original source/header/DSO bytes changed: ' + str(path)
+                self.save(); raise ValueError(self.report['preflight_error'])
+        for tool in (self.compiler, self.readelf):
+            if str(tool.resolve()) not in old['inputs']:
+                raise ValueError('current actual tool identity missing from original input receipt')
+            self.remember(tool)
+        self.save()
+
+    def command(self, argv, label, timeout=60):
+        words = list(map(str, argv))
+        if (not words or words[0] != str(self.readelf) or words[1:-1] not in (
+                ['-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle'],
+                ['-h', '-d', '--dyn-syms', '--wide', '--demangle'])):
+            raise ValueError('verify-existing permits only read-only actual ELF inspections')
+        path = regular(words[-1]).resolve()
+        if not within(path, self.root) and not within(path, self.previous_root):
+            raise ValueError('ELF recheck input outside immutable source/artifacts')
+        self.remember(path, source=within(path, self.root))
+        return super().command(words, label, timeout=timeout)
+
+    def bound_artifact(self, path, expected=None):
+        """Only relocate the old private artifact prefix, never source/out inputs."""
+        path = Path(path)
+        if self.artifact_origin is None or not path.is_absolute() or '..' in path.parts:
+            raise ValueError('invalid original artifact path')
+        try: relative = path.relative_to(self.artifact_origin)
+        except ValueError as error: raise ValueError('original artifact prefix mismatch') from error
+        local = self.previous_root / relative
+        if not within(local, self.previous_root): raise ValueError('original artifact symlink escapes read-only directory')
+        record = self.remember(local, source=False)
+        if expected is not None and record['sha256'] != expected:
+            raise ValueError('original artifact/log SHA256 mismatch: ' + str(local))
+        return record
+
+    def prior_command(self, label, argv=None):
+        commands = [c for c in self.previous['commands'] if c['label'] == label]
+        if len(commands) != 1 or argv is not None and commands[0]['argv'] != argv:
+            raise ValueError('original command/receipt binding mismatch: ' + label)
+        return commands[0]
+
+    def helper(self, name):
+        row = {'status': 'fail', 'runtime_validated': False}; self.report['helpers'][name] = row; self.save()
+        try:
+            old = self.previous['helpers'].get(name, {}); spec = HELPERS[name]
+            if old.get('fixture') != spec['fixture'] or not old.get('CFI_preserved'):
+                raise ValueError('original helper source/CFI receipt missing')
+            compile_cmd, link_cmd = old['compile_command'], old['link_command']
+            validate_flags(compile_cmd)
+            if not effective_cfi(link_cmd) or not any(w == '-flto' or w.startswith('-flto=') for w in link_cmd):
+                raise ValueError('original link CFI/LTO missing')
+            if Path(compile_cmd[0]).resolve() != self.compiler.resolve() or Path(link_cmd[0]).resolve() != self.compiler.resolve():
+                raise ValueError('original actual compiler identity mismatch')
+            self.prior_command(name + '-compile', compile_cmd); self.prior_command(name + '-link', link_cmd)
+            prior_elf = self.prior_command(name + '-actual-ELF-ABI')
+            base = self.artifact_origin / name
+            source = base / Path(spec['fixture']).name; guard = base / 'actual_system_abi.h'
+            obj = base / (name + '.o'); binary = base / name; deps = base / 'headers.d'
+            if (argument(compile_cmd, '-c') != str(source) or argument(compile_cmd, '-include') != str(guard) or
+                    argument(compile_cmd, '-o') != str(obj) or argument(compile_cmd, '-MF') != str(deps) or
+                    argument(link_cmd, '-o') != str(binary) or str(obj) not in link_cmd or prior_elf['argv'][-1] != str(binary)):
+                raise ValueError('original private compile/link/ELF artifact binding mismatch')
+            if old['private_source_sha256'] != old['source']['sha256'] or old['source'] != self.previous['inputs'].get(old['source']['path']):
+                raise ValueError('original fixture/private source hash binding mismatch')
+            if old['source']['path'] != str((HERE / 'fixtures' / spec['fixture']).resolve()):
+                raise ValueError('original helper does not use current known fixture')
+            row['reused_artifacts'] = {
+                'source': self.bound_artifact(source, old['source']['sha256']),
+                'abi_guard': self.bound_artifact(guard, old['abi_guard_sha256']),
+                'object_new_hash_capture': self.bound_artifact(obj),
+                'binary': self.bound_artifact(binary, old['elf']['sha256']),
+                'depfile': self.bound_artifact(deps, old['depfile_sha256'])}
+            if sha(row['reused_artifacts']['abi_guard']['path']) != hashlib.sha256(ABI_GUARD.encode()).hexdigest():
+                raise ValueError('original guard is not the actual system __h/fno-exceptions guard')
+            dependencies = old.get('actual_compiler_dependencies', [])
+            if not dependencies: raise ValueError('original complete compiler header dependencies absent')
+            for record in dependencies:
+                path = Path(record['path'])
+                if within(path, self.root):
+                    if self.previous['inputs'].get(str(path)) != record: raise ValueError('original dependency not hash-bound')
+                elif path in (source, guard): self.bound_artifact(path, record['sha256'])
+                else: raise ValueError('original dependency outside actual source/private helper')
+            actual_deps = dep_paths(Path(row['reused_artifacts']['depfile']['path']), self.build)
+            if actual_deps != [Path(r['path']).resolve() for r in dependencies]:
+                raise ValueError('original depfile/recorded header list mismatch')
+            linked = old.get('linked_libraries', []); opened = old.get('actual_link_inputs', [])
+            if not opened: raise ValueError('original actual linker input hashes absent')
+            for record in [*linked, *opened]:
+                if self.previous['inputs'].get(record['path']) != record: raise ValueError('original linker input not hash-bound')
+            direct = [Path(r['path']) for r in linked]
+            required = {(self.build / p).resolve() for p in spec['libraries']}
+            if not required <= set(direct) or not set(direct) <= {Path(r['path']) for r in opened}:
+                raise ValueError('original required product libraries/link trace binding missing')
+            row.update(original_helper_status=old['status'], original_helper_error=old.get('error'),
+                compile_command=compile_cmd, link_command=link_cmd, original_ELF_log_sha256=prior_elf['sha256'],
+                linked_libraries=linked, actual_compiler_dependencies=dependencies,
+                CFI_preserved=True, actual_link_inputs=opened)
+            self.check_elf(name, Path(row['reused_artifacts']['binary']['path']), direct, row)
+            row.update(status='pass_compile_link_ONLY', binary=row['reused_artifacts']['binary']['path'],
+                binary_sha256=row['reused_artifacts']['binary']['sha256'])
+        except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+            row['error'] = type(error).__name__ + ': ' + str(error)
+        finally: self.save()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
@@ -403,11 +584,19 @@ def main():
     parser.add_argument('--product', choices=[PRODUCT], required=True)
     parser.add_argument('--helper', choices=HELPERS, action='append', help='Repeat to select; default all three')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
+    parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')
+    parser.add_argument('--existing-report-sha256', help='Required external SHA256 binding of the original report')
     args = parser.parse_args()
     helpers = args.helper or list(HELPERS)
     if len(helpers) != len(set(helpers)): parser.error('duplicate helper selection')
+    if args.verify_existing and (args.plan_only or not args.existing_report_sha256):
+        parser.error('--verify-existing requires --existing-report-sha256 and excludes --plan-only')
+    if args.existing_report_sha256 and not args.verify_existing: parser.error('--existing-report-sha256 requires --verify-existing')
     try:
-        report = Builder(args.source_root, args.output, helpers, args.plan_only).run()
+        if args.verify_existing:
+            builder = ExistingVerifier(args.source_root, args.output, helpers, args.verify_existing, args.existing_report_sha256)
+        else: builder = Builder(args.source_root, args.output, helpers, args.plan_only)
+        report = builder.run()
         print(json.dumps({'status': report['status'], 'helpers': {n: r['status'] for n, r in report['helpers'].items()}}))
         return 1 if report['status'] == 'fail' else 0
     except (OSError, ValueError) as e:

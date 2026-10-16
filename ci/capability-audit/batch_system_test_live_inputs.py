@@ -25,14 +25,14 @@ class ContractTests(unittest.TestCase):
         temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
         path = Path(temp.name) / 'input.json'; path.write_text(json.dumps(value)); return path
 
-    def generated_project(self):
+    def generated_project(self, arch='arm64'):
         # Metadata lookup seam only; no SDK/API implementation is supplied here.
         import batch_system_build_live_hap as build
         temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
         project = Path(temp.name) / 'project'
         with patch('batch_system_build_live_hap.sdk_contract', return_value={'unit': 'metadata only'}), \
              patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
-            build.generate(project, Path(temp.name), 'arm64', RUN)
+            build.generate(project, Path(temp.name), arch, RUN)
         return project
 
     def test_actual_linux_sdk39_project_schema(self):
@@ -72,6 +72,42 @@ class ContractTests(unittest.TestCase):
         project = self.generated_project(); (project / 'entry/hvigorfile.ts').unlink()
         with patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
             with self.assertRaises(FileNotFoundError): verify_project(project, Path('/unused'), RUN, 'arm64')
+
+    def test_prebuilt_native_profile_never_selects_cmake(self):
+        for arch, abi, triple in [('arm64', 'arm64-v8a', 'aarch64-linux-ohos'),
+                                 ('armv7a', 'armeabi-v7a', 'arm-linux-ohos'),
+                                 ('x86_64', 'x86_64', 'x86_64-linux-ohos')]:
+            project = self.generated_project(arch)
+            self.assertEqual(read_json(project / 'entry/build-profile.json5'),
+                {'apiType': 'stageMode', 'targets': [{'name': 'default'}]})
+            value = read_json(project / 'live-inputs-contract.json')
+            self.assertEqual((value['abi'], value['triple']), (abi, triple))
+            self.assertEqual(value['native_packaging'],
+                {'mode': 'prebuilt', 'relative_library': 'entry/libs/' + abi + '/libliveinputaudit.so'})
+            self.assertFalse(list(project.rglob('CMakeLists.txt')))
+            self.assertFalse((project / 'live-inputs-build.json').exists())
+
+    def test_reintroduced_cmake_configuration_is_rejected_after_rehash(self):
+        from batch_system_live_inputs import project_files, verify_project
+        for options in ({'abiFilters': ['arm64-v8a']}, {'path': './src/main/cpp/CMakeLists.txt'}, {}):
+            project = self.generated_project(); profile = project / 'entry/build-profile.json5'
+            value = read_json(profile); value['buildOption'] = {'externalNativeOptions': options}
+            profile.write_text(json.dumps(value)); contract = project / 'live-inputs-contract.json'
+            value = read_json(contract); value['source_files'] = project_files(project); contract.write_text(json.dumps(value))
+            with patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
+                with self.assertRaisesRegex(ValueError, 'prebuilt native module'):
+                    verify_project(project, Path('/unused'), RUN, 'arm64')
+
+    def test_prebuilt_contract_cannot_silently_change_ABI_or_library(self):
+        from batch_system_live_inputs import verify_project
+        for field, replacement in [('native_packaging', {'mode': 'cmake'}),
+                                   ('native_packaging', {'mode': 'prebuilt', 'relative_library': 'entry/libs/x86_64/libliveinputaudit.so'}),
+                                   ('abi', 'x86_64'), ('triple', 'x86_64-linux-ohos')]:
+            project = self.generated_project(); contract = project / 'live-inputs-contract.json'
+            value = read_json(contract); value[field] = replacement; contract.write_text(json.dumps(value))
+            with patch('batch_system_live_inputs.sdk_contract', return_value={'unit': 'metadata only'}):
+                with self.assertRaisesRegex(ValueError, 'prebuilt native packaging contract'):
+                    verify_project(project, Path('/unused'), RUN, 'arm64')
 
     def test_nonce_rejects_stale_shape(self):
         for value in ['', 'x' * 32, 'F' * 32, '0' * 32, 1, None]:

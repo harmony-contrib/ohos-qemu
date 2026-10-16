@@ -8,14 +8,14 @@ import subprocess
 import time
 from batch_system_live_inputs import (BUNDLE, FIXTURES, PERMISSIONS, digest, nonce,
                                      project_files, sdk_contract, verify_project, write_json,
-                                     SDK_PRODUCT, HVIGOR_CONFIG, HVIGOR_APP, HVIGOR_HAP)
+                                     SDK_PRODUCT, HVIGOR_CONFIG, HVIGOR_APP, HVIGOR_HAP,
+                                     ENTRY_PROFILE, NATIVE_TARGETS, native_packaging)
 
 
 def generate(output, sdk, arch, run_id):
     output = Path(output); output.mkdir(parents=True, exist_ok=False)
     declarations = sdk_contract(sdk)
-    abi, triple = {'arm64': ('arm64-v8a', 'aarch64-linux-ohos'),
-                   'armv7a': ('armeabi-v7a', 'arm-linux-ohos'), 'x86_64': ('x86_64', 'x86_64-linux-ohos')}[arch]
+    abi, triple = NATIVE_TARGETS[arch]
     def put(name, content):
         p = output / name; p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(content if isinstance(content, str) else json.dumps(content, indent=2) + '\n')
@@ -31,7 +31,9 @@ def generate(output, sdk, arch, run_id):
     put('oh-package.json5', {'modelVersion': '6.0.0', 'name': 'live-input-audit', 'version': '1.0.0', 'dependencies': {}, 'devDependencies': {}})
     put('entry/oh-package.json5', {'modelVersion': '6.0.0', 'name': 'entry', 'version': '1.0.0',
         'dependencies': {'libliveinputaudit.so': 'file:./src/main/cpp/types/libliveinputaudit'}})
-    put('entry/build-profile.json5', {'apiType': 'stageMode', 'buildOption': {'externalNativeOptions': {'abiFilters': [abi]}}, 'targets': [{'name': 'default'}]})
+    # The SDK compiles the NAPI library into entry/libs/<abi> before Hvigor.
+    # externalNativeOptions selects the CMake task even when it only has abiFilters.
+    put('entry/build-profile.json5', ENTRY_PROFILE)
     put('entry/src/main/module.json5', {'module': {'name': 'entry', 'type': 'entry', 'mainElement': 'EntryAbility',
         'deviceTypes': ['default'], 'deliveryWithInstall': True, 'installationFree': False, 'pages': '$profile:main_pages',
         'requestPermissions': [{'name': name, 'reason': '$string:permission_reason',
@@ -51,6 +53,7 @@ def generate(output, sdk, arch, run_id):
     write_json(output / 'live-inputs-contract.json', {'schema_version': 1, 'bundle': BUNDLE, 'role': 'ordinary_app',
         'run_id': run_id, 'arch': arch, 'sdk': declarations, 'source_files': project_files(output),
         'fixture_hashes': {p.name: digest(p) for p in FIXTURES.iterdir() if p.is_file()}, 'triple': triple, 'abi': abi,
+        'native_packaging': native_packaging(arch),
         'not_claimed': 'SDK compilation, valid signature, public callback delivery, MSDP backend or package gate'})
     return verify_project(output, sdk, run_id, arch)
 
@@ -58,11 +61,12 @@ def generate(output, sdk, arch, run_id):
 def build(project, sdk, arch, run_id, arkdown):
     project = Path(project).resolve(); sdk = Path(sdk).resolve()
     value = verify_project(project, sdk, run_id, arch)
-    libs = project / 'entry/libs' / value['abi']; libs.mkdir(parents=True)
+    library = project / value['native_packaging']['relative_library']
+    libs = library.parent; libs.mkdir(parents=True)
     commands = [[str(sdk / 'native/llvm/bin/clang++'), '--target=' + value['triple'],
         '--sysroot=' + str(sdk / 'native/sysroot'), '-std=c++17', '-shared', '-fPIC', '-O2',
         '-Wall', '-Wextra', '-Werror', str(project / 'socket_probe.cpp'), '-lace_napi.z',
-        '-o', str(libs / 'libliveinputaudit.so')],
+        '-o', str(library)],
         [arkdown, 'build', '--project', str(project), '--target', 'hap', '--mode', 'debug']]
     report = {'status': 'fail', 'commands': [], 'source_contract_sha256': digest(project / 'live-inputs-contract.json')}
     try:
@@ -77,7 +81,7 @@ def build(project, sdk, arch, run_id, arkdown):
         verify_project(project, sdk, run_id, arch)
         hap = project / 'entry/build/default/outputs/default/entry-default-unsigned.hap'
         report.update(status='pass', unsigned_hap=str(hap), unsigned_hap_sha256=digest(hap),
-            native_library=str(libs / 'libliveinputaudit.so'), native_sha256=digest(libs / 'libliveinputaudit.so'))
+            native_library=str(library), native_sha256=digest(library))
     finally:
         write_json(project / 'live-inputs-build.json', report)
     return report
