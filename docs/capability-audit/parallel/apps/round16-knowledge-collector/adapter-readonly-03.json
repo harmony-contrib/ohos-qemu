@@ -1,0 +1,139 @@
+{
+  "scope": "actual_existing_receipts_readonly_NOT_compilation_signature_or_guest",
+  "candidate": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu/ci/capability-audit/batch_media_knowledge_artifacts.py",
+    "sha256": "9f4e180111780c2a4753bc0cfc69f4a53808ac8d7ed54cbb95216a0671ae3cae"
+  },
+  "dependency_context": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit",
+  "source_receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-SDK105-adapters-02/evidence.json",
+    "sha256": "b005226d833ee19cec61cfcb7418b85973817da03aecc326f28ef7cee423124a"
+  },
+  "note": "HERE selects real root dependency location for post-cherry-pick rehearsal; receipts and validators unchanged.",
+  "projects": {
+    "importer": {
+      "sdk_evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/evidence.json",
+        "sha256": "8d80201702abf12418060f452e6eff6ca3e5bce605e5ae24d695ce36adef461f"
+      },
+      "sdk_project": "knowledge-importer",
+      "batch_exit_code": 0,
+      "project_commands_verified": 2,
+      "source_files_verified": 18,
+      "unsigned_hap": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-importer/entry/build/default/outputs/default/entry-default-unsigned.hap",
+        "sha256": "09649eddd50b140d6c347e15cbb3a82d88593ad703ce647ec1cd509f9bec360d"
+      }
+    },
+    "denied": {
+      "sdk_evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/evidence.json",
+        "sha256": "8d80201702abf12418060f452e6eff6ca3e5bce605e5ae24d695ce36adef461f"
+      },
+      "sdk_project": "knowledge-denied",
+      "batch_exit_code": 0,
+      "project_commands_verified": 2,
+      "source_files_verified": 18,
+      "unsigned_hap": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-denied/entry/build/default/outputs/default/entry-default-unsigned.hap",
+        "sha256": "54929d9436e86e70fafca6c4a6887a7bf2239365648d57a65c8d0b5fcc300599"
+      }
+    },
+    "query": {
+      "sdk_evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/evidence.json",
+        "sha256": "8d80201702abf12418060f452e6eff6ca3e5bce605e5ae24d695ce36adef461f"
+      },
+      "sdk_project": "knowledge-query",
+      "batch_exit_code": 0,
+      "project_commands_verified": 2,
+      "source_files_verified": 18,
+      "unsigned_hap": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-query/entry/build/default/outputs/default/entry-default-unsigned.hap",
+        "sha256": "f348f5f2830613d2f1abdc780cae6da1ef910fd66d7fca1ed6e8c5bc69b5fb67"
+      }
+    },
+    "curator": {
+      "sdk_evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/evidence.json",
+        "sha256": "8d80201702abf12418060f452e6eff6ca3e5bce605e5ae24d695ce36adef461f"
+      },
+      "sdk_project": "knowledge-curator",
+      "batch_exit_code": 0,
+      "project_commands_verified": 2,
+      "source_files_verified": 18,
+      "unsigned_hap": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-actual-SDK105-02/knowledge-curator/entry/build/default/outputs/default/entry-default-unsigned.hap",
+        "sha256": "d5713a6f3775fadd1f0289bef1ad5a317cf356b484cf902bd82c24cfd32f2bfa"
+      }
+    }
+  },
+  "failures": [],
+  "helper": {
+    "binary": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/knowledge_token_query/knowledge_token_query",
+      "sha256": "0d6a1ba2cba790f47af4359940f710dad2dad2e07057cacd8feb8f686a6c682f"
+    },
+    "source": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_media/knowledge_runtime/knowledge_token_query.cpp",
+      "sha256": "e10ad9f93e91f45355d7d0a8d3f1cb6b5e16c1e867c014be02a911f2fcf19728"
+    },
+    "actual_builder_report": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/build.json",
+      "sha256": "dc47c6d2094bdf98ed5bb6eee2c9ad032b2106cb097047b8428ce696bc99c7d1"
+    },
+    "actual_logs": [
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/001-knowledge_token_query-compile.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/002-knowledge_token_query-link.log",
+        "sha256": "f732c9bf4a9e605ac4eef5af73df06cb219dea663100cc5019378181a22c8f61"
+      },
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/000-knowledge_token_query-0-actual-GN-command.log",
+        "sha256": "2040ce1db8a96b57d6af19f4106d3120a0a6d55ef43ad01b310a5e0b007fb16b"
+      },
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/001-knowledge_token_query-compile.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/002-knowledge_token_query-link.log",
+        "sha256": "f732c9bf4a9e605ac4eef5af73df06cb219dea663100cc5019378181a22c8f61"
+      },
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/003-knowledge_token_query-actual-ELF-ABI.log",
+        "sha256": "42c8cd75ead383d659997bebadc95051a6f7104323ff477c492c2373db435ecd"
+      },
+      {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-product-helper-01/helpers/004-knowledge_token_query-linked-libaccesstoken_sdk.z.so.log",
+        "sha256": "c6b075d3f79ab876eb7ee95db4ec5007bbab5d4e4516e69c7b5a0d6e2c30146b"
+      }
+    ],
+    "DT_NEEDED": [
+      "libaccesstoken_sdk.z.so",
+      "libc++.so",
+      "libc.so"
+    ],
+    "product_DSOs": [
+      {
+        "soname": "libaccesstoken_sdk.z.so",
+        "sha256": "fb1e6e34865dcf5eced7ad29771da3cba51eeaeec0aad93fbb86e0af287a9616"
+      },
+      {
+        "soname": "libc++.so",
+        "sha256": "5f8714f769bb5ff8e921f6e958e2a48c0af507f56ec88089d3f0a1b7870d2f32"
+      },
+      {
+        "soname": "libc.so",
+        "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f"
+      }
+    ],
+    "CFI_preserved": true,
+    "original_status": "pass_compile_link_ONLY",
+    "runtime_validated": false
+  },
+  "status": "pass_existing_receipts_ONLY"
+}
