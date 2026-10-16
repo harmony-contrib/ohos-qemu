@@ -16,6 +16,38 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GROUPS = {
+    'knowledge_content': {
+        'project': 'foundation/multimedia/media_library',
+        'revision': '564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380',
+        'components': ['fusion_asset_type', 'photos_facard', 'public_record_classes',
+                       'result_set_export', 'knowledge_content', 'knowledge_holiday_index'],
+        'units': ['native_module_ohos_photoaccess_helper', 'knowledge_content_napi', 'knowledge_content_query',
+                  'media_asset_rdbstore', 'medialibrary_rdbstore', 'knowledge_holiday_index'],
+        'sources': {
+            **{name: 'frameworks/js/src/' + name + '.cpp' for name in (
+                'native_module_ohos_photoaccess_helper', 'knowledge_content_napi', 'knowledge_content_query')},
+            'media_asset_rdbstore': 'frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp',
+            **{name: 'services/media_rdbstore/src/rdbstore/' + name + '.cpp' for name in (
+                'medialibrary_rdbstore', 'knowledge_holiday_index')},
+        },
+        'targets': {
+            **{name: 'obj/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelpernative/native_module_ohos_photoaccess_helper.o'
+               for name in ('native_module_ohos_photoaccess_helper', 'knowledge_content_napi', 'knowledge_content_query')},
+            'media_asset_rdbstore': 'obj/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_library/media_asset_rdbstore.o',
+            **{name: 'obj/foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_data_extension/medialibrary_rdbstore.o'
+               for name in ('medialibrary_rdbstore', 'knowledge_holiday_index')},
+        },
+        'template_sources': {
+            **{name: 'frameworks/js/src/native_module_ohos_photoaccess_helper.cpp' for name in (
+                'native_module_ohos_photoaccess_helper', 'knowledge_content_napi', 'knowledge_content_query')},
+            'media_asset_rdbstore': 'frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp',
+            **{name: 'services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp' for name in (
+                'medialibrary_rdbstore', 'knowledge_holiday_index')},
+        },
+        'required_header': None,
+        'supported_products': ['arm64_virt'],
+        'scope': 'six_complete_current_Knowledge_TUs_actual_product_flags_NEW_sources_use_explicit_templates_NOT_fresh_GN_link_runtime',
+    },
     'qemu_sensor': {
         'project': 'drivers/peripheral',
         'revision': '69094b77aa2200160207b1b06b3c0b586ae2157c',
@@ -186,6 +218,10 @@ GROUPS['location']['targets'].update({
     'report_manager': 'obj/base/location/location/services/location_locator/locator/source/lbsservice_locator/report_manager.o',
     'napi_util': 'obj/base/location/location/frameworks/js/napi/source/geolocationmanager/napi_util.o',
 })
+GROUPS['knowledge_content']['extra_owned'] = [
+    str(Path(name).relative_to('foundation/multimedia/media_library')) for name in json.loads(
+        (ROOT / 'patches/common/foundation/multimedia/media_library/knowledge_holiday_index/manifest.json').read_text())['files']
+]
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
