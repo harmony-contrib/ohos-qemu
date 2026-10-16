@@ -240,3 +240,9 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 截至此处仍为 281/199/82，新核销 0、交付验收 0/6、首包完整运行门禁 false，其余五包未启动。
 
 根追加前台 active MIC revoke 实际运行与严格重放：真实 UI 启动普通 public Capturer，经原系统 MIC 允许对话框、真实 RUNNING/PCM checkpoint 后，仅对自有实际 token 调用 RevokePermission（不杀进程），验证前后同 PID/starttime/UID，再回传新 nonce ACK。验收要求撤权发生在该新 handshake 区间内、后续真实 PCM 静默、Start 被拒绝、同一源的 producer 成功完成以及实际 native Release/Destroy/UIAbility completion。首包正式 suite/离线门禁已纳入 audio-revoke；37 项相关 mutation/既有证据调度回归 PASS，实际 guest 尚未执行，不核销82项中的任何记录。
+
+2026-10-16 集中源修复复编 r52-batched-platform-fixes-05（冻结bdc156a，113.211s）全部通过：Holiday 1完整TU保留-fno-exceptions；VPN networkvpn_service 1完整TU保留Werror；通信3个权限consumer及当前生成wrapper 4完整TU。各证据明确selected_only，不能把这6项误写为重新编完所有能力单元。原先通过的未改源单元证据单独保留；新增GN真实选择仍待产品构建。
+
+GNSS系统Linux测试4288e492已scope检查合入30774b8：GNU11.4/Werror/ASan/UBSan/LSan，provider35场景和bridge24对照完成通过。两次真实unload marker、同进程reload、新nonce拒旧帧/新代回调均实测；仅修host harness可移植性，0产品target变化。证据在 parallel/system/round5-linux-gnss/，容器已删除。真实OHOS客体CFI加载、公开API以及首包行为仍待验。
+
+完整Rust ANI首轮进入实际ld.lld，但旧产品 libtel_state_registry_api.z.so 缺新增虚方法/调整thunk而失败；r52-communication-full-Rust-01 原日志保留，正用真实新对象与原solink recipe闭合私有依赖，禁止用stub/放宽no-undefined替代。根已核对后台服务1903/ANS3203实际源码并增加严格task UID/pid/未挂起状态与notification OwnerUid/Id/Label联合观测；双UID焦点运行编排与独立验收继续进行。82未关、新核销0、首包完整门禁false、六包0/6、其余五包未启动。
