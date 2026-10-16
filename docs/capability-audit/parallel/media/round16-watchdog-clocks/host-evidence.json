@@ -1,0 +1,37 @@
+{
+  "scope": "host_clock_protocol_counterexamples_ONLY_NOT_guest_clock_or_native_build_evidence",
+  "base_commit": "571eb8190f02cb9fc3545b12e891a2ac673708bf",
+  "command": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "-m",
+    "unittest",
+    "test_watchdog_clocks",
+    "-v"
+  ],
+  "environment": {
+    "LC_ALL": "C",
+    "LC_CTYPE": "C",
+    "LANG": "C",
+    "PYTHONPATH": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/ci/capability-audit"
+  },
+  "exit_code": 0,
+  "seconds": 0.09751962497830391,
+  "log": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round16-watchdog-clocks/host-tests-01.log",
+    "sha256": "68c405c851079f2e41f985f2bcb512fe141650dd14d217c0ecc1f3c22084247e"
+  },
+  "source_files": {
+    "ci/capability-audit/watchdog_clock_probe.c": "c5c027cf3bc2c70476b1293d4f60789f5f8bf45080d1685f3d8efc289c32aa6c",
+    "ci/capability-audit/watchdog_clocks.py": "193a6b7b9b29bcc169ab5bf520f19e924bb15a41b092614368096de5990b6d12",
+    "ci/capability-audit/test_watchdog_clocks.py": "c517b01e190fde76baebc09c20c5cf6f3f4624b590a0ef384f43525c5d20ecc7"
+  },
+  "C_probe_compiled": false,
+  "C_probe_executed": false,
+  "guest_commands_executed": false,
+  "VM_started": false,
+  "SDK_compilation_executed": false,
+  "signature_operations_executed": false,
+  "sleep_state_inferred": false,
+  "first_artifact_behavior_gate_passed": false,
+  "closed_requirement_ids": []
+}
