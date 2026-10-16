@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T09:52:49.666217+08:00",
+  "updated_at": "2026-10-16T10:45:57.178006+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "5cc49d42eb41f7ef270b581ed1273884e603f5b2",
+  "checkpoint_commit": "45c072ad0f56144f8fa667f3b923801e180720d8",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -28,6 +28,231 @@
     "compiler_jobs": 2
   },
   "evidence": {
+    "public_MIC_HAP_original_SDK_failure": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-01/evidence.json",
+      "sha256": "44c8ba2f4be6e8d6990592a74568d5b44633dc14498a61223ca67c292d5dc9c6",
+      "reported_status": "fail",
+      "scope": "official_API26_ordinary_MIC_unsigned_HAP_compile_ONLY_NOT_signing_BMS_or_guest_permission_capture"
+    },
+    "public_MIC_HAP_actual_API26_build": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-02/evidence.json",
+      "sha256": "dbaa62ea5807675e95e56911e9460e9f5a931ee9857d1a878d3f2f58300a1a36",
+      "reported_status": "pass",
+      "scope": "official_API26_ordinary_MIC_unsigned_HAP_compile_ONLY_NOT_signing_BMS_or_guest_permission_capture"
+    },
+    "public_MIC_HAP_actual_native_and_permission_binding": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-public-Capturer-HAP-02/compiled-hap-contract-verification.json",
+      "sha256": "c690b0e2ea4d7e4183b10ecd43806f12a9725aa5746cdb7438ef21fc8b1819f7",
+      "reported_status": "pass",
+      "scope": "actual_unsigned_HAP_compiled_module_MIC_permission_and_native_PT_LOAD_identity_only_NOT_runtime"
+    },
+    "independent_current_PCM_and_token_tools": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Capturer-independent-tools-02/artifacts/tools/build.json",
+      "sha256": "33503d6400cd975deb379b75a4827646064c7caaf4302f6e5b04fa6bcc62d5dc",
+      "reported_status": "pass",
+      "scope": "real_root_PCM_producer_and_independent_AccessToken_tools_ONLY"
+    },
+    "location_business_13_full_TUs_12pass_one_real_error": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-location-business-full-TUs-02/artifacts/location/evidence.json",
+      "sha256": "96e8aacf5183b547052dd269dd4a8319cd7e74dcbcb9b7a8fae17681dc6cfe77",
+      "reported_status": "fail",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "locator_impl",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "30fd925562d7adb8b57799512be982fad8045698723f5885e571ed03c3e23ac6"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_ability",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "582fff4d89972554e4256241270bcc8fb4f9e8c6a055ff8bad2382c1115d62f8"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "request_manager",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "83273da6f001ab85f10a8b2b5cd8095b25a114e3e99edfafca8e4756ff444407"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_required_data_manager",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "426f8f33ab25bf16b98765adb55c5a926fdc946513b866418b94602458d35c22"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "location_napi_adapter",
+          "status": "fail",
+          "exit_code": 1,
+          "error": "ValueError: product compilation failed; full log retained",
+          "object_sha256": null
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "location_napi_entry",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "306ff4a8a04ee9b3196a67eb1b4edfc646289f5648d49097714a0e6a9c6f066f"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "bluetooth_scan_result_callback_napi",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "eab43159ca23e43ca8a984f18b7fc9cd31abecf8b71fca5575e376b01088693e"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "ohos.geoLocationManager.impl",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "1c29ff725e5532310d7eb4a0ba8ee200979afbb63607d87933b05db9350dc4fc"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_service_proxy",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "60a431b7235e5a4384ca79fa5bddfa7dd7efc84936170622bda630fc6cb08cdd"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "locator_service_stub",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "3d2c585474823ab4732a43c53471578074afad6f211e2007a937cf0c4f6eec26"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "request_config",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "905c5d7f0beb5cef6be9f6fd018fcb45353e205ccb03571bd522034723de22c9"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "report_manager",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "9f43d39378a06290157ff7f34c34b883655a12eb7de9504a6519d4ab651d2c29"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "napi_util",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "0d12542aac0a1701e02f5599ff8c32db3a01012fc0a29ffb5673c64065533ab8"
+        }
+      ],
+      "actual_generated_products": [
+        "arm64_virt"
+      ]
+    },
+    "Knowledge_original_incomplete_diagnostic_stack": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-full-TUs-01/host-evidence.json",
+      "sha256": "821cfa124e3f35151c2620aa8cbe5f69db8434d0c8592bbde58eadbc50b873dc",
+      "reported_status": null,
+      "scope": "six_whole_Knowledge_TUs_product_flags_with_new_source_templates_NOT_fresh_GN_link_runtime"
+    },
+    "Knowledge_six_full_TUs_four_pass_two_real_errors": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Knowledge-full-TUs-02/artifacts/knowledge/evidence.json",
+      "sha256": "9904f7fdcd0730cb693cfad6e12e5e7685518eae5de33466fa03abe3158b3733",
+      "reported_status": "fail",
+      "scope": "six_complete_current_Knowledge_TUs_actual_product_flags_NEW_sources_use_explicit_templates_NOT_fresh_GN_link_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "native_module_ohos_photoaccess_helper",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "92a7d36e63f2e0105719952cd8b575ea047a208d4d83b2d0dbef58c985d28e24"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "knowledge_content_napi",
+          "status": "fail",
+          "exit_code": 1,
+          "error": "ValueError: product compilation failed; full log retained",
+          "object_sha256": null
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "knowledge_content_query",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "a577e7e9175f5790ac92e21a894f15b522d697d8976e7f0ff7848e1c613c5609"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "media_asset_rdbstore",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "7c664b4434cf944fb8be84619771b00ceb2bcc86302a7cd7e4c287fd71a1b240"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "medialibrary_rdbstore",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "9dccc37c95f46ec29407993eb9988a8b7c02e5bfc4013d2ce9923414aa081e28"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "knowledge_holiday_index",
+          "status": "fail",
+          "exit_code": 1,
+          "error": "ValueError: product compilation failed; full log retained",
+          "object_sha256": null
+        }
+      ]
+    },
+    "RIL_full_inherited_IDL_and_two_full_callback_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-RIL-communication-full-HDI-04/artifacts/ril/evidence.json",
+      "sha256": "376f5f0c9ba7533fdfe37bb8714977e5e403469a504741de721c84faed39a7d8",
+      "reported_status": "pass",
+      "scope": "actual_inherited_HDI_maps_and_complete_generated_TUs_ONLY_NOT_modem_runtime",
+      "objects": [
+        {
+          "product": null,
+          "unit": "ril_callback_stub",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "968adfb57cd206ea6209420952e95721fc42cab7ecf6be378e5c516b33e3ccfe"
+        },
+        {
+          "product": null,
+          "unit": "ril_callback_proxy",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "5ffc0bcefc641bff915f1db5cd50a65be49a25346843a82527841e4ddb01558b"
+        }
+      ]
+    },
     "mesa_current_consumer": {
       "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-mesa-integrated-consumer-01/evidence.json",
       "sha256": "1c595433e0f36ee82f00e4c45d8689388505fad18c8b0a27fd6b53493ea3871b",
@@ -563,8 +788,8 @@
   "agents": {
     "apps": "Calendar dispatch complete platform TU passed; Admin official API26 unsigned HAP passed and precise signing policy wired; guest BMS/UI pending",
     "network": "seven Bluetooth complete TUs passed; VPN callback immutable epochs integrated and real FFRT execution passed; multiowner broker in progress",
-    "location": "icon/BLE and product IDL+10TUs pass; district/fence/track/5A/virtual GNSS-HCI-RIL-IMS pending",
-    "media": "capture/query candidates integrated; remaining Knowledge semantics and AudioVivid dependency queued",
+    "location": "district/skiing integrated; 13 actual product TUs collected, 12 passed and MAX_BUF_LEN error assigned in current fence/5A batch; inherited RIL maps+2callbackTUs passed; real providers/runtime pending",
+    "media": "Holiday transactional index integrated; six whole current TUs collected, four passed and missing header/direct GN deps assigned; ordinary MIC HAP and independent tools pass; real capture grant/deny/grant runner wired; Recorder/revocation batch in progress",
     "system": "external sensor and MSDP integrated; sensor two complete new TUs with actual HDI flags passed; kernel/service runtime gate pending"
   },
   "external_dependencies": {

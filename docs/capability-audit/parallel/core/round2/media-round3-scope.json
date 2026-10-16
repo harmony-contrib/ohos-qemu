@@ -100,5 +100,5 @@
   "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
   "first_artifact_behavior_gate_passed": false,
   "base": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
-  "head": "0fe6345fee604b31aeb3344ddd0fd6467a389e19"
+  "head": "bb34c6f7f1534be701e64337f0708e49f6b50bc9"
 }
