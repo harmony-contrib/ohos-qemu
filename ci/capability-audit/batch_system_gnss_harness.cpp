@@ -2,6 +2,7 @@
 // Explicit host-only Provider config authorizes the host UID; exported product ABI pins UID0.
 #include "qemu_gnss_vendor.cpp"
 #include <chrono>
+#include <atomic>
 #include <condition_variable>
 #include <iostream>
 #include <fcntl.h>
@@ -79,7 +80,8 @@ bool Write(int fd,const uint8_t* data,size_t size)
 #else
         auto n=send(fd,data,size,0);
 #endif
-        if(n<=0)return false;data+=n;size-=static_cast<size_t>(n);
+        if(n<=0)return false;
+        data+=n;size-=static_cast<size_t>(n);
     }return true;
 }
 void Closed(int fd){uint8_t byte;auto n=recv(fd,&byte,1,0);CHECK(n==0||(n<0&&errno==ECONNRESET));}
@@ -162,7 +164,8 @@ int main(int argc,char** argv)
             double lat=latitude(random),lon=longitude(random);Number(frame.data()+40,lat);Number(frame.data()+48,lon);
             if(scenario=="optional")WriteLe(frame.data()+80,4|8|16|64,4);
             if(scenario=="fragmented"){for(auto byte:frame)CHECK(Write(fd,&byte,1));}
-            else CHECK(Write(fd,frame.data(),frame.size()));sink.Await(1);
+            else CHECK(Write(fd,frame.data(),frame.size()));
+            sink.Await(1);
             {std::lock_guard<std::mutex> lock(sink.mutex);auto value=sink.values[0];CHECK(value.latitude==lat&&value.longitude==lon);
              CHECK(value.timeForFix==static_cast<int64_t>(ReadLe(frame.data()+32,8))&&value.timeSinceBoot>0);
              CHECK(value.size==sizeof(value)&&value.fieldValidity==(1|2|32|512|1024|(scenario=="optional"?(4|8|16|64):0)));}
@@ -194,7 +197,8 @@ int main(int argc,char** argv)
                 if(scenario=="repeated_utc")WriteLe(frame.data()+24,2,8);
             } else if(scenario!="partial")throw std::runtime_error("unknown case");
             if(scenario=="partial"){CHECK(Write(fd,frame.data(),20));shutdown(fd,SHUT_WR);}
-            else CHECK(Write(fd,frame.data(),frame.size()));Closed(fd);
+            else CHECK(Write(fd,frame.data(),frame.size()));
+            Closed(fd);
             CHECK(sink.Size()==((scenario=="repeated_sequence"||scenario=="repeated_utc")?1U:0U));
         }
         close(fd);if(provider){CHECK(provider->Disable()==0);callbacks=Callbacks();CHECK(provider->Enable(&callbacks)==0);CHECK(provider->Start(1)==0);provider->Disable();}

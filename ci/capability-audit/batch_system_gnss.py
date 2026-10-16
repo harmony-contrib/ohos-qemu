@@ -18,7 +18,10 @@ def run(output):
         assert hashlib.sha256(data).hexdigest()==row['sha256']
         (output/Path(row['path']).name).write_bytes(data)
     env=dict(os.environ,LC_ALL='C',LC_CTYPE='C',LANG='C',ASAN_OPTIONS=f'detect_leaks={int(platform.system()!="Darwin")}:halt_on_error=1',UBSAN_OPTIONS='halt_on_error=1')
-    files=COMPONENT/'files';flags=['c++','-std=c++17','-Wall','-Wextra','-Werror','-g','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I'+str(files),'-I'+str(output)]
+    files=COMPONENT/'files'
+    compiler=os.environ.get('CXX','c++')
+    compiler_version=subprocess.check_output([compiler,'--version'],text=True)
+    flags=[compiler,'-std=c++17','-Wall','-Wextra','-Werror','-g','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I'+str(files),'-I'+str(output)]
     commands=[]
     def compile(name,args):
         command=flags+args+['-o',str(output/name)];proc=subprocess.run(command,capture_output=True,text=True)
@@ -43,7 +46,7 @@ def run(output):
     rows.append(dict(case='true_dso_vendor_abi',argv=command,exit_code=proc.returncode))
     result=dict(status='pass_actual_host_gnss_provider',cases=rows,compile_commands=commands,fixture=meta,
       source_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files.glob('*'))},
-      compiler=subprocess.check_output(['c++','--version'],text=True).splitlines()[0],platform=platform.platform(),
+      compiler=compiler_version.splitlines()[0],platform=platform.platform(),
       host_test_peer_uid=os.geteuid(),exported_product_peer_uid=0,requirements_closed=0,runtime_tested=False,
       limitations='Actual full upstream vendor ABI header, provider functions, sockets and dlsym data symbol tested. Host Provider instance explicitly uses host UID/private path. Exported product device remains UID0/path fixed. Official GN/ARM64/CFI, HDI bridge, Location business/public API, SELinux and new package are not tested here.')
     (output/'evidence.json').write_text(json.dumps(result,indent=2)+'\n');return result
