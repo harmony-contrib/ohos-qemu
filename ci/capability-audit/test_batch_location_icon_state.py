@@ -88,7 +88,7 @@ struct PrivacyKit {
 std::map<std::pair<int,std::string>,int> PrivacyKit::starts,PrivacyKit::stops;
 std::map<int,bool> switches;
 bool systemPermission=true,callerAvailable=true,saAvailable=true;
-struct RequestConfig { int sports=0;int GetSportsType(){return sports;}int fix=0,timeout=5000;int64_t timestamp=100; int GetFixNumber(){return fix;}int GetTimeOut(){return timeout;}int64_t GetTimeStamp(){return timestamp;} };
+struct RequestConfig { bool needsFine=false;bool NeedsFinePermission()const{return needsFine;}int sports=0;int GetSportsType(){return sports;}int fix=0,timeout=5000;int64_t timestamp=100; int GetFixNumber(){return fix;}int GetTimeOut(){return timeout;}int64_t GetTimeStamp(){return timestamp;} };
 struct Request {
     bool usingPermission=true,usingFine=false,requesting=true; int uid=100001,pid=1;uint32_t token=1,first=0;
     std::shared_ptr<RequestConfig> config=std::make_shared<RequestConfig>();
@@ -116,6 +116,7 @@ struct LocationDataRdbManager {static int QuerySwitchStateForUser(int user){asse
 enum class LocatorInterfaceCode {GET_LOCATION_ICON_STATUS=65};
 class LocatorAbility {
 public:
+    bool IsFusionFenceLocatingInCurrentAccount(){return false;}
     std::shared_ptr<std::map<std::string,std::list<std::shared_ptr<Request>>>> requests=std::make_shared<std::map<std::string,std::list<std::shared_ptr<Request>>>>();
     std::set<uint32_t> ignored;
     static LocatorAbility* GetInstance(){static LocatorAbility v;return &v;}
@@ -265,7 +266,11 @@ class LocationIconStateTests(unittest.TestCase):
                                   ('StartDistrictLocating', 'START_DISTRICT_LOCATING', 68),
                                   ('StartLocatingWithSportsType', 'START_LOCATING_WITH_SPORTS_TYPE', 69),
                                   ('GetPostProcessingTrack', 'GET_POST_PROCESSING_TRACK', 70),
-                                  ('CheckDistrictAccess', 'CHECK_DISTRICT_ACCESS', 71)]:
+                                  ('CheckDistrictAccess', 'CHECK_DISTRICT_ACCESS', 71),
+                                  ('AddFusionFence', 'ADD_FUSION_FENCE', 72),
+                                  ('RemoveFusionFence', 'REMOVE_FUSION_FENCE', 73),
+                                  ('IsFusionFenceSupported', 'IS_FUSION_FENCE_SUPPORTED', 74),
+                                  ('ReleaseFusionFence', 'RELEASE_FUSION_FENCE', 75)]:
             self.assertEqual(value, idl[name])
             self.assertEqual(value, codes[enum])
             for original in frozen['inputs'].values():

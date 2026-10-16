@@ -1,0 +1,1189 @@
+diff --git a/base/telephony/core_service/frameworks/native/src/telephony_state_registry_client.cpp b/base/telephony/core_service/frameworks/native/src/telephony_state_registry_client.cpp
+index c0adb1ca02617d5b89e63b298d902be9f4163159..81ff30ddaf32cb5b88a5dc39abb28be7e6e817c7 100644
+--- a/base/telephony/core_service/frameworks/native/src/telephony_state_registry_client.cpp
++++ b/base/telephony/core_service/frameworks/native/src/telephony_state_registry_client.cpp
+@@ -205,6 +205,16 @@ int32_t TelephonyStateRegistryClient::UpdateSimActiveState(int32_t slotId, bool
+     }
+     return proxy->UpdateSimActiveState(slotId, activeStateResult);
+ }
++
++int32_t TelephonyStateRegistryClient::UpdateCommunicationState(int32_t slotId, bool is5A)
++{
++    auto proxy = GetProxy();
++    if (proxy == nullptr) {
++        TELEPHONY_LOGE("proxy is null!");
++        return TELEPHONY_ERR_IPC_CONNECT_STUB_FAIL;
++    }
++    return proxy->UpdateCommunicationState(slotId, is5A);
++}
+ } // namespace Telephony
+ }
+
+diff --git a/base/telephony/core_service/frameworks/native/src/telephony_state_registry_proxy.cpp b/base/telephony/core_service/frameworks/native/src/telephony_state_registry_proxy.cpp
+index 11b3522f0984d3da81a0643127c367688a59d43f..2381d46959ca81e765d4e281bdb136f1cf20a798 100644
+--- a/base/telephony/core_service/frameworks/native/src/telephony_state_registry_proxy.cpp
++++ b/base/telephony/core_service/frameworks/native/src/telephony_state_registry_proxy.cpp
+@@ -457,5 +457,32 @@ int32_t TelephonyStateRegistryProxy::UpdateSimActiveState(int32_t slotId, bool a
+     }
+     return TELEPHONY_ERR_IPC_CONNECT_STUB_FAIL;
+ }
++
++int32_t TelephonyStateRegistryProxy::UpdateCommunicationState(int32_t slotId, bool is5A)
++{
++    MessageOption option;
++    MessageParcel in;
++    MessageParcel out;
++    if (!in.WriteInterfaceToken(TelephonyStateRegistryProxy::GetDescriptor())) {
++        return TELEPHONY_ERR_WRITE_DESCRIPTOR_TOKEN_FAIL;
++    }
++    if (!in.WriteInt32(slotId)) {
++        return TELEPHONY_ERR_WRITE_DATA_FAIL;
++    }
++    if (!in.WriteBool(is5A)) {
++        return TELEPHONY_ERR_WRITE_DATA_FAIL;
++    }
++    sptr<IRemoteObject> remote = Remote();
++    if (remote == nullptr) {
++        return TELEPHONY_ERR_IPC_CONNECT_STUB_FAIL;
++    }
++    int result = remote->SendRequest(
++        static_cast<uint32_t>(StateNotifyInterfaceCode::COMMUNICATION_STATE), in, out, option);
++    if (result == ERR_NONE) {
++        result = out.ReadInt32();
++        return result;
++    }
++    return TELEPHONY_ERR_IPC_CONNECT_STUB_FAIL;
++}
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/core_service/interfaces/innerkits/include/i_telephony_state_notify.h b/base/telephony/core_service/interfaces/innerkits/include/i_telephony_state_notify.h
+index df3aee51086611f64893ab71e3ec72851cf840be..1c7539ae69a3ff05c6297375879fd84259f3316e 100644
+--- a/base/telephony/core_service/interfaces/innerkits/include/i_telephony_state_notify.h
++++ b/base/telephony/core_service/interfaces/innerkits/include/i_telephony_state_notify.h
+@@ -149,6 +149,8 @@ public:
+      */
+     virtual int32_t UnregisterStateChange(int32_t slotId, uint32_t mask) = 0;
+
++    virtual int32_t UpdateCommunicationState(int32_t slotId, bool is5A) = 0;
++
+ public:
+     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.Telephony.ITelephonyStateNotify");
+ };
+diff --git a/base/telephony/core_service/interfaces/innerkits/include/state_registry_ipc_interface_code.h b/base/telephony/core_service/interfaces/innerkits/include/state_registry_ipc_interface_code.h
+index 33ef52207ebbdac7c4b33d4825be2b898220684f..3fae8428118f6cd13c2e14e49a2b57c690da67ed 100644
+GIT binary patch
+delta 43
+xcmcb}`GIpoCX2idFP8!kIQ#qhhWdFrJBE1r`^5)`IEJ_?*eV#BOwMG<000VC3)27q
+
+delta 11
+Scmeysd69ENCd=dwmJ9$M1O#{h
+
+diff --git a/base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h b/base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h
+index 84bdb9c5cdbf3ee7867d7bd34f2742d6c1e4b7d2..2442aed02f5989545cb77c523bbd792901db16bd 100644
+--- a/base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h
++++ b/base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h
+@@ -42,6 +42,7 @@ public:
+         ON_CALL_STATE_EX_UPDATED,
+         ON_CCALL_STATE_UPDATED,
+         ON_SIM_ACTIVE_STATE_UPDATED,
++        ON_COMMUNICATION_STATE_UPDATED = 13,
+     };
+
+     virtual void OnCellularDataConnectStateUpdated(
+@@ -66,7 +67,10 @@ public:
+         int32_t slotId, int32_t callState, const std::u16string &phoneNumber) = 0;
+     virtual void OnSimActiveStateUpdated(int32_t slotId, bool enable) = 0;
+
++    virtual void OnCommunicationStateUpdated(int32_t slotId, bool is5A) {}
++
+ public:
++    static const uint32_t OBSERVER_MASK_COMMUNICATION_STATE = 0x00002000;
+     static const uint32_t OBSERVER_MASK_NETWORK_STATE = 0x00000001;
+     static const uint32_t OBSERVER_MASK_CALL_STATE_EX = 0x00000002;
+     static const uint32_t OBSERVER_MASK_CALL_STATE = 0x00000004;
+diff --git a/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_client.h b/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_client.h
+index e8c990f7b0750d788d73264e991b4442625585d2..757db1effc634136ce90f7f7890982f49ca8fbef 100644
+--- a/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_client.h
++++ b/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_client.h
+@@ -120,6 +120,7 @@ public:
+      * @param activeStateResult sim active state
+      * @return int32_t TELEPHONY_SUCCESS on success, others on failure.
+      */
++    int32_t UpdateCommunicationState(int32_t slotId, bool is5A);
+     int32_t UpdateSimActiveState(int32_t slotId, bool activeStateResult);
+     int32_t UpdateIccAccount();
+     sptr<ITelephonyStateNotify> GetProxy();
+diff --git a/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_proxy.h b/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_proxy.h
+index 93b1cf36df2878b2dc2a75ac7ca32d51da6d91b9..2383baccce0ce2a14e49421c246a4df5817092ed 100644
+--- a/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_proxy.h
++++ b/base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_proxy.h
+@@ -50,6 +50,7 @@ public:
+     int32_t UpdateCfuIndicator(int32_t slotId, bool cfuResult) override;
+     int32_t UpdateVoiceMailMsgIndicator(int32_t slotId, bool voiceMailMsgResult) override;
+     int32_t UpdateIccAccount() override;
++    int32_t UpdateCommunicationState(int32_t slotId, bool is5A) override;
+     int32_t UpdateSimActiveState(int32_t slotId, bool activeStateResult) override;
+
+     int32_t RegisterStateChange(const sptr<TelephonyObserverBroker> &telephonyObserver,
+diff --git a/base/telephony/core_service/services/tel_ril/include/tel_ril_callback.h b/base/telephony/core_service/services/tel_ril/include/tel_ril_callback.h
+index c262ce130f104db4b3eddba15e60e4ad2a3ad504..9eecdde5d05f0322f0d6a31cefd15f9cbd611500 100644
+--- a/base/telephony/core_service/services/tel_ril/include/tel_ril_callback.h
++++ b/base/telephony/core_service/services/tel_ril/include/tel_ril_callback.h
+@@ -27,6 +27,8 @@ public:
+     explicit TelRilCallback(std::shared_ptr<TelRilManager> telRilManager);
+     ~TelRilCallback() = default;
+
++    int32_t CommunicationStateUpdated(const HDI::Ril::V1_1::RilRadioResponseInfo& responseInfo, bool is5A) override;
++
+     // Call
+     int32_t CallEmergencyNotice(const HDI::Ril::V1_1::RilRadioResponseInfo &responseInfo,
+         const HDI::Ril::V1_1::EmergencyInfoList &emergencyInfoList) override;
+diff --git a/base/telephony/core_service/services/tel_ril/include/tel_ril_network.h b/base/telephony/core_service/services/tel_ril/include/tel_ril_network.h
+index 9dacbbdbb16304b26f13b9810f207e25d71f0c06..10dada5c977a2ea0d5757491c9991b25cd3aac1a 100644
+--- a/base/telephony/core_service/services/tel_ril/include/tel_ril_network.h
++++ b/base/telephony/core_service/services/tel_ril/include/tel_ril_network.h
+@@ -29,6 +29,7 @@ public:
+     ~TelRilNetwork() = default;
+
+     // send  command
++    int32_t CommunicationStateUpdated(bool is5A);
+     int32_t GetSignalStrength(const AppExecFwk::InnerEvent::Pointer &response);
+     int32_t GetCsRegStatus(const AppExecFwk::InnerEvent::Pointer &response);
+     int32_t GetPsRegStatus(const AppExecFwk::InnerEvent::Pointer &response);
+diff --git a/base/telephony/core_service/services/tel_ril/src/tel_ril_callback.cpp b/base/telephony/core_service/services/tel_ril/src/tel_ril_callback.cpp
+index 59f0cbf6bbe6b9320aa60559e37e59dfa3014f3d..9e74fa0fef2ff2ed32cbdf983d55761b3ace81e7 100644
+--- a/base/telephony/core_service/services/tel_ril/src/tel_ril_callback.cpp
++++ b/base/telephony/core_service/services/tel_ril/src/tel_ril_callback.cpp
+@@ -964,5 +964,16 @@ int32_t TelRilCallback::SetPrimarySlotResponse(const HDI::Ril::V1_1::RilRadioRes
+     return Response(responseInfo, &TelRilManager::GetTelRilSim, &TelRilSim::SetPrimarySlotResponse);
+ }
+
++int32_t TelRilCallback::CommunicationStateUpdated(
++    const HDI::Ril::V1_1::RilRadioResponseInfo& responseInfo, bool is5A)
++{
++    if (responseInfo.error != HDI::Ril::V1_1::RilErrType::NONE ||
++        (responseInfo.type != HDI::Ril::V1_1::RilResponseTypes::RIL_RESPONSE_NOTICE &&
++        responseInfo.type != HDI::Ril::V1_1::RilResponseTypes::RIL_RESPONSE_NOTICE_MUST_ACK)) {
++        return TELEPHONY_ERR_ARGUMENT_INVALID;
++    }
++    return Notify(responseInfo, &TelRilManager::GetTelRilNetwork, &TelRilNetwork::CommunicationStateUpdated, is5A);
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/core_service/services/tel_ril/src/tel_ril_network.cpp b/base/telephony/core_service/services/tel_ril/src/tel_ril_network.cpp
+index fae0325aba0edd1c320c275442917c018ec6874c..84d7d05b4ffec0125a33ffa30c1ccfcba2c2bfca 100644
+--- a/base/telephony/core_service/services/tel_ril/src/tel_ril_network.cpp
++++ b/base/telephony/core_service/services/tel_ril/src/tel_ril_network.cpp
+@@ -18,6 +18,8 @@
+ #include <securec.h>
+
+ #include "radio_event.h"
++#include "ipc_skeleton.h"
++#include "telephony_state_registry_client.h"
+
+ using namespace std;
+ using OHOS::IRemoteObject;
+@@ -1128,5 +1130,14 @@ void TelRilNetwork::BuildChannelConfigInfoList(std::shared_ptr<ChannelConfigInfo
+         channelConfigList->channelConfigInfos.push_back(phyChnlCfg);
+     }
+ }
++int32_t TelRilNetwork::CommunicationStateUpdated(bool is5A)
++{
++    struct IdentityGuard {
++        std::string saved = IPCSkeleton::ResetCallingIdentity();
++        ~IdentityGuard() { IPCSkeleton::SetCallingIdentity(saved); }
++    } guard;
++    return DelayedRefSingleton<TelephonyStateRegistryClient>::GetInstance().UpdateCommunicationState(slotId_, is5A);
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/ril_adapter/interfaces/innerkits/include/hril_notification.h b/base/telephony/ril_adapter/interfaces/innerkits/include/hril_notification.h
+index f070c6ae2fb2ddc7bd56f234fd0d4a519d269d19..f43fbd3bbd5cea1f6cda160376ea0daa372ce7a8 100644
+--- a/base/telephony/ril_adapter/interfaces/innerkits/include/hril_notification.h
++++ b/base/telephony/ril_adapter/interfaces/innerkits/include/hril_notification.h
+@@ -153,6 +153,9 @@ typedef enum {
+     /** Called when network restricted state is updated. */
+     HNOTI_NETWORK_RESTRICTED_STATE_UPDATED,
+
++    /** Explicit modem 5A state, int32_t payload restricted to 0 or 1. */
++    HNOTI_NETWORK_COMMUNICATION_STATE_UPDATED = 1412,
++
+     HNOTI_COMMON_BASE = 1500,
+
+     /** Called when radio state is updated. */
+diff --git a/base/telephony/ril_adapter/services/hril/include/hril_network.h b/base/telephony/ril_adapter/services/hril/include/hril_network.h
+index c8df9821538daf3ed06ac04e53cf06c05e839cc2..23911d76de407f0d2039309ad26c556f6fc04836 100644
+--- a/base/telephony/ril_adapter/services/hril/include/hril_network.h
++++ b/base/telephony/ril_adapter/services/hril/include/hril_network.h
+@@ -105,6 +105,7 @@ public:
+         int32_t indType, const HRilErrNumber error, const void *response, size_t responseLen);
+     int32_t NetworkCurrentCellUpdated_1_2(
+         int32_t indType, const HRilErrNumber error, const void *response, size_t responseLen);
++    int32_t CommunicationStateUpdated(int32_t indType, HRilErrNumber error, const void *response, size_t responseLen);
+     void RegisterNetworkFuncs(const HRilNetworkReq *networkFuncs);
+     bool IsNetworkRespOrNotify(uint32_t code);
+     int32_t ResidentNetworkUpdated(int32_t indType, HRilErrNumber error, const void *response, size_t responseLen);
+diff --git a/base/telephony/ril_adapter/services/hril/include/hril_notification_map.h b/base/telephony/ril_adapter/services/hril/include/hril_notification_map.h
+index 38bc8df8279429e6eabf375f64280cb847e54922..65f13ab1ca8b62fe93a138847030ba83cdf2fe33 100644
+--- a/base/telephony/ril_adapter/services/hril/include/hril_notification_map.h
++++ b/base/telephony/ril_adapter/services/hril/include/hril_notification_map.h
+@@ -41,6 +41,7 @@
+     {HNOTI_NETWORK_TIME_UPDATED, NEED_LOCK},
+     {HNOTI_NETWORK_TIME_ZONE_UPDATED, NEED_LOCK},
+     {HNOTI_NETWORK_PS_REG_STATUS_UPDATED, NEED_LOCK},
++    {HNOTI_NETWORK_COMMUNICATION_STATE_UPDATED, UNNEED_LOCK},
+     {HNOTI_NETWORK_PHY_CHNL_CFG_UPDATED, NEED_LOCK},
+     {HNOTI_NETWORK_CURRENT_CELL_UPDATED, NEED_LOCK},
+     {HNOTI_NETWORK_RRC_CONNECTION_STATE_UPDATED, UNNEED_LOCK},
+diff --git a/base/telephony/ril_adapter/services/hril/src/hril_network.cpp b/base/telephony/ril_adapter/services/hril/src/hril_network.cpp
+index 2ea4c76d44a077d551a2d94e62bfb71b3c29500f..5791786345b88b476534ba6b2b8e0ff267814dcb 100644
+--- a/base/telephony/ril_adapter/services/hril/src/hril_network.cpp
++++ b/base/telephony/ril_adapter/services/hril/src/hril_network.cpp
+@@ -16,6 +16,7 @@
+ #include "hril_network.h"
+
+ #include <sys/time.h>
++#include <cstring>
+
+ #include "hril_notification.h"
+ #include "hril_request.h"
+@@ -40,6 +41,10 @@ HRilNetwork::HRilNetwork(int32_t slotId) : HRilBase(slotId)
+ void HRilNetwork::AddNotificationToMap()
+ {
+     // indication
++    notiMemberFuncMap_[HNOTI_NETWORK_COMMUNICATION_STATE_UPDATED] =
++        [this](int32_t type, HRilErrNumber error, const void *data, size_t size) {
++            return CommunicationStateUpdated(type, error, data, size);
++        };
+     notiMemberFuncMap_[HNOTI_NETWORK_CS_REG_STATUS_UPDATED] =
+         [this](int32_t notifyType, HRilErrNumber error, const void *response,
+         size_t responseLen) { return NetworkCsRegStatusUpdated(notifyType, error, response, responseLen); };
+@@ -1472,5 +1477,18 @@ void HRilNetwork::RegisterNetworkFuncs(const HRilNetworkReq *networkFuncs)
+ {
+     networkFuncs_ = networkFuncs;
+ }
++int32_t HRilNetwork::CommunicationStateUpdated(int32_t indType, HRilErrNumber error,
++    const void *response, size_t responseLen)
++{
++    if (error != HRIL_ERR_SUCCESS || response == nullptr || responseLen != sizeof(int32_t)) {
++        return HRIL_ERR_INVALID_PARAMETER;
++    }
++    int32_t state = 0;
++    // Vendor buffers are not required to have int32_t alignment.
++    std::memcpy(&state, response, sizeof(state));
++    if (state != 0 && state != 1) { return HRIL_ERR_INVALID_PARAMETER; }
++    return Notify(indType, error, &HDI::Ril::V1_5::IRilCallback::CommunicationStateUpdated, state != 0);
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/ril_adapter/services/vendor/src/vendor_report.c b/base/telephony/ril_adapter/services/vendor/src/vendor_report.c
+index 5e3fb912880284b57ac9ab78f347596ba0ad8f6d..8cf7cedabf335b108b6e94cb5b27d81d88a65e2c 100644
+--- a/base/telephony/ril_adapter/services/vendor/src/vendor_report.c
++++ b/base/telephony/ril_adapter/services/vendor/src/vendor_report.c
+@@ -14,6 +14,9 @@
+  */
+
+ #include "vendor_report.h"
++#include <stdbool.h>
++#include <stdint.h>
++#include <string.h>
+
+ #include "at_call.h"
+ #include "at_sms.h"
+@@ -206,6 +209,23 @@ static void ProcessNotifyMock(const char *s, struct ReportInfo reportInfo)
+     return;
+ }
+
++static bool ReportCommunicationState(const char *line)
++{
++    static const char prefix[] = "+OHOS5A:";
++    if (strncmp(line, prefix, sizeof(prefix) - 1) != 0) { return false; }
++    const char *cursor = line + sizeof(prefix) - 1;
++    while (*cursor == ' ' || *cursor == '\t') { ++cursor; }
++    if (*cursor != '0' && *cursor != '1') { return true; }
++    int32_t state = *cursor++ - '0';
++    while (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n') { ++cursor; }
++    if (*cursor != '\0') { return true; }
++    struct ReportInfo report = {0};
++    ReportInfoInit(&report);
++    report.notifyId = HNOTI_NETWORK_COMMUNICATION_STATE_UPDATED;
++    OnNetworkReport(GetSlotId(NULL), report, (const uint8_t *)&state, sizeof(state));
++    return true;
++}
++
+ void OnNotifyOps(const char *s, const char *smsPdu)
+ {
+     if (s == NULL) {
+@@ -217,6 +237,7 @@ void OnNotifyOps(const char *s, const char *smsPdu)
+     if (GetRadioState() == HRIL_RADIO_POWER_STATE_UNAVAILABLE) {
+         return;
+     }
++    if (ReportCommunicationState(s)) { return; }
+     str = strdup(s);
+     if (str == NULL) {
+         return;
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets b/base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets
+index 9eb41734472862846ce77405b008d1880f47191d..b41569e8adc0f773219faa38bd6ebc4646fa12dc 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets
+@@ -63,6 +63,15 @@ export default namespace observer {
+   export native function onCallStateChangeOptions(options: ObserverOptions, callback: Callback<CallStateInfo>): void;
+   export native function offCallStateChange(callback?: Callback<CallStateInfo>): void;
+
++  export function onCommunicationStateChange(callback: Callback<boolean>, options?: ObserverOptions): void {
++    onCommunicationStateChangeInner(callback, options?.slotId ?? 0);
++  }
++  export function offCommunicationStateChange(callback: Callback<boolean>, options?: ObserverOptions): void {
++    offCommunicationStateChangeInner(callback, options?.slotId ?? 0);
++  }
++  native function onCommunicationStateChangeInner(callback: Callback<boolean>, slotId: int): void;
++  native function offCommunicationStateChangeInner(callback: Callback<boolean>, slotId: int): void;
++
+   export native function onGetSimActiveState(slotId: int, callback: Callback<boolean>): void;
+   export native function offGetSimActiveState(callback?: Callback<boolean>): void;
+
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h b/base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h
+index 70c3e5e1dccdf27a88b465007e37f5e0f446d22e..a6ded0ea80828c1033e73492a56e6ccac24bbbfd 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h
+@@ -40,6 +40,7 @@ enum class TelephonyUpdateEventType {
+     EVENT_CFU_INDICATOR_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CFU_INDICATOR,
+     EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_VOICE_MAIL_MSG_INDICATOR,
+     EVENT_ICC_ACCOUNT_CHANGE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_ICC_ACCOUNT,
++    EVENT_COMMUNICATION_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE,
+     EVENT_SIM_ACTIVE_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE,
+ };
+
+@@ -54,9 +55,11 @@ public:
+     void OnCellularDataFlowUpdated(int32_t slotId, int32_t dataFlowType) override;
+     void OnIccAccountUpdated() override;
+     void OnCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &teleNumber) override;
++    void OnCommunicationStateUpdated(int32_t slotId, bool is5A) override;
+     void OnSimActiveStateUpdated(int32_t slotId, bool enable) override;
+ };
+
++bool HasCommunicationPermission();
+ bool IsValidSlotIdEx(int32_t slotId, uint32_t eventType);
+ ArktsError EventListenerRegister(int32_t slotId, uint32_t eventType);
+ ArktsError EventListenerUnRegister(int32_t slotId, uint32_t eventType);
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp b/base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp
+index 800f147587e7f7fed075e8266db11dc4e8ff11e6..e4e694dc7c5438b1c363faa0a34d78e1dfcaaba4 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp
+@@ -22,6 +22,9 @@
+ #include "state_registry_errors.h"
+ #include "napi_util.h"
+ #include "cxx.h"
++#include "accesstoken_kit.h"
++#include "ipc_skeleton.h"
++#include "telephony_permission.h"
+ #include "wrapper.rs.h"
+
+ namespace OHOS {
+@@ -32,6 +35,17 @@ constexpr const char *OBSERVER_JS_PERMISSION_ERROR_STRING =
+     "Permission denied. An attempt was made to Observer "
+     "On forbidden by permission : ohos.permission.GET_NETWORK_INFO or ohos.permission.LOCATION ";
+
++bool HasCommunicationPermission()
++{
++    return Security::AccessToken::AccessTokenKit::VerifyAccessToken(IPCSkeleton::GetSelfTokenID(),
++        Permission::GET_NETWORK_INFO) == Security::AccessToken::PERMISSION_GRANTED;
++}
++
++void AniTelephonyObserver::OnCommunicationStateUpdated(int32_t slotId, bool is5A)
++{
++    if (HasCommunicationPermission()) { on_communication_state_updated(slotId, is5A); }
++}
++
+ void AniTelephonyObserver::OnSignalInfoUpdated(
+     int32_t slotId, const std::vector<sptr<Telephony::SignalInformation>> &signalInfoList)
+ {
+@@ -153,6 +167,9 @@ bool IsValidSlotIdEx(int32_t slotId, uint32_t eventType)
+     if (eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE)) {
+         defaultSlotId = -1;
+     }
++    if (eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE_UPDATE)) {
++        return slotId >= 0 && slotId < SIM_SLOT_COUNT;
++    }
+     // One more slot for VSim.
+     return ((slotId >= defaultSlotId) && (slotId < SIM_SLOT_COUNT + 1));
+ }
+@@ -170,7 +187,8 @@ ArktsError EventListenerRegister(int32_t slotId, uint32_t eventType)
+     }
+     errorCode = Telephony::TelephonyStateManager::AddStateObserver(
+         observer, slotId, eventType,
+-        eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE));
++        (eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE) ||
++        eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE_UPDATE)));
+     if (errorCode == TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED) {
+         ArktsError ArktsErr = {
+             .errorCode = JS_ERROR_TELEPHONY_PERMISSION_DENIED,
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/src/lib.rs b/base/telephony/state_registry/frameworks/ets/ani/observer/src/lib.rs
+index 5941402fed6b246d023c00abf7baafc93965ca30..4260a466dcc230ec4b500af1dee8ee02c7f66990 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/src/lib.rs
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/src/lib.rs
+@@ -43,6 +43,8 @@ ani_rs::ani_constructor! {
+         "onCallStateChange": observer::on_call_state_change,
+         "onCallStateChangeOptions": observer::on_call_state_change_option,
+         "offCallStateChange": observer::off_call_state_change,
++        "onCommunicationStateChangeInner": observer::on_communication_state_change,
++        "offCommunicationStateChangeInner": observer::off_communication_state_change,
+         "onGetSimActiveState": observer::on_get_sim_active_state,
+         "offGetSimActiveState": observer::off_get_sim_active_state,
+     ]
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs b/base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs
+index 3bb9c74a70a7e364785edc35447eb208adfc3d41..a3668c82cb62e716a0f97fbf86670a6fc8e4f98a 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs
+@@ -432,4 +432,28 @@ pub fn off_get_sim_active_state(
+     )?;
+
+     Ok(())
+-}
+\ No newline at end of file
++}
++fn check_communication_permission() -> Result<(), BusinessError> {
++    if !crate::wrapper::ffi::HasCommunicationPermission() {
++        return Err(BusinessError::new_static(201, "Permission denied: ohos.permission.GET_NETWORK_INFO."));
++    }
++    Ok(())
++}
++
++#[ani_rs::native]
++pub fn on_communication_state_change(env: &AniEnv, callback: AniFnObject, slot_id: i32) -> Result<(), BusinessError> {
++    check_communication_permission()?;
++    let callback = callback.into_global_callback(env).map_err(|_| BusinessError::new_static(401, "Invalid callback."))?;
++    Register::get_instance().register(EventListener::new(TelephonyUpdateEventType::EventCommunicationStateUpdate,
++        slot_id, CallbackFlavor::CommunicationStateChange(callback)))
++}
++
++#[ani_rs::native]
++pub fn off_communication_state_change(env: &AniEnv, callback: AniFnObject, slot_id: i32) -> Result<(), BusinessError> {
++    check_communication_permission()?;
++    if !crate::wrapper::ffi::IsValidSlotIdEx(slot_id, TelephonyUpdateEventType::EventCommunicationStateUpdate.to_u32()) {
++        return Err(BusinessError::new_static(8300001, "Invalid slotId."));
++    }
++    let callback = callback.into_global_callback(env).map_err(|_| BusinessError::new_static(401, "Invalid callback."))?;
++    Register::get_instance().unregister_communication(slot_id, CallbackFlavor::CommunicationStateChange(callback))
++}
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs b/base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs
+index 6a964d6c9b633eb139e76fa52a94bf275fc0e19e..a9eb7218af26e5008dcfc4e5021ee9fb660a6fce 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs
+@@ -30,6 +30,7 @@ pub enum CallbackFlavor {
+     NetworkStateChange(GlobalRefCallback<(bridge::NetworkState,)>),
+     CallStateChange(GlobalRefCallback<(bridge::CallStateInfo,)>),
+     SimActiveStateChange(GlobalRefCallback<(bool,)>),
++    CommunicationStateChange(GlobalRefCallback<(bool,)>),
+ }
+
+ #[derive(PartialEq, Eq)]
+@@ -47,6 +48,7 @@ pub enum TelephonyUpdateEventType {
+     EventVoiceMailMsgIndicatorUpdate = 0x00000200,
+     EventIccAccountChange = 0x00000400,
+     EventSimActiveStateUpdate = 0x00001000,
++    EventCommunicationStateUpdate = 0x00002000,
+ }
+
+ impl TelephonyUpdateEventType {
+@@ -64,6 +66,7 @@ impl TelephonyUpdateEventType {
+             TelephonyUpdateEventType::EventVoiceMailMsgIndicatorUpdate => 0x00000200,
+             TelephonyUpdateEventType::EventIccAccountChange => 0x00000400,
+             TelephonyUpdateEventType::EventSimActiveStateUpdate => 0x00001000,
++            TelephonyUpdateEventType::EventCommunicationStateUpdate => 0x00002000,
+         }
+     }
+ }
+@@ -436,6 +439,30 @@ impl Register {
+         }
+     }
+
++    pub fn unregister_communication(&self, slot_id: i32, callback: CallbackFlavor) -> Result<(), BusinessError> {
++        let mut inner = self.inner.lock().unwrap();
++        inner.retain(|listener| !(listener.event_type == TelephonyUpdateEventType::EventCommunicationStateUpdate &&
++            listener.slot_id == slot_id && listener.callback_ref == callback));
++        if !Self::check_event_type_exist(&inner, slot_id, &TelephonyUpdateEventType::EventCommunicationStateUpdate) {
++            let error = wrapper::ffi::EventListenerUnRegister(slot_id,
++                TelephonyUpdateEventType::EventCommunicationStateUpdate.to_u32());
++            if error.is_error() { return Err(BusinessError::from(error)); }
++        }
++        Ok(())
++    }
++
++    pub fn execute_on_communication_state_change(&self, slot_id: i32, state: bool) {
++        if !wrapper::ffi::HasCommunicationPermission() { return; }
++        let inner = self.inner.lock().unwrap();
++        for listener in inner.deref() {
++            if listener.event_type == TelephonyUpdateEventType::EventCommunicationStateUpdate && listener.slot_id == slot_id {
++                if let CallbackFlavor::CommunicationStateChange(callback) = &listener.callback_ref {
++                    callback.execute((state,));
++                }
++            }
++        }
++    }
++
+     pub fn execute_on_sim_active_state_change(&self, slot_id: i32, is_active: bool) {
+         let inner = self.inner.lock().unwrap();
+         if inner.is_empty() {
+@@ -502,3 +529,7 @@ pub fn on_sim_active_state_updated(slot_id: i32, is_active: bool) {
+     Register::get_instance().execute_on_sim_active_state_change(slot_id, is_active);
+ }
+
++
++pub fn on_communication_state_updated(slot_id: i32, is5a: bool) {
++    Register::get_instance().execute_on_communication_state_change(slot_id, is5a);
++}
+diff --git a/base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs b/base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs
+index ad2b1d9ea1aa9c24349e228c6422d6ae5ab6a26c..1df76ab936c2c19ec321b5c7f4c1eb53876d1ed1 100644
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs
+@@ -98,11 +98,13 @@ pub(crate) mod ffi {
+         fn on_cellular_data_connect_state_updated(slot_id: i32, data_state: i32, network_type: i32);
+         fn on_network_state_updated(slot_id: i32, network_state: NetworkStateAni);
+         fn on_call_state_updated(slot_id: i32, call_state: CallStateAni);
++        fn on_communication_state_updated(slot_id: i32, is5a: bool);
+         fn on_sim_active_state_updated(slot_id: i32, is_active: bool);
+     }
+
+     unsafe extern "C++" {
+         include!("observer_ani.h");
++        fn HasCommunicationPermission() -> bool;
+         fn IsValidSlotIdEx(slotId: i32, eventType: u32) -> bool;
+         fn EventListenerRegister(slotId: i32, eventType: u32) -> ArktsError;
+         fn EventListenerUnRegister(slotId: i32, eventType: u32) -> ArktsError;
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h b/base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h
+index a52898b849592ba2d4cbbb711f3b2c339fc5206f..0091548dbeb446c8b285d55f0ca2662609567471 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h
+@@ -51,6 +51,8 @@ public:
+         napi_env env, TelephonyUpdateEventType eventType, napi_ref ref, std::list<EventListener> &removeListenerList);
+     int32_t UnregisterEventListener(
+         napi_env env, TelephonyUpdateEventType eventType, std::list<EventListener> &removeListenerList);
++    int32_t UnregisterCommunicationListener(napi_env env, napi_ref callback, int32_t slotId,
++        std::list<EventListener>& removed);
+     void UnRegisterAllListener(napi_env env);
+
+ private:
+@@ -91,6 +93,7 @@ private:
+     static void WorkVoiceMailMsgIndicatorUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
+     static void WorkIccAccountUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
+     static void WorkCCallStateUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
++    static void WorkCommunicationUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
+     static void WorkSimActiveUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
+
+     template<typename T, typename D, TelephonyUpdateEventType eventType>
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h b/base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h
+index b70d0e5a96449c3fa514e3124dad082cd00e6dab..1e727dfe016b1ac933f929c20d28a232748f125d 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h
+@@ -55,6 +55,8 @@ public:
+         std::list<EventListener> &removeListenerList);
+     static int32_t UnregisterEventListener(
+         napi_env env, TelephonyUpdateEventType eventType, std::list<EventListener> &removeListenerList);
++    static int32_t UnregisterCommunicationListener(napi_env env, napi_ref callback, int32_t slotId,
++        std::list<EventListener>& removed);
+     static void UnRegisterAllListener(napi_env env);
+ };
+ } // namespace Telephony
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h b/base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h
+index cadcd3912578dd84b4a4910ee562b25a1aea2379..7643bcf4e28d2267650a43ec4a4b05582e142be3 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h
+@@ -39,6 +39,7 @@ public:
+     void OnVoiceMailMsgIndicatorUpdated(int32_t slotId, bool voiceMailMsgResult) override;
+     void OnIccAccountUpdated() override;
+     void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber) override;
++    void OnCommunicationStateUpdated(int32_t slotId, bool is5A) override;
+     void OnSimActiveStateUpdated(int32_t slotId, bool enable) override;
+ };
+ } // namespace Telephony
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/telephony_callback_event_id.h b/base/telephony/state_registry/frameworks/js/napi/include/telephony_callback_event_id.h
+index be4ad8c8c7e81919a4089e475c591eba6fac497d..a4a34eafbcd39475691ae422b1aada0a76c775cc 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/telephony_callback_event_id.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/telephony_callback_event_id.h
+@@ -33,6 +33,7 @@ enum class TelephonyCallbackEventId : uint32_t {
+     EVENT_ON_CALL_STATE_EX_UPDATE = 11,
+     EVENT_ON_CCALL_STATE_UPDATE = 12,
+     EVENT_ON_SIM_ACTIVE_STATE_UPDATE = 13,
++    EVENT_ON_COMMUNICATION_STATE_UPDATE = 14,
+ };
+
+ template<typename EnumClass>
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/telephony_update_event_type.h b/base/telephony/state_registry/frameworks/js/napi/include/telephony_update_event_type.h
+index 746f9e8ba2946f59c57992bb7113e1ca0b8ab407..e1e42e0329b5ec63f05fa4e1971ed4f3f0c2b993 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/telephony_update_event_type.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/telephony_update_event_type.h
+@@ -35,6 +35,7 @@ enum class TelephonyUpdateEventType {
+     EVENT_ICC_ACCOUNT_CHANGE = TelephonyObserverBroker::OBSERVER_MASK_ICC_ACCOUNT,
+     EVENT_CALL_STATE_EX_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE_EX,
+     EVENT_CCALL_STATE_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_CCALL_STATE,
++    EVENT_COMMUNICATION_STATE = TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE,
+     EVENT_SIM_ACTIVE_STATE = TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE,
+ };
+
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/update_contexts.h b/base/telephony/state_registry/frameworks/js/napi/include/update_contexts.h
+index f2bffbb3967b606fe856dd0fde5256ad428da105..89a2809d3e65989b7752c47bb00b11a8672cd78f 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/update_contexts.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/update_contexts.h
+@@ -133,6 +133,15 @@ struct SimActiveStateContext : EventListener {
+         return *this;
+     }
+ };
++
++struct CommunicationStateContext : EventListener {
++    bool is5A;
++    CommunicationStateContext &operator=(const CommunicationStateUpdate &info)
++    {
++        is5A = info.is5A;
++        return *this;
++    }
++};
+ } // namespace Telephony
+ } // namespace OHOS
+ #endif // UPDATE_CONTEXTS_H
+\ No newline at end of file
+diff --git a/base/telephony/state_registry/frameworks/js/napi/include/update_infos.h b/base/telephony/state_registry/frameworks/js/napi/include/update_infos.h
+index 73ce57fcccf6af12ef86353a2adc2c9e6f736e7f..cc84df44e12c17d32142567f2454c29e8324428d 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/include/update_infos.h
++++ b/base/telephony/state_registry/frameworks/js/napi/include/update_infos.h
+@@ -99,6 +99,12 @@ struct SimActiveStateUpdate : public UpdateInfo {
+     SimActiveStateUpdate(int32_t slotId, bool isActive)
+         : UpdateInfo(slotId), isSimActive(isActive) {}
+ };
++
++struct CommunicationStateUpdate : public UpdateInfo {
++    bool is5A = false;
++    CommunicationStateUpdate(int32_t slotId, bool state)
++        : UpdateInfo(slotId), is5A(state) {}
++};
+ } // namespace Telephony
+ } // namespace OHOS
+ #endif // UPDATE_INFOS_H
+diff --git a/base/telephony/state_registry/frameworks/js/napi/src/event_listener_handler.cpp b/base/telephony/state_registry/frameworks/js/napi/src/event_listener_handler.cpp
+index 2a4960cb49206807c53e144c44954632777fcd8f..4a6d2d001959871f255f3617deada65af5eaf607 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/src/event_listener_handler.cpp
++++ b/base/telephony/state_registry/frameworks/js/napi/src/event_listener_handler.cpp
+@@ -16,6 +16,9 @@
+ #include "event_listener_handler.h"
+
+ #include <cinttypes>
++#include "accesstoken_kit.h"
++#include "ipc_skeleton.h"
++#include "telephony_permission.h"
+
+ #include "event_listener_manager.h"
+ #include "inner_event.h"
+@@ -377,6 +380,11 @@ void EventListenerHandler::AddBasicHandlerToMap()
+
+ void EventListenerHandler::AddSimActiveStateHandlerToMap()
+ {
++    handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_COMMUNICATION_STATE_UPDATE] =
++        [this](const AppExecFwk::InnerEvent::Pointer &event) {
++            HandleCallbackInfoUpdate<CommunicationStateContext, CommunicationStateUpdate,
++                TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE>(event);
++        };
+     handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_SIM_ACTIVE_STATE_UPDATE] =
+         [this](const AppExecFwk::InnerEvent::Pointer &event) {
+             HandleCallbackInfoUpdate<SimActiveStateContext, SimActiveStateUpdate,
+@@ -420,6 +428,7 @@ void EventListenerHandler::AddWorkFuncToMap()
+         &EventListenerHandler::WorkVoiceMailMsgIndicatorUpdated;
+     workFuncMap_[TelephonyUpdateEventType::EVENT_ICC_ACCOUNT_CHANGE] = &EventListenerHandler::WorkIccAccountUpdated;
+     workFuncMap_[TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE] = &EventListenerHandler::WorkCCallStateUpdated;
++    workFuncMap_[TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE] = &EventListenerHandler::WorkCommunicationUpdated;
+     workFuncMap_[TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE] = &EventListenerHandler::WorkSimActiveUpdated;
+ }
+
+@@ -480,7 +489,8 @@ int32_t EventListenerHandler::RegisterEventListener(EventListener &eventListener
+             eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE ||
+             eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE ||
+             eventListener.eventType == TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE ||
+-            eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE);
++            eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE ||
++            eventListener.eventType == TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE);
+         int32_t addResult = TelephonyStateManager::AddStateObserver(
+             observer, eventListener.slotId, ToUint32t(eventListener.eventType), isUpdate);
+         if (addResult != TELEPHONY_SUCCESS) {
+@@ -751,15 +761,21 @@ void EventListenerHandler::WorkUpdated(uv_work_t *work, int status)
+     }
+     if (listener->isDeleting == nullptr || *(listener->isDeleting)) {
+         TELEPHONY_LOGI("listener is deleting");
+-        delete listener;
++        bool communication = listener->eventType == TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE;
++        if (communication) { delete static_cast<CommunicationStateContext*>(listener); }
++        else { delete listener; }
+         listener = nullptr;
++        if (communication) { delete work; }
+         return;
+     }
+     if (workFuncMap_.find(listener->eventType) == workFuncMap_.end() ||
+         workFuncMap_.find(listener->eventType)->second == nullptr) {
+         TELEPHONY_LOGE("listener state update is nullptr");
+-        delete listener;
++        bool communication = listener->eventType == TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE;
++        if (communication) { delete static_cast<CommunicationStateContext*>(listener); }
++        else { delete listener; }
+         listener = nullptr;
++        if (communication) { delete work; }
+         return;
+     }
+     workFuncMap_.find(listener->eventType)->second(work, lock);
+@@ -1036,6 +1052,35 @@ void EventListenerHandler::WorkSimActiveUpdated(uv_work_t *work, std::unique_loc
+     napi_close_handle_scope(env, scope);
+ }
+
++void EventListenerHandler::WorkCommunicationUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock)
++{
++    std::unique_ptr<uv_work_t> ownedWork(work);
++    if (work == nullptr) {
++        TELEPHONY_LOGE("work is null");
++        return;
++    }
++    std::unique_ptr<CommunicationStateContext> communicationStateInfo(
++        static_cast<CommunicationStateContext *>(work->data));
++    if (communicationStateInfo == nullptr) {
++        TELEPHONY_LOGE("communicationStateInfo is null");
++        return;
++    }
++    if (Security::AccessToken::AccessTokenKit::VerifyAccessToken(IPCSkeleton::GetSelfTokenID(),
++        Permission::GET_NETWORK_INFO) != Security::AccessToken::PERMISSION_GRANTED) { return; }
++    const napi_env &env = communicationStateInfo->env;
++    napi_handle_scope scope = nullptr;
++    napi_status status = napi_open_handle_scope(env, &scope);
++    if (status != napi_ok || scope == nullptr) {
++        TELEPHONY_LOGE("napi open handle scope failed");
++        lock.unlock();
++        return;
++    }
++    napi_value callbackValue =
++        GetNapiValue(communicationStateInfo->env, communicationStateInfo->is5A);
++    NapiReturnToJS(communicationStateInfo->env, communicationStateInfo->callbackRef, callbackValue, lock);
++    napi_close_handle_scope(env, scope);
++}
++
+ bool EventListenerHandler::IsNeedHandleCallbackUpdate(TelephonyUpdateEventType eventType,
+     TelephonyUpdateEventType curEventType, int32_t eventSlotId, int32_t curSlotId)
+ {
+@@ -1076,5 +1121,23 @@ void EventListenerHandler::WorkCCallStateUpdated(uv_work_t *work, std::unique_lo
+     NapiReturnToJS(callStateInfo->env, callStateInfo->callbackRef, callbackValue, lock);
+     napi_close_handle_scope(env, scope);
+ }
++int32_t EventListenerHandler::UnregisterCommunicationListener(napi_env env, napi_ref callback, int32_t slotId,
++    std::list<EventListener>& removed)
++{
++    std::unique_lock<std::mutex> lock(operatorMutex_);
++    for (auto it = listenerList_.begin(); it != listenerList_.end();) {
++        if (it->env == env && it->slotId == slotId &&
++            it->eventType == TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE &&
++            IsCallBackRegister(env, callback, it->callbackRef)) {
++            SetEventListenerDeleting(it->isDeleting);
++            removed.push_back(*it);
++            it = listenerList_.erase(it);
++        } else { ++it; }
++    }
++    int32_t result = TELEPHONY_SUCCESS;
++    CheckRemoveStateObserver(TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE, slotId, result);
++    return result;
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/state_registry/frameworks/js/napi/src/event_listener_manager.cpp b/base/telephony/state_registry/frameworks/js/napi/src/event_listener_manager.cpp
+index 3e68da68d5c9144da3e2075ad733267017c5506f..9affbd42c7d231cd535b388f5bd2ccc006a7f705 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/src/event_listener_manager.cpp
++++ b/base/telephony/state_registry/frameworks/js/napi/src/event_listener_manager.cpp
+@@ -60,5 +60,13 @@ void EventListenerManager::UnRegisterAllListener(napi_env env)
+     }
+     handler->UnRegisterAllListener(env);
+ }
++int32_t EventListenerManager::UnregisterCommunicationListener(napi_env env, napi_ref callback, int32_t slotId,
++    std::list<EventListener>& removed)
++{
++    auto handler = DelayedSingleton<EventListenerHandler>::GetInstance();
++    return handler == nullptr ? TELEPHONY_ERR_LOCAL_PTR_NULL :
++        handler->UnregisterCommunicationListener(env, callback, slotId, removed);
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/state_registry/frameworks/js/napi/src/napi_state_registry.cpp b/base/telephony/state_registry/frameworks/js/napi/src/napi_state_registry.cpp
+index 8600839cea95f0854d42ce12d47baa05b3c2e9cd..7ee1dd4296d6cae9b3a84e9c9fe366e25c96f8fa 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/src/napi_state_registry.cpp
++++ b/base/telephony/state_registry/frameworks/js/napi/src/napi_state_registry.cpp
+@@ -17,6 +17,12 @@
+
+ #include <map>
+ #include <utility>
++#include <cmath>
++#include <mutex>
++#include <set>
++#include "accesstoken_kit.h"
++#include "ipc_skeleton.h"
++#include "telephony_permission.h"
+
+ #include "event_listener_manager.h"
+ #include "napi_parameter_util.h"
+@@ -483,6 +489,97 @@ static napi_value OffSimActiveState(napi_env env, napi_callback_info info)
+     return NapiUtil::CreateUndefined(env);
+ }
+
++namespace {
++std::mutex g_communicationEnvironmentMutex;
++std::set<napi_env> g_communicationEnvironments;
++void CleanupCommunicationEnvironment(void* data)
++{
++    std::unique_ptr<napi_env> holder(static_cast<napi_env*>(data));
++    auto env = *holder;
++    EventListenerManager::UnRegisterAllListener(env);
++    std::lock_guard<std::mutex> lock(g_communicationEnvironmentMutex);
++    g_communicationEnvironments.erase(env);
++}
++bool EnsureCommunicationEnvironment(napi_env env)
++{
++    std::lock_guard<std::mutex> lock(g_communicationEnvironmentMutex);
++    if (g_communicationEnvironments.count(env) != 0) { return true; }
++    auto holder = std::make_unique<napi_env>(env);
++    if (napi_add_env_cleanup_hook(env, CleanupCommunicationEnvironment, holder.get()) != napi_ok) { return false; }
++    holder.release();
++    g_communicationEnvironments.insert(env);
++    return true;
++}
++bool HasCommunicationPermission()
++{
++    return Security::AccessToken::AccessTokenKit::VerifyAccessToken(IPCSkeleton::GetSelfTokenID(),
++        Permission::GET_NETWORK_INFO) == Security::AccessToken::PERMISSION_GRANTED;
++}
++bool ReadCommunicationArgs(napi_env env, napi_callback_info info, ObserverContext& context)
++{
++    size_t argc = 3;
++    napi_value argv[3] = {nullptr};
++    napi_valuetype type = napi_undefined;
++    if (napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr) != napi_ok || argc < 1 || argc > 2 ||
++        napi_typeof(env, argv[0], &type) != napi_ok || type != napi_function) { return false; }
++    context.slotId = DEFAULT_SIM_SLOT_ID;
++    if (argc == 2) {
++        if (napi_typeof(env, argv[1], &type) != napi_ok) { return false; }
++        if (type != napi_undefined) {
++            bool present = false;
++            if (type != napi_object || napi_has_named_property(env, argv[1], "slotId", &present) != napi_ok) { return false; }
++            if (present) {
++                napi_value slot = nullptr;
++                double value = 0;
++                if (napi_get_named_property(env, argv[1], "slotId", &slot) != napi_ok ||
++                    napi_typeof(env, slot, &type) != napi_ok || type != napi_number ||
++                    napi_get_value_double(env, slot, &value) != napi_ok || !std::isfinite(value) ||
++                    std::trunc(value) != value || value < 0 || value >= SIM_SLOT_COUNT) { return false; }
++                context.slotId = static_cast<int32_t>(value);
++            }
++        }
++    }
++    if (context.slotId < 0 || context.slotId >= SIM_SLOT_COUNT) { return false; }
++    return napi_create_reference(env, argv[0], 1, &context.callbackRef) == napi_ok;
++}
++}
++
++static napi_value OnCommunicationStateChange(napi_env env, napi_callback_info info)
++{
++    if (!HasCommunicationPermission()) {
++        NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_PERMISSION_DENIED, OBSERVER_JS_PERMISSION_ERROR_STRING);
++        return nullptr;
++    }
++    auto context = std::make_unique<ObserverContext>();
++    if (!ReadCommunicationArgs(env, info, *context)) { NapiUtil::ThrowParameterError(env); return nullptr; }
++    if (!EnsureCommunicationEnvironment(env)) {
++        napi_delete_reference(env, context->callbackRef);
++        NapiUtil::ThrowError(env, 8300003, "Failed to register environment cleanup.");
++        return nullptr;
++    }
++    context->eventType = TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE;
++    NativeOn(env, context.get());
++    OnCallback(env, context.release());
++    return NapiUtil::CreateUndefined(env);
++}
++
++static napi_value OffCommunicationStateChange(napi_env env, napi_callback_info info)
++{
++    if (!HasCommunicationPermission()) {
++        NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_PERMISSION_DENIED, OBSERVER_JS_PERMISSION_ERROR_STRING);
++        return nullptr;
++    }
++    auto context = std::make_unique<ObserverContext>();
++    if (!ReadCommunicationArgs(env, info, *context)) { NapiUtil::ThrowParameterError(env); return nullptr; }
++    context->eventType = TelephonyUpdateEventType::EVENT_COMMUNICATION_STATE;
++    context->errorCode = EventListenerManager::UnregisterCommunicationListener(env, context->callbackRef,
++        context->slotId, context->removeListenerList);
++    context->resolved = context->errorCode == TELEPHONY_SUCCESS ||
++        context->errorCode == TELEPHONY_STATE_UNREGISTRY_DATA_NOT_EXIST;
++    OffCallback(env, context.release());
++    return NapiUtil::CreateUndefined(env);
++}
++
+ napi_status InitEnumLockReason(napi_env env, napi_value exports)
+ {
+     napi_property_descriptor desc[] = {
+@@ -511,6 +608,8 @@ napi_value InitNapiStateRegistry(napi_env env, napi_value exports)
+ {
+     napi_property_descriptor desc[] = {
+         DECLARE_NAPI_WRITABLE_FUNCTION("on", On),
++        DECLARE_NAPI_WRITABLE_FUNCTION("onCommunicationStateChange", OnCommunicationStateChange),
++        DECLARE_NAPI_WRITABLE_FUNCTION("offCommunicationStateChange", OffCommunicationStateChange),
+         DECLARE_NAPI_WRITABLE_FUNCTION("off", Off),
+         DECLARE_NAPI_WRITABLE_FUNCTION("onCCallStateChange", OnCCallStateChange),
+         DECLARE_NAPI_WRITABLE_FUNCTION("offCCallStateChange", OffCCallStateChange),
+diff --git a/base/telephony/state_registry/frameworks/js/napi/src/napi_telephony_observer.cpp b/base/telephony/state_registry/frameworks/js/napi/src/napi_telephony_observer.cpp
+index 0ed1b4a19ec81fd9ccb383e31fff8a2358863877..c6a5a54ac82cee12a73c03dfa0a6e9f72d241896 100644
+--- a/base/telephony/state_registry/frameworks/js/napi/src/napi_telephony_observer.cpp
++++ b/base/telephony/state_registry/frameworks/js/napi/src/napi_telephony_observer.cpp
+@@ -181,5 +181,14 @@ void NapiTelephonyObserver::OnSimActiveStateUpdated(int32_t slotId, bool enable)
+     EventListenerManager::SendEvent(
+         ToUint32t(TelephonyCallbackEventId::EVENT_ON_SIM_ACTIVE_STATE_UPDATE), simActiveStateUpdateInfo);
+ }
++
++void NapiTelephonyObserver::OnCommunicationStateUpdated(int32_t slotId, bool is5A)
++{
++    TELEPHONY_LOGI("OnCommunicationStateUpdated slotId = %{public}d, activeStateResult = %{public}d", slotId, is5A);
++    std::unique_ptr<CommunicationStateUpdate> communicationStateUpdateInfo =
++        std::make_unique<CommunicationStateUpdate>(slotId, is5A);
++    EventListenerManager::SendEvent(
++        ToUint32t(TelephonyCallbackEventId::EVENT_ON_COMMUNICATION_STATE_UPDATE), communicationStateUpdateInfo);
++}
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h b/base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h
+index 95070f3f94fba6398013b936315f31e05886079a..ee8540b66064c208be3296c29dbb3c89f64a3d95 100644
+--- a/base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h
++++ b/base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h
+@@ -47,6 +47,7 @@ public:
+     void OnVoiceMailMsgIndicatorUpdated(int32_t slotId, bool voiceMailMsgResult);
+     void OnIccAccountUpdated();
+     void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber);
++    void OnCommunicationStateUpdated(int32_t slotId, bool is5A) override;
+     void OnSimActiveStateUpdated(int32_t slotId, bool enable);
+
+ private:
+diff --git a/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer.cpp b/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer.cpp
+index 581f098a3b83550bdba335eb2df77d69926c5260..63edebe3c1544434657cfe2a170412f781a46e95 100644
+--- a/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer.cpp
++++ b/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer.cpp
+@@ -52,6 +52,8 @@ void TelephonyObserver::OnCallStateUpdatedEx(int32_t slotId, int32_t callStateEx
+ void TelephonyObserver::OnCCallStateUpdated(
+     int32_t slotId, int32_t callState, const std::u16string &phoneNumber) {}
+
++void TelephonyObserver::OnCommunicationStateUpdated(int32_t slotId, bool is5A) {}
++
+ void TelephonyObserver::OnSimActiveStateUpdated(int32_t slotId, bool enable) {}
+
+ TelephonyObserver::TelephonyObserver()
+@@ -80,6 +82,8 @@ TelephonyObserver::TelephonyObserver()
+         [this](MessageParcel &data, MessageParcel &reply) { OnCallStateUpdatedExInner(data, reply); };
+     memberFuncMap_[static_cast<uint32_t>(ObserverBrokerCode::ON_CCALL_STATE_UPDATED)] =
+         [this](MessageParcel &data, MessageParcel &reply) { OnCCallStateUpdatedInner(data, reply); };
++    memberFuncMap_[static_cast<uint32_t>(ObserverBrokerCode::ON_COMMUNICATION_STATE_UPDATED)] =
++        [this](MessageParcel &data, MessageParcel &reply) { OnCommunicationStateUpdatedInner(data, reply); };
+     memberFuncMap_[static_cast<uint32_t>(ObserverBrokerCode::ON_SIM_ACTIVE_STATE_UPDATED)] =
+         [this](MessageParcel &data, MessageParcel &reply) { OnSimActiveStateUpdatedInner(data, reply); };
+ }
+@@ -324,5 +328,12 @@ void TelephonyObserver::OnCCallStateUpdatedInner(
+     std::u16string phoneNumber = data.ReadString16();
+     OnCCallStateUpdated(slotId, callState, phoneNumber);
+ }
++void TelephonyObserver::OnCommunicationStateUpdatedInner(MessageParcel &data, MessageParcel &reply)
++{
++    int32_t slotId = 0;
++    bool is5A = false;
++    if (data.ReadInt32(slotId) && data.ReadBool(is5A)) { OnCommunicationStateUpdated(slotId, is5A); }
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer_proxy.cpp b/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer_proxy.cpp
+index 4cb3dec11fe3789d0cc415ce39e2fccb79d26547..a6f79644780527c593c700f79fc0c0f44b07f9d3 100644
+--- a/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer_proxy.cpp
++++ b/base/telephony/state_registry/frameworks/native/observer/src/telephony_observer_proxy.cpp
+@@ -295,5 +295,22 @@ void TelephonyObserverProxy::OnSimActiveStateUpdated(int32_t slotId, bool enable
+         static_cast<int32_t>(ObserverBrokerCode::ON_SIM_ACTIVE_STATE_UPDATED), dataParcel, replyParcel, option);
+     TELEPHONY_LOGI("TelephonyObserverProxy::OnSimActiveStateUpdated##error: %{public}d.", code);
+ }
++
++void TelephonyObserverProxy::OnCommunicationStateUpdated(int32_t slotId, bool is5A)
++{
++    MessageOption option;
++    MessageParcel dataParcel;
++    MessageParcel replyParcel;
++    option.SetFlags(MessageOption::TF_ASYNC);
++    if (!dataParcel.WriteInterfaceToken(GetDescriptor())) {
++        TELEPHONY_LOGE("TelephonyObserverProxy::OnCommunicationStateUpdated WriteInterfaceToken failed!");
++        return;
++    }
++    dataParcel.WriteInt32(slotId);
++    dataParcel.WriteBool(is5A);
++    auto code = SendRequest(
++        static_cast<int32_t>(ObserverBrokerCode::ON_COMMUNICATION_STATE_UPDATED), dataParcel, replyParcel, option);
++    TELEPHONY_LOGI("TelephonyObserverProxy::OnCommunicationStateUpdated##error: %{public}d.", code);
++}
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/state_registry/interfaces/innerkits/observer/telephony_observer.h b/base/telephony/state_registry/interfaces/innerkits/observer/telephony_observer.h
+index c74586e16c4a5d7b345cb767d0ff293cc33704a7..f14f12bf4bdd66ad1b8a07e54f64d1cfc369b0d5 100644
+--- a/base/telephony/state_registry/interfaces/innerkits/observer/telephony_observer.h
++++ b/base/telephony/state_registry/interfaces/innerkits/observer/telephony_observer.h
+@@ -145,6 +145,7 @@ public:
+      * @param slotId Indicates the slot identification.
+      * @param enable Indicates the tel active state.
+      */
++    void OnCommunicationStateUpdated(int32_t slotId, bool is5A) override;
+     void OnSimActiveStateUpdated(int32_t slotId, bool enable) override;
+
+ private:
+@@ -166,6 +167,7 @@ private:
+     void OnIccAccountUpdatedInner(MessageParcel &data, MessageParcel &reply);
+     void OnCallStateUpdatedExInner(MessageParcel &data, MessageParcel &reply);
+     void OnCCallStateUpdatedInner(MessageParcel &data, MessageParcel &reply);
++    void OnCommunicationStateUpdatedInner(MessageParcel &data, MessageParcel &reply);
+     void OnSimActiveStateUpdatedInner(MessageParcel &data, MessageParcel &reply);
+     static constexpr int32_t CELL_NUM_MAX = 100;
+     static constexpr int32_t SIGNAL_NUM_MAX = 100;
+diff --git a/base/telephony/state_registry/services/include/telephony_state_registry_service.h b/base/telephony/state_registry/services/include/telephony_state_registry_service.h
+index b3b920786f43bb326be69a8583dd1280d87d7049..75012d19a3670cf18f7319e231b6c46af8c01952 100644
+--- a/base/telephony/state_registry/services/include/telephony_state_registry_service.h
++++ b/base/telephony/state_registry/services/include/telephony_state_registry_service.h
+@@ -58,6 +58,7 @@ public:
+     int32_t UpdateCfuIndicator(int32_t slotId, bool cfuResult) override;
+     int32_t UpdateVoiceMailMsgIndicator(int32_t slotId, bool voiceMailMsgResult) override;
+     int32_t UpdateIccAccount() override;
++    int32_t UpdateCommunicationState(int32_t slotId, bool is5A) override;
+     int32_t UpdateSimActiveState(int32_t slotId, bool activeStateResult) override;
+     int32_t RegisterStateChange(const sptr<TelephonyObserverBroker> &telephonyObserver, int32_t slotId, uint32_t mask,
+         const std::string &bundleName, bool notifyNow, pid_t pid, int32_t uid, int32_t tokenId,
+@@ -92,6 +93,7 @@ private:
+     bool IsCommonEventServiceAbilityExist();
+
+ private:
++    std::map<int32_t, bool> communicationStates_;
+     ServiceRunningState state_ = ServiceRunningState::STATE_STOPPED;
+     std::shared_mutex lock_;
+     int32_t slotSize_ = 0;
+diff --git a/base/telephony/state_registry/services/include/telephony_state_registry_stub.h b/base/telephony/state_registry/services/include/telephony_state_registry_stub.h
+index 8dc7c9ad81f1db142828d3d4da509a529fe720cd..e08eaa9e4574ed39e58a65427f7e20ad356d12ee 100644
+--- a/base/telephony/state_registry/services/include/telephony_state_registry_stub.h
++++ b/base/telephony/state_registry/services/include/telephony_state_registry_stub.h
+@@ -66,6 +66,7 @@ private:
+     int32_t OnUpdateCfuIndicator(MessageParcel &data, MessageParcel &reply);
+     int32_t OnUpdateVoiceMailMsgIndicator(MessageParcel &data, MessageParcel &reply);
+     int32_t OnIccAccountUpdated(MessageParcel &data, MessageParcel &reply);
++    int32_t OnCommunicationStateUpdated(MessageParcel &data, MessageParcel &reply);
+     int32_t OnSimActiveStateUpdated(MessageParcel &data, MessageParcel &reply);
+     int32_t SetTimer(uint32_t code);
+     void CancelTimer(int32_t id);
+diff --git a/base/telephony/state_registry/services/src/telephony_state_registry_service.cpp b/base/telephony/state_registry/services/src/telephony_state_registry_service.cpp
+index c2c2b661e5ebcfbc76a77732471c6fb5829bd425..0ec939d74c967e0639de7e81e1fd00ff98d432a1 100644
+--- a/base/telephony/state_registry/services/src/telephony_state_registry_service.cpp
++++ b/base/telephony/state_registry/services/src/telephony_state_registry_service.cpp
+@@ -14,6 +14,9 @@
+  */
+
+ #include "telephony_state_registry_service.h"
++#include "accesstoken_kit.h"
++#include "access_token.h"
++#include "native_token_info.h"
+
+ #include <sstream>
+ #include <thread>
+@@ -597,7 +600,8 @@ int32_t TelephonyStateRegistryService::UnregisterStateChange(int32_t slotId, uin
+     if (!CheckCallerIsSystemApp(mask)) {
+         return TELEPHONY_ERR_ILLEGAL_USE_OF_SYSTEM_API;
+     }
+-    if (!CheckPermission(mask)) {
++    // Owner-scoped teardown must remain possible after permission revocation.
++    if (mask != TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE && !CheckPermission(mask)) {
+         return TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED;
+     }
+     std::unique_lock<std::shared_mutex> lock(lock_);
+@@ -617,7 +621,8 @@ int32_t TelephonyStateRegistryService::UnregisterStateChange(int32_t slotId, uin
+
+ bool TelephonyStateRegistryService::CheckPermission(uint32_t mask)
+ {
+-    if ((mask & TelephonyObserverBroker::OBSERVER_MASK_NETWORK_STATE) != 0) {
++    if ((mask & (TelephonyObserverBroker::OBSERVER_MASK_NETWORK_STATE |
++        TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE)) != 0) {
+         if (!TelephonyPermission::CheckPermission(Permission::GET_NETWORK_INFO)) {
+             TELEPHONY_LOGE("Check permission failed,"
+                 "you must declare ohos.permission.GET_NETWORK_INFO permission for network state");
+@@ -734,6 +739,13 @@ void TelephonyStateRegistryService::UpdateDataEx(const TelephonyStateRegistryRec
+                 callIncomingNumber_[record.slotId_]);
+         }
+     }
++    if ((record.mask_ & TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE) != 0) {
++        auto known = communicationStates_.find(record.slotId_);
++        if (known != communicationStates_.end() && Security::AccessToken::AccessTokenKit::VerifyAccessToken(
++            record.tokenId_, Permission::GET_NETWORK_INFO) == Security::AccessToken::PERMISSION_GRANTED) {
++            record.telephonyObserver_->OnCommunicationStateUpdated(record.slotId_, known->second);
++        }
++    }
+     if ((record.mask_ & TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE) != 0) {
+         TELEPHONY_LOGI("RegisterStateChange##Notify-OBSERVER_MASK_SIM_ACTIVE_STATE");
+         record.telephonyObserver_->OnSimActiveStateUpdated(record.slotId_, simActiveResult_[record.slotId_]);
+@@ -1034,5 +1046,33 @@ bool TelephonyStateRegistryService::IsCommonEventServiceAbilityExist() __attribu
+     }
+     return true;
+ }
++int32_t TelephonyStateRegistryService::UpdateCommunicationState(int32_t slotId, bool is5A)
++{
++    using namespace Security::AccessToken;
++    NativeTokenInfo nativeInfo;
++    auto token = IPCSkeleton::GetCallingTokenID();
++    if (AccessTokenKit::GetTokenTypeFlag(token) != TOKEN_NATIVE ||
++        AccessTokenKit::GetNativeTokenInfo(token, nativeInfo) != 0 || nativeInfo.processName != "telephony" ||
++        !TelephonyPermission::CheckPermission(Permission::SET_TELEPHONY_STATE)) {
++        return TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED;
++    }
++    if (!VerifySlotId(slotId)) { return TELEPHONY_STATE_REGISTRY_SLODID_ERROR; }
++    std::vector<TelephonyStateRegistryRecord> records;
++    {
++        std::unique_lock<std::shared_mutex> lock(lock_);
++        auto old = communicationStates_.find(slotId);
++        if (old != communicationStates_.end() && old->second == is5A) { return TELEPHONY_SUCCESS; }
++        communicationStates_[slotId] = is5A;
++        records = stateRecords_;
++    }
++    for (const auto& record : records) {
++        if (record.slotId_ == slotId && record.IsExistStateListener(TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE) &&
++            AccessTokenKit::VerifyAccessToken(record.tokenId_, Permission::GET_NETWORK_INFO) == PERMISSION_GRANTED) {
++            record.telephonyObserver_->OnCommunicationStateUpdated(slotId, is5A);
++        }
++    }
++    return TELEPHONY_SUCCESS;
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+diff --git a/base/telephony/state_registry/services/src/telephony_state_registry_stub.cpp b/base/telephony/state_registry/services/src/telephony_state_registry_stub.cpp
+index 32acab2e6b1ba95455f1e1ed22436636ab22d5e1..05a5442d2c6e6ae7a210841667f76b7add810485 100644
+--- a/base/telephony/state_registry/services/src/telephony_state_registry_stub.cpp
++++ b/base/telephony/state_registry/services/src/telephony_state_registry_stub.cpp
+@@ -59,6 +59,8 @@ TelephonyStateRegistryStub::TelephonyStateRegistryStub()
+         [this](MessageParcel &data, MessageParcel &reply) { return OnUpdateVoiceMailMsgIndicator(data, reply); };
+     memberFuncMap_[StateNotifyInterfaceCode::ICC_ACCOUNT_CHANGE] =
+         [this](MessageParcel &data, MessageParcel &reply) { return OnIccAccountUpdated(data, reply); };
++    memberFuncMap_[StateNotifyInterfaceCode::COMMUNICATION_STATE] =
++        [this](MessageParcel &data, MessageParcel &reply) { return OnCommunicationStateUpdated(data, reply); };
+     memberFuncMap_[StateNotifyInterfaceCode::SIM_ACTIVR_STATE] =
+         [this](MessageParcel &data, MessageParcel &reply) { return OnSimActiveStateUpdated(data, reply); };
+ }
+@@ -459,5 +461,13 @@ int32_t TelephonyStateRegistryStub::UnregisterStateChange(int32_t slotId, uint32
+     int32_t tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+     return UnregisterStateChange(slotId, mask, tokenId, IPCSkeleton::GetCallingPid());
+ }
++int32_t TelephonyStateRegistryStub::OnCommunicationStateUpdated(MessageParcel &data, MessageParcel &reply)
++{
++    int32_t slotId = 0;
++    bool is5A = false;
++    if (!data.ReadInt32(slotId) || !data.ReadBool(is5A)) { return TELEPHONY_ERR_ARGUMENT_INVALID; }
++    return reply.WriteInt32(UpdateCommunicationState(slotId, is5A)) ? NO_ERROR : TELEPHONY_ERR_WRITE_DATA_FAIL;
++}
++
+ } // namespace Telephony
+ } // namespace OHOS
+\ No newline at end of file

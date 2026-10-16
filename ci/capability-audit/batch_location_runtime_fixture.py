@@ -17,11 +17,12 @@ def runtime_sources(prefix=None):
         for name, text in files.items():
             target = source / (PREFIX + name)
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(text)
+            if text is not None:
+                target.write_text(text)
         patches = sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))
         for patch in patches if prefix is None else patches[:prefix]:
             subprocess.run(['git', 'apply', str(patch)], cwd=source, check=True, capture_output=True)
-        return {name: (source / (PREFIX + name)).read_text() for name in files}
+        return {name: (source / (PREFIX + name)).read_text() if (source / (PREFIX + name)).exists() else None for name in files}
 
 
 def function(source, signature):

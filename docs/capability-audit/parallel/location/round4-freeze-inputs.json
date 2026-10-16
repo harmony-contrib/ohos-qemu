@@ -1,0 +1,407 @@
+{
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "base_commit": "c77dddccc28c8e9f1fb67a380646fb875eac4a9d",
+  "project_revisions": {
+    "base/location/location": "5a0c49c2adb0623fdac73f76e4f98f2e57674c00",
+    "base/telephony/core_service": "504dcba74da128ed446967e328e5c7162bfebbe2",
+    "base/telephony/state_registry": "2327cba6f48f4274b269e530c48a919e2eed28b7",
+    "base/telephony/ril_adapter": "81fac83292857fcd9bee90808a81d8ad7224b4e0"
+  },
+  "targets": {
+    "base/location/location/frameworks/base_module/source/request_config.cpp": {
+      "exists": true,
+      "sha256": "ce53f9bbb79e4d8ad7978f43a94c8da74aa5eb2ede61f1cd2888229c259c3eb5",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp": {
+      "exists": true,
+      "sha256": "7f921b19e87a20ff24053cbf78e95d5d18689483363d98a9378e558c71f54c9d",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h": {
+      "exists": true,
+      "sha256": "d23ab24104b996f25f6ee47e8b2b965cdfb3741b6debeb8d4004a9f179862d22",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/include/location_napi_adapter.h": {
+      "exists": true,
+      "sha256": "df3a6935369feb2b0f186e24f8ab9177d6207dea0482541f38c1c20ad289f990",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp": {
+      "exists": true,
+      "sha256": "a3ad0ab918bccf1fdfa2c4a2e17aa7930d2ab7af2ad1cdd4dddeac6f8296662e",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp": {
+      "exists": true,
+      "sha256": "10f006e05e6acd07d360f5473110f032fc82a1b060d4c52dfb7b93afc72636c5",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp": {
+      "exists": true,
+      "sha256": "10b3d9a118b6abd5fe9e2bc3aaf8c0c4e11d35d6bf99bfc933e62deb8d74515e",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/napi_util.cpp": {
+      "exists": true,
+      "sha256": "36406ece4437d0ebb7cfb0c361b90035ae422bad312237945a7f29607caa71f0",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl": {
+      "exists": true,
+      "sha256": "082dc98ff2d23395c4b18533ef6574dd50c2d331f35a3dcdd038d2b582dbba9d",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp": {
+      "exists": true,
+      "sha256": "88f399fd86a5cf15383c074e0d84e2c1ef4e5f22e1f6df9452a7f3f1d4dc33bc",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/constant_definition.h": {
+      "exists": true,
+      "sha256": "66413a57e9914ce2850ac268297d4924ed630ec7aa830336bd7a1b73adbbfe36",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/fusion_fence_request.h": {
+      "exists": false,
+      "sha256": null
+    },
+    "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h": {
+      "exists": true,
+      "sha256": "b55ec5e3afe9de9eef869e414a1f87b2621e6ad2447270b0ac6f771ccb9585e1",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/locator_impl.h": {
+      "exists": true,
+      "sha256": "64b3c6e816e046b3bf2161afeb2cc9a8a8008ffa99447bf331cc1d3c7fa6ef8d",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/request_config.h": {
+      "exists": true,
+      "sha256": "d890828f8496ed04739d2ebb3b5b68ac748284755627b4faa2b4f717477f64a4",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/BUILD.gn": {
+      "exists": true,
+      "sha256": "6a7103d84ec91f572aa50aa49caf87af4cb749e227ddcbd8aca9912b53092d0f",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/locator_ability.h": {
+      "exists": true,
+      "sha256": "f18ef92972cafd8f0c0198c93a7f1f8120f03d3bf28d5cff9d5d99d78b8765d8",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h": {
+      "exists": true,
+      "sha256": "4e6da25f6e689033cd68ddf5d0661ab2bb446c91f91daa4ecd572fb926fbba05",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/report_manager.h": {
+      "exists": true,
+      "sha256": "59ee6ab5679e88a3351f8200ff49b364ed2ccda144e4710496b77326c3b35462",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/request_manager.h": {
+      "exists": true,
+      "sha256": "9323e1dcca912bb48a7ef0d8ae4df901eb7cdc3f576cc9484d9dca3aeaaa6327",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/locator_ability.cpp": {
+      "exists": true,
+      "sha256": "942a8a3d327d1dded66ad65c35e6fea0931280119992502b93e54bfc0a5513c9",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp": {
+      "exists": true,
+      "sha256": "02b59695678a6ef244f8a1b42c034b9759c9f2390060858241197e7b275c8155",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/report_manager.cpp": {
+      "exists": true,
+      "sha256": "1a945bcf7974898496400ea1cbe22461548e8228701b5d2c639b539742182db2",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/request_manager.cpp": {
+      "exists": true,
+      "sha256": "8617a90d00307e8018e72d87942b4a6c8a8e7d077cf854b6d68040f4716fd4ee",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/frameworks/native/src/telephony_state_registry_client.cpp": {
+      "exists": true,
+      "sha256": "00719b9bfc35394d4a57ace201039ad737adeb28c3e660f6f7f380f7bcfb5a32",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/frameworks/native/src/telephony_state_registry_proxy.cpp": {
+      "exists": true,
+      "sha256": "6cedf01df32548d73ee2939d9c3b091f0dbe1871005db162d14867f0351d3738",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/i_telephony_state_notify.h": {
+      "exists": true,
+      "sha256": "463595fe43ccb0f34ff2b070d979ab54f3a091d15985aaa3871412195674b53c",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/state_registry_ipc_interface_code.h": {
+      "exists": true,
+      "sha256": "3a517b3fe08879519feae40bfb238adaf1ecb8f2d482d391812957683322f9a8",
+      "crlf_count": 39
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h": {
+      "exists": true,
+      "sha256": "64a1b0b4cca2362802c6d324d511179fcfd629601e0aecaf0c10b3f612a678a1",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_client.h": {
+      "exists": true,
+      "sha256": "b5f29ab6bcd99fa19f42db96057ab166f11296028f06b9a61758f21df253c421",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_state_registry_proxy.h": {
+      "exists": true,
+      "sha256": "a8486fd2540506a9b5ab627cee03fe4c521b194cab3fdf835000619cde064a12",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/services/tel_ril/include/tel_ril_callback.h": {
+      "exists": true,
+      "sha256": "282a24281f6bd25a05dfd627ee4e661397851fcad4904261e36acfcbec91ef83",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/services/tel_ril/include/tel_ril_network.h": {
+      "exists": true,
+      "sha256": "6422d3636489a6040b6e4754eb59cc927128c86b6b05855cc587c1f9afcbbf8d",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/services/tel_ril/src/tel_ril_callback.cpp": {
+      "exists": true,
+      "sha256": "9e0df2c89a67a064bffa0df59930f3c68e268bb5ec633cc353759554b6fe30cd",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/services/tel_ril/src/tel_ril_network.cpp": {
+      "exists": true,
+      "sha256": "557f516f54df158eabdc6a470f3745194ae00dd93a8f2c563cca334bd8bb2ed6",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/interfaces/innerkits/include/hril_notification.h": {
+      "exists": true,
+      "sha256": "e4e1f3bf971924bab92f414cb01d621da52c80daf667c071252171d905405615",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/services/hril/include/hril_network.h": {
+      "exists": true,
+      "sha256": "d07b0476f6952a5813028414f4c2a9bbd59774440eead70159b59b59a137da28",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/services/hril/include/hril_notification_map.h": {
+      "exists": true,
+      "sha256": "219122ef62a5b53088595b7822b6f6c25ae3af137def5df73c12b1f38b710f5c",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/services/hril/src/hril_network.cpp": {
+      "exists": true,
+      "sha256": "2aa99dbad88fe5830262d0ad415babe7cf03d4495a7cda01966365b5172d94ea",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/services/vendor/src/vendor_report.c": {
+      "exists": true,
+      "sha256": "c464eef0823a37415e79dfafc8c6cba1eff10d7ae5addd2b19e33a2707c37adc",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/ets/@ohos.telephony.observer.ets": {
+      "exists": true,
+      "sha256": "f93d9fdd2f585959baab482de7bbebd7089db0f4b281224bf5e4b9ee8caacc9f",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/include/observer_ani.h": {
+      "exists": true,
+      "sha256": "56d44d9f525df9b8fc4046510f6b55251aaaa153bf7df8d4dc57d7b385af5854",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/cxx/observer_ani.cpp": {
+      "exists": true,
+      "sha256": "97212899a78e2c4379d4502f015e165d475c282945ecd6001e54af1ec2464a74",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/lib.rs": {
+      "exists": true,
+      "sha256": "9510ebede31d94bf0a26b85888298be93abae235b657519d8d4b03b825bb13ad",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/observer.rs": {
+      "exists": true,
+      "sha256": "cc56a62afb4fc910f53a577f0ee4c7097d6d38336142ddbd3ee58f4fa5f47812",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/register.rs": {
+      "exists": true,
+      "sha256": "6f13b468670a723d0c69b8e7582185d5c994a8cfd49977a9d83479e3f72aaab8",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/ets/ani/observer/src/wrapper.rs": {
+      "exists": true,
+      "sha256": "204022739425755874e9965a66198ef5b65c7670ea24d626d4bf667b3b8f681f",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/event_listener_handler.h": {
+      "exists": true,
+      "sha256": "d6741e37d68b102a52f6637b05fe441b6dc49700379a0fab9fa9629ea9cb6379",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/event_listener_manager.h": {
+      "exists": true,
+      "sha256": "ff410a0d836088a8a91c01c7e5eeb764b9196bffe3a0cead1a6002f7d0bbe285",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/napi_telephony_observer.h": {
+      "exists": true,
+      "sha256": "1811650f97f63a6b2d61c0e21d859fc7caf4318309910531297c4317ea084691",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/telephony_callback_event_id.h": {
+      "exists": true,
+      "sha256": "99b35afd961d583afe67f3a139893c82083c84f71544a07a479db546a9d1e914",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/telephony_update_event_type.h": {
+      "exists": true,
+      "sha256": "f27a85e9f8d7e1ddeb4c31894afe54837a95d305cd619dce99cda1aba021781d",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/update_contexts.h": {
+      "exists": true,
+      "sha256": "8d8884f4fd5bb569b8d50a4ce6585ca685fae118dbfe3a34c42279d175aff0e6",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/include/update_infos.h": {
+      "exists": true,
+      "sha256": "4f961ef3f78137459e990295415af4e9f8e80a83caf109de05103bfba2291fad",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/src/event_listener_handler.cpp": {
+      "exists": true,
+      "sha256": "fd37e408438c441b671c84cdc184c3f52c759c658f134e2f80d6eab7d1a10fc3",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/src/event_listener_manager.cpp": {
+      "exists": true,
+      "sha256": "c0b11169a00933bad829e6cbd5f715c028297ea526ea67bdc5bd82201323b163",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/src/napi_state_registry.cpp": {
+      "exists": true,
+      "sha256": "5bf6a029a8a199b674b2373ccad58a975db27f4405b3071efca22dbac0beccf0",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/js/napi/src/napi_telephony_observer.cpp": {
+      "exists": true,
+      "sha256": "05626c8318f89f3271897d6e6b4b77e9e57b7815e899f10c5176277889dfdd7d",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h": {
+      "exists": true,
+      "sha256": "09924d02d21c20d45c8feca009003a4e792bcd8464ba08e2ec8a08d25aa42fc7",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/native/observer/src/telephony_observer.cpp": {
+      "exists": true,
+      "sha256": "9be347bf436fcade40d2b9bc81409abaeb6642c930bf29d3032371e65aad2f92",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/frameworks/native/observer/src/telephony_observer_proxy.cpp": {
+      "exists": true,
+      "sha256": "2c48b7d47da39e67b4d61f6d950d1d83fc52d9d44c6a2401dc6e78e59f711dce",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/interfaces/innerkits/observer/telephony_observer.h": {
+      "exists": true,
+      "sha256": "5d3c990e9de1e53f9b952982cb6a727393d7533a45f2545921676ae51b551fd7",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/services/include/telephony_state_registry_service.h": {
+      "exists": true,
+      "sha256": "c3463340459ddd3be40a75f1546f9ba2e748d0b751799eff84c7d12ce58c2a64",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/services/include/telephony_state_registry_stub.h": {
+      "exists": true,
+      "sha256": "fa758ef8605cdf383b0fc392dd0447add270ee5058e990021062f4a29294b83d",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/services/src/telephony_state_registry_service.cpp": {
+      "exists": true,
+      "sha256": "7e8469567846cec706144cab8772bacc3fd811144aa11a7db4f4d63a1f606e50",
+      "crlf_count": 0
+    },
+    "base/telephony/state_registry/services/src/telephony_state_registry_stub.cpp": {
+      "exists": true,
+      "sha256": "1d94a39f52efb938f8c1ba6140271a024c1cdde4ce4d428abeafad2c8527e31f",
+      "crlf_count": 0
+    }
+  },
+  "extra_inputs": {
+    "base/location/location/config.gni": {
+      "sha256": "02a3edca783281c0ee490f73166ed9004f9bfcfa140d5a521adf07c10612cd1f",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/BUILD.gn": {
+      "sha256": "6a7103d84ec91f572aa50aa49caf87af4cb749e227ddcbd8aca9912b53092d0f",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/core_service_client.h": {
+      "sha256": "ee23f48de93c6a0f68c015bdd182840cb1dc6b2eb9a245f497562e66a7289a57",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/cell_information.h": {
+      "sha256": "b65571ef482eb2ce9643bfa6aa2e50fa52eee6b10e2faa29b15f33883ca84d12",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/frameworks/native/src/cell_information.cpp": {
+      "sha256": "82977ec97620ea8b8c0fcc1cec61a8c39063de834b323f6096fd3d4e96671cc8",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/services/etc/init/telephony.cfg": {
+      "sha256": "98e21da5da953b96b0122365b1a7da21b3047155a219336393170a78948831af",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_errors.h": {
+      "sha256": "e4dc82e29492634438540a9e566d93025012f8d4405b7039edc6244c03dd867e",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/interfaces/innerkits/include/hril.h": {
+      "sha256": "58ae64ff5ae996cff605b047096a52e9e97a453c50060a771352c1798e93098b",
+      "crlf_count": 0
+    },
+    "base/telephony/ril_adapter/interfaces/innerkits/include/hril_public_struct.h": {
+      "sha256": "917e15752d5ca167cc0833b9ce9b2800a7bf5fb3e9c8d2a643b07f867df8de9f",
+      "crlf_count": 0
+    },
+    "base/security/access_token/interfaces/innerkits/accesstoken/include/access_token.h": {
+      "sha256": "5d88584a37e44a1374cb0cd278ae38df0bbfa18aa431533eab34cdf26a148652",
+      "crlf_count": 0
+    },
+    "base/security/access_token/interfaces/innerkits/accesstoken/include/accesstoken_kit.h": {
+      "sha256": "2edbeedcbc55b50cbb979069f482717070121fca958bfb5f811fd1796039470a",
+      "crlf_count": 687
+    },
+    "base/security/access_token/interfaces/innerkits/accesstoken/include/native_token_info.h": {
+      "sha256": "9115feb270eaa38670b7c4f25ee171dd1d74486532da503d7d5642dada749405",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/interfaces/innerkits/include/telephony_types.h": {
+      "sha256": "e25e2c86c80f28fb71b6b06c35ac2cc00354e1429a6a73104fa4e499318a541b",
+      "crlf_count": 0
+    },
+    "base/telephony/core_service/utils/common/include/telephony_permission.h": {
+      "sha256": "83d96081e8b71204388d30ad876473587dc0a58c573674c1c594a975234554ac",
+      "crlf_count": 0
+    }
+  },
+  "location_source_states": "patches/common/base/location/location/api26_runtime/source_states.json",
+  "communication_source_states": "patches/common/base/telephony/state_registry/communication_state/source_states.json",
+  "scope": "66 cumulative location+communication source targets; RTT 4 targets remain separately pinned by their existing component",
+  "parent_hdi_evidence": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-RIL-communication-full-HDI-04/artifacts/ril/evidence.json",
+    "sha256": "376f5f0c9ba7533fdfe37bb8714977e5e403469a504741de721c84faed39a7d8",
+    "claim": "Parent reported complete inherited IDL old mappings stable, new callback162, actual full generated proxy/stub platform TUs passed. No business/modem/runtime claim."
+  }
+}
