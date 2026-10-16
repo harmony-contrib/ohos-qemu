@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-17T03:45:12.705631+08:00",
+  "updated_at": "2026-10-17T03:52:01.755292+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
   "checkpoint_commit": "1a97e6f",
   "ledger": {
@@ -1415,7 +1415,7 @@
     }
   },
   "agents": {
-    "apps": "9041107 integrated; readonly fullbuild wiring review completed, no confirmed representative wiring blocker; explicit one product required",
+    "apps": "6fbacdf exact GNSS prefix and complete predecessor upgrade integrated; host GNSS/Contacts guard44 tests PASS; actual source/GN pending",
     "media": "f15c8a2 narrow exact SDK strip utility integrated; root actual replay plus host adapter PASS; no active lease",
     "system": "7b25af8 fixed default Chinese foreground consent source contract integrated; no active source/out reads",
     "network": "prior source/API/focus fixes integrated; no active write or heavy lease",
@@ -1444,7 +1444,7 @@
     "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied"
   ],
   "next_required": [
-    "Integrate exact GNSS BUILD upgrade and batch real calendar resource Docker forwarding; complete actual source preparation and GN preflight",
+    "Actual full source preparation06 with selected official CN2026 ICS and exact GNSS predecessor migration, then GN-only preflight",
     "One full ARM64 phone image build, all3 native witnesses and package guards",
     "Fresh helper DSO binding and complete new packaged guest acceptance",
     "Only after representative gate PASS build and accept the other five"

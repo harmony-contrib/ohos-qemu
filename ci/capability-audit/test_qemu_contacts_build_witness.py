@@ -36,7 +36,7 @@ class ContactsWitnessTests(unittest.TestCase):
         return text, rules
 
     def argv(self, product='arm64_virt'):
-        return ['./build.sh', '--product-name', product, '--build-target', 'images', '--build-only-load=false', '--fast-rebuild=false']
+        return ['./build.sh', '--product-name', product, '--build-target', 'images', '--build-only-load=false', '--build-only-gn=false', '--fast-rebuild=false']
 
     def log(self, source='/source', product='arm64_virt'):
         lines = ['[OHOS INFO] [NINJA] [1/999] CXX ' + unit for unit in G.UNITS]
@@ -105,7 +105,10 @@ class ContactsWitnessTests(unittest.TestCase):
 
     def test_required_full_images_argv_and_single_explicit_boolean_values(self):
         raw = self.argv(); G.full_build_argv(raw, 'arm64_virt')
-        for changed in (raw[:-1], raw + ['--fast-rebuild=true'], raw + ['--build-target', 'contact'],
+        for changed in (raw[:-1], raw + ['--fast-rebuild=true'], raw + ['--build-only-gn=true'],
+                        [s for s in raw if s != '--build-only-gn=false'],
+                        [s.replace('--build-only-gn=false', '--build-only-gn=true') for s in raw],
+                        raw + ['--build-target', 'contact'],
                         [s.replace('images', 'contact') for s in raw], [s.replace('arm64_virt', 'x86_64_virt') for s in raw],
                         [s.replace('--build-only-load=false', '--build-only-load=true') for s in raw], {'argv': raw}):
             with self.assertRaises(ValueError): G.full_build_argv(changed, 'arm64_virt')

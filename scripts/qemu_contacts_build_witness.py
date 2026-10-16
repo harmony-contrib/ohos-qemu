@@ -336,7 +336,8 @@ def full_build_argv(argv, product):
         require(len(values) == 1, 'unique full build argument required: ' + key)
         return values[0]
     require(option('--product-name') == product and option('--build-target') == 'images' and
-            option('--build-only-load') == 'false' and option('--fast-rebuild') == 'false',
+            option('--build-only-load') == 'false' and option('--build-only-gn') == 'false' and
+            option('--fast-rebuild') == 'false',
             'actual images build with fresh GN (not persisted fast/load-only) required')
 
 

@@ -1574,6 +1574,7 @@ PY
     # Always regenerate the graph for this source snapshot. hb otherwise may
     # inherit fast_rebuild from an earlier invocation and retain old JS/ABC paths.
     --fast-rebuild=false
+    --build-only-gn=false
     --ccache
     "--ninja-args=-j${BUILD_JOBS}"
     --load-test-config=false
