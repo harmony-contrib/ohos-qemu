@@ -349,6 +349,10 @@ def verify_fresh_snapshot(actor, native, reference, run):
             'callback_count', 'offset', 'end_offset', 'reply_prepared_ns')
     if any(type(value.get(k)) is not int or value[k] < 0 for k in keys):
         raise ValueError('fresh MIC actual callback/clock bounds invalid')
+    for prefix in ('request_', ''):
+        before, after, stamp = (value[prefix + name] for name in ('query_before_ns', 'query_after_ns', 'timestamp_ns'))
+        if not 0 <= after - before <= 200000000 or not before - 1000000000 <= stamp <= after + 100000000:
+            raise ValueError('fresh MIC timestamp clock domain/query interval invalid')
     low, high = interval(point['request_clock_interval'])
     if (not max(low, signal['monotonic_ns']) <= value['request_seen_ns'] <= high + 1000000000 or
             not value['request_seen_ns'] <= value['request_query_before_ns'] <= value['request_query_after_ns'] <= value['query_before_ns'] or

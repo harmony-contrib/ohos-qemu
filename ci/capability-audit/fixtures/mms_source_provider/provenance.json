@@ -10,6 +10,10 @@
     "signature/mms.p7b": {
       "file": "signature_mms.p7b.gz.b64",
       "sha256": "b18d4d1106a00e7b45aa87ecee15c5dcbd2b4f87f03e0a3b9afa4229f7efbf3a"
+    },
+    "oh-package.json5": {
+      "file": "oh-package.json5.gz.b64",
+      "sha256": "648bd2c3d9ed022f4e14d5cde43197ddd842ba38c037739fc696e4d0e0ebca12"
     }
   }
 }

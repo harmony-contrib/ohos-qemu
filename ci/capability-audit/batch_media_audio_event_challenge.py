@@ -5,6 +5,12 @@ from pathlib import Path
 HERE=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('event_pcm_oracle',HERE/'batch_media_audio_capture_challenge.py');pcm=importlib.util.module_from_spec(spec);spec.loader.exec_module(pcm)
 
+def snapshot_clock(row):
+ for key in ('before_ns','after_ns','timestamp_ns','position'):
+  if type(row.get(key))is not int or row[key]<0:raise ValueError('actual event timestamp/frame bounds invalid')
+ before,after,stamp=row['before_ns'],row['after_ns'],row['timestamp_ns']
+ if before<=0 or stamp<=0 or not 0<=after-before<=200000000 or not before-1000000000<=stamp<=after+100000000:raise ValueError('actual event timestamp clock domain/query interval invalid')
+
 def verify_primer(rows,directory,reference,run,ready,ack,main_steps):
  # Explicitly separate the contender's genuine MIC primer from VOIP focus input.
  steps=[r for r in rows if r.get('type')=='event_primer_step']
@@ -13,6 +19,7 @@ def verify_primer(rows,directory,reference,run,ready,ack,main_steps):
  if not steps[-2]['monotonic_ns']<=main_steps[0]['monotonic_ns']:raise ValueError('VOIP generated before real primer release')
  snapshots=[r for r in rows if r.get('type')=='event_snapshot' and r.get('point')=='primer_baseline']
  if len(snapshots)!=50 or any(r.get('phase')!=0 or r.get('state_result')!=0 or r.get('state')!=2 or r.get('frames_result')!=0 or r.get('timestamp_result')!=0 or r.get('invalid')!=0 for r in snapshots):raise ValueError('MIC primer was not actually RUNNING with valid timestamps')
+ for row in snapshots:snapshot_clock(row)
  first,last=snapshots[0],snapshots[-1];delta=last['timestamp_ns']-first['timestamp_ns']
  if delta<=0 or not 48000*.98<=(last['position']-first['position'])*1e9/delta<=48000*1.02:raise ValueError('MIC primer frame/timestamp rate mismatch')
  items=[r for r in rows if r.get('type')=='event_primer_pcm'];name=f'audio-event-{run}-mode2-primer-full.pcm'
@@ -69,6 +76,7 @@ def verify(results,directory,manifest,challenge,identity,run,mode):
  baseline=pcm.phase_content(pre,reference)
  snapshots=[r for r in rows if r.get('type')=='event_snapshot'];initial=[r for r in snapshots if r.get('point')=='baseline']
  if len(initial)!=50 or any(r.get('state_result')!=0 or r.get('state')!=2 or r.get('frames_result')!=0 or r.get('timestamp_result')!=0 or r.get('invalid')!=0 for r in initial):raise ValueError('actual running baseline states/frame/timestamp queries failed')
+ for row in initial:snapshot_clock(row)
  first,last=initial[0],initial[-1];advance=last['position']-first['position'];delta=last['timestamp_ns']-first['timestamp_ns']
  if delta<=0 or not 48000*.98<=advance*1e9/delta<=48000*1.02:raise ValueError('native baseline frame/timestamp rate mismatch')
  checkpoints=[r for r in rows if r.get('type')=='event_checkpoint']
@@ -79,6 +87,7 @@ def verify(results,directory,manifest,challenge,identity,run,mode):
  intervals=[r for r in rows if r.get('type')=='event_start_interval']
  if len(intervals)!=1 or intervals[0].get('actual')!=0 or type(intervals[0].get('before_ns'))is not int or not 0<=intervals[0].get('after_ns',-1)-intervals[0]['before_ns']<2000000000:raise ValueError('actual Start call interval missing/invalid')
  callbacks=[r for r in rows if r.get('type')=='event_callback']
+ if any(r.get('kind')==2 for r in callbacks):raise ValueError('actual capture stream delivered an unexpected native error')
  def quiet(action,point):
   ack=next(r for r in acks if r['action']==action);after=ack['monotonic_ns']+200000000
   post=[r for r in snapshots if r.get('point')==point and r.get('before_ns',0)>=after]

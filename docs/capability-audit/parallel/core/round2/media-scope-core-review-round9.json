@@ -1,0 +1,42 @@
+{
+  "status": "pass",
+  "agent": "media",
+  "requirements_reviewed": 7,
+  "changed_files": [
+    "docs/capability-audit/parallel/media/round9-core-review/REVIEW.md",
+    "docs/capability-audit/parallel/media/round9-core-review/host-observations.json",
+    "docs/capability-audit/parallel/media/round9-core-review/reproduce_oracle_gaps.py",
+    "docs/capability-audit/parallel/media/round9-core-review/review-inputs.json"
+  ],
+  "upstream_targets": [
+    "device/qemu/common/virt_full/audio_alsa/vendor_capture.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c",
+    "foundation/multimedia/av_codec/interfaces/inner_api/native/audio_capture_filter.h",
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp",
+    "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp",
+    "foundation/multimedia/av_codec/services/media_engine/filters/audio_capture_filter.cpp",
+    "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.cpp",
+    "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.h",
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h",
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp",
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn",
+    "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp",
+    "foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js",
+    "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn",
+    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h",
+    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h",
+    "foundation/multimedia/media_library/services/media_rdbstore/include/rdbstore/knowledge_holiday_index.h",
+    "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp",
+    "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp",
+    "foundation/multimedia/player_framework/frameworks/native/capi/recorder/native_avrecorder.cpp"
+  ],
+  "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
+  "first_artifact_behavior_gate_passed": false,
+  "base": "54f1ae07a4a6096a6334c67a5ccbb3ca997e312f",
+  "head": "a9f988fc56ee4f9407fd6e6bb0d6e0d6b31957c4"
+}

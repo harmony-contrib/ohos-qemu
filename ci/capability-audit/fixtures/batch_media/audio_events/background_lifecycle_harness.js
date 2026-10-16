@@ -11,6 +11,7 @@ async function scenario(name) {
   const calls = []; const callbacks = {}; const timers = new Map();
   let notificationEnabled = name !== 'notification_denied';
   let actualStatus = 0; let evidenceBroken = false;
+  let readyReads = 0; let completeReady = '';
   const originalBusinessError = { name: 'BusinessError', code: 13900012,
     message: '真实受控SDK失败/readonly', stack: 'controlled-original-stack', data: { operation: name, errno: 5 } };
   function assertOriginalError(error) {
@@ -24,7 +25,10 @@ async function scenario(name) {
       calls.push('native_run');
       const ready = { run_id: run, action: 'focus_begin', state_result: 0,
         state: name === 'not_running' ? 3 : 2, frames_result: 0, frames: 57600, copied_bytes: 230400 };
-      fs.writeFileSync(path.join(directory, 'audio-event-' + run + '-focus_begin-ready.json'), JSON.stringify(ready));
+      completeReady = JSON.stringify(ready) + '\n';
+      const raw = name === 'empty_ready' ? '' : name === 'short_ready' ? '{"run_id":' :
+        name === 'malformed_ready' ? '{"invalid": }\n' : completeReady;
+      fs.writeFileSync(path.join(directory, 'audio-event-' + run + '-focus_begin-ready.json'), raw);
       return true;
     },
     status: () => actualStatus,
@@ -45,7 +49,11 @@ async function scenario(name) {
   };
   const file = {
     OpenMode: { CREATE: 1, WRITE_ONLY: 2 }, accessSync: fs.existsSync,
-    readTextSync: (filename) => { if (name === 'business_read_error') throw originalBusinessError; return fs.readFileSync(filename, 'utf8'); },
+    readTextSync: (filename) => {
+      if (name === 'business_read_error') throw originalBusinessError;
+      if ((name === 'empty_ready' || name === 'short_ready') && ++readyReads === 2) fs.writeFileSync(filename, completeReady);
+      return fs.readFileSync(filename, 'utf8');
+    },
     openSync: (filename) => { if (name === 'business_open_error') throw originalBusinessError; if (evidenceBroken) throw new Error('controlled EIO'); return { fd: fs.openSync(filename, 'wx', 0o600) }; },
     writeSync: (fd, bytes) => fs.writeSync(fd, Buffer.from(bytes)), fsyncSync: fs.fsyncSync,
     closeSync: (handle) => fs.closeSync(handle.fd)
@@ -82,8 +90,8 @@ async function scenario(name) {
     }
     assert(calls.includes('native_abort')); assert.strictEqual(actualStatus, 2);
     assert.strictEqual(calls.includes('background_start'), name === 'business_background_error');
-  } else if (name === 'not_running') {
-    await assert.rejects(session.start(true), /no real RUNNING PCM/);
+  } else if (name === 'not_running' || name === 'malformed_ready') {
+    await assert.rejects(session.start(true), name === 'not_running' ? /no real RUNNING PCM/ : /SyntaxError/);
     assert(calls.includes('native_abort')); assert(!calls.includes('background_start'));
   } else {
     await session.start(true);
@@ -105,9 +113,9 @@ async function scenario(name) {
   // The actual helper's cleanup is asynchronous; allow its returned service promises to resolve.
   await new Promise((resolve) => setImmediate(resolve));
   assert.strictEqual(timers.size, 0); assert.deepStrictEqual(Object.keys(callbacks), []);
-  if (name !== 'not_running' && !name.startsWith('business_')) assert(calls.includes('background_stop'));
+  if (name !== 'not_running' && name !== 'malformed_ready' && !name.startsWith('business_')) assert(calls.includes('background_stop'));
 }
 (async () => {
-  for (const name of ['normal', 'cancel', 'not_running', 'notification_denied', 'evidence_io_error', 'business_open_error', 'business_read_error', 'business_background_error']) await scenario(name);
-  console.log('Actual ETS helper with controlled SDK dependencies:8 scenarios passed, including original BusinessError code/message/name/stack/data retained through all3 converted Error paths and abort/cleanup; not runtime proof');
+  for (const name of ['normal', 'empty_ready', 'short_ready', 'malformed_ready', 'cancel', 'not_running', 'notification_denied', 'evidence_io_error', 'business_open_error', 'business_read_error', 'business_background_error']) await scenario(name);
+  console.log('Actual ETS helper with controlled SDK dependencies:11 scenarios passed, including empty/short ready retry, complete malformed record refusal and original BusinessError retained; not runtime proof');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

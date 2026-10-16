@@ -33,3 +33,23 @@ diff --git a/applications/standard/mms/build-profile.json5 b/applications/standa
          "compileSdkVersion": "26.0.0",
          "compatibleSdkVersion": 23,
          "targetSdkVersion": 23,
+diff --git a/applications/standard/mms/oh-package.json5 b/applications/standard/mms/oh-package.json5
+--- a/applications/standard/mms/oh-package.json5
++++ b/applications/standard/mms/oh-package.json5
+@@ -6,14 +6,11 @@
+   "main": "",
+   "author": "",
+   "license": "ISC",
+-  "devDependencies": {
+-    "@ohos/hypium": "1.0.19"
+-  },
+   "dynamicDependencies": {},
+   "overrides": {
+     "long": "5.2.3"
+   },
+   "dependencies": {
+-    "class-transformer": "0.5.1",
++    "class-transformer": "file:./class-transformer-0.5.1.tgz",
+   }
+ }
+\ No newline at end of file

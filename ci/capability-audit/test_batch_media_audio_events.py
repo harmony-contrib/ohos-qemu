@@ -200,6 +200,19 @@ int main(int argc,char **argv){assert(argc==2);const std::string directory=std::
    with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:
     root=Path(temp);_,results,identity,challenge=self.prepare(root,mode);report=self.verify(root,results,identity,challenge,mode)
     self.assertEqual(report['closed_requirements'],0);self.assertTrue(report['external_token_or_second_app_policy_evidence_required'])
+ def test_unexpected_error_and_shifted_clock_rejected_for_all_three_roles(self):
+  for mode in [0,1,2]:
+   with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);original,results,identity,challenge=self.prepare(root,mode)
+    variants=[]
+    error=copy.deepcopy(original);error.insert(-1,dict(type='event_callback',run_id=RUN,kind=2,code=6800302,hint=0,monotonic_ns=11500000000));variants.append(error)
+    shifted=copy.deepcopy(original)
+    for row in shifted:
+     if row.get('point') in ('baseline','primer_baseline'):row['timestamp_ns']+=3600000000000
+    variants.append(shifted)
+    for rows in variants:
+     results.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+     with self.assertRaises(ValueError):self.verify(root,results,identity,challenge,mode)
  def test_primer_missing_silence_counter_only_and_stopped_are_rejected(self):
   with tempfile.TemporaryDirectory() as temp:
    root=Path(temp);rows,results,identity,challenge=self.prepare(root,2)

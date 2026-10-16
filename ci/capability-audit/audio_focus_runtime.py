@@ -82,6 +82,10 @@ def validate_fresh(reply, ready, uid, request_interval, constants):
     if any(type(reply.get(key)) is not int or reply[key] < 0 for key in numbers):
         raise ValueError('fresh reply counters/clocks invalid')
     q = reply
+    for prefix in ('request_', ''):
+        before, after, stamp = (q[prefix + name] for name in ('query_before_ns', 'query_after_ns', 'timestamp_ns'))
+        if not 0 <= after - before <= 200000000 or not before - 1000000000 <= stamp <= after + 100000000:
+            raise ValueError('fresh reply timestamp clock domain/query interval invalid')
     if (not ready['monotonic_ns'] <= request_interval[0] <= q['request_seen_ns'] < q['first_callback_ns'] <=
             q['last_callback_ns'] <= q['copy_before_ns'] <= q['copy_after_ns'] <= q['query_before_ns'] <=
             q['query_after_ns'] <= q['reply_prepared_ns'] < ready['monotonic_ns'] + 15000000000 or

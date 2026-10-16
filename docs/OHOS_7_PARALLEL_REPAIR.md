@@ -258,3 +258,11 @@ GNSS系统Linux测试4288e492已scope检查合入30774b8：GNU11.4/Werror/ASan/U
 本批apps独占Settings share picker5文件与MMS text sendData3文件（详见parallel-work-plan.json）；ACTION_CHOOSE/HMS/Bluetooth及未实现附件链仍明确缺失。system获唯一CPU2/mem5g租约，仅做真实OHOS GNSS DSO ABI/CFI消费端；Settings/MMS官方SDK编译排队，不并发重型任务。
 
 apps324d17f经五组upstream互斥scope通过后合入38c630e：真实Settings sysPicker/share与MMS text/plain草稿路由。根新增MMS固定26df98e源码ohos_app、QEMU原mms_hap选择接到源码目标，保留非QEMU预编译分支；仅将原MMS normal/system-app profile的分发证书和到期时间接到现有公共OS签名者，原ACL/受限项、两份原预装能力/四项授权的字段全部精确保留。未知签名/额外权限/重复条目拒绝；Admin完整已知MMS后继哈希允许整栈重放。33项相关source/策略/Share/Settings包检查PASS；01最初mac /var符号路径fixture失败保留，修正fixture.resolve后02/03通过。Settings/MMS官方SDK及实际签名/BMS/界面仍待验，分享不宣称消息发送成功，旧ACTION_CHOOSE/HMS/file-attachment缺口保留。
+
+system实际OHOS ABI/CFI消费端 b80c6b1合入8484f87：QEMU-user02 exit0，13真实DSO、两次callback/unmap、reload和旧nonce拒绝，源码与真实loader证据保留；非guest/Binder路径。scope首查漏登记已授权tests目录而失败，明确补录该前缀后再查PASS，01失败保留，未发现五组产品文件重叠。
+
+media只读round9 a9f988f合入a945ca9，发现ETS ready短写、主流error_callback漏判、event时间戳仅增量三个缺口；根已集中修，11项对应host检查PASS，包括实际ETS helper11场景和mode0/1/2 error/超前一小时负向对照。新ETS尚须三HAP真实编译和guest执行。
+
+Settings/MMS当前官方SDK01完整尝试失败：host公共26.0.0.105缺系统组件声明（419 compiler errors，418条带文件坐标），MMS官方OHPM TLS重置。未将公共SDK缺system声明误认为419个独立产品缺陷。Settings转实际产品Linux26.0.0.39 SDK；02的CLI fetch_timeout太小、03的image原有/root/.ohpm断链、04缺私有pnpm缓存依次保留，均未进入ArkTS；05用私有root tmpfs和已有真实pnpm10.27缓存正在完整编译。根另固定真实NPM class-transformer0.5.1 tar SHA256=49efad879d3cc811a46e6baf72b0454a4f271c0da6b7899d024bdfcf94961f7e（已与官方metadata sha512核对），改本地固定依赖并去掉生产HAP未用的hypium devDependency；不改运行权限/ACL。
+
+Contacts/Theme八个构建元数据d3823b8经scope通过合入f7a6ff5；真实业务仍有picker会话/计时器和renderer窗口清理待apps本批修复。Theme仅渲染扩展，未称壁纸设置UI已提供。82项未关闭、交付0/6、代表包完整运行门禁false，其余五包未启动。

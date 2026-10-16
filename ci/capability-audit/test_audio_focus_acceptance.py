@@ -59,7 +59,8 @@ class FreshFocusEvidence(unittest.TestCase):
             changes = ({'state': 3}, {'source_type': 7}, {'rate': 44100}, {'channels': 1}, {'format': 3},
                        {'state_result': 2}, {'first_callback_ns': 1480000000}, {'callback_count': 49},
                        {'request_nonce': 'c' * 32}, {'requested_offset': 192000}, {'frames': 24000},
-                       {'request_seen_ns': 1400000000}, {'query_after_ns': 2500000000})
+                       {'request_seen_ns': 1400000000}, {'query_after_ns': 2500000000},
+                       {'timestamp_ns': 3602000000000}, {'request_timestamp_ns': 3601490000000})
             for change in changes:
                 broken = copy.deepcopy(actor);point = broken['fresh_snapshots'][0];point['observation'].update(change)
                 reply = Path(broken['files']['reply']['path']);reply.write_text(json.dumps(point['observation']))

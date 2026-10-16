@@ -3268,6 +3268,9 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_admin_signing_policy.log"
   bash "${PATCH_ROOT}/common/applications/standard/mms/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_source_provider.log"
+  python3 "${PATCH_ROOT}/common/applications/standard/mms/source_provider/prepare_dependencies.py" \
+    --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/mms-source-dependencies" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_mms_source_dependencies.log"
   bash "${PATCH_ROOT}/common/applications/standard/mms/send_data_text/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_send_data_text.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/mms_provider/apply.sh" --source-root "${OHOS_ROOT}" \

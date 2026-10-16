@@ -128,7 +128,14 @@ class AudioRecordingSession {
           throw new Error('Native stream finished before actual microphone readiness');
         }
         if (fs.accessSync(path)) {
-          const ready = JSON.parse(fs.readTextSync(path)) as AudioEventReady;
+          const raw = fs.readTextSync(path);
+          // Native CREATE precedes the final write. Only a newline-terminated
+          // record is complete; retain the same bounded wait for a short read.
+          if (!raw.endsWith('\n')) {
+            await new Promise<void>((resolve) => { setTimeout(resolve, 20); });
+            continue;
+          }
+          const ready = JSON.parse(raw) as AudioEventReady;
           if (ready.run_id !== this.runId || ready.action !== action || ready.state_result !== 0 ||
             ready.state !== 2 || ready.frames_result !== 0 || ready.frames <= 0 || ready.copied_bytes <= 0) {
             throw new Error('Native microphone readiness has no real RUNNING PCM');
