@@ -119,8 +119,10 @@ class CaptureRuntime:
         result = json.loads(self.actual_shell(f'{self.remote}/audio_capture_token {self.run} {uid} query',
                                               'independent-MIC-token-' + phase))
         if (result.get('uid') != uid or result.get('run_id') != self.run or result.get('result') != 0 or
-                result.get('operation') != 'query' or result.get('before') != result.get('after')):
+                result.get('operation') != 'query' or type(result.get('before')) is not int or
+                result.get('before') not in (-1, 0) or type(result.get('after')) is not int or result.get('after') not in (-1, 0)):
             raise ValueError('independent actual AccessToken query does not match the ordinary caller')
+        self.last_token = result
         self.value['tokens'].append({'phase': phase, 'observation': result})
         self.save()
         return result['after']
@@ -160,7 +162,8 @@ class CaptureRuntime:
         # requestPermissionsFromUser and the independent service query may cross
         # once. Wait only for the actual decision to be committed, never grant.
         deadline = time.monotonic() + 10
-        while self.token(self.uid, 'after-dialog') != (-1 if self.denied else 0):
+        while (self.token(self.uid, 'after-dialog') != (-1 if self.denied else 0) or
+               self.last_token['before'] != (-1 if self.denied else 0)):
             if time.monotonic() >= deadline:
                 raise ValueError('actual AccessToken does not reflect the real microphone dialog decision')
             time.sleep(0.1)

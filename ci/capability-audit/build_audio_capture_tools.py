@@ -52,6 +52,7 @@ def build(root, output, arch):
     before = {str(p): sha(p) for p in inputs}
     report = {'status': 'fail', 'scope': 'real_root_PCM_producer_and_independent_AccessToken_tools_ONLY',
               'arch': arch, 'product': product, 'inputs_sha256': before, 'tools': {},
+              'builder_sha256': sha(Path(__file__).resolve()),
               'first_artifact_behavior_gate_passed': False}
     for name, argv in commands.items():
         row = {'command': argv, 'status': 'fail'}

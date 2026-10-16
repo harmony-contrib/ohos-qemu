@@ -25,14 +25,17 @@ def sha(path):
     return digest(path)
 
 
-def token(value, run, uid):
+def token(value, run, uid, allow_transition=False):
     if (not isinstance(value, dict) or value.get('run_id') != run or value.get('uid') != uid or
             value.get('user_id') != 100 or value.get('bundle') != 'org.harmonycontrib.capabilityaudit' or
             value.get('permission') != 'ohos.permission.MICROPHONE' or value.get('operation') != 'query' or
             type(value.get('token_id')) is not int or value['token_id'] <= 0 or value.get('result') != 0 or
             type(value.get('result')) is not int or type(value.get('after')) is not int or
             type(value.get('before')) is not int or value.get('before') not in (-1, 0) or
-            value.get('after') != value.get('before')):
+            value.get('after') not in (-1, 0) or
+            (not allow_transition and value.get('after') != value.get('before')) or
+            type(value.get('before_ns')) is not int or value['before_ns'] <= 0 or
+            type(value.get('after_ns')) is not int or value['after_ns'] < value['before_ns']):
         raise ValueError('independent actual microphone token evidence invalid')
     return value['after'], value['token_id']
 
@@ -119,12 +122,15 @@ def verify(args):
             any(r.get('phase') != 'after-dialog' for r in observations[1:-1])):
         raise ValueError('independent token observations do not span the actual ordinary capture')
     token_id = None
+    token_time = 0
     for index, row in enumerate(observations):
-        state, current = token(row['observation'], run, uid)
+        state, current = token(row['observation'], run, uid, allow_transition=0 < index < len(observations) - 1)
         if token_id is None:
             token_id = current
-        if current != token_id or (index == 0 and state != -1) or (index == len(observations) - 1 and state != (-1 if denied else 0)):
+        if (current != token_id or row['observation']['before_ns'] < token_time or
+                (index == 0 and state != -1) or (index == len(observations) - 1 and state != (-1 if denied else 0))):
             raise ValueError('microphone token changed or was not independently granted/denied')
+        token_time = row['observation']['after_ns']
     if token(observations[-2]['observation'], run, uid)[0] != (-1 if denied else 0):
         raise ValueError('actual committed microphone dialog state missing')
     labels_path = Path(runtime['labels'])
@@ -156,7 +162,8 @@ def verify(args):
     if sha(tools_path) != runtime['tools_sha256']:
         raise ValueError('microphone tool build evidence changed')
     tools = json.loads(tools_path.read_text())
-    if tools.get('status') != 'pass' or tools.get('arch') != arch or tools.get('inputs_unchanged') is not True:
+    if (tools.get('status') != 'pass' or tools.get('arch') != arch or tools.get('inputs_unchanged') is not True or
+            tools.get('builder_sha256') != sha(Path(__file__).with_name('build_audio_capture_tools.py'))):
         raise ValueError('actual microphone tools failed compilation/input binding')
     for name, source in (('alsa_inject', 'batch_media_alsa_inject.c'), ('audio_capture_token', 'probes/audio_capture_token.cpp')):
         row = tools['tools'][name]

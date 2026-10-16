@@ -7,9 +7,17 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <time.h>
 #include <unistd.h>
 
 using namespace OHOS::Security::AccessToken;
+
+static unsigned long long NowNs()
+{
+    struct timespec value {};
+    if (clock_gettime(CLOCK_MONOTONIC, &value) != 0) return 0;
+    return static_cast<unsigned long long>(value.tv_sec) * 1000000000ULL + value.tv_nsec;
+}
 
 int main(int argc, char **argv)
 {
@@ -29,6 +37,7 @@ int main(int argc, char **argv)
     const int queried = AccessTokenKit::GetHapTokenInfo(token, info);
     if (token == 0 || queried != 0 || info.tokenID != token || info.userID != 100 ||
         info.instIndex != 0 || info.bundleName != bundle || info.uid != static_cast<int32_t>(expected)) return 1;
+    const auto beforeNs = NowNs();
     const int before = AccessTokenKit::VerifyAccessToken(token, permission, true);
     int action = 0;
     if (strcmp(argv[3], "revoke") == 0) {
@@ -36,9 +45,11 @@ int main(int argc, char **argv)
         action = AccessTokenKit::RevokePermission(token, permission, PERMISSION_USER_SET, USER_GRANTED_PERM, false);
     }
     const int after = AccessTokenKit::VerifyAccessToken(token, permission, true);
+    const auto afterNs = NowNs();
+    if (beforeNs == 0 || afterNs < beforeNs) return 1;
     printf("{\"run_id\":\"%s\",\"bundle\":\"%s\",\"user_id\":100,\"uid\":%lu,"
         "\"token_id\":%u,\"permission\":\"%s\",\"operation\":\"%s\",\"result\":%d,"
-        "\"before\":%d,\"after\":%d}\n", run.c_str(), bundle, expected, token, permission,
-        argv[3], action, before, after);
+        "\"before\":%d,\"after\":%d,\"before_ns\":%llu,\"after_ns\":%llu}\n", run.c_str(), bundle, expected, token, permission,
+        argv[3], action, before, after, beforeNs, afterNs);
     return action == 0 && (after == PERMISSION_GRANTED || after == PERMISSION_DENIED) ? 0 : 1;
 }

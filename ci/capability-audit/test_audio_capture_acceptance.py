@@ -41,7 +41,7 @@ class CaptureAcceptanceTests(unittest.TestCase):
         run, uid = 'd' * 32, 20010001
         original = {'run_id': run, 'bundle': 'org.harmonycontrib.capabilityaudit', 'user_id': 100,
             'uid': uid, 'token_id': 123, 'permission': 'ohos.permission.MICROPHONE',
-            'operation': 'query', 'result': 0, 'before': -1, 'after': -1}
+            'operation': 'query', 'result': 0, 'before': -1, 'after': -1, 'before_ns': 1, 'after_ns': 2}
         self.assertEqual(V.token(original, run, uid), (-1, 123))
         for change in ({'uid': uid + 1}, {'token_id': 0}, {'operation': 'grant'}, {'result': -1},
                        {'before': 0}, {'after': True}, {'permission': 'ohos.permission.CAMERA'}, {'run_id': 'e' * 32}):
