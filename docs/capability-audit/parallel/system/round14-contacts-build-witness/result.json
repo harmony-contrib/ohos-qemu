@@ -1,0 +1,58 @@
+{
+  "scope": "Contacts_build_witness_tool_and_light_contract_tests_NOT_fresh_build_or_guest_acceptance",
+  "changed_code_files": [
+    "scripts/qemu_contacts_build_witness.py",
+    "ci/capability-audit/test_qemu_contacts_build_witness.py"
+  ],
+  "upstream_targets": [],
+  "inputs_sha256": {
+    "scripts/qemu_contacts_build_witness.py": "89061854a85b1e5cf79bbe7c3851ca1494cf34bd7d02d4dcf3aec801b2cfc1fd",
+    "ci/capability-audit/test_qemu_contacts_build_witness.py": "116f270776716021c82b6fc5bcb3b873e686b3678d8851e810ec85d0b5c1b1c7"
+  },
+  "dependency_commit": "3fe292dab74715d61d82577247ed964bd3f7e88b",
+  "owned_outputs_per_product": 18,
+  "implementation": [
+    "begin preserves only 18 owned outputs plus old witness; source and symlink preflight",
+    "finish binds current JS/callback/source pins, fresh 18 outputs and log, real images argv/exit0/exact hb footer, raw GN compile/action/CFI link contracts and public payload parser",
+    "package retains raw source/graphs/commands/ABC/blob/native/unstripped/log/witness and checks actual unique image inode",
+    "verify replays only original packaged bytes plus actual image extraction without original OHOS source/out or native tools"
+  ],
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ci/capability-audit -p test_qemu_contacts_build_witness.py -v",
+      "result": "PASS 17 pure Python tests; metadata-only mocks are not ELF acceptance"
+    },
+    {
+      "command": "pure Python graph_commands against readonly ARM64 actual contact.ninja and selected toolchain lines",
+      "result": "PASS 16 selected actual commands; not actual build execution"
+    },
+    {
+      "command": "AST parse of both new source files",
+      "result": "PASS"
+    },
+    {
+      "command": "script --help",
+      "result": "PASS; CLI help preserved"
+    },
+    {
+      "command": "git diff --cached --check",
+      "result": "PASS"
+    }
+  ],
+  "integration_requests": [
+    "root add two new files plus Apps parser dependency to freeze/recipe and three shared shell integration sites",
+    "root emit actual formal images argv JSON at out/<product>/qemu-full-build-argv.json and pass real pipefail exit0/full-log to finish",
+    "root full-build/current ABC/CFI/native/staged+ext4 positive and negative proof before new guest full behavior gate"
+  ],
+  "remaining_gaps": [
+    "No fresh product GN/full-build execution performed in this batch.",
+    "No fresh actual JS→ABC→2blob→native→CFI link→staged→system.img witness yet.",
+    "No ABC moduleRecordIdx/literal-array semantic decode.",
+    "No new representative boot or ordinary public Contacts callback behavior acceptance."
+  ],
+  "closed": [],
+  "module_record_and_literal_binding_verified": false,
+  "public_runtime_execution_verified": false,
+  "first_artifact_behavior_gate_passed": false,
+  "test_log_sha256": "ddf64abb3d87a196932274fb2990850702401ffa96d71fc9c70fa63f16f5030c"
+}
