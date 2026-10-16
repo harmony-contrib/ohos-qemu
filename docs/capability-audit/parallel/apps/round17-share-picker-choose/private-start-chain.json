@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "scope": "source evidence only, no actual native compile or normal-caller guest positive",
+  "source_files": [
+    {
+      "upstream_path": "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp",
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-01/source/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp",
+      "sha256": "924a096324e65b46e531d4ea47bc8f03753316bd0f017cb46cd66c9ee6b8e811",
+      "ranges": [
+        {
+          "start": 702,
+          "end": 705,
+          "text": "int AbilityManagerService::StartAbility(const Want &want, int32_t userId, int requestCode,\n    uint64_t specifiedFullTokenId)\n{\n    if (AppUtils::GetInstance().IsForbidStart()) {"
+        },
+        {
+          "start": 758,
+          "end": 778,
+          "text": "    }\n    if (hasWindowOptions && !AppUtils::GetInstance().IsStartOptionsWithAnimation()) {\n        TAG_LOGE(AAFwkTag::ABILITYMGR, \"window options not supported\");\n        return ERR_NOT_SUPPORTED_PRODUCT_TYPE;\n    }\n    InsightIntentExecuteParam::RemoveInsightIntent(const_cast<Want &>(want));\n    AbilityUtil::RemoveShowModeKey(const_cast<Want &>(want));\n    auto eventInfo = BuildEventInfo(want, userId);\n    eventInfo->calleeId = static_cast<int32_t>(CalleeId::START_ABILITY);\n    SendAbilityEvent(EventName::START_ABILITY, HISYSEVENT_BEHAVIOR, eventInfo);\n#ifdef SUPPORT_SCREEN\n    DmsUtil::GetInstance().UpdateFlagForCollaboration(want);\n#endif\n    StartAbilityWrapParam startAbilityWrapParam = {\n        .want = want,\n        .requestCode = requestCode,\n        .userId = userId,\n        .specifiedFullTokenId = specifiedFullTokenId,\n    };\n    int32_t ret = StartAbilityInner(startAbilityWrapParam);\n    AAFWK::ContinueRadar::GetInstance().ClickIconStartAbility(\"StartAbilityInner\", want.GetFlags(), ret);"
+        },
+        {
+          "start": 11845,
+          "end": 11855,
+          "text": "    if (!isData) {\n        isSaCall = AAFwk::PermissionVerification::GetInstance()->IsSACall();\n    }\n    uint32_t specifyTokenId = static_cast<uint32_t>(abilityRequest.specifiedFullTokenId);\n    if (specifyTokenId != 0) {\n        isSaCall = AAFwk::PermissionVerification::GetInstance()->IsSACallByTokenId(specifyTokenId);\n    }\n    uint32_t skillCallerTokenId = abilityRequest.skillCallerTokenId;\n    if (isSaCall) {\n        // do not need check static config permission when start ability by SA\n        return AppExecFwk::Constants::PERMISSION_GRANTED;"
+        },
+        {
+          "start": 12367,
+          "end": 12379,
+          "text": "int32_t AbilityManagerService::ShowPickerDialog(\n    const Want& want, int32_t userId, const sptr<IRemoteObject> &callerToken)\n{\n    AAFwk::Want newWant = want;\n    std::string sharePickerBundleName =\n        OHOS::system::GetParameter(SHARE_PICKER_DIALOG_BUNDLE_NAME_KEY, SHARE_PICKER_DIALOG_DEFAULY_BUNDLE_NAME);\n    std::string sharePickerAbilityName =\n        OHOS::system::GetParameter(SHARE_PICKER_DIALOG_ABILITY_NAME_KEY, SHARE_PICKER_DIALOG_DEFAULY_ABILITY_NAME);\n    newWant.SetElementName(sharePickerBundleName, sharePickerAbilityName);\n    newWant.SetParam(TOKEN_KEY, callerToken);\n    // note: clear actions\n    newWant.SetAction(\"\");\n    return IN_PROCESS_CALL(StartAbility(newWant, DEFAULT_INVAL_VALUE, userId));"
+        },
+        {
+          "start": 13147,
+          "end": 13159,
+          "text": "int AbilityManagerService::CheckCallAbilityPermission(const AbilityRequest &abilityRequest, bool isSelector,\n    uint32_t specifyTokenId, bool isCallByShortcut, bool isFreeInstallFromService)\n{\n    HITRACE_METER_NAME(HITRACE_TAG_ABILITY_MANAGER, __PRETTY_FUNCTION__);\n    TAG_LOGD(AAFwkTag::ABILITYMGR, \"Call CheckCallAbilityPermission\");\n\n    AAFwk::PermissionVerification::VerificationInfo verificationInfo;\n    verificationInfo.accessTokenId = abilityRequest.appInfo.accessTokenId;\n    verificationInfo.visible = abilityRequest.abilityInfo.visible;\n    verificationInfo.withContinuousTask = IsBackgroundTaskUid(IPCSkeleton::GetCallingUid());\n    verificationInfo.specifyTokenId = specifyTokenId;\n    auto tokenId = IPCSkeleton::GetCallingTokenID();\n    verificationInfo.isCliToolToken = Security::AccessToken::AccessTokenKit::IsCliToolToken(tokenId);"
+        },
+        {
+          "start": 13187,
+          "end": 13206,
+          "text": "        }\n    }\n    if (isFreeInstallFromService || (callerAbilityRecord != nullptr &&\n        callerAbilityRecord->GetAbilityInfo().extensionAbilityType == AppExecFwk::ExtensionAbilityType::APP_SERVICE)) {\n        verificationInfo.isBackgroundCall = false;\n    } else if (IsCallFromBackground(abilityRequest, verificationInfo.isBackgroundCall, isSelector,\n            specifyTokenId) != ERR_OK) {\n        return ERR_CHECK_CALL_FROM_BACKGROUND_FAILED;\n    }\n\n    int result = AAFwk::PermissionVerification::GetInstance()->CheckCallAbilityPermission(\n        verificationInfo, isCallByShortcut);\n    if (result != ERR_OK) {\n        auto sessionInfo = callerAbilityRecord ? callerAbilityRecord->GetSessionInfo() : nullptr;\n        int32_t persistentId = (sessionInfo == nullptr) ? -1 : sessionInfo->persistentId;\n        TAG_LOGE(AAFwkTag::ABILITYMGR,\n            \"without start pageAbility(FA) or ability(Stage) permission, caller:%{public}s %{public}d\",\n            callerAbilityRecord ? callerAbilityRecord->GetAbilityInfo().name.c_str() : \"null record\", persistentId);\n    }\n    return result;"
+        },
+        {
+          "start": 13249,
+          "end": 13268,
+          "text": "int AbilityManagerService::IsCallFromBackground(const AbilityRequest &abilityRequest, bool &isBackgroundCall,\n    bool isSelector, uint32_t specifyTokenId, bool isData)\n{\n    HITRACE_METER_NAME(HITRACE_TAG_ABILITY_MANAGER, __PRETTY_FUNCTION__);\n    if (!isData && AAFwk::PermissionVerification::GetInstance()->IsShellCall()) {\n        isBackgroundCall = true;\n        return ERR_OK;\n    }\n\n    if (!isData && (SupportSystemAbilityPermission::IsSupportSaCallPermission() ||\n        AbilityUtil::IsStartFreeInstall(abilityRequest.want))) {\n        isBackgroundCall = false;\n        return ERR_OK;\n    }\n\n    AppExecFwk::RunningProcessInfo processInfo;\n    std::shared_ptr<AbilityRecord> callerAbility = Token::GetAbilityRecordByToken(abilityRequest.callerToken);\n    if (callerAbility && callerAbility->GetAbilityInfo().bundleName == BUNDLE_NAME_DIALOG) {\n        callerAbility = callerAbility->GetCallerRecord();\n    }"
+        },
+        {
+          "start": 9406,
+          "end": 9411,
+          "text": "bool AbilityManagerService::VerificationAllToken(const sptr<IRemoteObject> &token)\n{\n    HITRACE_METER_NAME(HITRACE_TAG_ABILITY_MANAGER, __PRETTY_FUNCTION__);\n    CHECK_POINTER_AND_RETURN(subManagersHelper_, false);\n    return subManagersHelper_->VerificationAllToken(token);\n}"
+        },
+        {
+          "start": 13579,
+          "end": 13590,
+          "text": "bool AbilityManagerService::IsAppSelfCalled(const std::shared_ptr<AbilityRecord> &abilityRecord)\n{\n    CHECK_POINTER_RETURN_BOOL(abilityRecord);\n    auto callingTokenId = IPCSkeleton::GetCallingTokenID();\n    auto tokenID = abilityRecord->GetApplicationInfo().accessTokenId;\n    if (callingTokenId != tokenID) {\n        TAG_LOGE(AAFwkTag::ABILITYMGR, \"not app self called\");\n        return false;\n    }\n    return true;\n}\n"
+        }
+      ],
+      "claim": "Original Show retains its IN_PROCESS_CALL. Exact userId/requestCode overload is preserved in corrected order. AMS native SA call uses static permission and foreground/visibility checks, not a fabricated UI caller."
+    },
+    {
+      "upstream_path": "foundation/ability/ability_runtime/services/common/include/in_process_call_wrapper.h",
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-05/source/foundation/ability/ability_runtime/services/common/include/in_process_call_wrapper.h",
+      "sha256": "99a6f6ed7138a56ad333322cd14cc65c02d2c6e9bd987d9edfc21289b4349566",
+      "ranges": [
+        {
+          "start": 22,
+          "end": 28,
+          "text": "    ([&]() {                                                         \\\n        std::string identity = IPCSkeleton::ResetCallingIdentity();  \\\n        auto retVal = theCall;                                       \\\n        IPCSkeleton::SetCallingIdentity(identity);                   \\\n        return retVal;                                               \\\n    }())\n"
+        }
+      ],
+      "claim": "The existing system in-process macro saves original IPC identity, resets to this native process, calls, then restores it. No new reset macro or bypass is added."
+    },
+    {
+      "upstream_path": "foundation/ability/ability_runtime/services/common/src/permission_verification.cpp",
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-05/source/foundation/ability/ability_runtime/services/common/src/permission_verification.cpp",
+      "sha256": "58308bdc4500197de2a141550489f72623869215a26cfe2da15e7a0adfe55f26",
+      "ranges": [
+        {
+          "start": 73,
+          "end": 91,
+          "text": "bool PermissionVerification::IsSACall() const\n{\n    auto callerToken = GetCallingTokenID();\n    return IsSACallByTokenId(callerToken);\n}\n\nbool PermissionVerification::IsSACallByTokenId(uint32_t callerTokenId) const\n{\n    TAG_LOGD(AAFwkTag::DEFAULT, \"called\");\n    if (callerTokenId == 0) {\n        callerTokenId = GetCallingTokenID();\n    }\n    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerTokenId);\n    if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {\n        TAG_LOGD(AAFwkTag::DEFAULT, \"verify success\");\n        return true;\n    }\n    TAG_LOGD(AAFwkTag::DEFAULT, \"Not SA called\");\n    return false;"
+        },
+        {
+          "start": 411,
+          "end": 431,
+          "text": "bool PermissionVerification::JudgeStartInvisibleAbility(const uint32_t accessTokenId, const bool visible,\n    const uint32_t specifyTokenId) const\n{\n    if (visible) {\n        TAG_LOGD(AAFwkTag::DEFAULT, \"visible:true\");\n        return true;\n    }\n    if (specifyTokenId > 0 && accessTokenId == specifyTokenId) {\n        TAG_LOGD(AAFwkTag::DEFAULT, \"accessTokenId equal specifyTokenId\");\n        return true;\n    }\n    if (IsCallFromSameAccessToken(accessTokenId)) {\n        TAG_LOGD(AAFwkTag::DEFAULT, \"TargetAbility in same APP\");\n        return true;\n    }\n    if (VerifyCallingPermission(PermissionConstants::PERMISSION_START_INVISIBLE_ABILITY, specifyTokenId)) {\n        TAG_LOGD(AAFwkTag::DEFAULT, \"Caller PASS\");\n        return true;\n    }\n    TAG_LOGE(AAFwkTag::DEFAULT, \"verification fail\");\n    return false;"
+        },
+        {
+          "start": 469,
+          "end": 500,
+          "text": "int PermissionVerification::JudgeInvisibleAndBackground(const VerificationInfo &verificationInfo,\n    bool isCallByShortcut) const\n{\n    uint32_t specifyTokenId = verificationInfo.specifyTokenId;\n    if (verificationInfo.skillCallerTokenId != 0) {\n        specifyTokenId = verificationInfo.skillCallerTokenId;\n    }\n    TAG_LOGD(AAFwkTag::DEFAULT, \"specifyTokenId: %{public}u, isCallByShortcut %{public}d\",\n        specifyTokenId, isCallByShortcut);\n    if (specifyTokenId == 0 &&\n        SupportSystemAbilityPermission::IsSupportSaCallPermission()) {\n        TAG_LOGD(AAFwkTag::DEFAULT, \"Support SA call\");\n        // Only report when: 1) shell call, 2) ability is invisible (exported=false)\n        if (IsShellCall() && !verificationInfo.visible) {\n            EventInfo eventInfo;\n            eventInfo.uri = \"ShellCall://\" + std::to_string(IPCSkeleton::GetCallingUid());\n            EventReport::SendGrantUriPermissionEvent(EventName::GRANT_URI_PERMISSION, eventInfo);\n        }\n        return ERR_OK;\n    }\n    if (!isCallByShortcut &&\n        !JudgeStartInvisibleAbility(verificationInfo.accessTokenId, verificationInfo.visible,\n        specifyTokenId) && !(verificationInfo.isCliToolToken && verificationInfo.isLaunchAbility)) {\n        TAG_LOGE(AAFwkTag::DEFAULT, \"caller INVISIBLE permission invalid\");\n        return ABILITY_VISIBLE_FALSE_DENY_REQUEST;\n    }\n    if (!JudgeStartAbilityFromBackground(verificationInfo.isBackgroundCall, specifyTokenId)) {\n        TAG_LOGE(AAFwkTag::DEFAULT, \"caller START_ABILITIES_FROM_BACKGROUND permission invalid\");\n        return CHECK_PERMISSION_FAILED;\n    }\n\n    return ERR_OK;"
+        },
+        {
+          "start": 503,
+          "end": 520,
+          "text": "bool PermissionVerification::JudgeCallerIsAllowedToUseSystemAPI() const\n{\n    if (IsSACall() || IsShellCall()) {\n        return true;\n    }\n    auto callerToken = IPCSkeleton::GetCallingFullTokenID();\n    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(callerToken);\n}\n\nbool PermissionVerification::JudgeCallerIsAllowedToUseSystemAPIByTokenId(uint64_t specifiedFullTokenId) const\n{\n    uint32_t specifyTokenId = static_cast<uint32_t>(specifiedFullTokenId);\n    if (IsSACallByTokenId(specifyTokenId) || IsShellCallByTokenId(specifyTokenId)) {\n        return true;\n    }\n    if (specifiedFullTokenId == 0) {\n        specifiedFullTokenId = IPCSkeleton::GetCallingFullTokenID();\n    }"
+        }
+      ],
+      "claim": "TOKEN_NATIVE is SA; caller access is granted only through existing native SA support or real same-app/invisible/background permission rules. An ordinary unprivileged direct launch does not inherit AMS native identity."
+    },
+    {
+      "upstream_path": "foundation/ability/ability_runtime/services/abilitymgr/src/utils/update_caller_info_util.cpp",
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-01/source/foundation/ability/ability_runtime/services/abilitymgr/src/utils/update_caller_info_util.cpp",
+      "sha256": "cbab4e3194f80ca05f28b519e0a4be9f2e1c3e748937160ab12b8a770141c59a",
+      "ranges": [
+        {
+          "start": 263,
+          "end": 300,
+          "text": "bool UpdateCallerInfoUtil::UpdateAsCallerInfoFromDialog(Want& want)\n{\n    std::string dialogSessionId = want.GetStringParam(\"dialogSessionId\");\n    auto dialogCallerInfo = DialogSessionManager::GetInstance().GetDialogCallerInfo(dialogSessionId);\n    auto removeParamsForNotBroker = [&want](int32_t uid, const std::string& callerBundleName) {\n        if (uid != BROKER_UID && callerBundleName != SHELL_ASSISTANT_BUNDLENAME) {\n            want.RemoveParam(PARAM_RESV_ANCO_CALLER_UID);\n            want.RemoveParam(PARAM_RESV_ANCO_CALLER_BUNDLENAME);\n        }\n    };\n    if (dialogCallerInfo == nullptr) {\n        removeParamsForNotBroker(IPCSkeleton::GetCallingUid(),\n            want.GetStringParam(Want::PARAM_RESV_CALLER_BUNDLE_NAME));\n        TAG_LOGW(AAFwkTag::ABILITYMGR, \"failed get dialog caller info\");\n        return false;\n    }\n    Want dialogCallerWant = dialogCallerInfo->targetWant;\n    int32_t tokenId = dialogCallerWant.GetIntParam(Want::PARAM_RESV_CALLER_TOKEN, 0);\n    int32_t uid = dialogCallerWant.GetIntParam(Want::PARAM_RESV_CALLER_UID, 0);\n    int32_t pid = dialogCallerWant.GetIntParam(Want::PARAM_RESV_CALLER_PID, 0);\n    std::string callerBundleName = dialogCallerWant.GetStringParam(Want::PARAM_RESV_CALLER_BUNDLE_NAME);\n    std::string callerAbilityName = dialogCallerWant.GetStringParam(Want::PARAM_RESV_CALLER_ABILITY_NAME);\n    int32_t callerAppCloneIndex = dialogCallerWant.GetIntParam(Want::PARAM_RESV_CALLER_APP_CLONE_INDEX, 0);\n    want.SetParam(Want::PARAM_RESV_CALLER_TOKEN, tokenId);\n    want.SetParam(Want::PARAM_RESV_CALLER_UID, uid);\n    want.SetParam(Want::PARAM_RESV_CALLER_PID, pid);\n    want.SetParam(Want::PARAM_RESV_CALLER_BUNDLE_NAME, callerBundleName);\n    want.SetParam(Want::PARAM_RESV_CALLER_ABILITY_NAME, callerAbilityName);\n    want.SetParam(Want::PARAM_RESV_CALLER_APP_CLONE_INDEX, callerAppCloneIndex);\n\n    removeParamsForNotBroker(uid, callerBundleName);\n    if (callerBundleName == \"\") {\n        want.SetParam(Want::PARAM_RESV_CALLER_NATIVE_NAME,\n            dialogCallerWant.GetStringParam(Want::PARAM_RESV_CALLER_NATIVE_NAME));\n        return true;\n    }\n    UpdateSignatureInfo(callerBundleName, want);\n    return true;"
+        },
+        {
+          "start": 303,
+          "end": 335,
+          "text": "void UpdateCallerInfoUtil::UpdateCallerInfoFromToken(Want& want, const sptr<IRemoteObject> &token)\n{\n    auto abilityRecord = Token::GetAbilityRecordByToken(token);\n    if (!abilityRecord) {\n        TAG_LOGW(AAFwkTag::ABILITYMGR, \"caller abilityRecord null\");\n        return;\n    }\n    ClearProtectedWantParam(want);\n    int32_t tokenId = abilityRecord->GetApplicationInfo().accessTokenId;\n    int32_t callerUid = abilityRecord->GetUid();\n    int32_t callerPid = abilityRecord->GetPid();\n    want.RemoveParam(Want::PARAM_RESV_CALLER_TOKEN);\n    want.SetParam(Want::PARAM_RESV_CALLER_TOKEN, tokenId);\n    want.RemoveParam(Want::PARAM_RESV_CALLER_UID);\n    want.SetParam(Want::PARAM_RESV_CALLER_UID, callerUid);\n    want.RemoveParam(Want::PARAM_RESV_CALLER_PID);\n    want.SetParam(Want::PARAM_RESV_CALLER_PID, callerPid);\n    want.RemoveParam(WANT_PARAMS_APP_RESTART_FLAG);\n    want.RemoveParam(IS_SHELL_CALL);\n    want.RemoveParam(Want::PARAMS_REAL_CALLER_KEY);\n\n    std::string callerBundleName = abilityRecord->GetAbilityInfo().bundleName;\n    want.RemoveParam(Want::PARAM_RESV_CALLER_BUNDLE_NAME);\n    want.SetParam(Want::PARAM_RESV_CALLER_BUNDLE_NAME, callerBundleName);\n    std::string callerAbilityName = abilityRecord->GetAbilityInfo().name;\n    want.RemoveParam(Want::PARAM_RESV_CALLER_ABILITY_NAME);\n    want.SetParam(Want::PARAM_RESV_CALLER_ABILITY_NAME, callerAbilityName);\n    if (abilityRecord->GetApplicationInfo().bundleName != AbilityConfig::SCENEBOARD_BUNDLE_NAME ||\n        AppExecFwk::ConvertToExtensionAbilityType(want.GetStringParam(UIEXTENSION_TYPE_KEY)) !=\n        AppExecFwk::ExtensionAbilityType::EMBEDDED_UI) {\n        UpdateCallerAppCloneIndex(want, abilityRecord->GetAppIndex());\n    }\n    UpdateSignatureInfo(callerBundleName, want);"
+        }
+      ],
+      "claim": "Caller data is rebuilt from actual native AbilityRecord, then existing committed dialogSession delegates native caller identity. No remote token from a JS Want establishes authority."
+    },
+    {
+      "upstream_path": "foundation/ability/ability_runtime/services/abilitymgr/src/ability_record.cpp",
+      "host_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Share-choose-framework-source-04/source/foundation/ability/ability_runtime/services/abilitymgr/src/ability_record.cpp",
+      "sha256": "3e4c8171171dc6af1e902eea9edbd4452858e1127596181a04fa481d548f439d",
+      "ranges": [
+        {
+          "start": 1356,
+          "end": 1363,
+          "text": "void AbilityRecord::SendResultByBackToCaller(const std::shared_ptr<AbilityResult> &result)\n{\n    TAG_LOGI(AAFwkTag::ABILITYMGR, \"SendResultByBackToCaller:%{public}s\", abilityInfo_.name.c_str());\n    std::lock_guard<ffrt::mutex> guard(lock_);\n    CHECK_POINTER(scheduler_);\n    CHECK_POINTER(result);\n    scheduler_->SendResult(result->requestCode_, result->resultCode_, result->resultWant_);\n}"
+        }
+      ],
+      "claim": "Cancel sends the original native requestCode to actual caller scheduler; selection launch success is not a target result."
+    }
+  ],
+  "pending": [
+    "production SupportSystemAbilityPermission::IsSupportSaCallPermission branch implementation/header"
+  ],
+  "required_actual_runtime": [
+    "normal non-system caller -> action.select -> private Settings PickerDialog -> actual target -> original target result",
+    "normal direct explicit PickerDialog launch rejected",
+    "cancel/Back delivers actual original outstanding callback once; requestCode=-1 start has no invented callback"
+  ],
+  "caller_authentication": "VerificationAllToken establishes only known token; new Show additionally calls real IsAppSelfCalled(caller) before IN_PROCESS_CALL so actual IPC AccessToken owns the original UIAbility. Native/SA delegation without that identity is not claimed."
+}
