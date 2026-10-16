@@ -1517,18 +1517,19 @@
         "子进程与内核身份"
       ],
       "prefixes": [
+        "ci/capability-audit/batch_system_",
+        "ci/capability-audit/fixtures/batch_system/",
+        "ci/capability-audit/test_batch_system_",
+        "docs/capability-audit/parallel/system/",
+        "patches/common/base/msdp/",
         "patches/common/base/security/",
         "patches/common/base/startup/",
-        "patches/common/base/msdp/",
+        "patches/common/domains/",
+        "patches/common/drivers/peripheral/sensor/qemu_external/",
         "patches/common/foundation/ability/ability_runtime/native_child_process/",
         "patches/common/foundation/distributeddatamgr/",
-        "patches/common/foundation/msdp/",
         "patches/common/foundation/graphic/graphic_3d/",
-        "patches/common/domains/",
-        "ci/capability-audit/batch_system_",
-        "ci/capability-audit/test_batch_system_",
-        "ci/capability-audit/fixtures/batch_system/",
-        "docs/capability-audit/parallel/system/"
+        "patches/common/foundation/msdp/"
       ],
       "requirements": [
         {
@@ -1703,7 +1704,45 @@
         "foundation/graphic/graphic_3d/",
         "domains/",
         "foundation/ability/ability_runtime/frameworks/native/child_process/"
+      ],
+      "upstream_files": [
+        "drivers/peripheral/sensor/bundle.json",
+        "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+        "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+        "drivers/peripheral/sensor/sensor.gni"
       ]
     }
+  },
+  "delegated_parent_source_exceptions": {
+    "media": [
+      "device/qemu/common/virt_full/audio_alsa/vendor_capture.c"
+    ],
+    "system": [
+      "drivers/peripheral/sensor/sensor.gni",
+      "drivers/peripheral/sensor/bundle.json",
+      "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp"
+    ],
+    "network": [
+      "foundation/communication/bluetooth_service/services/bluetooth/ipc/src/bluetooth_host_stub.cpp",
+      "foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp",
+      "foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h",
+      "foundation/communication/bluetooth_service/services/bluetooth/stack/include/gap_if.h",
+      "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap.h",
+      "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c",
+      "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c"
+    ]
   }
 }
