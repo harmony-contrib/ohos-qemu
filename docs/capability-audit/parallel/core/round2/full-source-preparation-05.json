@@ -1,0 +1,16 @@
+{
+  "scope": "complete current patch stack actual Linux source preparation ONLY; no GN/images/package/runtime",
+  "evidence": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-source-prepare-05/evidence.json",
+    "sha256": "6bbc864657a54c5f1a744d21584ec6970d69f2a109cfac7021ade5499fa22e84"
+  },
+  "source_commit": "92ee57e62ff6de4fe1314fa037367deb2f80eca5",
+  "exit_code": 0,
+  "seconds": 308.48801922798157,
+  "products": "arm64_virt",
+  "device": "phone",
+  "resource_cpus": 2,
+  "resource_memory": "5g",
+  "remaining_five_started": false,
+  "first_artifact_behavior_gate_passed": false
+}
