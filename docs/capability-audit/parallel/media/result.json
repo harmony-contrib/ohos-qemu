@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "timezone": "Asia/Shanghai",
   "baseline_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
-  "branch": "codex/capability-media-20261015",
+  "branch": "codex/wallpaper-settings-source",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
   "status": "reviewable_candidate_host_checks_passed_new_package_required",
   "requirements_review": {
@@ -58,6 +58,14 @@
     }
   },
   "upstream_targets": [
+    "applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+    "applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+    "applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets",
+    "applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+    "applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+    "applications/standard/settings/product/phone/src/main/module.json5",
+    "base/theme/wallpaper_mgr/services/BUILD.gn",
+    "base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp",
     "device/qemu/common/virt_full/audio_alsa/vendor_capture.c",
     "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h",
     "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c",
@@ -84,7 +92,7 @@
     "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp",
     "foundation/multimedia/player_framework/frameworks/native/capi/recorder/native_avrecorder.cpp"
   ],
-  "ownership": "Same cumulative 25 actual upstream files exclusively assigned by parent; media-owned batch_media candidates/tests/docs only. No shared builder/runner/verifier, kernel/config/device files or source/out mutation this round.",
+  "ownership": "Cumulative 33 actual upstream files: 25 prior media targets plus eight exact root-authorized Settings/wallpaper targets in round11. New components restricted to settings/wallpaper_settings and wallpaper_mgr/qemu_renderer; apps renderer files and shared HAP GN/signing/BMS/profile/successor guards/builders/runners/verifiers unchanged by this batch.",
   "tests": [
     {
       "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p test_batch_media_avc_surface_layout.py -v",
@@ -270,6 +278,22 @@
       "tests": 33,
       "evidence": "docs/capability-audit/parallel/media/round7/knowledge-prior-guards-01.log",
       "scope": "Existing actual query/NAPI body and complete source composition/forward guard tests after new single-TU no-exceptions producer state; not product runtime."
+    },
+    {
+      "batch": "round11-wallpaper-settings",
+      "command": "PYTHONDONTWRITEBYTECODE=1 LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_wallpaper_settings.py -v",
+      "result": "passed_previously_no_rerun_for_report_fix",
+      "tests": 5,
+      "actual_controller_controlled_dependency_cases": 27,
+      "observed_overall_seconds": 6.305,
+      "evidence": "docs/capability-audit/parallel/media/round11-wallpaper-settings/evidence.json",
+      "transcript": "docs/capability-audit/parallel/media/round11-wallpaper-settings/host-tests-transcript.txt",
+      "scope": "Actual controller bodies with controlled public dependencies, actual Connect/Start function bodies ASan/UBSan stock and QEMU variants, official API26 declaration types, exact manifest/resource preservation and eight-target component replay/drift rejection. Not whole product TU, ArkTS/HAP, real BMS/token/URI/service/renderer or new-package runtime evidence.",
+      "native_binary_sha256": null,
+      "native_compile_logs": null,
+      "native_per_command_seconds": null,
+      "native_full_temporary_argv": null,
+      "missing_evidence_reason": "Original TemporaryDirectory removed binaries/scratch; original test did not retain compiler logs/full temporary argv/per-command timing/SHA. Root explicitly prohibited recovery compilation; no values reconstructed or fabricated."
     }
   ],
   "integration_requests": [
@@ -344,6 +368,21 @@
       "owner": "parent",
       "request": "See round6/HANDOFF.md and round5 operational protocol. Retry3 actual official event HAP personas after TS87 catch conversion; strict host TS alone was insufficient, no checker downgrade. Keep normal signer ACL[], no extra normal permission profile exception; actual token query-background GRANTED, notification/MIC consent, BGT task/notification and latest real owner RUNNING/fresh PCM after second-app setup remain root gates. All native source/library hashes unchanged; no native recompile required.",
       "status": "corrected_ETS_ready_root_actual3_event_HAP_retry_and_runtime_pending"
+    },
+    {
+      "id": "media-wallpaper-settings-source-successor",
+      "owner": "parent",
+      "request": "Apply existing Settings source/external/share components to actual SDK05 fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62 phone manifest, then settings/wallpaper_settings/apply.sh --source-root PATH; compose exact shared source/external/share successor guards for full six-file state and manifest ec1d3c1525d7298209346cb8f47715f781c1a6cc52b058cadef5e57d211db6bf. Native wallpaper_mgr/qemu_renderer/apply.sh --source-root PATH yields full TU SHA5590864bd8e51f2223e03bc709207c1a1619d36abcf0b812f31ec67e0c47f1c4. Child did not alter shared guard policy."
+    },
+    {
+      "id": "media-wallpaper-product-build-and-install",
+      "owner": "parent",
+      "request": "Compile complete actual Settings ArkTS/HAR/HAP with official API26 system SDK/resources and wallpaper_service shared/static full TU using real GN flags. Verify QEMU product_name armv7a_virt/arm64_virt/x86_64_virt and stock/ThemeService control. Select/sign/preinstall exactly one real renderer and check actual BMS/device compatibility/current-user token grant. Preserve Settings system_basic/hos_system_app; add only actual SET_WALLPAPER, no GET/READ/ACL bypass. Read-only feature-only BMS conditions are in round11-wallpaper-settings/bms-install-contract.md, not actual install proof."
+    },
+    {
+      "id": "media-wallpaper-new-image-runtime",
+      "owner": "parent",
+      "request": "On newly packaged representative artifact verify actual Settings entry, Photos picker selected-URI grant, challenged image preview, separate home/lock writes, actual persisted image/current user and independent renderer/screen pixels; also cancel/stale session/error/permission/enterprise policy/size/resource cleanup/default restore/restart. API success/preview is insufficient. Complete first-artifact behavior gate before remaining packages. Any future native host compile needs root short lease and artifact retention; do not rerun merely to fill missing old binary evidence."
     }
   ],
   "remaining_gaps": [
@@ -374,6 +413,11 @@
     {
       "id": "behavior:video-encoder-dependent-media-pipelines",
       "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers."
+    },
+    {
+      "area": "round11-wallpaper-settings-supplemental",
+      "requirements_review_ids_unchanged": true,
+      "remaining": "Candidate only: real Settings picker/preview/set/restore and QEMU renderer connection/ErrCode correction. No complete actual Settings ArkTS/HAR/HAP or wallpaper shared/static product TU compile in child batch; no actual BMS install/current-user token/selected URI/service/rendered pixels or new representative package gate. Full UI-extension/live/dynamic ThemeService capabilities remain unimplemented/unaccepted. Original native host binaries/isolated clang logs/full temporary argv/per-command durations/SHA were not retained and remain null. The seven original requirements stay open; no wallpaper or media capability closed."
     }
   ],
   "gap_closures": 0,
@@ -481,7 +525,13 @@
     "docs/capability-audit/parallel/media/round7/holiday-final-host-02.log": "1d19bd7a1bd939bc527865793d582721b926b003c90ef16fa85270d3da830ef4",
     "docs/capability-audit/parallel/media/round7/holiday-host-01.log": "fe63b95d155a9547bc2acb7b89b760a43f55161893226c23b794245b193bf0a9",
     "docs/capability-audit/parallel/media/round7/knowledge-prior-guards-01.log": "fdf434f8a812379e0edaf0ba8bb8d365246f74479339974a0990e5d67904ecc1",
-    "docs/capability-audit/parallel/media/round7/no-exceptions.json": "5ecff72345742d2ca060654e75c891639d9fa2436817109e4e20fa5fe5b5043e"
+    "docs/capability-audit/parallel/media/round7/no-exceptions.json": "5ecff72345742d2ca060654e75c891639d9fa2436817109e4e20fa5fe5b5043e",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/provenance.json": "50062e6073a46a8be63542bcf84c42ba30c6923902bc4e356569ea7a9ce60cf1",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/targets.json": "549f190b902839cbdef0a504e476fca72282590edab712980f332e9df8d2115d",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/HANDOFF.md": "6863c0238c28bb76cf41a24c468a5bfdd1b783eb4aae7130c580a5a1ef014c32",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/bms-install-contract.md": "d483c92f5262a78700226404e6013987b3b1ad7f423002fb479e4993eb17cd5b",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/evidence.json": "35bdb1d342b3ff564f3a0f00371609fc3a268d373c8429dd3ea9d370e24f363b",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/host-tests-transcript.txt": "de58d6b89be1a5c486a1c9c589aa6e91462f6c57fa1262e9b29e9f8b7baaef8d"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
@@ -493,6 +543,7 @@
     "ci/capability-audit/batch_media_audio_event_hap.cpp",
     "ci/capability-audit/batch_media_audio_event_probe.cpp",
     "ci/capability-audit/batch_media_audio_event_probe.ets",
+    "ci/capability-audit/batch_media_generate_wallpaper_components.py",
     "ci/capability-audit/batch_media_knowledge_query_cli.cpp",
     "ci/capability-audit/batch_media_recorder_challenge.py",
     "ci/capability-audit/batch_media_recorder_hap.cpp",
@@ -524,6 +575,25 @@
     "ci/capability-audit/fixtures/batch_media/recorder/native-baseline.json",
     "ci/capability-audit/fixtures/batch_media/recorder/public-sdk26-hashes.json",
     "ci/capability-audit/fixtures/batch_media/recorder/surface_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/applications/standard/settings/product/phone/src/main/module.json5",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/base/theme/wallpaper_mgr/services/BUILD.gn",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/after/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/applications/standard/settings/product/phone/src/main/module.json5",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/base/theme/wallpaper_mgr/services/BUILD.gn",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/before/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/controller-tests.cjs",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/provenance.json",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/sdk-types.cjs",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_settings/targets.json",
     "ci/capability-audit/test_batch_media_alsa_capture.py",
     "ci/capability-audit/test_batch_media_alsa_inject.py",
     "ci/capability-audit/test_batch_media_audio_background.py",
@@ -537,6 +607,7 @@
     "ci/capability-audit/test_batch_media_knowledge_install.py",
     "ci/capability-audit/test_batch_media_recorder.py",
     "ci/capability-audit/test_batch_media_recorder_configuration.py",
+    "ci/capability-audit/test_batch_media_wallpaper_settings.py",
     "docs/capability-audit/parallel/media/REVIEW.md",
     "docs/capability-audit/parallel/media/environment.json",
     "docs/capability-audit/parallel/media/existing-avc-checks-01.log",
@@ -546,6 +617,10 @@
     "docs/capability-audit/parallel/media/host-checks-03.log",
     "docs/capability-audit/parallel/media/host-checks-04.log",
     "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/HANDOFF.md",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/bms-install-contract.md",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/evidence.json",
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/host-tests-transcript.txt",
     "docs/capability-audit/parallel/media/round2/HANDOFF.md",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-01.log",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-02.log",
@@ -622,6 +697,12 @@
     "docs/capability-audit/parallel/media/round7/no-exceptions.json",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
+    "patches/common/applications/standard/settings/wallpaper_settings/0001-real-wallpaper-settings-and-renderer.patch",
+    "patches/common/applications/standard/settings/wallpaper_settings/apply.sh",
+    "patches/common/applications/standard/settings/wallpaper_settings/verify_source.py",
+    "patches/common/base/theme/wallpaper_mgr/qemu_renderer/0001-real-wallpaper-settings-and-renderer.patch",
+    "patches/common/base/theme/wallpaper_mgr/qemu_renderer/apply.sh",
+    "patches/common/base/theme/wallpaper_mgr/qemu_renderer/verify_source.py",
     "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
     "patches/common/drivers/peripheral/audio/capture_loopback/README.md",
     "patches/common/drivers/peripheral/audio/capture_loopback/apply.py",
@@ -684,7 +765,7 @@
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
   "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
-  "handoff": "docs/capability-audit/parallel/media/round7/HANDOFF.md; previous public HAP handoffs remain round6/round5",
+  "handoff": "docs/capability-audit/parallel/media/round11-wallpaper-settings/HANDOFF.md; original seven requirement handoffs and evidence remain cumulative under rounds2-10.",
   "round3_base_commit": "d4e74c00caa47127906075c57d59500d60844f04",
   "round3_status": "Capturer_public_caller_SDK_HAP_parent_compile_passed_real_HOLIDAY_service_producer_host_passed_all7_runtime_open",
   "round3_holiday_base_commit": "bb34c6f7f1534be701e64337f0708e49f6b50bc9",
@@ -695,5 +776,10 @@
   "round6_base_commit": "63395d37424f03d6894d83fb3e1fd8b335d5527f",
   "round6_status": "actual3_event_HAP_TS87_failures_fixed_host_types_Error_guard8_cleanup_scenarios_pass_root_real_HAP_retry_pending_all7_open",
   "round7_base_commit": "a5fe4322f776c5e35e5839903bae35d0b1aa61aa",
-  "round7_status": "one_actual_Holiday_TU_no_exceptions_contract_repaired_final_host8_plus_prior33_pass_product_retry_pending_all7_open"
+  "round7_status": "one_actual_Holiday_TU_no_exceptions_contract_repaired_final_host8_plus_prior33_pass_product_retry_pending_all7_open",
+  "round11_base_commit": "6a580c86a41034532c16f2b73b75ea76a4fe7fc2",
+  "round11_source_commit": "2e8a30841c9d4b75c2ba3a6b925cf85ebfbe0439",
+  "round11_status": "eight_authorized_wallpaper_targets_registered_5_host_tests_passed_real_SDK_full_product_TU_BMS_and_new_representative_pixels_pending_no_closures",
+  "upstream_target_count": 33,
+  "upstream_target_count_note": "Corrected cumulative count: 25 prior unique targets plus eight authorized round11 targets equals 33; the earlier 27/35 count was inaccurate."
 }
