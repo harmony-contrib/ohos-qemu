@@ -88,7 +88,7 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
       "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
-      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
+      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required. Parent full-platform compile exposed a const owner/account-helper mismatch; patch6 uses a local identity copy and host fixtures now retain the real mutable-reference declaration. Parent full locator TU/new-package validation remains required.",
       "evidence": [
         "round4-fusion-communication.md",
         "round4-freeze-inputs.json",
@@ -96,7 +96,9 @@
         "host-tests.log",
         "round5-gnss.md",
         "round5-freeze-inputs.json",
-        "round5-platform-build-request.json"
+        "round5-platform-build-request.json",
+        "round6-account-contract.md",
+        "round6-freeze-inputs.json"
       ],
       "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
@@ -177,12 +179,14 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
       "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
-      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied.",
+      "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied. Parent full-platform compile exposed a const owner/account-helper mismatch; patch6 uses a local identity copy and host fixtures now retain the real mutable-reference declaration. Parent full locator TU/new-package validation remains required.",
       "evidence": [
         "round4-fusion-communication.md",
         "round4-freeze-inputs.json",
         "round4-platform-build-request.json",
-        "host-tests.log"
+        "host-tests.log",
+        "round6-account-contract.md",
+        "round6-freeze-inputs.json"
       ],
       "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
     },
@@ -395,12 +399,14 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "remaining_implementation_and_validation",
       "classification": "device_profile_backend_boundary",
-      "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
+      "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required. Parent full-platform compile exposed a const owner/account-helper mismatch; patch6 uses a local identity copy and host fixtures now retain the real mutable-reference declaration. Parent full locator TU/new-package validation remains required.",
       "evidence": [
         "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence",
         "round5-gnss.md",
         "round5-freeze-inputs.json",
-        "round5-platform-build-request.json"
+        "round5-platform-build-request.json",
+        "round6-account-contract.md",
+        "round6-freeze-inputs.json"
       ],
       "next_required": "Parent controlled GNSS vendor ABI, real geocoder remote provider and real HCI/controller/WLAN/CELL peer routes must feed the actual service paths in a newly packaged representative artifact; source implementations and negative hardware boundaries do not close this behavior."
     },
@@ -525,6 +531,21 @@
     {
       "command": "Full platform GNSS TUs/link/HDI/provider and newly packaged representative runtime",
       "result": "NOT RUN by subagent; parent/system own platform integration/provider and parent owns all heavy tasks/package/runtime gate."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_location_*.py' -v",
+      "result": "PASS:28 tests in41.403s. Actual frozen account declaration/helper chain executes with explicit OS-account/SA boundaries; pre-fix owner caller independently fails syntax compilation against the real mutable-reference signature; patched evaluator/owner identity and existing regressions pass ASan/UBSan.",
+      "evidence": "host-tests.log and round6-account-contract.md"
+    },
+    {
+      "command": "Read-only live pinned HEAD/27 original hashes; actual complete six-patch stack and every production source state",
+      "result": "PASS:original/prefix1/prefix2/prefix3/prefix4/prefix5/final exact complete bytes. All strict source guard rejection/idempotence cases pass. No source-container write or new platform build.",
+      "evidence": "round6-freeze-inputs.json and host-tests.log"
+    },
+    {
+      "command": "Parent actual regenerated IPC plus15 full platform TUs before patch6",
+      "result": "Parent reported14 pass; sole failure locator_ability const AppIdentity against shared AppIdentity& API. Both new GNSS TUs passed. Failure preserved; parent must revalidate patch6 full TU. This is not runtime proof.",
+      "evidence": "round6-freeze-inputs.json:parent_platform_batch"
     }
   ],
   "integration_requests": [
@@ -545,7 +566,7 @@
     {
       "kind": "patch_component",
       "path": "common/base/location/location/api26_runtime",
-      "action": "Use latest five-patch strict component with full27-target original/prefix1/prefix2/prefix3/prefix4/final states; originally absent fusion header remains explicit. Apply via own apply.sh. GNSS fifth patch adds3 targets; no driver edits or transaction changes."
+      "action": "Use latest six-patch strict component with full27-target original/prefix1/prefix2/prefix3/prefix4/prefix5/final states. Patch6 changes only existing locator_ability.cpp to honor actual mutable-reference account API with an owned identity copy. No shared utility/driver/IDL edits."
     },
     {
       "kind": "host_regression",
@@ -584,6 +605,10 @@
     {
       "kind": "round5_gnss_complete_platform_and_runtime",
       "action": "Run round5-platform-build-request.json two complete TUs and real lbsservice_gnss link with frozen actual generated GNSS declarations; integrate system-owned actual driver bridge/vendor independently and prove external fix/SV/config/start/stop through a new representative package before remaining five. Legacy GNSS SendMessage reply denotes event acceptance, not synchronous hardware startup result."
+    },
+    {
+      "kind": "round6_complete_locator_TU",
+      "action": "Parent finished actual regenerated IPC/full15-TU batch:14 pass and only locator_ability const account-helper mismatch. Revalidate complete locator_ability.cpp/module with exact fixed header using round6-platform-build-request.json; all representative-package/runtime gates remain root-only."
     }
   ],
   "remaining_gaps": [
@@ -718,17 +743,15 @@
   },
   "validation_limit": "All22 assigned IDs remain open. Host/source/IDL/TU checks cannot satisfy AGENTS.md newly packaged representative runtime gate. Parent-only exact platform full-module/ANI/provider/new-package acceptance remains required; no six-package delivery is claimed.",
   "changed_files": [
-    "ci/capability-audit/fixtures/batch_location/gnss_abi_before.json",
-    "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
-    "ci/capability-audit/test_batch_location_gnss_runtime.py",
-    "ci/capability-audit/test_batch_location_runtime_source_guard.py",
+    "ci/capability-audit/fixtures/batch_location/location_account_contract_before.json",
+    "ci/capability-audit/test_batch_location_fusion_runtime.py",
+    "ci/capability-audit/test_batch_location_icon_state.py",
     "docs/capability-audit/parallel/location/host-tests.log",
     "docs/capability-audit/parallel/location/result.json",
-    "docs/capability-audit/parallel/location/round2-freeze-inputs.json",
-    "docs/capability-audit/parallel/location/round5-freeze-inputs.json",
-    "docs/capability-audit/parallel/location/round5-gnss.md",
-    "docs/capability-audit/parallel/location/round5-platform-build-request.json",
-    "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch",
+    "docs/capability-audit/parallel/location/round6-account-contract.md",
+    "docs/capability-audit/parallel/location/round6-freeze-inputs.json",
+    "docs/capability-audit/parallel/location/round6-platform-build-request.json",
+    "patches/common/base/location/location/api26_runtime/0006-preserve-fusion-owner-account-contract.patch",
     "patches/common/base/location/location/api26_runtime/README.md",
     "patches/common/base/location/location/api26_runtime/source_states.json"
   ],
@@ -741,7 +764,8 @@
     "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b",
     "patches/common/base/location/location/api26_runtime/0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
     "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch": "c0bf33c522e59759810ab13de3a8215c53d6c9a33d3b4c4d6e1754b43a2d9ccd",
-    "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144"
+    "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144",
+    "patches/common/base/location/location/api26_runtime/0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7"
   },
   "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
   "round2_batch_date": "2026-10-16",
@@ -800,6 +824,34 @@
     "all_cumulative_targets": 73,
     "additional_full_TUs_requested": 2,
     "cumulative_full_location_communication_TUs_requested": 28,
+    "behavior_closures": 0
+  },
+  "round5_changed_files": [
+    "ci/capability-audit/fixtures/batch_location/gnss_abi_before.json",
+    "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
+    "ci/capability-audit/test_batch_location_gnss_runtime.py",
+    "ci/capability-audit/test_batch_location_runtime_source_guard.py",
+    "docs/capability-audit/parallel/location/host-tests.log",
+    "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/round2-freeze-inputs.json",
+    "docs/capability-audit/parallel/location/round5-freeze-inputs.json",
+    "docs/capability-audit/parallel/location/round5-gnss.md",
+    "docs/capability-audit/parallel/location/round5-platform-build-request.json",
+    "patches/common/base/location/location/api26_runtime/0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch",
+    "patches/common/base/location/location/api26_runtime/README.md",
+    "patches/common/base/location/location/api26_runtime/source_states.json"
+  ],
+  "round6_base_commit": "94d765b83b6c06058f32b67c9ad5637fa8e139af",
+  "round6_date": "2026-10-16",
+  "round6_implementation": "round6-account-contract.md",
+  "round6_counts": {
+    "modified_existing_location_targets": 1,
+    "new_upstream_targets": 0,
+    "location_cumulative_targets": 27,
+    "communication_cumulative_targets": 42,
+    "previous_rtt_targets": 4,
+    "all_cumulative_targets": 73,
+    "full_TUs_recheck_requested": 1,
     "behavior_closures": 0
   }
 }

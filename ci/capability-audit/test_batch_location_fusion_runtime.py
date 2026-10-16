@@ -6,6 +6,7 @@ GNSS/WLAN/modem or product-package runtime pass.
 """
 import os
 from pathlib import Path
+import json
 import subprocess
 import tempfile
 import unittest
@@ -48,17 +49,23 @@ struct Parcel {
 SPTR = NAPI_PREAMBLE[NAPI_PREAMBLE.index('struct RefBase'):NAPI_PREAMBLE.index('struct BluetoothScanResult')]
 SPTR = SPTR.replace('T* operator->()const', 'bool operator==(const sptr& other)const{return ptr==other.ptr;}T* operator->()const')
 SERVICE = r'''
+#define LBSLOGE(...) ((void)0)
 using ErrCode=int;using LocationErrCode=int;
 constexpr int ERRCODE_SUCCESS=0,ERRCODE_INVALID_PARAM=401,ERRCODE_NOT_SUPPORTED=801,ERRCODE_SERVICE_UNAVAILABLE=3301000,ERRCODE_SWITCH_OFF=3301100;
 constexpr int LOCATION_ERRCODE_PERMISSION_DENIED=3300201,LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED=3300202;
-constexpr int GNSS_TYPE=1,RTK_TYPE=4,WGS84=1,ENABLED=1,PRIORITY_ACCURACY=1;
+constexpr int GNSS_TYPE=1,RTK_TYPE=4,WGS84=1,ENABLED=1,PRIORITY_ACCURACY=1,COMMON_UTILS=0;
 constexpr const char* ACCESS_LOCATION="fine";
 int64_t now=100000000000LL;bool fine=true,systemApp=true,currentAccount=true,switchedOn=true,background=false,backgroundGranted=true,frozen=false;
-struct CommonUtils{static int64_t GetSinceBootTime(){return now;}template<class T>static bool IsAppBelongCurrentAccount(const T&){return currentAccount;}};
 struct AppIdentity{int uid=100001,pid=10;uint32_t token=7,first=0;uint64_t ex=9;std::string bundle="owner";
  int GetUid()const{return uid;}int GetPid()const{return pid;}uint32_t GetTokenId()const{return token;}uint32_t GetFirstTokenId()const{return first;}uint64_t GetTokenIdEx()const{return ex;}std::string GetBundleName()const{return bundle;}};
 AppIdentity caller;
-struct PermissionManager{static bool CheckLocationPermission(uint32_t,uint32_t){return fine;}static bool CheckSystemPermission(uint32_t,uint64_t){return systemApp;}static bool CheckBackgroundPermission(uint32_t,uint32_t){return backgroundGranted;}};
+namespace AccountSA{struct OsAccountManager{static int GetOsAccountLocalIdFromUid(int uid,int& user){user=uid;return 0;}};}
+struct CommonUtils{
+ static int64_t GetSinceBootTime(){return now;}
+ static bool GetActiveUserIds(std::vector<int>& users){users={currentAccount?caller.GetUid():999999};return true;}
+ FROZEN_ACCOUNT_DECLARATIONS
+};
+struct PermissionManager{static bool CheckIsSystemSa(uint32_t){return false;}static bool CheckLocationPermission(uint32_t,uint32_t){return fine;}static bool CheckSystemPermission(uint32_t,uint64_t){return systemApp;}static bool CheckBackgroundPermission(uint32_t,uint32_t){return backgroundGranted;}};
 struct ReportManager{static ReportManager* GetInstance(){static ReportManager v;return &v;}bool IsAppBackground(const std::string&,uint32_t,uint64_t,int,int){return background;}};
 struct LocationDataRdbManager{static int QuerySwitchStateWithUid(int){return switchedOn;}};
 struct ProxyFreezeManager{static ProxyFreezeManager* GetInstance(){static ProxyFreezeManager v;return &v;}bool IsProxyPid(int){return frozen;}};
@@ -114,6 +121,11 @@ struct LocatorAbility{std::mutex fusionFenceMutex_;std::vector<std::shared_ptr<F
 MAIN = r'''
 int main(){
  auto* service=LocatorAbility::GetInstance();auto* data=LocatorRequiredDataManager::GetInstance();
+ const AppIdentity registeredOwner=caller;
+ assert(FusionOwnerAvailable(registeredOwner));
+ currentAccount=false;assert(!FusionOwnerAvailable(registeredOwner));currentAccount=true;
+ assert(registeredOwner.uid==caller.uid&&registeredOwner.pid==caller.pid&&registeredOwner.token==caller.token&&registeredOwner.first==caller.first&&registeredOwner.ex==caller.ex&&registeredOwner.bundle==caller.bundle);
+
  FusionFenceRequest req;req.identifier="a";req.scene=1;req.fenceType=1;req.events=7;req.loiterMs=1000;req.expirationMs=100000;FusionGnssFence shape;shape.type=2;shape.radius=100;shape.expirationMs=100000;req.gnss={shape};
  assert(req.Valid());Parcel parcel;assert(req.Marshalling(parcel));assert(parcel.WriteInt32(777));std::unique_ptr<FusionFenceRequest> copy(FusionFenceRequest::Unmarshalling(parcel));int32_t tail=0;assert(copy&&copy->Valid()&&parcel.ReadInt32(tail)&&tail==777);
  Parcel truncated=parcel;truncated.position=0;truncated.values.resize(3);assert(!FusionFenceRequest::Unmarshalling(truncated));
@@ -159,6 +171,23 @@ class FusionRuntimeTests(unittest.TestCase):
             self.assertIn('DECLARE_WRITABLE_NAPI_FUNCTION("' + name + '", ' + native + ')', entry)
             self.assertIn('napi_value ' + native + '(', sources['frameworks/js/napi/source/location_napi_adapter.cpp'])
 
+    def test_previous_const_owner_fails_with_real_mutable_account_signature(self):
+        sources = runtime_sources(prefix=5)
+        header = without_includes(sources['interfaces/inner_api/include/fusion_fence_request.h'])
+        header = header.replace('namespace OHOS {', '').replace('namespace Location {', '').replace('} // namespace Location', '').replace('} // namespace OHOS', '')
+        contract = json.loads((Path(__file__).parent / 'fixtures/batch_location/location_account_contract_before.json').read_text())
+        service = SERVICE.replace('FROZEN_ACCOUNT_DECLARATIONS', '\n '.join(contract['header']['declarations']))
+        owner = function(sources['services/location_locator/locator/source/locator_ability.cpp'], 'bool FusionOwnerAvailable(')
+        program = COMMON + SPTR + header + service + owner
+        with tempfile.TemporaryDirectory(prefix='batch-location-real-account-contract-') as directory:
+            path = Path(directory) / 'test.cpp'
+            path.write_text(program)
+            compiled = subprocess.run(['clang++', '-std=c++17', '-fsyntax-only', str(path)], capture_output=True, text=True)
+            self.assertNotEqual(0, compiled.returncode)
+            self.assertIn('IsAppBelongCurrentAccount', compiled.stderr)
+            self.assertIn('const', compiled.stderr)
+            self.assertIn('AppIdentity', compiled.stderr)
+
     def test_actual_wire_geometry_owner_and_service_lifecycle(self):
         sources = runtime_sources()
         header = without_includes(sources['interfaces/inner_api/include/fusion_fence_request.h'])
@@ -166,7 +195,10 @@ class FusionRuntimeTests(unittest.TestCase):
         source = sources['services/location_locator/locator/source/locator_ability.cpp']
         start = source.index('namespace {\nconstexpr int64_t FUSION_GNSS_FRESH_NS')
         end = source.index('ErrCode LocatorAbility::StartDistrictLocating(', start)
-        program = COMMON + SPTR + header + SERVICE + source[start:end] + MAIN
+        contract = json.loads((Path(__file__).parent / 'fixtures/batch_location/location_account_contract_before.json').read_text())
+        service = SERVICE.replace('FROZEN_ACCOUNT_DECLARATIONS', '\n '.join(contract['header']['declarations']))
+        account_functions = '\n'.join(contract['source']['functions'].values())
+        program = COMMON + SPTR + header + service + account_functions + source[start:end] + MAIN
         with tempfile.TemporaryDirectory(prefix='batch-location-fence-') as directory:
             path = Path(directory)
             (path/'test.cpp').write_text(program)

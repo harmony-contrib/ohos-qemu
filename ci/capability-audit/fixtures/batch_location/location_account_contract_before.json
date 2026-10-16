@@ -1,0 +1,25 @@
+{
+  "header": {
+    "path": "base/location/location/interfaces/inner_api/include/common_utils.h",
+    "sha256": "271095cb4be918ad7739d4c483f9f50f4fc462912b1947492d4740893462a114",
+    "declarations": [
+      "static bool CheckAppForUsers(int32_t uid, std::vector<int> activeIds, std::string& bundleName);",
+      "static bool IsAppBelongCurrentAccount(AppIdentity &identity);",
+      "static bool IsAppBelongActiveAccounts(AppIdentity &identity, std::vector<int> activeIds);"
+    ]
+  },
+  "source": {
+    "path": "base/location/location/frameworks/location_common/common/source/common_utils.cpp",
+    "sha256": "996825ac1b2bad35aeec1b0923a15ca49a360552755d43164cac2ed2364eed75",
+    "functions": {
+      "bool CommonUtils::IsAppBelongCurrentAccount(AppIdentity &identity)": "bool CommonUtils::IsAppBelongCurrentAccount(AppIdentity &identity)\n{\n    std::vector<int> activeIds;\n    if (!CommonUtils::GetActiveUserIds(activeIds)) {\n        LBSLOGE(COMMON_UTILS, \"Fail to GetCurrentUserId.\");\n    }\n    return CommonUtils::IsAppBelongActiveAccounts(identity, activeIds);\n}\n",
+      "bool CommonUtils::IsAppBelongActiveAccounts(AppIdentity &identity,": "bool CommonUtils::IsAppBelongActiveAccounts(AppIdentity &identity, std::vector<int> activeIds)\n{\n    std::string bundleName = identity.GetBundleName();\n    if (CommonUtils::CheckAppForUsers(identity.GetUid(), activeIds, bundleName)) {\n        return true;\n    }\n    if (PermissionManager::CheckIsSystemSa(identity.GetTokenId())) {\n        return true;\n    }\n    return false;\n}\n",
+      "bool CommonUtils::CheckAppForUsers(int32_t uid,": "bool CommonUtils::CheckAppForUsers(int32_t uid, std::vector<int> activeIds, std::string& bundleName)\n{\n    int userId = 0;\n    AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);\n    bool containsActiveId = std::find(activeIds.begin(), activeIds.end(), userId) != activeIds.end();\n    if (containsActiveId || userId == 0) {\n        return true;\n    }\n    return false;\n}\n"
+    }
+  },
+  "identity": {
+    "path": "base/location/location/interfaces/inner_api/include/app_identity.h",
+    "sha256": "9dea0594c89b3ae0c2ffec6b1b5c2d2f1bd660a1ca7ddaf15a2db7ecc873d4f8"
+  },
+  "scope": "Read-only fixed signatures/functions; OS-account and system-SA permission resolution remain explicit host boundaries."
+}

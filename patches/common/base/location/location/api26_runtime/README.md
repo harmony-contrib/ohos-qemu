@@ -1,6 +1,6 @@
 # API 26 location runtime routes
 
-Apply after `api26_public_enums`, using this component's `apply.sh`. The five-patch
+Apply after `api26_public_enums`, using this component's `apply.sh`. The six-patch
 stack adds live icon, filtered BLE search, district, skiing-track and fusion-fence routes.
 Transactions 65 through 75 are appended while all original numbers are preserved.
 
@@ -37,7 +37,7 @@ for the algorithm, authorization, compatibility and centralized build details.
 
 The guard pins the location project HEAD and the complete raw bytes of all 27
 upstream targets. It accepts only the original component state (after the enum
-prerequisite), the complete first/second/third/fourth patch prefixes, or the final state. Unknown or mixed
+prerequisite), the complete first/second/third/fourth/fifth patch prefixes, or the final state. Unknown or mixed
 edits, changed patches, unexpected new-header bytes, missing existing files and source/ancestor symlinks fail before
 source writes. A private suffix preflight must produce the exact final
 bytes and revalidate the source snapshot before atomic owned-file replacement.
@@ -71,3 +71,11 @@ round5-gnss.md, round5-freeze-inputs.json and round5-platform-build-request.json
 for the actual generated POD contract, regression reproduction, and two added
 complete platform TU requirements. The external vendor/driver bridge is owned
 by the integrating/system agents and is not modified by this component.
+
+
+The sixth patch passes an owned identity copy to the actual shared mutable-reference
+account helper, keeping the fusion fence owner immutable. Fixed header declarations
+and the unchanged account helper call chain are exercised by host regression; the
+previous const caller is required to fail compilation against that declaration.
+See round6-account-contract.md and round6-platform-build-request.json for the
+parent-reported full-platform failure and the remaining complete-TU gate.
