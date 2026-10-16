@@ -34,6 +34,7 @@
   },
   "qemu_gn_condition": "netmanager_base_enable_feature_sysvpn && (product_name == \"armv7a_virt\" || product_name == \"arm64_virt\" || product_name == \"x86_64_virt\")",
   "upstream_targets": [
+    "configure.ac",
     "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
     "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
     "foundation/communication/netmanager_ext/qemu_openvpn/management_protocol.h",
@@ -48,11 +49,10 @@
     "foundation/communication/netmanager_ext/services/vpnmanager/src/net_vpn_impl.cpp",
     "foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp",
     "foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp",
-    "third_party/openvpn/configure.ac",
-    "third_party/openvpn/src/openvpn/dns.c",
-    "third_party/openvpn/src/openvpn/dns.h",
-    "third_party/openvpn/src/openvpn/syshead.h",
-    "third_party/openvpn/src/openvpn/tun_afunix.c"
+    "src/openvpn/dns.c",
+    "src/openvpn/dns.h",
+    "src/openvpn/syshead.h",
+    "src/openvpn/tun_afunix.c"
   ],
   "tests": [
     {
@@ -357,5 +357,14 @@
     "patches/common/foundation/communication/netmanager_ext/openvpn_session/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "660e4d56e2f7954442a99c2fab55a6836be9a9e0"
+  "round_base_commit": "660e4d56e2f7954442a99c2fab55a6836be9a9e0",
+  "external_upstream_files": {
+    "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
+      "configure.ac",
+      "src/openvpn/dns.c",
+      "src/openvpn/dns.h",
+      "src/openvpn/syshead.h",
+      "src/openvpn/tun_afunix.c"
+    ]
+  }
 }
