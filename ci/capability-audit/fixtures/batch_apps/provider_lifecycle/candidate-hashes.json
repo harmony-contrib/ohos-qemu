@@ -1,0 +1,10 @@
+{
+  "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets": "56e07145ba8eaeb37ccfebf10cae714070f70707e7704c24f0efce27086e0ecf",
+  "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets": "df4609bbad3281abfeb922c3e1f86ff53dddab2ec18f00425e774c0a5c8aafee",
+  "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets": "1b6adb88192ade5cc160098956bd44dd5874fc7ddbe4f780e95d8aa2f58ec3c2",
+  "applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets": "b1327fb0c6f3872cb16ec84785aad01a9795bb0a4045b9725a4e38d790c25f51",
+  "applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets": "7195c647807b778b7ed3179de30ee22ca71375b8b1407e4ae79b9d1c5a07cb17",
+  "applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets": "32dc4a208dc5dff759ea68f9d7cf3a853209ee2dfa65d2243d1acd64ad2b525d",
+  "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts": "84cde2fbed244e1e6e3562096f66d5948d9124c4030e7d1bd54b3fa39e761dac",
+  "applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts": "84cde2fbed244e1e6e3562096f66d5948d9124c4030e7d1bd54b3fa39e761dac"
+}
