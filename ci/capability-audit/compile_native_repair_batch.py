@@ -253,6 +253,7 @@ GROUPS['recorder'] = {
     'project': 'foundation/multimedia/player_framework',
     'revision': '3d3b1231db27561e8978652d7ae867c12f488d9a',
     'components': ['recorder_configuration'], 'units': ['native_avrecorder'],
+    'extra_owned': ['frameworks/native/capi/recorder/native_avrecorder.cpp'],
     'sources': {'native_avrecorder': 'frameworks/native/capi/recorder/native_avrecorder.cpp'},
     'targets': {'native_avrecorder': 'obj/foundation/multimedia/player_framework/frameworks/native/capi/recorder/avrecorder/native_avrecorder.o'},
     'required_header': None, 'supported_products': ['arm64_virt'],
@@ -265,7 +266,7 @@ GROUPS['vpn_broker'] = {
     'components': [],
     'component_paths': [NETWORK_BASE + '/' + name for name in (
         'optional_settings_read', 'qemu_openvpn_control', 'qemu_openvpn_broker')] +
-        [NETWORK_EXT + '/' + name for name in ('always_on_vpn', 'vpn_config_arrays', 'vpn_config_store',
+        [NETWORK_EXT + '/' + name for name in ('api26_features', 'vpn_dialog_bundle', 'always_on_vpn', 'vpn_config_arrays', 'vpn_config_store',
          'vpn_openvpn_fields', 'connected_vpn_nullable', 'openvpn_lifecycle', 'openvpn_session',
          'vpn_callback_dispatch', 'netvpn_callback_unused', 'openvpn_broker')],
     'payloads': {NETWORK_EXT + '/qemu_openvpn/' + p.name: str(p.relative_to(ROOT))
@@ -292,6 +293,26 @@ for name, target in (('network_vpn_service_proxy', 'net_vpn_manager_if'),
                      ('network_vpn_service_stub', 'networkvpn_interface_stub')):
     GROUPS['vpn_broker']['targets'][name] = ('obj/out/arm64_virt/gen/' + NETWORK_EXT +
         '/interfaces/innerkits/netvpnclient/' + target + '/' + name + '.o')
+GNSS_COMPONENT = ROOT / 'patches/common/device/qemu/external_gnss'
+GNSS_MANIFEST = json.loads((GNSS_COMPONENT / 'manifest.json').read_text())
+GROUPS['gnss_vendor'] = {
+    'project': 'drivers/peripheral', 'revision': GNSS_MANIFEST['revision'],
+    'additional_projects': {'device/qemu': GNSS_MANIFEST['projects']['device/qemu']},
+    'components': [], 'component_paths': ['device/qemu/external_gnss'],
+    'extra_owned_paths': [*GNSS_MANIFEST['originals'], *GNSS_MANIFEST['files'], *GNSS_MANIFEST['dependencies']],
+    'units': ['gnss_interface_impl', 'location_vendor_interface', 'qemu_gnss_input', 'qemu_gnss_vendor'],
+    'source_paths': {**{name: 'drivers/peripheral/location/gnss/hdi_service/' + name + '.cpp'
+                         for name in ('gnss_interface_impl', 'location_vendor_interface')},
+                     **{name: 'device/qemu/common/virt_full/external_gnss/' + name + '.cpp'
+                         for name in ('qemu_gnss_input', 'qemu_gnss_vendor')}},
+    'targets': {name: 'obj/drivers/peripheral/location/gnss/hdi_service/libgnss_interface_service_2.0/' +
+                     ('location_vendor_interface' if name.startswith('qemu_') else name) + '.o'
+                for name in ('gnss_interface_impl', 'location_vendor_interface', 'qemu_gnss_input', 'qemu_gnss_vendor')},
+    'template_paths': {name: 'drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp'
+                       for name in ('qemu_gnss_input', 'qemu_gnss_vendor')},
+    'required_header': None, 'supported_products': ['arm64_virt'],
+    'scope': 'four_whole_GNSS_bridge_and_provider_TUs_actual_product_flags_explicit_new_source_templates_NOT_fresh_GN_or_link_or_runtime',
+}
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
@@ -415,7 +436,7 @@ def run(args):
     owned = sorted(set(patch_paths(components)) |
                    {str(project / name) for name in group.get('extra_checkout', [])} |
                    {str(project / name) for name in group.get('extra_owned', [])} |
-                   set(group.get('payloads', {})))
+                   set(group.get('payloads', {})) | set(group.get('extra_owned_paths', [])))
     if any(not any(Path(name).is_relative_to(p) for p in projects) for name in owned):
         raise ValueError('component targets a different project')
     before = {name: sha(root / name) if (root / name).is_file() else None for name in owned}
@@ -511,8 +532,8 @@ def run(args):
                                                 group['directory'] + '/' + unit + '.cpp'))
                     candidate_source = staged / source.relative_to(root)
                 compiler = 'clang' if source.suffix == '.c' else 'clang++'
-                template = (root / project / group['template_sources'][unit]
-                            if 'template_sources' in group else source)
+                template = (root / group['template_paths'][unit] if unit in group.get('template_paths', {}) else
+                            root / project / group['template_sources'][unit] if 'template_sources' in group else source)
                 if (Path(argv[0]).name != compiler or '--target=' + arch + '-linux-ohos' not in argv or
                         argv.count('-c') != 1 or argv.count('-o') != 1 or argv.count('-MF') != 1 or
                         any(v in argv for v in ('&&', ';', '|')) or
@@ -531,7 +552,18 @@ def run(args):
                     export_flags, export_proof = exported_includes(root,
                         'base/security/access_token/interfaces/innerkits/accesstoken/BUILD.gn', 'accesstoken')
                     argv += export_flags
-                    row['diagnostic_public_export'] = export_proof
+                    row['diagnostic_public_export'] = [export_proof]
+                    rdb_flags, rdb_proof = exported_includes(root,
+                        'foundation/distributeddatamgr/relational_store/interfaces/inner_api/rdb_data_share_adapter/BUILD.gn',
+                        'rdb_data_share_adapter_public_config')
+                    argv += rdb_flags
+                    row['diagnostic_public_export'].append(rdb_proof)
+                    row['fresh_GN_dependency_selection_tested'] = False
+                if args.group == 'knowledge_content' and unit == 'knowledge_holiday_index':
+                    from gn_export_diagnostic import openssl_public_includes
+                    export_flags, export_proof = openssl_public_includes(root, product)
+                    argv += export_flags
+                    row['diagnostic_public_export'] = [export_proof]
                     row['fresh_GN_dependency_selection_tested'] = False
                 if args.group == 'vpn_broker' and unit in ('system_vpn_wrapper', 'multi_vpn_manager'):
                     export_flags, export_proof = exported_includes(root,
