@@ -1183,7 +1183,7 @@
     "patches/common/applications/standard/theme/source_provider/apply.sh",
     "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
-  "previous_batch_commit": "41040fc7c1405b113218b1b31d42c2cc540a7a57",
+  "previous_batch_commit": "5eac5fe063fc813a0912857555f97439e023893b",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -1194,7 +1194,7 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership; latest batch adds only ordinary caller runtime/test tools and six fixtures/docs; no product upstream target changed",
+  "report_scope": "cumulative apps ownership; ordinary caller generator SDK39 deviceTypes correction only, no product upstream target changed",
   "contacts_theme_batch": {
     "scope": "8 build metadata upstream targets only; no business fix or acceptance claim",
     "fixed_source_container": "read-only ohos-qemu-parallel-source-20261016-02",
@@ -1302,6 +1302,20 @@
       "Verifier checks raw evidence linkage; cryptographic verify-app, hidden window/session leak and full capability acceptance remain root gates"
     ],
     "requirements_closed": 0,
-    "first_artifact_behavior_gate_passed": false
+    "first_artifact_behavior_gate_passed": false,
+    "source_metadata_correction": {
+      "trigger": "parent actual-product Linux SDK39 Theme03 proved no phone syscap set; use supported default/tablet/2in1",
+      "module_device_types": [
+        "default",
+        "tablet",
+        "2in1"
+      ],
+      "representative_ARM64_phone_gate_unchanged": true,
+      "additional_SDK_build_attempted": false
+    },
+    "tool_sha256": {
+      "ci/capability-audit/batch_apps_contact_picker_runtime.py": "90d54d7ca3ec89dc25f5449c009d9d1af96934b721648cef65e7e04076c37354",
+      "ci/capability-audit/test_batch_apps_contact_picker_runtime.py": "9fc93d055fcb54a4c9cf98550f3108c7e1e7db28afbea2098332825f0c01441d"
+    }
   }
 }

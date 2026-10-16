@@ -205,6 +205,7 @@ class RuntimeVerifier(unittest.TestCase):
     def test_prepare_is_normal_permissionless_and_preserves_prior_output(self):
         module = runtime.document(self.root / 'project/entry/src/main/module.json5')['module']
         self.assertEqual(module['requestPermissions'], [])
+        self.assertEqual(module['deviceTypes'], ['default', 'tablet', '2in1'])
         self.assertNotIn('extensionAbilities', module)
         with self.assertRaises(runtime.EvidenceError): runtime.prepare_project(self.root / 'project')
         self.assertEqual(len(runtime.document(self.root / 'project/caller-source-manifest.json')['fixture_hashes']), 6)
