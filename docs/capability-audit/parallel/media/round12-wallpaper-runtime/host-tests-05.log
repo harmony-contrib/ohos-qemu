@@ -1,0 +1,11 @@
+test_ack_security_timeout_and_real_fresh_reply (test_batch_media_wallpaper_runtime.RuntimeTests.test_ack_security_timeout_and_real_fresh_reply) ... ok
+test_actual_API26_caller_declarations (test_batch_media_wallpaper_runtime.RuntimeTests.test_actual_API26_caller_declarations) ... ok
+test_complete_host_oracle_and_mutations (test_batch_media_wallpaper_runtime.RuntimeTests.test_complete_host_oracle_and_mutations) ... ok
+test_pixels_reject_flat_stale_and_preview (test_batch_media_wallpaper_runtime.RuntimeTests.test_pixels_reject_flat_stale_and_preview) ... ok
+test_seed_errors_never_become_success (test_batch_media_wallpaper_runtime.RuntimeTests.test_seed_errors_never_become_success) ... ok
+test_stat_transfer_boundaries (test_batch_media_wallpaper_runtime.RuntimeTests.test_stat_transfer_boundaries) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.523s
+
+OK
