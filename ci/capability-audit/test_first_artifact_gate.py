@@ -13,7 +13,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from snapshot_build_inputs import digest_files
-from verify_first_artifact_gate import REQUIRED_CHECKS, checksum, verify
+from verify_first_artifact_gate import REQUIRED_CHECKS, REPRESENTATIVE_CHECKS, checksum, verify
 
 
 class FirstArtifactGateTests(unittest.TestCase):
@@ -34,7 +34,7 @@ class FirstArtifactGateTests(unittest.TestCase):
             member.size = len(inputs)
             package.addfile(member, io.BytesIO(inputs))
         records = {}
-        for name in REQUIRED_CHECKS:
+        for name in REQUIRED_CHECKS | REPRESENTATIVE_CHECKS:
             path = self.work / (name + '.unit-evidence')
             path.write_text('structure-only unit fixture, not actual guest results')
             records[name] = {'status': 'pass', 'evidence': path.name, 'sha256': checksum(path),
@@ -92,6 +92,9 @@ class FirstArtifactGateTests(unittest.TestCase):
                        lambda d: d['checks'].pop('env-reader'),
                        lambda d: d['checks'].pop('settings-all-navigation'),
                        lambda d: d['checks'].pop('child-default-profile'),
+                       lambda d: d['checks'].pop('contacts-picker'),
+                       lambda d: d['checks'].pop('wallpaper'),
+                       lambda d: d['checks'].pop('external-inputs'),
                        lambda d: d['checks']['vulkan'].update(status='fail'),
                        lambda d: d['checks']['issue20-library-exit'].update(commands=[]),
                        lambda d: d['checks']['native-bindings-e2e']['commands'][0].update(exit_code=1)):

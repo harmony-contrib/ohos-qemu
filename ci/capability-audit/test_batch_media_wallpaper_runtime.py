@@ -18,6 +18,22 @@ fixture = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(fixture
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_only_exact_uitest_window_enumeration_retry_is_allowed(self):
+        marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
+        remote = '/data/local/tmp/qemu-capability-ui-' + 'b' * 32 + '-7.json'
+        script = 'test ! -e ' + remote + ' && uitest dumpLayout -p ' + remote + ' -b com.ohos.settings'
+        tail = '; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"'
+        argv = ['hdc', '-t', '127.0.0.1:1234', 'shell', script + tail]
+        raw = 'DumpLayout failed:Get window nodes failed\n\n' + marker + '1\n'
+        self.assertTrue(verifier.layout_transition_unavailable(argv, raw))
+        for output in (raw.replace('failed:Get', 'failed:Other'), raw.replace(marker, marker + marker),
+                       raw.replace(marker, '__UITEST_EXIT_' + 'c' * 32 + '__='),
+                       raw.replace(marker + '1', marker + '2'), '[Fail] transport disconnected\n' + raw):
+            self.assertFalse(verifier.layout_transition_unavailable(argv, output))
+        for command in (script.replace(remote, '/data/local/tmp/foreign.json') + tail,
+                        'uitest uiInput click 1 1' + tail, script + ' && rm -f ' + remote + tail):
+            self.assertFalse(verifier.layout_transition_unavailable(argv[:4] + [command], raw))
+
     def test_template_from_another_snapshot_requires_exact_trusted_bytes(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

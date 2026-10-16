@@ -1191,6 +1191,16 @@ def behavior_results(runtime, boot_id, archive_sha, device_type=None):
                         'native_abi_evidence': str(native[0]), 'native_abi_sha256': digest(native[0]),
                         'verifier': 'all_65_public_symbols_and_real_two_cycle_PCM_data_state_boundary',
                         'not_claimed': 'algorithm_plugins_or_realtime_audio_device'}
+    if device_type == 'phone':
+        from parallel_runtime_suite import REQUIRED, representative, verified_closures
+        for name in REQUIRED:
+            result = child(name + '/evidence.json')
+            if result:
+                boot = json.loads((runtime / 'boot/boot.json').read_text())
+                environment = boot.get('test_environment', {})
+                if representative(environment):
+                    archive = Path(boot['archive'])
+                    closed.update(verified_closures(name, result[0], archive, environment))
     return closed
 
 

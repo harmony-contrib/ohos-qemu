@@ -22,6 +22,7 @@ REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 REQUIRED_CHECKS |= frozenset(('child-default-profile',))
 REQUIRED_CHECKS |= frozenset(('audio-capture', 'media-recorder', 'audio-revoke', 'audio-focus'))
+REPRESENTATIVE_CHECKS = frozenset(('contacts-picker', 'wallpaper', 'external-inputs'))
 
 
 def verified_payload(name, path, identity, environment):
@@ -107,6 +108,10 @@ def verified_payload(name, path, identity, environment):
             raise ValueError('child behavior belongs to another boot: ' + name)
         if payload.get('archive_sha256') != identity['sha256']:
             raise ValueError('child behavior belongs to another package: ' + name)
+        if name in REPRESENTATIVE_CHECKS:
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
+            from parallel_runtime_suite import verify_family
+            verify_family(name, path, Path(identity['archive']), environment)
         if name == 'power-suspend':
             cycles = payload.get('cycles', [])
             if (payload.get('scope') != 'fresh_packaged_finite_suspend_key_wake_real_compositor' or
@@ -533,6 +538,8 @@ def verify(archive, evidence, repository, product, device_type):
     policy = setup.get('policy_states', {})
     verify_policy_states(policy.get('before'), policy.get('setup'), policy.get('restored'))
     required = REQUIRED_CHECKS | DEVICE_CHECKS[device_type]
+    if product == 'arm64_virt' and device_type == 'phone':
+        required |= REPRESENTATIVE_CHECKS
     if not required.issubset(checks):
         raise ValueError("first-artifact behavior/boundary/regression coverage is incomplete")
     for name in required:

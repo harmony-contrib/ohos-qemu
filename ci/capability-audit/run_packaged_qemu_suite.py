@@ -175,6 +175,45 @@ def run(args):
         report['backend_inventory'] = {'evidence': str(inventory_path),
             'sha256': checksum(inventory_path), 'not_a_behavior_check': True}
         save()
+        from parallel_runtime_suite import (FAMILIES, TIMEOUTS, argv as capability_argv,
+            boot_copy, load_plan, representative, verify_family)
+        if representative(environment):
+            capability_plan = None
+            plan_error = None
+            try:
+                configured = os.environ.get('QEMU_TEST_CAPABILITY_INPUTS')
+                capability_plan = load_plan(Path(configured) if configured else None, environment)
+                report['capability_inputs'] = {'path': str(Path(configured).resolve()),
+                    'sha256': checksum(Path(configured)), 'scope': 'prebuilt_inputs_NOT_behavior_evidence'}
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                plan_error = str(error)
+            for family in FAMILIES:
+                output = work / family
+                previous_command_count = len(report['commands'])
+                def capability_health(label):
+                    same_guest(label)
+                    if label.startswith('after-') and len(report['commands']) > previous_command_count:
+                        if report['commands'][-1].get('timed_out'):
+                            raise ValueError('timed-out capability child cleanup is not certified; stop batch')
+                        evidence = output / 'evidence.json'
+                        if not evidence.is_file():
+                            raise ValueError('capability child cleanup evidence missing; stop batch: ' + family)
+                        child = json.loads(evidence.read_text())
+                        if child.get('cleanup_complete') is not True or child.get('cleanup_errors'):
+                            raise ValueError('owned capability cleanup failed; stop batch: ' + family)
+                with independent_probe(report, family, capability_health, save):
+                    if capability_plan is None:
+                        raise ValueError('real capability inputs unavailable: ' + str(plan_error))
+                    # Wake records may change the parent's boot.json later.
+                    # Keep the actual qemu.log directory and freeze this boot's bytes.
+                    guest.save()
+                    stable_boot = boot_copy(work / 'boot/boot.json', work / 'boot' / (family + '-boot.json'))
+                    save()  # Wallpaper verifies the current owner's finite power override.
+                    record = command(capability_argv(family, capability_plan, stable_boot,
+                        args.package_archive, hdc, output, args.evidence_output),
+                        'actual-' + family + '-complete-boundaries', timeout=TIMEOUTS[family])
+                    verify_family(family, output / 'evidence.json', args.package_archive, environment)
+                    check(family, output / 'evidence.json', [record])
         native_definitions = guest.directory / 'native-gap-abi-image.json'
         native_abi_probe = work / 'native-gap-abi-build'
         command([sys.executable, Path(__file__).with_name('build_native_gap_abi_probe.py'),

@@ -312,6 +312,23 @@ def photos_provider(dump, host):
         raise ValueError('actual Photos UIExtension provider for this host required')
 
 
+def layout_transition_unavailable(argv, raw):
+    """Only GuestUi's exact window-enumeration retry, never a failed action."""
+    if len(argv) < 5 or argv[3] != 'shell': return False
+    markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
+    if len(markers) != 1: return False
+    marker = markers[0]
+    tail = '; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"'
+    if not argv[4].endswith(tail): return False
+    script = argv[4][:-len(tail)]
+    if re.fullmatch(r'test ! -e (/data/local/tmp/qemu-capability-ui-[a-f0-9]{32}-[1-9][0-9]*\.json)'
+                    r' && uitest dumpLayout -p \1(?: -b [A-Za-z0-9_.]+)?', script) is None:
+        return False
+    normalized = raw.replace('\r', '')
+    match = re.search(r'(?:^|\n)' + re.escape(marker) + r'1\s*$', normalized)
+    return match is not None and normalized[:match.start()].strip() == 'DumpLayout failed:Get window nodes failed'
+
+
 def verify(path):
     value = json.loads(Path(path).read_text())
     if (value.get('schema_version') != 1 or value.get('scope') != SCOPE or value.get('status') != 'collected' or
@@ -419,7 +436,8 @@ def verify(path):
             raise ValueError('command does not target this enclosing guest')
         if argv[3] == 'shell':
             marker = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
-            if len(marker) != 1 or not raw.rstrip().endswith(marker[0]+'0') or raw.count(marker[0]) != 1:
+            if (len(marker) != 1 or raw.count(marker[0]) != 1 or
+                    (not raw.rstrip().endswith(marker[0]+'0') and not layout_transition_unavailable(argv, raw))):
                 raise ValueError('actual remote shell success marker missing/nonzero')
     cleanup_commands = [command for command in value['commands'] if command.get('label') == 'owned-private-inputs-absent']
     if len(cleanup_commands) != 1 or not cleanup_commands[0]['argv'][4].startswith(
