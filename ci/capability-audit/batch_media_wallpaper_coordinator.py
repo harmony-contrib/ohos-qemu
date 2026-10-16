@@ -52,6 +52,7 @@ def request_file(path, run, boot, sequence):
                 status.st_nlink != 1 or status.st_size > 16384):
             raise ValueError('owned bounded 0600 single-link request required')
         raw = stream.read(16385)
+    if not raw.endswith(b'\n'):raise NodeNotReady('request writer has not finished its complete line')
     try: value = json.loads(raw)
     except json.JSONDecodeError as error:
         if not raw.endswith(b'\n'): raise NodeNotReady('request not complete yet') from error
@@ -89,7 +90,7 @@ def adapt_sdk_build(input_value, generated_page, unsigned, output):
     """Consume root SDK39's real exit_code/source_files/commands/haps schema."""
     evidence_path = checked(input_value['sdk_evidence'])
     evidence = json.loads(evidence_path.read_text())
-    if (type(evidence.get('exit_code')) is not int or evidence['exit_code'] != 0 or
+    if (type(evidence.get('exit_code')) is not int or
             evidence.get('first_artifact_behavior_gate_passed') is not False or
             re.fullmatch('[a-f0-9]{40}', evidence.get('source_commit','')) is None or
             re.fullmatch('[a-f0-9]{64}', evidence.get('archive_sha256','')) is None or
@@ -99,21 +100,29 @@ def adapt_sdk_build(input_value, generated_page, unsigned, output):
     haps = [v for v in evidence.get('haps',[]) if v.get('sha256') == sha(unsigned) and
             v.get('bytes') == unsigned.stat().st_size]
     commands = evidence.get('commands',[])
-    if len(haps) != 1 or not commands or any(type(c.get('exit_code')) is not int or c['exit_code'] != 0 for c in commands):
-        raise ValueError('complete successful SDK compile and exact produced HAP required')
+    if len(haps) != 1 or not commands:
+        raise ValueError('complete SDK report and exact produced HAP required')
     compile_rows = [c for c in commands if c.get('label') == 'compile' and 'assembleHap' in c.get('argv',[])]
     project=haps[0].get('project') if haps else None
     if project:
+        selected=[c for c in commands if c.get('project')==project or
+                  (not c.get('project')and Path(c['log']).stem.startswith(project+'-'))]
         compile_rows=[c for c in compile_rows if c.get('project')==project or Path(c['log']).stem==project+'-compile']
         if not input_value['source_key'].startswith(project+'/'):
             raise ValueError('source file belongs to another project in the batch SDK report')
+    else:selected=commands
+    if (not selected or any(type(c.get('exit_code'))is not int or c['exit_code']!=0 for c in selected) or
+            not project and evidence['exit_code']!=0):
+        raise ValueError('all commands for the exact target project must succeed')
     if len(compile_rows) != 1:
         raise ValueError('one real official assembleHap command required')
     for command in commands:
         checked({'path':str(Path(command['log']).resolve()),'sha256':command['sha256']})
     if 'BUILD SUCCESSFUL' not in Path(compile_rows[0]['log']).read_text(errors='replace'):
         raise ValueError('actual SDK build completion absent from original compile log')
-    value = {'status':'pass','generated_page_sha256':sha(generated_page),'unsigned_sha256':sha(unsigned),
+    value = {'status':'pass','scope':'exact_target_project_compile_ONLY_NOT_whole_SDK_batch_or_runtime',
+             'actual_batch_exit_code':evidence['exit_code'],'target_project':project,
+             'generated_page_sha256':sha(generated_page),'unsigned_sha256':sha(unsigned),
              'actual_sdk_evidence':record(evidence_path),'actual_compile_log':record(compile_rows[0]['log'])}
     write_json(output,value)
     return record(output)
@@ -292,6 +301,8 @@ class Coordinator(Runtime):
 
     def stage_tool(self,name):
         item=self.inputs['tools'][name]; binary,source,build=(checked(item[k]) for k in ('binary','source','build_receipt'))
+        from batch_media_wallpaper_artifacts import verify_helper_receipt
+        proof=verify_helper_receipt(name,binary,source,item['build_receipt'])
         expected=(FIXTURE/'token_query.cpp') if name=='token' else HERE/'fixtures/batch_media/wallpaper_runtime/default_resolver.cpp'
         receipt=json.loads(build.read_text()); data=binary.read_bytes()
         if (sha(source)!=sha(expected) or receipt.get('status')!='pass' or receipt.get('source_sha256')!=sha(source) or
@@ -299,11 +310,25 @@ class Coordinator(Runtime):
             len(data)<20 or data[:4]!=b'\x7fELF' or int.from_bytes(data[18:20],'little')!=
             {'arm64':183,'armv7a':40,'x86_64':62}[self.guest.env['guest_arch']]):
             raise ValueError('actual compiled guest helper/source/ABI receipt required')
+        observations=[]
+        for dso in proof['product_DSOs']:
+            soname=dso['soname']
+            if re.fullmatch(r'[a-zA-Z0-9_+.\-]+\.so',soname)is None:raise ValueError('invalid product SONAME')
+            paths=['/system/lib64/'+soname,'/system/lib64/platformsdk/'+soname,
+                   '/system/lib64/chipsetsdk/'+soname,'/vendor/lib64/'+soname]
+            raw=self.shell('for task_dso in '+' '.join(map(shlex.quote,paths))+
+                '; do if test -f "$task_dso"; then sha256sum "$task_dso" || exit 1; fi; done','actual-helper-product-DSO')
+            rows=[line.split('  ',1)for line in raw.splitlines()]
+            if not rows or any(len(row)!=2 or row[0]!=dso['sha256']or row[1]not in paths for row in rows):
+                raise ValueError('guest DSO differs from helper actual linker inputs: '+soname)
+            observations.append({'soname':soname,'expected_sha256':dso['sha256'],
+                                 'actual_hashes':self.text(raw,'actual-helper-DSO-hashes')})
+        self.value.setdefault('helper_bindings',{})[name]={'build':proof,'actual_guest_DSOs':observations}
         remote=self.remote+'/'+name; self.stage_file(binary,remote,0,mode='500'); self.tools[name]=remote
 
     def token(self,role,permission):
         bundle={'seed':SEED,'settings':SETTINGS,'query':QUERY}[role]; uid=self.uids[role]
-        raw=self.shell(' '.join(shlex.quote(x) for x in [self.tools['token'],self.run,str(uid),bundle,permission]),'actual-token-query')
+        raw=self.shell('unset LD_LIBRARY_PATH LD_PRELOAD; '+' '.join(shlex.quote(x) for x in [self.tools['token'],self.run,str(uid),bundle,permission]),'actual-token-query')
         value=json.loads(raw)
         if (value.get('run_id')!=self.run or value.get('boot_id')!=self.boot_id or value.get('bundle')!=bundle or
             value.get('uid')!=uid or value.get('user_id')!=100 or value.get('permission')!=permission or
@@ -510,7 +535,7 @@ class Coordinator(Runtime):
             if normal['grant']!=-1 or settings['grant']!=0:raise ValueError('actual normal/Settings token boundaries differ')
         elif action=='resolve-service-default-resources':
             destination=self.receipt(request,'default-resolution.json')
-            raw=self.shell(shlex.quote(self.tools['default'])+' '+self.run,'actual-service-default-resolver')
+            raw=self.shell('unset LD_LIBRARY_PATH LD_PRELOAD; '+shlex.quote(self.tools['default'])+' '+self.run,'actual-service-default-resolver')
             value=json.loads(raw)
             if value.get('run_id')!=self.run or value.get('boot_id')!=self.boot_id:raise ValueError('wrong real default resolver boot')
             result={'run_id':self.run,'boot_id':self.boot_id,'actual_GetCfgFiles_query':self.text(raw,'actual-default-query'),
@@ -619,10 +644,17 @@ class Coordinator(Runtime):
             self.deadline=time.monotonic()+self.args.action_seconds
             row={'request':record(path),'sequence':sequence,'action':request['action'],'began_ns':time.monotonic_ns()}
             self.value['actions'].append(row);self.wake_if_asleep('before-requested-action-'+str(sequence));self.identity('coordinator-before-'+str(sequence))
+            row['power_before']=self.power_state('action-'+str(sequence)+'-power-before')
             self.dispatch(request);self.remaining();self.identity('coordinator-after-'+str(sequence))
+            row['power_after']=self.power_state('action-'+str(sequence)+'-power-after')
             row['finished_ns']=time.monotonic_ns();row['ack']=publish_ack(path.with_name(path.name.replace('.request.json','.ack.json')),request)
             self.save();self.deadline=None
         self.value['status']='completed_actions_NOT_runtime_acceptance';self.save()
+
+    def power_state(self,label):
+        from power_test_policy import power_timeout
+        raw=self.shell('hidumper -s 3301 -a "-a"',label)
+        return {'raw':self.text(raw,label),'state':power_timeout(raw)}
 
 
 def visible_bundle(tree,bundle):

@@ -40,6 +40,8 @@ class CoordinatorTests(unittest.TestCase):
             root=Path(temp);request=self.request();path=root/f'{request["run_id"]}-001-{request["nonce"]}.request.json'
             path.write_text('{');path.chmod(0o600)
             with self.assertRaises(NodeNotReady):coordinator.request_file(path,request['run_id'],request['boot_id'],1)
+            path.write_text(json.dumps(request))
+            with self.assertRaises(NodeNotReady):coordinator.request_file(path,request['run_id'],request['boot_id'],1)
             original=copy.deepcopy(request)
             for key,value in [('run_id','b'*32),('boot_id','2'*36),('sequence',True),('schema_version',True),
                               ('action','remove-owned-seed-private-inputs'),('nonce','x'*32)]:
@@ -190,6 +192,7 @@ class CoordinatorTests(unittest.TestCase):
             value.args=SimpleNamespace(actions=root,idle_seconds=1,action_seconds=1)
             value.guest=SimpleNamespace(start=lambda:None);value.run=request['run_id'];value.boot_id=request['boot_id']
             value.value={'actions':[]};value.wake_if_asleep=lambda _:False;value.identity=lambda _:None
+            value.power_state=lambda _:{'host_fixture':True}
             value.dispatch=lambda _:(_ for _ in()).throw(ValueError('real UI failed'));value.save=lambda:None
             with self.assertRaisesRegex(ValueError,'real UI failed'):value.run_requests()
             self.assertEqual([],list(root.glob('*.ack.json')))

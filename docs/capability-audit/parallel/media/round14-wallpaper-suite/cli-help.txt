@@ -1,0 +1,15 @@
+usage: batch_media_wallpaper_suite.py run [-h] --boot BOOT --archive ARCHIVE
+                                          --artifacts ARTIFACTS
+                                          --output OUTPUT
+                                          [--suite-evidence SUITE_EVIDENCE]
+                                          --hdc HDC [--timeout TIMEOUT]
+
+options:
+  -h, --help            show this help message and exit
+  --boot BOOT
+  --archive ARCHIVE
+  --artifacts ARTIFACTS
+  --output OUTPUT
+  --suite-evidence SUITE_EVIDENCE
+  --hdc HDC
+  --timeout TIMEOUT     bounded wall seconds, 300..7200

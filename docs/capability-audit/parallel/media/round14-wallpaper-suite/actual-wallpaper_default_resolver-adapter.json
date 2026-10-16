@@ -1,0 +1,71 @@
+{
+  "status": "pass",
+  "source_sha256": "5105e96fadc88c2f38f8dae88f72e04d0b228e7c7f8ed51500be82e144fcec32",
+  "binary_sha256": "13b9f2abee00eef20b618c8b1f3096494ecbf0876f6719c5739d6afac0aa6011",
+  "arch": "arm64",
+  "actual_builder_report": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-recheck-02/helpers/build.json",
+    "sha256": "3d66772f46116d8e07a40826e29d698e0fde0ffc0e1bcc0795d6c309037667f2"
+  },
+  "actual_builder_output": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers",
+  "actual_builder_path_map": {
+    "/evidence/helpers": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers",
+    "/work": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/frozen"
+  },
+  "original_build_report": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/build.json",
+    "sha256": "b2d5d610217aa173d7b8e2837f0bd9208cda59fe273fbd44c94df4d1276194ba"
+  },
+  "original_build_status": "fail",
+  "actual_build_logs": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/006-wallpaper_default_resolver-compile.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-01/helpers/007-wallpaper_default_resolver-link.log",
+      "sha256": "622dc9ca81d4a66028c53b37bcb6b351b10317af188a2ae34cc19c3a0b663704"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-recheck-02/helpers/003-wallpaper_default_resolver-actual-ELF-ABI.log",
+      "sha256": "33a9d5b067f289a632c2c1c7e187ec18d811a1932377a098ed812621282d4a10"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-recheck-02/helpers/004-wallpaper_default_resolver-linked-libconfigpolicy_util.z.so.log",
+      "sha256": "2f0d84ffe53899065229b6d5e77ec323329eff32e240cb9a765846ef2fbd124e"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-product-helpers-recheck-02/helpers/005-wallpaper_default_resolver-linked-libcjson.z.so.log",
+      "sha256": "507d8542eb159b27b07b389b4f3a5b842ae96c18b7153648650fcbc1c9e2c9b4"
+    }
+  ],
+  "DT_NEEDED": [
+    "libc++.so",
+    "libc.so",
+    "libcjson.z.so",
+    "libclang_rt.ubsan_minimal.so",
+    "libconfigpolicy_util.z.so"
+  ],
+  "product_DSOs": [
+    {
+      "soname": "libc++.so",
+      "sha256": "5f8714f769bb5ff8e921f6e958e2a48c0af507f56ec88089d3f0a1b7870d2f32"
+    },
+    {
+      "soname": "libc.so",
+      "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f"
+    },
+    {
+      "soname": "libcjson.z.so",
+      "sha256": "281feec1cc507bf6cbb9da3f019bdbc160b9fc9544b2e0f3b496a375aaa8d0b6"
+    },
+    {
+      "soname": "libclang_rt.ubsan_minimal.so",
+      "sha256": "c4c96a2d4b75d11b2d2296f462f91e7577c15fa09992b539bba29b1fb0016deb"
+    },
+    {
+      "soname": "libconfigpolicy_util.z.so",
+      "sha256": "7ebd033c241b4b168c4a6adcbc73f19375aae0acefbed52fd71985e1088503e4"
+    }
+  ]
+}

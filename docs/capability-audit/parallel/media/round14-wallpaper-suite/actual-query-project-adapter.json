@@ -1,0 +1,16 @@
+{
+  "status": "pass",
+  "scope": "exact_target_project_compile_ONLY_NOT_whole_SDK_batch_or_runtime",
+  "actual_batch_exit_code": 1,
+  "target_project": "wallpaper-query",
+  "generated_page_sha256": "a954c214e5f7628bfb77d56d77e1139effda79883bbf1f7735c266f5cd99af69",
+  "unsigned_sha256": "641d2246bafbb5bd570a8a8fac64a881977ab1c5fd2ac443adcc37902bb4663c",
+  "actual_sdk_evidence": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-seed-query-live-Linux-SDK-02/evidence.json",
+    "sha256": "0a8b119e2ebb6cd1a7ccc96af0a9a11954b6b37f8b6a6794e6330051bd0333c7"
+  },
+  "actual_compile_log": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-runtime-seed-query-live-Linux-SDK-02/wallpaper-query-compile.log",
+    "sha256": "e62459a1afdb84edb978ded8bbcb50ae5c8d250b8e0e1babfd7adbe63110ad6d"
+  }
+}
