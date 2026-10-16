@@ -15,9 +15,9 @@
       "gap_closed": false
     },
     "behavior:audio-capture-and-dependent-pipelines": {
-      "status": "unresolved",
+      "status": "candidate_prepared",
       "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
-      "candidate": "No input device/backend synthesized; no additional audio source change.",
+      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component.",
       "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence.",
       "gap_closed": false
     },
@@ -58,8 +58,12 @@
     }
   },
   "upstream_targets": [
+    "foundation/multimedia/av_codec/interfaces/inner_api/native/audio_capture_filter.h",
     "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp",
     "foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder_util.cpp",
+    "foundation/multimedia/av_codec/services/media_engine/filters/audio_capture_filter.cpp",
+    "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.cpp",
+    "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.h",
     "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h",
     "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp",
     "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp",
@@ -122,6 +126,14 @@
       "result": "passed",
       "tests": 21,
       "evidence": "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_audio_integrity.py",
+      "result": "passed",
+      "tests": 2,
+      "actual_function_cases": 40,
+      "evidence": "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log",
+      "scope": "ASan/UBSan actual module/filter method bodies plus exact full source installer; controlled dependencies are not backend/runtime evidence"
     }
   ],
   "integration_requests": [
@@ -154,6 +166,11 @@
       "id": "media-knowledge-content",
       "owner": "parent",
       "request": "See round2/knowledge-status.json: apply after complete prior photo stack; actual 4 TU/NAPI link and new signed 3-role populated-data HAP/Visitor/permission/alias/count/delete/current-account tests remain mandatory. Five old facade guards accept only the exact known new wrapper, not arbitrary edits."
+    },
+    {
+      "id": "media-audio-integrity",
+      "owner": "parent",
+      "request": "Apply av_codec/audio_capture_integrity after existing av_codec components; compile both actual full cpp TUs and both changed headers with true product flags, then ordinary Capturer/Recorder Stop/Pause/Resume/Release/denial and injected real PCM on new representative package. Task::IsTaskRunning is scheduler state only; actual worker readiness still needs product observation."
     }
   ],
   "remaining_gaps": [
@@ -214,17 +231,22 @@
     "docs/capability-audit/parallel/media/round2/knowledge-host-01.log": "6e3b8112236813f5fb5d01d98419e14deafb6816a455da6034cccbfc21d3e658",
     "docs/capability-audit/parallel/media/round2/knowledge-install-01.log": "2817f3135c207418655f96cc027fe13a1802ad72e51f1361cff397f9fb48f0d0",
     "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log": "d7f45b3039c41689f1f658c654c30f826bc0ecf3818aa9c5bb78dfc1764dc7bf",
-    "docs/capability-audit/parallel/media/round2/knowledge-status.json": "652bb0c8c4493be4063650fb9a201688d447f4493b4c6b22f438f2519312f903"
+    "docs/capability-audit/parallel/media/round2/knowledge-status.json": "652bb0c8c4493be4063650fb9a201688d447f4493b4c6b22f438f2519312f903",
+    "docs/capability-audit/parallel/media/round2/audio-integrity-host-01.log": "6d900236f15b38da7bf427a7a7c7df8e0985a4aaab180e386730acb75e2322ed",
+    "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log": "543a3eacbb5a7a81e9e576867e3391a7ec34cbf43094755357c378223be56563"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_knowledge_query_cli.cpp",
     "ci/capability-audit/batch_media_review_source.py",
+    "ci/capability-audit/fixtures/batch_media/audio/baseline.json",
+    "ci/capability-audit/fixtures/batch_media/audio/integrity_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_convert.cpp",
     "ci/capability-audit/fixtures/batch_media/avc_encoder_util.cpp",
     "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/knowledge/baseline.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/guard-context.json",
     "ci/capability-audit/fixtures/batch_media/manifest.json",
+    "ci/capability-audit/test_batch_media_audio_integrity.py",
     "ci/capability-audit/test_batch_media_avc_surface_layout.py",
     "ci/capability-audit/test_batch_media_knowledge_content.py",
     "ci/capability-audit/test_batch_media_knowledge_install.py",
@@ -237,12 +259,23 @@
     "docs/capability-audit/parallel/media/host-checks-03.log",
     "docs/capability-audit/parallel/media/host-checks-04.log",
     "docs/capability-audit/parallel/media/result.json",
+    "docs/capability-audit/parallel/media/round2/audio-integrity-host-01.log",
+    "docs/capability-audit/parallel/media/round2/audio-integrity-host-02.log",
     "docs/capability-audit/parallel/media/round2/knowledge-host-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-install-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-status.json",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/0001-validate-capture-data-and-lifecycle.patch",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/README.md",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.py",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.sh",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/files/audio_capture_filter.cpp",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/files/audio_capture_filter.h",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/files/audio_capture_module.cpp",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/files/audio_capture_module.h",
+    "patches/common/foundation/multimedia/av_codec/audio_capture_integrity/manifest.json",
     "patches/common/foundation/multimedia/av_codec/avc_eos/apply.sh",
     "patches/common/foundation/multimedia/av_codec/avc_eos/verify_source.py",
     "patches/common/foundation/multimedia/av_codec/avc_surface_layout/0001-validate-real-input-layout-and-release-rejected-surfaces.patch",
@@ -267,5 +300,5 @@
     "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py"
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
-  "round2_status": "KnowledgeContent native real-data implementation prepared; audio fixes in progress; no new package or closures"
+  "round2_status": "knowledge_content_and_audio_integrity_prepared_ALSA_capture_route_in_progress"
 }

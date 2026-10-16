@@ -1,0 +1,28 @@
+{
+  "component": "audio-capture-integrity",
+  "projects": {
+    "foundation/multimedia/av_codec": "e5c525670d1f6622d441c9e5bf975ea0579ea177"
+  },
+  "files": {
+    "foundation/multimedia/av_codec/services/media_engine/filters/audio_capture_filter.cpp": {
+      "before": "7e359c0c9bca3c9f4c20ae853c28b79b40fbd6a05b6539de839a7e3bbb5f71dc",
+      "after": "62fbe9126966d128f656fd7f7cda3caaf70b3cf132cb340d8c15a7f1f1606c4b",
+      "payload": "audio_capture_filter.cpp"
+    },
+    "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.cpp": {
+      "before": "414d6f18f6f27ff1849863dcfc6ef5f218a9f32314b91dcf90db0d20b9c80f70",
+      "after": "8589e979b33de9608f0643a67bbbcd10859ba73c2950932ff94d36064e0410a6",
+      "payload": "audio_capture_module.cpp"
+    },
+    "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.h": {
+      "before": "c8853dc5d18226ab27aa000741382d27b4adf45089b7a6e5d7fc4c63b13f199f",
+      "after": "a5cec568ad548ab8af22902ef638194879344f750c7874c92891807e16b76ffb",
+      "payload": "audio_capture_module.h"
+    },
+    "foundation/multimedia/av_codec/interfaces/inner_api/native/audio_capture_filter.h": {
+      "before": "92bce3101c5619c26d115f110e3b5e661f6eda2a63614e97ec4cc445396ff96a",
+      "after": "83d13298d04f7531535c9ea8c5fca876a553f08b3132513e85489b0193eba9a1",
+      "payload": "audio_capture_filter.h"
+    }
+  }
+}
