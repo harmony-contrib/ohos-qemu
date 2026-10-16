@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "status": "fixed_source_UI_contract_ONLY_NOT_guest_observation",
+  "source_evidence": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/docs/capability-audit/parallel/system/round18-knowledge-UI-contract/source-evidence.json",
+    "sha256": "d3ff9ac992cc5c3370148cc58ecc921c1258b747fee21a00337a2012c58e2c53"
+  },
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "source_last_read_utc": "2026-10-16T20:28:42.884383+00:00",
+  "read_lease_released": true,
+  "source_out_read": false,
+  "permission_manager": {
+    "bundle": "com.ohos.permissionmanager",
+    "group": "IMAGE_AND_VIDEOS",
+    "permissions": [
+      "ohos.permission.READ_IMAGEVIDEO",
+      "ohos.permission.WRITE_IMAGEVIDEO",
+      "ohos.permission.MEDIA_LOCATION"
+    ],
+    "group_request_semantics": "READ+WRITE map to the same configured group when both actually need request; this does not promise a popup for already-granted, unrequestable or policy-denied permissions. Actual per-permission authResults/token checks remain mandatory.",
+    "title_resource": "app.string.group_label_image_and_videos",
+    "title_templates": {
+      "base": "Allow %s to access images and videos on your device?",
+      "zh_CN": "允许“%s”访问图片和视频？",
+      "en_GB": "Allow %s to access images and videos on your device?"
+    },
+    "app_name_source": "GrantDialogModel caller resourceInfo.label; titleTrim only above1000 JS code units; do not invent an expected application name outside the actual signed installed caller label",
+    "button_order": [
+      "DENY",
+      "ALLOW"
+    ],
+    "allow_resource": "app.string.allow",
+    "allow_text": {
+      "base": "Allow",
+      "zh_CN": "允许"
+    },
+    "deny_resource": "app.string.ban",
+    "deny_text": {
+      "base": "Deny",
+      "zh_CN": "禁止"
+    },
+    "fixed_allow_widget_id": null,
+    "button_creation": "pages/dialogPlus.ets Button(buttonResource.get(buttonList[index])) horizontal, or ForEach buttons vertical; no explicit stable unique .id for allow in this excerpt"
+  },
+  "photo_save": {
+    "public_api": "PhotoAccessHelper.showAssetsCreationDialog",
+    "provider_bundle": "com.ohos.photos",
+    "provider_ability": "SaveUIExtensionAbility",
+    "extension_type": "sysDialog/common",
+    "host_route": [
+      "photoaccesshelperinf.js gets real self BMS bundleName/appId/appInfo.labelId, then module resource string appName",
+      "native InitConfirmRequest sets explicit provider and read-URI flag",
+      "caller abilityContext.GetUIContent().CreateModalUIExtension",
+      "phone manifest SaveUIExtensionAbility→CommonSaveAbility.onSessionCreate",
+      "session.loadContent(SaveAbility/view/SaveUIExtensionPage)",
+      "SaveUIExtensionComponent→CustomContentDialog"
+    ],
+    "UITest_node_bundle_attribute": "Not observed here; caller-hosted UIExtension source does not prove whether UITest reports importer or provider bundle. Bind actual caller window/AMS extension record and trusted dialog tree at runtime.",
+    "all_image_title_resource": "app.plural.third_save_picture",
+    "plural_templates": {
+      "third_save_picture": {
+        "base": [
+          {
+            "quantity": "one",
+            "value": "Allow %1$s to save %2$d image?",
+            "attr": {
+              "priority": "translate"
+            }
+          },
+          {
+            "quantity": "other",
+            "value": "Allow %1$s to save %2$d images?",
+            "attr": {
+              "priority": "translate"
+            }
+          }
+        ],
+        "zh_CN": [
+          {
+            "quantity": "other",
+            "value": "允许“%1$s”保存 %2$d 张图片？",
+            "attr": {
+              "priority": "translate"
+            }
+          }
+        ]
+      },
+      "third_save_video": {
+        "base": [
+          {
+            "quantity": "one",
+            "value": "Allow %1$s to save %2$d video?",
+            "attr": {
+              "priority": "translate"
+            }
+          },
+          {
+            "quantity": "other",
+            "value": "Allow %1$s to save %2$d videos?",
+            "attr": {
+              "priority": "translate"
+            }
+          }
+        ],
+        "zh_CN": [
+          {
+            "quantity": "other",
+            "value": "允许“%1$s”保存 %2$d 个视频？",
+            "attr": {
+              "priority": "translate"
+            }
+          }
+        ]
+      },
+      "third_save_picture_and_video": {
+        "base": [
+          {
+            "quantity": "one",
+            "value": "Allow %1$s to save %2$d file?",
+            "attr": {
+              "priority": "translate"
+            }
+          },
+          {
+            "quantity": "other",
+            "value": "Allow %1$s to save %2$d files?",
+            "attr": {
+              "priority": "translate"
+            }
+          }
+        ],
+        "zh_CN": [
+          {
+            "quantity": "other",
+            "value": "允许“%1$s”保存 %2$d 个文件？",
+            "attr": {
+              "priority": "translate"
+            }
+          }
+        ]
+      }
+    },
+    "plural_arguments": [
+      "quantity=uris.length",
+      "format_arg1=actual self appName",
+      "format_arg2=uris.length"
+    ],
+    "all_images_condition": "Every photoTypeArray entry equals PhotoType.IMAGE; mixed files use third_save_picture_and_video; shortTerm branch uses a different string.",
+    "example_28_images": {
+      "zh_CN": "允许“Knowledge audit importer”保存 28 张图片？",
+      "base": "Allow Knowledge audit importer to save 28 images?",
+      "preconditions": "Only if actual signed caller label is Knowledge audit importer, input URIs length28, all config typesIMAGE, non-shortTerm; not a captured guest title"
+    },
+    "example_1_image": {
+      "zh_CN": "允许“Knowledge audit importer”保存 1 张图片？",
+      "base": "Allow Knowledge audit importer to save 1 image?",
+      "preconditions": "Actual self label as above, length1 allIMAGE, non-shortTerm"
+    },
+    "spacing": "zh_CN template has ASCII U+0020 before numeric count and before 张; Chinese quotation marks and fullwidth question mark retained.",
+    "allow_resource": "app.string.dialog_allow",
+    "allow_text": {
+      "base": "Allow",
+      "zh_CN": "允许"
+    },
+    "deny_resource": "app.string.dialog_ban",
+    "deny_text": {
+      "base": "Deny",
+      "zh_CN": "禁止"
+    },
+    "buttons_array_order": [
+      "dialog_ban→setSaveResult(false)",
+      "dialog_allow→setSaveResult(true)"
+    ],
+    "fixed_allow_widget_id": null
+  },
+  "photo_delete_browser": {
+    "bundle": "com.ohos.photos",
+    "toolbar_key": "ToolBarButtonDelete",
+    "toolbar_key_proof": [
+      "PhotoBrowserComponent uses common PhotoBrowserToolBar",
+      "PhotoBrowserToolBar imports @ohos/browsercommon ToolBar, whose actual source is browserCommon/src/main/ets/default/view/actionbar/ToolBar.ets",
+      "that browser ToolBar emits ToolBarButton${menu.componentKey}",
+      "Action.DELETE.componentKey binds COMPONENT_KEY_DELETE, whose exact value is Delete"
+    ],
+    "ordinary_single_image": {
+      "preconditions": "Normal non-Recycle/RecentlyDeleted browser, one IMAGE, no GalleryCleanup special branch",
+      "title_resource": "app.string.recycle_picture_tips",
+      "title": {
+        "base": "Delete this photo?",
+        "zh_CN": "是否删除此图片？"
+      },
+      "confirm_resource": "app.string.dialog_delete",
+      "confirm_text": {
+        "base": "Delete",
+        "zh_CN": "删除"
+      },
+      "cancel_resource": "app.string.dialog_cancel",
+      "cancel_text": {
+        "base": "Cancel",
+        "zh_CN": "取消"
+      },
+      "content_resource": "app.string.recycle_delete_kept_tips when cloudDriveStatus false; cloud-specific content when true; title remains image recycle prompt",
+      "default_retention_days": 30
+    },
+    "recycle_bin_permanent_case": {
+      "preconditions": "albumInfo.isTrashAlbum makes isTrash=false",
+      "title_resource": "app.string.recycle_tips",
+      "title": {
+        "base": "Delete?",
+        "zh_CN": "是否删除？"
+      },
+      "confirm_resource": "app.string.dialog_delete_permanently",
+      "confirm_text": {
+        "base": "Delete",
+        "zh_CN": "永久删除"
+      },
+      "different_action_do_not_silently_accept_as_ordinary_delete": true
+    },
+    "dialog_builder": "DeleteDialog AlertDialog(primaryTitle=dialogMessage, primaryButton=cancelButton, secondaryButton=confirmButton)",
+    "fixed_confirm_widget_id": null,
+    "other_generic_toolbar_path": "common view/actionbar ActionButton.ets uses ToolBarButton_${prop.key}, and DeleteActionProp key ActionButton_Delete. This is a different producer and is not the actual phone PhotoBrowserToolBar browserCommon route. Do not change its verified ToolBarButtonDelete selector from this unrelated template."
+  },
+  "advanced_dialog_dynamic_key": {
+    "source": "foundation/arkui/ace_engine/advanced_ui_component/dialog/source/dialog.ets and dialog_v18.ets; shipping interfaces/dialog.js and dialog_v18.js contain the same key scheme",
+    "scheme": "advanced_dialog_button_${keyIndex++}",
+    "initial_counter": 0,
+    "source_property": ".key(), not an explicit Photos-owned stable button ID",
+    "two_button_horizontal_creation_order": [
+      "buttons[0] deny/cancel",
+      "buttons[1] allow/confirm"
+    ],
+    "two_button_vertical_creation_order": [
+      "buttons[1] allow/confirm",
+      "buttons[0] deny/cancel"
+    ],
+    "first_horizontal_possible_keys": {
+      "deny_or_cancel": "advanced_dialog_button_0",
+      "allow_or_confirm": "advanced_dialog_button_1"
+    },
+    "first_vertical_possible_keys": {
+      "allow_or_confirm": "advanced_dialog_button_0",
+      "deny_or_cancel": "advanced_dialog_button_1"
+    },
+    "repeat_render_key_stability": "No reset observed among keyIndex source references; key increments on builder calls. Never treat numeric suffix as a fixed semantic identity. Actual guest tree mapping is not proved here."
+  },
+  "runtime_selection_contract": [
+    "Bind the genuine expected caller/provider/window/UIExtension dialog and exact resource-derived title using the actual installed caller label, locale, file count and type.",
+    "Choose the one visible/enabled/clickable actual button whose exact text is the source-defined Allow or Delete in that dialog. Fail if zero or multiple, wrong title/bundle/window/session or unsupported locale.",
+    "Record selected_node actual ID/key/text/bounds and raw pre/post UITest/AMS observations; never make a stored expected field substitute for guest state.",
+    "Observe actual permission authResults and token grants, or save returned URIs/files, or delete true asset state; a click or title alone is not capability proof."
+  ],
+  "known_limits": [
+    "No new HAP signature/BMS/permission/runtime observations",
+    "Current default Chinese locale comes from prior round15 source contract, not a fresh guest observation here",
+    "First discovery saw source-tree build/cache references; authoritative packet uses only canonical source/resource files, not those generated references",
+    "One guessed browsercommon source directory did not exist; actual case-sensitive browserCommon path was then resolved and hashed",
+    "Initial generic-toolbar underscore hypothesis was corrected before handoff; actual phone route is independently traced"
+  ],
+  "first_artifact_behavior_gate_passed": false
+}

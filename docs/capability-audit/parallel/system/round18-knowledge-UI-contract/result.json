@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "agent": "system",
+  "round": 18,
+  "status": "complete_RO_UI_source_contract_NOT_guest_acceptance",
+  "files_changed_scope": "docs/capability-audit/parallel/system/round18-knowledge-UI-contract ONLY",
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "source_files": 38,
+  "first_discovery_source_tool_utc": "2026-10-16T20:20:56.696660+00:00",
+  "last_source_read_utc": "2026-10-16T20:28:42.884383+00:00",
+  "source_RO_lease_released": true,
+  "heavy_lease_held": false,
+  "source_out_read": false,
+  "new_container_build_SDK_VM_HDC_started": false,
+  "shared_or_product_or_old_report_changed": false,
+  "machine_contract": {
+    "path": "ui-contract.json",
+    "sha256": "e65ed60b7d4f022b19c2ebe5ca836992bce595d1d72ba0dc6b81b36a2e4b54df"
+  },
+  "source_evidence": {
+    "path": "source-evidence.json",
+    "sha256": "d3ff9ac992cc5c3370148cc58ecc921c1258b747fee21a00337a2012c58e2c53"
+  },
+  "findings": [
+    "READ/WRITE/MEDIA_LOCATION share configured ImageAndVideos group and actual source title/buttons",
+    "All-image save uses plural third_save_picture and actual BMS self label, count28/1 templates retained",
+    "advanced Dialog key counter and reversed two-button vertical layout prevent fixed semantic key1 assumptions",
+    "Real phone PhotoBrowser→browserCommon ToolBar key is ToolBarButtonDelete; different common generic ActionButton template is not this route",
+    "Ordinary single-image delete title/confirm differs from RecentlyDeleted permanent-delete case"
+  ],
+  "remaining_gaps": [
+    "Actual UITest node bundle/ID/text/bounds/uniqueness/clickability and host/AMS association require new guest observations",
+    "Actual permission results/token, savedURIs/files and deletion state require strict runtime evidence",
+    "No new locale, BMS registration/signature or capability closure proved"
+  ],
+  "tests": [
+    {
+      "name": "Python source-contract JSON/resource/hash consistency",
+      "status": "pass",
+      "evidence": "check-results.json"
+    }
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "requirements_closed": 0
+}
