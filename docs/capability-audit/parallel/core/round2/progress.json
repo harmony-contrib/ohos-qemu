@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T22:41:39.655954+08:00",
+  "updated_at": "2026-10-16T22:47:50.960152+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "f67b802",
+  "checkpoint_commit": "afa564a",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -1313,6 +1313,12 @@
       "actual_evidence_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-three-audio-event-ready-completion-HAP-roles-04/evidence.json",
       "sha256": "2bed036845def31d58e1bb978a3d2d216959995ab024cc5aace8d4a75dcce4da",
       "status": "3 actual unsigned API26 HAPs PASS; NOT guest or first artifact gate"
+    },
+    "MMS_real_OS_signing_private_ext4_01": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/evidence.json",
+      "sha256": "7d25c0f97fcb014c00f850abbea75d7553951c4f8aa7bdee8ae56fdfcc6f226d",
+      "status": "pass",
+      "scope": "real OS signer exact unchanged original grants and 9 private ext4 positive/negative cases ONLY NOT product image or guest"
     }
   },
   "agents": {

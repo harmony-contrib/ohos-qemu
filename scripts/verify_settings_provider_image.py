@@ -12,6 +12,7 @@ import tempfile
 import zipfile
 
 from ext_image_entries import dump_unique_file
+from verify_preinstall_selection import verify_selection
 from verify_alsa_config_image import debugfs_path, file_sha256
 
 SIGNATURE = '8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5'
@@ -258,6 +259,7 @@ def main():
         result['source_revision'] = verify_source(args.source_root)
         with tempfile.TemporaryDirectory(prefix='settings-image-') as directory:
             scratch = Path(directory)
+            result['install_selection'] = verify_selection(args.source_root, 'com.ohos.settings', args.system_image, scratch)
             hap = args.hap
             if args.system_image:
                 hap, identity = dump_unique_file(args.system_image,

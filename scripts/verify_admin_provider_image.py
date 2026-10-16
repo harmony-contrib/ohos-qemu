@@ -13,6 +13,7 @@ import admin_provider as provider
 from ext_image_entries import dump_unique_file
 from verify_alsa_config_image import debugfs_path, file_sha256
 from verify_photos_provider_image import verify_signature
+from verify_preinstall_selection import verify_selection
 
 
 def inspect_hap(hap, profile):
@@ -56,6 +57,7 @@ def main():
         profile = provider.verify(args.source_root)
         with tempfile.TemporaryDirectory(prefix='admin-provider-image-') as temporary:
             scratch = Path(temporary)
+            result['install_selection'] = verify_selection(args.source_root, provider.BUNDLE, args.system_image, scratch)
             hap = args.hap
             if args.system_image:
                 hap, inode = dump_unique_file(args.system_image, tuple(prefix + '/app/' + provider.BUNDLE +

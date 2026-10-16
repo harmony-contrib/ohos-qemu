@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 
 from calendar_provider import SIGNATURE, certificate_fingerprint
+from preinstall_selection import entry as selected_entry, same_json
 
 PROJECT = 'applications/standard/mms'
 REVISION = '26df98e3738f4219aa45efe6a3e7f6b1be55c051'
@@ -43,16 +44,6 @@ def unique(pairs):
         if key in result: raise ValueError('duplicate MMS profile/policy key')
         result[key] = value
     return result
-
-
-def same_json(actual, expected):
-    """Match BMS JSON types as well as values (Python bool equals int)."""
-    if type(actual) is not type(expected): return False
-    if isinstance(expected, dict):
-        return actual.keys() == expected.keys() and all(same_json(actual[k], v) for k, v in expected.items())
-    if isinstance(expected, list):
-        return len(actual) == len(expected) and all(same_json(a, b) for a, b in zip(actual, expected))
-    return actual == expected
 
 
 def cms(path, signer=None):
@@ -92,11 +83,7 @@ def policy(data, expected, require_current=False):
 
 
 def install_entry(data):
-    installs = json.loads(data, object_pairs_hook=unique)['install_list']
-    expected = {'app_dir': '/system/app/com.ohos.mms', 'removable': False}
-    if not same_json([r for r in installs if r.get('app_dir') == expected['app_dir']], [expected]):
-        raise ValueError('unique original MMS preinstall directory required')
-    return expected
+    return selected_entry(data, 'com.ohos.mms')
 
 
 def replace(path, data):

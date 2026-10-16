@@ -1,0 +1,452 @@
+[
+  {
+    "label": "clone-real-MMS",
+    "argv": [
+      "git",
+      "clone",
+      "--shared",
+      "--no-checkout",
+      "/ohos/applications/standard/mms",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/applications/standard/mms"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.23319530487060547,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/clone-real-MMS.log",
+    "sha256": "3a0edbdbb458a1c5f31c30400b48a4188ced69f8e0ab00331c3cf813d9766a42"
+  },
+  {
+    "label": "checkout-real-MMS",
+    "argv": [
+      "git",
+      "-C",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/applications/standard/mms",
+      "checkout",
+      "--detach",
+      "26df98e3738f4219aa45efe6a3e7f6b1be55c051"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.33263230323791504,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/checkout-real-MMS.log",
+    "sha256": "3c31695b97c93f52b8ce45c5790d604f62240498046896288f888fadd5a85ca3"
+  },
+  {
+    "label": "apply-mms-source_provider",
+    "argv": [
+      "bash",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/patches/common/applications/standard/mms/source_provider/apply.sh",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.5423901081085205,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/apply-mms-source_provider.log",
+    "sha256": "d9db24ecaff76a3d76f38567c1629c0c7859da2112fe4bc3d1df94194e316bd0"
+  },
+  {
+    "label": "apply-mms-send_data_text",
+    "argv": [
+      "bash",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/patches/common/applications/standard/mms/send_data_text/apply.sh",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.4863111972808838,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/apply-mms-send_data_text.log",
+    "sha256": "5c20e0bcdce89a7c4eb89eec761f43c51ad2abe36a7c1f12fbfc2d6845f981e9"
+  },
+  {
+    "label": "apply-hap-admin_provider",
+    "argv": [
+      "bash",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/patches/common/applications/standard/hap/admin_provider/apply.sh",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.334306001663208,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/apply-hap-admin_provider.log",
+    "sha256": "3cb3dffb1788e49600f1d6e87092783640b46be078701c4bda53bde269c1d626"
+  },
+  {
+    "label": "apply-hap-mms_provider",
+    "argv": [
+      "bash",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/patches/common/applications/standard/hap/mms_provider/apply.sh",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.33966684341430664,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/apply-hap-mms_provider.log",
+    "sha256": "68679d09c8b6e4f476031925fdf198ebde7d5865bd04eadabbeadf8fbda01c00"
+  },
+  {
+    "label": "sign-real-MMS",
+    "argv": [
+      "java",
+      "-jar",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/developtools/hapsigner/dist/hap-sign-tool.jar",
+      "sign-app",
+      "-mode",
+      "localSign",
+      "-signAlg",
+      "SHA256withECDSA",
+      "-keyAlias",
+      "openharmony application release",
+      "-inFile",
+      "/input-MMS.hap",
+      "-outFile",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/Mms-signed.hap",
+      "-profileFile",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/applications/standard/mms/signature/mms.p7b",
+      "-keystoreFile",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/developtools/hapsigner/dist/OpenHarmony.p12",
+      "-keyPwd",
+      "123456",
+      "-keystorePwd",
+      "123456",
+      "-appCertFile",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/developtools/hapsigner/dist/OpenHarmonyApplication.pem",
+      "-profileSigned",
+      "1",
+      "-inForm",
+      "zip"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 2.3189051151275635,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/sign-real-MMS.log",
+    "sha256": "5b9cd63c1d2599f10eea134ad64ad8ae8845d08915f72efecff181d9418b88c4"
+  },
+  {
+    "label": "verify-signed-HAP",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--hap",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/Mms-signed.hap",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/signed-HAP-contract.json"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 2.7729403972625732,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/verify-signed-HAP.log",
+    "sha256": "5d1a6f154dc84fa6b772cea9374b44ad544c6fb39dfa28ee6a6d3d18fb288c5a"
+  },
+  {
+    "label": "positive-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/positive.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.12760090827941895,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/positive-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "positive-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/positive.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/positive-contract.json"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 3.263233184814453,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/positive-verify.log",
+    "sha256": "5d1a6f154dc84fa6b772cea9374b44ad544c6fb39dfa28ee6a6d3d18fb288c5a"
+  },
+  {
+    "label": "missing-MMS-install-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/missing-MMS-install.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.17887234687805176,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/missing-MMS-install-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "missing-MMS-install-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/missing-MMS-install.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/missing-MMS-install-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 3.042003631591797,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/missing-MMS-install-verify.log",
+    "sha256": "23cde3e96f21a936e1ad731d7e3575d0be6a176b923d557e22d805c47a969058"
+  },
+  {
+    "label": "duplicate-MMS-install-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/duplicate-MMS-install.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.1814568042755127,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/duplicate-MMS-install-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "duplicate-MMS-install-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/duplicate-MMS-install.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/duplicate-MMS-install-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 2.9913227558135986,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/duplicate-MMS-install-verify.log",
+    "sha256": "23cde3e96f21a936e1ad731d7e3575d0be6a176b923d557e22d805c47a969058"
+  },
+  {
+    "label": "removable-MMS-install-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/removable-MMS-install.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.12660598754882812,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/removable-MMS-install-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "removable-MMS-install-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/removable-MMS-install.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/removable-MMS-install-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 3.031390905380249,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/removable-MMS-install-verify.log",
+    "sha256": "23cde3e96f21a936e1ad731d7e3575d0be6a176b923d557e22d805c47a969058"
+  },
+  {
+    "label": "numeric-removable-MMS-install-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-removable-MMS-install.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.1791830062866211,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-removable-MMS-install-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "numeric-removable-MMS-install-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-removable-MMS-install.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-removable-MMS-install-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 3.003662347793579,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-removable-MMS-install-verify.log",
+    "sha256": "23cde3e96f21a936e1ad731d7e3575d0be6a176b923d557e22d805c47a969058"
+  },
+  {
+    "label": "wildcard-MMS-grants-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/wildcard-MMS-grants.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.12609457969665527,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/wildcard-MMS-grants-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "wildcard-MMS-grants-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/wildcard-MMS-grants.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/wildcard-MMS-grants-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 3.2331812381744385,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/wildcard-MMS-grants-verify.log",
+    "sha256": "5b72ade23651464f14132ac8d88405b9a9a6b74e9989236697a24da2b54cee7f"
+  },
+  {
+    "label": "numeric-MMS-capability-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-MMS-capability.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.12720251083374023,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-MMS-capability-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "numeric-MMS-capability-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-MMS-capability.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-MMS-capability-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 3.0533812046051025,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/numeric-MMS-capability-verify.log",
+    "sha256": "5b72ade23651464f14132ac8d88405b9a9a6b74e9989236697a24da2b54cee7f"
+  },
+  {
+    "label": "ambiguous-MMS-HAP-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/ambiguous-MMS-HAP.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.17754745483398438,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/ambiguous-MMS-HAP-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "ambiguous-MMS-HAP-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/ambiguous-MMS-HAP.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/ambiguous-MMS-HAP-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 0.8600571155548096,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/ambiguous-MMS-HAP-verify.log",
+    "sha256": "061ebaed7a3e03ee722cb195dbec755095faa3bc1b709889322c1e2c06cc32db"
+  },
+  {
+    "label": "tampered-MMS-ABC-mkfs",
+    "argv": [
+      "/usr/sbin/mkfs.ext4",
+      "-q",
+      "-F",
+      "-d",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/image-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/tampered-MMS-ABC.ext4"
+    ],
+    "exit_code": 0,
+    "expected_success": true,
+    "seconds": 0.12152934074401855,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/tampered-MMS-ABC-mkfs.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "tampered-MMS-ABC-verify",
+    "argv": [
+      "/usr/bin/python3",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/frozen/scripts/verify_mms_provider_image.py",
+      "--system-image",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/tampered-MMS-ABC.ext4",
+      "--source-root",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source",
+      "--output",
+      "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/tampered-MMS-ABC-contract.json"
+    ],
+    "exit_code": 1,
+    "expected_success": false,
+    "seconds": 2.354323148727417,
+    "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/tampered-MMS-ABC-verify.log",
+    "sha256": "c9cd79aab145acb64e09894f8d73c325ab2d26f483ab42e81d0f1f2599f43f54"
+  }
+]

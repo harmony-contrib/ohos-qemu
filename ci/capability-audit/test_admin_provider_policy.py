@@ -1,5 +1,6 @@
 """Reject broader ACLs, unknown signers, duplicate rows and policy redirects."""
 import json
+import copy
 from pathlib import Path
 import sys
 import tempfile
@@ -47,6 +48,17 @@ class AdminPolicyTests(unittest.TestCase):
             alias.symlink_to(path)
             with self.assertRaisesRegex(ValueError, 'regular'):
                 M.policy_bytes(alias, 'install_list_permissions.json', True)
+
+    def test_numeric_boolean_fields_are_not_BMS_booleans(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            for name, expected in M.POLICIES.items():
+                row = copy.deepcopy(expected)
+                if 'permissions' in row:row['permissions'][0]['userCancellable'] = 0
+                else:row['allowAppDesktopIconHide'] = 1
+                document = {'install_list': [row]} if name.startswith('install_list_capability') else [row]
+                path = Path(temporary).resolve() / name;path.write_text(json.dumps(document))
+                with self.subTest(name=name), self.assertRaises(ValueError):
+                    M.policy_bytes(path, name, True)
 
 
 if __name__ == '__main__':

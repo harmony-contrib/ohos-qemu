@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 
 from calendar_provider import SIGNATURE, certificate_fingerprint, platform_leaf_fingerprint
+from preinstall_selection import entry as selected_entry, same_json
 
 BUNDLE = 'com.ohos.adminprovisioning'
 ACLS = ('ohos.permission.MANAGE_LOCAL_ACCOUNTS',
@@ -54,7 +55,7 @@ def policy_bytes(path, name, prepare=False):
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise ValueError('invalid AdminProvisioning preinstall policy')
     matches = [row for row in rows if row.get('bundleName') == BUNDLE]
-    if matches and matches != [POLICIES[name]]:
+    if matches and not same_json(matches, [POLICIES[name]]):
         raise ValueError('unknown AdminProvisioning certificate/grants; preserving source')
     if not matches:
         if not prepare:
@@ -112,10 +113,7 @@ def verify(root, prepare=False):
             'assemble_type = "assembleHap"' not in build):
         raise ValueError('actual source-built signed AdminProvisioning target required')
     directory = root / 'vendor/ohemu/virt/preinstall-config'
-    install = json.loads(read(directory / 'install_list.json'), object_pairs_hook=unique)
-    matches = [row for row in install['install_list'] if row.get('app_dir') == '/system/app/' + BUNDLE]
-    if matches != [{'app_dir': '/system/app/' + BUNDLE, 'removable': False}]:
-        raise ValueError('unique original AdminProvisioning preinstall directory required')
+    selected_entry(read(directory / 'install_list.json'), BUNDLE)
     paths = {name: directory / name for name in POLICIES}
     before = {name: read(path) for name, path in paths.items()}
     planned = {name: policy_bytes(path, name, prepare) for name, path in paths.items()}

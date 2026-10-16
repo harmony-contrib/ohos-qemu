@@ -1779,5 +1779,31 @@
     "scope": "serial official Settings/MMS SDK batch",
     "cpu": 2,
     "node_max_old_space_mib": 2048
+  },
+  "active_exclusive_grants": {
+    "apps_provider_lifecycle": {
+      "agent": "apps",
+      "root_owns_shared_GN_signing_preinstall": true,
+      "targets": [
+        "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/ContactUiExtentionAbility.ets",
+        "applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets",
+        "applications/standard/contacts/entry/src/main/ets/presenter/contact/batchselectcontacts/ContactsPickerPresenter.ets",
+        "applications/standard/contacts/entry/src/main/ets/pages/contacts/batchselectcontacts/ContactsPickerPage.ets",
+        "applications/standard/contacts/entry/src/main/ets/pages/ContactUiExtentionIndex.ets",
+        "applications/standard/contacts/entry/src/main/ets/workers/base/WorkerWrapper.ets",
+        "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts",
+        "applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts"
+      ]
+    },
+    "media_round10": {
+      "agent": "media",
+      "read_only_source": true,
+      "write_prefix": "docs/capability-audit/parallel/media/round10-install-selection/"
+    },
+    "system_round8": {
+      "agent": "system",
+      "read_only_source": true,
+      "write_prefix": "docs/capability-audit/parallel/system/round8-first-build-readiness/"
+    }
   }
 }
