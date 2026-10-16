@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "status": "pass_host_document_consistency_ONLY",
+  "checks": {
+    "fixed_baseline_82_IDs_exact_once": true,
+    "owner_counts_exact": true,
+    "category_counts_exact": true,
+    "59_coordination_packages_cover_every_ID_exactly_once": true,
+    "external_dependency_references_match_items": true,
+    "four_unknowns_have_explicit_questions": true,
+    "82_markdown_ID_rows_exactly_once": true,
+    "frozen_source_receipt_hashes_recomputed": 38,
+    "all_rows_remain_open": true,
+    "no_source_out_or_native_or_Docker_access": true
+  },
+  "counts": {
+    "existing_repair_pending_new_package_runtime": 25,
+    "repository_implementation_remaining": 23,
+    "missing_real_provider_hardware_credentials_or_peer": 30,
+    "pending_investigation": 4
+  },
+  "unknown_IDs": [
+    "behavior:api26-runtime-export-mismatches-phone",
+    "behavior:intelligent-scene-notification-query-fails",
+    "behavior:certificate-dialog-device-result",
+    "behavior:app-domain-verification-extension-missing"
+  ],
+  "review_generator_correction": {
+    "initial_check": "Expected root formal ICS to equal the earlier docs candidate SHA; assertion failed",
+    "observed_cause": "Root intentionally removed candidate from PRODID and provenance.asset binds the new official-resource bytes; candidate object remains a separate source reference",
+    "resolution": "Review now checks the actual resource against provenance.asset SHA/size, and does not report this intentional difference as a product defect"
+  },
+  "native_tests_run": false,
+  "SDK_or_guest_tests_run": false,
+  "first_artifact_behavior_gate_passed": false
+}

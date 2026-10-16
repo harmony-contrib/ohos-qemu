@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "reviewed_root_commit": "43a4c43991d3a5a9fe60c50c302d10daae592f99",
+  "source": "git show fixed commit, not mutable source/out or a staged mixed profile",
+  "files": {
+    "docs/capability-audit/parallel-work-plan.json": {
+      "sha256": "bc532804bea500cce6ecf9232abe950406a9cd120adeb839e7e823c3e8bd7000",
+      "bytes": 107899
+    },
+    "docs/capability-audit/parallel/apps/result.json": {
+      "sha256": "2dc2346fb0de1fef2c2ade18e67aac43eb93def25e001029ff5d04b64ae51fbd",
+      "bytes": 129022
+    },
+    "docs/capability-audit/parallel/network/result.json": {
+      "sha256": "935b9231fac8d8d0c8c2087f1a97ac867a25e01741b9f93415fb79b4a27cf497",
+      "bytes": 62836
+    },
+    "docs/capability-audit/parallel/location/result.json": {
+      "sha256": "32822a8f3d6671ff7ec47f6c5a2d5dc19a94edcd18e158e5be55f920cf8d9aae",
+      "bytes": 69831
+    },
+    "docs/capability-audit/parallel/media/result.json": {
+      "sha256": "036a93a19caf7cf5b01d4d0a9949b743ffb720d0066e4d310ed9f8c3210c4a12",
+      "bytes": 79959
+    },
+    "docs/capability-audit/parallel/system/result.json": {
+      "sha256": "497538d57839a684ecf12c242a28b48e8bba781ce46c5d79dd15dfbc2ed12809",
+      "bytes": 60142
+    },
+    "docs/capability-audit/parallel/system/round7-source-provider-review/result.json": {
+      "sha256": "91061f8c11c1d57a874128537361db45a15c6662f0259d3d27f994f316f8b037",
+      "bytes": 30422
+    },
+    "docs/capability-audit/parallel/core/round2/MMS-real-OS-signing-and-policy-01/result.json": {
+      "sha256": "7662949a2fd191596efadb30bda345447836f711867ce8564485caa6561d16e4",
+      "bytes": 538
+    },
+    "docs/capability-audit/parallel/media/round11-wallpaper-settings/HANDOFF.md": {
+      "sha256": "6863c0238c28bb76cf41a24c468a5bfdd1b783eb4aae7130c580a5a1ef014c32",
+      "bytes": 9107
+    },
+    "docs/capability-audit/parallel/media/round15-wallpaper-native-connection/HANDOFF.md": {
+      "sha256": "c0907b31e505cc3af17ca4405a403feeb5d19a2c2ddc49f0bfd17e5cb6546078",
+      "bytes": 8256
+    },
+    "docs/capability-audit/parallel/apps/round12-contact-ABC/fresh-build-contract.json": {
+      "sha256": "0506480c57617157ec1ad4eb61fd6b5598bc67be73e5be0249e0ba6f021ba10d",
+      "bytes": 6220
+    },
+    "docs/capability-audit/parallel/system/round14-contacts-build-witness/result.json": {
+      "sha256": "5cd9c02d710954a62e3104529696e4d44126676fe156ec3f6e7094e6f49bab82",
+      "bytes": 2972
+    },
+    "docs/capability-audit/parallel/location/round4-fusion-communication.md": {
+      "sha256": "581bbb8e3effb529b235aa6185d447bd9ff9bd479550afb19fb249186775f272",
+      "bytes": 7043
+    },
+    "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md": {
+      "sha256": "399ddd1fe171715ebb3b0de7535500ccb21e11359c1d05d8a5cff230d80b5e4e",
+      "bytes": 2626
+    },
+    "docs/capability-audit/parallel/system/round4-gnss/result.json": {
+      "sha256": "870c5f6c283c25616cd3a7ceb846fa6ffa672783430855c7cda7b8196d67c13b",
+      "bytes": 20789
+    },
+    "docs/capability-audit/parallel/system/round11-live-suite/result.json": {
+      "sha256": "17ab663e348566fa30c413d2128247b665321f92be6e2aa38058d0694c2791c2",
+      "bytes": 7885
+    },
+    "docs/capability-audit/parallel/system/round16-knowledge-resource-readiness/result.json": {
+      "sha256": "409ac0ffe712b0d421553561f9c728622045405e23a753103eed108d7a4a1a83",
+      "bytes": 6675
+    },
+    "docs/capability-audit/parallel/core/round2/current-provider-platform-TUs/MSDP-current-15-TU-coverage.json": {
+      "sha256": "60d30746bce49718f07d3708100657f5e19fae664c2085e530763228801b2ca2",
+      "bytes": 6302
+    },
+    "docs/capability-audit/parallel/system/round9-live-inputs/public-still/result.json": {
+      "sha256": "5197d42443b0eced8ae916904c8cada2af7e5979c6c4aed875d659c4dcdf0313",
+      "bytes": 27857
+    },
+    "patches/common/applications/standard/calendardata/event_editor/README.md": {
+      "sha256": "2460d2f6f487d3b8a7df8f3a5dbccce521cec21568b9c75dc790cdf343d092c7",
+      "bytes": 4463
+    },
+    "docs/capability-audit/parallel/system/round2-graphics3d/result.json": {
+      "sha256": "42584b9e8c98230f5e1eb82e93c12496a9db57e26c9813bb1bac3a18e7865df3",
+      "bytes": 8193
+    },
+    "docs/capability-audit/parallel/integration-result.json": {
+      "sha256": "cc49ace47fa1b79d1fefb0a55cef07b514b5cb2be0bd68f494ec231b142ce80c",
+      "bytes": 13304
+    },
+    "docs/OHOS_7_PARALLEL_REPAIR.md": {
+      "sha256": "49e8154804fdf2b65416947ac9fceb54b9b3e664d2fbf95377e1d979d61bc2c1",
+      "bytes": 43465
+    },
+    "docs/capability-audit/parallel/system/source-review.json": {
+      "sha256": "6fa2500298946e7b2887b7b05de9b9536ece9176cb5ab552980e404e7263ca66",
+      "bytes": 44577
+    },
+    "docs/capability-audit/parallel/media/REVIEW.md": {
+      "sha256": "5303bdca065383dd8a80ab47a181e0a66f02a73040430921a0f18f4533f22f7f",
+      "bytes": 7068
+    },
+    "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md": {
+      "sha256": "1de64b4e0345f4537b2fe7dd6b21b40993ea8d1fcd954fb52b810cdc3106b561",
+      "bytes": 5514
+    },
+    "ci/capability-audit/build_hap_probe.py": {
+      "sha256": "6d882a964b7b1a41d797e251e4a965008a3ee60b618ca22b9e8f88fb14c207db",
+      "bytes": 127380
+    },
+    "ci/capability-audit/known-findings.json": {
+      "sha256": "ae39065d781b10acb3cb81fdfad77b0dcec98f129d088b3ed2ba00af551655ce",
+      "bytes": 127298
+    },
+    "docs/capability-audit/runtime/arm64-phone/system-config/security-guard-model.json": {
+      "sha256": "66667f2b1ced46e464a734292acae32d55e172aceef344be4f6d233a5d51492b",
+      "bytes": 20
+    },
+    "docs/capability-audit/runtime/arm64-2in1/system-config/security-guard-model.json": {
+      "sha256": "66667f2b1ced46e464a734292acae32d55e172aceef344be4f6d233a5d51492b",
+      "bytes": 20
+    },
+    "ci/capability-audit/parallel_runtime_suite.py": {
+      "sha256": "74c5566dd94ea1adde20ca838ab1e1f86a1f00e271a1458c4dd7b861ec18d720",
+      "bytes": 6692
+    },
+    "scripts/run_2in1_full_build_docker.sh": {
+      "sha256": "7f0f7b1fcaf1bfa36f112b85334fda1605fd0bcca2ff6a6b080c19ce8b477f2d",
+      "bytes": 25485
+    },
+    "scripts/prepare_qemu_knowledge_resource.py": {
+      "sha256": "37d1c46d4cad247a314311dbf9db78eb3e2d1314da904078fd107dd9f576123d",
+      "bytes": 5726
+    },
+    "patches/resources/knowledge/cn-2026/holidays.ics": {
+      "sha256": "12798eab4471df83e23359ace64cab99228a256763cda188db5ded01ed32dfc9",
+      "bytes": 1564
+    },
+    "patches/resources/knowledge/cn-2026/provenance.json": {
+      "sha256": "3fe334526cbea8766073574a6e75ce19e54cfeca05cc15ff422b9dd0f0e0ffa0",
+      "bytes": 6680
+    },
+    "patches/common/base/msdp/device_status/public_still/manifest.json": {
+      "sha256": "a23c37937f9335dfa5de1ff883974d1b9d4f190f51d07cc637e6bee7242ba5e8",
+      "bytes": 3946
+    },
+    "ci/capability-audit/run_packaged_qemu_suite.py": {
+      "sha256": "7f329f9c04cbb424eabd0885a72a18e32bb0f68cb8d75c06beccf58905cb43c0",
+      "bytes": 64284
+    },
+    "ci/capability-audit/verify_gap_closure.py": {
+      "sha256": "70a61c928d35d656492e6d326875e2ca62873a6de76847e33cd471a9937f5138",
+      "bytes": 91160
+    }
+  },
+  "source_out_accessed": false,
+  "private_artifact_caches_accessed": false,
+  "runtime_attempts_started": false,
+  "heavy_lease_held": false
+}
