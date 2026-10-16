@@ -5,8 +5,8 @@
   "branch": "codex/capability-apps-20261015",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
   "requirements_count": 34,
-  "summary": "第四批新增真实AdminProvisioning官方API26源码HAP和QEMU图，修复真实启停/确认/拒绝/取消/并发请求与部署session；SDK04 Release unsigned编译通过。累计24个实际上游文件；34项完整映射保持，82项账本不核销。",
-  "acceptance_status": "Calendar and Admin official API26 Release unsigned HAP compile passed; main owns complete native TU, exact system signing/preinstall/pregrant and fresh representative ARM64 phone runtime acceptance.",
+  "summary": "第五批在现有Settings phone提供真实modal share picker候选，并修复MMS纯文本sendData到真实收件人/草稿UI；8个业务源目标，未编译HAP。保留ACTION_CHOOSE/HMS-Bluetooth/MMS附件解析缺口，完整34项映射仍不核销。",
+  "acceptance_status": "Latest share/plain-text receiver batch passed lightweight host checks only; root owns official SDK build, exact signing/preinstall and fresh representative ARM64 phone runtime acceptance.",
   "upstream_targets": [
     "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
     "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
@@ -31,7 +31,15 @@
     "applications/standard/admin_provisioning/oh-package.json5",
     "applications/standard/admin_provisioning/entry/oh-package.json5",
     "applications/standard/admin_provisioning/hvigor/hvigor-config.json5",
-    "applications/standard/hap/BUILD.gn"
+    "applications/standard/hap/BUILD.gn",
+    "applications/standard/settings/product/phone/src/main/module.json5",
+    "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
+    "applications/standard/mms/entry/src/main/module.json5",
+    "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
+    "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets",
+    "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets"
   ],
   "tests": [
     {
@@ -84,6 +92,13 @@
       "artifact_sha256": "5482df458fc63930cbdb6f0894662587d05ce8437391dbe9322e54137b95d24e",
       "result": "Attempt04 BUILD SUCCESSFUL 4.949s; API26.0.0.105 Release; unsigned real adminprovisioning module, modules.abc, original requested permissions/entry names",
       "not_runtime_acceptance": true
+    },
+    {
+      "name": "share_modal_and_mms_plain_text_actual_source",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest ci/capability-audit/test_batch_apps_share_provider.py -v",
+      "exit_code": 0,
+      "result": "7 tests passed; exact component hash/replay2/drift, unchanged manifest/permissions, source mirror, SDK import existence only, actual picker18/MMS5/session4 scenarios",
+      "scope": "Light host only; no official SDK/HAP/runtime validation for this batch"
     }
   ],
   "integration_requests": [
@@ -191,6 +206,56 @@
         "result delivery failure cannot cause a second enableAdmin"
       ],
       "boundary": "An explicit user-authorized backend commit already in flight may finish after page exit; old async work neither retargets nor closes a replacement page. No new runtime acceptance or ledger closure is claimed."
+    },
+    {
+      "id": "apps-share-modal-and-send-data-text",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "components": [
+        "patches/common/applications/standard/settings/share_picker",
+        "patches/common/applications/standard/mms/send_data_text"
+      ],
+      "final_sha256": {
+        "applications/standard/settings/product/phone/src/main/module.json5": "fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62",
+        "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d",
+        "applications/standard/mms/entry/src/main/module.json5": "67ce57d6262cffd662be30497c9bdcd60be1acef87418c04801de6623438187f",
+        "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets": "9c4bddf3b65cc57e909e38527f5ce92927fa4219c5141d39451f4cad5f063eda",
+        "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d",
+        "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758",
+        "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd",
+        "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets": "d0acb0b25a2d9f8f7553cb14c8732d8eab8b7e5ae9c59b7811a533bfeb9522fa"
+      },
+      "exact_extension": {
+        "name": "SharePickerExtensionAbility",
+        "srcEntry": "./ets/Setting/SharePicker/SharePickerExtension.ets",
+        "type": "sysPicker/share",
+        "exported": true,
+        "extensionProcessMode": "instance"
+      },
+      "request": "Root wires exact Settings source/final guard and owns MMS build metadata/GN/signing/profile/preinstall/preauthorization. Reuse existing app identities/permissions; do not claim legacy bundle or Bluetooth/HMS/file backends completed. Official API26 compile and fresh phone runtime still required.",
+      "result_contract": {
+        "selected": "resultCode0,outcome=launched only after successful native start; selected component names returned; no claim of actual send/save/receipt",
+        "cancel": "resultCode1,outcome=cancelled, no launch; also available during target query",
+        "invalid": "401 constructor payload error",
+        "load_failure": "16000050 page-load error",
+        "return_retry": "Same successful launch outcome retried without relaunch, even if user presses Cancel after an unsuccessful return"
+      },
+      "runtime_cases": [
+        "ordinary caller startAbilityByType share opens real UI, empty payload and query-empty cancel return1 without launching",
+        "plain-text stream and single-text array: picker user selects MMS; real recipient UI preserves body, cancel/back sends no message; user send only under real telephony backend validation",
+        "enabled/exported matching receivers enumerate; disappeared/disabled/MIME-changed receiver after listing fails second BMS query or native launch; permission denial leaves error",
+        "two authorized file URIs with READ|WRITE input reach selected receiver using original caller READ only; unauthorized foreign URI and WRITE-only flags cannot acquire access via Settings",
+        "malformed MIME/URI/array, spoof reserved caller/component/account input rejected/stripped without launch or permission escalation",
+        "cancel during pending list query; repeated select, return failure/retry, multiple simultaneous sessions, caller exit during list/revalidation/launch and service restart",
+        "MMS delayed DynamicLoader replaced by newer Want cannot open stale draft; actual load error is visible"
+      ],
+      "remaining_dependencies": {
+        "legacy_ACTION_CHOOSE": "AMS separate ShowPickerDialog uses const.system.sharePicker bundle/ability defaults com.ohos.sharepickerdialog/PickerDialog, still absent. A real UIAbility implementation/caller authorization/result design is separate; do not alias to this UIExtension.",
+        "share_extension_bluetooth": "Real BluetoothServiceAbility is outside apps scope and accepts only ReasonMessage_SystemShare, dynamically calls @hms:collaboration.systemShare. No complete replacement backend is provided by this open-source candidate; Bluetooth HAP presence does not establish runtime module availability.",
+        "mms_attachments": "Fixed MMS buildTransmitParam attachment construction is commented out and may yield empty content; this text-only candidate does not validate or repair that file/UTD path. Original advertised skills remain, and gap is not closed.",
+        "other_profiles": "Candidate adds phone Settings provider only. Tablet/2in1 modules and any other packages require their own actual registration and runtime proof.",
+        "sdk_and_guest": "Root serial official SDK/build and new-package execution pending. No 82-item ledger row closed."
+      }
     }
   ],
   "requirements_review": {
@@ -306,27 +371,31 @@
       ]
     },
     "behavior:ability-share-picker-system-provider-missing": {
-      "status": "real_provider_missing",
-      "finding": "预装配置列sharepickerdialog但暂存缺该bundle；SettingsInstantShareService不是PickerDialog share协议实现。",
-      "next_required": "提供真实系统share picker，处理目标枚举/数据授权/完成/取消/退出，并接入构建、签名、预装。",
+      "status": "modal_source_candidate_pending_build_legacy_provider_missing",
+      "finding": "固定源无完整系统share picker，只有空样例；本批在真实Settings phone新增sysPicker/share Controller/Extension/Page：BMS真目标枚举、用户选择、action/MIME/URI重查和原caller委托启动、取消/错误/销毁/返回重试。不是com.ohos.sharepickerdialog别名；旧ACTION_CHOOSE仍缺真实PickerDialog UIAbility。",
+      "next_required": "root精确接线Settings组件/最终guard，串行官方SDK编译和新phone包验证UI/URI原caller权限/取消/退出；单独补旧ACTION_CHOOSE真实provider和其他device profiles。",
       "ledger_closed": false,
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
         "docs/capability-audit/system-bundle-provider-audit.json",
-        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+        "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
+        "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json"
       ]
     },
     "behavior:ability-send-data-action-has-no-enabled-handler": {
-      "status": "preinstall_and_behavior_evidence_missing",
-      "finding": "暂存Bluetooth HAP有BluetoothServiceAbility，预装列表未列/system/app/Bluetooth；混合暂存不是phone BMS注册证据。",
-      "next_required": "统一真实Bluetooth预装/签名，验证sendData MIME/URI/权限/接收结果与取消，不能只注册任意handler。",
+      "status": "plain_text_receiver_source_candidate_pending_build_other_backends_missing",
+      "finding": "Bluetooth是真share扩展而非普通UIAbility，要求ReasonMessage_SystemShare且依赖@hms:collaboration.systemShare，存在HAP不能证明开放sendData闭环。MMS原sendData只认picker.records且附件构建已注释；本批新增真实text/plain skill及严格单文本解析，转到已有TransmitMsg收件人/草稿UI，收intent不发消息。",
+      "next_required": "root负责MMS源码构建包装/精确签名预装/官方SDK，实测文本保留、收件人选择、取消不发送和真实发送；另需合法Bluetooth/HMS或开源ShareExtension后端与MMS文件/UTD附件实际实现/授权验证。",
       "ledger_closed": false,
       "evidence": [
         "docs/capability-audit/parallel/apps/static-evidence.json",
         "docs/OHOS_7_BATCH_REPAIR.md",
         "docs/capability-audit/system-bundle-provider-audit.json",
-        "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+        "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
+        "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json"
       ]
     },
     "behavior:avcast-media-controller-provider-mismatch": {
@@ -657,13 +726,13 @@
     },
     {
       "id": "behavior:ability-share-picker-system-provider-missing",
-      "status": "real_provider_missing",
-      "reason": "提供真实系统share picker，处理目标枚举/数据授权/完成/取消/退出，并接入构建、签名、预装。"
+      "status": "modal_source_candidate_pending_build_legacy_provider_missing",
+      "reason": "root精确接线Settings组件/最终guard，串行官方SDK编译和新phone包验证UI/URI原caller权限/取消/退出；单独补旧ACTION_CHOOSE真实provider和其他device profiles。"
     },
     {
       "id": "behavior:ability-send-data-action-has-no-enabled-handler",
-      "status": "preinstall_and_behavior_evidence_missing",
-      "reason": "统一真实Bluetooth预装/签名，验证sendData MIME/URI/权限/接收结果与取消，不能只注册任意handler。"
+      "status": "plain_text_receiver_source_candidate_pending_build_other_backends_missing",
+      "reason": "root负责MMS源码构建包装/精确签名预装/官方SDK，实测文本保留、收件人选择、取消不发送和真实发送；另需合法Bluetooth/HMS或开源ShareExtension后端与MMS文件/UTD附件实际实现/授权验证。"
     },
     {
       "id": "behavior:avcast-media-controller-provider-mismatch",
@@ -784,6 +853,7 @@
   "changed_files": [
     "ci/capability-audit/batch_apps_prepare_admin_candidate.py",
     "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
+    "ci/capability-audit/batch_apps_prepare_share_candidate.py",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-BUILD.gn.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-build-profile.json5.gz.b64",
     "ci/capability-audit/fixtures/batch_apps/admin_provider/admin_provisioning-entry_hvigorfile.js.gz.b64",
@@ -814,14 +884,25 @@
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
     "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SendDataPayload.ets",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePicker.ets",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerController.ets",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerExtension.ets",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/extension.cjs",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/mms.cjs",
+    "ci/capability-audit/fixtures/batch_apps/share_provider/provenance.json",
     "ci/capability-audit/test_batch_apps_admin_provider.py",
     "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
     "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "ci/capability-audit/test_batch_apps_share_provider.py",
     "docs/capability-audit/parallel/apps/README.md",
     "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
     "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
+    "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
     "patches/common/applications/standard/admin_provisioning/source_provider/0001-build-real-admin-provider-and-verify-user-actions.patch",
     "patches/common/applications/standard/admin_provisioning/source_provider/README.md",
@@ -838,9 +919,17 @@
     "patches/common/applications/standard/hap/admin_provider/0001-build-real-admin-provider-and-verify-user-actions.patch",
     "patches/common/applications/standard/hap/admin_provider/README.md",
     "patches/common/applications/standard/hap/admin_provider/apply.sh",
-    "patches/common/applications/standard/hap/admin_provider/verify_source.py"
+    "patches/common/applications/standard/hap/admin_provider/verify_source.py",
+    "patches/common/applications/standard/mms/send_data_text/0001-provide-real-modal-sharing-and-text-receiver.patch",
+    "patches/common/applications/standard/mms/send_data_text/README.md",
+    "patches/common/applications/standard/mms/send_data_text/apply.sh",
+    "patches/common/applications/standard/mms/send_data_text/verify_source.py",
+    "patches/common/applications/standard/settings/share_picker/0001-provide-real-modal-sharing-and-text-receiver.patch",
+    "patches/common/applications/standard/settings/share_picker/README.md",
+    "patches/common/applications/standard/settings/share_picker/apply.sh",
+    "patches/common/applications/standard/settings/share_picker/verify_source.py"
   ],
-  "previous_batch_commit": "33cc68a6bf6d7fc4761465edca34189d30bca46a",
+  "previous_batch_commit": "fca7055",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -851,5 +940,5 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership since original b88407c Settings batch, plus Calendar editor/dispatch and Admin source/HAP components"
+  "report_scope": "cumulative apps ownership: original Settings/Calendar/Admin candidates plus bounded modal share and MMS text candidate; latest batch source only"
 }
