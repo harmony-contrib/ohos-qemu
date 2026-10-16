@@ -60,6 +60,20 @@ class Install(unittest.TestCase):
             subprocess.run(['bash',str(COMP/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True,text=True)
             self.assertTrue(install.validate(root,True));old.run(root);install.run(root)
 
+    def test_exact_round6_complete_observer_upgrade_and_whole_source_hash(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);baseline(root);old.run(root);install.run(root)
+            fixture=json.loads((FIX/'holiday-previous-round6.json').read_text())['files']
+            for name,entry in fixture.items():
+                data=gzip.decompress(base64.b64decode(entry['gzip_base64']));self.assertEqual(hashlib.sha256(data).hexdigest(),entry['sha256']);(root/name).write_bytes(data)
+            self.assertFalse(install.validate(root));self.assertTrue(old.validate(root,True))
+            with self.assertRaises(ValueError):install.validate(root,True)
+            install.run(root);self.assertTrue(install.validate(root,True));old.run(root)
+            name=next(n for n in fixture if n.endswith('/knowledge_holiday_index.cpp'));path=root/name
+            installed=path.read_bytes();path.write_bytes(installed+b'// preserve unknown observer changes\n')
+            with self.assertRaises(ValueError):install.run(root)
+            self.assertEqual(path.read_bytes(),installed+b'// preserve unknown observer changes\n')
+
     def test_partial_unknown_symlink_reject_and_preserve_all_files(self):
         for mode in ['partial','unknown','symlink']:
             with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:

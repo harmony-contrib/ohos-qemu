@@ -1,6 +1,6 @@
 # Real KnowledgeContent holiday producer and bounded queries
 
-Apply `knowledge_content/apply.sh` first, then this component's `apply.sh OHOS_ROOT`.
+Apply `knowledge_content/apply.sh` first, then this component's `apply.sh --source-root OHOS_ROOT`.
 The installer checks the exact media_library revision and all 13 source states
 before writing. It permits a complete original before state, the exact previous
 complete overlay, or the complete current after state; unknown/partial/symlink
@@ -99,3 +99,13 @@ generated include directories. Derive these declared configs in actual GN
 compilation; do not compensate with arbitrary compiler include flags.
 The exact thirteen-file guard accepts both previous complete e0d1137 and
 caeaf60 states as upgrades, preserving mixed/unknown source rejection.
+
+Round7 keeps the actual product -fno-exceptions option. The observer uses
+explicit pthread error returns, nothrow state allocation and independent
+state ownership; no std::thread construction or try/catch remains. Worker
+self-stop cancels and defers joining; external stops wait outside RDB locks,
+join failure preserves the generation for retry, and self-owned destruction
+detaches only its independently retained state. Host full-TU tests compile
+with -fno-exceptions plus ASan/UBSan and exercise actual return-failure cleanup.
+The complete previous a5fe432 source state is an additional exact upgrade input.
+Parent actual full product TU/link and new-package runtime remain mandatory.
