@@ -83,3 +83,12 @@ OK
 
 Final icon patch applies to complete private copies from read-only fixed source: git apply --check exit=0.
 No source container writes or product compilation.
+
+2026-10-16 icon+BLE batched follow-up, worktree HEAD before changes a749bda32c26af5eb8ac76c223254bef6507a19f
+LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_location_*.py' -v
+PASS 11 tests / 11.598 s. ASan/UBSan actual extracted patched functions: BLE NAPI parser/int32/undefined/identity/payload, reentry, queued cancellation/new generations, environment cleanup and ref/error lifetimes; BLE service/backend filters/RSSI, approximate/delegated/current-account/freeze checks, owner and stale scan task boundaries, start/stop failures/retries and disabled-feature 801; fine/approx/both/revoked/delegated PrivacyKit production paths, shared pid accounting, external checks after both locks released; RTT lifecycle regressions; exact full-state guard original/prefix_1/final reapply, unknown/mixed/symlink/wrong-HEAD/changed-patch refusal.
+Added final original IDL and old enum mapping preservation plus new 65/66/67 consistency assertions: first test-only regex failed because it read unrelated GnssInterfaceCode enum as well; restricted extraction to LocatorInterfaceCode. Focused icon rerun PASS 2 tests / 1.466 s.
+Full fixed 16-file private source preflight (not bounded snippets): original raw hashes matched, real two-patch stack applied, final raw hashes matched, reapply preserved final state. Source container remained read only.
+LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_call_public_enums.py: PASS 6 tests / 4.279 s.
+No full OpenHarmony IDL/TU build or QEMU/package validation performed by this subagent. All 22 runtime requirements stay open; host scanner/NAPI boundaries are test doubles, not packaged peripheral proof.
+Final complete location-prefixed rerun: PASS 11 tests / 10.494 s. A patch context line containing legacy tab indentation was trimmed (source output unchanged); source-state guard/reapply rerun PASS 5 tests / 4.068 s.

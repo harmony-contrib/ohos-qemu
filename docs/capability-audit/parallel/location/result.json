@@ -3,10 +3,12 @@
   "date": "2026-10-15",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-location-20261015",
-  "summary": "Repair RTT listener contract and lifetime on its existing IMS route; review all 22 assigned requirements without closing package/runtime gaps.",
+  "summary": "Implement current-account live locating icon state and real filtered BLE search routes; repair RTT callback lifetime and fine-only PrivacyKit usage. All 22 requirements remain open pending full service/device and new-package acceptance.",
   "upstream_targets": [
     "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
+    "base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h",
     "base/location/location/frameworks/js/napi/include/location_napi_adapter.h",
+    "base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp",
     "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp",
     "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp",
     "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl",
@@ -14,8 +16,10 @@
     "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h",
     "base/location/location/interfaces/inner_api/include/locator_impl.h",
     "base/location/location/services/location_locator/locator/include/locator_ability.h",
+    "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h",
     "base/location/location/services/location_locator/locator/include/request_manager.h",
     "base/location/location/services/location_locator/locator/source/locator_ability.cpp",
+    "base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp",
     "base/location/location/services/location_locator/locator/source/request_manager.cpp",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h",
@@ -29,7 +33,7 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "missing_new_binding_and_semantic_backend",
       "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
       "evidence": [
@@ -43,7 +47,7 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "missing_new_binding_and_semantic_backend",
       "finding": "No current-district API implementation was found in fixed production source. Existing point geocoding/location APIs do not supply the new request/cache/current-fix district orchestration. The recorded image also lacks location/geocoder provider operation.",
       "evidence": [
@@ -59,10 +63,12 @@
       "runtime_validation": "not_run_in_this_round",
       "status": "implemented_live_state_pending_compile_and_packaged_validation",
       "classification": "new_binding_to_live_request_and_permission_state",
-      "finding": "NAPI and Taihe now call a service-side system-permission checked IPC query. Current-account GNSS/network/fused requests must have active privacy-use state, valid lifetime, permission and switch state; frozen, passive-only and other-account requests are excluded. No HD provider is present, so HD status is not inferred.",
+      "finding": "NAPI and Taihe now call a service-side system-permission checked IPC query. Current-account GNSS/network/fused requests must have active privacy-use state, valid lifetime, permission and switch state; frozen, passive-only and other-account requests are excluded. No HD provider is present, so HD status is not inferred. Fine-only callers now use actual ACCESS_LOCATION PrivacyKit start/stop accounting; approximate callers retain approximate accounting. Query snapshots under request/permission locks, then checks permissions/accounts/freeze/RDB after releasing them.",
       "evidence": [
         "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "backend-excerpts.json: icon producer audit where applicable",
+        "ci/capability-audit/test_batch_location_icon_state.py",
+        "round2-freeze-inputs.json"
       ],
       "next_required": "Generate/compile the updated IDL and complete location TUs, then new packaged normal/system-caller query, start/stop/freeze/user/switch/permission boundaries. An actual HD provider/state source is still required for HD status."
     },
@@ -71,7 +77,7 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "missing_new_binding_and_semantic_backend",
       "finding": "No post-processing track implementation/export was found. SDK requires SKIING post-processing, records up to 24 hours and incremental reads; raw cached GNSS fixes or an empty array cannot satisfy that contract.",
       "evidence": [
@@ -85,7 +91,7 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "missing_new_binding_and_semantic_backend",
       "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
       "evidence": [
@@ -99,7 +105,7 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "missing_new_binding_and_semantic_backend",
       "finding": "No fusion-fence implementation/export was found. Existing GNSS and beacon fences are separate paths and do not implement the SDK fusion type/scene request contract.",
       "evidence": [
@@ -113,28 +119,30 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "New public search exports/handlers are absent. Legacy bluetoothScanResultChange and LocatorRequiredDataManager BLE scanning exist, but lack BluetoothSearchRequestParams device-ID matching and a propagated scan-start failure contract; direct aliases would be incomplete.",
+      "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
+      "classification": "new_binding_to_existing_BLE_service_with_semantic_repairs",
+      "finding": "New public NAPI routes call real locator IPC and BleCentralManager. Service filters exact normalized device IDs and strict RSSI thresholds with current-account/permission/freeze checks; startup and stop errors propagate. Optional/undefined stop owns only matching callbacks in its environment and silences queued events. Radio operations recheck current users to prevent stale task interference.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "ci/capability-audit/test_batch_location_ble_runtime.py",
+        "ci/capability-audit/test_batch_location_ble_napi.py",
+        "round2-freeze-inputs.json"
       ],
-      "next_required": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+      "next_required": "Regenerate IDL 66/67 and compile all listed full TUs; validate new packaged BLE over an actual/controlled virtual HCI transport with external challenge IDs/RSSI/payloads, start-failure, revoke-stop, callback/queue and user/freeze boundaries."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "New public search exports/handlers are absent. Legacy bluetoothScanResultChange and LocatorRequiredDataManager BLE scanning exist, but lack BluetoothSearchRequestParams device-ID matching and a propagated scan-start failure contract; direct aliases would be incomplete.",
+      "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
+      "classification": "new_binding_to_existing_BLE_service_with_semantic_repairs",
+      "finding": "New public NAPI routes call real locator IPC and BleCentralManager. Service filters exact normalized device IDs and strict RSSI thresholds with current-account/permission/freeze checks; startup and stop errors propagate. Optional/undefined stop owns only matching callbacks in its environment and silences queued events. Radio operations recheck current users to prevent stale task interference.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "ci/capability-audit/test_batch_location_ble_runtime.py",
+        "ci/capability-audit/test_batch_location_ble_napi.py",
+        "round2-freeze-inputs.json"
       ],
-      "next_required": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+      "next_required": "Regenerate IDL 66/67 and compile all listed full TUs; validate new packaged BLE over an actual/controlled virtual HCI transport with external challenge IDs/RSSI/payloads, start-failure, revoke-stop, callback/queue and user/freeze boundaries."
     },
     {
       "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
@@ -281,7 +289,7 @@
       "group": "电话与通信",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "new_sdk_contract_missing_fixed_source_backend",
       "finding": "No on/offCommunicationStateChange implementation or export appears in the 43 production state_registry files scanned. SDK describes a boolean 5A state, so mapping generic call state or network-present to this event would change the contract.",
       "evidence": [
@@ -295,7 +303,7 @@
       "group": "电话与通信",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "classification": "new_sdk_contract_missing_fixed_source_backend",
       "finding": "No on/offCommunicationStateChange implementation or export appears in the 43 production state_registry files scanned. SDK describes a boolean 5A state, so mapping generic call state or network-present to this event would change the contract.",
       "evidence": [
@@ -309,7 +317,7 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_device_transport",
+      "status": "remaining_implementation_and_validation",
       "classification": "device_profile_backend_boundary",
       "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport.",
       "evidence": [
@@ -322,7 +330,7 @@
       "group": "电话与通信",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "blocked_device_transport",
+      "status": "remaining_implementation_and_validation",
       "classification": "device_profile_backend_boundary",
       "finding": "Prior complete packaged evidence reports no modem/SIM/radio transport. Enabling RTT compile gates exposes the framework path, without supplying a radio/IMS network.",
       "evidence": [
@@ -357,9 +365,19 @@
       "result": "NOT RUN: centralized representative artifact gate remains owned by parent"
     },
     {
-      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_batch_location_icon_state.py",
-      "result": "PASS: 2 tests, real new request/service/client/NAPI functions and original availability guard executed under ASan/UBSan; original IDs preserved.",
-      "evidence": "host-tests.log and round2-ipc-baseline.json"
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_location_*.py' -v",
+      "result": "PASS: 11 tests in 10.494 s. Actual patched C++ functions execute under ASan/UBSan; covers RTT lifetimes, fine/approx/both/revoked/delegated permission producers/query and released query locks, BLE backend and NAPI boundaries, and strict source-state guards. The final extended 65/66/67 old/new mapping check also passed a focused 2-test icon rerun. Scanner/NAPI boundaries in host harnesses do not constitute real modem/Bluetooth/GNSS runtime proof.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "Private complete 16 fixed source files: validate original hashes; apply actual whole component stack; validate full final hashes; reapply",
+      "result": "PASS, independent of bounded regression source slices. Both actual patches apply cleanly to the exact fixed original source. Source container was not modified.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_call_public_enums.py",
+      "result": "PASS: all 6 existing regressions (4.279 s), repeated after current batch.",
+      "evidence": "host-tests.log"
     }
   ],
   "integration_requests": [
@@ -380,22 +398,31 @@
     {
       "kind": "patch_component",
       "path": "common/base/location/location/api26_runtime",
-      "action": "Register after location/api26_public_enums; this component adds real live icon state query. BLE routes will follow before any package freeze."
+      "action": "Register after location/api26_public_enums. This complete two-patch icon+BLE component has a strict full-file/HEAD prefix guard; use apply.sh and freeze every actual target/dependency in round2-freeze-inputs.json."
     },
     {
       "kind": "complete_translation_units",
-      "action": "Regenerate frameworks/native/locator_sdk:locator_interface from updated ILocatorService.idl, then compile/link native locator_sdk, generated interface proxy/stub, services/location_locator/locator:lbsservice_locator (locator_ability.cpp + request_manager.cpp), frameworks/js/napi:geolocationmanager and frameworks/ets/taihe/locator_sdk:location_framework_taihe_native (ohos.geoLocationManager.impl.cpp). Run ordinary/system permissions and idle/active/freeze/timeout/user/switch checks only on new representative package."
+      "action": "Regenerate //base/location/location/frameworks/native/locator_sdk:locator_interface from updated ILocatorService.idl (new 65/66/67, preserved old mappings), then compile/link complete locator_impl.cpp and generated proxy/stub; //base/location/location/services/location_locator/locator:lbsservice_locator locator_ability.cpp, request_manager.cpp, locator_required_data_manager.cpp; //base/location/location/frameworks/js/napi:geolocationmanager location_napi_adapter.cpp, location_napi_entry.cpp, bluetooth_scan_result_callback_napi.cpp; //base/location/location/frameworks/ets/taihe/locator_sdk:location_framework_taihe_native ohos.geoLocationManager.impl.cpp. Freeze exact inputs listed in round2-freeze-inputs.json. No new BUILD.gn/source-list changes are required. Phone BT enabled must compile; disabled feature must preserve 801. Representative runtime follows full TU/IDL checks."
+    },
+    {
+      "kind": "host_regression",
+      "path": "ci/capability-audit/test_batch_location_*.py",
+      "action": "Run all location-prefixed tests in normal discovery. New BLE/backend/NAPI/icon C++ checks require clang++ with ASan/UBSan; source guard tests copy the shared apply library without changing it."
+    },
+    {
+      "kind": "virtual_peripheral_transport",
+      "action": "Coordinate GNSS vendorGnssAdapter.so/GnssVendorInterface, BLE libbt_vendor.z.so/BLUETOOTH_VENDOR_LIB_INTERFACE H4 channel, and real RIL AT transport plus IMS service endpoint. Exact fixed source entry points and proposed challenge protocol boundaries are in round2-virtual-peripheral-handoff.md; follow-up implementation remains required."
     }
   ],
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Implement permission-checked current-fix and reverse-geocoder district orchestration, cache policy and service errors; supply actual location/geocoder providers and validate real district/error boundaries."
     },
     {
@@ -405,28 +432,28 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Provide genuine sports trajectory post-processing, per-caller history/cursor and retention semantics, plus GNSS input provider and permission-checked NAPI; validate real tracks, retention and repeated-read boundaries."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Implement real fused GNSS/cellular/Wi-Fi/Bluetooth fence backend, capability query and IPC/bindings; validate supported and unsupported combinations, add/remove ownership, transitions and permissions."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
-      "status": "blocked_backend_and_binding",
-      "dependency": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+      "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
+      "dependency": "Regenerate IDL 66/67 and compile all listed full TUs; validate new packaged BLE over an actual/controlled virtual HCI transport with external challenge IDs/RSSI/payloads, start-failure, revoke-stop, callback/queue and user/freeze boundaries."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
-      "status": "blocked_backend_and_binding",
-      "dependency": "Extend existing BLE backend with request/filter/session ownership and startup-error propagation; add approximate-location permission checked public bindings; validate real QEMU Bluetooth transport, match/no-match and off silence."
+      "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
+      "dependency": "Regenerate IDL 66/67 and compile all listed full TUs; validate new packaged BLE over an actual/controlled virtual HCI transport with external challenge IDs/RSSI/payloads, start-failure, revoke-stop, callback/queue and user/freeze boundaries."
     },
     {
       "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
@@ -480,22 +507,22 @@
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
     },
     {
       "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
-      "status": "blocked_backend_and_binding",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Define/implement actual radio 5A state producer and IPC event, add permission and slot-scoped subscription ownership, then dynamic/static bindings and modem runtime validation."
     },
     {
       "id": "behavior:location-provider-backends-missing",
-      "status": "blocked_device_transport",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Add a real GNSS/location provider and QEMU device/transport route; package and validate current-location callbacks, trajectory, fences and disabled/permission cases."
     },
     {
       "id": "behavior:telephony-no-modem-or-sim",
-      "status": "blocked_device_transport",
+      "status": "remaining_implementation_and_validation",
       "dependency": "Provide actual modem/SIM/radio plus IMS transport for QEMU; validate calls, SMS, data and RTT sessions with positive service outcomes and device-absent errors."
     }
   ],
@@ -507,29 +534,41 @@
     "location_binding_or_provider_requirements": 9,
     "communication_state_missing_backend_requirements": 2,
     "telephony_missing_device_transport_requirements": 1,
-    "closed_by_this_round": 0
+    "closed_by_this_round": 0,
+    "new_location_bindings_implemented_pending_validation": 3
   },
   "resource_use": {
-    "source_container": "ohos-qemu-parallel-source-20261015-01",
-    "container_operations": "read-only git/Python source queries only",
+    "source_container": "ohos-qemu-parallel-source-20261016-02",
+    "container_operations": "bounded read-only git/Python queries only; no compilation or source writes",
     "compile": "bounded local clang++ harness only",
     "build_package_qemu_hdc": "none"
   },
   "validation_limit": "Host lifecycle execution and fixed-source review do not satisfy AGENTS.md representative package/runtime gate. All 22 requirements remain open until genuine behavior and package evidence are accepted.",
   "changed_files": [
+    "ci/capability-audit/batch_location_runtime_fixture.py",
     "ci/capability-audit/fixtures/batch_location/icon_source.json",
+    "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
     "ci/capability-audit/fixtures/batch_location/rtt_before.json",
+    "ci/capability-audit/test_batch_location_ble_napi.py",
+    "ci/capability-audit/test_batch_location_ble_runtime.py",
     "ci/capability-audit/test_batch_location_icon_state.py",
     "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+    "ci/capability-audit/test_batch_location_runtime_source_guard.py",
     "docs/capability-audit/parallel/location/backend-excerpts.json",
     "docs/capability-audit/parallel/location/followup-review.json",
     "docs/capability-audit/parallel/location/host-tests.log",
     "docs/capability-audit/parallel/location/result.json",
+    "docs/capability-audit/parallel/location/round2-freeze-inputs.json",
     "docs/capability-audit/parallel/location/round2-ipc-baseline.json",
+    "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md",
     "docs/capability-audit/parallel/location/source-evidence.json",
     "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch",
+    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch",
     "patches/common/base/location/location/api26_runtime/README.md",
     "patches/common/base/location/location/api26_runtime/apply.sh",
+    "patches/common/base/location/location/api26_runtime/apply_runtime.py",
+    "patches/common/base/location/location/api26_runtime/source_states.json",
+    "patches/common/base/location/location/api26_runtime/verify_source.py",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
     "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
@@ -538,6 +577,9 @@
   "followup_review": "followup-review.json",
   "round2_base_commit": "72bad25b78c86bb7be2033f057bd3990984da3b8",
   "patch_sha256_by_path": {
-    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec"
-  }
+    "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec",
+    "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b"
+  },
+  "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
+  "round2_batch_date": "2026-10-16"
 }
