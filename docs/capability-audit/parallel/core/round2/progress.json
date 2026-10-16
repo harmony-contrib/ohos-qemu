@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T09:44:37.730098+08:00",
+  "updated_at": "2026-10-16T09:52:49.666217+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "aecc4a9adb99f5ae7cc186d878c0b9e01276d634",
+  "checkpoint_commit": "5cc49d42eb41f7ef270b581ed1273884e603f5b2",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -33,6 +33,50 @@
       "sha256": "1c595433e0f36ee82f00e4c45d8689388505fad18c8b0a27fd6b53493ea3871b",
       "reported_status": "pass_actual_current_consumer_build_ONLY_NOT_guest",
       "scope": "current-source actual Mesa build ONLY_NOT_package_or_guest"
+    },
+    "sensor_full_policy_original_failure": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-sensor-full-SELinux-policy-01/artifacts/evidence.json",
+      "sha256": "b1d148020621df1749bfd378a138d66261dce8b854ea8fe15fbe1eaf48d32059",
+      "reported_status": "fail",
+      "scope": "actual_fixed_full_SELinux_policy_compiler_with_sensor_socket_source_ONLY_NOT_runtime_access_or_fresh_GN"
+    },
+    "sensor_full_ordinary_and_developer_policy": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-sensor-full-SELinux-policy-02/artifacts/evidence.json",
+      "sha256": "8a4a9f751a5221b8b865bc199dc2b340f7438b80794a6fa4ae0c1ec14a28ebab",
+      "reported_status": "pass",
+      "scope": "actual_fixed_full_SELinux_policy_compiler_with_sensor_socket_source_ONLY_NOT_runtime_access_or_fresh_GN"
+    },
+    "actual_new_sensor_VDI_library_link": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-qemu-sensor-actual-VDI-link-01/artifacts/evidence.json",
+      "sha256": "150b311dc860fc6ac78e4771cc0618de6998bcfa1ec60d25b7ea9415f3ba9f16",
+      "reported_status": "pass",
+      "scope": "actual_new_VDI_objects_and_HDI_target_LTO_CFI_link_flags_ONLY_NOT_fresh_GN_selection_or_guest_HDF_load"
+    },
+    "ALSA_PCM_producer_ARM64_pass_two_ABI_dependencies_missing": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-ALSA-producer-three-ABI-01/artifacts/evidence.json",
+      "sha256": "e3690115db0a3c3b459422bd2c286e9b13fc66343d6108775e1339b40aceb344",
+      "reported_status": "fail",
+      "scope": "actual_guest_ALSA_PCM_producer_three_ABI_compile_and_link_ONLY_NOT_capture_runtime",
+      "ABI_results": [
+        {
+          "arch": null,
+          "exit_code": 0,
+          "sha256": null,
+          "bytes": null
+        },
+        {
+          "arch": null,
+          "exit_code": null,
+          "sha256": null,
+          "bytes": null
+        },
+        {
+          "arch": null,
+          "exit_code": null,
+          "sha256": null,
+          "bytes": null
+        }
+      ]
     },
     "bluetooth_OOB_six_service_TUs": {
       "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-bluetooth-oob-full-TUs-01/artifacts/bluetooth_oob_service/evidence.json",
