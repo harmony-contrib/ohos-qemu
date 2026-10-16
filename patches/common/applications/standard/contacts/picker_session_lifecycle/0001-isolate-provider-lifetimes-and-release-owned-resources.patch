@@ -2,7 +2,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/uiExtentionAbilit
 new file mode 100644
 --- /dev/null
 +++ b/applications/standard/contacts/entry/src/main/ets/uiExtentionAbility/PickerSession.ets
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,106 @@
 +/* Copyright (c) 2026 Harmony Contrib
 + * SPDX-License-Identifier: Apache-2.0 */
 +import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
@@ -10,6 +10,18 @@ new file mode 100644
 +import ability from '@ohos.ability.ability';
 +import type { UiExtentionParam } from './ContactUiExtentionAbility';
 +import WorkerWrapper, { WorkerRequestScope } from '../workers/base/WorkerWrapper';
++
++interface PickerSessionStorage {
++  uiExtentionSession: UIExtensionContentSession;
++  parameters: UiExtentionParam;
++  pickerSession: PickerSession;
++  isGettingPickerData: boolean;
++  isShowBindSheet: boolean;
++  isPickerSearch: boolean;
++  isShowAccountants: boolean;
++  isFromSaveContactPicker: boolean;
++  isSaveExistContact: boolean;
++}
 +
 +// No module/global result destination. Every callback retains this exact session.
 +export default class PickerSession {
@@ -31,12 +43,13 @@ new file mode 100644
 +    this.context = context;
 +    this.params = params;
 +    this.worker = worker;
-+    this.storage = new LocalStorage({
++    const initialStorage: PickerSessionStorage = {
 +      uiExtentionSession: session, parameters: params, pickerSession: this,
 +      isGettingPickerData: false, isShowBindSheet: false, isPickerSearch: false,
 +      isShowAccountants: false, isFromSaveContactPicker: params.isSaveContact,
 +      isSaveExistContact: params.isSaveExistContact
-+    });
++    };
++    this.storage = new LocalStorage(initialStorage);
 +    if (params.contact !== undefined) { this.storage.setOrCreate('contactFromPicker', params.contact); }
 +  }
 +
@@ -441,7 +454,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/uiExtentionAbilit
        }
      } catch (err) {
 -      HiLog.e(TAG, `onSessionCreate err: ${err.message} ,err code: ${err.code}`)
-+      throw err;
++      throw new Error('Contact picker session setup failed: ' + (err as Error).message);
      }
    }
  
@@ -1193,7 +1206,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
        } else {
          HiLog.i(TAG, 'commonEvent subscribe err:' + err?.message + ', stack: ' + err?.stack);
        }
-@@ -284,30 +311,36 @@
+@@ -284,30 +311,35 @@
     * @param err - 创建订阅者过程中可能出现的错误
     * @param commonEventSubscriber - 创建成功的公共事件订阅者实例
     */
@@ -1228,8 +1241,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
 -    }
 +      commonEventManager.createSubscriber(subscribeInfo, (error, subscriber) => {
 +        if (error) { HiLog.e(TAG, 'Subscriber creation failed: ' + error.message); return; }
-+        if (!scope.active || scope !== this.pageScope || request !== this.pickerSession ||
-+          (request !== undefined && !request.active)) {
++        if (!scope.active || scope !== this.pageScope || request !== this.pickerSession) {
 +          try { commonEventManager.unsubscribe(subscriber, this.unsubscribeCB); } catch (_) {}
 +          return;
 +        }
@@ -1248,7 +1260,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
    }
  
    /**
-@@ -336,7 +369,9 @@
+@@ -336,7 +368,9 @@
     */
    public unsubscribe() {
      try {
@@ -1259,7 +1271,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
      } catch (error) {
        HiLog.e(TAG, `Failed to unsubscribe. Code is ${error?.code}, message is ${error?.message}`);
      }
-@@ -364,14 +399,27 @@
+@@ -364,14 +398,27 @@
     * 9. 配置滑动多选工具
     */
    async aboutToAppear() {
@@ -1289,7 +1301,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
      HiLog.w(TAG, `localId: ${this.localId}`);
  
      // 参数处理逻辑：根据不同的调用方式初始化页面参数
-@@ -403,6 +451,8 @@
+@@ -403,6 +450,8 @@
      // UI刷新回调配置：设置Presenter的UI刷新回调函数
      // 当数据发生变化时，Presenter会调用此回调更新页面UI
      this.mPresenter.refreshUI = () => {
@@ -1298,7 +1310,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
        this.contactsListInited = this.mPresenter.contactsListInited;
        this.contactsTotal = this.mPresenter.totalCount;
        this.selectedCount = this.mPresenter.selectedCount;
-@@ -420,18 +470,19 @@
+@@ -420,18 +469,19 @@
      this.mPresenter.aboutToAppear(this.isContactMultiSelect);
      this.showOnlyAccessedAlert();
  
@@ -1322,7 +1334,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
              HiLog.i(TAG, 'terminateSelfWithResult Operation succeeded ');
            }).catch((error: BusinessError) => {
              HiLog.e(TAG, `Operation failed. Cause: ${error?.message}`);
-@@ -439,9 +490,7 @@
+@@ -439,9 +489,7 @@
          } else {
            // 联系人选择器模式：返回默认选中的数据
            this.isShowBindSheet = false;
@@ -1333,7 +1345,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
          }
        }
      }
-@@ -518,7 +567,9 @@
+@@ -518,7 +566,9 @@
    aboutToDisappear() {
      HiLog.w(TAG, 'aboutToDisappear')
      this.unInit();
@@ -1344,7 +1356,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
    }
  
    showOnlyAccessedAlert() {
-@@ -584,8 +635,10 @@
+@@ -584,8 +634,10 @@
      if (this.mPresenter.searchSerInitStatus != 0) {
        let task = new taskpool.Task(initFusionSearchService);
        taskpool.execute(task).then((res: Object) => {
@@ -1357,7 +1369,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
      }
      if (this.isSearching) {
        return;
-@@ -785,9 +838,7 @@
+@@ -785,9 +837,7 @@
                  })
                 } else {
                  this.isShowBindSheet = false;
@@ -1368,7 +1380,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
                }
              })
              .alignRules({
-@@ -1532,9 +1583,9 @@
+@@ -1532,9 +1582,9 @@
  
  @Component
  struct SecureAccessPopupTip {
@@ -1380,7 +1392,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
    @Link isShowOnlyAccessedAlert: boolean;
    private isPC: boolean = EnvironmentProp.isPC();
    // 是否启动无障碍
-@@ -1594,7 +1645,7 @@
+@@ -1594,7 +1644,7 @@
            .height(18)
            .onClick(() => {
              let list: string[] = AppStorage.get('showAccessedList') as string[];
@@ -1389,7 +1401,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
              HiLog.w(TAG, `SecureAccessPopupTip xmark onClick, name: ${name}`);
              if (!StringUtil.isEmpty(name) && name !== 'com.ohos.contacts') {
                list.push(name);
-@@ -1815,35 +1866,67 @@
+@@ -1815,35 +1865,67 @@
      .opacity(1)
    }
  
@@ -1465,7 +1477,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
    }
  
  
-@@ -2106,10 +2189,9 @@
+@@ -2106,10 +2188,9 @@
    }
  }
  
@@ -1477,7 +1489,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
    Row() {
      Row({ space: 8 }) {
        Button({ type: ButtonType.Circle, stateEffect: true }) {
-@@ -2121,7 +2203,7 @@
+@@ -2121,7 +2202,7 @@
        }
        .onClick(() => {
          HiLog.w(TAG, 'onBackButtonClick');
@@ -1486,7 +1498,7 @@ diff --git a/applications/standard/contacts/entry/src/main/ets/pages/contacts/ba
        })
        .accessibilityText(ContactsGlobalThisHelper.GetGlobalThis()
          .getDefaultUIContext()
-@@ -2166,7 +2248,7 @@
+@@ -2166,7 +2247,7 @@
        .backgroundColor(EnvironmentProp.isPC() ? Color.Transparent : $r('app.color.skin_ohos_id_color_button_normal'))
        .draggable(false)
        .onClick(() => {

@@ -32,6 +32,18 @@ import ability from '@ohos.ability.ability';
 import type { UiExtentionParam } from './ContactUiExtentionAbility';
 import WorkerWrapper, { WorkerRequestScope } from '../workers/base/WorkerWrapper';
 
+interface PickerSessionStorage {
+  uiExtentionSession: UIExtensionContentSession;
+  parameters: UiExtentionParam;
+  pickerSession: PickerSession;
+  isGettingPickerData: boolean;
+  isShowBindSheet: boolean;
+  isPickerSearch: boolean;
+  isShowAccountants: boolean;
+  isFromSaveContactPicker: boolean;
+  isSaveExistContact: boolean;
+}
+
 // No module/global result destination. Every callback retains this exact session.
 export default class PickerSession {
   private static sequence: number = 0;
@@ -52,12 +64,13 @@ export default class PickerSession {
     this.context = context;
     this.params = params;
     this.worker = worker;
-    this.storage = new LocalStorage({
+    const initialStorage: PickerSessionStorage = {
       uiExtentionSession: session, parameters: params, pickerSession: this,
       isGettingPickerData: false, isShowBindSheet: false, isPickerSearch: false,
       isShowAccountants: false, isFromSaveContactPicker: params.isSaveContact,
       isSaveExistContact: params.isSaveExistContact
-    });
+    };
+    this.storage = new LocalStorage(initialStorage);
     if (params.contact !== undefined) { this.storage.setOrCreate('contactFromPicker', params.contact); }
   }
 
@@ -588,7 +601,7 @@ for owner, event, type_name, variable in [('subWindow','windowSizeChange','windo
             if (!request.active) {{ return; }}''' + body + f'''          }};
           {owner}.on('{event}', {variable});
           request.addCleanup(() => {owner}?.off('{event}', {variable}));''' + extension[b+len('          });'):]
-extension = change(extension, 'HiLog.e(TAG, `onSessionCreate err: ${err.message} ,err code: ${err.code}`)', 'throw err;')
+extension = change(extension, 'HiLog.e(TAG, `onSessionCreate err: ${err.message} ,err code: ${err.code}`)', "throw new Error('Contact picker session setup failed: ' + (err as Error).message);")
 extension = change(extension, '      // 设置窗口监听', '      if (!request.active) { return; }\n      // 设置窗口监听')
 extension = change(extension, '    HiLog.i(TAG, `ContactUiExtentionAbility onSessionDestroy`)', '    this.sessions.get(session)?.dispose();\n    HiLog.i(TAG, `ContactUiExtentionAbility onSessionDestroy`)')
 
@@ -671,8 +684,7 @@ page = page[:a] + '''  public async registerSubscriber() {
     try {
       commonEventManager.createSubscriber(subscribeInfo, (error, subscriber) => {
         if (error) { HiLog.e(TAG, 'Subscriber creation failed: ' + error.message); return; }
-        if (!scope.active || scope !== this.pageScope || request !== this.pickerSession ||
-          (request !== undefined && !request.active)) {
+        if (!scope.active || scope !== this.pageScope || request !== this.pickerSession) {
           try { commonEventManager.unsubscribe(subscriber, this.unsubscribeCB); } catch (_) {}
           return;
         }

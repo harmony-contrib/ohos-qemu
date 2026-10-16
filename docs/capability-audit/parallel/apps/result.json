@@ -1098,7 +1098,7 @@
     "patches/common/applications/standard/theme/source_provider/apply.sh",
     "patches/common/applications/standard/theme/source_provider/verify_source.py"
   ],
-  "previous_batch_commit": "d3823b82bbc31fb2ee3962bcf3474c918c7cb1c5",
+  "previous_batch_commit": "7e23f4196ff12c261725375405821a024e7286be",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
@@ -1109,7 +1109,7 @@
     "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
     "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   },
-  "report_scope": "cumulative apps ownership; latest batch touches only 6 Contacts business files and 2 Theme renderer files, not previous 8 build metadata targets or Settings/MMS/shared integration",
+  "report_scope": "cumulative apps ownership; latest batch fixes only 3 SDK-reported ArkTS type errors in the existing Contacts lifecycle component; 5 other business payload hashes unchanged",
   "contacts_theme_batch": {
     "scope": "8 build metadata upstream targets only; no business fix or acceptance claim",
     "fixed_source_container": "read-only ohos-qemu-parallel-source-20261016-02",
@@ -1132,11 +1132,17 @@
       "applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts"
     ],
     "fixture_sha256": "2c271b1ce635c007b68ffc498b885b57ff5e5920b433dee4b0c1974a50d8b2c6",
-    "hash_manifest_sha256": "6780c8635b81b67e606531f70d0b11b520826c94f9b18b74cc193cee0f399bf1",
+    "hash_manifest_sha256": "e5b3921e6088125afb921d3d18e234e716ce9765ec1ec1f0db0e2e4fa8e19314",
     "host_scenarios": 38,
-    "official_SDK_build_attempted": false,
+    "official_SDK_build_attempted": true,
     "heavy_resource_use": "none; only small host tests and fixed source read-only inspection",
     "requirements_closed": 0,
-    "first_artifact_behavior_gate_passed": false
+    "first_artifact_behavior_gate_passed": false,
+    "official_SDK_build_status": "parent actual-product Linux SDK39 attempt 01 failed with three Contacts ArkTS diagnostics, corrected in this batch; parent SDK rebuild pending, no HAP artifact or runtime acceptance",
+    "sdk_type_corrections": [
+      "PickerSessionStorage names the LocalStorage initialization object type",
+      "openSession rethrows an actual Error with the original error message for outer session cleanup",
+      "legacy subscriber guard removes an unreachable request.active access after request was proven undefined; scope and request identity guards retained"
+    ]
   }
 }
