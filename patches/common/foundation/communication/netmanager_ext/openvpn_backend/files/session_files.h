@@ -63,6 +63,7 @@ public:
     ~SessionStore() { if (lock_ >= 0) close(lock_); if (root_ >= 0) close(root_); }
     bool Open(const char *path, uid_t owner)
     {
+        owner_ = owner;
         root_ = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
         if (root_ < 0 || !PrivateOwned(root_, true, owner)) return false;
         lock_ = openat(root_, "backend.lock", O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
@@ -87,7 +88,20 @@ public:
         closedir(entries);
         return valid;
     }
+    bool Remove(const std::string &directory)
+    {
+        const auto at = directory.rfind('/');
+        return root_ >= 0 && at != std::string::npos && RemoveSession(root_, directory.c_str() + at + 1, owner_);
+    }
+    void CloseInChild()
+    {
+        // Closing an inherited description must not unlock the parent's flock.
+        if (lock_ >= 0) close(lock_);
+        if (root_ >= 0) close(root_);
+        lock_ = root_ = -1;
+    }
 private:
+    uid_t owner_ = static_cast<uid_t>(-1);
     int root_ = -1;
     int lock_ = -1;
 };

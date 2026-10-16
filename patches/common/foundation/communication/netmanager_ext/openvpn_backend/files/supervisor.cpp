@@ -5,6 +5,8 @@
 #include "process_lifecycle.h"
 #include "session_files.h"
 #include "session_contract.h"
+#include "broker_runtime.h"
+#include "init_socket.h"
 #include "networkvpn_client.h"
 #include <array>
 #include <cerrno>
@@ -60,10 +62,10 @@ bool Notify(int state)
         OhosOpenvpn::Stage(sessionToken, "{\"updateState\":{\"state\":" + std::to_string(state) + "}}"), 0) == 0;
 }
 
-bool SaveSecret(const std::string &path, const std::string &contents)
+bool SaveSecret(int directory, const char *name, const std::string &contents)
 {
     Fd file;
-    file.value = open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
+    file.value = openat(directory, name, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
     return file.value >= 0 && Write(file.value, contents) && fsync(file.value) == 0;
 }
 
@@ -92,47 +94,40 @@ bool Credentials(int fd, ucred &peer)
 
 bool IsBridgeChild(pid_t bridge, pid_t client)
 {
-    std::ifstream status("/proc/" + std::to_string(bridge) + "/status");
-    std::string line;
-    while (std::getline(status, line)) {
-        if (line.compare(0, 5, "PPid:") != 0) continue;
-        char *end = nullptr;
-        errno = 0;
-        long parent = strtol(line.c_str() + 5, &end, 10);
-        while (end && (*end == ' ' || *end == '\t')) ++end;
-        return errno == 0 && end && !*end && parent == client;
-    }
-    return false;
+    const auto start = OhosOpenvpn::ProcessStart(bridge);
+    return !start.empty() && OhosOpenvpn::Executable(bridge, "/system/bin/qemu_openvpn_tun") &&
+        OhosOpenvpn::Parent(bridge) == client && OhosOpenvpn::ProcessStart(bridge) == start;
 }
 
 struct Session {
     std::string directory;
+    Fd directoryFd;
     pid_t child = -1;
     ~Session()
     {
         if (child > 0) {
             // The child remains unreaped until its entire owned process group
             // has received termination. Its PID cannot be reused during this.
-            kill(-child, SIGTERM);
+            kill(child, SIGTERM);
             for (int attempt = 0; attempt < 30; ++attempt) {
                 siginfo_t info {};
                 if (waitid(P_PID, child, &info, WEXITED | WNOHANG | WNOWAIT) == 0 && info.si_pid) break;
                 poll(nullptr, 0, 100);
             }
-            kill(-child, SIGKILL);
+            kill(child, SIGKILL);
             int status = 0;
             while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
         }
-        if (!directory.empty()) {
+        if (!directory.empty() && directoryFd.value >= 0) {
             for (const char *name : {"client.ovpn", "askpass", "management", "ready"})
-                unlink((directory + "/" + name).c_str());
+                unlinkat(directoryFd.value, name, 0);
             rmdir(directory.c_str());
         }
     }
 };
 
 bool Spawn(Session &session, const std::string &config, const std::string &management,
-           const std::string &ready)
+           const std::string &ready, const std::string &interfaceName)
 {
     std::vector<std::string> arguments {
         CLIENT, "--client", "--config", config, "--dev", "tun", "--dev-type", "tun",
@@ -140,6 +135,7 @@ bool Spawn(Session &session, const std::string &config, const std::string &manag
         "--route-noexec", "--management", management, "unix", "--management-client",
         "--management-hold", "--setenv", "OHOS_OPENVPN_READY_SOCKET", ready,
         "--setenv", "OHOS_OPENVPN_SESSION", sessionToken,
+        "--setenv", "OHOS_OPENVPN_INTERFACE", interfaceName,
         "--verb", "3",
     };
     std::vector<char *> argv;
@@ -149,11 +145,10 @@ bool Spawn(Session &session, const std::string &config, const std::string &manag
     session.child = fork();
     if (session.child < 0) return false;
     if (session.child == 0) {
-        if (!OhosOpenvpn::BindToParent(supervisor) || setpgid(0, 0) != 0) _exit(126);
+        if (!OhosOpenvpn::BindToParent(supervisor)) _exit(126);
         execv(CLIENT, argv.data());
         _exit(127);
     }
-    if (setpgid(session.child, session.child) != 0 && errno != EACCES) return false;
     return true;
 }
 
@@ -226,6 +221,8 @@ int Observe(Session &session, int managementListener, int readyListener)
         }
         if (tunReady && descriptors[3].revents) return 17;
         if (!published && tlsConnected && tunReady) {
+            pollfd live {bridgeReady.value, POLLIN, 0};
+            if (poll(&live, 1, 0) != 0) return 17;
             if (!Notify(4)) return 16;
             published = true;
         }
@@ -233,38 +230,82 @@ int Observe(Session &session, int managementListener, int readyListener)
     return 0;
 }
 
-int Run()
+int RunWorkerBody(const OhosOpenvpn::BrokerCommand &command, const std::string &directory)
 {
-    // Match the actual service's UID check; this program never manufactures
-    // a token or switches identity to bypass that authorization boundary.
-    if (getuid() != NETSYS_UID || geteuid() != NETSYS_UID) return 2;
-    OhosOpenvpn::SessionConfig snapshot;
-    std::string envelope;
-    if (NetworkVpnClient::GetInstance().GetSysVpnCertUri(OhosOpenvpn::SESSION_REQUEST, envelope) != 0 ||
-        !OhosOpenvpn::DecodeSession(envelope, snapshot)) return 3;
-    sessionToken = snapshot.token;
-    std::string config = std::move(snapshot.profile);
-    std::string password = std::move(snapshot.password);
-    OhosOpenvpn::SessionStore store;
-    if (!store.Open("/data/service/el1/public/vpn/qemu_openvpn", NETSYS_UID)) return 3;
+    sessionToken = command.session.token;
+    stopping = 0;
     Session session;
-    char directory[] = "/data/service/el1/public/vpn/qemu_openvpn/session-XXXXXX";
-    if (!mkdtemp(directory)) return 3;
     session.directory = directory;
+    session.directoryFd.value = open(directory.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+    if (session.directoryFd.value < 0 || !OhosOpenvpn::PrivateOwned(session.directoryFd.value, true, NETSYS_UID)) return 3;
+    // The token was generated by the VPN service and supplied through the
+    // authenticated netsys broker transport, never argv or a test parameter.
+    if (NetworkVpnClient::GetInstance().NotifyConnectStage(
+        OhosOpenvpn::Stage(sessionToken, "{\"claim\":{}}"), 0) != 0) return 3;
+    std::string config = command.session.profile;
+    std::string password = command.session.password;
     if (!OhosOpenvpn::ValidateProfile(config)) return 3;
     if (!password.empty()) {
-        if (!SaveSecret(session.directory + "/askpass", password + "\n")) return 3;
+        if (!SaveSecret(session.directoryFd.value, "askpass", password + "\n")) return 3;
         config += "\naskpass " + session.directory + "/askpass\n";
     }
-    if (!SaveSecret(session.directory + "/client.ovpn", config)) return 3;
+    OhosOpenvpn::EraseSecret(password);
+    if (!SaveSecret(session.directoryFd.value, "client.ovpn", config)) return 3;
+    OhosOpenvpn::EraseSecret(config);
     Fd management;
     Fd ready;
     management.value = Listen(session.directory + "/management");
     ready.value = Listen(session.directory + "/ready");
     if (management.value < 0 || ready.value < 0 ||
         !Spawn(session, session.directory + "/client.ovpn", session.directory + "/management",
-               session.directory + "/ready")) return 4;
+               session.directory + "/ready", command.interfaceName)) return 4;
     return Observe(session, management.value, ready.value);
+}
+
+int RunWorker(const OhosOpenvpn::BrokerCommand &command, const std::string &directory)
+{
+    const int result = RunWorkerBody(command, directory);
+    if (!stopping) Notify(5);
+    return result;
+}
+
+int Run()
+{
+    if (getuid() != NETSYS_UID || geteuid() != NETSYS_UID) return 2;
+    // init owns this listener; no pathname unlink/rebind or unauthenticated
+    // command-line activation can impersonate the privileged broker endpoint.
+    const int listener = GetControlSocket("qemu_openvpn");
+    if (!OhosOpenvpn::InitBrokerListener(listener, OhosOpenvpn::BROKER_SOCKET) || listen(listener, 8) != 0) return 3;
+    OhosOpenvpn::BrokerRuntime broker("/data/service/el1/public/vpn/qemu_openvpn", NETSYS_UID, RunWorker);
+    if (!broker.Open()) return 3;
+    while (!stopping) {
+        broker.Reap();
+        pollfd ready {listener, POLLIN, 0};
+        const int available = poll(&ready, 1, 200);
+        if (available < 0 && errno == EINTR) continue;
+        if (available < 0 || ready.revents & (POLLERR | POLLHUP | POLLNVAL)) return 4;
+        if (available == 0) continue;
+        OhosOpenvpn::BrokerFd connection(accept4(listener, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK));
+        if (connection.value < 0) { if (errno == EINTR || errno == EAGAIN) continue; return 4; }
+        if (!OhosOpenvpn::NativeBrokerPeer(connection.value)) continue;
+        std::string wire;
+        OhosOpenvpn::BrokerCommand command;
+        if (!OhosOpenvpn::ReadFrame(connection.value, wire) || !OhosOpenvpn::DecodeBroker(wire, command)) continue;
+        OhosOpenvpn::EraseSecret(wire);
+        const int result = command.start && !OhosOpenvpn::ValidateProfile(command.session.profile) ? EINVAL :
+            broker.Apply(command, listener, connection.value);
+        OhosOpenvpn::EraseSecret(command.session.profile);
+        OhosOpenvpn::EraseSecret(command.session.password);
+        // Delivery failure leaves a real accepted worker owned by its token;
+        // the caller reports failure and rolls it back with that same token.
+        pid_t worker = -1; std::string workerStart;
+        const std::string reply = result == 0 && command.start ?
+            (broker.Identity(command.session.token, worker, workerStart) ? OhosOpenvpn::StartReply(worker, workerStart) : std::to_string(EIO)) :
+            std::to_string(result);
+        OhosOpenvpn::SendFrame(connection.value, reply);
+    }
+    broker.Shutdown();
+    return 0;
 }
 }
 
@@ -274,10 +315,6 @@ int main()
     signal(SIGINT, Stop);
     signal(SIGHUP, Stop);
     signal(SIGPIPE, SIG_IGN);
-    int result = Run();
-    // The service initiating an explicit stop already owns its disconnected
-    // transition. Calling back synchronously here can block an init restart
-    // while that service still holds its setup/destroy mutex.
-    if (!stopping && OhosOpenvpn::Token(sessionToken) && getuid() == NETSYS_UID && geteuid() == NETSYS_UID) Notify(5);
-    return result;
+    signal(SIGCHLD, SIG_DFL);
+    return Run();
 }

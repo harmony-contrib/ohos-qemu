@@ -4,6 +4,7 @@
 #include "received_descriptor.h"
 #include "process_lifecycle.h"
 #include "session_contract.h"
+#include "broker_protocol.h"
 #include "negotiated_config.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -55,9 +56,10 @@ int ReceiveTun()
     if (control.value < 0) return -1;
     sockaddr_un address {};
     address.sun_family = AF_UNIX;
-    const char path[] = "/dev/unix/socket/tunfd";
+    const char path[] = "/dev/unix/socket/qemu_openvpn_tunfd";
     memcpy(address.sun_path, path, sizeof(path));
     if (connect(control.value, reinterpret_cast<sockaddr *>(&address), sizeof(address)) < 0) return -1;
+    if (!OhosOpenvpn::SendFrame(control.value, std::string("qemu-openvpn-tun-v2\n") + sessionToken)) return -1;
     pollfd ready { control.value, POLLIN, 0 };
     if (poll(&ready, 1, 2000) <= 0) return -1;
     char byte = 0;
@@ -69,7 +71,7 @@ int ReceiveTun()
     ssize_t received = recvmsg(control.value, &message, MSG_CMSG_CLOEXEC);
     return OhosOpenvpn::TakeSingleDescriptor(message, received, rights.size());
 }
-int ConnectReady()
+int ConnectReady(char state = 'R')
 {
     const char *path = getenv("OHOS_OPENVPN_READY_SOCKET");
     constexpr char prefix[] = "/data/service/el1/public/vpn/qemu_openvpn/session-";
@@ -82,7 +84,7 @@ int ConnectReady()
     remote.sun_family = AF_UNIX;
     memcpy(remote.sun_path, path, strlen(path) + 1);
     if (connect(socketFd.value, reinterpret_cast<sockaddr *>(&remote), sizeof(remote)) != 0 ||
-        send(socketFd.value, "R", 1, MSG_NOSIGNAL) != 1) return -1;
+        send(socketFd.value, &state, 1, MSG_NOSIGNAL) != 1) return -1;
     int fd = socketFd.value;
     socketFd.value = -1;
     return fd;
@@ -112,7 +114,10 @@ int Bridge()
     tun.value = ReceiveTun();
     if (tun.value < 0) return 4;
     ifreq request {};
-    if (ioctl(tun.value, TUNGETIFF, &request) < 0 || !(request.ifr_flags & IFF_TUN) || !(request.ifr_flags & IFF_NO_PI)) return 4;
+    const char *interfaceName = getenv("OHOS_OPENVPN_INTERFACE");
+    if (!interfaceName || !OhosOpenvpn::BrokerInterface(interfaceName) ||
+        ioctl(tun.value, TUNGETIFF, &request) < 0 || !(request.ifr_flags & IFF_TUN) || !(request.ifr_flags & IFF_NO_PI) ||
+        strnlen(request.ifr_name, IFNAMSIZ) == IFNAMSIZ || strcmp(request.ifr_name, interfaceName)) return 4;
     Fd ready;
     ready.value = ConnectReady();
     if (ready.value < 0) return 4;
@@ -140,5 +145,11 @@ int main()
 {
     // Service identity is provided by init/netsys, never changed by this helper.
     signal(SIGTERM, Stop); signal(SIGINT, Stop); signal(SIGHUP, Stop);
-    return Bridge();
+    const int result = Bridge();
+    if (result != 0 && getuid() == 1098 && geteuid() == 1098 && OhosOpenvpn::Token(sessionToken)) {
+        // An authenticated negative readiness byte reports negotiation/config/
+        // controller failure promptly; it never substitutes for a real TUN.
+        Fd failed; failed.value = ConnectReady('F');
+    }
+    return result;
 }

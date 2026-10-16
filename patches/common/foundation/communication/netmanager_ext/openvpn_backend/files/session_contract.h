@@ -3,6 +3,9 @@
 #include <cerrno>
 #include <cstdlib>
 #include <fstream>
+#include <fcntl.h>
+#include <signal.h>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <sys/types.h>
@@ -86,19 +89,54 @@ inline pid_t Parent(pid_t pid)
         char *end = nullptr; errno = 0;
         const long value = strtol(line.c_str() + 5, &end, 10);
         while (end && (*end == ' ' || *end == '\t')) ++end;
-        if (errno || !end || *end || value <= 1 || value > 0x7fffffff) return -1;
+        if (errno || !end || *end || value < 1 || value > 0x7fffffff) return -1;
         return static_cast<pid_t>(value);
     }
     return -1;
 }
-enum class SessionRole { Invalid, Supervisor, Bridge };
-inline SessionRole CallerRole(pid_t caller, pid_t supervisor)
+// A PID alone can refer to a later process. Authentication pins Linux's
+// monotonically allocated starttime and rechecks it after the proc reads.
+inline std::string ProcessStart(pid_t pid)
 {
-    if (supervisor <= 1 || !Executable(supervisor, "/system/bin/qemu_openvpn_service")) return SessionRole::Invalid;
+    if (pid <= 1) return {};
+    std::ifstream input("/proc/" + std::to_string(pid) + "/stat");
+    std::string line;
+    if (!std::getline(input, line) || line.size() > 4096) return {};
+    const auto at = line.rfind(')');
+    if (at == std::string::npos || at + 2 >= line.size()) return {};
+    std::istringstream fields(line.substr(at + 2));
+    std::string value;
+    for (unsigned field = 3; field <= 22; ++field) {
+        if (!(fields >> value) || (field == 3 && (value == "Z" || value == "X"))) return {};
+    }
+    if (value.empty() || value.size() > 20 || value == "0") return {};
+    for (char c : value) if (c < '0' || c > '9') return {};
+    if (kill(pid, 0) != 0 && errno != EPERM) return {};
+    return value;
+}
+inline bool WorkerProcess(pid_t caller)
+{
+    const auto start = ProcessStart(caller);
+    const pid_t broker = Parent(caller);
+    const auto brokerStart = ProcessStart(broker);
+    return !start.empty() && !brokerStart.empty() && Executable(caller, "/system/bin/qemu_openvpn_service") &&
+        Executable(broker, "/system/bin/qemu_openvpn_service") && Parent(broker) == 1 &&
+        ProcessStart(broker) == brokerStart && ProcessStart(caller) == start;
+}
+enum class SessionRole { Invalid, Supervisor, Bridge };
+inline SessionRole CallerRole(pid_t caller, pid_t supervisor, const std::string &expectedStart = {})
+{
+    const auto start = ProcessStart(supervisor);
+    if (supervisor <= 1 || start.empty() || (!expectedStart.empty() && start != expectedStart) ||
+        !Executable(supervisor, "/system/bin/qemu_openvpn_service") || ProcessStart(supervisor) != start) return SessionRole::Invalid;
     if (caller == supervisor) return SessionRole::Supervisor;
     if (!Executable(caller, "/system/bin/qemu_openvpn_tun")) return SessionRole::Invalid;
+    const auto bridgeStart = ProcessStart(caller);
     const pid_t client = Parent(caller);
-    return Executable(client, "/system/bin/qemu_openvpn") && Parent(client) == supervisor ?
+    const auto clientStart = ProcessStart(client);
+    return !bridgeStart.empty() && !clientStart.empty() && Executable(client, "/system/bin/qemu_openvpn") &&
+        Parent(client) == supervisor && ProcessStart(client) == clientStart && ProcessStart(caller) == bridgeStart &&
+        ProcessStart(supervisor) == start ?
         SessionRole::Bridge : SessionRole::Invalid;
 }
 } // namespace OhosOpenvpn
