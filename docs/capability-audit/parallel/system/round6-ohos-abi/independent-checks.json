@@ -1,0 +1,66 @@
+{
+  "status": "pass",
+  "consumer_sha256": "a0c08e06103cab0a46e1a3647e49ad2a7a2685cd0751978fb8c35fbaeb81ed28",
+  "runtime_dso_count": 13,
+  "actual_ohos_loader_sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f",
+  "qemu_exit_code": 0,
+  "qemu_elapsed_seconds": 1.6130733489990234,
+  "qemu_started_utc": "2026-10-16T13:51:23.843072+00:00",
+  "provider_file_opens": 2,
+  "provider_actual_unmaps": 2,
+  "provider_mapping_bytes": 45056,
+  "observed_callbacks": [
+    {
+      "ordinal": "1",
+      "latitude": "13.248495000000",
+      "longitude": "-75.603709000000",
+      "utc_ms": "1792158684504",
+      "boot_ns": "135149711414758",
+      "validity": "1571"
+    },
+    {
+      "ordinal": "2",
+      "latitude": "13.248495000000",
+      "longitude": "-75.603709000000",
+      "utc_ms": "1792158685149",
+      "boot_ns": "135150355391089",
+      "validity": "1571"
+    }
+  ],
+  "distinct_hello_nonces": [
+    "8199618b6fe56f3f0e8e8be865551541",
+    "e95b2c9c4bb1c4ebe94afbb55e376157",
+    "17473cd1084d3f5d808a810f47a31611"
+  ],
+  "old_frame_rejection_peer_eof": true,
+  "source_input_frame_hashes": [
+    "bedd24bf3f48a7cc07d10a86062c341af40d0f2abc9b8696c822fba8c0e3c687",
+    "2d6eda74dc7bc760dca4b9f82a7209e2c32493750e99df2872bafa4d31df47fe"
+  ],
+  "callback_cleanup_then_unload_then_reload_order_verified": true,
+  "no_input_and_stopped_observation_milliseconds": 250,
+  "cfi_slowpath_static_call_sites": [
+    "3564: 94000713     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "3594: 94000707     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "3668: 940006d2     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "3788: 9400068a     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "37d8: 94000676     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "38b0: 94000640     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "3928: 94000622     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "39a0: 94000604     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "3b50: 94000598     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "3bfc: 9400056d     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "40a0: 94000444     \tbl\t0x51b0 <__cfi_slowpath@plt>",
+    "40d8: 94000436     \tbl\t0x51b0 <__cfi_slowpath@plt>"
+  ],
+  "positive_cfi_build_runtime_calls": "pass",
+  "wrong_type_cfi_rejection_tested": false,
+  "full_public_enable_callback_ipc_tested": false,
+  "runtime_diagnostics": {
+    "missing_param_sec_dac_opens": 12,
+    "missing_hilog_connect_messages": 55
+  },
+  "guest_kernel_booted": false,
+  "first_artifact_behavior_gate_passed": false,
+  "requirements_closed": 0
+}

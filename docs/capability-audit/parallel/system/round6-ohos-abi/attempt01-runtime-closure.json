@@ -1,0 +1,124 @@
+[
+  {
+    "name": "vendorGnssAdapter.so",
+    "source": "/r52/vendorGnssAdapter.so",
+    "sha256": "ccdded90a93f95f27928f3d3a8fd8834da689ee2e68d4f32566bab0beebfce4e",
+    "needed": [
+      "libc.so",
+      "libc++.so"
+    ]
+  },
+  {
+    "name": "libgnss_interface_service_2.0.z.so",
+    "source": "/r52/libgnss_interface_service_2.0.z.so",
+    "sha256": "c8f7a26c745039983ad366633861f7b690b1222cacb9fb425a3c12685aede6c0",
+    "needed": [
+      "libutils.z.so",
+      "libhilog.so",
+      "libc.so",
+      "libc++.so"
+    ]
+  },
+  {
+    "name": "libc.so",
+    "source": "/ohos/out/arm64_virt/obj/third_party/musl/usr/lib/aarch64-linux-ohos/libc.so",
+    "sha256": "d0c2237415ab5563658c35d298bf3a6c7b0206ab9bf583251d14aec59127158f",
+    "needed": []
+  },
+  {
+    "name": "libc++.so",
+    "source": "/ohos/prebuilts/clang/ohos/linux-x86_64/llvm/lib/aarch64-linux-ohos/libc++.so",
+    "sha256": "5f8714f769bb5ff8e921f6e958e2a48c0af507f56ec88089d3f0a1b7870d2f32",
+    "needed": [
+      "libc.so"
+    ]
+  },
+  {
+    "name": "libutils.z.so",
+    "source": "/ohos/out/arm64_virt/commonlibrary/c_utils/libutils.z.so",
+    "sha256": "2dd01443121134bce1612deccb61934f6730b5749e645a18ba6221c92199588e",
+    "needed": [
+      "libsec_shared.z.so",
+      "libc.so",
+      "libc++.so",
+      "libclang_rt.ubsan_minimal.so"
+    ]
+  },
+  {
+    "name": "libhilog.so",
+    "source": "/ohos/out/arm64_virt/hiviewdfx/hilog/libhilog.so",
+    "sha256": "d259d5181e279aca8e82ac4f8c2c2ff6a375ee76abcae6b0cdbddc415b8ce673",
+    "needed": [
+      "libsandboxlog.so",
+      "libsec_shared.z.so",
+      "libbegetutil.z.so",
+      "libc.so",
+      "libc++.so"
+    ]
+  },
+  {
+    "name": "libsec_shared.z.so",
+    "source": "/ohos/out/arm64_virt/thirdparty/bounds_checking_function/libsec_shared.z.so",
+    "sha256": "5095e9d05c3816ad3ea53d9f457fc46d8b763f36de65c2a7b0663396536123f5",
+    "needed": [
+      "libc.so"
+    ]
+  },
+  {
+    "name": "libclang_rt.ubsan_minimal.so",
+    "source": "/ohos/out/arm64_virt/packages/phone/system/lib64/platformsdk/libclang_rt.ubsan_minimal.so",
+    "sha256": "9fb28ee9a387286ae3583f6b6ffee0e0318930290deb56e3ccc04cab633d55b8",
+    "needed": [
+      "libc.so"
+    ]
+  },
+  {
+    "name": "libsandboxlog.so",
+    "source": "/ohos/out/arm64_virt/packages/phone/system/lib64/platformsdk/libsandboxlog.so",
+    "sha256": "3fd460bcd22d4ab9c52b1acfe76c2b4169f656803979c2415cb1ef38ed7b37e6",
+    "needed": [
+      "libsec_shared.z.so",
+      "libcjson.z.so",
+      "libc.so",
+      "libc++.so",
+      "libclang_rt.ubsan_minimal.so"
+    ]
+  },
+  {
+    "name": "libbegetutil.z.so",
+    "source": "/ohos/out/arm64_virt/packages/phone/system/lib64/platformsdk/libbegetutil.z.so",
+    "sha256": "c9df6db40b7c58b5d085e5634a8c662ccb1a3e8e1fa1996c67f2a433bb929b60",
+    "needed": [
+      "libconfigpolicy_util.z.so",
+      "libc.so",
+      "libc++.so"
+    ]
+  },
+  {
+    "name": "libcjson.z.so",
+    "source": "/ohos/out/arm64_virt/packages/phone/system/lib64/platformsdk/libcjson.z.so",
+    "sha256": "281feec1cc507bf6cbb9da3f019bdbc160b9fc9544b2e0f3b496a375aaa8d0b6",
+    "needed": [
+      "libc.so"
+    ]
+  },
+  {
+    "name": "libconfigpolicy_util.z.so",
+    "source": "/ohos/out/arm64_virt/packages/phone/system/lib64/platformsdk/libconfigpolicy_util.z.so",
+    "sha256": "7ebd033c241b4b168c4a6adcbc73f19375aae0acefbed52fd71985e1088503e4",
+    "needed": [
+      "libsec_shared.z.so",
+      "libsystemparam.z.so",
+      "libc.so"
+    ]
+  },
+  {
+    "name": "libsystemparam.z.so",
+    "source": "/ohos/out/arm64_virt/packages/phone/system/lib64/platformsdk/libsystemparam.z.so",
+    "sha256": "50fc5b75dc5844f59119675884011fa56fa76464c52729730bc237fb6f6f96a1",
+    "needed": [
+      "libc.so",
+      "libc++.so"
+    ]
+  }
+]
