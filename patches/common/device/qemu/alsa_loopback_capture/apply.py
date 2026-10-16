@@ -68,7 +68,20 @@ def prepare(root):
     """Validate every input before preparing any source mutation."""
     for relative, revision in REVISIONS.items():
         git = root / relative / '.git'
-        cursor = git
+        # repo checkouts use this exact in-tree metadata link. Source files
+        # and every source parent remain regular; a foreign metadata target
+        # must not become an exception to that rule.
+        if git.is_symlink():
+            expected = root / '.repo/projects' / (relative + '.git')
+            if (os.readlink(git) != os.path.relpath(expected, git.parent) or
+                    not expected.is_dir()):
+                raise ValueError('noncanonical repo metadata link: ' + relative)
+            cursor = expected
+            while cursor != root:
+                if cursor.is_symlink():
+                    raise ValueError('symlink repo metadata target rejected: ' + relative)
+                cursor = cursor.parent
+        cursor = git.parent if git.is_symlink() else git
         while cursor != root:
             if cursor.is_symlink():
                 raise ValueError('symlink source metadata rejected: ' + relative)

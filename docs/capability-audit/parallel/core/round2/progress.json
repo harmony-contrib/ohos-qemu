@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-17T02:07:41.035165+08:00",
+  "updated_at": "2026-10-17T03:06:48.292063+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "9dbdc4387aa5c0685106a40ebdd9d3d7262116d2",
+  "checkpoint_commit": "7b25af8",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -26,10 +26,11 @@
     "diagnostic_source_and_out_readonly": true,
     "max_heavy_jobs": 1,
     "compiler_jobs": 2,
-    "current_heavy_container": "stupefied_dubinsky",
-    "current_heavy_dynamic_cpus": 4,
-    "current_heavy_dynamic_memory_gib": 8,
-    "current_heavy_memory_swap_total_gib": 10
+    "current_heavy_container": null,
+    "current_heavy_dynamic_cpus": null,
+    "current_heavy_dynamic_memory_gib": null,
+    "current_heavy_memory_swap_total_gib": null,
+    "source_out_write_owner": "root only during preparation/build; agents have released all source/out reads"
   },
   "evidence": {
     "public_MIC_HAP_original_SDK_failure": {
@@ -1358,12 +1359,47 @@
       "sha256": "8ba19099c49294d6c9203931c001155662f4a39691eecc3439213dd9e3133358",
       "status": "pass",
       "scope": "source exact successor composition and HAP metadata unit boundaries ONLY NOT new guest"
+    },
+    "M144_current_recipe_native_and_official_signed_HAP": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/evidence.json",
+      "sha256": "04fbfc2aaaae5b176d86e12e92eba8df80f8535ea82c9db4c3ad3dcbbf5843af",
+      "exit_code": 0,
+      "status": null,
+      "scope": "actual native+official signed HAP PASS, dependency only NOT QEMU package or guest"
+    },
+    "live_inputs_actual_SDK03": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-live-inputs-Linux-SDK-03/evidence.json",
+      "sha256": "e4571778786fe5181eb1a0015d6168d2ed4b4c3f3ba60609d7a50f04f6c73276",
+      "exit_code": 0,
+      "status": null,
+      "scope": "actual SDK39 native/full HAP PASS only NOT guest"
+    },
+    "live_SDK03_adapter_before_NativeStrip_fix": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-live-SDK03-adapter-before-strip-01/evidence.json",
+      "sha256": "649f6b3e77ffe6831fac3a33963e50c51191908f76928a1ad3c75b3eaa2159e6",
+      "exit_code": null,
+      "status": "fail",
+      "scope": "actual independent adapter FAIL due official NativeStrip byte change; original evidence preserved"
+    },
+    "watchdog_clock_actual_three_ABI_SDK39": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-watchdog-clocks-Linux-SDK-01/evidence.json",
+      "sha256": "00bad7fc10430fdf62e79517d04a9d93a0c2945be909f8c9906bbcd8e6d14c45",
+      "exit_code": 0,
+      "status": null,
+      "scope": "actual 3 ABI CLI compile/link only NOT guest"
+    },
+    "full_source_preparation_02": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-full-source-prepare-02/evidence.json",
+      "sha256": "e76a88844eaeea4b13525890733d05201d0917887ccf501c0e2d5b68b6fea2e2",
+      "exit_code": 1,
+      "status": null,
+      "scope": "failed at canonical repo .git metadata symlink rejection in ALSA selector; no full build/package"
     }
   },
   "agents": {
-    "apps": "0652db2 integrated c7a60b6: Contacts true deadline/navigation and AMS connection helper; current task read-only Contacts_data source\u2192ABC chain review",
-    "media": "d860039 integrated9cdb0ae; current exclusive wrapper/coordinator native-image and actual SERVICE connection binding; no heavy lease",
-    "system": "74b7c0b live wrapper integrated938ef2b; 9dbf67e readonly guard review integrated9dbdc43; current task readonly old R50/R51 root cause review",
+    "apps": "9041107 clock builder integrated; current host-only readonly full-build wiring review",
+    "media": "2216577 Wallpaper wrapper integrated; narrow new NativeStrip replay utility pending; no source/out reads",
+    "system": "7b25af8 fixed default Chinese foreground consent source contract integrated; no active source/out reads",
     "network": "prior source/API/focus fixes integrated; no active write or heavy lease",
     "location": "prior 17 TUs/full Rust/API coverage integrated; no active write or heavy lease"
   },
@@ -1383,32 +1419,31 @@
     "only after full representative gate passes build and accept remaining five ABI/profile packages"
   ],
   "current_runtime_acceptance_gaps": [
-    "No newly packaged representative has booted in this continuation; gate false, six packages0/6",
-    "MMS/Settings unsigned actual HAP builds and content checks passed; OS signing/BMS/UI pending",
-    "Root batched audio clock/error/short-ready fixes pass11host tests; new3HAPs queued",
-    "Contacts/Theme lifecycle source batch active; missing real wallpaper settings UI and other provider backends remain open",
-    "Legitimate OEM DeviceAttest, AudioVivid, Ads, SecurityGuard, geocoder/modem/HCI inputs still unsupplied"
+    "0/6 newly packaged artifacts accepted; first gate false",
+    "Native/HAP dependency success is not new package runtime proof",
+    "Actual new fullbuild required for fresh Contacts JS/ABC, MSDP, Wallpaper and HiCollie macro/DSO witness",
+    "SDK03 actual HAP PASS; exact strip replay adapter pending",
+    "Supplier/OEM AudioVivid Ads SecurityGuard and external modem/HCI/geocoder material still unsupplied"
   ],
   "next_required": [
-    "Finish currently running current-recipe M144 native+official HAP attempt and preserve all actual failures/results",
-    "Complete media freshnative-image plus actual AMS witness integration and batch remaining confirmed source/verifier fixes",
-    "Run actual LinuxSDK39 live-only HAP03; preserve any failures then repair together",
-    "Prepare complete patched source with current M144 dependency; freeze all scripts/patches/ci before one full ARM64 phone build/package",
-    "Run full fresh packaged representative runtime with current 3families and regressions; collect all failures before next repair/build cycle",
-    "Only after full representative behavior gate passes build/package/accept all remaining five with appropriate arch/profile evidence"
+    "Fix canonical repo metadata handling and finish current full source patch preparation; preserve all failures",
+    "Finish exact SDK NativeStrip replay and independent live adapter, assemble three family actual runtime inputs",
+    "Freeze final code, full ARM64 phone build, all three native witnesses and newly packaged artifact",
+    "Run actual clock/default suspend-wake/ordinary HiTrace and full capability boundary regressions, collect all failures before next build",
+    "Only after first complete behavior gate PASS build/package/accept remaining five architecture/profile packages"
   ],
   "Contacts_Theme_current_SDK": "Contacts SDK02 + Theme SDK04 phone/pad complete real API26 product builds PASS; unsigned only",
   "Settings_current_SDK": "SDK06 wallpaper UI full HAP PASS; actual 44 extensions, 6 ELF, exact permissions SET_WALLPAPER once PASS; signing/BMS/pixels pending",
   "Contacts_Theme_signing_wiring": "source GN/exact profiles/original installs/mandatory image guard implemented; actual source signing3HAP+13private ext4 PASS; BMS/runtime pending",
   "Contacts_Theme_real_OS_signing": "01 PASS 3 signed sourceHAP +13 privateext4 cases; source grant/APL preserved NOT BMS/runtime",
   "MSDP_public_still": "all15 actual product TUs covered via original8 unaffected+retry7; GNUASan/UBSan current13 cases PASS; actual fresh full GN/link/image/public API/restart guest pending",
-  "runtime_tools": "Contacts full_boundaries+ordinary callers/seed/provider+actual observer adapters ready; Wallpaper wrapper/native-image/AMS connection integration in progress; actual guest not executed",
+  "runtime_tools": "Actual 3ABI clock CLI build+host verify PASS; current Contacts/MSDP/Wallpaper fullbuild witnesses and boot clock fullsuite wired; actual fullbuild/newguest pending",
   "MSDP_current_platform_coverage": "15actualtargetsPASS via01unaffected8+02changed7; private fields genuine failures repaired; freshGN/link/newguest pending",
   "MSDP_image_guard_review": "64byte fake and CFIfalse false accept repaired; strong before/build/finish witness+rawGN/log+ELF implemented testsPASS; actual full pipeline pending",
-  "runtime_extension_HAPs": "SDK02 normal Contacts and Wallpaper importer actual HAP PASS; seed/query actual HAP PASS; live CMake profile fixed, live-only SDK03 queued behind current heavy",
+  "runtime_extension_HAPs": "Contacts/Wallpaper/seed/query and live SDK03 full unsigned HAP PASS; live verifier must accept exact official NativeStrip replay, repair in progress; no new guest",
   "representative_runtime_integration": "fixed3families, immutable same-directory boot copies, strict raw re-verification and exact cleanup_errors=[]; Contacts mandatory full deadline/navigation; Wallpaper finding closure disabled pending freshnative+AMS; current70host testsPASS and integrated Apps testsPASS; guest pending",
   "SDK_seed_query_live02": "Contacts seed and Wallpaper query actual SDK39 HAP PASS individually; overall batch FAIL from live nonexistent CMake task; original records preserved; tool fix integrated and live-only actual retry pending",
-  "engine_dependency_refresh": "current090fd4 M144 108-step actual build:105 compile steps complete, libarkweb_engine.so real CFI+ThinLTO link active, no OOM; native+official HAP launcher not yet complete. Dynamic container CPU2\u21924/memory5\u21928GiB separately recorded.",
+  "engine_dependency_refresh": "090fd4 actual native and official signed HAP both exit0; all5 native transformation replays PASS; ArkWebCore.hap SHA b70307d2c84d48b336e1609d8647a08e6ae414474c4b9d53c34fef834a740e80; NOT QEMU guest acceptance",
   "Wallpaper_native_image_guard": "14ebd31 forced-owned2object+3DSO witness+actualGNselectedfalse/protectedcommands/rawlogs/ELF/image implemented; independently reviewed and7host guard testsPASS; no actual full build/image execution yet",
   "runtime_helpers": "actual3 product helper CFI compile/link PASS; original parser failure preserved; independent actual readonly recheck02 PASS unchanged compiler/header/DSO/ELF; true guest DSO hash match still mandatory",
   "runtime_inputs_prepared": "r52-first-runtime-inputs-01 exact Contacts/Wallpaper real SDK source adapters PASS; controlled virtual vectors explicitly NOT physical measurement or guest result; freshboot sign/permission/newVM still pending"

@@ -1,0 +1,55 @@
+{
+  "scope": "actual current-recipe M144 engine and official signed HAP dependency build ONLY NOT a QEMU package or guest acceptance",
+  "attempt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/evidence.json",
+    "sha256": "04fbfc2aaaae5b176d86e12e92eba8df80f8535ea82c9db4c3ad3dcbbf5843af"
+  },
+  "stages": [
+    {
+      "stage": "native",
+      "argv": [
+        "bash",
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/frozen/scripts/run_m144_release_build_docker.sh",
+        "native",
+        "arm64"
+      ],
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/native-launcher.log",
+      "exit_code": 0,
+      "sha256": "e37379ee67627504aeb1a7ce1ecbdc33159dbc9a27fad7d789f1222e2dc2bac9"
+    },
+    {
+      "stage": "hap",
+      "argv": [
+        "bash",
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/frozen/scripts/run_m144_release_build_docker.sh",
+        "hap",
+        "arm64"
+      ],
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/hap-launcher.log",
+      "exit_code": 0,
+      "sha256": "0bb800fd531f01823813a72f4498d2e046fbb67c0bdeb43568c877a866afb41f"
+    }
+  ],
+  "exit_code": 0,
+  "seconds": 6273.019945144653,
+  "resource_adjustments": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-M144-current-recipe-01/resource-adjustments.json",
+    "sha256": "f1cbe8483db6eb697844fd733902830504e9e6b11516300896d9fdf8b39389ee"
+  },
+  "current_recipe": "090fd4d5e058f50b6a6574a6e58a10f4dc5defb876533be47e02bde4975da577",
+  "hap": {
+    "path": "/Volumes/PSSD/qemu/artifacts/arkweb-m144-7.0/090fd4d5e058f50b6a6574a6e58a10f4dc5defb876533be47e02bde4975da577/arm64/ArkWebCore.hap",
+    "sha256": "b70307d2c84d48b336e1609d8647a08e6ae414474c4b9d53c34fef834a740e80",
+    "bytes": 147537369
+  },
+  "core_artifact": {
+    "path": "/Volumes/PSSD/qemu/artifacts/arkweb-m144-7.0/090fd4d5e058f50b6a6574a6e58a10f4dc5defb876533be47e02bde4975da577/arm64/core-artifact.json",
+    "sha256": "ffca74bef9865807b1244d69ab2785472d25fc12292cc384e0dc99ad424d8d58"
+  },
+  "exact_official_native_transform": {
+    "path": "/Volumes/PSSD/qemu/artifacts/arkweb-m144-7.0/090fd4d5e058f50b6a6574a6e58a10f4dc5defb876533be47e02bde4975da577/arm64/hap-native-transform.json",
+    "sha256": "6bee2858a64a5f0428bafe371ad49afdb08571ac57af59c7ea444077b0dbc438"
+  },
+  "transform_status": "pass",
+  "first_artifact_behavior_gate_passed": false
+}

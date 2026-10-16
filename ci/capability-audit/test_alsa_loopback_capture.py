@@ -1,6 +1,7 @@
 """Source transaction and executed launcher boundaries; not guest capture proof."""
 import importlib.util
 from pathlib import Path
+import os
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -93,6 +94,32 @@ class AlsaCaptureSourceTests(unittest.TestCase):
         with patch.object(CAPTURE, 'atomic_write', side_effect=fail_second):
             with self.assertRaises(OSError):
                 CAPTURE.apply(self.root)
+        self.assertEqual(before, self.snapshot())
+
+    def test_canonical_repo_metadata_links_allow_source_transaction(self):
+        for relative in CAPTURE.REVISIONS:
+            git = self.root / relative / '.git'
+            metadata = self.root / '.repo/projects' / (relative + '.git')
+            metadata.mkdir(parents=True)
+            git.symlink_to(os.path.relpath(metadata, git.parent))
+        result = CAPTURE.apply(self.root)
+        self.assertEqual(len(result['files']), 4)
+
+    def test_foreign_or_symlinked_repo_metadata_target_preserves_sources(self):
+        git = self.root / 'device/qemu/.git'
+        before = self.snapshot()
+        foreign = self.root / 'foreign-metadata'; foreign.mkdir()
+        git.symlink_to(foreign)
+        with self.assertRaisesRegex(ValueError, 'noncanonical repo metadata'):
+            CAPTURE.apply(self.root)
+        self.assertEqual(before, self.snapshot())
+        git.unlink()
+        metadata = self.root / '.repo/projects/device/qemu.git'
+        metadata.parent.mkdir(parents=True)
+        metadata.symlink_to(foreign, target_is_directory=True)
+        git.symlink_to(os.path.relpath(metadata, git.parent))
+        with self.assertRaisesRegex(ValueError, 'metadata target rejected'):
+            CAPTURE.apply(self.root)
         self.assertEqual(before, self.snapshot())
 
 
