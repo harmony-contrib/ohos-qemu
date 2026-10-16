@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-network-20261015",
-  "summary": "Exact native helper compilation unblock: omit five unused parameter names in pre-existing empty callback overrides, preserving signatures/ABI/behavior and Werror. Two host regressions pass; parent helpers02 and native/package acceptance remain pending, all 9 gaps OPEN.",
+  "summary": "Real multi-owner QEMU OpenVPN broker/source candidate: per-owner worker/process group/interface/TUN FD, atomic credentials/generation, strict native owner/starttime binding, actual-exit STOP and broker-SIGKILL health/recovery. Existing account/permissions and system single-VPN exclusion preserved. No product/package runtime closure; all 9 assigned gaps remain OPEN.",
   "fixed_source": {
     "container": "ohos-qemu-parallel-source-20261016-02",
     "root": "/ohos",
@@ -37,6 +37,14 @@
       "file": "interfaces/kits/cpp/queue.h",
       "sha256": "89dde36b8553581792918cb04223c131b150cd2d6081550a221b553f79fc623d",
       "contract": "Serial queue submit_h yields null on submission failure; task_handle destruction releases only the caller reference."
+    },
+    "broker_contract_sha256": {
+      "base/startup/init/interfaces/innerkits/include/init_socket.h": "3d53cd1135977e1695e627c36e3ea18395e52054c471ff6c2a0b6ab05546742c",
+      "base/startup/init/interfaces/innerkits/socket/init_socket.c": "461b4e30c1381f5a6653c42167a15226e704c9ea2972298292135cf9e968ce81",
+      "foundation/communication/netmanager_base/services/etc/init/netsysnative.cfg": "e9dd94da52893eeeec00e0988bf9cbc1c46bb66289106e3b8643a310fd5f4419",
+      "foundation/communication/netmanager_base/services/netmanagernative/src/netsys_native_service_stub.cpp": "e84436479d79365d68817d01bf8137d56d84851046a7143561d442bd00d3d2a5",
+      "foundation/communication/netmanager_ext/services/vpnmanager/src/multi_vpn_helper.cpp": "1e7dc12025c5d2b6917d25c786738ad778f5e69e7079a7a9be8fc133a35eb5d2",
+      "foundation/resourceschedule/ffrt/interfaces/kits/cpp/task.h": "ddb78d1d7d862512e729d0075f4991101430fc3e52e5f098a2d17eadc75b80ff"
     }
   },
   "qemu_gn_condition": "netmanager_base_enable_feature_sysvpn && (product_name == \"armv7a_virt\" || product_name == \"arm64_virt\" || product_name == \"x86_64_virt\")",
@@ -57,8 +65,12 @@
     "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c",
     "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c",
     "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
+    "foundation/communication/netmanager_base/services/netmanagernative/include/manager/multi_vpn_manager.h",
+    "foundation/communication/netmanager_base/services/netmanagernative/src/manager/multi_vpn_manager.cpp",
     "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
     "foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h",
+    "foundation/communication/netmanager_ext/qemu_openvpn/broker_protocol.h",
+    "foundation/communication/netmanager_ext/qemu_openvpn/broker_runtime.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/management_protocol.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/negotiated_config.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/process_lifecycle.h",
@@ -67,8 +79,10 @@
     "foundation/communication/netmanager_ext/qemu_openvpn/session_files.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/supervisor.cpp",
     "foundation/communication/netmanager_ext/qemu_openvpn/tun_bridge.cpp",
+    "foundation/communication/netmanager_ext/services/vpnmanager/include/net_vpn_impl.h",
     "foundation/communication/netmanager_ext/services/vpnmanager/include/networkvpn_service.h",
     "foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h",
+    "foundation/communication/netmanager_ext/services/vpnmanager/src/multi_vpn_helper.cpp",
     "foundation/communication/netmanager_ext/services/vpnmanager/src/net_vpn_impl.cpp",
     "foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp",
     "foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp",
@@ -123,48 +137,57 @@
       "result": "PASS 2 tests. Actual original class fails with unused-parameter under -Wall -Wextra -Werror; actual repaired class compiles/runs with ASan/UBSan and exact virtual-signature static assertions. Complete ancestor/callback/warning stack remains idempotent; unknown source rejects.",
       "evidence": "docs/capability-audit/parallel/network/vpn-client-warning-host-tests-20261016.txt",
       "limits": "Parent product helpers02 remains necessary; no build/QEMU/HDC run started here."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest discover -s ci/capability-audit -p 'test_batch_network*.py' -v",
+      "result": "PASS: 41 collected, 38 passed, 3 Linux-only tests skipped on macOS. Actual broker parser/runtime/OS process groups/socket framing/strict guards, actual controller/config/error/cleanup/owner/getter bodies and independent health/callback lifecycle functions compile/run with -Werror and ASan/UBSan. Process/proc/account/IPC/backend doubles are explicit where required.",
+      "evidence": "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt",
+      "limits": "No new product compile/link/package, real Linux subreaper/parent-death proof or guest TLS peer run was started by this agent. The three skips must run centrally."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/batch_network_emit_vpn_broker_native.py --output-dir PRIVATE_DIR",
+      "result": "PASS: current actual-function callback and health probes emitted after two host generator regressions; source is intended for real target FFRT APIs.",
+      "native_source_sha256": {
+        "vpn-broker-health-native.cpp": "c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2",
+        "vpn-broker-callback-native.cpp": "ea7bfb2fe839f184c71aaee1054069f4993a1fa6b16b78e2fd37ccd99e6fc399"
+      },
+      "evidence": "docs/capability-audit/parallel/network/vpn-broker-native-emission-20261016.txt",
+      "limits": "Native probes are not product binaries; real target compilation/FFRT execution and actual service/guest IPC remain parent work."
     }
   ],
   "integration_requests": [
     {
       "owner": "parent",
-      "action": "Install the complete dynamic backend files, then apply openvpn_session after connected_vpn_nullable and openvpn_lifecycle. Add its apply.sh to the aggregate preparation without editing public IPC signatures. Earlier exact guards recognize only this full exact follow-up."
+      "action": "Apply final base qemu_openvpn_broker after qemu_openvpn_control and ext openvpn_broker after vpn_callback_dispatch; retain netvpn_callback_unused and the exact complete predecessor chain. Install all dynamic backend files, including broker_protocol.h and broker_runtime.h. No shared installation scripts were changed by this agent."
     },
     {
       "owner": "parent",
-      "action": "Rebuild locked OpenVPN with the expanded existing 0001 port patch; its new dns.c/dns.h/tun_afunix.c changes export final negotiated DNS before AF_UNIX bridge fork. Old dependency receipts/binaries must not be reused."
+      "action": "Wire the two exact init-passed 0600 sockets and narrow labels/FD permissions described in broker_contract/document. Native cfg target is foundation/communication/netmanager_base/services/etc/init/netsysnative.cfg. Add init:libbegetutil to helpers for GetControlSocket; product/sysvpn/fpga GN selection, recipe/lock/license/package bindings remain centrally owned."
     },
     {
       "owner": "parent",
-      "action": "Compile/link the final actual controller/service/base/supervisor/bridge translation units for all three target architectures. Verify process /proc/exe and PPid read permission under the actual NetworkVpnService identity; add only a demonstrated narrow policy if needed. startup.service.ctl read access was already verified by parent and does not need expansion."
+      "action": "Fresh compile/link of final real supervisor/tun bridge, net_vpn_impl/open_vpn_ctl/networkvpn_service/multi_vpn_helper and native SystemVpnWrapper/MultiVpnManager TUs, including every changed header and generated IPC, for all target architectures. Previous helper/source evidence must not be reused."
     },
     {
       "owner": "parent",
-      "action": "Run all three test_batch_network_* modules in private Linux scratch with the frozen recipe/source snapshot. In particular run test_linux_parent_death_kills_real_exec_child and test_sigkill_stale_secret_cleanup_no_symlink_or_unknown_tree_traversal. Keep fixed source/out mounts read-only."
+      "action": "Run PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_network_vpn_broker test_batch_network_vpn_broker_controllers test_batch_network_vpn_broker_health test_batch_network_openvpn_lifecycle test_batch_network_session_contract -v in private Linux scratch. In particular the two new Linux broker tests and older exec parent-death case must not skip. Fixed source/out stays read-only."
     },
     {
       "owner": "parent",
-      "action": "Keep the first-new-package gate: a real TLS peer must exercise dual-stack addresses, negotiated DNS and routes, data/endpoint bypass, forced reconnect with new DNS/routes, start/stop failure, abrupt init SIGKILL/restart, invalid/stale generation, real caller PID/lineage, permission and account boundaries before remaining five packages."
+      "action": "Run batch_network_emit_vpn_broker_native.py --output-dir PRIVATE_DIR; target-compile and execute both callback and health probes against real FFRT with bounded timeouts. Account/IPC/backend doubles remain explicit; additionally exercise real service IPC and guest process death."
+    },
+    {
+      "owner": "parent",
+      "action": "Complete the first newly packaged artifact runtime gate with genuine simultaneous VPN owners/TLS peers, accepted-app rules, IPv4/IPv6/routes/DNS/data/endpoint bypass, reconnect, failed stages, owner/account/permission rejection and broker SIGKILL/credentials/resource recovery. Record path/checksum/environment/commands/results before remaining five builds."
     },
     {
       "owner": "network_next_batch",
-      "action": "Finish external callback epoch/account/generation snapshots and unregister/death/teardown/reentry tests as an independent batch. No incomplete async callback code is included here."
-    },
-    {
-      "owner": "network_next_batch",
-      "action": "Implement/validate the API26 Bluetooth four-argument startPairOutOfBand parser/export and genuine backend/peer work; coordinate BPF/kernel, USB MTP provider and bridge/tap topology with their central owners."
+      "action": "Keep advancing real optional-R/local OOB controller generation and virtual identifier mapping, with classic/LE peer/HCI challenges; LE P192 must follow a genuine SDK-compatible contract and never repurpose C as a legacy TK. Existing 801 boundaries are not capability completion."
     },
     {
       "owner": "parent",
-      "action": "Apply bluetooth/api26_oob_pairing after existing framework enum components and include its real connection NAPI TU in cross-architecture compilation. Keep the original API23 entry. This is an export/parameter repair only until the separate service/adapter/HCI implementation and real peer checks complete."
-    },
-    "Apply bluetooth/api26_oob_validation after api26_oob_pairing; rebuild actual NAPI TU. This changes parser behavior only and does not satisfy controller/peer OOB acceptance.",
-    "Integrate bluetooth_service/oob_pairing_backend (12 exact approved files; ipc bluetooth_host_stub.cpp unchanged). Compile/link all affected server, classic/LE, GAP and HCI-consuming TUs on fixed source. Host command: PYTHONPATH=ci/capability-audit python -m unittest test_batch_network_bluetooth_service -v. Keep actual controller/peer and first-new-package gate; do not close OOB requirement from this candidate.",
-    "Bluetooth remaining product dependencies: real vendor/HDI transport/controller plus OOB-capable peer, virtual identifier mapping, LE legacy TK data contract, local controller OOB generation and optional randomizer semantics; current unsupported cases return real 801. Parent owns controller/launcher/init/shared build integration.",
-    "Apply netmanager_ext/vpn_callback_dispatch after openvpn_session; compile full real NetworkVpnService TU with matching changed header and generated IPC. Scope is only networkvpn_service.h/cpp, plus exact ancestor guard adjustment; no shared scripts modified.",
-    "Emit native FFRT probe with ci/capability-audit/batch_network_emit_vpn_callback_native.py --output PRIVATE_DIR/vpn-callback-native.cpp; compile with real target ABI and FFRT kits headers, link actual libffrt and run with a bounded timeout. Verify getter/register/unregister reentry, old listener/owner/account epochs, Stop/Restart and pending-worker destruction on actual FFRT. Other account/IPC/backend objects remain explicit doubles; additionally test actual service IPC/caller lifecycle in the first new package.",
-    "Actual product verification must include callback on/off after service restart, failed subscription/remote callback errors in Dump, callback death from a different owner/process, account switch round-trip and current getter state after real TLS/TUN transitions. Delivery errors never count as fake backend CONNECTED or completed acceptance.",
-    "Apply netmanager_ext/netvpn_callback_unused after always_on_vpn (full final stack includes vpn_callback_dispatch); it changes only networkvpn_client.h parameter names. Rerun supervisor/tun helpers02 with unchanged -Wall -Wextra -Werror. Parent helpers01 failure evidence: /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-openvpn-current-helpers-TU-link-01/artifacts/helpers/*-compile.log."
+      "action": "Coordinate outstanding BPF kernel runtime, actual WiFi radio/peer data/P2P, USB UDC/MTP provider and shared bridge/tap two-guest topology with central owners. These six peripheral requirements were reviewed but not closed or claimed by the VPN source batch."
+    }
   ],
   "requirements_review": {
     "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand": {
@@ -182,7 +205,7 @@
         "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt"
       ],
       "remaining": [
-        "Compile/link/package all real NAPI/service/stack TUs and test actual system/non-system/missing-permission/off boundaries.",
+        "Parent reports 7 actual complete ARM64 NAPI/service/GAP TUs PASS at r52-bluetooth-oob-full-TUs-01; final all-consumer relink/cross-architecture packaging and actual controller/peer/permission/off runtime acceptance remain required.",
         "Implement real controller/vendor/HDI transport and OOB peer challenge. Verify classic P192/P256 and LE SC C/R, events, data, failed challenge, cancel/replay/timeout/off/unplug/cleanup in the newly packaged representative artifact.",
         "Virtual-to-raw mapping and actual local OOB generation remain unavailable. LE P192 is not a legacy TK; optional randomizer omission is unsupported. Delayed firmware callbacks lack session identity and need actual duplicate-event/restart validation."
       ]
@@ -252,8 +275,8 @@
       ]
     },
     "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig": {
-      "status": "open_atomic_session_negotiation_and_callback_epoch_candidates",
-      "finding": "Second source batch atomically binds configuration/password/kernel-random generation to the actual native supervisor IPC PID; late events resolve that exact controller and real bridge lineage. Full checked negotiated address/route/DNS snapshots replace old data. Reconnect requires fresh bridge/TLS; one-supervisor second-owner requests reject before disrupting the first. SIGKILL-stale private session files prune under an exclusive no-follow owned root. No complete VPN claim.",
+      "status": "open_broker_and_health_candidate_runtime_pending",
+      "finding": "Fixed platform actually enables multiple extension VPN owners. Candidate replaces single-init RESTART/global TUN selection with a long-lived authenticated broker, per-owner UID/user/bundle/vpnId/generation snapshots, unique reserved interfaces, exact worker/broker starttime-bound TUN FDs and real whole-group STOP. Independent epoch-bound FFRT health checks detect broker/worker death, revoke queued CONNECTED, mark disconnected, retry cleanup and reconcile actual exited groups before stale credential removal. Actual supplier/link/UID/up-rule/mode errors propagate. Host tests use explicit platform/account/IPC doubles; no complete guest VPN claim.",
       "evidence": [
         "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
         "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
@@ -262,18 +285,22 @@
         "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md",
         "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
         "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/README.md",
-        "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt"
+        "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
+        "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_broker/",
+        "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+        "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt"
       ],
       "remaining": [
-        "Final cross-architecture full-TU compilation/linking and actual Linux/native PID/lineage checks.",
-        "Full platform TU/link plus actual FFRT/native and service IPC acceptance of implemented callback owner/account/generation/registration epochs, reentry, death and stop/restart.",
-        "Simultaneous OpenVPN owners need a real broker; current second owner rejects honestly. persist-tun configuration-update channel, split/encrypted DNS policies and nonzero route metric mapping remain unsupported.",
-        "First-new-package real TLS peer, DNS/IPv6/routes/data/endpoint bypass, reconnect, SIGKILL/restart, teardown, permissions and account/owner boundaries."
+        "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+        "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+        "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+        "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
       ]
     },
     "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo": {
-      "status": "open_atomic_session_negotiation_and_callback_epoch_candidates",
-      "finding": "Second source batch atomically binds configuration/password/kernel-random generation to the actual native supervisor IPC PID; late events resolve that exact controller and real bridge lineage. Full checked negotiated address/route/DNS snapshots replace old data. Reconnect requires fresh bridge/TLS; one-supervisor second-owner requests reject before disrupting the first. SIGKILL-stale private session files prune under an exclusive no-follow owned root. No complete VPN claim.",
+      "status": "open_broker_and_health_candidate_runtime_pending",
+      "finding": "Fixed platform actually enables multiple extension VPN owners. Candidate replaces single-init RESTART/global TUN selection with a long-lived authenticated broker, per-owner UID/user/bundle/vpnId/generation snapshots, unique reserved interfaces, exact worker/broker starttime-bound TUN FDs and real whole-group STOP. Independent epoch-bound FFRT health checks detect broker/worker death, revoke queued CONNECTED, mark disconnected, retry cleanup and reconcile actual exited groups before stale credential removal. Actual supplier/link/UID/up-rule/mode errors propagate. Host tests use explicit platform/account/IPC doubles; no complete guest VPN claim.",
       "evidence": [
         "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
         "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
@@ -282,18 +309,22 @@
         "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md",
         "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
         "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/README.md",
-        "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt"
+        "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
+        "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_broker/",
+        "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+        "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt"
       ],
       "remaining": [
-        "Final cross-architecture full-TU compilation/linking and actual Linux/native PID/lineage checks.",
-        "Full platform TU/link plus actual FFRT/native and service IPC acceptance of implemented callback owner/account/generation/registration epochs, reentry, death and stop/restart.",
-        "Simultaneous OpenVPN owners need a real broker; current second owner rejects honestly. persist-tun configuration-update channel, split/encrypted DNS policies and nonzero route metric mapping remain unsupported.",
-        "First-new-package real TLS peer, DNS/IPv6/routes/data/endpoint bypass, reconnect, SIGKILL/restart, teardown, permissions and account/owner boundaries."
+        "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+        "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+        "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+        "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
       ]
     },
     "behavior:vpn-runtime-export-gaps": {
-      "status": "open_atomic_session_negotiation_and_callback_epoch_candidates",
-      "finding": "Second source batch atomically binds configuration/password/kernel-random generation to the actual native supervisor IPC PID; late events resolve that exact controller and real bridge lineage. Full checked negotiated address/route/DNS snapshots replace old data. Reconnect requires fresh bridge/TLS; one-supervisor second-owner requests reject before disrupting the first. SIGKILL-stale private session files prune under an exclusive no-follow owned root. No complete VPN claim.",
+      "status": "open_broker_and_health_candidate_runtime_pending",
+      "finding": "Fixed platform actually enables multiple extension VPN owners. Candidate replaces single-init RESTART/global TUN selection with a long-lived authenticated broker, per-owner UID/user/bundle/vpnId/generation snapshots, unique reserved interfaces, exact worker/broker starttime-bound TUN FDs and real whole-group STOP. Independent epoch-bound FFRT health checks detect broker/worker death, revoke queued CONNECTED, mark disconnected, retry cleanup and reconcile actual exited groups before stale credential removal. Actual supplier/link/UID/up-rule/mode errors propagate. Host tests use explicit platform/account/IPC doubles; no complete guest VPN claim.",
       "evidence": [
         "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
         "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
@@ -302,13 +333,17 @@
         "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md",
         "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
         "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/README.md",
-        "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt"
+        "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
+        "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_broker/",
+        "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+        "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt"
       ],
       "remaining": [
-        "Final cross-architecture full-TU compilation/linking and actual Linux/native PID/lineage checks.",
-        "Full platform TU/link plus actual FFRT/native and service IPC acceptance of implemented callback owner/account/generation/registration epochs, reentry, death and stop/restart.",
-        "Simultaneous OpenVPN owners need a real broker; current second owner rejects honestly. persist-tun configuration-update channel, split/encrypted DNS policies and nonzero route metric mapping remain unsupported.",
-        "First-new-package real TLS peer, DNS/IPv6/routes/data/endpoint bypass, reconnect, SIGKILL/restart, teardown, permissions and account/owner boundaries."
+        "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+        "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+        "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+        "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
       ]
     }
   },
@@ -317,7 +352,7 @@
       "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
       "status": "open_real_service_gap_candidate_controller_peer_pending",
       "required": [
-        "Compile/link/package all real NAPI/service/stack TUs and test actual system/non-system/missing-permission/off boundaries.",
+        "Parent reports 7 actual complete ARM64 NAPI/service/GAP TUs PASS at r52-bluetooth-oob-full-TUs-01; final all-consumer relink/cross-architecture packaging and actual controller/peer/permission/off runtime acceptance remain required.",
         "Implement real controller/vendor/HDI transport and OOB peer challenge. Verify classic P192/P256 and LE SC C/R, events, data, failed challenge, cancel/replay/timeout/off/unplug/cleanup in the newly packaged representative artifact.",
         "Virtual-to-raw mapping and actual local OOB generation remain unavailable. LE P192 is not a legacy TK; optional randomizer omission is unsupported. Delayed firmware callbacks lack session identity and need actual duplicate-event/restart validation."
       ]
@@ -365,32 +400,32 @@
     },
     {
       "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
-      "status": "open_atomic_session_negotiation_and_callback_epoch_candidates",
+      "status": "open_broker_and_health_candidate_runtime_pending",
       "required": [
-        "Final cross-architecture full-TU compilation/linking and actual Linux/native PID/lineage checks.",
-        "Full platform TU/link plus actual FFRT/native and service IPC acceptance of implemented callback owner/account/generation/registration epochs, reentry, death and stop/restart.",
-        "Simultaneous OpenVPN owners need a real broker; current second owner rejects honestly. persist-tun configuration-update channel, split/encrypted DNS policies and nonzero route metric mapping remain unsupported.",
-        "First-new-package real TLS peer, DNS/IPv6/routes/data/endpoint bypass, reconnect, SIGKILL/restart, teardown, permissions and account/owner boundaries."
+        "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+        "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+        "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+        "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
       ]
     },
     {
       "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
-      "status": "open_atomic_session_negotiation_and_callback_epoch_candidates",
+      "status": "open_broker_and_health_candidate_runtime_pending",
       "required": [
-        "Final cross-architecture full-TU compilation/linking and actual Linux/native PID/lineage checks.",
-        "Full platform TU/link plus actual FFRT/native and service IPC acceptance of implemented callback owner/account/generation/registration epochs, reentry, death and stop/restart.",
-        "Simultaneous OpenVPN owners need a real broker; current second owner rejects honestly. persist-tun configuration-update channel, split/encrypted DNS policies and nonzero route metric mapping remain unsupported.",
-        "First-new-package real TLS peer, DNS/IPv6/routes/data/endpoint bypass, reconnect, SIGKILL/restart, teardown, permissions and account/owner boundaries."
+        "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+        "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+        "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+        "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
       ]
     },
     {
       "id": "behavior:vpn-runtime-export-gaps",
-      "status": "open_atomic_session_negotiation_and_callback_epoch_candidates",
+      "status": "open_broker_and_health_candidate_runtime_pending",
       "required": [
-        "Final cross-architecture full-TU compilation/linking and actual Linux/native PID/lineage checks.",
-        "Full platform TU/link plus actual FFRT/native and service IPC acceptance of implemented callback owner/account/generation/registration epochs, reentry, death and stop/restart.",
-        "Simultaneous OpenVPN owners need a real broker; current second owner rejects honestly. persist-tun configuration-update channel, split/encrypted DNS policies and nonzero route metric mapping remain unsupported.",
-        "First-new-package real TLS peer, DNS/IPv6/routes/data/endpoint bypass, reconnect, SIGKILL/restart, teardown, permissions and account/owner boundaries."
+        "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+        "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+        "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+        "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
       ]
     }
   ],
@@ -402,6 +437,7 @@
     "source_or_out_writes": 0
   },
   "changed_files": [
+    "ci/capability-audit/batch_network_emit_vpn_broker_native.py",
     "ci/capability-audit/batch_network_emit_vpn_callback_native.py",
     "ci/capability-audit/fixtures/batch_network/bluetooth-oob-prepared.json",
     "ci/capability-audit/fixtures/batch_network/bluetooth-service-prepared.json",
@@ -410,6 +446,7 @@
     "ci/capability-audit/fixtures/batch_network/cjson/cJSON.h",
     "ci/capability-audit/fixtures/batch_network/fixed-source.json",
     "ci/capability-audit/fixtures/batch_network/session-prepared.json",
+    "ci/capability-audit/fixtures/batch_network/vpn-broker-prepared.json",
     "ci/capability-audit/fixtures/batch_network/vpn-callback-ancestor-files.json",
     "ci/capability-audit/fixtures/batch_network/vpn-callback-prepared.json",
     "ci/capability-audit/test_batch_network_bluetooth_oob.py",
@@ -417,6 +454,9 @@
     "ci/capability-audit/test_batch_network_openvpn_lifecycle.py",
     "ci/capability-audit/test_batch_network_openvpn_session.py",
     "ci/capability-audit/test_batch_network_session_contract.py",
+    "ci/capability-audit/test_batch_network_vpn_broker.py",
+    "ci/capability-audit/test_batch_network_vpn_broker_controllers.py",
+    "ci/capability-audit/test_batch_network_vpn_broker_health.py",
     "ci/capability-audit/test_batch_network_vpn_callbacks.py",
     "ci/capability-audit/test_batch_network_vpn_client_warnings.py",
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
@@ -425,6 +465,9 @@
     "docs/capability-audit/parallel/network/host-tests.txt",
     "docs/capability-audit/parallel/network/result.json",
     "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+    "docs/capability-audit/parallel/network/vpn-broker-native-emission-20261016.txt",
     "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/vpn-callback-native-emission-20261016.txt",
     "docs/capability-audit/parallel/network/vpn-client-warning-host-tests-20261016.txt",
@@ -440,6 +483,10 @@
     "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/README.md",
     "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/apply.sh",
     "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/verify_source.py",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/0001-isolate-real-openvpn-workers-and-tun-descriptors.patch",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/README.md",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/apply.sh",
+    "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/verify_source.py",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/README.md",
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/apply.sh",
@@ -451,6 +498,8 @@
     "patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused/apply.sh",
     "patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused/verify_source.py",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/README.md",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/broker_protocol.h",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/broker_runtime.h",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/management_protocol.h",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/negotiated_config.h",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
@@ -459,6 +508,10 @@
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/session_files.h",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/supervisor.cpp",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/tun_bridge.cpp",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_broker/0001-isolate-real-openvpn-workers-and-tun-descriptors.patch",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_broker/README.md",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_broker/apply.sh",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_broker/verify_source.py",
     "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/0001-connect-qemu-openvpn-control-and-propagate-errors.patch",
     "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/README.md",
     "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/apply.sh",
@@ -473,7 +526,7 @@
     "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "c34f4d61fda7eae54ded475e4e4cab38c48df539",
+  "round_base_commit": "87e106fce6145751c52930991a8206ab07367abe",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
@@ -491,5 +544,59 @@
       268
     ],
     "semantics": "Both provided objects are validated; P256 alone takes effect when both supplied, so existing single-group IPC shape is retained."
+  },
+  "parent_validation_reports": [
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-bluetooth-oob-full-TUs-01",
+      "scope": "Prior Bluetooth source unchanged in this batch: 7 real complete ARM64 TUs PASS; no controller/peer/package closure."
+    },
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-openvpn-helper-object-verification-and-link-03",
+      "scope": "Previous helper sources compiled/linked PASS, superseded by this broker helper revision; fresh proof required."
+    },
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-vpn-callback-real-FFRT-01/artifacts/evidence.json",
+      "scope": "Previous actual callback function probe used real target FFRT PASS. Current broker callback/health probe source needs fresh target proof."
+    }
+  ],
+  "broker_contract": {
+    "document": "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+    "concurrent_workers": 20,
+    "spent_nonce_bound": 1024,
+    "health_delay_us": 500000,
+    "unclaimed_timeout_seconds": 10,
+    "stop_grace_ms": 500,
+    "reap_timeout_ms": 2000,
+    "native_start_reply": "0\\nworkerPID\\nworkerStarttime",
+    "sockets": [
+      {
+        "service": "qemu_openvpn",
+        "name": "qemu_openvpn",
+        "path": "/dev/unix/socket/qemu_openvpn",
+        "family": "AF_UNIX",
+        "type": "SOCK_STREAM",
+        "mode": "0600",
+        "uid": "netsysnative",
+        "gid": "netsysnative",
+        "domain": "netsysnative"
+      },
+      {
+        "service": "netsysnative",
+        "name": "qemu_openvpn_tunfd",
+        "path": "/dev/unix/socket/qemu_openvpn_tunfd",
+        "family": "AF_UNIX",
+        "type": "SOCK_STREAM",
+        "mode": "0600",
+        "uid": "netsysnative",
+        "gid": "netsysnative",
+        "domain": "netsysnative"
+      }
+    ],
+    "native_peer_argv": [
+      "/system/bin/sa_main",
+      "/system/profile/netsysnative.json"
+    ],
+    "new_public_ipc": false,
+    "fake_connection_entrypoint": false
   }
 }
