@@ -33,3 +33,10 @@ and observer_ani_cxx GN targets. All44 complete files now have pinned original,
 first-patch prefix and final states. The previous binary enum patch/CRLF bytes
 are unchanged. See round8-access-token-gn.md/json for the parent full-TU failures,
 real SDK public exports and remaining actual compilation/link/GN/runtime gates.
+
+Patch3 adds consistent override specifiers to all actual proxy callbacks and
+explicitly includes the service IPC identity header. The complete44-file guard
+accepts original, prefix1, prefix2 and final states; mixed/unknown bytes are
+rejected. It neither changes signatures nor disables the compiler warning. See
+round8-native-contract-fixes.md/json for the preserved batch04 failures and
+required complete-platform revalidation.

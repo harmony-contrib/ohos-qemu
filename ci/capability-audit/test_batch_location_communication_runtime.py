@@ -194,3 +194,40 @@ CommunicationRuntimeTests.test_actual_napi_slot_callbacks_queue_and_env_cleanup=
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NativeObserverDeclarationTests(unittest.TestCase):
+    def test_actual_broker_and_proxy_compile_consistent_overrides(self):
+        """Keep actual complete class declarations; only platform types are doubles."""
+        import re
+        platform = r'''
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+#define DECLARE_INTERFACE_DESCRIPTOR(...)
+namespace OHOS {
+template<class T> using sptr=std::shared_ptr<T>;
+struct IRemoteObject{};
+struct IRemoteBroker{virtual ~IRemoteBroker()=default;};
+template<class T>struct IRemoteProxy:T{};
+template<class T>struct BrokerDelegator{};
+struct MessageParcel;struct MessageOption;
+namespace Telephony {struct SignalInformation;struct NetworkState;struct CellInformation;
+enum class CardType;enum class SimState;enum class LockReason;}}
+'''
+        names=('base/telephony/core_service/interfaces/innerkits/include/telephony_observer_broker.h',
+               'base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h')
+        for prefix, should_pass in ((2,False),(None,True)):
+            files=sources(prefix=prefix)
+            declarations='\n'.join(re.sub(r'^#include[^\n]*$', '', files[name], flags=re.M) for name in names)
+            with tempfile.TemporaryDirectory(prefix='batch-location-actual-proxy-declaration-') as directory:
+                path=Path(directory)/'declarations.cpp';path.write_text(platform+declarations)
+                result=subprocess.run(['clang++','-std=c++17','-fsyntax-only','-Winconsistent-missing-override',
+                    '-Werror',str(path)],capture_output=True,text=True)
+                if should_pass:self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+                else:
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn('overrides a member function but is not marked',result.stderr)
+
+if __name__=='__main__':unittest.main()
