@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T08:34:32.327062+08:00",
+  "updated_at": "2026-10-16T08:56:13.509845+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "3833ed12e74218ee93f775fb7b0439029e3be468",
+  "checkpoint_commit": "8b0f62f59f5cb64db807ed3185a2dfc0b6b3af20",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -276,11 +276,75 @@
       "sha256": "3258beb894c5d8ba01f955bd1d1dcc1260a08ce7378a3b10b59c0f7895fb3770",
       "reported_status": "source_selection_only_NOT_kernel_build_or_guest_capture",
       "scope": "actual_four_pinned_complete_source_inputs_and_reapply_ONLY_NOT_kernel_compile_or_guest"
+    },
+    "ALSA_selected_full_product_C_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-alsa-capture-full-TUs-01/artifacts/alsa_capture/evidence.json",
+      "sha256": "8c716eed1f56886af692b92d5e091de3363778cc5dd6a39ac5d759fcd68980c1",
+      "reported_status": "pass",
+      "scope": "complete_patched_product_TUs_ONLY_NOT_link_package_runtime",
+      "objects": [
+        {
+          "product": "arm64_virt",
+          "unit": "alsa_soundcard_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "f244a088193c60888eb48b59eb2cc4aa097b9f0b5138f06aa36f9df0e7e08778"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "alsa_soundcard_render",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "f244a088193c60888eb48b59eb2cc4aa097b9f0b5138f06aa36f9df0e7e08778"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "alsa_snd_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "eb5dc79f0b1225b1a9ebd21100b17a51dfd0e56927f5136db4f1e0dca5ddd587"
+        },
+        {
+          "product": "arm64_virt",
+          "unit": "qemu_vendor_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "error": null,
+          "object_sha256": "055ea81fb549ef96bf9c8fdd5394dfee9d2f351f70e3ff1c94386193be0d499b"
+        }
+      ]
+    },
+    "OpenVPN_first_noexec_environment_failure_preserved": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-openvpn-final-source-build-01/artifacts/backend/build-evidence.json",
+      "sha256": "2e75938c01e655d9294eb6c324bf077cc42d9d502ef1a7d94f4206f3c8732195",
+      "reported_status": "fail",
+      "scope": "OHOS_OpenVPN_source_build_ONLY_NOT_packaged_or_runtime"
+    },
+    "OpenVPN_current_complete_source_and_link": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-openvpn-final-source-build-02/artifacts/backend/build-evidence.json",
+      "sha256": "aa155f87bdd2d81f647e8644d7e1ad80480a7ce9fe3af6bdffdb5be195d8a662",
+      "reported_status": "pass_source_build_ONLY_NOT_packaged_or_runtime",
+      "scope": "OHOS_OpenVPN_source_build_ONLY_NOT_packaged_or_runtime"
+    },
+    "current_Mesa_actual_EGL_GLES": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-Mesa-runtime-and-image-01/gles/evidence.json",
+      "sha256": "d8251daf60190f57d782573e2ce47159c6ef704b95a16a0ae3ab126d53ef16a7",
+      "reported_status": "pass_current_consumer_actual_EGL_6contexts_19507428shader_pixels_ONLY_NOT_default_display_or_new_package",
+      "scope": "actual_current_Mesa_EGL_GLES_QEMU_user_surfaceless_ONLY_NOT_default_display_new_package_or_RenderService"
+    },
+    "current_Mesa_six_libraries_ext4_and_tamper_rejection": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-Mesa-runtime-and-image-01/image/evidence.json",
+      "sha256": "6f96b9d9b928c1901d64f48d76db5c723c21610bd91139b43abdc9123dbd3fe8",
+      "reported_status": "pass_actual_six_Mesa_ELFs_ext4_source_and_offline_roundtrip_tamper_rejected_ONLY_NOT_guest",
+      "scope": "synthetic dependency-only ext4 with six actual built Mesa libraries ONLY_NOT_QEMU_image_or_runtime"
     }
   },
   "agents": {
-    "apps": "Calendar Editor candidate; owns official SDK HAP compile lease",
-    "network": "session/negotiation and API26 OOB NAPI integrated; actual service/GAP OOB and callback lifecycle in progress",
+    "apps": "Calendar official API26 unsigned HAP passed; NAPI env/thread lifecycle repair in progress; AdminProvisioning candidate in preparation",
+    "network": "session/negotiation and OOB NAPI/service/GAP integrated; seven complete TUs compiling; VPN callback lifecycle in progress",
     "location": "icon/BLE and product IDL+10TUs pass; district/fence/track/5A/virtual GNSS-HCI-RIL-IMS pending",
     "media": "capture/query candidates integrated; remaining Knowledge semantics and AudioVivid dependency queued",
     "system": "resumed MSDP and other system providers after media slot release"
@@ -291,7 +355,7 @@
   },
   "remaining_core_acceptance": [
     "actual links and final GN/product selection",
-    "current Mesa actual GL and RenderService/suspend stability",
+    "RenderService/suspend stability in a fresh package (current dependency EGL/GLES and ext4 diagnostics pass)",
     "ordinary-caller complete suite including HiTrace launch",
     "fresh representative ARM64 phone package with archive checksum and full changed-behavior boundaries",
     "remaining five ABI/profile packages only after first-artifact behavior gate"

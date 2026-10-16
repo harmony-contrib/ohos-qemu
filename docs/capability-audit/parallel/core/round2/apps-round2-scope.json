@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "agent": "apps",
+  "requirements_reviewed": 34,
+  "changed_files": [
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/00-calendar_manager_napi.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/01-calendar_manager_napi.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/02-module.json5.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/03-main_pages.json.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
+    "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
+    "ci/capability-audit/test_batch_apps_calendar_editor.py",
+    "docs/capability-audit/parallel/apps/README.md",
+    "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+    "docs/capability-audit/parallel/apps/result.json",
+    "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+    "patches/common/applications/standard/calendardata/event_editor/0001-provide-user-confirmed-calendar-event-editor.patch",
+    "patches/common/applications/standard/calendardata/event_editor/README.md",
+    "patches/common/applications/standard/calendardata/event_editor/apply.sh",
+    "patches/common/applications/standard/calendardata/event_editor/verify_source.py"
+  ],
+  "upstream_targets": [
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h",
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+    "applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets",
+    "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
+    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets",
+    "applications/standard/calendardata/entry/src/main/module.json5",
+    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json"
+  ],
+  "scope": "branch_and_declared_upstream_ownership_only_NOT_runtime_acceptance",
+  "first_artifact_behavior_gate_passed": false,
+  "base": "b88407cb7e9f93c1d58b4def55c64385e143f865",
+  "head": "ee2748c1abc73c5d77ef3bbbb0ee06466b47c7d2"
+}
