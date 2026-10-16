@@ -1,0 +1,919 @@
+{
+  "scope": "fixed_source_and_mixed_staging_readonly_NOT_fresh_guest_label_observation",
+  "files": {
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/common/permissionGroupManager/LocationStrategy.ets": {
+      "sha256": "6cf6ff5a0d5903e6e2f13aeaa31dca3aaa1b4120fe32dc5fbf80e207ae2d8374",
+      "bytes": 3635,
+      "excerpts": [
+        {
+          "start_line": 21,
+          "end_line": 63,
+          "lines": [
+            "const fuzzyMarks = [Constants.LOCATION_FUZZY, Constants.LOCATION_BOTH_FUZZY, Constants.LOCATION_BOTH_PRECISE];",
+            "const preciseMarks = [Constants.LOCATION_UPGRADE, Constants.LOCATION_BOTH_PRECISE];",
+            "const groupConfig: PermissionGroupConfig = new PermissionGroupConfig({",
+            "  groupName: PermissionGroup.LOCATION,",
+            "  permissions: [Permission.LOCATION_IN_BACKGROUND, Permission.APPROXIMATELY_LOCATION, Permission.LOCATION],",
+            "  icon: $r('app.media.ic_public_gps'),",
+            "  title: '',",
+            "  reason: '',",
+            "  buttonList: []",
+            "})",
+            "",
+            "export class LocationStrategy extends BasePermissionStrategy {",
+            "  public override getPermissionGroupConfig(): PermissionGroupConfig {",
+            "    return groupConfig;",
+            "  }",
+            "",
+            "  public override getGroupTitle(appName: string, locationFlag: number): ResourceStr {",
+            "    if (locationFlag == Constants.LOCATION_FUZZY) {",
+            "      return $r('app.string.access_general_location', appName);",
+            "    }",
+            "    if (locationFlag == Constants.LOCATION_UPGRADE) {",
+            "      return $r('app.string.fuzzy_to_exact', appName);",
+            "    }",
+            "    return $r('app.string.group_label_location', appName);",
+            "  }",
+            "",
+            "  public override getButtonList(): ButtonStatus[] {",
+            "    return [ButtonStatus.ALLOW_ONLY_DURING_USE, ButtonStatus.ALLOW_THIS_TIME, ButtonStatus.CANCEL];",
+            "  }",
+            "",
+            "  public override grantHandle(",
+            "    permission: Permission, callerAppInfo: CallerAppInfo, locationFlag: number, buttonStatus: ButtonStatus",
+            "  ): PermissionOption {",
+            "    let opt: PermissionOption = PermissionOption.SKIP;",
+            "    if (permission === Permission.APPROXIMATELY_LOCATION) {",
+            "      opt = this.handleFuzzyLocationGrant(callerAppInfo, locationFlag, buttonStatus);",
+            "    } else if (permission === Permission.LOCATION) {",
+            "      opt = this.handlePreciseLocationGrant(callerAppInfo, locationFlag, buttonStatus);",
+            "    } else {",
+            "      opt = PermissionOption.SKIP;",
+            "    }",
+            "    return opt;",
+            "  }"
+          ]
+        },
+        {
+          "start_line": 75,
+          "end_line": 93,
+          "lines": [
+            "  private handleFuzzyLocationGrant(",
+            "    callerAppInfo: CallerAppInfo, locationFlag: number, buttonStatus: ButtonStatus",
+            "  ): PermissionOption {",
+            "    if (fuzzyMarks.includes(locationFlag)) {",
+            "      return PermissionOption.GRANT;",
+            "    } else {",
+            "      return PermissionOption.SKIP;",
+            "    }",
+            "  }",
+            "",
+            "  private handlePreciseLocationGrant(",
+            "    callerAppInfo: CallerAppInfo, locationFlag: number, buttonStatus: ButtonStatus",
+            "  ): PermissionOption {",
+            "    if (preciseMarks.includes(locationFlag)) {",
+            "      return PermissionOption.GRANT;",
+            "    } else {",
+            "      return PermissionOption.SKIP;",
+            "    }",
+            "  }"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/common/model/permissionGroup.ets": {
+      "sha256": "e4ae8d96cc3f3ef817cdd2000156c2841520b61fb3beb4dc3ac0e7cf07e1eb5f",
+      "bytes": 15189,
+      "excerpts": [
+        {
+          "start_line": 117,
+          "end_line": 124,
+          "lines": [
+            "export const buttonResource: Map<ButtonStatus, Resource> = new Map([",
+            "    [ButtonStatus.ALLOW, $r('app.string.allow')],",
+            "    [ButtonStatus.DENY, $r('app.string.ban')],",
+            "    [ButtonStatus.CANCEL, $r('app.string.cancel')],",
+            "    [ButtonStatus.THIS_TIME_ONLY, $r('app.string.This_time_only')],",
+            "    [ButtonStatus.ALLOW_THIS_TIME, $r('app.string.allow_this_time')],",
+            "    [ButtonStatus.ALLOW_ONLY_DURING_USE, $r('app.string.allowed_only_during_use')]",
+            "])"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/common/model/definition.ets": {
+      "sha256": "53ad5cebc96e2c3dfbf20242487b462dfb3668dc910170d44cc9ccd6a55a6a30",
+      "bytes": 3830,
+      "excerpts": [
+        {
+          "start_line": 76,
+          "end_line": 90,
+          "lines": [
+            "export enum ButtonStatus {",
+            "  ALLOW = 'ALLOW',",
+            "  DENY = 'DENY',",
+            "  CANCEL = 'CANCEL',",
+            "  THIS_TIME_ONLY = 'THIS_TIME_ONLY',",
+            "  ALLOW_THIS_TIME = 'ALLOW_THIS_TIME',",
+            "  ALLOW_ONLY_DURING_USE = 'ALLOW_ONLY_DURING_USE'",
+            "}",
+            "",
+            "export enum ClickOption {",
+            "  // ALLOW/THIS_TIME_ONLY/ALLOW_THIS_TIME/ALLOW_ONLY_DURING_USE",
+            "  GRANT = 'GRANT',",
+            "  // DENY",
+            "  DENY = 'DENY',",
+            "  // CANCEL"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/pages/dialogPlus.ets": {
+      "sha256": "5efa374437ed470387e0c239dbef1e19060037b2b7ded2d40f5c2ca96af3ba7b",
+      "bytes": 10795,
+      "excerpts": [
+        {
+          "start_line": 155,
+          "end_line": 204,
+          "lines": [
+            "          if (",
+            "            this.viewState.grantGroups[this.viewState.curIndex].buttonList.length <= 2 &&",
+            "            this.calculateButtonWidth(this.viewState.grantGroups[this.viewState.curIndex].buttonList)",
+            "          ) {",
+            "            //横向布局",
+            "            Row() {",
+            "              Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {",
+            "                Button(buttonResource.get(this.viewState.grantGroups[this.viewState.curIndex].buttonList[0]))",
+            "                  .customizeButton()",
+            "                  .onClick(() => {",
+            "                    this.processClick(this.viewState.grantGroups[this.viewState.curIndex].buttonList[0]);",
+            "                  })",
+            "                Divider()",
+            "                  .color($r('sys.color.comp_divider'))",
+            "                  .vertical(true)",
+            "                  .strokeWidth(Constants.DIALOG_DIVIDER)",
+            "                  .height(Constants.DIVIDER_HEIGHT)",
+            "                  .opacity(0.2)",
+            "                  .margin({ left: Constants.MARGIN_8, right: Constants.MARGIN_8 })",
+            "                Button(buttonResource.get(this.viewState.grantGroups[this.viewState.curIndex].buttonList[1]))",
+            "                  .customizeButton()",
+            "                  .onClick(() => {",
+            "                    this.processClick(this.viewState.grantGroups[this.viewState.curIndex].buttonList[1]);",
+            "                  })",
+            "              }.margin({",
+            "                left: Constants.MARGIN_16,",
+            "                right: Constants.MARGIN_16,",
+            "                bottom: Constants.MARGIN_8",
+            "              })",
+            "            }",
+            "          } else {",
+            "            //纵向布局",
+            "            Column() {",
+            "              ForEach(",
+            "                this.viewState.grantGroups[this.viewState.curIndex].buttonList, (buttonStatus: ButtonStatus, idx: number",
+            "              ) => {",
+            "                Button(buttonResource.get(buttonStatus))",
+            "                  .customizeButton()",
+            "                  .width(Constants.FULL_WIDTH)",
+            "                  .margin({",
+            "                    bottom: idx + 1 < this.viewState.grantGroups[this.viewState.curIndex].buttonList.length ?",
+            "                      Constants.MARGIN_4 : 0",
+            "                  })",
+            "                  .onClick(() => {",
+            "                    this.processClick(buttonStatus);",
+            "                  })",
+            "              })",
+            "            }",
+            "            .padding({ left: Constants.PADDING_16, right: Constants.PADDING_16 })",
+            "          }"
+          ]
+        },
+        {
+          "start_line": 257,
+          "end_line": 268,
+          "lines": [
+            "  processClick(buttonStatus: ButtonStatus) {",
+            "    let groupConfig: PermissionGroupConfig = this.viewState.grantGroups[this.viewState.curIndex];",
+            "    if (this.callerAppInfo === undefined) {",
+            "      Log.error(`processClick faild, callerAppInfo is undefined.`);",
+            "      return;",
+            "    }",
+            "    let clickIntent: GrantDialogIntent.ClickIntent =",
+            "      new GrantDialogIntent.ClickIntent(this.context, groupConfig, this.callerAppInfo, buttonStatus);",
+            "    this.viewModel.processIntent(clickIntent);",
+            "  }",
+            "",
+            "}"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/ServiceExtAbility/ServiceExtAbility.ets": {
+      "sha256": "a888810833951ab65fd8f36c612993072138a92ce2b48921fa4b97bc54dd045b",
+      "bytes": 2413,
+      "excerpts": [
+        {
+          "start_line": 38,
+          "end_line": 58,
+          "lines": [
+            "  onRequest(want: Want, startId: number): void {",
+            "    Log.info('ServiceExtensionAbility onRequest. start id is ' + startId);",
+            "    if (deviceInfo.deviceType === 'wearable') {",
+            "      this.context.terminateSelf();",
+            "      Log.info('ServiceExtensionAbility terminateSelf');",
+            "      return;",
+            "    }",
+            "",
+            "    try {",
+            "      let dis = display.getDefaultDisplaySync();",
+            "      let navigationBarRect: display.Rect = {",
+            "        left: 0,",
+            "        top: 0,",
+            "        width: dis.width,",
+            "        height: dis.height",
+            "      };",
+            "      Log.info('want: ' + JSON.stringify(want));",
+            "      grantDialogModel.createWindow(this.context, 'permissionDialog' + startId, navigationBarRect, want);",
+            "    } catch (exception) {",
+            "      Log.error('Failed to obtain the default display object. Code: ' + JSON.stringify(exception));",
+            "    };"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/ServiceExtAbility/GrantDialogModel.ets": {
+      "sha256": "1829cfe059e2498cf28686c3b61b8c230b558be5880582fd2a38d03835d09532",
+      "bytes": 20109,
+      "excerpts": [
+        {
+          "start_line": 36,
+          "end_line": 47,
+          "lines": [
+            "const BG_COLOR = '#00000000';",
+            "const THIS_TIME_FLAG = [ButtonStatus.THIS_TIME_ONLY, ButtonStatus.ALLOW_THIS_TIME];",
+            "const DEFAULT_CALLER_APP_INFO: CallerAppInfo = {",
+            "  bundleName: '',",
+            "  tokenId: -1,",
+            "  reqPerms: [],",
+            "  reqPermsState: [],",
+            "  reqPermsDetails: [],",
+            "  proxy: {} as rpc.RemoteObject,",
+            "  grantResult: [],",
+            "  groupWithPermission: new Map<PermissionGroup, Set<Permission>>()",
+            "}"
+          ]
+        },
+        {
+          "start_line": 56,
+          "end_line": 87,
+          "lines": [
+            "  public async getCallerAppInfo(want: Want): Promise<CallerAppInfo> {",
+            "    if (!want.parameters) {",
+            "      Log.error(`want.parameters is undefined!`);",
+            "      return DEFAULT_CALLER_APP_INFO;",
+            "    }",
+            "    let bundleName: string = want.parameters['ohos.aafwk.param.callerBundleName'] as string ?? '';",
+            "    let tokenId: number = want.parameters['ohos.aafwk.param.callerToken'] as number ?? -1;",
+            "    let reqPerms: Permission[] = [...(want.parameters['ohos.user.grant.permission'] as Permission[])] ?? [];",
+            "    let reqPermsState: number[] = [...(want.parameters['ohos.user.grant.permission.state'] as number[])] ?? [];",
+            "    let reqPermsDetails: bundleManager.ReqPermissionDetail[] = [];",
+            "    let callback: Property = want.parameters['ohos.ability.params.callback'] as Property;",
+            "    let proxy: rpc.RemoteObject = callback.value as rpc.RemoteObject;",
+            "    try {",
+            "      let userId: number = await this.getUserId();",
+            "      let flag: number = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_REQUESTED_PERMISSION;",
+            "      let bundleInfo: bundleManager.BundleInfo = bundleManager.getBundleInfoSync(bundleName, flag, userId);",
+            "      reqPermsDetails = bundleInfo.reqPermissionDetails ?? [];",
+            "    } catch (error) {",
+            "      Log.error(`getBundleInfo faild, code: ${error.code}, message: ${error.message}.`);",
+            "    }",
+            "    let grantResult: number[] = this.initGrantResult(reqPermsState);",
+            "    await this.preProcessPermission(reqPerms, reqPermsState, tokenId, grantResult);",
+            "    let callerAppInfo: CallerAppInfo = {",
+            "      bundleName,",
+            "      tokenId,",
+            "      reqPerms,",
+            "      reqPermsState,",
+            "      reqPermsDetails,",
+            "      proxy,",
+            "      grantResult,",
+            "      groupWithPermission: this.getGroupWithPermission(reqPerms, reqPermsState)",
+            "    }"
+          ]
+        },
+        {
+          "start_line": 225,
+          "end_line": 248,
+          "lines": [
+            "  public async createWindow(",
+            "    context: common.ServiceExtensionContext, name: string, rect: display.Rect, want: Want",
+            "  ): Promise<void> {",
+            "    try {",
+            "      let configuration: window.Configuration = {",
+            "        ctx: context,",
+            "        name,",
+            "        windowType: window.WindowType.TYPE_DIALOG",
+            "      }",
+            "      const win = await window.createWindow(configuration);",
+            "      Log.info('createWindow end.');",
+            "      let callerAppInfo: CallerAppInfo = await this.getCallerAppInfo(want);",
+            "      let property: Record<string, Object> = { 'win': win, 'callerAppInfo': callerAppInfo };",
+            "      let storage: LocalStorage = new LocalStorage(property);",
+            "      await this.BindDialogTarget(context, win, want);",
+            "      Log.info('bindDialogTarget end.');",
+            "      await win.moveWindowTo(rect.left, rect.top);",
+            "      Log.info('moveWindowTo end.');",
+            "      await win.resize(rect.width, rect.height);",
+            "      Log.info('resize end.');",
+            "      await win.loadContent('pages/dialogPlus', storage);",
+            "      win.setWindowBackgroundColor(BG_COLOR);",
+            "      await win.showWindow();",
+            "      Log.info('showWindow end.');"
+          ]
+        },
+        {
+          "start_line": 331,
+          "end_line": 351,
+          "lines": [
+            "  public initLocationFlag(callerAppInfo: CallerAppInfo): number {",
+            "    let locationFlag: number = Constants.LOCATION_NONE;",
+            "    let hasFuzz: boolean = callerAppInfo.reqPerms.includes(Permission.APPROXIMATELY_LOCATION);",
+            "    let hasPrecise: boolean = callerAppInfo.reqPerms.includes(Permission.LOCATION);",
+            "",
+            "    if (hasFuzz) {",
+            "      locationFlag = Constants.LOCATION_FUZZY;",
+            "      if (hasPrecise) {",
+            "        locationFlag = Constants.LOCATION_BOTH_PRECISE;",
+            "        let fuzzyIndex = callerAppInfo.reqPerms.indexOf(Permission.APPROXIMATELY_LOCATION);",
+            "        if (callerAppInfo.reqPermsState[fuzzyIndex] === Constants.PASS_OPER) {",
+            "          locationFlag = Constants.LOCATION_UPGRADE;",
+            "        }",
+            "      }",
+            "    } else {",
+            "      if (hasPrecise) {",
+            "        locationFlag = Constants.LOCATION_UPGRADE;",
+            "      }",
+            "    }",
+            "    return locationFlag;",
+            "  }"
+          ]
+        },
+        {
+          "start_line": 382,
+          "end_line": 415,
+          "lines": [
+            "  public async clickHandle(",
+            "    groupConfig: PermissionGroupConfig, callerAppInfo: CallerAppInfo, locationFlag: number, buttonStatus: ButtonStatus",
+            "  ): Promise<void> {",
+            "    let flag: number =",
+            "      THIS_TIME_FLAG.includes(buttonStatus) ? Constants.PERMISSION_ALLOW_THIS_TIME : Constants.PERMISSION_FLAG;",
+            "    Log.info(`clickHandle, group: ${groupConfig.groupName}, buttonStatus: ${buttonStatus}.`);",
+            "    let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();",
+            "    let reportPermissions: Permission[] = [];",
+            "    let permissionWithOptionList: PermissionWithOption[] = [];",
+            "",
+            "    for (let permission of groupConfig.permissions) {",
+            "      let result: optionAndState = {",
+            "        operationResult: Constants.RESULT_SUCCESS,",
+            "        permissionState: abilityAccessCtrl.GrantStatus.PERMISSION_DENIED",
+            "      };",
+            "      let permissionOption = PermissionGroupManager.getInstance().getPermissionOption(",
+            "        permission, groupConfig.groupName, callerAppInfo, locationFlag, buttonStatus",
+            "      );",
+            "      let permissionWithOption: PermissionWithOption = { permission, permissionOption };",
+            "      if (permissionOption !== PermissionOption.SKIP) {",
+            "        permissionWithOptionList.push(permissionWithOption);",
+            "      }",
+            "      if (permissionOption === PermissionOption.GRANT) {",
+            "        result = await this.grantPermissionWithResult(permission, flag, callerAppInfo.tokenId, atManager);",
+            "      }",
+            "      if (permissionOption === PermissionOption.REVOKE) {",
+            "        result = await this.revokePermissionWithResult(permission, flag, callerAppInfo.tokenId, atManager);",
+            "      }",
+            "      Log.info(`permission: ${permission}, opt: ${permissionOption}, result: ${result.operationResult}.`);",
+            "      if (result.operationResult === Constants.RESULT_SUCCESS && permissionOption !== PermissionOption.SKIP) {",
+            "        reportPermissions.push(permission);",
+            "        this.writeToGrantResult(permission, callerAppInfo, result.permissionState);",
+            "      }",
+            "    }"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/ets/common/permissionGroupManager/PermissionGroupManager.ets": {
+      "sha256": "ff2a6aa9f9b72f47db73132147f3576bec36732ad515adc3ce003787ff11b6d0",
+      "bytes": 9276,
+      "excerpts": [
+        {
+          "start_line": 196,
+          "end_line": 230,
+          "lines": [
+            "    callerAppInfo: CallerAppInfo,",
+            "    locationFlag: number,",
+            "    buttonStatus: ButtonStatus",
+            "  ): PermissionOption {",
+            "    const groupHandle = this.permissionStrategies.get(groupName);",
+            "    let situation: ClickOption = this.getClickSituation(buttonStatus);",
+            "    if (groupHandle) {",
+            "      if (situation === ClickOption.GRANT) {",
+            "        return groupHandle.grantHandle(permission, callerAppInfo, locationFlag, buttonStatus);",
+            "      } else if (situation === ClickOption.DENY) {",
+            "        return groupHandle.denyHandle(permission, callerAppInfo, locationFlag, buttonStatus);",
+            "      } else {",
+            "        return PermissionOption.SKIP;",
+            "      }",
+            "    }",
+            "    return PermissionOption.SKIP;",
+            "  }",
+            "",
+            "  /**",
+            "   * 处理点击状态",
+            "   * @param buttonStatus",
+            "   * return",
+            "   */",
+            "  public getClickSituation(buttonStatus: ButtonStatus): ClickOption {",
+            "    switch (buttonStatus) {",
+            "      case ButtonStatus.ALLOW:",
+            "      case ButtonStatus.ALLOW_THIS_TIME:",
+            "      case ButtonStatus.THIS_TIME_ONLY:",
+            "      case ButtonStatus.ALLOW_ONLY_DURING_USE:",
+            "        return ClickOption.GRANT;",
+            "      case ButtonStatus.CANCEL:",
+            "        return ClickOption.CANCEL;",
+            "      default:",
+            "        return ClickOption.DENY;",
+            "    }"
+          ]
+        }
+      ]
+    },
+    "applications/standard/permission_manager/permissionmanager/src/main/module.json5": {
+      "sha256": "89d554943b9b82b221694c048d6619222b4760166727f81bb5a2f9edc4a43f3d",
+      "bytes": 5808,
+      "excerpts": [
+        {
+          "start_line": 70,
+          "end_line": 85,
+          "lines": [
+            "},",
+            "            {",
+            "                \"name\": \"com.ohos.permissionmanager.MainAbility\",  // 建议明确命名",
+            "                \"type\":  'sys/commonUI',  // 必须声明type为ui",
+            "                \"srcEntry\": \"./ets/MainAbility/UIExtSettingAbility.ts\",  // 入口文件路径",
+            "                \"exported\": true  // 允许外部调用",
+            "            },",
+            "            {",
+            "                \"icon\": \"$media:app_icon\",",
+            "                \"name\": \"com.ohos.permissionmanager.GrantAbility\",",
+            "                \"srcEntry\": \"./ets/ServiceExtAbility/ServiceExtAbility.ets\",",
+            "                \"type\": \"service\",",
+            "                \"exported\": true",
+            "            },",
+            "            {",
+            "                \"icon\": \"$media:app_icon\","
+          ]
+        }
+      ]
+    },
+    "base/global/i18n/frameworks/intl/etc/i18n.para": {
+      "sha256": "3596ced535c765e62615698aedd9b41d93eaac72f5fcc01e08d8003e9f6e24d8",
+      "bytes": 851,
+      "excerpts": [
+        {
+          "start_line": 13,
+          "end_line": 20,
+          "lines": [
+            "persist.global.language=",
+            "persist.global.locale=",
+            "persist.global.is24Hour=default",
+            "persist.global.preferredLanguages=",
+            "persist.global.tz_override=false",
+            "persist.global.upgrade_locale=",
+            "const.global.language=zh-Hans",
+            "const.global.locale=zh-Hans-CN"
+          ]
+        }
+      ]
+    },
+    "base/global/i18n/frameworks/intl/src/locale_config.cpp": {
+      "sha256": "b7224074c41f2302dd77101070ac3600ece51563314357ce5bb9aa14afb43fba",
+      "bytes": 110939,
+      "excerpts": [
+        {
+          "start_line": 64,
+          "end_line": 70,
+          "lines": [
+            "const std::string LocaleConfig::LANGUAGE_KEY = \"persist.global.language\";",
+            "const std::string LocaleConfig::LOCALE_KEY = \"persist.global.locale\";",
+            "const std::string LocaleConfig::HOUR_KEY = \"persist.global.is24Hour\";",
+            "const std::string LocaleConfig::HOUR_EVENT_DATA = \"24HourChange\";",
+            "const char *LocaleConfig::UPGRADE_LOCALE_KEY = \"persist.global.upgrade_locale\";",
+            "const char *LocaleConfig::DEFAULT_LOCALE_KEY = \"const.global.locale\";",
+            "const char *LocaleConfig::DEFAULT_LANGUAGE_KEY = \"const.global.language\";"
+          ]
+        },
+        {
+          "start_line": 465,
+          "end_line": 490,
+          "lines": [
+            "std::string LocaleConfig::GetEffectiveLocale()",
+            "{",
+            "    std::string systemLocale = ReadSystemParameter(LOCALE_KEY.c_str(), CONFIG_LEN);",
+            "    if (!systemLocale.empty()) {",
+            "        return systemLocale;",
+            "    }",
+            "    systemLocale = ReadSystemParameter(DEFAULT_LOCALE_KEY, CONFIG_LEN);",
+            "    if (systemLocale.empty()) {",
+            "        HILOG_ERROR_I18N(\"LocaleConfig::GetEffectiveLocale: Read default system locale failed.\");",
+            "        return \"zh-Hans-CN\";",
+            "    }",
+            "    return systemLocale;",
+            "}",
+            "",
+            "string LocaleConfig::GetSystemLanguage()",
+            "{",
+            "    std::string systemLanguage = ReadSystemParameter(LANGUAGE_KEY.c_str(), CONFIG_LEN);",
+            "    if (!systemLanguage.empty()) {",
+            "        return systemLanguage;",
+            "    }",
+            "    systemLanguage = ReadSystemParameter(DEFAULT_LANGUAGE_KEY, CONFIG_LEN);",
+            "    if (systemLanguage.empty()) {",
+            "        HILOG_ERROR_I18N(\"LocaleConfig::GetSystemLanguage: Read default system language failed.\");",
+            "        return \"zh-Hans\";",
+            "    }",
+            "    return systemLanguage;"
+          ]
+        },
+        {
+          "start_line": 522,
+          "end_line": 530,
+          "lines": [
+            "string LocaleConfig::GetSystemLocale()",
+            "{",
+            "    std::string systemLocale = GetEffectiveLocale();",
+            "    std::vector<std::pair<size_t, std::string>> positions = GetExtParamPositions(systemLocale);",
+            "    if (positions[0].first != std::string::npos) {",
+            "        systemLocale = systemLocale.substr(0, positions[0].first);",
+            "    }",
+            "    return systemLocale;",
+            "}"
+          ]
+        }
+      ]
+    },
+    "out/arm64_virt/packages/phone/system/etc/param/i18n.para": {
+      "sha256": "aa1761b58a81f3a61429d3292693b79e84dfcf4062faa5b902ffe304eb3f7194",
+      "bytes": 263,
+      "excerpts": [
+        {
+          "start_line": 1,
+          "end_line": 9,
+          "lines": [
+            "persist.global.language=",
+            "persist.global.locale=",
+            "persist.global.is24Hour=default",
+            "persist.global.preferredLanguages=",
+            "persist.global.tz_override=false",
+            "persist.global.upgrade_locale=",
+            "const.global.language=zh-Hans",
+            "const.global.locale=zh-Hans-CN",
+            "const.global.region=CN"
+          ]
+        }
+      ]
+    }
+  },
+  "resources": {
+    "base": {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/resources/base/element/string.json",
+      "sha256": "c22a51a84ddcb5a83ab83e6f3ebe85d66af1452351074ec21361408feffbc6b3",
+      "entries": [
+        {
+          "name": "allow",
+          "value": "Allow",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "ban",
+          "value": "Deny",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "allowed_only_during_use",
+          "value": "Allow while using the app",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "allow_this_time",
+          "value": "Allow this time only",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "access_general_location",
+          "value": "Allow %s to access your approximate location?",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "fuzzy_to_exact",
+          "value": "Change %s's location access from approximate to precise?",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "cancel",
+          "value": "Cancel",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "groupName_location",
+          "value": "Location information"
+        },
+        {
+          "name": "group_label_location",
+          "value": "Allow %s to access your location?",
+          "attr": {
+            "priority": "LT"
+          }
+        }
+      ]
+    },
+    "en_GB": {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/resources/en_GB/element/string.json",
+      "sha256": "1dfb9d32f4e02fc6cde1b1460cf7f5ccb72983c2e16ecf9fcc2aacbf3a1bb7fa",
+      "entries": [
+        {
+          "name": "allow",
+          "value": "Allow",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "cancel",
+          "value": "Cancel",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "access_general_location",
+          "value": "Allow %s to access your approximate location?",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "ban",
+          "value": "Deny",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "allow_this_time",
+          "value": "Allow this time only",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "allowed_only_during_use",
+          "value": "Allow while using the app",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "fuzzy_to_exact",
+          "value": "Change %s's location access from approximate to precise?",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "group_label_location",
+          "value": "Allow %s to access your location?",
+          "attr": {
+            "priority": "translate"
+          }
+        }
+      ]
+    },
+    "zh_CN": {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/resources/zh_CN/element/string.json",
+      "sha256": "754a1b2cf613a4dad910ecb81917d5cb5f97e81dc8917e74a829ce7c4bada437",
+      "entries": [
+        {
+          "name": "allow",
+          "value": "允许",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "ban",
+          "value": "禁止",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "allowed_only_during_use",
+          "value": "仅使用期间允许",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "allow_this_time",
+          "value": "允许本次使用",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "access_general_location",
+          "value": "允许“%s”访问大致位置？",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "fuzzy_to_exact",
+          "value": "允许“%s”的位置访问权限从“大致位置”改为“精确位置”？",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "cancel",
+          "value": "取消",
+          "attr": {
+            "priority": "translate"
+          }
+        },
+        {
+          "name": "groupName_location",
+          "value": "位置信息"
+        },
+        {
+          "name": "group_label_location",
+          "value": "允许“%s”访问你的位置？",
+          "attr": {
+            "priority": "translate"
+          }
+        }
+      ]
+    },
+    "zh_HK": {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/resources/zh_HK/element/string.json",
+      "sha256": "2d17f9feccffc41d81314becdc660085d97e1a9680a8bd71812cfb134b18f99e",
+      "entries": [
+        {
+          "name": "allow",
+          "value": "允許",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "cancel",
+          "value": "取消",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "access_general_location",
+          "value": "允許「%s」存取大致位置？",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "ban",
+          "value": "禁止",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "allow_this_time",
+          "value": "允許本次使用",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "allowed_only_during_use",
+          "value": "僅使用期間允許",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "fuzzy_to_exact",
+          "value": "允許「%s」的位置存取權限從「大致位置」更改為「精確位置」？",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "group_label_location",
+          "value": "允許「%s」存取你的位置？",
+          "attr": {
+            "priority": "LT"
+          }
+        }
+      ]
+    },
+    "zh_TW": {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/resources/zh_TW/element/string.json",
+      "sha256": "68a2aaf42122a848dd29341fcb4e7152781340571498a3526597080c95e4113a",
+      "entries": [
+        {
+          "name": "allow",
+          "value": "允許",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "cancel",
+          "value": "取消",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "access_general_location",
+          "value": "允許「%s」存取概略位置？",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "ban",
+          "value": "禁止",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "allow_this_time",
+          "value": "允許本次使用",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "allowed_only_during_use",
+          "value": "僅使用期間允許",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "fuzzy_to_exact",
+          "value": "允許「%s」的位置存取權限從「概略位置」變更為「精確位置」？",
+          "attr": {
+            "priority": "LT"
+          }
+        },
+        {
+          "name": "group_label_location",
+          "value": "允許「%s」存取您的位置？",
+          "attr": {
+            "priority": "LT"
+          }
+        }
+      ]
+    }
+  },
+  "ets_scanned": 67,
+  "explicit_ids_or_keys": [
+    {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/ets/OpenSetting/OpenSettingDialog.ets",
+      "line": 61,
+      "text": "Button('Cancel').id('qemu_manual_permission_deny')"
+    },
+    {
+      "path": "applications/standard/permission_manager/permissionmanager/src/main/ets/OpenSetting/OpenSettingDialog.ets",
+      "line": 64,
+      "text": "Button('Allow').id('qemu_manual_permission_allow')"
+    }
+  ]
+}
