@@ -1,0 +1,94 @@
+{
+  "kind": "executable ordinary caller Guest/UI driver and independent public-CRUD normal seed candidate",
+  "upstream_targets_added": [],
+  "new_files_and_narrow_verifier_extension": [
+    "ci/capability-audit/batch_apps_run_contact_picker_runtime.py",
+    "ci/capability-audit/test_batch_apps_run_contact_picker_runtime.py",
+    "ci/capability-audit/batch_apps_contact_picker_runtime.py",
+    "ci/capability-audit/test_batch_apps_contact_picker_runtime.py",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_seed/EntryAbility.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_seed/Index.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_seed/SeedStore.ets",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_seed/observer.cpp",
+    "ci/capability-audit/fixtures/batch_apps/contact_picker_seed/project-contract.json",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/executable-driver-and-seed.md",
+    "docs/capability-audit/parallel/apps/round8-contact-caller-review/executable-driver-and-seed.json",
+    "docs/capability-audit/parallel/apps/result.json"
+  ],
+  "parent_integrated_runtime_tool_commits": [
+    "0c17e87",
+    "5350866"
+  ],
+  "preceding_schema_fix_commit": "7bf1253",
+  "required_cases": 15,
+  "required_invocations": 16,
+  "seed_count": 205,
+  "requested_seed_permissions": [
+    "ohos.permission.READ_CONTACTS",
+    "ohos.permission.WRITE_CONTACTS"
+  ],
+  "seed_system_app": false,
+  "seed_extra_acl": [],
+  "actual_seed_public_api": [
+    "contact.addContact",
+    "contact.queryContacts",
+    "contact.deleteContact"
+  ],
+  "observer_native_api": [
+    "AppMgrClient::GetAllRunningProcesses",
+    "AccessTokenKit::GetHapTokenInfo",
+    "AccessTokenKit::VerifyAccessToken"
+  ],
+  "observer_product_compile_status": "not attempted; root owns real product headers/CFI/native build and installation",
+  "seed_sdk_compile_status": "not attempted; root owns official SDK39 batch",
+  "runtime_status": "not run; root owns signed installed HAPs, acceptance guest, suite and final gate",
+  "tests": [
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_apps_run_contact_picker_runtime.py -v",
+      "exit_code": 0,
+      "tests": 12,
+      "scope": "host Driver transport-model and actual extracted SeedStore ETS public API adapter; NOT runtime evidence"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_apps_contact_picker_runtime.py -v",
+      "exit_code": 0,
+      "tests": 9,
+      "scope": "independent verifier/normal project/actual caller recorder host checks; NOT runtime evidence"
+    }
+  ],
+  "integration_requests": [
+    {
+      "owner": "root",
+      "action": "Official SDK39 compile prepared independent seed HAP, normal non-system profile with only READ/WRITE_CONTACTS and no extra ACL; install fresh for genuine user permission grant."
+    },
+    {
+      "owner": "root",
+      "action": "Build observer.cpp against actual product AppMgr/AccessToken headers, libraries and CFI; push read-only ARM64 executable; do not link observer into normal seed HAP. Exact GN targets and DTO in executable-driver-and-seed.md."
+    },
+    {
+      "owner": "root",
+      "action": "Wire executable driver into suite using existing EnclosingAcceptanceGuest and root prepared signed build/profile/installed paths. Pass seed_hap and seed_source_manifest artifacts; root owns installation/signature verification and shared closure."
+    },
+    {
+      "owner": "root",
+      "action": "Run all 15 required cases/16 invocations with real current-boot UID/token, actual user grant, public CRUD nonce205, UI, callbacks and cleanup against fresh representative ARM64 phone package. Only full first-artifact gate may unlock remaining five packages."
+    }
+  ],
+  "remaining_gaps": [
+    "Actual official SDK39 seed HAP and product observer compilation/linking pending root.",
+    "Actual normal profiles/BMS/token/user grant must be observed on installed apps; source metadata does not prove them.",
+    "Fresh representative package runtime picker/CRUD/callback/cleanup and full suite gate pending; all 34 apps IDs remain unclosed."
+  ],
+  "ledger_closed": false,
+  "first_artifact_behavior_gate_passed": false,
+  "caller_sdk_compile_status": {
+    "reported_by": "root",
+    "status": "pass",
+    "batch": "Contacts-Wallpaper-callers-Linux-SDK-02",
+    "seconds": 47.14,
+    "caller_hap_sha256": "e3dac31486ed9fd31fa08556373e9b7f0c9e771f341d8fdbe6cd80611eecf38c",
+    "caller_hap_bytes": 81242,
+    "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Wallpaper-callers-Linux-SDK-02/evidence.json",
+    "new_seed_and_observer_not_compiled": true
+  }
+}
