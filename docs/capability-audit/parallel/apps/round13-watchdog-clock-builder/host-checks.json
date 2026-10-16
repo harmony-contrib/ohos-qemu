@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "scope": "mock subprocess and synthetic ELF host checks ONLY; no actual compiler/SDK/CLI/guest execution",
+  "argv": [
+    "python3",
+    "-m",
+    "unittest",
+    "test_build_watchdog_clock_probe",
+    "-v"
+  ],
+  "exit_code": 0,
+  "started_ns": 1792176614901993000,
+  "duration_seconds": 0.285,
+  "test_count": 21,
+  "inputs": {
+    "ci/capability-audit/build_watchdog_clock_probe.py": "139c31cf616fb0b10759030dfe10d75c6cd387e22aaaa86005550f14d4271515",
+    "ci/capability-audit/test_build_watchdog_clock_probe.py": "f5db718d7043686bc23eed7a918ea34963688db9c48047e23441346a0a991c9b"
+  },
+  "media_C_readonly_sha256": "c5c027cf3bc2c70476b1293d4f60789f5f8bf45080d1685f3d8efc289c32aa6c",
+  "media_C_commit": "0f1f4eef8789f74cc07d3b249dabb17673b1ec98",
+  "raw_log": {
+    "path": "docs/capability-audit/parallel/apps/round13-watchdog-clock-builder/host-checks.log",
+    "sha256": "9fb954016e73ddba0327d526ee0914ff931185a2a3d3bd7baff5677853eb98e8"
+  },
+  "actual_SDK39_build_run": false,
+  "native_or_guest_executed": false,
+  "upstream_targets_added": [],
+  "runtime_validated": false,
+  "first_artifact_behavior_gate_passed": false
+}
