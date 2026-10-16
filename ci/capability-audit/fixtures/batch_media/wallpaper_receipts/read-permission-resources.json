@@ -1,0 +1,23 @@
+{
+  "scope": "fixed_actual_PERMISSION_IMAGE_AND_VIDEOS_resources_NOT_runtime_grant",
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "strategy": "applications/standard/permission_manager/permissionmanager/src/main/ets/common/permissionGroupManager/ImageAndVideosStrategy.ets:35",
+  "locales": [
+    {
+      "locale": "base",
+      "source": "applications/standard/permission_manager/permissionmanager/src/main/resources/base/element/string.json",
+      "sha256": "c22a51a84ddcb5a83ab83e6f3ebe85d66af1452351074ec21361408feffbc6b3",
+      "title": "Allow %s to access images and videos on your device?",
+      "allow": "Allow",
+      "deny": "Deny"
+    },
+    {
+      "locale": "zh_CN",
+      "source": "applications/standard/permission_manager/permissionmanager/src/main/resources/zh_CN/element/string.json",
+      "sha256": "754a1b2cf613a4dad910ecb81917d5cb5f97e81dc8917e74a829ce7c4bada437",
+      "title": "允许“%s”访问图片和视频？",
+      "allow": "允许",
+      "deny": "禁止"
+    }
+  ]
+}

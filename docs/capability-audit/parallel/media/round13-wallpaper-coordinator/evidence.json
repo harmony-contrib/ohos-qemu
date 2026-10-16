@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-17",
+  "scope": "host_coordinator_protocol_receipts_API26_declarations_and_root_actual_SDK39_adapter_NOT_runtime_gate",
+  "baseline_commit": "ba8cd8af63523b480785d4cd360849ff49cfcb89",
+  "source_files": {
+    "ci/capability-audit/batch_media_wallpaper_coordinator.py": "f0a6cd9bc4a0a162e3d9ffac780d2cc15735babdecaacd5c4508b7bff7aab96a",
+    "ci/capability-audit/test_batch_media_wallpaper_coordinator.py": "06ad45087f37b0b0995405399088f5965ea37190c7195dd36cc1b0d427a86f7d",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_receipts/Query.ets": "a75615b3254f8954ee439ea8c39f5c0fa59442df66d3654313a99ee04069ae97",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_receipts/read-permission-resources.json": "06af6f9dea8546b54c5b787acde00ba7630d15a374ef6f474986d81bc54813af",
+    "ci/capability-audit/fixtures/batch_media/wallpaper_receipts/token_query.cpp": "34b523c3f3b49e9b7f5ea753b5bfaa07b88bc29a0130641a1063581e154fae17"
+  },
+  "frozen_files_sha256": {
+    "ci/capability-audit/batch_media_wallpaper_runtime.py": "1ace14a624e7987afba30cbc9b9c5d96c1b179c439ea6de175cb7d6e7b7b0459",
+    "ci/capability-audit/batch_media_verify_wallpaper_runtime.py": "78daa48ebf92c05a06325c00e5899ef0bbaf3d8f26e4bdef9ed91337085966ba",
+    "ci/capability-audit/test_batch_media_wallpaper_runtime.py": "b81e392465d68f0b38e333c3f8cb9b348ced72cf85c3ca1b365cfa306015ec45"
+  },
+  "tests": [
+    {
+      "command": [
+        "env",
+        "LC_ALL=C",
+        "LC_CTYPE=C",
+        "LANG=C",
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "ci/capability-audit",
+        "-p",
+        "test_batch_media_wallpaper_coordinator.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "tests": 10,
+      "test_seconds": 2.039,
+      "tool_wall_seconds": 2.382940875,
+      "log": {
+        "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round13-wallpaper-coordinator/host-tests-04.log",
+        "sha256": "906bab1048557d3c3e0999f53d9063ec487536208bf765f05c9450617e57b9c0"
+      },
+      "includes": "real installed API26 TypeScript SDK declarations through existing sdk-types.cjs; no SDK build/ArkTS compilation/native execution"
+    }
+  ],
+  "retained_previous_attempts": [
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round13-wallpaper-coordinator/host-tests-01.log",
+      "sha256": "efe004db45e83ee8516b05a86c99d86f880bb4282af7b4685b1b17eb0be6e5b9"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round13-wallpaper-coordinator/host-tests-02.log",
+      "sha256": "d2a5455b16e3040e0720fd2540ace56afd0d414f7ed9a83e47d3f6954406b5b4"
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round13-wallpaper-coordinator/host-tests-03.log",
+      "sha256": "af9e5fc7fe3559e4cdde4d26aca49f4fd01561cfca71fade125c762adaaea6f3"
+    }
+  ],
+  "initial_failure": "host-tests-01 found public API26 OpenMode.EXCL and fs.chmodSync absent; replaced with actual CREATE|WRITE_ONLY|NOFOLLOW, sandbox single writer and nonce/preexistence rejection",
+  "actual_root_sdk_adapter": {
+    "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round13-wallpaper-coordinator/sdk39-importer-adapter-actual.json",
+    "sha256": "38ef4b0a45d7d407f8e591d5a9b05f3bcc57be0d247abe178c265444a7793239"
+  },
+  "actual_root_sdk_adapter_scope": "root SDK02 original exit0 logs/source hashes/70855-byte unsigned HAP only; no signature/install/runtime claim",
+  "reports": [
+    {
+      "path": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu/docs/capability-audit/parallel/media/round13-wallpaper-coordinator/HANDOFF.md",
+      "sha256": "b10fc9594a9ebef7287fa918fb7daae887b6d43c5306414f44ad9811b78c272d"
+    }
+  ],
+  "root_dependencies": [
+    "Build/sign legitimate system_basic/hos_system_app query HAP with only READ_IMAGEVIDEO and real user consent",
+    "Compile/link exact token_query.cpp against actual product AccessToken SDK; root owns default resolver compilation",
+    "Supply actual profile UI plan selectors and signed/build receipts; execute both processes against same fresh packaged acceptance boot",
+    "Run unchanged independent validator; retain complete failure/positive evidence; cleanup observers only after final runtime verification"
+  ],
+  "executed_here": {
+    "docker": false,
+    "native_compile": false,
+    "hap_sdk_build": false,
+    "hdc": false,
+    "qemu": false,
+    "guest_runtime": false
+  },
+  "closed_requirement_ids": [],
+  "first_artifact_behavior_gate_passed": false
+}
