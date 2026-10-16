@@ -1,0 +1,651 @@
+{
+  "container": "ohos-qemu-parallel-source-20261016-02",
+  "source_root": "/ohos",
+  "out_consumed": false,
+  "note": "Read-only actual source configuration snapshots; integration edits from earlier batches may be present. These are not packaged-image or runtime evidence.",
+  "files": [
+    {
+      "path": "vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs",
+      "sha256": "ba1f175276b5846425c6b28cd189e0d2304f026e57a312755de6e31c9e5a3a0f",
+      "project": "vendor/ohemu",
+      "revision": "b56c5a95ec590543691278b85afe9fe228744163",
+      "snippets": [
+        {
+          "start": 375,
+          "end": 386,
+          "lines": [
+            "        sensor :: host { ",
+            "            hostName = \"sensor_host\"; ",
+            "            priority = 50; ",
+            "            gid = [\"sensor_host\", \"uhdf_driver\"];",
+            "            sensor_device :: device { ",
+            "                device0 :: deviceNode { ",
+            "                    policy = 2; ",
+            "                    priority = 100; ",
+            "                    moduleName = \"libsensor_driver.z.so\"; ",
+            "                    serviceName = \"sensor_interface_service\"; ",
+            "                } ",
+            "            } "
+          ]
+        }
+      ]
+    },
+    {
+      "path": "vendor/ohemu/virt/BUILD.gn",
+      "sha256": "8e25b28ac80b3e4326f4a1f02cea039f224db829c44d9b635b8e2ad27cc7358d",
+      "project": "vendor/ohemu",
+      "revision": "b56c5a95ec590543691278b85afe9fe228744163",
+      "snippets": [
+        {
+          "start": 16,
+          "end": 28,
+          "lines": [
+            "group(\"virtconfig_group\") {",
+            "  deps = [",
+            "    \"default_app_config:default_app_config\",",
+            "    \"image_conf:custom_image_conf\",",
+            "    \"preinstall-config:preinstall-config\",",
+            "    \"resourceschedule:resourceschedule\",",
+            "    \"etc:product_etc_conf\",",
+            "    \"window_config:window_config\",",
+            "    \"hals/vibrator:qemu_virtual_vibrator\",",
+            "    \"hals/audio:hdf_audio_config\",",
+            "    \"hals/codec:hdf_codec_config\",",
+            "    \"hdf_config/uhdf:hdf_config\",",
+            "  ]"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "vendor/ohemu/virt/etc/BUILD.gn",
+      "sha256": "3005aaef5824bb27017d2f6374d890663434e894a73391c8fb13ca9c84ee7768",
+      "project": "vendor/ohemu",
+      "revision": "b56c5a95ec590543691278b85afe9fe228744163",
+      "snippets": [
+        {
+          "start": 33,
+          "end": 48,
+          "lines": [
+            "# QEMU headless SceneBoard needs first-user unlock notifications.",
+            "ohos_prebuilt_etc(\"qemu_sceneboard_unlock_cfg\") {",
+            "  source = \"qemu_sceneboard_unlock.cfg\"",
+            "  output = \"qemu_sceneboard_unlock.cfg\"",
+            "  relative_install_dir = \"init\"",
+            "  subsystem_name = virt_subsystem_name",
+            "  part_name = virt_part_name",
+            "}",
+            "",
+            "group(\"product_etc_conf\") {",
+            "  deps = [",
+            "    \":qemu_sceneboard_unlock_cfg\",",
+            "    \":para_for_chip_prod\",",
+            "    \":para_for_sys_prod\",",
+            "  ]",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "drivers/hdf_core/framework/tools/hc-gen/src/startup_cfg_gen.cpp",
+      "sha256": "d2213fb0d8a6000a2a84b130eca3bf752f2020572a1fb59d89f24c18f1ffb773",
+      "project": "drivers/hdf_core",
+      "revision": "6abd61d562bf683f7fe02667401891a1d3f65149",
+      "snippets": [
+        {
+          "start": 31,
+          "end": 40,
+          "lines": [
+            "static constexpr const char *SERVICE_TOP =",
+            "    \"        {\\n\"",
+            "    \"            \\\"name\\\" : \";",
+            "static constexpr const char *PATH_INFO     = \"            \\\"path\\\" : [\\\"/vendor/bin/hdf_devhost\\\", \";",
+            "static constexpr const char *UID_INFO      = \"            \\\"uid\\\" : \";",
+            "static constexpr const char *GID_INFO      = \"            \\\"gid\\\" : [\";",
+            "static constexpr const char *CAPS_INFO     = \"            \\\"caps\\\" : [\";",
+            "static constexpr const char *DYNAMIC_INFO  = \"            \\\"ondemand\\\" : true,\\n\";",
+            "static constexpr const char *SECON_INFO    = \"            \\\"secon\\\" : \\\"u:r:\";",
+            "static constexpr const char *CRITICAL_INFO = \"            \\\"critical\\\" : [\";"
+          ]
+        },
+        {
+          "start": 126,
+          "end": 135,
+          "lines": [
+            "void StartupCfgGen::EmitIdInfo(const std::string &name, std::set<std::string> &configedKeywords)",
+            "{",
+            "   // If the parameter is configured in initconfig, uid and gid info is generated in function EmitInitConfigInfo.",
+            "    if ((configedKeywords.find(\"uid\") == configedKeywords.end())) {",
+            "        ofs_ << UID_INFO << \"\\\"\" << hostInfoMap_[name].hostUID << \"\\\",\\n\";",
+            "    }",
+            "",
+            "    if (configedKeywords.find(\"gid\") == configedKeywords.end()) {",
+            "        ofs_ << GID_INFO << hostInfoMap_[name].hostGID << \"],\\n\";",
+            "    }"
+          ]
+        },
+        {
+          "start": 162,
+          "end": 171,
+          "lines": [
+            "void StartupCfgGen::EmitSeconInfo(const std::string &name, std::set<std::string> &configedKeywords)",
+            "{",
+            "    // If the parameter is configured in initconfig, secon info is generated in function EmitInitConfigInfo.",
+            "    if (configedKeywords.find(\"secon\") == configedKeywords.end()) {",
+            "        ofs_ << SECON_INFO << name << \":s0\\\"\";",
+            "        if (!hostInfoMap_[name].initConfig.empty()) {",
+            "            ofs_ << \",\";",
+            "        }",
+            "        ofs_ << \"\\n\";",
+            "    }"
+          ]
+        },
+        {
+          "start": 448,
+          "end": 463,
+          "lines": [
+            "        InitHostInfo(hostData);",
+            "        serviceName = object->Child()->StringValue();",
+            "",
+            "        object = hostInfo->Lookup(\"priority\", PARSEROP_CONFTERM);",
+            "        if (object != nullptr) {",
+            "            hostData.hostPriority = object->Child()->IntegerValue();",
+            "        }",
+            "",
+            "        hostData.hostUID = serviceName;",
+            "        object = hostInfo->Lookup(\"uid\", PARSEROP_CONFTERM);",
+            "        if (object != nullptr && !object->Child()->StringValue().empty()) {",
+            "            hostData.hostUID = object->Child()->StringValue();",
+            "        }",
+            "",
+            "        object = hostInfo->Lookup(\"gid\", PARSEROP_CONFTERM);",
+            "        GetHostGID(object, hostData.hostGID, serviceName);"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "base/startup/init/services/etc/passwd",
+      "sha256": "da37323f6aa9baff40da3546daa94e2aba94230c964b4475ba3f28819b9badf8",
+      "project": "base/startup/init",
+      "revision": "475fcc1e48db623ea4a9ee03b5408a21a19b99c4",
+      "snippets": [
+        {
+          "start": 65,
+          "end": 65,
+          "lines": [
+            "sensor_host:x:3033:3033:::/bin/false"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "base/startup/init/services/etc/group",
+      "sha256": "3363d81fe8ca8945e6de35c96d57bd0e926889da1f354beee3b67c0ee2bb6e61",
+      "project": "base/startup/init",
+      "revision": "475fcc1e48db623ea4a9ee03b5408a21a19b99c4",
+      "snippets": [
+        {
+          "start": 70,
+          "end": 70,
+          "lines": [
+            "sensor_host:x:3033:"
+          ]
+        },
+        {
+          "start": 144,
+          "end": 144,
+          "lines": [
+            "uhdf_driver:x:3066:"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "base/startup/init/services/init/standard/init.c",
+      "sha256": "1be1b4274826ad1236243326a3ecf381fa7b9983c089549dc35761250d7026ec",
+      "project": "base/startup/init",
+      "revision": "475fcc1e48db623ea4a9ee03b5408a21a19b99c4",
+      "snippets": [
+        {
+          "start": 231,
+          "end": 240,
+          "lines": [
+            "void SystemInit(void)",
+            "{",
+            "    CloseStdio();",
+            "#ifndef STARTUP_INIT_TEST",
+            "    // Set up a session keyring that all processes will have access to.",
+            "    KeyCtrlGetKeyringId(KEY_SPEC_SESSION_KEYRING, 1);",
+            "#endif",
+            "    // umask call always succeeds and return the previous mask value which is not needed here",
+            "    (void)umask(DEFAULT_UMASK_INIT);",
+            "    MakeDirRecursive(\"/dev/unix/socket\", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/adapter/public/type.te",
+      "sha256": "36a52c43bc7dc2929ed5f487609fd2dee712fd2c416b29c9241e53eb45bd1721",
+      "project": "base/security/selinux_adapter",
+      "revision": "cfc1d5b31a7438dbc87763f9222f00337221cf21",
+      "snippets": [
+        {
+          "start": 48,
+          "end": 49,
+          "lines": [
+            "type sensor_host, hdfdomain, domain;",
+            "typeattribute sensor_host violator_vendor_system_etc_read;"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/sensor/vendor/sensor_host.te",
+      "sha256": "d5bdfa47ff23a7fe35e59241ece64a66221f4f6d042cbc60dc68c8f35d787ae1",
+      "project": "base/security/selinux_adapter",
+      "revision": "cfc1d5b31a7438dbc87763f9222f00337221cf21",
+      "snippets": [
+        {
+          "start": 48,
+          "end": 53,
+          "lines": [
+            "allow sensor_host dev_hdf_kevent:chr_file { getattr ioctl open read write };",
+            "allow sensor_host dev_hdf_sensor_mgr:chr_file { getattr ioctl open read write };",
+            "allow sensor_host dev_mgr_file:chr_file { getattr ioctl open read write };",
+            "allow sensor_host dev_unix_socket:dir { search };",
+            "allow sensor_host distributedsche_param:file { map read read open };",
+            "allow sensor_host hdf_devmgr:binder { call transfer };"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/base/system/file_contexts",
+      "sha256": "acc50b772ec6ea5f57e61f1fea3772efb1bad76958208320bfb1000db18d83a2",
+      "project": "base/security/selinux_adapter",
+      "revision": "cfc1d5b31a7438dbc87763f9222f00337221cf21",
+      "snippets": [
+        {
+          "start": 54,
+          "end": 62,
+          "lines": [
+            "/dev/unix/socket                u:object_r:dev_unix_socket:s0",
+            "/dev/unix/socket/AppSpawn       u:object_r:appspawn_socket:s0",
+            "/dev/unix/socket/NWebSpawn      u:object_r:nwebspawn_socket:s0",
+            "/dev/unix/socket/HybridSpawn    u:object_r:appspawn_socket:s0",
+            "/dev/unix/socket/AppSpawndf     u:object_r:appspawn_socket:s0",
+            "/dev/unix/socket/fd_holder      u:object_r:fd_holder_socket:s0",
+            "/dev/unix/socket/hdcd           u:object_r:hdcd_socket:s0",
+            "/dev/unix/socket/native         u:object_r:native_socket:s0",
+            "/dev/unix/socket/paramservice   u:object_r:paramservice_socket:s0"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/sensor/interfaces/v1_0/isensor_interface_vdi.h",
+      "sha256": "ac364c9d2dc3a20f8e184155dff1c0ee00d21edbbd439e0c3e6bb3a0107d5140",
+      "project": "drivers/peripheral",
+      "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+      "snippets": [
+        {
+          "start": 86,
+          "end": 90,
+          "lines": [
+            "namespace V1_1 {",
+            "#define HDI_SENSOR_PRODUCT_VDI_LIBNAME \"libhdi_product_sensor_impl.z.so\"",
+            "#define HDI_SENSOR_VDI_LIBNAME \"libhdi_sensor_impl.z.so\"",
+            "",
+            "struct HdfSensorInformationVdi {"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/sensor/hdi_service_3.0/sensor_if_driver.cpp",
+      "sha256": "0fefba29f76a852c8d5997a062f7108e78fe5402a774bf0803eabfb578dc632c",
+      "project": "drivers/peripheral",
+      "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+      "snippets": [
+        {
+          "start": 61,
+          "end": 90,
+          "lines": [
+            "static int32_t HdfSensorInterfaceDriverBind(struct HdfDeviceObject *deviceObject)",
+            "{",
+            "    auto *hdfSensorInterfaceHost = new (std::nothrow) HdfSensorInterfaceHost;",
+            "    if (hdfSensorInterfaceHost == nullptr) {",
+            "        HDF_LOGE(\"%{public}s: failed to create HdfSensorInterfaceHost object\", __func__);",
+            "        return HDF_FAILURE;",
+            "    }",
+            "",
+            "    hdfSensorInterfaceHost->ioService.Dispatch = SensorInterfaceDriverDispatch;",
+            "    hdfSensorInterfaceHost->ioService.Open = nullptr;",
+            "    hdfSensorInterfaceHost->ioService.Release = nullptr;",
+            "",
+            "    auto serviceImpl = OHOS::HDI::Sensor::V3_1::ISensorInterface::Get(true);",
+            "    if (serviceImpl == nullptr) {",
+            "        HDF_LOGE(\"%{public}s: failed to get of implement service\", __func__);",
+            "        delete hdfSensorInterfaceHost;",
+            "        return HDF_FAILURE;",
+            "    }",
+            "",
+            "    hdfSensorInterfaceHost->stub = OHOS::HDI::ObjectCollector::GetInstance().GetOrNewObject(serviceImpl,",
+            "        OHOS::HDI::Sensor::V3_1::ISensorInterface::GetDescriptor());",
+            "    if (hdfSensorInterfaceHost->stub == nullptr) {",
+            "        HDF_LOGE(\"%{public}s: failed to get stub object\", __func__);",
+            "        delete hdfSensorInterfaceHost;",
+            "        return HDF_FAILURE;",
+            "    }",
+            "",
+            "    deviceObject->service = &hdfSensorInterfaceHost->ioService;",
+            "    HDF_LOGI(\"HdfSensorInterfaceDriverBind Success\");",
+            "    return HDF_SUCCESS;"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/sensor/hdi_service_3.0/sensor_if_service.cpp",
+      "sha256": "42eb71a51ce0942b3bb63525c4a26e6368ce5e712255f09adc44eace25881f58",
+      "project": "drivers/peripheral",
+      "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+      "snippets": [
+        {
+          "start": 78,
+          "end": 131,
+          "lines": [
+            "int32_t SensorIfService::GetSensorVdiImpl()",
+            "{",
+            "    struct OHOS::HDI::Sensor::V1_1::WrapperSensorVdi *wrapperSensorVdi = nullptr;",
+            "    uint32_t version = 0;",
+            "    HDF_LOGI(\"%{public}s: start HdfLoadVdi(%{public}s)\", __func__, HDI_SENSOR_PRODUCT_VDI_LIBNAME);",
+            "    vdi_ = HdfLoadVdi(HDI_SENSOR_PRODUCT_VDI_LIBNAME);",
+            "    if (vdi_ != nullptr && vdi_->vdiBase != nullptr) {",
+            "        HDF_LOGI(\"%{public}s: loaded product sensor vdi\", __func__);",
+            "        GetSensorProductMode() = true;",
+            "    } else {",
+            "        HDF_LOGI(\"%{public}s: load product sensor vdi failed, try HdfLoadVdi(%{public}s)\", __func__,",
+            "                 HDI_SENSOR_VDI_LIBNAME);",
+            "        vdi_ = HdfLoadVdi(HDI_SENSOR_VDI_LIBNAME);",
+            "        if (vdi_ == nullptr || vdi_->vdiBase == nullptr) {",
+            "            HDF_LOGE(\"%{public}s: load sensor vdi failed\", __func__);",
+            "            return HDF_FAILURE;",
+            "        }",
+            "        GetSensorProductMode() = false;",
+            "    }",
+            "",
+            "    version = HdfGetVdiVersion(vdi_);",
+            "    if (version != 1) {",
+            "        HDF_LOGE(\"%{public}s: get sensor vdi version failed\", __func__);",
+            "        return HDF_FAILURE;",
+            "    }",
+            "",
+            "    wrapperSensorVdi = reinterpret_cast<struct OHOS::HDI::Sensor::V1_1::WrapperSensorVdi *>(vdi_->vdiBase);",
+            "    sensorVdiImplV1_1_ = wrapperSensorVdi->sensorModule;",
+            "    if (sensorVdiImplV1_1_ == nullptr) {",
+            "        HDF_LOGE(\"%{public}s: get sensor impl failed\", __func__);",
+            "        return HDF_FAILURE;",
+            "    }",
+            "    return HDF_SUCCESS;",
+            "}",
+            "",
+            "int32_t SensorIfService::Init()",
+            "{",
+            "    if (sensorVdiImplV1_1_ == nullptr) {",
+            "        HDF_LOGE(\"%{public}s: get sensor vdi impl failed\", __func__);",
+            "        return HDF_FAILURE;",
+            "    }",
+            "    int32_t ret = sensorVdiImplV1_1_->Init();",
+            "    if (ret != SENSOR_SUCCESS) {",
+            "        HDF_LOGE(\"%{public}s Init failed, error code is %{public}d\", __func__, ret);",
+            "    } else {",
+            "        ret = GetAllSensorInfo(hdfSensorInformations);",
+            "        if (ret != SENSOR_SUCCESS) {",
+            "            HDF_LOGE(\"%{public}s GetAllSensorInfo failed, error code is %{public}d\", __func__, ret);",
+            "        }",
+            "    }",
+            "#ifdef SENSOR_DEBUG",
+            "    RegisteDumpHost();",
+            "#endif",
+            "    return ret;"
+          ]
+        },
+        {
+          "start": 647,
+          "end": 661,
+          "lines": [
+            "extern \"C\" ISensorInterface *SensorInterfaceImplGetInstance(void)",
+            "{",
+            "    SensorIfService *impl = new (std::nothrow) SensorIfService();",
+            "    if (impl == nullptr) {",
+            "        return nullptr;",
+            "    }",
+            "",
+            "    int32_t ret = impl->Init();",
+            "    if (ret != HDF_SUCCESS) {",
+            "        HDF_LOGE(\"%{public}s: service init failed, error code is %{public}d\", __func__, ret);",
+            "        delete impl;",
+            "        return nullptr;",
+            "    }",
+            "",
+            "    return impl;"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/sensor/hdi_service_3.0/BUILD.gn",
+      "sha256": "7bef4b236d15665b2e41e4f4737498dd119a248c94d56f67b5a50033cc7564af",
+      "project": "drivers/peripheral",
+      "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+      "snippets": [
+        {
+          "start": 84,
+          "end": 89,
+          "lines": [
+            "ohos_shared_library(\"libsensor_driver\") {",
+            "  include_dirs = [",
+            "    \"../interfaces/include/\",",
+            "    \"../utils/include\",",
+            "  ]",
+            "  sources = [ \"sensor_if_driver.cpp\" ]"
+          ]
+        },
+        {
+          "start": 121,
+          "end": 132,
+          "lines": [
+            "  shlib_type = \"hdi\"",
+            "  install_images = [ chipset_base_dir ]",
+            "  subsystem_name = \"hdf\"",
+            "  part_name = \"drivers_peripheral_sensor\"",
+            "}",
+            "",
+            "group(\"hdi_sensor_service_3.0\") {",
+            "  deps = [",
+            "    \":libsensor_driver\",",
+            "    \":libsensor_interface_service_3.1\",",
+            "  ]",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+      "sha256": "593dc5799e8a6317cce6ce9ce911aa95640fd6eafa12d0ac7f88bd6321e52acc",
+      "project": "drivers/peripheral",
+      "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+      "snippets": [
+        {
+          "start": 17,
+          "end": 56,
+          "lines": [
+            "ohos_shared_library(\"libhdi_sensor_impl\") {",
+            "  include_dirs = [",
+            "    \"../interfaces/include/\",",
+            "    \"../interfaces/v1_0\",",
+            "    \"../utils/include\",",
+            "    \"../hal/include\",",
+            "  ]",
+            "",
+            "  sources = [ \"sensor_impl.cpp\" ]",
+            "  deps = [ \"../hal:hdi_sensor\" ]",
+            "",
+            "  cflags = [",
+            "    \"-Wall\",",
+            "    \"-Wextra\",",
+            "    \"-Werror\",",
+            "    \"-fsigned-char\",",
+            "    \"-fno-common\",",
+            "    \"-fno-strict-aliasing\",",
+            "  ]",
+            "",
+            "  if (is_standard_system) {",
+            "    external_deps = [",
+            "      \"drivers_interface_sensor:libsensor_stub_3.0\",",
+            "      \"hdf_core:libhdf_host\",",
+            "      \"hdf_core:libhdf_utils\",",
+            "      \"hilog:libhilog\",",
+            "      \"hitrace:hitrace_meter\",",
+            "      \"ipc:ipc_single\",",
+            "    ]",
+            "    if (c_utils_enable) {",
+            "      external_deps += [ \"c_utils:utils\" ]",
+            "    }",
+            "  } else {",
+            "    external_deps = [",
+            "      \"hdf_core:libhdf_utils\",",
+            "      \"hilog:libhilog\",",
+            "      \"ipc:ipc_single\",",
+            "    ]",
+            "  }",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "path": "developtools/hdc/src/daemon/etc/hdcd.root.cfg",
+      "sha256": "e512953bd9475bc924854b8cb8dc4001653af29ec751271b28b1f1f954bec04b",
+      "project": "developtools/hdc",
+      "revision": "8ae22770c5d7758808ef7499b6957fcdb92d7fb4",
+      "snippets": [
+        {
+          "start": 91,
+          "end": 91,
+          "lines": [
+            "            \"uid\" : \"root\","
+          ]
+        },
+        {
+          "start": 92,
+          "end": 92,
+          "lines": [
+            "            \"gid\" : [ \"root\", \"shell\", \"log\", \"readproc\", \"file_manager\" ],"
+          ]
+        },
+        {
+          "start": 100,
+          "end": 100,
+          "lines": [
+            "                \"uid\" : \"root\","
+          ]
+        },
+        {
+          "start": 101,
+          "end": 101,
+          "lines": [
+            "                \"gid\" : \"shell\""
+          ]
+        },
+        {
+          "start": 163,
+          "end": 163,
+          "lines": [
+            "            \"secon\" : \"u:r:su:s0\","
+          ]
+        }
+      ]
+    },
+    {
+      "path": "developtools/hdc/src/daemon/etc/hdcd.cfg",
+      "sha256": "f3e818345231df9710cea4bf74927b264d470d0e7858bf6a89c2602de79009e1",
+      "project": "developtools/hdc",
+      "revision": "8ae22770c5d7758808ef7499b6957fcdb92d7fb4",
+      "snippets": [
+        {
+          "start": 77,
+          "end": 77,
+          "lines": [
+            "            \"uid\" : \"shell\","
+          ]
+        },
+        {
+          "start": 78,
+          "end": 78,
+          "lines": [
+            "            \"gid\" : [ \"shell\", \"log\", \"readproc\", \"file_manager\", \"netsys_socket\" ],"
+          ]
+        },
+        {
+          "start": 85,
+          "end": 85,
+          "lines": [
+            "                \"uid\" : \"shell\","
+          ]
+        },
+        {
+          "start": 86,
+          "end": 86,
+          "lines": [
+            "                \"gid\" : \"shell\""
+          ]
+        },
+        {
+          "start": 137,
+          "end": 137,
+          "lines": [
+            "            \"secon\" : \"u:r:hdcd:s0\","
+          ]
+        }
+      ]
+    },
+    {
+      "path": "developtools/hdc/src/common/forward.cpp",
+      "sha256": "2b6fa7c4626324cc6ea12648f83b87f2b43ba0ec7bbb542ce063b85479428a35",
+      "project": "developtools/hdc",
+      "revision": "8ae22770c5d7758808ef7499b6957fcdb92d7fb4",
+      "snippets": [
+        {
+          "start": 385,
+          "end": 402,
+          "lines": [
+            "    } else if (sFType == \"localabstract\") {",
+            "        // daemon shell: /system/bin/socat abstract-listen:linux-abstract -",
+            "        // daemon shell: /system/bin/socat - abstract-connect:linux-abstract",
+            "        // host:   hdc fport tcp:8080 localabstract:linux-abstract",
+            "        ctxPoint->type = FORWARD_ABSTRACT;",
+            "    } else if (sFType == \"localreserved\") {",
+            "        sNodeCfg = harmonyReservedSocketPrefix + sNodeCfg;",
+            "        ctxPoint->type = FORWARD_RESERVED;",
+            "    } else if (sFType == \"localfilesystem\") {",
+            "        sNodeCfg = filesystemSocketPrefix + sNodeCfg;",
+            "        ctxPoint->type = FORWARD_FILESYSTEM;",
+            "    } else if (sFType == \"jdwp\") {",
+            "        ctxPoint->type = FORWARD_JDWP;",
+            "    } else if (sFType == \"ark\") {",
+            "        ctxPoint->type = FORWARD_ARK;",
+            "    } else {",
+            "        return false;",
+            "    }"
+          ]
+        }
+      ]
+    }
+  ]
+}

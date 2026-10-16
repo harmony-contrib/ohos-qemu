@@ -1,0 +1,32 @@
+{
+  "project": "drivers/peripheral",
+  "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+  "container": "ohos-qemu-parallel-source-20261016-02",
+  "files": [
+    {
+      "path": "drivers/peripheral/sensor/sensor.gni",
+      "fixture": "drivers__peripheral__sensor__sensor.gni.gz.b64",
+      "sha256": "a997c12d5a68797fcce3f8db7e92eaea71da10735e32a4b38a8f12bce93c8e5a"
+    },
+    {
+      "path": "drivers/peripheral/sensor/bundle.json",
+      "fixture": "drivers__peripheral__sensor__bundle.json.gz.b64",
+      "sha256": "412d4eb7ea791efb70fbf37a7147f80d56c1dcc7f3815c2c094cf72bd0e517d7"
+    },
+    {
+      "path": "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+      "fixture": "drivers__peripheral__sensor__hdi_impl__BUILD.gn.gz.b64",
+      "sha256": "593dc5799e8a6317cce6ce9ce911aa95640fd6eafa12d0ac7f88bd6321e52acc"
+    },
+    {
+      "path": "drivers/peripheral/sensor/interfaces/v1_0/isensor_interface_vdi.h",
+      "fixture": "drivers__peripheral__sensor__interfaces__v1_0__isensor_interface_vdi.h.gz.b64",
+      "sha256": "ac364c9d2dc3a20f8e184155dff1c0ee00d21edbbd439e0c3e6bb3a0107d5140"
+    },
+    {
+      "path": "drivers/peripheral/sensor/interfaces/v1_0/isensor_callback_vdi.h",
+      "fixture": "drivers__peripheral__sensor__interfaces__v1_0__isensor_callback_vdi.h.gz.b64",
+      "sha256": "67d1f81e2f5adb3c62abb3d86282015586266ac81d690c358da9bbe044d603c0"
+    }
+  ]
+}

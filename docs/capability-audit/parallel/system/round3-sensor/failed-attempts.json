@@ -1,0 +1,10 @@
+[
+  {
+    "path": "docs/capability-audit/parallel/system/round3-sensor/msdp-host-01-failure.log",
+    "reason": "Test shim compile setup issue; not a valid original product defect reproduction. Logging shim was corrected to consume actual arguments; unused test-only constants were marked maybe_unused. No product assertion weakened."
+  },
+  {
+    "path": "docs/capability-audit/parallel/system/round3-sensor/msdp-host-02-failure.log",
+    "reason": "Test shim compile setup issue; not a valid original product defect reproduction. Logging shim was corrected to consume actual arguments; unused test-only constants were marked maybe_unused. No product assertion weakened."
+  }
+]

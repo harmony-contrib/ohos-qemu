@@ -1,0 +1,37 @@
+{
+  "status": "external_samples_sent",
+  "endpoint": "/tmp/qsi-gus8kpam/controller.sock",
+  "hello_hex": "51534e31010000003d4d0da0a85ebdeacc161913031c28630100000000000000",
+  "samples": [
+    {
+      "sequence": 1,
+      "sent_monotonic_ns": 928689992564041,
+      "frame_hex": "51534631010000003d4d0da0a85ebdeacc161913031c28630100000000000000799ae1428596fcc2e8aef440",
+      "at_ms": 0,
+      "x": 112.80170440673828,
+      "y": -126.29398345947266,
+      "z": 7.646350860595703
+    },
+    {
+      "sequence": 2,
+      "sent_monotonic_ns": 928690015582875,
+      "frame_hex": "51534631010000003d4d0da0a85ebdeacc161913031c2863020000000000000060c30343dfd700c3221d6dc1",
+      "at_ms": 20,
+      "x": 131.76318359375,
+      "y": -128.84324645996094,
+      "z": -14.819612503051758
+    },
+    {
+      "sequence": 3,
+      "sent_monotonic_ns": 928690036621250,
+      "frame_hex": "51534631010000003d4d0da0a85ebdeacc161913031c28630300000000000000885a8bc24956e5c26b908142",
+      "at_ms": 40,
+      "x": -69.67681884765625,
+      "y": -114.66852569580078,
+      "z": 64.78206634521484
+    }
+  ],
+  "sensor_api_delivery_verified": false,
+  "limitations": "Successful send is transport evidence only. Compare a separately subscribed Sensor API/MSDP observer against the challenge and inspect lifecycle/denials.",
+  "input_sha256": "6cb86c3bc29bab1b5830277e77decbf4398df0f83caaa30472306c49920a1a81"
+}

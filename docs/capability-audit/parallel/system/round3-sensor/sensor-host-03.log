@@ -1,0 +1,86 @@
+active_path_protection.log
+active_path_protection: pass
+
+callback_destroy.log
+callback_destroy: pass
+
+callback_limit.log
+callback_limit: pass
+
+callback_reentry.log
+callback_reentry: pass
+
+compile.log
+
+disable_backpressure.log
+disable_backpressure: pass
+
+disable_replay.log
+disable_replay: pass
+
+disconnect_replay.log
+disconnect_replay: pass
+
+duplicate_register.log
+duplicate_register: pass
+
+external_controller.log
+{"status": "external_samples_sent", "samples": 3}
+112.801704 -126.293983 7.64635086 928684565355000
+131.763184 -128.843246 -14.8196125 928684588366000
+-69.6768188 -114.668526 64.7820663 928684609435000
+external_controller: pass
+
+file_protection.log
+file_protection: pass
+
+fragmented.log
+fragmented: pass
+
+infinity.log
+infinity: pass
+
+nan.log
+nan: pass
+
+out_of_range.log
+out_of_range: pass
+
+path_replacement.log
+path_replacement: pass
+
+range_edges.log
+range_edges: pass
+
+repeated_sequence.log
+repeated_sequence: pass
+
+roundtrip.log
+roundtrip: pass
+
+sampling_limit.log
+sampling_limit: pass
+
+short_frame.log
+short_frame: pass
+
+stale_path.log
+stale_path: pass
+
+symlink_protection.log
+symlink_protection: pass
+
+unauthorized.log
+unauthorized: pass
+
+wrong_magic.log
+wrong_magic: pass
+
+wrong_nonce.log
+wrong_nonce: pass
+
+wrong_version.log
+wrong_version: pass
+
+zero_sequence.log
+zero_sequence: pass
