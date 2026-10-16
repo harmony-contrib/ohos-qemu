@@ -24,6 +24,7 @@ class RuntimeSourceGuardTests(unittest.TestCase):
         cls.states = {
             'original': json.loads(FIXTURE.read_text())['files'],
             'prefix_1': runtime_sources(prefix=1),
+            'prefix_2': runtime_sources(prefix=2),
             'final': runtime_sources(),
         }
 

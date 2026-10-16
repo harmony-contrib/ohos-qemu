@@ -3,23 +3,29 @@
   "date": "2026-10-15",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-location-20261015",
-  "summary": "Implement current-account live locating icon state and real filtered BLE search routes; repair RTT callback lifetime and fine-only PrivacyKit usage. All 22 requirements remain open pending full service/device and new-package acceptance.",
+  "summary": "Implement live icon, real filtered BLE search, permission-correct district/current-fix/reverse-geocoder orchestration, skiing GNSS processing/history/cursors, and RTT listener lifecycle. All 22 assigned runtime requirements remain open until new-package acceptance.",
   "upstream_targets": [
+    "base/location/location/frameworks/base_module/source/request_config.cpp",
     "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp",
     "base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h",
     "base/location/location/frameworks/js/napi/include/location_napi_adapter.h",
     "base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp",
     "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp",
     "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp",
+    "base/location/location/frameworks/js/napi/source/napi_util.cpp",
     "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl",
     "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp",
+    "base/location/location/interfaces/inner_api/include/constant_definition.h",
     "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h",
     "base/location/location/interfaces/inner_api/include/locator_impl.h",
+    "base/location/location/interfaces/inner_api/include/request_config.h",
     "base/location/location/services/location_locator/locator/include/locator_ability.h",
     "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h",
+    "base/location/location/services/location_locator/locator/include/report_manager.h",
     "base/location/location/services/location_locator/locator/include/request_manager.h",
     "base/location/location/services/location_locator/locator/source/locator_ability.cpp",
     "base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp",
+    "base/location/location/services/location_locator/locator/source/report_manager.cpp",
     "base/location/location/services/location_locator/locator/source/request_manager.cpp",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h",
     "base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h",
@@ -47,14 +53,16 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "No current-district API implementation was found in fixed production source. Existing point geocoding/location APIs do not supply the new request/cache/current-fix district orchestration. The recorded image also lacks location/geocoder provider operation.",
+      "status": "implemented_district_route_pending_compile_provider_and_packaged_validation",
+      "classification": "new_binding_to_real_location_and_reverse_geocoder",
+      "finding": "Promise-only optional/undefined request now starts an owned authorized one-shot location request, uses its permitted recent cache or real fix, always stops a started request, queries the real reverse-geocoder/cache within one deadline, and rechecks fine/approximate/firstToken/current-account/switch access before publishing district fields. SDK area-query errors use 3301500.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "round3-business.md",
+        "round3-geocoder-peer-abi.md",
+        "ci/capability-audit/test_batch_location_business_runtime.py",
+        "round2-freeze-inputs.json"
       ],
-      "next_required": "Implement permission-checked current-fix and reverse-geocoder district orchestration, cache policy and service errors; supply actual location/geocoder providers and validate real district/error boundaries."
+      "next_required": "Generate new IDL68/71, compile complete native/service/NAPI TUs, provide actual GNSS and configured geocoder ability over externally challenged data using documented peer ABI; validate new-package cache/current-fix/locale/deadline/permission/user/stop behavior."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
@@ -77,14 +85,16 @@
       "group": "定位",
       "closure": "open",
       "runtime_validation": "not_run_in_this_round",
-      "status": "remaining_implementation_and_validation",
-      "classification": "missing_new_binding_and_semantic_backend",
-      "finding": "No post-processing track implementation/export was found. SDK requires SKIING post-processing, records up to 24 hours and incremental reads; raw cached GNSS fixes or an empty array cannot satisfy that contract.",
+      "status": "implemented_skiing_route_pending_compile_provider_and_packaged_validation",
+      "classification": "new_binding_and_real_GNSS_post_processing_history",
+      "finding": "SKIING travels through a new explicit IPC sports argument while legacy RequestConfig wire remains unchanged. SPORT requests use fine PrivacyKit state and real GNSS reports; accuracy/time-driven processing produces geometry, altitude, speed and direction. UID/token/firstToken history has 24h monotonic retention and incremental cursors with source/mock/out-of-order/privacy/lifecycle checks.",
       "evidence": [
-        "source-evidence.json: symbols",
-        "backend-excerpts.json: icon producer audit where applicable"
+        "round3-business.md",
+        "ci/capability-audit/test_batch_location_business_runtime.py",
+        "ci/capability-audit/test_batch_location_icon_state.py",
+        "round2-freeze-inputs.json"
       ],
-      "next_required": "Provide genuine sports trajectory post-processing, per-caller history/cursor and retention semantics, plus GNSS input provider and permission-checked NAPI; validate real tracks, retention and repeated-read boundaries."
+      "next_required": "Generate IDL69/70, rebuild RequestConfig consumers and complete listed TUs, then new-package GNSS challenge tracks with SPORT-only mode, ordinary/system fine permissions, background/revoke/switch, multiple owners/delegation, stop/late samples, retention and cursor boundaries. Assess processing behavior on actual virtual peripheral input."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
@@ -378,6 +388,25 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_call_public_enums.py",
       "result": "PASS: all 6 existing regressions (4.279 s), repeated after current batch.",
       "evidence": "host-tests.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_location_*.py' -v",
+      "result": "PASS: final complete 16-test location-prefixed discovery in 19.050 s, including expanded transaction68-71 checks and focused business scenarios. Actual patched functions execute under ASan/UBSan; host boundary doubles do not prove device/package behavior.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "Three actual patches on 22 complete fixed source files, verify original/prefix_1/prefix_2/final bytes and reapply",
+      "result": "PASS; original hashes additionally matched raw bytes read from the fixed source container. No source-container writes.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_location_enum_export.py",
+      "result": "PASS: 2 existing enum export regressions.",
+      "evidence": "host-tests.log"
+    },
+    {
+      "command": "Third-patch full OpenHarmony IDL/TU build and new-package runtime",
+      "result": "NOT RUN by subagent; parent owns centralized full source compilation and representative package gate."
     }
   ],
   "integration_requests": [
@@ -412,6 +441,18 @@
     {
       "kind": "virtual_peripheral_transport",
       "action": "Coordinate GNSS vendorGnssAdapter.so/GnssVendorInterface, BLE libbt_vendor.z.so/BLUETOOTH_VENDOR_LIB_INTERFACE H4 channel, and real RIL AT transport plus IMS service endpoint. Exact fixed source entry points and proposed challenge protocol boundaries are in round2-virtual-peripheral-handoff.md; follow-up implementation remains required."
+    },
+    {
+      "kind": "round3_complete_translation_units",
+      "action": "Regenerate locator_interface for appended68/69/70/71 and complete proxy/stub. In addition to previous full location TU list, compile frameworks/base_module/source/request_config.cpp (//base/location/location/frameworks/base_module:lbsbase_module), frameworks/js/napi/source/napi_util.cpp (//base/location/location/frameworks/js/napi:geolocationmanager), services/location_locator/locator/source/report_manager.cpp (//base/location/location/services/location_locator/locator:lbsservice_locator). Rebuild all RequestConfig/header consumers against the same version. Freeze all expanded round2-freeze-inputs.json targets and dependencies."
+    },
+    {
+      "kind": "geocoder_provider_peer",
+      "action": "Install/configure an actual reverse-geocoder ability via const.location.geocode_service_name / const.location.geocode_ability_name, preserving existing IPC/cache. Exact transaction2 request, callback1/2 and GeoAddress wire ABI are documented in round3-geocoder-peer-abi.md. Consume external geographic challenge data; no fixed district result or mock API."
+    },
+    {
+      "kind": "continuation_implementation",
+      "action": "Fusion fence shape/radio evaluation, add/remove/events and owner lifecycle; actual 5A radio producer/observer; positive GNSS/HCI/RIL/IMS routes still require further implementation. No behavior gap closes from this source batch."
     }
   ],
   "remaining_gaps": [
@@ -422,8 +463,8 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Implement permission-checked current-fix and reverse-geocoder district orchestration, cache policy and service errors; supply actual location/geocoder providers and validate real district/error boundaries."
+      "status": "implemented_district_route_pending_compile_provider_and_packaged_validation",
+      "dependency": "Generate new IDL68/71, compile complete native/service/NAPI TUs, provide actual GNSS and configured geocoder ability over externally challenged data using documented peer ABI; validate new-package cache/current-fix/locale/deadline/permission/user/stop behavior."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
@@ -432,8 +473,8 @@
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
-      "status": "remaining_implementation_and_validation",
-      "dependency": "Provide genuine sports trajectory post-processing, per-caller history/cursor and retention semantics, plus GNSS input provider and permission-checked NAPI; validate real tracks, retention and repeated-read boundaries."
+      "status": "implemented_skiing_route_pending_compile_provider_and_packaged_validation",
+      "dependency": "Generate IDL69/70, rebuild RequestConfig consumers and complete listed TUs, then new-package GNSS challenge tracks with SPORT-only mode, ordinary/system fine permissions, background/revoke/switch, multiple owners/delegation, stop/late samples, retention and cursor boundaries. Assess processing behavior on actual virtual peripheral input."
     },
     {
       "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
@@ -535,7 +576,7 @@
     "communication_state_missing_backend_requirements": 2,
     "telephony_missing_device_transport_requirements": 1,
     "closed_by_this_round": 0,
-    "new_location_bindings_implemented_pending_validation": 3
+    "new_location_bindings_implemented_pending_validation": 5
   },
   "resource_use": {
     "source_container": "ohos-qemu-parallel-source-20261016-02",
@@ -551,6 +592,7 @@
     "ci/capability-audit/fixtures/batch_location/rtt_before.json",
     "ci/capability-audit/test_batch_location_ble_napi.py",
     "ci/capability-audit/test_batch_location_ble_runtime.py",
+    "ci/capability-audit/test_batch_location_business_runtime.py",
     "ci/capability-audit/test_batch_location_icon_state.py",
     "ci/capability-audit/test_batch_location_rtt_lifecycle.py",
     "ci/capability-audit/test_batch_location_runtime_source_guard.py",
@@ -561,9 +603,12 @@
     "docs/capability-audit/parallel/location/round2-freeze-inputs.json",
     "docs/capability-audit/parallel/location/round2-ipc-baseline.json",
     "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md",
+    "docs/capability-audit/parallel/location/round3-business.md",
+    "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md",
     "docs/capability-audit/parallel/location/source-evidence.json",
     "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch",
     "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch",
+    "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch",
     "patches/common/base/location/location/api26_runtime/README.md",
     "patches/common/base/location/location/api26_runtime/apply.sh",
     "patches/common/base/location/location/api26_runtime/apply_runtime.py",
@@ -578,8 +623,12 @@
   "round2_base_commit": "72bad25b78c86bb7be2033f057bd3990984da3b8",
   "patch_sha256_by_path": {
     "patches/common/base/location/location/api26_runtime/0001-query-live-location-icon-state.patch": "4d64e7e3a288b2f1c77e895b7eb3ac97c22fcab202f5e7d44196c23ef9fde6ec",
+    "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch": "80244fe9981f57694d685a979ee06f4060d7ce793618b062ecbadc1505fbbdb4",
     "patches/common/base/location/location/api26_runtime/0002-connect-filtered-BLE-search-and-fine-permission-use.patch": "91da711e414c4bea1a770001040fb78800ae2a37c350433bc164c2f4157ef19b"
   },
   "round2_batch_base_commit": "a749bda32c26af5eb8ac76c223254bef6507a19f",
-  "round2_batch_date": "2026-10-16"
+  "round2_batch_date": "2026-10-16",
+  "round3_base_commit": "4b329553506a1ba71a33c5c4ad631f6e4fe51513",
+  "round3_date": "2026-10-16",
+  "round3_implementation": "round3-business.md"
 }

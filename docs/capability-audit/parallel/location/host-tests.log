@@ -92,3 +92,12 @@ Full fixed 16-file private source preflight (not bounded snippets): original raw
 LC_ALL=C LC_CTYPE=C LANG=C python3 ci/capability-audit/test_call_public_enums.py: PASS 6 tests / 4.279 s.
 No full OpenHarmony IDL/TU build or QEMU/package validation performed by this subagent. All 22 runtime requirements stay open; host scanner/NAPI boundaries are test doubles, not packaged peripheral proof.
 Final complete location-prefixed rerun: PASS 11 tests / 10.494 s. A patch context line containing legacy tab indentation was trimmed (source output unchanged); source-state guard/reapply rerun PASS 5 tests / 4.068 s.
+
+2026-10-16 third runtime patch, base4b329553506a1ba71a33c5c4ad631f6e4fe51513
+New actual district/service/native/NAPI/config/cache/report/track tests: focused5 PASS6.164s after SPORT-only scenario correction; existing native RequestConfig wire10fields retained. Native public/internal error mapping executes the fixed real CommonUtils mapper. Coverage includes fine-only, total deadline, late callback stop, geocoder failure3301500, final permission/account changes, Promise payloads/errors, privacy stop retry for fine+approx, failed cache event not decrementing another active request, actual report-to-skiing history, source/lifecycle/delegation, retention and cursor boundaries.
+Complete location-prefixed discovery PASS16 tests18.225s before final focused checks; final full rerun follows below.
+Full22 raw original source hashes match the read-only fixed container. Actual patch0001->0002->0003 applied to complete22files: exact prefix_1/prefix_2/final states and marker-free final reapply passed.
+Existing test_location_enum_export.py PASS2 tests1.191s.
+Only bounded host C++/ASan/UBSan compilation used; full platform IDL/TU/new-package validation remains centralized and not claimed. All22 requirements remain open.
+Final complete location-prefixed discovery: PASS16 tests19.050s, including latest SPORT-only/fine-both/locale/68-71 mapping, actual error mapper and expanded cache/owner/delegation/revoke/account tests.
+Patch-context whitespace normalized without source changes; guard5-test rerun PASS, complete22-source final bytes confirmed again.

@@ -27,7 +27,7 @@ def manifest():
         path = PurePosixPath(name)
         if path.is_absolute() or '..' in path.parts or '\\' in name:
             raise ValueError('unsafe location source target')
-    if set(data['states']) != {'original', 'prefix_1', 'final'} or any(
+    if set(data['states']) != {'original', 'prefix_1', 'prefix_2', 'final'} or any(
             set(state) != set(data['files']) for state in data['states'].values()):
         raise ValueError('incomplete location whole-component state')
     patches = sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))
