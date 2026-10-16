@@ -1,0 +1,464 @@
+{
+  "status": "pass_actual_host_gnss_provider",
+  "cases": [
+    {
+      "case": "abi_boundaries",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "abi_boundaries",
+        "/tmp/qgn-zbats0hi/0.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "config",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "config",
+        "/tmp/qgn-zbats0hi/1.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "no_source",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "no_source",
+        "/tmp/qgn-zbats0hi/2.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "valid",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "valid",
+        "/tmp/qgn-zbats0hi/3.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "optional",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "optional",
+        "/tmp/qgn-zbats0hi/4.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "fragmented",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "fragmented",
+        "/tmp/qgn-zbats0hi/5.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "wrong_nonce",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "wrong_nonce",
+        "/tmp/qgn-zbats0hi/6.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "wrong_version",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "wrong_version",
+        "/tmp/qgn-zbats0hi/7.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "zero_sequence",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "zero_sequence",
+        "/tmp/qgn-zbats0hi/8.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "repeated_sequence",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "repeated_sequence",
+        "/tmp/qgn-zbats0hi/9.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "repeated_utc",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "repeated_utc",
+        "/tmp/qgn-zbats0hi/10.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "stale_utc",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "stale_utc",
+        "/tmp/qgn-zbats0hi/11.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "future_utc",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "future_utc",
+        "/tmp/qgn-zbats0hi/12.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "latitude",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "latitude",
+        "/tmp/qgn-zbats0hi/13.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "longitude",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "longitude",
+        "/tmp/qgn-zbats0hi/14.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "nan",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "nan",
+        "/tmp/qgn-zbats0hi/15.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "zero_accuracy",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "zero_accuracy",
+        "/tmp/qgn-zbats0hi/16.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "speed",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "speed",
+        "/tmp/qgn-zbats0hi/17.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "bearing",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "bearing",
+        "/tmp/qgn-zbats0hi/18.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "unknown_fields",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "unknown_fields",
+        "/tmp/qgn-zbats0hi/19.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "partial",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "partial",
+        "/tmp/qgn-zbats0hi/20.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "unauthorized",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "unauthorized",
+        "/tmp/qgn-zbats0hi/21.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "stop_replay",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "stop_replay",
+        "/tmp/qgn-zbats0hi/22.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "reconnect_replay",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "reconnect_replay",
+        "/tmp/qgn-zbats0hi/23.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "callback_stop",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "callback_stop",
+        "/tmp/qgn-zbats0hi/24.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "callback_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "callback_cleanup",
+        "/tmp/qgn-zbats0hi/25.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "backpressure_stop",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "backpressure_stop",
+        "/tmp/qgn-zbats0hi/26.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "file_protection",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "file_protection",
+        "/tmp/qgn-zbats0hi/27.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "symlink_protection",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "symlink_protection",
+        "/tmp/qgn-zbats0hi/28.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "wrong_magic",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "wrong_magic",
+        "/tmp/qgn-zbats0hi/29.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "reserved",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "reserved",
+        "/tmp/qgn-zbats0hi/30.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "altitude",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "altitude",
+        "/tmp/qgn-zbats0hi/31.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "infinity",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "infinity",
+        "/tmp/qgn-zbats0hi/32.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "vertical_accuracy",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_harness",
+        "vertical_accuracy",
+        "/tmp/qgn-zbats0hi/33.sock"
+      ],
+      "exit_code": 0
+    },
+    {
+      "case": "true_dso_vendor_abi",
+      "argv": [
+        "/private/tmp/system-gnss-host-04/gnss_loader",
+        "/private/tmp/system-gnss-host-04/vendorGnssAdapter.so"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "compile_commands": [
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-I/private/tmp/system-gnss-host-04",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_harness.cpp",
+      "-o",
+      "/private/tmp/system-gnss-host-04/gnss_harness"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-I/private/tmp/system-gnss-host-04",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_vendor.cpp",
+      "-o",
+      "/private/tmp/system-gnss-host-04/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-I/private/tmp/system-gnss-host-04",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_loader.cpp",
+      "-o",
+      "/private/tmp/system-gnss-host-04/gnss_loader"
+    ]
+  ],
+  "fixture": {
+    "project": "drivers/peripheral",
+    "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "files": [
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/location_vendor_lib.h",
+        "sha256": "f0df806ff59b5cad6a793a25191b36f546e77c72afb638681fbe1261e39035b5",
+        "fixture": "location_vendor_lib.h.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+        "sha256": "6221743ea6d708bb4bffa7a50d383486c60f8083335935094348af7583f237b8",
+        "fixture": "location_vendor_interface.cpp.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+        "sha256": "496452bb22b609bcd2e078d4fc32afd57f3c609eb08c68537e92da4fcb1eb031",
+        "fixture": "gnss_interface_impl.cpp.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/BUILD.gn",
+        "sha256": "223f29a68d3ea320f10a9a41dd0a7fd2d942576395e5f174886bf4fde0471e1e",
+        "fixture": "BUILD.gn.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h",
+        "sha256": "001eef3dddc760a25dd0386e55cafdfb8aad8da27c41d3d6bba18e68a52c42f8",
+        "fixture": "location_vendor_interface.h.gz.b64"
+      }
+    ]
+  },
+  "source_sha256": {
+    "BUILD.gn": "436e42030c3e582156b8f9e11a265b4e153890c2c72a4f5d7ed2907245175330",
+    "qemu_gnss_input.cpp": "2435f10d6243974508ffec8188fa9794d67dc96068a09cac612e71cb3bb88c94",
+    "qemu_gnss_input.h": "f879d0083750680101cf43428a6181eeee3268bb070ba14a7df12f8cda51bae6",
+    "qemu_gnss_protocol.h": "c8a2bffd726a3cc9f6b1f53637ec0bf5b3832277988e1afbd99f51286b8909cc",
+    "qemu_gnss_vendor.cpp": "d2e65a9e9032a251a04bfef72d69bf8837ccfb4bfc23402af92eb95d77660b02"
+  },
+  "compiler": "Apple clang version 16.0.0 (clang-1600.0.26.6)",
+  "platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+  "host_test_peer_uid": 501,
+  "exported_product_peer_uid": 0,
+  "requirements_closed": 0,
+  "runtime_tested": false,
+  "limitations": "Actual full upstream vendor ABI header, provider functions, sockets and dlsym data symbol tested. Host Provider instance explicitly uses host UID/private path. Exported product device remains UID0/path fixed. Official GN/ARM64/CFI, HDI bridge, Location business/public API, SELinux and new package are not tested here.",
+  "evidence_file_sha256": {
+    "gnss_harness": "ef8492334f659e598a7da64c0249fe3e0bec11466d21b88a2c85773d8f3be130",
+    "nan.log": "9c1a2be35d711f65c5dfaf41fa192902e7490cf53ce382ef43ece8322e1ce199",
+    "valid.log": "e6df5198ee3f67d8224610b42a14b8a103e97640a51fd859f0a6e4f684b3978a",
+    "abi_boundaries.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "callback_stop.log": "643f78afa9917fd4294487695c621b0900c8601444510aa51c6838b1fa836e75",
+    "gnss_loader": "3375775361c2ca15c93c4bd88d447ee1433c094ca1502fa625cc6e125c81c1da",
+    "infinity.log": "0c291293590b6a23f1cd37a77c3862038930fa723dcd232b3be1a0be71a249cd",
+    "reconnect_replay.log": "1e560822441f180d3fc4a217fa13c15bd5353f91b43601f8dc8b680f3208ec3b",
+    "longitude.log": "4d83ae312aad21a25cf67a546e15077f1b9b2884bac64c528e2b473b1c293cf8",
+    "gnss_loader.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong_version.log": "498a06288034ecac0aaed6e3492ee80e0f20a045ae3cc9725ff98e212dc2a516",
+    "stale_utc.log": "81328eec53f863a13de086ed0389c2c78c9f03936f5f4da2dacfa7a72f7cfa5d",
+    "optional.log": "467a7f6c402c3899b3075d75202b92525d715dc3802596dbe348dd91fa388f40",
+    "callback_cleanup.log": "c2849e0e15bb6ae980911971b18322ef9f495da55fa15ac5c46652eec32752a5",
+    "file_protection.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "zero_sequence.log": "b5f4dc60721bfc47aff5d3ed8fde73f71d6969ad4cacfe3b071fc240095d0acb",
+    "wrong_magic.log": "cad8699e6c3d4efd695d8504896031a920536ed6d1fd88458caabd02949d376b",
+    "zero_accuracy.log": "a348eb835c1c739ca2addc1b381d2aa764ba58b75767b3b003f0b2a3e5f0c871",
+    "vendorGnssAdapter.so": "2a28dcf6091461a85aec0191cdb8fee1b49692a3d45ad8683d0b4ee1a1917d7f",
+    "future_utc.log": "13217fe1ff535626a36b84b77180a4faf79a42e615ab7fe207c1d13b24004e47",
+    "fragmented.log": "2035908c7fe476cf9eb6ff618e05874d3748754bad6fb413ab705d76e8f68973",
+    "speed.log": "a3b19db4c910f083c8154587fe52ca451219dbe645caf06844dd886ac4501e0e",
+    "unknown_fields.log": "09fd10c5f45d7c7cd812f26105583421617494a454120fdd447ca51a7787d081",
+    "no_source.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stop_replay.log": "be7a94519576e98440b19d78f2cbcd57b99584af747b975ffe0e8b4db4689226",
+    "vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "partial.log": "5e632eaa00dc0291be51ae135eb14bd8f3a73df75c34d639e9cf21ab4d3af902",
+    "unauthorized.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "repeated_utc.log": "8af584d5d68974f8f122a4fe73d7d2912b0b16871fc39ef5f42f0d8af2385f51",
+    "config.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "latitude.log": "a1a58e2e453d5f1bfac78490363d39c5f3288c244cae46cee8bf05dc093d4efb",
+    "reserved.log": "6351b731f4bc39843664a25b8799924680afa2517d892427667dbd46e5d7b35f",
+    "loader.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "altitude.log": "e6b0e79a524ec691c4ed8f864adbdf4b61b0e3da922106ea22ea516ba0e82b59",
+    "repeated_sequence.log": "24abef643f3ca885f648e4b728875b6f03ffc714b866c6772b6667b45ff8e87d",
+    "vertical_accuracy.log": "8d476caf827c0d5b81c2b1c1028eb5e022c39d5b0e0510acf018ebcd4cb7cb68",
+    "backpressure_stop.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bearing.log": "e2b542e0e357266739d1e2aa58eb4782ea0551499fb35f9f4494ad2657ff7a9d",
+    "symlink_protection.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong_nonce.log": "61dc431c091c9df8d0a66c483f24795e11ef479e79f8b9f1b1f9ba20e08bf651",
+    "gnss_harness.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gnss_loader.dSYM/Contents/Resources/DWARF/gnss_loader": "f81a394b80f43ddaf812157c2ba4b1bce0e1077a4c795a94c124d8bccdd4c8bd",
+    "gnss_harness.dSYM/Contents/Resources/DWARF/gnss_harness": "645b8b08c7992447a1517fa6e0d788f00df3c5f23cc550a3d113ed4dbf172ca6",
+    "vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "7fd96dc8377880f309c0b84e382b305f308e70c6b4ff8d6a454e36a3cbb13eac"
+  }
+}

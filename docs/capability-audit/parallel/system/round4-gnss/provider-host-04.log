@@ -1,0 +1,102 @@
+abi_boundaries.log
+
+altitude.log
+altitude: pass
+
+backpressure_stop.log
+
+bearing.log
+bearing: pass
+
+callback_cleanup.log
+callback_cleanup: pass
+
+callback_stop.log
+callback_stop: pass
+
+config.log
+
+file_protection.log
+
+fragmented.log
+fragmented: pass
+
+future_utc.log
+future_utc: pass
+
+gnss_harness.compile.log
+
+gnss_loader.compile.log
+
+infinity.log
+infinity: pass
+
+latitude.log
+latitude: pass
+
+loader.log
+
+longitude.log
+longitude: pass
+
+nan.log
+nan: pass
+
+no_source.log
+
+optional.log
+optional: pass
+
+partial.log
+partial: pass
+
+reconnect_replay.log
+reconnect_replay: pass
+
+repeated_sequence.log
+repeated_sequence: pass
+
+repeated_utc.log
+repeated_utc: pass
+
+reserved.log
+reserved: pass
+
+speed.log
+speed: pass
+
+stale_utc.log
+stale_utc: pass
+
+stop_replay.log
+stop_replay: pass
+
+symlink_protection.log
+
+unauthorized.log
+
+unknown_fields.log
+unknown_fields: pass
+
+valid.log
+valid: pass
+
+vendorGnssAdapter.so.compile.log
+
+vertical_accuracy.log
+vertical_accuracy: pass
+
+wrong_magic.log
+wrong_magic: pass
+
+wrong_nonce.log
+wrong_nonce: pass
+
+wrong_version.log
+wrong_version: pass
+
+zero_accuracy.log
+zero_accuracy: pass
+
+zero_sequence.log
+zero_sequence: pass

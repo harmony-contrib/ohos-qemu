@@ -1,0 +1,57 @@
+READY
+=================================================================
+==9941==ERROR: AddressSanitizer: odr-violation (0x000107109440):
+  [1] size=16 'HostUnusedProductDevice' /private/tmp/system-gnss-bridge-host-04/after/configured_provider.cpp
+  [2] size=16 'HostUnusedProductDevice' /private/tmp/system-gnss-bridge-host-04/after/configured_provider.cpp
+These globals were registered at these points:
+  [1]:
+    #0 0x1050916a0 in __asan_register_globals+0x9c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x156a0)
+    #1 0x1050cf124 in __asan::AsanApplyToGlobals(void (*)(__asan_global*, unsigned long), void const*)+0x70 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x53124)
+    #2 0x1050915ec in __asan_register_image_globals+0x3c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x155ec)
+    #3 0x1070d10fc in asan.module_ctor+0x24 (vendorGnssAdapter.so:arm64+0x350fc)
+    #4 0x18b8abe8c  (<unknown module>)
+    #5 0x18b8ea4cc  (<unknown module>)
+    #6 0x18b8ddc34  (<unknown module>)
+    #7 0x18b8902d8  (<unknown module>)
+    #8 0x18b8dcbc8  (<unknown module>)
+    #9 0x18b8e9fe0  (<unknown module>)
+    #10 0x18b8abbb0  (<unknown module>)
+    #11 0x18b8b318c  (<unknown module>)
+    #12 0x18b8ac26c  (<unknown module>)
+    #13 0x18b8b055c  (<unknown module>)
+    #14 0x18b8ac45c  (<unknown module>)
+    #15 0x18b8c4898  (<unknown module>)
+    #16 0x1050bcd28 in dlopen+0x108 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x40d28)
+    #17 0x104bf99a4 in OHOS::HDI::Location::LocationVendorInterface::Init() location_vendor_interface.cpp:224
+    #18 0x104bf9704 in OHOS::HDI::Location::LocationVendorInterface::GetInstance() location_vendor_interface.cpp:207
+    #19 0x104c10414 in Enable() batch_system_gnss_bridge_harness.cpp:35
+    #20 0x104c11824 in main batch_system_gnss_bridge_harness.cpp:47
+    #21 0x18b894270  (<unknown module>)
+
+  [2]:
+    #0 0x1050916a0 in __asan_register_globals+0x9c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x156a0)
+    #1 0x1050cf124 in __asan::AsanApplyToGlobals(void (*)(__asan_global*, unsigned long), void const*)+0x70 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x53124)
+    #2 0x1050915ec in __asan_register_image_globals+0x3c (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x155ec)
+    #3 0x1070d10fc in asan.module_ctor+0x24 (vendorGnssAdapter.so:arm64+0x350fc)
+    #4 0x18b8abe8c  (<unknown module>)
+    #5 0x18b8ea4cc  (<unknown module>)
+    #6 0x18b8ddc34  (<unknown module>)
+    #7 0x18b8902d8  (<unknown module>)
+    #8 0x18b8dcbc8  (<unknown module>)
+    #9 0x18b8e9fe0  (<unknown module>)
+    #10 0x18b8abbb0  (<unknown module>)
+    #11 0x18b8b318c  (<unknown module>)
+    #12 0x18b8ac26c  (<unknown module>)
+    #13 0x18b8b055c  (<unknown module>)
+    #14 0x18b8ac45c  (<unknown module>)
+    #15 0x18b8c4898  (<unknown module>)
+    #16 0x1050bcd28 in dlopen+0x108 (libclang_rt.asan_osx_dynamic.dylib:arm64e+0x40d28)
+    #17 0x104bf99a4 in OHOS::HDI::Location::LocationVendorInterface::Init() location_vendor_interface.cpp:224
+    #18 0x104bf9704 in OHOS::HDI::Location::LocationVendorInterface::GetInstance() location_vendor_interface.cpp:207
+    #19 0x104c10414 in Enable() batch_system_gnss_bridge_harness.cpp:35
+    #20 0x104c11824 in main batch_system_gnss_bridge_harness.cpp:47
+    #21 0x18b894270  (<unknown module>)
+
+==9941==HINT: if you don't care about these errors you may set ASAN_OPTIONS=detect_odr_violation=0
+SUMMARY: AddressSanitizer: odr-violation: global 'HostUnusedProductDevice' at /private/tmp/system-gnss-bridge-host-04/after/configured_provider.cpp
+==9941==ABORTING

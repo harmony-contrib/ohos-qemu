@@ -1,0 +1,119 @@
+after/bad_device/execution.log
+
+after/bad_device/vendorGnssAdapter.so.compile.log
+
+after/bad_table/execution.log
+
+after/bad_table/vendorGnssAdapter.so.compile.log
+
+after/bridge_functions.compile.log
+
+after/bridge_harness.compile.log
+
+after/callback_cleanup/execution.log
+READY
+callback_cleanup: pass
+
+after/callback_cleanup/vendorGnssAdapter.so.compile.log
+
+after/external_cleanup/execution.log
+READY
+external_cleanup: pass
+
+after/external_cleanup/vendorGnssAdapter.so.compile.log
+
+after/function-cache.log
+cache: pass
+
+after/function-callback_reentry.log
+callback_reentry: pass
+
+after/function-callback_size.log
+callback_size: pass
+
+after/function-config_size.log
+config_size: pass
+
+after/function-interval.log
+interval: pass
+
+after/function-invalid_mode.log
+
+after/missing_symbol/execution.log
+
+after/missing_symbol/vendorGnssAdapter.so.compile.log
+
+after/repeated_cleanup/execution.log
+
+after/repeated_cleanup/vendorGnssAdapter.so.compile.log
+
+before/bad_device/execution.log
+bad_device: !table
+
+before/bad_device/vendorGnssAdapter.so.compile.log
+
+before/bad_table/execution.log
+bad_table: !table
+
+before/bad_table/vendorGnssAdapter.so.compile.log
+
+before/bridge_functions.compile.log
+
+before/bridge_harness.compile.log
+
+before/callback_cleanup/execution.log
+READY
+libc++abi: terminating due to uncaught exception of type std::runtime_error: !std::ifstream(std::getenv("GNSS_TEST_UNLOADED")).good()
+
+before/callback_cleanup/vendorGnssAdapter.so.compile.log
+
+before/external_cleanup/execution.log
+READY
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7048==ERROR: AddressSanitizer: SEGV on unknown address 0x000102760638 (pc 0x00010029bddc bp 0x00016fb6e580 sp 0x00016fb6d700 T0)
+==7048==The signal is caused by a READ memory access.
+    #0 0x10029bddc in main batch_system_gnss_bridge_harness.cpp:64
+    #1 0x18b894270  (<unknown module>)
+
+==7048==Register values:
+ x[0] = 0x000000702df8dbbe   x[1] = 0xf8f8f8f8f8f8f8f8   x[2] = 0xffffffffffffffc6   x[3] = 0x000000702df8dbc6
+ x[4] = 0x000000702df8dc00   x[5] = 0x0000000000001000   x[6] = 0x000000016f374000   x[7] = 0x0000000000000001
+ x[8] = 0x0000000102760620   x[9] = 0x0000000102760638  x[10] = 0x000000000000436f  x[11] = 0x00000fffffffffff
+x[12] = 0x0000000000000000  x[13] = 0xffffffffffffffff  x[14] = 0x0000000000000000  x[15] = 0x00007fffffffffff
+x[16] = 0x000000018bc4bae0  x[17] = 0x00000001007a05e0  x[18] = 0x0000000000000000  x[19] = 0x000000016fb6e0c0
+x[20] = 0x00000001f0a940a0  x[21] = 0x00000001f0a94050  x[22] = 0x000000016fb6e678  x[23] = 0x000000016fb6e678
+x[24] = 0x000000018b88e000  x[25] = 0x0000000000000000  x[26] = 0x0000000000000000  x[27] = 0x0000000000000000
+x[28] = 0x0000000000000000     fp = 0x000000016fb6e580     lr = 0x000000010029bbf0     sp = 0x000000016fb6d700
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV batch_system_gnss_bridge_harness.cpp:64 in main
+==7048==ABORTING
+
+before/external_cleanup/vendorGnssAdapter.so.compile.log
+
+before/function-cache.log
+cache: captured.size==sizeof(captured)&&captured.startCategory==2&&captured.u.gnssCacheConfig.size==sizeof(GnssCachingConfig)&&captured.u.gnssCacheConfig.interval==217&&captured.u.gnssCacheConfig.fifoFullNotify
+
+before/function-callback_reentry.log
+actual original callback holds g_mutex while reentrant callback requests the same mutex; bounded 2s timeout
+
+before/function-callback_size.log
+callback_size: cb.size==sizeof(cb)
+
+before/function-config_size.log
+config_size: captured.size==sizeof(captured)
+
+before/function-interval.log
+interval: captured.u.gnssBasicConfig.minInterval==1327
+
+before/function-invalid_mode.log
+invalid_mode: impl.SetGnssConfigPara(config)==HDF_ERR_INVALID_PARAM
+
+before/missing_symbol/execution.log
+missing_symbol: std::ifstream(std::getenv("GNSS_TEST_UNLOADED")).good()
+
+before/missing_symbol/vendorGnssAdapter.so.compile.log
+
+before/repeated_cleanup/execution.log
+
+before/repeated_cleanup/vendorGnssAdapter.so.compile.log

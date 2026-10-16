@@ -1,0 +1,639 @@
+{
+  "status": "pass_actual_loader_dso_lifecycle",
+  "cases": [
+    {
+      "state": "before",
+      "case": "actual_function_callback_size",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions",
+        "callback_size"
+      ],
+      "exit_code": 1
+    },
+    {
+      "state": "before",
+      "case": "actual_function_config_size",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions",
+        "config_size"
+      ],
+      "exit_code": 1
+    },
+    {
+      "state": "before",
+      "case": "actual_function_interval",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions",
+        "interval"
+      ],
+      "exit_code": 1
+    },
+    {
+      "state": "before",
+      "case": "actual_function_cache",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions",
+        "cache"
+      ],
+      "exit_code": 1
+    },
+    {
+      "state": "before",
+      "case": "actual_function_invalid_mode",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions",
+        "invalid_mode"
+      ],
+      "exit_code": 1
+    },
+    {
+      "state": "before",
+      "case": "actual_function_callback_reentry",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions",
+        "callback_reentry"
+      ],
+      "exit_code": 124
+    },
+    {
+      "state": "before",
+      "case": "missing_symbol",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness",
+        "missing_symbol"
+      ],
+      "exit_code": 1,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "before",
+      "case": "bad_device",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness",
+        "bad_device"
+      ],
+      "exit_code": 1,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "before",
+      "case": "bad_table",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness",
+        "bad_table"
+      ],
+      "exit_code": 1,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "before",
+      "case": "callback_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness",
+        "callback_cleanup"
+      ],
+      "exit_code": -6,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "before",
+      "case": "external_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness",
+        "external_cleanup"
+      ],
+      "exit_code": -6,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "before",
+      "case": "repeated_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness",
+        "repeated_cleanup"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "after",
+      "case": "actual_function_callback_size",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions",
+        "callback_size"
+      ],
+      "exit_code": 0
+    },
+    {
+      "state": "after",
+      "case": "actual_function_config_size",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions",
+        "config_size"
+      ],
+      "exit_code": 0
+    },
+    {
+      "state": "after",
+      "case": "actual_function_interval",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions",
+        "interval"
+      ],
+      "exit_code": 0
+    },
+    {
+      "state": "after",
+      "case": "actual_function_cache",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions",
+        "cache"
+      ],
+      "exit_code": 0
+    },
+    {
+      "state": "after",
+      "case": "actual_function_invalid_mode",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions",
+        "invalid_mode"
+      ],
+      "exit_code": 0
+    },
+    {
+      "state": "after",
+      "case": "actual_function_callback_reentry",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions",
+        "callback_reentry"
+      ],
+      "exit_code": 0
+    },
+    {
+      "state": "after",
+      "case": "missing_symbol",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness",
+        "missing_symbol"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "after",
+      "case": "bad_device",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness",
+        "bad_device"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "after",
+      "case": "bad_table",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness",
+        "bad_table"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "after",
+      "case": "callback_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness",
+        "callback_cleanup"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "after",
+      "case": "external_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness",
+        "external_cleanup"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    },
+    {
+      "state": "after",
+      "case": "repeated_cleanup",
+      "argv": [
+        "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness",
+        "repeated_cleanup"
+      ],
+      "exit_code": 0,
+      "unload_marker": "unloaded\n"
+    }
+  ],
+  "compile_commands": [
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bridge_harness.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/bridge_harness"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bridge_functions_harness.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/bridge_functions"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "-DBAD_GNSS_KIND=1",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/missing_symbol/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "-DBAD_GNSS_KIND=2",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/bad_device/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "-DBAD_GNSS_KIND=3",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/bad_table/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/private/tmp/system-gnss-bridge-host-03/before/configured_provider.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/callback_cleanup/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/private/tmp/system-gnss-bridge-host-03/before/configured_provider.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/external_cleanup/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/before/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/private/tmp/system-gnss-bridge-host-03/before/configured_provider.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/before/repeated_cleanup/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bridge_harness.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/bridge_harness"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bridge_functions_harness.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/bridge_functions"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "-DBAD_GNSS_KIND=1",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/missing_symbol/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "-DBAD_GNSS_KIND=2",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/bad_device/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "-DBAD_GNSS_KIND=3",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bad_dso.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/bad_table/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/private/tmp/system-gnss-bridge-host-03/after/configured_provider.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/callback_cleanup/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/private/tmp/system-gnss-bridge-host-03/after/configured_provider.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/external_cleanup/vendorGnssAdapter.so"
+    ],
+    [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-pthread",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "-I/private/tmp/system-gnss-bridge-host-03/after/drivers/peripheral/location/gnss/hdi_service",
+      "-I/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files",
+      "-shared",
+      "-fPIC",
+      "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/patches/common/device/qemu/external_gnss/files/qemu_gnss_input.cpp",
+      "/private/tmp/system-gnss-bridge-host-03/after/configured_provider.cpp",
+      "-o",
+      "/private/tmp/system-gnss-bridge-host-03/after/repeated_cleanup/vendorGnssAdapter.so"
+    ]
+  ],
+  "fixture": {
+    "project": "drivers/peripheral",
+    "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "files": [
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/location_vendor_lib.h",
+        "sha256": "f0df806ff59b5cad6a793a25191b36f546e77c72afb638681fbe1261e39035b5",
+        "fixture": "location_vendor_lib.h.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp",
+        "sha256": "6221743ea6d708bb4bffa7a50d383486c60f8083335935094348af7583f237b8",
+        "fixture": "location_vendor_interface.cpp.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp",
+        "sha256": "496452bb22b609bcd2e078d4fc32afd57f3c609eb08c68537e92da4fcb1eb031",
+        "fixture": "gnss_interface_impl.cpp.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/BUILD.gn",
+        "sha256": "223f29a68d3ea320f10a9a41dd0a7fd2d942576395e5f174886bf4fde0471e1e",
+        "fixture": "BUILD.gn.gz.b64"
+      },
+      {
+        "path": "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h",
+        "sha256": "001eef3dddc760a25dd0386e55cafdfb8aad8da27c41d3d6bba18e68a52c42f8",
+        "fixture": "location_vendor_interface.h.gz.b64"
+      }
+    ]
+  },
+  "requirements_closed": 0,
+  "runtime_tested": false,
+  "limitations": "Actual complete upstream loader source/header and true dlopen/dlsym/dlclose against actual shipped Provider class/socket transport. Test DSO factory explicitly configures host UID/path; production export remains pinned UID0. Only irrelevant HDF logging includes are shimmed. Full GNSS remote HDI TU/business/CFI/official ARM64/new package remain pending.",
+  "evidence_file_sha256": {
+    "before/function-callback_reentry.log": "fe64a48aed142132c75d1dcd418e842865c19eec5a21fe85f11c252c50732cef",
+    "before/bridge_functions.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/function-cache.log": "2b2dedc0bf5116f385a3c99b3050843e98b1f97fa0d12ae8f9fdaac6c16fad3d",
+    "before/bridge_functions": "0aa6785a9647ba6293c03b3d2c5b9c15662cfaf1ed65ea48dd24219629b224cd",
+    "before/bridge_harness.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/function-invalid_mode.log": "55002ee07d448d4c40748d3eaffd315313e880ed81e2858beefebb19624defeb",
+    "before/bridge_harness": "c1ebd4dfed9606e17a766d8819abcb80a16a7329ea9ae39fc3b51a5a6d167f79",
+    "before/function-interval.log": "c8a639af2cde65c1d0a3d003702aaad6e0e2543d0b1483e956b1246991d4b5b4",
+    "before/function-callback_size.log": "9f09a4fcc25777d07d88db078eac16f26f2ff1d8cac462964e97ff2a68e0ceda",
+    "before/function-config_size.log": "f4e7bd6b1614afcaa621756b9c87a7aaf626d87a40b1858199d71e552efa317a",
+    "after/function-callback_reentry.log": "a01c92dec764cec1e4812955aa7a97a2d8b5accc419a8e86493423cf2a6b13c6",
+    "after/bridge_functions.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/function-cache.log": "bde1daea6df5b10752009dc8d86a9d6156a40df9d41dd286be3cf8ba1b7b1cb5",
+    "after/bridge_functions": "b85d62bd2d8ffb116fb9305276dab9b8af8d830c0c81f9c670072c6a0a0160db",
+    "after/bridge_harness.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/function-invalid_mode.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/bridge_harness": "89b54434b90cbcaa80ddfc53a8440157a100395e5583e9fe3c8ef1b7916b64cd",
+    "after/function-interval.log": "98e28c1694e2ab63a47ab50db55f4af8a8a231f0b375b3c5321f6a3ced44ec94",
+    "after/function-callback_size.log": "6943c11ba35b711128caf55a850d2e60df2045c340a8074c1e99b0e7598adb46",
+    "after/function-config_size.log": "7e151f0937c4402d29584709bc50716135eb8b6814939ec29ca0a5fa434832de",
+    "after/missing_symbol/vendorGnssAdapter.so": "28e21b9e7f15054e90943796a2f196dfa19e726fb7a395e35cec7a1cd7e5bede",
+    "after/missing_symbol/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/missing_symbol/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/bad_table/vendorGnssAdapter.so": "52c3bbfa70705a7163063e171af6e814f9a5f5521e6c36b86aca19993a33ea5c",
+    "after/bad_table/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/bad_table/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/external_cleanup/vendorGnssAdapter.so": "cb508a8b37ea45ac75964ec38499c49ffb1ebec6491be153fb4268b15a8ae5a8",
+    "after/external_cleanup/execution.log": "dee928886152db7b4eb0b8592df01c1a45d2ee4e27b125afae81e17e9fc33b64",
+    "after/external_cleanup/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/callback_cleanup/vendorGnssAdapter.so": "2cf5cb89a29b1d443bc99e7e5a35f558563ef86cc70b3d70a454680b634eb145",
+    "after/callback_cleanup/execution.log": "199c36d10259902ca73ec233c49a768a5861a244c18741eda242c1edc3b202d3",
+    "after/callback_cleanup/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/repeated_cleanup/vendorGnssAdapter.so": "0cd9bed1f93bd9f905d1d69f6825773759d9d2a347afd66294e4a071b7f8ee9a",
+    "after/repeated_cleanup/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/repeated_cleanup/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/bad_device/vendorGnssAdapter.so": "68ae67944e0788abd0b7b974074ce7edf57a9a9a1cf492c96a306693a7895247",
+    "after/bad_device/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/bad_device/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after/bridge_functions.dSYM/Contents/Resources/DWARF/bridge_functions": "71f56520f31bbb26b38da9751fc19f2f83309d0831a03efea53f279ea4514d3b",
+    "after/bad_device/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "4eb83290742ad35cbf1f809efbde513d67e877091b057eb50ef47cbe08397fc2",
+    "after/repeated_cleanup/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "991c239cf364ed3db9186c75664d4104e100f9f0ee2d1e723d40d3efc22f87de",
+    "after/bridge_harness.dSYM/Contents/Resources/DWARF/bridge_harness": "9836f5966218d933c03c959bb06a39fe68f54d3bb17644e18b4960c2d88fc44e",
+    "after/callback_cleanup/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "31ef63c9e475f89586d05e3b6164491ec75d11a36d8a874bf8f8f537ee83b8c2",
+    "after/external_cleanup/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "f22c7f1227c9ec8c61e040a6d7c8cf3e0cc1a4c5efedc49bb49c16d59b71d6c3",
+    "after/bad_table/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "922f5dfff632a7406e35bae6dfca1f17c6e7909ee7bca153dc092f85a3d9a658",
+    "after/missing_symbol/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "9f266eb4c755560f18022decf0263e60c44a4c3cba6fe4d5f24c53fc3a8cf98d",
+    "after/drivers/peripheral/location/gnss/hdi_service/actual_bridge_functions.inc": "8ad48241108851143341b4d3ab81da5bf04a6449dfae31f1c689636e153972f5",
+    "before/missing_symbol/vendorGnssAdapter.so": "4e5bbab70139fb2b65e65e47a8a1e310172711623754ab9a16ebfe95471d1945",
+    "before/missing_symbol/execution.log": "fcc585e6526c5eed20aa0ede81141002a1ec89362115444609776634d2adb2be",
+    "before/missing_symbol/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/bad_table/vendorGnssAdapter.so": "05f07a96de0e32eb1eaf1eefbb7477d673137b6c7b244f873c53cefc8d10d3b5",
+    "before/bad_table/execution.log": "7a1fc4400d50700ab53d9a98f550471ef0867e626c57313a6d2b19280cc367cb",
+    "before/bad_table/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/external_cleanup/vendorGnssAdapter.so": "b17b3897459b349694209205b267e14730e34a25889f7a1d8f2ad58dfd48d6e8",
+    "before/external_cleanup/execution.log": "ae16febad9add40dac860c12e6399d91d53e7cb02c606d45c2016b86625cbf9a",
+    "before/external_cleanup/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/callback_cleanup/vendorGnssAdapter.so": "5ce5239f8a80e837d8b25811f4162a885ebb80c9c0d4de725245c009d78d179c",
+    "before/callback_cleanup/execution.log": "090fd8d5e9f82203f00a7ce12389f2d36e0391de6eb21afbb42b9c03c2462a4b",
+    "before/callback_cleanup/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/repeated_cleanup/vendorGnssAdapter.so": "5b4b23f854c5004dd5e0c48691e3f2fff6e2430367b337d0523a4c71804585a1",
+    "before/repeated_cleanup/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/repeated_cleanup/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/bad_device/vendorGnssAdapter.so": "9ad865cfe99ccc659df52182c95677cd635aa3d73a262f30cd42909292bb5b3a",
+    "before/bad_device/execution.log": "b4a974cda56b748b04508761336ac0ee294ef774516ed39926effb770c24deda",
+    "before/bad_device/vendorGnssAdapter.so.compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before/bridge_functions.dSYM/Contents/Resources/DWARF/bridge_functions": "69c7c5116f243506a77ed805337c7ca6ec13a0d7cb0180dcbcbead7a8d27c787",
+    "before/bad_device/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "ba342de9e15f9a793dc228976bd3b962d823919bebe7167ed2b993d0de2f2654",
+    "before/repeated_cleanup/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "498604ed927936b189f8041a819933aa9f937835d174ccd55ca5549d7aa92582",
+    "before/bridge_harness.dSYM/Contents/Resources/DWARF/bridge_harness": "e0618d07682b517aea270fc076ce30814ffd27778e63256bf802fc836db33b81",
+    "before/callback_cleanup/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "37585dbd7d9a4f987f762ec758c2ab7d16428d8d2b30518df236961e7dfcecab",
+    "before/external_cleanup/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "d5edd41c6d282d53a23611d4f64827a1e07287f941b91a79a493b82ab1d9d21e",
+    "before/bad_table/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "3f9f50310e580e2c00d4903047012063e84a78791d11326e87791338e2a7c722",
+    "before/missing_symbol/vendorGnssAdapter.so.dSYM/Contents/Resources/DWARF/vendorGnssAdapter.so": "10891f1e8f498d73b8ddfb341c43aa8d3b8ca675dd8fc30206359c7f993f91d1",
+    "before/drivers/peripheral/location/gnss/hdi_service/actual_bridge_functions.inc": "d0e947f2c005bac66bcabaa2e4700442e45814f87a69e7d814dac4fae8eee1e4"
+  }
+}
