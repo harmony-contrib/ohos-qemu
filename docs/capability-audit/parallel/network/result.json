@@ -3,7 +3,7 @@
   "date": "2026-10-16",
   "base_commit": "2aa40c0cdaa9710c9d330814211f10c686ddd431",
   "branch": "codex/capability-network-20261015",
-  "summary": "VPN callback origin/listener epochs remove synchronous reentry locks and bind real owner/account/connection instance; 24 related host tests pass (1 Linux-only skip). Full real platform/native FFRT/new-package acceptance remains pending; all 9 gaps remain OPEN.",
+  "summary": "Exact native helper compilation unblock: omit five unused parameter names in pre-existing empty callback overrides, preserving signatures/ABI/behavior and Werror. Two host regressions pass; parent helpers02 and native/package acceptance remain pending, all 9 gaps OPEN.",
   "fixed_source": {
     "container": "ohos-qemu-parallel-source-20261016-02",
     "root": "/ohos",
@@ -58,6 +58,7 @@
     "foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c",
     "foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn",
     "foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp",
+    "foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/management_protocol.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/negotiated_config.h",
     "foundation/communication/netmanager_ext/qemu_openvpn/process_lifecycle.h",
@@ -116,6 +117,12 @@
       "command": "LC_ALL=C LC_CTYPE=C LANG=C /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python ci/capability-audit/batch_network_emit_vpn_callback_native.py --output .network-scratch/vpn-callback-native.cpp",
       "result": "Emitted a separate actual-function C++ probe using real FFRT API and a bounded future-based runtime check. Host generator regression passed. The probe has not been SDK-compiled or executed by this agent.",
       "evidence": "docs/capability-audit/parallel/network/vpn-callback-native-emission-20261016.txt"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_vpn_client_warnings -v",
+      "result": "PASS 2 tests. Actual original class fails with unused-parameter under -Wall -Wextra -Werror; actual repaired class compiles/runs with ASan/UBSan and exact virtual-signature static assertions. Complete ancestor/callback/warning stack remains idempotent; unknown source rejects.",
+      "evidence": "docs/capability-audit/parallel/network/vpn-client-warning-host-tests-20261016.txt",
+      "limits": "Parent product helpers02 remains necessary; no build/QEMU/HDC run started here."
     }
   ],
   "integration_requests": [
@@ -156,7 +163,8 @@
     "Bluetooth remaining product dependencies: real vendor/HDI transport/controller plus OOB-capable peer, virtual identifier mapping, LE legacy TK data contract, local controller OOB generation and optional randomizer semantics; current unsupported cases return real 801. Parent owns controller/launcher/init/shared build integration.",
     "Apply netmanager_ext/vpn_callback_dispatch after openvpn_session; compile full real NetworkVpnService TU with matching changed header and generated IPC. Scope is only networkvpn_service.h/cpp, plus exact ancestor guard adjustment; no shared scripts modified.",
     "Emit native FFRT probe with ci/capability-audit/batch_network_emit_vpn_callback_native.py --output PRIVATE_DIR/vpn-callback-native.cpp; compile with real target ABI and FFRT kits headers, link actual libffrt and run with a bounded timeout. Verify getter/register/unregister reentry, old listener/owner/account epochs, Stop/Restart and pending-worker destruction on actual FFRT. Other account/IPC/backend objects remain explicit doubles; additionally test actual service IPC/caller lifecycle in the first new package.",
-    "Actual product verification must include callback on/off after service restart, failed subscription/remote callback errors in Dump, callback death from a different owner/process, account switch round-trip and current getter state after real TLS/TUN transitions. Delivery errors never count as fake backend CONNECTED or completed acceptance."
+    "Actual product verification must include callback on/off after service restart, failed subscription/remote callback errors in Dump, callback death from a different owner/process, account switch round-trip and current getter state after real TLS/TUN transitions. Delivery errors never count as fake backend CONNECTED or completed acceptance.",
+    "Apply netmanager_ext/netvpn_callback_unused after always_on_vpn (full final stack includes vpn_callback_dispatch); it changes only networkvpn_client.h parameter names. Rerun supervisor/tun helpers02 with unchanged -Wall -Wextra -Werror. Parent helpers01 failure evidence: /Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-openvpn-current-helpers-TU-link-01/artifacts/helpers/*-compile.log."
   ],
   "requirements_review": {
     "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand": {
@@ -410,6 +418,7 @@
     "ci/capability-audit/test_batch_network_openvpn_session.py",
     "ci/capability-audit/test_batch_network_session_contract.py",
     "ci/capability-audit/test_batch_network_vpn_callbacks.py",
+    "ci/capability-audit/test_batch_network_vpn_client_warnings.py",
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt",
@@ -418,6 +427,7 @@
     "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/vpn-callback-native-emission-20261016.txt",
+    "docs/capability-audit/parallel/network/vpn-client-warning-host-tests-20261016.txt",
     "patches/common/foundation/communication/bluetooth/api26_oob_pairing/0001-bind-api26-device-target-and-oob-promise.patch",
     "patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md",
     "patches/common/foundation/communication/bluetooth/api26_oob_pairing/apply.sh",
@@ -436,6 +446,10 @@
     "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/verify_source.py",
     "patches/common/foundation/communication/netmanager_ext/always_on_vpn/verify_source.py",
     "patches/common/foundation/communication/netmanager_ext/connected_vpn_nullable/verify_source.py",
+    "patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused/0001-omit-unused-parameter-names-in-empty-callbacks.patch",
+    "patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused/README.md",
+    "patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused/apply.sh",
+    "patches/common/foundation/communication/netmanager_ext/netvpn_callback_unused/verify_source.py",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/README.md",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/management_protocol.h",
     "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/negotiated_config.h",
@@ -459,7 +473,7 @@
     "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "da501e92c628e60756e8869170033edf555f6da7",
+  "round_base_commit": "c34f4d61fda7eae54ded475e4e4cab38c48df539",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
