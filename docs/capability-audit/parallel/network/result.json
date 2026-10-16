@@ -153,6 +153,13 @@
       },
       "evidence": "docs/capability-audit/parallel/network/vpn-broker-native-emission-20261016.txt",
       "limits": "Native probes are not product binaries; real target compilation/FFRT execution and actual service/guest IPC remain parent work."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit /Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python -m unittest test_batch_network_bluetooth_oob test_batch_network_bluetooth_service test_batch_network_vpn_broker -v",
+      "environment": "macOS arm64; Apple clang 16.0.0; -Wall -Wextra -Werror, ASan/UBSan unchanged",
+      "result": "PASS: 13 collected, 11 passed, 2 actual Linux-only broker process tests skipped. Only four fixture control-flow blocks received braces; all assertions and runtime behavior unchanged.",
+      "evidence": "docs/capability-audit/parallel/network/fixture-indentation-host-tests-20261016.txt",
+      "limits": "This run does not prove GCC warning elimination or Linux subreaper/PDEATHSIG execution. Parent will rerun with CXX=/usr/bin/g++ CC=/usr/bin/gcc. No Docker, SDK, QEMU/HDC, product source or shared CFG/GN/policy changes."
     }
   ],
   "integration_requests": [
@@ -462,6 +469,7 @@
     "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-oob-validation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt",
+    "docs/capability-audit/parallel/network/fixture-indentation-host-tests-20261016.txt",
     "docs/capability-audit/parallel/network/host-tests.txt",
     "docs/capability-audit/parallel/network/result.json",
     "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
@@ -526,7 +534,7 @@
     "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/verify_source.py",
     "patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch"
   ],
-  "round_base_commit": "87e106fce6145751c52930991a8206ab07367abe",
+  "round_base_commit": "a5e9fc5022d2417f4f072325ab3b476fde6ece38",
   "external_upstream_files": {
     "OpenVPN dc1f569087135894ac2703aeabd7a960ee9452d4": [
       "configure.ac",
@@ -557,6 +565,10 @@
     {
       "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-vpn-callback-real-FFRT-01/artifacts/evidence.json",
       "scope": "Previous actual callback function probe used real target FFRT PASS. Current broker callback/health probe source needs fresh target proof."
+    },
+    {
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-broker-complete-Linux-host-02/artifacts/parsed-evidence.json",
+      "scope": "Preceding a5e9fc5: actual Linux collected all 41 without skips, 34 passed; four fixture compiles failed under GCC misleading-indentation and three tests lacked CC=.../gcc. This round only fixes the four reported fixture blocks; parent owns rerun and launcher evidence formatting."
     }
   ],
   "broker_contract": {
@@ -598,5 +610,17 @@
     ],
     "new_public_ipc": false,
     "fake_connection_entrypoint": false
+  },
+  "latest_round": {
+    "scope": "Four C++ test-fixture control-flow blocks made explicit for GCC -Werror=misleading-indentation. No assertion, runtime logic, compiler/sanitizer flag or product source changed.",
+    "upstream_targets": [],
+    "changed_files": [
+      "ci/capability-audit/test_batch_network_bluetooth_oob.py",
+      "ci/capability-audit/test_batch_network_bluetooth_service.py",
+      "ci/capability-audit/test_batch_network_vpn_broker.py",
+      "docs/capability-audit/parallel/network/fixture-indentation-host-tests-20261016.txt",
+      "docs/capability-audit/parallel/network/result.json"
+    ],
+    "acceptance": "Parent must repeat actual Linux tests with CXX=/usr/bin/g++ and CC=/usr/bin/gcc. macOS cannot supply Linux subreaper/PDEATHSIG runtime proof. All 9 requirements remain open."
   }
 }

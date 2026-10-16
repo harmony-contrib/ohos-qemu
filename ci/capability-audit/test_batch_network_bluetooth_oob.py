@@ -83,7 +83,10 @@ struct Work {std::function<NapiAsyncWorkRet()> execute;Value promise;bool queued
 std::vector<std::shared_ptr<Work>> works;
 struct NapiAsyncWorkFactory {
  template<class F>static std::shared_ptr<Work> CreateAsyncWork(napi_env,napi_callback_info,F run,int,std::shared_ptr<NapiHaEventUtils>){
-  if(failFactory)return nullptr;auto work=std::make_shared<Work>();work->execute=run;works.push_back(work);return work;
+  if(failFactory){
+   return nullptr;
+  }
+  auto work=std::make_shared<Work>();work->execute=run;works.push_back(work);return work;
  }
 };
 '''
