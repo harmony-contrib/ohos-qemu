@@ -3367,6 +3367,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_external_sensor_component.log"
   bash "${PATCH_ROOT}/common/base/msdp/device_status/sensor_input/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_msdp_real_sensor_input_component.log"
+  bash "${PATCH_ROOT}/common/base/msdp/device_status/public_still/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_msdp_public_still_component.log"
   if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
     python3 "${SCRIPT_DIR}/prepare_qemu_sensor_runtime.py" --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_sensor_runtime.log"

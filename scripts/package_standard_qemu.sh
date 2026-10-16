@@ -3141,6 +3141,9 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
       --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \
       --write-provenance "${PACKAGE_DIR}/runtime-assets-source" \
       --output "${PACKAGE_DIR}/runtime-assets-image-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_qemu_msdp_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \
+      --write-provenance "${PACKAGE_DIR}/msdp-source" --output "${PACKAGE_DIR}/msdp-image-evidence.json"
     python3 "${SCRIPT_DIR}/verify_qemu_gnss_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --vendor-image "${IMAGES_OUT}/vendor.img" \
       --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \

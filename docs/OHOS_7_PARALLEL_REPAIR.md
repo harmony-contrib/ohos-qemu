@@ -377,3 +377,7 @@ the next batch. No new guest acceptance or audit closure is claimed.
 2026-10-16 23:55 +0800：当前 336512f 源码的 Theme SDK04 手机／平板完整 HAP 均通过，Settings SDK06 新壁纸设置页完整 HAP 通过。独立读取实际 Settings HAP 验证 44 个扩展、3 ABI 的 6 个 ELF、源码权限列表及唯一 SET_WALLPAPER 均通过。便携证据见 core/round2/Theme-SDK04-result.json、Settings-SDK06-result.json、Settings-SDK06-actual-HAP-contract.json。
 
 根接通 Contacts 三组源码补丁、Theme 五组源码补丁及共享 HAP 图，设备分别选择单一真实 Wallpaper 模块；增加真实源码 profile 重签与镜像检查。原 Contacts profile 叶指纹为 D5F3BA…400E4，原 Contacts 安装策略 pin 为 04AC9C…5EA04；原 Wallpaper profile 已使用 OS 叶 8E9386…024B5，但有效期过期。分别固定原始完整 profile 哈希和各自叶，保留原 APL/ACL/权限/系统应用身份，仅替换 OS 叶与有限有效期；Contacts 现存授权策略只更新 pin。Wallpaper 原 removable=true 必须保留，不能套用其他应用 false。初次新单测因错误假设两 profile 同为 04AC 而拒绝，已据真实 CMS 修正；12 项 profile/策略/六层图重放/实际 ext4 选择回归现均通过。真实签名／新整机启动尚未完成，计数仍为 199/281，首包 gate=false，0/6 验收。
+
+2026-10-17 00:15 +0800：Contacts/Theme real OS signing01 完成：3 个源码HAP真实签名，手机与平板私有ext4正例通过，11个反例均拒绝，共13case。固定profile原APL/ACL/已有授权不变，证据完整归档 core/round2/Contacts-Theme-real-OS-signing-and-policy-01；尚不是新产品镜像/BMS/UI。普通Contacts调用方真实SDK01在启动窗口schema处失败，缺startWindowIcon与startWindowBackground，日志保留；已集成ec51d1a补齐真实资源，尚待后续实际编译。
+
+MSDP public_still源码批 scope PASS，集成 b8a2087：原14文件独占、无新核销。host01两编译失败已留证；host02两次GNU ASan/UBSan编译及12场景通过。根发现旧sensor_input在新public_still状态重放会误拒绝，已仅接受完整14文件精确后继并验证其余旧状态；包含原子回滚/未知改动/软链的15回归通过，普通Contacts/Wallpaper工具合批29检查通过。增加MSDP强制新源码/GN/两真实DSO与镜像绑定；这项护栏的元数据拒绝测试明确使用合成字节，不能当ELF/运行证据。准备实际完整平台TU与真实调用方SDK合批，首包gate仍false、0/6。

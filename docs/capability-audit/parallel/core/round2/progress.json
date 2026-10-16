@@ -1393,5 +1393,8 @@
   ],
   "Contacts_Theme_current_SDK": "Contacts SDK02 + Theme SDK04 phone/pad complete real API26 product builds PASS; unsigned only",
   "Settings_current_SDK": "SDK06 wallpaper UI full HAP PASS; actual 44 extensions, 6 ELF, exact permissions SET_WALLPAPER once PASS; signing/BMS/pixels pending",
-  "Contacts_Theme_signing_wiring": "source GN+exact profiles+typed original installs+mandatory image guard implemented; 12 host tests PASS; real OS signing ext4 pending"
+  "Contacts_Theme_signing_wiring": "source GN+exact profiles+typed original installs+mandatory image guard implemented; 12 host tests PASS; real OS signing ext4 pending",
+  "Contacts_Theme_real_OS_signing": "01 PASS 3 signed sourceHAP +13 privateext4 cases; source grant/APL preserved NOT BMS/runtime",
+  "MSDP_public_still": "b8a2087 integrated; host01 two compilerfail preserved; host02 GNU ASan/UBSan two compiles and12casesPASS; root composition15 checksPASS; real16platformTUs/GN/link/guest pending",
+  "runtime_tools": "ordinary Contacts and challenged Wallpaper tools integrated; caller SDK01 startup-schema fail fixed ec51d1a, next actualSDK pending; actualguestNOTexecuted"
 }

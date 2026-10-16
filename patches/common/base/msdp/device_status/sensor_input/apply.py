@@ -2,6 +2,7 @@
 """Install only exact fixed sources and exact new files, with rollback on failure."""
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -48,12 +49,26 @@ def validate(root, manifest, require_patched=False, revision=True):
         actual = subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip()
         if actual != manifest['revision']:
             raise ValueError('fixed upstream revision required')
+    # Replays may encounter the complete later public-still component. Accept
+    # that exact fourteen-file state, never just one changed overlapping file.
+    successor = COMPONENT.parent / 'public_still/apply.py'
+    overrides = {}
+    if successor.is_file():
+        spec = importlib.util.spec_from_file_location('msdp_public_still_successor', successor)
+        guard = importlib.util.module_from_spec(spec);spec.loader.exec_module(guard)
+        later, _ = guard.load_manifest()
+        complete = (later['project'] == manifest['project'] and later['revision'] == manifest['revision'] and
+                    all(safe_path(root, name).is_file() and sha(safe_path(root, name).read_bytes()) == row['after']
+                        for name, row in later['originals'].items()))
+        if complete:
+            guard.validate(root, later, require_patched=True, revision=revision)
+            overrides = {name: row['after'] for name, row in later['originals'].items()}
     states = set()
     for relative, row in manifest['originals'].items():
         value = sha(safe_path(root, relative).read_bytes())
         if value == row['before']:
             states.add(0)
-        elif value == row['after']:
+        elif value == overrides.get(relative, row['after']):
             states.add(1)
         else:
             raise ValueError('unknown source bytes; preserving edits: ' + relative)

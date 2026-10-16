@@ -223,6 +223,12 @@ PY
     echo "FAIL: packaged Sensor VDI or trusted calendar assets differ from the current source" >&2
     FAIL=1
   fi
+  if ! python3 "${SCRIPT_DIR}/verify_qemu_msdp_image.py" \
+    --system-image "${PACKAGE}/images/system.img" --product "${MANIFEST_PRODUCT}" \
+    --packaged-provenance "${PACKAGE}/msdp-source"; then
+    echo "FAIL: packaged MSDP source, GN, features or DSOs differ" >&2
+    FAIL=1
+  fi
   if ! python3 "${SCRIPT_DIR}/verify_qemu_gnss_image.py" \
     --system-image "${PACKAGE}/images/system.img" --vendor-image "${PACKAGE}/images/vendor.img" \
     --product "${MANIFEST_PRODUCT}" --packaged-provenance "${PACKAGE}/gnss-source"; then

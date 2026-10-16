@@ -1,0 +1,164 @@
+{
+  "status": "pass",
+  "scope": "actual source signed Contacts/Wallpaper image policy ONLY",
+  "first_artifact_behavior_gate_passed": false,
+  "provider_runtime_validated": false,
+  "device": "phone",
+  "failures": [],
+  "providers": {
+    "contacts": {
+      "bundle": "com.ohos.contacts",
+      "hap_sha256": "3263658bcd5daeef6bb7c186cc893eeff8d4ddf06da6744c44b12439e519ed08",
+      "compiled_abc_bytes": 5964732,
+      "module": "entry",
+      "permissions": [
+        "ohos.permission.ACCESS_CAR_DISTRIBUTED_ENGINE",
+        "ohos.permission.VIBRATE",
+        "ohos.permission.READ_CONTACTS",
+        "ohos.permission.WRITE_CONTACTS",
+        "ohos.permission.READ_CALL_LOG",
+        "ohos.permission.WRITE_CALL_LOG",
+        "ohos.permission.PLACE_CALL",
+        "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "ohos.permission.CONNECT_IME_ABILITY",
+        "ohos.permission.GET_TELEPHONY_STATE",
+        "ohos.permission.NOTIFICATION_CONTROLLER",
+        "ohos.permission.START_ABILITIES_FROM_BACKGROUND",
+        "ohos.permission.GET_NETWORK_INFO",
+        "ohos.permission.SET_TELEPHONY_STATE",
+        "ohos.permission.SET_NETWORK_INFO",
+        "ohos.permission.INTERNET",
+        "ohos.permission.READ_CLOUD_SYNC_CONFIG",
+        "ohos.permission.GET_BUNDLE_INFO",
+        "ohos.permission.START_SYSTEM_DIALOG",
+        "ohos.permission.PERMISSION_USED_STATS",
+        "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
+        "ohos.permission.GET_BUNDLE_RESOURCES",
+        "ohos.permission.sec.ACCESS_UDID",
+        "ohos.permission.ACCESS_SEARCH_SERVICE",
+        "ohos.permission.LAUNCH_DATA_PRIVACY_CENTER",
+        "ohos.permission.SECURE_PASTE",
+        "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
+        "ohos.permission.WRITE_RINGTONE",
+        "ohos.permission.MANAGE_SECURE_SETTINGS",
+        "ohos.permission.CALLED_BELOW_LOCK_SCREEN",
+        "ohos.permission.ACCESS_LEARN_MORE_DIALOG",
+        "ohos.permission.ACCESS_BIOMETRIC",
+        "ohos.permission.READ_APP_LOCK",
+        "ohos.permission.WRITE_APP_LOCK",
+        "ohos.permission.ACCESS_USER_AUTH_INTERNAL",
+        "ohos.permission.MANAGE_INTELLIGENT_VOICE",
+        "ohos.permission.ACCESS_HIVIEWCARE",
+        "ohos.permission.GET_TELEPHONY_ESIM_STATE"
+      ],
+      "extension_abilities": [
+        "ShortcutCardAbility",
+        "SpeedDialCardAbility",
+        "MissedCallCardAbility",
+        "FormEditExtensionAbility",
+        "Subscriber",
+        "EntryFormAbility",
+        "ContactUiExtentionAbility",
+        "InterceptionCallsExtAbility",
+        "SyncContactsExtAbility",
+        "CardDialogServiceExtAbility",
+        "ContactWorkSchedulerExtensionAbility",
+        "BackupLogWorkSchedulerExtensionAbility",
+        "PrivacyAbility",
+        "BackupExtensionAbility"
+      ],
+      "image_path": "/app/com.ohos.contacts/Contacts.hap",
+      "image_inode": 14,
+      "image_path_aliases": [
+        "/app/com.ohos.contacts/Contacts.hap"
+      ],
+      "install_selection": {
+        "entry": {
+          "app_dir": "/system/app/com.ohos.contacts",
+          "removable": false
+        },
+        "source_sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+        "source_uninstall_sha256": "1d2c69e6abeeaa1e9648bed76fba1cad730f440319f7f5cd818db164b3f06238",
+        "image_path": "/etc/app/install_list.json",
+        "image_inode": 19,
+        "image_path_aliases": [
+          "/etc/app/install_list.json"
+        ],
+        "image_file_sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+        "uninstall_policy": {
+          "image_path": "/etc/app/uninstall_list.json",
+          "image_inode": 22,
+          "image_path_aliases": [
+            "/etc/app/uninstall_list.json"
+          ],
+          "image_file_sha256": "1d2c69e6abeeaa1e9648bed76fba1cad730f440319f7f5cd818db164b3f06238"
+        }
+      },
+      "application_signer_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5",
+      "embedded_profile_sha256": "8314ddbe1f6a2675442a4c119df0b7a0ab851c315babd8192bc73a79a9c035dc",
+      "digest_codesign_permission_verification": "pass"
+    },
+    "theme": {
+      "bundle": "com.ohos.wallpaper",
+      "hap_sha256": "f4f533d17c8a7e6375bd1b89452666163d281b18065e16beebbb3226b981f518",
+      "compiled_abc_bytes": 8388,
+      "module": "phone_wallpaper",
+      "permissions": [
+        "ohos.permission.GET_WALLPAPER",
+        "ohos.permission.READ_USER_STORAGE"
+      ],
+      "extension_abilities": [
+        "WallpaperExtAbility"
+      ],
+      "image_path": "/app/com.ohos.wallpaper/Wallpaper.hap",
+      "image_inode": 16,
+      "image_path_aliases": [
+        "/app/com.ohos.wallpaper/Wallpaper.hap"
+      ],
+      "install_selection": {
+        "entry": {
+          "app_dir": "/system/app/com.ohos.wallpaper",
+          "removable": true
+        },
+        "source_sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+        "source_uninstall_sha256": "1d2c69e6abeeaa1e9648bed76fba1cad730f440319f7f5cd818db164b3f06238",
+        "image_path": "/etc/app/install_list.json",
+        "image_inode": 19,
+        "image_path_aliases": [
+          "/etc/app/install_list.json"
+        ],
+        "image_file_sha256": "b3c23ff2133586df1dfbd6865b9e7e848c1d10ea3ae9de9aec1d76e5bfee097d",
+        "uninstall_policy": {
+          "image_path": "/etc/app/uninstall_list.json",
+          "image_inode": 22,
+          "image_path_aliases": [
+            "/etc/app/uninstall_list.json"
+          ],
+          "image_file_sha256": "1d2c69e6abeeaa1e9648bed76fba1cad730f440319f7f5cd818db164b3f06238"
+        }
+      },
+      "application_signer_sha256": "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5",
+      "embedded_profile_sha256": "f1eb4a092b710626f5959c3b9da78bf755929c7b7dec46d73c809921fa33679a",
+      "digest_codesign_permission_verification": "pass"
+    }
+  },
+  "image_policies": {
+    "install_list_capability.json": {
+      "image_path": "/etc/app/install_list_capability.json",
+      "image_inode": 20,
+      "image_path_aliases": [
+        "/etc/app/install_list_capability.json"
+      ],
+      "sha256": "61e848226c28e2527b82bac444dac0ab4210d1f2ecf237cfae90fcecad0387b8"
+    },
+    "install_list_permissions.json": {
+      "image_path": "/etc/app/install_list_permissions.json",
+      "image_inode": 21,
+      "image_path_aliases": [
+        "/etc/app/install_list_permissions.json"
+      ],
+      "sha256": "727634fde67e369d4fced7d0ccc5febdc96a06231e12332546819f630b5d5136"
+    }
+  },
+  "system_image_sha256": "a772a8d5088a892017c08b364ac4d520df14108f61fd0341d885c42ace99e4a3"
+}

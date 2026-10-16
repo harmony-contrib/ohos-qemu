@@ -315,6 +315,52 @@ GROUPS['gnss_vendor'] = {
 }
 from communication_build_inputs import group as communication_group
 GROUPS['communication_state'] = communication_group(ROOT)
+
+# Compile the complete current picker service and both actual wallpaper rules.
+# These commands retain original product protection flags; adding a new feature
+# define here is diagnostic evidence only until fresh GN selects the same rule.
+GROUPS['contacts_picker'] = {
+    'project': 'applications/standard/contacts_data',
+    'revision': 'c73bd27daa3fcd8ed6099b17cbffbd7021e3873e',
+    'components': ['record_classes', 'attribute_mapping', 'sync_mode', 'picker_result_protocol'],
+    'units': ['contacts_api', 'contacts_napi_utils'],
+    'sources': {name: 'contacts/src/' + name + '.cpp' for name in ('contacts_api', 'contacts_napi_utils')},
+    'targets': {name: 'obj/applications/standard/contacts_data/contacts/src/contact/' + name + '.o'
+                for name in ('contacts_api', 'contacts_napi_utils')},
+    'required_header': 'contacts/include/contact_picker_protocol.h',
+    'source_header_inputs': ['third_party/json/single_include/nlohmann/json.hpp'],
+    'supported_products': ['arm64_virt'],
+}
+GROUPS['wallpaper_renderer'] = {
+    'project': 'base/theme/wallpaper_mgr',
+    'revision': '42256bdeaa504da4ae4d038c24d42a4601e3a6cf',
+    'components': ['qemu_renderer'],
+    'units': ['wallpaper_service', 'wallpaper_service_static'],
+    'sources': {name: 'services/src/wallpaper_service.cpp' for name in ('wallpaper_service', 'wallpaper_service_static')},
+    'targets': {name: 'obj/base/theme/wallpaper_mgr/services/src/' + name + '/wallpaper_service.o'
+                for name in ('wallpaper_service', 'wallpaper_service_static')},
+    'required_header': None,
+    'diagnostic_feature_defines': ['QEMU_WALLPAPER_RENDERER'],
+    'supported_products': ['arm64_virt'],
+}
+msdp = GROUPS['msdp_sensor']
+msdp['components'] = ['sensor_input', 'public_still']
+msdp['extra_checkout'] = ['libs/src/algorithm/algo_base.cpp', 'libs/src/devicestatus_msdp_mock.cpp',
+                          'services/native/src/devicestatus_service.cpp']
+for unit in ('algo_absolute_still', 'algo_base', 'algo_horizontal', 'algo_vertical', 'devicestatus_algorithm_manager',
+             'devicestatus_msdp_mock'):
+    subdir = 'algorithm/' if unit.startswith('algo_') else ''
+    target = 'devicestatus_mock' if unit == 'devicestatus_msdp_mock' else 'devicestatus_algo'
+    msdp['units'].append(unit)
+    msdp['sources'][unit] = 'libs/src/' + subdir + unit + '.cpp'
+    msdp['targets'][unit] = 'obj/base/msdp/device_status/libs/src/' + subdir + target + '/' + unit + '.o'
+for target in ('devicestatus_service', 'devicestatus_static_service', 'intention_stationary_server'):
+    for source in ('devicestatus_manager', 'devicestatus_service'):
+        unit = target + '__' + source
+        msdp['units'].append(unit)
+        msdp['sources'][unit] = 'services/native/src/' + source + '.cpp'
+        msdp['targets'][unit] = 'obj/base/msdp/device_status/services/native/src/' + target + '/' + source + '.o'
+msdp['scope'] = 'sixteen_current_MSDP_product_TUs_explicit_Sensor_noMock_defines_NOT_fresh_GN_link_runtime'
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
@@ -519,6 +565,7 @@ def run(args):
               'recipe_sha256': recipe_before, 'objects': [],
               'coverage': {'declared_group_units': group['units'], 'selected_units': units,
                            'all_group_units_tested': set(units) == set(group['units'])}, 'first_artifact_behavior_gate_passed': False}
+    report['external_header_sha256'] = {name: sha(root / name) for name in group.get('source_header_inputs', [])}
     if not report['coverage']['all_group_units_tested']:
         report['group_context_scope'] = report['scope']
         report['scope'] = 'selected_complete_product_TUs_ONLY_NOT_all_group_units_or_link_or_runtime'
@@ -636,6 +683,8 @@ def run(args):
     report['recipe_inputs_unchanged'] = all(sha(Path(name)) == checksum for name, checksum in recipe_before.items())
     report['candidate_inputs_unchanged'] = all(sha(staged / name) == checksum
                                                for name, checksum in report['candidate_sha256'].items())
+    report['external_header_inputs_unchanged'] = all(sha(root / name) == checksum
+        for name, checksum in report['external_header_sha256'].items())
     report['generated_inputs_unchanged'] = all(
         sha(generated[product][0] / name) == checksum
         for product, proof in generated_report.items()
@@ -645,6 +694,7 @@ def run(args):
         for name, checksum in proof['prior_generated_sha256'].items())
     if (report['source_inputs_unchanged'] and report['recipe_inputs_unchanged'] and
             report['candidate_inputs_unchanged'] and report['generated_inputs_unchanged'] and
+            report['external_header_inputs_unchanged'] and
             report['objects'] and all(x['status'] == 'pass' for x in report['objects'])):
         report['status'] = 'pass'
     (output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')

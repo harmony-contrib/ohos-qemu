@@ -1,0 +1,88 @@
+{
+  "scope": "real public OS Contacts/Theme signing and private ext4 checks only",
+  "source_commit": "b7a0728a5582fbae8a9816f066190161e45902c4",
+  "archive_sha256": "edf73240c7be6a90a59ffcbed9f8a8fc16f99afd9603c56b32a50b4d82c8e2b0",
+  "runner_sha256": "49a9e73097c6f4703897ad046bbc5acec3c6da1601d41f25ba2cdd91c34a6255",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "--name",
+    "ohos-qemu-r52-Contacts-Theme-real-sign-01",
+    "--network",
+    "none",
+    "--read-only",
+    "--cpus",
+    "2",
+    "--memory",
+    "5g",
+    "--pids-limit",
+    "512",
+    "--tmpfs",
+    "/tmp:rw,exec,nosuid,nodev,size=1g",
+    "--tmpfs",
+    "/root:rw,exec,nosuid,nodev,size=256m",
+    "--mount",
+    "type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly",
+    "--mount",
+    "type=volume,src=ohos-qemu-7_0-release-out,dst=/ohos/out,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01,dst=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-actual-product-Linux-SDK-02/source/applications/standard/contacts/entry/build/default/outputs/default/entry-default-unsigned.hap,dst=/input-contacts.hap,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/source/applications/standard/theme/product/phone/build/default/outputs/default/phone_wallpaper-default-unsigned.hap,dst=/input-theme-phone.hap,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/source/applications/standard/theme/product/pad/build/default/outputs/default/pad_wallpaper-default-unsigned.hap,dst=/input-theme-pad.hap,readonly",
+    "--mount",
+    "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-MMS-real-OS-signing-and-policy-01/source/applications/standard/hap/BUILD.gn,dst=/input-HAP-BUILD.gn,readonly",
+    "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "python3",
+    "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/runner.py"
+  ],
+  "inputs": {
+    "contacts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-actual-product-Linux-SDK-02/source/applications/standard/contacts/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "4bf63d5977b54f10f3a9c459b301e8beee976b80cd67786c90bd429b4efe1583"
+    },
+    "theme-phone": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/source/applications/standard/theme/product/phone/build/default/outputs/default/phone_wallpaper-default-unsigned.hap",
+      "sha256": "35ee357b7b109fabe731ad44d18a1629d3c59aaa49d0d85f5ee49bfdea04dc71"
+    },
+    "theme-pad": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Theme-actual-product-Linux-SDK-04/source/applications/standard/theme/product/pad/build/default/outputs/default/pad_wallpaper-default-unsigned.hap",
+      "sha256": "5db8411bd8696f96e31b63a3a1fb785ffeede5d5efe7ea4f9db26796dde10c31"
+    }
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "exit_code": 0,
+  "seconds": 85.59771203994751,
+  "container_log_sha256": "ecc319ee3b623af47c93ae3166f600ab0e62144d4d975ca46e2182f58280943f",
+  "result": {
+    "status": "pass",
+    "failures": [],
+    "signed_haps": {
+      "contacts": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/contacts-signed.hap",
+        "sha256": "3263658bcd5daeef6bb7c186cc893eeff8d4ddf06da6744c44b12439e519ed08",
+        "bytes": 8876604
+      },
+      "theme-phone": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/theme-phone-signed.hap",
+        "sha256": "f4f533d17c8a7e6375bd1b89452666163d281b18065e16beebbb3226b981f518",
+        "bytes": 125494
+      },
+      "theme-pad": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/theme-pad-signed.hap",
+        "sha256": "7e2bf122b0361d2b4644c4a65711aa2a98e4215c6133421cfc632648cc237dd9",
+        "bytes": 125502
+      }
+    },
+    "image_case_count": 13,
+    "first_artifact_behavior_gate_passed": false,
+    "provider_runtime_validated": false,
+    "scope": "real Contacts/Wallpaper OS signing private ext4 positive/negative ONLY NOT new product image/BMS/guest"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "status": "pass",
+  "failures": [],
+  "signed_haps": {
+    "contacts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/contacts-signed.hap",
+      "sha256": "3263658bcd5daeef6bb7c186cc893eeff8d4ddf06da6744c44b12439e519ed08",
+      "bytes": 8876604
+    },
+    "theme-phone": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/theme-phone-signed.hap",
+      "sha256": "f4f533d17c8a7e6375bd1b89452666163d281b18065e16beebbb3226b981f518",
+      "bytes": 125494
+    },
+    "theme-pad": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Theme-real-OS-signing-and-policy-01/theme-pad-signed.hap",
+      "sha256": "7e2bf122b0361d2b4644c4a65711aa2a98e4215c6133421cfc632648cc237dd9",
+      "bytes": 125502
+    }
+  },
+  "image_case_count": 13,
+  "first_artifact_behavior_gate_passed": false,
+  "provider_runtime_validated": false,
+  "scope": "real Contacts/Wallpaper OS signing private ext4 positive/negative ONLY NOT new product image/BMS/guest"
+}
