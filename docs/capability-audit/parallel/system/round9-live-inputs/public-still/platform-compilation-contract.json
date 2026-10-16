@@ -39,6 +39,10 @@
       "obj/base/msdp/device_status/services/native/src/devicestatus_static_service/devicestatus_manager.o",
       "obj/base/msdp/device_status/services/native/src/devicestatus_static_service/devicestatus_msdp_client_impl.o",
       "obj/base/msdp/device_status/services/native/src/devicestatus_static_service/devicestatus_service.o"
+    ],
+    "//base/msdp/device_status/intention/stationary/server:intention_stationary_server": [
+      "obj/base/msdp/device_status/services/native/src/intention_stationary_server/devicestatus_manager.o",
+      "obj/base/msdp/device_status/services/native/src/intention_stationary_server/devicestatus_msdp_client_impl.o"
     ]
   },
   "configurations_required": [
@@ -57,5 +61,7 @@
     "LTO",
     "-fno-exceptions"
   ],
-  "note": "Six actual algorithm/worker TUs include unchanged algo_base.cpp because AlgoBase inheritance changed; unchanged devicestatus_service.cpp consumes actual DeviceStatusManager header and make_shared lifetime. Internal function pointer Destroy must be void(*)(const IMsdp*); SDK public API unchanged. Host ASan does not prove this ABI/CFI contract."
+  "note": "Six actual algorithm/worker TUs include unchanged algo_base.cpp because AlgoBase inheritance changed; unchanged devicestatus_service.cpp consumes actual DeviceStatusManager header and make_shared lifetime. Internal function pointer Destroy must be void(*)(const IMsdp*); SDK public API unchanged. Host ASan does not prove this ABI/CFI contract.",
+  "actual_target_count": 15,
+  "excluded_nonexistent_target": "intention_stationary_server__devicestatus_service (no Ninja object exists; diagnostic scope correction, not a product defect)"
 }

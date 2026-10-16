@@ -1,7 +1,7 @@
 {
   "project": "base/msdp/device_status",
   "revision": "96335211bea5ca348325d55746e14e102208354f",
-  "patch_sha256": "db312bbbfc960193db987ac2316d6333a559e9fa291e935eabb47ee80d86f96d",
+  "patch_sha256": "49fbb5272058812f9110aaa04dfe33c71900a720f78e666570143d5eba0d57bc",
   "originals": {
     "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h": {
       "before": "3c3bb7dc518b4ab89a6ee62271ca436e07475fbdb49b8a4de46259b0741ac935",
@@ -37,7 +37,7 @@
     },
     "base/msdp/device_status/services/native/include/devicestatus_manager.h": {
       "before": "43f03fc7ab6ff8a03311013187f9453f1923a34388249553671d89b55a739143",
-      "after": "7f467a3f5517fe4c59d422692fda7c3597f6b3cb7599a9b07678bdb3f67111af"
+      "after": "f3753c4b8f85892384117bd9cf9e28862344837a69b31a474b2325cda839a241"
     },
     "base/msdp/device_status/services/native/src/devicestatus_manager.cpp": {
       "before": "cf53629a41af6013fb7b3dfd9be6c7cab580f0744124bbcf713ec11b7b06f01c",

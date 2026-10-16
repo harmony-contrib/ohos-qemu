@@ -1,0 +1,17 @@
+{
+  "source": "root frozen a9189eb platform01 complete batch",
+  "root_artifacts_directory": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Contacts-Wallpaper-MSDP-complete-TUs-01/artifacts/msdp_sensor",
+  "actual_msdp_targets": 15,
+  "passed": 12,
+  "failed": 3,
+  "failure": "three manager object variants reject obsolete private type_/event_/arrs_ with -Werror,-Wunused-private-field",
+  "logs_sha256": {
+    "arm64_virt-devicestatus_service__devicestatus_manager-compile.log": "c9f79f9f804fa6068874ed0751b6c3e0e9f41e7f17977164d7f1e1ade2814106",
+    "arm64_virt-devicestatus_static_service__devicestatus_manager-compile.log": "c9f79f9f804fa6068874ed0751b6c3e0e9f41e7f17977164d7f1e1ade2814106",
+    "arm64_virt-intention_stationary_server__devicestatus_manager-compile.log": "c9f79f9f804fa6068874ed0751b6c3e0e9f41e7f17977164d7f1e1ade2814106"
+  },
+  "excluded_nonexistent_object": "intention_stationary_server__devicestatus_service",
+  "scope_error_is_product_defect": false,
+  "repair": "remove actual unused type_/event_/arrs_ plus arrs-only argSize_; preserve compiler warnings; recompile current source in next consolidated batch",
+  "new_native_compiler_invoked_for_cleanup": false
+}
