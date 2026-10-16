@@ -1,0 +1,19 @@
+test_duplicate_json_keys_rejected (batch_system_test_live_inputs.ContractTests.test_duplicate_json_keys_rejected) ... ok
+test_empty_location_result_does_not_pass (batch_system_test_live_inputs.ContractTests.test_empty_location_result_does_not_pass) ... ok
+test_location_raw_challenge_match_and_mutations (batch_system_test_live_inputs.ContractTests.test_location_raw_challenge_match_and_mutations) ... ok
+test_mappings_require_real_uid_and_no_replaced_library (batch_system_test_live_inputs.ContractTests.test_mappings_require_real_uid_and_no_replaced_library) ... ok
+test_missing_msdp_package_evidence_is_failure (batch_system_test_live_inputs.ContractTests.test_missing_msdp_package_evidence_is_failure) ... ok
+test_nan_trace_rejected (batch_system_test_live_inputs.ContractTests.test_nan_trace_rejected) ... ok
+test_no_builtin_fixed_trace (batch_system_test_live_inputs.ContractTests.test_no_builtin_fixed_trace) ... ok
+test_nonce_rejects_stale_shape (batch_system_test_live_inputs.ContractTests.test_nonce_rejects_stale_shape) ... ok
+test_quiet_interval_requires_clock_markers (batch_system_test_live_inputs.ContractTests.test_quiet_interval_requires_clock_markers) ... ok
+test_raw_rows_cannot_be_a_summary (batch_system_test_live_inputs.ContractTests.test_raw_rows_cannot_be_a_summary) ... ok
+test_sensor_float32_units_and_order (batch_system_test_live_inputs.ContractTests.test_sensor_float32_units_and_order) ... ok
+test_still_requires_real_transition_callbacks_and_input_timing (batch_system_test_live_inputs.ContractTests.test_still_requires_real_transition_callbacks_and_input_timing) ... ok
+test_wire_bytes_rejection_and_retired_nonce (batch_system_test_live_inputs.ContractTests.test_wire_bytes_rejection_and_retired_nonce) ... ok
+test_wire_evidence_needs_real_all_sessions (batch_system_test_live_inputs.ContractTests.test_wire_evidence_needs_real_all_sessions) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.015s
+
+OK
