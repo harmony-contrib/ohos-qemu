@@ -602,7 +602,14 @@
     "external_gnss": {
       "report": "docs/capability-audit/parallel/system/round4-gnss/result.json",
       "status": "bounded_local_candidate_ready_platform_and_new_package_runtime_pending_reload_attempt_failed",
-      "requirements_closed": 0
+      "requirements_closed": 0,
+      "remaining_gaps": [
+        "No official GN/SDK/ARM64/CFI compile/link, guest input wiring, ordinary permission/API or newly packaged end-to-end behavior validation performed by this subagent.",
+        "Historical location UTC is preserved and rejects stale replay; no historical sample is relabeled as a fresh measured fix.",
+        "Darwin ASan same-process reload ODR registration failed in an uncompleted extra extension; full log retained, no pass claimed or sanitizer suppression applied.",
+        "Optional GNSS modules, cache, satellites/NMEA/assistance are unsupported; source only implements normal standalone external position measurements.",
+        "The unchanged ten system IDs and all location IDs remain unclosed. This is a root-owned hardware input subtask, not an extra accounting closure."
+      ]
     }
   },
   "round4": "docs/capability-audit/parallel/system/round4-gnss/result.json"
