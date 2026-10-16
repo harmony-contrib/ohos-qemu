@@ -313,6 +313,8 @@ GROUPS['gnss_vendor'] = {
     'required_header': None, 'supported_products': ['arm64_virt'],
     'scope': 'four_whole_GNSS_bridge_and_provider_TUs_actual_product_flags_explicit_new_source_templates_NOT_fresh_GN_or_link_or_runtime',
 }
+from communication_build_inputs import group as communication_group
+GROUPS['communication_state'] = communication_group(ROOT)
 PRODUCTS = {'arm64_virt': ('aarch64', 183, 2), 'armv7a_virt': ('arm', 40, 1),
             'x86_64_virt': ('x86_64', 62, 2)}
 
@@ -448,6 +450,7 @@ def run(args):
               ROOT / 'patches/lib/apply_exact_component.py',
               *(ROOT / name for name in group.get('payloads', {}).values()),
               ROOT / 'ci/capability-audit/gn_export_diagnostic.py',
+              *(ROOT / name for name in group.get('extra_recipe', [])),
               *(p for c in components for p in c.rglob('*')
                if p.is_file() and '__pycache__' not in p.parts)]
     recipe_before = {str(p): sha(p) for p in recipe}
@@ -495,10 +498,15 @@ def run(args):
                 'generated_sha256': proof['output_sha256'],
                 'prior_generated_sha256': {entry['name'].removeprefix(str(generated[product][1]) + '/'): sha(Path(entry['name']))
                     for entry in entries}}
+    auxiliary_overlay, auxiliary_units, auxiliary_proof = [], {}, {}
+    if group.get('generate_communication'):
+        from communication_build_inputs import generate as communication_generate
+        auxiliary_overlay, auxiliary_units, auxiliary_proof = communication_generate(
+            ROOT, root, staged, output, args.ril_generated)
     overlay = output / 'headers.json'
     overlay.write_text(json.dumps({'version': 0, 'roots': [
         {'type': 'file', 'name': str(root / name), 'external-contents': str(staged / name),
-         'use-external-name': True} for name in headers] + [
+         'use-external-name': True} for name in headers] + auxiliary_overlay + [
         {'type': 'file', 'name': str(original_directory / name),
          'external-contents': str(directory / name), 'use-external-name': True}
         for product, (directory, original_directory) in generated.items()
@@ -514,6 +522,8 @@ def run(args):
     if not report['coverage']['all_group_units_tested']:
         report['group_context_scope'] = report['scope']
         report['scope'] = 'selected_complete_product_TUs_ONLY_NOT_all_group_units_or_link_or_runtime'
+    if auxiliary_proof:
+        report['actual_auxiliary_generation'] = auxiliary_proof
     if generated_report:
         report['actual_idl_generation'] = generated_report
     for product in args.product:
@@ -530,7 +540,9 @@ def run(args):
                 argv = shlex.split(query.stdout.splitlines()[-1])
                 if Path(argv[0]).name == 'ccache':
                     argv.pop(0)
-                if (group.get('generate_idl') and unit in ('locator_service_proxy', 'locator_service_stub') or
+                if unit in auxiliary_units:
+                    source, candidate_source = auxiliary_units[unit]
+                elif (group.get('generate_idl') and unit in ('locator_service_proxy', 'locator_service_stub') or
                         group.get('generate_vpn_idl') and unit in ('network_vpn_service_proxy', 'network_vpn_service_stub')):
                     source = generated[product][1] / (unit + '.cpp')
                     candidate_source = generated[product][0] / (unit + '.cpp')
@@ -592,7 +604,7 @@ def run(args):
                 argv[argv.index('-o') + 1] = str(obj)
                 argv[argv.index('-MF') + 1] = str(dep)
                 argv += ['-iquote', str(source.parent)]
-                if headers or generated:
+                if headers or generated or auxiliary_overlay:
                     argv += ['-ivfsoverlay', str(overlay)]
                 row['executed_argv'] = argv
                 with (output / f'{product}-{unit}-compile.log').open('xb') as log:
@@ -638,6 +650,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--group', choices=GROUPS, required=True)
     parser.add_argument('--unit', action='append', help='selected complete TUs; coverage remains explicit')
+    parser.add_argument('--ril-generated', type=Path, help='verified complete real RIL HDI checkpoint')
     parser.add_argument('--product', choices=PRODUCTS, action='append', required=True)
     args = parser.parse_args()
     if len(args.product) != len(set(args.product)):
