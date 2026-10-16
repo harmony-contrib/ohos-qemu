@@ -5,16 +5,11 @@
   "branch": "codex/capability-apps-20261015",
   "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
   "requirements_count": 34,
-  "summary": "第二批新增真实CalendarData editEvent UIExtension/用户编辑写入及NAPI生命周期修复，官方API26 Release unsigned HAP编译通过。继续保留完整34项映射，82项账本不核销。",
-  "acceptance_status": "Official API26 Release unsigned HAP compile passed; full platform NAPI TU, system signing and new-package runtime acceptance pending",
+  "summary": "第三批独立补齐Calendar原生ModalUI回调的JS投递、env cleanup、handle scope和UIContent/session销毁防护；完整34项映射保持，82项账本不核销。AdminProvisioning候选仍未提交、不包含本批。",
+  "acceptance_status": "Exact native-function host regressions passed; final platform NAPI TU and fresh representative system-signed ARM64 phone package runtime acceptance pending",
   "upstream_targets": [
     "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
-    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h",
-    "applications/standard/calendardata/entry/src/main/module.json5",
-    "applications/standard/calendardata/entry/src/main/resources/base/profile/main_pages.json",
-    "applications/standard/calendardata/entry/src/main/ets/editor/EventEditorController.ets",
-    "applications/standard/calendardata/entry/src/main/ets/EditorUIExtensionAbility.ets",
-    "applications/standard/calendardata/entry/src/main/ets/pages/EventEditor.ets"
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h"
   ],
   "tests": [
     {
@@ -37,6 +32,14 @@
       "result": "PASS",
       "evidence": "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
       "scope": "Mixed-profile staging only; all34 runtime gaps remain open"
+    },
+    {
+      "name": "calendar_native_dispatch",
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest ci/capability-audit/test_batch_apps_calendar_editor.py ci/capability-audit/test_batch_apps_calendar_dispatch.py -v",
+      "exit_code": 0,
+      "result": "7 tests passed, 4.870s; new harness executes exact product functions across distinct UI/JS threads in 23 scenarios, including concurrent env cleanup, queued result then destroy, synchronous delivery failure, handle-scope failure, two sessions and weak ownership expiration",
+      "environment": "bounded host C++20 -Wall -Wextra -Werror -pthread; no product compile/runtime claim",
+      "evidence": "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json"
     }
   ],
   "integration_requests": [
@@ -85,6 +88,27 @@
       "owner": "apps",
       "required_for_this_candidate": false,
       "request": "This batch provides the real public editEvent creation UI only. Full standalone Calendar launcher UI/expanded text date routing and existing Cangjie completion implementation remain separate work; none are covered by unsigned HAP compilation."
+    },
+    {
+      "id": "apps-calendar-native-callback-dispatch",
+      "owner": "main",
+      "required_for_this_candidate": true,
+      "component": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
+      "request": "Apply after source_provider -> event_editor, before full //applications/standard/calendardata/calendarmanager:calendarmanager. Update exact final-state/replay recognition for these two new hashes; earlier event_editor exact check intentionally rejects a later native state. No broad hash/contract bypass. Keep full final composed source stable for native TU evidence. The prior unsigned HAP04 ArkTS payload is unchanged by this native-only delta.",
+      "native_target": "//applications/standard/calendardata/calendarmanager:calendarmanager",
+      "native_source": "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+      "changed_headers": [
+        "applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h"
+      ],
+      "runtime_cases": [
+        "UI callback result/error/release on actual framework JS dispatch",
+        "queued positive eventId then immediate host/session destroy cancels old generation and never closes a freed/replacement UIContent",
+        "env teardown while result is queued or concurrently being sent; no NAPI after cleanup",
+        "simultaneous sessions close only own id; duplicate/late callbacks do not settle twice",
+        "native JS-event delivery failure cancels and releases state; no off-thread NAPI fallback or success",
+        "handle-scope failure cannot emit success"
+      ],
+      "failure_boundary": "If JS event delivery or handle-scope allocation fails, the native request is cancelled/closed without reporting success; an inaccessible JS environment cannot safely receive Promise settlement. Cleanup hook holds a weak request reference, so this path retains no request cycle."
     }
   ],
   "requirements_review": {
@@ -150,7 +174,7 @@
     },
     "behavior:api26-runtime-export-mismatches-phone": {
       "status": "coverage_refresh_and_cross_domain_implementation_required",
-      "finding": "聚合约40个syscap的API26导出差异；基线有分模块修复，旧R49导出面不能按源码候选扣减。 第二批新增真实CalendarData.editEvent provider及NAPI结果/错误/销毁处理，实际API26 Release unsigned源HAP编译通过；其余模块仍需统一新包导出/行为刷新。",
+      "finding": "聚合约40个syscap的API26导出差异；基线有分模块修复，旧R49导出面不能按源码候选扣减。 第二批新增真实CalendarData.editEvent provider及NAPI结果/错误/销毁处理，实际API26 Release unsigned源HAP编译通过；其余模块仍需统一新包导出/行为刷新。 第三批依据真实ModalUI线程契约补上NAPI事件投递/环境销毁/显式scope和旧代session取消，仍待完整TU及新包验收。",
       "next_required": "同包刷新arkts-export-surface，并按模块把剩余真实导出/值/行为差异分给唯一所有者；不注册空函数。",
       "ledger_closed": false,
       "evidence": [
@@ -159,7 +183,8 @@
         "docs/capability-audit/system-bundle-provider-audit.json",
         "docs/capability-audit/runtime/arm64-phone/arkts-export-surface-latest.json",
         "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
-        "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json"
+        "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+        "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json"
       ]
     },
     "behavior:intelligent-scene-notification-query-fails": {
@@ -674,30 +699,28 @@
     }
   ],
   "changed_files": [
-    ".hvigor/outputs/build-logs/build.log",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/00-calendar_manager_napi.cpp.gz.b64",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/01-calendar_manager_napi.h.gz.b64",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/02-module.json5.gz.b64",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/03-main_pages.json.gz.b64",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/controller.cjs",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/napi_harness.cpp",
-    "ci/capability-audit/fixtures/batch_apps/calendar_editor/provenance.json",
-    "ci/capability-audit/test_batch_apps_calendar_editor.py",
-    "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+    "ci/capability-audit/batch_apps_prepare_calendar_dispatch.py",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/00-calendar_manager_napi.cpp.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/01-calendar_manager_napi.h.gz.b64",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/napi_harness.cpp",
+    "ci/capability-audit/fixtures/batch_apps/calendar_dispatch/provenance.json",
+    "ci/capability-audit/test_batch_apps_calendar_dispatch.py",
+    "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json",
     "docs/capability-audit/parallel/apps/result.json",
-    "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
-    "patches/common/applications/standard/calendardata/event_editor/0001-provide-user-confirmed-calendar-event-editor.patch",
-    "patches/common/applications/standard/calendardata/event_editor/README.md",
-    "patches/common/applications/standard/calendardata/event_editor/apply.sh",
-    "patches/common/applications/standard/calendardata/event_editor/verify_source.py"
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/0001-dispatch-editor-results-with-native-lifetime-cancellation.patch",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/README.md",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh",
+    "patches/common/applications/standard/calendardata/editor_callback_dispatch/verify_source.py"
   ],
-  "previous_batch_commit": "b88407cb7e9f93c1d58b4def55c64385e143f865",
+  "previous_batch_commit": "ee2748c1abc73c5d77ef3bbbb0ee06466b47c7d2",
   "parent_integration_baseline": "8bf5840",
   "additional_candidate": {
     "surface": "calendarManager.CalendarManager.editEvent",
     "requirements_closed": 0,
     "artifact_evidence": "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
     "full_calendar_ui_remains_missing": true,
-    "native_cj_completion_unchanged": true
+    "native_cj_completion_unchanged": true,
+    "native_callback_dispatch": "patches/common/applications/standard/calendardata/editor_callback_dispatch",
+    "native_compile_predecessor": "source_provider -> event_editor (ee2748c) -> editor_callback_dispatch"
   }
 }
