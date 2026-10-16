@@ -25,7 +25,13 @@ class VpnCallbackTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);source=prepared(root)
             subprocess.run(['bash',str(COMPONENT/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True)
-            p=source/'include/networkvpn_service.h';p.write_bytes(p.read_bytes()+b'// unknown\n');before=p.read_bytes()
+            p=source/'include/networkvpn_service.h';fixed=p.read_bytes()
+            self.assertEqual(fixed.count(b'virtual ~VpnConnStateCb();'),1)
+            p.write_bytes(fixed.replace(b'virtual ~VpnConnStateCb();',b'~VpnConnStateCb() override;'))
+            before=p.read_bytes()
+            denied=subprocess.run(['bash',str(COMPONENT/'apply.sh'),'--source-root',str(root)],capture_output=True)
+            self.assertNotEqual(denied.returncode,0);self.assertEqual(p.read_bytes(),before)
+            p.write_bytes(fixed+b'// unknown\n');before=p.read_bytes()
             denied=subprocess.run(['bash',str(COMPONENT/'apply.sh'),'--source-root',str(root)],capture_output=True)
             self.assertNotEqual(denied.returncode,0);self.assertEqual(p.read_bytes(),before)
 
@@ -63,6 +69,7 @@ class VpnCallbackTests(unittest.TestCase):
 #include <shared_mutex>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <vector>
 #define SUPPORT_SYSVPN 1
 #define NETMGR_EXT_LOG_E(...) do{}while(0)
@@ -78,7 +85,8 @@ struct IRemoteObject {std::weak_ptr<IVpnEventCallback> callback;bool dead=false;
 template<class T>sptr<T> iface_cast(const sptr<IRemoteObject>& p){return std::dynamic_pointer_cast<T>(p->callback.lock());}
 struct VpnState {std::string vpnIfName_,vpnIfAddr_,vpnId_,vpnPacketName_;bool isGlobalVpn_=true;std::vector<int> routes_;std::vector<std::string> dnsServers_;VpnState(std::string i,std::string a,std::string v,bool g,std::vector<int> r,std::vector<std::string> d):vpnIfName_(i),vpnIfAddr_(a),vpnId_(v),isGlobalVpn_(g),routes_(r),dnsServers_(d){}};
 enum class VpnConnectState {VPN_DISCONNECTED,VPN_CONNECTED};
-struct IVpnConnStateCb {virtual~IVpnConnStateCb()=default;virtual void OnVpnConnStateChanged(const VpnConnectState&,const sptr<VpnState>&)=0;virtual void SendConnStateChanged(const VpnConnectState&,int32_t,const std::string&)=0;virtual void OnMultiVpnConnStateChanged(const VpnConnectState&,const std::string&)=0;};
+// The fixed product interface has an implicit, non-virtual destructor.
+struct IVpnConnStateCb {virtual void OnVpnConnStateChanged(const VpnConnectState&,const sptr<VpnState>&)=0;virtual void SendConnStateChanged(const VpnConnectState&,int32_t,const std::string&)=0;virtual void OnMultiVpnConnStateChanged(const VpnConnectState&,const std::string&)=0;};
 struct IVpnEventCallback {virtual~IVpnEventCallback()=default;sptr<IRemoteObject> remote=sptr<IRemoteObject>::MakeSptr();sptr<IRemoteObject> AsObject()const{return remote;}virtual int OnVpnStateChanged(bool,const sptr<VpnState>&)=0;virtual int OnMultiVpnStateChanged(bool,const std::string&,const std::string&)=0;virtual int OnVpnMultiUserSetUp()=0;};
 thread_local int callingUid=20000001,callingPid=123;thread_local std::string callingOwner="owner.one";
 struct IPCSkeleton {static int GetCallingUid(){return callingUid;}static int GetCallingPid(){return callingPid;}};
@@ -129,8 +137,25 @@ struct Client:IVpnEventCallback {std::vector<std::string> owners;std::vector<boo
 };
 sptr<Client> NewClient(){auto c=sptr<Client>::MakeSptr();c->remote->callback=c;return c;}
 sptr<VpnState> State(std::string id=""){return sptr<VpnState>::MakeSptr("tun0","10.0.0.2",id,true,std::vector<int>{1,2},std::vector<std::string>{"2001:db8::53"});}
+void CheckInterfaceCallbackLifetime(const std::shared_ptr<NetworkVpnService>& service){
+ static_assert(!std::has_virtual_destructor_v<IVpnConnStateCb>);
+ static_assert(std::has_virtual_destructor_v<NetworkVpnService::VpnConnStateCb>);
+ auto object=std::make_shared<NetVpnImpl>();
+ auto concrete=service->CreateConnectionCallback(object,"pending.interface",100,"interface");assert(concrete);
+ auto origin=service->callbackDispatch_->origins.back().lock();assert(origin);
+ // A controller keeps the concrete make_shared control block when upcasting.
+ std::shared_ptr<IVpnConnStateCb> controller=concrete;concrete.reset();
+ std::promise<void> entered;auto started=entered.get_future();
+ auto waiter=std::async(std::launch::async,[origin,&entered]{entered.set_value();return origin->WaitReady();});
+ assert(started.wait_for(std::chrono::seconds(1))==std::future_status::ready);
+ assert(waiter.wait_for(std::chrono::milliseconds(20))==std::future_status::timeout);
+ controller.reset();
+ assert(waiter.wait_for(std::chrono::seconds(1))==std::future_status::ready && !waiter.get());
+ assert(origin->phase.load()==NetworkVpnService::CallbackOrigin::CANCELLED);
+}
 int main(){
  auto service=std::make_shared<NetworkVpnService>();auto client=NewClient(),other=NewClient();auto object=std::make_shared<NetVpnImpl>();
+ CheckInterfaceCallbackLifetime(service);
  assert(service->SyncRegisterVpnEvent(client)==0 && service->SyncRegisterVpnEvent(other)==0);assert(client->remote->adds==1 && other->remote->adds==1);Drain();
  auto callback=service->CreateConnectionCallback(object,"owner.one",100,"");assert(callback);Drain();
  // A pending setup decision cannot deliver a CONNECTED event before publication.
@@ -225,6 +250,7 @@ struct NativePause {
 int main()
 {
     auto service = std::make_shared<NetworkVpnService>();
+    CheckInterfaceCallbackLifetime(service);
     auto client = NewClient();
     auto object = std::make_shared<NetVpnImpl>();
     assert(service->SyncRegisterVpnEvent(client) == 0);

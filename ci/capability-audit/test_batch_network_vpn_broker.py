@@ -81,6 +81,14 @@ class VpnBrokerTests(unittest.TestCase):
                 for name in names:
                     result=subprocess.run(['bash',str(ROOT/'patches/common'/project/name/'apply.sh'),'--source-root',str(root)],capture_output=True,text=True)
                     self.assertEqual(result.returncode,0,name+result.stderr)
+            header=root/EXT/'services/vpnmanager/include/networkvpn_service.h';fixed=header.read_bytes()
+            self.assertEqual(fixed.count(b'virtual ~VpnConnStateCb();'),1)
+            header.write_bytes(fixed.replace(b'virtual ~VpnConnStateCb();',b'~VpnConnStateCb() override;'))
+            rejected=header.read_bytes()
+            for name in ['vpn_callback_dispatch','openvpn_broker']:
+                result=subprocess.run(['bash',str(ext/name/'apply.sh'),'--source-root',str(root)],capture_output=True)
+                self.assertNotEqual(result.returncode,0);self.assertEqual(header.read_bytes(),rejected)
+            header.write_bytes(fixed)
             target=root/EXT/'services/vpnmanager/src/multi_vpn_helper.cpp'
             target.write_bytes(target.read_bytes()+b'// unreviewed change\n')
             result=subprocess.run(['bash',str(ext/'vpn_callback_dispatch/apply.sh'),'--source-root',str(root)],capture_output=True)
