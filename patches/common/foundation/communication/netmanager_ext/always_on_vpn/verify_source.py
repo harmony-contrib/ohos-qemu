@@ -23,6 +23,23 @@ def validate(root, require_patched=False):
     except ValueError as original_error:
         # The reviewed later nullable-result component rebuilds both IPC ends.
         # Accept only its complete exact state, never a partially changed parent.
+        replacements = {}
+        import importlib.util
+        warning_spec = importlib.util.spec_from_file_location('netvpn_unused_callback_following',
+            Path(__file__).resolve().parent.parent / 'netvpn_callback_unused/verify_source.py')
+        warning = importlib.util.module_from_spec(warning_spec)
+        warning_spec.loader.exec_module(warning)
+        try:
+            warning.validate(root, True)
+            replacements = {name: final for name, _, final in warning.FILES}
+        except (ValueError, FileNotFoundError):
+            pass
+        if replacements:
+            expected = tuple((name, original, replacements.get(name, final)) for name, original, final in FILES)
+            try:
+                return validate_component(root, PROJECT, REVISION, expected, True)
+            except ValueError:
+                pass
         following_hashes = {
             'interfaces/innerkits/netvpnclient/INetworkVpnService.idl':
                 '3c8259477599282e159352d03afd7b2e27740ff5ab0815ca9f03766b11e791c6',
@@ -33,6 +50,7 @@ def validate(root, require_patched=False):
             'services/vpnmanager/src/networkvpn_service.cpp':
                 '7c622df9325665c6983ad35a281364aafa5fdb16a555de2246d061c2b7689d53',
         }
+        following_hashes.update(replacements)
         following = tuple((name, original, following_hashes.get(name, final))
                           for name, original, final in FILES)
         try:
