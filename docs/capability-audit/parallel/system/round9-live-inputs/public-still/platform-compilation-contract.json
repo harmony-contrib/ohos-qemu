@@ -1,0 +1,61 @@
+{
+  "status": "pending_root_product_compilation",
+  "actual_read_only_ninja_root": "/ohos/out/arm64_virt/obj/base/msdp/device_status",
+  "ninja_not_fresh_image_evidence": true,
+  "upstream_targets": [
+    "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h",
+    "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+    "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h",
+    "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+    "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h",
+    "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+    "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h",
+    "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+    "base/msdp/device_status/services/native/include/devicestatus_manager.h",
+    "base/msdp/device_status/services/native/src/devicestatus_manager.cpp",
+    "base/msdp/device_status/libs/include/algorithm/algo_base.h",
+    "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+    "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+    "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
+  ],
+  "labels": {
+    "//base/msdp/device_status/libs:devicestatus_algo": [
+      "obj/base/msdp/device_status/libs/src/algorithm/devicestatus_algo/algo_absolute_still.o",
+      "obj/base/msdp/device_status/libs/src/algorithm/devicestatus_algo/algo_base.o",
+      "obj/base/msdp/device_status/libs/src/algorithm/devicestatus_algo/algo_horizontal.o",
+      "obj/base/msdp/device_status/libs/src/algorithm/devicestatus_algo/algo_vertical.o",
+      "obj/base/msdp/device_status/libs/src/datahub/devicestatus_algo/sensor_data_callback.o",
+      "obj/base/msdp/device_status/libs/src/devicestatus_algo/devicestatus_algorithm_manager.o"
+    ],
+    "//base/msdp/device_status/libs:devicestatus_mock": [
+      "obj/base/msdp/device_status/libs/src/devicestatus_mock/devicestatus_msdp_mock.o"
+    ],
+    "//base/msdp/device_status/services:devicestatus_service": [
+      "obj/base/msdp/device_status/services/native/src/devicestatus_service/devicestatus_manager.o",
+      "obj/base/msdp/device_status/services/native/src/devicestatus_service/devicestatus_msdp_client_impl.o",
+      "obj/base/msdp/device_status/services/native/src/devicestatus_service/devicestatus_service.o"
+    ],
+    "//base/msdp/device_status/services:devicestatus_static_service": [
+      "obj/base/msdp/device_status/services/native/src/devicestatus_static_service/devicestatus_manager.o",
+      "obj/base/msdp/device_status/services/native/src/devicestatus_static_service/devicestatus_msdp_client_impl.o",
+      "obj/base/msdp/device_status/services/native/src/devicestatus_static_service/devicestatus_service.o"
+    ]
+  },
+  "configurations_required": [
+    "DEVICE_STATUS_SENSOR_ENABLE with DEVICE_STATUS_DISABLE_MOCK_FALLBACK (actual QEMU product)",
+    "DEVICE_STATUS_SENSOR_ENABLE without DEVICE_STATUS_DISABLE_MOCK_FALLBACK (default legacy fallback retained)",
+    "without DEVICE_STATUS_SENSOR_ENABLE (disabled build must remain valid)"
+  ],
+  "links_required": [
+    "actual product libdevicestatus_algo.z.so",
+    "actual product libdevicestatus_service.z.so",
+    "actual libdevicestatus_mock.z.so internal Destroy CFI type consistency if built"
+  ],
+  "preserve": [
+    "product CFI",
+    "cross-DSO CFI",
+    "LTO",
+    "-fno-exceptions"
+  ],
+  "note": "Six actual algorithm/worker TUs include unchanged algo_base.cpp because AlgoBase inheritance changed; unchanged devicestatus_service.cpp consumes actual DeviceStatusManager header and make_shared lifetime. Internal function pointer Destroy must be void(*)(const IMsdp*); SDK public API unchanged. Host ASan does not prove this ABI/CFI contract."
+}

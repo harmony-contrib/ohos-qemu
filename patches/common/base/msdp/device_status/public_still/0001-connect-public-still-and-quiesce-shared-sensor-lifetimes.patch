@@ -1,0 +1,1479 @@
+--- a/base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h
++++ b/base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h
+@@ -18,6 +18,7 @@
+ 
+ #ifdef DEVICE_STATUS_SENSOR_ENABLE
+ #include <map>
++#include <set>
+ #include <memory>
+ #include <mutex>
+ #include <string>
+@@ -49,8 +50,8 @@
+     ErrCode UnregisterSensor(Type type);
+     std::shared_ptr<MsdpAlgoCallback> GetCallbackImpl()
+     {
+-        std::unique_lock lock(mutex_);
+-        return callback_;
++        std::unique_lock lock(mutex_, std::try_to_lock);
++        return lock.owns_lock() ? callback_ : nullptr;
+     }
+     bool CheckSensorTypeId(int32_t sensorTypeId);
+     bool StartSensor(Type type);
+@@ -59,11 +60,12 @@
+     int32_t type_[Type::TYPE_MAX] { 0 };
+     std::shared_ptr<MsdpAlgoCallback> callback_ { nullptr };
+     std::mutex mutex_;
++    std::shared_ptr<AlgoAbsoluteStill> publicStill_ { nullptr };
++    std::set<Type> stoppingTypes_;
+     std::shared_ptr<AlgoAbsoluteStill> still_ { nullptr };
+     std::shared_ptr<AlgoHorizontal> horizontalPosition_ { nullptr };
+     std::shared_ptr<AlgoVertical> verticalPosition_ { nullptr };
+     std::map<Type, int32_t> callAlgoNums_ {};
+-    Type algoType_ { TYPE_INVALID };
+ };
+ } // namespace DeviceStatus
+ } // namespace Msdp
+--- a/base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp
++++ b/base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp
+@@ -15,6 +15,7 @@
+ 
+ #ifdef DEVICE_STATUS_SENSOR_ENABLE
+ #include "devicestatus_algorithm_manager.h"
++#include <climits>
+ 
+ #include <cerrno>
+ #include <string>
+@@ -58,38 +59,19 @@
+ 
+ ErrCode AlgoMgr::RegisterCallback(std::shared_ptr<MsdpAlgoCallback> callback)
+ {
+-    CALL_DEBUG_ENTER;
+-    std::lock_guard lock(mutex_);
+-    switch (algoType_) {
+-        case Type::TYPE_ABSOLUTE_STILL: {
+-            if (still_ != nullptr) {
+-                still_->RegisterCallback(callback);
+-            }
+-            break;
+-        }
+-        case Type::TYPE_HORIZONTAL_POSITION: {
+-            if (horizontalPosition_ != nullptr) {
+-                horizontalPosition_->RegisterCallback(callback);
+-            }
+-            break;
+-        }
+-        case Type::TYPE_VERTICAL_POSITION: {
+-            if (verticalPosition_ != nullptr) {
+-                verticalPosition_->RegisterCallback(callback);
+-            }
+-            break;
+-        }
+-        default: {
+-            FI_HILOGE("Unsupported algorithm type");
+-            return RET_ERR;
+-        }
+-    }
++    if (callback == nullptr) { return RET_ERR; }
++    std::unique_lock lock(mutex_, std::try_to_lock);
++    if (!lock.owns_lock()) { return RET_ERR; }
++    if (!callAlgoNums_.empty() && callback_ != callback) { return RET_ERR; }
++    callback_ = std::move(callback);
+     return RET_OK;
+ }
+ 
+ ErrCode AlgoMgr::UnregisterCallback()
+ {
+-    CALL_DEBUG_ENTER;
++    std::unique_lock lock(mutex_, std::try_to_lock);
++    if (!lock.owns_lock() || !callAlgoNums_.empty()) { return RET_ERR; }
++    callback_.reset();
+     return RET_OK;
+ }
+ 
+@@ -117,6 +99,7 @@
+ {
+     FI_HILOGI("Get sensor type: %{public}d", type);
+     switch (type) {
++        case Type::TYPE_STILL:
+         case Type::TYPE_ABSOLUTE_STILL: {
+             return SensorTypeId::SENSOR_TYPE_ID_ACCELEROMETER;
+         }
+@@ -136,116 +119,79 @@
+ 
+ ErrCode AlgoMgr::Enable(Type type)
+ {
+-    CALL_DEBUG_ENTER;
+-    if (!StartSensor(type)) {
+-        FI_HILOGE("sensor init failed");
+-        return RET_ERR;
+-    }
+-    std::lock_guard lock(mutex_);
+-    switch (type) {
+-        case Type::TYPE_ABSOLUTE_STILL: {
+-            if (still_ == nullptr) {
+-                FI_HILOGE("still_ is nullptr");
+-                still_ = std::make_shared<AlgoAbsoluteStill>();
+-                still_->Init(type);
+-                callAlgoNums_[type] = 0;
+-            }
+-            callAlgoNums_[type]++;
+-            break;
+-        }
+-        case Type::TYPE_HORIZONTAL_POSITION: {
+-            if (horizontalPosition_ == nullptr) {
+-                FI_HILOGE("horizontalPosition_ is nullptr");
+-                horizontalPosition_ = std::make_shared<AlgoHorizontal>();
+-                horizontalPosition_->Init(type);
+-                callAlgoNums_[type] = 0;
+-            }
+-            callAlgoNums_[type]++;
+-            break;
+-        }
+-        case Type::TYPE_VERTICAL_POSITION: {
+-            if (verticalPosition_ == nullptr) {
+-                FI_HILOGE("verticalPosition_ is nullptr");
+-                verticalPosition_ = std::make_shared<AlgoVertical>();
+-                verticalPosition_->Init(type);
+-                callAlgoNums_[type] = 0;
+-            }
+-            callAlgoNums_[type]++;
+-            break;
+-        }
+-        default: {
+-            FI_HILOGE("Unsupported algorithm type");
+-            return RET_ERR;
+-        }
+-    }
+-    algoType_ = type;
++    std::unique_lock lock(mutex_, std::try_to_lock);
++    if (!lock.owns_lock() || callback_ == nullptr || stoppingTypes_.count(type) != 0) { return RET_ERR; }
++    auto existing = callAlgoNums_.find(type);
++    if (existing != callAlgoNums_.end()) {
++        if (existing->second == INT32_MAX) { return RET_ERR; }
++        ++existing->second;
++        return RET_OK;
++    }
++    if (GetSensorTypeId(type) == RET_ERR || !StartSensor(type)) { return RET_ERR; }
++    std::shared_ptr<AlgoBase> instance;
++    switch (type) {
++        case TYPE_STILL: instance = std::make_shared<AlgoAbsoluteStill>(); break;
++        case TYPE_ABSOLUTE_STILL: instance = std::make_shared<AlgoAbsoluteStill>(); break;
++        case TYPE_HORIZONTAL_POSITION: instance = std::make_shared<AlgoHorizontal>(); break;
++        case TYPE_VERTICAL_POSITION: instance = std::make_shared<AlgoVertical>(); break;
++        default: UnregisterSensor(type); return RET_ERR;
++    }
++    instance->RegisterCallback(callback_);
++    if (!instance->Init(type)) { UnregisterSensor(type); return RET_ERR; }
++    switch (type) {
++        case TYPE_STILL: publicStill_ = std::static_pointer_cast<AlgoAbsoluteStill>(instance); break;
++        case TYPE_ABSOLUTE_STILL: still_ = std::static_pointer_cast<AlgoAbsoluteStill>(instance); break;
++        case TYPE_HORIZONTAL_POSITION: horizontalPosition_ = std::static_pointer_cast<AlgoHorizontal>(instance); break;
++        case TYPE_VERTICAL_POSITION: verticalPosition_ = std::static_pointer_cast<AlgoVertical>(instance); break;
++        default: return RET_ERR;
++    }
++    callAlgoNums_[type] = 1;
+     return RET_OK;
+ }
+ 
+ ErrCode AlgoMgr::Disable(Type type)
+ {
+-    CALL_DEBUG_ENTER;
+-    std::lock_guard lock(mutex_);
+-    callAlgoNums_[type]--;
+-    FI_HILOGI("callAlgoNums_:%{public}d", callAlgoNums_[type]);
+-    if (callAlgoNums_[type] != 0) {
+-        FI_HILOGE("callAlgoNums_[type] is not zero");
+-        return RET_ERR;
+-    }
+-    switch (type) {
+-        case Type::TYPE_ABSOLUTE_STILL: {
+-            if (still_ != nullptr) {
+-                FI_HILOGD("still_ is not nullptr");
+-                still_->Unsubscribe(type);
+-                still_ = nullptr;
+-            }
+-            break;
+-        }
+-        case Type::TYPE_HORIZONTAL_POSITION: {
+-            if (horizontalPosition_ != nullptr) {
+-                FI_HILOGD("horizontalPosition_ is not nullptr");
+-                horizontalPosition_->Unsubscribe(type);
+-                horizontalPosition_ = nullptr;
+-            }
+-            break;
+-        }
+-        case Type::TYPE_VERTICAL_POSITION: {
+-            if (verticalPosition_ != nullptr) {
+-                FI_HILOGD("verticalPosition_ is not nullptr");
+-                verticalPosition_->Unsubscribe(type);
+-                verticalPosition_ = nullptr;
+-            }
+-            break;
+-        }
+-        default: {
+-            FI_HILOGE("Unsupported algorithm type");
+-            break;
+-        }
+-    }
+-    callAlgoNums_.erase(type);
+-    UnregisterSensor(type);
++    std::unique_lock lock(mutex_, std::try_to_lock);
++    if (!lock.owns_lock()) { return RET_ERR; }
++    auto found = callAlgoNums_.find(type);
++    if (found == callAlgoNums_.end()) { return RET_ERR; }
++    if (found->second > 1) { --found->second; return RET_OK; }
++    std::shared_ptr<AlgoBase> instance;
++    switch (type) {
++        case TYPE_STILL: instance = publicStill_; break;
++        case TYPE_ABSOLUTE_STILL: instance = still_; break;
++        case TYPE_HORIZONTAL_POSITION: instance = horizontalPosition_; break;
++        case TYPE_VERTICAL_POSITION: instance = verticalPosition_; break;
++        default: return RET_ERR;
++    }
++    if (stoppingTypes_.insert(type).second && instance != nullptr) { instance->Unsubscribe(type); }
++    // Failed physical teardown remains retryable; never claim it was stopped.
++    if (UnregisterSensor(type) != RET_OK) { return RET_ERR; }
++    switch (type) {
++        case TYPE_STILL: publicStill_.reset(); break;
++        case TYPE_ABSOLUTE_STILL: still_.reset(); break;
++        case TYPE_HORIZONTAL_POSITION: horizontalPosition_.reset(); break;
++        case TYPE_VERTICAL_POSITION: verticalPosition_.reset(); break;
++        default: return RET_ERR;
++    }
++    stoppingTypes_.erase(type);
++    callAlgoNums_.erase(found);
+     return RET_OK;
+ }
+ 
+ ErrCode AlgoMgr::DisableCount(Type type)
+ {
+-    CALL_DEBUG_ENTER;
+-    return RET_OK;
++    (void)type;
++    { std::lock_guard lock(mutex_); if (!callAlgoNums_.empty()) { return RET_ERR; } }
++    // Called by the service-side retirement worker, outside provider callbacks.
++    return SENSOR_DATA_CB.Unregister() ? RET_OK : RET_ERR;
+ }
+ 
+ ErrCode AlgoMgr::UnregisterSensor(Type type)
+ {
+-    CALL_DEBUG_ENTER;
+     int32_t sensorType = GetSensorTypeId(type);
+-    if (sensorType == RET_ERR) {
+-        FI_HILOGE("Failed to get sensorType");
+-        return false;
+-    }
+-    if (!SENSOR_DATA_CB.UnregisterCallbackSensor(sensorType)) {
+-        FI_HILOGE("Failed to unregister callback sensor");
+-        return false;
+-    }
+-    return true;
++    if (sensorType == RET_ERR) { return RET_ERR; }
++    return SENSOR_DATA_CB.UnregisterCallbackSensor(sensorType) ? RET_OK : RET_ERR;
+ }
+ 
+ extern "C" IMsdp *Create(void)
+--- a/base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h
++++ b/base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h
+@@ -30,6 +30,7 @@
+     bool Init(Type type) override;
+ 
+ private:
++    Type reportType_ { TYPE_INVALID };
+     bool StartAlgorithm(int32_t sensorTypeId, AccelData* sensorData) override;
+     void ExecuteOperation() override;
+ };
+--- a/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp
++++ b/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp
+@@ -28,6 +28,8 @@
+ bool AlgoAbsoluteStill::Init(Type type)
+ {
+     CALL_DEBUG_ENTER;
++    if (type != TYPE_ABSOLUTE_STILL && type != TYPE_STILL) { return false; }
++    reportType_ = type;
+     algoCallback_ = [this](int32_t sensorTypeId, AccelData* sensorData) {
+         return this->StartAlgorithm(sensorTypeId, sensorData);
+     };
+@@ -35,8 +37,9 @@
+         FI_HILOGE("algoCallback is nullptr");
+         return false;
+     }
+-    SENSOR_DATA_CB.SubscribeSensorEvent(type, algoCallback_);
+-    return true;
++    auto owner = weak_from_this().lock();
++    if (owner == nullptr) { return false; }
++    return SENSOR_DATA_CB.SubscribeSensorEvent(type, algoCallback_, owner);
+ }
+ 
+ bool AlgoAbsoluteStill::StartAlgorithm(int32_t sensorTypeId, AccelData* sensorData)
+@@ -63,14 +66,14 @@
+         counter_--;
+         if (counter_ == 0) {
+             counter_ = COUNTER_THRESHOLD;
+-            UpdateStateAndReport(VALUE_ENTER, STILL, TYPE_ABSOLUTE_STILL);
++            UpdateStateAndReport(VALUE_ENTER, STILL, reportType_);
+         }
+     } else {
+         counter_ = COUNTER_THRESHOLD;
+         if (state_ == UNSTILL) {
+             return;
+         }
+-        UpdateStateAndReport(VALUE_EXIT, UNSTILL, TYPE_ABSOLUTE_STILL);
++        UpdateStateAndReport(VALUE_EXIT, UNSTILL, reportType_);
+     }
+ }
+ } // namespace DeviceStatus
+--- a/base/msdp/device_status/libs/include/datahub/sensor_data_callback.h
++++ b/base/msdp/device_status/libs/include/datahub/sensor_data_callback.h
+@@ -18,12 +18,15 @@
+ 
+ #ifdef DEVICE_STATUS_SENSOR_ENABLE
+ #include <atomic>
++#include <condition_variable>
++#include <memory>
++#include <vector>
++#include <cstdint>
+ #include <list>
+ #include <map>
+ #include <mutex>
+ #include <thread>
+ 
+-#include "semaphore.h"
+ #include "singleton.h"
+ #include "sensor_agent.h"
+ #include "sensor_agent_type.h"
+@@ -40,26 +43,42 @@
+     bool UnregisterCallbackSensor(int32_t sensorTypeId);
+     void Init();
+     bool Unregister();
+-    bool SubscribeSensorEvent(int32_t sensorTypeId, SensorCallback callback);
++    bool SubscribeSensorEvent(int32_t sensorTypeId, SensorCallback callback, std::shared_ptr<void> owner = nullptr);
+     bool UnsubscribeSensorEvent(int32_t sensorTypeId, SensorCallback callback);
+     bool PushData(int32_t sensorTypeId, uint8_t* data);
+ 
+ private:
+-    bool PopData(int32_t sensorTypeId, AccelData& data);
++    struct Sample { uint64_t sequence; AccelData data; };
++    struct Slot {
++        SensorCallback callback;
++        std::shared_ptr<void> owner;
++        uint64_t firstSequence { 0 };
++        bool active { true };
++        size_t inFlight { 0 };
++        std::condition_variable drained;
++    };
++    bool PopData(int32_t sensorTypeId, AccelData& data, uint64_t& sequence);
+     void AlgorithmLoop();
+     void HandleSensorEvent();
+-    bool NotifyCallback(int32_t sensorTypeId, AccelData* data);
++    bool NotifyCallback(int32_t sensorTypeId, AccelData* data, uint64_t sequence);
++    bool StopPhysicalLocked();
+ 
+-    struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+-    std::list<AccelData> accelDataList_;
++    struct SensorUser user_ {};
++    std::list<Sample> accelDataList_;
+     std::unique_ptr<std::thread> algorithmThread_ { nullptr };
+-    sem_t sem_ = {};
++    std::condition_variable dataReady_;
+     std::mutex callbackMutex_;
+     std::mutex dataMutex_;
+     std::mutex initMutex_;
+     std::mutex sensorMutex_;
+-    std::atomic<bool> alive_ { true };
+-    std::map<int32_t, SensorCallback> algoMap_;
++    std::atomic<bool> alive_ { false };
++    bool workerStopping_ { false };
++    bool accepting_ { false };
++    bool subscribed_ { false };
++    bool activated_ { false };
++    size_t physicalUsers_ { 0 };
++    uint64_t sampleSequence_ { 0 };
++    std::map<int32_t, std::shared_ptr<Slot>> algoMap_;
+ };
+ #define SENSOR_DATA_CB OHOS::Singleton<SensorDataCallback>::GetInstance()
+ } // namespace DeviceStatus
+--- a/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp
++++ b/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp
+@@ -31,89 +31,113 @@
+ namespace DeviceStatus {
+ namespace {
+ constexpr int32_t RATE_MILLISEC { 100100100 };
++thread_local const SensorDataCallback* currentSensorCallback = nullptr;
+ constexpr size_t MAX_PENDING_ACCEL_SAMPLES { 256 };
+ } // namespace
+ 
+ SensorDataCallback::SensorDataCallback() {}
+ SensorDataCallback::~SensorDataCallback()
+ {
+-    algoMap_.clear();
+-    alive_ = false;
+-    CHKPV(algorithmThread_);
+-    if (!algorithmThread_->joinable()) {
+-        FI_HILOGE("Thread join failed");
+-        return;
+-    }
+-    sem_post(&sem_);
+-    algorithmThread_->join();
+-    accelDataList_.clear();
++    {
++        std::lock_guard lock(callbackMutex_);
++        for (auto& entry : algoMap_) { entry.second->active = false; }
++        algoMap_.clear();
++    }
++    {
++        std::lock_guard lock(sensorMutex_);
++        physicalUsers_ = 0;
++        StopPhysicalLocked();
++    }
++    Unregister();
+ }
+ 
+ void SensorDataCallback::Init()
+ {
+-    FI_HILOGI("SensorDataCallback is initiated");
+     std::lock_guard lock(initMutex_);
+-    if (algorithmThread_ == nullptr) {
+-        FI_HILOGI("Create algorithm thread");
+-        algorithmThread_ = std::make_unique<std::thread>([this] { this->AlgorithmLoop(); });
+-    }
++    if (workerStopping_ || algorithmThread_ != nullptr) { return; }
++    {
++        std::lock_guard dataLock(dataMutex_);
++        alive_ = true;
++        accelDataList_.clear();
++    }
++    algorithmThread_ = std::make_unique<std::thread>([this] { AlgorithmLoop(); });
+ }
+ 
+ bool SensorDataCallback::Unregister()
+ {
+-    CALL_DEBUG_ENTER;
+-    bool ret = UnregisterCallbackSensor(SensorTypeId::SENSOR_TYPE_ID_ACCELEROMETER);
+-    if (!ret) {
+-        FI_HILOGE("UnregisterCallbackSensor failed");
+-        return false;
+-    }
+-    alive_ = false;
++    { std::lock_guard lock(callbackMutex_); if (!algoMap_.empty()) { return false; } }
++    {
++        std::lock_guard lock(sensorMutex_);
++        if (physicalUsers_ != 0 || !StopPhysicalLocked()) { return false; }
++    }
++    std::unique_ptr<std::thread> retired;
+     {
+         std::lock_guard lock(initMutex_);
+-        CHKPF(algorithmThread_);
+-        if (!algorithmThread_->joinable()) {
+-            FI_HILOGE("Thread join failed");
+-            return false;
+-        }
+-    }
+-    sem_post(&sem_);
+-    {
+-        std::lock_guard lock(initMutex_);
+-        algorithmThread_->join();
+-    }
+-    return ret;
+-}
+-
+-bool SensorDataCallback::SubscribeSensorEvent(int32_t sensorTypeId, SensorCallback callback)
+-{
+-    CALL_DEBUG_ENTER;
+-    std::lock_guard lock(callbackMutex_);
+-    auto ret = algoMap_.insert(std::pair(sensorTypeId, callback));
+-    if (ret.second) {
+-        return true;
+-    }
+-    FI_HILOGE("SensorCallback is duplicated");
+-    return false;
++        if (workerStopping_) { return false; }
++        if (algorithmThread_ == nullptr) { return true; }
++        if (algorithmThread_->get_id() == std::this_thread::get_id()) { return false; }
++        workerStopping_ = true;
++        { std::lock_guard dataLock(dataMutex_); alive_ = false; accelDataList_.clear(); }
++        dataReady_.notify_all();
++        retired = std::move(algorithmThread_);
++    }
++    if (retired->joinable()) { retired->join(); }
++    { std::lock_guard lock(initMutex_); workerStopping_ = false; }
++    return true;
++}
++
++bool SensorDataCallback::SubscribeSensorEvent(int32_t sensorTypeId, SensorCallback callback,
++    std::shared_ptr<void> owner)
++{
++    if (!callback || owner == nullptr) { return false; }
++    auto slot = std::make_shared<Slot>();
++    slot->callback = std::move(callback);
++    slot->owner = std::move(owner);
++    std::scoped_lock lock(callbackMutex_, dataMutex_);
++    if (!alive_ || sampleSequence_ == UINT64_MAX) { return false; }
++    slot->firstSequence = sampleSequence_ + 1;
++    return algoMap_.emplace(sensorTypeId, std::move(slot)).second;
+ }
+ 
+ bool SensorDataCallback::UnsubscribeSensorEvent(int32_t sensorTypeId, SensorCallback callback)
+ {
+-    CALL_DEBUG_ENTER;
+-    std::lock_guard lock(callbackMutex_);
+-    auto callbackIter = algoMap_.find(sensorTypeId);
+-    if (callbackIter != algoMap_.end()) {
+-        FI_HILOGE("Erase sensorTypeId:%{public}d", sensorTypeId);
+-        algoMap_.erase(callbackIter);
+-    }
+-    return true;
+-}
+-
+-bool SensorDataCallback::NotifyCallback(int32_t sensorTypeId, AccelData* data)
++    (void)callback;
++    std::unique_lock lock(callbackMutex_);
++    auto found = algoMap_.find(sensorTypeId);
++    if (found == algoMap_.end()) { return false; }
++    auto slot = found->second;
++    slot->active = false;
++    algoMap_.erase(found);
++    // The callback itself holds Slot::owner until it returns; never wait on self.
++    if (currentSensorCallback != this) {
++        slot->drained.wait(lock, [&slot] { return slot->inFlight == 0; });
++    }
++    return true;
++}
++
++bool SensorDataCallback::NotifyCallback(int32_t sensorTypeId, AccelData* data, uint64_t sequence)
+ {
+     CHKPF(data);
+-    std::lock_guard lock(callbackMutex_);
+-    for (auto iter = algoMap_.begin(); iter != algoMap_.end(); ++iter) {
+-        (iter->second)(sensorTypeId, data);
++    std::vector<std::shared_ptr<Slot>> slots;
++    {
++        std::lock_guard lock(callbackMutex_);
++        for (const auto& entry : algoMap_) { slots.push_back(entry.second); }
++    }
++    for (const auto& slot : slots) {
++        {
++            std::lock_guard lock(callbackMutex_);
++            if (!slot->active || sequence < slot->firstSequence) { continue; }
++            ++slot->inFlight;
++        }
++        auto previous = currentSensorCallback;
++        currentSensorCallback = this;
++        slot->callback(sensorTypeId, data);
++        currentSensorCallback = previous;
++        {
++            std::lock_guard lock(callbackMutex_);
++            --slot->inFlight;
++            slot->drained.notify_all();
++        }
+     }
+     return true;
+ }
+@@ -136,19 +160,20 @@
+     }
+     {
+         std::lock_guard lock(dataMutex_);
++        if (!accepting_ || !alive_ || sampleSequence_ == UINT64_MAX) { return false; }
+         if (accelDataList_.size() >= MAX_PENDING_ACCEL_SAMPLES) {
+             FI_HILOGE("Accelerometer input queue is full");
+             return false;
+         }
+-        accelDataList_.emplace_back(*acclData);
++        accelDataList_.push_back({++sampleSequence_, *acclData});
+         FI_HILOGD("ACCEL pushData:x:%{public}f, y:%{public}f, z:%{public}f, PushData sensorTypeId:%{public}d",
+             acclData->x, acclData->y, acclData->z, sensorTypeId);
+     }
+-    sem_post(&sem_);
+-    return true;
+-}
+-
+-bool SensorDataCallback::PopData(int32_t sensorTypeId, AccelData& data)
++    dataReady_.notify_one();
++    return true;
++}
++
++bool SensorDataCallback::PopData(int32_t sensorTypeId, AccelData& data, uint64_t& sequence)
+ {
+     CALL_DEBUG_ENTER;
+     if (sensorTypeId != SENSOR_TYPE_ID_ACCELEROMETER) {
+@@ -160,7 +185,8 @@
+         FI_HILOGE("No accel data");
+         return false;
+     }
+-    data = accelDataList_.front();
++    sequence = accelDataList_.front().sequence;
++    data = accelDataList_.front().data;
+     accelDataList_.pop_front();
+     FI_HILOGD("ACCEL popData:x:%{public}f, y:%{public}f, z:%{public}f, PopData sensorTypeId:%{public}d",
+         data.x, data.y, data.z, sensorTypeId);
+@@ -182,69 +208,69 @@
+ 
+ bool SensorDataCallback::RegisterCallbackSensor(int32_t sensorTypeId)
+ {
++    if (sensorTypeId != SENSOR_TYPE_ID_ACCELEROMETER) { return false; }
+     std::lock_guard lock(sensorMutex_);
++    if (physicalUsers_ != 0) { ++physicalUsers_; return true; }
++    if (!alive_ || !StopPhysicalLocked()) { return false; }
+     user_.callback = SensorDataCallbackImpl;
+-    int32_t ret = SubscribeSensor(sensorTypeId, &user_);
+-    if (ret != 0) {
+-        FI_HILOGE("SubscribeSensor failed");
+-        return false;
+-    }
+-    ret = SetBatch(sensorTypeId, &user_, RATE_MILLISEC, RATE_MILLISEC);
+-    if (ret != 0) {
+-        FI_HILOGE("SetBatch failed");
+-        if (UnsubscribeSensor(sensorTypeId, &user_) != 0) {
+-            FI_HILOGE("Rollback UnsubscribeSensor failed");
+-        }
+-        return false;
+-    }
+-    ret = ActivateSensor(sensorTypeId, &user_);
+-    if (ret != 0) {
+-        FI_HILOGE("ActivateSensor failed");
+-        if (DeactivateSensor(sensorTypeId, &user_) != 0) {
+-            FI_HILOGE("Rollback DeactivateSensor failed");
+-        }
+-        if (UnsubscribeSensor(sensorTypeId, &user_) != 0) {
+-            FI_HILOGE("Rollback UnsubscribeSensor failed");
+-        }
+-        return false;
+-    }
++    if (SubscribeSensor(sensorTypeId, &user_) != 0) { return false; }
++    subscribed_ = true;
++    if (SetBatch(sensorTypeId, &user_, RATE_MILLISEC, RATE_MILLISEC) != 0) {
++        StopPhysicalLocked(); return false;
++    }
++    if (ActivateSensor(sensorTypeId, &user_) != 0) {
++        // Activate can partially register even on error; attempt exact rollback.
++        activated_ = true;
++        StopPhysicalLocked(); return false;
++    }
++    activated_ = true;
++    physicalUsers_ = 1;
++    { std::lock_guard dataLock(dataMutex_); accepting_ = true; }
+     return true;
+ }
+ 
+ bool SensorDataCallback::UnregisterCallbackSensor(int32_t sensorTypeId)
+ {
+-    CALL_DEBUG_ENTER;
++    if (sensorTypeId != SENSOR_TYPE_ID_ACCELEROMETER) { return false; }
+     std::lock_guard lock(sensorMutex_);
+-    CHKPF(user_.callback);
+-    int32_t ret = DeactivateSensor(sensorTypeId, &user_);
+-    if (ret != 0) {
+-        FI_HILOGE("DeactivateSensor failed");
+-        return false;
+-    }
+-    ret = UnsubscribeSensor(sensorTypeId, &user_);
+-    if (ret != 0) {
+-        FI_HILOGE("UnsubscribeSensor failed");
+-        return false;
+-    }
+-    return true;
++    if (physicalUsers_ > 1) { --physicalUsers_; return true; }
++    physicalUsers_ = 0;
++    {
++        std::lock_guard dataLock(dataMutex_);
++        accepting_ = false;
++        alive_ = false;
++        accelDataList_.clear();
++    }
++    dataReady_.notify_all();
++    return StopPhysicalLocked();
++}
++
++bool SensorDataCallback::StopPhysicalLocked()
++{
++    if (activated_ && DeactivateSensor(SENSOR_TYPE_ID_ACCELEROMETER, &user_) == 0) { activated_ = false; }
++    if (subscribed_ && UnsubscribeSensor(SENSOR_TYPE_ID_ACCELEROMETER, &user_) == 0) { subscribed_ = false; }
++    return !activated_ && !subscribed_;
+ }
+ 
+ void SensorDataCallback::AlgorithmLoop()
+ {
+     SetThreadName(std::string("os_loop_sensor"));
+-    CALL_DEBUG_ENTER;
+-    while (alive_) {
+-        sem_wait(&sem_);
++    for (;;) {
++        {
++            std::unique_lock lock(dataMutex_);
++            dataReady_.wait(lock, [this] { return !alive_ || !accelDataList_.empty(); });
++            if (!alive_) { return; }
++        }
+         HandleSensorEvent();
+     }
+ }
+ 
+ void SensorDataCallback::HandleSensorEvent()
+ {
+-    CALL_DEBUG_ENTER;
+-    AccelData acclData;
+-    if (PopData(SENSOR_TYPE_ID_ACCELEROMETER, acclData)) {
+-        NotifyCallback(SENSOR_TYPE_ID_ACCELEROMETER, static_cast<AccelData*>(&acclData));
++    AccelData data;
++    uint64_t sequence = 0;
++    if (PopData(SENSOR_TYPE_ID_ACCELEROMETER, data, sequence)) {
++        NotifyCallback(SENSOR_TYPE_ID_ACCELEROMETER, &data, sequence);
+     }
+ }
+ } // namespace DeviceStatus
+--- a/base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h
++++ b/base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h
+@@ -17,6 +17,8 @@
+ #define DEVICESTATUS_MSDP_CLIENT_IMPL_H
+ 
+ #include <memory>
++#include <atomic>
++#include <thread>
+ #include <mutex>
+ #include <map>
+ 
+@@ -31,7 +33,7 @@
+ public:
+     using CallbackManager = std::function<int32_t(const Data&)>;
+     using LoadMockLibraryFunc = IMsdp* (*)();
+-    using LoadMockLibraryPtr = void *(*)(IMsdp*);
++    using LoadMockLibraryPtr = void (*)(const IMsdp*);
+     DeviceStatusMsdpClientImpl();
+     ErrCode InitMsdpImpl(Type type);
+     ErrCode Disable(Type type);
+@@ -62,6 +64,8 @@
+ 
+ private:
+     ErrCode ImplCallback(const Data &data);
++    ErrCode UnloadAlgoLibraryLocked();
++    void RetireAlgo();
+     IMsdp* GetAlgoInst(Type type);
+     IMsdp* GetMockInst(Type type);
+     void OnResult(const Data &data) override;
+@@ -77,7 +81,8 @@
+     IMsdp* iAlgo_ { nullptr };
+     IMsdp* iMock_ { nullptr };
+     std::mutex mutex_;
+-    bool notifyManagerFlag_ { false };
++    std::mutex algoLifecycleMutex_;
++    std::atomic<bool> algoRetiring_ { false };
+     mutable std::mutex callMutex_;
+ };
+ } // namespace DeviceStatus
+--- a/base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp
++++ b/base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp
+@@ -44,7 +44,6 @@
+ DeviceStatusMsdpClientImpl::DeviceStatusMsdpClientImpl()
+ {
+     for (int32_t type = 0; type < static_cast<int32_t>(Type::TYPE_MAX); ++type) {
+-        algoCallCounts_[static_cast<Type>(type)] = 0;
+         mockCallCounts_[static_cast<Type>(type)] = 0;
+     }
+ }
+@@ -105,32 +104,21 @@
+ 
+ ErrCode DeviceStatusMsdpClientImpl::AlgoHandle(Type type)
+ {
+-    if (GetAlgoAbility(type) == RET_ERR) {
+-        FI_HILOGE("Algo Library is not support");
+-        return RET_ERR;
+-    }
+-    if (StartAlgo(type) == RET_ERR) {
+-        FI_HILOGE("Start algo Library failed");
+-        return RET_ERR;
+-    }
+-    CHKPR(iAlgo_, RET_ERR);
+-    if ((iAlgo_->Enable(type)) == RET_ERR) {
+-        FI_HILOGE("Enable algo Library failed");
+-        return RET_ERR;
+-    }
+-    std::unique_lock lock(mutex_);
+-    auto iter = algoCallCounts_.find(type);
+-    if (iter == algoCallCounts_.end()) {
+-        auto ret = algoCallCounts_.emplace(type, 0);
+-        if (!ret.second) {
+-            FI_HILOGW("Type is duplicated");
+-            return RET_ERR;
+-        }
+-    } else {
+-        iter->second++;
+-    }
+-    RegisterAlgo();
+-    FI_HILOGI("algoCallCounts_:%{public}d", algoCallCounts_[type]);
++    if (algoRetiring_) { return RET_ERR; }
++    std::unique_lock lifecycle(algoLifecycleMutex_, std::try_to_lock);
++    if (!lifecycle.owns_lock() || algoRetiring_ || GetAlgoAbility(type) != RET_OK) { return RET_ERR; }
++    auto existing = algoCallCounts_.find(type);
++    if (existing != algoCallCounts_.end()) {
++        if (existing->second == UINT32_MAX) { return RET_ERR; }
++        ++existing->second;
++        return RET_OK;
++    }
++    if (weak_from_this().expired() || StartAlgo(type) != RET_OK || iAlgo_ == nullptr) { return RET_ERR; }
++    if (RegisterAlgo() != RET_OK || iAlgo_->Enable(type) != RET_OK) {
++        if (algoCallCounts_.empty()) { UnloadAlgoLibraryLocked(); }
++        return RET_ERR;
++    }
++    algoCallCounts_.emplace(type, 1);
+     return RET_OK;
+ }
+ 
+@@ -140,7 +128,7 @@
+         FI_HILOGE("Load algo Library failed");
+         return RET_ERR;
+     }
+-    std::unique_lock lock(mutex_);
++    // GetAlgoInst owns mutex_; do not recursively lock the same std::mutex.
+     iAlgo_ = GetAlgoInst(type);
+     CHKPR(iAlgo_, RET_ERR);
+     return RET_OK;
+@@ -168,7 +156,7 @@
+ 
+ ErrCode DeviceStatusMsdpClientImpl::GetAlgoAbility(Type type)
+ {
+-    if ((type == Type::TYPE_ABSOLUTE_STILL) || (type == Type::TYPE_HORIZONTAL_POSITION) ||
++    if ((type == Type::TYPE_STILL) || (type == Type::TYPE_ABSOLUTE_STILL) || (type == Type::TYPE_HORIZONTAL_POSITION) ||
+         (type == Type::TYPE_VERTICAL_POSITION)) {
+         FI_HILOGI("Support ability type:%{public}d", type);
+         return RET_OK;
+@@ -191,36 +179,27 @@
+ 
+ ErrCode DeviceStatusMsdpClientImpl::AlgoDisable(Type type)
+ {
+-    #ifdef DEVICE_STATUS_SENSOR_ENABLE
+-    CALL_DEBUG_ENTER;
+-    CHKPR(iAlgo_, RET_ERR);
+-    auto iter = algoCallCounts_.find(type);
+-    if (iter == algoCallCounts_.end()) {
+-        FI_HILOGE("Failed to find record type");
+-        return RET_ERR;
+-    }
+-    if (iter->second == 0) {
+-        algoCallCounts_.erase(type);
+-    } else {
+-        iAlgo_->Disable(type);
+-        UnregisterAlgo();
+-    }
+-    algoCallCounts_.erase(type);
++#ifdef DEVICE_STATUS_SENSOR_ENABLE
++    if (algoRetiring_) { return RET_ERR; }
++    std::unique_lock lifecycle(algoLifecycleMutex_, std::try_to_lock);
++    if (!lifecycle.owns_lock() || algoRetiring_ || iAlgo_ == nullptr) { return RET_ERR; }
++    auto found = algoCallCounts_.find(type);
++    if (found == algoCallCounts_.end()) { return RET_ERR; }
++    if (found->second > 1) { --found->second; return RET_OK; }
++    auto self = weak_from_this().lock();
++    if (self == nullptr || iAlgo_->Disable(type) != RET_OK) { return RET_ERR; }
++    algoCallCounts_.erase(found);
+     if (algoCallCounts_.empty()) {
+-        if (UnloadAlgoLibrary() == RET_ERR) {
+-            FI_HILOGE("Failed to close algorithm library");
+-            return RET_ERR;
+-        }
+-        FI_HILOGI("Close algorithm library");
+-        iAlgo_ = nullptr;
+-        callBacksMgr_ = nullptr;
+-    }
+-    FI_HILOGI("algoCallCounts_:%{public}d", algoCallCounts_[type]);
+-    return RET_OK;
+-    #else
+-    FI_HILOGE("Disable:sensor is not exist");
++        algoRetiring_ = true;
++        // This code is in the service DSO, not the algorithm being retired.
++        // It waits for the actual worker's join after any reentrant callback returns.
++        std::thread([self] { self->RetireAlgo(); }).detach();
++    }
++    return RET_OK;
++#else
++    (void)type;
+     return RET_ERR;
+-    #endif // DEVICE_STATUS_SENSOR_ENABLE
++#endif
+ }
+ 
+ ErrCode DeviceStatusMsdpClientImpl::MockDisable(Type type)
+@@ -254,14 +233,15 @@
+ 
+ ErrCode DeviceStatusMsdpClientImpl::ImplCallback(const Data &data)
+ {
+-    std::unique_lock lock(mutex_);
+-    CHKPR(callBacksMgr_, RET_ERR);
+-    callBacksMgr_(data);
+-    return RET_OK;
++    CallbackManager callback;
++    { std::lock_guard lock(callMutex_); callback = callBacksMgr_; }
++    return callback ? callback(data) : RET_ERR;
+ }
+ 
+ ErrCode DeviceStatusMsdpClientImpl::RegisterImpl(const CallbackManager &callback)
+ {
++    if (!callback) { return RET_ERR; }
++    std::lock_guard lock(callMutex_);
+     callBacksMgr_ = callback;
+     return RET_OK;
+ }
+@@ -292,12 +272,10 @@
+ 
+ ErrCode DeviceStatusMsdpClientImpl::RegisterAlgo()
+ {
+-    CALL_DEBUG_ENTER;
+-    if (iAlgo_ != nullptr) {
+-        std::shared_ptr<IMsdp::MsdpAlgoCallback> callback_ = shared_from_this();
+-        iAlgo_->RegisterCallback(callback_);
+-    }
+-    return RET_OK;
++    if (iAlgo_ == nullptr) { return RET_ERR; }
++    auto self = weak_from_this().lock();
++    if (self == nullptr) { return RET_ERR; }
++    return iAlgo_->RegisterCallback(self);
+ }
+ 
+ ErrCode DeviceStatusMsdpClientImpl::UnregisterAlgo()
+@@ -310,33 +288,15 @@
+ 
+ int32_t DeviceStatusMsdpClientImpl::MsdpCallback(const Data &data)
+ {
+-    CALL_DEBUG_ENTER;
+-    std::unique_lock callLock(callMutex_);
+     DS_DUMPER->PushDeviceStatus(data);
+     SaveObserverData(data);
+-    if (notifyManagerFlag_) {
+-        ImplCallback(data);
+-        notifyManagerFlag_ = false;
+-    }
+-    return RET_OK;
++    return ImplCallback(data);
+ }
+ 
+ Data DeviceStatusMsdpClientImpl::SaveObserverData(const Data &data)
+ {
+-    CALL_DEBUG_ENTER;
+-    for (auto iter = deviceStatusDatas_.begin(); iter != deviceStatusDatas_.end(); ++iter) {
+-        if (iter->first == data.type) {
+-            iter->second = data.value;
+-            notifyManagerFlag_ = true;
+-            return data;
+-        }
+-    }
+-    auto ret = deviceStatusDatas_.insert(std::make_pair(data.type, data.value));
+-    if (!ret.second) {
+-        FI_HILOGW("type is duplicated");
+-        return data;
+-    }
+-    notifyManagerFlag_ = true;
++    std::lock_guard lock(callMutex_);
++    deviceStatusDatas_[data.type] = data.value;
+     return data;
+ }
+ 
+@@ -449,9 +409,6 @@
+             dlName.c_str());
+         dlclose(algo_.handle);
+         algo_.Clear();
+-        if (algo_.handle == nullptr) {
+-            return RET_OK;
+-        }
+         FI_HILOGE("Load algo failed");
+         return RET_ERR;
+     }
+@@ -460,14 +417,35 @@
+ 
+ ErrCode DeviceStatusMsdpClientImpl::UnloadAlgoLibrary()
+ {
+-    CALL_DEBUG_ENTER;
+-    std::unique_lock lock(mutex_);
+-    CHKPR(algo_.handle, RET_ERR);
++    std::unique_lock lifecycle(algoLifecycleMutex_, std::try_to_lock);
++    if (!lifecycle.owns_lock()) { return RET_ERR; }
++    return UnloadAlgoLibraryLocked();
++}
++
++void DeviceStatusMsdpClientImpl::RetireAlgo()
++{
++    std::lock_guard lifecycle(algoLifecycleMutex_);
++    if (UnloadAlgoLibraryLocked() != RET_OK) {
++        FI_HILOGE("Algorithm teardown incomplete; retaining mapped module");
++    }
++    algoRetiring_ = false;
++}
++
++ErrCode DeviceStatusMsdpClientImpl::UnloadAlgoLibraryLocked()
++{
++    if (!algoCallCounts_.empty()) { return RET_ERR; }
++    if (iAlgo_ != nullptr) {
++        if (iAlgo_->DisableCount(TYPE_INVALID) != RET_OK) { return RET_ERR; }
++        if (iAlgo_->UnregisterCallback() != RET_OK) { return RET_ERR; }
++    }
++    std::unique_lock lock(mutex_);
++    if (algo_.handle == nullptr) { return RET_OK; }
+     if (algo_.pAlgorithm != nullptr) {
+         algo_.destroy(algo_.pAlgorithm);
+         algo_.pAlgorithm = nullptr;
+     }
+-    dlclose(algo_.handle);
++    iAlgo_ = nullptr;
++    if (dlclose(algo_.handle) != 0) { return RET_ERR; }
+     algo_.Clear();
+     return RET_OK;
+ }
+@@ -475,6 +453,7 @@
+ IMsdp* DeviceStatusMsdpClientImpl::GetAlgoInst(Type type)
+ {
+     CALL_DEBUG_ENTER;
++    (void)type;
+     std::unique_lock lock(mutex_);
+     CHKPP(algo_.handle);
+     if (algo_.pAlgorithm == nullptr) {
+--- a/base/msdp/device_status/services/native/include/devicestatus_manager.h
++++ b/base/msdp/device_status/services/native/include/devicestatus_manager.h
+@@ -17,6 +17,7 @@
+ #define DEVICESTATUS_MANAGER_H
+ 
+ #include <set>
++#include <memory>
+ #include <map>
+ 
+ #include <atomic>
+@@ -42,16 +43,18 @@
+ using namespace Security::AccessToken;
+ using namespace OHOS::Rosen;
+ class DeviceStatusService;
+-class DeviceStatusManager {
++class DeviceStatusManager : public std::enable_shared_from_this<DeviceStatusManager> {
+ public:
+     DeviceStatusManager() = default;
+-    ~DeviceStatusManager() = default;
++    ~DeviceStatusManager();
+ 
+     class DeviceStatusCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
+     public:
+-        DeviceStatusCallbackDeathRecipient() = default;
++        explicit DeviceStatusCallbackDeathRecipient(std::weak_ptr<DeviceStatusManager> manager) : manager_(manager) {}
+         virtual void OnRemoteDied(const wptr<IRemoteObject> &remote);
+         virtual ~DeviceStatusCallbackDeathRecipient() = default;
++    private:
++        std::weak_ptr<DeviceStatusManager> manager_;
+     };
+ 
+     class BoomerangCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
+@@ -133,6 +136,9 @@
+     void HandlerPageScrollerEvent(int32_t event);
+     void SystemBarHiddedInit();
+ #endif
++    void ReconcileType(Type type);
++    void RemoveDeadCallback(const wptr<IRemoteObject>& remote);
++    bool HasObjectLocked(const sptr<IRemoteObject>& object) const;
+     void TimerTask();
+     void RemoveLibTimerTask(const std::shared_ptr<BoomerangAlgoImpl> &boomerangAlgo);
+     static constexpr int32_t argSize_ { TYPE_MAX };
+@@ -143,6 +149,10 @@
+     std::shared_ptr<DeviceStatusMsdpClientImpl> msdpImpl_ { nullptr };
+     std::map<Type, OnChangedValue> msdpData_;
+     std::map<Type, std::set<const sptr<IRemoteDevStaCallback>, classcomp>> listeners_;
++    std::map<Type, std::map<sptr<IRemoteDevStaCallback>, ActivityEvent, classcomp>> listenerEvents_;
++    std::set<Type> enabledTypes_;
++    std::set<Type> changingTypes_;
++    std::set<Type> failedStopTypes_;
+     std::map<std::string, std::set<const sptr<IRemoteBoomerangCallback>, boomerangClasscomp>> boomerangListeners_;
+     sptr<IRemoteBoomerangCallback> notifyListener_ { nullptr };
+     sptr<IRemoteBoomerangCallback> encodeCallback_ { nullptr };
+--- a/base/msdp/device_status/services/native/src/devicestatus_manager.cpp
++++ b/base/msdp/device_status/services/native/src/devicestatus_manager.cpp
+@@ -52,8 +52,8 @@
+ 
+ void DeviceStatusManager::DeviceStatusCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
+ {
+-    CHKPV(remote);
+-    FI_HILOGI("Recv death notice");
++    auto manager = manager_.lock();
++    if (manager != nullptr) { manager->RemoveDeadCallback(remote); }
+ }
+ 
+ void DeviceStatusManager::BoomerangCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
+@@ -154,7 +154,7 @@
+ {
+     CALL_DEBUG_ENTER;
+     if (devicestatusCBDeathRecipient_ == nullptr) {
+-        devicestatusCBDeathRecipient_ = new (std::nothrow) DeviceStatusCallbackDeathRecipient();
++        devicestatusCBDeathRecipient_ = new (std::nothrow) DeviceStatusCallbackDeathRecipient(weak_from_this());
+         if (devicestatusCBDeathRecipient_ == nullptr) {
+             FI_HILOGE("devicestatusCBDeathRecipient_ failed");
+             return false;
+@@ -211,16 +211,8 @@
+ 
+ bool DeviceStatusManager::Enable(Type type)
+ {
+-    CALL_DEBUG_ENTER;
+-    if ((type <= TYPE_INVALID) || (type >= TYPE_MAX)) {
+-        FI_HILOGE("Check type is invalid");
+-        return false;
+-    }
+-    if (!InitAlgoMngrInterface(type)) {
+-        FI_HILOGE("Init AlgoMngr Interface error");
+-        return false;
+-    }
+-    return InitDataCallback();
++    if (type <= TYPE_INVALID || type >= TYPE_MAX || !InitDataCallback()) { return false; }
++    return InitAlgoMngrInterface(type);
+ }
+ 
+ bool DeviceStatusManager::Disable(Type type)
+@@ -250,15 +242,14 @@
+ 
+ bool DeviceStatusManager::InitDataCallback()
+ {
+-    CALL_DEBUG_ENTER;
+     CHKPF(msdpImpl_);
+-    DeviceStatusMsdpClientImpl::CallbackManager callback = [this](const Data &data) {
+-        return this->MsdpDataCallback(data);
++    auto owner = weak_from_this();
++    if (owner.expired()) { return false; }
++    DeviceStatusMsdpClientImpl::CallbackManager callback = [owner](const Data &data) {
++        auto manager = owner.lock();
++        return manager != nullptr ? manager->MsdpDataCallback(data) : RET_ERR;
+     };
+-    if (msdpImpl_->RegisterImpl(callback) == RET_ERR) {
+-        FI_HILOGE("Register impl failed");
+-    }
+-    return true;
++    return msdpImpl_->RegisterImpl(callback) == RET_OK;
+ }
+ 
+ int32_t DeviceStatusManager::MsdpDataCallback(const Data &data)
+@@ -269,47 +260,26 @@
+ 
+ int32_t DeviceStatusManager::NotifyDeviceStatusChange(const Data &deviceStatusData)
+ {
+-    CALL_DEBUG_ENTER;
+-    FI_HILOGI("type:%{public}d, value:%{public}d", deviceStatusData.type, deviceStatusData.value);
+-    std::set<const sptr<IRemoteDevStaCallback>, classcomp> listeners;
+-    std::lock_guard lock(mutex_);
+-    auto iter = listeners_.find(deviceStatusData.type);
+-    if (iter == listeners_.end()) {
+-        FI_HILOGE("type:%{public}d is not exits", deviceStatusData.type);
+-        return RET_ERR;
+-    }
+-    if ((deviceStatusData.type <= TYPE_INVALID) || (deviceStatusData.type >= TYPE_MAX)) {
+-        FI_HILOGE("Check deviceStatusData.type is invalid");
+-        return RET_ERR;
+-    }
+-    listeners = (std::set<const sptr<IRemoteDevStaCallback>, classcomp>)(iter->second);
+-    for (const auto &listener : listeners) {
+-        if (listener == nullptr) {
+-            FI_HILOGE("listener is nullptr");
+-            return RET_ERR;
+-        }
+-        FI_HILOGI("type:%{public}d, arrs_:%{public}d", deviceStatusData.type, arrs_[deviceStatusData.type]);
+-        switch (arrs_[deviceStatusData.type]) {
+-            case ENTER: {
+-                if (deviceStatusData.value == VALUE_ENTER) {
+-                    listener->OnDeviceStatusChanged(deviceStatusData);
+-                }
+-                break;
+-            }
+-            case EXIT: {
+-                if (deviceStatusData.value == VALUE_EXIT) {
+-                    listener->OnDeviceStatusChanged(deviceStatusData);
+-                }
+-                break;
+-            }
+-            case ENTER_EXIT: {
+-                listener->OnDeviceStatusChanged(deviceStatusData);
+-                break;
+-            }
+-            default: {
+-                FI_HILOGE("OnChangedValue is unknown");
+-                return RET_ERR;
+-            }
++    if (deviceStatusData.type <= TYPE_INVALID || deviceStatusData.type >= TYPE_MAX) { return RET_ERR; }
++    std::map<sptr<IRemoteDevStaCallback>, ActivityEvent, classcomp> listeners;
++    {
++        std::lock_guard lock(mutex_);
++        auto found = listenerEvents_.find(deviceStatusData.type);
++        if (found == listenerEvents_.end()) { return RET_ERR; }
++        listeners = found->second;
++    }
++    // An individual listener's requested event is preserved; no global last-event alias.
++    for (const auto& entry : listeners) {
++        bool current = false;
++        {
++            std::lock_guard lock(mutex_);
++            auto found = listenerEvents_.find(deviceStatusData.type);
++            current = found != listenerEvents_.end() && found->second.count(entry.first) != 0;
++        }
++        if (!current) { continue; }
++        if (entry.second == ENTER_EXIT || (entry.second == ENTER && deviceStatusData.value == VALUE_ENTER) ||
++            (entry.second == EXIT && deviceStatusData.value == VALUE_EXIT)) {
++            entry.first->OnDeviceStatusChanged(deviceStatusData);
+         }
+     }
+     return RET_OK;
+@@ -318,94 +288,131 @@
+ void DeviceStatusManager::Subscribe(Type type, ActivityEvent event, ReportLatencyNs latency,
+     sptr<IRemoteDevStaCallback> callback)
+ {
+-    CALL_DEBUG_ENTER;
+-    CHKPV(callback);
+-    if ((type <= TYPE_INVALID) || (type >= TYPE_MAX)) {
+-        FI_HILOGE("Subscribe type_:%{public}d is error", type_);
+-        return;
+-    }
+-    if ((event < ENTER) || (event > ENTER_EXIT)) {
+-        FI_HILOGE("Subscribe event_:%{public}d is error", event_);
+-        return;
+-    }
+-    std::lock_guard lock(mutex_);
+-    event_ = event;
+-    type_ = type;
+-    if (argSize_ < type_ + 1) {
+-        FI_HILOGE("Subscribe type is error");
+-        return;
+-    }
+-    arrs_ [type_] = event_;
+-    FI_HILOGI("type_:%{public}d, event:%{public}d", type_, event);
+-    std::set<const sptr<IRemoteDevStaCallback>, classcomp> listeners;
++    (void)latency;
++    if (callback == nullptr || type <= TYPE_INVALID || type >= TYPE_MAX || event < ENTER || event > ENTER_EXIT) { return; }
+     auto object = callback->AsObject();
+-    CHKPV(object);
+-    FI_HILOGI("listeners_.size:%{public}zu", listeners_.size());
+-    auto dtTypeIter = listeners_.find(type);
+-    if (dtTypeIter == listeners_.end()) {
+-        if (listeners.insert(callback).second) {
+-            FI_HILOGI("No found set list of type, insert success");
+-            object->AddDeathRecipient(devicestatusCBDeathRecipient_);
+-        }
+-        auto [_, ret] = listeners_.insert(std::make_pair(type, listeners));
+-        if (!ret) {
+-            FI_HILOGW("type is duplicated");
+-        }
+-    } else {
+-        FI_HILOGI("callbacklist.size:%{public}zu", listeners_[dtTypeIter->first].size());
+-        auto iter = listeners_[dtTypeIter->first].find(callback);
+-        if (iter != listeners_[dtTypeIter->first].end()) {
++    if (object == nullptr) { return; }
++    {
++        std::lock_guard lock(mutex_);
++        auto found = listeners_.find(type);
++        if (found != listeners_.end() && found->second.count(callback) != 0) { return; }
++        if (!HasObjectLocked(object) && !object->AddDeathRecipient(devicestatusCBDeathRecipient_)) {
++            FI_HILOGE("Failed to register actual subscriber death recipient");
+             return;
+         }
+-        if (listeners_[dtTypeIter->first].insert(callback).second) {
+-            FI_HILOGI("Find set list of type, insert success");
+-            object->AddDeathRecipient(devicestatusCBDeathRecipient_);
+-        }
+-    }
+-    if (!Enable(type)) {
+-        FI_HILOGE("Enable failed");
+-        return;
+-    }
++        listeners_[type].insert(callback);
++        listenerEvents_[type][callback] = event;
++    }
++    ReconcileType(type);
+ }
+ 
+ void DeviceStatusManager::Unsubscribe(Type type, ActivityEvent event, sptr<IRemoteDevStaCallback> callback)
+ {
+-    CALL_DEBUG_ENTER;
+-    CHKPV(callback);
+-    if ((type <= TYPE_INVALID) || (type >= TYPE_MAX)) {
+-        FI_HILOGE("Unsubscribe type_:%{public}d is error", type);
+-        return;
+-    }
+-    if ((event < ENTER) || (event > ENTER_EXIT)) {
+-        FI_HILOGE("Unsubscribe event_:%{public}d is error", event);
+-        return;
+-    }
++    if (callback == nullptr || type <= TYPE_INVALID || type >= TYPE_MAX || event < ENTER || event > ENTER_EXIT) { return; }
+     auto object = callback->AsObject();
+-    CHKPV(object);
+-    std::lock_guard lock(mutex_);
+-    FI_HILOGI("listeners_.size:%{public}zu, type:%{public}d event:%{public}d", listeners_.size(),
+-        static_cast<int32_t>(type), event);
+-    auto dtTypeIter = listeners_.find(type);
+-    if (dtTypeIter == listeners_.end()) {
+-        FI_HILOGE("Failed to find listener for type");
+-        return;
+-    }
+-    FI_HILOGI("callbacklist.size:%{public}zu", listeners_[dtTypeIter->first].size());
+-    auto iter = listeners_[dtTypeIter->first].find(callback);
+-    if (iter != listeners_[dtTypeIter->first].end()) {
+-        if (listeners_[dtTypeIter->first].erase(callback) != 0) {
+-            object->RemoveDeathRecipient(devicestatusCBDeathRecipient_);
+-            if (listeners_[dtTypeIter->first].empty()) {
+-                listeners_.erase(dtTypeIter);
+-            }
+-        }
+-    }
+-    FI_HILOGI("listeners_.size:%{public}zu", listeners_.size());
+-    if (listeners_.empty()) {
+-        Disable(type);
+-    } else {
+-        FI_HILOGI("Other subscribe exist");
+-    }
++    if (object == nullptr) { return; }
++    {
++        std::lock_guard lock(mutex_);
++        auto found = listeners_.find(type);
++        if (found == listeners_.end() || found->second.erase(callback) == 0) { return; }
++        auto events = listenerEvents_.find(type);
++        if (events != listenerEvents_.end()) {
++            events->second.erase(callback);
++            if (events->second.empty()) { listenerEvents_.erase(events); }
++        }
++        if (found->second.empty()) { listeners_.erase(found); }
++        if (!HasObjectLocked(object)) { object->RemoveDeathRecipient(devicestatusCBDeathRecipient_); }
++    }
++    ReconcileType(type);
++}
++
++bool DeviceStatusManager::HasObjectLocked(const sptr<IRemoteObject>& object) const
++{
++    for (const auto& type : listeners_) {
++        for (const auto& listener : type.second) { if (listener->AsObject() == object) { return true; } }
++    }
++    return false;
++}
++
++void DeviceStatusManager::ReconcileType(Type type)
++{
++    for (;;) {
++        bool start = false;
++        {
++            std::lock_guard lock(mutex_);
++            if (changingTypes_.count(type) != 0) { return; }
++            auto found = listeners_.find(type);
++            bool wanted = found != listeners_.end() && !found->second.empty();
++            bool enabled = enabledTypes_.count(type) != 0;
++            if (failedStopTypes_.count(type) != 0) { wanted = false; }
++            if (wanted == enabled) { return; }
++            start = wanted;
++            changingTypes_.insert(type);
++        }
++        // Neither backend operations nor user callback paths run under mutex_.
++        bool success = start ? Enable(type) : Disable(type);
++        {
++            std::lock_guard lock(mutex_);
++            changingTypes_.erase(type);
++            if (!success) {
++                if (!start) { failedStopTypes_.insert(type); }
++                auto found = listeners_.find(type);
++                decltype(listeners_)::mapped_type failed;
++                if (found != listeners_.end()) { failed.swap(found->second); listeners_.erase(found); }
++                listenerEvents_.erase(type);
++                for (const auto& callback : failed) {
++                    auto object = callback->AsObject();
++                    if (object != nullptr && !HasObjectLocked(object)) { object->RemoveDeathRecipient(devicestatusCBDeathRecipient_); }
++                }
++                FI_HILOGE("Real backend transition failed; pending subscription rolled back");
++                return;
++            }
++            if (start) { enabledTypes_.insert(type); }
++            else { enabledTypes_.erase(type); failedStopTypes_.erase(type); }
++        }
++        // on/off/death may have changed the desired state during the real call.
++    }
++}
++
++void DeviceStatusManager::RemoveDeadCallback(const wptr<IRemoteObject>& remote)
++{
++    auto object = remote.promote();
++    if (object == nullptr) { return; }
++    std::set<Type> changed;
++    {
++        std::lock_guard lock(mutex_);
++        for (auto it = listeners_.begin(); it != listeners_.end();) {
++            auto& callbacks = it->second;
++            for (auto callback = callbacks.begin(); callback != callbacks.end();) {
++                if ((*callback)->AsObject() == object) {
++                    listenerEvents_[it->first].erase(*callback);
++                    callback = callbacks.erase(callback);
++                    changed.insert(it->first);
++                } else { ++callback; }
++            }
++            if (callbacks.empty()) { listenerEvents_.erase(it->first); it = listeners_.erase(it); }
++            else { ++it; }
++        }
++    }
++    for (auto type : changed) { ReconcileType(type); }
++}
++
++DeviceStatusManager::~DeviceStatusManager()
++{
++    std::set<Type> enabled;
++    {
++        std::lock_guard lock(mutex_);
++        enabled.swap(enabledTypes_);
++        for (const auto& type : listeners_) {
++            for (const auto& callback : type.second) {
++                auto object = callback->AsObject();
++                if (object != nullptr) { object->RemoveDeathRecipient(devicestatusCBDeathRecipient_); }
++            }
++        }
++        listeners_.clear();
++        listenerEvents_.clear();
++    }
++    for (auto type : enabled) { Disable(type); }
+ }
+ 
+ int32_t DeviceStatusManager::Subscribe(int32_t type, const std::string &bundleName,
+--- a/base/msdp/device_status/libs/include/algorithm/algo_base.h
++++ b/base/msdp/device_status/libs/include/algorithm/algo_base.h
+@@ -18,6 +18,7 @@
+ 
+ #ifdef DEVICE_STATUS_SENSOR_ENABLE
+ #include <cmath>
++#include <memory>
+ #include <cstdio>
+ #include <iostream>
+ 
+@@ -30,7 +31,7 @@
+ namespace OHOS {
+ namespace Msdp {
+ namespace DeviceStatus {
+-class AlgoBase {
++class AlgoBase : public std::enable_shared_from_this<AlgoBase> {
+ public:
+     AlgoBase() {};
+     virtual ~AlgoBase() = default;
+--- a/base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp
++++ b/base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp
+@@ -32,8 +32,9 @@
+         return this->StartAlgorithm(sensorTypeId, sensorData);
+     };
+     CHKPF(algoCallback_);
+-    SENSOR_DATA_CB.SubscribeSensorEvent(type, algoCallback_);
+-    return true;
++    auto owner = weak_from_this().lock();
++    if (owner == nullptr) { return false; }
++    return SENSOR_DATA_CB.SubscribeSensorEvent(type, algoCallback_, owner);
+ }
+ 
+ bool AlgoHorizontal::StartAlgorithm(int32_t sensorTypeId, AccelData* sensorData)
+--- a/base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp
++++ b/base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp
+@@ -35,8 +35,9 @@
+         return this->StartAlgorithm(sensorTypeId, sensorData);
+     };
+     CHKPF(algoCallback_);
+-    SENSOR_DATA_CB.SubscribeSensorEvent(type, algoCallback_);
+-    return true;
++    auto owner = weak_from_this().lock();
++    if (owner == nullptr) { return false; }
++    return SENSOR_DATA_CB.SubscribeSensorEvent(type, algoCallback_, owner);
+ }
+ 
+ bool AlgoVertical::StartAlgorithm(int32_t sensorTypeId, AccelData* sensorData)
+--- a/base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h
++++ b/base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h
+@@ -46,7 +46,7 @@
+ struct MsdpAlgoHandle {
+     void* handle;
+     IMsdp* (*create)();
+-    void* (*destroy)(IMsdp*);
++    void (*destroy)(const IMsdp*);
+     IMsdp* pAlgorithm;
+     MsdpAlgoHandle() : handle(nullptr), create(nullptr), destroy(nullptr), pAlgorithm(nullptr) {}
+     ~MsdpAlgoHandle() {}

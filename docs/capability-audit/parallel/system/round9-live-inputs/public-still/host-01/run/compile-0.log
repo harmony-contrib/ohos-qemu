@@ -1,0 +1,55 @@
+In file included from /evidence/run/after/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp:17:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+/evidence/run/after/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp: In member function 'bool OHOS::Msdp::DeviceStatus::SensorDataCallback::NotifyCallback(int32_t, AccelData*, uint64_t)':
+/evidence/run/after/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp:135:32: error: could not convert '((const std::__shared_ptr_access<OHOS::Msdp::DeviceStatus::SensorDataCallback::Slot, __gnu_cxx::_S_atomic, false, false>*)(& slot))->std::__shared_ptr_access<OHOS::Msdp::DeviceStatus::SensorDataCallback::Slot, __gnu_cxx::_S_atomic, false, false>::operator->()->OHOS::Msdp::DeviceStatus::SensorDataCallback::Slot::callback.std::function<void(int, AccelData*)>::operator()(sensorTypeId, data)' from 'void' to 'bool'
+  135 |         result = slot->callback(sensorTypeId, data) && result;
+      |                  ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+cc1plus: all warnings being treated as errors
+In file included from /evidence/run/include/algo_base.h:28,
+                 from /evidence/run/include/algo_absolute_still.h:20,
+                 from /evidence/run/include/devicestatus_algorithm_manager.h:28,
+                 from /evidence/run/after/base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp:17:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+cc1plus: all warnings being treated as errors
+In file included from /evidence/run/include/algo_base.h:28,
+                 from /evidence/run/include/algo_absolute_still.h:20,
+                 from /evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp:17:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp: In member function 'virtual bool OHOS::Msdp::DeviceStatus::AlgoAbsoluteStill::Init(OHOS::Msdp::DeviceStatus::Type)':
+/evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp:41:5: error: 'CHKPF' was not declared in this scope
+   41 |     CHKPF(owner);
+      |     ^~~~~
+cc1plus: all warnings being treated as errors
+In file included from /evidence/run/include/algo_base.h:28,
+                 from /evidence/run/include/algo_horizontal.h:20,
+                 from /evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp:17:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+cc1plus: all warnings being treated as errors
+In file included from /evidence/run/include/algo_base.h:28,
+                 from /evidence/run/include/algo_vertical.h:20,
+                 from /evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp:17:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+cc1plus: all warnings being treated as errors
+In file included from /evidence/run/include/algo_base.h:28,
+                 from /evidence/run/after/base/msdp/device_status/libs/src/algorithm/algo_base.cpp:17:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+cc1plus: all warnings being treated as errors
+In file included from /evidence/run/include/algo_base.h:28,
+                 from /evidence/run/include/algo_absolute_still.h:20,
+                 from /work/ci/capability-audit/batch_system_public_still_harness.cpp:31:
+/evidence/run/include/sensor_data_callback.h:66:85: error: missing initializer for member 'SensorUser::plugCallback' [-Werror=missing-field-initializers]
+   66 |     struct SensorUser user_ = {.name = {0}, .callback = nullptr, .userData = nullptr};
+      |                                                                                     ^
+cc1plus: all warnings being treated as errors
