@@ -48,7 +48,11 @@ def unique(pairs):
 def cms(path, signer=None):
     command = ['openssl', 'cms', '-verify', '-inform', 'DER', '-noverify', '-in', str(path)]
     if signer is not None: command += ['-signer', str(signer)]
-    return json.loads(subprocess.run(command, capture_output=True, check=True).stdout, object_pairs_hook=unique)
+    return json.loads(subprocess.run(command, capture_output=True, check=True, timeout=30).stdout, object_pairs_hook=unique)
+
+
+def certificates(data):
+    return re.findall(b'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', data, re.S)
 
 
 def desired_profile(original, leaf):
@@ -89,14 +93,13 @@ def replace(path, data):
 
 def source_identity(root):
     project, dist = root / PROJECT, root / 'developtools/hapsigner/dist'
-    if subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip() != REVISION:
+    if subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True, timeout=30).strip() != REVISION:
         raise ValueError('MMS requires the fixed release checkout')
     for name, expected in SIGNING_INPUTS.items():
         if hashlib.sha256(read(dist / name)).hexdigest() != expected:
             raise ValueError('changed existing public OS signing input: ' + name)
-    original = subprocess.check_output(['git', '-C', str(project), 'show', 'HEAD:signature/mms.p7b'])
+    original = subprocess.check_output(['git', '-C', str(project), 'show', 'HEAD:signature/mms.p7b'], timeout=30)
     if hashlib.sha256(original).hexdigest() != PROFILE_SHA: raise ValueError('changed original MMS profile')
-    certificates = lambda data: re.findall(b'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', data, re.S)
     app_chain = certificates(read(dist / 'OpenHarmonyApplication.pem'))
     issuer_chain = certificates(read(dist / 'OpenHarmonyProfileRelease.pem'))
     if len(app_chain) != 3 or len(issuer_chain) != 3: raise ValueError('unexpected existing OS certificate chain')
@@ -132,7 +135,7 @@ def prepare(root):
                 '-mode', 'localSign', '-profileCertFile', str(dist / 'OpenHarmonyProfileRelease.pem'),
                 '-inFile', str(template), '-keystoreFile', str(dist / 'OpenHarmony.p12'),
                 '-outFile', str(signed), '-keyPwd', '123456', '-keystorePwd', '123456'],
-                capture_output=True, check=True)
+                capture_output=True, check=True, timeout=120)
             verify(signed);pending[profile] = signed.read_bytes()
         # Commit only the exact profile and existing two signer-bound rows.
         written = []

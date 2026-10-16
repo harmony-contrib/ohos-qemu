@@ -270,3 +270,5 @@ Contacts/Theme八个构建元数据d3823b8经scope通过合入f7a6ff5；真实�
 Settings05实际完整产品Linux26.0.0.39 SDK编译PASS（256.309s），真实57,479,660B unsigned HAP SHA7487d5e02e9683e4fd506c589438d63d57b5e37a738e1deb1d194a342144a705，实际44扩展含sysPicker/share和3ABI共6原生库检查PASS。MMS02同真实SDK完整编译PASS（140.831s），真实8,091,208B unsigned HAP SHAa6a5847b9a5fde069fbe9f9571b3dae173bc2b2040ef9b00973d96abd0241951；原37权限、完整入口/skills及text/plain草稿接收合同PASS。MMS初版检查器误将旧visible字段当成未exported，失败另存；修为逐字段保留visible/exported的真实源/编译manifest后通过，未修改权限或BMS边界。
 
 根修复external_input在share_picker后继全五文件已完整时的整栈重放，拒绝缺文件/未知共享后继；Settings镜像检查同时要求所有当前候选组件完整。MMS新增只读源/原profile/OS signer/原两份授权校验及强制镜像HAP检查；26项相关package/source mutation检查PASS。实际签名/镜像检查尚待执行，不把上述unsigned HAP当交付或运行验收。
+
+最新ETS ready短写修复后，3个普通音频event HAP在真实API26 unsigned构建和native/权限/后台合同中全部PASS（r52-three-audio-event-ready-completion-HAP-roles-04）；仍待guest。根自查MMS签名helper提取公共输入函数后 certificates lambda 作用域错误，提升为模块函数并补外部签名/Git/CMS超时；将用真实公共OS key/profile/HAP和独立ext4反例完成签名与镜像检查，未提前称通过。

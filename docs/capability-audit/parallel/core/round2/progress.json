@@ -1307,6 +1307,12 @@
       "sha256": "39fd25bf657480f3b0bdd59e1c9970887e3fd3f5768b496c9554842ae01d3f0e",
       "reported_status": "pass",
       "scope": "actual OHOS ABI CFI call chain ONLY NOT guest"
+    },
+    "latest_three_event_HAPs_after_ETS_ready_fix": {
+      "path": "docs/capability-audit/parallel/core/round2/progress.json",
+      "actual_evidence_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-three-audio-event-ready-completion-HAP-roles-04/evidence.json",
+      "sha256": "2bed036845def31d58e1bb978a3d2d216959995ab024cc5aace8d4a75dcce4da",
+      "status": "3 actual unsigned API26 HAPs PASS; NOT guest or first artifact gate"
     }
   },
   "agents": {
