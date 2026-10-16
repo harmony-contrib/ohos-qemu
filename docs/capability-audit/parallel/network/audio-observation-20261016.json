@@ -1,0 +1,862 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-16",
+  "scope": "read-only fixed-source contracts for ordinary dual-UID HAP audio runtime observation; no runtime acceptance or authorization action performed",
+  "provenance": {
+    "inspector_container": "ohos-qemu-parallel-source-20261016-02",
+    "source_root": "/ohos",
+    "queries": "Bounded Python Path reads/hash/exact snippets and git rev-parse only; container rg unavailable.",
+    "agent_base_commit": "a9423641d1759abb72f03fd9fad99d974b22470d",
+    "project_revisions": {
+      "foundation/resourceschedule/background_task_mgr": "ada26aa972cc85b94949a3abf2b1fc7053b19bb8",
+      "base/notification/distributed_notification_service": "08a878a934511503bca88d3d69c686cc283c198c"
+    },
+    "runtime_commands_executed": [],
+    "source_or_shared_output_mutations": false,
+    "heavy_tasks_started": false
+  },
+  "background_tasks": {
+    "sa_id": 1903,
+    "process": "resource_schedule_service",
+    "sa_profile_evidence": "bg_sa",
+    "readonly_commands": [
+      {
+        "name": "all_records",
+        "argv": [
+          "hidumper",
+          "-s",
+          "1903",
+          "-a",
+          "-C --all"
+        ],
+        "service_arguments": [
+          "-C",
+          "--all"
+        ],
+        "evidence": [
+          "bg_service",
+          "bg_mgr"
+        ]
+      },
+      {
+        "name": "uid_records",
+        "argv_template": [
+          "hidumper",
+          "-s",
+          "1903",
+          "-a",
+          "-C --get {uid}"
+        ],
+        "service_arguments_template": [
+          "-C",
+          "--get",
+          "{uid}"
+        ],
+        "uid_input": "Actual HAP UID from runtime identity; canonical non-negative decimal. Dumper uses atoi, so never pass unvalidated input.",
+        "argument_count": 3,
+        "evidence": [
+          "bg_service",
+          "bg_mgr",
+          "bg_dumper"
+        ]
+      }
+    ],
+    "admission": {
+      "requirements": [
+        "const.debuggable != 0",
+        "FirstTokenID has ohos.permission.DUMP",
+        "manager isSysReady"
+      ],
+      "evidence": [
+        "bg_service",
+        "bg_mgr"
+      ]
+    },
+    "audio_recording": {
+      "numeric_mode": 3,
+      "name": "audioRecording",
+      "evidence": [
+        "bg_modes",
+        "bg_record"
+      ],
+      "parse_modes": "Comma-separated integers; vector printer emits trailing comma. Parse exact integers, not substring '3' (13 is a different mode). backgroundMode is only the selected primary mode; use backgroundModes membership for batch API."
+    },
+    "output": {
+      "empty_exact": "No running continuous task\n",
+      "invalid_exact": "param invaild\n",
+      "record_start_regex": "(?m)^No\\.\\d+(?=\\t|$)",
+      "first_line_handling": "Remove only leading No.<decimal> before extracting fields; UID dump begins No.N immediately followed by two tabs and abilityName.",
+      "field_line_regex": "^\\s*([^:\\n]+):\\s*(.*?)\\s*$",
+      "uid_fields": [
+        "abilityName",
+        "isFromWebview",
+        "uid",
+        "pid",
+        "notificationId",
+        "continuousTaskId",
+        "abilityId",
+        "wantAgentBundleName",
+        "wantAgentAbilityName",
+        "backgroundModes",
+        "backgroundSubModes"
+      ],
+      "all_additional_fields": [
+        "continuousTaskKey",
+        "bundleName",
+        "suspendState",
+        "isFromNewApi",
+        "backgroundMode",
+        "isBatchApi",
+        "userId",
+        "notificationLabel",
+        "isCombinedTaskNotification",
+        "combinedNotificationTaskId",
+        "isByRequestObject"
+      ],
+      "all_optional_fields": [
+        "subNotificationLabel",
+        "subNotificationId"
+      ],
+      "uid_query_includes_suspended": true,
+      "uid_query_default_arguments": {
+        "includeSuspended": true,
+        "exemptUid": false
+      },
+      "uid_filter_source": "GetAllContinuousTasksInner skips record when record.uid_ != requested uid; taskInfo retains uid/pid/notificationId/continuousTaskId.",
+      "evidence": [
+        "bg_dumper",
+        "bg_mgr",
+        "bg_mgr_header"
+      ]
+    },
+    "observation_contract": [
+      "Observe each actual HAP UID separately; require UID/pid/task IDs to match that app's runtime identity.",
+      "Join UID records to --all on uid, pid, continuousTaskId; require suspendState=false for an unsuspended task assertion.",
+      "Require exact mode integer 3 in backgroundModes. A returned record or API success alone does not prove continuous unsuspended recording.",
+      "Take read-only snapshots around start/background/stop for both UIDs and retain raw stdout/stderr/service errors. No record for one UID must be attributed to the other.",
+      "Combined notification settings and optional subNotificationId can affect one-task/one-notification assumptions; inspect --all fields."
+    ]
+  },
+  "notifications": {
+    "sa_id": 3203,
+    "process": "foundation",
+    "sa_profile_evidence": "ans_sa",
+    "readonly_command": {
+      "argv": [
+        "hidumper",
+        "-s",
+        "3203",
+        "-a",
+        "--active"
+      ],
+      "service_arguments": [
+        "--active"
+      ],
+      "alternate_service_argument": "-a",
+      "exact_argument_count": 1,
+      "uid_filter_available_in_hidumper": false,
+      "extra_arguments_rejected": true,
+      "evidence": "ans_dump"
+    },
+    "admission": {
+      "compile_condition": "build_variant == \"root\" defines ANM_SUPPORT_DUMP",
+      "caller": "ShellDump requires shell token or native token; HAP token rejected.",
+      "evidence": [
+        "ans_dump",
+        "ans_dump_build"
+      ],
+      "empty_caution": "GetDumpInfo ignores the ShellDump return and may print no notification when permission/queue work failed; do not treat that text alone as successful absence."
+    },
+    "output": {
+      "empty_exact": "no notification\n",
+      "list_header_exact": "notification list:\n",
+      "record_start_regex": "(?m)^No\\.\\d+\\s*$",
+      "fields": [
+        "UserId",
+        "CreatePid",
+        "OwnerBundleName",
+        "OwnerUid",
+        "ReceiverUserId",
+        "Id",
+        "Label"
+      ],
+      "equals_fields": [
+        "DeliveryTime",
+        "SlotType"
+      ],
+      "nested_marker": "Notification:",
+      "optional_flag_fields": [
+        "ReminderFlags",
+        "Sound",
+        "Vibration",
+        "Banner",
+        "LockScreen",
+        "LightScreen",
+        "StatusIcon"
+      ],
+      "owner_uid_rule": "GetOwnerUid() > 0 ? GetOwnerUid() : GetCreatorUid()",
+      "evidence": "ans_dump"
+    },
+    "correlation": {
+      "ordinary_hap": "For ordinary non-agent HAP publish, actual service stamps creator UID/PID from IPC; default owner UID becomes that caller UID. Parse the active dump's actual uppercase OwnerUid/OwnerBundleName/Id/Label fields, not NotificationRequest::Dump lowercase keys.",
+      "background_service_notification": "NotificationTools sets creatorUid=serviceUid and ownerUid=continuousTaskRecord.uid. The task's HAP PID is in background task output; notification CreatePid can be a service PID.",
+      "join": [
+        [
+          "background uid",
+          "notification OwnerUid"
+        ],
+        [
+          "background notificationId",
+          "notification Id"
+        ],
+        [
+          "background notificationLabel",
+          "notification Label"
+        ]
+      ],
+      "identity_key": [
+        "OwnerUid",
+        "Id",
+        "Label"
+      ],
+      "evidence": [
+        "ans_normal_publish_identity",
+        "bg_notification",
+        "ans_dump"
+      ],
+      "notification_assignment": "PublishNotification assigns/reuses notificationId; only after PublishNotification returns success does it retain notificationLabel and new notificationId in the task record.",
+      "negative_boundaries": [
+        "The same numeric notification Id under another OwnerUid is not this HAP's notification.",
+        "Do not join only by label, array index, No.N, or CreatePid.",
+        "For ordinary application notifications additionally compare the actual OwnerBundleName and the known request ID; for combined task notifications inspect parent/sub IDs and labels."
+      ]
+    }
+  },
+  "authorization_dialog": {
+    "bundle": "com.ohos.notificationdialog",
+    "ability": "EnableNotificationDialog",
+    "evidence": [
+      "ui_app",
+      "ui_module",
+      "ui_callback"
+    ],
+    "phone_page": "pages/notificationDialog",
+    "pc_page": "pages/pcNotificationDialog",
+    "routing": {
+      "default": "phone_page",
+      "configuration_path": "etc/notification/notification_config.json",
+      "rule": "configPolicy.getCfgFiles loads config files in order. If deviceInfo.isPc is defined, selects PC; code checks !== undefined, not boolean truth. Later isTv/isCar can override. Inspect actual guest configuration/page before choosing selectors.",
+      "evidence": [
+        "ui_entry",
+        "ui_config_path"
+      ]
+    },
+    "title": {
+      "resource": "app.string.group_label_notification",
+      "argument": "appName = titleTrim(bundleResourceManager.getBundleResourceInfo(requested bundleName, GET_RESOURCE_INFO_ALL).label)",
+      "evidence": [
+        "ui_phone",
+        "ui_pc"
+      ],
+      "do_not_substitute_bundle_name_for_label": true
+    },
+    "selectors": {
+      "scope_bundle": "com.ohos.notificationdialog",
+      "pages": [
+        "pages/notificationDialog",
+        "pages/pcNotificationDialog"
+      ],
+      "require": [
+        "Actual visible dialog with this HAP's resolved title/label",
+        "Visible and enabled Button component with exact current-locale resource text",
+        "Unique visible match inside that dialog; do not select by index"
+      ],
+      "allow_resource": "app.string.ALLOW",
+      "deny_resource": "app.string.BAN",
+      "stable_button_id_in_source": null,
+      "phone_container_source_id": "mainWindow",
+      "phone_duplicate_button_note": "Phone has both horizontal and single-row BAN/ALLOW button layouts controlled by visibility. Match a visible button, not all text nodes.",
+      "evidence": [
+        "ui_phone",
+        "ui_pc"
+      ],
+      "runtime_ui_hierarchy_verified": false
+    },
+    "translations": {
+      "base": {
+        "reason": "These may include lock screen notifications, banners, badges, sounds, and vibrations. You can change this in Settings.",
+        "reason_simple": "These may include banners, badges, and sounds. You can change this in Settings.",
+        "ALLOW": "Allow",
+        "BAN": "Deny",
+        "group_label_notification": "Allow %s to send you notifications?",
+        "evidence": "ui_strings_base"
+      },
+      "en_GB": {
+        "group_label_notification": "Allow %s to send you notifications?",
+        "ALLOW": "Allow",
+        "BAN": "Deny",
+        "reason": "These may include lock screen notifications, banners, badges, sounds, and vibrations. You can change this in Settings.",
+        "reason_simple": "These may include banners, badges, and sounds. You can change this in Settings.",
+        "evidence": "ui_strings_en_GB"
+      },
+      "zh_CN": {
+        "reason": "通知提醒方式可能包括锁屏、横幅、角标、响铃、振动。可前往“设置”更改。",
+        "reason_simple": "通知提醒方式可能包括横幅、角标、响铃。可前往“设置”更改。",
+        "ALLOW": "允许",
+        "BAN": "不允许",
+        "group_label_notification": "允许“%s”向你发送通知？",
+        "evidence": "ui_strings_zh_CN"
+      },
+      "zh_HK": {
+        "reason": "通知提醒方式可能包括鎖屏、橫幅、徽章圖標、響鬧和震動。可前往「設定」更改。",
+        "reason_simple": "通知提醒方式可能包括橫幅、徽章圖標、響鬧。可前往「設定」更改。",
+        "ALLOW": "允許",
+        "BAN": "不允許",
+        "group_label_notification": "允許「%s」向你發送通知？",
+        "evidence": "ui_strings_zh_HK"
+      },
+      "zh_TW": {
+        "reason": "通知提醒方式可能包括鎖定螢幕、橫幅、徽章圖示、響鈴和振動。您可以前往「設定」變更。",
+        "reason_simple": "通知提醒方式可能包括橫幅、徽章圖示和響鈴。您可以前往「設定」變更。",
+        "ALLOW": "允許",
+        "BAN": "不允許",
+        "group_label_notification": "允許「%s」傳送通知給您？",
+        "evidence": "ui_strings_zh_TW"
+      }
+    },
+    "callback": {
+      "allow_enabled": true,
+      "deny_enabled": false,
+      "ui_entry": "enableNotification(enabled) -> dialog.publishButtonClickedEvent(enabled)",
+      "event": "OnNotificationServiceDialogClicked",
+      "event_parameters": [
+        "bundleName",
+        "bundleUid"
+      ],
+      "event_codes": {
+        "ALLOW_CLICKED": 0,
+        "DENY_CLICKED": 1,
+        "DIALOG_CRASHED": 2,
+        "DIALOG_SERVICE_DESTROYED": 3
+      },
+      "ordinary_hap_identity": "onSessionCreate copies ohos.aafwk.param.callerBundleName/callerUid into want.parameters.bundleName/bundleUid for callers other than SceneBoard/SystemUI.",
+      "event_publisher_bundle_restriction": "NotificationDialogEventSubscriber::Create sets publisher bundle com.ohos.notificationdialog",
+      "service_chain": "OnReceiveEvent -> OnBundleEnabledStatusChanged -> OnDialogButtonClicked(bundleName,uid,enabled) -> SetNotificationsEnabledForSpecialBundle(DEFAULT_DEVICE_ID,bundleOption,enabled) -> HandleOneDialogClosed",
+      "failure_caution": "SetNotificationsEnabledForSpecialBundle errors are logged but HandleOneDialogClosed still executes. Dialog disappearance or callback alone is not proof that enablement persisted. Follow with the HAP's own read-only enablement query and actual active notification observation.",
+      "evidence": [
+        "ui_phone",
+        "ui_pc",
+        "ui_entry",
+        "ui_callback"
+      ]
+    }
+  },
+  "limitations": [
+    "Contracts are static fixed-source evidence; no UI, runtime dump, notification publish, authorization click, guest shell, service mutation, build or heavy task was performed.",
+    "Selected resources cover base/en_GB/zh_CN/zh_HK/zh_TW. Other installed locales must be resolved from their actual resource file before selecting text.",
+    "The actual guest HAP UIDs/PIDs, application labels, locale, configuration overlay, available dump feature and live hierarchy must be observed by the parent.",
+    "This support does not close audio requirements, network gaps, or the first newly packaged artifact runtime gate."
+  ],
+  "sources": {
+    "bg_sa": {
+      "path": "foundation/resourceschedule/background_task_mgr/sa_profile/1903.json",
+      "sha256": "04d8f569f8b4f1375c2b45ba949a5e8f99e45c3ec62324f9acff16df3c966cf2",
+      "snippets": [
+        {
+          "start_line": 1,
+          "end_line": 14,
+          "text": "{\n    \"process\": \"resource_schedule_service\",\n    \"systemability\": [\n        {\n            \"name\": 1903,\n            \"libpath\": \"libbgtaskmgr_service.z.so\",\n            \"run-on-create\": true,\n            \"distributed\": false,\n            \"dump_level\": 1,\n            \"min_hdi_proxy_version\": [],\n            \"extension\": [\"backup\", \"restore\"]\n        }\n    ]\n}"
+        }
+      ]
+    },
+    "ans_sa": {
+      "path": "base/notification/distributed_notification_service/sa_profile/3203.json",
+      "sha256": "9bc4ca84a3d76689ad39312df860d12855a47b27bc2500aef1929c086add59ed",
+      "snippets": [
+        {
+          "start_line": 1,
+          "end_line": 18,
+          "text": "{\n    \"process\": \"foundation\",\n    \"systemability\": [\n        {\n            \"name\": 3203,\n            \"libpath\": \"libans.z.so\",\n            \"run-on-create\": true,\n            \"depend\": [\n                3299\n            ],\n            \"extension\": [\"backup\", \"restore\"],\n            \"depend_time_out\": 60000,\n            \"distributed\": false,\n            \"dump_level\": 1,\n            \"min_hdi_proxy_version\": []\n        }\n    ]\n}"
+        }
+      ]
+    },
+    "bg_service": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/core/src/background_task_mgr_service.cpp",
+      "sha256": "a5d22b44bbf2cec34d9d7f337220646d72b8c654ec65e635427e298f8019f012",
+      "snippets": [
+        {
+          "start_line": 49,
+          "end_line": 49,
+          "text": "const int32_t ENG_MODE = OHOS::system::GetIntParameter(\"const.debuggable\", 0);"
+        },
+        {
+          "start_line": 841,
+          "end_line": 881,
+          "text": "bool BackgroundTaskMgrService::AllowDump()\n{\n    if (ENG_MODE == 0) {\n        BGTASK_LOGE(\"Not eng mode\");\n        return false;\n    }\n    Security::AccessToken::AccessTokenID tokenId = IPCSkeleton::GetFirstTokenID();\n    int32_t ret = Security::AccessToken::AccessTokenKit::VerifyAccessToken(tokenId, \"ohos.permission.DUMP\");\n    if (ret != Security::AccessToken::PermissionState::PERMISSION_GRANTED) {\n        BGTASK_LOGE(\"CheckPermission failed\");\n        return false;\n    }\n    return true;\n}\n\nint32_t BackgroundTaskMgrService::Dump(int32_t fd, const std::vector<std::u16string> &args)\n{\n    if (!AllowDump()) {\n        return ERR_BGTASK_PERMISSION_DENIED;\n    }\n    std::vector<std::string> argsInStr;\n    std::transform(args.begin(), args.end(), std::back_inserter(argsInStr),\n        [](const std::u16string &arg) {\n        return Str16ToStr8(arg);\n    });\n    std::string result;\n\n    int32_t ret = ERR_OK;\n\n    if (argsInStr.size() == NO_DUMP_PARAM_NUMS) {\n        DumpUsage(result);\n    } else {\n        std::vector<std::string> infos;\n        if (argsInStr[0] == \"-h\") {\n            DumpUsage(result);\n        } else if (argsInStr[0] == \"-T\") {\n            ret = DelayedSingleton<BgTransientTaskMgr>::GetInstance()->ShellDump(argsInStr, infos);\n        } else if (argsInStr[0] == \"-C\") {\n            ret = BgContinuousTaskMgr::GetInstance()->ShellDump(argsInStr, infos);\n        } else if (argsInStr[0] == \"-E\") {\n            ret = DelayedSingleton<BgEfficiencyResourcesMgr>::GetInstance()->ShellDump(argsInStr, infos);"
+        },
+        {
+          "start_line": 898,
+          "end_line": 912,
+          "text": "void BackgroundTaskMgrService::DumpUsage(std::string &result)\n{\n    std::string dumpHelpMsg =\n    \"usage: bgtask dump [<options>]\\n\"\n    \"options list:\\n\"\n    \"    -h                                   help menu\\n\"\n    \"    -T                                   transient task commands:\\n\"\n    \"        BATTARY_LOW                          battary low mode\\n\"\n    \"        BATTARY_OKAY                         battary okay mode\\n\"\n    \"        DUMP_CANCEL                          cancel dump mode\\n\"\n    \"        All                                  list all request\\n\"\n    \"    -C                                   continuous task commands:\\n\"\n    \"        --all                                list all running continuous task infos\\n\"\n    \"        --cancel_all                         cancel all running continuous task\\n\"\n    \"        --cancel {continuous task key}       cancel one task by specifying task key\\n\""
+        }
+      ]
+    },
+    "bg_mgr": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/continuous_task/src/bg_continuous_task_mgr.cpp",
+      "sha256": "e8f853c20e93e399908f88aeb827f8cef0f8b25d4cf402737ae21d814190091a",
+      "snippets": [
+        {
+          "start_line": 145,
+          "end_line": 149,
+          "text": "static constexpr char DUMP_PARAM_LIST_ALL[] = \"--all\";\nstatic constexpr char DUMP_PARAM_CANCEL_ALL[] = \"--cancel_all\";\nstatic constexpr char DUMP_PARAM_CANCEL[] = \"--cancel\";\nstatic constexpr char DUMP_PARAM_GET[] = \"--get\";\nstatic constexpr char DUMP_INNER_TASK[] = \"--inner_task\";"
+        },
+        {
+          "start_line": 891,
+          "end_line": 904,
+          "text": "ErrCode BgContinuousTaskMgr::RequestGetContinuousTasksByUidForInner(int32_t uid,\n    std::vector<std::shared_ptr<ContinuousTaskInfo>> &list)\n{\n    if (!isSysReady_.load()) {\n        BGTASK_LOGW(\"manager is not ready\");\n        return ERR_BGTASK_SYS_NOT_READY;\n    }\n    ErrCode result = ERR_OK;\n    HitraceScoped traceScoped(HITRACE_TAG_OHOS,\n        \"BackgroundTaskManager::ContinuousTask::Service::RequestGetContinuousTasksByUidForInner\");\n    handler_->PostSyncTask([this, uid, &list, &result]() {\n        result = this->GetAllContinuousTasksInner(uid, list);\n        }, AppExecFwk::EventQueue::Priority::HIGH);\n    return result;"
+        },
+        {
+          "start_line": 1915,
+          "end_line": 1947,
+          "text": "ErrCode BgContinuousTaskMgr::GetAllContinuousTasksInner(int32_t uid,\n    std::vector<std::shared_ptr<ContinuousTaskInfo>> &list, bool includeSuspended, bool exemptUid)\n{\n    if (continuousTaskInfosMap_.empty()) {\n        return ERR_OK;\n    }\n    BGTASK_LOGD(\"GetAllContinuousTasksInner, includeSuspended: %{public}d\", includeSuspended);\n    for (const auto &record : continuousTaskInfosMap_) {\n        if (!record.second) {\n            continue;\n        }\n        if (!exemptUid && record.second->uid_ != uid) {\n            continue;\n        }\n        if (!includeSuspended && record.second->suspendState_) {\n            continue;\n        }\n        std::string wantAgentBundleName {\"NULL\"};\n        std::string wantAgentAbilityName {\"NULL\"};\n        if (record.second->wantAgentInfo_ != nullptr) {\n            wantAgentBundleName = record.second->wantAgentInfo_->bundleName_;\n            wantAgentAbilityName = record.second->wantAgentInfo_->abilityName_;\n        }\n        auto info = std::make_shared<ContinuousTaskInfo>(record.second->abilityName_, record.second->uid_,\n            record.second->pid_, record.second->isFromWebview_, record.second->bgModeIds_, record.second->bgSubModeIds_,\n            record.second->notificationId_, record.second->continuousTaskId_, record.second->abilityId_,\n            wantAgentBundleName, wantAgentAbilityName);\n        info->SetBundleName(record.second->bundleName_);\n        info->SetAppIndex(record.second->appIndex_);\n        info->SetByRequestObject(record.second->isByRequestObject_);\n        list.push_back(info);\n    }\n    return ERR_OK;"
+        },
+        {
+          "start_line": 2563,
+          "end_line": 2635,
+          "text": "ErrCode BgContinuousTaskMgr::ShellDumpInner(const std::vector<std::string> &dumpOption,\n    std::vector<std::string> &dumpInfo)\n{\n    if (dumpOption.size() <= 1) {\n        BGTASK_LOGW(\"Invalid dump param number, need at least 2 params.\");\n        return ERR_INVALID_VALUE;\n    }\n    if (dumpOption[1] == DUMP_PARAM_LIST_ALL) {\n        DumpAllTaskInfo(dumpInfo);\n    } else if (dumpOption[1] == DUMP_PARAM_CANCEL_ALL) {\n        DumpCancelTask(dumpOption, true);\n    } else if (dumpOption[1] == DUMP_PARAM_CANCEL) {\n        DumpCancelTask(dumpOption, false);\n    } else if (dumpOption[1] == DUMP_PARAM_GET) {\n        BgContinuousTaskDumper::GetInstance()->DumpGetTask(dumpOption, dumpInfo);\n    } else if (dumpOption[1] == DUMP_INNER_TASK) {\n        BgContinuousTaskDumper::GetInstance()->DebugContinuousTask(dumpOption, dumpInfo);\n    } else {\n        BGTASK_LOGW(\"invalid dump param\");\n    }\n    return ERR_OK;\n}\n\nvoid BgContinuousTaskMgr::DumpAllTaskInfo(std::vector<std::string> &dumpInfo)\n{\n    std::stringstream stream;\n    if (continuousTaskInfosMap_.empty()) {\n        dumpInfo.emplace_back(\"No running continuous task\\n\");\n        return;\n    }\n    std::unordered_map<std::string, std::shared_ptr<ContinuousTaskRecord>>::iterator iter;\n    uint32_t index = 1;\n    for (iter = continuousTaskInfosMap_.begin(); iter != continuousTaskInfosMap_.end(); ++iter) {\n        stream.str(\"\");\n        stream.clear();\n        stream << \"No.\" << index;\n        stream << \"\\tcontinuousTaskKey: \" << iter->first << \"\\n\";\n        stream << \"\\tcontinuousTaskValue:\" << \"\\n\";\n        stream << \"\\t\\tbundleName: \" << iter->second->GetBundleName() << \"\\n\";\n        stream << \"\\t\\tabilityName: \" << iter->second->GetAbilityName() << \"\\n\";\n        stream << \"\\t\\tsuspendState: \" << (iter->second->suspendState_ ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\t\\tisFromWebview: \" << (iter->second->IsFromWebview() ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\t\\tisFromNewApi: \" << (iter->second->IsNewApi() ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\t\\tbackgroundMode: \" << g_continuousTaskModeName[GetBgModeNameIndex(\n            iter->second->GetBgModeId(), iter->second->IsNewApi())] << \"\\n\";\n        stream << \"\\t\\tisBatchApi: \" << (iter->second->isBatchApi_ ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\t\\tbackgroundModes: \" << iter->second->ToString(iter->second->bgModeIds_) << \"\\n\";\n        stream << \"\\t\\tbackgroundSubModes: \" << iter->second->ToString(iter->second->bgSubModeIds_) << \"\\n\";\n        stream << \"\\t\\tuid: \" << iter->second->GetUid() << \"\\n\";\n        stream << \"\\t\\tuserId: \" << iter->second->GetUserId() << \"\\n\";\n        stream << \"\\t\\tpid: \" << iter->second->GetPid() << \"\\n\";\n        stream << \"\\t\\tnotificationLabel: \" << iter->second->GetNotificationLabel() << \"\\n\";\n        stream << \"\\t\\tnotificationId: \" << iter->second->GetNotificationId() << \"\\n\";\n        if (iter->second->GetSubNotificationId() != -1 && iter->second->isByRequestObject_) {\n            stream << \"\\t\\tsubNotificationLabel: \" << iter->second->GetSubNotificationLabel() << \"\\n\";\n            stream << \"\\t\\tsubNotificationId: \" << iter->second->GetSubNotificationId() << \"\\n\";\n        }\n        stream << \"\\t\\tcontinuousTaskId: \" << iter->second->continuousTaskId_ << \"\\n\";\n        if (iter->second->wantAgentInfo_ != nullptr) {\n            stream << \"\\t\\twantAgentBundleName: \" << iter->second->wantAgentInfo_->bundleName_ << \"\\n\";\n            stream << \"\\t\\twantAgentAbilityName: \" << iter->second->wantAgentInfo_->abilityName_ << \"\\n\";\n        } else {\n            stream << \"\\t\\twantAgentBundleName: \" << \"NULL\" << \"\\n\";\n            stream << \"\\t\\twantAgentAbilityName: \" << \"NULL\" << \"\\n\";\n        }\n        stream << \"\\t\\tisCombinedTaskNotification: \" <<\n            (iter->second->isCombinedTaskNotification_ ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\t\\tcombinedNotificationTaskId: \" << iter->second->combinedNotificationTaskId_ << \"\\n\";\n        stream << \"\\t\\tisByRequestObject: \" << (iter->second->isByRequestObject_ ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\n\";\n        dumpInfo.emplace_back(stream.str());\n        index++;\n    }"
+        }
+      ]
+    },
+    "bg_mgr_header": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/continuous_task/include/bg_continuous_task_mgr.h",
+      "sha256": "88e6c92c29485aefdae053e3fe16b94b158473d09abdda4de358fe5af84d6419",
+      "snippets": [
+        {
+          "start_line": 183,
+          "end_line": 184,
+          "text": "    ErrCode GetAllContinuousTasksInner(int32_t uid, std::vector<std::shared_ptr<ContinuousTaskInfo>> &list,\n        bool includeSuspended = true, bool exemptUid = false);"
+        }
+      ]
+    },
+    "bg_dumper": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/continuous_task/src/bg_continuous_task_dumper.cpp",
+      "sha256": "dec870004f32e04686a751ba728bda4f1c8323e88f2a29c2f4f94938618324e9",
+      "snippets": [
+        {
+          "start_line": 25,
+          "end_line": 27,
+          "text": "static constexpr int32_t MAX_DUMP_INNER_PARAM_NUMS = 4;\nstatic constexpr int32_t MAX_DUMP_PARAM_NUMS = 3;\n}"
+        },
+        {
+          "start_line": 73,
+          "end_line": 116,
+          "text": "void BgContinuousTaskDumper::DumpGetTask(const std::vector<std::string> &dumpOption,\n    std::vector<std::string> &dumpInfo)\n{\n    if (dumpOption.size() != MAX_DUMP_PARAM_NUMS) {\n        dumpInfo.emplace_back(\"param invaild\\n\");\n        return;\n    }\n    int32_t uid = std::atoi(dumpOption[MAX_DUMP_PARAM_NUMS - 1].c_str());\n    if (uid < 0) {\n        dumpInfo.emplace_back(\"param invaild\\n\");\n        return;\n    }\n    std::vector<std::shared_ptr<ContinuousTaskInfo>> list;\n    ErrCode ret = BgContinuousTaskMgr::GetInstance()->RequestGetContinuousTasksByUidForInner(uid, list);\n    if (ret != ERR_OK) {\n        dumpInfo.emplace_back(\"param invaild\\n\");\n        return;\n    }\n    if (list.empty()) {\n        dumpInfo.emplace_back(\"No running continuous task\\n\");\n        return;\n    }\n    std::stringstream stream;\n    uint32_t index = 1;\n    for (const auto &info : list) {\n        stream.str(\"\");\n        stream.clear();\n        stream << \"No.\" << index;\n        stream << \"\\t\\tabilityName: \" << info->GetAbilityName() << \"\\n\";\n        stream << \"\\t\\tisFromWebview: \" << (info->IsFromWebView() ? \"true\" : \"false\") << \"\\n\";\n        stream << \"\\t\\tuid: \" << info->GetUid() << \"\\n\";\n        stream << \"\\t\\tpid: \" << info->GetPid() << \"\\n\";\n        stream << \"\\t\\tnotificationId: \" << info->GetNotificationId() << \"\\n\";\n        stream << \"\\t\\tcontinuousTaskId: \" << info->GetContinuousTaskId() << \"\\n\";\n        stream << \"\\t\\tabilityId: \" << info->GetAbilityId() << \"\\n\";\n        stream << \"\\t\\twantAgentBundleName: \" << info->GetWantAgentBundleName() << \"\\n\";\n        stream << \"\\t\\twantAgentAbilityName: \" << info->GetWantAgentAbilityName() << \"\\n\";\n        stream << \"\\t\\tbackgroundModes: \" << info->ToString(info->GetBackgroundModes()) << \"\\n\";\n        stream << \"\\t\\tbackgroundSubModes: \" << info->ToString(info->GetBackgroundSubModes()) << \"\\n\";\n        stream << \"\\n\";\n        dumpInfo.emplace_back(stream.str());\n        index++;\n    }\n}"
+        }
+      ]
+    },
+    "bg_modes": {
+      "path": "foundation/resourceschedule/background_task_mgr/interfaces/innerkits/include/background_mode.h",
+      "sha256": "93dadcb808f12703ecb8c76507f0266819c59fd1c950aa0682df544302b57003",
+      "snippets": [
+        {
+          "start_line": 26,
+          "end_line": 35,
+          "text": "    enum Type : uint32_t {\n        DATA_TRANSFER = 1,\n        AUDIO_PLAYBACK = 2,\n        AUDIO_RECORDING = 3,\n        LOCATION = 4,\n        BLUETOOTH_INTERACTION = 5,\n        MULTI_DEVICE_CONNECTION = 6,\n        WIFI_INTERACTION = 7,\n        VOIP = 8,\n        TASK_KEEPING = 9,"
+        }
+      ]
+    },
+    "bg_record": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/continuous_task/src/continuous_task_record.cpp",
+      "sha256": "29b6f52eabca4e21c8c748a45024e9723b30fb5e454ae82ae23b8faaea86b1df",
+      "snippets": [
+        {
+          "start_line": 25,
+          "end_line": 41,
+          "text": "const char *g_continuousTaskModeName[CONTINUOUS_TASK_MODE_LENGTH] = {\n    \"dataTransfer\",\n    \"audioPlayback\",\n    \"audioRecording\",\n    \"location\",\n    \"bluetoothInteraction\",\n    \"multiDeviceConnection\",\n    \"wifiInteraction\",\n    \"voip\",\n    \"taskKeeping\",\n    \"workout\",\n    \"default\",\n    \"avPlaybackAndRecord\",\n    \"specialScenarioProcessing\",\n    \"nearlink\",\n    \"default\",\n};"
+        },
+        {
+          "start_line": 133,
+          "end_line": 141,
+          "text": "std::string ContinuousTaskRecord::ToString(std::vector<uint32_t> &bgmodes)\n{\n    std::string result;\n    for (auto it : bgmodes) {\n        result += std::to_string(it);\n        result += \",\";\n    }\n    return result;\n}"
+        }
+      ]
+    },
+    "bg_notification": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/continuous_task/src/notification_tools.cpp",
+      "sha256": "7080d870d6edfe5096d5dd96a6da51e681411030fc4e248847da5669fd21dc44",
+      "snippets": [
+        {
+          "start_line": 93,
+          "end_line": 115,
+          "text": "Notification::NotificationRequest CreateNotificationRequest(\n    const std::shared_ptr<ContinuousTaskRecord>& continuousTaskRecord,\n    const std::shared_ptr<Notification::NotificationLocalLiveViewContent>& liveContent,\n    const std::shared_ptr<AAFwk::WantParams>& extraInfo,\n    int32_t serviceUid, const std::string& notificationLabel)\n{\n    Notification::NotificationRequest notificationRequest = Notification::NotificationRequest();\n    notificationRequest.SetContent(std::make_shared<Notification::NotificationContent>(liveContent));\n    notificationRequest.SetAdditionalData(extraInfo);\n    notificationRequest.SetCreatorUid(serviceUid);\n    notificationRequest.SetInProgress(true);\n    notificationRequest.SetIsAgentNotification(true);\n    notificationRequest.SetUpdateByOwnerAllowed(true);\n    notificationRequest.SetLabel(notificationLabel);\n    if (continuousTaskRecord->NeedNotificationForInnerApi() && continuousTaskRecord->IsFromComponent()) {\n        auto wantAgent = CreateStartAbilityWantAgent(continuousTaskRecord);\n        notificationRequest.SetWantAgent(wantAgent);\n    } else {\n        notificationRequest.SetWantAgent(continuousTaskRecord->GetWantAgent());\n    }\n    notificationRequest.SetOwnerUid(continuousTaskRecord->GetUid());\n    return notificationRequest;\n}"
+        },
+        {
+          "start_line": 145,
+          "end_line": 171,
+          "text": "    Notification::NotificationRequest notificationRequest = CreateNotificationRequest(\n        continuousTaskRecord, liveContent, extraInfo, serviceUid, notificationLabel);\n    if (std::find(continuousTaskRecord->bgModeIds_.begin(), continuousTaskRecord->bgModeIds_.end(),\n        BACKGROUND_MODE_DATA_TANSFER) != continuousTaskRecord->bgModeIds_.end()) {\n        notificationRequest.SetPublishDelayTime(PUBLISH_DELAY_TIME);\n        notificationRequest.SetSlotType(Notification::NotificationConstant::SlotType::LIVE_VIEW);\n    } else {\n        notificationRequest.SetSlotType(Notification::NotificationConstant::SlotType::OTHER);\n        notificationRequest.GetContent()->ResetToBasicContent();\n        notificationRequest.SetUnremovable(true);\n        notificationRequest.SetTapDismissed(false);\n    }\n    if (continuousTaskRecord->GetNotificationId() == -1) {\n        notificationRequest.SetNotificationId(++notificationIdIndex_);\n    } else {\n        notificationRequest.SetNotificationId(continuousTaskRecord->GetNotificationId());\n    }\n    if (Notification::NotificationHelper::PublishNotification(notificationRequest) != ERR_OK) {\n        BGTASK_LOGE(\"publish notification error, %{public}s, %{public}d\", notificationLabel.c_str(),\n            continuousTaskRecord->notificationId_);\n        return ERR_BGTASK_NOTIFICATION_ERR;\n    }\n    continuousTaskRecord->notificationLabel_ = notificationLabel;\n    if (continuousTaskRecord->GetNotificationId() == -1) {\n        continuousTaskRecord->notificationId_ = notificationIdIndex_;\n    }\n#endif"
+        }
+      ]
+    },
+    "ans_dump": {
+      "path": "base/notification/distributed_notification_service/services/ans/src/advanced_notification_utils.cpp",
+      "sha256": "5a1cd0e3da3ece5cddb8e49375b8bc1e03f2f03ceeaa030595c7fb716dceaeef",
+      "snippets": [
+        {
+          "start_line": 80,
+          "end_line": 118,
+          "text": "#ifdef ANM_SUPPORT_DUMP\nconstexpr char ACTIVE_NOTIFICATION_OPTION[] = \"active\";\n#ifdef ANS_FEATURE_ORIGINAL_DISTRIBUTED\nconstexpr char DISTRIBUTED_NOTIFICATION_OPTION[] = \"distributed\";\n#endif\nconstexpr char SET_RECENT_COUNT_OPTION[] = \"setRecentCount\";\nconstexpr char HELP_NOTIFICATION_OPTION[] = \"help\";\nconstexpr char RECENT_NOTIFICATION_OPTION[] = \"recent\";\nconstexpr char HIDUMPER_ERR_MSG[] =\n    \"error: unknown option.\\nThe arguments are illegal and you can enter '-h' for help.\";\n#endif\nconstexpr int32_t HOURS_IN_ONE_DAY = 24;\nconstexpr char FOUNDATION_BUNDLE_NAME[] = \"ohos.global.systemres\";\nconstexpr int32_t MAIN_USER_ID = 100;\nconstexpr int32_t ZERO_USER_ID = 0;\nconstexpr char OLD_KEY_BUNDLE_DISTRIBUTED_ENABLE_NOTIFICATION[] = \"enabledNotificationDistributed\";\nconstexpr char KEY_TABLE_VERSION[] = \"tableVersion\";\nconstexpr char SPLIT_FLAG[] = \"-\";\nconstexpr int32_t KEYWORD_SIZE = 4;\nconstexpr int32_t MIN_VERSION = 1;\nconstexpr int32_t OPERATION_TYPE_COMMON_EVENT = 4;\nconstexpr size_t MIN_NOTIFICATION_LIST_SIZE = 0;\nconstexpr int32_t INVAILD_PROCESS_ID = -1;\n#ifdef ANM_SUPPORT_DUMP\nconst std::unordered_map<std::string, std::string> HIDUMPER_CMD_MAP = {\n    { \"--help\", HELP_NOTIFICATION_OPTION },\n    { \"--active\", ACTIVE_NOTIFICATION_OPTION },\n    { \"--recent\", RECENT_NOTIFICATION_OPTION },\n    { \"-h\", HELP_NOTIFICATION_OPTION },\n    { \"-a\", ACTIVE_NOTIFICATION_OPTION },\n    { \"-r\", RECENT_NOTIFICATION_OPTION },\n};\n\nconstexpr char HIDUMPER_HELP_MSG[] =\n    \"Usage:dump <command> [options]\\n\"\n    \"Description::\\n\"\n    \"  --active, -a                 list all active notifications\\n\"\n    \"  --recent, -r                 list recent notifications\\n\";\n#endif"
+        },
+        {
+          "start_line": 328,
+          "end_line": 373,
+          "text": "ErrCode AdvancedNotificationService::ActiveNotificationDump(const std::string& bundle, int32_t userId,\n    int32_t recvUserId, std::vector<std::string> &dumpInfo)\n{\n    ANS_LOGD(\"%{public}s\", __FUNCTION__);\n    std::stringstream stream;\n    for (const auto &record : notificationList_) {\n        if (record->notification == nullptr || record->request == nullptr) {\n            continue;\n        }\n        if (userId != SUBSCRIBE_USER_INIT && userId != record->notification->GetUserId()) {\n            continue;\n        }\n        if (recvUserId != SUBSCRIBE_USER_INIT && recvUserId != record->notification->GetRecvUserId()) {\n            continue;\n        }\n        if (!bundle.empty() && bundle != record->notification->GetBundleName()) {\n            continue;\n        }\n#ifdef ANS_FEATURE_ORIGINAL_DISTRIBUTED\n        if (!record->deviceId.empty()) {\n            continue;\n        }\n#endif\n        stream.clear();\n        stream.str(\"\");\n        stream << \"\\tUserId: \" << record->notification->GetUserId() << \"\\n\";\n        stream << \"\\tCreatePid: \" << record->request->GetCreatorPid() << \"\\n\";\n        stream << \"\\tOwnerBundleName: \" << record->notification->GetBundleName() << \"\\n\";\n        if (record->request->GetOwnerUid() > 0) {\n            ANS_LOGD(\"GetOwnerUid larger than zero.\");\n            stream << \"\\tOwnerUid: \" << record->request->GetOwnerUid() << \"\\n\";\n        } else {\n            stream << \"\\tOwnerUid: \" << record->request->GetCreatorUid() << \"\\n\";\n        }\n        stream << \"\\tReceiverUserId: \" << record->request->GetReceiverUserId() << \"\\n\";\n        stream << \"\\tDeliveryTime = \" << TimeToString(record->request->GetDeliveryTime()) << \"\\n\";\n        stream << \"\\tNotification:\\n\";\n        stream << \"\\t\\tId: \" << record->notification->GetId() << \"\\n\";\n        stream << \"\\t\\tLabel: \" << record->notification->GetLabel() << \"\\n\";\n        stream << \"\\t\\tSlotType = \" << record->request->GetSlotType() << \"\\n\";\n        ExtendDumpForFlags(record->request->GetFlags(), stream);\n        ANS_LOGD(\"DumpInfo push stream.\");\n        dumpInfo.push_back(stream.str());\n    }\n    return ERR_OK;\n}"
+        },
+        {
+          "start_line": 1432,
+          "end_line": 1464,
+          "text": "#ifdef ANM_SUPPORT_DUMP\nErrCode AdvancedNotificationService::ShellDump(const std::string &cmd, const std::string &bundle, int32_t userId,\n    int32_t recvUserId, std::vector<std::string> &dumpInfo)\n{\n    ANS_LOGD(\"%{public}s\", __FUNCTION__);\n\n    auto callerToken = IPCSkeleton::GetCallingTokenID();\n    if (!AccessTokenHelper::VerifyShellToken(callerToken) && !AccessTokenHelper::VerifyNativeToken(callerToken)) {\n        ANS_LOGE(\"Not subsystem or shell request\");\n        return ERR_ANS_INNER_PERMISSION_DENIED;\n    }\n\n    ErrCode result = ERR_ANS_INNER_NOT_ALLOWED;\n    auto submitResult = notificationSvrQueue_.SyncSubmit(std::bind([&]() {\n        ANS_LOGD(\"ffrt enter!\");\n        if (cmd == ACTIVE_NOTIFICATION_OPTION) {\n            result = ActiveNotificationDump(bundle, userId, recvUserId, dumpInfo);\n        } else if (cmd == RECENT_NOTIFICATION_OPTION) {\n            result = RecentNotificationDump(bundle, userId, recvUserId, dumpInfo);\n#ifdef ANS_FEATURE_ORIGINAL_DISTRIBUTED\n        } else if (cmd == DISTRIBUTED_NOTIFICATION_OPTION) {\n            result = DistributedNotificationDump(bundle, userId, recvUserId, dumpInfo);\n#endif\n        } else if (cmd.substr(0, cmd.find_first_of(\" \", 0)) == SET_RECENT_COUNT_OPTION) {\n            result = SetRecentNotificationCount(cmd.substr(cmd.find_first_of(\" \", 0) + 1));\n        } else {\n            result = ERR_ANS_INNER_INVALID_PARAM;\n        }\n    }));\n    ANS_COND_DO_ERR(submitResult != ERR_OK, return submitResult, \"Shell dump\");\n    return result;\n}\n#endif"
+        },
+        {
+          "start_line": 1490,
+          "end_line": 1531,
+          "text": "int AdvancedNotificationService::Dump(int fd, const std::vector<std::u16string> &args)\n{\n    ANS_LOGD(\"called\");\n    std::string result;\n    GetDumpInfo(args, result);\n    int ret = dprintf(fd, \"%s\\n\", result.c_str());\n    if (ret < 0) {\n        ANS_LOGE(\"dprintf error\");\n        return ERR_ANS_INNER_INVALID_PARAM;\n    }\n    return ERR_OK;\n}\n\nvoid AdvancedNotificationService::GetDumpInfo(const std::vector<std::u16string> &args, std::string &result)\n{\n    if (args.size() != 1) {\n        result = HIDUMPER_ERR_MSG;\n        return;\n    }\n    std::vector<std::string> dumpInfo;\n    std::string cmd = Str16ToStr8(args.front());\n    if (HIDUMPER_CMD_MAP.find(cmd) == HIDUMPER_CMD_MAP.end()) {\n        result = HIDUMPER_ERR_MSG;\n        return;\n    }\n    std::string cmdValue = HIDUMPER_CMD_MAP.find(cmd)->second;\n    if (cmdValue == HELP_NOTIFICATION_OPTION) {\n        result = HIDUMPER_HELP_MSG;\n    }\n    ShellDump(cmdValue, \"\", SUBSCRIBE_USER_INIT, SUBSCRIBE_USER_INIT, dumpInfo);\n    if (dumpInfo.empty()) {\n        result.append(\"no notification\\n\");\n        return;\n    }\n    int32_t index = 0;\n    result.append(\"notification list:\\n\");\n    for (const auto &info: dumpInfo) {\n        result.append(\"No.\" + std::to_string(++index) + \"\\n\");\n        result.append(info);\n    }\n}\n#endif"
+        }
+      ]
+    },
+    "ans_dump_build": {
+      "path": "base/notification/distributed_notification_service/services/ans/BUILD.gn",
+      "sha256": "5131d20de862165a2b671a31c274f1aa1f7a3f3a7e652ef9c697cc8a3084c7dd",
+      "snippets": [
+        {
+          "start_line": 308,
+          "end_line": 310,
+          "text": "  if (build_variant == \"root\") {\n    defines += [ \"ANM_SUPPORT_DUMP\" ]\n  }"
+        }
+      ]
+    },
+    "ui_app": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/AppScope/app.json",
+      "sha256": "ed716d727f911abd60934062e16b606e7eb740743652c04553629ffb2acad929",
+      "snippets": [
+        {
+          "start_line": 1,
+          "end_line": 14,
+          "text": "{\n  \"app\": {\n    \"bundleName\": \"com.ohos.notificationdialog\",\n    \"vendor\": \"example\",\n    \"versionCode\": 1000045,\n    \"versionName\": \"1.4.5\",\n    \"icon\": \"$media:app_icon\",\n    \"label\": \"$string:app_name\",\n    \"distributedNotificationEnabled\": true,\n    \"minAPIVersion\": 10,\n    \"targetAPIVersion\": 10,\n    \"configuration\": \"$profile:configuration\"\n  }\n}"
+        }
+      ]
+    },
+    "ui_module": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/module.json",
+      "sha256": "883ec23b780387320aa01f26b4e6328c77ea1bd65e3d81b1489138a0991a7a68",
+      "snippets": [
+        {
+          "start_line": 8,
+          "end_line": 13,
+          "text": "    \"deviceTypes\": [\n      \"default\",\n      \"tablet\",\n      \"2in1\",\n      \"wearable\"\n    ],"
+        },
+        {
+          "start_line": 22,
+          "end_line": 36,
+          "text": "        \"description\": \"$string:NotificationServiceExtAbility_desc\",\n        \"icon\": \"$media:icon\",\n        \"label\": \"$string:NotificationServiceExtAbility_label\",\n        \"exported\":true,\n        \"type\": \"sysDialog/common\",\n        \"extensionProcessMode\": \"instance\"\n      }\n    ],\n    \"requestPermissions\": [\n      {\n        \"name\": \"ohos.permission.START_ABILITIES_FROM_BACKGROUND\"\n      },\n      {\n        \"name\": \"ohos.permission.GET_BUNDLE_RESOURCES\"\n      }"
+        }
+      ]
+    },
+    "ui_phone": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/ets/pages/notificationDialog.ets",
+      "sha256": "6fd32df0fd7dd4f6756ed6ff65f38d893db311e2d8226def8a02e7b897ef8301",
+      "snippets": [
+        {
+          "start_line": 36,
+          "end_line": 41,
+          "text": "const TAG = 'NotificationDialog_Service ';\nconst mainWindowId = 'mainWindow';\nconst permission: Record<string, Resource> = {\n  'label': $r('app.string.group_label_notification'),\n  'icon': $r('app.media.ic_public_ring'),\n  'reason': $r('app.string.reason'),"
+        },
+        {
+          "start_line": 139,
+          "end_line": 155,
+          "text": "              Row() {\n                Flex({ justifyContent: FlexAlign.Center }) {\n                  Text($r('app.string.group_label_notification', this.appName))\n                  .fontSize($r('sys.float.ohos_id_text_size_headline8'))\n                  .fontColor($r('app.color.text_primary'))\n                  .fontWeight(FontWeight.Bold)\n                  .minFontSize(\n                    getLimitFontSize(Constants.TITLE_MIN_FONT_SIZE,\n                      getFontSizeScale(getContext(this) as common.UIAbilityContext, Constants.FONT_SCALE_MAX))\n                  )\n                  .maxFontSize(\n                    getLimitFontSize(sourceToVp($r('sys.float.ohos_id_text_size_headline8')),\n                      getFontSizeScale(getContext(this) as common.UIAbilityContext, Constants.FONT_SCALE_MAX))\n                  )\n                  .heightAdaptivePolicy(TextHeightAdaptivePolicy.MAX_LINES_FIRST)\n                  .maxLines(2)\n                  .textOverflow({overflow: TextOverflow.Ellipsis})"
+        },
+        {
+          "start_line": 204,
+          "end_line": 224,
+          "text": "              Row() {\n                Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {\n                  Button($r('app.string.BAN'))\n                    .onClick(async (): Promise<void> => {\n                    await this.enableNotification(false);\n                    })\n                    .customizeButton()\n                    .fontColor($r('sys.color.ohos_id_color_warning'))\n                  Divider()\n                    .color($r('app.color.comp_divider'))\n                    .vertical(true)\n                    .height(Constants.DIVIDER_HEIGHT)\n                    .strokeWidth(Constants.DIVIDER_WIDTH)\n                    .margin({left: Constants.BUTTON_LEFT, right: Constants.BUTTON_RIGHT})\n                  Button($r('app.string.ALLOW'))\n                    .onClick(async (): Promise<void> => {\n                      await this.enableNotification(true);\n                    })\n                    .customizeButton()\n                    .fontColor($r('app.color.button_text'))\n                }"
+        },
+        {
+          "start_line": 235,
+          "end_line": 262,
+          "text": "                  Button($r('app.string.BAN'))\n                  .onClick(async (): Promise<void> => {\n                    await this.enableNotification(false);\n                  })\n                  .singleRowButton()\n                  .fontColor($r('sys.color.ohos_id_color_warning'))\n                  .margin({ \n                    left: Constants.MARGIN_ZERO,\n                    right: Constants.MARGIN_ZERO,\n                    bottom: Constants.BUTTON_MARGIN_ROW\n                  })\n                }\n                .margin({ \n                  left: Constants.BUTTON_MARGIN_LEFT, \n                  right: Constants.BUTTON_MARGIN_RIGHT \n                })\n              }\n              .visibility(this.singleRowButtonVisibility)\n              \n              Row() {\n                Flex({ justifyContent: FlexAlign.Center }) {\n                  Button($r('app.string.ALLOW'))\n                    .onClick(async (): Promise<void> => {\n                      await this.enableNotification(true);\n                    })\n                    .singleRowButton()\n                    .fontColor($r('app.color.button_text'))\n                    .margin({ "
+        },
+        {
+          "start_line": 277,
+          "end_line": 281,
+          "text": "        .width(Constants.FULL_WIDTH)\n        .clip(true)\n        .id(mainWindowId)\n        .onAreaChange((oldArea: Area, newArea: Area) => {\n          this.updateButtomVisibility(newArea.width as number);"
+        },
+        {
+          "start_line": 291,
+          "end_line": 301,
+          "text": "  async updateApplicationName(bundleName: string): Promise<void> {\n    console.info(TAG, `updateApplicationName bundleName: ${bundleName}`);\n    try {\n      let bundleFlags = bundleResourceManager.ResourceFlag.GET_RESOURCE_INFO_ALL;\n      let resourceInfo = bundleResourceManager.getBundleResourceInfo(bundleName, bundleFlags);\n      console.info(TAG, `applicationName name : ${JSON.stringify(resourceInfo.label)}`);\n      let appName = resourceInfo.label;\n      this.appName = titleTrim(appName);\n      console.info(TAG, `hap label: ${this.appName}`);\n    } catch (err) {\n      console.error(TAG, `applicationName error : ${err?.code}`);"
+        },
+        {
+          "start_line": 499,
+          "end_line": 508,
+          "text": "  async enableNotification(enabled: boolean): Promise<void> {\n    console.info(TAG, `NotificationDialog enableNotification: ${enabled}`);\n    try {\n      await this.dialog?.publishButtonClickedEvent(enabled);\n      this.clicked = true;\n    } catch (err) {\n      console.error(TAG, `NotificationDialog enable error, code is ${err?.code}`);\n      await this.dialog?.destroyException();\n    } finally {\n      await this.dialog?.subWindow?.destroyWindow();"
+        }
+      ]
+    },
+    "ui_pc": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/ets/pages/pcNotificationDialog.ets",
+      "sha256": "b19e93ae1c83185fcfb0364d1d2ffd53aad4bd7058ab20ad4563d19f342d7b4c",
+      "snippets": [
+        {
+          "start_line": 149,
+          "end_line": 164,
+          "text": "              Row() {\n                Flex({ justifyContent: FlexAlign.Center }) {\n                  Text($r('app.string.group_label_notification', this.appName))\n                  .fontSize($r('sys.float.Title_S'))\n                  .fontColor($r('sys.color.font_primary'))\n                  .fontWeight(FontWeight.Bold)\n                  .minFontSize(\n                    getLimitFontSize(Constants.TITLE_MIN_FONT_SIZE,\n                      getFontSizeScale(getContext(this) as common.UIAbilityContext, Constants.FONT_SCALE_MAX))\n                  )\n                  .maxFontSize(\n                    getLimitFontSize(sourceToVp($r('sys.float.Title_S')),\n                      getFontSizeScale(getContext(this) as common.UIAbilityContext, Constants.FONT_SCALE_MAX))\n                  )\n                  .heightAdaptivePolicy(TextHeightAdaptivePolicy.MAX_LINES_FIRST)\n                  .maxLines(2)"
+        },
+        {
+          "start_line": 207,
+          "end_line": 225,
+          "text": "              Row() {\n                Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {\n                  Button($r('app.string.BAN'))\n                    .onClick(async (): Promise<void> => {\n                    await this.enableNotification(false);\n                    })\n                    .customizeButton()\n                    .fontColor($r('sys.color.ohos_id_color_warning'))\n                  Divider()\n                    .color(Color.Transparent)\n                    .height(Constants.DIVIDER_HEIGHT)\n                    .vertical(true)\n                    .margin({left: Constants.BUTTON_LEFT, right: Constants.BUTTON_RIGHT})\n                  Button($r('app.string.ALLOW'))\n                    .onClick(async (): Promise<void> => {\n                      await this.enableNotification(true);\n                    })\n                    .customizeButton()\n                    .fontColor($r('sys.color.font_emphasize'))"
+        },
+        {
+          "start_line": 322,
+          "end_line": 333,
+          "text": "  async updateApplicationName(bundleName: string): Promise<void> {\n    console.info(TAG, `updateApplicationName bundleName: ${bundleName}`);\n    try {\n      let bundleFlags = bundleResourceManager.ResourceFlag.GET_RESOURCE_INFO_ALL;\n      let resourceInfo = bundleResourceManager.getBundleResourceInfo(bundleName, bundleFlags);\n      console.info(TAG, `applicationName name : ${JSON.stringify(resourceInfo.label)}`);\n      let appName = resourceInfo.label;\n      this.appName = titleTrim(appName);\n      console.info(TAG, `hap label: ${this.appName}`);\n    } catch (err) {\n      console.error(TAG, `applicationName error : ${err?.code}`);\n    }"
+        },
+        {
+          "start_line": 462,
+          "end_line": 473,
+          "text": "  async enableNotification(enabled: boolean): Promise<void> {\n    console.info(TAG, `NotificationDialog enableNotification: ${enabled}`);\n    try {\n      await this.dialog?.publishButtonClickedEvent(enabled);\n      this.clicked = true;\n    } catch (err) {\n      console.error(TAG, `NotificationDialog enable error, code is ${err?.code}`);\n      await this.dialog?.destroyException();\n    } finally {\n      await this.dialog?.subWindow?.destroyWindow();\n      this.session?.terminateSelf();\n    }"
+        }
+      ]
+    },
+    "ui_entry": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/ets/ServiceExtAbility/NotificationServiceExtAbility.ts",
+      "sha256": "e030b66f4559cc040ea0898ab6ca5404896bb630aba1ce9c18683c7a4f244421",
+      "snippets": [
+        {
+          "start_line": 45,
+          "end_line": 51,
+          "text": "const COMMON_EVENT_NAME = 'OnNotificationServiceDialogClicked';\nenum DialogStatus {\n  ALLOW_CLICKED,\n  DENY_CLICKED,\n  DIALOG_CRASHED,\n  DIALOG_SERVICE_DESTROYED\n};"
+        },
+        {
+          "start_line": 80,
+          "end_line": 87,
+          "text": "export class EnableNotificationDialog {\n  static ENABLE_NOTIFICATION_DIALOG_NAME = 'EnableNotificationDialog';\n  static DIALOG_PATH = 'pages/notificationDialog';\n  static WATCH_DIALOG_PATH = 'pages/watchNotificationDialog';\n  static PC_DIALOG_PATH = 'pages/pcNotificationDialog';\n  static TV_DIALOG_PATH = 'pages/tvNotificationDialog';\n  static CAR_DIALOG_PATH = 'pages/carNotificationDialog';\n  static EMPTY_PAGE_PATH = 'pages/emptyPage';"
+        },
+        {
+          "start_line": 187,
+          "end_line": 220,
+          "text": "async readConfig(): Promise<void> {\n    try {\n      let filePaths = await configPolicy.getCfgFiles(Constants.CCM_CONFIG_PATH);\n      if (filePaths.length === 0) {\n        console.info(TAG, 'not get any configFile');\n        this.hasConfig = false;\n      }\n      for (let i = 0; i < filePaths.length; i++) {\n        let res = fs.accessSync(filePaths[i]);\n        if (!res) {\n          console.error(TAG, 'accessSync false');\n          return;\n        }\n        let fileContent = fs.readTextSync(filePaths[i]);\n        let config: NotificationConfig = JSON.parse(fileContent);\n        if (config.deviceInfo !== undefined) {\n          let deviceInfo: DeviceInfo = config.deviceInfo;\n          if (deviceInfo.isWatch !== undefined) {\n            this.path = EnableNotificationDialog.WATCH_DIALOG_PATH;\n            console.info(TAG, 'watch request');\n          }\n          if (deviceInfo.isPc !== undefined) {\n            this.path = EnableNotificationDialog.PC_DIALOG_PATH;\n            this.isPcDevice = true;\n            console.info(TAG, 'pc request');\n          }\n          if (deviceInfo.isTv !== undefined) {\n            this.path = EnableNotificationDialog.TV_DIALOG_PATH;\n            console.info(TAG, 'tv request');\n          }\n          if (deviceInfo.isCar !== undefined) {\n            this.path = EnableNotificationDialog.CAR_DIALOG_PATH;\n            console.info(TAG, 'car request');\n          }"
+        },
+        {
+          "start_line": 232,
+          "end_line": 245,
+          "text": "  async publishButtonClickedEvent(enabled: boolean): Promise<void> {\n    CommonEventManager.publish(\n      COMMON_EVENT_NAME,\n      {\n        code: enabled ? DialogStatus.ALLOW_CLICKED : DialogStatus.DENY_CLICKED,\n        data: this.want.parameters.bundleName.toString(),\n        parameters: {\n          bundleName: this.want.parameters.bundleName.toString(),\n          bundleUid: this.want.parameters.bundleUid.toString()\n        }\n      } as CommonEventManager.CommonEventPublishData,\n      () => { console.info(TAG, 'publish CLICKED succeeded'); }\n    );\n  }"
+        },
+        {
+          "start_line": 280,
+          "end_line": 303,
+          "text": "  async onSessionCreate(want: Want, session: UIExtensionContentSession) {\n    try {\n      let stageModel = false;\n      let bundleName = want.parameters['ohos.aafwk.param.callerBundleName'];\n      let bundleUid = want.parameters['ohos.aafwk.param.callerUid'];\n      let innerLake = false;\n      let easyAbroad = false;\n      if (bundleName !== EnableNotificationDialog.SCENEBOARD_BUNDLE &&\n        bundleName !== EnableNotificationDialog.SYSTEMUI_BUNDLE) {\n        want.parameters.bundleName = bundleName;\n        want.parameters.bundleUid = bundleUid;\n        stageModel = true;\n        console.log(TAG, `stage model`);\n      } else {\n        stageModel = false;\n        innerLake = Boolean(want.parameters.innerLake);\n        easyAbroad = Boolean(want.parameters.easyAbroad);\n        console.log(TAG, ` un stage model innerLake = ${innerLake},  easyAbroad = ${easyAbroad}`);\n      }\n      console.log(TAG, `UIExtAbility onSessionCreate bundleName ${want.parameters.bundleName}` +\n        `uid ${want.parameters.bundleUid}`);    \n        let dialog = new EnableNotificationDialog(1, want, stageModel, innerLake, easyAbroad);\n      await dialog.createUiExtensionWindow(session, stageModel);\n      AppStorage.setOrCreate('dialog', dialog);"
+        }
+      ]
+    },
+    "ui_config_path": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/ets/common/constant.ets",
+      "sha256": "2c1c6df4062122f989fcdfa602a628a385a33cd623666f315f47b61f8dab6941",
+      "snippets": [
+        {
+          "start_line": 194,
+          "end_line": 194,
+          "text": "  static CCM_CONFIG_PATH = \"etc/notification/notification_config.json\";"
+        }
+      ]
+    },
+    "ui_callback": {
+      "path": "base/notification/distributed_notification_service/services/ans/src/notification_dialog_manager.cpp",
+      "sha256": "56ef9afd47d4d1dc7237d7eb37d618d25f4f7ac0e2eabb39df5fc50bd36e020c",
+      "snippets": [
+        {
+          "start_line": 40,
+          "end_line": 68,
+          "text": "constexpr const char* EVENT_NAME = \"OnNotificationServiceDialogClicked\";\nconstexpr const char* NOTIFICATION_DIALOG_SERVICE_BUNDLE = \"com.ohos.notificationdialog\";\nconstexpr const char* NOTIFICATION_DIALOG_SERVICE_ABILITY = \"EnableNotificationDialog\";\n}\n\nstd::shared_ptr<NotificationDialogEventSubscriber> NotificationDialogEventSubscriber::Create(\n    NotificationDialogManager& dialogManager)\n{\n    ANS_LOGD(\"enter\");\n    EventFwk::MatchingSkills matchingSkills;\n    matchingSkills.AddEvent(EVENT_NAME);\n    EventFwk::CommonEventSubscribeInfo subscriberInfo(matchingSkills);\n    subscriberInfo.SetPublisherBundleName(NotificationDialogManager::NOTIFICATION_DIALOG_SERVICE_BUNDLE);\n    return std::make_shared<NotificationDialogEventSubscriber>(dialogManager, subscriberInfo);\n}\n\nNotificationDialogEventSubscriber::NotificationDialogEventSubscriber(\n    NotificationDialogManager& dialogManager, const EventFwk::CommonEventSubscribeInfo& subscribeInfo)\n    : EventFwk::CommonEventSubscriber(subscribeInfo), dialogManager_(dialogManager)\n{ }\n\nvoid NotificationDialogEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventData& data)\n{\n    int32_t code = data.GetCode();\n    std::string bundleName = data.GetWant().GetStringParam(\"bundleName\");\n    int32_t bundleUid = std::atoi(data.GetWant().GetStringParam(\"bundleUid\").c_str());\n    ANS_LOGI(\"NotificationDialogEventSubscriber Get Data %{public}d %{public}s %{public}d\", code,\n        bundleName.c_str(), bundleUid);\n    dialogManager_.OnBundleEnabledStatusChanged(static_cast<DialogStatus>(code), bundleName, bundleUid);"
+        },
+        {
+          "start_line": 128,
+          "end_line": 155,
+          "text": "ErrCode NotificationDialogManager::OnBundleEnabledStatusChanged(\n    DialogStatus status, const std::string& bundleName, const int32_t& uid)\n{\n    ANS_LOGD(\"enter\");\n    bool result = false;\n    switch (status) {\n        case DialogStatus::ALLOW_CLICKED:\n            result = OnDialogButtonClicked(bundleName, uid, true);\n            break;\n        case DialogStatus::DENY_CLICKED:\n            result = OnDialogButtonClicked(bundleName, uid, false);\n            break;\n        case DialogStatus::DIALOG_CRASHED:\n            result = OnDialogCrashed(bundleName, uid);\n            break;\n        case DialogStatus::DIALOG_SERVICE_DESTROYED:\n            result = OnDialogServiceDestroyed();\n            break;\n        case DialogStatus::REMOVE_BUNDLE:\n            result = onRemoveBundle(bundleName, uid);\n            break;\n        default:\n            result = false;\n    }\n    if (!result) {\n        ANS_LOGE(\"OnBundleEnabledStatusChanged failed\");\n        return ERR_ANS_INNER_TASK_ERR;\n    }"
+        },
+        {
+          "start_line": 262,
+          "end_line": 291,
+          "text": "bool NotificationDialogManager::OnDialogButtonClicked(\n    const std::string& bundleName, const int32_t& uid, bool enabled)\n{\n    ANS_LOGD(\"enter\");\n    auto bundleOption = GetBundleOptionByBundleName(bundleName, uid);\n    if (bundleOption == nullptr) {\n        return false;\n    }\n\n    NotificationDialogManager::SetHasPoppedDialog(bundleOption, true);\n\n    ErrCode result = ans_.SetNotificationsEnabledForSpecialBundle(\n        NotificationDialogManager::DEFAULT_DEVICE_ID,\n        bundleOption, enabled);\n#ifdef ENABLE_ANS_PRIVILEGED_MESSAGE_EXT_WRAPPER\n    if (!enabled) {\n        SetDialogPoppedTimeInterVal(bundleOption);\n    }\n#endif\n    if (result != ERR_OK) {\n        ANS_LOGE(\"SetNotificationsEnabledForSpecialBundle Failed, code is %{public}d\", result);\n        // Do not return here, need to clear the data\n    }\n    ans_.SendDialogClickHiSysEvent(bundleOption, enabled);\n    HaMetaMessage message = HaMetaMessage(EventSceneId::SCENE_28, EventBranchId::BRANCH_0);\n    message.Message(bundleOption->GetBundleName() + \"_\" + std::to_string(bundleOption->GetUid()) +\n        \" allow:\" + std::to_string(enabled));\n    NotificationAnalyticsUtil::ReportModifyEvent(message, true);\n    EnabledDialogStatus status = enabled ? EnabledDialogStatus::ALLOW_CLICKED : EnabledDialogStatus::DENY_CLICKED;\n    return HandleOneDialogClosed(bundleOption, status);"
+        }
+      ]
+    },
+    "ui_strings_base": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/resources/base/element/string.json",
+      "sha256": "3bb84f09a442ba6ac9ff1a455e3013a9c8c388310833aa131c4a9f2c00158584",
+      "values": {
+        "reason": "These may include lock screen notifications, banners, badges, sounds, and vibrations. You can change this in Settings.",
+        "reason_simple": "These may include banners, badges, and sounds. You can change this in Settings.",
+        "ALLOW": "Allow",
+        "BAN": "Deny",
+        "group_label_notification": "Allow %s to send you notifications?"
+      },
+      "snippets": [
+        {
+          "start_line": 51,
+          "end_line": 52,
+          "text": "            \"name\":\"ALLOW\",\n            \"value\":\"Allow\","
+        },
+        {
+          "start_line": 58,
+          "end_line": 59,
+          "text": "            \"name\":\"BAN\",\n            \"value\":\"Deny\","
+        },
+        {
+          "start_line": 65,
+          "end_line": 66,
+          "text": "            \"name\":\"group_label_notification\",\n            \"value\":\"Allow %s to send you notifications?\","
+        }
+      ]
+    },
+    "ui_strings_en_GB": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/resources/en_GB/element/string.json",
+      "sha256": "321b25ac7ce9790c220cb3170b498b13682cc409d53cbedc7cc642f7617741eb",
+      "values": {
+        "group_label_notification": "Allow %s to send you notifications?",
+        "ALLOW": "Allow",
+        "BAN": "Deny",
+        "reason": "These may include lock screen notifications, banners, badges, sounds, and vibrations. You can change this in Settings.",
+        "reason_simple": "These may include banners, badges, and sounds. You can change this in Settings."
+      },
+      "snippets": [
+        {
+          "start_line": 4,
+          "end_line": 5,
+          "text": "            \"name\":\"group_label_notification\",\n            \"value\":\"Allow %s to send you notifications?\","
+        },
+        {
+          "start_line": 11,
+          "end_line": 12,
+          "text": "            \"name\":\"ALLOW\",\n            \"value\":\"Allow\","
+        },
+        {
+          "start_line": 18,
+          "end_line": 19,
+          "text": "            \"name\":\"BAN\",\n            \"value\":\"Deny\","
+        }
+      ]
+    },
+    "ui_strings_zh_CN": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/resources/zh_CN/element/string.json",
+      "sha256": "983d3972afd46d3a20f80d62b2564b38de4c6dc2bc5c3fcda4e7e804ae4b110a",
+      "values": {
+        "reason": "通知提醒方式可能包括锁屏、横幅、角标、响铃、振动。可前往“设置”更改。",
+        "reason_simple": "通知提醒方式可能包括横幅、角标、响铃。可前往“设置”更改。",
+        "ALLOW": "允许",
+        "BAN": "不允许",
+        "group_label_notification": "允许“%s”向你发送通知？"
+      },
+      "snippets": [
+        {
+          "start_line": 51,
+          "end_line": 52,
+          "text": "            \"name\":\"ALLOW\",\n            \"value\":\"允许\","
+        },
+        {
+          "start_line": 58,
+          "end_line": 59,
+          "text": "            \"name\":\"BAN\",\n            \"value\":\"不允许\","
+        },
+        {
+          "start_line": 65,
+          "end_line": 66,
+          "text": "            \"name\":\"group_label_notification\",\n            \"value\":\"允许“%s”向你发送通知？\","
+        }
+      ]
+    },
+    "ui_strings_zh_HK": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/resources/zh_HK/element/string.json",
+      "sha256": "d804170bdfe2d6294f95b33d3ea823c9adae2643965398c783a50d0157d5678c",
+      "values": {
+        "reason": "通知提醒方式可能包括鎖屏、橫幅、徽章圖標、響鬧和震動。可前往「設定」更改。",
+        "reason_simple": "通知提醒方式可能包括橫幅、徽章圖標、響鬧。可前往「設定」更改。",
+        "ALLOW": "允許",
+        "BAN": "不允許",
+        "group_label_notification": "允許「%s」向你發送通知？"
+      },
+      "snippets": [
+        {
+          "start_line": 51,
+          "end_line": 52,
+          "text": "            \"name\":\"ALLOW\",\n            \"value\":\"允許\","
+        },
+        {
+          "start_line": 58,
+          "end_line": 59,
+          "text": "            \"name\":\"BAN\",\n            \"value\":\"不允許\","
+        },
+        {
+          "start_line": 65,
+          "end_line": 66,
+          "text": "            \"name\":\"group_label_notification\",\n            \"value\":\"允許「%s」向你發送通知？\","
+        }
+      ]
+    },
+    "ui_strings_zh_TW": {
+      "path": "base/notification/distributed_notification_service/services/dialog_ui/enable_notification_dialog/entry/src/main/resources/zh_TW/element/string.json",
+      "sha256": "6993e5988b2b70f08267a6d3d154b4de939888ddbc4d219b18aacb1a8fe77c40",
+      "values": {
+        "reason": "通知提醒方式可能包括鎖定螢幕、橫幅、徽章圖示、響鈴和振動。您可以前往「設定」變更。",
+        "reason_simple": "通知提醒方式可能包括橫幅、徽章圖示和響鈴。您可以前往「設定」變更。",
+        "ALLOW": "允許",
+        "BAN": "不允許",
+        "group_label_notification": "允許「%s」傳送通知給您？"
+      },
+      "snippets": [
+        {
+          "start_line": 51,
+          "end_line": 52,
+          "text": "            \"name\":\"ALLOW\",\n            \"value\":\"允許\","
+        },
+        {
+          "start_line": 58,
+          "end_line": 59,
+          "text": "            \"name\":\"BAN\",\n            \"value\":\"不允許\","
+        },
+        {
+          "start_line": 65,
+          "end_line": 66,
+          "text": "            \"name\":\"group_label_notification\",\n            \"value\":\"允許「%s」傳送通知給您？\","
+        }
+      ]
+    },
+    "bg_task_permission_and_audio_notification": {
+      "path": "foundation/resourceschedule/background_task_mgr/services/continuous_task/src/notification_tools.cpp",
+      "sha256": "7080d870d6edfe5096d5dd96a6da51e681411030fc4e248847da5669fd21dc44",
+      "snippets": [
+        {
+          "start_line": 126,
+          "end_line": 138,
+          "text": "    liveContent->SetText(prompt);\n    if (std::find(continuousTaskRecord->bgModeIds_.begin(), continuousTaskRecord->bgModeIds_.end(),\n        BACKGROUND_MODE_DATA_TANSFER) != continuousTaskRecord->bgModeIds_.end()) {\n        liveContent->SetType(TYPE_CODE_DATA_TANSFER);\n    } else if (std::find(continuousTaskRecord->bgModeIds_.begin(), continuousTaskRecord->bgModeIds_.end(),\n        BACKGROUND_MODE_AUDIO_RECORDING) != continuousTaskRecord->bgModeIds_.end()) {\n        liveContent->SetType(TYPE_CODE_AUDIO_RECORDING);\n    } else if (std::find(continuousTaskRecord->bgModeIds_.begin(), continuousTaskRecord->bgModeIds_.end(),\n        BACKGROUND_MODE_VOIP) != continuousTaskRecord->bgModeIds_.end()) {\n        liveContent->SetType(TYPE_CODE_VOIP);\n    }\n\n    std::shared_ptr<AAFwk::WantParams> extraInfo = std::make_shared<AAFwk::WantParams>();"
+        }
+      ]
+    },
+    "ans_normal_publish_identity": {
+      "path": "base/notification/distributed_notification_service/services/ans/src/advanced_notification_service.cpp",
+      "sha256": "9975cefbb1992fc66ffc88accf0771e81e0fc26f2428384e36ddbd30434f1c63",
+      "snippets": [
+        {
+          "start_line": 130,
+          "end_line": 145,
+          "text": "{\n    ANS_LOGD(\"called\");\n\n    std::string bundle = GetClientBundleName();\n    if (bundle.empty()) {\n        return AnsStatus::InvalidBundle(EventSceneId::SCENE_14, EventBranchId::BRANCH_0);\n    }\n    if (request == nullptr) {\n        ANS_LOGE(\"NotificationRequest object is nullptr\");\n        return AnsStatus::InvalidParam(\"NotificationRequest object is nullptr\",\n            EventSceneId::SCENE_14, EventBranchId::BRANCH_1);\n    }\n\n    if (request->IsAgentNotification()) {\n        bool isSubsystem = AccessTokenHelper::VerifyNativeToken(IPCSkeleton::GetCallingTokenID());\n        if (!isSubsystem && !AccessTokenHelper::IsSystemApp()) {"
+        },
+        {
+          "start_line": 242,
+          "end_line": 256,
+          "text": "    int32_t uid = IPCSkeleton::GetCallingUid();\n    int32_t pid = IPCSkeleton::GetCallingPid();\n    request->SetCreatorUid(uid);\n    request->SetCreatorPid(pid);\n    if (request->GetOwnerUid() == DEFAULT_UID) {\n        request->SetOwnerUid(uid);\n    }\n\n    int32_t userId = SUBSCRIBE_USER_INIT;\n    OsAccountManagerHelper::GetInstance().GetOsAccountLocalIdFromUid(uid, userId);\n    request->SetCreatorUserId(userId);\n    request->SetCreatorBundleName(bundle);\n    if (request->GetOwnerBundleName().empty()) {\n        request->SetOwnerBundleName(bundle);\n    }"
+        }
+      ]
+    }
+  }
+}
