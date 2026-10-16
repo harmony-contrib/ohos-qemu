@@ -10,14 +10,14 @@
     "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent": {
       "status": "candidate_prepared",
       "source_finding": "SDK defines getRelatedEntity/getSearchSuggestion with system+READ_IMAGEVIDEO authorization. Exact class/method tokens absent in 4066 scoped media_library source/config files. Existing Photos/geographic knowledge joins do not implement Entity/alias/ranking or all suggestion types.",
-      "candidate": "Round 2: implemented native static class, native token/READ checks, current-account VISITOR bound queries over real asset/analysis/nickname data, relationships, aliases, weighted votes and 7 suggestion counts. NONE/HOLIDAY producers and actual product/ACL compatibility remain unresolved.",
-      "remaining": "Actual product NAPI/4-TU compilation and link, signed three-role new-package data/alias/count/delete/permission-revocation/current-account evidence, absent NONE/HOLIDAY producers, and fully verified SDK ranking/default/display compatibility.",
+      "candidate": "Round 3: real service-owned fixed trusted all-day ICS producer, same MediaLibrary RDB schema/transaction/hash/version, legacy open/upgrade/reopen plus cancellable managed configuration observer; HOLIDAY joins actual Photos.date_day, NONE sentinel rejects with 13900020; omitted count streams all budgeted candidates, weighted vote/display project semantics defined. Native caller/account/VISITOR/token/visibility constraints retained.",
+      "remaining": "Actual product producer/service/NAPI/query/helper compilation and link, populated public three-role new-package asset/calendar/alias/count/delete/account/VISITOR ACL and permission revocation/runtime acceptance; no host adapter or generated ICS is real-world holiday evidence.",
       "gap_closed": false
     },
     "behavior:audio-capture-and-dependent-pipelines": {
       "status": "candidate_prepared",
       "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
-      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render.",
+      "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render. Round 3 public native ordinary-MIC HAP with awaited real grant dialog, actual callback PCM/timestamps/lifecycle/private evidence and independent fresh host challenge diagnostic; parent reports actual SDK26 native compile/link 3ABI and HAP02 compile passed.",
       "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence.",
       "gap_closed": false
     },
@@ -39,7 +39,7 @@
       "status": "candidate_prepared",
       "source_finding": "Pinned AVC surface RGBA validates stride only as pixels, NV21 indexes plane[2] although supported native layout can be two physical planes, UV tail is not bounded, P010 maps to an 8-bit converter, and AVMemory offset is ignored.",
       "candidate": "Independent exact-source avc_surface_layout patch and guards; real source functions and scalar converters exercised with challenged pixels, old-code reproductions, offset/stride/chroma-end/overflow/layout rejection and surface cleanup.",
-      "remaining": "Two actual full product TUs and link; new-package default/software AVC create, full encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary cases. No HEVC, P010 converter or complete codec-matrix closure claimed.",
+      "remaining": "Parent reports actual two AVC product TUs compiled. Actual final link/new-package default/software AVC encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary matrix remain; no HEVC, P010 converter or complete codec-matrix closure.",
       "gap_closed": false
     },
     "behavior:audio-vivid-metadata-runtime-plugin-missing": {
@@ -71,13 +71,17 @@
     "foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.h",
     "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h",
     "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp",
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn",
     "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp",
     "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp",
     "foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp",
     "foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js",
     "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn",
     "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h",
-    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h"
+    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h",
+    "foundation/multimedia/media_library/services/media_rdbstore/include/rdbstore/knowledge_holiday_index.h",
+    "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp",
+    "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp"
   ],
   "ownership": "Both complete upstream paths exclusively assigned by parent before edits; no shared source/out writes or other agent files changed.",
   "tests": [
@@ -160,6 +164,20 @@
       "tests": 4,
       "evidence": "docs/capability-audit/parallel/media/round3/capture-host-02.log",
       "scope": "Actual full public caller host syntax against pinned real SDK headers, actual PCM callback ASan/UBSan and independent challenge oracle unit fixtures; not actual HAP/HDI/runtime proof"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p 'test_batch_media_knowledge_holiday*.py' -v",
+      "result": "passed",
+      "tests": 10,
+      "evidence": "docs/capability-audit/parallel/media/round3/holiday-host-07.log",
+      "scope": "Actual full producer TU and real NAPI/query functions ASan/UBSan; real SQLite persistence/transactions/snapshot and OpenSSL SHA256; controlled NativeRdb/NAPI/token/IO dependencies explicitly not product pool/Visitor/HAP/backend proof"
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_media_knowledge_content test_batch_media_knowledge_install test_photo_public_enums test_photo_fusion_asset_type test_photos_recent_info test_photo_result_set_export test_photo_record_classes -v",
+      "result": "passed",
+      "tests": 33,
+      "evidence": "docs/capability-audit/parallel/media/round3/holiday-prior-guards-01.log",
+      "scope": "Existing whole photo/Knowledge exact-source guards, installer repeat and real query regressions after new forward-state recognition"
     }
   ],
   "integration_requests": [
@@ -171,7 +189,8 @@
     {
       "id": "media-official-tu-validation",
       "owner": "parent",
-      "request": "Under the single heavy-resource lease, compile both changed full avc_encoder.cpp and avc_encoder_util.cpp using actual fixed product flags/headers in owned scratch, then link/build the representative artifact; no mixed /ohos/out or host-harness success substitutes for this."
+      "request": "Under the single heavy-resource lease, compile both changed full avc_encoder.cpp and avc_encoder_util.cpp using actual fixed product flags/headers in owned scratch, then link/build the representative artifact; no mixed /ohos/out or host-harness success substitutes for this.",
+      "status": "parent_reports_two_actual_AVC_TUs_passed_final_link_and_runtime_pending"
     },
     {
       "id": "media-host-suite",
@@ -191,28 +210,36 @@
     {
       "id": "media-knowledge-content",
       "owner": "parent",
-      "request": "See round2/knowledge-status.json: apply after complete prior photo stack; actual 4 TU/NAPI link and new signed 3-role populated-data HAP/Visitor/permission/alias/count/delete/current-account tests remain mandatory. Five old facade guards accept only the exact known new wrapper, not arbitrary edits."
+      "request": "Superseded by media-real-holiday-producer integration order and round3/HOLIDAY_HANDOFF.md; original permissions/account/VISITOR/three-role runtime acceptance remains mandatory."
     },
     {
       "id": "media-audio-integrity",
       "owner": "parent",
-      "request": "Apply av_codec/audio_capture_integrity after existing av_codec components; compile both actual full cpp TUs and both changed headers with true product flags, then ordinary Capturer/Recorder Stop/Pause/Resume/Release/denial and injected real PCM on new representative package. Task::IsTaskRunning is scheduler state only; actual worker readiness still needs product observation."
+      "request": "Apply av_codec/audio_capture_integrity after existing av_codec components; compile both actual full cpp TUs and both changed headers with true product flags, then ordinary Capturer/Recorder Stop/Pause/Resume/Release/denial and injected real PCM on new representative package. Task::IsTaskRunning is scheduler state only; actual worker readiness still needs product observation.",
+      "status": "parent_reports_actual_two_ARM64_TUs_passed_runtime_pending"
     },
     {
       "id": "media-alsa-capture-loopback",
       "owner": "parent",
-      "request": "Apply drivers/peripheral/audio/capture_loopback after old audio 0001..0007. Compile full alsa_soundcard.c, alsa_snd_capture.c, both driver and device/qemu vendor_capture.c, plus alsa_soundcard.h. Parent kernel/JSON/launch contract is card0 ES1370 render, card1 QemuCapture capture D0/sub0, producer playback D1/sub0. Build batch_media_alsa_inject.c with actual guest libasound and sysroot. Read README for fresh challenge injection, public Capturer/Recorder independent output validation; verify honest unsupported mixer ops do not abort usable PCM service startup. Preserve representative gate."
+      "request": "Apply drivers/peripheral/audio/capture_loopback after old audio 0001..0007. Compile full alsa_soundcard.c, alsa_snd_capture.c, both driver and device/qemu vendor_capture.c, plus alsa_soundcard.h. Parent kernel/JSON/launch contract is card0 ES1370 render, card1 QemuCapture capture D0/sub0, producer playback D1/sub0. Build batch_media_alsa_inject.c with actual guest libasound and sysroot. Read README for fresh challenge injection, public Capturer/Recorder independent output validation; verify honest unsupported mixer ops do not abort usable PCM service startup. Preserve representative gate.",
+      "status": "parent_reports_actual_four_ARM64_C_TUs_and_root_producer_passed_kernel_JSON_launch_wired_runtime_pending"
     },
     {
       "id": "media-public-capture-candidate",
       "owner": "parent",
-      "request": "See round3/CAPTURE_CANDIDATE.md: compile/link two batch_media_audio_capture*.cpp into ordinary foreground HAP libbatchmediacapture.so, MIC user grant/denial/revocation real token tests; new random host PCM root producer D1p only, public MIC capturer D0c copies real PCM private files; independent batch_media_audio_capture_challenge.py diagnosis checks both channels/content/rate/clock/lifecycle/recreate. Shared runner/verifier remain parent-owned. Actual recorder output/decode remains separate."
+      "request": "See round3/CAPTURE_CANDIDATE.md: compile/link two batch_media_audio_capture*.cpp into ordinary foreground HAP libbatchmediacapture.so, MIC user grant/denial/revocation real token tests; new random host PCM root producer D1p only, public MIC capturer D0c copies real PCM private files; independent batch_media_audio_capture_challenge.py diagnosis checks both channels/content/rate/clock/lifecycle/recreate. Shared runner/verifier remain parent-owned. Actual recorder output/decode remains separate.",
+      "status": "parent_reports_API26_native_3ABI_and_HAP02_compile_passed_runtime_pending"
+    },
+    {
+      "id": "media-real-holiday-producer",
+      "owner": "parent",
+      "request": "Apply knowledge_holiday_index after complete knowledge_content. Freeze all13 exact source manifest and component/test bytes. Compile actual full producer/service/NAPI/query/helper TUs+headers with real product GN/link (OpenSSL dependency added to existing medialibrary_data_extension target). Parent optional trusted holidays.ics packaging/hash/provenance at fixed /system/etc/knowledge-content/holidays.ics; no dates invented, absent asset is legitimate no-data. Runtime actual populated photos/calendar replacement/deletion/query snapshot/3 roles/account/Visitor/revocation. See round3/HOLIDAY_HANDOFF.md and component README; if .patch context requires whitespace exception, parent should add exact path only."
     }
   ],
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
-      "remaining": "Actual product NAPI/4-TU compilation and link, signed three-role new-package data/alias/count/delete/permission-revocation/current-account evidence, absent NONE/HOLIDAY producers, and fully verified SDK ranking/default/display compatibility."
+      "remaining": "Actual product producer/service/NAPI/query/helper compilation and link, populated public three-role new-package asset/calendar/alias/count/delete/account/VISITOR ACL and permission revocation/runtime acceptance; no host adapter or generated ICS is real-world holiday evidence."
     },
     {
       "id": "behavior:audio-capture-and-dependent-pipelines",
@@ -228,7 +255,7 @@
     },
     {
       "id": "behavior:media-codec-base-partial",
-      "remaining": "Two actual full product TUs and link; new-package default/software AVC create, full encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary cases. No HEVC, P010 converter or complete codec-matrix closure claimed."
+      "remaining": "Parent reports actual two AVC product TUs compiled. Actual final link/new-package default/software AVC encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary matrix remain; no HEVC, P010 converter or complete codec-matrix closure."
     },
     {
       "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
@@ -238,14 +265,14 @@
       "id": "behavior:video-encoder-dependent-media-pipelines",
       "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers."
     },
-    "New capture components and real ALSA diagnostic require actual full target TU/link and representative kernel/HDI/service/HAP/runtime validation. Controlled host ALSA tests cannot establish a working backend, worker readiness, focus/interrupt/recording/haptic/MIDI/voice pipelines."
+    "No new package/runtime gate has passed. Public Recorder, interruption/focus/haptic, active revocation and dependent pipelines still need real candidates and runtime evidence. AudioVivid real licensed metadata algorithm/plugin dependency not found; parent queried user. No silent PCM/empty holiday/mock backend is counted as closure."
   ],
   "gap_closures": 0,
   "package_created": false,
   "first_package": null,
   "runtime_validation": "not run; central representative-package gate remains mandatory before other five artifacts",
   "resources": {
-    "docker_access": "approved bounded read-only queries in ohos-qemu-parallel-source-20261015-01",
+    "docker_access": "approved bounded read-only source queries in ohos-qemu-parallel-source-20261016-02; no Docker/SDK build by media",
     "source_out_modified": false,
     "heavy_jobs_started": 0,
     "qemu_hdc_used": false
@@ -278,9 +305,18 @@
     "docs/capability-audit/parallel/media/round2/alsa-inject-host-02.log": "a90c13487e87d6441c67875fd67ec354ed4b6021a5c6462d97d264ccf09f8d02",
     "docs/capability-audit/parallel/media/round2/alsa-capture-host-04.log": "09c39f4beb3927783c34fbf9fd8825f29b95472658e6e974d0c46d078f12c4c7",
     "docs/capability-audit/parallel/media/round2/HANDOFF.md": "2852a3ad7fd73635ea53f14950aafdaa78f2caec541c1406e0debfadf161af2d",
-    "docs/capability-audit/parallel/media/round3/CAPTURE_CANDIDATE.md": "63c0e29789da4157f438e6c2e131c37621903a030554f7f49ee449c4b3f25920",
+    "docs/capability-audit/parallel/media/round3/CAPTURE_CANDIDATE.md": "e812cc18dce0ac1545df963953863fa51eae032366dcda779711ffb7579ccb29",
     "docs/capability-audit/parallel/media/round3/capture-host-02.log": "9919ac6a3ddfecd0a513fba05088e746e10cf9920b2b9edabd96c6c44be81f8f",
-    "docs/capability-audit/parallel/media/round3/capture-host-01.log": "f170499f847bd260eaf42151e542c92a971c12b1d42a1df278229997ec035a40"
+    "docs/capability-audit/parallel/media/round3/capture-host-01.log": "f170499f847bd260eaf42151e542c92a971c12b1d42a1df278229997ec035a40",
+    "docs/capability-audit/parallel/media/round3/holiday-prior-guards-01.log": "3f385cfe31ee3f8c1c04d9754ac07bbf933d26a3a1bb891abffbda40411a44a6",
+    "docs/capability-audit/parallel/media/round3/holiday-host-07.log": "9619f9ada127d012378e60b86b877642b719eff6661270890822c9133aec7b91",
+    "docs/capability-audit/parallel/media/round3/HOLIDAY_HANDOFF.md": "4b592ccc31b691192c711d477bbaaffbf2ff5c1ca69ceba8befabfb25c5dc36b",
+    "docs/capability-audit/parallel/media/round3/holiday-host-06.log": "e95ada6bd878d14244af9dc9ba6652f27019f22d152fb7327dcf4a13005037c4",
+    "docs/capability-audit/parallel/media/round3/holiday-host-04.log": "db7fa88232e3c3ce5d9f5de9f0d8bd5a4b36fcb7b53a35d1d35cd73949318e46",
+    "docs/capability-audit/parallel/media/round3/holiday-host-05.log": "173d1d92e128ae023621aec8ba8e8846718521299cfa91b7b09c215ab5729361",
+    "docs/capability-audit/parallel/media/round3/holiday-host-01.log": "7d6478df35904d8209acbc9ae6d23a39400c2e4cf4e97df4d8729e357b60163f",
+    "docs/capability-audit/parallel/media/round3/holiday-host-02.log": "307c7f02413cf4a0540dba2fccfe93dd7531fbd3d01f058da9365182dafbb6aa",
+    "docs/capability-audit/parallel/media/round3/holiday-host-03.log": "9ef1cfd64a084ca9ff3fcef2d4c1f234eeca8bf4f1d12da4e6b8bd60c7c2f42a"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
@@ -300,6 +336,10 @@
     "ci/capability-audit/fixtures/batch_media/input_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/knowledge/baseline.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/guard-context.json",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday-baseline.json",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday/cursor_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday/producer_harness.cpp",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday/rdb_store.h",
     "ci/capability-audit/fixtures/batch_media/manifest.json",
     "ci/capability-audit/test_batch_media_alsa_capture.py",
     "ci/capability-audit/test_batch_media_alsa_inject.py",
@@ -307,6 +347,8 @@
     "ci/capability-audit/test_batch_media_audio_integrity.py",
     "ci/capability-audit/test_batch_media_avc_surface_layout.py",
     "ci/capability-audit/test_batch_media_knowledge_content.py",
+    "ci/capability-audit/test_batch_media_knowledge_holiday.py",
+    "ci/capability-audit/test_batch_media_knowledge_holiday_install.py",
     "ci/capability-audit/test_batch_media_knowledge_install.py",
     "docs/capability-audit/parallel/media/REVIEW.md",
     "docs/capability-audit/parallel/media/environment.json",
@@ -332,8 +374,17 @@
     "docs/capability-audit/parallel/media/round2/knowledge-prior-guards-01.log",
     "docs/capability-audit/parallel/media/round2/knowledge-status.json",
     "docs/capability-audit/parallel/media/round3/CAPTURE_CANDIDATE.md",
+    "docs/capability-audit/parallel/media/round3/HOLIDAY_HANDOFF.md",
     "docs/capability-audit/parallel/media/round3/capture-host-01.log",
     "docs/capability-audit/parallel/media/round3/capture-host-02.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-01.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-02.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-03.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-04.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-05.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-06.log",
+    "docs/capability-audit/parallel/media/round3/holiday-host-07.log",
+    "docs/capability-audit/parallel/media/round3/holiday-prior-guards-01.log",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
     "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
@@ -374,13 +425,25 @@
     "patches/common/foundation/multimedia/media_library/knowledge_content/files/knowledge_content_query.h",
     "patches/common/foundation/multimedia/media_library/knowledge_content/manifest.json",
     "patches/common/foundation/multimedia/media_library/knowledge_content/transforms.py",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0001-index-real-system-holidays-and-bound-knowledge-responses.patch",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/README.md",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/apply.py",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/apply.sh",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_napi.cpp",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_query.cpp",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_query.h",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_holiday_index.cpp",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_holiday_index.h",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/manifest.json",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/transforms.py",
     "patches/common/foundation/multimedia/media_library/photos_recent_info/verify_source.py",
     "patches/common/foundation/multimedia/media_library/public_record_classes/verify_source.py",
     "patches/common/foundation/multimedia/media_library/result_set_export/verify_source.py"
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
   "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
-  "handoff": "docs/capability-audit/parallel/media/round2/HANDOFF.md",
+  "handoff": "docs/capability-audit/parallel/media/round3/HOLIDAY_HANDOFF.md",
   "round3_base_commit": "d4e74c00caa47127906075c57d59500d60844f04",
-  "round3_status": "public_MIC_Capturer_candidate_prepared_actual_HAP_link_and_new_package_pending"
+  "round3_status": "Capturer_public_caller_SDK_HAP_parent_compile_passed_real_HOLIDAY_service_producer_host_passed_all7_runtime_open",
+  "round3_holiday_base_commit": "bb34c6f7f1534be701e64337f0708e49f6b50bc9"
 }

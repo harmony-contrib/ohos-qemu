@@ -90,6 +90,11 @@ representative image have not been run by this agent. The parent owns SDK compil
 scheduling and the formal runtime gate.
 
 Still missing beyond this candidate: public AVRecorder output/decode and PTS tests,
-real permission revocation/focus/haptic/dependent pipelines, KnowledgeContent NONE/
-HOLIDAY data semantics, and actual AudioVivid builder dependency. None is closed
+real permission revocation/focus/haptic/dependent pipelines, KnowledgeContent actual product/ACL/runtime acceptance, and actual AudioVivid
+builder dependency. NONE/HOLIDAY producer semantics are addressed by the separate
+knowledge_holiday_index candidate with no runtime closure. None is closed
 by callback counters or these host checks.
+
+Parent validation update: actual official API26 native caller compile/link for all
+three ABIs passed (r52-public-capturer-SDK-3ABI-01); actual API26 HAP02 compiled
+with WRITE_ONLY. Parent owns native binding checks, signing and runtime gate.

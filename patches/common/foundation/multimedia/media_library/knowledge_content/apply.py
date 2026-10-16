@@ -31,6 +31,13 @@ def path_for(root,name):
 
 
 def validate(root,require_patched=False):
+    forward=HERE.parent/'knowledge_holiday_index'/'apply.py'
+    if forward.is_file():
+        spec=importlib.util.spec_from_file_location('knowledge_calendar_forward',forward)
+        overlay=importlib.util.module_from_spec(spec);spec.loader.exec_module(overlay)
+        try:
+            if overlay.validate(root,True):return True
+        except ValueError:pass
     root=Path(root).resolve();project=root/transforms.PROJECT
     if (project/'.git').exists():
         actual=subprocess.check_output(['git','-C',str(project),'rev-parse','HEAD'],text=True).strip()
