@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "caller": {
+    "sdk_evidence": {"path": "/ABS/actual-LinuxSDK39-live03/evidence.json", "sha256": "REPLACE_WITH_ACTUAL_SHA256"},
+    "sdk_project": "live-inputs",
+    "source_project": "/ABS/actual-LinuxSDK39-live03/live-inputs",
+    "source_manifest": {"path": "/ABS/actual-LinuxSDK39-live03/live-inputs/live-inputs-contract.json", "sha256": "REPLACE_WITH_ACTUAL_SHA256"},
+    "unsigned_hap": {"path": "/ABS/actual-LinuxSDK39-live03/live-inputs/entry/build/default/outputs/default/entry-default-unsigned.hap", "sha256": "REPLACE_WITH_ACTUAL_SHA256"}
+  },
+  "sdk": "/ABS/exported-actual-LinuxSDK39-runtime-contract",
+  "signer_dist": "/ABS/fixed-publicSigner-distribution",
+  "signer_jar": "/ABS/fixed-publicSigner-distribution/hap-sign-tool.jar",
+  "permission_allow_text": "REPLACE_WITH_ACTUAL_VISIBLE_TRUSTED_CONSENT_LABEL",
+  "input_source": {
+    "mode": "controlled_virtual_protocol_vectors",
+    "source_id": "ROOT-EXPLICIT-CONTROLLED-VIRTUAL-PROTOCOL-VECTORS-FRESH-ID",
+    "vectors": {"path": "/ABS/root-selected-vectors.json", "sha256": "REPLACE_WITH_ACTUAL_SHA256"}
+  }
+}

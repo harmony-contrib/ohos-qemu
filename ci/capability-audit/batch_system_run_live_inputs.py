@@ -166,7 +166,7 @@ class Capture:
         return result
 
     def mappings(self, name):
-        pattern = 'vendorGnssAdapter.so|libgnss_interface_service_2.0.z.so|liblbsservice_gnss.z.so|libhdi_sensor_impl.z.so|libsensor_driver.z.so|libdevicestatus_algo.z.so|libdevicestatus_mock.z.so'
+        pattern = 'vendorGnssAdapter.so|libgnss_interface_service_2.0.z.so|liblbsservice_gnss.z.so|libhdi_sensor_impl.z.so|libsensor_driver.z.so|libdevicestatus_algo.z.so|libdevicestatus_service.z.so|libdevicestatus_mock.z.so'
         script = 'for f in /proc/[0-9]*/maps; do if grep -Eq ' + shlex.quote(pattern) + ' "$f" 2>/dev/null; then '
         script += 'p=${f%/maps}; printf "\\nPROCESS %s\\n" "$p"; cat "$p/status"; cat "$p/attr/current"; grep -E ' + shlex.quote(pattern) + ' "$f"; fi; done'
         value = self.shell(script, name)
@@ -235,8 +235,11 @@ class Capture:
             for kind in SOCKETS:
                 with socket.socket() as probe: probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
                 local, remote = 'tcp:' + str(port), 'localfilesystem:' + SOCKETS[kind]
+                # Register this private endpoint before a command that may fail
+                # after creation, so the finally path still attempts removal.
+                self.forwards.append((local, remote))
                 self.command([a.hdc, '-t', a.target, 'fport', local, remote], 'own-forward-' + kind)
-                self.forwards.append((local, remote)); self.ports[kind] = port
+                self.ports[kind] = port
             old = {}
             for generation in (1, 2):
                 self.generation = generation
