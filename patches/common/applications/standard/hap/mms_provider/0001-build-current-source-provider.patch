@@ -4,7 +4,7 @@ diff --git a/applications/standard/hap/BUILD.gn b/applications/standard/hap/BUIL
 @@ -218,11 +218,19 @@
    subsystem_name = "applications"
  }
- 
+
 -ohos_prebuilt_etc("mms_hap") {
 -  source = hap_src_dir + "Mms.hap"
 -  module_install_dir = "app/com.ohos.mms"
@@ -24,5 +24,5 @@ diff --git a/applications/standard/hap/BUILD.gn b/applications/standard/hap/BUIL
 +    subsystem_name = "applications"
 +  }
  }
- 
+
  ohos_prebuilt_etc("contacts_hap") {

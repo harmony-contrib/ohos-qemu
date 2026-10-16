@@ -1,0 +1,6 @@
+{
+  "status": "fail",
+  "agent": "system",
+  "failure": "agent changed a parent-owned or other-group file: patches/common/drivers/peripheral/gnss/qemu_provider/tests/README.md",
+  "first_artifact_behavior_gate_passed": false
+}
