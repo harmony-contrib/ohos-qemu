@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-16T10:45:57.178006+08:00",
+  "updated_at": "2026-10-16T20:47:43.857736+08:00",
   "status": "active_all_remaining_repairs_and_six_package_acceptance",
-  "checkpoint_commit": "45c072ad0f56144f8fa667f3b923801e180720d8",
+  "checkpoint_commit": "4f0d833a8e7cc3a02f75af2cdadfc697b55a6dca",
   "ledger": {
     "total": 281,
     "closed": 199,
@@ -783,24 +783,398 @@
       "sha256": "6f96b9d9b928c1901d64f48d76db5c723c21610bd91139b43abdc9123dbd3fe8",
       "reported_status": "pass_actual_six_Mesa_ELFs_ext4_source_and_offline_roundtrip_tamper_rejected_ONLY_NOT_guest",
       "scope": "synthetic dependency-only ext4 with six actual built Mesa libraries ONLY_NOT_QEMU_image_or_runtime"
+    },
+    "Linux_VPN_all_41_host_after_GCC_fixtures": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-broker-complete-Linux-host-03/artifacts/evidence.json",
+      "sha256": "17c2f1de58aa4d3ade6852c4ae0730a9324c5cb80c10066974d7e1c8417b9cee",
+      "reported_status": "pass",
+      "scope": "actual_Linux_complete_network_host_functions_and_real_prctl_process_cleanup_NOT_guest"
+    },
+    "actual_full_combined_Sensor_GNSS_VPN_policy": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-combined-Sensor-GNSS-VPN-SELinux-policy-01/artifacts/evidence.json",
+      "sha256": "aaf326ec450b5fdcc74522bc1830b0e1276e1fc5224565f266b013b67de13e08",
+      "reported_status": "pass",
+      "scope": "actual_fixed_full_SELinux_policy_compiler_with_Sensor_GNSS_VPN_sockets_ONLY_NOT_runtime_access_or_fresh_GN"
+    },
+    "actual_Sensor_DSO_ext4_roundtrip_and_rejections": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-real-Sensor-DSO-runtime-assets-ext4-01/evidence.json",
+      "sha256": "3afc49b191990f992fea68ab941d87979114daded14525fee040e0ed324d25cd",
+      "reported_status": "pass",
+      "scope": "small_synthetic_ext4_with_actual_built_Sensor_DSO_ONLY_NOT_GN_source_selection_or_QEMU_package_or_runtime"
+    },
+    "actual_GNSS_4_complete_CFI_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-GNSS-bridge-provider-full-TUs-01/artifacts/gnss_vendor/evidence.json",
+      "sha256": "520e81660ce7d02a18f4e2e6efa44233c8bbbee9ecbca92ace51eab6a3c9ec3d",
+      "reported_status": "pass",
+      "scope": "four_whole_GNSS_bridge_and_provider_TUs_actual_product_flags_explicit_new_source_templates_NOT_fresh_GN_or_link_or_runtime",
+      "objects": [
+        {
+          "group": null,
+          "role": null,
+          "unit": "gnss_interface_impl",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "location_vendor_interface",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "qemu_gnss_input",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "qemu_gnss_vendor",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        }
+      ]
+    },
+    "actual_GNSS_2_CFI_DSO_links": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-GNSS-bridge-provider-actual-CFI-links-01/artifacts/evidence.json",
+      "sha256": "167fe07884171d6bec65fc903e10ba6049ee3eb4c4239f6b38f8c09032917742",
+      "reported_status": "pass",
+      "scope": "actual_four_GNSS_objects_bridge_and_new_provider_HDI_target_LTO_CFI_links_ONLY_NOT_fresh_GN_selection_or_guest_load",
+      "links": [
+        {
+          "group": null,
+          "role": null,
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        }
+      ]
+    },
+    "current_batch_original_full_TUs_01": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-capability-full-TUs-and-helpers-01/host-evidence.json",
+      "sha256": "d5943a29123d103288f3c15fe80d66f7669aad444b908b0982e915caf3216a0c",
+      "reported_status": null,
+      "scope": "batched_whole_current_capability_TUs_and_helper_links_preserve_actual_flags_NOT_fresh_GN_or_runtime"
+    },
+    "current_batch_location15_Recorder_and_real_FFRT_02": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-current-capability-full-TUs-and-FFRT-02/host-evidence.json",
+      "sha256": "68d4f92e5f149bb876870c0dda1a5f1cae6dbaab9010caac4faf083c3bb5a49d",
+      "reported_status": null,
+      "scope": "batched_whole_current_capability_TUs_and_helper_links_preserve_actual_flags_NOT_fresh_GN_or_runtime"
+    },
+    "ordinary_six_HAP_roles_first_3pass3ArkTSfail_preserved": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-six-media-ordinary-HAP-roles-01/evidence.json",
+      "sha256": "7e24960515160f5061ee123a2b8d9d473ba745ee22a5ee4c68e662b40b64e9f6",
+      "reported_status": null,
+      "scope": null,
+      "rows": [
+        {
+          "group": null,
+          "role": "capture",
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 3.6328139305114746,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "recorder",
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.553499698638916,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "recorder-denied",
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.5100457668304443,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "event-revoke",
+          "unit": null,
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": 1.4836559295654297,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "event-owner",
+          "unit": null,
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": 1.4037330150604248,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "event-contender",
+          "unit": null,
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": 1.4617938995361328,
+          "error": null
+        }
+      ]
+    },
+    "ordinary_three_audio_event_HAP_roles_all_pass": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-three-audio-event-ordinary-HAP-roles-02/evidence.json",
+      "sha256": "52f6e6751ffd987c16fd2c1602de78c4f67a21f61d6d8d998e67f2ecc570e192",
+      "reported_status": null,
+      "scope": null,
+      "rows": [
+        {
+          "group": null,
+          "role": "event-revoke",
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 3.1462512016296387,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "event-owner",
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.5832338333129883,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": "event-contender",
+          "unit": null,
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": 1.5895311832427979,
+          "error": null
+        }
+      ]
+    },
+    "platform03_VPN7pass1source_error_Holiday_noexceptions_and_tool_links": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-VPN-Knowledge-communication-platform-03/host-evidence.json",
+      "sha256": "7f480d57737a207f84cbf7b366245fc39bff5f6ff447b15b9c8fffc78cb46251",
+      "reported_status": null,
+      "scope": "batched_whole_current_capability_TUs_and_helper_links_preserve_actual_flags_NOT_fresh_GN_or_runtime"
+    },
+    "communication17_full_TUs_14pass3_GN_dependency_fail": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-communication-complete-platform-04/artifacts/communication_state/evidence.json",
+      "sha256": "4b4f56eb62b7d11042e936b7b85a3174a4b0fc9d0407250e6ab3be1a4321d880",
+      "reported_status": "fail",
+      "scope": "sixteen_complete_communication_TU_variants_plus_actual_regenerated_CXX_wrapper_NOT_Rust_link_or_runtime",
+      "objects": [
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_state_registry_client__tel_core_service_api",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_state_registry_proxy__tel_core_service_api",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "tel_ril_callback__tel_core_service",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "tel_ril_network__tel_core_service",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "hril_network__hril",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "vendor_report__ril_vendor",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "observer_ani__observer_ani_cxx",
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": null,
+          "error": "ValueError: product compilation failed; full log retained"
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "event_listener_handler__observer",
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": null,
+          "error": "ValueError: product compilation failed; full log retained"
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "event_listener_manager__observer",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "napi_state_registry__observer",
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": null,
+          "error": "ValueError: product compilation failed; full log retained"
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "napi_telephony_observer__observer",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_observer__tel_state_registry_api",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_observer_proxy__tel_state_registry_api",
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": null,
+          "error": "ValueError: product compilation failed; full log retained"
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_observer_proxy__tel_state_registry",
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": null,
+          "error": "ValueError: product compilation failed; full log retained"
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_state_registry_service__tel_state_registry",
+          "status": "fail",
+          "exit_code": 1,
+          "seconds": null,
+          "error": "ValueError: product compilation failed; full log retained"
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "telephony_state_registry_stub__tel_state_registry",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        },
+        {
+          "group": null,
+          "role": null,
+          "unit": "generated_wrapper",
+          "status": "pass",
+          "exit_code": 0,
+          "seconds": null,
+          "error": null
+        }
+      ]
+    },
+    "independent_actual_AAC_AVC_decoder_tools": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-independent-media-decoder-tools/evidence.json",
+      "sha256": "59e53baf4f62ecd07e7f85e40fd18e8d6167c52855261f1702d4f04ff5a63103",
+      "reported_status": null,
+      "scope": "independent_real_decoder_executables_ONLY_NOT_media_capture"
     }
   },
   "agents": {
-    "apps": "Calendar dispatch complete platform TU passed; Admin official API26 unsigned HAP passed and precise signing policy wired; guest BMS/UI pending",
-    "network": "seven Bluetooth complete TUs passed; VPN callback immutable epochs integrated and real FFRT execution passed; multiowner broker in progress",
-    "location": "district/skiing integrated; 13 actual product TUs collected, 12 passed and MAX_BUF_LEN error assigned in current fence/5A batch; inherited RIL maps+2callbackTUs passed; real providers/runtime pending",
-    "media": "Holiday transactional index integrated; six whole current TUs collected, four passed and missing header/direct GN deps assigned; ordinary MIC HAP and independent tools pass; real capture grant/deny/grant runner wired; Recorder/revocation batch in progress",
-    "system": "external sensor and MSDP integrated; sensor two complete new TUs with actual HDI flags passed; kernel/service runtime gate pending"
+    "apps": "source adaptation integrated; Calendar actual TU and official unsigned HAP, Admin unsigned API26 HAP pass; actual signing/BMS/UI pending",
+    "network": "callback destructor real-base fix integrated d9ac091 after scope pass; platform affected TU retest pending; readonly BGT/notification observation map in progress",
+    "location": "all15 location actual TUs pass; communication17:14pass3 AccessToken GN deps missing and assigned; preparing complete Rust dylib diagnostic",
+    "media": "all3 event ordinary unsigned API26 HAPs pass after ArkTS fix; Holiday actual no-exceptions TU fix preparing commit; root ordinary MIC/Recorder grant-deny-grant and decoder gate wired, real guest pending",
+    "system": "actual4GNSS TUs+2CFI DSO links and full combined SELinux pass; single heavy lease for Linux loader lifecycle sanitizer regressions"
   },
   "external_dependencies": {
     "device_attest": "Legitimate OEM identity/key/service location requested; no supplied configuration yet. Do not fabricate attestation.",
-    "audio_vivid": "Actual compatible builder/algorithm implementation or legitimate provider dependency still missing; loader or video HDR metadata is not an implementation."
+    "audio_vivid": "Actual compatible AudioVivid builder/algorithm/ABI provider missing.",
+    "advertisement": "Actual Ads provider and legitimate endpoint/configuration missing.",
+    "security_guard": "Actual SecurityGuard model/config/repository/SDK missing."
   },
   "remaining_core_acceptance": [
-    "actual links and final GN/product selection",
-    "RenderService/suspend stability in a fresh package (current dependency EGL/GLES and ext4 diagnostics pass)",
-    "ordinary-caller complete suite including HiTrace launch",
-    "fresh representative ARM64 phone package with archive checksum and full changed-behavior boundaries",
-    "remaining five ABI/profile packages only after first-artifact behavior gate"
+    "finish batched Holiday no-exceptions/VPN destructor/communication GN dependency actual TU retests",
+    "complete Rust ANI dylib compile/link; GNSS Linux reload; actual remaining modules links and fresh GN product selection",
+    "root real ordinary audio revoke/two-UID focus and notifications/background-task service observation",
+    "real Calendar/Admin signing/BMS/UI, true modem/HCI/GNSS/Sensor/Knowledge external provider behavior",
+    "RenderService suspend/wake and ordinary HiTrace regressions against newly packaged representative artifact",
+    "ONE newly packaged ARM64 phone: archive path/checksum/env/commands/full runtime boundary suite",
+    "only after full representative gate passes build and accept remaining five ABI/profile packages"
   ]
 }
