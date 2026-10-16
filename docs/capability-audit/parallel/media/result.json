@@ -10,8 +10,8 @@
     "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent": {
       "status": "candidate_prepared",
       "source_finding": "SDK defines getRelatedEntity/getSearchSuggestion with system+READ_IMAGEVIDEO authorization. Exact class/method tokens absent in 4066 scoped media_library source/config files. Existing Photos/geographic knowledge joins do not implement Entity/alias/ranking or all suggestion types.",
-      "candidate": "Round 3: real service-owned fixed trusted all-day ICS producer, same MediaLibrary RDB schema/transaction/hash/version, legacy open/upgrade/reopen plus cancellable managed configuration observer; HOLIDAY joins actual Photos.date_day, NONE sentinel rejects with 13900020; omitted count streams all budgeted candidates, weighted vote/display project semantics defined. Native caller/account/VISITOR/token/visibility constraints retained. Actual GN/header compile gaps repaired: real media_log.h and direct access_token:libaccesstoken_sdk + ipc:ipc_core on photoaccesshelpernative; exact previous-complete overlay upgrade supported without admitting mixed states. Round5 adds direct relational_store:rdb_data_share_adapter to photoaccesshelpernative, confirms already-declared libcrypto_shared real public exports and supports complete caeaf60 upgrades; standard CLI/whole-state/mixed-state guards pass.",
-      "remaining": "Latest parent actual6-TU batch:4 pass; NAPI missing rdb_utils.h and producer missing openssl/sha.h using older target command flags. Direct adapter dependency is now added, real OpenSSL direct dependency/public configs already exist; actual GN-derived exports retry/link pending. Public three-role populated asset/calendar/account/VISITOR/revocation and representative-package runtime still required.",
+      "candidate": "Round 3: real service-owned fixed trusted all-day ICS producer, same MediaLibrary RDB schema/transaction/hash/version, legacy open/upgrade/reopen plus cancellable managed configuration observer; HOLIDAY joins actual Photos.date_day, NONE sentinel rejects with 13900020; omitted count streams all budgeted candidates, weighted vote/display project semantics defined. Native caller/account/VISITOR/token/visibility constraints retained. Actual GN/header compile gaps repaired: real media_log.h and direct access_token:libaccesstoken_sdk + ipc:ipc_core on photoaccesshelpernative; exact previous-complete overlay upgrade supported without admitting mixed states. Round5 adds direct relational_store:rdb_data_share_adapter to photoaccesshelpernative, confirms already-declared libcrypto_shared real public exports and supports complete caeaf60 upgrades; standard CLI/whole-state/mixed-state guards pass. Round7 replaces exception-dependent observer lifecycle with explicit pthread status/independent retained state, weak DB, cancelled/self-stop/external joins and startup/return-failure cleanup; exact full13-source previous a5fe432 upgrades and -fno-exceptions host regression pass.",
+      "remaining": "Parent actual platform03:5 other Knowledge TUs passed; Holiday failed3 try/catch blocks under real -fno-exceptions. This single CPP now honors that product contract, final host TU and lifecycle/guard regressions pass; actual same-options full TU retry/library link plus populated calendar/photo/account/VISITOR/three-role/revocation/new representative runtime remain required.",
       "gap_closed": false
     },
     "behavior:audio-capture-and-dependent-pipelines": {
@@ -249,6 +249,27 @@
       "tests": 1,
       "evidence": "docs/capability-audit/parallel/media/round6/background-host-01.log",
       "scope": "Actual officialSDK helper types, focused Error-only throw constraint guard with3 rejected negative cases,8 controlled actual-helper lifecycle scenarios including all3 original BusinessError preservation paths. Complete real ArkTS/HAP and device runtime remain root gates."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_media_knowledge_holiday.py -v",
+      "result": "passed_before_final_error_logging_notify_refinement",
+      "tests": 8,
+      "evidence": "docs/capability-audit/parallel/media/round7/holiday-host-01.log",
+      "scope": "Actual full producer host TU with -fno-exceptions/ASan/UBSan, actual cursor/query bodies, real SQLite/OpenSSL, controlled pthread/NativeRdb/IO; no platform/backend claim."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_media_knowledge_holiday.Holiday.test_observer_cancel_join_reopen_inflight_and_reentrant_stop test_batch_media_knowledge_holiday.Holiday.test_no_exceptions_pthread_failures_rollback_retry_and_worker_owned_destruction test_batch_media_knowledge_holiday_install -v",
+      "result": "passed",
+      "tests": 8,
+      "evidence": "docs/capability-audit/parallel/media/round7/holiday-final-host-02.log",
+      "scope": "Final actual complete producer TU -fno-exceptions:2 lifecycle tests with7 explicit pthread return-failure types, double external stop, weak DB/self-call/destruction and real RDB rollback/retry;6 exact whole-source upgrade/mixed/unknown/review guards."
+    },
+    {
+      "command": "LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit python3 -m unittest test_batch_media_knowledge_content test_batch_media_knowledge_install test_photo_public_enums test_photo_fusion_asset_type test_photos_recent_info test_photo_result_set_export test_photo_record_classes -v",
+      "result": "passed",
+      "tests": 33,
+      "evidence": "docs/capability-audit/parallel/media/round7/knowledge-prior-guards-01.log",
+      "scope": "Existing actual query/NAPI body and complete source composition/forward guard tests after new single-TU no-exceptions producer state; not product runtime."
     }
   ],
   "integration_requests": [
@@ -313,9 +334,10 @@
       "status": "parent_reports_actual_Recorder_and_RecorderDenied_HAP_builds_passed_fresh_product_decode_runtime_pending"
     },
     {
-      "id": "media-knowledge-two-actual-TU-retry",
+      "id": "media-knowledge-one-actual-TU-retry",
       "owner": "parent",
-      "request": "Use round5 direct relational_store:rdb_data_share_adapter on photoaccesshelpernative plus already-declared openssl:libcrypto_shared on medialibrary_data_extension. Derive actual public_configs from fixed GN and regenerate actual dependency flags/link; gn-dependencies.json records full fixed GN SHA and exports. Four product TUs remain passed, two new header failures require retry. Complete e0d1137/caeaf60 upgrades supported; arbitrary -I or stripped checks prohibited."
+      "request": "See round7/HANDOFF.md and no-exceptions.json. Only actual knowledge_holiday_index.cpp changed from preceding complete13-file component (new SHA0858f5406dc651091a9fa1f4cc264ef32b9f94d8c0cd6106dd138aa267caf6bd); preserve5 other passed TU source/evidence. Retry actual full Holiday TU and final library with original product -fno-exceptions and all existing protections. No compiler flag downgrade or whole extension exceptions. Current installer recognizes complete a5fe432 and older complete states and rejects mixed/unknown edits. Runtime gate unchanged.",
+      "status": "parent5_other_TUs_passed_single_Holiday_no_exceptions_source_repaired_actual_retry_pending"
     },
     {
       "id": "media-public-audio-events",
@@ -327,7 +349,7 @@
   "remaining_gaps": [
     {
       "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
-      "remaining": "Latest parent actual6-TU batch:4 pass; NAPI missing rdb_utils.h and producer missing openssl/sha.h using older target command flags. Direct adapter dependency is now added, real OpenSSL direct dependency/public configs already exist; actual GN-derived exports retry/link pending. Public three-role populated asset/calendar/account/VISITOR/revocation and representative-package runtime still required."
+      "remaining": "Parent actual platform03:5 other Knowledge TUs passed; Holiday failed3 try/catch blocks under real -fno-exceptions. This single CPP now honors that product contract, final host TU and lifecycle/guard regressions pass; actual same-options full TU retry/library link plus populated calendar/photo/account/VISITOR/three-role/revocation/new representative runtime remain required."
     },
     {
       "id": "behavior:audio-capture-and-dependent-pipelines",
@@ -364,7 +386,8 @@
     "heavy_jobs_started": 0,
     "qemu_hdc_used": false,
     "round5": "No Docker/Ninja/product build/QEMU/HDC. Parent explicitly authorized sequential light local actual public API26 SDK compiles and host checks; no heavy lease used.",
-    "round6": "Only local official SDK TypeChecker/helper compile and controlled host cleanup; no Docker/HAP/product/native compiler/QEMU/HDC/heavy jobs."
+    "round6": "Only local official SDK TypeChecker/helper compile and controlled host cleanup; no Docker/HAP/product/native compiler/QEMU/HDC/heavy jobs.",
+    "round7": "Local bounded host clang -fno-exceptions/ASan/UBSan producer and guard tests only; no Docker, SDK/product/HAP build, QEMU/HDC or heavy lease."
   },
   "preserved_failures": [
     "docs/capability-audit/parallel/media/host-checks-01.log: missing fixture manifest and unsupported macOS leak detector; fixed without relaxing ASan/UBSan or pixel assertions",
@@ -372,7 +395,8 @@
     "docs/capability-audit/parallel/media/round5/background-sdk-types-01..04.log: actual SDK module/type mismatch and explicitly handled file exceptions repaired; official helper types now pass",
     "docs/capability-audit/parallel/media/round5/background-host-01.log: controlled disk EIO originally rejected async cleanup Promise; actual stop/unsubscribe now guaranteed and error reported, host02 passes",
     "round5/gn-dependencies.json: parent actual current6-TU diagnostics,4pass/2missing header; actual retry/link pending",
-    "round6/arkts-throw-fix.json records all3 parent real official event HAP TS87 failures and frozen input SHA; source repaired, actual unchanged ArkTS/HAP recheck pending"
+    "round6/arkts-throw-fix.json records all3 parent real official event HAP TS87 failures and frozen input SHA; source repaired, actual unchanged ArkTS/HAP recheck pending",
+    "round7/no-exceptions.json binds original parent full product -fno-exceptions3 try/catch errors; candidate repaired; unchanged-flags actual single full-TU retry remains parent gate"
   ],
   "evidence_sha256": {
     "docs/capability-audit/parallel/media/REVIEW.md": "5303bdca065383dd8a80ab47a181e0a66f02a73040430921a0f18f4533f22f7f",
@@ -452,7 +476,12 @@
     "docs/capability-audit/parallel/media/round5/native-sdk-driver-02.log": "b6176e114cda0c2cffcd72cd9e0d29737a56b53fc07f23697cd55f5c46710e7b",
     "docs/capability-audit/parallel/media/round6/HANDOFF.md": "82a56e7f41a2d0d69278c53c65aec48545029c6dff99190720312dbf3901b8a8",
     "docs/capability-audit/parallel/media/round6/arkts-throw-fix.json": "cd6efc377c3d7bd7e107bacdea503c386f3d8e087f0b5fcf4d8c1d873c5f6c4e",
-    "docs/capability-audit/parallel/media/round6/background-host-01.log": "9511a7a146fe5868e8c79d94a4dd28ee518dd22fa454a5fbd4dd37744277bab6"
+    "docs/capability-audit/parallel/media/round6/background-host-01.log": "9511a7a146fe5868e8c79d94a4dd28ee518dd22fa454a5fbd4dd37744277bab6",
+    "docs/capability-audit/parallel/media/round7/HANDOFF.md": "ed4b37341fd2ac68ab5b6f620b6549f1160047942b1989021986bfb2f5ef06f4",
+    "docs/capability-audit/parallel/media/round7/holiday-final-host-02.log": "1d19bd7a1bd939bc527865793d582721b926b003c90ef16fa85270d3da830ef4",
+    "docs/capability-audit/parallel/media/round7/holiday-host-01.log": "fe63b95d155a9547bc2acb7b89b760a43f55161893226c23b794245b193bf0a9",
+    "docs/capability-audit/parallel/media/round7/knowledge-prior-guards-01.log": "fdf434f8a812379e0edaf0ba8bb8d365246f74479339974a0990e5d67904ecc1",
+    "docs/capability-audit/parallel/media/round7/no-exceptions.json": "5ecff72345742d2ca060654e75c891639d9fa2436817109e4e20fa5fe5b5043e"
   },
   "changed_files": [
     "ci/capability-audit/batch_media_alsa_inject.c",
@@ -485,6 +514,7 @@
     "ci/capability-audit/fixtures/batch_media/knowledge/guard-context.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday-baseline.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday-previous-round4.json",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday-previous-round6.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday-previous.json",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday/cursor_harness.cpp",
     "ci/capability-audit/fixtures/batch_media/knowledge/holiday/producer_harness.cpp",
@@ -585,6 +615,11 @@
     "docs/capability-audit/parallel/media/round6/HANDOFF.md",
     "docs/capability-audit/parallel/media/round6/arkts-throw-fix.json",
     "docs/capability-audit/parallel/media/round6/background-host-01.log",
+    "docs/capability-audit/parallel/media/round7/HANDOFF.md",
+    "docs/capability-audit/parallel/media/round7/holiday-final-host-02.log",
+    "docs/capability-audit/parallel/media/round7/holiday-host-01.log",
+    "docs/capability-audit/parallel/media/round7/knowledge-prior-guards-01.log",
+    "docs/capability-audit/parallel/media/round7/no-exceptions.json",
     "docs/capability-audit/parallel/media/source-review-01.failure.json",
     "docs/capability-audit/parallel/media/source-review.json",
     "patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch",
@@ -649,7 +684,7 @@
   ],
   "round2_base_commit": "11d48c0e8d50bd9213a2b732afff41824bd14e1b",
   "round2_status": "submitted_parent_integration_and_new_representative_package_pending_all_7_open",
-  "handoff": "docs/capability-audit/parallel/media/round6/HANDOFF.md; docs/capability-audit/parallel/media/round5/HANDOFF.md",
+  "handoff": "docs/capability-audit/parallel/media/round7/HANDOFF.md; previous public HAP handoffs remain round6/round5",
   "round3_base_commit": "d4e74c00caa47127906075c57d59500d60844f04",
   "round3_status": "Capturer_public_caller_SDK_HAP_parent_compile_passed_real_HOLIDAY_service_producer_host_passed_all7_runtime_open",
   "round3_holiday_base_commit": "bb34c6f7f1534be701e64337f0708e49f6b50bc9",
@@ -658,5 +693,7 @@
   "round5_base_commit": "caeaf60ba125eb06cdece16735aa89886003cf8e",
   "round5_status": "47_host_checks_and_final_public_SDK_6_links_passed_normal_background_candidate_prepared_all7_runtime_open",
   "round6_base_commit": "63395d37424f03d6894d83fb3e1fd8b335d5527f",
-  "round6_status": "actual3_event_HAP_TS87_failures_fixed_host_types_Error_guard8_cleanup_scenarios_pass_root_real_HAP_retry_pending_all7_open"
+  "round6_status": "actual3_event_HAP_TS87_failures_fixed_host_types_Error_guard8_cleanup_scenarios_pass_root_real_HAP_retry_pending_all7_open",
+  "round7_base_commit": "a5fe4322f776c5e35e5839903bae35d0b1aa61aa",
+  "round7_status": "one_actual_Holiday_TU_no_exceptions_contract_repaired_final_host8_plus_prior33_pass_product_retry_pending_all7_open"
 }

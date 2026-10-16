@@ -366,7 +366,7 @@
 +#endif
 --- /dev/null
 +++ b/foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp
-@@ -0,0 +1,445 @@
+@@ -0,0 +1,599 @@
 +/* SPDX-License-Identifier: Apache-2.0 */
 +#include "knowledge_holiday_index.h"
 +#define MLOG_TAG "KnowledgeHolidayIndex"
@@ -374,19 +374,19 @@
 +#include "rdb_errno.h"
 +#include "transaction.h"
 +#include <algorithm>
-+#include <chrono>
-+#include <condition_variable>
++#include <atomic>
 +#include <cerrno>
 +#include <cstdint>
 +#include <cstring>
 +#include <fcntl.h>
 +#include <map>
-+#include <mutex>
++#include <new>
++#include <pthread.h>
 +#include <openssl/sha.h>
 +#include <set>
 +#include <string>
 +#include <sys/stat.h>
-+#include <thread>
++#include <time.h>
 +#include <unistd.h>
 +#include <vector>
 +namespace OHOS::Media {
@@ -419,7 +419,13 @@
 +bool Date(const std::string &text, Day &value)
 +{
 +    if (text.size() != 8 || !std::all_of(text.begin(), text.end(), [](char c) {return c >= '0' && c <= '9';})) return false;
-+    value = {std::stoi(text.substr(0, 4)), std::stoi(text.substr(4, 2)), std::stoi(text.substr(6, 2))};
++    // Fixed validated decimal fields cannot overflow and need no throwing conversion.
++    auto decimal = [&](size_t offset, size_t count) {
++        int number = 0;
++        for (size_t i = offset; i < offset + count; ++i) number = number * 10 + text[i] - '0';
++        return number;
++    };
++    value = {decimal(0,4),decimal(4,2),decimal(6,2)};
 +    return value.year >= 1600 && value.year <= 9999 && value.month >= 1 && value.month <= 12 &&
 +        value.day >= 1 && value.day <= MonthDays(value.year, value.month);
 +}
@@ -693,97 +699,249 @@
 +    scope.committed = true;
 +    return scope.Close();
 +}
-+// The service owns one observer for its static shared RDB. No callback captures
-+// MediaLibraryRdbStore/this or a raw RdbStore. A weak reference becomes strong
-+// only during an import and is released before the cancellable wait.
-+struct ObserverState {
-+    std::mutex mutex;
-+    std::condition_variable wake;
-+    bool cancelled = false;
-+    std::weak_ptr<NativeRdb::RdbStore> store;
-+    void Cancel()
++// All lifecycle operations use pthread return values under the product's
++// -fno-exceptions contract. Workers own an intrusive state reference and never
++// capture ObserverOwner, MediaLibraryRdbStore/this or a raw RdbStore.
++class MutexLock final {
++public:
++    explicit MutexLock(pthread_mutex_t &mutex) : mutex_(mutex), locked_(false)
 +    {
-+        {std::lock_guard<std::mutex> lock(mutex); cancelled = true;}
-+        wake.notify_all();
++        const int result = pthread_mutex_lock(&mutex_);
++        locked_ = result == 0;
++        if (result != 0) MEDIA_ERR_LOG("Knowledge observer mutex lock failed: %{public}d", result);
++    }
++    ~MutexLock()
++    {
++        if (locked_) {
++            const int result = pthread_mutex_unlock(&mutex_);
++            if (result != 0) MEDIA_ERR_LOG("Knowledge observer mutex unlock failed: %{public}d", result);
++        }
++    }
++    bool Locked() const {return locked_;}
++private:
++    pthread_mutex_t &mutex_;
++    bool locked_;
++};
++struct ObserverState {
++    pthread_mutex_t mutex{};
++    pthread_cond_t wake{};
++    bool mutexReady = false;
++    bool wakeReady = false;
++    bool cancelled = false;
++    std::atomic<unsigned> references{1};
++    std::weak_ptr<NativeRdb::RdbStore> store;
++    int Init()
++    {
++        int result = pthread_mutex_init(&mutex,nullptr);
++        if (result != 0) return result;
++        mutexReady = true;
++        result = pthread_cond_init(&wake,nullptr);
++        if (result == 0) wakeReady = true;
++        return result;
++    }
++    ~ObserverState()
++    {
++        if (wakeReady) {
++            const int result = pthread_cond_destroy(&wake);
++            if (result != 0) MEDIA_ERR_LOG("Knowledge observer condition destroy failed: %{public}d", result);
++        }
++        if (mutexReady) {
++            const int result = pthread_mutex_destroy(&mutex);
++            if (result != 0) MEDIA_ERR_LOG("Knowledge observer mutex destroy failed: %{public}d", result);
++        }
++    }
++    void Retain() {references.fetch_add(1,std::memory_order_relaxed);}
++    void Release()
++    {
++        if (references.fetch_sub(1,std::memory_order_acq_rel) == 1) delete this;
++    }
++    int Cancel()
++    {
++        MutexLock lock(mutex);
++        if (!lock.Locked()) return NativeRdb::E_ERROR;
++        cancelled = true;
++        const int result = pthread_cond_broadcast(&wake);
++        if (result != 0) MEDIA_ERR_LOG("Knowledge observer cancellation wake failed: %{public}d", result);
++        return result == 0 ? NativeRdb::E_OK : NativeRdb::E_ERROR;
++    }
++    int Wait(bool &stopped)
++    {
++        MutexLock lock(mutex);
++        if (!lock.Locked()) return NativeRdb::E_ERROR;
++        timespec deadline{};
++        if (clock_gettime(CLOCK_REALTIME,&deadline) != 0) {
++            MEDIA_ERR_LOG("Knowledge observer clock read failed: %{public}d", errno);
++            return NativeRdb::E_ERROR;
++        }
++        deadline.tv_sec += 5;
++        while (!cancelled) {
++            const int result = pthread_cond_timedwait(&wake,&mutex,&deadline);
++            if (result == ETIMEDOUT) {stopped = cancelled; return NativeRdb::E_OK;}
++            if (result != 0) {
++                MEDIA_ERR_LOG("Knowledge observer condition wait failed: %{public}d", result);
++                return NativeRdb::E_ERROR;
++            }
++        }
++        stopped = true;
++        return NativeRdb::E_OK;
 +    }
 +};
 +class ObserverOwner final {
 +public:
-+    ~ObserverOwner() {Stop();}
++    ~ObserverOwner()
++    {
++        if (Stop() != NativeRdb::E_OK) {
++            // A callback may destroy its own owner. Detach only for destruction;
++            // the worker retains independent state through its last DB call.
++            ObserverState *previous = nullptr;
++            {
++                MutexLock lock(mutex_);
++                if (lock.Locked() && joinable_) {
++                    if (state_ != nullptr) state_->Cancel();
++                    const int result = pthread_detach(worker_);
++                    if (result != 0) MEDIA_ERR_LOG("Knowledge observer detach failed: %{public}d", result);
++                    joinable_ = false;
++                    previous = state_;
++                    state_ = nullptr;
++                }
++            }
++            if (previous != nullptr) previous->Release();
++        }
++        const int conditionResult = pthread_cond_destroy(&joined_);
++        const int mutexResult = pthread_mutex_destroy(&mutex_);
++        if (conditionResult != 0 || mutexResult != 0) {
++            MEDIA_ERR_LOG("Knowledge observer owner cleanup failed: %{public}d/%{public}d", conditionResult,mutexResult);
++        }
++    }
 +    int Stop()
 +    {
-+        std::thread previous;
++        pthread_t previous{};
++        ObserverState *state = nullptr;
 +        {
-+            std::unique_lock<std::mutex> lock(mutex_);
-+            if (state_ != nullptr) state_->Cancel();
-+            // A re-entrant RDB callback cannot join its own worker, including
-+            // when an external Stop has already moved that worker for joining.
-+            const auto caller = std::this_thread::get_id();
-+            if ((worker_.joinable() && worker_.get_id() == caller) ||
-+                (joining_ && joiningId_ == caller)) return NativeRdb::E_ERROR;
-+            joined_.wait(lock,[this] {return !joining_;});
-+            if (state_ != nullptr) state_->Cancel();
-+            previous = std::move(worker_);
-+            state_.reset();
-+            joining_ = previous.joinable();
-+            joiningId_ = previous.get_id();
++            MutexLock lock(mutex_);
++            if (!lock.Locked()) return NativeRdb::E_ERROR;
++            if (state_ != nullptr && state_->Cancel() != NativeRdb::E_OK) return NativeRdb::E_ERROR;
++            // Do not wait for our own thread even if an external Stop is already
++            // joining it. The external caller remains responsible for that join.
++            const pthread_t caller = pthread_self();
++            if ((joinable_ && pthread_equal(worker_,caller)) ||
++                (joining_ && pthread_equal(joiningId_,caller))) return NativeRdb::E_ERROR;
++            while (joining_) {
++                const int result = pthread_cond_wait(&joined_,&mutex_);
++                if (result != 0) {
++                    MEDIA_ERR_LOG("Knowledge observer join wait failed: %{public}d", result);
++                    return NativeRdb::E_ERROR;
++                }
++            }
++            if (!joinable_) return NativeRdb::E_OK;
++            if (state_->Cancel() != NativeRdb::E_OK) return NativeRdb::E_ERROR;
++            previous = worker_;
++            state = state_;
++            state_ = nullptr;
++            joinable_ = false;
++            joining_ = true;
++            joiningId_ = previous;
 +        }
-+        if (previous.joinable()) previous.join(); // no lock needed by worker held
++        // No owner or state lock is held across join or an external RDB call.
++        const int result = pthread_join(previous,nullptr);
++        int notified = 0;
 +        {
-+            std::lock_guard<std::mutex> lock(mutex_);
++            MutexLock lock(mutex_);
++            if (!lock.Locked()) return NativeRdb::E_ERROR;
++            if (result != 0) {
++                // A failed join has not reclaimed the thread. Preserve the same
++                // cancelled generation and its reference so Stop can retry.
++                worker_ = previous;
++                state_ = state;
++                joinable_ = true;
++            }
 +            joining_ = false;
-+            joiningId_ = {};
++            notified = pthread_cond_broadcast(&joined_);
++            if (notified != 0) MEDIA_ERR_LOG("Knowledge observer join notification failed: %{public}d", notified);
 +        }
-+        joined_.notify_all();
-+        return NativeRdb::E_OK;
++        if (result != 0) {
++            MEDIA_ERR_LOG("Knowledge observer join failed: %{public}d", result);
++            return NativeRdb::E_ERROR;
++        }
++        state->Release();
++        return notified == 0 ? NativeRdb::E_OK : NativeRdb::E_ERROR;
 +    }
 +    int Start(const std::shared_ptr<NativeRdb::RdbStore> &store)
 +    {
 +        if (store == nullptr || Stop() != NativeRdb::E_OK) return NativeRdb::E_ERROR;
-+        try {
-+            auto state = std::make_shared<ObserverState>();
-+            state->store = store;
-+            std::lock_guard<std::mutex> lock(mutex_);
-+            if (worker_.joinable() || joining_) return NativeRdb::E_ERROR;
-+            state_ = state;
-+            worker_ = std::thread([state] {
-+                std::string lastHash;
-+                bool lastPresent = false;
-+                bool acknowledged = false;
-+                std::unique_lock<std::mutex> wait(state->mutex);
-+                while (!state->wake.wait_for(wait,std::chrono::seconds(5),[&state] {return state->cancelled;})) {
-+                    wait.unlock();
-+                    auto live = state->store.lock();
-+                    if (live == nullptr) return;
-+                    Resource observed;
-+                    int result = NativeRdb::E_ERROR;
-+                    try {
-+                        result = Load(observed);
-+                        if (result == NativeRdb::E_OK && (!acknowledged ||
-+                            observed.hash != lastHash || observed.present != lastPresent)) {
-+                            result = KnowledgeHolidayIndex::Refresh(*live);
-+                            if (result == NativeRdb::E_OK) {
-+                                lastHash = observed.hash;
-+                                lastPresent = observed.present;
-+                                acknowledged = true;
-+                            }
-+                        }
-+                    } catch (...) {result = NativeRdb::E_ERROR;}
-+                    if (result != NativeRdb::E_OK) MEDIA_ERR_LOG("Knowledge calendar configuration refresh failed: %{public}d", result);
-+                    live.reset();
-+                    wait.lock();
++        auto *state = new (std::nothrow) ObserverState;
++        if (state == nullptr) {
++            MEDIA_ERR_LOG("Knowledge observer state allocation failed");
++            return NativeRdb::E_ERROR;
++        }
++        const int initialized = state->Init();
++        if (initialized != 0) {
++            MEDIA_ERR_LOG("Knowledge observer initialization failed: %{public}d", initialized);
++            state->Release();
++            return NativeRdb::E_ERROR;
++        }
++        state->store = store;
++        int result = NativeRdb::E_ERROR;
++        bool retained = false;
++        {
++            MutexLock lock(mutex_);
++            if (lock.Locked() && !joinable_ && !joining_) {
++                state->Retain();
++                retained = true;
++                result = pthread_create(&worker_,nullptr,Run,state);
++                if (result == 0) {
++                    state_ = state;
++                    joinable_ = true;
++                    return NativeRdb::E_OK;
 +                }
-+            });
-+        } catch (...) {return NativeRdb::E_ERROR;}
-+        return NativeRdb::E_OK;
++            }
++        }
++        if (retained) state->Release();
++        state->Release();
++        MEDIA_ERR_LOG("Knowledge observer thread start failed: %{public}d", result);
++        return NativeRdb::E_ERROR;
 +    }
 +private:
-+    std::mutex mutex_;
-+    std::condition_variable joined_;
++    static void *Run(void *argument)
++    {
++        auto *state = static_cast<ObserverState *>(argument);
++        {
++            std::string lastHash;
++            bool lastPresent = false;
++            bool acknowledged = false;
++            while (true) {
++                bool stopped = false;
++                const int waited = state->Wait(stopped);
++                if (waited != NativeRdb::E_OK || stopped) break;
++                auto live = state->store.lock();
++                if (live == nullptr) break;
++                Resource observed;
++                int result = Load(observed);
++                if (result == NativeRdb::E_OK && (!acknowledged ||
++                    observed.hash != lastHash || observed.present != lastPresent)) {
++                    result = KnowledgeHolidayIndex::Refresh(*live);
++                    if (result == NativeRdb::E_OK) {
++                        lastHash = observed.hash;
++                        lastPresent = observed.present;
++                        acknowledged = true;
++                    }
++                }
++                if (result != NativeRdb::E_OK) MEDIA_ERR_LOG("Knowledge calendar configuration refresh failed: %{public}d", result);
++                // Last strong DB release may call Stop on this worker. It holds
++                // no owner/state lock and only this independent state is used.
++                live.reset();
++            }
++        }
++        state->Release();
++        return nullptr;
++    }
++    pthread_mutex_t mutex_ = PTHREAD_MUTEX_INITIALIZER;
++    pthread_cond_t joined_ = PTHREAD_COND_INITIALIZER;
 +    bool joining_ = false;
-+    std::thread::id joiningId_;
-+    std::shared_ptr<ObserverState> state_;
-+    std::thread worker_;
++    bool joinable_ = false;
++    pthread_t joiningId_{};
++    pthread_t worker_{};
++    ObserverState *state_ = nullptr;
 +};
 +ObserverOwner &Observer()
 +{
@@ -793,12 +951,8 @@
 +}
 +int32_t KnowledgeHolidayIndex::Refresh(NativeRdb::RdbStore &store)
 +{
-+    try {
-+        return Synchronize(store);
-+    } catch (...) {
-+        MEDIA_ERR_LOG("Knowledge holiday import allocation/parser failure; retaining committed index");
-+        return NativeRdb::E_ERROR;
-+    }
++    // RDB/IO/parser failures use explicit status returns under -fno-exceptions.
++    return Synchronize(store);
 +}
 +int32_t KnowledgeHolidayIndex::Observe(const std::shared_ptr<NativeRdb::RdbStore> &store)
 +{

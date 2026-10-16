@@ -37,13 +37,13 @@ class Holiday(unittest.TestCase):
         for path in (FIX/'holiday').glob('*.h'):(cls.root/path.name).write_bytes(path.read_bytes())
         (cls.root/'transaction.h').write_text('#include "rdb_store.h"\n')
         (cls.root/'rdb_errno.h').write_text('#include "rdb_store.h"\n')
-        (cls.root/'media_log.h').write_text('#define MEDIA_ERR_LOG(...)\n')
+        (cls.root/'media_log.h').write_text('#define MEDIA_ERR_LOG(...) TestMediaLog(__VA_ARGS__)\n')
         for name in ['knowledge_holiday_index.h','knowledge_content_query.h']:(cls.root/name).write_bytes((COMP/'files'/name).read_bytes())
         source=(FIX/'holiday/producer_harness.cpp').read_text().replace('// ACTUAL_PRODUCER',(COMP/'files/knowledge_holiday_index.cpp').read_text())
         (cls.root/'producer.cpp').write_text(source)
         openssl=Path('/opt/homebrew/opt/openssl@3')
         extra=['-I',str(openssl/'include'),'-L',str(openssl/'lib')] if openssl.exists() else []
-        cls.flags=['clang++','-std=c++17','-Wall','-Wextra','-Werror','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I',str(cls.root)]
+        cls.flags=['clang++','-std=c++17','-Wall','-Wextra','-Werror','-pthread','-fno-exceptions','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I',str(cls.root)]
         subprocess.run(cls.flags+extra+[str(cls.root/'producer.cpp'),'-lsqlite3','-lcrypto','-o',str(cls.root/'producer')],check=True)
         # Actual final query builder and weighted selection; no fake query implementation.
         cli=(HERE/'batch_media_knowledge_query_cli.cpp').read_text().replace(' && !HasProducer(7)',' && HasProducer(7)')
@@ -73,6 +73,10 @@ class Holiday(unittest.TestCase):
     def test_observer_cancel_join_reopen_inflight_and_reentrant_stop(self):
         self.publish(self.calendar([self.event()]))
         subprocess.run([str(self.root/'producer'),str(self.database),'observer-tests'],env=dict(self.env,BATCH_MEDIA_TEST_RESOURCE_DIRECTORY=str(self.resource)),check=True,timeout=18)
+
+    def test_no_exceptions_pthread_failures_rollback_retry_and_worker_owned_destruction(self):
+        self.publish(self.calendar([self.event()]))
+        subprocess.run([str(self.root/'producer'),str(self.database),'observer-failure-tests'],env=dict(self.env,BATCH_MEDIA_TEST_RESOURCE_DIRECTORY=str(self.resource)),check=True,timeout=22)
 
     def test_actual_sqlite_query_snapshot_during_source_replacement_and_directory_delete(self):
         self.publish(self.calendar([self.event()]));self.run_producer()
