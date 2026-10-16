@@ -104,6 +104,8 @@ def verify_family(name, path, archive, environment):
     result = module.verify_evidence(path, archive, boot)
     if name == 'contacts-picker' and (not isinstance(result, dict) or result.get('full_boundaries_verified') is not True):
         raise ValueError('actual Contacts deadline/navigation boundary observations are incomplete')
+    if name == 'wallpaper' and (not isinstance(result, dict) or result.get('native_fallback_and_renderer_verified') is not True):
+        raise ValueError('actual Wallpaper native/image/source HAP and renderer connections are incomplete')
     return result
 
 
@@ -113,7 +115,7 @@ def verified_closures(name, evidence, archive, environment):
     # GNSS/accelerometer/public still covers a subset of the broad original
     # MSDP finding. It must never close missing clients or other modalities.
     identifiers = {'contacts-picker': ('behavior:contacts-picker-entrypoint-missing-phone',),
-                   'wallpaper': (), 'external-inputs': ()}[name]
+                   'wallpaper': ('behavior:wallpaper-ui-provider-missing',), 'external-inputs': ()}[name]
     return {identifier: {'evidence': str(evidence), 'sha256': digest(evidence),
         'verifier': FAMILIES[name][0] + '.verify_evidence',
         'not_claimed': 'unrelated providers, APIs or broad MSDP client completion'} for identifier in identifiers}

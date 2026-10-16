@@ -88,6 +88,21 @@ class ParallelRuntimeSuiteTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'deadline/navigation'):
                     suite.verify_family('contacts-picker', path, self.archive, self.env)
 
+    def test_wallpaper_pixels_alone_cannot_replace_native_image_and_connection_proof(self):
+        path = self.result('wallpaper')
+        for partial in ({'status':'pass'}, {'native_fallback_and_renderer_verified':False}, None):
+            with patch.object(suite.importlib, 'import_module', return_value=types.SimpleNamespace(
+                    verify_evidence=Mock(return_value=partial))):
+                with self.assertRaisesRegex(ValueError, 'native/image/source'):
+                    suite.verify_family('wallpaper', path, self.archive, self.env)
+
+    def test_wallpaper_closure_is_exact_and_always_runs_independent_verification(self):
+        path = self.result('wallpaper')
+        with patch.object(suite, 'verify_family') as verify:
+            result = suite.verified_closures('wallpaper', path, self.archive, self.env)
+        self.assertEqual(set(result), {'behavior:wallpaper-ui-provider-missing'})
+        verify.assert_called_once_with('wallpaper',path,self.archive,self.env)
+
     def test_matching_boot_id_cannot_hide_replaced_VM_or_failed_cleanup(self):
         path = self.result('external-inputs')
         for changed in (dict(self.env, qemu_pid=1000), dict(self.env, target='127.0.0.1:5678')):

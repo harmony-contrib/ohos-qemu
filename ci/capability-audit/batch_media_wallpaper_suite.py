@@ -375,7 +375,7 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     cleanup=[c for c in value['commands']if c['label']=='uninstall-owned-wallpaper-observer']
     if len(cleanup)!=2 or any(not re.search('success',checked({k:c[k]for k in ('path','sha256')}).read_text(),re.I)for c in cleanup):
         raise ValueError('both owned observers must be actually removed')
-    return result
+    return {**result,'native_fallback_and_renderer_verified':True}
 
 
 def verify_native_runtime(value,coordinator,native,env):
