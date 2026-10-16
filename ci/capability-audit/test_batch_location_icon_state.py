@@ -6,6 +6,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+from batch_location_runtime_fixture import runtime_sources
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPONENT = ROOT / 'patches/common/base/location/location/api26_runtime'
@@ -27,9 +28,13 @@ def function(source, signature):
 
 
 def new_source():
-    patch = (COMPONENT / '0001-query-live-location-icon-state.patch').read_text()
-    return ''.join(line[1:] if line.startswith(('+', ' ')) else line if line == '\n' else ''
-                   for line in patch.splitlines(keepends=True) if not line.startswith(('+++', '---', '@@')))
+    sources = runtime_sources()
+    return '\n'.join(sources[name] for name in [
+        'services/location_locator/locator/source/request_manager.cpp',
+        'services/location_locator/locator/source/locator_ability.cpp',
+        'frameworks/native/locator_sdk/source/locator_impl.cpp',
+        'frameworks/js/napi/source/location_napi_adapter.cpp',
+    ])
 
 
 PREAMBLE = r'''
@@ -43,6 +48,8 @@ PREAMBLE = r'''
 #include <mutex>
 #include <set>
 #include <string>
+#include <tuple>
+#include <sys/types.h>
 #include <vector>
 namespace ffrt { using mutex=std::mutex; }
 using ErrCode=int; using LocationErrCode=int;
@@ -58,16 +65,35 @@ struct AppIdentity {
     int GetUid()const{return uid;} uint32_t GetTokenId()const{return token;} uint64_t GetTokenIdEx()const{return token;}
 };
 int currentUser=100; std::vector<int> activeUsers{100}; int64_t now=100;
-std::map<uint32_t,bool> permissions;
+std::map<uint32_t,bool> permissions,finePermissions;
+bool queryProbe=false;std::mutex* requestLock=nullptr;std::mutex* permissionLock=nullptr;
+void assertQueryLocksReleased(){if(queryProbe){assert(requestLock->try_lock());requestLock->unlock();assert(permissionLock->try_lock());permissionLock->unlock();}}
+const std::string ACCESS_LOCATION="fine",ACCESS_APPROXIMATELY_LOCATION="approximate";
+namespace Security { namespace AccessToken {
+constexpr int PERMISSION_DENIED=-1,PERMISSION_GRANTED=0,ERR_PERMISSION_ALREADY_START_USING=1;
+enum class ATokenTypeEnum {TOKEN_INVALID,TOKEN_HAP};
+std::vector<std::tuple<uint32_t,uint32_t,std::string>> checked;
+struct AccessTokenKit {
+ static ATokenTypeEnum GetTokenTypeFlag(uint32_t token){return token?ATokenTypeEnum::TOKEN_HAP:ATokenTypeEnum::TOKEN_INVALID;}
+ static int VerifyAccessToken(uint32_t token,const std::string& permission){assertQueryLocksReleased();return (permission==ACCESS_LOCATION?finePermissions[token]:permissions[token])?PERMISSION_GRANTED:PERMISSION_DENIED;}
+ static int VerifyAccessToken(uint32_t token,uint32_t first,const std::string& permission){checked.emplace_back(token,first,permission);return VerifyAccessToken(token,permission)==PERMISSION_GRANTED&&VerifyAccessToken(first,permission)==PERMISSION_GRANTED?PERMISSION_GRANTED:PERMISSION_DENIED;}
+};
+}}
+struct PrivacyKit {
+ static std::map<std::pair<int,std::string>,int> starts,stops;
+ static int StartUsingPermission(uint32_t,const std::string& permission,int pid){++starts[{pid,permission}];return 0;}
+ static int StopUsingPermission(uint32_t,const std::string& permission,int pid){++stops[{pid,permission}];return 0;}
+};
+std::map<std::pair<int,std::string>,int> PrivacyKit::starts,PrivacyKit::stops;
 std::map<int,bool> switches;
 bool systemPermission=true,callerAvailable=true,saAvailable=true;
 struct RequestConfig { int fix=0,timeout=5000;int64_t timestamp=100; int GetFixNumber(){return fix;}int GetTimeOut(){return timeout;}int64_t GetTimeStamp(){return timestamp;} };
 struct Request {
-    bool usingPermission=true,requesting=true; int uid=100001,pid=1;uint32_t token=1;
+    bool usingPermission=true,usingFine=false,requesting=true; int uid=100001,pid=1;uint32_t token=1,first=0;
     std::shared_ptr<RequestConfig> config=std::make_shared<RequestConfig>();
-    bool GetApproximatelyPermState(){return usingPermission;}bool GetIsRequesting(){return requesting;}
+    bool GetApproximatelyPermState(){return usingPermission;}bool GetLocationPermState(){return usingFine;}void SetLocationPermState(bool state){usingFine=state;}void SetApproximatelyPermState(bool state){usingPermission=state;}int GetPermUsedType(){return 0;}bool GetIsRequesting(){return requesting;}
     std::shared_ptr<RequestConfig> GetRequestConfig(){return config;}int GetUid(){return uid;}int GetPid(){return pid;}
-    uint32_t GetTokenId(){return token;}uint32_t GetFirstTokenId(){return 0;}
+    uint32_t GetTokenId(){return token;}uint32_t GetFirstTokenId(){return first;}
     std::string ToString(){return "request";}std::string GetPackageName(){return "app";}std::string GetUuid(){return "uuid";}
 };
 struct ProxyFreezeManager {std::set<int> frozen;static ProxyFreezeManager* GetInstance(){static ProxyFreezeManager v;return &v;}bool IsProxyPid(int pid){return frozen.count(pid);}};
@@ -81,10 +107,11 @@ struct CommonUtils {
 };
 struct PermissionManager {
     static bool CheckSystemPermission(uint32_t,uint64_t){return systemPermission;}
-    static bool CheckLocationPermission(uint32_t,uint32_t){return false;}
-    static bool CheckApproximatelyPermission(uint32_t token,uint32_t){return permissions[token];}
+    static bool CheckPermission(const std::string&,uint32_t,uint32_t);
+    static bool CheckLocationPermission(uint32_t,uint32_t);
+    static bool CheckApproximatelyPermission(uint32_t,uint32_t);
 };
-struct LocationDataRdbManager {static int QuerySwitchStateForUser(int user){return switches[user]?ENABLED:0;}};
+struct LocationDataRdbManager {static int QuerySwitchStateForUser(int user){assertQueryLocksReleased();return switches[user]?ENABLED:0;}};
 enum class LocatorInterfaceCode {GET_LOCATION_ICON_STATUS=65};
 class LocatorAbility {
 public:
@@ -95,12 +122,20 @@ public:
     bool GetLocationSwitchIgnoredFlag(uint32_t token){return ignored.count(token);}
     void GetAppIdentityInfo(AppIdentity& identity){identity=AppIdentity{};}
     bool CheckRequestAvailable(LocatorInterfaceCode,AppIdentity&){return callerAvailable;}
+    bool IsHapCaller(uint32_t){return true;}
+    int UpdatePermissionUsedRecord(uint32_t,const std::string&,int,int,int){return 0;}
     ErrCode GetLocationIconStatus(int32_t&);
 };
 class RequestManager {
 public:
     static RequestManager* GetInstance(){static RequestManager v;return &v;}
-    static ffrt::mutex requestMutex_;ffrt::mutex permissionRecordMutex_;
+    static ffrt::mutex requestMutex_;ffrt::mutex permissionRecordMutex_,workingPidsCountMutex_;
+    std::map<pid_t,int32_t> workingPidsCountMap_,fineWorkingPidsCountMap_;
+    bool UpdateUsingPermission(std::shared_ptr<Request>,bool);
+    bool UpdateUsingFinePermission(std::shared_ptr<Request>,bool);
+    bool UpdateUsingApproximatelyPermission(std::shared_ptr<Request>,bool);
+    void IncreaseWorkingPidsCount(pid_t);void DecreaseWorkingPidsCount(pid_t);
+    bool IsNeedStartUsingPermission(pid_t);bool IsNeedStopUsingPermission(pid_t);
     bool IsRequestAvailable(std::shared_ptr<Request>&);
     bool IsLocatingInCurrentAccount();
 };
@@ -118,7 +153,8 @@ void HandleSyncErrCode(napi_env env,int code){env->error=code;}
 MAIN = r'''
 int main(){
     auto locator=LocatorAbility::GetInstance();auto manager=RequestManager::GetInstance();
-    Env env;auto query=[&](){env.error=0;return GetLocationIconStatus(&env,nullptr);};
+    requestLock=&manager->requestMutex_;permissionLock=&manager->permissionRecordMutex_;
+    Env env;auto query=[&](){env.error=0;queryProbe=true;auto result=GetLocationIconStatus(&env,nullptr);queryProbe=false;return result;};
     auto noIcon=[&](){auto value=query();assert(value && *value==0 && env.error==0);};
     auto activeIcon=[&](){auto value=query();assert(value && *value==1 && env.error==0);};
     switches[100]=true;permissions[1]=true;noIcon();
@@ -137,13 +173,34 @@ int main(){
     locator->requests->clear();(*locator->requests)[FUSED_ABILITY].push_back(request);activeIcon();
     locator->requests->clear();(*locator->requests)[GNSS_ABILITY].push_back(nullptr);noIcon();
     locator->requests.reset();noIcon();
+    locator->requests=std::make_shared<std::map<std::string,std::list<std::shared_ptr<Request>>>>();
+    auto fine=std::make_shared<Request>();fine->usingPermission=false;finePermissions[1]=true;permissions[1]=false;
+    (*locator->requests)[GNSS_ABILITY].push_back(fine);
+    assert(manager->UpdateUsingPermission(fine,true) && fine->usingFine && !fine->usingPermission);activeIcon();
+    assert(PrivacyKit::starts[std::make_pair(1,ACCESS_LOCATION)]==1);
+    auto second=std::make_shared<Request>();second->usingPermission=false;(*locator->requests)[GNSS_ABILITY].push_back(second);
+    assert(manager->UpdateUsingPermission(second,true));assert(manager->UpdateUsingPermission(second,true));
+    assert(PrivacyKit::starts[std::make_pair(1,ACCESS_LOCATION)]==1);
+    assert(manager->UpdateUsingPermission(fine,false));activeIcon();assert(PrivacyKit::stops[std::make_pair(1,ACCESS_LOCATION)]==0);
+    assert(manager->UpdateUsingPermission(second,false));noIcon();assert(PrivacyKit::stops[std::make_pair(1,ACCESS_LOCATION)]==1);
+    permissions[1]=true;finePermissions[1]=false;
+    assert(manager->UpdateUsingPermission(fine,true) && fine->usingPermission && !fine->usingFine);activeIcon();
+    finePermissions[1]=true;assert(manager->UpdateUsingPermission(fine,true));activeIcon();
+    assert(!fine->usingFine && fine->usingPermission); // both grants keep the established approximate-use scope
+    permissions[1]=false;assert(manager->UpdateUsingPermission(fine,true));assert(fine->usingFine && !fine->usingPermission);activeIcon();
+    finePermissions[1]=false;noIcon();assert(manager->UpdateUsingPermission(fine,false));
+    fine->first=2;finePermissions[1]=true;finePermissions[2]=false;
+    assert(!manager->UpdateUsingPermission(fine,true));noIcon();
+    finePermissions[2]=true;assert(manager->UpdateUsingPermission(fine,true));activeIcon();
+    finePermissions[2]=false;noIcon();assert(manager->UpdateUsingPermission(fine,false));
+    bool sawDelegation=false;for(const auto& check:Security::AccessToken::checked)if(std::get<0>(check)==1&&std::get<1>(check)==2)sawDelegation=true;assert(sawDelegation);
     systemPermission=false;assert(!query() && env.error==LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED);systemPermission=true;
     callerAvailable=false;assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);callerAvailable=true;
     saAvailable=false;assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);saAvailable=true;
     g_locatorClient->proxy=nullptr;assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);g_locatorClient->proxy=locator;
     g_locatorClient.reset();assert(!query() && env.error==ERRCODE_SERVICE_UNAVAILABLE);
     (void)manager;
-    std::cout<<"Live icon query: GNSS/network/fused, privacy-use, freeze, account, timeout, permission, switch, passive, service boundaries passed\n";
+    std::cout<<"Live icon/query/PrivacyKit route: fine/approx/both/revoked/delegated, shared pid, GNSS/network/fused, locks, freeze/account/timeout/switch/service boundaries passed\n";
 }
 '''
 
@@ -152,7 +209,12 @@ class LocationIconStateTests(unittest.TestCase):
     def test_execute_live_query(self):
         source = new_source()
         original_guard = json.loads(FIXTURE.read_text())['availability_guard']
-        actual = original_guard + ''.join(function(source, signature) for signature in [
+        permission_functions = json.loads(FIXTURE.read_text())['permission_functions']
+        actual = permission_functions + original_guard + ''.join(function(source, signature) for signature in [
+            'bool RequestManager::UpdateUsingPermission(', 'bool RequestManager::UpdateUsingFinePermission(',
+            'bool RequestManager::UpdateUsingApproximatelyPermission(',
+            'void RequestManager::IncreaseWorkingPidsCount(', 'void RequestManager::DecreaseWorkingPidsCount(',
+            'bool RequestManager::IsNeedStartUsingPermission(', 'bool RequestManager::IsNeedStopUsingPermission(',
             'bool RequestManager::IsLocatingInCurrentAccount()',
             'ErrCode LocatorAbility::GetLocationIconStatus(',
             'LocationErrCode LocatorImpl::GetLocationIconStatus(',
@@ -171,6 +233,24 @@ class LocationIconStateTests(unittest.TestCase):
         self.assertIn('+    [ipccode 65] void GetLocationIconStatus([out] int status);', patch)
         self.assertIn('+    GET_LOCATION_ICON_STATUS = 65', patch)
         self.assertFalse(re.search(r'^-.*\[ipccode \d+\]', patch, re.M))
+        sources = runtime_sources()
+        frozen = json.loads((ROOT / 'docs/capability-audit/parallel/location/round2-ipc-baseline.json').read_text())
+        idl_path = 'frameworks/native/locator_sdk/ILocatorService.idl'
+        enum_path = 'interfaces/inner_api/include/locationhub_ipc_interface_code.h'
+        idl = {name: int(code) for code, name in re.findall(
+            r'\[ipccode (\d+)\] void (\w+)\(', sources[idl_path])}
+        codes = {name: int(value) for name, value in re.findall(
+            r'\b([A-Z_0-9]+)\s*=\s*(\d+)', function(sources[enum_path], 'enum class LocatorInterfaceCode'))}
+        for path, mapping in [(idl_path, idl), (enum_path, codes)]:
+            original = frozen['inputs']['base/location/location/' + path]['mapping']
+            self.assertEqual(original, {key: mapping[key] for key in original})
+        for name, enum, value in [('GetLocationIconStatus', 'GET_LOCATION_ICON_STATUS', 65),
+                                  ('StartBluetoothSearch', 'START_BLUETOOTH_SEARCH', 66),
+                                  ('StopBluetoothSearch', 'STOP_BLUETOOTH_SEARCH', 67)]:
+            self.assertEqual(value, idl[name])
+            self.assertEqual(value, codes[enum])
+            for original in frozen['inputs'].values():
+                self.assertNotIn(value, original['mapping'].values())
 
 
 if __name__ == '__main__':

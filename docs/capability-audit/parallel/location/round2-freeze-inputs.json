@@ -1,0 +1,157 @@
+{
+  "project": "base/location/location",
+  "revision": "5a0c49c2adb0623fdac73f76e4f98f2e57674c00",
+  "source_container": "ohos-qemu-parallel-source-20261016-02",
+  "targets": {
+    "base/location/location/frameworks/native/locator_sdk/ILocatorService.idl": {
+      "sha256": "082dc98ff2d23395c4b18533ef6574dd50c2d331f35a3dcdd038d2b582dbba9d",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/locator_impl.h": {
+      "sha256": "64b3c6e816e046b3bf2161afeb2cc9a8a8008ffa99447bf331cc1d3c7fa6ef8d",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp": {
+      "sha256": "88f399fd86a5cf15383c074e0d84e2c1ef4e5f22e1f6df9452a7f3f1d4dc33bc",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/locator_ability.h": {
+      "sha256": "f18ef92972cafd8f0c0198c93a7f1f8120f03d3bf28d5cff9d5d99d78b8765d8",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/locator_ability.cpp": {
+      "sha256": "942a8a3d327d1dded66ad65c35e6fea0931280119992502b93e54bfc0a5513c9",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/locator_required_data_manager.h": {
+      "sha256": "4e6da25f6e689033cd68ddf5d0661ab2bb446c91f91daa4ecd572fb926fbba05",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp": {
+      "sha256": "02b59695678a6ef244f8a1b42c034b9759c9f2390060858241197e7b275c8155",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/include/location_napi_adapter.h": {
+      "sha256": "df3a6935369feb2b0f186e24f8ab9177d6207dea0482541f38c1c20ad289f990",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp": {
+      "sha256": "10f006e05e6acd07d360f5473110f032fc82a1b060d4c52dfb7b93afc72636c5",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/location_napi_entry.cpp": {
+      "sha256": "10b3d9a118b6abd5fe9e2bc3aaf8c0c4e11d35d6bf99bfc933e62deb8d74515e",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h": {
+      "sha256": "d23ab24104b996f25f6ee47e8b2b965cdfb3741b6debeb8d4004a9f179862d22",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp": {
+      "sha256": "a3ad0ab918bccf1fdfa2c4a2e17aa7930d2ab7af2ad1cdd4dddeac6f8296662e",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp": {
+      "sha256": "7f921b19e87a20ff24053cbf78e95d5d18689483363d98a9378e558c71f54c9d",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h": {
+      "sha256": "b55ec5e3afe9de9eef869e414a1f87b2621e6ad2447270b0ac6f771ccb9585e1",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/include/request_manager.h": {
+      "sha256": "9323e1dcca912bb48a7ef0d8ae4df901eb7cdc3f576cc9484d9dca3aeaaa6327",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/source/request_manager.cpp": {
+      "sha256": "8617a90d00307e8018e72d87942b4a6c8a8e7d077cf854b6d68040f4716fd4ee",
+      "crlf_count": 0
+    }
+  },
+  "freeze_inputs": {
+    "base/location/location/frameworks/native/locator_sdk/type/IDataTypes.idl": {
+      "sha256": "02b97b8cd47c9637857d406a4ef07ff08b05ab17748ed0f445b42650e4025558",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/permission_manager.h": {
+      "sha256": "d4752481189161e2203fd95877074f60dd783409ee542299aee0a26a2dae3b5d",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/location_common/common/source/permission_manager.cpp": {
+      "sha256": "bb3d01ee4b517fc6c5c95432039c16defbfc15f185487a0480a7939c99348c08",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/request.h": {
+      "sha256": "948d9479a2608e6bff6ece2d885dd6d42b2540d07ab7fc70aa90cd8745c9b3fb",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/request_config.h": {
+      "sha256": "d890828f8496ed04739d2ebb3b5b68ac748284755627b4faa2b4f717477f64a4",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/app_identity.h": {
+      "sha256": "9dea0594c89b3ae0c2ffec6b1b5c2d2f1bd660a1ca7ddaf15a2db7ecc873d4f8",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/common_utils.h": {
+      "sha256": "271095cb4be918ad7739d4c483f9f50f4fc462912b1947492d4740893462a114",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/constant_definition.h": {
+      "sha256": "66413a57e9914ce2850ac268297d4924ed630ec7aa830336bd7a1b73adbbfe36",
+      "crlf_count": 0
+    },
+    "base/location/location/interfaces/inner_api/include/location_data_rdb_manager.h": {
+      "sha256": "48a66929212427fd24478f1f3411d5d7a97063db6e8420322ebdd6590d86a099",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/location_common/common/source/location_data_rdb_manager.cpp": {
+      "sha256": "490a68e72c34eefac515c8cf41f87251d560e03ed78207ca74e882518da7f555",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/native/locator_sdk/BUILD.gn": {
+      "sha256": "d203eb8212917207245b0f1199110964c4d247b85e210915051040a1b02bc2ac",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/js/napi/BUILD.gn": {
+      "sha256": "e984642363fac2bc7456a2b111c0509978efb7d770d528f29b897c799036acda",
+      "crlf_count": 0
+    },
+    "base/location/location/services/location_locator/locator/BUILD.gn": {
+      "sha256": "6a7103d84ec91f572aa50aa49caf87af4cb749e227ddcbd8aca9912b53092d0f",
+      "crlf_count": 0
+    },
+    "base/location/location/frameworks/ets/taihe/locator_sdk/BUILD.gn": {
+      "sha256": "d9b598f064215e743f7992592c0d68f4fd8d7af0f1c69d3d710734fb1391fe12",
+      "crlf_count": 0
+    },
+    "foundation/communication/bluetooth/interfaces/inner_api/include/bluetooth_ble_central_manager.h": {
+      "sha256": "8c3507e0185325bd4da3a197c5acad866843cf30ba9b9b56ebe244a37fe59fa7"
+    },
+    "foundation/arkui/napi/interfaces/inner_api/napi/native_node_api.h": {
+      "sha256": "52f4302f1f9728e426ec9d15daec21217aaeeadefbac6a5dca58afaa22e6cd6e"
+    },
+    "foundation/arkui/napi/interfaces/kits/napi/native_api.h": {
+      "sha256": "b6960e0f0b4d21ac518313a22807d47c8a009dfd60619001e04bf57ea0ebdcb6"
+    },
+    "third_party/node/src/node_api.h": {
+      "sha256": "24bdd7597c72fde524440f41b40dd4be7d151c40d3565cf555ca0208db3d95f7"
+    },
+    "third_party/node/src/js_native_api.h": {
+      "sha256": "d47a6f979387d00f603cf1193eeb4d4e3164307123a33891590fe6601fed95b4"
+    },
+    "third_party/node/src/node_api_types.h": {
+      "sha256": "69297f804fd2680e6339ab661391ae07755cda1473a28934003aa432e0060793"
+    },
+    "third_party/node/src/js_native_api_types.h": {
+      "sha256": "0823951156077b35c7a2759b83e30bad3a82a8ee934f44eaa75e9ccd364e63a5"
+    },
+    "base/location/location/interfaces/inner_api/include/ibluetooth_scan_result_callback.h": {
+      "sha256": "e7c4c422ba0fae9f14bfde0bad2f138e6454b5b5346d3e52c50c128b8aacd42a"
+    },
+    "base/location/location/interfaces/inner_api/include/bluetooth_scan_result.h": {
+      "sha256": "9ae5868b698404fd7e875efc9b613a8b66ec0de710ab04b1014d5e6900b28cda",
+      "crlf_count": 0
+    }
+  }
+}

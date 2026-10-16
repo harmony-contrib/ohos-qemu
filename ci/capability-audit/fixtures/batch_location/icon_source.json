@@ -55,5 +55,6 @@
     62,
     63,
     64
-  ]
+  ],
+  "permission_functions": "bool PermissionManager::CheckPermission(const std::string &permission, uint32_t callerToken, uint32_t tokenFirstCaller)\n{\n    auto tokenType = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);\n    int result = Security::AccessToken::PERMISSION_DENIED;\n    if (tokenFirstCaller == 0) {\n        if (tokenType == Security::AccessToken::ATokenTypeEnum::TOKEN_INVALID) {\n            LBSLOGD(LOCATOR, \"id = %{public}d has no permission.permission name=%{public}s\",\n                callerToken, permission.c_str());\n            return false;\n        } else {\n            result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, permission);\n        }\n    } else {\n        result = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callerToken, tokenFirstCaller, permission);\n    }\n    if (result == Security::AccessToken::PERMISSION_GRANTED) {\n        return true;\n    } else {\n        LBSLOGD(LOCATOR, \"id = %{public}d has no permission.permission name=%{public}s\",\n            callerToken, permission.c_str());\n        return false;\n    }\n}\nbool PermissionManager::CheckLocationPermission(uint32_t tokenId, uint32_t firstTokenId)\n{\n    return CheckPermission(ACCESS_LOCATION, tokenId, firstTokenId);\n}\nbool PermissionManager::CheckApproximatelyPermission(uint32_t tokenId, uint32_t firstTokenId)\n{\n    return CheckPermission(ACCESS_APPROXIMATELY_LOCATION, tokenId, firstTokenId);\n}\n"
 }
