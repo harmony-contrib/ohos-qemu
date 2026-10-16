@@ -230,3 +230,11 @@ oneway 的 TF_ASYNC/WriteBool/SendRequest 已核对，两个完整生成 proxy/s
 根也完成实际Sensor DSO的依赖专用ext4读回与四项拒绝测试（r52-real-Sensor-DSO-runtime-assets-ext4-01）：配置改字节、额外未绑定ICS、优先级更高的product VDI、两个不同真实inode歧义均拒绝。不是产品镜像，不核销运行能力。新增GNSS源码/构建图/三层真实库/启动和参数的镜像绑定检查，包装及离线检查均必须执行。
 
 完整能力TU第一批416.977s：location 14/15PASS，真实const AppIdentity&缺口由round6修复并集成b934096；Knowledge 4/6PASS，缺RDB/OpenSSL declared exports；Recorder标准CLI与私有stage清单问题、VPN遗漏前驱问题全部收齐。媒体round5 63395d3已通过scope集成aaecdc8，补真实普通后台录音与RDB direct dep/Recorder标准CLI；47 host tests及Recorder/audio_event最终三ABI链接PASS，真正HAP/权限/运行仍待验。VPN当前helpers两个完整TU和实际executable links PASS。真实FFRT第一批health PASS、callback fail；已实证为探针遗留单应用VPN触发正确互斥过滤，network修探针e262999集成8667c52，保留原断言并补抑制分支，待真实libffrt复验。所有失败证据原样保留；其余五包未开始、门禁false、0/6、82项仍待闭环。
+
+2026-10-16 后续集中复验：location 15 个完整平台 TU、Recorder 完整 TU 及真实 libffrt callback 回归通过（r52-current-capability-full-TUs-and-FFRT-02）。六类普通 HAP 第一轮中 Capturer/Recorder/拒绝 Recorder 的真实 API26 unsigned HAP 和 native/权限合同通过；三个 event HAP 发现同一 ArkTS throw 类型问题，67ea121 修复后仅重建这三个角色，r52-three-audio-event-ordinary-HAP-roles-02 三项均通过。仍未证明签名安装、真实权限 UI、后台任务或录音事件。
+
+真实通信 17 个完整 TU 首轮收齐 14 PASS/3 FAIL（r52-communication-complete-platform-04）：新增权限检查的 NAPI/ANI consumer 均缺真实 access_token direct GN dependency，已交原所有者统一修复；Rust 完整链接尚未通过。VPN 完整 TU 首轮 7 PASS/1 FAIL，真实基接口非虚析构暴露 fixture 错误；network 修复 a942364 已经 scope 检查集成 d9ac091，保留共享接口和 Werror，等待受影响平台 TU 复编。Holiday 在真实产品 -fno-exceptions 下的 try/catch 编译错误已交 media 集中修复，未修改编译保护。
+
+根完成 Recorder 普通应用权限 UI/token、私有输入/输出、两个录制生命周期与独立 ffmpeg/ffprobe 实际 AAC/AVC 解码验收接线，首包门禁要求同一新归档、同一 boot、三个新 nonce 的 grant/deny/grant；离线门禁重新运行解码而不接受旧 pass 字段。36 项相关权限边界/证据/调度回归通过（recorder-acceptance-host-01.log），不是 guest 或包验收。真实 ffmpeg/ffprobe 9.0.1 工具及 SHA 另存 r52-independent-media-decoder-tools/evidence.json。
+
+截至此处仍为 281/199/82，新核销 0、交付验收 0/6、首包完整运行门禁 false，其余五包未启动。

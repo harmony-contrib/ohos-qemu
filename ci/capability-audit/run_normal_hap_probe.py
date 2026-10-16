@@ -73,6 +73,7 @@ PERSONAS = {
                       '"export_collection_complete":true', 'verify_arkts_exports_results.py'),
     'audio-stream': ('--audio-stream-only', 'audio-stream-{run}-results.log', '"summary"', 'verify_audio_stream_results.py'),
     'audio-capture': ('--audio-capture-only', 'audio-capture-{run}-results.log', '"summary"', 'verify_audio_capture_results.py'),
+    'media-recorder': ('--media-recorder-only', 'recorder-{run}-results.log', '"recorder_summary"', 'verify_media_recorder_results.py'),
     'avc-media': ('--avc-media-only', 'avc-media-{run}-results.log', '"summary"', 'verify_avc_media_results.py'),
     'audio-suite-effects': ('--audio-suite-effects-only', 'audio-suite-effects-{run}-results.log', '"summary"',
                             'verify_audio_suite_effects_results.py'),
@@ -166,7 +167,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('audio-capture', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('audio-capture', 'media-recorder', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -235,7 +236,7 @@ def run(args):
         return command([args.hdc, '-t', args.target, 'shell', script], label, accepted_failure=accepted_failure)
 
     try:
-        if args.persona == 'audio-capture' and (
+        if args.persona in ('audio-capture', 'media-recorder') and (
                 getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
             raise ValueError('microphone content requires the actual enclosing package-owned acceptance boot')
         if args.persona == 'spring-loading' and (
@@ -276,6 +277,8 @@ def run(args):
                  '--arch', args.arch, '--sdk', args.sdk, '--udid', args.udid, '--output', project]
         if args.persona == 'audio-capture' and getattr(args, 'audio_capture_expect_denied', False):
             build += ['--audio-capture-expect-denied']
+        if args.persona == 'media-recorder' and getattr(args, 'media_recorder_expect_denied', False):
+            build += ['--media-recorder-expect-denied']
         if args.persona == 'network-accounting':
             from network_accounting_endpoint import Endpoint
             network_peer = Endpoint(challenge)
@@ -307,9 +310,14 @@ def run(args):
             '--bundle-name', BUNDLE, '--udid', args.udid, '--sign-code', '1']
         command(sign, 'docker-sign-and-verify', timeout=300)
         report['hap_sha256'] = checksum(signed)
-        if args.persona == 'audio-capture':
+        if args.persona in ('audio-capture', 'media-recorder'):
             from audio_capture_runtime import CaptureRuntime
-            capture_runtime = CaptureRuntime(args, command, shell, report, challenge, boot_id)
+            if args.persona == 'media-recorder':
+                from media_recorder_runtime import RecorderRuntime
+                runtime_type = RecorderRuntime
+            else:
+                runtime_type = CaptureRuntime
+            capture_runtime = runtime_type(args, command, shell, report, challenge, boot_id)
             capture_runtime.prepare()
         # Only our dedicated audit bundle is stopped/replaced. A successful
         # uninstall alone can leave asynchronous old-session teardown queued
@@ -463,10 +471,13 @@ def run(args):
         if capture_runtime is not None:
             runtime = capture_runtime.collect(app_files)
             capture_runtime.close()
-            inputs = project / 'audio-capture-probe-inputs.json'
+            inputs = project / (args.persona + '-probe-inputs.json')
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs),
                           capture_runtime=str(runtime), capture_runtime_sha256=checksum(runtime))
             ui_arguments += ['--inputs', str(inputs), '--runtime', str(runtime), '--hap', str(signed), '--boot-id', boot_id]
+            if args.persona == 'media-recorder':
+                ui_arguments += ['--decode-evidence', str(args.output / 'independent-decode'),
+                                 '--ffmpeg', str(args.ffmpeg), '--ffprobe', str(args.ffprobe)]
         verification = args.output / 'verified-result.json'
         if args.persona in ('avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')
@@ -559,6 +570,9 @@ def main():
     parser.add_argument('--source-volume', default='ohos-qemu-7_0-release-source')
     parser.add_argument('--out-volume', default='ohos-qemu-7_0-release-out')
     parser.add_argument('--audio-capture-expect-denied', action='store_true')
+    parser.add_argument('--media-recorder-expect-denied', action='store_true')
+    parser.add_argument('--ffmpeg', type=Path, default=Path('/opt/homebrew/bin/ffmpeg'))
+    parser.add_argument('--ffprobe', type=Path, default=Path('/opt/homebrew/bin/ffprobe'))
     parser.add_argument('--docker-image', default='ohos-qemu-m144-build-env:7.0-release')
     parser.add_argument('--wait-seconds', type=int, choices=range(60, 1801), default=300)
     args = parser.parse_args()
@@ -566,6 +580,8 @@ def main():
         parser.error('actual guest UDID must be 64 hex digits')
     if args.audio_capture_expect_denied and args.persona != 'audio-capture':
         parser.error('denied microphone expectation requires the public capture persona')
+    if args.media_recorder_expect_denied and args.persona != 'media-recorder':
+        parser.error('denied Recorder expectation requires the public Recorder persona')
     report = run(args)
     print(json.dumps({'persona': report['persona'], 'status': report['status'], 'failures': report['failures']}))
     return 0 if report['status'] == 'pass' else 1
