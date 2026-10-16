@@ -9,12 +9,33 @@ FILES = (('services/vpnmanager/include/open_vpn_ctl.h', '83d31736f01a61c2a939a4e
 CRLF_FILES = ('foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h', 'foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp')
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    try:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    except ValueError as original_error:
+        try:
+            return following().validate_preceding(root, FILES)
+        except (ValueError, FileNotFoundError):
+            raise original_error
 
 
 def validate_preceding(root, files):
-    """Accept only this complete follow-up plus every unaffected preceding file."""
-    validate(root, True)
+    """Accept the complete successor and every unaffected preceding file."""
     repaired = {name: final for name, _, final in FILES}
     expected = tuple((name, original, repaired.get(name, final)) for name, original, final in files)
-    return validate_component(root, PROJECT, REVISION, expected, True)
+    try:
+        validate_component(root, PROJECT, REVISION, FILES, True)
+        return validate_component(root, PROJECT, REVISION, expected, True)
+    except ValueError as original_error:
+        try:
+            return following().validate_preceding(root, expected)
+        except (ValueError, FileNotFoundError):
+            raise original_error
+
+
+def following():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('vpn_callback_dispatch_following',
+        Path(__file__).resolve().parent.parent / 'vpn_callback_dispatch/verify_source.py')
+    result = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(result)
+    return result
