@@ -1,0 +1,2999 @@
+{
+  "schema_version": 1,
+  "reviewed_root_commit": "43a4c43991d3a5a9fe60c50c302d10daae592f99",
+  "ledger_authority": "docs/capability-audit/parallel-work-plan.json#/agents/*/requirements",
+  "baseline": {
+    "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r51-full-unresolved-batch-worklist-04.json",
+    "sha256": "eefbee1c3a9476d6635886f3a67913350fb68b9e33981704d42d1991eec6503a",
+    "total": 281,
+    "closed": 199,
+    "unresolved": 82
+  },
+  "category_labels": {
+    "existing_repair_pending_new_package_runtime": "已有修复候选，待新包运行",
+    "repository_implementation_remaining": "尚缺实现或接线，可继续仓库修复",
+    "missing_real_provider_hardware_credentials_or_peer": "真实供应方/硬件/凭据/对端数据仍缺",
+    "pending_investigation": "证据不足，待核查"
+  },
+  "counts": {
+    "existing_repair_pending_new_package_runtime": 25,
+    "repository_implementation_remaining": 23,
+    "missing_real_provider_hardware_credentials_or_peer": 30,
+    "pending_investigation": 4
+  },
+  "owners": {
+    "apps": 34,
+    "network": 9,
+    "location": 22,
+    "media": 7,
+    "system": 10
+  },
+  "baseline_open_ids": 82,
+  "closed_here": 0,
+  "items": [
+    {
+      "id": "arkts_export:@ohos.accessibility.config:startBlinking",
+      "baseline_finding_id": "arkts_export:@ohos.accessibility.config:startBlinking",
+      "owner": "apps",
+      "group": "无障碍",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "accessibility-input-blink",
+      "deliverable": "真实无障碍输入与闪屏全链",
+      "next_step": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_new_package",
+        "finding": "基线已有真实 NAPI/client/IPC/AAMS/WM screen_blink 实现；R50单项通过不能替代完整验收。",
+        "next_required": "同一新归档验证系统/普通调用者、真实输入/像素/节点、停止/退出/重启边界。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "R50 新包 ScreenBlink 单项通过，待后续全量账本确认",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.accessibility.config:stopBlinking",
+      "baseline_finding_id": "arkts_export:@ohos.accessibility.config:stopBlinking",
+      "owner": "apps",
+      "group": "无障碍",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "accessibility-input-blink",
+      "deliverable": "真实无障碍输入与闪屏全链",
+      "next_step": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_new_package",
+        "finding": "与startBlinking同一真实实现，已有调用者跟踪和窗口释放候选；仍缺本轮完整新包证明。",
+        "next_required": "验证重复stop、无start、caller退出、关闭总开关和服务重启后窗口/像素恢复。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "R50 新包 ScreenBlink 单项通过，待后续全量账本确认",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:phone-published-capabilities-not-declared",
+      "baseline_finding_id": "phone-published-capabilities-not-declared",
+      "owner": "apps",
+      "group": "能力声明与运行时插件",
+      "category": "repository_implementation_remaining",
+      "work_package": "published-syscaps",
+      "deliverable": "六个发布能力的真实后端和声明",
+      "next_step": "逐项确认DistributedFile/HiDumper/DataTransitManager/DeviceAuth/DeviceSecurityLevel/PinAuth的真实选件、插件和权限，再同步SDK/声明/实际镜像canIUse；不能只添六个字符串。",
+      "unknowns": [
+        "本轮未重读完整产品源码或新生成GN，六项当前真实后端选择仍待owner逐项确认。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "declaration_and_backend_missing",
+        "finding": "固定暂存syscap仍不含DistributedFile、HiDumper、DataTransitManager、DeviceAuth、DeviceSecurityLevel、PinAuth六项；不能仅添加字符串。",
+        "next_required": "为六项分别指定真实后端所有者，核对最低配置，接线声明/公开接口/权限与插件完整回归。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:phone-avinputcast-not-declared",
+      "baseline_finding_id": "phone-avinputcast-not-declared",
+      "owner": "apps",
+      "group": "能力声明与运行时插件",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "cast-input-peer",
+      "deliverable": "AVInputCast声明与实际输入投送",
+      "next_step": "先确认新phone声明及provider协议，再提供实际发送端/接收端和共享可发现网络，以随机媒体挑战验证会话、数据、取消及清理。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "cast-distributed-peer"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_declaration_needs_provider_and_new_package",
+        "finding": "混合暂存syscap已声明AVInputCast，但不能由暂存推断phone归档canIUse或真实投送行为。",
+        "next_required": "新phone包核对声明/canIUse，再验证AVInputCast真实会话、provider选择/取消/回调。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:accessibility-qemu-input-e2e",
+      "baseline_finding_id": "accessibility-qemu-input-e2e",
+      "owner": "apps",
+      "group": "无障碍",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "accessibility-input-blink",
+      "deliverable": "真实无障碍输入与闪屏全链",
+      "next_step": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_new_package",
+        "finding": "已有输入E2E和ScreenBlink候选，本轮另补Settings通知service完成/退出语义；均不能替代整体新包验收。",
+        "next_required": "运行真实a11y输入、像素、节点和caller退出/重启轨迹，并加入Settings通知动作。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:api26-runtime-export-mismatches-phone",
+      "baseline_finding_id": "api26-runtime-export-mismatches-phone",
+      "owner": "apps",
+      "group": "能力声明与运行时插件",
+      "category": "pending_investigation",
+      "work_package": "api26-surface-refresh",
+      "deliverable": "API26导出聚合复核",
+      "next_step": "在新归档重采arkts-export-surface，按模块把仍缺的实际成员/值/行为分派唯一owner；引用既有分模块修复，不能按候选数量扣减此聚合ID。",
+      "unknowns": [
+        "原聚合约40个syscap，当前同一新归档逐成员差分尚无；不能认定已经全部实现。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "coverage_refresh_and_cross_domain_implementation_required",
+        "finding": "聚合约40个syscap的API26导出差异；基线有分模块修复，旧R49导出面不能按源码候选扣减。 第二批新增真实CalendarData.editEvent provider及NAPI结果/错误/销毁处理，实际API26 Release unsigned源HAP编译通过；其余模块仍需统一新包导出/行为刷新。 第三批依据真实ModalUI线程契约补上NAPI事件投递/环境销毁/显式scope和旧代session取消，仍待完整TU及新包验收。",
+        "next_required": "同包刷新arkts-export-surface，并按模块把剩余真实导出/值/行为差异分给唯一所有者；不注册空函数。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/runtime/arm64-phone/arkts-export-surface-latest.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+          "docs/capability-audit/parallel/apps/calendar-editor-sdk-20261016.json",
+          "docs/capability-audit/parallel/apps/calendar-native-dispatch-source-contract-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:intelligent-scene-notification-query-fails",
+      "baseline_finding_id": "intelligent-scene-notification-query-fails",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "pending_investigation",
+      "work_package": "intelligent-scene-query",
+      "deliverable": "真实DND查询provider协议",
+      "next_step": "新包复测isDoNotDisturbEnabled和isNotifyAllowedInDoNotDisturb，保存真实初始化/数据/调用者/重启路径，再按具体失败决定源码修复。",
+      "unknowns": [
+        "HAP/Ability存在不能证明旧35200001已解决；当前未确定是哪一层协议失败。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "provider_protocol_and_runtime_missing",
+        "finding": "暂存有IntelligentScene DataExtAbility/NotDisturbService，但HAP存在不能证明原35200001已消失或provider数据协议正确。",
+        "next_required": "新phone包复测两种DND query，保存provider初始化、数据、拒绝和重启证据；仍失败时定位通知/IntelligentScene链。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:shortkey-empty-launch-config",
+      "baseline_finding_id": "shortkey-empty-launch-config",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "shortkey-settings",
+      "deliverable": "真实快捷键Settings路由",
+      "next_step": "新包验证businessId/setKeyDownDuration、Meta+I、短按/错误修饰键、普通caller拒绝及重启。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_new_package",
+        "finding": "基线已有qemu.settings Meta+I真实Shortkeys配置/保留键补丁，暂存能见businessId；未形成完整新包闭环。",
+        "next_required": "验证businessId/setKeyDownDuration、短按、错误修饰键、普通调用者拒绝和重启。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:certificate-dialog-device-result",
+      "baseline_finding_id": "certificate-dialog-device-result",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "pending_investigation",
+      "work_package": "certificate-dialog-review",
+      "deliverable": "证书对话框真实支持条件",
+      "next_step": "沿certificate_manager支持判断运行证书选择/取消/拒绝/空列表/device分支；先保留supportsCACertDialog原始值和实际BMS目标。",
+      "unknowns": [
+        "固定源存在两个真实扩展，旧false不能证明缺HAP；尚无本轮根因或真实正例。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "capability_decision_requires_runtime_review",
+        "finding": "源码/暂存CertificateManager都有MainExtensionAbility和CertPickerUIExtAbility，旧phone supportsCACertDialog=false不能归因为缺HAP。",
+        "next_required": "由certificate_manager所有者跟踪支持判断，实测证书选择、取消、拒绝、空列表和device分支。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:ability-share-picker-system-provider-missing",
+      "baseline_finding_id": "ability-share-picker-system-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "share-picker",
+      "deliverable": "真实share picker及legacy chooser",
+      "next_step": "完成已交Settings modal路径的真实普通caller/URI委托验收；另实现旧ACTION_CHOOSE所需真实PickerDialog UIAbility与取消/结果协议，其他画像逐项验收。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json",
+        "docs/capability-audit/parallel/system/round7-source-provider-review/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "modal_source_candidate_pending_build_legacy_provider_missing",
+        "finding": "固定源无完整系统share picker，只有空样例；本批在真实Settings phone新增sysPicker/share Controller/Extension/Page：BMS真目标枚举、用户选择、action/MIME/URI重查和原caller委托启动、取消/错误/销毁/返回重试。不是com.ohos.sharepickerdialog别名；旧ACTION_CHOOSE仍缺真实PickerDialog UIAbility。",
+        "next_required": "root精确接线Settings组件/最终guard，串行官方SDK编译和新phone包验证UI/URI原caller权限/取消/退出；单独补旧ACTION_CHOOSE真实provider和其他device profiles。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+          "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
+          "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:ability-send-data-action-has-no-enabled-handler",
+      "baseline_finding_id": "ability-send-data-action-has-no-enabled-handler",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "mms-senddata",
+      "deliverable": "MMS sendData文本与附件真实接收",
+      "next_step": "先跑已构建/签名MMS text/plain收件人/草稿UI和取消不发送；按真实UTD/文件URI授权补附件链，Bluetooth/HMS后端缺失须另定合法实现。",
+      "unknowns": [
+        "已有文本handler候选不代表所有sendData MIME/附件及HMS分享协议完成。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json",
+        "docs/capability-audit/parallel/core/round2/MMS-real-OS-signing-and-policy-01/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "plain_text_receiver_source_candidate_pending_build_other_backends_missing",
+        "finding": "Bluetooth是真share扩展而非普通UIAbility，要求ReasonMessage_SystemShare且依赖@hms:collaboration.systemShare，存在HAP不能证明开放sendData闭环。MMS原sendData只认picker.records且附件构建已注释；本批新增真实text/plain skill及严格单文本解析，转到已有TransmitMsg收件人/草稿UI，收intent不发消息。",
+        "next_required": "root负责MMS源码构建包装/精确签名预装/官方SDK，实测文本保留、收件人选择、取消不发送和真实发送；另需合法Bluetooth/HMS或开源ShareExtension后端与MMS文件/UTD附件实际实现/授权验证。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+          "docs/capability-audit/parallel/apps/share-provider-candidate-20261016.json",
+          "docs/capability-audit/parallel/apps/share-provider-source-contract-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:avcast-media-controller-provider-mismatch",
+      "baseline_finding_id": "avcast-media-controller-provider-mismatch",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "cast-controller-volume",
+      "deliverable": "同一真实媒体controller/音量provider",
+      "next_step": "核对真实Want/结果和会话/音量协议，选唯一bundle/Ability并准确构建签名预装；新包验证选择/调整/拒绝/取消/关闭，cast正例共用独立peer。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "provider_protocol_and_wiring_missing",
+        "finding": "暂存provider是com.hmos.mediacontroller，只有UIExtAbility/AVVolumeExtension；没有com.ohos.mediacontroller，包名替换不证明picker协议。",
+        "next_required": "媒体所有者核对真实Want/会话结果协议，统一唯一provider的名字/入口/签名/预装并跑选择/取消。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:media-control-volume-provider-activation",
+      "baseline_finding_id": "media-control-volume-provider-activation",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "cast-controller-volume",
+      "deliverable": "同一真实媒体controller/音量provider",
+      "next_step": "核对真实Want/结果和会话/音量协议，选唯一bundle/Ability并准确构建签名预装；新包验证选择/调整/拒绝/取消/关闭，cast正例共用独立peer。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "provider_protocol_and_wiring_missing",
+        "finding": "AVVolumeExtension仅见com.hmos.mediacontroller暂存；缺phone归档启用及真实面板操作证明。",
+        "next_required": "协调媒体provider，验证真实音量读取/调整、拒绝、取消、关闭和重启后的UI生命周期。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:distributed-hardware-ui-preinstall-path-mismatch",
+      "baseline_finding_id": "distributed-hardware-ui-preinstall-path-mismatch",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "distributed-hardware-ui",
+      "deliverable": "真实DHardware UI预装路径",
+      "next_step": "新包核对DHardwareUIAbility/Mech扩展BMS注册与真实发起/取消/错误/退出；与共同peer工程复用，不另造分布式后端通过结论。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_new_package",
+        "finding": "基线已有dhardware_preinstall正确目录补丁，暂存目录/预装已一致；不是同包BMS/实际交互证明。",
+        "next_required": "新包查DHardwareUIAbility/Mech扩展注册，验证真实发起、取消、错误和退出。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:photo-provider-not-activated-2in1",
+      "baseline_finding_id": "photo-provider-not-activated-2in1",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "photos-provider",
+      "deliverable": "Photos源码provider和真实数据",
+      "next_step": "验证真实Recent组件/Info/DefaultAlbum、授权/取消/退出、FA-card数据变更及cloud协议；首ARM64 phone后仍需2in1独立画像接受。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_source_provider_needs_new_package",
+        "finding": "基线已有Photos源码构建、FA-card真实provider重定向和Store初始化；源码/暂存有Recent*、DefaultAlbumName和FACardService，仍缺完整行为。",
+        "next_required": "新包验证Recent组件/Info/DefaultAlbum、图库授权/取消/退出、FA-card真实数据变化/cloud设置协议，2in1单独验收。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:enterprise-provisioning-provider-missing",
+      "baseline_finding_id": "enterprise-provisioning-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "admin-provisioning",
+      "deliverable": "真实AdminProvisioning源HAP",
+      "next_step": "复核已交实际SDK候选及原normal APL/ACL精确签名预装；新包真实enableAdmin/disableAdmin和状态持久化、super拒绝、取消/错误/双请求/退出/重启。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "source_provider_sdk_passed_needs_system_wiring_and_new_package",
+        "finding": "第四批真实AdminProvisioning源码Stage HAP已官方API26 Release编译通过，原profile normal APL/三项ACL/五个请求权限/真实Main/Auto/Byod与MDMUIExtension均保留。真实enableAdmin/disableAdmin和状态确认、防重、缺配置/权限/取消/session销毁已补；SDK旧字段/可选值错误已修，185条既有弃用和private输入警告留待UI验收。",
+        "next_required": "main接入两个组件及精确平台leaf 8E9386...24B5的preinstall/pregrant，保持normal APL和原ACL；新phone包验证BMS所有入口、真实EDM普通管理员启停/状态持久化、super拒绝、用户取消、错误、双请求/退出/重启、部署配置缺失与结果协议；检查UI实际文字/节点/输入。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json",
+          "docs/capability-audit/parallel/apps/admin-provider-sdk-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:wallpaper-ui-provider-missing",
+      "baseline_finding_id": "wallpaper-ui-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "wallpaper-static-ui-renderer",
+      "deliverable": "实际壁纸选择/设置/还原和renderer",
+      "next_step": "使用当前严格wallpaper family验证Settings真实PhotoPicker授权、两次挑战图home/lock持久数据及屏幕、native fallback/真实renderer连接、默认还原/取消/策略/重启。",
+      "unknowns": [
+        "候选为theme_service=false的真实静态壁纸产品方向；不能扩大为全部UIExtension/live wallpaper/ThemeService接口已实现。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json",
+        "docs/capability-audit/parallel/media/round11-wallpaper-settings/HANDOFF.md",
+        "docs/capability-audit/parallel/media/round15-wallpaper-native-connection/HANDOFF.md"
+      ],
+      "prior_agent_report": {
+        "status": "real_renderer_lifecycle_candidate_settings_UI_and_native_route_missing",
+        "finding": "修复Theme phone/pad真实renderer的未定义错误变量、窗口创建/load/show/destroy代次与销毁后的PixelMap回调；构建元数据、feature/wallpaper manifest和原权限零改。仍只渲染全屏现有壁纸，没有选择/设置/还原/取消UI；原profile过期和native Launcher fallback仍待根。",
+        "next_required": "根完整产品SDK39/BMS/设备兼容/OS签名续期；实现真实Wallpaper设置UI及Launcher fallback，再新包验证真实renderer生命周期/壁纸变化/错误、设置/还原/取消/退出/服务重启及2in1。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
+          "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/inspection.json",
+          "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
+          "ci/capability-audit/test_batch_apps_provider_lifecycle.py"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:accessibility-screen-reader-provider-missing",
+      "baseline_finding_id": "accessibility-screen-reader-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "screen-reader",
+      "deliverable": "真实reader扩展",
+      "next_step": "实现可访问焦点/手势到真实TTS的reader生命周期、唯一bundle和设置启停协议；验证朗读内容/焦点变化及关闭后静默。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "real_backend_missing",
+        "finding": "暂存两种screenreader bundle均缺；设置页/扩展名字不能提供朗读、焦点、手势、TTS生命周期。",
+        "next_required": "实现真实reader extension并统一bundle配置，验证焦点/手势/朗读/关闭/重启，不能空壳。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "baseline_finding_id": "accessibility-caption-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "live-caption",
+      "deliverable": "真实音频字幕provider",
+      "next_step": "先确认可复用的真实ASR引擎/模型与许可，再实现音频订阅、识别、字幕UI/权限/停止/重启；不能仅安装AiCaptionServiceExtAbility空壳。",
+      "unknowns": [
+        "已交资料只确认provider缺失；是否已有可合法复用ASR模型或可用引擎路径尚未核实，不断言必须商业供应方。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "real_backend_missing",
+        "finding": "暂存无com.ohos.vassistant/AiCaptionServiceExtAbility；状态查询不等于实时音频转字幕。",
+        "next_required": "提供真实字幕音频/识别/显示/权限/停止后端并预装，目前没有可直接复用的完整provider。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:vpn-dialog-provider-prefix-mismatch",
+      "baseline_finding_id": "vpn-dialog-provider-prefix-mismatch",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "vpn-service-broker",
+      "deliverable": "VPN授权UI与共同真实broker",
+      "next_step": "同新包验证实际com.ohos.vpndialog允许/拒绝/取消、真实caller结果与断连/重启；复用VPN真实TLS/多owner工程。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_network_integration",
+        "finding": "基线vpn_dialog_bundle补丁已转com.ohos.vpndialog，暂存有真实VpnServiceExtAbility；本组不改网络调用者。",
+        "next_required": "network/main统一验证新包真实授权允许/拒绝/取消/断连/重启，保留调用者及服务结果。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:network-policy-settings-providers-missing",
+      "baseline_finding_id": "network-policy-settings-providers-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "network-policy-ui",
+      "deliverable": "真实联网策略编辑入口",
+      "next_step": "按netpolicy模型实现NetAccessPolicySettingUIExtension真实UI/结果、通知跳转/权限/持久化；不能用普通Settings页替代协议。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "provider_contract_and_caller_wiring_missing",
+        "finding": "暂存CommunicationsSetting是com.ohos且无NetAccessPolicySettingUIExtension；普通Settings页不能冒充联网策略编辑协议。",
+        "next_required": "网络所有者核对策略模型/现有UI，提供真实入口并统一调用者及通知跳转，验证持久化/取消/拒绝。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:telephony-apn-settings-provider-missing",
+      "baseline_finding_id": "telephony-apn-settings-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "apn-settings-ui",
+      "deliverable": "真实APN编辑协议",
+      "next_step": "定位真实APN Want/结果/权限并实现对应入口及增删改、取消/持久化；无线实际生效与modem工程共用。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "provider_contract_and_caller_wiring_missing",
+        "finding": "暂存com.ohos.callsetting有若干Dialog/CallSetting入口但无GeneralCallSettingDialogAbility；相近名字不保证APN协议兼容。",
+        "next_required": "telephony/main核对APN Want/结果协议，提供真实APN设置入口/权限，验证增改删/取消/重启。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:wifi-system-ui-providers-not-activated",
+      "baseline_finding_id": "wifi-system-ui-providers-not-activated",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "wifi-system-ui",
+      "deliverable": "WiFi通知/portal真实UI启用",
+      "next_step": "接线LocationDialog/PortalLogin准确签名和预装目录；实际STA/AP/portal挑战共用WiFi对端工程，验证取消/退出和通知目标。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "preinstall_missing_and_network_backend_dependency",
+        "finding": "暂存LocationDialog有WifiServiceAbility/HotSpotServiceAbility，PortalLogin有EntryAbility；预装未列这两目录，WiFi后端由network负责。",
+        "next_required": "main统一唯一目录/签名预装，network完成STA/AP后端；新包验证真实通知/portal界面与取消/退出。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:camera-picker-entrypoint-missing-phone",
+      "baseline_finding_id": "camera-picker-entrypoint-missing-phone",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "camera-picker",
+      "deliverable": "phone独立camera picker图",
+      "next_step": "把已有product/picker真实模块接入phone构建/签名/预装而非替换MainAbility；实际camera输入、结果URI授权、取消/异常退出单独验收。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "source_provider_and_packaging_missing",
+        "finding": "真源码product/picker声明PickerAbility，混合暂存也有独立picker；HAP图只在SceneBoard分支加入cameraPicker，不能用旧phone MainAbility替代。",
+        "next_required": "main准备phone独立picker模块构建/签名/打包，media完成camera后端，再验证拍摄/结果URI/权限/取消/异常退出。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:notification-extension-settings-entrypoint-missing",
+      "baseline_finding_id": "notification-extension-settings-entrypoint-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "notification-extension-grant-ui",
+      "deliverable": "通知订阅扩展授权UI",
+      "next_step": "补真实NotificationAccessGrantUIExtensionAbility与调用者结果契约，验证允许/拒绝/取消/caller退出/重启。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "real_ui_entrypoint_missing",
+        "finding": "混合暂存SceneBoard未见NotificationAccessGrantUIExtensionAbility；NotificationManangerUIExtensionAbility属于另一流程。",
+        "next_required": "提供订阅扩展授权真实UI/结果协议，协调通知调用者，验证允许/拒绝/取消/重启。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:accessibility-settings-entrypoints-unavailable",
+      "baseline_finding_id": "accessibility-settings-entrypoints-unavailable",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "accessibility-settings-service",
+      "deliverable": "Settings辅助功能服务生命周期",
+      "next_step": "先验已修Promise/请求队列/真实四类notification action；继续实现安全idle-stop与新请求/销毁/重启边界，不能用提前成功或无startId terminateSelf结束。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_repaired_needs_sdk_and_new_package",
+        "finding": "Settings真源及暂存已声明两个目标；本轮修复IgnoreRepeatClickService提前成功、未处理Promise拒绝与请求排队。两个notification helper为同步setValueSync。保留framework service生命周期，避免无startId条件的异步terminateSelf与新请求竞态。尚未公共recipe接线/官方SDK编译。",
+        "next_required": "接线新组件并SDK构建，操作四类真实通知action，核对config/缓存、权限拒绝/连续请求。另需单独建立安全idle-stop与service销毁/重启闭环，不能由本候选核销。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
+          "ci/capability-audit/test_batch_apps_accessibility_service.py",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:notification-manager-settings-provider-missing-phone",
+      "baseline_finding_id": "notification-manager-settings-provider-missing-phone",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "notification-management-ui",
+      "deliverable": "phone通知管理provider选择",
+      "next_step": "明确phone到底选用哪个实际provider和UIExtension契约，接真实模块/配置并验证通知修改、返回、权限、取消/退出。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "profile_wiring_and_runtime_evidence_missing",
+        "finding": "混合暂存SceneBoard notificationmanagement有目标NotificationManangerUIExtensionAbility；phone画像是否启用它不能由暂存推断。",
+        "next_required": "在phone冻结配置选择真实provider、核对UIExtension契约，验证通知修改/结果/取消/退出/权限，不能用不同SystemUI入口冒充。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:avsession-desktop-lyrics-provider-missing",
+      "baseline_finding_id": "avsession-desktop-lyrics-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "desktop-lyrics",
+      "deliverable": "真实桌面歌词provider",
+      "next_step": "实现DesktopLyricAbility、真实会话歌词订阅/显示/隐藏/关闭/重启；不靠bundle别名声称已有UI。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "real_ui_backend_missing",
+        "finding": "暂存缺com.ohos.mediacontroller，com.hmos.mediacontroller也没有DesktopLyricAbility；无可直接重命名复用目标。",
+        "next_required": "实现真实桌面歌词UI/provider和会话订阅/显示/隐藏/清理，验证支持查询、enable及重启。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:location-privacy-ui-providers-unavailable",
+      "baseline_finding_id": "location-privacy-ui-providers-unavailable",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "location-privacy-ui",
+      "deliverable": "定位consent/detail真实入口",
+      "next_step": "接线实际LocationPrivacyExtAbility签名预装并补缺失detail协议；验证同意/拒绝/详情/取消/caller退出，区分PermissionManager前台系统权限弹窗。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "preinstall_and_detail_provider_missing",
+        "finding": "暂存LocationDialog有LocationPrivacyExtAbility但未列预装；com.huawei.hmos.location/LocationPrivacyDetailAbility仍缺。",
+        "next_required": "与location组统一真实consent/detail provider、目录及签名，验证同意/拒绝/详情/取消/caller退出。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "baseline_finding_id": "telephony-number-identity-provider-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "telephone-identity-data",
+      "deliverable": "号码归属/标记/骚扰/反诈真实数据与服务",
+      "next_step": "分别指定numberlocation/numbermark DataShare、NumberIdentity、SpamShield、HSDR实际owner和合法数据/服务；验证更新/离线/未知号码/错误/权限，不能填固定分类。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "telephone-identity"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "multiple_real_backends_missing",
+        "finding": "暂存缺com.numberidentity/com.spamshield/com.hmos.hsdr；归属/标记DataShare和风控能力不能用空表或固定分类替代。",
+        "next_required": "telephony/main拆解身份/归属/骚扰/反诈四种真实协议，提供数据/服务/权限及更新/错误/离线/重启证明。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:settings-navigation-provider-mismatch",
+      "baseline_finding_id": "settings-navigation-provider-mismatch",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "settings-navigation",
+      "deliverable": "真实Settings公开导航",
+      "next_step": "运行全部公开navigation、实际UI/controller、2in1隐式app-info、权限拒绝/取消/退出/重启。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "existing_candidate_needs_new_package",
+        "finding": "基线已修真实Settings bundle路由并源码构建，源码/暂存都有两种UIExtension；R50完整单项仍未记入后续完整账本。",
+        "next_required": "新包跑全部公开导航和真实UI/controller操作，含2in1 implicit app info、无权限/取消/退出/重启。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "R50 新包完整 Settings 单项通过，待后续全量账本确认",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:contacts-picker-entrypoint-missing-phone",
+      "baseline_finding_id": "contacts-picker-entrypoint-missing-phone",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "contacts-picker",
+      "deliverable": "完整Contacts公共picker链",
+      "next_step": "使用严格contacts-picker family完整边界：普通normal零联系人权限签名caller、真实205选择/100分批聚合、取消/错误/双session/超时/退出后重开；同时保留JS→ABC→blob→native→image witness。",
+      "unknowns": [
+        "ABC字节身份witness不证明moduleRecordIdx/literal语义；必须由新guest公共API闭环。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json",
+        "docs/capability-audit/parallel/apps/round12-contact-ABC/fresh-build-contract.json",
+        "docs/capability-audit/parallel/system/round14-contacts-build-witness/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "real_provider_HAP_compiled_caller_protocol_and_ordinary_test_candidate_runtime_pending",
+        "finding": "根实际产品SDK39批02已完整编译真Contacts HAP；本批补齐真实public selectContacts/selectContact caller链的BusinessError/Promise/callback、严格100分批及205完整聚合、默认取消、独立UV通知/有界超时/环境与窗口清理。86 JS +44 native helper +17 native lifecycle host场景通过；Darwin无LSan，未核销。 本批新增normal/非systemApp/零读写权限普通caller源码与独立证据checker，15必需用例/16 invocation、两项可选边界；8 host checks通过。尚未官方SDK/签名/安装/真UI，不以source权限声明或合成测试核销。",
+        "next_required": "根真实产品两TU/ABC编译、sync_mode精确后继guard和重放，普通非systemApp零读写权限caller实际签名/BMS/token校验及新包UI全部重载/205/取消默认/部分帧非零错误/双session退出后重开；legacy import/save传输仍独立未验收。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/provider-lifecycle-and-pickersheet.md",
+          "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/inspection.json",
+          "ci/capability-audit/fixtures/batch_apps/provider_lifecycle/candidate-hashes.json",
+          "ci/capability-audit/test_batch_apps_provider_lifecycle.py",
+          "docs/capability-audit/parallel/apps/round8-contact-caller-review/review.md",
+          "docs/capability-audit/parallel/apps/round8-contact-caller-review/host-evidence.json",
+          "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/candidate-hashes.json",
+          "ci/capability-audit/test_batch_apps_contact_picker_protocol.py",
+          "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-evidence-contract.md",
+          "docs/capability-audit/parallel/apps/round8-contact-caller-review/runtime-candidate.json",
+          "ci/capability-audit/batch_apps_contact_picker_runtime.py",
+          "ci/capability-audit/test_batch_apps_contact_picker_runtime.py"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:arkui-expanded-text-menu-providers-missing",
+      "baseline_finding_id": "arkui-expanded-text-menu-providers-missing",
+      "owner": "apps",
+      "group": "系统应用与入口",
+      "category": "repository_implementation_remaining",
+      "work_package": "expanded-text-menu",
+      "deliverable": "实际菜单plugin及动作handler",
+      "next_step": "实现与真实dlopen ABI匹配的expanded_menu和动作映射，复用Browser/Calendar/Maps/share真实handler，验文本/URI安全授权与取消/退出。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "runtime_plugin_and_handler_backends_missing",
+        "finding": "暂存lib/lib64均缺expanded_menu/libexpanded_menu.z.so；菜单动作还依赖缺失或名字不同的Browser/Calendar/Maps/分享handler。",
+        "next_required": "提供真实menu映射plugin和动作handler，验证文本/URI、安全授权/选择/取消/退出，不能隐藏菜单或固定成功。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:arkui-text-service-runtime-plugins-missing",
+      "baseline_finding_id": "arkui-text-service-runtime-plugins-missing",
+      "owner": "apps",
+      "group": "能力声明与运行时插件",
+      "category": "repository_implementation_remaining",
+      "work_package": "text-service-plugins",
+      "deliverable": "分享/翻译/实体识别真实plugin",
+      "next_step": "按真实systemshare/translation/analyzer ABI补实际服务与有内容结果、取消/释放；先确定模型/数据/handler来源，不造空符号。",
+      "unknowns": [
+        "真实翻译/识别引擎和合法模型材料是否可复用，在现交接不足以证明。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/apps/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "real_runtime_plugin_backends_missing",
+        "finding": "暂存缺systemshare_innerkits、ai_text_translation_innerapi、ai_text_analyzer_innerapi三库；已有fallback没有真实分享/翻译/识别行为。",
+        "next_required": "提供与ArkUI dlopen接口/ABI匹配的真实服务后端，验证目标/内容/实体范围及错误/取消/释放，不加空符号。",
+        "ledger_closed": false,
+        "evidence": [
+          "docs/capability-audit/parallel/apps/static-evidence.json",
+          "docs/OHOS_7_BATCH_REPAIR.md",
+          "docs/capability-audit/system-bundle-provider-audit.json",
+          "docs/capability-audit/parallel/apps/static-evidence-20261016.json"
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+      "baseline_finding_id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+      "owner": "network",
+      "group": "网络与外设",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "bluetooth-controller-peer",
+      "deliverable": "实际HCI/vendor/controller及OOB peer",
+      "next_step": "先接libbt_vendor真实H4通道和独立controller/peer；验证经典P192/P256及LE SC C/R、最终enable/disable、配对/数据、取消/重放/超时/off/unplug。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "hci-controller"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_real_service_gap_candidate_controller_peer_pending",
+        "finding": "API26 validates both supplied objects and selects P256 per fixed SDK. New exact service candidate validates system/API permission, raw peer/type and C/R and uses real classic P192/extended P256 HCI and LE P256 SC GAP replies. Single-use storage, cancellation/expiry/off and actual failures are covered in host bodies; local generation no longer reports empty success. Hardware, full-TU and runtime proof remain absent.",
+        "evidence": [
+          "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:53",
+          "/ohos/foundation/communication/bluetooth/frameworks/js/napi/src/connection/napi_bluetooth_connection.cpp:800",
+          "/ohos/interface/sdk-js/api/@ohos.bluetooth.connection.d.ts:286",
+          "patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md",
+          "docs/capability-audit/parallel/network/bluetooth-oob-host-tests-20261016.txt",
+          "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:941",
+          "/ohos/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp:1444",
+          "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/README.md",
+          "docs/capability-audit/parallel/network/bluetooth-service-host-tests-20261016.txt"
+        ],
+        "remaining": [
+          "Parent reports 7 actual complete ARM64 NAPI/service/GAP TUs PASS at r52-bluetooth-oob-full-TUs-01; final all-consumer relink/cross-architecture packaging and actual controller/peer/permission/off runtime acceptance remain required.",
+          "Implement real controller/vendor/HDI transport and OOB peer challenge. Verify classic P192/P256 and LE SC C/R, events, data, failed challenge, cancel/replay/timeout/off/unplug/cleanup in the newly packaged representative artifact.",
+          "Virtual-to-raw mapping and actual local OOB generation remain unavailable. LE P192 is not a legacy TK; optional randomizer omission is unsupported. Delayed firmware callbacks lack session identity and need actual duplicate-event/restart validation."
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+      "baseline_finding_id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+      "owner": "network",
+      "group": "VPN",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "vpn-service-broker",
+      "deliverable": "真实OpenVPN broker/每owner状态",
+      "next_step": "同新包跑多owner真实TLS对端/数据、TUN/netId/DNS/IPv4/IPv6/路由/UID隔离、可空getter与回调、重放/断连/worker-broker死后清理；不要把未来persist-tun/split-DNS/metric不支持写成通过。",
+      "unknowns": [
+        "该候选不实现persist-tun更新传输、OHOS不可表示的加密/拆分DNS或非零route metric；若该ID明确要求这些子功能，仍需B类实现和追加范围，不能整条据getter成功核销。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_broker_and_health_candidate_runtime_pending",
+        "finding": "Fixed platform actually enables multiple extension VPN owners. Candidate replaces single-init RESTART/global TUN selection with a long-lived authenticated broker, per-owner UID/user/bundle/vpnId/generation snapshots, unique reserved interfaces, exact worker/broker starttime-bound TUN FDs and real whole-group STOP. Independent epoch-bound FFRT health checks detect broker/worker death, revoke queued CONNECTED, mark disconnected, retry cleanup and reconcile actual exited groups before stale credential removal. Actual supplier/link/UID/up-rule/mode errors propagate. Host tests use explicit platform/account/IPC doubles; no complete guest VPN claim.",
+        "evidence": [
+          "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+          "docs/capability-audit/parallel/network/host-tests.txt",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md",
+          "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
+          "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/README.md",
+          "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
+          "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_broker/",
+          "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+          "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt"
+        ],
+        "remaining": [
+          "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+          "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+          "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+          "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
+        ]
+      },
+      "baseline_preparation_status": "四补丁三架构 TU；新增真实 ARM64 原生监督程序/TUN 桥已编译链接，实际 host 进程退出与 formatter 检查通过；系统服务接线和完整新包网络行为仍未完成",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+      "baseline_finding_id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+      "owner": "network",
+      "group": "VPN",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "vpn-service-broker",
+      "deliverable": "真实OpenVPN broker/每owner状态",
+      "next_step": "同新包跑多owner真实TLS对端/数据、TUN/netId/DNS/IPv4/IPv6/路由/UID隔离、可空getter与回调、重放/断连/worker-broker死后清理；不要把未来persist-tun/split-DNS/metric不支持写成通过。",
+      "unknowns": [
+        "该候选不实现persist-tun更新传输、OHOS不可表示的加密/拆分DNS或非零route metric；若该ID明确要求这些子功能，仍需B类实现和追加范围，不能整条据getter成功核销。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_broker_and_health_candidate_runtime_pending",
+        "finding": "Fixed platform actually enables multiple extension VPN owners. Candidate replaces single-init RESTART/global TUN selection with a long-lived authenticated broker, per-owner UID/user/bundle/vpnId/generation snapshots, unique reserved interfaces, exact worker/broker starttime-bound TUN FDs and real whole-group STOP. Independent epoch-bound FFRT health checks detect broker/worker death, revoke queued CONNECTED, mark disconnected, retry cleanup and reconcile actual exited groups before stale credential removal. Actual supplier/link/UID/up-rule/mode errors propagate. Host tests use explicit platform/account/IPC doubles; no complete guest VPN claim.",
+        "evidence": [
+          "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+          "docs/capability-audit/parallel/network/host-tests.txt",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md",
+          "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
+          "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/README.md",
+          "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
+          "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_broker/",
+          "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+          "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt"
+        ],
+        "remaining": [
+          "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+          "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+          "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+          "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
+        ]
+      },
+      "baseline_preparation_status": "四补丁三架构 TU；新增真实 ARM64 原生监督程序/TUN 桥已编译链接，实际 host 进程退出与 formatter 检查通过；系统服务接线和完整新包网络行为仍未完成",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:netmanager-ebpf-backend",
+      "baseline_finding_id": "netmanager-ebpf-backend",
+      "owner": "network",
+      "group": "网络与外设",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "netmanager-ebpf",
+      "deliverable": "真实内核BPF路径",
+      "next_step": "新归档内核验证BPF syscall、实际program/map load/attach、UID计数/策略执行、拒绝与卸载；三个defconfig候选不是运行证明。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_new_package_validation",
+        "finding": "The repository already has BPF_SYSCALL/CGROUP_BPF kernel candidates for all three architectures. Historical ENOSYS alone cannot establish the behavior of the next rebuilt kernel, and candidate configuration does not prove UID policy/statistics.",
+        "evidence": [
+          "patches/common/device/qemu/kernel_capability/0001-enable-ebpf-dmabuf-and-arm64-ftrace.patch",
+          "docs/capability-audit/parallel-work-plan.json"
+        ],
+        "remaining": [
+          "Boot a newly packaged kernel and verify actual BPF program/map loading and attachment, UID accounting, access-policy enforcement, denied caller boundaries and cleanup.",
+          "Kernel/defconfig modifications belong to central integration; this batch did not edit them."
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:bluetooth-state-transition-false-success",
+      "baseline_finding_id": "bluetooth-state-transition-false-success",
+      "owner": "network",
+      "group": "网络与外设",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "bluetooth-controller-peer",
+      "deliverable": "实际HCI/vendor/controller及OOB peer",
+      "next_step": "先接libbt_vendor真实H4通道和独立controller/peer；验证经典P192/P256及LE SC C/R、最终enable/disable、配对/数据、取消/重放/超时/off/unplug。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "hci-controller"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_backend_dependency",
+        "finding": "Historical adapter/vendor-loader rollback remains open. Existing enum/export repairs cannot substitute for a Bluetooth transport or confirm adapter state transitions.",
+        "evidence": [
+          "docs/capability-audit/parallel-work-plan.json",
+          "patches/common/foundation/communication/bluetooth/api26_control_enums/README.md"
+        ],
+        "remaining": [
+          "Select a real virtual or passthrough controller and matching vendor/HDI transport.",
+          "Use a new package and peer to verify enable/disable final state, pairing/data, unplug and cleanup; request acceptance must not count as enabled."
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:wifi-sta-backend-unavailable",
+      "baseline_finding_id": "wifi-sta-backend-unavailable",
+      "owner": "network",
+      "group": "网络与外设",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "wifi-radio-peer",
+      "deliverable": "实际WiFi无线接口及STA/AP peer",
+      "next_step": "使用新包实际mac80211_hwsim/virt_wifi、WPA和监管配置；提供独立兼容STA/AP，对真实DHCP/包传输/P2P、设备变化/失败/清理作挑战。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "wifi-peer"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_new_package_and_peer_validation",
+        "finding": "The repository already stages mac80211_hwsim/virt_wifi modules and WPA scan/channel/software-PNO/regulatory candidates. Their own evidence explicitly leaves AP association/data/P2P validation open; historical absent-module evidence must not be misreported as a fresh-source result.",
+        "evidence": [
+          "scripts/build_standard_qemu_in_docker.sh:2365",
+          "patches/common/foundation/communication/wifi/wpa_scan/README.md",
+          "patches/common/foundation/communication/wifi/wpa_channels/README.md",
+          "patches/common/foundation/communication/wifi/software_ap_regulatory/README.md"
+        ],
+        "remaining": [
+          "Validate the actual packaged modules, service identity, real radio interface and regulatory behavior.",
+          "Run STA/AP association, DHCP, packet transfer, P2P, failure, device-change and teardown tests using a genuine compatible peer."
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:usb-manager-device-query",
+      "baseline_finding_id": "usb-manager-device-query",
+      "owner": "network",
+      "group": "网络与外设",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "usb-host-udc-mtp",
+      "deliverable": "实际USB fixture/UDC及MTP",
+      "next_step": "先选QEMU设备/受控passthrough并明确device-mode真实UDC/configfs，另接准确MtpService；验descriptor/query/open/权限/数据/unplug。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "usb-device-udc"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_device_and_provider_dependency",
+        "finding": "Host enumeration and a USB service alone do not establish gadget/device-mode operation. The historical missing UDC/configfs binding and MTP service declaration mismatch remain separate unresolved dependencies.",
+        "evidence": [
+          "/ohos/base/usb/usb_manager/services/native/src/usb_host_manager.cpp:489",
+          "/ohos/base/usb/usb_manager/services/native/src/usb_service.cpp:856",
+          "docs/capability-audit/parallel-work-plan.json"
+        ],
+        "remaining": [
+          "Provide actual QEMU host-device fixtures/passthrough and a genuine UDC backend for device mode.",
+          "Coordinate MtpService HAP/provider declaration with the owning app/media group through the parent; do not edit their files.",
+          "Validate descriptor/query/open/permission/data/unplug/cleanup behavior and real MTP activation on a new package."
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:peer-device-user-nat-isolation",
+      "baseline_finding_id": "peer-device-user-nat-isolation",
+      "owner": "network",
+      "group": "网络与外设",
+      "category": "repository_implementation_remaining",
+      "work_package": "peer-networking",
+      "deliverable": "显式共享二层和独立设备身份",
+      "next_step": "root实现显式bridge/tap/唯一MAC/端口/设备身份，再用同一已包装代表归档的两个实例做发现/帐号认证/数据/peer移除；不需要先构建其余五包。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_shared_launcher_and_peer_dependency",
+        "finding": "The current package launcher still generates a user-mode NAT netdev, preventing ordinary peer discovery between independent guests. Correcting a single service implementation cannot create a shared layer-2 test network.",
+        "evidence": [
+          "scripts/package_standard_qemu.sh:1244",
+          "docs/capability-audit/parallel-work-plan.json"
+        ],
+        "remaining": [
+          "Parent owns shared launcher changes: design explicit bridge/tap networking with unique interfaces, MACs, ports and two independent device identities.",
+          "Validate discovery, account/authentication boundaries, distributed/cast data and peer removal with two newly packaged guests."
+        ]
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:vpn-runtime-export-gaps",
+      "baseline_finding_id": "vpn-runtime-export-gaps",
+      "owner": "network",
+      "group": "VPN",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "vpn-service-broker",
+      "deliverable": "真实OpenVPN broker/每owner状态",
+      "next_step": "同新包跑多owner真实TLS对端/数据、TUN/netId/DNS/IPv4/IPv6/路由/UID隔离、可空getter与回调、重放/断连/worker-broker死后清理；不要把未来persist-tun/split-DNS/metric不支持写成通过。",
+      "unknowns": [
+        "该候选不实现persist-tun更新传输、OHOS不可表示的加密/拆分DNS或非零route metric；若该ID明确要求这些子功能，仍需B类实现和追加范围，不能整条据getter成功核销。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/network/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_broker_and_health_candidate_runtime_pending",
+        "finding": "Fixed platform actually enables multiple extension VPN owners. Candidate replaces single-init RESTART/global TUN selection with a long-lived authenticated broker, per-owner UID/user/bundle/vpnId/generation snapshots, unique reserved interfaces, exact worker/broker starttime-bound TUN FDs and real whole-group STOP. Independent epoch-bound FFRT health checks detect broker/worker death, revoke queued CONNECTED, mark disconnected, retry cleanup and reconcile actual exited groups before stale credential removal. Actual supplier/link/UID/up-rule/mode errors propagate. Host tests use explicit platform/account/IPC doubles; no complete guest VPN claim.",
+        "evidence": [
+          "patches/common/foundation/communication/netmanager_base/qemu_openvpn_control/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_lifecycle/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/process_lifecycle.h",
+          "docs/capability-audit/parallel/network/host-tests.txt",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md",
+          "docs/capability-audit/parallel/network/session-host-tests-20261016.txt",
+          "patches/common/foundation/communication/netmanager_ext/vpn_callback_dispatch/README.md",
+          "docs/capability-audit/parallel/network/vpn-callback-host-tests-20261016.txt",
+          "patches/common/foundation/communication/netmanager_base/qemu_openvpn_broker/",
+          "patches/common/foundation/communication/netmanager_ext/openvpn_broker/",
+          "docs/capability-audit/parallel/network/vpn-broker-integration-20261016.md",
+          "docs/capability-audit/parallel/network/vpn-broker-host-tests-20261016.txt"
+        ],
+        "remaining": [
+          "Integrate final base/ext exact components and dynamic helpers, init inherited sockets, libbegetutil dependency and demonstrated narrow policy. Compile/link complete final service/controller/native/helper TUs and changed header consumers for all target architectures.",
+          "Run real Linux blocked-descendant stop and broker SIGKILL -> worker/client/bridge parent-death/credential cleanup tests. Run both final actual-function probes against real FFRT and actual service IPC/caller lifecycle.",
+          "First-new-package real simultaneous-owner TLS peers, accepted-app/UID isolation, interfaces/netIds, DNS/IPv4/IPv6/routes/data/endpoint bypass, real callback and nullable getter state, account/permission boundaries, generation replay, reconnect, SIGKILL recovery and teardown must pass before the other five packages.",
+          "persist-tun configuration-update transport, OHOS-unrepresentable split/encrypted DNS and nonzero route metric mapping remain unsupported source features and need separate genuine implementations."
+        ]
+      },
+      "baseline_preparation_status": "四补丁三架构 TU；新增真实 ARM64 原生监督程序/TUN 桥已编译链接，实际 host 进程退出与 formatter 检查通过；系统服务接线和完整新包网络行为仍未完成",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "fusion-fence-inputs",
+      "deliverable": "真实GNSS/WLAN/CELL融合围栏",
+      "next_step": "复用新GNSS provider和真实Request/WorkRecord，补实际WLAN扫描/实时CELL peer；逐shape/bitmap/owner/权限/截止/队列验证，BLE bitmap8明确801，不伪装支持。",
+      "unknowns": [
+        "支持范围为现有真实输入的圆/多边形/指纹/小区；SDK缺BLE fence参数，不得把801改成功。"
+      ],
+      "missing_dependency_keys": [
+        "wifi-peer",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/location/round4-fusion-communication.md"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+        "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
+        "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required. Parent full-platform compile exposed a const owner/account-helper mismatch; patch6 uses a local identity copy and host fixtures now retain the real mutable-reference declaration. Parent full locator TU/new-package validation remains required.",
+        "evidence": [
+          "round4-fusion-communication.md",
+          "round4-freeze-inputs.json",
+          "round4-platform-build-request.json",
+          "host-tests.log",
+          "round5-gnss.md",
+          "round5-freeze-inputs.json",
+          "round5-platform-build-request.json",
+          "round6-account-contract.md",
+          "round6-freeze-inputs.json"
+        ],
+        "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "reverse-geocoder",
+      "deliverable": "真实逆地理provider与行政区数据",
+      "next_step": "按已交真实Binder peer ABI部署受配置/签名的能力，输入有来源/许可行政区边界或真实服务；对GNSS点/locale作实际查询、无覆盖/超时/断连/缓存/权限挑战。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "reverse-geocoder"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_district_route_pending_compile_provider_and_packaged_validation",
+        "classification": "new_binding_to_real_location_and_reverse_geocoder",
+        "finding": "Promise-only optional/undefined request now starts an owned authorized one-shot location request, uses its permitted recent cache or real fix, always stops a started request, queries the real reverse-geocoder/cache within one deadline, and rechecks fine/approximate/firstToken/current-account/switch access before publishing district fields. SDK area-query errors use 3301500. Batch4 repairs the parent-found undeclared MAX_BUF_LEN TU error using the same fixed 100-byte locale bound and actual100/101-byte parser regression. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
+        "evidence": [
+          "round3-business.md",
+          "round3-geocoder-peer-abi.md",
+          "ci/capability-audit/test_batch_location_business_runtime.py",
+          "round2-freeze-inputs.json",
+          "round5-gnss.md",
+          "round5-freeze-inputs.json",
+          "round5-platform-build-request.json"
+        ],
+        "next_required": "Generate new IDL68/71, compile complete native/service/NAPI TUs, provide actual GNSS and configured geocoder ability over externally challenged data using documented peer ABI; validate new-package cache/current-fix/locale/deadline/permission/user/stop behavior."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+      "owner": "location",
+      "group": "定位",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "location-privacy-icon",
+      "deliverable": "当前帐号真实隐私使用状态",
+      "next_step": "新包实测正常/系统caller query、start/stop/freeze/user/switch/revoke与真实PrivacyKit计账；不存在HD provider不能据普通GNSS推断HD状态。",
+      "unknowns": [
+        "真正HD provider/HD positive branch无本轮材料；只验真实已存在类型及诚实无HD状态，不把函数单次返回算全能力。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_live_state_pending_compile_and_packaged_validation",
+        "classification": "new_binding_to_live_request_and_permission_state",
+        "finding": "NAPI and Taihe now call a service-side system-permission checked IPC query. Current-account GNSS/network/fused requests must have active privacy-use state, valid lifetime, permission and switch state; frozen, passive-only and other-account requests are excluded. No HD provider is present, so HD status is not inferred. Fine-only callers now use actual ACCESS_LOCATION PrivacyKit start/stop accounting; approximate callers retain approximate accounting. Query snapshots under request/permission locks, then checks permissions/accounts/freeze/RDB after releasing them. Radio-only active fusion fences now contribute only while their real fine-permission-use request remains active and current-account eligible; retired stop retries do not claim an active fence.",
+        "evidence": [
+          "source-evidence.json: symbols",
+          "backend-excerpts.json: icon producer audit where applicable",
+          "ci/capability-audit/test_batch_location_icon_state.py",
+          "round2-freeze-inputs.json"
+        ],
+        "next_required": "Generate/compile the updated IDL and complete location TUs, then new packaged normal/system-caller query, start/stop/freeze/user/switch/permission boundaries. An actual HD provider/state source is still required for HD status."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+      "owner": "location",
+      "group": "定位",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "gnss-skiing-track",
+      "deliverable": "真实GNSS skiing后处理轨迹",
+      "next_step": "使用root独立受控轨迹经vendor→HDI→定位业务，验证SPORT-only、实际坐标/高度/速度/方向、历史增量/24h保留、owner/delegation/撤权/停止/晚样本。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/system/round4-gnss/result.json",
+        "docs/capability-audit/parallel/system/round11-live-suite/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_skiing_route_pending_compile_provider_and_packaged_validation",
+        "classification": "new_binding_and_real_GNSS_post_processing_history",
+        "finding": "SKIING travels through a new explicit IPC sports argument while legacy RequestConfig wire remains unchanged. SPORT requests use fine PrivacyKit state and real GNSS reports; accuracy/time-driven processing produces geometry, altitude, speed and direction. UID/token/firstToken history has 24h monotonic retention and incremental cursors with source/mock/out-of-order/privacy/lifecycle checks. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required.",
+        "evidence": [
+          "round3-business.md",
+          "ci/capability-audit/test_batch_location_business_runtime.py",
+          "ci/capability-audit/test_batch_location_icon_state.py",
+          "round2-freeze-inputs.json",
+          "round5-gnss.md",
+          "round5-freeze-inputs.json",
+          "round5-platform-build-request.json"
+        ],
+        "next_required": "Generate IDL69/70, rebuild RequestConfig consumers and complete listed TUs, then new-package GNSS challenge tracks with SPORT-only mode, ordinary/system fine permissions, background/revoke/switch, multiple owners/delegation, stop/late samples, retention and cursor boundaries. Assess processing behavior on actual virtual peripheral input."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "fusion-fence-inputs",
+      "deliverable": "真实GNSS/WLAN/CELL融合围栏",
+      "next_step": "复用新GNSS provider和真实Request/WorkRecord，补实际WLAN扫描/实时CELL peer；逐shape/bitmap/owner/权限/截止/队列验证，BLE bitmap8明确801，不伪装支持。",
+      "unknowns": [
+        "支持范围为现有真实输入的圆/多边形/指纹/小区；SDK缺BLE fence参数，不得把801改成功。"
+      ],
+      "missing_dependency_keys": [
+        "wifi-peer",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/location/round4-fusion-communication.md"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+        "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
+        "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied.",
+        "evidence": [
+          "round4-fusion-communication.md",
+          "round4-freeze-inputs.json",
+          "round4-platform-build-request.json",
+          "host-tests.log"
+        ],
+        "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "fusion-fence-inputs",
+      "deliverable": "真实GNSS/WLAN/CELL融合围栏",
+      "next_step": "复用新GNSS provider和真实Request/WorkRecord，补实际WLAN扫描/实时CELL peer；逐shape/bitmap/owner/权限/截止/队列验证，BLE bitmap8明确801，不伪装支持。",
+      "unknowns": [
+        "支持范围为现有真实输入的圆/多边形/指纹/小区；SDK缺BLE fence参数，不得把801改成功。"
+      ],
+      "missing_dependency_keys": [
+        "wifi-peer",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/location/round4-fusion-communication.md"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_gnss_cell_wifi_pending_platform_and_runtime",
+        "classification": "real_business_backend_and_bindings_implemented_device_boundaries_explicit",
+        "finding": "API26 bindings, bounded new wire, preserved old IPC and owner lifecycle use real GNSS Requests/WorkRecords, actual WLAN scans and fresh per-slot CoreServiceClient cells. Source backend supports circle/polygon/fingerprint/cell transitions; BLE bitmap8 honestly returns801 because the fixed SDK provides no BLE fence input. No arbitrary success, coordinate or event is supplied. Parent full-platform compile exposed a const owner/account-helper mismatch; patch6 uses a local identity copy and host fixtures now retain the real mutable-reference declaration. Parent full locator TU/new-package validation remains required.",
+        "evidence": [
+          "round4-fusion-communication.md",
+          "round4-freeze-inputs.json",
+          "round4-platform-build-request.json",
+          "host-tests.log",
+          "round6-account-contract.md",
+          "round6-freeze-inputs.json"
+        ],
+        "next_required": "Parent actual IDL72..75 + full platform TUs/link; new representative runtime must prove externally challenged GNSS/CELL/WLAN transitions, shape/owner/permission/deadline/queued callback boundaries and explicit unsupported BLE contract. Controlled providers and actual device permissions remain required."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "bluetooth-controller-peer",
+      "deliverable": "公开定位BLE扫描服务链",
+      "next_step": "接真实HCI/controller后让BleCentralManager解析独立广告ID/RSSI/payload，经真实service/NAPI验证过滤、启动失败、队列/注销/撤权/用户切换；不能直接注入NAPI回调。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "hci-controller"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
+        "classification": "new_binding_to_existing_BLE_service_with_semantic_repairs",
+        "finding": "New public NAPI routes call real locator IPC and BleCentralManager. Service filters exact normalized device IDs and strict RSSI thresholds with current-account/permission/freeze checks; startup and stop errors propagate. Optional/undefined stop owns only matching callbacks in its environment and silences queued events. Radio operations recheck current users to prevent stale task interference.",
+        "evidence": [
+          "ci/capability-audit/test_batch_location_ble_runtime.py",
+          "ci/capability-audit/test_batch_location_ble_napi.py",
+          "round2-freeze-inputs.json"
+        ],
+        "next_required": "Regenerate IDL 66/67 and compile all listed full TUs; validate new packaged BLE over an actual/controlled virtual HCI transport with external challenge IDs/RSSI/payloads, start-failure, revoke-stop, callback/queue and user/freeze boundaries."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "baseline_finding_id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "bluetooth-controller-peer",
+      "deliverable": "公开定位BLE扫描服务链",
+      "next_step": "接真实HCI/controller后让BleCentralManager解析独立广告ID/RSSI/payload，经真实service/NAPI验证过滤、启动失败、队列/注销/撤权/用户切换；不能直接注入NAPI回调。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "hci-controller"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_live_ble_route_pending_compile_and_packaged_validation",
+        "classification": "new_binding_to_existing_BLE_service_with_semantic_repairs",
+        "finding": "New public NAPI routes call real locator IPC and BleCentralManager. Service filters exact normalized device IDs and strict RSSI thresholds with current-account/permission/freeze checks; startup and stop errors propagate. Optional/undefined stop owns only matching callbacks in its environment and silences queued events. Radio operations recheck current users to prevent stale task interference.",
+        "evidence": [
+          "ci/capability-audit/test_batch_location_ble_runtime.py",
+          "ci/capability-audit/test_batch_location_ble_napi.py",
+          "round2-freeze-inputs.json"
+        ],
+        "next_required": "Regenerate IDL 66/67 and compile all listed full TUs; validate new packaged BLE over an actual/controlled virtual HCI transport with external challenge IDs/RSSI/payloads, start-failure, revoke-stop, callback/queue and user/freeze boundaries."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implementation_repaired_pending_packaged_validation",
+        "classification": "existing_real_backend_with_listener_contract_defects",
+        "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+        "evidence": [
+          "backend-excerpts.json: NAPI and call.js exports",
+          "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+        ],
+        "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implementation_repaired_pending_packaged_validation",
+        "classification": "existing_real_backend_with_listener_contract_defects",
+        "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+        "evidence": [
+          "backend-excerpts.json: NAPI and call.js exports",
+          "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+        ],
+        "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implementation_repaired_pending_packaged_validation",
+        "classification": "existing_real_backend_with_listener_contract_defects",
+        "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+        "evidence": [
+          "backend-excerpts.json: NAPI and call.js exports",
+          "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+        ],
+        "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implementation_repaired_pending_packaged_validation",
+        "classification": "existing_real_backend_with_listener_contract_defects",
+        "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+        "evidence": [
+          "backend-excerpts.json: NAPI and call.js exports",
+          "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+        ],
+        "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implementation_repaired_pending_packaged_validation",
+        "classification": "existing_real_backend_with_listener_contract_defects",
+        "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+        "evidence": [
+          "backend-excerpts.json: NAPI and call.js exports",
+          "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+        ],
+        "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implementation_repaired_pending_packaged_validation",
+        "classification": "existing_real_backend_with_listener_contract_defects",
+        "finding": "Existing NAPI exports and IMS reports are present under SUPPORT_RTT_CALL. This round fixes optional synchronous off, matching listener identity, multiple registrations, queued cancellation, reference ownership and environment teardown for this event family.",
+        "evidence": [
+          "backend-excerpts.json: NAPI and call.js exports",
+          "ci/capability-audit/test_batch_location_rtt_lifecycle.py"
+        ],
+        "next_required": "New packaged phone: verify exports and ordinary/system caller permission boundaries; real IMS RTT event payloads, off silence and session teardown need modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "existing_implementation_pending_packaged_validation",
+        "classification": "existing_real_backend_feature_gated",
+        "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+        "evidence": [
+          "backend-excerpts.json: out_rtt_args and NAPI exports",
+          "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+        ],
+        "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "existing_implementation_pending_packaged_validation",
+        "classification": "existing_real_backend_feature_gated",
+        "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+        "evidence": [
+          "backend-excerpts.json: out_rtt_args and NAPI exports",
+          "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+        ],
+        "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:startRtt",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:startRtt",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "existing_implementation_pending_packaged_validation",
+        "classification": "existing_real_backend_feature_gated",
+        "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+        "evidence": [
+          "backend-excerpts.json: out_rtt_args and NAPI exports",
+          "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+        ],
+        "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "ims-rtt-session",
+      "deliverable": "真实IMS RTT会话与回调",
+      "next_step": "按实际ImsCoreServiceInterface/PROXY_IMS_CALL提供协商会话与独立RTT peer，逐方法验证文本/modify/error、模式/权限、off静默/会话退出/重连；AT注册不能替代IMS。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "ims-rtt",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.call:stopRtt",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "existing_implementation_pending_packaged_validation",
+        "classification": "existing_real_backend_feature_gated",
+        "finding": "Fixed NAPI and call.js already expose this operation under SUPPORT_RTT_CALL. ARM64 phone out/args.gn has both call_manager and cellular_call RTT gates true. No extra export or success shim is justified.",
+        "evidence": [
+          "backend-excerpts.json: out_rtt_args and NAPI exports",
+          "base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp"
+        ],
+        "next_required": "New packaged phone export/permission/invalid-call boundary checks, followed by positive RTT session operations against an actual modem/SIM/IMS transport."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "at-modem-5a",
+      "deliverable": "AT→HRil→registry→公开5A observer",
+      "next_step": "先建立实际参考AT vendor/tty/radio/SIM状态；独立peer发+OHOS5A:0/1，校验unknown/去重/slot/权限/队列/off/env清理与radio reset回false。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/location/round4-fusion-communication.md"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
+        "classification": "real_vendor_to_registry_dataflow_and_bindings_implemented",
+        "finding": "Strict independent AT +OHOS5A:0/1 reaches HRil notification1412, parent actual-generated RIL callback162, TelRilNetwork, native-telephony-only registry publication, slot/permission checks and dynamic plus ANI bool observers. Unknown is not initial false. Dynamic unregister/env cleanup owns exact slot/callback generations and silences queued old work. No NR-state inference or public mock success.",
+        "evidence": [
+          "round4-fusion-communication.md",
+          "round4-platform-build-request.json",
+          "round4-freeze-inputs.json",
+          "host-tests.log"
+        ],
+        "next_required": "Parent register component, regenerate/compile/link all complete business TUs and ANI bridge, then deliver independent peer challenges through actual AT/HDI/registry/public API. Verify permissions, slots, duplicate off, env/queued callbacks and provider false-state/reset discipline in a newly packaged representative image."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "baseline_finding_id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "at-modem-5a",
+      "deliverable": "AT→HRil→registry→公开5A observer",
+      "next_step": "先建立实际参考AT vendor/tty/radio/SIM状态；独立peer发+OHOS5A:0/1，校验unknown/去重/slot/权限/队列/off/env清理与radio reset回false。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json",
+        "docs/capability-audit/parallel/location/round4-fusion-communication.md"
+      ],
+      "prior_agent_report": {
+        "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "implemented_explicit_modem_producer_observer_pending_platform_and_runtime",
+        "classification": "real_vendor_to_registry_dataflow_and_bindings_implemented",
+        "finding": "Strict independent AT +OHOS5A:0/1 reaches HRil notification1412, parent actual-generated RIL callback162, TelRilNetwork, native-telephony-only registry publication, slot/permission checks and dynamic plus ANI bool observers. Unknown is not initial false. Dynamic unregister/env cleanup owns exact slot/callback generations and silences queued old work. No NR-state inference or public mock success.",
+        "evidence": [
+          "round4-fusion-communication.md",
+          "round4-platform-build-request.json",
+          "round4-freeze-inputs.json",
+          "host-tests.log"
+        ],
+        "next_required": "Parent register component, regenerate/compile/link all complete business TUs and ANI bridge, then deliver independent peer challenges through actual AT/HDI/registry/public API. Verify permissions, slots, duplicate off, env/queued callbacks and provider false-state/reset discipline in a newly packaged representative image."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:location-provider-backends-missing",
+      "baseline_finding_id": "location-provider-backends-missing",
+      "owner": "location",
+      "group": "定位",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "location-provider-composition",
+      "deliverable": "定位后端聚合条目的同包整合",
+      "next_step": "组合GNSS、真实geocoder、HCI/WLAN/CELL各独立证据，再复核公共定位/帐号/权限/开关；GNSS子集通过不能核销其他producer。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "reverse-geocoder",
+        "hci-controller",
+        "wifi-peer",
+        "at-modem"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "behavior:location-provider-backends-missing",
+        "group": "定位",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "remaining_implementation_and_validation",
+        "classification": "device_profile_backend_boundary",
+        "finding": "Prior complete packaged evidence reports no GNSS/location provider, zero enabled callbacks and 3301100 while disabled. Fixed source has real locator/GNSS service classes, which alone cannot create a QEMU sensor/provider transport. GNSS measurement production no longer manufactures satellites; generated PODs are initialized with actual request interval and configuration failures stop navigation startup. Source/host-only repair; external vendor/new-package proof remains required. Parent full-platform compile exposed a const owner/account-helper mismatch; patch6 uses a local identity copy and host fixtures now retain the real mutable-reference declaration. Parent full locator TU/new-package validation remains required.",
+        "evidence": [
+          "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence",
+          "round5-gnss.md",
+          "round5-freeze-inputs.json",
+          "round5-platform-build-request.json",
+          "round6-account-contract.md",
+          "round6-freeze-inputs.json"
+        ],
+        "next_required": "Parent controlled GNSS vendor ABI, real geocoder remote provider and real HCI/controller/WLAN/CELL peer routes must feed the actual service paths in a newly packaged representative artifact; source implementations and negative hardware boundaries do not close this behavior."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "baseline_finding_id": "telephony-no-modem-or-sim",
+      "owner": "location",
+      "group": "电话与通信",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "at-modem-5a",
+      "deliverable": "真实modem/SIM/radio基础链",
+      "next_step": "配置真实RilInitOps厂商库/AT tty并接受受控modem独立SIM、radio、注册/呼叫/SMS/data挑战；RTT另依赖真实IMS，不能由+OHOS5A构造全套modem能力。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "at-modem",
+        "ims-rtt"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/result.json"
+      ],
+      "prior_agent_report": {
+        "id": "behavior:telephony-no-modem-or-sim",
+        "group": "电话与通信",
+        "closure": "open",
+        "runtime_validation": "not_run_in_this_round",
+        "status": "remaining_implementation_and_validation",
+        "classification": "device_profile_backend_boundary",
+        "finding": "Prior complete packaged evidence reports no modem/SIM/radio transport. Enabling RTT compile gates exposes the framework path, without supplying a radio/IMS network.",
+        "evidence": [
+          "docs/capability-audit/parallel-work-plan.json: assigned original behavioral evidence"
+        ],
+        "next_required": "Parent real configured AT/RIL virtual peripheral must supply challenged SIM/radio/network identities and explicit 5A URCs; actual IMS SA/peer must support negotiated RTT. Peer state reset/off must terminate true5A state; no direct public API fixture injection."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+      "baseline_finding_id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+      "owner": "media",
+      "group": "媒体知识数据",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "knowledge-data-index",
+      "deliverable": "真实Knowledge数据与可信holiday输入",
+      "next_step": "当前b1aa03c已纳入官方CN/2026 ICS及来源，正式launcher已有只读输入和变量转发；核对真实source/package选中正式asset SHA及范围sidecar，然后实际producer解析、新包photo/date/alias/ranking/account/VISITOR/三角色/revoke与更新删除验收。",
+      "unknowns": [
+        "其他自动people/label/geographic producer的数据生产覆盖仍需真实输入，不能凭手工RDB fixture或空数组认为完成。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json",
+        "docs/capability-audit/parallel/system/round16-knowledge-resource-readiness/result.json",
+        "scripts/run_2in1_full_build_docker.sh",
+        "patches/resources/knowledge/cn-2026/holidays.ics",
+        "patches/resources/knowledge/cn-2026/provenance.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_prepared",
+        "source_finding": "SDK defines getRelatedEntity/getSearchSuggestion with system+READ_IMAGEVIDEO authorization. Exact class/method tokens absent in 4066 scoped media_library source/config files. Existing Photos/geographic knowledge joins do not implement Entity/alias/ranking or all suggestion types.",
+        "candidate": "Round 3: real service-owned fixed trusted all-day ICS producer, same MediaLibrary RDB schema/transaction/hash/version, legacy open/upgrade/reopen plus cancellable managed configuration observer; HOLIDAY joins actual Photos.date_day, NONE sentinel rejects with 13900020; omitted count streams all budgeted candidates, weighted vote/display project semantics defined. Native caller/account/VISITOR/token/visibility constraints retained. Actual GN/header compile gaps repaired: real media_log.h and direct access_token:libaccesstoken_sdk + ipc:ipc_core on photoaccesshelpernative; exact previous-complete overlay upgrade supported without admitting mixed states. Round5 adds direct relational_store:rdb_data_share_adapter to photoaccesshelpernative, confirms already-declared libcrypto_shared real public exports and supports complete caeaf60 upgrades; standard CLI/whole-state/mixed-state guards pass. Round7 replaces exception-dependent observer lifecycle with explicit pthread status/independent retained state, weak DB, cancelled/self-stop/external joins and startup/return-failure cleanup; exact full13-source previous a5fe432 upgrades and -fno-exceptions host regression pass.",
+        "remaining": "Parent actual platform03:5 other Knowledge TUs passed; Holiday failed3 try/catch blocks under real -fno-exceptions. This single CPP now honors that product contract, final host TU and lifecycle/guard regressions pass; actual same-options full TU retry/library link plus populated calendar/photo/account/VISITOR/three-role/revocation/new representative runtime remain required.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "current_update": "Supersedes round16 no-existing-asset and missing-forwarding findings: root b1aa03c fixed these before reviewed43a4c43. Formal asset SHA is12798eab4471df83e23359ace64cab99228a256763cda188db5ded01ed32dfc9, not the documentation candidate SHA703f66a62f74fbfb769af52fcf02ada8705507217c023d9641ac4087d4f57b59; only PRODID removed candidate label, and provenance.asset binds the actual new bytes.",
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:audio-capture-and-dependent-pipelines",
+      "baseline_finding_id": "audio-capture-and-dependent-pipelines",
+      "owner": "media",
+      "group": "音视频输入与处理",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "audio-real-pcm",
+      "deliverable": "真实音频输入和PCM管线",
+      "next_step": "根正式suite外部音频challenge→真实ES1370/ALSA→普通已授权HAP，独立PCM相关性/时间/声道采样、撤权/中断/重建；先记录所有模式实际覆盖。",
+      "unknowns": [
+        "MIDI/voice/playback capture/智能语音等宽泛依赖并未由普通MIC PCM证明；未测/未实现子模式须owner逐项核查。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_prepared",
+        "source_finding": "Fixed ALSA capture opens/reads real PCM; repository already prepares ES1370/ALSA config/audio policy, and historical Renderer PCM success exists. Original no-device finding is historical rather than a fresh assertion about the current package.",
+        "candidate": "Exact-length real blocking Capturer reads, validated AVMemory writable offset range/SetSize, queue cancellation on rejection, serialized filter controls, Stop-before-task-wait, old-generation rejection and Release-after-inflight-read. Independent actual ALSA capture route is next component. Added strict optional capture-only ALSA route and true PCM start/drop/nonblocking read behavior, honest absent mixer capabilities, real external-file libasound injection diagnostic; parent retains primary render. Round 3 public native ordinary-MIC HAP with awaited real grant dialog, actual callback PCM/timestamps/lifecycle/private evidence and independent fresh host challenge diagnostic; parent reports actual SDK26 native compile/link 3ABI and HAP02 compile passed. Round4 ordinary public active-revocation/event caller records real MIC PCM/frames/clock/state/errors with fresh nonce and private baseline checkpoint; actual token mutation remains external to the app. Round5 actual final event native candidate links all3ABIs. Ordinary focus actors request a real audioRecording task only after real MIC readiness, actual notification authorization and normal install permission; matching cancellation/suspension aborts and actual worker completion triggers real cleanup. Round6 actual official HAP TS87 arbitrary-catch-throw errors repaired using genuine new Error with explicit lossless BusinessError details; official helper types, focused Error-only constraint guard and8 controlled cleanup scenarios pass. Actual3 event HAP rebuild still root-owned.",
+        "remaining": "Real challenged input injection to ordinary HAP Capturer, persisted/read-back nonzero PCM, permissions, interrupt/end/recreate. MIDI, voice, playback capture and dependent service behavior each need evidence. Root actual6-persona HAP batch passed Capture/Recorder/RecorderDenied, failed3 event personas on TS87; corrected event source must pass real unchanged ArkTS checker and runtime before closure. Normal KEEP_BACKGROUND_RUNNING at equal normal APL needs no extra ACL/profile exception; actual installed GRANTED still mandatory.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:media-recording-input-backends-missing",
+      "baseline_finding_id": "media-recording-input-backends-missing",
+      "owner": "media",
+      "group": "音视频输入与处理",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "media-recording",
+      "deliverable": "实际AVRecorder编码录制",
+      "next_step": "新包普通签名HAP真实音视频输入、pause/stop/reset/release/recreate/权限，保留fresh输出并独立ffprobe/ffmpeg解码核对挑战/PTS/格式。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_prepared",
+        "source_finding": "Actual audio/video capture filters require capture producer/surface. Shared AVC input ignores AVMemory offset and accepts incompatible surface byte ranges/layouts.",
+        "candidate": "Real AVC input offset, surface geometry/stride/UV capacity checks and validation-error surface release, preserving existing encoder backend. Round 4 exact public C Recorder Prepare configuration/max-duration error propagation plus actual public MIC AAC+surface AVC file caller, native state/error/lifecycle/private outputs and independent external AAC/AVC decode/pixels/PTS/PCM challenge diagnostic. Round5 public Recorder candidate actual SDK26 compile+link passed on all3ABIs, real public libraries and symbols checked; standard component --source-root CLI fixed and regression-tested.",
+        "remaining": "Actual full Recorder product TU/library link, ordinary signed HAP build, real external AAC/AVC ffprobe/ffmpeg decode of fresh challenged new-image outputs and timestamp/pause/stop/reset/release/recreate/permissions acceptance remain. Official public SDK3ABI links pass; host/native self-report is not runtime proof.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:audio-interrupt-haptic-renderer-dependency",
+      "baseline_finding_id": "audio-interrupt-haptic-renderer-dependency",
+      "owner": "media",
+      "group": "音视频输入与处理",
+      "category": "repository_implementation_remaining",
+      "work_package": "audio-focus-haptic",
+      "deliverable": "真实焦点中断及audio/vibration同步",
+      "next_step": "运行已交双UID前后台/fresh-PCM真实焦点协议；另补明确的AudioHapticPlayer音频与实际vibrator同步/失败/停止证据和必要实现，不能只测Renderer PCM。",
+      "unknowns": [
+        "既有资料明确同步播放/振动仍未实现或未验收；先由owner区分真正缺实现和仅缺同步oracle。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_prepared",
+        "source_finding": "AudioHapticPlayerImpl Start calls actual audioPlayer Start; independent Renderer PCM callbacks cannot demonstrate interrupt focus or audio/vibration synchronization.",
+        "candidate": "Public two-normal-UID MIC owner/VOICE_COMMUNICATION contender candidate with actual interrupt/error callbacks, real PCM/checkpoints/states/native timestamps, precise Start interval and fresh action nonce handshake. Actual fixed source policy row/provenance recorded; no self-induced background stop is accepted as focus evidence. Round5 implements legitimate normal audioRecording tasks/WantAgent/notification user consent and true MIC primer for contender before VOIP; actual officialSDK3ABI links and helper official types pass. No fake foreground or privileged ACL/API. Fresh readiness/PCM and real task service/token checks remain root-owned. Round6 actual official HAP TS87 arbitrary-catch-throw errors repaired using genuine new Error with explicit lossless BusinessError details; official helper types, focused Error-only constraint guard and8 controlled cleanup scenarios pass. Actual3 event HAP rebuild still root-owned.",
+        "remaining": "Full ordinary UI HAP builds, actual normal KEEP_BACKGROUND_RUNNING install/profile grant, real notification/MIC user answers, two-UID task/service/session/focus timing and fresh PCM through actual background transitions on new representative image. Foreground restoration before resume if required must be real UI; any pre-contender background stop/cancellation fails. Actual audio/haptic synchronized playback/vibration remains unimplemented/unaccepted. Root actual6-persona HAP batch passed Capture/Recorder/RecorderDenied, failed3 event personas on TS87; corrected event source must pass real unchanged ArkTS checker and runtime before closure. Normal KEEP_BACKGROUND_RUNNING at equal normal APL needs no extra ACL/profile exception; actual installed GRANTED still mandatory.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:media-codec-base-partial",
+      "baseline_finding_id": "media-codec-base-partial",
+      "owner": "media",
+      "group": "音视频输入与处理",
+      "category": "repository_implementation_remaining",
+      "work_package": "codec-format-matrix",
+      "deliverable": "实际AVC边界及剩余codec格式",
+      "next_step": "先验已有AVC stride/plane/offset修复；按真实公开能力矩阵补HEVC/P010等未实现路径或诚实错误，不用改变声明/跳过格式缩范围核销；独立SPS/IDR/码率/PTS/EOS验证。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_prepared",
+        "source_finding": "Pinned AVC surface RGBA validates stride only as pixels, NV21 indexes plane[2] although supported native layout can be two physical planes, UV tail is not bounded, P010 maps to an 8-bit converter, and AVMemory offset is ignored.",
+        "candidate": "Independent exact-source avc_surface_layout patch and guards; real source functions and scalar converters exercised with challenged pixels, old-code reproductions, offset/stride/chroma-end/overflow/layout rejection and surface cleanup.",
+        "remaining": "Parent reports actual two AVC product TUs compiled. Actual final link/new-package default/software AVC encode/decode/SPS/IDR/bitrate/PTS/EOS/recreate and public offset/surface boundary matrix remain; no HEVC, P010 converter or complete codec-matrix closure.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
+      "baseline_finding_id": "audio-vivid-metadata-runtime-plugin-missing",
+      "owner": "media",
+      "group": "音视频输入与处理",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "audio-vivid-plugin",
+      "deliverable": "真实AudioVivid元数据builder",
+      "next_step": "取得合法格式/算法/实现及许可，按真实Create/Destroy factory ABI构建libAudioVividMetaBuilder.z.so；测对象位置/增益元数据序列化往返、坏输入/生命周期。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "audio-vivid"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "unresolved",
+        "source_finding": "media_foundation native_audio_vivid.cpp explicitly loads libAudioVividMetaBuilder.z.so and requires CreateAudioVividMetaBuilder/DestroyAudioVividMetaBuilder; no true format implementation supplied to this group.",
+        "candidate": "Kept genuine unsupported/error behavior; no dummy builder, fabricated metadata or empty success.",
+        "remaining": "Real Audio Vivid metadata format/algorithm plugin with provenance/license and installed ABI, objects/positions/gain metadata serialization roundtrip and lifecycle/error validation on the new package.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:video-encoder-dependent-media-pipelines",
+      "baseline_finding_id": "video-encoder-dependent-media-pipelines",
+      "owner": "media",
+      "group": "音视频输入与处理",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "encoded-video-pipelines",
+      "deliverable": "实际录屏/转码等视频管线",
+      "next_step": "在同新包逐录制/录屏/转码走真实producer和encoder；独立解码挑战像素/音频/metadata/PTS，验取消/中断/重建/坏输入和surface释放；复用codec矩阵证据。",
+      "unknowns": [
+        "AVC修复只提供共有输入方向，不能推断每个codec/每条服务管线都已实现或通过。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/media/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_prepared",
+        "source_finding": "Recording/screen-capture/transcoding share the actual encoder input; existing software AVC and truthful hardware capability preparation do not validate complete pipelines.",
+        "candidate": "Fixes actual shared AVC byte routing, supported layouts, bounds and rejected-surface release without replacing backend data.",
+        "remaining": "Fresh ordinary-HAP recording/screen-capture/transcoding with real producer challenge, independently decoded output pixels/audio/metadata/PTS, cancellation/interruption/recreate/permissions; malformed input must produce errors without output or retained surface buffers.",
+        "gap_closed": false
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:access-token-api26-kernel-abi",
+      "baseline_finding_id": "access-token-api26-kernel-abi",
+      "owner": "system",
+      "group": "子进程与内核身份",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "appspawn-child-identity",
+      "deliverable": "实际打包内核与AppSpawn身份链",
+      "next_step": "新包真实GET_ALL_PERMISSIONS/taskUID、普通HAP父子token/UID/帐号关系和冒用拒绝；可用legacy fallback时不把optional SPM不支持当缺陷。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_runtime_identity_proof_pending",
+        "fixed_source_findings": [
+          "AppSpawn SetUserId is a real implementation and SetUidGid calls it before setresuid in the baseline; do not re-fix the old weak success stub.",
+          "SpmGetVersion clears the version and propagates ioctl errno on failure; the prior SPM handshake repair is present."
+        ],
+        "source_paths": [
+          "base/startup/appspawn/modules/common/appspawn_common.c",
+          "base/security/access_token/interfaces/innerkits/token_setproc/src/spm_setproc.c"
+        ],
+        "remaining": [
+          "New packaged kernel GET_ALL_PERMISSIONS and task UID ioctls, parent-HAP/child token relation, account mapping and foreign-caller rejection need real normal-HAP evidence.",
+          "Optional unsupported SPM alone is not a failure if the legitimate legacy path works."
+        ],
+        "action": "No additional kernel/token identity patch guessed from stale evidence."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "baseline_finding_id": "msdp-device-status-mock-or-missing-clients",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "repository_implementation_remaining",
+      "work_package": "msdp-modalities",
+      "deliverable": "真实Sensor/still子集及剩余MSDP客户端",
+      "next_step": "先用已交external-inputs ordinary HAP验证VDI→HDI→SensorAgent→算法→公开still；再逐公开类型/客户端补真实实现，relativeStill等仍缺，不能整条由still子集核销。",
+      "unknowns": [
+        "still是现有五事件加速度模长启发式，不证明物理静止精度；各未覆盖姿态/运动/多模态client的真实输入与语义待逐项确认。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json",
+        "docs/capability-audit/parallel/core/round2/current-provider-platform-TUs/MSDP-current-15-TU-coverage.json",
+        "docs/capability-audit/parallel/system/round9-live-inputs/public-still/result.json",
+        "docs/capability-audit/parallel/system/round11-live-suite/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "public_still_current_host13_verified_product_and_ordinary_API_runtime_pending",
+        "fixed_source_findings": [
+          "InitMsdpImpl first tries sensor HDI, then sensor-enabled algorithm, then explicitly falls back to MockHandle.",
+          "The tree contains real devicestatus_algo sources for absolute-still/horizontal/vertical and sensor callback integration; existence alone does not show QEMU runtime input.",
+          "Sensor HDI V3 service tries libhdi_product_sensor_impl.z.so then libhdi_sensor_impl.z.so, validates VDI version 1 and calls its Init/enumeration; sensor_host has UID3033 and supplementary GIDs3033/3066.",
+          "SensorAgent accelerometer payload is exactly three float32 axes in m/s^2. Existing MSDP algorithms already transform x=data.y/y=data.x/z=-data.z and reject magnitude above160.",
+          "Actual sensor callback previously accepted NaN/wrong-type/short payloads and unbounded pending events, and leaked subscription after SetBatch/Activate failure.",
+          "API26 public stationary ActivityType still is documented Absolutely still; actual NAPI routes still to TYPE_STILL while only undocumented absoluteStill previously had an algorithm backend.",
+          "Round9 uses an independent TYPE_STILL AlgoAbsoluteStill instance and preserves its exact existing acceleration magnitude threshold (7 < magnitude < 11 for five events) and actual data.type; relativeStill remains unsupported.",
+          "Actual manager previously enabled per listener and disabled only when global listeners empty; event_ was shared across listener types, so per logical type lifetime and individual event filters were not preserved.",
+          "Round9 retirement waits for the actual algorithm worker join on service-side thread before destroying/unloading the algorithm DSO; internal Destroy pointers now match actual void(const IMsdp*) exports. Actual product CFI type verification remains required."
+        ],
+        "source_paths": [
+          "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+          "base/msdp/device_status/libs/BUILD.gn",
+          "drivers/peripheral/sensor/sensor.gni",
+          "drivers/peripheral/sensor/bundle.json",
+          "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+          "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp",
+          "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h",
+          "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h",
+          "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp",
+          "base/msdp/device_status/device_status.gni",
+          "base/msdp/device_status/bundle.json",
+          "base/msdp/device_status/services/BUILD.gn",
+          "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp",
+          "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h",
+          "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+          "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h",
+          "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp",
+          "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h",
+          "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h",
+          "base/msdp/device_status/services/native/include/devicestatus_manager.h",
+          "base/msdp/device_status/services/native/src/devicestatus_manager.cpp",
+          "base/msdp/device_status/libs/include/algorithm/algo_base.h",
+          "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp",
+          "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp",
+          "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h"
+        ],
+        "remaining": [
+          "Recompile all15 actual product objects after root platform01 unused private-field cleanup and bounded callback drain delta; previous12 successful object results do not prove current full product linkage.",
+          "Root must apply public_still after sensor_input, compile all affected actual product TUs in sensor-enabled/no-mock, sensor-enabled/default and sensor-disabled configurations, and link actual CFI/LTO DSOs with corrected internal Destroy function type.",
+          "Need same newly packaged ARM64 phone actual external random acceleration challenge matched through actual VDI -> Sensor HDI -> SensorAgent -> independent public still threshold algorithm -> ordinary stationary API callbacks; archive/signature/BMS UID/same-boot binding and failure/stop/restart/old-generation boundaries remain unvalidated.",
+          "Public still uses the existing five-event acceleration magnitude heuristic. This batch does not validate physical immobility accuracy, implement relativeStill or other missing motion/sensor capabilities, or close the assigned MSDP requirement.",
+          "Manager Binder lifetime cases use actual extracted function bodies with a host Binder scaffold; actual platform Binder death and cross-process callbacks remain package checks."
+        ],
+        "action": "Round9 public_still composes after the immutable sensor_input final hashes. It connects public still to the genuine threshold algorithm, keeps separate logical instances/first-last references, shares one accelerometer, rolls back failed registrations/listeners and quiesces callback slots/worker before actual DSO unload. No synthetic sensor/API events or relativeStill implementation. Follow-up bounds external callback drain to one second, retains inactive slot/owner and stopping type on timeout, returns real failure and retries quiesce before physical stop/worker retirement."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true,
+      "current_update": "Committed current15TU coverage matches current public_still manifest SHA:12 platform01 successes contained8 unchanged successes, platform02 rebuilt7 affected objects, giving15 distinct current objects. Old instruction to rebuild all15 is stale. Full fresh GN/module link/image/publicAPI runtime and broad missing clients remain open."
+    },
+    {
+      "id": "behavior:native-child-process-phone-boundary",
+      "baseline_finding_id": "native-child-process-phone-boundary",
+      "owner": "system",
+      "group": "子进程与内核身份",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "appspawn-child-identity",
+      "deliverable": "真实child callback/引用/进程生命周期",
+      "next_step": "新包enabled profile跑实际AppMgr/AppSpawn/IPC、回调重入/重复/先通知、child PID/UID/token/FD/参数/退出/kill/重建及disabled phone拒绝；共用身份工程。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_lifecycle_repair_host_verified_runtime_pending",
+        "fixed_source_findings": [
+          "Both Create entrypoints retain the startup callback after dispatch; synchronous terminal notification can remove nothing and then be retained forever.",
+          "Null child/proxy allocation failure do not release retention consistently; unsynchronized callback_ permits reentrant or concurrent duplicate delivery.",
+          "SDK declares StartMode as export const enum; missing NAPI runtime enum object alone is not sufficient failure evidence. Existing typed const-enum compilation is the relevant boundary.",
+          "Main reports full actual child product TU compilation passes for the round-1 repair; final linking and newly packaged IPC/lifecycle/identity validation remain pending."
+        ],
+        "source_paths": [
+          "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp",
+          "foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_callback.cpp",
+          "foundation/ability/ability_runtime/frameworks/js/napi/js_child_process_manager/js_child_process_manager.cpp",
+          "interface/sdk-js/api/@ohos.app.ability.childProcessManager.d.ts"
+        ],
+        "action": "Added 0004 terminal callback lifecycle patch: retain before dispatch, clean immediate failure, take callback once under a short mutex, release retained reference and hold a local strong reference while calling user code outside locks. Invalid child/proxy failures truthfully return NCP_ERR_INTERNAL once.",
+        "remaining": [
+          "Enabled profile real AppMgr/AppSpawn/IPC callbacks, child PID/UID/token, process limits, FD/parameter transport, exit/kill/recreate and denied foreign caller boundaries still need packaged runtime.",
+          "Disabled default phone profile and error/metadata/strip provenance remain main-agent first-artifact checks; no new eligibility bypass."
+        ]
+      },
+      "baseline_preparation_status": "禁用画像参数/载荷修复待 R51；启用画像完整生命周期尚未完成",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:session-manager-profile-gap",
+      "baseline_finding_id": "session-manager-profile-gap",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "sceneboard-session",
+      "deliverable": "真实SceneBoard/session产品画像",
+      "next_step": "核对新SDK/默认/实际image SysCap一致，运行窗口/session/PiP/floating，分别验phone和2in1；首包需RS稳定与真实sleep/wake。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_profile_and_sceneboard_runtime_pending",
+        "fixed_source_findings": [
+          "Pinned window_manager bundle declares SessionManager=false and includes scene/session/screen-session manager libraries.",
+          "Repository baseline already selects real SceneBoard implementation/profile through patches/lib/graphics_features.py and phone/2in1 product adapters."
+        ],
+        "source_paths": [
+          "foundation/window/window_manager/bundle.json"
+        ],
+        "remaining": [
+          "Need rebuilt SDK/default/image SysCap agreement plus real SceneBoard window/session/PiP/floating paths on phone and 2in1.",
+          "RenderService startup/suspend stability is a main-agent gate; this group must not change that shared code."
+        ],
+        "action": "Avoided a duplicate profile declaration-only patch and avoided the main-agent RenderService ownership."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "baseline_finding_id": "calendar-lifecycle-device-difference",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "repository_implementation_remaining",
+      "work_package": "calendar-full-lifecycle",
+      "deliverable": "CalendarData editor及完整Calendar提醒UI",
+      "next_step": "先新包真实BMS/普通无日历权限editEvent用户Save/Cancel和lower/whole CRUD；继续补Calendar MainAbility/URI提醒路由及提醒/重复规则/重启生命周期。",
+      "unknowns": [
+        "既有Editor不等于完整Calendar app或全部提醒路由；旧累计result中“editor missing”已被后续组件覆盖。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json",
+        "patches/common/applications/standard/calendardata/event_editor/README.md"
+      ],
+      "prior_agent_report": {
+        "status": "open_provider_ui_and_packaged_runtime_pending",
+        "fixed_source_findings": [
+          "Fixed calendar source actually declares calendardata_whole and ReminderCallbackExtAbility with specific whole-calendar and update-rrule permissions.",
+          "Native editEvent still explicitly targets missing EditorUIExtensionAbility; ReminderAgentHelper targets com.ohos.calendar.",
+          "The baseline has source-provider HAP/signature preparation; old prebuilt absence must not be re-repaired by fabricating a provider."
+        ],
+        "source_paths": [
+          "applications/standard/calendardata/entry/src/main/module.json5",
+          "applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp",
+          "applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets"
+        ],
+        "remaining": [
+          "Need a real editor UI Ability and Calendar app MainAbility/URI routing with event validation.",
+          "New HAP BMS registration, ordinary permission allow/deny, lower/whole CRUD ownership, reminders and reboot lifecycle need same first-package evidence."
+        ],
+        "action": "Calendar provider, actual Editor UI and app routing implementation are exclusively apps-agent owned in the active parent batch. This group avoids calendar changes; final HAP registration and packaged lifecycle evidence remain pending."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "baseline_finding_id": "device-attest-uninitialized",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "oem-attestation",
+      "deliverable": "合法OEM身份/密钥/服务证明",
+      "next_step": "向可信OEM取得产品身份、密钥安全provisioning和真实验证服务/信任链配置；不在报告粘贴secret。新包验证初始化/auth/software/detail真实ticket及失效/失败。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "oem-attest"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_oem_provisioning_dependency",
+        "fixed_source_findings": [
+          "OEMGetProductId and OEMGetProductKey have intentionally empty product ID/key buffers in the fixed OEM adapter."
+        ],
+        "source_paths": [
+          "test/xts/device_attest/services/oem_adapter/src/device_attest_oem_adapter.c"
+        ],
+        "remaining": [
+          "Requires legitimate OEM product identity/key provisioning and reachable verification service; cannot derive valid attestation credentials from QEMU defaults.",
+          "Need actual initialized auth/software/detail outcomes and a real ticket on the new package."
+        ],
+        "action": "No fabricated credentials, success result or ticket introduced."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:advertising-service-provider-missing",
+      "baseline_finding_id": "advertising-service-provider-missing",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "advertising-provider",
+      "deliverable": "真实Ads provider与内容来源",
+      "next_step": "先取得真实provider源码或签名包/ABI/入口与合法广告内容/服务，再补providerApiAbilityName等准确配置并按原签名权限安装；实际load/render/callback/取消失败验收。",
+      "unknowns": [],
+      "missing_dependency_keys": [
+        "advertising"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_real_ad_provider_dependency",
+        "fixed_source_findings": [
+          "Fixed ads config targets com.samples.AdsServiceDemo/AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService.",
+          "AdLoadService additionally requires providerApiAbilityName before connecting, and the shipped config omits that key."
+        ],
+        "source_paths": [
+          "domains/advertising/advertising/frameworks/js/napi/ads/resource/ad_service_config.json",
+          "domains/advertising/advertising/frameworks/js/napi/ads/src/ad_load_service.cpp"
+        ],
+        "remaining": [
+          "Need actual installed, signed provider implementing service/API/JS/UI contract and real ad retrieval/render/callback behavior.",
+          "Adding a name or returning synthetic ad data alone would not repair this capability."
+        ],
+        "action": "No fictional provider configuration or mock ad service added."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:graphics3d-scene-manager-unavailable",
+      "baseline_finding_id": "graphics3d-scene-manager-unavailable",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "existing_repair_pending_new_package_runtime",
+      "work_package": "graphics3d-scene",
+      "deliverable": "真实3D plugin/queue/scene初始化",
+      "next_step": "新包实际Scene.load有效asset→render→destroy/recreate，验证缺插件/导入失败/retry/队列清理和稳定RenderService/Mesa；已有host/完整TU/link不替代实际显示。",
+      "unknowns": [],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json",
+        "docs/capability-audit/parallel/system/round2-graphics3d/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "candidate_real_plugin_and_initialization_repair_host_verified_runtime_pending",
+        "fixed_source_findings": [
+          "Scene.load failure maps to RenderContextJS::CreateScene line 881: CreateSceneManager(uri) returns null before scene creation.",
+          "Public module/library presence is not proof the META scene plugin registry, task queues, renderer and scene importer initialized."
+        ],
+        "source_paths": [
+          "foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp"
+        ],
+        "remaining": [
+          "Main reports all actual ARM64 product TUs including split-LTO modules pass for the round-2 change; final linking and a newly packaged runtime path remain pending.",
+          "Need actual Scene.load/create/render/destroy/recreate with a valid asset, plugin load/retry diagnostics and stable RenderService/software-render context from the new package."
+        ],
+        "action": "Round 2 repairs actual engine/plugin load and retry state, truthful complete initialization, partial object rollback and JS queue lifetime; see round2-graphics3d/result.json. This does not yet prove the original guest failure fully resolved."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "baseline_finding_id": "security-guard-empty-model-config",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "missing_real_provider_hardware_credentials_or_peer",
+      "work_package": "security-guard-model",
+      "deliverable": "有定义的真实风险模型与事件",
+      "next_step": "先确定产品真实modelName/事件/collector/判定语义和合法实现/数据再配置；getModelResult(capability-audit)的401只能是未知模型反例，不能改空成功或冒充真实风险输出。",
+      "unknowns": [
+        "已交资料未证明必须商业OEM二进制；可在明确语义后实现有意义的开源规则/模型，当前未找到可直接安装的已定义模型。"
+      ],
+      "missing_dependency_keys": [
+        "security-guard-model"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_real_risk_model_dependency",
+        "fixed_source_findings": [
+          "Fixed OEM security_guard_model.cfg is exactly an empty modelcfg array.",
+          "Framework model configuration parser caches supplied model IDs and associated event lists; no actual OEM risk model is supplied by the current config."
+        ],
+        "source_paths": [
+          "base/security/security_guard/oem_property/hos/security_guard_model.cfg"
+        ],
+        "remaining": [
+          "Need a specified, meaningful model implementation and event/collector mappings with legitimate permission/ACL integration.",
+          "Need valid model query results, unknown-model rejection, live event inputs and lifecycle evidence; changing 401 to an empty success is invalid."
+        ],
+        "action": "No invented model IDs, fake score or permission relaxation introduced."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    },
+    {
+      "id": "behavior:app-domain-verification-extension-missing",
+      "baseline_finding_id": "app-domain-verification-extension-missing",
+      "owner": "system",
+      "group": "其他系统服务",
+      "category": "pending_investigation",
+      "work_package": "domain-association",
+      "deliverable": "真实域名验证与显式路由fallback",
+      "next_step": "用实际可控HTTPS association及匹配/不匹配签名安装bundle验证native VerifyTask fallback、refresh/cache/路由；若empty TargetInfo确实导致失败再修真实选包，不猜target。",
+      "unknowns": [
+        "扩展so可选且有真实VerifyTask fallback；缺扩展本身不是故障根因。当前没有完整HTTPS→验证→显式路由正/反例。"
+      ],
+      "missing_dependency_keys": [],
+      "evidence": [
+        "docs/capability-audit/parallel/system/result.json"
+      ],
+      "prior_agent_report": {
+        "status": "open_real_verification_routing_evidence_pending",
+        "fixed_source_findings": [
+          "CompleteVerifyRefresh and ExecuteVerifyTask already fall back to the real VerifyTask path on E_EXTENSIONS_LIB_NOT_FOUND.",
+          "ConvertToExplicitWant fallback constructs an empty TargetInfo and invokes OnConvert(0,...); optional extension absence alone is not proof all verification is broken."
+        ],
+        "source_paths": [
+          "foundation/bundlemanager/app_domain_verify/services/src/agent/core/app_domain_verify_agent_service.cpp"
+        ],
+        "remaining": [
+          "Need controlled actual HTTP/HTTPS association hosting, installed test bundles with matching/mismatching signer fingerprints, refresh/cache behavior and routing.",
+          "Need correct bundle/ability selection for conversion fallback if runtime confirms empty routing fails; do not guess a target or accept arbitrary domain/certificate."
+        ],
+        "action": "No optional-library dependency fabricated and no trust/signature rule weakened."
+      },
+      "baseline_preparation_status": "实现与完整验证尚未齐备",
+      "closure": "open",
+      "counts_as_one_baseline_id": true,
+      "ready_to_close_from_this_report": false,
+      "prior_agent_report_is_snapshot_NOT_current_runtime_proof": true
+    }
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "current_receipt_corrections": [
+    "Knowledge official asset/forwarding repaired by root b1aa03c; use provenance.asset SHA rather than older candidate SHA",
+    "Wallpaper true Settings UI/native fallback source exist; old cumulative missing-UI wording is historical",
+    "MSDP current15 product TU receipt matches current manifest; broad client/modalities remain incomplete",
+    "CalendarData EditorUIExtension exists; Calendar MainAbility/reminder URI lifecycle separate",
+    "3D original targets use LTO; do not claim CFI simply because child/other DSOs select CFI"
+  ]
+}

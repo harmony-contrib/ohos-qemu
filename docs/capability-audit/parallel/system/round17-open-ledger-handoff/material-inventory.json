@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "reviewed_root_commit": "43a4c43991d3a5a9fe60c50c302d10daae592f99",
+  "tracked_path_count": 3751,
+  "scope": "Committed host repository filenames and exact references ONLY. No external caches, private secret stores, source/out, remote websites, Docker or product runtime were accessed.",
+  "method": [
+    "git ls-tree -r --name-only COMMIT",
+    "git grep -l -I -F NEEDLE COMMIT -- patches scripts ci/capability-audit docs/capability-audit/parallel"
+  ],
+  "queries": {
+    "oem-attest": {
+      "filename_regex": "attest|oem.*(identity|product|key)",
+      "matched_tracked_paths": [],
+      "literal_reference_paths": {
+        "OEMGetProductId": [
+          "docs/capability-audit/parallel/system/result.json",
+          "docs/capability-audit/parallel/system/round5-linux-gnss/result.json",
+          "docs/capability-audit/parallel/system/round6-ohos-abi/result.json",
+          "docs/capability-audit/parallel/system/round7-source-provider-review/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/public-still/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/result.json",
+          "docs/capability-audit/parallel/system/source-review.json"
+        ],
+        "OEMGetProductKey": [
+          "docs/capability-audit/parallel/system/result.json",
+          "docs/capability-audit/parallel/system/round5-linux-gnss/result.json",
+          "docs/capability-audit/parallel/system/round6-ohos-abi/result.json",
+          "docs/capability-audit/parallel/system/round7-source-provider-review/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/public-still/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/result.json",
+          "docs/capability-audit/parallel/system/source-review.json"
+        ]
+      }
+    },
+    "audio-vivid": {
+      "filename_regex": "audio.?vivid|metabuilder",
+      "matched_tracked_paths": [],
+      "literal_reference_paths": {
+        "libAudioVividMetaBuilder.z.so": [
+          "ci/capability-audit/audit_system_bundle_providers.py",
+          "ci/capability-audit/batch_media_review_source.py",
+          "ci/capability-audit/known-findings.json",
+          "ci/capability-audit/verify_results.py",
+          "docs/capability-audit/parallel/media/REVIEW.md",
+          "docs/capability-audit/parallel/media/result.json",
+          "docs/capability-audit/parallel/media/round2/HANDOFF.md",
+          "docs/capability-audit/parallel/media/round3/HOLIDAY_HANDOFF.md",
+          "docs/capability-audit/parallel/media/source-review.json"
+        ],
+        "CreateAudioVividMetaBuilder": [
+          "ci/capability-audit/batch_media_review_source.py",
+          "docs/capability-audit/parallel/media/result.json",
+          "docs/capability-audit/parallel/media/round2/HANDOFF.md",
+          "docs/capability-audit/parallel/media/source-review.json"
+        ]
+      }
+    },
+    "advertising": {
+      "filename_regex": "(^|/)(ads|advertising)|ads.*(provider|service)",
+      "matched_tracked_paths": [],
+      "literal_reference_paths": {
+        "com.samples.AdsServiceDemo": [
+          "ci/capability-audit/audit_system_bundle_providers.py",
+          "ci/capability-audit/known-findings.json",
+          "docs/capability-audit/parallel/system/result.json",
+          "docs/capability-audit/parallel/system/round5-linux-gnss/result.json",
+          "docs/capability-audit/parallel/system/round6-ohos-abi/result.json",
+          "docs/capability-audit/parallel/system/round7-source-provider-review/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/public-still/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/result.json",
+          "docs/capability-audit/parallel/system/source-review.json"
+        ],
+        "providerApiAbilityName": [
+          "ci/capability-audit/known-findings.json",
+          "docs/capability-audit/parallel/system/result.json",
+          "docs/capability-audit/parallel/system/round5-linux-gnss/result.json",
+          "docs/capability-audit/parallel/system/round6-ohos-abi/result.json",
+          "docs/capability-audit/parallel/system/round7-source-provider-review/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/public-still/result.json",
+          "docs/capability-audit/parallel/system/round9-live-inputs/result.json",
+          "docs/capability-audit/parallel/system/source-review.json"
+        ]
+      }
+    },
+    "security-guard-model": {
+      "filename_regex": "security.?guard|risk.?model",
+      "matched_tracked_paths": [
+        "docs/capability-audit/runtime/arm64-2in1/system-config/security-guard-model.json",
+        "docs/capability-audit/runtime/arm64-phone/system-config/security-guard-model.json"
+      ],
+      "literal_reference_paths": {
+        "\"modelcfg\"": [],
+        "securityGuard.getModelResult": [
+          "ci/capability-audit/build_hap_probe.py"
+        ]
+      }
+    },
+    "at-modem-and-ims": {
+      "filename_regex": "(^|/)(ims|modem)|ril_|telephony|communication_state",
+      "matched_tracked_paths": [
+        "ci/capability-audit/compile_ril_communication_callback.py",
+        "ci/capability-audit/fixtures/ril_communication/IRilCallback.idl",
+        "ci/capability-audit/test_api26_telephony_enums.py",
+        "ci/capability-audit/test_ril_communication_source.py",
+        "patches/common/base/telephony/call_manager/api26_enums/0001-register-public-call-state-and-rtt-enums.patch",
+        "patches/common/base/telephony/call_manager/api26_enums/0002-use-existing-IMS-RTT-history-accessor.patch",
+        "patches/common/base/telephony/call_manager/api26_enums/0003-link-existing-ICU-provider-for-RTT.patch",
+        "patches/common/base/telephony/call_manager/api26_enums/0004-forward-public-state-and-rtt-enums.patch",
+        "patches/common/base/telephony/call_manager/api26_enums/README.md",
+        "patches/common/base/telephony/call_manager/api26_enums/apply.sh",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh",
+        "patches/common/base/telephony/core_service/api26_enums/0001-register-real-nr-and-dsds-enum-values.patch",
+        "patches/common/base/telephony/core_service/api26_enums/README.md",
+        "patches/common/base/telephony/core_service/api26_enums/apply.sh",
+        "patches/common/base/telephony/sms_mms/api26_enums/0001-register-real-short-code-type-enum.patch",
+        "patches/common/base/telephony/sms_mms/api26_enums/README.md",
+        "patches/common/base/telephony/sms_mms/api26_enums/apply.sh",
+        "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+        "patches/common/base/telephony/state_registry/communication_state/0002-declare-access-token-public-SDK-dependencies.patch",
+        "patches/common/base/telephony/state_registry/communication_state/0003-complete-native-observer-override-and-IPC-includes.patch",
+        "patches/common/base/telephony/state_registry/communication_state/README.md",
+        "patches/common/base/telephony/state_registry/communication_state/apply.sh",
+        "patches/common/base/telephony/state_registry/communication_state/apply_runtime.py",
+        "patches/common/base/telephony/state_registry/communication_state/source_states.json",
+        "patches/common/base/telephony/state_registry/communication_state/verify_source.py",
+        "scripts/prepare_ril_communication_callback.py"
+      ],
+      "literal_reference_paths": {
+        "RilInitOps": [
+          "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md"
+        ],
+        "PROXY_IMS_CALL": [
+          "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md"
+        ],
+        "const.telephony.ril.attty.path": [
+          "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md"
+        ]
+      }
+    },
+    "hci-controller": {
+      "filename_regex": "hci|bluetooth.*(vendor|transport)",
+      "matched_tracked_paths": [
+        "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/0001-bind-single-use-peer-oob-to-real-gap-and-hci.patch"
+      ],
+      "literal_reference_paths": {
+        "BLUETOOTH_VENDOR_LIB_INTERFACE": [
+          "docs/capability-audit/parallel/location/result.json",
+          "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md"
+        ],
+        "BT_OP_HCI_CHANNEL_OPEN": [
+          "docs/capability-audit/parallel/location/round2-virtual-peripheral-handoff.md"
+        ]
+      }
+    },
+    "reverse-geocoder": {
+      "filename_regex": "geo.?coder|geoconvert|district",
+      "matched_tracked_paths": [
+        "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md",
+        "patches/common/base/location/location/api26_runtime/0003-connect-current-district-and-processed-skiing-history.patch"
+      ],
+      "literal_reference_paths": {
+        "const.location.geocode_service_name": [
+          "docs/capability-audit/parallel/location/result.json",
+          "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md"
+        ],
+        "REQUEST_REVERSE_GEOCODE": [
+          "ci/capability-audit/fixtures/batch_location/location_runtime_before.json",
+          "docs/capability-audit/parallel/location/round3-geocoder-peer-abi.md"
+        ]
+      }
+    }
+  },
+  "interpretation": "Reference/loader/test/source-review paths are not deployable supplier artifacts. Absence in this inventory does not prove material cannot exist outside this repository.",
+  "usable_unprovided_material_outside_repository": "unknown; require exact artifact, provenance/license and integration receipt before accepting it"
+}
