@@ -6,7 +6,8 @@ neverallow { domain -init -netsysnative } qemu_openvpn_exec:file execute;
 
 allow init qemu_openvpn_data_file:dir { getattr relabelto search setattr };
 allow netsysnative qemu_openvpn_data_file:dir { add_name create getattr open read remove_name rmdir search setattr write };
-allow netsysnative qemu_openvpn_data_file:file { create getattr ioctl lock open read setattr unlink write };
+# Private regular config/lock files need no device ioctl permission.
+allow netsysnative qemu_openvpn_data_file:file { create getattr lock open read setattr unlink write };
 allow netsysnative qemu_openvpn_data_file:sock_file { create getattr open read setattr unlink write };
 allowxperm netsysnative dev_tun_file:chr_file ioctl { 0x54d2 };
 

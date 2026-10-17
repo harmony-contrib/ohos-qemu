@@ -58,7 +58,7 @@ FILES = {
             'restorecon /dev/unix/socket/qemu_sensor']} ]}, indent=4) + '\n',
     POLICY + 'public/types.te': '''# SPDX-License-Identifier: Apache-2.0
 type qemu_sensor_input_dir, dev_attr, file_attr;
-type qemu_sensor_input_socket, dev_attr, file_attr;
+type qemu_sensor_input_socket, dev_attr, file_attr, system_sock_domain;
 ''',
     POLICY + 'system/file_contexts': '''# SPDX-License-Identifier: Apache-2.0
 /dev/unix/socket/qemu_sensor          u:object_r:qemu_sensor_input_dir:s0
@@ -127,6 +127,16 @@ LEGACY_FILES_SHA256 = {
 }
 
 
+# Exact complete state after the contexts format fix, before socket classification.
+FORMAT_FIXED_FILES_SHA256 = {
+    "vendor/ohemu/virt/etc/qemu_sensor_input.cfg": "538559efa3c4b36e927eb2b2674f35a865428055be19e861fb00ea1169ba23a3",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/public/types.te": "6ee29c69c4f502718060574a3e7739299f5b0e5b63e6600fc4d93ab4e4974268",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/file_contexts": "6cd23fbe712b41f7a1eacafd0e53907ba492d3bfcbf47165a0799065c7535158",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/runtime.te": "3944c748a5556d6bb5c9a05b9df3dec9c2018a3d6a50a21bcd5dcfd3d17fbf7c"
+}
+KNOWN_PREVIOUS_FILES_SHA256 = (LEGACY_FILES_SHA256, FORMAT_FIXED_FILES_SHA256)
+
+
 def apply(root):
     if root.is_symlink() or not root.is_dir():
         raise ValueError('materialized sensor runtime source root required')
@@ -164,10 +174,11 @@ def apply(root):
                    all(snapshots[n] == planned[n] for n in FILES))
     previous_state = (before_build.count(BLOCK.encode()) == 1 and
                       before_build.count(DEPENDENCY.encode()) == 1 and
-                      set(FILES) == set(LEGACY_FILES_SHA256) and
-                      all(snapshots[n] is not None and
-                          hashlib.sha256(snapshots[n]).hexdigest() == expected
-                          for n, expected in LEGACY_FILES_SHA256.items()))
+                      any(set(FILES) == set(version) and
+                          all(snapshots[n] is not None and
+                              hashlib.sha256(snapshots[n]).hexdigest() == expected
+                              for n, expected in version.items())
+                          for version in KNOWN_PREVIOUS_FILES_SHA256))
     if not original_state and not final_state and not previous_state:
         raise ValueError('unknown or partial sensor runtime source; preserving all files')
     written = []

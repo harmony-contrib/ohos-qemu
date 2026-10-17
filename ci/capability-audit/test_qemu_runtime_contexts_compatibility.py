@@ -47,11 +47,15 @@ class ContextCompatibilityTests(unittest.TestCase):
         build.write_bytes((ROOT / 'ci/capability-audit/fixtures' / fixture).read_bytes())
         return root
 
-    def previous(self, root, module):
+    def previous(self, root, module, format_fixed=False):
         module.apply(root)
-        (root / contexts_key(module)).write_text(PREVIOUS[module])
+        types = root / (module.POLICY + 'public/types.te')
+        types.write_text(types.read_text().replace(', system_sock_domain;', ';'))
+        if not format_fixed:
+            (root / contexts_key(module)).write_text(PREVIOUS[module])
         self.assertEqual({n: hashlib.sha256((root / n).read_bytes()).hexdigest()
-                          for n in module.FILES}, module.LEGACY_FILES_SHA256)
+                          for n in module.FILES}, module.FORMAT_FIXED_FILES_SHA256
+                         if format_fixed else module.LEGACY_FILES_SHA256)
 
     def checker(self):
         source = (FIX / 'build_contexts.py').read_bytes()
@@ -82,16 +86,20 @@ class ContextCompatibilityTests(unittest.TestCase):
 
     def test_exact_previous_complete_install_upgrades_and_replays(self):
         for module in PREVIOUS:
-            with self.subTest(module=module.__name__), tempfile.TemporaryDirectory() as temporary:
-                root = self.root(temporary, module)
-                self.previous(root, module)
-                before = snapshot(root)
-                result = module.apply(root)
-                self.assertTrue(result['upgraded_known_previous'])
-                after = snapshot(root)
-                self.assertEqual({n for n in before if before[n] != after[n]}, {contexts_key(module)})
-                self.assertFalse(module.apply(root)['upgraded_known_previous'])
-                self.assertEqual(snapshot(root), after)
+            for format_fixed in (False, True):
+                with self.subTest(module=module.__name__, format_fixed=format_fixed), tempfile.TemporaryDirectory() as temporary:
+                    root = self.root(temporary, module)
+                    self.previous(root, module, format_fixed)
+                    before = snapshot(root)
+                    result = module.apply(root)
+                    self.assertTrue(result['upgraded_known_previous'])
+                    after = snapshot(root)
+                    changed = {module.POLICY + 'public/types.te'}
+                    if not format_fixed:
+                        changed.add(contexts_key(module))
+                    self.assertEqual({n for n in before if before[n] != after[n]}, changed)
+                    self.assertFalse(module.apply(root)['upgraded_known_previous'])
+                    self.assertEqual(snapshot(root), after)
 
     def test_each_changed_previous_member_is_preserved_before_any_upgrade(self):
         for module in PREVIOUS:

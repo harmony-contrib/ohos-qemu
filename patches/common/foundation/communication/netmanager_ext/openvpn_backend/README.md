@@ -41,3 +41,9 @@ check in user policy (also inherited by developer policy). It does not grant
 permissions; the dedicated executable label, allow rules and execute
 neverallow remain in force. The unmodified full SELinux checker must pass
 before another representative package attempt.
+
+Private VPN files carry `data_service_file_attr`; their management socket and
+the init-created control sockets carry `system_sock_domain`. The control
+parameter is system internal. These classifications retain the dedicated
+labels and do not add an access rule. Regular config/lock files have no ioctl
+grant; the existing TUN-device ioctl remains narrowly specified separately.
