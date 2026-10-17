@@ -1,7 +1,7 @@
 {
-  "scope": "preserved full2620 and previous targeted/native host scopes plus batched actual GN stdout/dual-query/Calendar corrections; no package or guest acceptance",
+  "scope": "preserved full2620 + previous native/targeted scopes; current actual package-tail19 and VPN destination/full checksum integrity corrections; no guest",
   "status": "pass_batched_host_scope_with_preserved_initial_errors",
-  "tested_commit": "d7fa01abd960f2e8778e36ec4e0d758a778c3e81",
+  "tested_commit": "359b8dd8e47d1b36860a899d336b0630075984f3",
   "exit_code": 0,
   "full_suite": {
     "report": {
@@ -83,5 +83,20 @@
     "checks": 6,
     "source_HAP_command_receipt_bytes_verified": true,
     "SDK_rebuild_or_guest_claim": false
+  },
+  "package_metadata_repairs": {
+    "VPN": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r55-OpenVPN-package-path-host-01/checks.json",
+      "sha256": "8ac9ec6580af09bd0e3a09e848036d39d1b7cbf883df8f11962c53e748917a63",
+      "bytes": 1574
+    },
+    "VPN_tests": 19,
+    "checksums": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r55-package-checksum-host-01/checks.json",
+      "sha256": "1d17e5b25e332cb125a71f4149af306e101d7ed3c3b757171fee28cdf9164e9f",
+      "bytes": 2002
+    },
+    "checksum_boot_native_scope_tests": 42,
+    "full_suite_rerun": false
   }
 }
