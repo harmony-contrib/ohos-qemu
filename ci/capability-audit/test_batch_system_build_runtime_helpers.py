@@ -71,6 +71,16 @@ class RuntimeHelperBuilderTests(unittest.TestCase):
         for wrong in [text + 'libs = -ldl\n', text.replace('-lc++ -lc', '$unknown'), 'libs = -lc\n']:
             with self.assertRaises(ValueError): b.variables(wrong)
 
+    def test_actual_gnss_literal_colon_include_keeps_unknown_variables_rejected(self):
+        # Actual product graph contains a target-style include path with Ninja's $: escape.
+        include = '-I../../base/telephony/sms_mms$:tel_sms_mms_config'
+        text = 'include_dirs = ' + include + '\nldflags = -flto\nlibs = -lc++\n'
+        self.assertEqual(b.variables(text)['include_dirs'],
+                         ['-I../../base/telephony/sms_mms:tel_sms_mms_config'])
+        for unknown in ('$name', '${name}', '$:suffix$name', '$$:', '$ '):
+            with self.subTest(unknown=unknown), self.assertRaises(ValueError):
+                b.variables(text.replace(include, '-I' + unknown))
+
     def test_only_actual_selected_DSO_inputs_and_not_proxy_libc(self):
         graph = ('build own.so unstripped/own.so: solink first.o public/libreal.z.so '
                  'obj/third_party/musl/sp/libc.so private/libactual.so | implicit/unused.so || later.stamp\n')

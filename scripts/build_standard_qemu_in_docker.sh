@@ -1658,7 +1658,8 @@ PY
       local witness_args=(finish --source-root "${OHOS_ROOT}" --product "${product}"
         --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log")
       if [ "${witness}" = qemu_contacts_build_witness ]; then
-        witness_args+=(--build-argv-json "${build_argv_json}" --build-exit-code 0)
+        witness_args+=(--build-argv-json "${build_argv_json}" --build-exit-code 0
+          --execution-log "${OHOS_ROOT}/out/${product}/build.log")
       fi
       if ! python3 "${SCRIPT_DIR}/${witness}.py" "${witness_args[@]}"; then
         witness_failed=1

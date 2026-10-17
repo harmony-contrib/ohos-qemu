@@ -83,7 +83,13 @@ class SettingsTtsNamespaceTests(unittest.TestCase):
                             if name != 'InitTTSMap')
         mock = r'''
 // Preserve the fixed upstream initializer's VLA; do not rewrite the exercised method.
+#if defined(__clang__)
+#if __has_warning("-Wvla-cxx-extension")
 #pragma clang diagnostic ignored "-Wvla-cxx-extension"
+#elif __has_warning("-Wvla-extension")
+#pragma clang diagnostic ignored "-Wvla-extension"
+#endif
+#endif
 #include <cassert>
 #include <map>
 #include <memory>

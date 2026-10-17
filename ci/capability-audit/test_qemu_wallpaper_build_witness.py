@@ -1,5 +1,7 @@
 """Wallpaper build/provenance guard negatives; no constructed fixture is a build."""
 import json
+import os
+import subprocess
 from pathlib import Path
 import struct
 import sys
@@ -62,11 +64,54 @@ class WallpaperBuildWitnessTests(unittest.TestCase):
     def test_query_argv_binds_only_theme_service_and_matching_build_product(self):
         argv = ['/source/prebuilts/build-tools/linux-x86/bin/gn', 'args', '/source/out/arm64_virt', '--list=theme_service']
         guard.selected_args_command(argv, 'arm64_virt')
-        guard.selected_args_command(['/usr/bin/qemu-x86_64-static'] + argv, 'arm64_virt')
-        for changed in (None, argv + ['--list=unrelated'], ['untrusted'] + argv[1:],
+        guard.selected_args_command(['/usr/bin/qemu-x86_64-static', '-cpu', 'max'] + argv, 'arm64_virt')
+        for changed in (None, ['/usr/bin/qemu-x86_64-static'] + argv,
+                        ['/usr/bin/qemu-x86_64-static', '-cpu', 'host'] + argv, argv + ['--list=unrelated'], ['untrusted'] + argv[1:],
                         argv[:2] + ['/other/out/arm64_virt'] + argv[3:],
                         argv[:2] + ['/source/out/x86_64_virt'] + argv[3:], argv[:-1] + ['--list=other']):
             with self.assertRaises(ValueError): guard.selected_args_command(changed, 'arm64_virt')
+
+    def test_explicit_software_CPU_and_finite_budget_match_host_GN_policy(self):
+        source = Path('/source')
+        with patch.dict(os.environ, {'QEMU_HOST_GN_QEMU_USER': '0'}):
+            native, budget = guard.gn_query_command(source, 'arm64_virt')
+            self.assertEqual(native[0], '/source/prebuilts/build-tools/linux-x86/bin/gn')
+            self.assertEqual(budget, 180)
+        with patch.dict(os.environ, {'QEMU_HOST_GN_QEMU_USER': '1'}):
+            emulated, budget = guard.gn_query_command(source, 'arm64_virt')
+            self.assertEqual(emulated[:3], ['/usr/bin/qemu-x86_64-static', '-cpu', 'max'])
+            self.assertEqual(emulated[3:], native); self.assertEqual(budget, 900)
+        with patch.dict(os.environ, {'QEMU_HOST_GN_QEMU_USER': '2'}), self.assertRaises(ValueError):
+            guard.gn_query_command(source, 'arm64_virt')
+
+    def test_timeout_is_fatal_and_never_reuses_a_selected_args_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary).resolve(); build = source / 'out/arm64_virt'
+            graph = build / guard.GRAPH; graph.parent.mkdir(parents=True); graph.write_text(self.graph())
+            (build / 'theme-service-args.txt').write_text('theme_service\n Current value = false\n')
+            calls = []
+            def query(argv, **kwargs):
+                calls.append((argv, kwargs))
+                if 'args' in argv: raise subprocess.TimeoutExpired(argv, kwargs['timeout'])
+                unit = argv[-1]
+                return self.command().replace(guard.UNITS[0], unit).replace('wallpaper_service.cpp', Path(unit).stem + '.cpp') + '\n'
+            with patch.object(guard, 'source_check'), patch.object(guard.subprocess, 'check_output', query), patch.dict(os.environ, {'QEMU_HOST_GN_QEMU_USER': '1'}):
+                with self.assertRaises(subprocess.TimeoutExpired): guard.query(source, 'arm64_virt')
+            self.assertEqual(calls[-1][0][:3], ['/usr/bin/qemu-x86_64-static', '-cpu', 'max'])
+            self.assertEqual(calls[-1][1]['timeout'], 900)
+            self.assertEqual(sum('args' in argv for argv, _ in calls), 1)
+
+    def test_longer_query_budget_cannot_accept_true_or_default_only_false(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary).resolve(); graph = source / 'out/arm64_virt' / guard.GRAPH
+            graph.parent.mkdir(parents=True); graph.write_text(self.graph())
+            for args in ('theme_service\n Current value = true\n Default value = false\n', 'theme_service = false\n'):
+                def query(argv, **kwargs):
+                    if 'args' in argv: return args
+                    unit = argv[-1]
+                    return self.command().replace(guard.UNITS[0], unit).replace('wallpaper_service.cpp', Path(unit).stem + '.cpp') + '\n'
+                with patch.object(guard, 'source_check'), patch.object(guard.subprocess, 'check_output', query), patch.dict(os.environ, {'QEMU_HOST_GN_QEMU_USER': '1'}):
+                    with self.subTest(args=args), self.assertRaises(ValueError): guard.query(source, 'arm64_virt')
 
     def test_begin_preserves_only_owned_outputs_and_old_witness(self):
         with tempfile.TemporaryDirectory() as temporary:

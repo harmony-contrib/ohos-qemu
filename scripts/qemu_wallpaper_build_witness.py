@@ -30,6 +30,9 @@ FILES = {
     BASE + '/wallpaper.gni': 'd727530a2f509b8e17f06b9c20cac2fc0a5489de3e0d59a13d74542a561d4033',
     BASE + '/services/src/wallpaper_extension_ability_connection.cpp': '1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d',
 }
+GN_NATIVE_TIMEOUT = 180
+GN_EMULATED_TIMEOUT = 900  # Round06 actual GN generation alone took 243.99s.
+
 PAYLOADS = {'graph.ninja', 'compile-commands.json', 'theme-service-args.txt', LIBRARY, 'witness.json', 'build-log.txt'}
 
 
@@ -136,13 +139,28 @@ def selected_args(text):
 def selected_args_command(command, product):
     if not isinstance(command, list) or any(not isinstance(x, str) for x in command):
         raise ValueError('actual GN argument query argv required')
-    if command and command[0] == '/usr/bin/qemu-x86_64-static': command = command[1:]
+    if command and command[0] == '/usr/bin/qemu-x86_64-static':
+        if command[1:3] != ['-cpu', 'max']:
+            raise ValueError('explicit fixed host GN software CPU required')
+        command = command[3:]
     if len(command) != 4 or command[1] != 'args' or command[3] != '--list=theme_service':
         raise ValueError('unique theme_service GN argument query required')
     build = Path(command[2]); source = build.parent.parent
     if (not build.is_absolute() or '..' in build.parts or build.parts[-2:] != ('out', product) or
             command[0] != str(source / 'prebuilts/build-tools/linux-x86/bin/gn')):
         raise ValueError('GN query does not bind the actual product source/build paths')
+
+
+
+def gn_query_command(source, product):
+    mode = os.environ.get('QEMU_HOST_GN_QEMU_USER', '0')
+    if mode not in ('0', '1'):
+        raise ValueError('QEMU_HOST_GN_QEMU_USER must be 0 or 1')
+    prefix = ['/usr/bin/qemu-x86_64-static', '-cpu', 'max'] if mode == '1' else []
+    command = prefix + [str(source / 'prebuilts/build-tools/linux-x86/bin/gn'),
+                        'args', str(source / 'out' / product), '--list=theme_service']
+    selected_args_command(command, product)
+    return command, GN_EMULATED_TIMEOUT if mode == '1' else GN_NATIVE_TIMEOUT
 
 
 def elf_check(path, product):
@@ -175,11 +193,8 @@ def query(source, product):
         lines = [line for line in raw.splitlines() if 'clang++ ' in line and ' -c ' in line]
         if len(lines) != 1: raise ValueError('actual one-object Wallpaper compile query is ambiguous')
         compile_check(lines[0], unit, product); commands[unit] = lines[0]
-    gn = [str(source / 'prebuilts/build-tools/linux-x86/bin/gn')]
-    if os.environ.get('QEMU_HOST_GN_QEMU_USER') == '1': gn.insert(0, '/usr/bin/qemu-x86_64-static')
-    args_command = gn + ['args', str(build), '--list=theme_service']
-    selected_args_command(args_command, product)
-    args = subprocess.check_output(args_command, cwd=source, text=True, timeout=180); selected_args(args)
+    args_command, timeout = gn_query_command(source, product)
+    args = subprocess.check_output(args_command, cwd=source, text=True, timeout=timeout); selected_args(args)
     return dict(graph_sha256=file_sha256(graph), compile_commands=commands, selected_args_command=args_command,
                 selected_args_sha256=__import__('hashlib').sha256(args.encode()).hexdigest()), {
                     'graph.ninja': graph.read_bytes(), 'compile-commands.json': (json.dumps(commands, indent=2) + '\n').encode(),

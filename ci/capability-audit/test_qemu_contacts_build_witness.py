@@ -38,18 +38,35 @@ class ContactsWitnessTests(unittest.TestCase):
     def argv(self, product='arm64_virt'):
         return ['./build.sh', '--product-name', product, '--build-target', 'images', '--build-only-load=false', '--build-only-gn=false', '--fast-rebuild=false']
 
+    def gn_header(self, source='/source', product='arm64_virt', clock=20):
+        return '[OHOS INFO] [GN] Excuting gn command: ' + source + '/prebuilts/build-tools/linux-x86/bin/gn gen --args=product_name="' + product + '" ohos_build_time=' + str(clock) + ' ' + source + '/out/' + product
+
+    def logs(self, source='/source', product='arm64_virt'):
+        # Constructed host protocol inputs, never real build evidence.
+        work = ['CXX ' + unit for unit in G.UNITS]
+        work += ['ACTION //' + G.BASE + ':' + label + '(//build/toolchain/ohos:ohos_clang_' + G.PRODUCTS[product][2] + ')' for label in ('gen_contact_abc', 'gen_js_obj_contact_js', 'gen_js_obj_contact_abc')]
+        work += ['SOLINK ' + G.LINKED]
+        progress = ['[' + str(i + 1) + '/999] ' + item for i, item in enumerate(work)]
+        outer = [self.gn_header(source, product)] + ['[OHOS INFO] [NINJA] ' + line for line in progress]
+        outer += ['[OHOS INFO]  ' + product + ' build success']
+        detail = [self.gn_header(source, product)]
+        for i, line in enumerate(progress):
+            detail.append(line)
+            if i == len(G.UNITS):
+                detail.append('./ets_frontend/es2abc --output ' + source + '/out/' + product + '/' + G.ABC + ' --module ' + source + '/' + G.JS + ' --target-api-sub-version=beta3 | execution_path: ' + source + '/out/' + product + '/clang_x64/arkcompiler')
+        return '\n'.join(outer) + '\n', '\n'.join(detail) + '\n'
+
     def log(self, source='/source', product='arm64_virt'):
-        lines = ['[OHOS INFO] [NINJA] [1/999] CXX ' + unit for unit in G.UNITS]
-        lines += ['[OHOS INFO] [NINJA] ACTION //' + G.BASE + ':' + label + '(//build/toolchain/ohos:ohos_clang_' + G.PRODUCTS[product][2] + ')' for label in ('gen_contact_abc', 'gen_js_obj_contact_js', 'gen_js_obj_contact_abc')]
-        lines += ['[OHOS INFO] [NINJA] ./ets_frontend/es2abc --output ' + source + '/out/' + product + '/' + G.ABC + ' --module ' + source + '/' + G.JS + ' --target-api-sub-version=beta3 | execution_path: ' + source + '/out/' + product + '/clang_x64/arkcompiler']
-        lines += ['[OHOS INFO] [NINJA] SOLINK ' + G.LINKED, '[OHOS INFO]  ' + product + ' build success']
-        return '\n'.join(lines) + '\n'
+        return self.logs(source, product)[0]
+
+    def check_log(self, outer, selected, source='/source', product='arm64_virt', detail=None, start=10000000, end=30000000):
+        G.build_log_check(outer, selected, source, product, self.logs(source, product)[1] if detail is None else detail, start, end)
 
     def test_all_three_actual_abi_graph_contracts_without_executing_tools(self):
         for product in G.PRODUCTS:
             selected = G.graph_commands(*self.graph(product=product), '/source', product)
             self.assertEqual(set(selected['commands']), {*G.UNITS, G.ABC, G.JS_OBJECT, G.ABC_OBJECT, G.LINKED})
-            G.build_log_check(self.log(product=product), selected, '/source', product)
+            self.check_log(self.log(product=product), selected, '/source', product)
             G.full_build_argv(self.argv(product), product)
 
     def test_missing_or_duplicate_native_edges_and_wrong_source_are_rejected(self):
@@ -119,11 +136,30 @@ class ContactsWitnessTests(unittest.TestCase):
                         log.replace('arm64_virt build success', 'other build success'),
                         log.replace(' build success', ' build success then failed'),
                         log.replace('contacts_api.o\n', 'unrelated.o\n'),
-                        log.replace('gen_contact_abc(', 'other('), log.replace(' --module ', ' --commonjs '),
-                        log.replace('execution_path: /source/', 'execution_path: /old/'),
+                        log.replace('gen_contact_abc(', 'other('),
                         '[OHOS INFO]  arm64_virt build success\n' + log.replace('[OHOS INFO]  arm64_virt build success\n', ''),
                         log + 'FAILED: later.o\n', log + '[OHOS INFO]  arm64_virt build success\n'):
-            with self.subTest(changed=changed[-100:]), self.assertRaises(ValueError): G.build_log_check(changed, selected, '/source', 'arm64_virt')
+            with self.subTest(changed=changed[-100:]), self.assertRaises(ValueError): self.check_log(changed, selected)
+
+    def test_detailed_stdout_and_same_attempt_binding_are_mandatory(self):
+        selected = G.graph_commands(*self.graph(), '/source', 'arm64_virt')
+        outer, detail = self.logs(); execution = next(line for line in detail.splitlines() if 'execution_path:' in line)
+        self.check_log(outer, selected, detail=detail)
+        variants = [('', 'absent'), (detail.replace(execution + '\n', ''), 'missing execution'),
+            (detail.replace('--module', '--commonjs'), 'wrong module'),
+            (detail.replace('execution_path: /source/', 'execution_path: /old/'), 'wrong cwd'),
+            (detail + execution + '\n', 'duplicate execution'),
+            (detail.replace(execution + '\n', '') + execution + '\n', 'outside action output'),
+            (detail.replace('ohos_build_time=20', 'ohos_build_time=21'), 'another generation'),
+            (detail.replace('[1/999]', '[2/999]'), 'counter mismatch'),
+            (detail + 'FAILED: another.o\n', 'actual detailed failure'),
+            (self.gn_header() + '\n' + detail, 'appended old log'),
+            (detail.replace(self.gn_header() + '\n', '') + self.gn_header() + '\n', 'work before generation')]
+        for raw, name in variants:
+            with self.subTest(name=name), self.assertRaises(ValueError): self.check_log(outer, selected, detail=raw)
+        with self.assertRaises(ValueError): G.build_log_check(outer, selected, '/source', 'arm64_virt')
+        with self.assertRaises(ValueError): self.check_log(outer, selected, start=21000000)
+        with self.assertRaises(ValueError): self.check_log(outer, selected, end=19000000)
 
     def test_begin_moves_exact_18_outputs_plus_old_witness_and_retains_stamps(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -182,17 +218,19 @@ class ContactsWitnessTests(unittest.TestCase):
         source_hashes = {name: G.sha(data) for name, data in source.items()}
         data = {'graph/contact.ninja': graph.encode(), 'graph/toolchain.ninja': toolchain.encode(),
                 'graph/args.gn': b'fixture_only = true\n', 'build-log.txt': self.log().encode(),
+                'execution-log.txt': self.logs()[1].encode(),
                 'build-argv.json': json.dumps(self.argv()).encode(),
                 'commands.json': json.dumps(selected).encode(), 'link-response.txt': selected['link_response'].encode()}
         data.update({'source/' + name: raw for name, raw in source.items()})
         data.update({'outputs/' + name: ('not an ELF or bytecode: ' + name).encode() for name in G.outputs('arm64_virt')})
         witness = dict(schema_version=1, phase='completed', scope=G.SCOPE, product='arm64_virt', recipe={},
-            nonce='a' * 32, source_root='/source', source_sha256=source_hashes, start_ns=10, finished_ns=30,
+            nonce='a' * 32, source_root='/source', source_sha256=source_hashes, start_ns=10000000, finished_ns=30000000,
             build_exit_code=0, commands=selected, artifacts={name: dict(sha256=G.sha(data['outputs/' + name]),
-                bytes=len(data['outputs/' + name]), mtime_ns=20) for name in G.outputs('arm64_virt')},
+                bytes=len(data['outputs/' + name]), mtime_ns=20000000) for name in G.outputs('arm64_virt')},
             graphs_sha256={name: G.sha(data['graph/' + name]) for name in ('contact.ninja', 'toolchain.ninja', 'args.gn')},
-            build_log=dict(path='/log', sha256=G.sha(data['build-log.txt']), bytes=len(data['build-log.txt']), mtime_ns=20),
-            build_argv=dict(path='/argv', sha256=G.sha(data['build-argv.json']), bytes=len(data['build-argv.json']), mtime_ns=15),
+            build_log=dict(path='/log', sha256=G.sha(data['build-log.txt']), bytes=len(data['build-log.txt']), mtime_ns=20000000),
+            execution_log=dict(path='/source/out/arm64_virt/build.log', sha256=G.sha(data['execution-log.txt']), bytes=len(data['execution-log.txt']), mtime_ns=20000000),
+            build_argv=dict(path='/argv', sha256=G.sha(data['build-argv.json']), bytes=len(data['build-argv.json']), mtime_ns=15000000),
             tools={name: {'resolved_source_path': name, 'sha256': 'b' * 64} for name in [G.CLANG,
                 'prebuilts/clang/ohos/linux-x86_64/llvm/bin/llvm-objcopy', 'out/arm64_virt/clang_x64/arkcompiler/ets_frontend/es2abc']},
             payload_identity={'synthetic_metadata_test_only': True}, module_record_and_literal_binding_verified=False,
@@ -215,7 +253,7 @@ class ContactsWitnessTests(unittest.TestCase):
                 for change in ('old_output', 'future_output', 'nonzero_build', 'boolean_build', 'false_runtime', 'missing_output', 'stale_log'):
                     changed = json.loads(json.dumps(witness))
                     if change == 'old_output': changed['artifacts'][G.ABC]['mtime_ns'] = 9
-                    elif change == 'future_output': changed['artifacts'][G.ABC]['mtime_ns'] = 31
+                    elif change == 'future_output': changed['artifacts'][G.ABC]['mtime_ns'] = 31000000
                     elif change == 'nonzero_build': changed['build_exit_code'] = 1
                     elif change == 'boolean_build': changed['build_exit_code'] = False
                     elif change == 'false_runtime': changed['public_runtime_execution_verified'] = True
@@ -242,6 +280,45 @@ class ContactsWitnessTests(unittest.TestCase):
                 inventory['files_sha256']['witness.json'] = G.file_sha256(directory / 'witness.json')
                 with self.assertRaises(ValueError): G.check_inventory(inventory, 'arm64_virt', directory)
                 api.assert_not_called()
+
+    def test_offline_rehash_cannot_hide_missing_stale_or_foreign_detailed_log(self):
+        for change in ('missing_payload', 'missing_metadata', 'old_mtime', 'wrong_path', 'old_header', 'foreign_counter', 'missing_execution', 'outside_action'):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary).resolve(); inventory, witness, pins = self.metadata_fixture(directory)
+                path = directory / 'execution-log.txt'; text = path.read_text()
+                if change == 'missing_payload': path.unlink(); del inventory['files_sha256']['execution-log.txt']
+                elif change == 'missing_metadata': del witness['execution_log']
+                elif change == 'old_mtime': witness['execution_log']['mtime_ns'] = 9
+                elif change == 'wrong_path': witness['execution_log']['path'] = '/old/build.log'
+                else:
+                    if change == 'old_header': text = text.replace('ohos_build_time=20', 'ohos_build_time=9')
+                    elif change == 'foreign_counter': text = text.replace('[1/999]', '[2/999]')
+                    else:
+                        execution = next(line for line in text.splitlines() if 'execution_path:' in line)
+                        text = text.replace(execution + '\n', '')
+                        if change == 'outside_action': text += execution + '\n'
+                    path.write_text(text); checksum = G.file_sha256(path)
+                    inventory['files_sha256']['execution-log.txt'] = checksum
+                    witness['execution_log'].update(sha256=checksum, bytes=path.stat().st_size)
+                (directory / 'witness.json').write_text(json.dumps(witness))
+                inventory['files_sha256']['witness.json'] = G.file_sha256(directory / 'witness.json')
+                with patch.object(G, 'PINNED', pins), patch.object(G, 'recipe', return_value={}), patch.object(G, 'payload_check') as api:
+                    with self.assertRaises(ValueError): G.check_inventory(inventory, 'arm64_virt', directory)
+                    api.assert_not_called()
+
+    def test_materialize_retains_original_execution_log_bytes_for_package_replay(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary).resolve(); source = base / 'source'; build = source / 'out/arm64_virt'
+            build.mkdir(parents=True); execution = build / 'build.log'; execution.write_bytes(b'HOST TEST original detailed bytes\n')
+            log = base / 'outer.log'; log.write_bytes(b'HOST TEST outer bytes\n')
+            argv = base / 'argv.json'; argv.write_text('[]')
+            for name in G.outputs('arm64_virt'):
+                path = build / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(b'HOST TEST not actual outputs')
+            witness = {'execution_log': {'path': str(execution)}, 'source_sha256': {}, 'commands': {'link_response': ''}}
+            with patch.object(G, 'recipe', return_value={}):
+                inventory = G.materialize(source, 'arm64_virt', witness, {}, base / 'archive', log, argv)
+            self.assertEqual((base / 'archive/execution-log.txt').read_bytes(), execution.read_bytes())
+            self.assertEqual(inventory['files_sha256']['execution-log.txt'], G.file_sha256(execution))
 
     def test_payload_report_paths_are_stable_when_publishing_private_scratch(self):
         def public_api(**kwargs):

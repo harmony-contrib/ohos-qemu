@@ -341,30 +341,76 @@ def full_build_argv(argv, product):
             'actual images build with fresh GN (not persisted fast/load-only) required')
 
 
-def build_log_check(text, commands, source_root, product):
-    lines = text.splitlines(); positions = []
-    for unit in UNITS:
-        hits = [i for i, line in enumerate(lines) if re.search(r'\bCXX\s+' + re.escape(unit) + r'\s*$', line)]
-        require(len(hits) == 1, 'full build log requires one forced native compilation: ' + unit); positions += hits
-    for label in ('gen_contact_abc', 'gen_js_obj_contact_js', 'gen_js_obj_contact_abc'):
-        suffix = 'ACTION //' + BASE + ':' + label + '(//build/toolchain/ohos:ohos_clang_' + PRODUCTS[product][2] + ')'
-        hits = [i for i, line in enumerate(lines) if line.rstrip().endswith(suffix)]
-        require(len(hits) == 1, 'full build log missing/duplicate forced action: ' + label); positions += hits
-    links = [i for i, line in enumerate(lines) if re.search(r'\bSOLINK\s+' + re.escape(LINKED) + r'\s*$', line)]
-    require(len(links) == 1, 'full build log requires actual final Contacts solink'); positions += links
+def gn_generation(text, source_root, product, start_ns, end_ns):
+    require(type(start_ns) is int and type(end_ns) is int and 0 < start_ns <= end_ns,
+            'actual pending/finish time window required for detailed build log')
+    prefix = '[OHOS INFO] [GN] Excuting gn command: '
+    heads = [line for line in text.splitlines() if line.startswith(prefix)]
+    require(len(heads) == 1, 'unique current full GN generation header required in each log')
+    source = Path(source_root); head = heads[0]
+    require(head.startswith(prefix + str(source / 'prebuilts/build-tools/linux-x86/bin/gn') + ' gen ') and
+            head.endswith(' ' + str(source / 'out' / product)), 'GN header source/product differs')
+    times = re.findall(r'(?<!\S)ohos_build_time=([0-9]+)(?=\s)', head)
+    require(1 <= len(times) <= 2 and len(set(times)) == 1 and
+            start_ns // 1000000 <= int(times[0]) <= end_ns // 1000000,
+            'GN generation header does not belong to this prepared build window')
+    return head
+
+
+def progress_row(line, outer):
+    prefix = '[OHOS INFO] [NINJA] ' if outer else ''
+    match = re.fullmatch(re.escape(prefix) + r'\[([0-9]+)/([0-9]+)\] (.+)', line)
+    require(match is not None and int(match[1]) > 0 and int(match[2]) >= int(match[1]),
+            'actual paired Ninja progress counter/label required')
+    return match[1], match[2], match[3]
+
+
+def build_log_check(text, commands, source_root, product, execution_text=None, start_ns=None, end_ns=None):
+    # HB's outer tee retains progress and final success but filters successful
+    # action stdout. The actual product build.log retains the es2abc print.
+    # Never concatenate or synthesize those independent original logs.
+    require(isinstance(execution_text, str) and execution_text, 'actual detailed product execution log required')
+    require(isinstance(commands, dict) and isinstance(commands.get('commands'), dict) and ABC in commands['commands'],
+            'retained actual graph ABC command required alongside execution evidence')
+    action_check(commands['commands'][ABC], 'abc', source_root, product)
+    generation = gn_generation(text, source_root, product, start_ns, end_ns)
+    require(generation == gn_generation(execution_text, source_root, product, start_ns, end_ns),
+            'outer/detailed logs belong to different GN generations')
+    lines = text.splitlines(); detailed = execution_text.splitlines(); positions = []; raw_positions = {}
+    work = ['CXX ' + unit for unit in UNITS]
+    work += ['ACTION //' + BASE + ':' + label + '(//build/toolchain/ohos:ohos_clang_' + PRODUCTS[product][2] + ')'
+             for label in ('gen_contact_abc', 'gen_js_obj_contact_js', 'gen_js_obj_contact_abc')]
+    work += ['SOLINK ' + LINKED]
+    for label in work:
+        hits = [i for i, line in enumerate(lines) if line.rstrip().endswith(' ' + label)]
+        raw_hits = [i for i, line in enumerate(detailed) if line.rstrip().endswith(' ' + label)]
+        require(len(hits) == len(raw_hits) == 1, 'one matching forced work edge required in both logs: ' + label)
+        require(progress_row(lines[hits[0]], True) == progress_row(detailed[raw_hits[0]], False),
+                'outer/detailed forced work progress differs: ' + label)
+        positions += hits; raw_positions[label] = raw_hits[0]
+    require(lines.index(generation) < min(positions) and detailed.index(generation) < min(raw_positions.values()),
+            'forced Contacts work predates the current full GN generation')
+    require([lines[i].split('] ', 2)[-1] for i in sorted(positions)] ==
+            [detailed[i] for i in sorted(raw_positions.values())], 'forced work order/counters differ between actual logs')
     source = Path(source_root); build = source / 'out' / product
     expected = ['./ets_frontend/es2abc', '--output', str(build / ABC), '--module', str(source / JS), '--target-api-sub-version=beta3']
     executions = []
-    for i, line in enumerate(lines):
+    for i, line in enumerate(detailed):
         if './ets_frontend/es2abc ' in line and str(build / ABC) in line:
-            match = re.search(r'(\./ets_frontend/es2abc .*?) \| execution_path: (.*)$', line)
+            match = re.fullmatch(r'(\./ets_frontend/es2abc .*?) \| execution_path: (.*)', line)
             require(match is not None and words(match[1]) == expected and
                     match[2].strip() == str(build / 'clang_x64/arkcompiler'), 'actual es2abc invocation/cwd differs')
             executions.append(i)
-    require(len(executions) == 1, 'fresh real es2abc execution line required'); positions += executions
+    require(len(executions) == 1, 'fresh real es2abc execution line required in detailed product log')
+    action = raw_positions[work[len(UNITS)]]
+    next_progress = next((i for i in range(action + 1, len(detailed)) if re.match(r'^\[[0-9]+/[0-9]+\] ', detailed[i])), len(detailed))
+    require(action < executions[0] < next_progress, 'real es2abc stdout is outside its actual fresh ABC action output block')
+    require(executions[0] < raw_positions['SOLINK ' + LINKED], 'real es2abc must precede final Contacts link')
     success = [i for i, line in enumerate(lines) if re.fullmatch(r'\[OHOS INFO\][ \t]+' + re.escape(product) + r' build success[ \t]*', line)]
     require(len(success) == 1 and success[0] > max(positions), 'complete actual hb product build success required after forced work')
-    require(not re.search(r'(?m)(?:^|\s)(?:FAILED:|ninja: build stopped:)|^\[OHOS ERROR\].*build failed', text), 'failed actual build log')
+    for raw in (text, execution_text):
+        require(not re.search(r'(?m)(?:^|\s)(?:FAILED:|ninja: build stopped:)|^\[OHOS ERROR\].*build failed', raw),
+                'failed actual build log')
 
 
 def tool_hashes(source, product):
@@ -436,12 +482,14 @@ def witness_check(value, product):
         require(isinstance(row.get('sha256'), str) and re.fullmatch('[a-f0-9]{64}', row['sha256']) and
                 type(row.get('mtime_ns')) is int and value['start_ns'] <= row['mtime_ns'] <= value['finished_ns'] and
                 type(row.get('bytes')) is int and row['bytes'] > 0, 'fresh Contacts output record missing')
-    for key in ('build_log', 'build_argv'):
+    for key in ('build_log', 'execution_log', 'build_argv'):
         row = value.get(key, {})
         require(isinstance(row.get('sha256'), str) and re.fullmatch('[a-f0-9]{64}', row['sha256']) and
                 type(row.get('bytes')) is int and row['bytes'] > 0 and type(row.get('mtime_ns')) is int and
                 0 < row['mtime_ns'] <= value['finished_ns'] and
-                (key != 'build_log' or row['mtime_ns'] >= value['start_ns']), 'actual fresh build log/argv metadata required')
+                (key == 'build_argv' or row['mtime_ns'] >= value['start_ns']), 'actual fresh build log/argv metadata required')
+    require(value['execution_log'].get('path') == str(Path(root) / 'out' / product / 'build.log'),
+            'detailed execution log must be the actual product build.log')
     for field in ('module_record_and_literal_binding_verified', 'public_runtime_execution_verified', 'first_artifact_behavior_gate_passed'):
         require(value.get(field) is False, 'build evidence must not claim ABC semantics or runtime')
     require(set(value.get('tools', {})) == {CLANG, 'prebuilts/clang/ohos/linux-x86_64/llvm/bin/llvm-objcopy',
@@ -459,7 +507,7 @@ def check_inventory(value, product, directory, image_dso=None):
     for name, checksum in files.items():
         relative(name); require(file_sha256(regular(directory / name)) == checksum, 'Contacts evidence bytes changed: ' + name)
     witness = json.loads(regular(directory / 'witness.json').read_text()); witness_check(witness, product)
-    expected = {'witness.json', 'build-log.txt', 'build-argv.json', 'commands.json', 'link-response.txt',
+    expected = {'witness.json', 'build-log.txt', 'execution-log.txt', 'build-argv.json', 'commands.json', 'link-response.txt',
                 'graph/contact.ninja', 'graph/toolchain.ninja', 'graph/args.gn'}
     expected |= {'source/' + name for name in witness['source_sha256']}
     expected |= {'outputs/' + name for name in outputs(product)}
@@ -476,13 +524,14 @@ def check_inventory(value, product, directory, image_dso=None):
     require(json.loads((directory / 'commands.json').read_text()) == commands and
             (directory / 'link-response.txt').read_text() == commands['link_response'] and
             witness.get('commands') == commands, 'raw selected graph/command/link response mismatch')
-    for key, path in [('build_log', 'build-log.txt'), ('build_argv', 'build-argv.json')]:
+    for key, path in [('build_log', 'build-log.txt'), ('execution_log', 'execution-log.txt'), ('build_argv', 'build-argv.json')]:
         require(witness.get(key, {}).get('sha256') == files[path] and
                 witness[key]['bytes'] == (directory / path).stat().st_size, 'actual full build command/log witness mismatch')
     require(witness.get('graphs_sha256') == {name: files['graph/' + name] for name in ('contact.ninja', 'toolchain.ninja', 'args.gn')},
             'actual product raw graphs differ from build witness')
     full_build_argv(json.loads((directory / 'build-argv.json').read_text()), product)
-    build_log_check((directory / 'build-log.txt').read_text(), commands, witness['source_root'], product)
+    build_log_check((directory / 'build-log.txt').read_text(), commands, witness['source_root'], product,
+                    (directory / 'execution-log.txt').read_text(), witness['start_ns'], witness['finished_ns'])
     result = payload_check(directory, product, image_dso)
     # The public parser independently rereads every source/blob/DSO. Its own
     # deliberately narrower claims are preserved rather than rewritten as runtime.
@@ -493,7 +542,8 @@ def check_inventory(value, product, directory, image_dso=None):
 def materialize(source, product, witness, graph_payload, directory, log, argv_path):
     payload = dict(graph_payload)
     payload.update({'witness.json': (json.dumps(witness, indent=2) + '\n').encode(),
-                    'build-log.txt': regular(log).read_bytes(), 'build-argv.json': regular(argv_path).read_bytes(),
+                    'build-log.txt': regular(log).read_bytes(),
+                    'execution-log.txt': regular(witness['execution_log']['path']).read_bytes(), 'build-argv.json': regular(argv_path).read_bytes(),
                     'commands.json': (json.dumps(witness['commands'], indent=2) + '\n').encode(),
                     'link-response.txt': witness['commands']['link_response'].encode()})
     for name in witness['source_sha256']:
@@ -507,7 +557,7 @@ def materialize(source, product, witness, graph_payload, directory, log, argv_pa
                 files_sha256={name: sha(data) for name, data in payload.items()}, first_artifact_behavior_gate_passed=False)
 
 
-def finish(source, product, log, argv_path, exit_code):
+def finish(source, product, log, argv_path, exit_code, execution_log):
     source = Path(source); build = source / 'out' / product
     value = json.loads(regular(build / PENDING).read_text())
     require(value.get('phase') == 'prepared' and value.get('product') == product and value.get('scope') == SCOPE and
@@ -516,12 +566,16 @@ def finish(source, product, log, argv_path, exit_code):
     require(type(exit_code) is int and exit_code == 0, 'actual full product build must exit zero')
     full_build_argv(json.loads(regular(argv_path).read_text()), product)
     selected, graphs = capture(source, product)
-    build_log_check(regular(log).read_text(), selected, str(source), product)
-    now = time.time_ns(); artifacts = artifact_rows(build, product, value['start_ns'], now)
-    require(value['start_ns'] <= regular(log).stat().st_mtime_ns <= now, 'actual full build log predates this attempt')
+    require(Path(execution_log) == source / 'out' / product / 'build.log', 'actual product detailed log path required')
+    regular(execution_log); now = time.time_ns()
+    build_log_check(regular(log).read_text(), selected, str(source), product, regular(execution_log).read_text(), value['start_ns'], now)
+    artifacts = artifact_rows(build, product, value['start_ns'], now)
+    for current_log in (log, execution_log):
+        require(value['start_ns'] <= regular(current_log).stat().st_mtime_ns <= now, 'actual full build log predates this attempt')
     value.update(phase='completed', finished_ns=now, artifacts=artifacts, commands=selected, tools=tool_hashes(source, product),
         graphs_sha256={name.removeprefix('graph/'): sha(data) for name, data in graphs.items()}, build_exit_code=exit_code,
         build_log=dict(path=str(log), sha256=file_sha256(log), bytes=Path(log).stat().st_size, mtime_ns=Path(log).stat().st_mtime_ns),
+        execution_log=dict(path=str(execution_log), sha256=file_sha256(execution_log), bytes=Path(execution_log).stat().st_size, mtime_ns=Path(execution_log).stat().st_mtime_ns),
         build_argv=dict(path=str(argv_path), sha256=file_sha256(argv_path), bytes=Path(argv_path).stat().st_size, mtime_ns=Path(argv_path).stat().st_mtime_ns),
         module_record_and_literal_binding_verified=False, public_runtime_execution_verified=False, first_artifact_behavior_gate_passed=False)
     with tempfile.TemporaryDirectory(prefix='contacts-build-check-') as temporary:
@@ -571,18 +625,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('phase', choices=('begin', 'finish', 'package', 'verify'))
     parser.add_argument('--source-root', type=Path); parser.add_argument('--product', choices=PRODUCTS, required=True)
+    parser.add_argument('--execution-log', type=Path)
     parser.add_argument('--build-log', type=Path); parser.add_argument('--build-argv-json', type=Path)
     parser.add_argument('--build-exit-code', type=int); parser.add_argument('--directory', type=Path)
     parser.add_argument('--system-image', type=Path); parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.phase in ('begin', 'finish', 'package') and args.source_root is None: parser.error('source-root required')
-    if args.phase == 'finish' and (args.build_log is None or args.build_argv_json is None or args.build_exit_code is None):
-        parser.error('actual build-log/build-argv-json/build-exit-code required')
+    if args.phase == 'finish' and (args.build_log is None or args.execution_log is None or args.build_argv_json is None or args.build_exit_code is None):
+        parser.error('actual build-log/execution-log/build-argv-json/build-exit-code required')
     if args.phase in ('package', 'verify') and (args.directory is None or args.system_image is None):
         parser.error('directory/system-image required')
     source = args.source_root.resolve() if args.source_root else None
     if args.phase == 'begin': result = begin(source, args.product)
-    elif args.phase == 'finish': result = finish(source, args.product, args.build_log, args.build_argv_json, args.build_exit_code)
+    elif args.phase == 'finish': result = finish(source, args.product, args.build_log, args.build_argv_json, args.build_exit_code, args.execution_log)
     else:
         if args.phase == 'package': package(source, args.product, args.directory)
         result = image(args.system_image, args.directory, args.product)

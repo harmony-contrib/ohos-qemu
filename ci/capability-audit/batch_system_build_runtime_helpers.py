@@ -97,8 +97,9 @@ def variables(text):
         m = re.fullmatch(r'\s*(include_dirs|ldflags|libs) = (.*)', line)
         if m:
             if m[1] in result: raise ValueError('ambiguous selected Ninja variable: ' + m[1])
-            if '$' in m[2]: raise ValueError('unexpanded selected Ninja variable: ' + m[1])
-            result[m[1]] = shlex.split(m[2])
+            literal = m[2].replace('$:', ':')  # Ninja's literal-colon escape is not variable expansion.
+            if '$' in literal: raise ValueError('unexpanded selected Ninja variable: ' + m[1])
+            result[m[1]] = shlex.split(literal)
     if not {'include_dirs', 'ldflags', 'libs'} <= result.keys(): raise ValueError('incomplete actual Ninja target')
     return result
 
