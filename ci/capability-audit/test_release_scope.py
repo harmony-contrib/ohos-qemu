@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 from release_scope import SCOPE, IMAGE_GENERATION, exclusion_record
 from verify_gap_closure import LEDGER, requirements
@@ -52,18 +53,29 @@ class ReleaseScopeTests(unittest.TestCase):
                    'audit_baseline_sha256': hashlib.sha256(LEDGER.read_bytes()).hexdigest()}
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'structural-fixture.json'
+            identity['archive'] = str(Path(folder) / 'missing-fixture-archive.tar.gz')
             path.write_text(json.dumps(payload))
-            verified_payload('cxx-arkts11-gaps', path, identity, environment)
-            for kind in ('missing-required', 'extra-exclusion', 'claim-excluded-fixed', 'old-scope', 'changed-policy'):
-                value = copy.deepcopy(payload)
-                if kind == 'missing-required': value['closed'].pop(next(iter(retained)))
-                elif kind == 'extra-exclusion': value['release_exclusions']['ids'].append('behavior:unrelated')
-                elif kind == 'claim-excluded-fixed': value['closed'][exclusions['ids'][0]] = {}
-                elif kind == 'old-scope': value['scope'] = 'complete_audited_Cxx_ArkTS11_gap_closure'
-                else: value['release_exclusions']['policy_sha256'] = '0' * 64
-                path.write_text(json.dumps(value))
-                with self.assertRaises(ValueError):
-                    verified_payload('cxx-arkts11-gaps', path, identity, environment)
+            # Isolate scope validation while requiring delegation to the raw
+            # archive/boot verifier. These empty closure rows are not evidence.
+            with mock.patch('verify_gap_closure.verify_evidence') as raw:
+                verified_payload('cxx-arkts11-gaps', path, identity, environment)
+                raw.assert_called_once_with(payload, Path(identity['archive']),
+                                            path.parent / 'boot/boot.json', path.parent, 'phone')
+                raw.reset_mock()
+                for kind in ('missing-required', 'extra-exclusion', 'claim-excluded-fixed', 'old-scope', 'changed-policy'):
+                    value = copy.deepcopy(payload)
+                    if kind == 'missing-required': value['closed'].pop(next(iter(retained)))
+                    elif kind == 'extra-exclusion': value['release_exclusions']['ids'].append('behavior:unrelated')
+                    elif kind == 'claim-excluded-fixed': value['closed'][exclusions['ids'][0]] = {}
+                    elif kind == 'old-scope': value['scope'] = 'complete_audited_Cxx_ArkTS11_gap_closure'
+                    else: value['release_exclusions']['policy_sha256'] = '0' * 64
+                    path.write_text(json.dumps(value))
+                    with self.assertRaises(ValueError):
+                        verified_payload('cxx-arkts11-gaps', path, identity, environment)
+                    raw.assert_not_called()
+            path.write_text(json.dumps(payload))
+            with self.assertRaises((ValueError, OSError)):
+                verified_payload('cxx-arkts11-gaps', path, identity, environment)
 
 
 if __name__ == '__main__':
