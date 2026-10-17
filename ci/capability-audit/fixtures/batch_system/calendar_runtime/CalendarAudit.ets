@@ -26,6 +26,7 @@ interface Row {
 interface State {
   run_id: string; calendar_id: number; event_ids: number[];
 }
+interface CalendarAccountObservation { id: number; account: calendarManager.CalendarAccount; }
 interface DisplayTime { id: number; start: string; end: string; }
 const ROLE: string = '__ROLE__';
 const RUN: string = '__RUN__';
@@ -165,7 +166,7 @@ export class CalendarAudit {
   private async read(): Promise<void> {
     const values = await this.calendars();
     this.record('accounts', 'CalendarManager.getAllCalendars+Calendar.getAccount', JSON.stringify(values.map(
-      (calendar: calendarManager.Calendar) => ({ id: calendar.id, account: calendar.getAccount() }))));
+      (calendar: calendarManager.Calendar): CalendarAccountObservation => ({ id: calendar.id, account: calendar.getAccount() }))));
     for (const calendar of values) {
       this.api = 'Calendar.getEvents'; const events = await calendar.getEvents();
       const display: DisplayTime[] = events.map((event: calendarManager.Event): DisplayTime => ({
