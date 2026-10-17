@@ -1,0 +1,110 @@
+{
+    "MetaData": {
+        "Create": "2023-01-09",
+        "Description": "a haptic testcase",
+        "Version": 1.0,
+        "ChannelNumber": 1
+    },
+    "Channels": [
+        {
+            "Parameters": {
+                "Index": 0
+            },
+            "Pattern": [
+                {
+                    "Event": {
+                        "Type": "transient",
+                        "StartTime": 0,
+                        "Parameters": {
+                            "Frequency": 31,
+                            "Intensity": 100
+                        }
+                    }
+                },
+                {
+                    "Event": {
+                        "Type": "continuous",
+                        "StartTime": 40,
+                        "Duration": 54,
+                        "Parameters": {
+                            "Frequency": 30,
+                            "Intensity": 38,
+                            "Curve": [
+                                {
+                                    "Time": 0,
+                                    "Frequency": 0,
+                                    "Intensity": 0
+                                },
+                                {
+                                    "Time": 1,
+                                    "Frequency": 0,
+                                    "Intensity": 1
+                                },
+                                {
+                                    "Time": 40,
+                                    "Frequency": 0,
+                                    "Intensity": 1
+                                },
+                                {
+                                    "Time": 54,
+                                    "Frequency": 0,
+                                    "Intensity": 0
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "Event": {
+                        "Type": "transient",
+                        "StartTime": 103,
+                        "Parameters": {
+                            "Frequency": 69,
+                            "Intensity": 79
+                        }
+                    }
+                },
+                {
+                    "Event": {
+                        "Type": "transient",
+                        "StartTime": 180,
+                        "Parameters": {
+                            "Frequency": 82,
+                            "Intensity": 53
+                        }
+                    }
+                },
+                {
+                    "Event": {
+                        "Type": "transient",
+                        "StartTime": 239,
+                        "Parameters": {
+                            "Frequency": 82,
+                            "Intensity": 51
+                        }
+                    }
+                },
+                {
+                    "Event": {
+                        "Type": "transient",
+                        "StartTime": 319,
+                        "Parameters": {
+                            "Frequency": 74,
+                            "Intensity": 37
+                        }
+                    }
+                },
+                {
+                    "Event": {
+                        "Type": "transient",
+                        "StartTime": 350,
+                        "Parameters": {
+                            "Frequency": 44,
+                            "Intensity": 24
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,63 @@
+{
+  "scope": "host source scaffold + actual SDK105 declarations ONLY; no compiler/sign/guest",
+  "roles": {
+    "producer": {
+      "manifest_sha256": "3d40e020c6b8f4f591cc9b6d64fdbc2e02577acadffbbfcefcf87991d46adb06",
+      "source_files": 17,
+      "bundle": "org.harmonycontrib.calendarproducer",
+      "apl": "normal",
+      "allowed_acls": [],
+      "system_api_imports_observer_only": true
+    },
+    "observer": {
+      "manifest_sha256": "f9b94b77bc2a697ca46dc67481bd1328963fecb01ce551d77566ae719c7832be",
+      "source_files": 17,
+      "bundle": "org.harmonycontrib.calendarobserver",
+      "apl": "system_basic",
+      "allowed_acls": [
+        "ohos.permission.NOTIFICATION_CONTROLLER"
+      ],
+      "system_api_imports_observer_only": true
+    },
+    "denied": {
+      "manifest_sha256": "22c683e4e84b6c1b286b483711426cf4eb30050eb30b4f66cd2be4c4c2582cfb",
+      "source_files": 17,
+      "bundle": "org.harmonycontrib.calendardenied",
+      "apl": "normal",
+      "allowed_acls": [],
+      "system_api_imports_observer_only": true
+    }
+  },
+  "sdk": {
+    "metadata": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/oh-uni-package.json",
+      "sha256": "250b53f383be634ada496cfb4a1cbebd1e7ad6f14f44fd136ca55d2d9a35acab"
+    },
+    "@ohos.calendarManager.d.ts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.calendarManager.d.ts",
+      "sha256": "00a713c6109b5fec53ba9e9c42a1264f414d389b579a480a682d64bccccec1c9"
+    },
+    "@ohos.notificationManager.d.ts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.notificationManager.d.ts",
+      "sha256": "9c0a2523b3687f1ecbeca3289047d859f30f24cdcb218b6f68d586a2447b51ad"
+    },
+    "@ohos.app.ability.wantAgent.d.ts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.app.ability.wantAgent.d.ts",
+      "sha256": "5bda6a2a960dd6f7f64e3f21487a523bc078c43ad95faeb79f1b734d16b5fcaf"
+    },
+    "@ohos.abilityAccessCtrl.d.ts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/@ohos.abilityAccessCtrl.d.ts",
+      "sha256": "13a80a514850e33572ae463f6852c9951fad03e97be616be1ea45c76f5093758"
+    },
+    "application/UIAbilityContext.d.ts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/application/UIAbilityContext.d.ts",
+      "sha256": "d23c784fccf8f8eacdf3023a2db2a835bd8a68742670a154fb02eb3beae39f49"
+    },
+    "device_default": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/ets/api/device-define/default.json",
+      "sha256": "9fc6cd7512b7fdf772a18796e6ddf8ed094599b4042d0d25141ba75e0f2c13cf"
+    }
+  },
+  "temporary_sources_removed": true,
+  "runtime_acceptance": false
+}

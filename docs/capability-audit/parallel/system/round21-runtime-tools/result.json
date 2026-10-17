@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "scope": "new_Calendar_dedicated_QA_tools_ONLY_NOT_production_or_guest_pass",
+  "utc": "2026-10-17T03:21:17.758009+00:00",
+  "repository_head_observed": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "environment": {
+    "platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.7 (main, Aug 14 2025, 11:12:11) [Clang 17.0.0 (clang-1700.0.13.3)]",
+    "node": "v24.14.0"
+  },
+  "status": "handoff_host_checks_pass_guest_and_build_unverified",
+  "host_checks": {
+    "protocol_tests": {
+      "count": 11,
+      "status": "pass",
+      "artifact": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round21-runtime-tools/host-tests.log",
+        "sha256": "60121be27d555836baeaa89d5b7da0db4eb91bc682f8537e36c409385a8278c9"
+      }
+    },
+    "syntax_and_CLI_imports": {
+      "tools": 9,
+      "status": "pass",
+      "artifact": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round21-runtime-tools/syntax-cli-check.log",
+        "sha256": "57890ccca1eac23fe2e9bfbc8b5fcbdfed60ef789148eb125cd853229b597978"
+      }
+    },
+    "actual_SDK105_declarations_and_role_project_generation": {
+      "status": "pass_ONLY_source_generation",
+      "artifact": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round21-runtime-tools/project-generation-check.json",
+        "sha256": "d1dbe04974dda546a617acf4706a0dfa33b59284a23d9607ebd641f4a8f4946e"
+      }
+    }
+  },
+  "roles": {
+    "producer": {
+      "bundle": "org.harmonycontrib.calendarproducer",
+      "apl": "normal",
+      "system_app": false,
+      "permissions": [
+        "ohos.permission.READ_CALENDAR",
+        "ohos.permission.WRITE_CALENDAR"
+      ],
+      "allowed_acls": []
+    },
+    "observer": {
+      "bundle": "org.harmonycontrib.calendarobserver",
+      "apl": "system_basic",
+      "system_app": true,
+      "permissions": [
+        "ohos.permission.READ_WHOLE_CALENDAR",
+        "ohos.permission.NOTIFICATION_CONTROLLER"
+      ],
+      "allowed_acls": [
+        "ohos.permission.NOTIFICATION_CONTROLLER"
+      ]
+    },
+    "denied": {
+      "bundle": "org.harmonycontrib.calendardenied",
+      "apl": "normal",
+      "system_app": false,
+      "permissions": [],
+      "allowed_acls": []
+    }
+  },
+  "observer_system_basic_ACL_sufficiency_verified": false,
+  "historical_permission_reference": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round21-runtime-tools/permission-definition-reference.json",
+    "sha256": "3881efa45cc702348e3b0ff8d65028a2fad651fe94ecbb9bc01e6c781c0fcdd2"
+  },
+  "current_image_permission_definitions_collected": false,
+  "normal_producer_has_observer_system_API_imports": false,
+  "process_local_product_helper_extension": {
+    "entry": "ci/capability-audit/batch_system_calendar_runtime_helper.py",
+    "actual_APP_TOKEN_anchors": true,
+    "shared_helper_modified": false,
+    "product_build_executed": false,
+    "CFI_or_NDK_fallback_allowed": false
+  },
+  "executed_resources": {
+    "Docker": false,
+    "source_out_read": false,
+    "SDK_compilation": false,
+    "native_compilation": false,
+    "signing": false,
+    "HAP_install": false,
+    "VM": false,
+    "archive_binding": false,
+    "repackage": false
+  },
+  "unverified": [
+    "Actual SDK105 three-role compilation and immutable HAP inventory",
+    "Exact UDID signing and BMS installation of all roles",
+    "system_basic observer provision ACL acceptance and actual NOTIFICATION_CONTROLLER grant",
+    "Current image GetDefPermission definitions and READ_WHOLE real user grants",
+    "Actual product helper native TU ABI CFI LTO link and runtime DSO SHA binding",
+    "New archive/system.img/provider signed bytes/build-inputs/metadata binding",
+    "Normal caller public create -> provider -> real consumer notification -> UI click -> MainAbility -> independent public read/tree/pixels",
+    "True cold/warm/onNewWant rapid routes/independent Ability instance lifecycle",
+    "Update/delete refresh causal witness and viewer exit/restart",
+    "Cross-boot persistent data continuity on same new archive",
+    "Positive globally unknown event ID boundary",
+    "Independent final cleanup read and notification cancellation",
+    "Pillow runtime availability; actual UI bundle/language selectors and manual pixel review",
+    "Other original system/calendar reminder cancel repeat snooze and account lifecycle boundaries"
+  ],
+  "root_commands_and_resource_requirements": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round21-runtime-tools/HANDOFF.md",
+    "sha256": "28be398b5a2475544331a351d95671115ebc540fd1311617a0c84d4ca3b6c478"
+  },
+  "source_files_sha256": {
+    "ci/capability-audit/batch_system_calendar_runtime_archive.py": "88439dcb61658e7c8481b77d52836e1e113041407eaa31e512f57b4e242f72f2",
+    "ci/capability-audit/batch_system_calendar_runtime_build.py": "5798283c67a1f8d5e55fb87f273789b9e9cbfdb0f9ff8ea08fbe62ab38f06620",
+    "ci/capability-audit/batch_system_calendar_runtime_capture.py": "d900d85d061653151ee30d5c74cfa98d9aca6017aadaeae1dbdeb6cf6dedf1f3",
+    "ci/capability-audit/batch_system_calendar_runtime_helper.py": "bdd6660d34fea4cf7c3e1561cd40716989731ebcb38518e5e2fb76cd726988fc",
+    "ci/capability-audit/batch_system_calendar_runtime_project.py": "e3867a517e627db6993a539caf9344c9771bcc8d5ce331004ec468c32fafb7fd",
+    "ci/capability-audit/batch_system_calendar_runtime_protocol.py": "547ffa37da71fd04fbc712b752306f134da5b8dfb5859ff3bbcd214cdebfecb9",
+    "ci/capability-audit/batch_system_calendar_runtime_sign.py": "c12de24efe9b9965d192ec42487f44768c8634675003ee71800c977a17bcf8ff",
+    "ci/capability-audit/batch_system_calendar_runtime_tests.py": "5bfc0ffc411ed34e1f21556106b9ca8c1597ca66cae1545c5a1c32b2b1e9a6ee",
+    "ci/capability-audit/batch_system_calendar_runtime_verify.py": "3092a031a57adaed8e64a32ec233052acb2c8c4b6a4176b629de8a474969c5c9",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/CalendarAudit.ets": "34602cacd0d30e343941f0c2dd970fc84a4fe5566722c0c4482636fb8cbc0fa8",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/EntryAbility.ets": "714569d1b5f73c9fd80cd1f55bbdb3bc06f4e20c623579848550b0f3ca35dd73",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/Index.ets": "0065edb9fca628499d5a3e950189064a84687c5529377cae791409bfeaba32c3",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/contract.json": "2aecb161ea64ac15d232518b7909aee6db64a2e0d83209723e77d2a90181f869",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/cpu-cap.cjs": "8109ae1269df83cb19ac39357ca7432fb127628a3510893e6d7df2a9f03f362e",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/host.cjs": "927f2e72ea2c8f0d79829c03c09c2d12d3d1d27b6444541e52b2c02d81070f2d",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/observer.cpp": "b73909a36e33aa395d10970aeb90ca2538a1a14ab8cfe54eef782b4c2f619191"
+  },
+  "documentation_and_host_evidence_sha256": {
+    "docs/capability-audit/parallel/system/round21-runtime-tools/HANDOFF.md": "28be398b5a2475544331a351d95671115ebc540fd1311617a0c84d4ca3b6c478",
+    "docs/capability-audit/parallel/system/round21-runtime-tools/host-tests.log": "60121be27d555836baeaa89d5b7da0db4eb91bc682f8537e36c409385a8278c9",
+    "docs/capability-audit/parallel/system/round21-runtime-tools/permission-definition-reference.json": "3881efa45cc702348e3b0ff8d65028a2fad651fe94ecbb9bc01e6c781c0fcdd2",
+    "docs/capability-audit/parallel/system/round21-runtime-tools/project-generation-check.json": "d1dbe04974dda546a617acf4706a0dfa33b59284a23d9607ebd641f4a8f4946e",
+    "docs/capability-audit/parallel/system/round21-runtime-tools/syntax-cli-check.log": "57890ccca1eac23fe2e9bfbc8b5fcbdfed60ef789148eb125cd853229b597978"
+  },
+  "full_calendar_lifecycle_verified": false,
+  "core_chain_verified": false,
+  "first_artifact_behavior_gate_passed": false,
+  "ledger_closed": false,
+  "Git_index_changed": false,
+  "committed": false,
+  "file_lease_released": true,
+  "resource_lease_held": false
+}

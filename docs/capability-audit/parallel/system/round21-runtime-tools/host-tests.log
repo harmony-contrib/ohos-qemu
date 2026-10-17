@@ -1,0 +1,16 @@
+test_actual_qa_source_future_events_ownership_and_cleanup (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_actual_qa_source_future_events_ownership_and_cleanup) ... ok
+test_bound_protocol_and_incomplete_not_success (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_bound_protocol_and_incomplete_not_success) ... ok
+test_empty_text_may_be_absent_or_zero_size_but_never_leak (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_empty_text_may_be_absent_or_zero_size_but_never_leak) ... ok
+test_fixture_has_no_direct_notification_publication_or_clock_mutation (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_fixture_has_no_direct_notification_publication_or_clock_mutation) ... ok
+test_metadata_only_actual_shape_and_unknown_version_rejected (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_metadata_only_actual_shape_and_unknown_version_rejected) ... ok
+test_native_identity_requires_actual_current_permission_definitions (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_native_identity_requires_actual_current_permission_definitions) ... ok
+test_notification_requires_real_preserved_want_and_id (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_notification_requires_real_preserved_want_and_id) ... ok
+test_profile_roles_cannot_raise_normal_caller_privilege (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_profile_roles_cannot_raise_normal_caller_privilege) ... ok
+test_replay_identity_sequence_type_and_time_rejected (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_replay_identity_sequence_type_and_time_rejected) ... ok
+test_request_role_scope_and_unique_nonces (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_request_role_scope_and_unique_nonces) ... ok
+test_substituted_request_and_duplicate_json_rejected (batch_system_calendar_runtime_tests.CalendarProtocolTests.test_substituted_request_and_duplicate_json_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.099s
+
+OK

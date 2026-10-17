@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "scope": "HOST_AST_imports_and_controlled_protocol_counterexamples_ONLY_NOT_SDK_product_compilation_guest_PCM_or_VDI",
+  "host": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.7 (main, Aug 14 2025, 11:12:11) [Clang 17.0.0 (clang-1700.0.13.3)]",
+  "AST_files": [
+    "batch_media_audio_haptic_build_callers.py",
+    "batch_media_audio_haptic_build_sampler.py",
+    "batch_media_audio_haptic_host_checks.py",
+    "batch_media_audio_haptic_project.py",
+    "batch_media_audio_haptic_runtime.py",
+    "batch_media_audio_haptic_verify.py"
+  ],
+  "CLI_help": [
+    {
+      "name": "batch_media_audio_haptic_build_callers.py",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_build_callers.py",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_sha256": "fbefeb1f00fe9a90d86de427f0f77170a37d8fe64c8bcec547a6974fb8f5d503"
+    },
+    {
+      "name": "batch_media_audio_haptic_build_sampler.py",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_build_sampler.py",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_sha256": "d15db72b044c590d6892867d83ed00c69d6ac9f0f6a70395cd98718be85939a5"
+    },
+    {
+      "name": "batch_media_audio_haptic_project.py",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_project.py",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_sha256": "8d5f711ee057e98dd5b9bf267e46b417e54f18a5f9f82bab3b41fa6ce383691e"
+    },
+    {
+      "name": "batch_media_audio_haptic_runtime.py",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_runtime.py",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_sha256": "1eea31c3c0df25476d087be0493b1db9ed43a788478a5aef802ff4a264b3a994"
+    },
+    {
+      "name": "batch_media_audio_haptic_verify.py",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_verify.py",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_sha256": "01df0cafca591abfb9e40f2c9a345c77c4179bc46c3c268836639665e22c20ad"
+    }
+  ],
+  "tests": {
+    "argv": [
+      "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+      "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_host_checks.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.6755330840824172,
+    "test_count": 5,
+    "log": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/media/round21-runtime-tools/host-checks.log",
+    "log_sha256": "f488942470c2bd200a1109c463adca784a3475ee28681e76aedc31d76adaeb37"
+  },
+  "SDK_build": false,
+  "product_compile": false,
+  "guest_runtime": false,
+  "first_artifact_behavior_gate_passed": false
+}

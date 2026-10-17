@@ -42,3 +42,5 @@ patches/common/base/location/location/api26_runtime/0007-validate-measured-GNSS-
 docs/capability-audit/parallel/location/round21-coordinated/core-review-correction-host.log -text whitespace=-blank-at-eof
 # The fixed upstream context checker is a byte-pinned compatibility witness.
 ci/capability-audit/fixtures/selinux_contexts_compatibility/build_contexts.py -text -whitespace
+# Decoder/JSON/QEMU reference inputs retain their exact upstream SHA-256 bytes.
+ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/** -text -whitespace

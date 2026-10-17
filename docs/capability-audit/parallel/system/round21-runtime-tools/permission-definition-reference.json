@@ -1,0 +1,40 @@
+{
+  "scope": "historical_existing_host_export_reference_ONLY_NOT_current_archive_or_runtime",
+  "source": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/openharmony-qemu-arm64-arm64_virt-phone-runtime-y9gnveew/permission-registry/stdout.jsonl",
+    "sha256": "edec9d559a5ffd11f71f7d4a8b4d0e59761ab13031fceca1b93fd3f47be284df"
+  },
+  "selected_original_rows": [
+    {
+      "kind": "run",
+      "runId": "522918d36357a68141430f19b241eac9"
+    },
+    {
+      "kind": "definition",
+      "permissionName": "ohos.permission.NOTIFICATION_CONTROLLER",
+      "result": 0,
+      "grantMode": 1,
+      "availableLevel": 3,
+      "availableType": 1,
+      "provisionEnable": true,
+      "distributedSceneEnable": false,
+      "isKernelEffect": false,
+      "hasValue": false
+    },
+    {
+      "kind": "definition",
+      "permissionName": "ohos.permission.READ_WHOLE_CALENDAR",
+      "result": 0,
+      "grantMode": 0,
+      "availableLevel": 2,
+      "availableType": 0,
+      "provisionEnable": true,
+      "distributedSceneEnable": false,
+      "isKernelEffect": false,
+      "hasValue": false
+    }
+  ],
+  "system_basic_observer_provision_acl_sufficiency_verified": false,
+  "new_image_GetDefPermission_BMS_signature_and_token_required": true,
+  "SDK_types_do_not_prove_APL_or_grant": true
+}

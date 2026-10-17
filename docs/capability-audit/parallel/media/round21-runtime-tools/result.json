@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "owner": "media",
+  "status": "runnable_unexecuted_QA_tool_candidate_host_checks_only",
+  "assigned_frozen_product_HEAD": "97f58dba86c3ae20f3867048dbbd685b9b463f55",
+  "reported_repository_HEAD": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "scope": "Dedicated AudioHaptic tools added only; existing production/shared files unchanged by this agent",
+  "files": [
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_build_callers.py",
+      "sha256": "0a81371f0bc64a66d90e9c7078e476e74145485b38b1cfd64d3f38ffbf679ba3",
+      "bytes": 6390
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_build_sampler.py",
+      "sha256": "d74b95ebb75d6eee6f6151a06a151dbe1a2c5da31e6028d57a4db3b8a834f586",
+      "bytes": 2700
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_host_checks.py",
+      "sha256": "efc2cd89f5e0401830a03f2690b36cc775a3eb9875f40a3af85e69e3b073e2fb",
+      "bytes": 7544
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_project.py",
+      "sha256": "eab85b0a0525126ce5fd3ed96551bfb02fa54d475e8838838665f91c58712a44",
+      "bytes": 19223
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_runtime.py",
+      "sha256": "ab34a059f62c011452be0c3bc451f280bddf002d56adc80c67036337c5218174",
+      "bytes": 32445
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_verify.py",
+      "sha256": "b55bed2a5dc29d26dc9a4177ad52074ee062cf591a8436c8dae91ea9cc7defd2",
+      "bytes": 31884
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/EntryAbility.ets",
+      "sha256": "57313e27545fa92390d73047a8c2b3eb49f77f14c77ebdb20429ea591573cd2c",
+      "bytes": 244
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/Index.ets",
+      "sha256": "b223ee6c9cbdc1fd88eba29f91d8a2914381e0962def8d602737393389b6590f",
+      "bytes": 2264
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/cpu-cap.cjs",
+      "sha256": "3807e82d9e777a81e4ff3eb683d0f3fad807533e4e0c0dff1d73ad3f909abe62",
+      "bytes": 265
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/sampler.cpp",
+      "sha256": "10a1f7d7ffe0a141dfae7950e2fd2bcabc209746e199cf6dc18c4fae938a98d3",
+      "bytes": 5919
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/LICENSE",
+      "sha256": "9264a6b3c134511ccfcae48ed3808320688ae6933ec4fc547476a005095fc1ef",
+      "bytes": 10349
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/provenance.json",
+      "sha256": "158aa4af29942fac05c631333667796e30ee7cce26805c8c57f92ed18881fa2b",
+      "bytes": 3629
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/COPYING",
+      "sha256": "6f04ae8364d0079a192b14635f4b1da294ce18724c034c39a6a41d1b09df6100",
+      "bytes": 17992
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/audio-hmp-cmds.c",
+      "sha256": "c2590ad00f1b06e53975254b419cee0e75c6d7ddfca1b765d4d1747ac52e255b",
+      "bytes": 2802
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/provenance.json",
+      "sha256": "eee1fc8af132c8fa28ae2f9aac0819a328c8fa8c517434104e080557736c6872",
+      "bytes": 766
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/wavcapture.c",
+      "sha256": "320fce0b787cc074b221bcd8cda4c162f18d9f78c616d586966f90ce927e0141",
+      "bytes": 4901
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/services/miscdevice_service/haptic_matcher/src/custom_vibration_matcher.cpp",
+      "sha256": "563b36052c9413dc00fbc8d8c8e48d91f01192b23da546bc8ff685c37bd76145",
+      "bytes": 19074
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/services/miscdevice_service/src/vibrator_thread.cpp",
+      "sha256": "c5c8bbef441209bbc6d8c03f3f843e570ecac36a037e6015f2516b61295b6733",
+      "bytes": 13492
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/test/unittest/vibrator/native/resource/json_file/coin_drop.json",
+      "sha256": "dbc39b7446ccbef191d85ad3a95b2a41de0384ecfcdb98b3daf12259a3dde97f",
+      "bytes": 3726
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/haptic_decoder/oh_json/include/default_vibrator_decoder.h",
+      "sha256": "61a30cd4499a9ab648f4a1406b969d63047a01389049bf60ab389be0b2516eba",
+      "bytes": 1906
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/haptic_decoder/oh_json/src/default_vibrator_decoder.cpp",
+      "sha256": "ea0750b54561c3f5fdb08b361bc2a1f485e6a2bb4bbf2971f3588f45bb82ee9d",
+      "bytes": 12730
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/tools/haptic_format_converter/converter/schemas/oh_schema.json",
+      "sha256": "c45f1e4522accdb3b3634c2c7865dab82afe8f68165780b2af36ab0098865bac",
+      "bytes": 5660
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/tools/haptic_format_converter/tests/test_data/oh_no_curve_sample.json",
+      "sha256": "cd2452325cabc30592b20955a2483fb3cb6cbdb465eb4abb01417bc125519aae",
+      "bytes": 428
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/HANDOFF.md",
+      "sha256": "b9b28b17ca3a1707d417d9034968a97d2cdeb68694523a8e95e107d46d43c154",
+      "bytes": 13435
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/host-checks.json",
+      "sha256": "4f6ebe4f49c7aceaff7e7daebe89186e6abae4684fd414b3d6728e68bd432a5e",
+      "bytes": 3320
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/host-checks.log",
+      "sha256": "f488942470c2bd200a1109c463adca784a3475ee28681e76aedc31d76adaeb37",
+      "bytes": 900
+    }
+  ],
+  "coverage": {
+    "fixed_public_UI_operations": 74,
+    "operation_capture_segments": 36,
+    "final_cleanup_capture_segments": 1,
+    "normal_stop_restart_cycles": 3,
+    "EOS_restart_cycles": 2,
+    "loop": true,
+    "release_recreate_and_post_release": true,
+    "mute_combinations": 3,
+    "bad_WAV_JSON_missing_file_retries": true,
+    "independent_no_VIBRATE_caller": true,
+    "immediate_StartSound_or_service_death_fault_injection_implemented": false
+  },
+  "host_checks": {
+    "path": "docs/capability-audit/parallel/media/round21-runtime-tools/host-checks.json",
+    "sha256": "4f6ebe4f49c7aceaff7e7daebe89186e6abae4684fd414b3d6728e68bd432a5e",
+    "bytes": 3320
+  },
+  "primary_source_provenance": {
+    "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/provenance.json",
+    "sha256": "158aa4af29942fac05c631333667796e30ee7cce26805c8c57f92ed18881fa2b",
+    "bytes": 3629
+  },
+  "sampler": {
+    "source": {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/sampler.cpp",
+      "sha256": "10a1f7d7ffe0a141dfae7950e2fd2bcabc209746e199cf6dc18c4fae938a98d3",
+      "bytes": 5919
+    },
+    "behavior": "Read-only real HDI V2_0 IsVibratorRunning({0,0}), AccessToken VIBRATE query and clock observation; never starts/stops an effect",
+    "product_ABI_CFI_build": "Root-only existing actual product GN builder configuration extension; unexecuted",
+    "source_out_read_lease_used": false
+  },
+  "root_commands": "HANDOFF.md gives challenge/project, real SDK build, product sampler build, artifact manifest generation, same-owned-guest run and independent verify commands",
+  "required_runtime_inputs": [
+    "Actual SDK105 and Node/OHPM/Hvigor executable paths; retained private Hvigor/OHPM cache",
+    "Current root product source/out read-only lease and original CFI/proxy compiler/link evidence for sampler",
+    "Fresh new ARM64 phone archive and unchanged existing acceptance boot/PID/QMP/UDID evidence",
+    "Fixed public normal-QA signer distribution and JAR; actual two compiled source manifests and complete unsigned HAPs",
+    "Actual HDC, Java and OpenSSL; Pillow-enabled host venv",
+    "Exclusive guest audio/vibrator producer admission; no simultaneous active vibrator_hdi probe"
+  ],
+  "unverified": [
+    "New persistent Index and dual HAP builder have not run actual SDK checker or emitted HAPs",
+    "Sampler C++/actual headers/GN selection/proxy/CFI/link have not been compiled in this batch",
+    "All 74 real UI/API operations, signing/installed/BMS/token checks, PCM/VDI behavior and owned cleanup remain unexecuted",
+    "Derived JSON matches pinned original structure and decoder source/ranges; actual product decoder acceptance remains required",
+    "QEMU inactive capture clock/empty-silence compatibility and exact HMP help/info output remain unverified and fail closed",
+    "Guest/host clock bracket and 250ms capture frame-origin assumptions require real measured continuous WAV duration",
+    "Raw native hilog is captured but per-generation first-frame freshness lacks independent native nonce binding",
+    "Immediate actual StartSound failure/service-death injection is absent; bad-resource prepare failures and retry are covered",
+    "Cross-generation late callback after rearm remains an explicit production gap; no closure claimed",
+    "Media production DSO compile-to-image witness remains root build evidence; this tool binds sampler actual product DSOs/maps"
+  ],
+  "resource_ownership": {
+    "only_new_allowed_paths": true,
+    "existing_files_edited": false,
+    "git_add_or_commit": false,
+    "Docker_or_source_out_reads": false,
+    "SDK_or_HAP_jobs": false,
+    "VM_or_packaging": false,
+    "root_compiler_jobs_started": 0,
+    "subagents_spawned": 0,
+    "lease_released": true
+  },
+  "finding_ids_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "ledger_closed": false
+}

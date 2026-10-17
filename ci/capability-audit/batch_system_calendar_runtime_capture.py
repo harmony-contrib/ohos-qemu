@@ -1,0 +1,478 @@
+#!/usr/bin/env python3
+"""Collect one Calendar QA stage in an enclosing real guest. No boot/build/install.
+
+Raw output is collector-owned. Stage success never asserts the full lifecycle,
+onNewWant delivery, independent instances, or a package gate.
+"""
+import argparse
+import json
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import time
+
+import batch_apps_contact_picker_coordinator as signatures
+from batch_apps_run_contact_picker_runtime import clickable_for_text
+from batch_system_calendar_runtime_project import (CONTRACT, FIX, ROLES, checked, load_challenge,
+    record, request, require, sha, write)
+import batch_system_calendar_runtime_protocol as protocol
+from enclosing_acceptance_guest import EnclosingAcceptanceGuest
+from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
+
+HERE = Path(__file__).resolve().parent
+PROVIDER = CONTRACT['provider']
+
+
+def helper_proof(spec):
+    """Consume actual future product-helper builder output; no NDK fallback."""
+    import batch_system_build_runtime_helpers as product
+    binary, receipt = checked(spec['binary']), checked(spec['receipt'])
+    report = protocol.decode(receipt.read_text())
+    mapping = spec.get('path_map', {})
+    require(not mapping or set(mapping) == {'/work', '/evidence/helpers'}, 'only original product helper witness mappings supported')
+    def actual(item):
+        return signatures.witness_artifact(item, mapping)
+    require(report.get('plan_only') is False and report.get('product') == 'arm64_virt' and
+            report.get('changed_inputs') == [] and report.get('builder_sha256') == sha(HERE / 'batch_system_build_runtime_helpers.py'),
+            'current immutable product helper build receipt required')
+    require(sha(actual(report.get('calendar_runtime_extension', {}))) == sha(HERE / 'batch_system_calendar_runtime_helper.py'),
+            'actual dedicated helper extension/anchor configuration differs')
+    row = report['helpers']['calendar_runtime_observer']
+    require(row.get('status') == 'pass_compile_link_ONLY' and row.get('CFI_preserved') is True and
+            row.get('fixture') == 'batch_system/calendar_runtime/observer.cpp' and
+            row.get('private_source_sha256') == sha(FIX / 'observer.cpp') and
+            row.get('binary_sha256') == sha(binary) and signatures.witness_path(row['binary'], mapping).resolve() == binary,
+            'actual Calendar helper source/binary/product CFI differs')
+    for name in ('source',):
+        require(sha(actual(row[name])) == sha(FIX / 'observer.cpp'), 'actual compiled observer source differs')
+    for kind in ('compile', 'link'):
+        commands = [c for c in report['commands'] if c.get('label') == 'calendar_runtime_observer-' + kind]
+        require(len(commands) == 1 and commands[0]['exit_code'] == 0 and commands[0]['argv'] == row[kind + '_command'],
+                'real product helper compile/link failed')
+        actual({'path': commands[0]['log'], 'sha256': commands[0]['sha256']})
+    compile_argv = row['compile_command']
+    require('--target=aarch64-linux-ohos' in compile_argv and '-fno-exceptions' in compile_argv and
+            '-fsanitize-cfi-cross-dso' in compile_argv and any(x.startswith('-fsanitize=') and 'cfi' in x for x in compile_argv) and
+            product.effective_cfi(compile_argv) and product.effective_cfi(row['link_command']) and '-pie' in row['link_command'] and
+            row.get('actual_compiler_dependencies') and row.get('actual_link_inputs') and row.get('anchors'),
+            'actual product headers/DSO/CFI commands missing')
+    product.validate_flags(compile_argv)
+    require([a['object_target'] for a in row['anchors']] == [product.APP['object'], product.TOKEN['object']],
+            'actual APP/TOKEN graph anchors differ')
+    require({'libapp_manager.z.so', 'libaccesstoken_sdk.z.so'} <= set(row.get('DT_NEEDED', [])), 'real innerkit DSOs missing')
+    commands = [c for c in report['commands'] if c.get('label') == 'calendar_runtime_observer-actual-ELF-ABI']
+    require(len(commands) == 1 and commands[0]['exit_code'] == 0 and Path(commands[0]['argv'][0]).name == 'llvm-readelf',
+            'actual ELF/CFI readback required')
+    elf = actual({'path': commands[0]['log'], 'sha256': commands[0]['sha256']}).read_text()
+    require('__cfi_check' in elf and 'std::__h::' in elf and 'std::__n1::' not in elf, 'actual ELF product libc++/CFI missing')
+    from run_root_probe import validate_elf
+    validate_elf(binary, 'arm64')
+    return row
+
+
+def exact_signature(signed, role, udid, signer, output, command):
+    """Actual Java code-sign + fixed application leaf + independent profile CMS."""
+    policy = ROLES[role]
+    dist, jar, inputs = signatures.signer_inputs(signer['dist'], checked(signer['jar']))
+    module, payload = signatures.hap_contents(signed)
+    require(module['app']['bundleName'] == policy['bundle'] and module['app'].get('debug') is False and
+            sorted(x['name'] for x in module['module'].get('requestPermissions', [])) == sorted(policy['permissions']) and
+            module['module'].get('extensionAbilities', []) == [] and
+            len(module['module'].get('abilities', [])) == 1 and module['module']['abilities'][0]['name'] == 'EntryAbility',
+            'actual compiled QA role permission/Ability surface differs')
+    output.mkdir(parents=True, exist_ok=False)
+    chain, profile = output / 'chain.cer', output / 'profile.p7b'
+    log = command(['java', '-jar', str(jar), 'verify-app', '-inFile', str(signed), '-outCertChain', str(chain), '-outProfile', str(profile)], 'signature-' + role)
+    require(all(s in log for s in ('verify codesign success', 'Digest verify result: true', 'verify permission sign success', 'verify-app success')),
+            'real app signature/codesign failed')
+    signatures.application_leaf(log)
+    decoded = output / 'java-profile.json'
+    log = command(['java', '-jar', str(jar), 'verify-profile', '-inFile', str(profile), '-outFile', str(decoded)], 'profile-' + role)
+    require('verify-profile success' in log, 'real embedded profile verification failed')
+    from check_m144_core_package import verified_profile_content
+    value = verified_profile_content(protocol.decode(decoded.read_text()))
+    leaf = output / 'profile-leaf.pem'
+    certs = re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', (dist / 'OpenHarmonyProfileDebug.pem').read_text(), re.S)
+    require(len(certs) == 3, 'fixed profile issuer chain differs')
+    leaf.write_text(certs[-1] + '\n')
+    fingerprint = command(['openssl', 'x509', '-in', str(leaf), '-noout', '-fingerprint', '-sha256'], 'issuer-' + role)
+    require(fingerprint.strip().split('=')[-1].replace(':', '').upper() == signatures.PROFILE_LEAF, 'profile issuer differs')
+    cms = output / 'cms-profile.json'
+    command(['openssl', 'cms', '-verify', '-inform', 'DER', '-in', str(profile), '-nointern', '-certfile', str(leaf), '-noverify', '-out', str(cms)], 'CMS-' + role)
+    require(protocol.decode(cms.read_text()) == value, 'independent CMS profile differs')
+    info = value['bundle-info']
+    require(info['bundle-name'] == policy['bundle'] and info['apl'] == policy['apl'] and
+            info['app-feature'] == ('hos_system_app' if policy['system_app'] else 'hos_normal_app') and
+            value['debug-info']['device-ids'] == [udid] and value['acls']['allowed-acls'] == policy['allowed_acls'] and
+            value['permissions']['restricted-permissions'] == policy['allowed_acls'] and
+            value['validity']['not-before'] <= int(time.time()) < value['validity']['not-after'],
+            'exact role/UDID/ACL/validity differs')
+    return {'verified_profile': record(cms), 'signed_hap': record(signed), 'fixed_signer_inputs': inputs, 'payload': payload}
+
+
+class Collector:
+    def __init__(self, args):
+        self.args = args
+        self.output = args.output.resolve()
+        self.output.mkdir(parents=True, exist_ok=False)
+        self.challenge = load_challenge(args.challenge)
+        self.run = self.challenge['run_id']
+        self.plan = protocol.decode(args.plan.read_text())
+        self.guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, self.output / 'guest').start()
+        require(self.guest.env['guest_arch'] == 'arm64' and self.guest.env['device_type'] == 'phone', 'representative ARM64 phone required')
+        self.boot = self.guest.env['boot_id']
+        self.report = {'schema_version': 1, 'scope': 'actual_calendar_QA_stage_NOT_full_calendar_or_package_gate',
+            'status': 'fail', 'run_id': self.run, 'boot_id': self.boot, 'archive': record(args.archive.resolve()),
+            'boot': record(args.boot.resolve()), 'challenge': record(args.challenge.resolve()), 'plan': record(args.plan.resolve()),
+            'collector': record(Path(__file__)), 'commands': [], 'artifacts': {}, 'failures': [], 'gaps': [],
+            'first_artifact_behavior_gate_passed': False, 'ledger_closed': False}
+        self.ui = GuestUi(self.command, args.hdc, self.guest.target, self.output / 'ui')
+        self.apps = {}
+        self.save()
+
+    def save(self):
+        self.report['guest_commands'] = self.guest.report['commands']
+        (self.output / 'capture.json').write_text(json.dumps(self.report, ensure_ascii=False, indent=2) + '\n')
+
+    def command(self, argv, label):
+        self.guest.healthy()
+        result = subprocess.run(list(map(str, argv)), capture_output=True, text=True, timeout=30)
+        path = self.output / ('command-' + str(len(self.report['commands'])).zfill(4) + '.log')
+        write(path, result.stdout + result.stderr)
+        self.report['commands'].append({'argv': list(map(str, argv)), 'label': label, 'exit_code': result.returncode, **record(path)})
+        self.save()
+        from hdc_transport import failed
+        require(result.returncode == 0 and not failed(result.stdout, result.stderr), 'actual command failed: ' + label)
+        self.guest.healthy()
+        return result.stdout.replace('\r', '')
+
+    def raw(self, script, label):
+        text = self.guest.shell(script, label)
+        path = self.output / ('raw-' + str(len(self.guest.report['commands'])).zfill(4) + '-' + label + '.txt')
+        write(path, text)
+        self.save()
+        return text, record(path)
+
+    def token(self, bundle, label):
+        raw, artifact = self.raw(shlex.join([self.plan['helper']['remote'], self.run, bundle]), label)
+        identity = {'run_id': self.run, 'boot_id': self.boot}
+        value = protocol.token(protocol.decode(raw), identity, bundle, self.apps[bundle])
+        previous = getattr(self, 'clock_anchor', None)
+        if previous:
+            require(abs((value['realtime_ns']-previous['realtime_ns']) -
+                    (value['boottime_ns']-previous['boottime_ns'])) <= 2_000_000_000,
+                    'guest wall clock changed relative to suspend-aware real elapsed time')
+        self.clock_anchor = value
+        return value, artifact
+
+    def setup(self):
+        require(set(self.plan['roles']) == set(ROLES), 'producer/observer/denied roles must be explicit and distinct')
+        helper = self.plan['helper']
+        row = helper_proof(helper)
+        require(helper['remote'].startswith('/data/local/tmp/') and '..' not in Path(helper['remote']).parts, 'owned installed diagnostic path required')
+        actual, proof = self.raw('sha256sum ' + shlex.quote(helper['remote']), 'helper-sha')
+        require(actual.split()[0] == sha(checked(helper['binary'])), 'guest observer differs from actual product ELF')
+        # Actual linked DSO bytes must match the newly booted guest, not only a
+        # compiler receipt referring to an older image. Root supplies locations.
+        require(set(helper['guest_dsos']) >= {'libapp_manager.z.so', 'libaccesstoken_sdk.z.so'}, 'product runtime DSO map missing')
+        links = row['actual_link_inputs']
+        linked_hashes = {v['sha256'] for v in protocol.objects(links) if isinstance(v.get('sha256'), str)}
+        dso_observations = {}
+        for name, item in helper['guest_dsos'].items():
+            local = checked(item['artifact'])
+            require(item['artifact']['sha256'] in linked_hashes and Path(item['remote']).name == name and
+                    item['remote'].startswith(('/system/', '/vendor/')), 'helper DSO is not an actual product link input')
+            text, observation = self.raw('sha256sum ' + shlex.quote(item['remote']), 'DSO-' + name.replace('.', '-'))
+            require(text.split()[0] == sha(local), 'helper linked DSO differs from booted image')
+            dso_observations[name] = observation
+        self.report['helper'] = {'binary': helper['binary'], 'receipt': helper['receipt'], 'guest_sha': proof,
+            'dsos': dso_observations}
+        for role, policy in ROLES.items():
+            item = self.plan['roles'][role]
+            sdk = signatures.verify_sdk_project(item['sdk'])
+            source = Path(item['sdk']['source_project'])
+            manifest = protocol.decode(checked(item['source_manifest']).read_text())
+            require(manifest['run_id'] == self.run and manifest['role'] == role and
+                    all(manifest[k] == policy[k] for k in policy) and manifest['challenge'] == record(self.args.challenge.resolve()) and
+                    manifest['fixture_hashes'] == {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()}, 'compiled source role/run/fixture differs')
+            rows = signatures.source_rows(protocol.decode(checked(item['sdk']['sdk_evidence']).read_text()), item['sdk']['sdk_project'])
+            require(rows.get('calendar-source-manifest.json') == sha(checked(item['source_manifest'])) and
+                    all(rows.get(name) == expected and sha(source / name) == expected for name, expected in manifest['source_hashes'].items()),
+                    'actual SDK did not freeze complete prepared QA sources')
+            signed = checked(item['signed_hap'])
+            signature = exact_signature(signed, role, self.guest.udid, self.plan['signer'], self.output / ('signature-' + role), self.command)
+            require(signatures.hap_contents(checked(item['sdk']['unsigned_hap']))[1] == signature['payload'], 'signing changed compiled role payload')
+            raw, bm = self.raw('bm dump -n ' + policy['bundle'], 'BMS-' + role)
+            _, app, remote = protocol.bms(raw, policy['bundle'], policy)
+            self.apps[policy['bundle']] = app
+            installed = self.output / (role + '-installed.hap')
+            self.command([self.args.hdc, '-t', self.guest.target, 'file', 'recv', remote, str(installed)], 'pull-' + role)
+            require(sha(installed) == sha(signed), 'actual BMS-installed QA HAP differs')
+            token, token_file = self.token(policy['bundle'], 'token-' + role)
+            if role in ('producer', 'denied'):
+                require(all(token['permissions'][p] == -1 for p in ('ohos.permission.READ_WHOLE_CALENDAR',
+                        'ohos.permission.WRITE_WHOLE_CALENDAR', 'ohos.permission.NOTIFICATION_CONTROLLER')), 'ordinary role unexpectedly privileged')
+            else:
+                require(token['permissions']['ohos.permission.NOTIFICATION_CONTROLLER'] == 0,
+                        'observer exact system_basic/provision-ACL candidate was not actually granted; preserve BMS/token gap')
+            self.report['artifacts'][role] = {'sdk': sdk, 'source_manifest': item['source_manifest'], 'signature': signature,
+                'bms': bm, 'installed_hap': record(installed), 'token': token_file, 'uid': app['uid'], 'token_id': app['accessTokenId']}
+        require(len({a['uid'] for a in self.apps.values()}) == 3 and len({a['accessTokenId'] for a in self.apps.values()}) == 3,
+                'QA producer and observer identities overlap')
+        raw, bm = self.raw('bm dump -n ' + PROVIDER, 'BMS-provider')
+        _, app, remote = protocol.bms(raw, PROVIDER)
+        require(app.get('isSystemApp') is True and app.get('appPrivilegeLevel') == 'system_core', 'real source provider system-core identity missing')
+        self.apps[PROVIDER] = app
+        installed = self.output / 'provider-installed.hap'
+        self.command([self.args.hdc, '-t', self.guest.target, 'file', 'recv', remote, str(installed)], 'pull-provider')
+        provider_receipt = checked(self.plan['provider']['archive_binding'])
+        provider = protocol.decode(provider_receipt.read_text())
+        require(provider['archive'] == record(self.args.archive.resolve()) and provider['collector'] ==
+                record(HERE / 'batch_system_calendar_runtime_archive.py') and
+                provider['scope'] == 'actual_archive_system_image_Calendar_HAP_signature_frozen_inputs_ONLY',
+                'actual current archive provider derivation required; old SDK HAP is not a runtime provider')
+        require(sha(installed) == sha(checked(provider['signed_hap'])), 'installed source provider differs from actual archive image HAP')
+        inputs = protocol.decode(checked(provider['build_inputs']).read_text())
+        require(inputs['tree_sha256'] == provider['build_inputs_tree_sha256'], 'archive build inputs changed')
+        for name, expected in provider['source_component_hashes'].items():
+            require(inputs['files_sha256'].get(name) == expected and sha(HERE.parents[1] / name) == expected,
+                    'current/archive reminder component bytes differ')
+        for entry in provider['commands']:
+            require(entry['exit_code'] == 0, 'actual archive provider signature check failed')
+            checked({'path': entry['path'], 'sha256': entry['sha256']})
+        module, payload = signatures.hap_contents(installed)
+        require(module['app']['bundleName'] == PROVIDER and payload == provider['module_payload'],
+                'installed provider is not the actual archive image source payload')
+        schema = protocol.schema(module)
+        token, token_art = self.token(PROVIDER, 'token-provider')
+        self.report['artifacts']['provider'] = {'archive_binding': record(provider_receipt), 'bms': bm, 'installed_hap': record(installed),
+            'token': token_art, 'uid': app['uid'], 'token_id': app['accessTokenId'], 'schema': schema}
+        self.save()
+
+    def permission_click(self, decision):
+        bundle = self.plan.get('permission_bundle', 'com.ohos.permissionmanager')
+        texts = self.plan.get('allow_texts', ['允许', 'Allow']) if decision == 'allow' else self.plan.get('deny_texts', ['不允许', 'Deny'])
+        layout, path = self.ui.layout(label='permission')
+        matches = []
+        for text in texts:
+            try:
+                matches.append((text, clickable_for_text(layout, bundle, text)))
+            except NodeNotReady:
+                pass
+        if not matches:
+            return None
+        require(len(matches) == 1, 'ambiguous actual permission decision control')
+        text, node = matches[0]
+        screen = self.ui.screenshot(label='permission-before')
+        x, y, w, h = node['rect']
+        self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'permission-actual-node')
+        return {'decision': decision, 'selected_text': text, 'layout': record(path), 'screenshot': record(screen), 'selected_node': node}
+
+    def operation(self, role, action, case):
+        policy = ROLES[role]
+        value = request(self.args.challenge, self.boot, sha(self.args.archive), role, action, case,
+            lead_minutes=self.args.lead_minutes, spacing_minutes=self.args.spacing_minutes)
+        self.report['request'] = value
+        self.report['stage'] = 'public-operation'
+        self.raw(shlex.join(['aa', 'start', '-b', policy['bundle'], '-a', 'EntryAbility', '--ps', 'request', json.dumps(value, separators=(',', ':'))]), 'launch-request')
+        deadline = time.monotonic() + self.args.timeout
+        clicked = False
+        last = ''
+        while time.monotonic() < deadline:
+            try:
+                if not clicked:
+                    self.report['run_click'] = self.ui.click(policy['bundle'], identifier='calendar-qa-run', label='execute-real-operation')
+                    clicked = True
+                if self.args.permission_decision:
+                    decision = self.permission_click(self.args.permission_decision)
+                    if decision:
+                        self.report.setdefault('permission_clicks', []).append(decision)
+                path = '/data/app/el2/100/base/' + policy['bundle'] + '/files/calendar-' + self.run + '-' + self.boot + '.jsonl'
+                raw, artifact = self.raw('if test -f ' + shlex.quote(path) + '; then cat ' + shlex.quote(path) + '; fi', 'public-journal')
+                if raw:
+                    _, own = protocol.parse(raw, value, self.apps[policy['bundle']])
+                    if own:
+                        self.report['journal'] = artifact
+                        self.report['operation_errors'] = [r for r in own if r['event'] == 'error']
+                        self.report['token_after'] = self.token(policy['bundle'], 'token-after-operation')[1]
+                        self.report['status'] = 'captured'
+                        return
+            except (LayoutNotReady, NodeNotReady) as error:
+                last = str(error)
+            self.save(); time.sleep(0.25)
+        raise ValueError('actual public operation timed out: ' + last)
+
+    def seed(self):
+        capture = protocol.decode(self.args.seed.read_text())
+        require(capture.get('run_id') == self.run and capture['archive'] == record(self.args.archive.resolve()) and
+                capture.get('request', {}).get('role') == 'producer' and capture['request']['action'] == 'create', 'actual same-run create capture required')
+        row = capture['artifacts']['producer']
+        app = {'uid': row['uid'], 'accessTokenId': row['token_id']}
+        _, own = protocol.parse(checked(capture['journal']).read_text(), capture['request'], app)
+        require(own is not None, 'seed capture incomplete')
+        cases = protocol.created(own, self.run)
+        require(self.args.case in cases, 'actual owned event case required')
+        self.report['seed_capture'] = record(self.args.seed.resolve())
+        self.report['seed_event'] = cases[self.args.case]
+        return cases[self.args.case]
+
+    def view(self, expected=None, blank=False):
+        deadline = time.monotonic() + min(self.args.timeout, 90)
+        last = ''
+        while time.monotonic() < deadline:
+            try:
+                if self.args.permission_decision:
+                    decision = self.permission_click(self.args.permission_decision)
+                    if decision: self.report.setdefault('permission_clicks', []).append(decision)
+                layout, path = self.ui.layout(bundle=PROVIDER, label='viewer')
+                title = protocol.viewer_field(layout, 'title', empty=blank)
+                description = protocol.viewer_field(layout, 'description', empty=blank)
+                start = protocol.viewer_field(layout, 'start', empty=blank)
+                end = protocol.viewer_field(layout, 'end', empty=blank)
+                status = select_node(layout, PROVIDER, identifier='calendar-main-status')
+                text = title['attributes'].get('text', '') if title else ''
+                if expected is not None:
+                    if (text != expected['event']['title'] or description['attributes'].get('text', '') != expected['event']['description'] or
+                            start['attributes'].get('text', '') != expected['display']['start'] or
+                            end['attributes'].get('text', '') != expected['display']['end']):
+                        raise NodeNotReady('persisted challenge title/description not yet visible')
+                if blank and not status['attributes'].get('text'):
+                    raise NodeNotReady('denied/invalid/deleted viewer did not become non-success')
+                self.report['view'] = {'layout': record(path), 'screenshot': record(self.ui.screenshot(label='viewer-pixels')),
+                    'nodes': {'title': title, 'description': description, 'status': status, 'start': start, 'end': end},
+                    'expected_persisted': expected, 'expected_blank': blank}
+                self.report['provider_token_after'] = self.token(PROVIDER, 'provider-token-after-view')[1]
+                return
+            except (LayoutNotReady, NodeNotReady) as error:
+                last = str(error)
+            self.save(); time.sleep(0.25)
+        raise ValueError('viewer outcome timed out: ' + last)
+
+    def independent(self, seed):
+        capture = protocol.decode(self.args.readback.read_text())
+        require(capture['run_id'] == self.run and capture['boot_id'] == self.boot and
+                capture['archive'] == record(self.args.archive.resolve()) and capture['request']['role'] == 'observer' and
+                capture['request']['action'] == 'read', 'actual independent current-boot public read required')
+        _, rows = protocol.parse(checked(capture['journal']).read_text(), capture['request'], self.apps[ROLES['observer']['bundle']])
+        require(rows and not protocol.values(rows, 'error'), 'independent reader failed')
+        values = protocol.values(rows, 'events', 'Calendar.getEvents')
+        matches = [(event, value) for value in values for event in value['events'] if event.get('id') == seed['id']]
+        require(len(matches) == 1, 'one actual independently read event required')
+        event, value = matches[0]
+        require(event['title'].startswith('QCAL_' + self.run + '_'), 'independent event is outside this run')
+        display = [d for d in value['display'] if d['id'] == seed['id']]
+        require(len(display) == 1, 'actual guest-locale time readback required')
+        self.report['readback_capture'] = record(self.args.readback.resolve())
+        return {'event': event, 'display': display[0]}
+
+    def notification_click(self):
+        seed = self.seed()
+        observation = protocol.decode(self.args.notification.read_text())
+        require(observation.get('run_id') == self.run and observation.get('boot_id') == self.boot and
+                observation['archive'] == record(self.args.archive.resolve()) and observation['request']['role'] == 'observer' and
+                observation['request']['action'] == 'notifications', 'actual current-boot observer notification capture required')
+        app = self.apps[ROLES['observer']['bundle']]
+        _, own = protocol.parse(checked(observation['journal']).read_text(), observation['request'], app)
+        want = protocol.notification(own, seed)
+        require(want['uid'] == self.apps[PROVIDER]['uid'], 'actual reminder WantAgent UID differs from installed provider')
+        self.report.update(stage='notification-click', notification_capture=record(self.args.notification.resolve()), observed_want=want)
+        before, artifact = self.raw('aa dump -a -u 100', 'AMS-before-notification')
+        self.report['AMS_before'] = artifact
+        # Opening the shade is a gesture based on actual compositor geometry.
+        # The notification tap itself must use its actual matching UI node.
+        image = self.ui.screenshot(label='before-shade')
+        from PIL import Image
+        with Image.open(image) as screen:
+            width, height = screen.size
+        self.ui.shell(f'uitest uiInput swipe {width//2} 1 {width//2} {height*3//4}', 'open-real-notification-shade')
+        layout, path = self.ui.layout(label='notification-shade')
+        bundle = self.plan.get('notification_bundle', 'com.ohos.systemui')
+        require(bundle != PROVIDER and bundle not in {p['bundle'] for p in ROLES.values()}, 'notification node must belong to actual notification UI')
+        node = clickable_for_text(layout, bundle, seed['event']['title'])
+        self.report['notification_click'] = {'layout': record(path), 'screenshot': record(self.ui.screenshot(label='notification-before-click')), 'selected_node': node}
+        x, y, w, h = node['rect']
+        self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'actual-notification-node-click')
+        self.view(self.independent(seed) if self.args.expect == 'persisted' else None, self.args.expect == 'blank')
+        self.report['AMS_after'] = self.raw('aa dump -a -u 100', 'AMS-after-notification')[1]
+        self.report['status'] = 'captured'
+        self.report['gaps'].append('actual notification clicked; onNewWant vs new-instance requires independent actual Ability lifecycle/mission evidence')
+
+    def uri(self):
+        seed = self.seed(); event = seed['event']
+        uri = f"calendar://com.ohos.calendar?event_id={seed['id']}&start={event['startTime']}&end={event['endTime']}"
+        kind = self.args.uri_case
+        if kind == 'bad-uri': uri = uri.replace('calendar://', 'https://')
+        elif kind == 'missing-id': uri = uri.replace('event_id=' + str(seed['id']) + '&', '')
+        elif kind == 'bad-id': uri = uri.replace('event_id=' + str(seed['id']), 'event_id=0')
+        # Deleted IDs are supplied from an actual delete capture, never guessed.
+        if kind == 'deleted-id':
+            deletion = protocol.decode(self.args.deleted.read_text())
+            require(deletion['run_id'] == self.run and deletion['archive'] == record(self.args.archive.resolve()), 'same-run actual delete required')
+            app = self.apps[ROLES['producer']['bundle']]
+            _, rows = protocol.parse(checked(deletion['journal']).read_text(), deletion['request'], app)
+            require(not protocol.values(rows, 'error') and protocol.values(rows, 'event-deleted', 'Calendar.deleteEvent') ==
+                    [{'id': seed['id'], 'case_id': self.args.case}], 'actual owned event delete missing')
+            self.report['delete_capture'] = record(self.args.deleted.resolve())
+        self.report.update(stage='direct-uri-boundary', uri=uri, uri_case=kind)
+        self.report['launch'] = self.raw(shlex.join(['aa', 'start', '-b', PROVIDER, '-a', 'MainAbility', '-U', uri]), 'explicit-URI-boundary')[1]
+        self.view(self.independent(seed) if self.args.expect == 'persisted' else None, self.args.expect == 'blank')
+        self.report['AMS_after'] = self.raw('aa dump -a -u 100', 'AMS-after-URI')[1]
+        self.report['status'] = 'captured'
+        self.report['gaps'].append('explicit URI launch is only a boundary test and never notification delivery proof')
+
+    def execute(self):
+        try:
+            self.setup()
+            if self.args.stage == 'operation': self.operation(self.args.role, self.args.action, self.args.case)
+            elif self.args.stage == 'notification-click': self.notification_click()
+            elif self.args.stage == 'uri': self.uri()
+            else:
+                self.report['stage'] = 'viewer-snapshot'
+                self.view(self.independent(self.seed()) if self.args.expect == 'persisted' else None, self.args.expect == 'blank')
+                self.report['AMS_after'] = self.raw('aa dump -a -u 100', 'AMS-snapshot')[1]
+                self.report['status'] = 'captured'
+        except Exception as error:
+            self.report['failures'].append(str(error))
+        finally:
+            self.report['hilog'] = None
+            try:
+                self.report['hilog'] = self.raw('hilog -x', 'actual-final-hilog')[1]
+            except Exception as error:
+                self.report['failures'].append('hilog: ' + str(error))
+            self.save(); self.guest.close()
+        return self.report
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ('archive', 'boot', 'hdc', 'challenge', 'plan', 'output'):
+        parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--stage', choices=('operation', 'notification-click', 'uri', 'snapshot'), required=True)
+    parser.add_argument('--role', choices=ROLES, default='producer')
+    parser.add_argument('--action', choices=('permission', 'access', 'create', 'read', 'notifications', 'update', 'delete', 'cleanup', 'routes'), default='read')
+    parser.add_argument('--case', default='public-read')
+    parser.add_argument('--seed', type=Path)
+    parser.add_argument('--notification', type=Path)
+    parser.add_argument('--deleted', type=Path)
+    parser.add_argument('--readback', type=Path)
+    parser.add_argument('--uri-case', choices=('valid', 'bad-uri', 'missing-id', 'bad-id', 'deleted-id'), default='valid')
+    parser.add_argument('--expect', choices=('persisted', 'blank'), default='persisted')
+    parser.add_argument('--permission-decision', choices=('allow', 'deny'))
+    parser.add_argument('--timeout', type=int, default=90)
+    parser.add_argument('--lead-minutes', type=int, default=2)
+    parser.add_argument('--spacing-minutes', type=int, default=2)
+    args = parser.parse_args()
+    require(1 <= args.timeout <= 900, 'bounded real wall-clock timeout required')
+    require(args.stage not in ('notification-click', 'uri') or args.seed is not None, 'actual create capture required')
+    require(args.stage != 'notification-click' or args.notification is not None, 'actual notification observer capture required')
+    require(args.uri_case != 'deleted-id' or args.deleted is not None, 'actual delete capture required')
+    require(args.stage == 'operation' or args.expect != 'persisted' or args.seed is not None and args.readback is not None,
+            'persisted UI assertions require actual seed and independent observer read captures')
+    report = Collector(args).execute()
+    print(args.output / 'capture.json')
+    raise SystemExit(0 if report['status'] == 'captured' and not report['failures'] else 1)
+
+
+if __name__ == '__main__':
+    main()

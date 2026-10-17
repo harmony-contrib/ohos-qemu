@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "reviewed_head": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "created_at": "2026-10-17T11:15:46.252640+08:00",
+  "scope": "Read-only coverage audit; only new QA documents written. No test, source preparation, SDK, Docker, QEMU or package operation executed.",
+  "root_reported_context": {
+    "representative_attempt": "03 source prepare running",
+    "Settings_actual_SDK_HAP": "root reports complete successful compile; not reread/revalidated by this review",
+    "new_package_runtime_for_these_fixes": false
+  },
+  "conclusion": {
+    "existing_targeted_guest_runners": 0,
+    "exact_races_with_host_logic_tests": 3,
+    "exact_races_proven_on_new_package": 0,
+    "full_suite_or_ScreenBlink_cannot_substitute": true,
+    "new_runner_added": false,
+    "ledger_closed_here": 0
+  },
+  "races": [
+    {
+      "id": "settings-service-epoch",
+      "target": "IgnoreRepeatClickService queue and stale async completion after onDestroy/recreate",
+      "existing_host": {
+        "test": "test_real_service_body_success_failures_queue_reentry_and_lifetime",
+        "scenarios": [
+          "destroy_before_dispatch",
+          "destroy_queued_success",
+          "destroy_queued_rejection",
+          "recreate_epoch"
+        ],
+        "mechanism": "Patched complete ETS class with erased imports/types runs in Node vm; config.set is a manually deferred Promise, model/preferences/events/logs are host doubles; test directly invokes onDestroy/onCreate."
+      },
+      "existing_guest_runner": null,
+      "reachable_smoke": "Actual privileged AAMS notification action -> registered Settings service -> real config/preference state; ordinary permission denial and graceful service stop/restart can be tested once a real caller/driver is supplied. Current navigation runner does not invoke this service.",
+      "required_schedule": [
+        "authorized first config setter enters and blocks",
+        "two subsequent real onRequest actions enqueue without starting backend operations",
+        "real service onDestroy is observed while its process/JS continuation can still execute",
+        "old setter resolves or rejects",
+        "queued config/preference dispatch count remains zero; old-generation local cache/success event continuation absent",
+        "new service lifetime accepts its own fresh request and real persisted state/cache resynchronize"
+      ],
+      "missing": [
+        "typed privileged action driver or actual notification UI action orchestration and ordinary denied counterpart",
+        "backend Promise barrier and operation IDs; existing logs show action/onCreate/onDestroy but no private generation or queue entry/dispatch IDs",
+        "graceful service destruction witness distinct from onDisconnect and whole-process force-stop",
+        "independent real config/preference reads plus cache/event observer; false setters require discriminating initial true/1 states",
+        "native object reuse/recreation reachability witness for the same-object host schedule"
+      ],
+      "not_equivalent": [
+        "onDisconnect does not invalidate lifecycle",
+        "closing Settings UI is not proof of onDestroy",
+        "aa force-stop com.ohos.settings kills the continuation and cannot prove stale-completion suppression",
+        "an already accepted native setter can still complete after destruction; its effect is not a queued-action bug",
+        "ordinary ScreenBlink calls invoke different APIs and a different lifecycle"
+      ]
+    },
+    {
+      "id": "share-old-load-rejection",
+      "target": "Late loadContent rejection cannot dispose/delete/terminate the replacement session",
+      "existing_host": {
+        "test": "test_actual_extension_session_isolation_destroy_and_error_codes",
+        "scenarios": [
+          "destroy_while_loading",
+          "recreate_while_loading",
+          "isolated"
+        ],
+        "mechanism": "Actual SharePickerExtension ETS body in Node vm; Controller is a stub, session.loadContent is manually deferred, and the exact same JS session object is destroyed/reused before rejecting the old Promise."
+      },
+      "existing_guest_runner": null,
+      "reachable_smoke": "Real startAbilityByType share -> visible Settings sysPicker/share page -> explicit Cancel/result or real receiver selection; caller exit and reopened independent session can be checked once a suitable ordinary typed caller exists.",
+      "required_schedule": [
+        "first real session load operation pending with operation/session/generation IDs",
+        "onSessionDestroy(old) is observed",
+        "replacement session is created and visibly usable",
+        "old pending load fails after replacement creation",
+        "only old controller is disposed; no terminate/result request is sent to replacement; replacement can still cancel/choose and clean up"
+      ],
+      "missing": [
+        "ordinary typed Share caller with separate request nonces and callbacks; generic system-ish builder only sends empty WantParams",
+        "framework loadContent completion/error barrier and observed ordering",
+        "stable JS wrapper identity/session ID/controller ID plus dispose/terminate counters; current Share code emits none",
+        "proof that native runtime may reuse the same JS session wrapper, or an honest weaker different-wrapper session case",
+        "verifier binding independent callback/UI/native operation evidence to the same new archive/boot"
+      ],
+      "not_equivalent": [
+        "two independent sessions naturally use different wrappers and do not by themselves execute the exact same-key generation branch",
+        "caller-side fake UIExtensionContentSession or direct lifecycle calls remain host/protocol tests",
+        "killing the extension process removes the old pending continuation",
+        "deleting/replacing packaged page files changes the tested archive and is not final-package acceptance",
+        "startAbilityByType Promise resolution alone does not prove picker loading or correct result delivery"
+      ]
+    },
+    {
+      "id": "share-dead-label-continuation",
+      "target": "Cancel/dispose while query or first ability-label request is pending prevents any subsequent label lookup",
+      "existing_host": {
+        "test": "test_actual_picker_controller",
+        "scenarios": [
+          "cancel_label",
+          "destroy_label",
+          "cancel_query_no_label",
+          "destroy_query_no_label"
+        ],
+        "mechanism": "Actual SharePickerController ETS body in Node vm; BMS query and first label Promise are controlled host doubles, with two valid unique receiver infos and exact labels/starts/results counters. URI parsing also uses a host URL substitute."
+      },
+      "existing_guest_runner": null,
+      "reachable_smoke": "Real query returns actual matching receivers; actual Cancel control is enabled while load is pending; caller cancellation outcome and no receiver launch can be observed. Current tools do not hold native label work or count later label RPCs.",
+      "required_schedule": [
+        "at least two actual unique enabled/exported sendData UIAbility handlers match MIME/URI",
+        "first native getAbilityLabel call is observed pending, or queryAbilityInfo is held pending for the no-label variant",
+        "actual Cancel or onSessionDestroy/dispose is observed before release",
+        "held native completion returns while the relevant JS continuation is still observable",
+        "label-call count remains 1 after first-label cancel/destroy, or 0 after pending-query cancel/destroy; receiver launch count remains 0; correct cancel result only for live caller"
+      ],
+      "missing": [
+        "two discriminating real receiver handlers and ordinary Share caller",
+        "BMS/resource label/query completion barrier with operation IDs",
+        "per-controller label/query request entry counters or native trace; current UI/error state cannot reveal silent extra calls",
+        "actual cancel/dispose and continuation entry witness; page aboutToDisappear alone only changes view state",
+        "bounded drain/quiescence and cleanup verifier tied to archive, boot, caller and sessions"
+      ],
+      "not_equivalent": [
+        "page closes or list stays empty: old code already guarded final target publication",
+        "one receiver only: there is no second label lookup to suppress",
+        "request count from an unrelated controller/session",
+        "an in-flight native request is not expected to be cancelled or rolled back by this patch",
+        "generic caller exits/process dies before the late completion executes"
+      ]
+    }
+  ],
+  "existing_tool_boundaries": [
+    {
+      "path": "ci/capability-audit/build_hap_probe.py",
+      "lines": "1216-1238",
+      "observed": "Schedules startAbilityByType(share, {}, callback) at 3000 ms, emits invoked/start/error/callback rows. No race controls, nonempty payload, receiver journal, real cancellation interaction or per-session/operation nonce. Not a dedicated ordinary Share runner."
+    },
+    {
+      "path": "ci/capability-audit/run_settings_all_navigation_probe.py",
+      "lines": "122-153",
+      "observed": "Two rounds of fixed public routes with UI/pixel evidence; service and Share are absent. CONTRACTS only behavior:settings-navigation-provider-mismatch."
+    },
+    {
+      "path": "ci/capability-audit/parallel_runtime_suite.py",
+      "lines": "14-22",
+      "observed": "Four fixed families: contacts-picker, wallpaper, external-inputs, knowledge-holiday. None targets these Apps races."
+    },
+    {
+      "path": "ci/capability-audit/verify_screen_blink_evidence.py",
+      "lines": "17-21",
+      "observed": "Only startBlinking/stopBlinking contracts; scope expressly NOT_complete_lifecycle, actual calls/pixels/caller exit, no service queue/Share operation ownership."
+    },
+    {
+      "path": "ci/capability-audit/verify_gap_closure.py",
+      "lines": "1089-1127",
+      "observed": "Settings-all closes its navigation contract; blink closes its two export contracts with entire-accessibility exclusion. No exact Apps race claim should be inferred."
+    },
+    {
+      "path": "scripts/verify_settings_provider_image.py",
+      "lines": "108-126,260-262",
+      "observed": "Offline HAP/source/ABI/signature/preinstall checks preserve service ACCESS_SYSTEM_SETTINGS and Share extension type/export/process mode. provider_runtime_validated=False; does not execute JS lifecycle."
+    },
+    {
+      "path": "ci/capability-audit/guest_ui.py",
+      "lines": "43-125",
+      "observed": "Reusable real hierarchy/node click and compositor capture helpers, not a race driver or verifier."
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/contact_picker_protocol/native_lifecycle_test.cpp",
+      "observed": "Contacts native lifecycle/transport helper tests belong to Contacts. They do not instantiate Settings service or Share session and cannot replace either acceptance."
+    }
+  ],
+  "manual_guest_acceptance_steps": [
+    {
+      "id": "settings-action-smoke",
+      "ready_as_automated_runner": false,
+      "precondition": "New packaged Settings BMS entry, exact ACCESS_SYSTEM_SETTINGS permission policy; actual AAMS notifications or a separately compiled/signed authorized caller plus ordinary denied caller.",
+      "steps": [
+        "record config and both secure preference initial values, provider and caller identities",
+        "enable ignore-repeat/animation setting through real accepted config path so corresponding real notification/action exists",
+        "click each real AAMS action: disableIgnoreRepeatClick, disableNotificaiton (intentional upstream spelling), reOpenTransitionAnimations, disableTransitionAnimationsNotification",
+        "independently read real config/preference poststate and correlate service request/result logs; run ordinary caller denial",
+        "gracefully stop/restart the service while retaining a live process if possible and record exact onDestroy vs onDisconnect; ordinary stop/start without held async work is smoke only",
+        "restore exact initial values and prove owned service/caller/session cleanup"
+      ]
+    },
+    {
+      "id": "share-functional-smoke",
+      "ready_as_automated_runner": false,
+      "precondition": "Ordinary typed Share caller with per-request callback journal and real matching receiver; currently no dedicated existing persona/runner supplies it.",
+      "steps": [
+        "invoke startAbilityByType share with nonce-bearing text/plain and record real system-share-title UI plus BMS/AMS binding",
+        "click system-share-cancel/Back and verify live caller resultCode=1,outcome=cancelled with zero receiver launches",
+        "repeat select a real target and verify selected receiver sees original challenged payload and no automatic send",
+        "exercise caller exit and reopen an independent real session; prove cleanup and returned result identity",
+        "retain these as functional/isolation smoke; exact late-load/label races require the barriers/counters specified separately"
+      ]
+    }
+  ],
+  "fault_injection_acceptance_contract": {
+    "must_observe": [
+      "archive SHA, immutable input/source/HAP binding, boot ID and same target before/after",
+      "caller UID/token/PID and exact allowed/denied profiles",
+      "session/controller/service-lifetime IDs, async operation IDs and monotonic sequence",
+      "backend API dispatch/complete, actual lifecycle callbacks, pending barrier entered/released",
+      "real UI result/receiver side effects and bounded final cleanup"
+    ],
+    "requirements": [
+      "Use controlled native/framework async barriers or a verified debugger/test mechanism retaining actual production call/lifecycle paths; a caller-supplied public Want delay/error flag would not be an existing accepted test control.",
+      "Do not convert synthetic Node session injection into new-package native proof.",
+      "If runtime destroys the JS environment or never reuses the same wrapper, record that native reachability fact and scope host adversarial schedules separately.",
+      "An instrumented diagnostic guest or changed page/DSO does not silently become proof for the untouched final archive.",
+      "No new instrumentation, caller, runner or verifier was implemented in this audit."
+    ],
+    "status": "missing_targeted_injection_and_observability; exact race acceptance remains open"
+  },
+  "root_commands": [
+    {
+      "id": "host-exact-race-logic",
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_extension_session_isolation_destroy_and_error_codes -v",
+      "preconditions": [
+        "repo root cwd",
+        "Python3 and Node with node:module.stripTypeScriptTypes",
+        "no SDK/Docker/guest needed; tests use temporary fixture source"
+      ],
+      "proves": "Three host test methods, 14 service +22 controller +5 extension scenarios; exact runtime scheduling assertions remain mocked",
+      "executed_in_this_review": false
+    },
+    {
+      "id": "host-single-old-session-reject",
+      "command": "node --unhandled-rejections=strict ci/capability-audit/fixtures/batch_apps/share_provider/extension.cjs ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerExtension.ets recreate_while_loading",
+      "preconditions": [
+        "repo root cwd",
+        "Node supporting stripTypeScriptTypes"
+      ],
+      "proves": "Exact extension ownership logic under the same-object hostile host schedule; stub Controller and session, no native lifecycle",
+      "executed_in_this_review": false
+    },
+    {
+      "id": "root-full-new-archive-regression",
+      "command": "python3 ci/capability-audit/run_with_owned_hdc.py --package-archive \"$TASK_ARCHIVE\" --evidence-output \"$TASK_OUT/full-suite.json\"",
+      "preconditions": [
+        "root owns sole VM/heavy/source lease after representative03 finishes creating a new archive",
+        "set HDC, QEMU_TEST_SDK_HOME (API26 Release), QEMU_TEST_HVIGOR_HOME, QEMU_TEST_NODE_HOME, DOCKER_SOURCE_VOLUME, QEMU_TEST_DOCKER_IMAGE",
+        "provide actual QEMU_TEST_CLOCK_PROBE/QEMU_TEST_CLOCK_PROBE_BUILD receipts and complete QEMU_TEST_CAPABILITY_INPUTS for existing four families",
+        "fresh output paths; wrapper owns private TMPDIR and HDC server; do not attach a second independent runner to the same guest"
+      ],
+      "proves": "Existing complete package suite only; navigation and ScreenBlink subchecks do not include these three new race protocols",
+      "executed_in_this_review": false
+    },
+    {
+      "id": "root-existing-guest-settings-navigation",
+      "command": "python3 ci/capability-audit/run_settings_all_navigation_probe.py --archive \"$TASK_ARCHIVE\" --sdk \"$QEMU_TEST_SDK_HOME\" --arch arm64 --device phone --target \"$TASK_TARGET\" --udid \"$TASK_UDID\" --boot-id \"$TASK_BOOT_ID\" --hdc \"$HDC\" --output \"$TASK_OUT/settings-navigation\" --hvigor-home \"$QEMU_TEST_HVIGOR_HOME\" --node-home \"$QEMU_TEST_NODE_HOME\" --source-volume \"$DOCKER_SOURCE_VOLUME\" --docker-image \"$QEMU_TEST_DOCKER_IMAGE\"",
+      "preconditions": [
+        "only inside root-owned, unchanged fresh ARM64 phone acceptance guest and its private transport; same boot/target/UDID",
+        "existing normal shared audit caller is cleaned/replaced by the runner; do not overlap caller jobs",
+        "official caller compile/sign resources available and fresh output path"
+      ],
+      "proves": "Twelve public Settings routes in two rounds, actual provider UI/pixels and ordinary caller cleanup; no IgnoreRepeatClick service or Share race",
+      "executed_in_this_review": false
+    },
+    {
+      "id": "root-guest-BMS-snapshot",
+      "command": "\"$HDC\" -t \"$TASK_TARGET\" shell \"bm dump -n com.ohos.settings\" > \"$TASK_OUT/settings-bms.txt\"",
+      "preconditions": [
+        "root-owned unchanged acceptance guest/private transport; TASK_OUT exists",
+        "record archive SHA/boot ID alongside output"
+      ],
+      "proves": "Runtime BMS registration and installed permission metadata, not method execution or epoch scheduling",
+      "executed_in_this_review": false
+    },
+    {
+      "id": "root-guest-AMS-snapshot",
+      "command": "\"$HDC\" -t \"$TASK_TARGET\" shell \"aa dump -a -u 100\" > \"$TASK_OUT/settings-ams.txt\"",
+      "preconditions": [
+        "same root-owned guest and recording context"
+      ],
+      "proves": "AMS process/ability/session state snapshot, not JS wrapper identity or no-further-label proof",
+      "executed_in_this_review": false
+    }
+  ],
+  "source_records": [
+    {
+      "path": "ci/capability-audit/test_batch_apps_accessibility_service.py",
+      "sha256": "0be1608e6f68dd1baeab72daa1ad85548f8809bda90262c9d64e9da1385d03b6"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs",
+      "sha256": "9642f0f273dcebba91c3fe7e6a0f97449c77b909f8c184d14aa4aa173c4cca26"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/accessibility_service_completion/0002-ignore-queued-actions-after-service-destruction.patch",
+      "sha256": "b07c305dbcc47fedc92d8c5be7752ab4b6ffd63cfa98cd612753f1b6c4935420"
+    },
+    {
+      "path": "ci/capability-audit/test_batch_apps_share_provider.py",
+      "sha256": "13dbb4d4d65b93239a181e9e09c1554f9cab92dcc5f80a46a49eec34a8b316be"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/extension.cjs",
+      "sha256": "cb3f01d730b837e58ee6aceeb67764ef6c0f0632ccfde75416be1e8decc2c29d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs",
+      "sha256": "9fbfd60aed48e06034e24984331928e538435db44900ba99d6e2ada0023f36d2"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerController.ets",
+      "sha256": "7cbf03a93e1c4877b677c077ba279be7073fcc07996b8b3ac08f551077bf790d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerExtension.ets",
+      "sha256": "2b7dc87f39cddb03a6ed9b18172125b717fa5b16fbb3f70f92eddd5dc6b99b61"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePicker.ets",
+      "sha256": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd"
+    },
+    {
+      "path": "ci/capability-audit/build_hap_probe.py",
+      "sha256": "6d882a964b7b1a41d797e251e4a965008a3ee60b618ca22b9e8f88fb14c207db"
+    },
+    {
+      "path": "ci/capability-audit/parallel_runtime_suite.py",
+      "sha256": "8e1f6586c5e532206dbb51f785aa9b4a5d6827592bdbbbedcc9f338b716395e9"
+    },
+    {
+      "path": "ci/capability-audit/run_packaged_qemu_suite.py",
+      "sha256": "a79cea60875c0686eb6a6a11297d83381b024ecfee3a7e6c22c1e0db592ecb7f"
+    },
+    {
+      "path": "ci/capability-audit/run_with_owned_hdc.py",
+      "sha256": "f194af08fea75f42b06b4fa7d256fbd4ab64fb1bd84d230e740f977be8c78f33"
+    },
+    {
+      "path": "ci/capability-audit/run_settings_all_navigation_probe.py",
+      "sha256": "dadd8201aeaa37b341e7dc6735a5843cb64e9b48cd1617a9b5ce2c7c500fdfdf"
+    },
+    {
+      "path": "ci/capability-audit/build_settings_all_navigation_probe.py",
+      "sha256": "c098b351e937e5791f98d1af4b7ba86fe30be717ef499fdb93e3c0964b766d33"
+    },
+    {
+      "path": "ci/capability-audit/verify_settings_all_navigation_results.py",
+      "sha256": "fe2a2cc70ac51e2216f27ff61ce04cabd218e8252055670ef98f30bc389a602b"
+    },
+    {
+      "path": "ci/capability-audit/verify_settings_all_navigation_evidence.py",
+      "sha256": "136f3bc3e2677f899e094cd2a334669dae9770398a801ce18daaa323bc278bb3"
+    },
+    {
+      "path": "ci/capability-audit/screen_blink_probe.ets",
+      "sha256": "4af424eb7b1342f3242f30bef425a77fa873ac6c5eb3e0cbc77ee6a363d9767d"
+    },
+    {
+      "path": "ci/capability-audit/verify_screen_blink_evidence.py",
+      "sha256": "0a96f745acf771f04a8c3d7ffb3ce13701ce1d4caaee7b4398432bdecc4341e3"
+    },
+    {
+      "path": "ci/capability-audit/verify_gap_closure.py",
+      "sha256": "38cd6564f9f99fd2f6f573a49b273a3769a7392c0a04225833134c1f5641c477"
+    },
+    {
+      "path": "ci/capability-audit/guest_ui.py",
+      "sha256": "dcc6a69d1836e72138dea54f6c8f768a5c1f7543a71a9054f0bb636ae0b14566"
+    },
+    {
+      "path": "scripts/verify_settings_provider_image.py",
+      "sha256": "a63022ceccfde8fd9474c316e182eb68d60acffd59f8b83eb6d38324d4f90535"
+    }
+  ],
+  "safety_and_resources": {
+    "new_files_only_under": "docs/capability-audit/parallel/apps/round21-runtime-tools/",
+    "production_or_shared_files_modified": false,
+    "git_index_or_commits": false,
+    "source_out_sdk_docker_vm_package_access": false,
+    "heavy_jobs": 0,
+    "tests_run_this_review": 0
+  }
+}
