@@ -93,6 +93,35 @@ class AudioCapture:
         return {'wav': record(self.path), 'host_begin_ns': self.begin, 'host_end_ns': ended, 'backend': self.backend}
 
 
+def sign_ordinary_hap(unsigned, bundle, permissions, udid, signer_dist, signer_jar, output, command):
+    # The shared comparator is integrated by root. Avoid the legacy whole-ZIP
+    # equality in sign_normal_hap; retain all real signature/profile checks.
+    unsigned = checked(record(unsigned)); signatures.ordinary_hap(unsigned, bundle, permissions)
+    output = Path(output).resolve(); output.mkdir(parents=True, exist_ok=False)
+    dist, jar, _ = signatures.signer_inputs(signer_dist, signer_jar)
+    signed = output / 'signed.hap'
+    command([sys.executable, str(HERE / 'sign_web_probe.py'), '--signer-dist', str(dist), '--jar', str(jar),
+        '--unsigned', str(unsigned), '--output', str(signed), '--bundle-name', bundle, '--udid', udid, '--sign-code', '1'], 'sign-normal-HAP')
+    signatures.verify_signed_payload(unsigned, signed)
+    proof = signatures.verify_signed_hap_artifacts(signed, bundle, permissions, udid, dist, jar, output / 'verification', command)
+    proof['unsigned_hap'] = record(unsigned)
+    return proof
+
+
+def cleanup_player_actions(invoke, envelope, read_rows, errors, role):
+    # A failed Stop must never prevent attempting Release of our own player.
+    for action in ('stop', 'release'):
+        try:
+            current = json.loads(json.dumps(envelope)); current['role'] = role
+            current['phase'] = 'cleanup-' + role + '-' + action
+            current['request'].update(action=action, operation_id=secrets.token_hex(16))
+            operation = invoke(current, cleanup=True)
+            group = [row for row in read_rows(operation) if row['operation_id'] == current['request']['operation_id']]
+            require(any(row['event'] == 'complete' for row in group) and not any(row['event'] == 'error' for row in group),
+                    'real owned public cleanup failed')
+        except Exception as error: errors.append('owned ' + role + ' ' + action + ' cleanup: ' + str(error))
+
+
 class Collector(shared.Collector):
     """Reuse generic actual commands/UITest observations; no Knowledge operations."""
     def __init__(self, args, value):
@@ -155,8 +184,8 @@ class Collector(shared.Collector):
 
     def token(self, role, when):
         bundle, _ = ROLES[role]
-        raw = self.observe('unset LD_LIBRARY_PATH LD_PRELOAD; ' + ' '.join(map(shlex.quote, [self.remote + '/sampler', 'token',
-            self.data['run_id'], self.env['boot_id'], bundle, str(self.identities[role]['uid'])])), role + '-token-' + when)
+        raw = self.observe(project.sampler_script(self.remote, 'token', self.data['run_id'], self.env['boot_id'],
+            bundle, self.identities[role]['uid']), role + '-token-' + when)
         value = load(checked(raw))
         require(value.get('kind') == 'token' and value['run_id'] == self.data['run_id'] and value['boot_id'] == self.env['boot_id'] and
                 value['bundle'] == bundle and value['uid'] == self.identities[role]['uid'] and value['token_id'] == self.identities[role]['token_id'] and
@@ -166,7 +195,7 @@ class Collector(shared.Collector):
     def install(self, role):
         artifacts = self.value['artifacts_data']; spec = artifacts['projects'][role]
         bundle, permissions = ROLES[role]
-        proof = signatures.sign_normal_hap(checked(spec['unsigned_hap']), bundle, permissions, self.env['udid'],
+        proof = sign_ordinary_hap(checked(spec['unsigned_hap']), bundle, permissions, self.env['udid'],
             artifacts['signer']['dist'], checked(artifacts['signer']['jar']), self.args.output / (role + '-signing'), self.command)
         self.installed.append(bundle)
         reply = self.command([self.args.hdc, '-t', self.guest.target, 'install', checked(proof['signed_hap'])], 'install-' + role)
@@ -189,8 +218,7 @@ class Collector(shared.Collector):
 
     def clock(self, label):
         before = time.monotonic_ns()
-        raw = self.observe('unset LD_LIBRARY_PATH LD_PRELOAD; ' + self.remote + '/sampler clock ' + self.data['run_id'] +
-            ' ' + self.env['boot_id'], label)
+        raw = self.observe(project.sampler_script(self.remote, 'clock', self.data['run_id'], self.env['boot_id']), label)
         after = time.monotonic_ns()
         row = dict(raw=raw, host_before_ns=before, host_after_ns=after)
         self.value['clocks'].append(row)
@@ -271,56 +299,72 @@ class Collector(shared.Collector):
         self.shell('test ! -d /proc/' + pid + ' && rm -f -- ' + self.remote + '/sampler-stop', 'aborted-owned-observer-absent')
         self.process = None; self.sampler_row = None; self.sampler_pid = None
 
-    def invoke(self, envelope, *, cleanup=False):
-        role, phase, request = envelope['role'], envelope['phase'], envelope['request']
-        bundle = ROLES[role][0]
-        name = 'request-' + request['operation_id']; path = self.args.output / (name + '.json')
-        project.write(path, envelope)
-        row = dict(phase=phase, role=role, request=record(path), begin_boot=self.identity(name + '-boot-before'), complete=False)
-        self.value['cleanup_operations' if cleanup else 'phases'].append(row)
+    def invoke(self, envelope, *, cleanup=False, following=None, delay_ms=None):
+        role, phase = envelope['role'], envelope['phase']; bundle = ROLES[role][0]
+        envelopes = [envelope] if following is None else [envelope, following]
+        rows = []
+        begin = self.identity('request-' + envelope['request']['operation_id'] + '-boot-before')
+        for item in envelopes:
+            path = self.args.output / ('request-' + item['request']['operation_id'] + '.json')
+            project.write(path, item)
+            row = dict(phase=item['phase'], role=role, request=record(path), begin_boot=begin, complete=False)
+            self.value['cleanup_operations' if cleanup else 'phases'].append(row); rows.append(row)
+        transport = rows[0]['request']
+        if following is not None:
+            path = self.args.output / ('pair-' + envelope['request']['operation_id'] + '.json')
+            project.write(path, project.paired_request(envelope, following, delay_ms)); transport = record(path)
         self.shell('aa start -b ' + bundle + ' -a EntryAbility', 'foreground-' + role)
         self.wait_control(bundle, {'identifier': 'audio_haptic_run'}, 'ready', phase)
-        row['pid_before'] = self.pid(role, phase + '-before')
-        self.stage(record(path), self.files(role) + '/audio-haptic-request.json', self.identities[role]['uid'], replace=True)
-        row['click'] = self.click(bundle, {'identifier': 'audio_haptic_run'}, 'run', phase)
+        before = self.pid(role, phase + '-before')
+        self.stage(transport, self.files(role) + '/audio-haptic-request.json', self.identities[role]['uid'], replace=True)
+        # One real click executes only this explicit pair in the persistent UI
+        # instance. No HDC, screenshot, journal or sampler restart between calls.
+        click = self.click(bundle, {'identifier': 'audio_haptic_run'}, 'run', phase)
+        for row in rows: row.update(transport_request=transport, click=click, pid_before=before)
         deadline = time.monotonic() + 45
         while True:
-            journal = self.journal(role, name + '-poll')
+            journal = self.journal(role, 'request-' + envelope['request']['operation_id'] + '-poll')
             text = checked(journal).read_text()
             if text.endswith('\n'):
-                group = [r for r in map(json.loads, text.splitlines()) if r['operation_id'] == request['operation_id']]
-                terminal = [r for r in group if r['event'] in ('complete', 'error')]
-                if terminal: break
-            require(time.monotonic() < deadline, 'real public operation timed out: ' + phase)
-            time.sleep(.2)
-        row.update(journal=journal, end_boot=self.identity(name + '-boot-after'), pid_after=self.pid(role, phase + '-after'), complete=True)
-        self.roles[role]['journal'] = journal
-        self.persist()
-        return row
+                records = list(map(json.loads, text.splitlines()))
+                if all(any(r['operation_id'] == item['request']['operation_id'] and r['event'] in ('complete', 'error')
+                           for r in records) for item in envelopes): break
+                # A real failed first call prevents the UI from running its
+                # following operation. Preserve that failure without 45s delay.
+                first = [r for r in records if r['operation_id'] == envelope['request']['operation_id']]
+                require(not any(r['event'] == 'error' for r in first) or following is None, 'paired public Start failed')
+            require(time.monotonic() < deadline, 'real public operation timed out: ' + phase); time.sleep(.2)
+        ended = self.identity('request-' + envelope['request']['operation_id'] + '-boot-after')
+        after = self.pid(role, phase + '-after')
+        for row in rows: row.update(journal=journal, end_boot=ended, pid_after=after, complete=True)
+        self.roles[role]['journal'] = journal; self.persist()
+        return rows if following is not None else rows[0]
 
-    def segment(self, phase, envelope=None):
-        self.capture.start(phase['name'])
-        row = dict(phase=phase['name'], expected=phase, begin_boot=self.identity(phase['name'] + '-segment-before'))
+    def segment(self, phase, envelope=None, *, following=None, boundary=None):
+        block = [phase] if boundary is None else [phase, boundary]
+        name = project.capture_name(block)
+        self.capture.start(name)
+        row = dict(phase=name, expected=phase, begin_boot=self.identity(name + '-segment-before'))
+        if boundary is not None: row['boundary_expected'] = boundary
         self.value['segments'].append(row)
         try:
-            row['clock_before'] = self.clock(phase['name'] + '-clock-before')
-            self.sampler_start(phase['name'])
-            if envelope is not None: row['operation'] = self.invoke(envelope)
-            time.sleep(phase['hold_ms'] / 1000)
+            row['clock_before'] = self.clock(name + '-clock-before'); self.sampler_start(name)
             if envelope is not None:
-                role = envelope['role']
-                row['journal_after'] = self.journal(role, phase['name'] + '-after-hold')
+                operations = self.invoke(envelope, following=following, delay_ms=phase['hold_ms'])
+                if following is None: row['operation'] = operations
+                else: row['operation'], row['boundary_operation'] = operations
+            time.sleep((phase if boundary is None else boundary)['hold_ms'] / 1000)
+            if envelope is not None:
+                role = envelope['role']; row['journal_after'] = self.journal(role, name + '-after-hold')
                 self.roles[role]['journal'] = row['journal_after']
-                if envelope['request']['action'] == 'start': row['native_log'] = self.observe('hilog -x', phase['name'] + '-native-log')
-            row['sampler'] = self.sampler_stop()
-            row['clock_after'] = self.clock(phase['name'] + '-clock-after')
+                if envelope['request']['action'] == 'start': row['native_log'] = self.observe('hilog -x', name + '-native-log')
+            row['sampler'] = self.sampler_stop(); row['clock_after'] = self.clock(name + '-clock-after')
         finally:
             if self.process is not None:
                 try: row['sampler'] = self.sampler_stop()
                 except Exception as error: self.value['cleanup_errors'].append(str(error))
-            if self.capture.owned: row['audio_capture'] = self.capture.stop(phase['name'])
-            row['end_boot'] = self.identity(phase['name'] + '-segment-after')
-            self.persist()
+            if self.capture.owned: row['audio_capture'] = self.capture.stop(name)
+            row['end_boot'] = self.identity(name + '-segment-after'); self.persist()
 
     def cleanup(self):
         errors = self.value['cleanup_errors']; cleanup = self.value.setdefault('cleanup', {})
@@ -342,14 +386,8 @@ class Collector(shared.Collector):
                 released = [r['sequence'] for r in rows if r['event'] == 'return' and r['api'] == 'AudioHapticPlayer.release']
                 if created and max(created) > max(released, default=0):
                     base = project.request(checked(self.value['artifacts_data']['challenge']), self.env['boot_id'], 'normal-stop-1')
-                    for action in ('stop', 'release'):
-                        envelope = json.loads(json.dumps(base)); envelope['role'] = role
-                        envelope['phase'] = 'cleanup-' + role + '-' + action
-                        envelope['request'].update(action=action, operation_id=secrets.token_hex(16))
-                        operation = self.invoke(envelope, cleanup=True)
-                        group = [r for r in map(json.loads, checked(operation['journal']).read_text().splitlines())
-                                 if r['operation_id'] == envelope['request']['operation_id']]
-                        require(any(r['event'] == 'complete' for r in group) and not any(r['event'] == 'error' for r in group), 'real owned public cleanup failed')
+                    cleanup_player_actions(self.invoke, base,
+                        lambda operation: map(json.loads, checked(operation['journal']).read_text().splitlines()), errors, role)
                 self.roles[role]['journal'] = self.journal(role, role + '-final')
                 self.token(role, 'final')
             except Exception as error: errors.append('owned public player cleanup: ' + role + ': ' + str(error))
@@ -372,7 +410,7 @@ class Collector(shared.Collector):
             cleanup['ams_absent'] = ams
             if self.capture is not None and self.process is None:
                 self.segment(dict(name='final-cleanup-quiet', role=None, action=None, options={}, expected='ok', errors=[],
-                    hold_ms=1100, audio='quiet', haptic='quiet', eos=False))
+                    hold_ms=1100, audio='quiet', haptic='quiet', eos=False, active_before=None))
         except Exception as error: errors.append('owned cleanup observations: ' + str(error))
         try:
             ui_paths = sorted({p for row in self.value['commands'] if len(row['argv']) == 5 and row['argv'][3] == 'shell'
@@ -380,9 +418,12 @@ class Collector(shared.Collector):
             require(self.process is None, 'preserve private observer files while owned process exit is unproved')
             paths = ([self.remote + '/sampler'] if self.remote_created else []) + ui_paths
             if paths:
-                script = 'rm -f -- ' + ' '.join(map(shlex.quote, paths)) + ' && ' + ' && '.join('test ! -e ' + shlex.quote(p) + ' && test ! -L ' + shlex.quote(p) for p in paths)
-                if self.remote_created: script += ' && rmdir ' + self.remote + ' && test ! -e ' + self.remote
+                if self.remote_created: paths, script = project.private_cleanup_script(self.remote, ui_paths)
+                else:
+                    script = 'rm -f -- ' + ' '.join(map(shlex.quote, paths)) + ' && ' + ' && '.join(
+                        'test ! -e ' + shlex.quote(p) + ' && test ! -L ' + shlex.quote(p) for p in paths)
                 cleanup['private_removal'] = self.observe(script, 'only-owned-helper-and-UI-files-absent')
+            cleanup['ui_challenge'] = self.ui.challenge
             cleanup['private_paths'] = paths
             cleanup['final_boot'] = self.identity('final-same-boot')
         except Exception as error: errors.append('owned private cleanup: ' + str(error))
@@ -408,7 +449,7 @@ def run(args):
     value = dict(schema_version=1, status='fail', scope=SCOPE, archive=record(args.archive), archive_sha256=sha(args.archive),
         boot=record(args.boot), artifacts=record(args.artifacts), hdc=str(Path(args.hdc).resolve()), commands=[], observations=[], received=[],
         staged=[], journals=[], phases=[], cleanup_operations=[], ui_actions=[], segments=[], samplers=[], clocks=[], roles={},
-        failures=[], cleanup_errors=[], cleanup_complete=False, qmp={'requests': []},
+        failures=[], cleanup_errors=[], cleanup_complete=False, qmp={'requests': []}, signature_reverification_commands=[],
         tool_sources={name: record(HERE / name) for name in TOOLS},
         first_frame_trace_freshness_independently_verified=False, cross_generation_callback_gap_closed=False,
         first_artifact_behavior_gate_passed=False, ledger_closed=False)
@@ -443,9 +484,13 @@ def run(args):
         for role in ROLES: collector.install(role)
         require(len({row['uid'] for row in collector.identities.values()}) == 2 and
                 len({row['token_id'] for row in collector.identities.values()}) == 2, 'normal/denied identities overlap')
-        for phase in project.phases():
+        for block in project.execution_plan():
+            phase = block[0]
             envelope = project.request(checked(spec['challenge']), collector.env['boot_id'], phase['name'])
-            if phase['hold_ms']: collector.segment(phase, envelope)
+            if len(block) == 2:
+                following = project.request(checked(spec['challenge']), collector.env['boot_id'], block[1]['name'])
+                collector.segment(phase, envelope, following=following, boundary=block[1])
+            elif phase['hold_ms']: collector.segment(phase, envelope)
             else: collector.invoke(envelope)
     except Exception as error:
         value['failures'].append(type(error).__name__ + ': ' + str(error))
@@ -460,7 +505,7 @@ def run(args):
         try:
             from batch_media_audio_haptic_verify import verify_evidence
             value['independent_result'] = verify_evidence(args.output / 'evidence.json', args.archive, args.boot,
-                command=signatures.Commands(args.output / 'reverification', value['commands']))
+                command=signatures.Commands(args.output / 'reverification', value['signature_reverification_commands']))
             value['status'] = 'pass_scoped_runtime_NOT_full_capability_closure'
         except Exception as error: value['failures'].append('independent verification: ' + type(error).__name__ + ': ' + str(error))
         save(args.output / 'evidence.json', value)

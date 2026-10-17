@@ -8,10 +8,11 @@ let removed = [], writes = [], updates = [];
 const run = 'd'.repeat(32), boot = '12345678-1234-1234-1234-123456789abc';
 function calendar(name, id) {
   const rows = [];
-  return {id, getAccount() {return {name, type: 0};}, async setConfig(c) {this.config = c;}, getConfig() {return this.config;},
+  return {id, rows, getAccount() {return {name, type: 0};}, async setConfig(c) {this.config = c;}, getConfig() {return this.config;},
     async addEvent(event) {const id = nextId++; rows.push({...event, id}); writes.push(event); return id;},
-    async getEvents(ids) {return rows.filter(r => !ids || ids.includes(r.id));},
-    async updateEvent(event) {updates.push(event);}, async deleteEvent(id) {removed.push(id); const i=rows.findIndex(r=>r.id===id); if(i>=0)rows.splice(i,1);}};
+    async getEvents(ids) {return JSON.parse(JSON.stringify(rows.filter(r => !ids || ids.includes(r.id))));},
+    async updateEvent(event) {updates.push(event); const i=rows.findIndex(r=>r.id===event.id); if(i>=0)rows[i]=JSON.parse(JSON.stringify(event));},
+    async deleteEvent(id) {removed.push(id); const i=rows.findIndex(r=>r.id===id); if(i>=0)rows.splice(i,1);}};
 }
 const foreign = calendar('foreign-real-records', 9); calendars.push(foreign);
 const manager = {async getAllCalendars(){return calendars;}, async createCalendar(account){const c=calendar(account.name, 10);calendars.push(c);return c;},
@@ -27,8 +28,12 @@ const sandbox = {fs:io, util:{TextEncoder:class {encodeInto(text){return new Tex
   calendarManager:{CalendarType:{LOCAL:0},EventType:{NORMAL:0},EventFilter:{filterById(ids){return ids;}},getCalendarManager(){return manager;}}};
 vm.createContext(sandbox);vm.runInContext(stripTypeScriptTypes(source,{mode:'transform'})+'\nthis.Audit=CalendarAudit;',sandbox);
 let operation = 0;
-function request(action,case_id='cold-allow') {return JSON.stringify({schema_version:1,run_id:run,boot_id:boot,archive_sha256:'a'.repeat(64),
-  operation_id:(++operation).toString(16).padStart(32,'0'),role:'producer',action,case_id});}
+function request(action,case_id='cold-allow') {
+  const value={schema_version:1,run_id:run,boot_id:boot,archive_sha256:'a'.repeat(64),
+    operation_id:(++operation).toString(16).padStart(32,'0'),role:'producer',action,case_id};
+  if(action==='cleanup') value.cleanup_guard={calendar_id:10,events:calendars.find(c=>c.id===10)?.rows??[],observed_ms:Date.now()};
+  return JSON.stringify(value);
+}
 function journal(){return storage.get('/private/calendar-'+run+'-'+boot+'.jsonl').trim().split('\n').map(JSON.parse);}
 (async()=>{
   assert.throws(()=>new sandbox.Audit({filesDir:'/private'},request('notifications')));
@@ -41,8 +46,30 @@ function journal(){return storage.get('/private/calendar-'+run+'-'+boot+'.jsonl'
   const state='/private/calendar-state-'+run+'.json';const original=storage.get(state);
   const altered=JSON.parse(original);altered.calendar_id=9;storage.set(state,JSON.stringify(altered));
   await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();assert.deepEqual(removed,[401]);
+  storage.set(state,original);
+  const owned=calendars.find(c=>c.id===10), beforeRows=JSON.stringify(owned.rows);
+  owned.rows.push({...owned.rows[0],id:999,title:'foreign event'});
+  await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();
+  assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(owned.rows.at(-1).id,999);
+  owned.rows.pop();owned.rows[0].description='external edit';
+  await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();
+  assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(owned.rows[0].description,'external edit');
+  owned.rows.splice(0,owned.rows.length,...JSON.parse(beforeRows));
+  const withoutGuard=JSON.parse(request('cleanup'));delete withoutGuard.cleanup_guard;
+  await new sandbox.Audit({filesDir:'/private'},JSON.stringify(withoutGuard)).execute();
+  assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);
+  for(const observed_ms of [Date.now()-120001,Date.now()+60000]) {
+    const expired=JSON.parse(request('cleanup'));expired.cleanup_guard.observed_ms=observed_ms;
+    await new sandbox.Audit({filesDir:'/private'},JSON.stringify(expired)).execute();
+    assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(JSON.stringify(owned.rows),beforeRows);
+  }
+  // A normal reader hiding a foreign row must not override the independent
+  // whole-reader guard. No delete is issued when their complete views differ.
+  const hidden=JSON.parse(request('cleanup'));hidden.cleanup_guard.events.push({...owned.rows[0],id:1000});
+  await new sandbox.Audit({filesDir:'/private'},JSON.stringify(hidden)).execute();
+  assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(JSON.stringify(owned.rows),beforeRows);
   storage.set(state,original);await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();
   assert.deepEqual(removed,[401,'calendar/10']);assert.equal(calendars.length,1);assert.equal(calendars[0],foreign);
   assert.equal(storage.has(state),false);const rows=journal();rows.forEach((r,i)=>assert.equal(r.sequence,i+1));
-  console.log('PASS host-only actual QA source: real API dispatch future timing per-run ownership foreign cleanup refusal sequence');
+  console.log('PASS host-only actual QA source: future timing ownership foreign/changed/hidden cleanup refusal fresh guard sequence');
 })().catch(e=>{console.error(e);process.exitCode=1;});

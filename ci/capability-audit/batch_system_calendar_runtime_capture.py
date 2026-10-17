@@ -17,6 +17,7 @@ from batch_apps_run_contact_picker_runtime import clickable_for_text
 from batch_system_calendar_runtime_project import (CONTRACT, FIX, ROLES, checked, load_challenge,
     record, request, require, sha, write)
 import batch_system_calendar_runtime_protocol as protocol
+from batch_system_calendar_runtime_binding import permission_label, sdk_binding, signed_payload
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
 
@@ -190,19 +191,10 @@ class Collector:
             'dsos': dso_observations}
         for role, policy in ROLES.items():
             item = self.plan['roles'][role]
-            sdk = signatures.verify_sdk_project(item['sdk'])
-            source = Path(item['sdk']['source_project'])
-            manifest = protocol.decode(checked(item['source_manifest']).read_text())
-            require(manifest['run_id'] == self.run and manifest['role'] == role and
-                    all(manifest[k] == policy[k] for k in policy) and manifest['challenge'] == record(self.args.challenge.resolve()) and
-                    manifest['fixture_hashes'] == {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()}, 'compiled source role/run/fixture differs')
-            rows = signatures.source_rows(protocol.decode(checked(item['sdk']['sdk_evidence']).read_text()), item['sdk']['sdk_project'])
-            require(rows.get('calendar-source-manifest.json') == sha(checked(item['source_manifest'])) and
-                    all(rows.get(name) == expected and sha(source / name) == expected for name, expected in manifest['source_hashes'].items()),
-                    'actual SDK did not freeze complete prepared QA sources')
+            sdk = sdk_binding(item['sdk'], item['source_manifest'], role, self.args.challenge.resolve())
             signed = checked(item['signed_hap'])
             signature = exact_signature(signed, role, self.guest.udid, self.plan['signer'], self.output / ('signature-' + role), self.command)
-            require(signatures.hap_contents(checked(item['sdk']['unsigned_hap']))[1] == signature['payload'], 'signing changed compiled role payload')
+            signed_payload(checked(item['sdk']['unsigned_hap']), signed)
             raw, bm = self.raw('bm dump -n ' + policy['bundle'], 'BMS-' + role)
             _, app, remote = protocol.bms(raw, policy['bundle'], policy)
             self.apps[policy['bundle']] = app
@@ -250,31 +242,50 @@ class Collector:
             'token': token_art, 'uid': app['uid'], 'token_id': app['accessTokenId'], 'schema': schema}
         self.save()
 
-    def permission_click(self, decision):
+    def permission_preflight(self):
+        layout, path = self.ui.layout(label='permission-preflight')
+        require(not protocol.permission_windows(layout, self.plan.get('permission_bundle', 'com.ohos.permissionmanager')),
+                'pre-existing permission prompt: preserve it before starting any new request')
+        self.report['permission_preflight'] = {'layout': record(path)}
+        self.save()
+
+    def permission_click(self, decision, target):
         bundle = self.plan.get('permission_bundle', 'com.ohos.permissionmanager')
         texts = self.plan.get('allow_texts', ['允许', 'Allow']) if decision == 'allow' else self.plan.get('deny_texts', ['不允许', 'Deny'])
         layout, path = self.ui.layout(label='permission')
-        matches = []
-        for text in texts:
-            try:
-                matches.append((text, clickable_for_text(layout, bundle, text)))
-            except NodeNotReady:
-                pass
-        if not matches:
+        if not protocol.permission_windows(layout, bundle):
             return None
-        require(len(matches) == 1, 'ambiguous actual permission decision control')
-        text, node = matches[0]
+        selected = protocol.permission_control(layout, bundle, target, permission_label(target, self.apps, self.run), texts)
+        node = selected['selected_node']
         screen = self.ui.screenshot(label='permission-before')
         x, y, w, h = node['rect']
         self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'permission-actual-node')
-        return {'decision': decision, 'selected_text': text, 'layout': record(path), 'screenshot': record(screen), 'selected_node': node}
+        return {'decision': decision, 'layout': record(path), 'screenshot': record(screen), **selected}
 
     def operation(self, role, action, case):
         policy = ROLES[role]
         value = request(self.args.challenge, self.boot, sha(self.args.archive), role, action, case,
             lead_minutes=self.args.lead_minutes, spacing_minutes=self.args.spacing_minutes)
+        if action == 'cleanup':
+            require(self.args.readback is not None, 'cleanup requires a fresh actual independent observer read capture')
+            from batch_system_calendar_runtime_verify import validate_capture, operation
+            observed = validate_capture(self.args.readback, self.challenge, self.report['archive'])
+            require(observed['request']['role'] == 'observer' and observed['request']['action'] == 'read' and
+                    observed['boot_id'] == self.boot, 'current-boot whole-reader cleanup preflight required')
+            rows = operation(observed)
+            require(not protocol.values(rows, 'error'), 'independent cleanup preflight read failed')
+            native = protocol.decode(checked(observed['token_after']).read_text())
+            require(native['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
+                    'cleanup preflight lacks actual whole-calendar grant')
+            readings = protocol.values(rows, 'events', 'Calendar.getEvents')
+            require(len(readings) == 1 and 0 <= self.clock_anchor['realtime_ns']//1_000_000 - rows[-1]['timestamp_ms'] <= 120000,
+                    'fresh unique independent complete account read required; preserve uncertain data')
+            value['cleanup_guard'] = {'calendar_id': readings[0]['calendar_id'], 'events': readings[0]['events'],
+                'observed_ms': rows[-1]['timestamp_ms']}
+            self.report['readback_capture'] = record(self.args.readback.resolve())
         self.report['request'] = value
         self.report['stage'] = 'public-operation'
+        self.permission_preflight()
         self.raw(shlex.join(['aa', 'start', '-b', policy['bundle'], '-a', 'EntryAbility', '--ps', 'request', json.dumps(value, separators=(',', ':'))]), 'launch-request')
         deadline = time.monotonic() + self.args.timeout
         clicked = False
@@ -285,7 +296,7 @@ class Collector:
                     self.report['run_click'] = self.ui.click(policy['bundle'], identifier='calendar-qa-run', label='execute-real-operation')
                     clicked = True
                 if self.args.permission_decision:
-                    decision = self.permission_click(self.args.permission_decision)
+                    decision = self.permission_click(self.args.permission_decision, policy['bundle'])
                     if decision:
                         self.report.setdefault('permission_clicks', []).append(decision)
                 path = '/data/app/el2/100/base/' + policy['bundle'] + '/files/calendar-' + self.run + '-' + self.boot + '.jsonl'
@@ -304,7 +315,8 @@ class Collector:
         raise ValueError('actual public operation timed out: ' + last)
 
     def seed(self):
-        capture = protocol.decode(self.args.seed.read_text())
+        from batch_system_calendar_runtime_verify import validate_capture
+        capture = validate_capture(self.args.seed, self.challenge, self.report['archive'])
         require(capture.get('run_id') == self.run and capture['archive'] == record(self.args.archive.resolve()) and
                 capture.get('request', {}).get('role') == 'producer' and capture['request']['action'] == 'create', 'actual same-run create capture required')
         row = capture['artifacts']['producer']
@@ -323,24 +335,19 @@ class Collector:
         while time.monotonic() < deadline:
             try:
                 if self.args.permission_decision:
-                    decision = self.permission_click(self.args.permission_decision)
+                    decision = self.permission_click(self.args.permission_decision, PROVIDER)
                     if decision: self.report.setdefault('permission_clicks', []).append(decision)
                 layout, path = self.ui.layout(bundle=PROVIDER, label='viewer')
-                title = protocol.viewer_field(layout, 'title', empty=blank)
-                description = protocol.viewer_field(layout, 'description', empty=blank)
-                start = protocol.viewer_field(layout, 'start', empty=blank)
-                end = protocol.viewer_field(layout, 'end', empty=blank)
-                status = select_node(layout, PROVIDER, identifier='calendar-main-status')
+                nodes = protocol.viewer_nodes(layout, blank)
+                title, description, start, end = [nodes[k] for k in ('title', 'description', 'start', 'end')]
                 text = title['attributes'].get('text', '') if title else ''
                 if expected is not None:
                     if (text != expected['event']['title'] or description['attributes'].get('text', '') != expected['event']['description'] or
                             start['attributes'].get('text', '') != expected['display']['start'] or
                             end['attributes'].get('text', '') != expected['display']['end']):
                         raise NodeNotReady('persisted challenge title/description not yet visible')
-                if blank and not status['attributes'].get('text'):
-                    raise NodeNotReady('denied/invalid/deleted viewer did not become non-success')
                 self.report['view'] = {'layout': record(path), 'screenshot': record(self.ui.screenshot(label='viewer-pixels')),
-                    'nodes': {'title': title, 'description': description, 'status': status, 'start': start, 'end': end},
+                    'nodes': nodes,
                     'expected_persisted': expected, 'expected_blank': blank}
                 self.report['provider_token_after'] = self.token(PROVIDER, 'provider-token-after-view')[1]
                 return
@@ -350,7 +357,8 @@ class Collector:
         raise ValueError('viewer outcome timed out: ' + last)
 
     def independent(self, seed):
-        capture = protocol.decode(self.args.readback.read_text())
+        from batch_system_calendar_runtime_verify import validate_capture
+        capture = validate_capture(self.args.readback, self.challenge, self.report['archive'])
         require(capture['run_id'] == self.run and capture['boot_id'] == self.boot and
                 capture['archive'] == record(self.args.archive.resolve()) and capture['request']['role'] == 'observer' and
                 capture['request']['action'] == 'read', 'actual independent current-boot public read required')
@@ -368,7 +376,8 @@ class Collector:
 
     def notification_click(self):
         seed = self.seed()
-        observation = protocol.decode(self.args.notification.read_text())
+        from batch_system_calendar_runtime_verify import validate_capture
+        observation = validate_capture(self.args.notification, self.challenge, self.report['archive'])
         require(observation.get('run_id') == self.run and observation.get('boot_id') == self.boot and
                 observation['archive'] == record(self.args.archive.resolve()) and observation['request']['role'] == 'observer' and
                 observation['request']['action'] == 'notifications', 'actual current-boot observer notification capture required')
@@ -376,7 +385,9 @@ class Collector:
         _, own = protocol.parse(checked(observation['journal']).read_text(), observation['request'], app)
         want = protocol.notification(own, seed)
         require(want['uid'] == self.apps[PROVIDER]['uid'], 'actual reminder WantAgent UID differs from installed provider')
+        expected = self.independent(seed) if self.args.expect == 'persisted' else None
         self.report.update(stage='notification-click', notification_capture=record(self.args.notification.resolve()), observed_want=want)
+        self.permission_preflight()
         before, artifact = self.raw('aa dump -a -u 100', 'AMS-before-notification')
         self.report['AMS_before'] = artifact
         # Opening the shade is a gesture based on actual compositor geometry.
@@ -393,7 +404,7 @@ class Collector:
         self.report['notification_click'] = {'layout': record(path), 'screenshot': record(self.ui.screenshot(label='notification-before-click')), 'selected_node': node}
         x, y, w, h = node['rect']
         self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'actual-notification-node-click')
-        self.view(self.independent(seed) if self.args.expect == 'persisted' else None, self.args.expect == 'blank')
+        self.view(expected, self.args.expect == 'blank')
         self.report['AMS_after'] = self.raw('aa dump -a -u 100', 'AMS-after-notification')[1]
         self.report['status'] = 'captured'
         self.report['gaps'].append('actual notification clicked; onNewWant vs new-instance requires independent actual Ability lifecycle/mission evidence')
@@ -407,16 +418,19 @@ class Collector:
         elif kind == 'bad-id': uri = uri.replace('event_id=' + str(seed['id']), 'event_id=0')
         # Deleted IDs are supplied from an actual delete capture, never guessed.
         if kind == 'deleted-id':
-            deletion = protocol.decode(self.args.deleted.read_text())
+            from batch_system_calendar_runtime_verify import validate_capture
+            deletion = validate_capture(self.args.deleted, self.challenge, self.report['archive'])
             require(deletion['run_id'] == self.run and deletion['archive'] == record(self.args.archive.resolve()), 'same-run actual delete required')
             app = self.apps[ROLES['producer']['bundle']]
             _, rows = protocol.parse(checked(deletion['journal']).read_text(), deletion['request'], app)
             require(not protocol.values(rows, 'error') and protocol.values(rows, 'event-deleted', 'Calendar.deleteEvent') ==
                     [{'id': seed['id'], 'case_id': self.args.case}], 'actual owned event delete missing')
             self.report['delete_capture'] = record(self.args.deleted.resolve())
+        expected = self.independent(seed) if self.args.expect == 'persisted' else None
         self.report.update(stage='direct-uri-boundary', uri=uri, uri_case=kind)
+        self.permission_preflight()
         self.report['launch'] = self.raw(shlex.join(['aa', 'start', '-b', PROVIDER, '-a', 'MainAbility', '-U', uri]), 'explicit-URI-boundary')[1]
-        self.view(self.independent(seed) if self.args.expect == 'persisted' else None, self.args.expect == 'blank')
+        self.view(expected, self.args.expect == 'blank')
         self.report['AMS_after'] = self.raw('aa dump -a -u 100', 'AMS-after-URI')[1]
         self.report['status'] = 'captured'
         self.report['gaps'].append('explicit URI launch is only a boundary test and never notification delivery proof')

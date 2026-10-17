@@ -4,9 +4,11 @@ import argparse
 import json
 from pathlib import Path
 import re
+import shlex
 
 from batch_system_calendar_runtime_project import CONTRACT, ROLES, checked, load_challenge, record, require, sha, write
 import batch_system_calendar_runtime_protocol as protocol
+from batch_system_calendar_runtime_binding import permission_label, sdk_binding, signed_payload
 from enclosing_acceptance_guest import validate_binding
 from guest_ui import select_node
 
@@ -91,6 +93,11 @@ def validate_capture(path, challenge, archive):
     apps = {}
     for role, policy in ROLES.items():
         item = capture['artifacts'][role]
+        configured = plan['roles'][role]
+        bound_sdk = sdk_binding(configured['sdk'], configured['source_manifest'], role, checked(capture['challenge']))
+        require(item['sdk'] == bound_sdk and item['source_manifest'] == configured['source_manifest'] and
+                item['signature']['signed_hap'] == configured['signed_hap'], 'captured role differs from exact current SDK/source/signing inputs')
+        signed_payload(checked(configured['sdk']['unsigned_hap']), checked(configured['signed_hap']))
         _, app, _ = protocol.bms(raw_bound(capture, item['bms']), policy['bundle'], policy)
         require(item['uid'] == app['uid'] and item['token_id'] == app['accessTokenId'], 'role UID/token substituted')
         token = protocol.token(protocol.decode(raw_bound(capture, item['token'])),
@@ -130,14 +137,22 @@ def validate_capture(path, challenge, archive):
         role = capture['request']['role']
         protocol.token(protocol.decode(raw_bound(capture, capture['token_after'])),
             {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, ROLES[role]['bundle'], apps[ROLES[role]['bundle']])
+    if capture['stage'] != 'viewer-snapshot':
+        preflight = layout_bound(capture, capture['permission_preflight']['layout'])
+        require(not protocol.permission_windows(preflight, plan.get('permission_bundle', 'com.ohos.permissionmanager')),
+                'a pre-existing permission prompt was not preserved before the stage request')
     for decision in capture.get('permission_clicks', []):
         layout = layout_bound(capture, decision['layout']); pixels_bound(capture, decision['screenshot'])
+        require(decision['decision'] in ('allow', 'deny'), 'actual allow/deny decision required')
         text = decision['selected_text']
         allowed = plan.get('allow_texts', ['允许', 'Allow']) if decision['decision'] == 'allow' else plan.get('deny_texts', ['不允许', 'Deny'])
         require(text in allowed, 'actual permission label does not match requested user decision')
-        from batch_apps_run_contact_picker_runtime import clickable_for_text
-        node = clickable_for_text(layout, plan.get('permission_bundle', 'com.ohos.permissionmanager'), text)
-        require(node == decision['selected_node'], 'permission choice is not the observed permissionmanager UI node')
+        target = ROLES[capture['request']['role']]['bundle'] if capture['stage'] == 'public-operation' else CONTRACT['provider']
+        selected = protocol.permission_control(layout, plan.get('permission_bundle', 'com.ohos.permissionmanager'),
+            target, permission_label(target, apps, challenge['run_id']), allowed)
+        require(selected is not None and all(decision.get(k) == v for k, v in selected.items()),
+                'permission choice is not the actual intended app prompt in one window')
+        node = selected['selected_node']
         x, y, w, h = node['rect']; command = f'uitest uiInput click {x+w//2} {y+h//2}'
         require(any(row['label'] == 'permission-actual-node' and command in row['argv'][-1] for row in capture['commands']),
                 'actual user permission click command missing')
@@ -145,16 +160,14 @@ def validate_capture(path, challenge, archive):
         view = capture['view']
         layout = layout_bound(capture, view['layout'])
         size = pixels_bound(capture, view['screenshot'])
-        for name, node in view['nodes'].items():
+        actual_nodes = protocol.viewer_nodes(layout, view['expected_blank'])
+        require(view['nodes'] == actual_nodes, 'complete actual viewer nodes differ')
+        for name, actual in actual_nodes.items():
             empty = view['expected_blank'] and name != 'status'
-            actual = protocol.viewer_field(layout, name, empty=empty)
-            require(actual == node, 'actual viewer node differs')
-            if not empty:
+            if not empty and not (name == 'status' and not view['expected_blank']):
                 require(actual['rect'][0]+actual['rect'][2] <= size[0] and
                         actual['rect'][1]+actual['rect'][3] <= size[1], 'actual viewer pixel geometry differs')
-        if view['expected_blank']:
-            require(view['nodes']['status']['attributes'].get('text'), 'denied/invalid/deleted UI needs real visible status')
-        elif view['expected_persisted']:
+        if not view['expected_blank'] and view['expected_persisted']:
             provider_token = protocol.decode(raw_bound(capture, capture['provider_token_after']))
             require(provider_token['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
                     'persisted viewer data appeared without the actual required whole-calendar grant')
@@ -199,6 +212,29 @@ def verify(challenge_path, captures):
         offsets = [r['realtime_ns']-r['boottime_ns'] for r in rows]
         require(max(offsets)-min(offsets) <= 2_000_000_000, 'guest wall clock changed between captured stages')
     by_path = {str(path): value for path, value in zip(paths, values)}
+    for c in values:
+        for key in ('seed_capture', 'notification_capture', 'readback_capture', 'delete_capture'):
+            if key in c:
+                actual = checked(c[key]).resolve()
+                require(c[key] == record(actual) and str(actual) in by_path,
+                        'supply every unchanged original referenced capture for independent replay')
+        if 'seed_capture' in c:
+            original = by_path[c['seed_capture']['path']]
+            protocol.bind_seed(operation(original), original['request'], c['seed_event'], data['run_id'])
+        if c['stage'] == 'public-operation' and c['request']['action'] == 'cleanup':
+            require(c['request']['role'] == 'producer' and 'readback_capture' in c, 'cleanup needs its original independent preflight capture')
+            original = by_path[c['readback_capture']['path']]
+            require(original['request']['role'] == 'observer' and original['request']['action'] == 'read' and
+                    original['boot_id'] == c['boot_id'], 'current-boot independent cleanup preflight required')
+            rows = operation(original); readings = protocol.values(rows, 'events', 'Calendar.getEvents')
+            native = protocol.decode(raw_bound(original, original['token_after']))
+            require(not protocol.values(rows, 'error') and len(readings) == 1 and
+                    native['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
+                    'actual authorized complete cleanup readback missing')
+            expected = {'calendar_id': readings[0]['calendar_id'], 'events': readings[0]['events'], 'observed_ms': rows[-1]['timestamp_ms']}
+            require(c['request'].get('cleanup_guard') == expected and
+                    0 <= operation(c)[0]['timestamp_ms']-expected['observed_ms'] <= 120000,
+                    'cleanup guard was not derived freshly from the actual independent public API read')
     core = []
     coverage = {case: 'gap' for case in CONTRACT['mandatory_coverage']}
     coverage['normal-identities'] = 'observed'
@@ -233,6 +269,8 @@ def verify(challenge_path, captures):
             require(c['notification_capture']['path'] in by_path and c['seed_capture']['path'] in by_path,
                     'supply original create and notification captures alongside click capture')
             observed = by_path[c['notification_capture']['path']]
+            require(observed['request']['role'] == 'observer' and observed['request']['action'] == 'notifications' and
+                    observed['boot_id'] == c['boot_id'], 'actual current-boot independent notification observer required')
             rows = operation(observed); seed = c['seed_event']; want = protocol.notification(rows, seed)
             require(want == c['observed_want'] and want['uid'] == c['artifacts']['provider']['uid'], 'actual notification owner UID differs')
             raw = protocol.values(rows, 'notification', 'notificationManager.getAllActiveNotifications')
@@ -253,6 +291,9 @@ def verify(challenge_path, captures):
                             'denied notification case lacks actual user Deny')
                     observed_token = protocol.decode(raw_bound(c, c['provider_token_after']))
                     require(observed_token['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == -1, 'MainAbility token was not actually denied')
+                else:
+                    require(c['view']['expected_persisted'] and not c['view']['expected_blank'],
+                            'positive notification case requires actual persisted values')
                 coverage[key] = 'actual-click/UI-observed; launch-mode-unproven'
             if c['view']['expected_persisted']:
                 require(c['readback_capture']['path'] in by_path, 'supply original independent read capture')
@@ -260,6 +301,29 @@ def verify(challenge_path, captures):
                     'public_event_id': seed['id'], 'independent_ui_values_verified': True,
                     'pixels_captured_not_OCR_verified': True})
         if c['stage'] == 'direct-uri-boundary':
+            seed = c['seed_event']; event = seed['event']
+            uri = f"calendar://com.ohos.calendar?event_id={seed['id']}&start={event['startTime']}&end={event['endTime']}"
+            kind = c['uri_case']
+            if kind == 'bad-uri': uri = uri.replace('calendar://', 'https://')
+            elif kind == 'missing-id': uri = uri.replace('event_id=' + str(seed['id']) + '&', '')
+            elif kind == 'bad-id': uri = uri.replace('event_id=' + str(seed['id']), 'event_id=0')
+            require(c['uri'] == uri, 'derived URI differs from the original public create values')
+            launch = checked(c['launch']); raw_bound(c, c['launch'])
+            index = int(re.match(r'raw-([0-9]+)-', launch.name)[1])-1
+            command = shlex.join(['aa', 'start', '-b', CONTRACT['provider'], '-a', 'MainAbility', '-U', uri])
+            require(c['guest_commands'][index]['argv'][-1].startswith('(' + command + ');'), 'actual URI launch command differs')
+            if kind != 'valid':
+                require(c['view']['expected_blank'], 'invalid/deleted URI must produce a terminal blank view')
+            if kind == 'deleted-id':
+                deletion = by_path[c['delete_capture']['path']]
+                rows = operation(deletion)
+                require(deletion['request']['role'] == 'producer' and deletion['request']['action'] == 'delete' and
+                        not protocol.values(rows, 'error') and protocol.values(rows, 'event-deleted', 'Calendar.deleteEvent') ==
+                        [{'id': seed['id'], 'case_id': seed['case_id']}], 'deleted URI lacks the actual same owned event deletion')
+                token = protocol.decode(raw_bound(c, c['provider_token_after']))
+                require(token['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0 and
+                        c['view']['nodes']['status']['attributes']['text'] == '日程已删除或当前帐号不可见',
+                        'deleted URI result is not an authorized terminal missing event')
             key = {'valid': 'legacy-uri', 'bad-uri': 'bad-uri', 'missing-id': 'missing-id', 'bad-id': 'bad-uri', 'deleted-id': 'deleted-refresh'}[c['uri_case']]
             coverage[key] = 'direct-URI-observed-only'
     gaps = [key for key, value in coverage.items() if value != 'observed']

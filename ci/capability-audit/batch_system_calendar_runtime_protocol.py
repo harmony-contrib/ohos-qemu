@@ -134,6 +134,68 @@ def viewer_field(layout, name, *, empty=False):
     return {'attributes': matches[0], 'bundle': CONTRACT['provider']} if matches else None
 
 
+TERMINAL_STATUSES = {'请从日程提醒打开对应日程', '日程已删除或当前帐号不可见', '无法读取日程，请检查日历权限后重试'}
+
+
+def viewer_nodes(layout, blank):
+    from guest_ui import NodeNotReady, select_node
+    nodes = {name: viewer_field(layout, name, empty=blank) for name in ('title', 'description', 'start', 'end')}
+    if blank:
+        nodes['status'] = select_node(layout, CONTRACT['provider'], identifier='calendar-main-status')
+        if nodes['status']['attributes'].get('text') not in TERMINAL_STATUSES:
+            raise NodeNotReady('blank viewer is still pending or has no recognized actual terminal status')
+    else:
+        # Successful production reads intentionally render Text(''). It may
+        # have zero area or be absent; no synthetic visible node is invented.
+        try:
+            nodes['status'] = viewer_field(layout, 'status', empty=True)
+        except ValueError as error:
+            raise NodeNotReady('viewer has not reached the actual empty success status') from error
+    return nodes
+
+
+def permission_windows(layout, bundle):
+    from batch_apps_run_contact_picker_runtime import walk
+    result = []
+    for node, actual, ancestors in walk(layout):
+        if actual != bundle or node['attributes'].get('bundleName') != bundle or any(
+                p['attributes'].get('bundleName') == bundle for p in ancestors):
+            continue
+        if any(v['attributes'].get('visible') == 'true' for v, owner, _ in walk(node) if owner == bundle):
+            result.append(node)
+    return result
+
+
+def permission_control(layout, panel, target_bundle, target_label, texts):
+    """Fail closed on a foreign/ambiguous actual prompt; never click by Allow alone."""
+    from batch_apps_run_contact_picker_runtime import clickable_for_text
+    from guest_ui import NodeNotReady, select_node
+    windows = permission_windows(layout, panel)
+    if not windows:
+        return None
+    require(len(windows) == 1, 'foreign or ambiguous permission windows; preserve their state')
+    window = windows[0]
+    requester = select_node(window, panel, text=target_label)
+    matches = []
+    for text in texts:
+        try:
+            matches.append((text, clickable_for_text(window, panel, text)))
+        except NodeNotReady:
+            pass
+    require(len(matches) == 1, 'actual owned prompt decision is missing or ambiguous')
+    text, button = matches[0]
+    return {'requester_bundle': target_bundle, 'requester_label': target_label, 'requester_node': requester,
+            'window_attributes': window['attributes'], 'selected_text': text, 'selected_node': button}
+
+
+def bind_seed(rows, request, supplied, run):
+    require(request.get('role') == 'producer' and request.get('action') == 'create', 'original normal producer create required')
+    cases = created(rows, run)
+    require(isinstance(supplied, dict) and supplied.get('case_id') in cases and
+            cases[supplied['case_id']] == supplied, 'derived clicked event differs from original public create journal')
+    return cases[supplied['case_id']]
+
+
 def created(rows, run):
     require(not values(rows, 'error'), 'producer public API failed')
     accounts = values(rows, 'calendar-created', 'CalendarManager.createCalendar')

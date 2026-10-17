@@ -16,7 +16,9 @@ interface Request {
   schema_version: number; run_id: string; boot_id: string; archive_sha256: string;
   operation_id: string; role: string; action: string; case_id: string;
   lead_minutes?: number; spacing_minutes?: number;
+  cleanup_guard?: CleanupGuard;
 }
+interface CleanupGuard { calendar_id: number; events: calendarManager.Event[]; observed_ms: number; }
 interface Row {
   schema_version: number; run_id: string; boot_id: string; archive_sha256: string;
   operation_id: string; role: string; action: string; case_id: string;
@@ -24,7 +26,7 @@ interface Row {
   event: string; api: string; value_json: string; error_code: number; error_message: string;
 }
 interface State {
-  run_id: string; calendar_id: number; event_ids: number[];
+  run_id: string; calendar_id: number; event_ids: number[]; event_snapshots: string[];
 }
 interface CalendarAccountObservation { id: number; account: calendarManager.CalendarAccount; }
 interface DisplayTime { id: number; start: string; end: string; }
@@ -95,7 +97,9 @@ export class CalendarAudit {
   private state(): State {
     const state: State = JSON.parse(fs.readTextSync(this.statePath)) as State;
     if (state.run_id !== RUN || state.calendar_id <= 0 || state.event_ids.length > 4 ||
-      !state.event_ids.every((id: number) => Number.isSafeInteger(id) && id > 0)) { throw new Error('Invalid owned state'); }
+      !state.event_ids.every((id: number) => Number.isSafeInteger(id) && id > 0) ||
+      new Set(state.event_ids).size !== state.event_ids.length || state.event_snapshots.length !== state.event_ids.length ||
+      !state.event_snapshots.every((value: string) => value.length <= 65536)) { throw new Error('Invalid owned state'); }
     return state;
   }
 
@@ -137,7 +141,7 @@ export class CalendarAudit {
     this.api = 'CalendarManager.createCalendar';
     const calendar = await manager.createCalendar({ name: this.accountName, type: calendarManager.CalendarType.LOCAL,
       displayName: 'Calendar QA ' + RUN.substring(0, 8) });
-    const state: State = { run_id: RUN, calendar_id: calendar.id, event_ids: [] };
+    const state: State = { run_id: RUN, calendar_id: calendar.id, event_ids: [], event_snapshots: [] };
     this.saveState(state);
     this.record('calendar-created', this.api, JSON.stringify({ id: calendar.id, account: calendar.getAccount() }));
     this.api = 'Calendar.setConfig'; await calendar.setConfig({ enableReminder: true });
@@ -158,8 +162,15 @@ export class CalendarAudit {
       this.api = 'Calendar.addEvent';
       const id: number = await calendar.addEvent(event);
       if (!Number.isSafeInteger(id) || id <= 0) { throw new Error('Invalid public event ID'); }
-      state.event_ids.push(id); this.saveState(state);
-      this.record('event-created', this.api, JSON.stringify({ case_id: CASES[index], id: id, event: event }));
+      state.event_ids.push(id); state.event_snapshots.push(''); this.saveState(state);
+      this.api = 'Calendar.getEvents';
+      const stored = await calendar.getEvents(calendarManager.EventFilter.filterById([id]));
+      if (stored.length !== 1 || stored[0].id !== id || stored[0].title !== event.title ||
+        stored[0].description !== event.description || stored[0].startTime !== event.startTime ||
+        stored[0].endTime !== event.endTime) { throw new Error('Created event readback uncertain; preserve account and state'); }
+      state.event_snapshots[index] = JSON.stringify(stored[0]); this.saveState(state);
+      this.record('event-created', 'Calendar.addEvent', JSON.stringify({ case_id: CASES[index], id: id, event: event }));
+      this.record('event-snapshot', 'Calendar.getEvents', JSON.stringify({ case_id: CASES[index], id: id, event: stored[0] }));
     }
   }
 
@@ -183,15 +194,24 @@ export class CalendarAudit {
     const id: number = state.event_ids[index];
     const events = await calendar.getEvents(calendarManager.EventFilter.filterById([id]));
     if (events.length !== 1 || events[0].id !== id ||
-      !events[0].title?.startsWith('QCAL_' + RUN + '_')) { throw new Error('Refuse foreign or missing event'); }
+      !events[0].title?.startsWith('QCAL_' + RUN + '_') || !state.event_snapshots[index] ||
+      state.event_snapshots[index] !== JSON.stringify(events[0])) { throw new Error('Refuse foreign, externally changed or missing event'); }
     if (remove) {
       this.api = 'Calendar.deleteEvent'; await calendar.deleteEvent(id);
     } else {
       events[0].title = 'QCAL_' + RUN + '_' + this.request.case_id + '_updated';
       events[0].description = 'QNOTE_' + RUN + '_updated';
       this.api = 'Calendar.updateEvent'; await calendar.updateEvent(events[0]);
+      this.api = 'Calendar.getEvents';
+      const current = await calendar.getEvents(calendarManager.EventFilter.filterById([id]));
+      if (current.length !== 1 || JSON.stringify(current[0]) !== JSON.stringify(events[0])) {
+        throw new Error('Updated event readback uncertain; preserve account and state');
+      }
+      state.event_snapshots[index] = JSON.stringify(current[0]); this.saveState(state);
+      this.record('event-snapshot', 'Calendar.getEvents', JSON.stringify({ case_id: this.request.case_id, id: id, event: current[0] }));
     }
-    this.record(remove ? 'event-deleted' : 'event-updated', this.api, JSON.stringify({ id: id, case_id: this.request.case_id }));
+    this.record(remove ? 'event-deleted' : 'event-updated', remove ? 'Calendar.deleteEvent' : 'Calendar.updateEvent',
+      JSON.stringify({ id: id, case_id: this.request.case_id }));
   }
 
   private async notifications(): Promise<void> {
@@ -229,6 +249,25 @@ export class CalendarAudit {
       else if (action === 'delete') { await this.change(true); await this.read(); }
       else if (action === 'cleanup') {
         const calendar = await this.owned(); const state = this.state();
+        const guard = this.request.cleanup_guard;
+        if (guard === undefined || guard.calendar_id !== state.calendar_id || !Number.isSafeInteger(guard.observed_ms) ||
+          guard.observed_ms > Date.now() || Date.now() - guard.observed_ms > 120000) {
+          throw new Error('Fresh independent whole-calendar cleanup guard unavailable; preserve all data');
+        }
+        this.api = 'Calendar.getEvents'; const current = await calendar.getEvents();
+        this.record('cleanup-inspection', this.api, JSON.stringify({ calendar_id: state.calendar_id, events: current }));
+        if (current.length !== guard.events.length || new Set(current.map((event: calendarManager.Event): number => event.id ?? -1)).size !== current.length) {
+          throw new Error('Foreign or incompletely visible calendar content; preserve all data');
+        }
+        for (const event of current) {
+          const index: number = state.event_ids.indexOf(event.id ?? -1);
+          const whole = guard.events.filter((item: calendarManager.Event) => item.id === event.id);
+          if (index < 0 || !state.event_snapshots[index] || JSON.stringify(event) !== state.event_snapshots[index] ||
+            whole.length !== 1 || JSON.stringify(whole[0]) !== JSON.stringify(event) ||
+            !event.title?.startsWith('QCAL_' + RUN + '_')) {
+            throw new Error('Foreign or externally changed event; preserve account and state');
+          }
+        }
         this.api = 'CalendarManager.deleteCalendar';
         await calendarManager.getCalendarManager(this.context).deleteCalendar(calendar);
         this.record('calendar-deleted', this.api, JSON.stringify({ id: state.calendar_id, account_name: this.accountName }));
