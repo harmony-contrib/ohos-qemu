@@ -1,0 +1,42 @@
+{
+  "scope": "actual complete full-product contexts GN action passed; output binary exactly equals source-bound native preflight ONLY NOT complete build/package/runtime",
+  "source_commit": "ae858ffafe2e2e689ea3f74a2caa83bea207a82c",
+  "observed_utc": "2026-10-17T04:47:15.737852+00:00",
+  "actual_action_line": "[OHOS INFO] [NINJA] [732/8991] ACTION //base/security/selinux_adapter:build_contexts(//build/toolchain/ohos:ohos_clang_arm64)",
+  "outputs": {
+    "file_contexts.bin": {
+      "sha256": "865bdfa5188c088eeac9cc09473028d9f5c4c91d984abf30b2fcb6e209c1e3ed",
+      "bytes": 921110
+    },
+    "file_contexts": {
+      "sha256": "94004957646f7861cc5e761c2207988fb28ad1f986fec842ddf6428f55dafba5",
+      "bytes": 44212
+    },
+    "service_contexts": {
+      "sha256": "6900149c1c504023f2b24fef1cd820dac64d32318424ecf13b9702e7d8d1ee9a",
+      "bytes": 29244
+    },
+    "hdf_service_contexts": {
+      "sha256": "48aecb12ace63b646ae522b9986f7fccaba87673ae71e04a20362dd6cd3de955",
+      "bytes": 6782
+    },
+    "parameter_contexts": {
+      "sha256": "b1a0e33723e22131634e310252ad254c52745026ef509893b768139f6aa756b4",
+      "bytes": 11384
+    },
+    "sehap_contexts": {
+      "sha256": "db069310e2477008cf2090a2c7e90fe91891da9b618727fe6181f972f3d95658",
+      "bytes": 2434
+    },
+    "policy.31": {
+      "sha256": "82c5a5bdc519076743319462bc818bb1c93caffaf9f53ade3f30677f9393c41e",
+      "bytes": 538279
+    }
+  },
+  "preflight": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-04/checks.json",
+    "sha256": "491889f78d536715f73aeb0fcef5e75d8f4fd7ef755ee9ad312ed46be24197aa"
+  },
+  "file_contexts_binary_matches_preflight": true,
+  "first_artifact_behavior_gate_passed": false
+}

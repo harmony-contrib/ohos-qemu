@@ -1,5 +1,5 @@
 {
-  "phase": "representative04_inputs_ready_for_freeze",
+  "phase": "representative04_failed_fully_preserved_batch_repair",
   "implementation_head": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
   "baseline_head": "2c6a5c2",
   "checkpoint": "ddfabb4",
@@ -34,10 +34,9 @@
     "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
   },
   "next_required": [
-    "freeze candidate04 with all known context/source-install repairs",
-    "ONE representative04 prepare/readiness/full build/package",
-    "fresh product helpers plus dedicated caller SDK builds",
-    "new package runtime including limited AudioHaptic/Calendar boundaries; exact Apps races remain unvalidated; no remaining-five matrix"
+    "batch all known fixes",
+    "verify both actual OpenVPN helper GN targets before representative05 full package",
+    "new representative archive runtime gate; remaining five not started"
   ],
   "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
   "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
@@ -61,7 +60,7 @@
   "first_artifact_behavior_gate_passed": false,
   "remaining_five_started": false,
   "frozen_candidate_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
-  "observed_at": "2026-10-17T04:03:54.438091+00:00",
+  "observed_at": "2026-10-17T05:01:43.691179+00:00",
   "source_upgrade": {
     "exit_code": 0,
     "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Settings-lifetime-source-upgrade-01/evidence.json"
@@ -134,7 +133,7 @@
     "kernel_source_and_image_unchanged": true,
     "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-02/evidence.json"
   },
-  "current_stage": "03 completed failure sealed; all known contexts repairs committed; actual native whole-contexts preflight passed; candidate04 freeze next",
+  "current_stage": "batch repair native GN dependency and Calendar QA SDK type; no representative running",
   "representative02_result": {
     "source_commit": "97f58dba86c3ae20f3867048dbbd685b9b463f55",
     "exit_code": 1,
@@ -188,5 +187,77 @@
       "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-Calendar-runtime-QA-01/source-preparation.json",
       "sha256": "61a755232c055815d8787fedc211908c1832a707f90b6def1ff66d5d474f6b28"
     }
+  },
+  "candidate04_frozen_commit": "ae858ffafe2e2e689ea3f74a2caa83bea207a82c",
+  "candidate04_source_upgrade_exit_code": 0,
+  "candidate04_source_preparation": {
+    "exit_code": 0,
+    "seconds": 298.8017987080384,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-full-source-prepare-04/evidence.json"
+  },
+  "candidate04_prebuild_readiness": {
+    "exit_code": 0,
+    "seconds": 20.478673166944645,
+    "entrypoints": 5,
+    "actual_whole_contexts_preflight": 0,
+    "frozen_context_inputs_matched": 3,
+    "kernel_source_and_image_unchanged": true,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-04/evidence.json"
+  },
+  "representative04_result": {
+    "scope": "completed representative04 full attempt; no archive or guest acceptance",
+    "source_commit": "ae858ffafe2e2e689ea3f74a2caa83bea207a82c",
+    "exit_code": 1,
+    "seconds": 2892.251862999983,
+    "package": null,
+    "primary_failures": [
+      {
+        "target": "qemu_openvpn_service/supervisor.o",
+        "cause": "actual generated inetwork_vpn_service.h includes want.h; helper target lacks direct ability_base:want external dependency"
+      }
+    ],
+    "completed_native_actions": {
+      "SELinux": "actual full GN contexts generation passed; file_contexts.bin equals verified native preflight",
+      "OpenVPN": "native source output copied into product objects; helpers compile blocked",
+      "kernel": "current full source and artifact verification0; Image and12modules preserved"
+    },
+    "raw": {
+      "build_receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/evidence.json",
+        "sha256": "5ed613c693d9964ee117652c3214caf847a2a2ef606ce8149e881992d7d29ff9"
+      },
+      "launcher": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/launcher.log",
+        "sha256": "2ea1bd1a067bbaa2ce46337a6ac3284463a24518d3c90cd9684d1f738f7699b9"
+      },
+      "product_build": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/preservation-01/product-build.log",
+        "sha256": "c65787c2c40336242e8f0aafbdab018c23054a98b0f9cae4c59698a92e8a7877"
+      },
+      "product_error": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/preservation-01/product-error.log",
+        "sha256": "c82c91c1a269163ce7993d4fd75a3d999d3665a0705289dc8a90ef3b34d6d865"
+      },
+      "resource_progress": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/resource-progress.jsonl",
+        "sha256": "3553280ff9afb4067d892f9fdee3db5c9cc2b5a794dce9e9d4ed0ef917f9c042"
+      },
+      "preservation_receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/preservation-01/receipt.json",
+        "sha256": "d01d52bdbf74339ec05afd434bf6b587f13e3ad0002e89ec48a6097ba86c73ee"
+      },
+      "preservation_launcher": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/preservation-01/launcher.json",
+        "sha256": "d99e0541ffe56df477175e09d6fbdc28cabb61998602cfcc844d362ff50f720c"
+      },
+      "final_container_log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-04/preservation-01/container.log",
+        "sha256": "967ebdd44b678af54bf8168d2110468f63650c5346cd149140017dcba28254df"
+      }
+    },
+    "preserved_file_checks": 21,
+    "preservation_live_log_excluded_and_parent_final_hash_verified": true,
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_started": false
   }
 }

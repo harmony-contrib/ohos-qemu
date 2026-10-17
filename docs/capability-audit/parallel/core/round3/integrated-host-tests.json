@@ -1,7 +1,7 @@
 {
-  "scope": "unaffected passing results from full host suite plus final affected-source and failure rechecks; not a second full 2542-test run and not package/guest acceptance",
-  "status": "pass_previous_unchanged_scope_plus_98_context_affected_and_16_QA_host_checks",
-  "tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+  "scope": "prior unchanged host scope plus10 source installer checks and11 Calendar QA host checks; actual three-role Calendar SDK compile pass; VPN actual native GN target check pending",
+  "status": "pass_previous_unchanged_scope_plus_source_install_and_Calendar_QA_type_checks",
+  "tested_commit": "45db11a0408788059b6ce4e7f0671b68386bcddb",
   "exit_code": 0,
   "full_suite": {
     "report": "integrated-host-tests-01.json",
@@ -51,7 +51,7 @@
   },
   "ownership_audit_sha256": "5d01180d1c7a8032596ca51c817add4d873cec5dfb4efab8d8a02cbfbbc93198",
   "first_artifact_behavior_gate_passed": false,
-  "previous_tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+  "previous_tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
   "previous_consolidated_evidence": {
     "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-selinux-contexts.json",
     "sha256": "6a24a2cf0f99fc62cca272fb7a33027f1c59ac318392b824bb50fbf5029f96dd"
@@ -72,7 +72,7 @@
     "ci/capability-audit/test_openvpn_source_install.py": "8d07a96ff3cfb68f9ed88f435094f4d1672643d93c4a8631be2757c34eee23fb"
   },
   "full_2542_test_suite_rerun": false,
-  "note": "Initial2542 failures and original logs remain preserved. Reuse unchanged prior host scope and failure rechecks, plus current98 affected tests (97pass/1macOS skip; unchanged SCM_RIGHTS had passed Linux) and16 new dedicated QA host checks. Complete native contexts command passed against actual product policy.31. No second full suite or new-package/runtime pass is claimed.",
+  "note": "No second full2542 suite, no completed new package or guest behavior claimed. Previous unchanged source/test evidence remains preserved.",
   "additional_empty_output_check": {
     "scope": "current product publication host regression only; actual empty-directory/foreign-content/rename-race/previous-evidence tests plus all affected OpenVPN checks",
     "tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
@@ -180,5 +180,26 @@
       }
     },
     "SDK_native_helpers_and_guest_executed": false
+  },
+  "additional_Want_Calendar_check": {
+    "source_install_checks": {
+      "tests": 10,
+      "exit_code": 0,
+      "seconds": 1.712
+    },
+    "calendar_host_checks": {
+      "tests": 11,
+      "exit_code": 0,
+      "receipt": "../../system/round21-runtime-tools/sdk105-map-fix.json"
+    },
+    "calendar_actual_SDK": {
+      "exit_code": 0,
+      "roles": 3,
+      "receipt": "calendar-runtime-sdk.json"
+    },
+    "source_files": {
+      "ci/capability-audit/fixtures/batch_system/calendar_runtime/CalendarAudit.ets": "94da8a1e009c140f92d0c140629ac10437277d54f29e6dd9e842b8df1181a21e",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/BUILD.gn": "98cc90c24e17dcc93ebc19018cbd85214fc0c0b31c3e1896b0ac412eb81605d4"
+    }
   }
 }

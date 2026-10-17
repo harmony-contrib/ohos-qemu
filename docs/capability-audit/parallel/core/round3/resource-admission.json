@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-17T04:03:54.440980+00:00",
+  "observed_at": "2026-10-17T05:01:43.691179+00:00",
   "max_concurrent_subagents": 3,
   "five_distinct_workstreams": [
     "apps",
@@ -12,7 +12,7 @@
   "source_out_writer": "root only",
   "read_lease": null,
   "build_limits": {
-    "max_heavy_jobs": 1,
+    "max_heavy_jobs": 2,
     "cpus": 4,
     "memory_gib": 10,
     "compiler_jobs": 2,
@@ -109,5 +109,67 @@
     "exit_code": 1,
     "package": null,
     "evidence": "first-build-03-findings.json"
+  },
+  "previous_admission_max_heavy_jobs": 1,
+  "admission_policy": {
+    "max_product_source_out_jobs": 1,
+    "max_isolated_auxiliary_SDK_jobs": 1,
+    "max_total_resource_jobs": 2,
+    "product_limits_unchanged": true,
+    "auxiliary_nice": 10,
+    "auxiliary_worker_cpu_discovery": 2,
+    "auxiliary_node_heap_mib": 2048,
+    "auxiliary_memory_reservation_gib": 4,
+    "host_observation": {
+      "free_percent": 71,
+      "logical_cpus": 12,
+      "memory_gib": 32,
+      "loadavg": [
+        5.32,
+        17.21,
+        17.56
+      ],
+      "product_current_memory_gib": 1.611
+    },
+    "reason": "measured headroom permits one disjoint low-priority host SDK job; no source/out access, private projects/caches, no second QEMU artifact"
+  },
+  "auxiliary_sdk_job": {
+    "owner": "root",
+    "kind": "three-role Calendar runtime caller HAPs",
+    "nice": 10,
+    "worker_cpu_discovery": 2,
+    "node_heap_mib": 2048,
+    "memory_reservation_gib": 4,
+    "representative_source_out_access": false,
+    "launcher": "r54-Calendar-runtime-QA-01/sdk-launcher.json",
+    "latest_host_memory_free_percent": 69,
+    "session_id": 83065,
+    "status": "complete_failed_all_three_roles",
+    "exit_code": 1,
+    "seconds": 6.314994208049029,
+    "failure": "producer SDK compile; collect remaining roles before QA source repair",
+    "remaining_diagnostic_session": 5846,
+    "remaining_roles_exit_codes": {
+      "observer": 1,
+      "denied": 1
+    }
+  },
+  "completed_auxiliary_SDK_jobs": [
+    {
+      "owner": "root",
+      "kind": "two ordinary AudioHaptic runtime caller HAPs",
+      "launcher": "r54-AudioHaptic-runtime-QA-01/sdk-launcher.json",
+      "source_out_read_or_write": false,
+      "CPU_and_memory_discovery_capped": true,
+      "session_id": 35441,
+      "status": "complete",
+      "exit_code": 0,
+      "seconds": 16.091846582945436
+    }
+  ],
+  "representative04_finished": {
+    "exit_code": 1,
+    "package": null,
+    "evidence": "first-build-04-findings.json"
   }
 }

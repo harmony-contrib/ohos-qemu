@@ -1,0 +1,74 @@
+{
+  "scope": "completed failed attempt raw evidence and copied kernel/product artifacts integrity; exception identifies incomplete live-log entry in original capture-time receipts",
+  "observed_utc": "2026-10-17T04:41:14.635499+00:00",
+  "original_receipts_modified": false,
+  "all_sealed_raw_references_unchanged": true,
+  "all_kernel_and_product_artifacts_unchanged": true,
+  "live_log_entries_are_not_final_log_checksums": true,
+  "results": [
+    {
+      "attempt": "01",
+      "raw_refs_checked": 5,
+      "raw_ref_mismatches": [],
+      "preservation_receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/preservation-01/receipt.json",
+        "sha256": "8e021ac52702bd3834198b4fa626ff546f24e64cfa3a41c01193e23776fbcc42"
+      },
+      "preserved_files_matching": 19,
+      "capture_time_mismatches": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/preservation-01/container.log",
+          "recorded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_bytes": 0,
+          "final_sha256": "c0e7ef47dcab9306f7895a989fc3bf167129aff2e62fa8fba7066e8dfc458258",
+          "final_bytes": 44,
+          "capture_time_prefix_matches": true,
+          "final_suffix_text": "{\"kernel_verify_exit_code\": 0, \"files\": 20}\n"
+        }
+      ]
+    },
+    {
+      "attempt": "02",
+      "raw_refs_checked": 9,
+      "raw_ref_mismatches": [],
+      "preservation_receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-02/preservation-01/receipt.json",
+        "sha256": "eefd6ed3e139dd179d7c0ef761f146ed6761221ccac9b991bff538e1bacd3be0"
+      },
+      "preserved_files_matching": 21,
+      "capture_time_mismatches": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-02/preservation-01/container.log",
+          "recorded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_bytes": 0,
+          "final_sha256": "ab5ec59454b2d326b67b39f31480bd1ee2a25ff958a6d9a8670fc0e42ed2c2e1",
+          "final_bytes": 44,
+          "capture_time_prefix_matches": true,
+          "final_suffix_text": "{\"kernel_verify_exit_code\": 0, \"files\": 22}\n"
+        }
+      ]
+    },
+    {
+      "attempt": "03",
+      "raw_refs_checked": 12,
+      "raw_ref_mismatches": [],
+      "preservation_receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/receipt.json",
+        "sha256": "22a31103bc00322cf70cc428510d3ed019c879094c06863e39ddb604a0cba251"
+      },
+      "preserved_files_matching": 21,
+      "capture_time_mismatches": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/container.log",
+          "recorded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "recorded_bytes": 0,
+          "final_sha256": "ab5ec59454b2d326b67b39f31480bd1ee2a25ff958a6d9a8670fc0e42ed2c2e1",
+          "final_bytes": 44,
+          "capture_time_prefix_matches": true,
+          "final_suffix_text": "{\"kernel_verify_exit_code\": 0, \"files\": 22}\n"
+        }
+      ]
+    }
+  ],
+  "first_artifact_behavior_gate_passed": false
+}

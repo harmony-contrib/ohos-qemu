@@ -1,0 +1,39 @@
+{
+  "scope": "actual SDK source inventory/complete unsigned HAP/ordinary role permission verification ONLY NOT sign/BMS/guest",
+  "exit_code": 0,
+  "projects": {
+    "normal": {
+      "sdk_evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-AudioHaptic-runtime-QA-01/sdk-build/evidence.json",
+        "sha256": "c495602667fbca923adec825b1d56ab42c69eff4769b2ff5f6b763a106a7661b"
+      },
+      "sdk_project": "normal",
+      "batch_exit_code": 0,
+      "project_commands_verified": 2,
+      "source_files_verified": 18,
+      "unsigned_hap": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-AudioHaptic-runtime-QA-01/normal/entry/build/default/outputs/default/entry-default-unsigned.hap",
+        "sha256": "cc4be451c193f6de51eca5cef44fb8a901038a9ecc30cf9c05e393d2ba97ba3e"
+      }
+    },
+    "denied": {
+      "sdk_evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-AudioHaptic-runtime-QA-01/sdk-build/evidence.json",
+        "sha256": "c495602667fbca923adec825b1d56ab42c69eff4769b2ff5f6b763a106a7661b"
+      },
+      "sdk_project": "denied",
+      "batch_exit_code": 0,
+      "project_commands_verified": 2,
+      "source_files_verified": 18,
+      "unsigned_hap": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-AudioHaptic-runtime-QA-01/denied/entry/build/default/outputs/default/entry-default-unsigned.hap",
+        "sha256": "57ba4fab37f53400e5fb6e99063d190d9ab51df1e27556f5e35db94ac1fcc2a8"
+      }
+    }
+  },
+  "SDK_evidence": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-AudioHaptic-runtime-QA-01/sdk-build/evidence.json",
+    "sha256": "c495602667fbca923adec825b1d56ab42c69eff4769b2ff5f6b763a106a7661b"
+  },
+  "first_artifact_behavior_gate_passed": false
+}
