@@ -1,0 +1,46 @@
+{
+  "scope": "ONE normal complete ARM64 phone build/images/package attempt ONLY NOT guest acceptance",
+  "source_commit": "b4e715f601143fb2b412e22141e1d2ea6b4ffbcc",
+  "candidate": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-integrated-candidate-06/candidate.json",
+  "argv": [
+    "bash",
+    "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-integrated-candidate-06/frozen/scripts/run_2in1_full_build_docker.sh"
+  ],
+  "environment": {
+    "QEMU_KNOWLEDGE_ICS": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-integrated-candidate-06/frozen/patches/resources/knowledge/cn-2026/holidays.ics",
+    "LC_ALL": "C",
+    "LC_CTYPE": "C",
+    "LANG": "C",
+    "CACHE_ROOT": "/Volumes/PSSD/qemu",
+    "DOCKER_IMAGE": "ohos-qemu-build-env:7.0-release-gn-qemu-user",
+    "DEVICE_TYPE": "phone",
+    "PRODUCTS": "arm64_virt",
+    "PACKAGE_ROOT": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-06/packages",
+    "LOG_DIR": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-06/logs",
+    "BUILD_JOBS": "2",
+    "KERNEL_BUILD_JOBS": "2",
+    "DOCKER_BUILD_CPUS": "4",
+    "DOCKER_BUILD_MEMORY": "10g",
+    "SKIP_REPO_SYNC": "1",
+    "SKIP_PREBUILTS": "1",
+    "SKIP_GIT_LFS": "1",
+    "SKIP_APT": "1",
+    "PREPARE_ONLY": "0",
+    "BUILD_ONLY_LOAD": "0",
+    "SOURCE_PREPARE_ONLY": "0",
+    "OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE": "0",
+    "JSVM_ENGINE_ARTIFACTS": "/Volumes/PSSD/qemu/artifacts/m144-7.0-dependencies/549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d/arm64/jsvm",
+    "QEMU_VULKAN_ARTIFACTS": "/Volumes/PSSD/qemu/artifacts/m144-7.0-dependencies/549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d/arm64/swiftshader",
+    "QEMU_AVC_ARTIFACTS": "/Volumes/PSSD/qemu/artifacts/m144-7.0-dependencies/549ee0f06b5cf4f24845e667041b47f5cfa7d21b33018dae236808888137b90d/arm64/avc",
+    "QEMU_ARKWEB_CORE_ARTIFACTS": "/Volumes/PSSD/qemu/artifacts/arkweb-m144-7.0/090fd4d5e058f50b6a6574a6e58a10f4dc5defb876533be47e02bde4975da577"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "exit_code": 1,
+  "seconds": 13214.181331207976,
+  "launcher_log_sha256": "0df83464beb062b11f62285508469a8786ab513456674478b05403bb5d9f6dd3",
+  "external_receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-06/evidence.json",
+    "sha256": "6aa3e5bb71fe78d4f57714bcab7abf1e76702f41cb8c3a7c6837ef214b23e058"
+  }
+}
