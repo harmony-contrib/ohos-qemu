@@ -20,6 +20,7 @@ import time
 import zipfile
 
 from PIL import Image
+from batch_apps_contact_picker_coordinator import verify_signed_payload
 from batch_media_wallpaper_runtime import Runtime, record, sha, write_json, SETTINGS, SEED, PHOTOS, CASES
 from batch_media_verify_wallpaper_runtime import checked, check_challenge, seed_rows, thumbnail, photos_provider
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
@@ -149,10 +150,8 @@ def validate_hap(value, role, challenge, udid, output):
     if (not set(profile['acls'].get('allowed-acls',[])) <= permitted or
             not set(profile['permissions'].get('restricted-permissions',[])) <= permitted):
         raise ValueError('caller profile has unrelated ACL or restricted permission')
-    with zipfile.ZipFile(unsigned) as plain, zipfile.ZipFile(signed) as final:
-        if (len(plain.namelist()) != len(set(plain.namelist())) or len(final.namelist()) != len(set(final.namelist())) or
-                plain.read('module.json') != final.read('module.json') or plain.read('ets/modules.abc') != final.read('ets/modules.abc')):
-            raise ValueError('signed HAP changed compiled module/ABC or has duplicate entries')
+    verify_signed_payload(unsigned, signed)
+    with zipfile.ZipFile(signed) as final:
         raw = final.read('module.json'); module = json.loads(raw)
     declared=module['module'].get('requestPermissions',[])
     # Real SDK module output may retain reason/usedScene/resource metadata.

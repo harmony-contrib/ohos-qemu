@@ -351,8 +351,9 @@ def verify_role_bindings(capture, challenge, env, *, command, output):
             capture['signer']['dist'], checked(capture['signer']['jar']), output / role, command,
             apl=apl, system_app=apl != 'normal')
         unsigned = checked(item['sdk']['unsigned_hap'])
-        require(signatures.hap_contents(unsigned)[1] == signatures.hap_contents(checked(item['signed_hap']))[1] and
-                sha(checked(item['installed_hap'])) == item['signed_hap']['sha256'], 'signing or actual installation changed compiled HAP payload')
+        signatures.verify_signed_payload(unsigned, checked(item['signed_hap']))
+        require(sha(checked(item['installed_hap'])) == item['signed_hap']['sha256'],
+                'actual installation changed the signed HAP payload')
         bms_raw = checked(item['bms']).read_text()
         if bms_raw.startswith(bundle+':\n'):
             bms_raw = bms_raw[len(bundle)+2:]

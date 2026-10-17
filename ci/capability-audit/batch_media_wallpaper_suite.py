@@ -367,7 +367,7 @@ def verify_evidence(evidence_path, archive_path, boot_path):
             if role=='seed' and json.loads(checked(runtime['import_observation']).read_text()).get('app_label')!=actual_hap['app_label']:
                 raise ValueError('Photos consent caller label differs from the actual SDK-bound label')
             proof=value[role+'_signing'];checked(proof['signature_verification']);checked(proof['decoded_profile'])
-            if signatures.hap_contents(checked(item['unsigned_hap']))[1]!=signatures.hap_contents(signed)[1]:raise ValueError('actual signed compiled payload changed')
+            signatures.verify_signed_payload(checked(item['unsigned_hap']), signed)
             actual=signatures.verify_signed_hap_artifacts(signed,bundle,permissions,env['udid'],dist,jar,Path(temporary)/role,
                 actual_command,apl='normal'if role=='seed'else'system_basic',system_app=role=='query')
             if actual['verified_profile']!=proof['verified_profile']:raise ValueError('actual cryptographic profile replay differs')
@@ -474,8 +474,7 @@ def run(args):
                     '--unsigned',unsigned,'--output',signed,'--udid',env['udid'],'--role','query'],'sign-query-exact-role')
                 proof=signer_tools.verify_signed_hap_artifacts(signed,QUERY,[READ],env['udid'],dist,jar,
                     args.output/'query-signing-verification',command,apl='system_basic',system_app=True)
-                if signer_tools.hap_contents(unsigned)[1]!=signer_tools.hap_contents(signed)[1]:
-                    raise ValueError('signing changed real query compiled payload')
+                signer_tools.verify_signed_payload(unsigned, signed)
             report[role+'_signing']=proof
             adapter=args.output/(role+'-coordinator-signing.json')
             write_json(adapter,{'status':'pass','scope':'actual_signature_profile_and_codesign_NOT_guest',

@@ -54,7 +54,7 @@ class ValidationBindingTests(unittest.TestCase):
 
     def test_dedicated_QA_updates_require_exact_receipt_and_never_admit_production(self):
         from validation_input_binding import DEDICATED_QA_TEST_ONLY
-        self.assertEqual(len(DEDICATED_QA_TEST_ONLY), 16)
+        self.assertEqual(len(DEDICATED_QA_TEST_ONLY), 25)
         self.assertTrue(all(name.startswith('ci/capability-audit/') for name in DEDICATED_QA_TEST_ONLY))
         current = dict(self.current)
         current.update({name: '9'*64 for name in DEDICATED_QA_TEST_ONLY})

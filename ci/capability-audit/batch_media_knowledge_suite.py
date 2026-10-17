@@ -326,8 +326,7 @@ class Collector:
                 '--unsigned', unsigned, '--signer-dist', dist, '--jar', jar, '--udid', self.env['udid'], '--output', signed], 'sign-' + role)
             proof = signatures.verify_signed_hap_artifacts(signed, bundle, permissions, self.env['udid'], dist, jar,
                 self.args.output / (role + '-signature-verification'), self.command, apl=apl, system_app=True)
-        require(signatures.hap_contents(unsigned)[1] == signatures.hap_contents(checked(proof['signed_hap']))[1],
-                'signing changed actual compiled HAP members')
+        signatures.verify_signed_payload(unsigned, checked(proof['signed_hap']))
         self.installed.append(bundle)  # Include an install whose transport reply might be lost.
         reply = self.command([self.args.hdc, '-t', self.guest.target, 'install', checked(proof['signed_hap'])], 'install-' + role)
         require(re.search(r'\bsuccess', reply, re.I) and not re.search(r'\bfail', reply, re.I), 'actual role install failed')

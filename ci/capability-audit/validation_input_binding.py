@@ -20,6 +20,15 @@ TEST_ONLY = frozenset('ci/capability-audit/' + name for name in (
 # Explicit receipt binding remains mandatory for every changed input.
 DEDICATED_QA_TEST_ONLY = frozenset((
     'ci/capability-audit/batch_apps_contact_picker_coordinator.py',
+    'ci/capability-audit/batch_media_wallpaper_suite.py',
+    'ci/capability-audit/batch_media_wallpaper_coordinator.py',
+    'ci/capability-audit/batch_media_verify_wallpaper_runtime.py',
+    'ci/capability-audit/batch_media_knowledge_suite.py',
+    'ci/capability-audit/batch_media_knowledge_runtime.py',
+    'ci/capability-audit/batch_system_live_inputs_suite.py',
+    'ci/capability-audit/fixtures/batch_media/wallpaper_runtime/oracle_fixture.py',
+    'ci/capability-audit/test_batch_media_wallpaper_coordinator.py',
+    'ci/capability-audit/test_batch_hap_signed_payload.py',
     'ci/capability-audit/batch_media_audio_haptic_build_callers.py',
     'ci/capability-audit/batch_media_audio_haptic_project.py',
     'ci/capability-audit/batch_media_audio_haptic_reviewfix_checks.py',

@@ -411,7 +411,7 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     verify_capture_project(project, spec, sdk_result, commands, source_rows)
     source = verify_input_source(report, spec, capture)
     api = apps_api(); unsigned = checked(spec['caller']['unsigned_hap']); signed = checked(report['signed']['signed_hap'])
-    require(api.hap_contents(unsigned)[1] == api.hap_contents(signed)[1], 'signed caller differs from actual SDK HAP payload')
+    api.verify_signed_payload(unsigned, signed)
     with tempfile.TemporaryDirectory(prefix='live-parent-reverify-') as scratch:
         scratch = Path(scratch); crypto_rows = []; command = Commands(scratch / 'commands', crypto_rows, env['target'], report['hdc'])
         api.verify_signed_hap_artifacts(signed, BUNDLE, PERMISSIONS, env['udid'], spec['signer_dist'], spec['signer_jar'], scratch / 'signature', command)
