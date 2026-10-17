@@ -27,7 +27,7 @@
   ],
   "rules": {
     "max_concurrent_subagents": 3,
-    "max_heavy_jobs": 1,
+    "max_heavy_jobs": 2,
     "build_jobs": 2,
     "shared_source_out_readonly": true,
     "heavy_resources_require_parent_lease": true,
@@ -42,14 +42,16 @@
     "no_agent_full_package_or_matrix": true,
     "closure_only_parent_fresh_package_full_runtime": true,
     "source_out_write_lease": "root only, agents cease source/out reads during complete preparation and full image build",
-    "representative_products": "arm64_virt ONLY until complete freshly packaged runtime gate PASS"
+    "representative_products": "arm64_virt ONLY until complete freshly packaged runtime gate PASS",
+    "max_product_source_out_jobs": 1,
+    "max_isolated_low_priority_aux_SDK_jobs": 1
   },
   "agents": {
     "apps": {
       "groups": [
-        "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
-        "\u65e0\u969c\u788d",
-        "\u80fd\u529b\u58f0\u660e\u4e0e\u8fd0\u884c\u65f6\u63d2\u4ef6"
+        "系统应用与入口",
+        "无障碍",
+        "能力声明与运行时插件"
       ],
       "prefixes": [
         "patches/common/applications/standard/",
@@ -64,7 +66,7 @@
       "requirements": [
         {
           "id": "arkts_export:@ohos.accessibility.config:startBlinking",
-          "group": "\u65e0\u969c\u788d",
+          "group": "无障碍",
           "requirement": {
             "name": "startBlinking",
             "syscaps": [
@@ -80,12 +82,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "R50 \u65b0\u5305 ScreenBlink \u5355\u9879\u901a\u8fc7\uff0c\u5f85\u540e\u7eed\u5168\u91cf\u8d26\u672c\u786e\u8ba4",
-          "next_required": "\u8865\u9f50\u771f\u5b9e\u8f93\u5165/\u50cf\u7d20/\u53ef\u8bbf\u95ee\u8282\u70b9\u5b8c\u6574\u56de\u5f52\u53ca\u8c03\u7528\u8005\u9000\u51fa"
+          "preparation_status": "R50 新包 ScreenBlink 单项通过，待后续全量账本确认",
+          "next_required": "补齐真实输入/像素/可访问节点完整回归及调用者退出"
         },
         {
           "id": "arkts_export:@ohos.accessibility.config:stopBlinking",
-          "group": "\u65e0\u969c\u788d",
+          "group": "无障碍",
           "requirement": {
             "name": "stopBlinking",
             "syscaps": [
@@ -101,12 +103,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "R50 \u65b0\u5305 ScreenBlink \u5355\u9879\u901a\u8fc7\uff0c\u5f85\u540e\u7eed\u5168\u91cf\u8d26\u672c\u786e\u8ba4",
-          "next_required": "\u8865\u9f50\u771f\u5b9e\u8f93\u5165/\u50cf\u7d20/\u53ef\u8bbf\u95ee\u8282\u70b9\u5b8c\u6574\u56de\u5f52\u53ca\u8c03\u7528\u8005\u9000\u51fa"
+          "preparation_status": "R50 新包 ScreenBlink 单项通过，待后续全量账本确认",
+          "next_required": "补齐真实输入/像素/可访问节点完整回归及调用者退出"
         },
         {
           "id": "behavior:phone-published-capabilities-not-declared",
-          "group": "\u80fd\u529b\u58f0\u660e\u4e0e\u8fd0\u884c\u65f6\u63d2\u4ef6",
+          "group": "能力声明与运行时插件",
           "requirement": {
             "id": "phone-published-capabilities-not-declared",
             "status": "missing_capability",
@@ -122,12 +124,12 @@
             },
             "evidence": "listed by the latest published phone minimum profile but absent from the image declaration; canIUse returns false. Some services or partial backends are packaged, so this is a contract/discoverability failure even where a subset may respond"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u4fee\u590d\u58f0\u660e\u4e0e\u5b9e\u9645\u5b9e\u73b0\uff0c\u5b8c\u6574\u9a8c\u8bc1\u6240\u6709\u5bf9\u5e94\u63a5\u53e3\u548c\u63d2\u4ef6\u8c03\u7528\uff1b\u4fdd\u7559\u7528\u6237\u8981\u6c42\u80fd\u529b"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "修复声明与实际实现，完整验证所有对应接口和插件调用；保留用户要求能力"
         },
         {
           "id": "behavior:phone-avinputcast-not-declared",
-          "group": "\u80fd\u529b\u58f0\u660e\u4e0e\u8fd0\u884c\u65f6\u63d2\u4ef6",
+          "group": "能力声明与运行时插件",
           "requirement": {
             "id": "phone-avinputcast-not-declared",
             "status": "missing_capability",
@@ -138,12 +140,12 @@
             },
             "evidence": "required by the latest SDK default profile but absent from the phone image; canIUse returns false"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u4fee\u590d\u58f0\u660e\u4e0e\u5b9e\u9645\u5b9e\u73b0\uff0c\u5b8c\u6574\u9a8c\u8bc1\u6240\u6709\u5bf9\u5e94\u63a5\u53e3\u548c\u63d2\u4ef6\u8c03\u7528\uff1b\u4fdd\u7559\u7528\u6237\u8981\u6c42\u80fd\u529b"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "修复声明与实际实现，完整验证所有对应接口和插件调用；保留用户要求能力"
         },
         {
           "id": "behavior:accessibility-qemu-input-e2e",
-          "group": "\u65e0\u969c\u788d",
+          "group": "无障碍",
           "requirement": {
             "id": "accessibility-qemu-input-e2e",
             "status": "partially_broken",
@@ -155,12 +157,12 @@
             },
             "evidence": "with --a11y, ARM64 passes ArkUI CustomNode, XComponent, action/update, multi-instance release and QMP multitouch end-to-end checks; however the API 26 startBlinking and stopBlinking runtime exports are absent"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u771f\u5b9e\u8f93\u5165/\u50cf\u7d20/\u53ef\u8bbf\u95ee\u8282\u70b9\u5b8c\u6574\u56de\u5f52\u53ca\u8c03\u7528\u8005\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐真实输入/像素/可访问节点完整回归及调用者退出"
         },
         {
           "id": "behavior:api26-runtime-export-mismatches-phone",
-          "group": "\u80fd\u529b\u58f0\u660e\u4e0e\u8fd0\u884c\u65f6\u63d2\u4ef6",
+          "group": "能力声明与运行时插件",
           "requirement": {
             "id": "api26-runtime-export-mismatches-phone",
             "status": "partially_broken",
@@ -210,12 +212,12 @@
             },
             "evidence": "OHOS 7 API 26 declares runtime values or functions that are absent from the packaged phone ArkTS module; see arkts-export-surface-latest.json"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u4fee\u590d\u58f0\u660e\u4e0e\u5b9e\u9645\u5b9e\u73b0\uff0c\u5b8c\u6574\u9a8c\u8bc1\u6240\u6709\u5bf9\u5e94\u63a5\u53e3\u548c\u63d2\u4ef6\u8c03\u7528\uff1b\u4fdd\u7559\u7528\u6237\u8981\u6c42\u80fd\u529b"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "修复声明与实际实现，完整验证所有对应接口和插件调用；保留用户要求能力"
         },
         {
           "id": "behavior:intelligent-scene-notification-query-fails",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "intelligent-scene-notification-query-fails",
             "status": "confirmed_broken",
@@ -226,12 +228,12 @@
             },
             "evidence": "API 26 system HAP calls isDoNotDisturbEnabled/isNotifyAllowedInDoNotDisturb and receives internal error 35200001"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:shortkey-empty-launch-config",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "shortkey-empty-launch-config",
             "status": "confirmed_broken",
@@ -242,12 +244,12 @@
             },
             "evidence": "ability_launch_config.json has empty Shortkeys/Sequences and setKeyDownDuration for the documented businessId returns 401"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:certificate-dialog-device-result",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "certificate-dialog-device-result",
             "status": "partially_broken",
@@ -258,12 +260,12 @@
             },
             "evidence": "supportsCACertDialog returns false on phone"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:ability-share-picker-system-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "ability-share-picker-system-provider-missing",
             "status": "confirmed_broken",
@@ -274,12 +276,12 @@
             },
             "evidence": "startAbilityByType('share') initially resolves, then reports callback error 16000050 because com.ohos.sharepickerdialog is listed in system configuration but absent from the image and BMS"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:ability-send-data-action-has-no-enabled-handler",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "ability-send-data-action-has-no-enabled-handler",
             "status": "partially_broken",
@@ -290,12 +292,12 @@
             },
             "evidence": "the standard implicit Want action ohos.want.action.sendData has no enabled BMS handler; the only phone handler is BluetoothServiceAbility in the unregistered com.ohos.bluetooth payload"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:avcast-media-controller-provider-mismatch",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "avcast-media-controller-provider-mismatch",
             "status": "confirmed_broken",
@@ -307,12 +309,12 @@
             },
             "evidence": "AVCastPickerHelper.select resolves success without starting a picker; no media-controller provider exists in the phone image"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:media-control-volume-provider-activation",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "media-control-volume-provider-activation",
             "status": "partially_broken",
@@ -323,12 +325,12 @@
             },
             "evidence": "AVVolumePanel source depends on com.hmos.mediacontroller, which is absent from the phone image"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:distributed-hardware-ui-preinstall-path-mismatch",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "distributed-hardware-ui-preinstall-path-mismatch",
             "status": "partially_broken",
@@ -339,12 +341,12 @@
             },
             "evidence": "DHardware_UI.hap exists under /system/app/DHardware_UI and installs manually, while install_list.json points to absent /system/app/com.ohos.dhardwareui; BMS does not register it"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:photo-provider-not-activated-2in1",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "photo-provider-not-activated-2in1",
             "status": "partially_broken",
@@ -355,12 +357,12 @@
             },
             "evidence": "PhotoViewPicker starts successfully, but OHOS 7 RecentPhotoComponent, getRecentPhotoInfo and getPhotoPickerComponentDefaultAlbumName target three entrypoints absent from the enabled phone Photos HAP. Media-library FA-card and cloud-setting integration also targets absent com.huawei.hmos.photos/FACardServiceAbility and datashare:///com.huawei.hmos.photos.provider.userPropertySettings"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:enterprise-provisioning-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "enterprise-provisioning-provider-missing",
             "status": "partially_broken",
@@ -371,12 +373,12 @@
             },
             "evidence": "basic EDM service queries work, but production EDM code targets com.ohos.adminprovisioning and the provider payload is absent"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:wallpaper-ui-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "wallpaper-ui-provider-missing",
             "status": "partially_broken",
@@ -387,12 +389,12 @@
             },
             "evidence": "wallpaper color query works, but the configured com.ohos.wallpaper UI provider is absent; with ThemeService absent, WallpaperService also targets com.ohos.launcher/WallpaperExtAbility, which the enabled phone Launcher HAP does not declare"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:accessibility-screen-reader-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "accessibility-screen-reader-provider-missing",
             "status": "partially_broken",
@@ -404,12 +406,12 @@
             },
             "evidence": "accessibility core/input probes pass, but the framework hardcodes com.ohos.screenreader/AccessibilityExtAbility while another service checks com.ohos.hmos.screenreader; neither provider is packaged"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:accessibility-caption-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "accessibility-caption-provider-missing",
             "status": "partially_broken",
@@ -420,12 +422,12 @@
             },
             "evidence": "CaptionsManager state queries work, but enabling the caption assistant targets absent com.ohos.vassistant/AiCaptionServiceExtAbility"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:vpn-dialog-provider-prefix-mismatch",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "vpn-dialog-provider-prefix-mismatch",
             "status": "confirmed_broken",
@@ -436,12 +438,12 @@
             },
             "evidence": "NetworkVpnService hardcodes com.huawei.hmos.vpndialog/VpnServiceExtAbility, while the enabled image provider is com.ohos.vpndialog/VpnServiceExtAbility; VPN authorization cannot connect to the packaged dialog"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:network-policy-settings-providers-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "network-policy-settings-providers-missing",
             "status": "partially_broken",
@@ -452,12 +454,12 @@
             },
             "evidence": "showAppNetPolicySettings targets absent com.huawei.hmos.communicationsetting/NetAccessPolicySettingUIExtension; network-limit notifications separately target absent com.huawei.hmos.settings/MainAbility although com.ohos.settings is installed"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:telephony-apn-settings-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "telephony-apn-settings-provider-missing",
             "status": "confirmed_broken",
@@ -468,12 +470,12 @@
             },
             "evidence": "OHOS 7 API 26 showSystemApnSettings hardcodes com.huawei.hmos.callsetting/GeneralCallSettingDialogAbility, but the phone image has no matching provider"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:wifi-system-ui-providers-not-activated",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "wifi-system-ui-providers-not-activated",
             "status": "confirmed_broken",
@@ -486,12 +488,12 @@
             },
             "evidence": "in addition to the missing Wi-Fi hardware backend, WifiServiceAbility, HotSpotServiceAbility and captive-portal EntryAbility exist only in unlisted HAP payloads that BMS did not register"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:camera-picker-entrypoint-missing-phone",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "camera-picker-entrypoint-missing-phone",
             "status": "confirmed_broken",
@@ -502,12 +504,12 @@
             },
             "evidence": "cameraPicker.pick defaults to the non-TV UIAbility branch and hardcodes com.ohos.camera/PickerAbility; the enabled phone Camera HAP declares MainAbility and ExtensionPickerAbility but not PickerAbility"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:notification-extension-settings-entrypoint-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "notification-extension-settings-entrypoint-missing",
             "status": "partially_broken",
@@ -518,12 +520,12 @@
             },
             "evidence": "public openSubscriptionSettings APIs hardcode com.ohos.sceneboard/NotificationAccessGrantUIExtensionAbility; the phone image has no SceneBoard provider, so this specific settings flow cannot create its modal UI extension"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:accessibility-settings-entrypoints-unavailable",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "accessibility-settings-entrypoints-unavailable",
             "status": "partially_broken",
@@ -535,12 +537,12 @@
             },
             "evidence": "Accessibility services connect to com.ohos.settings/SettingsExtService and IgnoreRepeatClickExtService, but the enabled phone Settings HAP declares neither entrypoint"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:notification-manager-settings-provider-missing-phone",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "notification-manager-settings-provider-missing-phone",
             "status": "partially_broken",
@@ -551,12 +553,12 @@
             },
             "evidence": "public openNotificationSettings APIs hardcode com.ohos.sceneboard/NotificationManangerUIExtensionAbility; the phone image has no SceneBoard package, while its enabled SystemUI notification-management ability is a different bundle and entrypoint"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:avsession-desktop-lyrics-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "avsession-desktop-lyrics-provider-missing",
             "status": "partially_broken",
@@ -567,12 +569,12 @@
             },
             "evidence": "AVSession reports desktop lyrics supported on phone and enableDesktopLyric starts com.ohos.mediacontroller/DesktopLyricAbility, but no matching provider is packaged"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:location-privacy-ui-providers-unavailable",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "location-privacy-ui-providers-unavailable",
             "status": "partially_broken",
@@ -583,12 +585,12 @@
             },
             "evidence": "location privacy flows require com.ohos.locationdialog/LocationPrivacyExtAbility and com.huawei.hmos.location/LocationPrivacyDetailAbility; the first is an unregistered payload and the second is absent"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:telephony-number-identity-provider-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "telephony-number-identity-provider-missing",
             "status": "partially_broken",
@@ -599,12 +601,12 @@
             },
             "evidence": "CallManager number identity and incoming-call classification have no usable provider: number-mark refresh connects absent com.numberidentity/NumberIdentityServiceExtAbility; the numberlocationability and numbermarkability DataShare authorities are unresolved; spam detection targets absent com.spamshield/SpamShieldServiceExtAbility; anti-fraud cloud results target absent com.hmos.hsdr/HSDRService"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:settings-navigation-provider-mismatch",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "settings-navigation-provider-mismatch",
             "status": "partially_broken",
@@ -615,12 +617,12 @@
             },
             "evidence": "OHOS 7 @ohos.settings navigation APIs hardcode com.huawei.hmos.settings: openNetworkManagerSettings targets OpenNetworkUIExtensionAbility, input-method routes target ExternalCommonUIExtensionAbility, and the remaining open*SettingsPage methods target com.huawei.hmos.settings.MainAbility; only com.ohos.settings is packaged, and its phone HAP also lacks both UIExtension entrypoints. openAppDetailSettingsPage uses implicit action.settings.app.info; that handler is enabled only on phone"
           },
-          "preparation_status": "R50 \u65b0\u5305\u5b8c\u6574 Settings \u5355\u9879\u901a\u8fc7\uff0c\u5f85\u540e\u7eed\u5168\u91cf\u8d26\u672c\u786e\u8ba4",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "R50 新包完整 Settings 单项通过，待后续全量账本确认",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:contacts-picker-entrypoint-missing-phone",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "contacts-picker-entrypoint-missing-phone",
             "status": "partially_broken",
@@ -631,12 +633,12 @@
             },
             "evidence": "contact.selectContact/selectContacts hardcode com.ohos.contacts/ContactUiExtentionAbility; the enabled phone Contacts HAP declares only MainAbility and Subscriber, so CRUD can work while every documented picker overload lacks its target entrypoint"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:arkui-expanded-text-menu-providers-missing",
-          "group": "\u7cfb\u7edf\u5e94\u7528\u4e0e\u5165\u53e3",
+          "group": "系统应用与入口",
           "requirement": {
             "id": "arkui-expanded-text-menu-providers-missing",
             "status": "partially_broken",
@@ -647,12 +649,12 @@
             },
             "evidence": "OHOS 7 documents ArkUI built-in TextMenuItemId search, share, URL, email, phone, address and date/time actions, but the phone image lacks /system/lib64/expanded_menu/libexpanded_menu.z.so. The implementation therefore cannot obtain the provider mapping; the image also has no enabled ohos.want.action.search or appdetail handler, no sendData handler, and lacks the mapped Huawei Browser, Calendar, Maps and SuperDevice bundles"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u5b9e\u9645\u5df2\u542f\u7528\u63d0\u4f9b\u8005\uff0c\u8865\u9f50\u8c03\u7528\u3001\u754c\u9762\u3001\u62d2\u7edd/\u53d6\u6d88/\u9000\u51fa\u548c\u670d\u52a1\u91cd\u542f\u8bc1\u660e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
         },
         {
           "id": "behavior:arkui-text-service-runtime-plugins-missing",
-          "group": "\u80fd\u529b\u58f0\u660e\u4e0e\u8fd0\u884c\u65f6\u63d2\u4ef6",
+          "group": "能力声明与运行时插件",
           "requirement": {
             "id": "arkui-text-service-runtime-plugins-missing",
             "status": "partially_broken",
@@ -663,8 +665,8 @@
             },
             "evidence": "ArkUI public TextMenu SHARE/TRANSLATE and Text/RichEditor entity recognition load libsystemshare_innerkits.z.so, libai_text_translation_innerapi.z.so and libai_text_analyzer_innerapi.z.so. All three are absent; built-in fallbacks return -1, report unsupported, or produce no share action."
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u4fee\u590d\u58f0\u660e\u4e0e\u5b9e\u9645\u5b9e\u73b0\uff0c\u5b8c\u6574\u9a8c\u8bc1\u6240\u6709\u5bf9\u5e94\u63a5\u53e3\u548c\u63d2\u4ef6\u8c03\u7528\uff1b\u4fdd\u7559\u7528\u6237\u8981\u6c42\u80fd\u529b"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "修复声明与实际实现，完整验证所有对应接口和插件调用；保留用户要求能力"
         }
       ],
       "count": 34,
@@ -682,7 +684,7 @@
     "network": {
       "groups": [
         "VPN",
-        "\u7f51\u7edc\u4e0e\u5916\u8bbe"
+        "网络与外设"
       ],
       "prefixes": [
         "ci/capability-audit/batch_network_",
@@ -709,7 +711,7 @@
       "requirements": [
         {
           "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
-          "group": "\u7f51\u7edc\u4e0e\u5916\u8bbe",
+          "group": "网络与外设",
           "requirement": {
             "name": "startPairOutOfBand",
             "syscaps": [
@@ -724,8 +726,8 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u63a5\u901a\u771f\u5b9e\u865a\u62df\u5916\u8bbe\u548c peer\uff1b\u9a8c\u8bc1\u72b6\u6001\u3001\u6570\u636e\u3001\u6743\u9650\u3001\u8bbe\u5907\u53d8\u5316\u4e0e\u6e05\u7406"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "接通真实虚拟外设和 peer；验证状态、数据、权限、设备变化与清理"
         },
         {
           "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
@@ -744,8 +746,8 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u56db\u8865\u4e01\u4e09\u67b6\u6784 TU\uff1b\u65b0\u589e\u771f\u5b9e ARM64 \u539f\u751f\u76d1\u7763\u7a0b\u5e8f/TUN \u6865\u5df2\u7f16\u8bd1\u94fe\u63a5\uff0c\u5b9e\u9645 host \u8fdb\u7a0b\u9000\u51fa\u4e0e formatter \u68c0\u67e5\u901a\u8fc7\uff1b\u7cfb\u7edf\u670d\u52a1\u63a5\u7ebf\u548c\u5b8c\u6574\u65b0\u5305\u7f51\u7edc\u884c\u4e3a\u4ecd\u672a\u5b8c\u6210",
-          "next_required": "\u5b8c\u6210 GN/init/netsys \u63a5\u7ebf\u3001\u914d\u7f6e\u6267\u884c\u7b56\u7565\u3001DNS/IPv6/\u8def\u7531\u4e0e\u591a\u6240\u6709\u8005\u751f\u547d\u5468\u671f\uff1b\u5728\u65b0\u5305\u5bf9\u771f\u5b9e TLS peer \u9a8c\u8bc1\u8fde\u63a5\u3001\u6570\u636e\u3001\u5931\u8d25\u3001\u9000\u51fa\u53ca\u89d2\u8272/\u8d26\u53f7\u8fb9\u754c"
+          "preparation_status": "四补丁三架构 TU；新增真实 ARM64 原生监督程序/TUN 桥已编译链接，实际 host 进程退出与 formatter 检查通过；系统服务接线和完整新包网络行为仍未完成",
+          "next_required": "完成 GN/init/netsys 接线、配置执行策略、DNS/IPv6/路由与多所有者生命周期；在新包对真实 TLS peer 验证连接、数据、失败、退出及角色/账号边界"
         },
         {
           "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
@@ -764,12 +766,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u56db\u8865\u4e01\u4e09\u67b6\u6784 TU\uff1b\u65b0\u589e\u771f\u5b9e ARM64 \u539f\u751f\u76d1\u7763\u7a0b\u5e8f/TUN \u6865\u5df2\u7f16\u8bd1\u94fe\u63a5\uff0c\u5b9e\u9645 host \u8fdb\u7a0b\u9000\u51fa\u4e0e formatter \u68c0\u67e5\u901a\u8fc7\uff1b\u7cfb\u7edf\u670d\u52a1\u63a5\u7ebf\u548c\u5b8c\u6574\u65b0\u5305\u7f51\u7edc\u884c\u4e3a\u4ecd\u672a\u5b8c\u6210",
-          "next_required": "\u5b8c\u6210 GN/init/netsys \u63a5\u7ebf\u3001\u914d\u7f6e\u6267\u884c\u7b56\u7565\u3001DNS/IPv6/\u8def\u7531\u4e0e\u591a\u6240\u6709\u8005\u751f\u547d\u5468\u671f\uff1b\u5728\u65b0\u5305\u5bf9\u771f\u5b9e TLS peer \u9a8c\u8bc1\u8fde\u63a5\u3001\u6570\u636e\u3001\u5931\u8d25\u3001\u9000\u51fa\u53ca\u89d2\u8272/\u8d26\u53f7\u8fb9\u754c"
+          "preparation_status": "四补丁三架构 TU；新增真实 ARM64 原生监督程序/TUN 桥已编译链接，实际 host 进程退出与 formatter 检查通过；系统服务接线和完整新包网络行为仍未完成",
+          "next_required": "完成 GN/init/netsys 接线、配置执行策略、DNS/IPv6/路由与多所有者生命周期；在新包对真实 TLS peer 验证连接、数据、失败、退出及角色/账号边界"
         },
         {
           "id": "behavior:netmanager-ebpf-backend",
-          "group": "\u7f51\u7edc\u4e0e\u5916\u8bbe",
+          "group": "网络与外设",
           "requirement": {
             "id": "netmanager-ebpf-backend",
             "status": "partially_broken",
@@ -780,12 +782,12 @@
             },
             "evidence": "BPF syscall is ENOSYS; UID statistics and access-policy backend unavailable"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u63a5\u901a\u771f\u5b9e\u865a\u62df\u5916\u8bbe\u548c peer\uff1b\u9a8c\u8bc1\u72b6\u6001\u3001\u6570\u636e\u3001\u6743\u9650\u3001\u8bbe\u5907\u53d8\u5316\u4e0e\u6e05\u7406"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "接通真实虚拟外设和 peer；验证状态、数据、权限、设备变化与清理"
         },
         {
           "id": "behavior:bluetooth-state-transition-false-success",
-          "group": "\u7f51\u7edc\u4e0e\u5916\u8bbe",
+          "group": "网络与外设",
           "requirement": {
             "id": "bluetooth-state-transition-false-success",
             "status": "confirmed_broken",
@@ -796,12 +798,12 @@
             },
             "evidence": "enable-bt reports success but the adapter remains STATE_TURN_OFF; the vendor loader cannot open libbt_vendor.z.so, so state rolls back and disable-bt reports ERR_BT_DISABLE_FAILED"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u63a5\u901a\u771f\u5b9e\u865a\u62df\u5916\u8bbe\u548c peer\uff1b\u9a8c\u8bc1\u72b6\u6001\u3001\u6570\u636e\u3001\u6743\u9650\u3001\u8bbe\u5907\u53d8\u5316\u4e0e\u6e05\u7406"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "接通真实虚拟外设和 peer；验证状态、数据、权限、设备变化与清理"
         },
         {
           "id": "behavior:wifi-sta-backend-unavailable",
-          "group": "\u7f51\u7edc\u4e0e\u5916\u8bbe",
+          "group": "网络与外设",
           "requirement": {
             "id": "wifi-sta-backend-unavailable",
             "status": "confirmed_broken",
@@ -812,12 +814,12 @@
             },
             "evidence": "API reports enable success, but only virtio eth0 exists; HDF cannot find AP6275S and cfg80211/mac80211/iwlwifi/iwlmvm modules are absent, so STA, AP and P2P have no radio backend"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u63a5\u901a\u771f\u5b9e\u865a\u62df\u5916\u8bbe\u548c peer\uff1b\u9a8c\u8bc1\u72b6\u6001\u3001\u6570\u636e\u3001\u6743\u9650\u3001\u8bbe\u5907\u53d8\u5316\u4e0e\u6e05\u7406"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "接通真实虚拟外设和 peer；验证状态、数据、权限、设备变化与清理"
         },
         {
           "id": "behavior:usb-manager-device-query",
-          "group": "\u7f51\u7edc\u4e0e\u5916\u8bbe",
+          "group": "网络与外设",
           "requirement": {
             "id": "usb-manager-device-query",
             "status": "partially_broken",
@@ -828,12 +830,12 @@
             },
             "evidence": "USB service loads and enumeration returns only empty/root-hub state, but /sys/class/udc is empty and configfs UDC binding fails; gadget/device-mode and real host-device operations are unavailable. The media-library MTP path also starts com.ohos.medialibrary.medialibrarydata/MtpService, which the enabled HAP does not declare"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u63a5\u901a\u771f\u5b9e\u865a\u62df\u5916\u8bbe\u548c peer\uff1b\u9a8c\u8bc1\u72b6\u6001\u3001\u6570\u636e\u3001\u6743\u9650\u3001\u8bbe\u5907\u53d8\u5316\u4e0e\u6e05\u7406"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "接通真实虚拟外设和 peer；验证状态、数据、权限、设备变化与清理"
         },
         {
           "id": "behavior:peer-device-user-nat-isolation",
-          "group": "\u7f51\u7edc\u4e0e\u5916\u8bbe",
+          "group": "网络与外设",
           "requirement": {
             "id": "peer-device-user-nat-isolation",
             "status": "partially_broken",
@@ -853,8 +855,8 @@
             },
             "evidence": "the default launcher uses QEMU user-mode NAT, which isolates emulator guests from peer discovery; distributed/SoftBus/cast behavior requires explicit bridge networking and a second device"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u63a5\u901a\u771f\u5b9e\u865a\u62df\u5916\u8bbe\u548c peer\uff1b\u9a8c\u8bc1\u72b6\u6001\u3001\u6570\u636e\u3001\u6743\u9650\u3001\u8bbe\u5907\u53d8\u5316\u4e0e\u6e05\u7406"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "接通真实虚拟外设和 peer；验证状态、数据、权限、设备变化与清理"
         },
         {
           "id": "behavior:vpn-runtime-export-gaps",
@@ -869,8 +871,8 @@
             },
             "evidence": "legacy VpnConnection exports load, but all declared system VPN configuration APIs and always-on VPN APIs from API 11/12/20 are absent"
           },
-          "preparation_status": "\u56db\u8865\u4e01\u4e09\u67b6\u6784 TU\uff1b\u65b0\u589e\u771f\u5b9e ARM64 \u539f\u751f\u76d1\u7763\u7a0b\u5e8f/TUN \u6865\u5df2\u7f16\u8bd1\u94fe\u63a5\uff0c\u5b9e\u9645 host \u8fdb\u7a0b\u9000\u51fa\u4e0e formatter \u68c0\u67e5\u901a\u8fc7\uff1b\u7cfb\u7edf\u670d\u52a1\u63a5\u7ebf\u548c\u5b8c\u6574\u65b0\u5305\u7f51\u7edc\u884c\u4e3a\u4ecd\u672a\u5b8c\u6210",
-          "next_required": "\u5b8c\u6210 GN/init/netsys \u63a5\u7ebf\u3001\u914d\u7f6e\u6267\u884c\u7b56\u7565\u3001DNS/IPv6/\u8def\u7531\u4e0e\u591a\u6240\u6709\u8005\u751f\u547d\u5468\u671f\uff1b\u5728\u65b0\u5305\u5bf9\u771f\u5b9e TLS peer \u9a8c\u8bc1\u8fde\u63a5\u3001\u6570\u636e\u3001\u5931\u8d25\u3001\u9000\u51fa\u53ca\u89d2\u8272/\u8d26\u53f7\u8fb9\u754c"
+          "preparation_status": "四补丁三架构 TU；新增真实 ARM64 原生监督程序/TUN 桥已编译链接，实际 host 进程退出与 formatter 检查通过；系统服务接线和完整新包网络行为仍未完成",
+          "next_required": "完成 GN/init/netsys 接线、配置执行策略、DNS/IPv6/路由与多所有者生命周期；在新包对真实 TLS peer 验证连接、数据、失败、退出及角色/账号边界"
         }
       ],
       "count": 9,
@@ -915,8 +917,8 @@
     },
     "location": {
       "groups": [
-        "\u5b9a\u4f4d",
-        "\u7535\u8bdd\u4e0e\u901a\u4fe1"
+        "定位",
+        "电话与通信"
       ],
       "prefixes": [
         "patches/common/base/location/",
@@ -929,7 +931,7 @@
       "requirements": [
         {
           "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "addFusionFence",
             "syscaps": [
@@ -944,12 +946,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "getCurrentDistrict",
             "syscaps": [
@@ -964,12 +966,12 @@
             "system_api": false,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "getLocationIconStatus",
             "syscaps": [
@@ -985,12 +987,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "getPostProcessingTrack",
             "syscaps": [
@@ -1005,12 +1007,12 @@
             "system_api": false,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "isFusionFenceSupported",
             "syscaps": [
@@ -1025,12 +1027,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "removeFusionFence",
             "syscaps": [
@@ -1045,12 +1047,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "startBluetoothSearch",
             "syscaps": [
@@ -1065,12 +1067,12 @@
             "system_api": false,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "name": "stopBluetoothSearch",
             "syscaps": [
@@ -1085,12 +1087,12 @@
             "system_api": false,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "offReceiveRttMessage",
             "syscaps": [
@@ -1106,12 +1108,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "offRttErrCause",
             "syscaps": [
@@ -1127,12 +1129,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "offRttModifyInd",
             "syscaps": [
@@ -1148,12 +1150,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "onReceiveRttMessage",
             "syscaps": [
@@ -1169,12 +1171,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "onRttErrCause",
             "syscaps": [
@@ -1190,12 +1192,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "onRttModifyInd",
             "syscaps": [
@@ -1211,12 +1213,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "sendRttMessage",
             "syscaps": [
@@ -1232,12 +1234,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:setRttCapability",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "setRttCapability",
             "syscaps": [
@@ -1253,12 +1255,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:startRtt",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "startRtt",
             "syscaps": [
@@ -1274,12 +1276,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.call:stopRtt",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "stopRtt",
             "syscaps": [
@@ -1295,12 +1297,12 @@
             "system_api": true,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "offCommunicationStateChange",
             "syscaps": [
@@ -1316,12 +1318,12 @@
             "system_api": false,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "name": "onCommunicationStateChange",
             "syscaps": [
@@ -1337,12 +1339,12 @@
             "system_api": false,
             "kind": "function"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         },
         {
           "id": "behavior:location-provider-backends-missing",
-          "group": "\u5b9a\u4f4d",
+          "group": "定位",
           "requirement": {
             "id": "location-provider-backends-missing",
             "status": "partially_broken",
@@ -1356,12 +1358,12 @@
             },
             "evidence": "framework state APIs respond, but the image has no GNSS/location provider; an enabled-location run produced zero callbacks and the current disabled run returns 3301100"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u6216\u63a5\u901a\u5b9e\u9645\u5b9a\u4f4d\u540e\u7aef\u548c\u5168\u90e8\u65b0\u589e\u63a5\u53e3\uff1b\u7528\u771f\u5b9e\u8f68\u8ff9\u3001\u56f4\u680f\u3001\u884c\u653f\u533a\u4e0e\u6743\u9650\u8fb9\u754c\u9a8c\u8bc1"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
         },
         {
           "id": "behavior:telephony-no-modem-or-sim",
-          "group": "\u7535\u8bdd\u4e0e\u901a\u4fe1",
+          "group": "电话与通信",
           "requirement": {
             "id": "telephony-no-modem-or-sim",
             "status": "partially_broken",
@@ -1376,8 +1378,8 @@
             },
             "evidence": "telephony framework and state queries load, but QEMU exposes no modem/SIM/radio transport; boot and service state report no SIM/network, so calls, SMS and cellular data cannot complete"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u8865\u9f50\u5b9e\u9645\u8c03\u5236\u89e3\u8c03\u5668/SIM/RTT \u901a\u8def\uff1b\u9a8c\u8bc1\u4f1a\u8bdd\u4e8b\u4ef6\u3001\u53c2\u6570\u3001\u6ce8\u9500\u9759\u9ed8\u4e0e\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
         }
       ],
       "count": 22,
@@ -1387,8 +1389,8 @@
     },
     "media": {
       "groups": [
-        "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
-        "\u5a92\u4f53\u77e5\u8bc6\u6570\u636e"
+        "音视频输入与处理",
+        "媒体知识数据"
       ],
       "prefixes": [
         "patches/common/foundation/multimedia/",
@@ -1405,7 +1407,7 @@
       "requirements": [
         {
           "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
-          "group": "\u5a92\u4f53\u77e5\u8bc6\u6570\u636e",
+          "group": "媒体知识数据",
           "requirement": {
             "name": "KnowledgeContent",
             "syscaps": [
@@ -1421,12 +1423,12 @@
             "system_api": true,
             "kind": "class"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u5b9e\u73b0\u5b9e\u9645\u77e5\u8bc6\u5185\u5bb9\u5b58\u53d6\u548c\u7d22\u5f15\uff0c\u9a8c\u8bc1\u5e26\u6570\u636e\u5f80\u8fd4\u3001\u6743\u9650\u548c\u5220\u9664\uff0c\u4e0d\u80fd\u7528\u7a7a\u6570\u7ec4\u4ee3\u66ff"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现实际知识内容存取和索引，验证带数据往返、权限和删除，不能用空数组代替"
         },
         {
           "id": "behavior:audio-capture-and-dependent-pipelines",
-          "group": "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
+          "group": "音视频输入与处理",
           "requirement": {
             "id": "audio-capture-and-dependent-pipelines",
             "status": "confirmed_broken",
@@ -1446,12 +1448,12 @@
             },
             "evidence": "the policy layer advertises MIC/SPEAKER, but /dev/snd has only timer, QEMU launches no audio device and AudioSeekCpuDaiDevice has no controller; playback/capture dependent pipelines have no PCM data path"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u7528\u5b9e\u9645\u8f93\u5165\u3001\u91c7\u96c6/\u5f55\u5236/\u7f16\u89e3\u7801\u548c\u8f93\u51fa\u6570\u636e\u9a8c\u8bc1\u7ba1\u7ebf\uff0c\u5305\u542b\u4e2d\u65ad\u3001\u8fb9\u754c\u53ca\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         },
         {
           "id": "behavior:media-recording-input-backends-missing",
-          "group": "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
+          "group": "音视频输入与处理",
           "requirement": {
             "id": "media-recording-input-backends-missing",
             "status": "confirmed_broken",
@@ -1463,12 +1465,12 @@
             },
             "evidence": "recording requires camera and/or audio input; the image has neither a camera host/video node nor an ALSA PCM capture node"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u7528\u5b9e\u9645\u8f93\u5165\u3001\u91c7\u96c6/\u5f55\u5236/\u7f16\u89e3\u7801\u548c\u8f93\u51fa\u6570\u636e\u9a8c\u8bc1\u7ba1\u7ebf\uff0c\u5305\u542b\u4e2d\u65ad\u3001\u8fb9\u754c\u53ca\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         },
         {
           "id": "behavior:audio-interrupt-haptic-renderer-dependency",
-          "group": "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
+          "group": "音视频输入与处理",
           "requirement": {
             "id": "audio-interrupt-haptic-renderer-dependency",
             "status": "partially_broken",
@@ -1480,12 +1482,12 @@
             },
             "evidence": "manager objects are available, but the native audio renderer Start returns 2 with no callback data, so interrupt/playback-dependent behavior cannot complete"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u7528\u5b9e\u9645\u8f93\u5165\u3001\u91c7\u96c6/\u5f55\u5236/\u7f16\u89e3\u7801\u548c\u8f93\u51fa\u6570\u636e\u9a8c\u8bc1\u7ba1\u7ebf\uff0c\u5305\u542b\u4e2d\u65ad\u3001\u8fb9\u754c\u53ca\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         },
         {
           "id": "behavior:media-codec-base-partial",
-          "group": "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
+          "group": "音视频输入与处理",
           "requirement": {
             "id": "media-codec-base-partial",
             "status": "partially_broken",
@@ -1496,12 +1498,12 @@
             },
             "evidence": "codec enumeration and audio/video decode work, but both advertised video encoder instances fail creation"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u7528\u5b9e\u9645\u8f93\u5165\u3001\u91c7\u96c6/\u5f55\u5236/\u7f16\u89e3\u7801\u548c\u8f93\u51fa\u6570\u636e\u9a8c\u8bc1\u7ba1\u7ebf\uff0c\u5305\u542b\u4e2d\u65ad\u3001\u8fb9\u754c\u53ca\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         },
         {
           "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
-          "group": "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
+          "group": "音视频输入与处理",
           "requirement": {
             "id": "audio-vivid-metadata-runtime-plugin-missing",
             "status": "partially_broken",
@@ -1512,12 +1514,12 @@
             },
             "evidence": "OHOS 7 API 26 exposes OH_AudioVividMetaBuilder_* through libnative_media_core.so, but /system/lib64/libAudioVividMetaBuilder.z.so is absent; Create and CreateEmptyBuilder therefore return AV_ERR_UNSUPPORT."
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u7528\u5b9e\u9645\u8f93\u5165\u3001\u91c7\u96c6/\u5f55\u5236/\u7f16\u89e3\u7801\u548c\u8f93\u51fa\u6570\u636e\u9a8c\u8bc1\u7ba1\u7ebf\uff0c\u5305\u542b\u4e2d\u65ad\u3001\u8fb9\u754c\u53ca\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         },
         {
           "id": "behavior:video-encoder-dependent-media-pipelines",
-          "group": "\u97f3\u89c6\u9891\u8f93\u5165\u4e0e\u5904\u7406",
+          "group": "音视频输入与处理",
           "requirement": {
             "id": "video-encoder-dependent-media-pipelines",
             "status": "partially_broken",
@@ -1529,8 +1531,8 @@
             },
             "evidence": "object creation succeeds, but video recording/transcoding depends on the advertised AVC/HEVC encoder path; both advertised OMX.rk encoders fail instance creation on ARM64."
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u7528\u5b9e\u9645\u8f93\u5165\u3001\u91c7\u96c6/\u5f55\u5236/\u7f16\u89e3\u7801\u548c\u8f93\u51fa\u6570\u636e\u9a8c\u8bc1\u7ba1\u7ebf\uff0c\u5305\u542b\u4e2d\u65ad\u3001\u8fb9\u754c\u53ca\u9000\u51fa"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "用实际输入、采集/录制/编解码和输出数据验证管线，包含中断、边界及退出"
         }
       ],
       "count": 7,
@@ -1548,8 +1550,8 @@
     },
     "system": {
       "groups": [
-        "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
-        "\u5b50\u8fdb\u7a0b\u4e0e\u5185\u6838\u8eab\u4efd"
+        "其他系统服务",
+        "子进程与内核身份"
       ],
       "prefixes": [
         "ci/capability-audit/batch_system_",
@@ -1571,7 +1573,7 @@
       "requirements": [
         {
           "id": "behavior:access-token-api26-kernel-abi",
-          "group": "\u5b50\u8fdb\u7a0b\u4e0e\u5185\u6838\u8eab\u4efd",
+          "group": "子进程与内核身份",
           "requirement": {
             "id": "access-token-api26-kernel-abi",
             "status": "partially_broken",
@@ -1582,12 +1584,12 @@
             },
             "evidence": "old ARM64 baseline: mandatory GET_ALL_PERMISSIONS has no Linux 6.6 switch handler; default AppSpawn SetUserId is a weak success stub. Real bitmap/task user ID, common AppSpawn setter before privilege drop and truthful SPM handshake patches are prepared; new packaged-kernel and normal-HAP runtime validation remains pending. Unsupported optional SPM is not alone proof of failure when legacy fallback works; parent-HAP-token mapping still needs closure"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u9a8c\u8bc1\u542f\u7528\u753b\u50cf\u771f\u5b9e\u5b50\u8fdb\u7a0b\u751f\u547d\u5468\u671f\u3001\u7236\u5b50 token/UID \u5173\u7cfb\u53ca\u7981\u7528\u8fb9\u754c\uff1b\u62d2\u7edd\u5192\u7528\u8eab\u4efd"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "验证启用画像真实子进程生命周期、父子 token/UID 关系及禁用边界；拒绝冒用身份"
         },
         {
           "id": "behavior:msdp-device-status-mock-or-missing-clients",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "msdp-device-status-mock-or-missing-clients",
             "status": "confirmed_broken",
@@ -1599,12 +1601,12 @@
             },
             "evidence": "rich-only declaration; product uses mock backend and required clients are missing"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:native-child-process-phone-boundary",
-          "group": "\u5b50\u8fdb\u7a0b\u4e0e\u5185\u6838\u8eab\u4efd",
+          "group": "子进程与内核身份",
           "requirement": {
             "id": "native-child-process-phone-boundary",
             "status": "partially_broken",
@@ -1615,12 +1617,12 @@
             },
             "evidence": "Native Child Process succeeds when enabled and returns 16010004 when disabled instead of required 801; the API 26 runtime module also omits the declared StartMode export"
           },
-          "preparation_status": "\u7981\u7528\u753b\u50cf\u53c2\u6570/\u8f7d\u8377\u4fee\u590d\u5f85 R51\uff1b\u542f\u7528\u753b\u50cf\u5b8c\u6574\u751f\u547d\u5468\u671f\u5c1a\u672a\u5b8c\u6210",
-          "next_required": "\u9a8c\u8bc1\u542f\u7528\u753b\u50cf\u771f\u5b9e\u5b50\u8fdb\u7a0b\u751f\u547d\u5468\u671f\u3001\u7236\u5b50 token/UID \u5173\u7cfb\u53ca\u7981\u7528\u8fb9\u754c\uff1b\u62d2\u7edd\u5192\u7528\u8eab\u4efd"
+          "preparation_status": "禁用画像参数/载荷修复待 R51；启用画像完整生命周期尚未完成",
+          "next_required": "验证启用画像真实子进程生命周期、父子 token/UID 关系及禁用边界；拒绝冒用身份"
         },
         {
           "id": "behavior:session-manager-profile-gap",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "session-manager-profile-gap",
             "status": "missing_capability",
@@ -1631,12 +1633,12 @@
             },
             "evidence": "the published phone minimum profile includes SessionManager, but the SDK default profile and image omit it and canIUse returns false; related window/PiP modules and native window-manager symbols are packaged"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:calendar-lifecycle-device-difference",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "calendar-lifecycle-device-difference",
             "status": "partially_broken",
@@ -1647,12 +1649,12 @@
             },
             "evidence": "calendar CRUD works with READ_CALENDAR/WRITE_CALENDAR, but API 21+ also publicly accepts READ_WHOLE_CALENDAR/WRITE_WHOLE_CALENDAR; the implementation selects datashare:///calendardata_whole for those permissions while the phone CalendarData HAP declares only datashare://calendardata. Public editEvent also targets missing EditorUIExtensionAbility, and reminder integration lacks ReminderCallbackExtAbility and com.ohos.calendar/MainAbility"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:device-attest-uninitialized",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "device-attest-uninitialized",
             "status": "confirmed_broken",
@@ -1663,12 +1665,12 @@
             },
             "evidence": "system-core API 26 reaches SA 5501 but authResult, softwareResult and all five detail fields remain DEVATTEST_INIT (-2) and ticket is empty; the packaged default OEM adapter has empty product ID and product key"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:advertising-service-provider-missing",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "advertising-service-provider-missing",
             "status": "confirmed_broken",
@@ -1679,12 +1681,12 @@
             },
             "evidence": "ads_framework configuration targets absent com.samples.AdsServiceDemo and its AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService entrypoints; the packaged JSON also omits providerApiAbilityName, which AdLoadService requires before connecting"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:graphics3d-scene-manager-unavailable",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "graphics3d-scene-manager-unavailable",
             "status": "confirmed_broken",
@@ -1695,12 +1697,12 @@
             },
             "evidence": "API 26 Scene.load() fails with \"Creating scene manager failed\" although the module and graphics3d libraries are packaged"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:security-guard-empty-model-config",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "security-guard-empty-model-config",
             "status": "partially_broken",
@@ -1711,12 +1713,12 @@
             },
             "evidence": "security_guard_model.cfg contains an empty model list; a model-result query returns 401"
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         },
         {
           "id": "behavior:app-domain-verification-extension-missing",
-          "group": "\u5176\u4ed6\u7cfb\u7edf\u670d\u52a1",
+          "group": "其他系统服务",
           "requirement": {
             "id": "app-domain-verification-extension-missing",
             "status": "partially_broken",
@@ -1727,8 +1729,8 @@
             },
             "evidence": "Baseline lacks the optional libapp_domain_verify_extension.z.so. Source recheck found real VerifyTask/VerifyHttpTask verification and refresh fallbacks on E_EXTENSIONS_LIB_NOT_FOUND, so library absence alone does not prove verification failure. ConvertToExplicitWant falls back to an empty TargetInfo; actual HTTP/HTTPS verification, signature checks, refresh and routing remain unvalidated."
           },
-          "preparation_status": "\u5b9e\u73b0\u4e0e\u5b8c\u6574\u9a8c\u8bc1\u5c1a\u672a\u9f50\u5907",
-          "next_required": "\u6838\u5bf9\u672c\u9879\u539f\u59cb\u9700\u6c42\u4e0e\u771f\u5b9e\u670d\u52a1\uff0c\u6279\u91cf\u4fee\u590d\u5e76\u589e\u52a0\u5b8c\u6574\u65b0\u5305\u8bc1\u636e"
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
         }
       ],
       "count": 10,
@@ -1788,8 +1790,8 @@
   },
   "current_resource_lease": {
     "owner": "root",
-    "scope": "Round3 ONE ARM64 phone representative full build active; frozen candidate42a0f56",
-    "max_heavy_jobs": 1,
+    "scope": "root-only one representative06 pending after batched fixes and native14 gate passed",
+    "max_heavy_jobs": 2,
     "container": null,
     "source_and_out": "root sole writer; all five agents completed and all read leases released",
     "preparation_cpus": 2,
@@ -1805,22 +1807,38 @@
       "docker_cpus": 12,
       "host_disk_free_gib": 381
     },
-    "capacity_reason": "single heavy build; CPU4 and memory10GiB previously used successfully for same-session M144; leave VM headroom, retain two compiler jobs",
+    "capacity_reason": "one product job4CPU10GiB/Ninja2 unchanged; measured headroom permits at most one isolated nice10 auxiliary SDK job2workerCPU/2048MiBheap/private caches, per core round3/resource-admission.json; all SDK jobs currently finished",
     "completed_dependencies": [
       "current090 M144 native and signed HAP",
       "live SDK03 HAP and exact SDK39 NativeStrip replay",
       "three ABI clock CLI build and host recheck"
     ],
     "queued": [
-      "exact source migration/prepare02 and executable readiness",
-      "ONE ARM64 phone full build/package02",
-      "new archive complete runtime gate"
+      "all current native SELinux checks pass",
+      "ONE fresh representative06",
+      "new archive full runtime and dedicated AudioHaptic/Calendar/OpenVPN boundaries"
     ],
     "remaining_five_started": false,
-    "active_stage": "ready to freeze retry02"
+    "active_stage": "freeze06 then full source preparation"
   },
-  "active_exclusive_grants": {},
-  "updated_at": "2026-10-17T02:25:37.188066+00:00",
+  "active_exclusive_grants": {
+    "network_new_runtime_QA": {
+      "agent": "network",
+      "scope": "new QA only OpenVPN runtime tools; production and shared files frozen",
+      "new_paths": [
+        "ci/capability-audit/batch_network_openvpn_runtime_*.py",
+        "ci/capability-audit/fixtures/batch_network/openvpn_runtime/",
+        "docs/capability-audit/parallel/network/"
+      ],
+      "existing_file_edit": false,
+      "Git_commit": false,
+      "source_out_access": false,
+      "SDK_Docker_VM_or_other_heavy_jobs": false,
+      "root_edits_same_files": false,
+      "released": true
+    }
+  },
+  "updated_at": "2026-10-17T06:17:59.389976+00:00",
   "previous_exclusive_grants": {
     "apps_provider_lifecycle": {
       "agent": "apps",
@@ -2062,19 +2080,20 @@
     "source_upgrade_and_preparation_passed": true
   },
   "core_acceptance_current": {
-    "implementation_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+    "implementation_commit": "c057606bdd5d8f1fb26dd08e4eabbe118e47b1a7",
     "representative02": "complete failed; source build passed but empty GN directory publication rejected; evidence preserved",
     "representative03": "complete failed at six unsupported context filetype fields; all evidence sealed; complete actual contexts preflight passed after batch repair",
     "first_artifact_behavior_gate_passed": false,
     "remaining_five_started": false,
     "source_out_owner": "root",
-    "qa_only_agents": [
-      "media: new audio_haptic_runtime files",
-      "system: new calendar_runtime files"
-    ],
+    "qa_only_agents": [],
     "original_five_workstreams_complete": true,
-    "representative04": "pending freeze; one package only",
-    "agent_file_leases": "all released",
-    "dedicated_QA_tools": "committed host-validated candidates; SDK/product helper/guest pending"
+    "representative04": "complete failed: helpers missing Want GN dependency; source/kernel/logs sealed; actual contexts generation passed",
+    "agent_file_leases": "all five production/QA write leases and read-only audits released",
+    "dedicated_QA_tools": "six unsigned HAPs actual SDK105 compiled and bound: AudioHaptic2/Calendar3/OpenVPN1; signature/BMS/dedicated fresh guest pending",
+    "frozen_candidate_commit": "af2edafbd00d9c299858c4a1546f15cf7330f31a",
+    "representative05": "complete failed at SELinux execution group check; all raw logs/kernel/receipts sealed; no archive",
+    "SELinux_followup": "four failures fixed together; fresh GN policy/context compilation plus all14 raw checks and whole entrypoint pass; original exception negative cases rejected",
+    "native_OpenVPN_helpers": "two actual product flag objects and actual GN wrapper links pass; complete image/package/runtime still pending"
   }
 }

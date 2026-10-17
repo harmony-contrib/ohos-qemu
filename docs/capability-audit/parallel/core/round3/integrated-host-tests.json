@@ -1,7 +1,7 @@
 {
-  "scope": "prior unchanged host scope plus10 source installer checks and11 Calendar QA host checks; actual three-role Calendar SDK compile pass; VPN actual native GN target check pending",
-  "status": "pass_previous_unchanged_scope_plus_source_install_and_Calendar_QA_type_checks",
-  "tested_commit": "45db11a0408788059b6ce4e7f0671b68386bcddb",
+  "scope": "previous unchanged host scope plus complete runtime source migrations, all14 fresh actual SELinux checks, actual helper links and dedicated OpenVPN QA SDK/source/host checks; NOT new package/runtime",
+  "status": "pass_current_batched_prepackage_checks",
+  "tested_commit": "c057606bdd5d8f1fb26dd08e4eabbe118e47b1a7",
   "exit_code": 0,
   "full_suite": {
     "report": "integrated-host-tests-01.json",
@@ -51,10 +51,10 @@
   },
   "ownership_audit_sha256": "5d01180d1c7a8032596ca51c817add4d873cec5dfb4efab8d8a02cbfbbc93198",
   "first_artifact_behavior_gate_passed": false,
-  "previous_tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+  "previous_tested_commit": "45db11a0408788059b6ce4e7f0671b68386bcddb",
   "previous_consolidated_evidence": {
-    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-selinux-contexts.json",
-    "sha256": "6a24a2cf0f99fc62cca272fb7a33027f1c59ac318392b824bb50fbf5029f96dd"
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-typeattrs.json",
+    "sha256": "93ddad3023535900537502cb909686cb21f22710f603d85471302aee7b3e7c33"
   },
   "additional_check": {
     "tests": 25,
@@ -201,5 +201,42 @@
       "ci/capability-audit/fixtures/batch_system/calendar_runtime/CalendarAudit.ets": "94da8a1e009c140f92d0c140629ac10437277d54f29e6dd9e842b8df1181a21e",
       "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/BUILD.gn": "98cc90c24e17dcc93ebc19018cbd85214fc0c0b31c3e1896b0ac412eb81605d4"
     }
+  },
+  "additional_typeattr_openvpn_QA_checks": {
+    "host_transaction_tests": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-classification-host-01/checks.json",
+      "sha256": "7baa9f25092959f076984b506a4e4c5b034668dbdccb4603a6b386aef7300998"
+    },
+    "SELinux": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/selinux-full-native-preflight-06.json",
+      "sha256": "58493f827587855a480b2eec123b6bd55a85b8b2d8853d392676725906a8b4a4"
+    },
+    "helper_links": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/openvpn-helper-link-preflight-06.json",
+      "sha256": "52b4b24176b65064f33f3710ea1f9a13aebb8c7612ded6229b91a92482313fd4"
+    },
+    "OpenVPN_QA_SDK": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/openvpn-runtime-sdk.json",
+      "sha256": "cc8542f7794ea6a3fbee2c9d3041b1e2191835e3fc0e90e0ad0c7014ad4e9f9d"
+    },
+    "changed_code_since_previous_scope": [
+      "ci/capability-audit/batch_network_openvpn_runtime_build.py",
+      "ci/capability-audit/batch_network_openvpn_runtime_collect.py",
+      "ci/capability-audit/batch_network_openvpn_runtime_project.py",
+      "ci/capability-audit/batch_network_openvpn_runtime_test.py",
+      "ci/capability-audit/fixtures/batch_network/openvpn_runtime/EntryAbility.ets",
+      "ci/capability-audit/fixtures/batch_network/openvpn_runtime/Index.ets",
+      "ci/capability-audit/test_openvpn_source_install.py",
+      "ci/capability-audit/test_qemu_runtime_contexts_compatibility.py",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/README.md",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/qemu_openvpn_perm_group_whitelist.json",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/qemu_openvpn_policy.te",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/qemu_openvpn_types.te",
+      "scripts/prepare_qemu_gnss_runtime.py",
+      "scripts/prepare_qemu_openvpn_backend.py",
+      "scripts/prepare_qemu_sensor_runtime.py"
+    ],
+    "full_2542_suite_rerun": false,
+    "first_artifact_behavior_gate_passed": false
   }
 }

@@ -1,5 +1,5 @@
 {
-  "phase": "representative04_failed_fully_preserved_batch_repair",
+  "phase": "representative05_failed_fully_preserved_batch_repair",
   "implementation_head": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
   "baseline_head": "2c6a5c2",
   "checkpoint": "ddfabb4",
@@ -34,9 +34,10 @@
     "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
   },
   "next_required": [
-    "batch all known fixes",
-    "verify both actual OpenVPN helper GN targets before representative05 full package",
-    "new representative archive runtime gate; remaining five not started"
+    "finish and preserve complete representative05 compile/link/image/package result",
+    "if archive succeeds build and verify fresh product CFI helpers",
+    "boot exact new archive and complete full suite plus intended AudioHaptic/Calendar boundary evidence",
+    "only after real first-artifact behavior gate consider remaining artifacts"
   ],
   "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
   "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
@@ -60,7 +61,7 @@
   "first_artifact_behavior_gate_passed": false,
   "remaining_five_started": false,
   "frozen_candidate_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
-  "observed_at": "2026-10-17T05:01:43.691179+00:00",
+  "observed_at": "2026-10-17T05:54:25.010561+00:00",
   "source_upgrade": {
     "exit_code": 0,
     "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Settings-lifetime-source-upgrade-01/evidence.json"
@@ -133,7 +134,7 @@
     "kernel_source_and_image_unchanged": true,
     "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-02/evidence.json"
   },
-  "current_stage": "batch repair native GN dependency and Calendar QA SDK type; no representative running",
+  "current_stage": "batched production and QA repairs complete; freeze06 then full source prepare and complete native readiness before one representative build",
   "representative02_result": {
     "source_commit": "97f58dba86c3ae20f3867048dbbd685b9b463f55",
     "exit_code": 1,
@@ -259,5 +260,85 @@
     "preservation_live_log_excluded_and_parent_final_hash_verified": true,
     "first_artifact_behavior_gate_passed": false,
     "remaining_five_started": false
+  },
+  "candidate05_frozen_commit": "af2edafbd00d9c299858c4a1546f15cf7330f31a",
+  "candidate05_source_preparation": {
+    "exit_code": 0,
+    "seconds": 260.98315837502014
+  },
+  "candidate05_prebuild_readiness": {
+    "exit_code": 0,
+    "seconds": 23.83698308293242
+  },
+  "candidate05_native_preflight": "openvpn-helper-native-preflight-05.json",
+  "representative05_result": {
+    "scope": "completed full representative05 failure and sealed evidence ONLY; no archive or runtime",
+    "source_commit": "af2edafbd00d9c299858c4a1546f15cf7330f31a",
+    "exit_code": 1,
+    "seconds": 2079.736801666906,
+    "package": null,
+    "failures": [
+      {
+        "target": "selinux_adapter:selinux_check",
+        "check": "execute and execute_no_trans",
+        "user": "netsysnative qemu_openvpn_exec",
+        "developer": "netsysnative qemu_openvpn_exec",
+        "cause": "intentional same netsysnative helper execution pair missing from checked QEMU component exception inventory"
+      }
+    ],
+    "raw": {
+      "evidence": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/evidence.json",
+        "sha256": "3803c50f681502feeeb6d41ebc3c0df2c4e6cc802bc42d75c9fadb335171ab97"
+      },
+      "launcher": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/launcher.log",
+        "sha256": "29b800517232e40b05159cf7955e96270e7f25c4a8180a7190cac072e81ee16c"
+      },
+      "resource_progress": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/resource-progress.jsonl",
+        "sha256": "bfce57fa4a7035db725fa85bb4b6d13e657852df1527b6180c24c97c839fb2b3"
+      },
+      "product_build": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/product-build.log",
+        "sha256": "9f7785960c533952a678db04c48351e05e266bedd0fe9bce79324b2bc0f59456"
+      },
+      "product_error": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/product-error.log",
+        "sha256": "775cbd017fa6d2e457962a874a5e4356169228aba49cb9d096e18467d8477810"
+      },
+      "preservation_receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/receipt.json",
+        "sha256": "c16022ef06619b63b4992cc344092dde35fd1a91fe90c541e74640a89db9caa2"
+      },
+      "preservation_launcher": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/launcher.json",
+        "sha256": "58d3c3bf63d2a567da3012bc80e89f12ff23c663bf21b42c5e3cb48a2b18d232"
+      },
+      "final_container_log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/container.log",
+        "sha256": "967ebdd44b678af54bf8168d2110468f63650c5346cd149140017dcba28254df"
+      }
+    },
+    "preserved_files_verified": 21,
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_started": false
+  },
+  "updated_at": "2026-10-17T06:17:59.389976+00:00",
+  "current_implementation_commit": "c057606bdd5d8f1fb26dd08e4eabbe118e47b1a7",
+  "representative05_finished": {
+    "exit_code": 1,
+    "seconds": 2079.736801666906,
+    "package": null,
+    "preserved": true,
+    "report": "first-build-05-findings.json"
+  },
+  "batched_followups": {
+    "SELinux_all14": 0,
+    "whole_original_entrypoint": 0,
+    "native_helper_links": 2,
+    "OpenVPN_actual_SDK_HAPs": 1,
+    "OpenVPN_QA_host_tests": 14,
+    "new_guest_runtime": false
   }
 }

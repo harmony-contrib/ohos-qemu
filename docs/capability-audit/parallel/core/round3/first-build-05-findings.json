@@ -1,0 +1,53 @@
+{
+  "scope": "completed full representative05 failure and sealed evidence ONLY; no archive or runtime",
+  "source_commit": "af2edafbd00d9c299858c4a1546f15cf7330f31a",
+  "exit_code": 1,
+  "seconds": 2079.736801666906,
+  "package": null,
+  "failures": [
+    {
+      "target": "selinux_adapter:selinux_check",
+      "check": "execute and execute_no_trans",
+      "user": "netsysnative qemu_openvpn_exec",
+      "developer": "netsysnative qemu_openvpn_exec",
+      "cause": "intentional same netsysnative helper execution pair missing from checked QEMU component exception inventory"
+    }
+  ],
+  "raw": {
+    "evidence": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/evidence.json",
+      "sha256": "3803c50f681502feeeb6d41ebc3c0df2c4e6cc802bc42d75c9fadb335171ab97"
+    },
+    "launcher": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/launcher.log",
+      "sha256": "29b800517232e40b05159cf7955e96270e7f25c4a8180a7190cac072e81ee16c"
+    },
+    "resource_progress": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/resource-progress.jsonl",
+      "sha256": "bfce57fa4a7035db725fa85bb4b6d13e657852df1527b6180c24c97c839fb2b3"
+    },
+    "product_build": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/product-build.log",
+      "sha256": "9f7785960c533952a678db04c48351e05e266bedd0fe9bce79324b2bc0f59456"
+    },
+    "product_error": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/product-error.log",
+      "sha256": "775cbd017fa6d2e457962a874a5e4356169228aba49cb9d096e18467d8477810"
+    },
+    "preservation_receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/receipt.json",
+      "sha256": "c16022ef06619b63b4992cc344092dde35fd1a91fe90c541e74640a89db9caa2"
+    },
+    "preservation_launcher": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/launcher.json",
+      "sha256": "58d3c3bf63d2a567da3012bc80e89f12ff23c663bf21b42c5e3cb48a2b18d232"
+    },
+    "final_container_log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-05/preservation-01/container.log",
+      "sha256": "967ebdd44b678af54bf8168d2110468f63650c5346cd149140017dcba28254df"
+    }
+  },
+  "preserved_files_verified": 21,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

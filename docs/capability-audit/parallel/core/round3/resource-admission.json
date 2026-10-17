@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-17T05:01:43.691179+00:00",
+  "observed_at": "2026-10-17T06:17:59.389976+00:00",
   "max_concurrent_subagents": 3,
   "five_distinct_workstreams": [
     "apps",
@@ -42,10 +42,9 @@
     "source_out_write": false
   },
   "pending_root_jobs": [
-    "ONE ARM64 phone candidate04 prepare/build/package",
-    "fresh product helper compilation, exact ABI/CFI and DSO binding",
-    "dedicated AudioHaptic/Calendar SDK and owned-guest validation",
-    "complete packaged suite with private HDC service; no six-package matrix"
+    "freeze06/full source prepare/readiness with fresh all14 checks",
+    "ONE representative06",
+    "actual newly packaged runtime boundaries before other packages"
   ],
   "active_job": null,
   "idle_inspection_container_cleanup": {
@@ -135,18 +134,18 @@
   },
   "auxiliary_sdk_job": {
     "owner": "root",
-    "kind": "three-role Calendar runtime caller HAPs",
+    "kind": "Calendar three-role fresh02",
     "nice": 10,
     "worker_cpu_discovery": 2,
     "node_heap_mib": 2048,
     "memory_reservation_gib": 4,
     "representative_source_out_access": false,
-    "launcher": "r54-Calendar-runtime-QA-01/sdk-launcher.json",
+    "launcher": "r54-Calendar-runtime-QA-02/sdk-launcher.json",
     "latest_host_memory_free_percent": 69,
-    "session_id": 83065,
-    "status": "complete_failed_all_three_roles",
-    "exit_code": 1,
-    "seconds": 6.314994208049029,
+    "session_id": null,
+    "status": "complete_pass",
+    "exit_code": 0,
+    "seconds": 20.900931791984476,
     "failure": "producer SDK compile; collect remaining roles before QA source repair",
     "remaining_diagnostic_session": 5846,
     "remaining_roles_exit_codes": {
@@ -165,11 +164,42 @@
       "status": "complete",
       "exit_code": 0,
       "seconds": 16.091846582945436
+    },
+    {
+      "owner": "root",
+      "kind": "independent system OpenVPN runtime caller HAP",
+      "launcher": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-02/sdk-launcher.json",
+        "sha256": "dceb73680cde1482f2c03726ecada019234b90e0da0d3b446259d733f23cc11d"
+      },
+      "exit_code": 0,
+      "source_out_read_or_write": false,
+      "host_tests": 14
     }
   ],
   "representative04_finished": {
     "exit_code": 1,
     "package": null,
     "evidence": "first-build-04-findings.json"
+  },
+  "network_runtime_QA_lease": {
+    "agent": "network",
+    "scope": "new QA only OpenVPN runtime tools; production and shared files frozen",
+    "new_paths": [
+      "ci/capability-audit/batch_network_openvpn_runtime_*.py",
+      "ci/capability-audit/fixtures/batch_network/openvpn_runtime/",
+      "docs/capability-audit/parallel/network/"
+    ],
+    "existing_file_edit": false,
+    "Git_commit": false,
+    "source_out_access": false,
+    "SDK_Docker_VM_or_other_heavy_jobs": false,
+    "root_edits_same_files": false,
+    "released": true
+  },
+  "representative05_finished": {
+    "exit_code": 1,
+    "package": null,
+    "evidence": "first-build-05-findings.json"
   }
 }

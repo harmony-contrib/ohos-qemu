@@ -1,0 +1,38 @@
+{
+  "scope": "actual regenerated product compiler flags, two isolated native object compile preflight ONLY NOT link/full build/package/runtime",
+  "source_commit": "af2edafbd00d9c299858c4a1546f15cf7330f31a",
+  "exit_code": 0,
+  "actual_compilation": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-compile-05/checks.json",
+    "sha256": "f034c80f8929899ebe4c12588af7585701d82e62cbf3bb21f036b05a52e02851"
+  },
+  "launcher": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-compile-05/evidence.json",
+    "sha256": "22b4624b4a76dfd937af8e254880bcefc376372594ccae1cf8ea441a5f60882d"
+  },
+  "earlier_preflight_attempts": {
+    "05": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-GN-05/evidence.json",
+      "sha256": "bf65a3ba169641f58ad174eb3c35a9361bc4724631daa94578f94288f379610e"
+    },
+    "05-02": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-GN-05-02/evidence.json",
+      "sha256": "08cf6d11919f4b31ad734cfe2f7870568d440d0df89f91b9bd1af6ba323abed2"
+    },
+    "05-03": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-GN-05-03/evidence.json",
+      "sha256": "998230dc43847e0b4fe24200f03e37cc95f6ac7f59c1f255a637dfee532bc34c"
+    },
+    "05-04": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-GN-05-04/evidence.json",
+      "sha256": "331228e1aa864a61e2ef80d778e73eb4f497a349841b7adbe7cc13fd4d959314"
+    }
+  },
+  "earlier_attempt_explanations": {
+    "05": "target inventory omitted actual product dupbuild=warn; no compilation",
+    "05-02": "target inventory ambiguous installed/unstripped pair; no compilation",
+    "05-03": "both compiled against preceding stale generated graph; want.h absent; both failures preserved",
+    "05-04": "actual GN regenerated0 with byte-identical args.gn; broad two-target dependency DAG14661 actions; root signalled precisely identified owned Ninja PID810 SIGINT130 before further traversal to bound this native preflight; no representative package build interrupted"
+  },
+  "first_artifact_behavior_gate_passed": false
+}

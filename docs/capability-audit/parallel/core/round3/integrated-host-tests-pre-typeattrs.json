@@ -1,0 +1,205 @@
+{
+  "scope": "prior unchanged host scope plus10 source installer checks and11 Calendar QA host checks; actual three-role Calendar SDK compile pass; VPN actual native GN target check pending",
+  "status": "pass_previous_unchanged_scope_plus_source_install_and_Calendar_QA_type_checks",
+  "tested_commit": "45db11a0408788059b6ce4e7f0671b68386bcddb",
+  "exit_code": 0,
+  "full_suite": {
+    "report": "integrated-host-tests-01.json",
+    "report_sha256": "6db2868fadba801fb37c5d45028250f731d4749650afc20f7d106938d95a2558",
+    "tests": 2542,
+    "failures": 1,
+    "errors": 2,
+    "skipped": 5
+  },
+  "resolved_failures": [
+    {
+      "test": "Recorder configuration native functions",
+      "cause": "host clang21/libc++ ABI mismatch",
+      "recheck": "native Apple clang16 with unchanged ASan/UBSan flags passed"
+    },
+    {
+      "test": "VPN native binding/controller ownership",
+      "cause": "same host clang/libc++ ABI mismatch",
+      "recheck": "native Apple clang16 passed; separate six real Linux tests also passed"
+    },
+    {
+      "test": "release scope raw archive delegation",
+      "cause": "structural fixture lacked archive after raw verifier integration",
+      "recheck": "scope fixture asserts raw delegation and separately rejects unmocked structural-only evidence"
+    }
+  ],
+  "rechecks": [
+    {
+      "path": "host-failure-rechecks.log",
+      "sha256": "6eb2678dd95546a7e21c4f8a8501ad31f4c8899f259def03b519c9bcf124677f",
+      "tests": 6,
+      "exit_code": 0
+    },
+    {
+      "path": "location-final-integration.log",
+      "sha256": "a7bd6d05432d4572ee3646a3935735a92ff2e22a6ed87e481590cdfd27f46edb",
+      "tests": 38,
+      "seconds": 121.966,
+      "exit_code": 0
+    }
+  ],
+  "optional_accuracy_correction": {
+    "commit": "0c67170",
+    "agent_targeted_tests": 14,
+    "whole_location_domain_tests": 38,
+    "patch_sha256": "f2ca1c04c6b7680ff44282867c42ef7ca44c42880b62596e1e578735e075e1c0"
+  },
+  "ownership_audit_sha256": "5d01180d1c7a8032596ca51c817add4d873cec5dfb4efab8d8a02cbfbbc93198",
+  "first_artifact_behavior_gate_passed": false,
+  "previous_tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+  "previous_consolidated_evidence": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-selinux-contexts.json",
+    "sha256": "6a24a2cf0f99fc62cca272fb7a33027f1c59ac318392b824bb50fbf5029f96dd"
+  },
+  "additional_check": {
+    "tests": 25,
+    "passed": 24,
+    "skipped": 1,
+    "skip_reason": "SCM_RIGHTS truncation semantics must be checked on target Linux kernel",
+    "exit_code": 0,
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-publisher-affected-host.log",
+      "sha256": "7361930bab56ddb66f28fd6bf837e19b89ce3f5f3b72f83e89348b3da0c4d2e1"
+    }
+  },
+  "source_changes_since_previous_host_scope": {
+    "scripts/prepare_qemu_openvpn_backend.py": "2d3a8bb2057c1150ffeb304e086215167e75c66a9384b93d367ad4141496c28f",
+    "ci/capability-audit/test_openvpn_source_install.py": "8d07a96ff3cfb68f9ed88f435094f4d1672643d93c4a8631be2757c34eee23fb"
+  },
+  "full_2542_test_suite_rerun": false,
+  "note": "No second full2542 suite, no completed new package or guest behavior claimed. Previous unchanged source/test evidence remains preserved.",
+  "additional_empty_output_check": {
+    "scope": "current product publication host regression only; actual empty-directory/foreign-content/rename-race/previous-evidence tests plus all affected OpenVPN checks",
+    "tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+    "macos": {
+      "tests": 37,
+      "passed": 36,
+      "skipped": 1,
+      "exit_code": 0,
+      "receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-host-01/evidence.json",
+        "sha256": "66bf13eff21d1ad744d37e53dd5c1c13062020fd33199ee23250f43512a871e4"
+      },
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-host-01/host.log",
+        "sha256": "670ff0332e8dc8df5e97cfc9d19faf371674335c459ad6ed340bdd7ce1edb7c2"
+      }
+    },
+    "linux": {
+      "tests": 37,
+      "passed": 37,
+      "skipped": 0,
+      "exit_code": 0,
+      "receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-Linux-01/evidence.json",
+        "sha256": "b33f20d6ed65a414059587faca9441776de0c6d894af045536afed4c768c8954"
+      },
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-Linux-01/container.log",
+        "sha256": "5cb15fb359e76fa25c5aa06389d929f3925e9618e0b8df42c4259ac3026ddf25"
+      }
+    },
+    "source_files_sha256": {
+      "scripts/build_product_openvpn.py": "95848ece8c8f2e62458a56e7f9b76e4692e19f8bd5d99e72d6f4947c779b5ab4",
+      "ci/capability-audit/test_openvpn_product_output.py": "c7a4c1241a282584dc4a26fc1d021ce937446bbd3d0832dff28826e0e5d569eb"
+    },
+    "first_artifact_behavior_gate_passed": false,
+    "new_package_or_guest_runtime": false,
+    "representative02_preserved": "first-build-02-findings.json"
+  },
+  "additional_contexts_check": {
+    "scope": "all six context syntax fixes, strict exact previous source migration and actual complete product contexts native preflight ONLY NOT complete product/package/runtime",
+    "tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+    "host": {
+      "tests": 98,
+      "passed": 97,
+      "skipped": 1,
+      "skip_reason": "SCM_RIGHTS Linux-specific test; previously passed unchanged on actual Linux",
+      "receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/affected-host.json",
+        "sha256": "6e7a819220cf69b9280daddc46d94b382c5df3ed6316b15e6887241ad84de413"
+      },
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/affected-host.log",
+        "sha256": "0fd6228e808d1e40213e247476ba67b6565d7172857cceea2783cbee230810aa"
+      }
+    },
+    "source_upgrade": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/source-upgrade/evidence.json",
+      "sha256": "dd0ab53542793f7ab01e6d8659a14eb06a66ff05ea06bc38979acd987d2dadb8"
+    },
+    "source_upgrade_checks": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/source-upgrade/checks.json",
+      "sha256": "b00606ceb336b38a9817993c9ad50afa6d5353b75123aee46da3d18352bf60a5"
+    },
+    "native_preflight": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/evidence.json",
+      "sha256": "ae5653693d9cbcc14f9a6b4c0ab8058287953de581ee302117b6e62f4bd12d2b"
+    },
+    "native_preflight_checks": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/checks.json",
+      "sha256": "654d117b7d99a51d5c193c8e63cc6c6bfa8eb83f37837eb0027aab0d85d5bdaf"
+    },
+    "native_log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/actual-command.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native_full_contexts_exit_code": 0,
+    "permissions_or_type_transition_rules_changed": false,
+    "source_files_sha256": {
+      "scripts/prepare_qemu_sensor_runtime.py": "11b38860aca6bc8fe959bcc8e94dd3f29acf1a474854662b7920f0135cb17476",
+      "scripts/prepare_qemu_gnss_runtime.py": "f67fc589c09629cfdcd6e23a6a754fed56e6c418b9c6efab7e5b21b71bfe9672",
+      "scripts/prepare_qemu_openvpn_backend.py": "2d3a8bb2057c1150ffeb304e086215167e75c66a9384b93d367ad4141496c28f",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/qemu_openvpn_file_contexts": "12afa0633f9dc70ebc1d26c6461f8e03968bf045c115125a12392253dcc247cb"
+    },
+    "known_previous_inputs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/known-previous-inputs.json",
+      "sha256": "ce21982d393677c1da11fa822f5f58709f3ba4cd0aaeaa5a08d2c048b19f0751"
+    },
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_started": false
+  },
+  "dedicated_QA_host_checks": {
+    "AudioHaptic": {
+      "tests": 5,
+      "report": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/audio-haptic-runtime-tools-review.json",
+        "sha256": "c0be786dd8409bc90231c34a9b2e8f11ce398d171cee81b5ac57ffd8245f6ff1"
+      }
+    },
+    "Calendar": {
+      "tests": 11,
+      "report": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/calendar-runtime-tools-review.json",
+        "sha256": "5b651fe2d3e00793c8112b4f7ca4b18e1d2cf5b41acf68108f0e69cbd3bf001a"
+      }
+    },
+    "SDK_native_helpers_and_guest_executed": false
+  },
+  "additional_Want_Calendar_check": {
+    "source_install_checks": {
+      "tests": 10,
+      "exit_code": 0,
+      "seconds": 1.712
+    },
+    "calendar_host_checks": {
+      "tests": 11,
+      "exit_code": 0,
+      "receipt": "../../system/round21-runtime-tools/sdk105-map-fix.json"
+    },
+    "calendar_actual_SDK": {
+      "exit_code": 0,
+      "roles": 3,
+      "receipt": "calendar-runtime-sdk.json"
+    },
+    "source_files": {
+      "ci/capability-audit/fixtures/batch_system/calendar_runtime/CalendarAudit.ets": "94da8a1e009c140f92d0c140629ac10437277d54f29e6dd9e842b8df1181a21e",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/BUILD.gn": "98cc90c24e17dcc93ebc19018cbd85214fc0c0b31c3e1896b0ac412eb81605d4"
+    }
+  }
+}

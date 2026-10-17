@@ -1,0 +1,25 @@
+{
+  "scope": "two actual GN helper wrapper/link rules against existing actual product DSOs ONLY NOT complete product/package/runtime",
+  "preflight": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-link-02/evidence.json",
+    "sha256": "4d9301db639f518e90c5ffaa6ac3950e9422ee9c055e4b5c6d39768de406a18e"
+  },
+  "checks": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-link-02/checks.json",
+    "sha256": "cf52b4e91a1b6843f1ba49232495cf98fe4951d96eb7ba73854cf3b718e3114c"
+  },
+  "exit_code": 0,
+  "targets": 2,
+  "private_output_only": true,
+  "original_link_flags_retained": true,
+  "source_out_read_only": true,
+  "known_harness_attempt": {
+    "report": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-helper-link-01/evidence.json",
+      "sha256": "e722035071e155680646f82c67f0a7bea3b5a859e6c78f9c7a9ebc94cec47e97"
+    },
+    "cause": "overbroad temporary cache path replacement rewrote linker option names; fixed to change only --thinlto-cache-dir value in fresh02",
+    "original_evidence_preserved": true
+  },
+  "first_artifact_behavior_gate_passed": false
+}

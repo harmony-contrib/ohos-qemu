@@ -1,0 +1,49 @@
+{
+  "scope": "actual SDK105 independent system OpenVPN caller unsigned HAP and source/provenance checks ONLY NOT signature/BMS/guest",
+  "tested_commit": "c057606bdd5d8f1fb26dd08e4eabbe118e47b1a7",
+  "actual_SDK": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-02/sdk-build/evidence.json",
+    "sha256": "ab1002b560dcd8fa6343866db1a628b560f64d15d8cac6dace2fe5b8c10a6d4e"
+  },
+  "launcher": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-02/sdk-launcher.json",
+    "sha256": "dceb73680cde1482f2c03726ecada019234b90e0da0d3b446259d733f23cc11d"
+  },
+  "project_inputs": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-02/sdk-build/project-inputs.json",
+    "sha256": "58b2fa77d1749ee1c5c9c33e987acd4c5c2e53e475ae2fc3e379f396c5e06fb7"
+  },
+  "root_final_checks": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-02/root-final-checks/checks.json",
+    "sha256": "1ec66f11784192702a099a9d34c36912ddfa48a4835ce72eb0f724e39f2bcd7e"
+  },
+  "haps": [
+    {
+      "project": "openvpn-cleanup",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-02/project/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "ac0ef95e533b0a995b168d2b6ff98f67ae4da9b0f04109e1dedf12f59b1e6e81",
+      "bytes": 77393
+    }
+  ],
+  "exit_code": 0,
+  "host_tests": 14,
+  "actual_receipt_negative_cases": 7,
+  "source_files": {
+    "ci/capability-audit/batch_network_openvpn_runtime_test.py": "14db81cb82d3725972183da5e65de9d5dade5e701b412fad0985deac9518c116",
+    "ci/capability-audit/batch_network_openvpn_runtime_build.py": "b5486026b79323a278442d190629d27a12f9d878d9f8d724185ec99d61b205f5",
+    "ci/capability-audit/batch_network_openvpn_runtime_collect.py": "514c4e30d4b4bf129697a2d9d59e8e7358a03d336512f521cfec480c372c5a39",
+    "ci/capability-audit/batch_network_openvpn_runtime_project.py": "7e0fa00c3d2f1132e75194301dc2ace2288f6f730916d741b8b3b0789e9a20e0",
+    "ci/capability-audit/fixtures/batch_network/openvpn_runtime/Index.ets": "cfedb86297276584ddc305d1d206e1947b80b1b8affb5f1e4077582c1e922b08",
+    "ci/capability-audit/fixtures/batch_network/openvpn_runtime/EntryAbility.ets": "8fba925f0559a8c18e993acd3fbf95af970359bc8b475d09b240b36c943395ad"
+  },
+  "prior_prepare_failure": {
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-runtime-QA-01/prepare-project.log",
+      "sha256": "5773ae3a8c22b69fa932ed1684ebd1855e16a415171aab807c062b5e9d36ca4d"
+    },
+    "SDK_was_run": false,
+    "cause": "raw PEM -----BEGIN headers were mistaken for -- command-line options; split exact inline credential blocks from options; then fresh project02 prepared and actual SDK passed"
+  },
+  "credentials": "fresh root-owned ephemeral CA/client valid2026-10-17 through2026-10-24; private files only in owned0700 evidence; endpoint127.0.0.1:54123 has no peer; no connected claim",
+  "first_artifact_behavior_gate_passed": false
+}
