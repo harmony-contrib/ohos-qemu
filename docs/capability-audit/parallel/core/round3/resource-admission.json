@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-17T03:07:52.574821+00:00",
+  "observed_at": "2026-10-17T04:03:54.440980+00:00",
   "max_concurrent_subagents": 3,
   "five_distinct_workstreams": [
     "apps",
@@ -25,10 +25,7 @@
     "scope": "narrow CalendarData fixed source export only",
     "released": true
   },
-  "active_children": [
-    "media: NEW isolated runtime QA files only",
-    "system: NEW isolated Calendar runtime QA files only"
-  ],
+  "active_children": [],
   "completed_children": [
     "apps",
     "media",
@@ -45,9 +42,10 @@
     "source_out_write": false
   },
   "pending_root_jobs": [
-    "ONE ARM64 phone candidate03 prepare/build/package",
-    "fresh product helpers and input binding",
-    "dedicated runtime QA compile and new archive runtime"
+    "ONE ARM64 phone candidate04 prepare/build/package",
+    "fresh product helper compilation, exact ABI/CFI and DSO binding",
+    "dedicated AudioHaptic/Calendar SDK and owned-guest validation",
+    "complete packaged suite with private HDC service; no six-package matrix"
   ],
   "active_job": null,
   "idle_inspection_container_cleanup": {
@@ -71,7 +69,8 @@
       "Git_commit": false,
       "source_out_read_or_write": false,
       "SDK_Docker_VM_or_package": false,
-      "root_owns_execution_and_build_resources": true
+      "root_owns_execution_and_build_resources": true,
+      "released": true
     },
     {
       "agent": "system",
@@ -80,7 +79,8 @@
       "Git_commit": false,
       "source_out_read_or_write": false,
       "SDK_Docker_VM_or_package": false,
-      "root_owns_execution_and_build_resources": true
+      "root_owns_execution_and_build_resources": true,
+      "released": true
     }
   ],
   "representative02_finished": {
@@ -98,5 +98,16 @@
     "source_out_or_heavy_jobs": false,
     "Git_commit": false,
     "released": true
+  },
+  "completed_qa_reviews": [
+    "media: new tools delivered, source checks+5 host checks passed; SDK/runtime pending",
+    "apps: read-only exact lifecycle runtime coverage gap review delivered",
+    "system: 21 exact files checked +11 host checks passed; SDK/native/runtime pending"
+  ],
+  "all_agent_file_leases_released": true,
+  "representative03_finished": {
+    "exit_code": 1,
+    "package": null,
+    "evidence": "first-build-03-findings.json"
   }
 }

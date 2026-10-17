@@ -1,0 +1,52 @@
+{
+  "scope": "all six context syntax fixes, strict exact previous source migration and actual complete product contexts native preflight ONLY NOT complete product/package/runtime",
+  "tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+  "host": {
+    "tests": 98,
+    "passed": 97,
+    "skipped": 1,
+    "skip_reason": "SCM_RIGHTS Linux-specific test; previously passed unchanged on actual Linux",
+    "receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/affected-host.json",
+      "sha256": "6e7a819220cf69b9280daddc46d94b382c5df3ed6316b15e6887241ad84de413"
+    },
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/affected-host.log",
+      "sha256": "0fd6228e808d1e40213e247476ba67b6565d7172857cceea2783cbee230810aa"
+    }
+  },
+  "source_upgrade": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/source-upgrade/evidence.json",
+    "sha256": "dd0ab53542793f7ab01e6d8659a14eb06a66ff05ea06bc38979acd987d2dadb8"
+  },
+  "source_upgrade_checks": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/source-upgrade/checks.json",
+    "sha256": "b00606ceb336b38a9817993c9ad50afa6d5353b75123aee46da3d18352bf60a5"
+  },
+  "native_preflight": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/evidence.json",
+    "sha256": "ae5653693d9cbcc14f9a6b4c0ab8058287953de581ee302117b6e62f4bd12d2b"
+  },
+  "native_preflight_checks": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/checks.json",
+    "sha256": "654d117b7d99a51d5c193c8e63cc6c6bfa8eb83f37837eb0027aab0d85d5bdaf"
+  },
+  "native_log": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/actual-command.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "native_full_contexts_exit_code": 0,
+  "permissions_or_type_transition_rules_changed": false,
+  "source_files_sha256": {
+    "scripts/prepare_qemu_sensor_runtime.py": "11b38860aca6bc8fe959bcc8e94dd3f29acf1a474854662b7920f0135cb17476",
+    "scripts/prepare_qemu_gnss_runtime.py": "f67fc589c09629cfdcd6e23a6a754fed56e6c418b9c6efab7e5b21b71bfe9672",
+    "scripts/prepare_qemu_openvpn_backend.py": "2d3a8bb2057c1150ffeb304e086215167e75c66a9384b93d367ad4141496c28f",
+    "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/qemu_openvpn_file_contexts": "12afa0633f9dc70ebc1d26c6461f8e03968bf045c115125a12392253dcc247cb"
+  },
+  "known_previous_inputs": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/known-previous-inputs.json",
+    "sha256": "ce21982d393677c1da11fa822f5f58709f3ba4cd0aaeaa5a08d2c048b19f0751"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

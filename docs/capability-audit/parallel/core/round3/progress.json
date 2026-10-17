@@ -1,6 +1,6 @@
 {
-  "phase": "representative03_inputs_ready_for_freeze",
-  "implementation_head": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+  "phase": "representative04_inputs_ready_for_freeze",
+  "implementation_head": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
   "baseline_head": "2c6a5c2",
   "checkpoint": "ddfabb4",
   "integrated_commits": {
@@ -12,7 +12,9 @@
     "location_initial": "cf32293",
     "location_compatibility": "0c67170",
     "openvpn_publication": "a48a2bb",
-    "openvpn_empty_output": "34d7b8675be849088a673dbc86fab7ccb3a0a725"
+    "openvpn_empty_output": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+    "selinux_context_format": "decda33",
+    "dedicated_runtime_QA": "7f56101"
   },
   "five_agents_delivered": true,
   "all_source_out_read_leases_released": true,
@@ -32,10 +34,10 @@
     "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
   },
   "next_required": [
-    "freeze candidate03 with all known product publication fixes",
-    "ONE representative03 full prepare/build/package",
-    "fresh product helpers and checksum-bound inputs",
-    "new package runtime including dedicated AudioHaptic/Calendar boundaries; no remaining-five matrix"
+    "freeze candidate04 with all known context/source-install repairs",
+    "ONE representative04 prepare/readiness/full build/package",
+    "fresh product helpers plus dedicated caller SDK builds",
+    "new package runtime including limited AudioHaptic/Calendar boundaries; exact Apps races remain unvalidated; no remaining-five matrix"
   ],
   "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
   "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
@@ -59,7 +61,7 @@
   "first_artifact_behavior_gate_passed": false,
   "remaining_five_started": false,
   "frozen_candidate_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
-  "observed_at": "2026-10-17T03:07:52.573919+00:00",
+  "observed_at": "2026-10-17T04:03:54.438091+00:00",
   "source_upgrade": {
     "exit_code": 0,
     "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Settings-lifetime-source-upgrade-01/evidence.json"
@@ -132,7 +134,7 @@
     "kernel_source_and_image_unchanged": true,
     "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-02/evidence.json"
   },
-  "current_stage": "representative02 failure sealed; batch publisher repair committed and affected Linux/macOS checks passed; candidate03 freeze next",
+  "current_stage": "03 completed failure sealed; all known contexts repairs committed; actual native whole-contexts preflight passed; candidate04 freeze next",
   "representative02_result": {
     "source_commit": "97f58dba86c3ae20f3867048dbbd685b9b463f55",
     "exit_code": 1,
@@ -149,5 +151,42 @@
     "commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
     "validated": "openvpn-empty-output-validation.json",
     "native_or_runtime": false
+  },
+  "candidate03_frozen_commit": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "candidate03_source_upgrade_exit_code": 0,
+  "candidate03_source_preparation": {
+    "exit_code": 0,
+    "seconds": 278.2464362079045,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-full-source-prepare-03/evidence.json"
+  },
+  "candidate03_prebuild_readiness": {
+    "exit_code": 0,
+    "seconds": 20.2949298749445,
+    "entrypoints": 5,
+    "kernel_source_and_image_unchanged": true,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-03/evidence.json"
+  },
+  "representative03_result": {
+    "source_commit": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+    "exit_code": 1,
+    "seconds": 2321.4083018749952,
+    "package": null,
+    "findings": "first-build-03-findings.json",
+    "OpenVPN_native_publication": "pass compile/publication ONLY",
+    "kernel_integrity": "pass unchanged"
+  },
+  "contexts_native_preflight": {
+    "exit_code": 0,
+    "report": "selinux-contexts-compatibility.json"
+  },
+  "diagnostic_source_preparation": {
+    "AudioHaptic": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-AudioHaptic-runtime-QA-01/source-preparation.json",
+      "sha256": "920a1a9b464d589b05e5fbd7d4a62a584a6eb0151a4346a94936301fdfe97db6"
+    },
+    "Calendar": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-Calendar-runtime-QA-01/source-preparation.json",
+      "sha256": "61a755232c055815d8787fedc211908c1832a707f90b6def1ff66d5d474f6b28"
+    }
   }
 }

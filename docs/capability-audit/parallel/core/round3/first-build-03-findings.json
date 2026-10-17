@@ -1,0 +1,72 @@
+{
+  "scope": "completed third representative ARM64 phone attempt; OpenVPN source build+publication passed; actual SELinux contexts stage failed; no archive/runtime pass",
+  "source_commit": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "exit_code": 1,
+  "seconds": 2321.4083018749952,
+  "failed_actions": [
+    "[OHOS ERROR] [NINJA] FAILED: [code=1] obj/base/security/selinux_adapter/file_contexts.bin obj/base/security/selinux_adapter/file_contexts obj/base/security/selinux_adapter/sehap_contexts obj/base/security/selinux_adapter/service_contexts obj/base/security/selinux_adapter/hdf_service_contexts obj/base/security/selinux_adapter/parameter_contexts "
+  ],
+  "primary_error": "actual pinned build_contexts.py rejects six -d/-s file type tokens",
+  "failed_context_lines": {
+    "364": "/dev/unix/socket/qemu_openvpn          -s u:object_r:qemu_openvpn_control_socket:s0",
+    "365": "/dev/unix/socket/qemu_openvpn_tunfd    -s u:object_r:qemu_openvpn_tunfd_socket:s0",
+    "417": "/dev/unix/socket/qemu_gnss          -d u:object_r:qemu_gnss_input_dir:s0",
+    "418": "/dev/unix/socket/qemu_gnss/input    -s u:object_r:qemu_gnss_input_socket:s0",
+    "419": "/dev/unix/socket/qemu_sensor          -d u:object_r:qemu_sensor_input_dir:s0",
+    "420": "/dev/unix/socket/qemu_sensor/input    -s u:object_r:qemu_sensor_input_socket:s0"
+  },
+  "package_exists": false,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "kernel_verify_exit_code": 0,
+  "raw_evidence": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/evidence.json",
+      "sha256": "36a3d8b34443e5c9283ca6ebe611d6ec35dc647678686ecaf60f9cbe9400a6d3"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/launcher.log",
+      "sha256": "7708d926fbadc0b093560044547554be99aa9c7c5bd7487c8874a5835a380138"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/resource-progress.jsonl",
+      "sha256": "fffbafe921d018011c2af93bc74aaf212547231d8e5e554e7adb8a130792446b"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/selinux-contexts-failed-lines.json",
+      "sha256": "2d00f448474ee7c04405ee8b3a215a0d4280223b3e54dc5a7dbc93f931ad0928"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/selinux-build_contexts.py",
+      "sha256": "17d9b8aca5860338759434dbc04bb62c8be27fcc736f0c2a2a3a72a0b423b018"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/openvpn-published-build-evidence.json",
+      "sha256": "b74d86228a2c3f46a114a45894417a9a3841f86fcd4f2e6c53ec50c3704b1665"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/openvpn-publication-observation.json",
+      "sha256": "7812689799b5faec3af0ae8c4b618b9737f094fc26c12ef82c9754231f8d84a6"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/receipt.json",
+      "sha256": "22a31103bc00322cf70cc428510d3ed019c879094c06863e39ddb604a0cba251"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/launcher.json",
+      "sha256": "79b2317d91de2f53f9e62d74104a9cf86bd9d280fe2507a7338977a3ab738b75"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/openvpn-output.tar",
+      "sha256": "047c9659b4337281b44d6e2386b8e59366c2022fe9ed2539cde388315455587b"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/product-build.log",
+      "sha256": "ea8574ebe0cfceda54d7f3b028611d26f5b35d5b6825c1713b17485e4709eddb"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/preservation-01/product-error.log",
+      "sha256": "74d15e346146f6e342e4cde9b490194c677cff16f98b3b0b46a0870dac31b5c0"
+    }
+  ]
+}

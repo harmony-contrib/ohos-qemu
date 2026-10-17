@@ -1,7 +1,7 @@
 {
   "scope": "unaffected passing results from full host suite plus final affected-source and failure rechecks; not a second full 2542-test run and not package/guest acceptance",
-  "status": "pass_previous_unchanged_host_scope_plus_affected_OpenVPN_empty_output_rechecks",
-  "tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+  "status": "pass_previous_unchanged_scope_plus_98_context_affected_and_16_QA_host_checks",
+  "tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
   "exit_code": 0,
   "full_suite": {
     "report": "integrated-host-tests-01.json",
@@ -51,10 +51,10 @@
   },
   "ownership_audit_sha256": "5d01180d1c7a8032596ca51c817add4d873cec5dfb4efab8d8a02cbfbbc93198",
   "first_artifact_behavior_gate_passed": false,
-  "previous_tested_commit": "a48a2bb23380d539d9db5e2dbe5424d548765564",
+  "previous_tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
   "previous_consolidated_evidence": {
-    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-openvpn-empty-output.json",
-    "sha256": "2dadb58ad44f85aac64a408b722c1bec2259121a891b1a2c797f92ded87ab880"
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-selinux-contexts.json",
+    "sha256": "6a24a2cf0f99fc62cca272fb7a33027f1c59ac318392b824bb50fbf5029f96dd"
   },
   "additional_check": {
     "tests": 25,
@@ -72,7 +72,7 @@
     "ci/capability-audit/test_openvpn_source_install.py": "8d07a96ff3cfb68f9ed88f435094f4d1672643d93c4a8631be2757c34eee23fb"
   },
   "full_2542_test_suite_rerun": false,
-  "note": "Initial full2542 failures and logs remain preserved; prior unchanged code/failure rechecks plus new37 affected checks are consolidated. Linux37 passed including SCM_RIGHTS; macOS36 passed+1 platform skip. This is not a second full2542 run, native product success, package or guest acceptance.",
+  "note": "Initial2542 failures and original logs remain preserved. Reuse unchanged prior host scope and failure rechecks, plus current98 affected tests (97pass/1macOS skip; unchanged SCM_RIGHTS had passed Linux) and16 new dedicated QA host checks. Complete native contexts command passed against actual product policy.31. No second full suite or new-package/runtime pass is claimed.",
   "additional_empty_output_check": {
     "scope": "current product publication host regression only; actual empty-directory/foreign-content/rename-race/previous-evidence tests plus all affected OpenVPN checks",
     "tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
@@ -111,5 +111,74 @@
     "first_artifact_behavior_gate_passed": false,
     "new_package_or_guest_runtime": false,
     "representative02_preserved": "first-build-02-findings.json"
+  },
+  "additional_contexts_check": {
+    "scope": "all six context syntax fixes, strict exact previous source migration and actual complete product contexts native preflight ONLY NOT complete product/package/runtime",
+    "tested_commit": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+    "host": {
+      "tests": 98,
+      "passed": 97,
+      "skipped": 1,
+      "skip_reason": "SCM_RIGHTS Linux-specific test; previously passed unchanged on actual Linux",
+      "receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/affected-host.json",
+        "sha256": "6e7a819220cf69b9280daddc46d94b382c5df3ed6316b15e6887241ad84de413"
+      },
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/affected-host.log",
+        "sha256": "0fd6228e808d1e40213e247476ba67b6565d7172857cceea2783cbee230810aa"
+      }
+    },
+    "source_upgrade": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/source-upgrade/evidence.json",
+      "sha256": "dd0ab53542793f7ab01e6d8659a14eb06a66ff05ea06bc38979acd987d2dadb8"
+    },
+    "source_upgrade_checks": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/source-upgrade/checks.json",
+      "sha256": "b00606ceb336b38a9817993c9ad50afa6d5353b75123aee46da3d18352bf60a5"
+    },
+    "native_preflight": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/evidence.json",
+      "sha256": "ae5653693d9cbcc14f9a6b4c0ab8058287953de581ee302117b6e62f4bd12d2b"
+    },
+    "native_preflight_checks": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/checks.json",
+      "sha256": "654d117b7d99a51d5c193c8e63cc6c6bfa8eb83f37837eb0027aab0d85d5bdaf"
+    },
+    "native_log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/native-preflight/actual-command.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native_full_contexts_exit_code": 0,
+    "permissions_or_type_transition_rules_changed": false,
+    "source_files_sha256": {
+      "scripts/prepare_qemu_sensor_runtime.py": "11b38860aca6bc8fe959bcc8e94dd3f29acf1a474854662b7920f0135cb17476",
+      "scripts/prepare_qemu_gnss_runtime.py": "f67fc589c09629cfdcd6e23a6a754fed56e6c418b9c6efab7e5b21b71bfe9672",
+      "scripts/prepare_qemu_openvpn_backend.py": "2d3a8bb2057c1150ffeb304e086215167e75c66a9384b93d367ad4141496c28f",
+      "patches/common/foundation/communication/netmanager_ext/openvpn_backend/files/qemu_openvpn_file_contexts": "12afa0633f9dc70ebc1d26c6461f8e03968bf045c115125a12392253dcc247cb"
+    },
+    "known_previous_inputs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-SELinux-contexts-compatibility-01/known-previous-inputs.json",
+      "sha256": "ce21982d393677c1da11fa822f5f58709f3ba4cd0aaeaa5a08d2c048b19f0751"
+    },
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_started": false
+  },
+  "dedicated_QA_host_checks": {
+    "AudioHaptic": {
+      "tests": 5,
+      "report": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/audio-haptic-runtime-tools-review.json",
+        "sha256": "c0be786dd8409bc90231c34a9b2e8f11ce398d171cee81b5ac57ffd8245f6ff1"
+      }
+    },
+    "Calendar": {
+      "tests": 11,
+      "report": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/calendar-runtime-tools-review.json",
+        "sha256": "5b651fe2d3e00793c8112b4f7ca4b18e1d2cf5b41acf68108f0e69cbd3bf001a"
+      }
+    },
+    "SDK_native_helpers_and_guest_executed": false
   }
 }

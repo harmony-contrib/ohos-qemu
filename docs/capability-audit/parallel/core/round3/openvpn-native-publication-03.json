@@ -1,0 +1,70 @@
+{
+  "published": true,
+  "files": {
+    "build-evidence.json": {
+      "sha256": "b74d86228a2c3f46a114a45894417a9a3841f86fcd4f2e6c53ec50c3704b1665",
+      "bytes": 131633
+    },
+    "port-check.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "port-apply.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "autoreconf.log": {
+      "sha256": "7ad5654382b86c35cec83f0b0b9949556f63b40445c8472e4ba08ec9ab264420",
+      "bytes": 1211
+    },
+    "configure.log": {
+      "sha256": "535d3fa2b1737ba5d5892c464b7b08bc005676a1e3f8081fa5db8de8bc1fa97f",
+      "bytes": 14716
+    },
+    "make-compat.log": {
+      "sha256": "ad9d21b1e99ca3efa8e8a798d79e6cca31cc733a25fce30b294d3405c0e5ac17",
+      "bytes": 400
+    },
+    "make-openvpn.log": {
+      "sha256": "618783952418ed6fc3ff3237bdf66e9191259e659f38bcc5025faf5ee02eff47",
+      "bytes": 2414
+    },
+    "ELF-identity.log": {
+      "sha256": "2156995d4fc1b2af1411faaefc8a12ae50a974719a5df09260276294ca864278",
+      "bytes": 4282
+    },
+    "openvpn": {
+      "sha256": "782038937c8bfdf0363fcb3e56b4650cbd13d95e1d8b0c2cfe33da9aae2d201b",
+      "bytes": 843656
+    },
+    "COPYING": {
+      "sha256": "2bb17fe225c16734912c86003329ff44981ddae5f3a55bb2fa55b6938a12241b",
+      "bytes": 3820
+    },
+    "COPYRIGHT.GPL": {
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6",
+      "bytes": 17984
+    }
+  },
+  "scope": "actual current full-product OpenVPN action compiled and published into formerly empty GN directory ONLY NOT complete build/package/runtime",
+  "source_commit": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "observed_utc": "2026-10-17T03:37:49.916655+00:00",
+  "argv": [
+    "docker",
+    "exec",
+    "-e",
+    "PYTHONDONTWRITEBYTECODE=1",
+    "ohos-qemu-phone-build",
+    "python3",
+    "-c",
+    "from pathlib import Path; import json,hashlib,base64; p=Path('/Volumes/PSSD/qemu/openharmony/out/arm64_virt/gen/foundation/communication/netmanager_ext/qemu_openvpn/source-build'); r=p/'build-evidence.json'; print(json.dumps({'published':r.is_file(),'receipt_base64':base64.b64encode(r.read_bytes()).decode() if r.is_file() else None,'files':{f.name:{'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'bytes':f.stat().st_size} for f in p.iterdir() if f.is_file() and not f.is_symlink()}}))"
+  ],
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-03/openvpn-published-build-evidence.json",
+    "sha256": "b74d86228a2c3f46a114a45894417a9a3841f86fcd4f2e6c53ec50c3704b1665"
+  },
+  "binary_sha256": "782038937c8bfdf0363fcb3e56b4650cbd13d95e1d8b0c2cfe33da9aae2d201b",
+  "builder_sha256": "95848ece8c8f2e62458a56e7f9b76e4692e19f8bd5d99e72d6f4947c779b5ab4",
+  "commands": 7,
+  "first_artifact_behavior_gate_passed": false
+}

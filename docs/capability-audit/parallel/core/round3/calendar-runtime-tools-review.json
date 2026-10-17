@@ -1,0 +1,15 @@
+{
+  "scope": "root exact new Calendar QA source checks and host protocol counterexamples ONLY NOT SDK/native/guest",
+  "manifest": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/system/round21-runtime-tools/result.json",
+  "manifest_sha256": "995174bd882357c43eb1562c5bdab5750b5262defe62c464befd5bafdedb5eca",
+  "exact_files_checked": 21,
+  "argv": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "ci/capability-audit/batch_system_calendar_runtime_tests.py"
+  ],
+  "exit_code": 0,
+  "host_tests": 11,
+  "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-Calendar-runtime-tools-host-01/host.log",
+  "log_sha256": "243d9f12aca1e6da8aa0f7b3bcf5ccd1e5fc47e87caff6bc6b68009466b67934",
+  "first_artifact_behavior_gate_passed": false
+}

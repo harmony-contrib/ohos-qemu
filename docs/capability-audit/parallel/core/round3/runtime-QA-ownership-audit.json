@@ -1,0 +1,298 @@
+{
+  "scope": "exclusive source ownership and frozen production input check ONLY NOT runtime pass",
+  "observed_utc": "2026-10-17T03:51:10.490368+00:00",
+  "product_HEAD": "f40b63e5ee69f9e84021ad02be66d73bc1dbc0b9",
+  "tracked_changes_root_progress_docs_only": [
+    "docs/capability-audit/parallel/core/round3/progress.json",
+    "docs/capability-audit/parallel/core/round3/resource-admission.json"
+  ],
+  "Git_index_empty": true,
+  "all_subagent_file_leases_released": true,
+  "production_or_shared_file_modified_since_freeze": false,
+  "overlapping_or_unassigned_new_paths": [],
+  "counts": {
+    "media": 27,
+    "system": 22,
+    "apps": 2,
+    "root": 4
+  },
+  "files": [
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_build_callers.py",
+      "owner": "media",
+      "sha256": "0a81371f0bc64a66d90e9c7078e476e74145485b38b1cfd64d3f38ffbf679ba3"
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_build_sampler.py",
+      "owner": "media",
+      "sha256": "d74b95ebb75d6eee6f6151a06a151dbe1a2c5da31e6028d57a4db3b8a834f586"
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_host_checks.py",
+      "owner": "media",
+      "sha256": "efc2cd89f5e0401830a03f2690b36cc775a3eb9875f40a3af85e69e3b073e2fb"
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_project.py",
+      "owner": "media",
+      "sha256": "eab85b0a0525126ce5fd3ed96551bfb02fa54d475e8838838665f91c58712a44"
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_runtime.py",
+      "owner": "media",
+      "sha256": "ab34a059f62c011452be0c3bc451f280bddf002d56adc80c67036337c5218174"
+    },
+    {
+      "path": "ci/capability-audit/batch_media_audio_haptic_verify.py",
+      "owner": "media",
+      "sha256": "b55bed2a5dc29d26dc9a4177ad52074ee062cf591a8436c8dae91ea9cc7defd2"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_archive.py",
+      "owner": "system",
+      "sha256": "88439dcb61658e7c8481b77d52836e1e113041407eaa31e512f57b4e242f72f2"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_build.py",
+      "owner": "system",
+      "sha256": "5798283c67a1f8d5e55fb87f273789b9e9cbfdb0f9ff8ea08fbe62ab38f06620"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_capture.py",
+      "owner": "system",
+      "sha256": "d900d85d061653151ee30d5c74cfa98d9aca6017aadaeae1dbdeb6cf6dedf1f3"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_helper.py",
+      "owner": "system",
+      "sha256": "bdd6660d34fea4cf7c3e1561cd40716989731ebcb38518e5e2fb76cd726988fc"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_project.py",
+      "owner": "system",
+      "sha256": "e3867a517e627db6993a539caf9344c9771bcc8d5ce331004ec468c32fafb7fd"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_protocol.py",
+      "owner": "system",
+      "sha256": "547ffa37da71fd04fbc712b752306f134da5b8dfb5859ff3bbcd214cdebfecb9"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_sign.py",
+      "owner": "system",
+      "sha256": "c12de24efe9b9965d192ec42487f44768c8634675003ee71800c977a17bcf8ff"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_tests.py",
+      "owner": "system",
+      "sha256": "5bfc0ffc411ed34e1f21556106b9ca8c1597ca66cae1545c5a1c32b2b1e9a6ee"
+    },
+    {
+      "path": "ci/capability-audit/batch_system_calendar_runtime_verify.py",
+      "owner": "system",
+      "sha256": "3092a031a57adaed8e64a32ec233052acb2c8c4b6a4176b629de8a474969c5c9"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/EntryAbility.ets",
+      "owner": "media",
+      "sha256": "57313e27545fa92390d73047a8c2b3eb49f77f14c77ebdb20429ea591573cd2c"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/Index.ets",
+      "owner": "media",
+      "sha256": "b223ee6c9cbdc1fd88eba29f91d8a2914381e0962def8d602737393389b6590f"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/cpu-cap.cjs",
+      "owner": "media",
+      "sha256": "3807e82d9e777a81e4ff3eb683d0f3fad807533e4e0c0dff1d73ad3f909abe62"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/sampler.cpp",
+      "owner": "media",
+      "sha256": "10a1f7d7ffe0a141dfae7950e2fd2bcabc209746e199cf6dc18c4fae938a98d3"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/LICENSE",
+      "owner": "media",
+      "sha256": "9264a6b3c134511ccfcae48ed3808320688ae6933ec4fc547476a005095fc1ef"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/provenance.json",
+      "owner": "media",
+      "sha256": "158aa4af29942fac05c631333667796e30ee7cce26805c8c57f92ed18881fa2b"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/COPYING",
+      "owner": "media",
+      "sha256": "6f04ae8364d0079a192b14635f4b1da294ce18724c034c39a6a41d1b09df6100"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/audio-hmp-cmds.c",
+      "owner": "media",
+      "sha256": "c2590ad00f1b06e53975254b419cee0e75c6d7ddfca1b765d4d1747ac52e255b"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/provenance.json",
+      "owner": "media",
+      "sha256": "eee1fc8af132c8fa28ae2f9aac0819a328c8fa8c517434104e080557736c6872"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/qemu-v9.0.0/wavcapture.c",
+      "owner": "media",
+      "sha256": "320fce0b787cc074b221bcd8cda4c162f18d9f78c616d586966f90ce927e0141"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/services/miscdevice_service/haptic_matcher/src/custom_vibration_matcher.cpp",
+      "owner": "media",
+      "sha256": "563b36052c9413dc00fbc8d8c8e48d91f01192b23da546bc8ff685c37bd76145"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/services/miscdevice_service/src/vibrator_thread.cpp",
+      "owner": "media",
+      "sha256": "c5c8bbef441209bbc6d8c03f3f843e570ecac36a037e6015f2516b61295b6733"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/test/unittest/vibrator/native/resource/json_file/coin_drop.json",
+      "owner": "media",
+      "sha256": "dbc39b7446ccbef191d85ad3a95b2a41de0384ecfcdb98b3daf12259a3dde97f"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/haptic_decoder/oh_json/include/default_vibrator_decoder.h",
+      "owner": "media",
+      "sha256": "61a30cd4499a9ab648f4a1406b969d63047a01389049bf60ab389be0b2516eba"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/haptic_decoder/oh_json/src/default_vibrator_decoder.cpp",
+      "owner": "media",
+      "sha256": "ea0750b54561c3f5fdb08b361bc2a1f485e6a2bb4bbf2971f3588f45bb82ee9d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/tools/haptic_format_converter/converter/schemas/oh_schema.json",
+      "owner": "media",
+      "sha256": "c45f1e4522accdb3b3634c2c7865dab82afe8f68165780b2af36ab0098865bac"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/utils/tools/haptic_format_converter/tests/test_data/oh_no_curve_sample.json",
+      "owner": "media",
+      "sha256": "cd2452325cabc30592b20955a2483fb3cb6cbdb465eb4abb01417bc125519aae"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/CalendarAudit.ets",
+      "owner": "system",
+      "sha256": "34602cacd0d30e343941f0c2dd970fc84a4fe5566722c0c4482636fb8cbc0fa8"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/EntryAbility.ets",
+      "owner": "system",
+      "sha256": "714569d1b5f73c9fd80cd1f55bbdb3bc06f4e20c623579848550b0f3ca35dd73"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/Index.ets",
+      "owner": "system",
+      "sha256": "0065edb9fca628499d5a3e950189064a84687c5529377cae791409bfeaba32c3"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/contract.json",
+      "owner": "system",
+      "sha256": "2aecb161ea64ac15d232518b7909aee6db64a2e0d83209723e77d2a90181f869"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/cpu-cap.cjs",
+      "owner": "system",
+      "sha256": "8109ae1269df83cb19ac39357ca7432fb127628a3510893e6d7df2a9f03f362e"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/host.cjs",
+      "owner": "system",
+      "sha256": "927f2e72ea2c8f0d79829c03c09c2d12d3d1d27b6444541e52b2c02d81070f2d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_system/calendar_runtime/observer.cpp",
+      "owner": "system",
+      "sha256": "b73909a36e33aa395d10970aeb90ca2538a1a14ab8cfe54eef782b4c2f619191"
+    },
+    {
+      "path": "docs/capability-audit/parallel/apps/round21-runtime-tools/HANDOFF.md",
+      "owner": "apps",
+      "sha256": "24043e6af54be016fa0376c388eb10293461680f1caf702aa134f290f6cf6afb"
+    },
+    {
+      "path": "docs/capability-audit/parallel/apps/round21-runtime-tools/result.json",
+      "owner": "apps",
+      "sha256": "1c28bf685172aacb2981063d2a126b49a59f4dacfb7f26c6772db5167a7d6a27"
+    },
+    {
+      "path": "docs/capability-audit/parallel/core/round3/apps-runtime-coverage-review.json",
+      "owner": "root",
+      "sha256": "7cf260d49d34cfce06cfe00268148319a8f54f0f263eb103fde37e1bbd52d9e1"
+    },
+    {
+      "path": "docs/capability-audit/parallel/core/round3/audio-haptic-runtime-tools-review.json",
+      "owner": "root",
+      "sha256": "c0be786dd8409bc90231c34a9b2e8f11ce398d171cee81b5ac57ffd8245f6ff1"
+    },
+    {
+      "path": "docs/capability-audit/parallel/core/round3/calendar-runtime-tools-review.json",
+      "owner": "root",
+      "sha256": "5b651fe2d3e00793c8112b4f7ca4b18e1d2cf5b41acf68108f0e69cbd3bf001a"
+    },
+    {
+      "path": "docs/capability-audit/parallel/core/round3/openvpn-native-publication-03.json",
+      "owner": "root",
+      "sha256": "7812689799b5faec3af0ae8c4b618b9737f094fc26c12ef82c9754231f8d84a6"
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/HANDOFF.md",
+      "owner": "media",
+      "sha256": "b9b28b17ca3a1707d417d9034968a97d2cdeb68694523a8e95e107d46d43c154"
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/host-checks.json",
+      "owner": "media",
+      "sha256": "4f6ebe4f49c7aceaff7e7daebe89186e6abae4684fd414b3d6728e68bd432a5e"
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/host-checks.log",
+      "owner": "media",
+      "sha256": "f488942470c2bd200a1109c463adca784a3475ee28681e76aedc31d76adaeb37"
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round21-runtime-tools/result.json",
+      "owner": "media",
+      "sha256": "8405dee652e63035c278f5abb8171ccf683c65f16b0cefa32fa84cfa41d8fabc"
+    },
+    {
+      "path": "docs/capability-audit/parallel/system/round21-runtime-tools/HANDOFF.md",
+      "owner": "system",
+      "sha256": "28be398b5a2475544331a351d95671115ebc540fd1311617a0c84d4ca3b6c478"
+    },
+    {
+      "path": "docs/capability-audit/parallel/system/round21-runtime-tools/host-tests.log",
+      "owner": "system",
+      "sha256": "60121be27d555836baeaa89d5b7da0db4eb91bc682f8537e36c409385a8278c9"
+    },
+    {
+      "path": "docs/capability-audit/parallel/system/round21-runtime-tools/permission-definition-reference.json",
+      "owner": "system",
+      "sha256": "3881efa45cc702348e3b0ff8d65028a2fad651fe94ecbb9bc01e6c781c0fcdd2"
+    },
+    {
+      "path": "docs/capability-audit/parallel/system/round21-runtime-tools/project-generation-check.json",
+      "owner": "system",
+      "sha256": "d1dbe04974dda546a617acf4706a0dfa33b59284a23d9607ebd641f4a8f4946e"
+    },
+    {
+      "path": "docs/capability-audit/parallel/system/round21-runtime-tools/result.json",
+      "owner": "system",
+      "sha256": "995174bd882357c43eb1562c5bdab5750b5262defe62c464befd5bafdedb5eca"
+    },
+    {
+      "path": "docs/capability-audit/parallel/system/round21-runtime-tools/syntax-cli-check.log",
+      "owner": "system",
+      "sha256": "57890ccca1eac23fe2e9bfbc8b5fcbdfed60ef789148eb125cd853229b597978"
+    }
+  ],
+  "source_out_owner": "root only",
+  "first_artifact_behavior_gate_passed": false
+}
