@@ -169,11 +169,11 @@
       "services/location_locator/locator/include/locator_required_data_manager.h": "55a343f82e124ec573ae7b7b61826d43e9fc4c9a62209056c76e1742074f39e8",
       "services/location_locator/locator/include/report_manager.h": "2bd01481f5dbadd78368098e5f8e718cb5006ddc0ef2f0a4fd69ec354f2c94bc",
       "services/location_locator/locator/include/request_manager.h": "5a4bd93057a989a2a772e81ebc59d623e6d1386a2c1ef54af3c749088b8c03ba",
-      "services/location_locator/locator/source/locator_ability.cpp": "63499d9ac1b6b7467a0300313ee754ec4f0c90601417b9bcfe1c9c7ca64cc298",
+      "services/location_locator/locator/source/locator_ability.cpp": "d46760dc0344dd42dbfbe4c48ae3bdcd3d2c64bd586d8722613c0db5fba50648",
       "services/location_locator/locator/source/locator_required_data_manager.cpp": "099d2bf072b88873ea646ffeb7347daaf6e26c2ac89d4a6323fe7a9b31f3ac29",
       "services/location_locator/locator/source/report_manager.cpp": "a68465ad209e642583e73d20973d3ce3337ad4c5eabdd1df58838349ad94c012",
       "services/location_locator/locator/source/request_manager.cpp": "255a921ca779bc807300642e5b52815405f3c6e4f11a571234e3081906b84a15",
-      "services/location_gnss/gnss/source/gnss_event_callback.cpp": "1f31fb184abbbb53754461bcfe5a1b4866749515e4de89690c6948fe3471ef09",
+      "services/location_gnss/gnss/source/gnss_event_callback.cpp": "7ec1a28ac6d75152a3c8be9a8168f4952fabd4e16439b05b41f1d440e5ccfe63",
       "services/location_gnss/gnss/include/gnss_event_callback.h": "f8d233c08b1f097b37c32db4d3a748dc9e43a7cdb88a7ed42a4e6ba916b274cf",
       "services/location_gnss/gnss/source/gnss_ability.cpp": "2970d270ecf5ce5c45a57a722b2e97727419e53c14bcf81219123f6690b03f8b"
     },
@@ -234,6 +234,35 @@
       "services/location_gnss/gnss/source/gnss_event_callback.cpp": "1f31fb184abbbb53754461bcfe5a1b4866749515e4de89690c6948fe3471ef09",
       "services/location_gnss/gnss/include/gnss_event_callback.h": "f8d233c08b1f097b37c32db4d3a748dc9e43a7cdb88a7ed42a4e6ba916b274cf",
       "services/location_gnss/gnss/source/gnss_ability.cpp": "2970d270ecf5ce5c45a57a722b2e97727419e53c14bcf81219123f6690b03f8b"
+    },
+    "prefix_6": {
+      "frameworks/base_module/source/request_config.cpp": "f40ce392ca94bcf1a133a4ad97492c845b911ec73eb7ad30647989b685779f37",
+      "frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp": "7c3a6e732c3b4fddce9106ff152e49bf6adfac54c02357016b04bbc245573631",
+      "frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h": "175d3d33876761796dc9e746a5016e4efc8076c7ce898c5848ab514ff38be604",
+      "frameworks/js/napi/include/location_napi_adapter.h": "ca337398d767ae51a4ec658583e463627efccd88d072609f4c41ab23ba10c693",
+      "frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp": "d3e48ae7b689e2ac3dd65503fb02290b1e11891560a4f38256967026e00728e1",
+      "frameworks/js/napi/source/location_napi_adapter.cpp": "abba792484ad3f5eb3833b98d790361080c848b05967383693a49bcadcc39d96",
+      "frameworks/js/napi/source/location_napi_entry.cpp": "67b457f0b55ec0ae6bbf9696f3f7e1165ebbfdb8f07fa8d49b893d63e8bd5639",
+      "frameworks/js/napi/source/napi_util.cpp": "7949e7dc5253f65861343197689f04b8a0d810625d4f4c9da69a2d5cd3ce3dc9",
+      "frameworks/native/locator_sdk/ILocatorService.idl": "82fa55030c356ce9c47f05b282a0fd9786fe3ad768bd1ca79c0b784d6808fd4d",
+      "frameworks/native/locator_sdk/source/locator_impl.cpp": "48a722ac28468b05f70cc10352c150c50ffde662459d709613ef37ea31d4d73d",
+      "interfaces/inner_api/include/constant_definition.h": "c14712513f6813dcbf9add316f9254759231f8bdba53def14a3d80acc2640472",
+      "interfaces/inner_api/include/fusion_fence_request.h": "ee2a3d4613e3b29ebf071791d84aa57c721bc54cd508a44fcd1409aed166b323",
+      "interfaces/inner_api/include/locationhub_ipc_interface_code.h": "7b7234a71b5aa2e0c1b6a4039b5f7e56b81da1766cddbeed7b942b72336fe70a",
+      "interfaces/inner_api/include/locator_impl.h": "7ad2442032ace3abd54fdb5318ec3bf0f570d79981b0c90e82ce3505da15333b",
+      "interfaces/inner_api/include/request_config.h": "cee151f6a8a6f5c074eb5adb2c52997a42977d803457f16bc7925426336d4564",
+      "services/location_locator/locator/BUILD.gn": "d0d50d355c7a7120e0ec0acc07d9459d3f6efbb60c02842a3bd9feab6fe39b38",
+      "services/location_locator/locator/include/locator_ability.h": "619178908b62613ff5209655df52b5e58e7c6e687ea82e4a1324052a3b099d7b",
+      "services/location_locator/locator/include/locator_required_data_manager.h": "55a343f82e124ec573ae7b7b61826d43e9fc4c9a62209056c76e1742074f39e8",
+      "services/location_locator/locator/include/report_manager.h": "2bd01481f5dbadd78368098e5f8e718cb5006ddc0ef2f0a4fd69ec354f2c94bc",
+      "services/location_locator/locator/include/request_manager.h": "5a4bd93057a989a2a772e81ebc59d623e6d1386a2c1ef54af3c749088b8c03ba",
+      "services/location_locator/locator/source/locator_ability.cpp": "63499d9ac1b6b7467a0300313ee754ec4f0c90601417b9bcfe1c9c7ca64cc298",
+      "services/location_locator/locator/source/locator_required_data_manager.cpp": "099d2bf072b88873ea646ffeb7347daaf6e26c2ac89d4a6323fe7a9b31f3ac29",
+      "services/location_locator/locator/source/report_manager.cpp": "a68465ad209e642583e73d20973d3ce3337ad4c5eabdd1df58838349ad94c012",
+      "services/location_locator/locator/source/request_manager.cpp": "255a921ca779bc807300642e5b52815405f3c6e4f11a571234e3081906b84a15",
+      "services/location_gnss/gnss/source/gnss_event_callback.cpp": "1f31fb184abbbb53754461bcfe5a1b4866749515e4de89690c6948fe3471ef09",
+      "services/location_gnss/gnss/include/gnss_event_callback.h": "f8d233c08b1f097b37c32db4d3a748dc9e43a7cdb88a7ed42a4e6ba916b274cf",
+      "services/location_gnss/gnss/source/gnss_ability.cpp": "2970d270ecf5ce5c45a57a722b2e97727419e53c14bcf81219123f6690b03f8b"
     }
   },
   "patches": {
@@ -242,6 +271,7 @@
     "0003-connect-current-district-and-processed-skiing-history.patch": "80244fe9981f57694d685a979ee06f4060d7ce793618b062ecbadc1505fbbdb4",
     "0004-connect-fusion-fence-owner-lifecycle.patch": "a3a5623d868565bfc2a7ee0a11c04968e52afa569f0d189bf67f5be1e61a2e84",
     "0005-preserve-measured-satellites-and-validate-GNSS-configuration.patch": "1b012149a9c321fe99786a10050c9b6545af7061907f05e5e0fd05299faa4144",
-    "0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7"
+    "0006-preserve-fusion-owner-account-contract.patch": "607c88c5783a9a7a99a4f2ce9111e8f6f466e61b0dc7dba8e62f199438a288f7",
+    "0007-validate-measured-GNSS-and-ordered-WLAN-evidence.patch": "fcb43f9e1797e960b21260bd71ce034ceedeac256487ce2fee337386ad90ef65"
   }
 }

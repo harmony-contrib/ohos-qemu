@@ -37,3 +37,4 @@ docs/capability-audit/parallel/apps/round21-coordinated/baseline-regression.log 
 patches/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/0001-reset-real-prepare-and-reap-failed-first-frame-waiters.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/applications/standard/calendardata/main_ui/0001-route-real-calendar-reminders-to-source-provider.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 patches/common/base/notification/distributed_notification_service/calendar_owner/0001-bind-reminder-owner-to-installed-calendar-provider.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/base/location/location/api26_runtime/0007-validate-measured-GNSS-and-ordered-WLAN-evidence.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

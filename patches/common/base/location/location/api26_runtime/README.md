@@ -1,6 +1,6 @@
 # API 26 location runtime routes
 
-Apply after `api26_public_enums`, using this component's `apply.sh`. The six-patch
+Apply after `api26_public_enums`, using this component's `apply.sh`. The seven-patch
 stack adds live icon, filtered BLE search, district, skiing-track and fusion-fence routes.
 Transactions 65 through 75 are appended while all original numbers are preserved.
 
@@ -37,7 +37,7 @@ for the algorithm, authorization, compatibility and centralized build details.
 
 The guard pins the location project HEAD and the complete raw bytes of all 27
 upstream targets. It accepts only the original component state (after the enum
-prerequisite), the complete first/second/third/fourth/fifth patch prefixes, or the final state. Unknown or mixed
+prerequisite), the complete first/second/third/fourth/fifth/sixth patch prefixes, or the final state. Unknown or mixed
 edits, changed patches, unexpected new-header bytes, missing existing files and source/ancestor symlinks fail before
 source writes. A private suffix preflight must produce the exact final
 bytes and revalidate the source snapshot before atomic owned-file replacement.
@@ -79,3 +79,13 @@ and the unchanged account helper call chain are exercised by host regression; th
 previous const caller is required to fail compilation against that declaration.
 See round6-account-contract.md and round6-platform-build-request.json for the
 parent-reported full-platform failure and the remaining complete-TU gate.
+
+The seventh patch rejects normal HDI location reports without measured latitude,
+longitude and horizontal-accuracy validity bits, nonfinite or out-of-range
+coordinates, and invalid horizontal accuracy. An optional UTC field disciplines
+the clock only with its actual validity bit and a positive timestamp. Raw
+measurement fields and validity bits are otherwise preserved. Fusion WLAN
+snapshots now use monotonically increasing scan-completion timestamps; replayed
+or older completions cannot overwrite newer inside/outside evidence. Individual
+AP timestamps still control freshness and may repeat across a new completed
+scan. See `round21-coordinated/HANDOFF.md` for regression and new-package gates.

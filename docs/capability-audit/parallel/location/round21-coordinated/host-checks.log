@@ -1,0 +1,18 @@
+Host-only targeted check record; no package-runtime closure.
+Environment: Darwin 24.1.0 arm64; clang 21.1.2; Python 3.13.7; ASan/UBSan.
+
+$ LC_ALL=C LC_CTYPE=C LANG=C python3 -m unittest discover -s ci/capability-audit -p test_batch_location_producer_evidence.py -v
+Ran 4 tests in 6.176s
+OK (exit 0)
+PASS: actual prefix6 functions reproduce 3 GNSS/clock scenarios and WLAN replay assertion failures; patched functions pass invalid fields/values, optional UTC, legal geography/accuracy, scan completion order, same AP timestamp on new scan, canceled record silence.
+
+$ LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit python3 -m unittest -v test_batch_location_gnss_runtime.GnssRuntimeTests.test_actual_callbacks_configuration_and_request_dispatch test_batch_location_fusion_runtime.FusionRuntimeTests.test_actual_wire_geometry_owner_and_service_lifecycle test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_all_legal_prefixes_and_idempotence test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_unknown_and_mixed_edits_rejected_before_mutation test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_wrong_head_and_changed_patch_rejected
+Ran 5 tests in 11.256s
+OK (exit 0)
+PASS: existing actual GNSS SV/HDI POD/config/request boundaries, fusion geometry/owner/expiry/permissions; all original/prefix1..6/final apply and idempotence; mixed/unknown/wrong-HEAD/changed-patch rejection.
+
+Final namespace qualification recheck:
+$ LC_ALL=C LC_CTYPE=C LANG=C PYTHONPATH=ci/capability-audit python3 -m unittest -v test_batch_location_producer_evidence.ProducerEvidenceTests.test_current_gnss_validation_and_valid_boundaries test_batch_location_gnss_runtime.GnssRuntimeTests.test_actual_callbacks_configuration_and_request_dispatch test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_all_legal_prefixes_and_idempotence
+Ran 3 tests in 16.132s
+OK (exit 0)
+PASS after final review explicitly qualified GnssLocationValidity to actual HDI namespace. Rechecked changed GNSS function + adjacent actual GNSS behavior + all legal apply prefixes.
