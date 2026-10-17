@@ -148,7 +148,7 @@ def wave_values(path):
         return pcm.pcm_values(stream.readframes(frames))
 
 
-def audio_metrics(capture, expectation, reference):
+def audio_metrics(capture, expectation, reference, *, followed_by_boundary=False):
     values = wave_values(checked(capture['wav'])); frames = len(values)//2
     elapsed = (capture['host_end_ns']-capture['host_begin_ns'])/1e9
     require(0 < elapsed <= 120 and abs(frames/48000-elapsed) <= .25,
@@ -180,7 +180,55 @@ def audio_metrics(capture, expectation, reference):
     if mode == 'eos':
         require(result['tail_rms'] <= 8 and 3.5 <= (last-first)/48000 <= 4.4, 'actual 4-second WAV EOS/trailing silence differs')
     elif mode == 'loop':
-        require((last-first)/48000 >= 8 and rms(tail) > 64, 'actual repeated audio loop stops early')
+        require((last-first)/48000 >= 8 and (followed_by_boundary or rms(tail) > 64), 'actual repeated audio loop stops early')
+    return result
+
+
+def active_boundary_metrics(segment, data, boot, journal, clock_interval):
+    expectation = segment['boundary_expected']; required = expectation['active_before']
+    require(required is not None, 'explicit active boundary expectation required')
+    start_request = load(checked(segment['operation']['request']))['request']
+    boundary_request = load(checked(segment['boundary_operation']['request']))['request']
+    start_group = [row for row in journal if row['operation_id'] == start_request['operation_id']]
+    boundary_group = [row for row in journal if row['operation_id'] == boundary_request['operation_id']]
+    began = one(boundary_group, 'begin'); start_return = one(start_group, 'return', 'AudioHapticPlayer.start')
+    require(began['player_epoch'] == start_return['player_epoch'] and began['sequence'] > start_return['sequence'] and
+            not any(row['event'] == 'callback' and row['api'] == 'AudioHapticPlayer.endOfStream' and
+                    row['sequence'] < began['sequence'] for row in start_group),
+            'EOS preceded the purported active Stop/Release; boundary remains unproved')
+    _, samples = sampler_rows(segment['sampler'], data['run_id'], boot)
+    instant = began['timestamp_ms'] * 1000000
+    preceding = [row for row in samples if row['realtime_ns'] <= instant and instant-row['realtime_ns'] <= 100000000]
+    require(len(preceding) >= 3 and instant-preceding[-1]['realtime_ns'] <= 30000000,
+            'no dense genuine VDI observations immediately before Stop/Release')
+    if required['haptic']:
+        require(all(row['running'] for row in preceding), 'VDI had already expired before active Stop/Release')
+    else:
+        require(all(not row['running'] for row in preceding), 'muted haptics unexpectedly active before Stop')
+    anchor = preceding[-1]
+    delta = instant-anchor['realtime_ns']
+    low, high = clock_interval
+    action_low = anchor['before_ns'] + delta + low - 1000000
+    action_high = anchor['after_ns'] + delta + high + 1000000
+    require(action_high-action_low <= 100000000, 'active boundary clock uncertainty exceeds 100ms; keep boundary gap')
+    result = dict(action_host_interval_ns=[action_low, action_high], preceding_VDI_samples=len(preceding),
+                  maximum_VDI_pre_action_age_ns=instant-anchor['realtime_ns'], required=required)
+    if required['audio']:
+        capture = segment['audio_capture']; values = wave_values(checked(capture['wav'])); origin = capture['host_begin_ns']
+        reference = pcm.pcm_values(checked(data['reference']).read_bytes())
+        # Use the declared +/-250ms capture-origin bound conservatively. The
+        # matched source must exist before the call; its last active frame must
+        # reach the call within 50ms under the worst allowed clock/origin bound.
+        end_frame = (action_low-origin-250000000)*48000//1000000000
+        start_frame = end_frame-2*pcm.WINDOW
+        require(start_frame >= 0 and end_frame <= len(values)//2, 'no genuine pre-action PCM window')
+        matches = [pcm.match_window(values[pos*2:(pos+pcm.WINDOW)*2], reference)
+                   for pos in (start_frame, start_frame+pcm.WINDOW)]
+        active = [i for i in range(len(values)//2) if max(abs(values[2*i]), abs(values[2*i+1])) > 64]
+        require(active and origin+active[-1]*1000000000//48000-250000000 >= action_high-50000000,
+                'PCM may have ended before Stop/Release under measured uncertainty; active boundary unproved')
+        result['pre_action_PCM_matches'] = matches
+    result['scope'] = 'conservative_continuous_PCM_and_read_only_VDI_boundary_NOT_physical_motor_or_late_callback_closure'
     return result
 
 
@@ -197,11 +245,15 @@ def segment_metrics(segment, data, boot):
         require(all(not r['running'] for r in tail), 'actual VDI still running at silent boundary')
         if expectation['action'] in ('start', 'create', None): require(not active, 'muted/denied/post-release/final interval unexpectedly vibrated')
     elif mode == 'eos': require(active and all(not r['running'] for r in tail), 'actual VDI did not run and expire at EOS')
-    elif mode == 'loop': require(active and any(r['running'] for r in tail), 'actual VDI loop not running after two audio periods')
+    elif mode == 'loop':
+        require(active and (segment.get('boundary_expected') is not None or any(r['running'] for r in tail)),
+                'actual VDI loop not running after two audio periods')
+        require(active[-1]['realtime_ns']-active[0]['realtime_ns'] >= 8000000000, 'VDI loop did not span two real audio periods')
     else: require(active, 'actual VDI never ran for unmuted haptics')
     if mode in ('active', 'eos', 'loop'): require(not samples[0]['running'], 'VDI already running before fresh UI start')
     reference = pcm.pcm_values(checked(data['reference']).read_bytes())
-    audio = audio_metrics(segment['audio_capture'], expectation, reference)
+    audio = audio_metrics(segment['audio_capture'], expectation, reference,
+        followed_by_boundary=segment.get('boundary_expected') is not None)
     result = dict(audio=audio, HDI_samples=len(samples), HDI_running_samples=len(active), clock_offset_ns=[low, high],
                   QEMU_audio_frame_origin_uncertainty_ns=250000000)
     if mode in ('active', 'eos', 'loop') and expectation['audio'] in ('active', 'eos', 'loop'):
@@ -266,8 +318,8 @@ def verify_evidence(path, archive, boot, *, command):
         identities[role] = identity
         proof = signatures.verify_signed_hap_artifacts(checked(item['signed_hap']), *ROLES[role], env['udid'],
             spec['signer']['dist'], checked(spec['signer']['jar']), Path(path).parent / ('verify-' + role + '-' + __import__('secrets').token_hex(4)), command)
-        require(signatures.hap_contents(checked(item['signed_hap']))[1] == signatures.hap_contents(checked(spec['projects'][role]['unsigned_hap']))[1] and
-                item['installed_hap']['sha256'] == item['signed_hap']['sha256'] and
+        signatures.verify_signed_payload(checked(spec['projects'][role]['unsigned_hap']), checked(item['signed_hap']))
+        require(item['installed_hap']['sha256'] == item['signed_hap']['sha256'] and
                 received[(item['installed_hap']['path'], item['installed_hap']['sha256'])] == identity['installed_remote'], 'signed/installed compiled payload differs')
         require(checked(item['journal_before']).read_bytes() == b'' and
                 any(j['raw'] == item['journal_before'] for j in value['journals']), 'fresh journal baseline missing')
@@ -277,13 +329,26 @@ def verify_evidence(path, archive, boot, *, command):
             require(actual['sha256'] == expected['sha256'] and received[(actual['path'], actual['sha256'])] ==
                     '/data/app/el2/100/base/' + ROLES[role][0] + '/files/' + name, 'private genuine challenge input differs')
         for when in ('initial', 'final'):
-            raw = item['token_' + when]; token = json.loads(observed(raw))
+            raw = item['token_' + when]; token = json.loads(observed(raw, project.sampler_script(
+                '/data/local/tmp/audio-haptic-' + data['run_id'], 'token', data['run_id'], env['boot_id'], ROLES[role][0], identity['uid'])))
             require(token.get('kind') == 'token' and token['run_id'] == data['run_id'] and token['boot_id'] == env['boot_id'] and
                     token['bundle'] == ROLES[role][0] and token['uid'] == identity['uid'] and token['token_id'] == identity['token_id'] and
                     token['VIBRATE'] == (0 if role == 'normal' else -1) and 0 < token['before_ns'] <= token['after_ns'], 'real VIBRATE role/token boundary differs')
         binding_results[role] = dict(identity=identity, signature=proof)
     require(set(identities) == set(ROLES) and len({v['uid'] for v in identities.values()}) == 2 and
             len({v['token_id'] for v in identities.values()}) == 2, 'ordinary/denied installed identities overlap')
+    phase_records = {row['phase']: row for row in value['phases']}
+    require(len(phase_records) == len(value['phases']), 'duplicate phase evidence')
+    transports = {}
+    for block in project.execution_plan():
+        first = phase_records[block[0]['name']]
+        expected = load(checked(first['request']))
+        if len(block) == 2:
+            second = phase_records[block[1]['name']]
+            expected = project.paired_request(expected, load(checked(second['request'])), block[0]['hold_ms'])
+            require(first['transport_request'] == second['transport_request'] and first['click'] == second['click'], 'paired calls require one explicit real UI click')
+        require(load(checked(first['transport_request'])) == expected, 'real UI transport differs from fixed explicit operation plan')
+        for phase in block: transports[phase['name']] = first['transport_request']
     epochs = {role: 0 for role in ROLES}; source_ids = {role: -1 for role in ROLES}; pids = {role: [] for role in ROLES}; nonces = set()
     require(len(value['phases']) == len(project.phases()), 'fixed lifecycle/negative/mute coverage incomplete')
     for captured, phase in zip(value['phases'], project.phases()):
@@ -302,7 +367,7 @@ def verify_evidence(path, archive, boot, *, command):
             pids[role].append((pid, fields[19]))
         click = captured['click']; require(click in value['ui_actions'] and click['bundle'] == ROLES[role][0] and click['selector'] == {'identifier': 'audio_haptic_run'}, 'wrong real UI host control')
         shared.verify_click(click, commands, value['hdc'], env['target'], observed)
-        staged = [r for r in value['staged'] if r['local'] == captured['request']]
+        staged = [r for r in value['staged'] if r['local'] == transports[phase['name']]]
         require(len(staged) == 1 and staged[0]['remote'] == '/data/app/el2/100/base/' + ROLES[role][0] + '/files/audio-haptic-request.json', 'clicked operation lacks exact staged request')
         begin_index = observations[(captured['begin_boot']['path'], captured['begin_boot']['sha256'])]['command']
         end_index = observations[(captured['end_boot']['path'], captured['end_boot']['sha256'])]['command']
@@ -324,13 +389,34 @@ def verify_evidence(path, archive, boot, *, command):
             shared.exact_script(commands[sent+2], 'test ! -L ' + shlex.quote(remote) + ' && mv ' + shlex.quote(item['sent_remote']) + ' ' + shlex.quote(remote))
         if remote.endswith('/sampler'): require(item['local'] == helper['binary'] and item['uid'] == 0 and item['mode'] == '700', 'another observer was executed')
         else: require(item['mode'] == '600' and item['uid'] in {v['uid'] for v in identities.values()}, 'ordinary private input owner/mode differs')
-    planned = [v for v in project.phases() if v['hold_ms']]
-    require([v['phase'] for v in value['segments']] == [v['name'] for v in planned] + ['final-cleanup-quiet'], 'all actual PCM/HDI observation intervals required')
+    planned = project.capture_plan()
+    require([v['phase'] for v in value['segments']] == [project.capture_name(block) for block in planned] + ['final-cleanup-quiet'], 'all continuous PCM/HDI observation intervals required')
     metrics = []
     final_quiet = dict(name='final-cleanup-quiet', role=None, action=None, options={}, expected='ok', errors=[],
-                       hold_ms=1100, audio='quiet', haptic='quiet', eos=False)
-    for segment, phase in zip(value['segments'], planned + [final_quiet]):
-        require(segment['expected'] == phase and observed(segment['begin_boot']) == env['boot_id'] and observed(segment['end_boot']) == env['boot_id'], 'segment expectation or boot changed')
+                       hold_ms=1100, audio='quiet', haptic='quiet', eos=False, active_before=None)
+    used_clocks = []
+    for segment, block in zip(value['segments'], planned + [[final_quiet]]):
+        phase = block[0]
+        require(segment['expected'] == phase and observed(segment['begin_boot'], 'cat /proc/sys/kernel/random/boot_id') == env['boot_id'] and
+                observed(segment['end_boot'], 'cat /proc/sys/kernel/random/boot_id') == env['boot_id'], 'segment expectation or boot changed')
+        expected_boundary = block[1] if len(block) == 2 else None
+        require(segment.get('boundary_expected') == expected_boundary, 'fixed active boundary changed')
+        if phase['name'] != 'final-cleanup-quiet':
+            require(segment['operation'] == phase_records[phase['name']], 'segment Start/single operation differs')
+        if expected_boundary is not None:
+            require(segment['boundary_operation'] == phase_records[expected_boundary['name']], 'same-window boundary operation differs')
+        clock_indexes = []
+        for key in ('clock_before', 'clock_after'):
+            clock = segment[key]; require(clock in value['clocks'] and clock not in used_clocks, 'unbound/reused clock bracket')
+            used_clocks.append(clock)
+            observed(clock['raw'], project.sampler_script(remote_root, 'clock', data['run_id'], env['boot_id']))
+            clock_indexes.append(observations[(clock['raw']['path'], clock['raw']['sha256'])]['command'])
+        require(clock_indexes[0] < clock_indexes[1], 'actual calibration order differs')
+        begin_index = observations[(segment['begin_boot']['path'], segment['begin_boot']['sha256'])]['command']
+        end_index = observations[(segment['end_boot']['path'], segment['end_boot']['sha256'])]['command']
+        require(begin_index < clock_indexes[0] < clock_indexes[1] < end_index, 'clock bracket escaped continuous segment')
+        if phase['name'] != 'final-cleanup-quiet':
+            require(clock_indexes[0] < segment['operation']['click']['command'] < clock_indexes[1], 'calibration does not bracket real operation click')
         require(segment['sampler'] in value['samplers'], 'actual sampler observation missing')
         begin, _ = sampler_rows(segment['sampler'], data['run_id'], env['boot_id'])
         sampler = segment['sampler']; stop_file = remote_root + '/sampler-stop'; marker = sampler['exit_marker']
@@ -343,7 +429,23 @@ def verify_evidence(path, archive, boot, *, command):
             paths = {line.split()[-1] for line in maps.splitlines() if line.split() and line.split()[-1].endswith('/' + soname)}
             require(len(paths) == 1 and any(next(iter(paths)) in observed(p['observation']) for p in value['helper_guest_DSOs'] if p['soname'] == soname),
                     'sampler did not actually map the hashed product DSO: ' + soname)
-        metrics.append({'phase': segment['phase'], 'metrics': segment_metrics(segment, data, env['boot_id'])})
+        result = {'phase': segment['phase'], 'metrics': segment_metrics(segment, data, env['boot_id'])}
+        if expected_boundary is not None:
+            interval = clock_bounds([segment['clock_before'], segment['clock_after']], data['run_id'], env['boot_id'])
+            result['boundary'] = active_boundary_metrics(segment, data, env['boot_id'], journals[phase['role']], interval)
+            _, samples = sampler_rows(segment['sampler'], data['run_id'], env['boot_id'])
+            require(all(not sample['running'] for sample in samples if sample['before_ns'] >= samples[-1]['after_ns']-400000000),
+                    'VDI still active after real Stop/Release')
+            result['boundary']['quiet_audio'] = audio_metrics(segment['audio_capture'], expected_boundary,
+                pcm.pcm_values(checked(data['reference']).read_bytes()))
+        metrics.append(result)
+    require(len(used_clocks) == len(value['clocks']), 'unrelated clock calibrations in evidence')
+    for role, item in value['roles'].items():
+        indexes = [observations[(item['token_'+when]['path'], item['token_'+when]['sha256'])]['command'] for when in ('initial', 'final')]
+        calls = [row for row in value['phases'] if row['role'] == role]
+        require(indexes[0] < min(row['click']['command'] for row in calls) and
+                indexes[1] > max(observations[(row['end_boot']['path'], row['end_boot']['sha256'])]['command'] for row in calls),
+                'actual initial/final token queries do not bracket role operations')
     qmp = value['qmp']['requests']
     require(qmp and all(r.get('execute') == 'human-monitor-command' and type(r.get('host_ns')) is int and
             r['host_ns'] <= r.get('completed_ns', 0) and isinstance(r.get('reply'), str) and
@@ -374,7 +476,15 @@ def verify_evidence(path, archive, boot, *, command):
     shared.assert_bundles_absent(observed(cleanup['bms_absent'], 'bm dump -a'), [v[0] for v in ROLES.values()])
     shared.assert_ams_absent(observed(cleanup['ams_absent'], 'aa dump -a -u 100'), [v[0] for v in ROLES.values()])
     require(observed(cleanup['final_boot'], 'cat /proc/sys/kernel/random/boot_id') == env['boot_id'], 'cleanup switched guest')
-    require(cleanup['private_removal'] and observed(cleanup['private_removal']) == '', 'owned helper/UI cleanup missing')
+    ui_challenge = cleanup['ui_challenge']; require(re.fullmatch('[a-f0-9]{32}', ui_challenge), 'actual UI nonce missing')
+    ui_paths = sorted({p for row in commands if len(row['argv']) == 5 and row['argv'][3] == 'shell'
+        for p in re.findall(r'/data/local/tmp/qemu-capability-ui-' + ui_challenge + r'-[1-9][0-9]*\.(?:json|png)', row['argv'][4])})
+    all_ui_paths = {p for row in commands if len(row['argv']) == 5 and row['argv'][3] == 'shell'
+        for p in re.findall(r'/data/local/tmp/qemu-capability-ui-[a-f0-9]{32}-[1-9][0-9]*\.(?:json|png)', row['argv'][4])}
+    require(ui_paths and set(ui_paths) == all_ui_paths, 'actual complete UI-owned nonce/path set differs')
+    paths, script = project.private_cleanup_script(remote_root, ui_paths)
+    require(cleanup['private_paths'] == paths and observed(cleanup['private_removal'], script) == '',
+            'exact owned helper/UI deletion and absence command missing')
     return dict(scope='bound_ordinary_public_calls_fresh_independent_PCM_and_read_only_time_VDI_only',
         archive_sha256=sha(archive), boot_id=env['boot_id'], run_id=data['run_id'], roles=binding_results, phases=len(project.phases()),
         segments=metrics, first_frame_native_log_freshness_verified=False, physical_motor_or_HD_haptics_verified=False,

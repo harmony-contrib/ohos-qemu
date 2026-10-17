@@ -15,10 +15,13 @@ import time
 
 from batch_system_calendar_runtime_project import FIX, ROLES, ROOT, checked, record, require, sdk_contract, sha, write
 import batch_system_calendar_runtime_protocol as protocol
+from batch_system_calendar_runtime_binding import SDK_SCOPE, prepared, sdk_commands, source_tools
 
 
 def build(args):
     require(args.execute_sdk_build, 'root must explicitly request the actual SDK compilation')
+    for name in ('node', 'ohpm', 'hvigor'):
+        setattr(args, name, getattr(args, name).resolve())
     args.output = args.output.resolve(); args.output.mkdir(parents=True, exist_ok=False)
     source_commit = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     require(re.fullmatch('[a-f0-9]{40}', source_commit), 'actual repository commit identity required')
@@ -30,8 +33,9 @@ def build(args):
         require(path.is_absolute() and path.is_dir() and not path.is_symlink() and not path.resolve().is_relative_to(ROOT), 'private prepared source project required')
         projects[name] = path.resolve()
     require(projects, 'at least one actual prepared Calendar role project required')
-    report = {'schema_version': 1, 'scope': 'actual_private_Calendar_QA_SDK105_HAP_compile_ONLY',
+    report = {'schema_version': 1, 'scope': SDK_SCOPE,
         'source_commit': source_commit, 'runner_sha256': sha(Path(__file__)), 'source_files': {}, 'commands': [],
+        'source_tools': source_tools(),
         'haps': [], 'failures': [], 'exit_code': 1, 'sdk': sdk_contract(args.sdk),
         'tools': {key: record(getattr(args, key).resolve()) for key in ('node', 'ohpm', 'hvigor')},
         'first_artifact_behavior_gate_passed': False}
@@ -52,7 +56,7 @@ def build(args):
     # and the official CLI disables parallel/incremental/daemon operation.
     def command(argv, role, label, timeout):
         path = args.output / (role + '-' + label + '.log')
-        entry = {'argv': list(map(str, argv)), 'project': role, 'label': label, 'log': str(path), 'exit_code': None}
+        entry = {'argv': list(map(str, argv)), 'cwd': str(projects[role]), 'project': role, 'label': label, 'log': str(path), 'exit_code': None}
         report['commands'].append(entry)
         with path.open('xb') as output:
             process = subprocess.Popen(list(map(str, argv)), cwd=projects[role], env=environment,
@@ -78,19 +82,13 @@ def build(args):
         for role, project in projects.items():
             manifest_path = project / 'calendar-source-manifest.json'
             manifest = protocol.decode(manifest_path.read_text())
-            require(manifest['role'] == role and all(manifest[k] == v for k, v in ROLES[role].items()) and
-                    manifest['fixture_hashes'] == {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
-                    'prepared exact role/fixture manifest differs')
-            rows = dict(manifest['source_hashes']); rows['calendar-source-manifest.json'] = sha(manifest_path)
-            for name, expected in rows.items():
-                require(sha(project / name) == expected, 'prepared source changed before actual compilation')
+            manifest, rows = prepared(project, role, checked(manifest['challenge']))
+            require(manifest['sdk'] == report['sdk'], 'prepared source SDK differs from actual compiler SDK')
             require((project / 'local.properties').read_text() == 'sdk.dir=' + str(args.sdk.resolve().parent) + '\n', 'prepared SDK directory differs')
             report['source_files'][role] = rows
-            command([args.node, '--max-old-space-size=2048', '--require', cpu, args.ohpm, 'install', '--all', '--registry', 'http://127.0.0.1:9',
-                '--fetch_timeout', '10000', '--retry_times', '0'], role, 'dependencies', 120)
-            log = command([args.node, '--max-old-space-size=2048', '--require', cpu, args.hvigor, 'assembleHap', '--mode', 'module', '-p', 'product=default',
-                '-p', 'module=entry', '-p', 'debuggable=false', '-p', 'hvigor-obfuscation=false',
-                '--no-daemon', '--no-parallel', '--no-incremental', '--max-old-space-size', '2048'], role, 'compile', 1800)
+            commands = sdk_commands(report['tools'])
+            command(commands[0][1], role, commands[0][0], 120)
+            log = command(commands[1][1], role, commands[1][0], 1800)
             require('BUILD SUCCESSFUL' in log, 'actual Hvigor did not report successful assembly')
             for name, expected in rows.items():
                 require(sha(project / name) == expected, 'prepared source changed during actual compilation')

@@ -8,6 +8,9 @@ interface Envelope {
   role: string;
   phase: string;
   request: HapticRequest;
+  following_phase?: string;
+  following_request?: HapticRequest;
+  following_delay_ms?: number;
 }
 
 @Entry
@@ -31,6 +34,17 @@ struct Index {
       operation = request.operation_id;
       if (envelope.role !== '__HAPTIC_ROLE__' || request.run_id !== '__HAPTIC_RUN__' ||
         !/^[a-z0-9-]{1,80}$/.test(envelope.phase)) { throw new Error('Unexpected role/run/phase'); }
+      const following = envelope.following_request;
+      const delay = envelope.following_delay_ms;
+      if (following !== undefined && (request.action !== 'start' ||
+        (following.action !== 'stop' && following.action !== 'release') ||
+        following.run_id !== request.run_id || following.boot_id !== request.boot_id ||
+        following.operation_id === request.operation_id || envelope.following_phase === undefined ||
+        !/^[a-z0-9-]{1,80}$/.test(envelope.following_phase) || delay === undefined ||
+        !Number.isInteger(delay) || delay < 1 || delay > 10000)) { throw new Error('Invalid explicit lifecycle pair'); }
+      if (following === undefined && (envelope.following_phase !== undefined || delay !== undefined)) {
+        throw new Error('Incomplete explicit lifecycle pair');
+      }
       if (this.probe === undefined) {
         this.boot = request.boot_id;
         this.probe = new AudioHapticProbe(context.filesDir, request.run_id, request.boot_id);
@@ -39,6 +53,14 @@ struct Index {
       const current = this.probe;
       this.status = 'running|' + operation;
       await current.step(request);
+      if (following !== undefined && delay !== undefined) {
+        // The same real click authorizes these two fresh operations. This
+        // bounded wait avoids host screenshot/HDC work between Start and Stop.
+        await new Promise<void>((resolve) => { setTimeout(() => { resolve(); }, delay); });
+        operation = following.operation_id;
+        this.status = 'running|' + operation;
+        await current.step(following);
+      }
       this.status = 'done|' + operation;
     } catch (caught) {
       const error = caught as BusinessError;

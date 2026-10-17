@@ -245,14 +245,26 @@ def verify_signed_hap_artifacts(signed, bundle, permissions, udid, signer_dist, 
             'verified_profile': value}
 
 
+def verify_signed_payload(unsigned_path, signed_path):
+    with zipfile.ZipFile(unsigned_path) as unsigned, zipfile.ZipFile(signed_path) as signed:
+        before, after = unsigned.namelist(), signed.namelist()
+        require(len(before) == len(set(before)) and len(after) == len(set(after)) and
+                '.pages.info' not in before and set(after) == set(before) | {'.pages.info'},
+                'signed HAP members differ from the compiled caller')
+        bitmap = signed.read('.pages.info')
+        require(bitmap and len(bitmap) % 8 == 0 and
+                all(unsigned.read(name) == signed.read(name) for name in before),
+                'signed HAP payload or executable page bitmap changed')
+
+
 def sign_normal_hap(unsigned, bundle, permissions, udid, signer_dist, signer_jar, output, command):
-    unsigned = regular(unsigned); expected = ordinary_hap(unsigned, bundle, permissions)
+    unsigned = regular(unsigned); ordinary_hap(unsigned, bundle, permissions)
     output = Path(output).resolve(); output.mkdir(parents=True, exist_ok=False)
     dist, jar, _ = signer_inputs(signer_dist, signer_jar)
     signed = output / 'signed.hap'
     command([sys.executable, str(HERE / 'sign_web_probe.py'), '--signer-dist', str(dist), '--jar', str(jar),
              '--unsigned', str(unsigned), '--output', str(signed), '--bundle-name', bundle, '--udid', udid, '--sign-code', '1'], 'sign-normal-HAP')
-    require(hap_contents(signed)[1] == expected, 'signing changed compiled HAP payload')
+    verify_signed_payload(unsigned, signed)
     proof = verify_signed_hap_artifacts(signed, bundle, permissions, udid, dist, jar, output / 'verification', command)
     proof['unsigned_hap'] = descriptor(unsigned)
     return proof

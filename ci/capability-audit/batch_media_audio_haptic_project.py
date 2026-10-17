@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import secrets
+import shlex
 import wave
 
 import batch_media_audio_capture_challenge as pcm
@@ -18,6 +19,33 @@ PROBE = HERE / 'fixtures/batch_media/audio_haptic/AudioHapticProbe.ets'
 ROLES = {'normal': ('org.harmonycontrib.audiohapticqa', ['ohos.permission.VIBRATE']),
          'denied': ('org.harmonycontrib.audiohapticdenied', [])}
 PIN = '248a21a014a0794fc8d1853387d139f815df9a56'
+SDK_SCOPE = 'actual_SDK105_full_unsigned_AudioHaptic_HAPs_ONLY_NOT_signature_or_guest'
+SDK_SOURCE_TOOLS = ('batch_media_audio_haptic_project.py', 'batch_media_audio_haptic_build_callers.py')
+
+
+def sdk_inputs(sdk):
+    sdk = Path(sdk).resolve()
+    return {name: record(sdk / relative) for name, relative in {
+        'metadata': 'ets/oh-uni-package.json', 'audio_haptic': 'ets/api/@ohos.multimedia.audioHaptic.d.ts',
+        'device_default': 'ets/api/device-define/default.json'}.items()}
+
+
+def sampler_script(remote, mode, run, boot, *arguments):
+    require(mode in ('clock', 'token'), 'only exact read-only observation modes')
+    return 'unset LD_LIBRARY_PATH LD_PRELOAD; ' + ' '.join(map(shlex.quote,
+        [remote + '/sampler', mode, run, boot, *map(str, arguments)]))
+
+
+def private_cleanup_script(remote, ui_paths):
+    require(re.fullmatch('/data/local/tmp/audio-haptic-[a-f0-9]{32}', remote), 'owned helper directory required')
+    paths = [remote + '/sampler'] + sorted(set(ui_paths))
+    require(all(re.fullmatch(r'/data/local/tmp/qemu-capability-ui-[a-f0-9]{32}-[1-9][0-9]*\.(?:json|png)', p)
+                for p in paths[1:]), 'only genuine owned UI paths may be removed')
+    script = 'rm -f -- ' + ' '.join(map(shlex.quote, paths)) + ' && ' + ' && '.join(
+        'test ! -e ' + shlex.quote(p) + ' && test ! -L ' + shlex.quote(p) for p in paths)
+    script += ' && rmdir ' + remote + ' && test ! -e ' + remote + ' && test ! -L ' + remote
+    return paths, script
+
 require, sha, record, checked, write = (getattr(shared_project, n) for n in ('require', 'sha', 'record', 'checked', 'write'))
 
 
@@ -152,6 +180,46 @@ def prepare_project(output, role, challenge_path, sdk):
         'audio_haptic': record(declaration), 'device_default': record(profile)})
 
 
+def verify_sdk_receipt(spec, role, sdk):
+    evidence = checked(spec['sdk_evidence']); report = load(evidence)
+    source = Path(spec['source_project']).resolve()
+    require(spec['sdk_project'] == role and report['scope'] == SDK_SCOPE and
+            type(report['exit_code']) is int and report['exit_code'] == 0 and report['failures'] == [] and
+            re.fullmatch('[a-f0-9]{40}', report['source_commit']) and
+            report['runner_sha256'] == sha(HERE / 'batch_media_audio_haptic_build_callers.py') and
+            report['source_tools'] == {name: sha(HERE / name) for name in SDK_SOURCE_TOOLS} and
+            report['fixture_hashes'] == fixture_hashes() and report['sdk'] == sdk and
+            set(report['source_files']) == set(ROLES) and set(report['projects']) == set(ROLES),
+            'successful exact dedicated AudioHaptic SDK builder receipt required')
+    for item in report['sdk'].values(): checked(item)
+    tools = {name: checked(report['runtime_inputs'][name]) for name in ('node', 'ohpm', 'hvigor', 'cpu_cap')}
+    require(tools['cpu_cap'] == evidence.parent / 'cpu-cap.cjs' and
+            sha(tools['cpu_cap']) == sha(FIX / 'cpu-cap.cjs'), 'actual bounded SDK preload differs')
+    prefix = [str(tools['node']), '--max-old-space-size=2048', '--require', str(tools['cpu_cap'])]
+    expected = [('_toolchain', 'node-version', [str(tools['node']), '--version'], str(evidence.parent))]
+    for selected in ROLES:
+        cwd = str(Path(report['projects'][selected]).resolve())
+        expected += [(selected, 'dependencies', prefix + [str(tools['ohpm']), 'install', '--all', '--registry',
+            'http://127.0.0.1:9', '--fetch_timeout', '10000', '--retry_times', '0'], cwd),
+            (selected, 'compile', prefix + [str(tools['hvigor']), 'assembleHap', '--mode', 'module', '-p',
+             'product=default', '-p', 'module=entry', '-p', 'debuggable=false', '-p', 'hvigor-obfuscation=false',
+             '--no-daemon', '--no-parallel', '--no-incremental', '--max-old-space-size', '2048'], cwd)]
+    require(len(report['commands']) == len(expected) and report['projects'][role] == str(source), 'SDK source/cwd set differs')
+    for row, (selected, label, argv, cwd) in zip(report['commands'], expected):
+        require((row['project'], row['label'], row['argv'], row['cwd']) == (selected, label, argv, cwd) and
+                type(row['exit_code']) is int and row['exit_code'] == 0 and row['timed_out'] is False,
+                'actual dedicated SDK command/cwd/outcome differs')
+        checked({'path': row['log'], 'sha256': row['sha256']})
+    require(checked({'path': report['commands'][0]['log'], 'sha256': report['commands'][0]['sha256']}).read_text().strip()
+            == report['node_version'] == 'v18.20.1', 'actual SDK Node version receipt differs')
+    require(len(report['haps']) == len(ROLES) and {h['project'] for h in report['haps']} == set(ROLES), 'both complete SDK HAPs required')
+    selected = [h for h in report['haps'] if h['project'] == role]
+    hap = checked(spec['unsigned_hap'])
+    require(len(selected) == 1 and selected[0]['path'] == str(hap) and selected[0]['sha256'] == sha(hap) and
+            selected[0]['bytes'] == hap.stat().st_size, 'dedicated SDK HAP differs')
+    return report
+
+
 def project_binding(spec, role, challenge_path):
     result = signatures.verify_sdk_project(spec)
     data = validate_challenge(challenge_path)
@@ -166,6 +234,7 @@ def project_binding(spec, role, challenge_path):
     require(isinstance(manifest['sdk'], dict) and set(manifest['sdk']) == {'metadata', 'audio_haptic', 'device_default'} and
             load(checked(manifest['sdk']['metadata'])).get('version') == '26.0.0.105', 'actual fixed SDK105 receipt required')
     for item in manifest['sdk'].values(): checked(item)
+    verify_sdk_receipt(spec, role, manifest['sdk'])
     rows = signatures.source_rows(load(checked(spec['sdk_evidence'])), spec['sdk_project'])
     require(rows.get('audio-haptic-source-manifest.json') == sha(checked(spec['source_manifest'])), 'SDK must freeze source manifest')
     for name, digest in manifest['sources'].items():
@@ -181,38 +250,38 @@ def project_binding(spec, role, challenge_path):
 def phases():
     """Coverage is fixed here, never narrowed by the incoming capture report."""
     rows = []
-    def add(name, action, *, role='normal', expected='ok', errors=(), hold=0, audio=None, haptic=None, eos=False, **options):
+    def add(name, action, *, role='normal', expected='ok', errors=(), hold=0, audio=None, haptic=None, eos=False, active_before=None, **options):
         rows.append(dict(name=name, role=role, action=action, options=options, expected=expected, errors=list(errors),
-                         hold_ms=hold, audio=audio, haptic=haptic, eos=eos))
+                         hold_ms=hold, audio=audio, haptic=haptic, eos=eos, active_before=active_before))
     def source(prefix, **options):
         add(prefix + '-register', 'register', **options)
         add(prefix + '-create', 'create', **options)
-    def stop(prefix): add(prefix, 'stop', hold=700, audio='quiet', haptic='quiet')
-    def release(prefix): add(prefix, 'release', hold=700, audio='quiet', haptic='quiet')
+    def stop(prefix, active_before=None): add(prefix, 'stop', hold=700, audio='quiet', haptic='quiet', active_before=active_before)
+    def release(prefix, active_before=None): add(prefix, 'release', hold=700, audio='quiet', haptic='quiet', active_before=active_before)
     add('normal-access', 'access')
     source('base')
     add('base-loop-off', 'loop', loop=False)
     add('base-volume', 'volume', volume=0.5)
     for cycle in range(1, 4):
         add('normal-start-' + str(cycle), 'start', hold=1100, audio='active', haptic='active')
-        stop('normal-stop-' + str(cycle))
+        stop('normal-stop-' + str(cycle), {'audio': True, 'haptic': True})
     for cycle in range(1, 3):
         add('eos-start-' + str(cycle), 'start', hold=5200, audio='eos', haptic='eos', eos=True)
     add('loop-enable', 'loop', loop=True)
     add('loop-start', 'start', hold=9200, audio='loop', haptic='loop')
-    stop('loop-stop')
+    stop('loop-stop', {'audio': True, 'haptic': True})
     add('loop-disable', 'loop', loop=False)
     release('base-release')
     add('post-release-start', 'start', expected='error', errors=(5400102,), hold=700, audio='quiet', haptic='quiet')
     add('base-unregister', 'unregister')
     source('recreate')
     add('recreate-start', 'start', hold=1100, audio='active', haptic='active')
-    release('recreate-active-release')
+    release('recreate-active-release', {'audio': True, 'haptic': True})
     add('recreate-unregister', 'unregister')
     for label, mute_audio, mute_haptics in [('mute-audio', True, False), ('mute-haptics', False, True), ('mute-both', True, True)]:
         source(label, mute_audio=mute_audio, mute_haptics=mute_haptics)
         add(label + '-start', 'start', hold=1100, audio='quiet' if mute_audio else 'active', haptic='quiet' if mute_haptics else 'active')
-        stop(label + '-stop')
+        stop(label + '-stop', {'audio': not mute_audio, 'haptic': not mute_haptics})
         release(label + '-release')
         add(label + '-unregister', 'unregister')
     for bad, option in [('bad-wav', {'audio': 'bad.wav'}), ('bad-json', {'haptic': 'bad.json'}), ('missing-wav', {'audio': 'missing.wav'})]:
@@ -221,7 +290,7 @@ def phases():
         add(bad + '-unregister', 'unregister')
         source(bad + '-retry')
         add(bad + '-retry-start', 'start', hold=1100, audio='active', haptic='active')
-        stop(bad + '-retry-stop')
+        stop(bad + '-retry-stop', {'audio': True, 'haptic': True})
         release(bad + '-retry-release')
         add(bad + '-retry-unregister', 'unregister')
     add('denied-access', 'access', role='denied')
@@ -229,6 +298,35 @@ def phases():
     add('denied-create', 'create', role='denied', expected='error', errors=(201,), hold=700, audio='quiet', haptic='quiet')
     add('denied-unregister', 'unregister', role='denied')
     return rows
+
+
+def execution_plan():
+    rows = phases(); result = []; index = 0
+    while index < len(rows):
+        first = rows[index]
+        if (index + 1 < len(rows) and first['action'] == 'start' and first['expected'] == 'ok' and
+                rows[index + 1]['action'] in ('stop', 'release') and rows[index + 1]['active_before'] is not None):
+            result.append(rows[index:index + 2]); index += 2
+        else: result.append([first]); index += 1
+    return result
+
+
+def capture_plan():
+    return [block for block in execution_plan() if block[0]['hold_ms']]
+
+
+def capture_name(block):
+    return '--'.join(phase['name'] for phase in block)
+
+
+def paired_request(first, following, delay_ms):
+    require(first['role'] == following['role'] and first['request']['action'] == 'start' and
+            following['request']['action'] in ('stop', 'release') and
+            first['request']['operation_id'] != following['request']['operation_id'] and
+            first['request']['run_id'] == following['request']['run_id'] and
+            first['request']['boot_id'] == following['request']['boot_id'] and
+            type(delay_ms) is int and 1 <= delay_ms <= 10000, 'exact fresh explicit lifecycle pair required')
+    return dict(first, following_phase=following['phase'], following_request=following['request'], following_delay_ms=delay_ms)
 
 
 def request(challenge_path, boot, phase, operation_id=None):

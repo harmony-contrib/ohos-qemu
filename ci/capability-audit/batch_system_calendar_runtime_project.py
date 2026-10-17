@@ -95,20 +95,17 @@ def sdk_contract(sdk):
     return proof
 
 
-def prepare(output, role, challenge_path, sdk):
+def expected_sources(data, role, sdk):
+    """Pure source recipe shared by preparation and independent SDK binding."""
     require(role in ROLES, 'known exact role required')
-    data = load_challenge(challenge_path)
-    sdk_proof = sdk_contract(sdk)
-    output = Path(output).absolute()
-    require(not output.exists() and ROOT not in output.parents and not output.is_symlink(), 'fresh private source project required')
-    output.mkdir(parents=True)
     policy = ROLES[role]
+    files = {}
     def put(name, value):
-        write(output / name, value)
+        files[name] = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2) + '\n'
     put('AppScope/app.json5', {'app': {'bundleName': policy['bundle'], 'vendor': 'Harmony Contrib', 'versionCode': 1,
         'versionName': '1.0.0', 'icon': '$media:app_icon', 'label': '$string:app_name'}})
     put('AppScope/resources/base/element/string.json', {'string': [
-        {'name': 'app_name', 'value': 'Calendar QA ' + role},
+        {'name': 'app_name', 'value': 'Calendar QA ' + role + ' ' + data['run_id']},
         {'name': 'calendar_reason', 'value': 'Read and manage only temporary Calendar QA records with your permission'}]})
     put('AppScope/resources/base/media/app_icon.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#296848"/></svg>\n')
     put('build-profile.json5', {'app': {'products': [{'name': 'default', 'compileSdkVersion': '26.0.0',
@@ -145,12 +142,24 @@ def prepare(output, role, challenge_path, sdk):
             require('notificationManager.' not in text and 'wantAgent.' not in text,
                     'normal producer/denied source must not import or call observer system APIs')
         put('entry/src/main/ets/' + target, text.replace('__ROLE__', role).replace('__RUN__', data['run_id']))
-    manifest = {'schema_version': 1, 'run_id': data['run_id'], 'role': role, **policy,
+    return files
+
+
+def prepare(output, role, challenge_path, sdk):
+    data = load_challenge(challenge_path)
+    sdk_proof = sdk_contract(sdk)
+    output = Path(output).absolute()
+    require(not output.exists() and ROOT not in output.parents and not output.is_symlink(), 'fresh private source project required')
+    output.mkdir(parents=True)
+    files = expected_sources(data, role, sdk)
+    for name, text in files.items():
+        write(output / name, text)
+    manifest = {'schema_version': 1, 'run_id': data['run_id'], 'role': role, **ROLES[role],
         'sdk': sdk_proof, 'challenge': record(Path(challenge_path).resolve()),
         'fixture_hashes': {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
-        'source_hashes': {str(p.relative_to(output)): sha(p) for p in sorted(output.rglob('*')) if p.is_file()},
+        'source_hashes': {name: hashlib.sha256(text.encode()).hexdigest() for name, text in files.items()},
         'signed': False, 'runtime_acceptance': False}
-    put('calendar-source-manifest.json', manifest)
+    write(output / 'calendar-source-manifest.json', manifest)
     return output / 'calendar-source-manifest.json'
 
 
