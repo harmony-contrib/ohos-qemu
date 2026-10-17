@@ -1,0 +1,16 @@
+test_acl_and_system_identity_cannot_expand_or_downgrade (test_calendar_provider.CalendarProviderTests.test_acl_and_system_identity_cannot_expand_or_downgrade) ... ok
+test_authorities_and_service_permission_cannot_be_aliased_or_weakened (test_calendar_provider.CalendarProviderTests.test_authorities_and_service_permission_cannot_be_aliased_or_weakened) ... ok
+test_editor_requires_exact_surface_inuse_scene_and_existing_boundaries (test_calendar_provider.CalendarProviderTests.test_editor_requires_exact_surface_inuse_scene_and_existing_boundaries) ... ok
+test_existing_policy_requires_matching_leaf_not_wildcard (test_calendar_provider.CalendarProviderTests.test_existing_policy_requires_matching_leaf_not_wildcard) ... ok
+test_platform_pem_uses_application_leaf_not_first_root (test_calendar_provider.CalendarProviderTests.test_platform_pem_uses_application_leaf_not_first_root) ... ok
+test_pristine_crlf_and_profile_formatted_signing_policy_apply_identically (test_calendar_provider.CalendarProviderTests.test_pristine_crlf_and_profile_formatted_signing_policy_apply_identically) ... ok
+test_reminder_viewer_extends_only_the_read_scene_and_requires_actual_main_ability (test_calendar_provider.CalendarProviderTests.test_reminder_viewer_extends_only_the_read_scene_and_requires_actual_main_ability) ... ok
+test_source_hap_vendor_and_stale_prebuilt_are_independently_wired (test_calendar_provider.CalendarProviderTests.test_source_hap_vendor_and_stale_prebuilt_are_independently_wired) ... ok
+test_source_profile_keeps_all_hars_and_is_idempotent (test_calendar_provider.CalendarProviderTests.test_source_profile_keeps_all_hars_and_is_idempotent) ... ok
+test_stage_build_migration_is_exact_and_rejects_unknown_or_symlink (test_calendar_provider.CalendarProviderTests.test_stage_build_migration_is_exact_and_rejects_unknown_or_symlink) ... ok
+test_unknown_or_duplicate_signing_policy_preserves_original_bytes (test_calendar_provider.CalendarProviderTests.test_unknown_or_duplicate_signing_policy_preserves_original_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.941s
+
+OK

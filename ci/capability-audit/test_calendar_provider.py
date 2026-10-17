@@ -39,6 +39,38 @@ def policy():
 
 
 class CalendarProviderTests(unittest.TestCase):
+    def test_reminder_viewer_extends_only_the_read_scene_and_requires_actual_main_ability(self):
+        module, profile, capabilities = policy()
+        module['extensionAbilities'].append(copy.deepcopy(EDITOR))
+        base = ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
+                'ReminderCallbackExtAbility', 'EditorUIExtensionAbility']
+        module['requestPermissions'] = [
+            {'name': name, 'usedScene': {'abilities': base + (['MainAbility'] if index == 0 else []),
+                                       'when': 'inuse'}}
+            for index, name in enumerate(('ohos.permission.READ_WHOLE_CALENDAR',
+                                          'ohos.permission.WRITE_WHOLE_CALENDAR'))]
+        module['abilities'] = [{'name': 'MainAbility', 'srcEntry': './ets/MainAbility/MainAbility.ets',
+                                'exported': True}]
+        validate(module, profile, capabilities, SIGNATURE, SIGNATURE, True, True)
+        with self.assertRaises(ValueError):
+            validate(module, profile, capabilities, SIGNATURE, SIGNATURE, True)
+        for mode in ('write-scene', 'read-always', 'missing-main', 'duplicate-main', 'private-main', 'wrong-source'):
+            broken = copy.deepcopy(module)
+            if mode == 'write-scene':
+                broken['requestPermissions'][1]['usedScene']['abilities'].append('MainAbility')
+            elif mode == 'read-always':
+                broken['requestPermissions'][0]['usedScene']['when'] = 'always'
+            elif mode == 'missing-main':
+                broken['abilities'] = []
+            elif mode == 'duplicate-main':
+                broken['abilities'].append(copy.deepcopy(broken['abilities'][0]))
+            elif mode == 'private-main':
+                broken['abilities'][0]['exported'] = False
+            else:
+                broken['abilities'][0]['srcEntry'] = './ets/Other.ets'
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate(broken, profile, capabilities, SIGNATURE, SIGNATURE, True, True)
+
     def test_editor_requires_exact_surface_inuse_scene_and_existing_boundaries(self):
         module, profile, capabilities = policy()
         with self.assertRaises(ValueError):

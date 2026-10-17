@@ -1,0 +1,9 @@
+test_actual_controller_consent_crud_result_errors_and_lifetime (test_batch_apps_calendar_editor.CalendarEditorTests.test_actual_controller_consent_crud_result_errors_and_lifetime) ... ok
+test_actual_napi_callbacks_settle_once_without_stale_js_handles (test_batch_apps_calendar_editor.CalendarEditorTests.test_actual_napi_callbacks_settle_once_without_stale_js_handles) ... ok
+test_exact_patch_idempotence_and_drift_rejection (test_batch_apps_calendar_editor.CalendarEditorTests.test_exact_patch_idempotence_and_drift_rejection) ... ok
+test_whole_and_lower_datashare_permission_and_proxy_contracts_preserved (test_batch_apps_calendar_editor.CalendarEditorTests.test_whole_and_lower_datashare_permission_and_proxy_contracts_preserved) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.361s
+
+OK

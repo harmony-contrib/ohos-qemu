@@ -30,3 +30,10 @@ patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0001-
 ci/capability-audit/fixtures/ril_communication/IRilCallback.idl -text whitespace=cr-at-eol
 # Preserve the exact UBSan diagnostic bytes from the first fresh-PCM host attempt.
 docs/capability-audit/parallel/media/round8-host-01.log -text whitespace=-blank-at-eol
+# Preserve upstream blank context and the captured pre-repair unittest output.
+patches/common/applications/standard/settings/accessibility_service_completion/0002-ignore-queued-actions-after-service-destruction.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/applications/standard/settings/share_picker/0002-isolate-async-share-session-lifetimes.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/capability-audit/parallel/apps/round21-coordinated/baseline-regression.log -text whitespace=-blank-at-eol
+patches/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/0001-reset-real-prepare-and-reap-failed-first-frame-waiters.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/applications/standard/calendardata/main_ui/0001-route-real-calendar-reminders-to-source-provider.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+patches/common/base/notification/distributed_notification_service/calendar_owner/0001-bind-reminder-owner-to-installed-calendar-provider.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

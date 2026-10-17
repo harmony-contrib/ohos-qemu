@@ -2,6 +2,7 @@
 """Verify CalendarData source/provider/signing wiring, not runtime behavior."""
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -21,7 +22,8 @@ EDITOR = {'name': 'EditorUIExtensionAbility', 'srcEntry': './ets/EditorUIExtensi
           'type': 'sys/commonUI', 'exported': True, 'extensionProcessMode': 'instance'}
 
 
-def validate(module, profile, capabilities, fingerprint, platform_fingerprint, require_editor=False):
+def validate(module, profile, capabilities, fingerprint, platform_fingerprint, require_editor=False,
+             require_reminder_ui=False):
     if fingerprint != SIGNATURE or platform_fingerprint != SIGNATURE:
         raise ValueError('CalendarData profile/platform certificate does not match pinned source signing policy')
     bundle = profile.get('bundle-info', {})
@@ -43,7 +45,7 @@ def validate(module, profile, capabilities, fingerprint, platform_fingerprint, r
     has_editor = 'EditorUIExtensionAbility' in names
     expected = original | ({'EditorUIExtensionAbility'} if has_editor else set())
     if (len(names) != len(set(names)) or module.get('deviceTypes') != ['default', 'tablet'] or
-            set(names) != expected or (require_editor and not has_editor)):
+            set(names) != expected or ((require_editor or require_reminder_ui) and not has_editor)):
         raise ValueError('unexpected or incomplete CalendarData provider/device surface')
     if has_editor:
         editor = next(entry for entry in extensions if entry['name'] == 'EditorUIExtensionAbility')
@@ -51,11 +53,19 @@ def validate(module, profile, capabilities, fingerprint, platform_fingerprint, r
             raise ValueError('CalendarData editor must use the exact per-session common UI extension')
         for permission in ('ohos.permission.READ_WHOLE_CALENDAR', 'ohos.permission.WRITE_WHOLE_CALENDAR'):
             grants = [entry for entry in module.get('requestPermissions', []) if entry.get('name') == permission]
+            abilities = ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
+                         'ReminderCallbackExtAbility', 'EditorUIExtensionAbility']
+            if require_reminder_ui and permission == 'ohos.permission.READ_WHOLE_CALENDAR':
+                abilities.append('MainAbility')
             if (len(grants) != 1 or grants[0].get('usedScene') != {
-                    'abilities': ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
-                                  'ReminderCallbackExtAbility', 'EditorUIExtensionAbility'],
+                    'abilities': abilities,
                     'when': 'inuse'}):
                 raise ValueError('CalendarData editor requires the exact existing in-use permission scene')
+    if require_reminder_ui:
+        main = [entry for entry in module.get('abilities', []) if entry.get('name') == 'MainAbility']
+        if (len(main) != 1 or main[0].get('srcEntry') != './ets/MainAbility/MainAbility.ets' or
+                main[0].get('exported') is not True):
+            raise ValueError('CalendarData reminder must target the real exported MainAbility')
     for name, (uri, read, write) in AUTHORITIES.items():
         entry = next(entry for entry in extensions if entry['name'] == name)
         if (entry.get('type') != 'dataShare' or entry.get('exported') is not True or entry.get('uri') != uri or
@@ -82,7 +92,7 @@ def platform_leaf_fingerprint(chain):
     return certificate_fingerprint(certificates[-1])
 
 
-def verify(root, require_editor=False):
+def verify(root, require_editor=False, require_reminder_ui=False):
     source = root / 'applications/standard/calendardata'
     source_build = (source / 'BUILD.gn').read_text()
     if (source_build.count('ohos_app("calendardata_hap")') != 1 or
@@ -102,14 +112,23 @@ def verify(root, require_editor=False):
     module = json.loads((source / 'entry/src/main/module.json5').read_text())['module']
     capabilities = json.loads((root / 'vendor/ohemu/virt/preinstall-config/install_list_capability.json').read_text())
     validate(module, profile, capabilities, certificate_fingerprint(certificate),
-             platform_leaf_fingerprint(platform), require_editor)
-    if require_editor:
+             platform_leaf_fingerprint(platform), require_editor, require_reminder_ui)
+    if require_editor or require_reminder_ui:
         page = 'pages/EventEditor'
         pages = json.loads((source / 'entry/src/main/resources/base/profile/main_pages.json').read_text())['src']
         if (pages.count(page) != 1 or
                 not (source / 'entry/src/main/ets/EditorUIExtensionAbility.ets').is_file() or
                 not (source / 'entry/src/main/ets/pages/EventEditor.ets').is_file()):
             raise ValueError('CalendarData editor source/page is missing from the real HAP')
+    if require_reminder_ui:
+        components = Path(__file__).resolve().parents[1] / 'common'
+        for name in ('applications/standard/calendardata/main_ui',
+                     'base/notification/distributed_notification_service/calendar_owner'):
+            spec = importlib.util.spec_from_file_location('calendar_reminder_guard',
+                                                         components / name / 'verify_source.py')
+            guard = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(guard)
+            guard.validate(root, require_patched=True)
     build = (root / 'applications/standard/hap/BUILD.gn').read_text()
     if re.search(r'calendarData_hap|CalendarData\.hap', build):
         raise ValueError('stale CalendarData prebuilt still exists in the HAP build graph')
@@ -123,8 +142,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--require-editor', action='store_true')
+    parser.add_argument('--require-reminder-ui', action='store_true')
     args = parser.parse_args()
-    verify(args.source_root, args.require_editor)
+    verify(args.source_root, args.require_editor, args.require_reminder_ui)
 
 
 if __name__ == '__main__':

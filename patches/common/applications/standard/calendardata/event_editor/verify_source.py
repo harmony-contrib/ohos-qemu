@@ -13,6 +13,18 @@ def validate(root, require_patched=False):
     try:
         return validate_component(root, PROJECT, REVISION, FILES, require_patched)
     except ValueError as original_error:
+        # The reminder viewer is a complete, pinned successor of this editor
+        # and the native dispatch pair. It validates every other editor file.
+        main_path = Path(__file__).resolve().parent.parent / 'main_ui/verify_source.py'
+        if main_path.is_file():
+            main_spec = importlib.util.spec_from_file_location('calendar_editor_main_successor', main_path)
+            main = importlib.util.module_from_spec(main_spec)
+            main_spec.loader.exec_module(main)
+            try:
+                main.validate(root, require_patched=True)
+                return True
+            except (ValueError, OSError):
+                pass
         # Accept exactly the complete known native successor, paired with the
         # unchanged final hashes of all five editor UI files. Mixed pairs and
         # unknown UI/native edits must fail before any source mutation.

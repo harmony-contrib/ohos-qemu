@@ -358,6 +358,8 @@ ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/
 CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/source_provider/apply.sh"
 CALENDAR_EVENT_EDITOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/event_editor/apply.sh"
 CALENDAR_EDITOR_CALLBACK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh"
+CALENDAR_MAIN_UI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/main_ui/apply.sh"
+CALENDAR_REMINDER_OWNER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/notification/distributed_notification_service/calendar_owner/apply.sh"
 CALENDAR_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/calendar_provider/apply.sh"
 CALENDAR_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/calendar_provider/apply.sh"
 PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/photos/source_provider/apply.sh"
@@ -3258,11 +3260,15 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_event_editor_component.log"
   bash "${CALENDAR_EDITOR_CALLBACK_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_editor_callback_component.log"
+  bash "${CALENDAR_MAIN_UI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_main_ui_component.log"
+  bash "${CALENDAR_REMINDER_OWNER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_reminder_owner_component.log"
   bash "${CALENDAR_PREBUILT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_prebuilt_component.log"
   bash "${CALENDAR_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_signing_component.log"
-  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" --require-editor \
+  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" --require-editor --require-reminder-ui \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_calendar_source_provider.log"
   bash "${PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_source_provider_component.log"

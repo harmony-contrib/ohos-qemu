@@ -1,0 +1,8 @@
+{
+  "requirements_unique": true,
+  "json_valid": true,
+  "scope": "system owned source/test/docs plus explicitly granted notification/calendar directories only",
+  "source_main_exported_true": "actual-main-ability-contract.json",
+  "test_total": 16,
+  "host_only": true
+}

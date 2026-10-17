@@ -1,0 +1,19 @@
+{
+  "scope": "read saved actual fixed-container source export, not solely fixture; no new container read",
+  "source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-reminder-consumer-source-01/source/applications/standard/calendardata/entry/src/main/module.json5",
+  "source_sha256": "ff618ccd9b045e512e190e65724cff864e7e91307404e6cd0a7ba10d778b3ab7",
+  "source_receipt": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r52-Calendar-reminder-consumer-source-01/evidence.json",
+  "ability": {
+    "name": "MainAbility",
+    "srcEntry": "./ets/MainAbility/MainAbility.ets",
+    "description": "$string:description_mainability",
+    "icon": "$media:icon",
+    "label": "$string:app_name",
+    "exported": true,
+    "launchType": "standard",
+    "startWindowIcon": "$media:icon",
+    "startWindowBackground": "$color:yellow"
+  },
+  "result": "PASS",
+  "not_guest_BMS_proof": true
+}
