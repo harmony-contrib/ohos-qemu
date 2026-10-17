@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Root builds with current product innerkit ABI/CFI. Read-only, never grant/revoke.
 #include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -18,15 +19,19 @@ static uint64_t Now(clockid_t clock) {
     return static_cast<uint64_t>(value.tv_sec) * 1000000000ULL + value.tv_nsec;
 }
 int main(int argc, char** argv) {
-    if (argc != 3 || getuid() != 0) return 2;
-    const std::string run(argv[1]), bundle(argv[2]);
+    if (argc != 4 || getuid() != 0) return 2;
+    const std::string run(argv[1]), bundle(argv[2]), uidText(argv[3]);
     if (run.size() != 32 || run.find_first_not_of("0123456789abcdef") != std::string::npos ||
         (bundle != "org.harmonycontrib.calendarproducer" && bundle != "org.harmonycontrib.calendarobserver" &&
          bundle != "org.harmonycontrib.calendardenied" && bundle != "com.ohos.calendardata")) return 2;
+    if (uidText.empty() || uidText.size() > 9 || uidText.find_first_not_of("0123456789") != std::string::npos) return 2;
+    const unsigned long expectedUid = std::strtoul(uidText.c_str(), nullptr, 10);
+    if (expectedUid / 200000 != 100) return 2;
     const AccessTokenID token = AccessTokenKit::GetHapTokenID(100, bundle, 0);
     HapTokenInfo info {};
-    if (!token || AccessTokenKit::GetHapTokenInfo(token, info) != 0 || info.tokenID != token ||
-        info.bundleName != bundle || info.instIndex != 0 || info.userID != 100 || info.uid / 200000 != 100) return 1;
+    const int queried = AccessTokenKit::GetHapTokenInfo(token, info);
+    if (!token || queried != 0 || info.tokenID != token ||
+        info.bundleName != bundle || info.instIndex != 0 || info.userID != 100) return 1;
     std::ifstream stream("/proc/sys/kernel/random/boot_id"); std::string boot;
     if (!std::getline(stream, boot) || boot.size() != 36 || boot.find_first_not_of("0123456789abcdef-") != std::string::npos) return 1;
     const uint64_t before = Now(CLOCK_MONOTONIC), realtime = Now(CLOCK_REALTIME), boottime = Now(CLOCK_BOOTTIME);
@@ -53,8 +58,11 @@ int main(int argc, char** argv) {
     }
     const uint64_t after = Now(CLOCK_MONOTONIC);
     if (!before || !realtime || !boottime || after < before) return 1;
-    std::cout << json({{"schema_version", 1}, {"run_id", run}, {"boot_id", boot}, {"bundle", bundle},
-        {"uid", info.uid}, {"token_id", token}, {"user_id", info.userID},
+    std::cout << json({{"schema_version", 2}, {"run_id", run}, {"boot_id", boot}, {"bundle", bundle},
+        {"identity_schema", "hap-bms-access-token/v1"}, {"expected_uid", expectedUid},
+        {"at_reported_uid", info.uid}, {"at_query_rc", queried}, {"at_token_id", info.tokenID},
+        {"at_user_id", info.userID}, {"at_inst_index", info.instIndex}, {"at_bundle", info.bundleName},
+        {"token_id", token}, {"user_id", info.userID},
         {"permission_api", "AccessTokenKit::VerifyAccessToken"}, {"permissions", permissions},
         {"definition_api", "AccessTokenKit::GetDefPermission"}, {"definitions", definitions},
         {"process_api", "AppMgrClient::GetAllRunningProcesses"}, {"processes", processes},

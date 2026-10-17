@@ -27,8 +27,9 @@ int main(int argc, char **argv)
     if (uid / 200000 != 100 || uid % 200000 < 10000) return 2;
     const AccessTokenID token = AccessTokenKit::GetHapTokenID(100, bundle, 0);
     HapTokenInfo info {};
-    if (token == 0 || AccessTokenKit::GetHapTokenInfo(token, info) != 0 || info.tokenID != token ||
-        info.userID != 100 || info.uid != static_cast<int32_t>(uid) || info.instIndex != 0 || info.bundleName != bundle) return 1;
+    const int queried = AccessTokenKit::GetHapTokenInfo(token, info);
+    if (token == 0 || queried != 0 || info.tokenID != token ||
+        info.userID != 100 || info.instIndex != 0 || info.bundleName != bundle) return 1;
     std::ifstream stream("/proc/sys/kernel/random/boot_id");
     std::string boot;
     if (!std::getline(stream, boot) || boot.size() != 36 || boot.find_first_not_of("0123456789abcdef-") != std::string::npos) return 1;
@@ -42,9 +43,13 @@ int main(int argc, char **argv)
     if (before == 0 || after < before || read != again ||
         (read != PERMISSION_GRANTED && read != PERMISSION_DENIED) ||
         (write != PERMISSION_GRANTED && write != PERMISSION_DENIED)) return 1;
-    std::printf("{\"schema_version\":1,\"api\":\"AccessTokenKit::VerifyAccessToken\",\"run_id\":\"%s\","
-        "\"boot_id\":\"%s\",\"bundle\":\"%s\",\"uid\":%lu,\"user_id\":100,\"token_id\":%u,"
-        "\"READ_IMAGEVIDEO\":%d,\"WRITE_IMAGEVIDEO\":", run.c_str(), boot.c_str(), bundle.c_str(), uid, token, read);
+    std::printf("{\"schema_version\":2,\"api\":\"AccessTokenKit::VerifyAccessToken\",\"run_id\":\"%s\","
+        "\"boot_id\":\"%s\",\"bundle\":\"%s\",\"expected_uid\":%lu,"
+        "\"identity_schema\":\"hap-bms-access-token/v1\",\"at_reported_uid\":%d,\"at_query_rc\":%d,"
+        "\"at_token_id\":%u,\"at_user_id\":%d,\"at_inst_index\":%d,\"at_bundle\":\"%s\","
+        "\"user_id\":100,\"token_id\":%u,\"READ_IMAGEVIDEO\":%d,\"WRITE_IMAGEVIDEO\":",
+        run.c_str(), boot.c_str(), bundle.c_str(), uid, info.uid, queried, info.tokenID, info.userID,
+        info.instIndex, info.bundleName.c_str(), token, read);
     if (curator) std::printf("%d", write);
     else std::printf("null"); // Not queried: never represent a missing query as an actual denial.
     std::printf(",\"before_ns\":%llu,\"after_ns\":%llu}\n", before, after);

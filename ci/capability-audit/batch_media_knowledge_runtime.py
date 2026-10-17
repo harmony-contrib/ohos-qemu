@@ -8,6 +8,7 @@ report guest_identity_verified=False and never close a package gate.
 import argparse
 from datetime import datetime, timezone
 import json
+from hap_identity_binding import verify_hap_token_identity
 from pathlib import Path
 import re
 
@@ -370,9 +371,16 @@ def verify_role_bindings(capture, challenge, env, *, command, output):
             token = load(checked(item['token_'+phase]))
             expected_read = -1 if phase == 'initial' or apl == 'normal' else 0
             expected_write = (-1 if phase == 'initial' else 0) if role == 'curator' else None
-            require(token.get('schema_version') == 1 and token.get('api') == 'AccessTokenKit::VerifyAccessToken' and
+            verify_hap_token_identity(token, bundle=bundle, uid=app['uid'], token_id=app['accessTokenId'])
+            for side in ('before', 'after'):
+                adjacent_raw = checked(item['token_bms_' + phase][side]).read_text().removeprefix(bundle + ':\n')
+                adjacent = json.loads(adjacent_raw)['applicationInfo']
+                require((adjacent.get('name') or adjacent.get('bundleName')) == bundle and
+                        all(adjacent.get(k) == app.get(k) for k in ('uid', 'accessTokenId', 'isSystemApp', 'appPrivilegeLevel')),
+                        'independent BMS identity changed around native token query')
+            require(type(token.get('schema_version')) is int and token['schema_version'] == 2 and token.get('api') == 'AccessTokenKit::VerifyAccessToken' and
                     token.get('run_id') == data['run_id'] and token.get('boot_id') == env['boot_id'] and token.get('bundle') == bundle and
-                    token.get('uid') == app['uid'] and token.get('token_id') == app['accessTokenId'] and token.get('user_id') == 100 and
+                    token.get('user_id') == 100 and
                     type(token.get('READ_IMAGEVIDEO')) is int and token['READ_IMAGEVIDEO'] == expected_read and
                     token.get('WRITE_IMAGEVIDEO') == expected_write and
                     (expected_write is None or type(token.get('WRITE_IMAGEVIDEO')) is int) and

@@ -5,10 +5,15 @@ import stationary from '@ohos.stationary';
 import fs from '@ohos.file.fs';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import common from '@ohos.app.ability.common';
-import { BusinessError } from '@ohos.base';
 import native from 'libliveinputaudit.so';
+// Journal v2 keeps all ordinary values numeric. Error code type and public
+// switch booleans have separate fields; neither is normalized into a number.
+interface ObservedApiError { code?: number | string; name?: string; message?: string; }
+interface ApiErrorEvidence { code_type: string; operation: string; name?: string; message?: string;
+  raw_code_string?: string; raw_code_number?: number;
+  raw_code_type?: string; raw_code_text?: string; raw_error_json?: string; }
 interface Row { schema: number; run_id: string; seq: number; kind: string; generation: number;
-  boot_ns: string; values: number[]; text: string; }
+  boot_ns: string; values: number[]; text: string; error?: ApiErrorEvidence; location_enabled?: boolean; }
 @Entry
 @Component
 struct Index {
@@ -19,16 +24,46 @@ struct Index {
   private generation: number = 0;
   private active: boolean = false;
   private rawCount: number = 0;
+  private switchQueryId: number = 0;
   private locationCb: (v: location.Location) => void = () => {};
   private sensorCb: (v: sensor.AccelerometerResponse) => void = () => {};
   private stillCb: (v: stationary.ActivityResponse) => void = () => {};
-  private record(kind: string, values: number[] = [], text: string = ''): void {
+  private record(kind: string, values: number[] = [], text: string = '',
+    error?: ApiErrorEvidence, locationEnabled?: boolean): number {
     if (this.sequence >= 20000) { throw new Error('bounded raw result limit exceeded'); }
-    const row: Row = { schema: 1, run_id: this.runId, seq: ++this.sequence, kind,
+    const row: Row = { schema: 2, run_id: this.runId, seq: ++this.sequence, kind,
       generation: this.generation, boot_ns: native.clock(), values, text };
+    if (error !== undefined) { row.error = error; }
+    if (locationEnabled !== undefined) { row.location_enabled = locationEnabled; }
     const file = fs.openSync(this.logPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
     try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
     this.note = kind;
+    return row.seq;
+  }
+  private recordError(error: ObservedApiError, operation: string, context: number[] = []): void {
+    const code = error.code;
+    const evidence: ApiErrorEvidence = { code_type: 'undefined', operation };
+    if (typeof error.name === 'string') { evidence.name = error.name; }
+    if (typeof error.message === 'string') { evidence.message = error.message; }
+    if (typeof code === 'string') {
+      evidence.code_type = 'string'; evidence.raw_code_string = code;
+    } else if (typeof code === 'number' && Number.isFinite(code) && Number.isInteger(code)) {
+      evidence.code_type = 'number'; evidence.raw_code_number = code;
+    } else if (code !== undefined) {
+      // Unsupported error shapes remain explicit fatal diagnostics, never code 0.
+      evidence.code_type = 'unsupported'; evidence.raw_code_type = typeof code;
+      evidence.raw_code_text = String(code); evidence.raw_error_json = JSON.stringify(error);
+    }
+    this.record('error', context, operation, evidence);
+  }
+  private readLocationSwitchState(): void {
+    const requestId = ++this.switchQueryId;
+    const operation = 'geoLocationManager.isLocationEnabled';
+    const beforeSeq = this.record('location_switch_query', [requestId], operation);
+    try {
+      const enabled = location.isLocationEnabled();
+      this.record('location_switch_state', [requestId, beforeSeq], operation, undefined, enabled);
+    } catch (e) { this.recordError(e as ObservedApiError, operation, [requestId, beforeSeq]); }
   }
   private async permissions(): Promise<void> {
     try {
@@ -36,10 +71,10 @@ struct Index {
         getContext(this) as common.UIAbilityContext,
         ['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']);
       this.record('permissions', answer.authResults, answer.permissions.join(','));
-    } catch (e) { this.record('error', [(e as BusinessError).code], 'permissions'); }
+    } catch (e) { this.recordError(e as ObservedApiError, 'permissions'); }
   }
   private start(): void {
-    if (this.active) { this.record('error', [], 'duplicate start'); return; }
+    if (this.active) { this.recordError(new Error('duplicate start') as ObservedApiError, 'duplicate start'); return; }
     this.active = true; this.generation++;
     const current = this.generation;
     this.locationCb = (v: location.Location): void => {
@@ -56,25 +91,25 @@ struct Index {
       location.on('locationChange', { priority: location.LocationRequestPriority.ACCURACY,
         timeInterval: 0, distanceInterval: 0, maxAccuracy: 0 }, this.locationCb);
       this.record('subscribed', [], 'location');
-    } catch (e) { this.record('error', [(e as BusinessError).code], 'location.on'); }
+    } catch (e) { this.recordError(e as ObservedApiError, 'location.on'); }
     try {
       sensor.on(sensor.SensorId.ACCELEROMETER, this.sensorCb, { interval: 10000000 });
       this.record('subscribed', [], 'sensor');
-    } catch (e) { this.record('error', [(e as BusinessError).code], 'sensor.on'); }
+    } catch (e) { this.recordError(e as ObservedApiError, 'sensor.on'); }
     try {
       stationary.on('still', stationary.ActivityEvent.ENTER_EXIT, 1000000000, this.stillCb);
       this.record('subscribed', [], 'stationary');
-    } catch (e) { this.record('error', [(e as BusinessError).code], 'stationary.on'); }
+    } catch (e) { this.recordError(e as ObservedApiError, 'stationary.on'); }
     this.record('start_complete');
   }
   private stop(): void {
     this.record('stop_begin');
     try { location.off('locationChange', this.locationCb); } catch (e) {
-      this.record('error', [(e as BusinessError).code], 'location.off'); }
+      this.recordError(e as ObservedApiError, 'location.off'); }
     try { sensor.off(sensor.SensorId.ACCELEROMETER, this.sensorCb); } catch (e) {
-      this.record('error', [(e as BusinessError).code], 'sensor.off'); }
+      this.recordError(e as ObservedApiError, 'sensor.off'); }
     try { stationary.off('still', stationary.ActivityEvent.ENTER_EXIT, this.stillCb); } catch (e) {
-      this.record('error', [(e as BusinessError).code], 'stationary.off'); }
+      this.recordError(e as ObservedApiError, 'stationary.off'); }
     this.active = false; this.record('stopped');
   }
   aboutToAppear(): void {
@@ -86,6 +121,7 @@ struct Index {
     Column() {
       Text(this.note)
       Button('Request actual location permission').id('live-permissions').onClick(() => { this.permissions(); })
+      Button('Read actual location switch state').id('live-location-switch-state').onClick(() => { this.readLocationSwitchState(); })
       Button('Start real public observers').id('live-start').onClick(() => { this.start(); })
       Button('Stop real public observers').id('live-stop').onClick(() => { this.stop(); })
       Button('Record actual UID socket refusal').id('live-denials').onClick(() => { this.record('socket_denials', [], native.denials()); })

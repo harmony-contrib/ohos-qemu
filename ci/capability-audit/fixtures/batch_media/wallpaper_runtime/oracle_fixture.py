@@ -1,6 +1,7 @@
 """Synthetic host oracle input ONLY. Never guest, package or SDK evidence."""
 import copy
 import json
+import shlex
 from pathlib import Path
 import zipfile
 
@@ -14,6 +15,21 @@ def node(bundle, identifier='', *, kind='Button', rect=(0, 0, 360, 640), childre
     return {'attributes': {'bundleName': bundle, 'id': identifier, 'type': kind, 'visible': 'true',
                           'enabled': 'true', 'clickable': 'true', 'bounds': f'[{x},{y}][{x+w},{y+h}]'},
             'children': children or []}
+
+def system_tree(bundle, identifier, width=360, height=640, top=0):
+    full=f'[0,0][{width},{height}]'
+    selected=node(bundle,identifier,kind='Flex',rect=(0,top,width,height-top))
+    selected['attributes'].update(origBounds=full,displayId='0',hostWindowId='11')
+    window=node(bundle,'session11',kind='WindowScene',rect=(0,top,width,height-top),children=[selected])
+    window['attributes'].update(origBounds=full,displayId='0',hostWindowId='11')
+    root=node('',rect=(0,0,width,height),children=[window])
+    if top:
+        bar=node('com.ohos.sceneboard','StatusBarBackground_Row_0',kind='Row',rect=(0,0,width,top))
+        bar['attributes'].update(origBounds=f'[0,0][{width},{top}]',displayId='0',hostWindowId='20')
+        owner=node('com.ohos.sceneboard','session20',kind='WindowScene',rect=(0,0,width,top),children=[bar])
+        owner['attributes'].update(origBounds=f'[0,0][{width},{top}]',displayId='0',hostWindowId='20')
+        root['children'].append(owner)
+    return root
 
 
 def ams(bundle):
@@ -46,11 +62,16 @@ class Fixture:
                       'archive': archive, 'boot': boot, 'challenge': runtime.record(self.challenge_path),
                       'plan': self.js(self.plan), 'runner': runtime.record(Path(runtime.__file__)),
                       'commands': [], 'ui_actions': [], 'actions': [], 'stages': []}
+        self.bms_observations={}
         for key, bundle, ordinary, uid in [('seed_identity', runtime.SEED, True, self.seed_uid),
             ('settings_identity', runtime.SETTINGS, False, self.settings_uid),
             ('renderer_identity', 'com.ohos.wallpaper', False, 20010002), ('photos_identity', runtime.PHOTOS, False, 20010003)]:
-            self.value[key] = self.js({'applicationInfo': {'name': bundle, 'uid': uid, 'isSystemApp': not ordinary,
-                                                          'appPrivilegeLevel': 'normal' if ordinary else 'system_basic'}})
+            app={'applicationInfo':{'name':bundle,'uid':uid,'isSystemApp':not ordinary,
+                'accessTokenId':10+len(self.bms_observations),'appPrivilegeLevel':'normal'if ordinary else'system_basic'}}
+            label={'seed_identity':'seed','settings_identity':'settings','renderer_identity':'renderer',
+                'photos_identity':'photos'}[key]+'-BMS'
+            observed=self.observation('bm dump -n '+bundle,json.dumps(app),label)
+            self.value[key]=observed['raw'];self.bms_observations[bundle]=observed
         self.default = {}
         for kind, case in [('desktop', 'cancel'), ('lock', 'desktop-1')]:
             image = Image.open(self.challenge['images'][case]['path'])
@@ -112,10 +133,9 @@ class Fixture:
             'ui_bundle': runtime.SETTINGS, 'layout': self.js(close), 'node': button_ancestor(close, runtime.SETTINGS, 'Third_Select_PickerClose'),
             'provider_dump': self.put(provider(runtime.SETTINGS)), 'screenshot': self.challenge['images']['cancel']})
         self.value['denied_observation'] = self.js({'run_id': self.run, 'boot_id': self.boot,
-            'token_query': self.js({'bundle': runtime.SEED, 'uid': self.seed_uid, 'token_id': 10,
-                                    'permission': 'ohos.permission.SET_WALLPAPER', 'grant': -1}),
-            'settings_token_query': self.js({'bundle': runtime.SETTINGS, 'uid': self.settings_uid, 'token_id': 11,
-                                             'permission': 'ohos.permission.SET_WALLPAPER', 'grant': 0})})
+            'token_query': self.token_observation(runtime.SEED,-1),
+            'settings_token_query': self.token_observation(runtime.SETTINGS,0),
+            'before_normal_token':self.token_observation(runtime.SEED,-1)})
         deletion=[]
         for _ in runtime.CASES:
             toolbar=node(runtime.PHOTOS,'ToolBarButtonDelete')
@@ -184,6 +204,34 @@ class Fixture:
         return runtime.record(path)
 
     def js(self, value): return self.put(json.dumps(value))
+
+    def observation(self,script,raw,label):
+        index=len(self.value['commands']);marker='__UITEST_EXIT_'+format(index+1,'032x')+'__='
+        log=self.put(raw+'\n\n'+marker+'0\n')
+        command={'argv':['hdc','-t','127.0.0.1:1234','shell',
+            script+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"'],
+            'label':label,'exit_code':0,**log}
+        self.value['commands'].append(command)
+        return {'raw':self.put(raw),'command_index':index,'command':command}
+
+    def token_observation(self,bundle,grant):
+        baseline=self.bms_observations[bundle];bms=json.loads(verify.checked(baseline['raw']).read_text())
+        app=bms['applicationInfo'];uid,token=app['uid'],app['accessTokenId']
+        before=self.observation('bm dump -n '+bundle,json.dumps(bms),'before-token-BMS')
+        value={'run_id':self.run,'boot_id':self.boot,'bundle':bundle,'token_id':token,'user_id':100,
+            'permission':'ohos.permission.SET_WALLPAPER','grant':grant,'before_ns':1000,'after_ns':1001,
+            'identity_schema':'hap-bms-access-token/v1','expected_uid':uid,'at_reported_uid':0,
+            'at_query_rc':0,'at_token_id':token,'at_user_id':100,'at_inst_index':0,'at_bundle':bundle}
+        script='unset LD_LIBRARY_PATH LD_PRELOAD; '+shlex.join([
+            '/data/local/tmp/wallpaper-coordinator-'+self.run+'/token',self.run,str(uid),bundle,value['permission']])
+        observed=self.observation(script,json.dumps(value),'actual-token-query')
+        after=self.observation('bm dump -n '+bundle,json.dumps(bms),'after-token-BMS')
+        observed.update(schema_version=1,run_id=self.run,boot_id=self.boot,
+            role='seed'if bundle==runtime.SEED else'settings',baseline=baseline,before=before,after=after,
+            helper={'binary':self.put(b'HOST ORACLE ONLY NOT NATIVE BINARY'),
+                'source':runtime.record(verify.HERE/'fixtures/batch_media/wallpaper_receipts/token_query.cpp'),
+                'build_receipt':self.js({'scope':'HOST ORACLE ONLY NOT COMPILE EVIDENCE'})})
+        return self.js(observed)
     def row(self, name, detail): self.rows.append({'runId': self.run, 'sequence': len(self.rows)+1,
         'name': name, 'detail': json.dumps(detail), 'timestampMs': 1000000+len(self.rows)})
     def lines(self): return '\n'.join(json.dumps(row) for row in self.rows)+'\n'
@@ -203,7 +251,8 @@ class Fixture:
         if screen:
             chosen = self.plan['screens'][screen]
             image = Image.open(picture['path']); capture = self.root/(name+'-capture.png'); image.save(capture, format='PNG')
-            stage.update(screen_kind=screen, screenshot=runtime.record(capture), layout=self.js(node(chosen['bundle'], chosen['identifier'])))
+            stage.update(screen_kind=screen, screenshot=runtime.record(capture),
+                layout=self.js(system_tree(chosen['bundle'],chosen['identifier'],image.width,image.height)))
         self.value['stages'].append(stage)
         marker = '__UITEST_EXIT_'+'a'*32+'__='
         log = self.put(marker+'0\n')

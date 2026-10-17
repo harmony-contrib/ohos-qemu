@@ -13,6 +13,13 @@ BUNDLE = 'org.harmonycontrib.liveinputaudit'
 PERMISSIONS = ['ohos.permission.ACCELEROMETER', 'ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']
 SOCKETS = {'gnss': '/dev/unix/socket/qemu_gnss/input', 'sensor': '/dev/unix/socket/qemu_sensor/input'}
 SCOPE = 'new_package_external_input_to_ordinary_public_callbacks_NOT_all_MSDP_or_first_artifact_gate'
+JOURNAL_SCHEMA = 2
+JOURNAL_FIELDS = {'schema', 'run_id', 'seq', 'kind', 'generation', 'boot_ns', 'values', 'text'}
+JOURNAL_KINDS = {'ready', 'socket_denials', 'permissions', 'error', 'start', 'subscribed', 'start_complete',
+                 'location', 'sensor', 'still', 'stop_begin', 'stopped', 'quiet_marker', 'finished',
+                 'location_switch_query', 'location_switch_state'}
+LOCATION_SWITCH_API = 'geoLocationManager.isLocationEnabled'
+LOCATION_SWITCH_CONTROL = 'live-location-switch-state'
 SDK_PRODUCT = {'name': 'default', 'compileSdkVersion': '26.0.0', 'compatibleSdkVersion': '26.0.0',
                'targetSdkVersion': '26.0.0', 'runtimeOS': 'OpenHarmony'}
 HVIGOR_CONFIG = {'modelVersion': '6.0.0', 'dependencies': {}, 'execution': {'daemon': False, 'parallel': False}}
@@ -111,12 +118,14 @@ def sdk_contract(sdk):
     anchors = {
         '@ohos.stationary.d.ts': ["'still' | 'relativeStill'", 'function on(activity: ActivityType', 'function off(activity: ActivityType'],
         '@ohos.sensor.d.ts': ['SensorId.ACCELEROMETER', 'interface AccelerometerResponse', 'timestamp: number'],
-        '@ohos.geoLocationManager.d.ts': ["type: 'locationChange'", 'LocationRequestPriority', 'timeSinceBoot: number', 'GNSS = 1'],
+        '@ohos.geoLocationManager.d.ts': ["type: 'locationChange'", 'LocationRequestPriority', 'timeSinceBoot: number', 'GNSS = 1', 'function isLocationEnabled('],
     }
     for name, values in anchors.items():
         path = sdk / 'ets/api' / name
         text = path.read_text()
         if not all(v in text for v in values): raise ValueError('actual public SDK contract changed: ' + name)
+        if name == '@ohos.geoLocationManager.d.ts' and re.search(r'function\s+isLocationEnabled\(\s*\)\s*:\s*boolean\s*;', text) is None:
+            raise ValueError('actual SDK lacks the public synchronous boolean switch query')
         result[name] = digest(path)
     for part in ('ets', 'native'):
         path = sdk / part / 'oh-uni-package.json'
@@ -180,20 +189,129 @@ def hap_payload(path):
         return {n: hashlib.sha256(archive.read(n)).hexdigest() for n in names if not n.endswith('/') and not n.startswith('META-INF/')}
 
 
-def load_rows(path, run_id):
-    text = Path(path).read_text()
-    if not text.endswith('\n') or len(text) > 8000000: raise ValueError('incomplete/excessive ordinary raw results')
-    rows = []
-    previous = 0
+class JournalSchemaError(ValueError):
+    """Actual journal is malformed; callers must not turn this into a timeout."""
+
+
+class OrdinaryApiError(ValueError):
+    """Actual API errors with their original string/integer code representation."""
+    def __init__(self, rows, context):
+        self.rows = tuple(rows)
+        details = [{'schema': r['schema'], 'seq': r['seq'], 'generation': r['generation'],
+                    'operation': r['text'], 'raw_values': r['values'],
+                    **({'error': r['error']} if 'error' in r else {})} for r in rows]
+        super().__init__(context + ': actual ordinary API error(s): ' +
+                         json.dumps(details, ensure_ascii=False, allow_nan=False))
+
+
+def require_no_api_errors(rows, context='ordinary public acceptance'):
+    errors = [row for row in rows if row['kind'] == 'error']
+    if errors:
+        raise OrdinaryApiError(errors, context)
+
+
+def _error_payload(row):
+    if not row['text']:
+        raise JournalSchemaError('error operation is missing')
+    if row['schema'] == 1:
+        # Retain genuine C1 ["3301100"] verbatim. This is diagnostic readability,
+        # never an API success or a string-to-number conversion.
+        values = row['values']
+        if len(values) > 1 or any(type(v) not in (str, int) for v in values):
+            raise JournalSchemaError('legacy error code must retain its string/integer type')
+        return
+    detail = row['error']
+    if not isinstance(detail, dict):
+        raise JournalSchemaError('typed error object required')
+    optional = {'name', 'message'}
+    required = {'code_type', 'operation'}
+    extra = {'string': {'raw_code_string'}, 'number': {'raw_code_number'}, 'undefined': set(),
+             'unsupported': {'raw_code_type', 'raw_code_text', 'raw_error_json'}}
+    kind = detail.get('code_type')
+    if (kind not in extra or not (required | extra[kind]) <= set(detail) or
+            set(detail) - required - extra[kind] - optional):
+        raise JournalSchemaError('typed error fields disagree with its original code type')
+    if detail['operation'] != row['text'] or any(type(detail[k]) is not str for k in optional & detail.keys()):
+        raise JournalSchemaError('typed error operation/name/message differs')
+    if kind == 'string' and type(detail['raw_code_string']) is not str:
+        raise JournalSchemaError('raw string API code was changed')
+    if kind == 'number' and type(detail['raw_code_number']) is not int:
+        raise JournalSchemaError('raw integer API code was changed')
+    if kind == 'unsupported' and any(type(detail[k]) is not str for k in extra[kind]):
+        raise JournalSchemaError('unsupported API error must preserve its raw diagnostic representation')
+    if not all(finite(value) for value in row['values']):
+        raise JournalSchemaError('typed error context must remain numeric')
+    if row['text'] != LOCATION_SWITCH_API and row['values']:
+        raise JournalSchemaError('unexpected typed error context')
+
+
+def _switch_queries(rows):
+    pending, completed = {}, set()
+    for row in rows:
+        if row['kind'] == 'location_switch_query':
+            values = row['values']
+            if (row['schema'] != JOURNAL_SCHEMA or row['text'] != LOCATION_SWITCH_API or len(values) != 1 or
+                    type(values[0]) is not int or values[0] != len(pending) + 1):
+                raise JournalSchemaError('public switch query ID/operation differs')
+            pending[values[0]] = row
+        elif row['kind'] == 'location_switch_state' or row['kind'] == 'error' and row['text'] == LOCATION_SWITCH_API:
+            values = row['values']
+            if (row['schema'] != JOURNAL_SCHEMA or len(values) != 2 or any(type(v) is not int for v in values) or
+                    values[0] not in pending or values[0] in completed):
+                raise JournalSchemaError('public switch response has no unique query')
+            before = pending[values[0]]
+            if (row['text'] != LOCATION_SWITCH_API or values[1] != before['seq'] or before['seq'] >= row['seq'] or
+                    row['generation'] != before['generation']):
+                raise JournalSchemaError('public switch response changed before sequence/generation')
+            completed.add(values[0])
+    return pending, completed
+
+
+def switch_observations(rows, require_complete=False):
+    pending, completed = _switch_queries(rows)
+    if require_complete and set(pending) != completed:
+        raise JournalSchemaError('public switch query did not produce a state/error response')
+    return [{'request_id': row['values'][0], 'before_seq': row['values'][1], 'after_seq': row['seq'],
+             'generation': row['generation'], 'location_enabled': row['location_enabled'],
+             'operation': row['text'], 'boot_ns': row['boot_ns']} for row in rows if row['kind'] == 'location_switch_state']
+
+
+def parse_rows(text, run_id):
+    if not text or not text.endswith('\n') or len(text) > 8000000:
+        raise JournalSchemaError('incomplete/excessive ordinary raw results')
+    rows, previous, schema = [], 0, None
     for seq, line in enumerate(text.splitlines(), 1):
-        row = json.loads(line, object_pairs_hook=unique_pairs, parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite callback')))
-        if (set(row) != {'schema', 'run_id', 'seq', 'kind', 'generation', 'boot_ns', 'values', 'text'} or
-                row['schema'] != 1 or row['run_id'] != run_id or type(row['seq']) is not int or row['seq'] != seq or
-                type(row['generation']) is not int or row['generation'] not in (0, 1, 2) or
-                not isinstance(row['boot_ns'], str) or re.fullmatch('[1-9][0-9]{0,19}', row['boot_ns']) is None or
-                int(row['boot_ns']) < previous or not isinstance(row['values'], list) or
-                any(not finite(x) for x in row['values']) or not isinstance(row['text'], str)):
-            raise ValueError('malformed/stale/out-of-order actual app result')
-        previous = int(row['boot_ns']); rows.append(row)
-    if not rows or len(rows) > 20000: raise ValueError('missing/bounded raw app results required')
+        try:
+            row = json.loads(line, object_pairs_hook=unique_pairs,
+                             parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite callback')))
+            if not isinstance(row, dict):
+                raise ValueError('journal row is not an object')
+            version = row.get('schema')
+            kind = row.get('kind')
+            fields = JOURNAL_FIELDS | ({'error'} if version == 2 and kind == 'error' else set())
+            fields |= {'location_enabled'} if version == 2 and kind == 'location_switch_state' else set()
+            if (set(row) != fields or type(version) is not int or version not in (1, JOURNAL_SCHEMA) or
+                    schema is not None and version != schema or kind not in JOURNAL_KINDS or
+                    row['run_id'] != run_id or type(row['seq']) is not int or row['seq'] != seq or
+                    type(row['generation']) is not int or row['generation'] not in (0, 1, 2) or
+                    not isinstance(row['boot_ns'], str) or re.fullmatch('[1-9][0-9]{0,19}', row['boot_ns']) is None or
+                    int(row['boot_ns']) < previous or not isinstance(row['values'], list) or not isinstance(row['text'], str)):
+                raise ValueError('malformed/stale/out-of-order actual app result')
+            if kind == 'error':
+                _error_payload(row)
+            elif any(not finite(value) for value in row['values']):
+                raise ValueError('non-error values must remain finite numbers')
+            if kind == 'location_switch_state' and type(row['location_enabled']) is not bool:
+                raise ValueError('public isLocationEnabled result must remain an original boolean')
+            previous, schema = int(row['boot_ns']), version
+            rows.append(row)
+        except (ValueError, KeyError, TypeError, OverflowError) as error:
+            raise JournalSchemaError('actual journal schema error at seq ' + str(seq) + ': ' + str(error)) from error
+    if not rows or len(rows) > 20000:
+        raise JournalSchemaError('missing/bounded raw app results required')
+    _switch_queries(rows)
     return rows
+
+
+def load_rows(path, run_id):
+    return parse_rows(Path(path).read_text(), run_id)

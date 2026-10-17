@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import re
+from hap_identity_binding import verify_hap_token_identity
 from batch_system_calendar_runtime_project import CONTRACT, FIX, ROLES, checked, record, require, sha
 
 KEYS = {'schema_version', 'run_id', 'boot_id', 'archive_sha256', 'operation_id', 'role', 'action', 'case_id',
@@ -80,9 +81,9 @@ def bms(raw, bundle, policy=None):
 
 
 def token(value, request, bundle, app):
-    require(type(value.get('schema_version')) is int and value.get('schema_version') == 1 and value.get('run_id') == request['run_id'] and
+    verify_hap_token_identity(value, bundle=bundle, uid=app['uid'], token_id=app['accessTokenId'])
+    require(type(value.get('schema_version')) is int and value.get('schema_version') == 2 and value.get('run_id') == request['run_id'] and
             value.get('boot_id') == request['boot_id'] and value.get('bundle') == bundle and
-            value.get('uid') == app['uid'] and value.get('token_id') == app['accessTokenId'] and
             value.get('user_id') == 100 and value.get('permission_api') == 'AccessTokenKit::VerifyAccessToken' and
             value.get('process_api') == 'AppMgrClient::GetAllRunningProcesses', 'raw product token/process identity mismatch')
     expected = {'ohos.permission.' + name for name in ('READ_CALENDAR', 'WRITE_CALENDAR', 'READ_WHOLE_CALENDAR',

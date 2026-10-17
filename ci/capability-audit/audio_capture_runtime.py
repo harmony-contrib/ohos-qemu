@@ -16,6 +16,7 @@ from guest_ui import GuestUi
 import batch_system_build_runtime_helpers as product
 from build_audio_capture_tools import verify_installed_tools
 from spring_loading_input import binding
+from hap_identity_binding import bms_application_identity, strict_json, verify_hap_token_identity
 
 HERE = Path(__file__).resolve().parent
 BUNDLE = 'org.harmonycontrib.capabilityaudit'
@@ -220,15 +221,37 @@ class CaptureRuntime:
         self.value.update(asound=str(hardware_path), asound_sha256=sha(hardware_path))
         self.save()
 
+    def token_observation(self, uid, phase, *, bundle=BUNDLE, operation='query', explicit_bundle=False):
+        # The UID is read from BMS, not HapTokenInfo's non-serialized UID field.
+        from run_normal_hap_probe import require_normal_identity
+        bms_script = shlex.join(['bm', 'dump', '-n', bundle])
+        def identity(suffix):
+            raw = self.actual_shell(bms_script, 'token-BMS-' + phase + '-' + suffix)
+            index = len(self.value['guest_shell_observations']) - 1
+            if require_normal_identity(raw, bundle) != uid:
+                raise ValueError('actual normal BMS caller UID changed around native token query')
+            return bms_application_identity(raw, bundle), index
+        before, before_index = identity('before')
+        script = ('unset LD_LIBRARY_PATH LD_PRELOAD; ' + self.remote + '/audio_capture_token ' +
+                  self.run + ' ' + str(uid) + ' ' + operation + (' ' + bundle if explicit_bundle else ''))
+        result = strict_json(self.actual_shell(script, 'independent-MIC-token-' + phase))
+        query_index = len(self.value['guest_shell_observations']) - 1
+        after, after_index = identity('after')
+        if before != after:
+            raise ValueError('actual BMS UID/accessTokenId changed during native token query')
+        verify_hap_token_identity(result, bundle=bundle, uid=before['uid'], token_id=before['token_id'])
+        row = dict(phase=phase, observation=result, bms_before_observation=before_index,
+                   token_observation=query_index, bms_after_observation=after_index)
+        return result, row
+
     def token(self, uid, phase):
-        result = json.loads(self.actual_shell(f'unset LD_LIBRARY_PATH LD_PRELOAD; {self.remote}/audio_capture_token {self.run} {uid} query',
-                                              'independent-MIC-token-' + phase))
-        if (result.get('uid') != uid or result.get('run_id') != self.run or result.get('result') != 0 or
+        result, row = self.token_observation(uid, phase)
+        if (result.get('run_id') != self.run or result.get('result') != 0 or
                 result.get('operation') != 'query' or type(result.get('before')) is not int or
                 result.get('before') not in (-1, 0) or type(result.get('after')) is not int or result.get('after') not in (-1, 0)):
             raise ValueError('independent actual AccessToken query does not match the ordinary caller')
         self.last_token = result
-        self.value['tokens'].append({'phase': phase, 'observation': result})
+        self.value['tokens'].append(row)
         self.save()
         return result['after']
 

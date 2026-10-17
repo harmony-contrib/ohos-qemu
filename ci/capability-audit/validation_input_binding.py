@@ -112,6 +112,41 @@ F09_RUNTIME_QA_TEST_ONLY = frozenset((
 TEST_ONLY = TEST_ONLY | F09_RUNTIME_QA_TEST_ONLY
 
 
+# C2 repairs of private QA callers and evidence readers. These exact paths
+# cannot replace production sources, recipes, ledgers, or gate policy.
+F09_C2_QA_TEST_ONLY = frozenset((
+    'ci/capability-audit/test_batch_media_knowledge_suite.py',
+    'ci/capability-audit/batch_network_kernel_snapshot.py',
+    'ci/capability-audit/build_network_kernel_snapshot.py',
+    'ci/capability-audit/test_network_kernel_snapshot.py',
+    'ci/capability-audit/probes/netlink_snapshot.c',
+    'ci/capability-audit/test_audio_capture_acceptance.py',
+    'ci/capability-audit/test_audio_revoke_acceptance.py',
+    'ci/capability-audit/audio_revoke_runtime.py',
+    'ci/capability-audit/batch_apps_run_contact_picker_runtime.py',
+    'ci/capability-audit/batch_media_audio_haptic_host_checks.py',
+    'ci/capability-audit/batch_system_calendar_runtime_resources.py',
+    'ci/capability-audit/hap_identity_binding.py',
+    'ci/capability-audit/sign_web_probe.py',
+    'ci/capability-audit/test_batch_apps_run_contact_picker_runtime.py',
+    'ci/capability-audit/test_batch_media_verify_wallpaper_runtime.py',
+    'ci/capability-audit/test_batch_system_calendar_runtime_resources.py',
+    'ci/capability-audit/test_batch_system_live_inputs_journal.py',
+    'ci/capability-audit/test_contacts_seed_signer_profile.py',
+    'ci/capability-audit/test_hap_identity_binding.py',
+    'ci/capability-audit/test_microphone_token_bindings.py',
+    'ci/capability-audit/verify_audio_revoke_results.py',
+    'ci/capability-audit/fixtures/batch_apps/contact_picker_seed/project-contract.json',
+    'ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/sampler.cpp',
+    'ci/capability-audit/fixtures/batch_media/knowledge_runtime/knowledge_token_query.cpp',
+    'ci/capability-audit/fixtures/batch_media/wallpaper_receipts/token_query.cpp',
+    'ci/capability-audit/fixtures/batch_system/calendar_runtime/observer.cpp',
+    'ci/capability-audit/fixtures/batch_system/live_inputs/Index.ets.in',
+    'ci/capability-audit/fixtures/batch_system/live_inputs/fixed_sources.json',
+))
+TEST_ONLY = TEST_ONLY | F09_C2_QA_TEST_ONLY
+
+
 def tree_digest(files):
     if not isinstance(files, dict) or not files or any(
             not isinstance(name, str) or not isinstance(value, str) or

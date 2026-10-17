@@ -33,11 +33,29 @@ SCOPE = 'same_new_archive_ordinary_AudioHaptic_public_lifecycle_independent_QEMU
 TOOLS = ('batch_media_audio_haptic_project.py', 'batch_media_audio_haptic_build_sampler.py',
          'batch_media_audio_haptic_build_callers.py', 'batch_media_audio_haptic_runtime.py', 'batch_media_audio_haptic_verify.py', 'batch_media_audio_capture_challenge.py',
          'batch_media_knowledge_suite.py', 'batch_apps_contact_picker_coordinator.py', 'batch_media_wallpaper_artifacts.py',
-         'batch_system_build_runtime_helpers.py', 'enclosing_acceptance_guest.py', 'guest_ui.py', 'spring_loading_input.py')
+         'batch_system_build_runtime_helpers.py', 'enclosing_acceptance_guest.py', 'guest_ui.py', 'spring_loading_input.py',
+         'hap_identity_binding.py')
+
+INFO_CAPTURE_NOTICE = "warning: 'info capture' is deprecated since v10.2, to be removed\r\n"
+
+
+def capture_list_body(text):
+    """Only the exact observed HMP info-capture prefix, preserving raw evidence.
+
+    This grammar applies exclusively to info capture replies. Other commands,
+    including wavcapture/stopcapture, have no observed notice allowance.
+    """
+    require(isinstance(text, str), 'actual HMP capture listing must be text')
+    return text.removeprefix(INFO_CAPTURE_NOTICE)
+
+
+def capture_list_empty(text):
+    return capture_list_body(text) == ''
 
 
 def owned_capture_listing(text, path):
-    require(re.fullmatch(r'\[0\]: Capturing audio\(48000,16,2\) to ' + re.escape(str(path)) + r': [0-9]+ bytes\r?\n', text),
+    require(re.fullmatch(r'\[0\]: Capturing audio\(48000,16,2\) to ' + re.escape(str(path)) +
+            r': [0-9]+ bytes\r?\n', capture_list_body(text)),
             'actual capture index/path/format is not exclusively ours')
 
 
@@ -60,7 +78,8 @@ class AudioCapture:
         self.owned = False
         help_text = self.hmp('help wavcapture', 'capture-help')
         require(re.search(r'wavcapture\s+path audiodev', help_text), 'actual HMP wavcapture syntax differs from reviewed QEMU primary source')
-        require(self.hmp('info capture', 'capture-before') == '', 'another audio capture already exists; refuse to stop or reuse it')
+        require(capture_list_empty(self.hmp('info capture', 'capture-before')),
+                'another audio capture or unknown monitor output exists; refuse to stop or reuse it')
 
     def hmp(self, command, label):
         self.collector.guest.healthy()
@@ -70,7 +89,7 @@ class AudioCapture:
         return result
 
     def start(self, phase):
-        require(not self.owned and self.hmp('info capture', phase + '-before-capture') == '', 'capture ownership changed')
+        require(not self.owned and capture_list_empty(self.hmp('info capture', phase + '-before-capture')), 'capture ownership changed')
         self.path = self.collector.args.output / (phase + '-qemu.wav')
         require(not self.path.exists() and re.fullmatch(r'/[A-Za-z0-9_./-]+', str(self.path)),
                 'fresh monitor-safe absolute WAV output required (no spaces)')
@@ -88,7 +107,7 @@ class AudioCapture:
         owned_capture_listing(listing, self.path)
         require(self.hmp('stopcapture 0', phase + '-stopcapture') == '', 'actual owned capture stop failed')
         ended = time.monotonic_ns()
-        require(self.hmp('info capture', phase + '-capture-after-stop') == '', 'owned capture remains active')
+        require(capture_list_empty(self.hmp('info capture', phase + '-capture-after-stop')), 'owned capture remains active')
         self.owned = False
         require(self.path.is_file() and not self.path.is_symlink(), 'actual QEMU did not produce a WAV file')
         return {'wav': record(self.path), 'host_begin_ns': self.begin, 'host_end_ns': ended, 'backend': self.backend}
@@ -185,13 +204,24 @@ class Collector(shared.Collector):
 
     def token(self, role, when):
         bundle, _ = ROLES[role]
+        from batch_media_audio_haptic_verify import bms_identity, token_identity
+        binding = self.roles[role].setdefault('token_bindings', {}).setdefault(when, {})
+        require(not binding, 'duplicate actual token identity observation')
+        # These reads bracket only the lifecycle initial/final token query, never
+        # the short Start -> Stop/Release window in the paired UI operation.
+        binding['bms_before'] = self.observe('bm dump -n ' + bundle, role + '-' + when + '-BMS-before-token')
+        require(bms_identity(checked(binding['bms_before']).read_text(), role) == self.identities[role],
+                'actual BMS identity changed before token query')
         raw = self.observe(project.sampler_script(self.remote, 'token', self.data['run_id'], self.env['boot_id'],
             bundle, self.identities[role]['uid']), role + '-token-' + when)
-        value = load(checked(raw))
-        require(value.get('kind') == 'token' and value['run_id'] == self.data['run_id'] and value['boot_id'] == self.env['boot_id'] and
-                value['bundle'] == bundle and value['uid'] == self.identities[role]['uid'] and value['token_id'] == self.identities[role]['token_id'] and
-                value['VIBRATE'] == (0 if role == 'normal' else -1), 'real ordinary VIBRATE token differs')
+        binding['token'] = raw
+        binding['bms_after'] = self.observe('bm dump -n ' + bundle, role + '-' + when + '-BMS-after-token')
+        require(bms_identity(checked(binding['bms_after']).read_text(), role) == self.identities[role],
+                'actual BMS identity changed after token query')
+        token_identity(checked(raw).read_text(), role, run=self.data['run_id'], boot=self.env['boot_id'],
+                       identity=self.identities[role])
         self.roles[role]['token_' + when] = raw
+        self.persist()
 
     def install(self, role):
         artifacts = self.value['artifacts_data']; spec = artifacts['projects'][role]

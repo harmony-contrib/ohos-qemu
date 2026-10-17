@@ -2,7 +2,7 @@
 """Exercise installed ordinary Contacts apps in the suite-owned acceptance guest.
 
 No boot/build/sign/install/grant/DB commands. Public CRUD happens in the independent
-normal seed HAP after UITest clicks the actual permission dialog. Root supplies
+system_basic seed HAP after UITest clicks the actual permission dialog. Root supplies
 signed artifacts and a product-built read-only AppMgr/AccessToken observer.
 """
 import argparse
@@ -82,7 +82,7 @@ def prepare_seed(output):
                            ('SeedStore.ets', 'model/SeedStore.ets')]:
         write('entry/src/main/ets/' + target, (FIX / source).read_text())
     manifest = {'schema_version': 1, 'bundle_name': SEED, 'requested_permissions': PERMISSIONS,
-                'apl_required_at_signing': 'normal', 'system_app_required_at_install': False,
+                'apl_required_at_signing': 'system_basic', 'system_app_required_at_install': True,
                 'fixture_hashes': {p.name: verifier.sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
                 'source_hashes': {str(p.relative_to(output)): verifier.sha(p) for p in sorted(output.rglob('*')) if p.is_file()},
                 'signed': False, 'runtime_acceptance': False}
@@ -97,9 +97,12 @@ def application_info(text, bundle):
     apps = [item for item in verifier.objects(raw) if item.get('bundleName') == bundle and 'isSystemApp' in item]
     verifier.require(len(apps) == 1, 'BMS app identity missing or ambiguous')
     app = apps[0]
-    verifier.require(app['isSystemApp'] is False and app.get('appPrivilegeLevel', app.get('apl')) == 'normal' and
-        type(app.get('uid')) is int and app['uid'] > 10000 and type(app.get('accessTokenId')) is int and
-        0 < app['accessTokenId'] < 2**32, 'normal non-system UID/token required')
+    verifier.require(bundle in (CALLER, SEED), 'only exact caller/seed audit identities allowed')
+    system_seed = bundle == SEED
+    verifier.require(app['isSystemApp'] is system_seed and
+        app.get('appPrivilegeLevel', app.get('apl')) == ('system_basic' if system_seed else 'normal') and
+        type(app.get('uid')) is int and app['uid'] // 200000 == 100 and type(app.get('accessTokenId')) is int and
+        0 < app['accessTokenId'] < 2**32, 'exact caller-normal/seed-system_basic BMS UID/token required')
     return app
 
 
@@ -222,6 +225,7 @@ class Driver:
         self.clock, self.sleep = clock, sleep
         self.evidence = {'run_id': run_id, 'boot_session_id': guest.env['boot_id'], 'events': [], 'caller_processes': {}}
         self.last_journal = ''
+        self.permission_bms_bindings = []
         self.serial = 0
         self.caller_uid = None
         self.contacts_uid = None
@@ -296,11 +300,19 @@ class Driver:
         return self.wait(click)
 
     def permissions(self, bundle, token, stem):
+        before_raw, before = self.raw('bm dump -n ' + bundle, stem + '-BMS-before')
+        app = application_info(before_raw, bundle)
+        verifier.require(type(token) is int and token == app['accessTokenId'], 'observer token must come from current BMS')
         raw, art = self.raw(shlex.join([self.observer, 'permissions', bundle, str(token)]), stem)
         value = json.loads(raw)
         verifier.require(value.get('api') == 'AccessTokenKit::VerifyAccessToken' and
-                         value.get('token_id') == token and value.get('bundle_name') == bundle,
-                         'observer token/API mismatch')
+                         type(value.get('token_id')) is int and value['token_id'] == token and value.get('bundle_name') == bundle and
+                         all(type(value.get(k)) is int and value[k] in (-1, 0) for k in ('READ_CONTACTS', 'WRITE_CONTACTS')),
+                         'observer token/API/grant mismatch')
+        after_raw, after = self.raw('bm dump -n ' + bundle, stem + '-BMS-after')
+        again = application_info(after_raw, bundle)
+        verifier.require(all(again[k] == app[k] for k in ('uid', 'accessTokenId')), 'BMS UID/token changed around observer query')
+        self.permission_bms_bindings.append({'bundle': bundle, 'token': art, 'before': before, 'after': after})
         return value, art
 
     def processes(self, phase, expect):
@@ -566,7 +578,7 @@ class Driver:
             self.evidence['seed_permission_after'] = proof
             verifier.require(self.evidence.get('seed_user_permission_inputs') and
                              all(after[p] == 0 for p in ('READ_CONTACTS', 'WRITE_CONTACTS')),
-                             'actual normal user Contacts permission grant missing')
+                             'actual user Contacts permission grant missing')
             for case_id in cases:
                 try:
                     self.case(case_id, seed)
@@ -616,10 +628,13 @@ def verify_normal_signed_input(identity, hap, bundle, permissions):
     profile_path = verifier.artifact(identity['decoded_profile'])
     profile = verifier.raw_json(profile_path)
     info = profile.get('bundle-info', {})
-    verifier.require(info.get('bundle-name') == bundle and info.get('apl') == 'normal' and
-                     info.get('app-feature') != 'hos_system_app' and profile.get('acls', {}).get('allowed-acls', []) == [] and
+    verifier.require(bundle in (CALLER, SEED) and permissions == ([] if bundle == CALLER else PERMISSIONS), 'exact Contacts profile role required')
+    system_seed = bundle == SEED
+    verifier.require(info.get('bundle-name') == bundle and info.get('apl') == ('system_basic' if system_seed else 'normal') and
+                     info.get('app-feature') == ('hos_system_app' if system_seed else 'hos_normal_app') and
+                     profile.get('acls', {}).get('allowed-acls', []) == [] and
                      profile.get('permissions', {}).get('restricted-permissions', []) == [],
-                     'normal profile with no system ACL/restricted grants required')
+                     'exact role profile with no ACL/restricted grants required')
     signature = verifier.raw_json(verifier.artifact(identity['signature_verification']))
     verifier.require(signature.get('exit_code') == 0 and signature.get('hap_sha256') == verifier.sha(hap) and
                      signature.get('decoded_profile_sha256') == verifier.sha(profile_path) and
@@ -668,6 +683,7 @@ def run(args):
         verifier.require(remote_hash == verifier.sha(args.observer_local), 'guest observer differs from product-built artifact')
         validate_elf(args.observer_local, 'arm64')
         report['observer'] = descriptor(args.observer_local)
+        report['observer_remote'] = args.observer
         seed_manifest = verifier.raw_json(verifier.artifact(build['seed_source_manifest']))
         verifier.require(seed_manifest.get('fixture_hashes') == {p.name: verifier.sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
                          'compiled seed source fixture provenance differs')
@@ -734,6 +750,7 @@ def run(args):
         if guest:
             report['test_environment'] = guest.env
             report['guest_commands'] = guest.report['commands']
+            if 'driver' in locals(): report['permission_bms_bindings'] = driver.permission_bms_bindings
             guest.close()
         write_json(args.output / 'driver-report.json', report)
     return report

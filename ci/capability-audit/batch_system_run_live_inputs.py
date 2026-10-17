@@ -19,11 +19,16 @@ import subprocess
 import time
 
 from batch_system_live_inputs import (BUNDLE, SOCKETS, SCOPE, digest, verify_signed_payload,
-    load_rows, nonce, read_json, trace, verify_project, write_json)
+    load_rows, nonce, read_json, trace, verify_project, write_json, JournalSchemaError,
+    require_no_api_errors, switch_observations, LOCATION_SWITCH_API, LOCATION_SWITCH_CONTROL)
 from batch_system_gnss_controller import encode_sample, read_exact
 from guest_ui import GuestUi
 from hdc_transport import failed as hdc_failed
 from run_normal_hap_probe import require_normal_identity
+
+
+class JournalNotReady(ValueError):
+    """Only an explicitly absent/initially empty journal may be polled again."""
 
 
 class Capture:
@@ -66,21 +71,67 @@ class Capture:
         return output[:match.start()].rstrip('\n')
 
     def rows(self):
-        raw = self.shell('cat ' + shlex.quote(self.remote), 'read-own-raw-callbacks', accepted_failure=True)
-        p = self.output / 'raw-results.jsonl'; p.write_text(raw + '\n')
-        return load_rows(p, self.a.run_id)
+        absent = '__LIVE_JOURNAL_NOT_CREATED__'
+        script = 'if test -f ' + shlex.quote(self.remote) + '; then cat ' + shlex.quote(self.remote)
+        script += '; else printf "' + absent + '\\n"; fi'
+        raw = self.shell(script, 'read-own-raw-callbacks')
+        path = self.output / 'raw-results.jsonl'
+        path.write_text(('' if raw == absent else raw) + '\n')
+        if raw in ('', absent):
+            if getattr(self, '_journal_seen', False):
+                raise JournalSchemaError('actual journal disappeared/truncated after valid rows')
+            raise JournalNotReady('actual ordinary journal not created/written yet')
+        rows = load_rows(path, self.a.run_id)
+        self._journal_seen = True
+        return rows
 
     def wait(self, kind, generation=None, seconds=30):
         end = time.monotonic() + seconds
         while time.monotonic() < end:
             try:
                 rows = self.rows()
-                candidates = [r for r in rows if r['kind'] == kind and (generation is None or r['generation'] == generation)]
-                if candidates: return candidates[-1]
-            except (ValueError, json.JSONDecodeError):
-                pass
+            except JournalNotReady:
+                time.sleep(.25)
+                continue
+            # Never replace a schema/transport/API failure with a timeout, even
+            # when the requested marker is already present later in the journal.
+            require_no_api_errors(rows, 'waiting for ' + kind)
+            candidates = [r for r in rows if r['kind'] == kind and (generation is None or r['generation'] == generation)]
+            if candidates:
+                return candidates[-1]
             time.sleep(.25)
         raise ValueError('ordinary callback/control did not arrive: ' + kind)
+
+    def read_location_switch_state(self, label, seconds=30):
+        """Repeatable read-only public observation, usable during restoration.
+
+        Prior API errors are returned verbatim in the observation, never erased
+        or converted into acceptance. Errors from this query fail immediately.
+        This method does not change the switch, request permission or touch HDI.
+        """
+        if re.fullmatch('[A-Za-z0-9_-]+', label) is None or not 0 < seconds <= 90:
+            raise ValueError('bounded explicit public switch query label/deadline required')
+        before = self.rows()
+        before_seq = before[-1]['seq']
+        old_queries = [r for r in before if r['kind'] == 'location_switch_query']
+        request_id = len(old_queries) + 1
+        self.click(LOCATION_SWITCH_CONTROL)
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            rows = self.rows()
+            recent = [r for r in rows if r['seq'] > before_seq]
+            require_no_api_errors(recent, 'reading actual public switch state: ' + label)
+            observations = [r for r in switch_observations(rows) if r['request_id'] == request_id and r['before_seq'] > before_seq]
+            if observations:
+                if len(observations) != 1:
+                    raise JournalSchemaError('public switch query produced duplicate states')
+                observation = dict(observations[0], label=label,
+                    prior_api_errors=[r for r in before if r['kind'] == 'error'],
+                    scope='ordinary_public_switch_state_observation_ONLY_NOT_acceptance')
+                self.report.setdefault('public_location_switch_observations', []).append(observation)
+                return observation
+            time.sleep(.25)
+        raise ValueError('actual public ' + LOCATION_SWITCH_API + ' result missing: ' + label)
 
     def click(self, identifier):
         action = self.ui.click(BUNDLE, identifier=identifier, label=identifier)
@@ -242,6 +293,7 @@ class Capture:
             old = {}
             for generation in (1, 2):
                 self.generation = generation
+                self.read_location_switch_state('before-start-' + str(generation))
                 self.click('live-start'); self.wait('start_complete', generation)
                 self.click('live-denials')
                 r['mappings_' + str(generation)] = self.mappings('actual-mappings-' + str(generation))

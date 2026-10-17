@@ -23,16 +23,34 @@ def boot_value(archive_sha):
 
 
 class PowerTransport:
-    def __init__(self,output,override=86400000):self.output=output;self.override=override;self.commands=[]
+    def __init__(self,output,override=86400000):
+        self.output=output;self.override=override;self.commands=[];self.value={'commands':[]}
+        self.boot_id='11111111-1111-1111-1111-111111111111';self.home_error=None
     def shell(self,command,label):
         self.commands.append(command)
-        if command.startswith('hidumper'):return 'ScreenOffTime: Timeout=30000ms'+('  OverrideTimeout='+str(self.override)+'ms'if self.override else'')
-        if command=='power-shell timeout -r':self.override=None;return 'Restore screen off time'
-        if command=='power-shell timeout -o 86400000':self.override=86400000;return 'Override screen off time to 86400000'
-        raise AssertionError(command)
+        if command.startswith('hidumper'):raw='ScreenOffTime: Timeout=30000ms'+('  OverrideTimeout='+str(self.override)+'ms'if self.override else'')
+        elif command=='power-shell timeout -r':self.override=None;raw='Restore screen off time'
+        elif command=='power-shell timeout -o 86400000':self.override=86400000;raw='Override screen off time to 86400000'
+        elif command=='cat /proc/sys/kernel/random/boot_id':raw=self.boot_id
+        elif command.startswith('echo "bootevent.account.ready='):
+            raw='bootevent.account.ready=true\nID: 100\nisForeground: true'
+        else:raise AssertionError(command)
+        marker='__UITEST_EXIT_'+format(len(self.value['commands'])+1,'032x')+'__='
+        path=self.output/(label+'-command.log');path.write_text(raw+'\n\n'+marker+'0\n')
+        self.value['commands'].append({'argv':['hdc','-t','127.0.0.1:12345','shell',
+            command+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"'],
+            'label':label,'exit_code':0,**record(path)})
+        return raw
     def text(self,raw,label):
         path=self.output/(label+'.txt');path.write_text(raw);return record(path)
-    def home(self):self.commands.append('actual home gesture fixture');self.override=None
+    def home(self):
+        self.commands.append('actual home gesture fixture')
+        if self.home_error:raise ValueError(self.home_error)
+        self.override=None
+    def identity(self,label):
+        self.shell('cat /proc/sys/kernel/random/boot_id',label+'-boot')
+        script='echo "bootevent.account.ready=$(param get bootevent.account.ready)"; hidumper -s AccountMgr -a "-os_account_infos"'
+        return self.text(self.shell(script,label+'-account'),label+'-account')
 
 
 class WallpaperSuiteTests(unittest.TestCase):
@@ -252,6 +270,29 @@ class WallpaperSuiteTests(unittest.TestCase):
                 with self.assertRaises(ValueError):suite.verify_guest_commands([row],'127.0.0.1:12')
             path.write_text('cleanup failed\n'+marker+'7\n');row.update(record(path));row['argv'][4]='rm /only-owned; '+marker
             with self.assertRaises(ValueError):suite.verify_guest_commands([row],'127.0.0.1:12')
+
+    def test_home_failure_kept_but_same_boot_and_policy_readbacks_still_collected(self):
+        with tempfile.TemporaryDirectory()as temp:
+            transport=PowerTransport(Path(temp),None);report={};policy=suite.OwnedPolicy(transport,None,report)
+            policy.suspend('a'*64,transport.boot_id,Path(temp)/'not-needed')
+            transport.home_error='actual Home window unavailable'
+            self.assertIn('actual Home window unavailable',policy.restore())
+            self.assertTrue(report['restored']);self.assertIn('navigation_failure',report)
+            self.assertIn('wrapper-policy-restored',policy.states)
+            self.assertEqual(2,len(report['boots']))
+            for observed in report['boots'].values():
+                suite.replay_observation(observed,'cat /proc/sys/kernel/random/boot_id',
+                    '127.0.0.1:12345',commands=transport.value['commands'])
+            self.assertFalse(any(c.startswith('power-shell')for c in transport.commands))
+
+    def test_unknown_override_after_home_failure_is_never_cleared(self):
+        with tempfile.TemporaryDirectory()as temp:
+            transport=PowerTransport(Path(temp),None);policy=suite.OwnedPolicy(transport,None,{})
+            policy.suspend('a'*64,transport.boot_id,Path(temp)/'not-needed')
+            transport.override=1234;transport.home_error='original navigation failure'
+            with self.assertRaisesRegex(ValueError,'unknown nested power override'):policy.restore()
+            self.assertEqual(1234,transport.override)
+            self.assertFalse(any(c.startswith('power-shell')for c in transport.commands))
 
 
 if __name__=='__main__':unittest.main()

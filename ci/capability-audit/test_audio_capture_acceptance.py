@@ -40,10 +40,14 @@ class CaptureAcceptanceTests(unittest.TestCase):
     def test_token_never_accepts_another_owner_a_grant_claim_or_unknown_state(self):
         run, uid = 'd' * 32, 20010001
         original = {'run_id': run, 'bundle': 'org.harmonycontrib.capabilityaudit', 'user_id': 100,
-            'uid': uid, 'token_id': 123, 'permission': 'ohos.permission.MICROPHONE',
+            'expected_uid': uid, 'token_id': 123, 'permission': 'ohos.permission.MICROPHONE',
+            'identity_schema': 'hap-bms-access-token/v1', 'at_reported_uid': 0, 'at_query_rc': 0,
+            'at_token_id': 123, 'at_user_id': 100, 'at_inst_index': 0,
+            'at_bundle': 'org.harmonycontrib.capabilityaudit',
             'operation': 'query', 'result': 0, 'before': -1, 'after': -1, 'before_ns': 1, 'after_ns': 2}
         self.assertEqual(V.token(original, run, uid), (-1, 123))
-        for change in ({'uid': uid + 1}, {'token_id': 0}, {'operation': 'grant'}, {'result': -1},
+        for change in ({'uid': uid}, {'expected_uid': uid + 1}, {'at_query_rc': -1},
+                       {'at_token_id': 124}, {'token_id': 0}, {'operation': 'grant'}, {'result': -1},
                        {'before': 0}, {'after': True}, {'permission': 'ohos.permission.CAMERA'}, {'run_id': 'e' * 32}):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 V.token({**original, **change}, run, uid)

@@ -69,14 +69,19 @@ int main(int argc, char **argv)
         if (bundle != "org.harmonycontrib.audiohapticqa" && bundle != "org.harmonycontrib.audiohapticdenied") return 2;
         const AccessTokenID token = AccessTokenKit::GetHapTokenID(100, bundle, 0);
         HapTokenInfo info {};
-        if (token == 0 || AccessTokenKit::GetHapTokenInfo(token, info) != 0 || info.tokenID != token ||
-            info.userID != 100 || info.instIndex != 0 || info.bundleName != bundle || info.uid != static_cast<int32_t>(uid)) return 1;
+        const int queried = AccessTokenKit::GetHapTokenInfo(token, info);
+        if (token == 0 || queried != 0 || info.tokenID != token ||
+            info.userID != 100 || info.instIndex != 0 || info.bundleName != bundle) return 1;
         const uint64_t before = Now(CLOCK_MONOTONIC);
         const int result = AccessTokenKit::VerifyAccessToken(token, "ohos.permission.VIBRATE", true);
         const uint64_t after = Now(CLOCK_MONOTONIC);
         printf("{\"kind\":\"token\",\"run_id\":\"%s\",\"boot_id\":\"%s\",\"bundle\":\"%s\","
-            "\"uid\":%lu,\"token_id\":%u,\"VIBRATE\":%d,\"before_ns\":%" PRIu64 ",\"after_ns\":%" PRIu64 "}\n",
-            run, boot, bundle.c_str(), uid, token, result, before, after);
+            "\"expected_uid\":%lu,\"identity_schema\":\"hap-bms-access-token/v1\","
+            "\"at_reported_uid\":%d,\"at_query_rc\":%d,\"at_token_id\":%u,\"at_user_id\":%d,"
+            "\"at_inst_index\":%d,\"at_bundle\":\"%s\","
+            "\"token_id\":%u,\"VIBRATE\":%d,\"before_ns\":%" PRIu64 ",\"after_ns\":%" PRIu64 "}\n",
+            run, boot, bundle.c_str(), uid, info.uid, queried, info.tokenID, info.userID,
+            info.instIndex, info.bundleName.c_str(), token, result, before, after);
         return before > 0 && after >= before && (result == 0 || result == -1) ? 0 : 1;
     }
     if (strcmp(argv[1], "sample") != 0 || argc != 7) return 2;

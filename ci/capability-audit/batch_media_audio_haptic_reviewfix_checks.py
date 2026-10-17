@@ -140,6 +140,81 @@ class ReviewFixChecks(unittest.TestCase):
         with self.assertRaises(ValueError):project.private_cleanup_script('/data/local/tmp/not-owned',[ui])
         with self.assertRaises(ValueError):project.private_cleanup_script(remote,['/data/local/tmp/foreign.json'])
 
+    def test_raw_QMP_capture_replay_allows_only_observed_info_notice(self):
+        # Synthetic host transcript exercises the actual replay function, never QMP.
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder).resolve()/'controlled.wav'; path.write_bytes(b'host-contract-only')
+            phase = 'controlled'; backend = 'ohos_audio'; notice = runtime.INFO_CAPTURE_NOTICE
+            own = '[0]: Capturing audio(48000,16,2) to '+str(path)+': 16 bytes\r\n'
+            def row(label, command, reply, index):
+                return dict(execute='human-monitor-command', label=label, arguments={'command-line':command},
+                    reply=reply, host_ns=100+index*10, completed_ns=101+index*10)
+            rows = [row('capture-help', 'help wavcapture', 'wavcapture path audiodev [frequency]\r\n', 0),
+                    row('capture-before', 'info capture', notice, 1)]
+            names = ('before-capture', 'wavcapture', 'capture-owned', 'capture-before-stop', 'stopcapture', 'capture-after-stop')
+            commands = ('info capture', f'wavcapture {path} {backend} 48000 16 2', 'info capture',
+                        'info capture', 'stopcapture 0', 'info capture')
+            replies = (notice, '', notice+own, notice+own, '', notice)
+            rows += [row(phase+'-'+name, command, reply, index+2)
+                     for index, (name,command,reply) in enumerate(zip(names,commands,replies))]
+            segments = [dict(phase=phase, audio_capture=dict(wav=project.record(path), backend=backend,
+                host_begin_ns=115, host_end_ns=180))]
+            verify.verify_capture_requests(rows, segments)
+            legacy = copy.deepcopy(rows)
+            for item in legacy:
+                if item['arguments']['command-line'] == 'info capture':
+                    item['reply'] = item['reply'].removeprefix(notice)
+            verify.verify_capture_requests(legacy, segments)
+            mutations = [
+                lambda r:r[1].update(reply=notice+own),
+                lambda r:r[1].update(reply=notice*2),
+                lambda r:r[2].update(reply='unknown warning\r\n'),
+                lambda r:r[3].update(reply=notice),  # No unobserved wavcapture warning allowance.
+                lambda r:r[4].update(reply=notice+own.replace('[0]', '[1]')),
+                lambda r:r[4].update(reply=notice+own+own),
+                lambda r:r[5].update(reply=notice+own.replace(str(path), '/tmp/foreign.wav')),
+                lambda r:r[6].update(reply=notice),  # No unobserved stopcapture warning allowance.
+                lambda r:r[7].update(reply=notice+own),
+                lambda r:r[6]['arguments'].update({'command-line':'stopcapture 1'}),
+                lambda r:r[6].update(failure_reply={'error':{'desc':'controlled'}}),
+                lambda r:r[4].update(host_ns=100),
+                lambda r:r.append(copy.deepcopy(r[-1])),
+            ]
+            for number, mutate in enumerate(mutations):
+                bad = copy.deepcopy(rows); mutate(bad)
+                with self.subTest(number=number), self.assertRaises(ValueError): verify.verify_capture_requests(bad, segments)
+
+    def test_collector_brackets_each_initial_final_token_with_raw_BMS(self):
+        # The real Collector.token method executes against controlled observations.
+        # Core native/query verification remains the actual production Python code.
+        role = 'normal'; bundle = project.ROLES[role][0]; run = 'a'*32; boot = 'b'*36
+        uid = 20010040; token = 537042608
+        bms = bundle+':\n'+json.dumps(dict(appIndex=0, uid=uid,
+            applicationInfo=dict(bundleName=bundle, appIndex=0, isSystemApp=False, appPrivilegeLevel='normal', uid=uid, accessTokenId=token),
+            hapModuleInfos=[dict(hapPath='/data/app/el1/bundle/public/'+bundle+'/entry.hap')],
+            userInfo=[dict(bundleName=bundle, uid=uid, accessTokenId=token, bundleUserInfo=dict(userId=100))]))
+        native = dict(kind='token', run_id=run, boot_id=boot, bundle=bundle, token_id=token, VIBRATE=0,
+            before_ns=1, after_ns=2, identity_schema='hap-bms-access-token/v1', expected_uid=uid,
+            at_reported_uid=0, at_query_rc=0, at_token_id=token, at_user_id=100, at_inst_index=0, at_bundle=bundle)
+        with tempfile.TemporaryDirectory() as folder:
+            collector = runtime.Collector.__new__(runtime.Collector)
+            collector.env = {'boot_id':boot}; collector.data = {'run_id':run}; collector.remote = '/data/local/tmp/audio-haptic-'+run
+            collector.roles = {role:{}}; collector.identities = {role:verify.bms_identity(bms, role)}
+            calls = []; collector.persist = lambda:None
+            def observe(script, label):
+                calls.append((script,label)); path = Path(folder)/str(len(calls))
+                path.write_text(bms if script.startswith('bm dump -n ') else json.dumps(native))
+                return project.record(path)
+            collector.observe = observe
+            for when in ('initial', 'final'):
+                collector.token(role, when)
+                binding = collector.roles[role]['token_bindings'][when]
+                self.assertEqual(set(binding), {'bms_before','token','bms_after'})
+                self.assertEqual(binding['token'], collector.roles[role]['token_'+when])
+            self.assertEqual([script for script,_ in calls], ['bm dump -n '+bundle,
+                project.sampler_script(collector.remote,'token',run,boot,bundle,uid),'bm dump -n '+bundle]*2)
+            with self.assertRaisesRegex(ValueError, 'duplicate'): collector.token(role, 'final')
+
     def test_loop_with_explicit_stop_requires_long_real_signal_and_quiet_tail(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);challenge=project.challenge(root/'challenge');data=project.validate_challenge(challenge)

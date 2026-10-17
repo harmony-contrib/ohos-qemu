@@ -45,6 +45,32 @@ def verify_profile(value, udid):
             value['permissions']['restricted-permissions'] == [project.PERMISSION], 'actual signature profile differs')
 
 
+def verify_embedded_profile(command, *, jar, embedded, dist, output, udid):
+    """Verify the same extracted profile through Java and fixed-leaf CMS.
+
+    ``command`` records the actual argv/log and rejects a nonzero exit. Java
+    emits a verification envelope; CMS emits the bare signed message. Neither
+    output is an interchangeable claim of success from the other verifier.
+    """
+    verified, cms = output / 'verified-profile.json', output / 'cms-profile.json'
+    require(not any(p.exists() or p.is_symlink() for p in (verified, cms)),
+            'fresh independent profile verification outputs required')
+    log = command(['java', '-jar', jar, 'verify-profile', '-inFile', embedded,
+                   '-outFile', verified], 'verify-profile')
+    require('verify-profile success' in log, 'actual Java profile verification failed')
+    value = verified_profile_content(load(verified))
+    certs = re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',
+                      (dist / 'OpenHarmonyProfileDebug.pem').read_text(), re.S)
+    require(len(certs) == 3, 'fixed profile certificate chain differs')
+    leaf = output / 'profile-leaf.pem'; leaf.write_text(certs[-1] + '\n')
+    command(['openssl', 'cms', '-verify', '-inform', 'DER', '-in', embedded,
+             '-nointern', '-certfile', leaf, '-noverify', '-out', cms], 'fixed-profile-CMS')
+    require(load(cms) == value, 'CMS decoded profile differs from Java verified content')
+    verify_profile(value, udid)
+    return {'java_envelope': descriptor(verified), 'cms_content': descriptor(cms),
+            'fixed_leaf': descriptor(leaf)}
+
+
 def verify_signed_payload(unsigned_path, signed_path):
     with zipfile.ZipFile(unsigned_path) as unsigned, zipfile.ZipFile(signed_path) as signed:
         before, after = unsigned.namelist(), signed.namelist()
@@ -557,14 +583,8 @@ class Collector:
         log = self.command(['java', '-jar', jar, 'verify-app', '-inFile', signed, '-outCertChain', chain, '-outProfile', embedded], 'verify-app')
         require(all(v in log for v in ('verify codesign success', 'Digest verify result: true', 'verify permission sign success', 'verify-app success')), 'signature verify markers missing')
         shared.application_leaf(log)
-        # Reuse fixed signer inputs and independently verify CMS with its fixed
-        # leaf; do not weaken the shared ordinary/system_basic verifier.
-        certs = re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', (dist / 'OpenHarmonyProfileDebug.pem').read_text(), re.S)
-        require(len(certs) == 3, 'fixed profile certificate chain differs')
-        leaf = self.output / 'profile-leaf.pem'; leaf.write_text(certs[-1] + '\n')
-        decoded = self.output / 'profile.json'
-        self.command(['openssl', 'cms', '-verify', '-inform', 'DER', '-in', embedded, '-nointern', '-certfile', leaf, '-noverify', '-out', decoded], 'fixed-profile-CMS')
-        verify_profile(verified_profile_content(load(decoded)), self.guest.udid)
+        self.report['profile_verification'] = verify_embedded_profile(self.command, jar=jar,
+            embedded=embedded, dist=dist, output=self.output, udid=self.guest.udid)
         self.report['signed_hap'] = descriptor(signed)
         self.install_attempted = True
         reply = self.command([self.args.hdc, '-t', self.guest.target, 'install', signed], 'install')

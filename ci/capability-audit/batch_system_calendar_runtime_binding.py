@@ -101,11 +101,21 @@ def sdk_binding(spec, manifest_artifact, role, challenge_path):
     return shared.verify_sdk_project(spec)
 
 
-def permission_label(bundle, apps, run):
+def permission_label(bundle, apps, run, *, provider_label_proof=None, provider_label_context=None):
     for role, policy in ROLES.items():
         if policy['bundle'] == bundle:
             return 'Calendar QA ' + role + ' ' + run
     require(bundle == 'com.ohos.calendardata', 'only current Calendar provider can request viewer permission')
+    if provider_label_proof is not None:
+        from batch_system_calendar_runtime_resources import verify_provider_label_proof
+        require(isinstance(provider_label_context, dict) and provider_label_context.get('run_id') == run,
+                'explicit bound resource label context required')
+        label = verify_provider_label_proof(provider_label_proof, **provider_label_context)
+        identity = provider_label_proof['resolved']['identity']; app = apps[bundle]
+        require(identity['bundle'] == bundle and identity['uid'] == app['uid'] and identity['token_id'] == app['accessTokenId'] and
+                identity['BMS_label'] == app.get('label') and identity['label_id'] == app.get('labelId'),
+                'resource label proof belongs to another actual requester')
+        return label
     label = apps[bundle].get('label')
     require(isinstance(label, str) and label.strip() == label and label and len(label) <= 256 and
             not label.startswith(('$', '@')) and label != bundle,

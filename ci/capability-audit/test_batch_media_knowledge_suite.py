@@ -89,6 +89,32 @@ class KnowledgeCollectorTests(unittest.TestCase):
             result = suite.bms_identity(ROLES[role][0] + ':\n' + json.dumps(value), role)
             self.assertEqual((result['uid'], result['token_id']), (20010001, 123))
 
+    def test_native_identity_joins_actual_at_tuple_to_stable_raw_bms(self):
+        bundle = ROLES['importer'][0]; boot = 'host-only-boot'; run = 'd' * 32
+        token = dict(schema_version=2, api='AccessTokenKit::VerifyAccessToken', run_id=run, boot_id=boot,
+            bundle=bundle, token_id=123, identity_schema='hap-bms-access-token/v1', expected_uid=20010001,
+            at_reported_uid=0, at_query_rc=0, at_token_id=123, at_user_id=100, at_inst_index=0, at_bundle=bundle)
+        def collector(value, *, changed_after=False):
+            c = object.__new__(suite.Collector); c.data = {'run_id': run}; c.env = {'boot_id': boot}; c.remote = '/owned'
+            c.identities = {'importer': suite.bms_identity(json.dumps(self.bms('importer')), 'importer')}
+            c.roles = {'importer': {}}; c.persist = lambda: None; scripts = []
+            after = self.bms('importer')
+            if changed_after: after['applicationInfo']['accessTokenId'] = 124
+            values = [json.dumps(self.bms('importer')), json.dumps(value), json.dumps(after)]
+            def observe(script, label):
+                scripts.append(script); return self.raw(values.pop(0), label + '.json')
+            c.observe = observe
+            return c, scripts
+        c, scripts = collector(token); c.token('importer', 'initial')
+        self.assertEqual(len(scripts), 3)
+        self.assertEqual(scripts[1], 'unset LD_LIBRARY_PATH LD_PRELOAD; /owned/observer ' + run + ' 20010001 ' + bundle)
+        self.assertEqual(set(c.roles['importer']['token_bms_initial']), {'before', 'after'})
+        for mutation in ({'at_token_id': 124}, {'expected_uid': 1}, {'at_bundle': 'foreign'}, {'uid': 20010001}, {'schema_version': 1}):
+            c, _ = collector(dict(token, **mutation))
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError): c.token('importer', 'initial')
+        c, _ = collector(token, changed_after=True)
+        with self.assertRaises(ValueError): c.token('importer', 'initial')
+
     def test_bms_rejects_wrong_identity_uid_token_or_ambiguous_hap(self):
         changes = [lambda v: v['applicationInfo'].update(uid=10001), lambda v: v['applicationInfo'].update(uid=True),
                    lambda v: v['applicationInfo'].update(isSystemApp=True), lambda v: v['applicationInfo'].update(appPrivilegeLevel='system_basic'),

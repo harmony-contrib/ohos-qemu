@@ -4,12 +4,15 @@ import copy
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 import wave
 
 import batch_media_audio_haptic_project as project
 import batch_media_audio_haptic_verify as verify
 from batch_media_audio_haptic_runtime import owned_capture_listing
+import batch_media_audio_haptic_runtime as runtime
 
 
 class HostChecks(unittest.TestCase):
@@ -102,6 +105,84 @@ class HostChecks(unittest.TestCase):
         self.assertNotRegex(source, r'driver->(?:Start|Stop|Enable|Play)\w*\(')
         self.assertNotIn('GrantPermission(', source)
         self.assertNotIn('RevokePermission(', source)
+
+    def test_exact_HMP_notice_does_not_hide_capture_or_other_output(self):
+        notice = runtime.INFO_CAPTURE_NOTICE
+        own = '[0]: Capturing audio(48000,16,2) to /tmp/ours.wav: 1234 bytes\r\n'
+        self.assertTrue(runtime.capture_list_empty(''))
+        self.assertTrue(runtime.capture_list_empty(notice))
+        owned_capture_listing(notice+own, '/tmp/ours.wav')
+        for text in (own, notice+own, notice*2, notice.replace('v10.2', 'v10.3'),
+                     notice.replace('info capture', 'stopcapture'), notice.replace('\r\n', '\n'),
+                     notice+'Failed to add wave capture\r\n', 'unknown monitor output\n'):
+            with self.subTest(text=text): self.assertFalse(runtime.capture_list_empty(text))
+        for text in (notice*2+own, notice+own+own, notice+own+'error\n',
+                     notice+own.replace('[0]', '[1]'), notice+own.replace('/ours.wav', '/foreign.wav'),
+                     notice+own.replace('48000,16,2', '44100,16,2')):
+            with self.subTest(text=text), self.assertRaises(ValueError): owned_capture_listing(text, '/tmp/ours.wav')
+
+    def test_capture_refuses_foreign_state_without_any_start_or_stop(self):
+        notice = runtime.INFO_CAPTURE_NOTICE
+        def collector():
+            return SimpleNamespace(env={'qemu_command': 'qemu -audiodev none,id=ohos_audio -device es1370,audiodev=ohos_audio'},
+                value={'qmp': {'requests': []}}, guest=SimpleNamespace(healthy=lambda: None), persist=lambda: None)
+        for baseline in (notice, notice+'[0]: Capturing audio(48000,16,2) to /tmp/foreign.wav: 40 bytes\r\n', notice*2):
+            calls = []
+            def qmp(capture, execute, label, arguments):
+                calls.append(arguments['command-line'])
+                return 'wavcapture path audiodev [frequency [bits [channels]]]\r\n' if label == 'capture-help' else baseline
+            with patch.object(runtime.AudioCapture, 'qmp', qmp):
+                if baseline == notice:
+                    capture = runtime.AudioCapture(collector()); self.assertFalse(capture.owned)
+                else:
+                    with self.assertRaises(ValueError): runtime.AudioCapture(collector())
+            self.assertEqual(calls, ['help wavcapture', 'info capture'])
+        capture = runtime.AudioCapture.__new__(runtime.AudioCapture)
+        capture.path = Path('/tmp/ours.wav'); capture.owned = True; calls = []
+        def foreign(command, label):
+            calls.append(command)
+            return notice+'[0]: Capturing audio(48000,16,2) to /tmp/foreign.wav: 40 bytes\r\n'
+        capture.hmp = foreign
+        with self.assertRaises(ValueError): capture.stop('controlled')
+        self.assertEqual(calls, ['info capture']); self.assertTrue(capture.owned)
+
+    def test_BMS_UID_and_actual_token_join_with_raw_bracketing(self):
+        role = 'normal'; bundle = project.ROLES[role][0]; run = 'a'*32; boot = 'b'*36
+        uid = 20010040; token = 537042608
+        def bms(uid=uid, token=token):
+            return bundle+':\n'+json.dumps(dict(appIndex=0, uid=uid,
+                applicationInfo=dict(bundleName=bundle, appIndex=0, isSystemApp=False, appPrivilegeLevel='normal',
+                    uid=uid, accessTokenId=token), hapModuleInfos=[dict(hapPath='/data/app/el1/bundle/public/'+bundle+'/entry.hap')],
+                userInfo=[dict(bundleName=bundle, uid=uid, accessTokenId=token, bundleUserInfo=dict(userId=100))]))
+        raw_bms = bms(); identity = verify.bms_identity(raw_bms, role)
+        native = dict(kind='token', run_id=run, boot_id=boot, bundle=bundle, token_id=token, VIBRATE=0,
+            before_ns=10, after_ns=11, identity_schema='hap-bms-access-token/v1', expected_uid=uid,
+            at_reported_uid=0, at_query_rc=0, at_token_id=token, at_user_id=100, at_inst_index=0, at_bundle=bundle)
+        scripts = {'before': 'bm dump -n '+bundle, 'after': 'bm dump -n '+bundle,
+            'token': project.sampler_script('/data/local/tmp/audio-haptic-'+run, 'token', run, boot, bundle, uid)}
+        data = {'before': raw_bms, 'token': json.dumps(native), 'after': raw_bms}
+        refs = {name:dict(path=name, sha256=name) for name in data}; indexes = dict(before=1, token=2, after=3)
+        binding = dict(bms_before=refs['before'], token=refs['token'], bms_after=refs['after'])
+        def observed(ref, expected):
+            self.assertEqual(expected, scripts[ref['path']]); return data[ref['path']]
+        def replay():
+            return verify.verify_token_binding(binding, refs['token'], role=role, identity=identity, run=run, boot=boot,
+                observed=observed, command_index=lambda ref:indexes[ref['path']])
+        self.assertEqual(replay()['at_reported_uid'], 0)  # The BMS record, not this unsupported AT field, supplies UID.
+        for key, wrong in [('expected_uid', uid+1), ('at_token_id', token+1), ('at_inst_index', 1),
+                           ('at_query_rc', -1), ('uid', uid), ('before_ns', True), ('VIBRATE', False)]:
+            data['token'] = json.dumps(dict(native, **{key:wrong}))
+            with self.subTest(key=key), self.assertRaises(ValueError): replay()
+        data['token'] = json.dumps(native)
+        for changed in (bms(uid=uid+1), bms(token=token+1)):
+            data['after'] = changed
+            with self.assertRaisesRegex(ValueError, 'BMS identity changed'): replay()
+        data['after'] = raw_bms; indexes['after'] = 1
+        with self.assertRaisesRegex(ValueError, 'bracket'): replay()
+        wrong = json.loads(raw_bms.removeprefix(bundle+':\n')); wrong['userInfo'][0]['accessTokenId'] += 1
+        with self.assertRaises(ValueError): verify.bms_identity(bundle+':\n'+json.dumps(wrong), role)
+        wrong['userInfo'][0]['accessTokenId'] -= 1; wrong['applicationInfo']['appIndex'] = 1
+        with self.assertRaises(ValueError): verify.bms_identity(bundle+':\n'+json.dumps(wrong), role)
 
 
 if __name__ == '__main__':

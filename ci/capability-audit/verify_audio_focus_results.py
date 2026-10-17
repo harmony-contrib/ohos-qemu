@@ -56,15 +56,27 @@ def completed_native(row, kind, expected):
         raise ValueError('actual native focus completion missing, duplicated or different')
 
 
-def actor_tokens(actor, run):
+def actor_tokens(actor, run, capture):
+    from hap_identity_binding import bms_application_identity
+    from verify_audio_capture_results import verify_token_observation
     uid, bundle = actor['uid'], actor['bundle']
+    original_bms = bms_application_identity(referenced(actor, 'identity').read_text(), bundle)
     rows = actor['tokens']
     if not rows:
         raise ValueError('actual ordinary focus permission observations missing')
-    token_id, clock = None, 0
+    token_id, clock, previous_shell, previous_command = None, 0, -1, -1
     microphone, background = [], []
     for row in rows:
         v = row['observation']
+        if type(row.get('bms_before_observation')) is not int or row['bms_before_observation'] <= previous_shell:
+            raise ValueError('Focus token queries must use fresh ordered original observations')
+        if v.get('operation') not in ('query', 'query-background'):
+            raise ValueError('Focus only permits its two read-only token operations')
+        if verify_token_observation(row, capture, run, uid, bundle=bundle,
+                operation=v['operation'], explicit_bundle=True, previous_command=previous_command) != original_bms:
+            raise ValueError('Focus token differs from the actual original BMS application identity')
+        previous_shell = row['bms_after_observation']
+        previous_command = capture['guest_shell_observations'][previous_shell]['command_index']
         state, current = token(v, run, uid, bundle=bundle, operation=v['operation'], allow_transition=True)
         if token_id is None: token_id = current
         if current != token_id or v['before_ns'] < clock:
@@ -336,7 +348,7 @@ def verify(args):
             if (path.name != name or row.get('uid') != uid or path.stat().st_size != row.get('bytes') or
                     (not (name.endswith('-permission.json') or '-background-' in name) and row.get('mode') != 600)):
                 raise ValueError('actual focus native files wrong owner/mode/size')
-        actor_tokens(actor, run)
+        actor_tokens(actor, run, capture)
         permission(actor, run, mode, mic_labels, notification_contract)
         started = journal(actor, run, mode)
         active[role], _ = services(actor, started)

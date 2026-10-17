@@ -161,6 +161,50 @@ class CoordinatorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             c.verify_profile(value, self.bundle, ['ohos.permission.READ_IMAGEVIDEO'], 'a' * 64, apl='system_basic', system_app=True)
 
+    def test_contacts_seed_profile_flag_is_narrow_and_normal_default_unchanged(self):
+        args = ('/unsigned.hap', self.bundle, [], 'a' * 64, '/dist', '/dist/tool.jar', '/signed.hap')
+        ordinary = c.normal_sign_argv(*args)
+        self.assertNotIn('--contacts-seed-profile', ordinary)
+        seed = c.normal_sign_argv(args[0], c.driver.SEED, c.driver.PERMISSIONS, *args[3:], contacts_seed=True)
+        self.assertEqual(seed[-1], '--contacts-seed-profile')
+        for bundle, permissions in [(self.bundle, c.driver.PERMISSIONS), (c.driver.SEED, []),
+                                    (c.driver.SEED, c.driver.PERMISSIONS + ['ohos.permission.GET_BUNDLE_INFO'])]:
+            with self.subTest(bundle=bundle, permissions=permissions), self.assertRaises(ValueError):
+                c.normal_sign_argv(args[0], bundle, permissions, *args[3:], contacts_seed=True)
+        with self.assertRaises(ValueError): c.normal_sign_argv(*args, contacts_seed=1)
+
+    def test_identity_raw_command_cannot_substitute_another_script(self):
+        item = self.json('0001-BMS.log', {'host': 'only'}); desc = c.descriptor(item)
+        marker = '__QEMU_CHILD_EXIT_' + 'a' * 32 + '__='; script = 'bm dump -n ' + self.bundle
+        log = self.root / 'guest-0001-BMS.log'; log.write_text(item.read_text() + '\n' + marker + '0\n')
+        argv = ['hdc', '-t', 'owned', 'shell', '(' + script + '); task_child_rc=$?; printf "\\n' + marker + '%s\\n" "$task_child_rc"']
+        report = {'guest_commands': [{'argv': argv, 'exit_code': 0, 'log': str(log), 'sha256': c.verifier.sha(log)}]}
+        self.assertEqual(c.runtime_raw_bound(report, desc, script, 'owned')[0], item.read_text())
+        with self.assertRaises(ValueError): c.runtime_raw_bound(report, desc, 'cat /unrelated', 'owned')
+        with self.assertRaises(ValueError): c.runtime_raw_bound(report, desc, script, 'other-guest')
+
+    def test_contacts_token_replay_rejects_reinstall_and_missing_bms_join(self):
+        target = 'owned'; run = 'contacts_host'; bundle = c.driver.SEED
+        app = {'bundleName': bundle, 'uid': 20010001, 'accessTokenId': 123, 'isSystemApp': True, 'appPrivilegeLevel': 'system_basic'}
+        report = {'run_id': run, 'observer_remote': '/data/local/tmp/' + run + '_observer', 'guest_commands': []}
+        def raw(number, script, text):
+            label = str(number).zfill(4) + '-identity.log'
+            path = self.root / label; path.write_text(text)
+            marker = '__QEMU_CHILD_EXIT_' + str(number) * 32 + '__='
+            log = self.root / ('guest-' + label); log.write_text(text + '\n' + marker + '0\n')
+            report['guest_commands'].append({'argv': ['hdc', '-t', target, 'shell', '(' + script + '); task_child_rc=$?; printf "\\n' + marker + '%s\\n" "$task_child_rc"'], 'exit_code': 0, 'log': str(log), 'sha256': c.verifier.sha(log)})
+            return c.descriptor(path)
+        bms = json.dumps({'applicationInfo': app})
+        before = raw(1, 'bm dump -n ' + bundle, bms)
+        token = raw(2, c.shlex.join([report['observer_remote'], 'permissions', bundle, '123']), json.dumps({
+            'api': 'AccessTokenKit::VerifyAccessToken', 'bundle_name': bundle, 'token_id': 123, 'READ_CONTACTS': -1, 'WRITE_CONTACTS': -1}))
+        after = raw(3, 'bm dump -n ' + bundle, bms)
+        report['permission_bms_bindings'] = [{'bundle': bundle, 'token': token, 'before': before, 'after': after}]
+        self.assertEqual(c.runtime_token_bound(report, token, bundle, app, target)['READ_CONTACTS'], -1)
+        with self.assertRaises(ValueError): c.runtime_token_bound(report, token, bundle, dict(app, accessTokenId=124), target)
+        report['permission_bms_bindings'] = []
+        with self.assertRaises(ValueError): c.runtime_token_bound(report, token, bundle, app, target)
+
     def test_wrong_actual_application_leaf_rejected(self):
         with self.assertRaisesRegex(ValueError, 'signer leaf'):
             c.application_leaf('certificate #0\nSHA256: ' + '0' * 64 + '\ncertificate #1\nSHA256: ' + c.APP_LEAF)

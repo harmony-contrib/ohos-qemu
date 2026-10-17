@@ -23,7 +23,8 @@ from batch_media_wallpaper_runtime import HERE, Runtime, record, sha, write_json
 from batch_media_wallpaper_coordinator import Coordinator, QUERY, READ, validate_hap, adapt_sdk_build, ordered_actions, request_file, actual_query
 from batch_media_wallpaper_artifacts import caller_sources, adapt_helpers, verify_helper_receipt, verify_runtime_guest_observation
 import batch_media_wallpaper_native as native_binding
-from batch_media_verify_wallpaper_runtime import checked, check_challenge, verify
+from batch_media_verify_wallpaper_runtime import (checked, check_challenge, verify, verify_token_observation,
+    bms_identity, replay_observation)
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
 from guest_ui import GuestUi
 
@@ -103,8 +104,17 @@ class OwnedPolicy:
 
     def read(self,label):
         raw=self.transport.shell('hidumper -s 3301 -a "-a"',label)
-        self.states[label]={'state':power_timeout(raw),'raw':self.transport.text(raw,label)}
+        self.states[label]={'state':power_timeout(raw),'raw':self.transport.text(raw,label),
+            'command_index':len(self.transport.value['commands'])-1,
+            'command':dict(self.transport.value['commands'][-1])}
         return self.states[label]['state']
+
+    def same_boot(self,label):
+        raw=self.transport.shell('cat /proc/sys/kernel/random/boot_id',label)
+        proof={'raw':self.transport.text(raw,label),'command_index':len(self.transport.value['commands'])-1,
+            'command':dict(self.transport.value['commands'][-1])}
+        self.report.setdefault('boots',{})[label]=proof
+        if raw.strip()!=self.transport.boot_id:raise ValueError('policy restoration belongs to another boot')
 
     def suspend(self,archive_sha,boot_id,boot_path):
         current=self.read('wrapper-policy-before')
@@ -134,7 +144,17 @@ class OwnedPolicy:
         if self.read('wrapper-policy-paused')!=states['before']:raise ValueError('real original power policy not restored')
 
     def restore(self):
-        self.transport.home()  # Let the real lock consumer restore its own override.
+        self.same_boot('wrapper-policy-restore-before')
+        self.report['account_before_restore']=self.transport.identity('wrapper-policy-account-before')
+        navigation_error=None
+        try:
+            self.transport.home()  # Let the real lock consumer restore its own override.
+        except (OSError,ValueError,KeyError,subprocess.SubprocessError)as error:
+            navigation_error=type(error).__name__+': '+str(error)
+            self.report['navigation_failure']=navigation_error
+        # Still collect finite readbacks and recheck this boot before mutation.
+        self.same_boot('wrapper-policy-after-navigation')
+        self.report['account_after_navigation']=self.transport.identity('wrapper-policy-account-after')
         current=self.read('wrapper-policy-before-resume')
         target=dict(self.original,override_ms=None)if self.suspended else self.original
         if current!=target:raise ValueError('unknown nested power override remains; never clear it')
@@ -143,6 +163,7 @@ class OwnedPolicy:
             if reply.strip()!='Override screen off time to '+str(self.original['override_ms']):raise ValueError('parent timeout resume failed')
         if self.read('wrapper-policy-restored')!=self.original:raise ValueError('parent policy not restored exactly')
         self.report['restored']=True
+        return navigation_error
 
 
 def stop_child(process):
@@ -217,6 +238,40 @@ def verify_guest_commands(commands,target):
         elif argv[3]!='file':raise ValueError('unexpected guest operation')
 
 
+def readonly_token_preflight_failure(coordinator, row, index, target):
+    """Preserve one exact failed read-only token query; never forgive cleanup."""
+    actions=coordinator.get('actions',[])
+    if (len(actions)!=1 or actions[0].get('action')!=ordered_actions()[0] or
+            'ack'in actions[0] or not coordinator.get('failures')or
+            row.get('label')!='actual-token-query' or row.get('exit_code')!=0 or row.get('timed_out')):
+        raise ValueError('failed operation is not the initial read-only token preflight')
+    run,boot=coordinator['run_id'],coordinator['boot_id']
+    request=request_file(checked(actions[0]['request']),run,boot,1)
+    if request['details']!={'required_permission':'ohos.permission.SET_WALLPAPER'}:
+        raise ValueError('unexpected initial preflight details')
+    inputs=json.loads(checked(coordinator['inputs']).read_text());item=inputs['tools']['token']
+    proof=verify_helper_receipt('token',checked(item['binary']),checked(item['source']),item['build_receipt'])
+    if coordinator['helper_bindings']['token']['build']!=proof:
+        raise ValueError('failed token query was not the exact product-bound read-only helper')
+    argv=row['argv'];raw=checked({k:row[k]for k in ('path','sha256')}).read_text().replace('\r','')
+    if len(argv)!=5 or argv[1:4]!=['-t',target,'shell'] or '[Fail]'in raw:
+        raise ValueError('failed token observation has no exact guest transport')
+    markers=re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=',argv[4])
+    if len(markers)!=1 or raw.count(markers[0])!=1 or not raw.endswith('\n'+markers[0]+'1\n'):
+        raise ValueError('failed token observation lacks its exact native exit1')
+    for role,bundle in (('seed',SEED),('settings',SETTINGS)):
+        baseline=coordinator['BMS_observations'][role]
+        replay_observation(baseline,'bm dump -n '+bundle,target,commands=coordinator['commands'])
+        uid,_=bms_identity(baseline['raw'],bundle,ordinary=role=='seed')
+        script='unset LD_LIBRARY_PATH LD_PRELOAD; '+shlex.join([
+            '/data/local/tmp/wallpaper-coordinator-'+run+'/token',run,str(uid),bundle,'ohos.permission.SET_WALLPAPER'])
+        tail='; task_ui_rc=$?; printf "\\n'+markers[0]+'%s\\n" "$task_ui_rc"'
+        if argv[4]==script+tail and baseline['command_index']<index:
+            return {'command_index':index,'command':row,'inner_exit_code':1,
+                    'classification':'preserved_original_readonly_token_preflight_failure_NOT_success'}
+    raise ValueError('failed command was not the exact read-only helper arguments')
+
+
 def asset_cleanup_proof(output):
     """Permit safe reuse after a pixel failure only with completed raw cleanup."""
     from batch_media_verify_wallpaper_runtime import stage_files, CFG
@@ -225,9 +280,16 @@ def asset_cleanup_proof(output):
         if [a['action']for a in coo['actions']]!=ordered_actions()[:len(coo['actions'])]:raise ValueError('unexpected early actions')
         if any(a['action']not in ordered_actions()[:3]for a in runtime.get('actions',[])):
             raise ValueError('runtime progressed beyond unstarted import')
-        verify_guest_commands(coo['commands'],json.loads(checked(coo['boot']).read_text())['test_environment']['target'])
+        if coo.get('ui_actions')or coo.get('queries')or runtime.get('stages'):
+            raise ValueError('early preflight already drove media/UI observations')
+        target=json.loads(checked(coo['boot']).read_text())['test_environment']['target']
+        preserved=[]
+        for index,command in enumerate(coo['commands']):
+            try:verify_guest_commands([command],target)
+            except ValueError:
+                preserved.append(readonly_token_preflight_failure(coo,command,index,target))
         return {'runtime':record(output/'runtime/runtime.json'),'coordinator':record(output/'coordinator/coordinator.json'),
-                'no_media_mutation_action_started':True}
+                'no_media_mutation_action_started':True,'preserved_readonly_preflight_failures':preserved}
     if len(coo.get('actions',[]))!=21 or [a['action']for a in coo['actions']]!=ordered_actions():
         raise ValueError('partial UI flow: created assets/default restoration cleanup unproven')
     for row in coo['actions'][-2:]:
@@ -299,6 +361,16 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     if (coo.get('status')!='completed_actions_NOT_runtime_acceptance' or coo.get('boot_id')!=env['boot_id']or
             coo.get('run_id')!=challenge['run_id']or coo.get('failures')!=[]or len(coo.get('actions',[]))!=21):
         raise ValueError('all real coordinator actions required')
+    if not 2 <= len(coo.get('tokens',[])) <= 64:
+        raise ValueError('actual indexed native token observations required')
+    for token_record in coo['tokens']:
+        token_proof=json.loads(checked(token_record).read_text());role=token_proof['role']
+        bundle={'seed':SEED,'settings':SETTINGS,'query':QUERY}[role]
+        if token_proof['helper']!=inputs['tools']['token']:
+            raise ValueError('native token helper differs from product-bound coordinator input')
+        verify_token_observation(token_record,run=challenge['run_id'],boot=env['boot_id'],
+            target=env['target'],bundle=bundle,permission=READ if role=='query'else 'ohos.permission.SET_WALLPAPER',
+            original_BMS=coo[role+'_BMS'],commands=coo['commands'])
     if inputs.get('native')!=value['native_archive']or inputs.get('renderer_provider_hap')!=value['renderer_provider']['hap']:
         raise ValueError('coordinator native/source HAP proof differs from independently re-read current archive')
     verify_native_runtime(value,coo,native,env)
@@ -337,6 +409,23 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     if len(cleanup_rows)!=1 or remote not in cleanup_rows[0]['argv'][4]or 'rmdir '+remote not in cleanup_rows[0]['argv'][4]:
         raise ValueError('actual owned helper removal command missing')
     parsed={name:power_timeout(checked(row['raw']).read_text())for name,row in states.items()}
+    for row in states.values():
+        replay_observation(row,'hidumper -s 3301 -a "-a"',env['target'],commands=transport['commands'])
+    for label in ('wrapper-policy-restore-before','wrapper-policy-after-navigation'):
+        observed=policy['boots'][label]
+        if replay_observation(observed,'cat /proc/sys/kernel/random/boot_id',env['target'],
+                commands=transport['commands']).strip()!=env['boot_id']:
+            raise ValueError('policy restoration raw boot changed')
+    from account_state import parse_snapshot
+    account_script='echo "bootevent.account.ready=$(param get bootevent.account.ready)"; hidumper -s AccountMgr -a "-os_account_infos"'
+    for key,label in (('account_before_restore','wrapper-policy-account-before-account'),
+                      ('account_after_navigation','wrapper-policy-account-after-account')):
+        matches=[(i,row)for i,row in enumerate(transport['commands'])if row.get('label')==label]
+        if len(matches)!=1:raise ValueError('one actual policy account observation required')
+        index,command=matches[0]
+        raw=replay_observation({'raw':policy[key],'command':command,'command_index':index},
+            account_script,env['target'],commands=transport['commands'])
+        if not all(parse_snapshot(raw).values()):raise ValueError('policy restoration left foreground account100')
     if any(parsed[k]!=row['state']for k,row in states.items())or policy.get('restored')is not True:raise ValueError('actual power readback proof missing')
     before=parsed['wrapper-policy-before'];restored=parsed['wrapper-policy-restored']
     if before!=restored:raise ValueError('parent policy not restored')
@@ -536,7 +625,13 @@ def run(args):
             except (OSError,ValueError,KeyError,subprocess.SubprocessError)as error:
                 report['cleanup_errors'].append('observer/helper cleanup failed: '+str(error));report['status']='fail'
             try:
-                if policy and policy.restorable:policy.restore()
+                if policy and policy.restorable:
+                    navigation_error=policy.restore()
+                    if navigation_error:
+                        report['failures'].append('final Home navigation failed: '+navigation_error);report['status']='fail'
+            except (OSError,ValueError,KeyError,subprocess.SubprocessError)as error:
+                report['cleanup_errors'].append('policy restoration failed: '+str(error));report['status']='fail'
+            try:
                 transport.identity('wrapper-final');transport.guest.healthy()
                 if sha(args.archive)!=report['archive_sha256']:raise ValueError('archive changed')
                 report['enclosing_guest_preserved']=True

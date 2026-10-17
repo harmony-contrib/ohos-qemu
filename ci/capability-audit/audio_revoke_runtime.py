@@ -10,6 +10,12 @@ from audio_capture_contract import sha
 from batch_media_audio_capture_challenge import load_reference, phase_content
 from guest_ui import GuestUi, NodeNotReady, LayoutNotReady
 
+PROCESS_IDENTITY_SCRIPT = ('task_mic_app_pid=$(pidof ' + BUNDLE + '); '
+    'case "$task_mic_app_pid" in ""|*[!0-9]*) exit 1;; esac; '
+    'printf "%s " "$task_mic_app_pid"; '
+    'awk \'{printf "%s ", $22}\' /proc/$task_mic_app_pid/stat; '
+    'awk \'/^Uid:/{print $2}\' /proc/$task_mic_app_pid/status')
+
 
 class RevokeRuntime(CaptureRuntime):
     def __init__(self, *args):
@@ -19,18 +25,14 @@ class RevokeRuntime(CaptureRuntime):
         self.save()
 
     def process_identity(self, label):
-        raw = self.actual_shell('task_mic_app_pid=$(pidof ' + BUNDLE + '); '
-            'case "$task_mic_app_pid" in ""|*[!0-9]*) exit 1;; esac; '
-            'printf "%s " "$task_mic_app_pid"; '
-            'awk \'{printf "%s ", $22}\' /proc/$task_mic_app_pid/stat; '
-            'awk \'/^Uid:/{print $2}\' /proc/$task_mic_app_pid/status', label)
+        raw = self.actual_shell(PROCESS_IDENTITY_SCRIPT, label)
         fields = raw.split()
         if len(fields) != 3 or any(re.fullmatch('[0-9]+', v) is None for v in fields):
             raise ValueError('one real ordinary stream process required')
         pid, start, uid = map(int, fields)
         if min(pid, start) <= 0 or uid != self.uid:
             raise ValueError('actual microphone process UID differs')
-        return {'pid': pid, 'starttime': start, 'uid': uid}
+        return {'pid': pid, 'starttime': start, 'uid': uid}, len(self.value['guest_shell_observations']) - 1
 
     def permission(self):
         ui = GuestUi(self.command, self.args.hdc, self.args.target, self.output / 'start-ui')
@@ -80,12 +82,11 @@ class RevokeRuntime(CaptureRuntime):
         self.command([self.args.hdc, '-t', self.args.target, 'file', 'recv', remote, checkpoint], 'read-real-before-revoke-PCM')
         _, reference = load_reference(self.output / 'challenge/challenge.json', self.output / 'challenge/challenge.pcm', self.run)
         correlation = phase_content(checkpoint.read_bytes()[4800 * 4:-4800 * 4], reference)
-        before = self.process_identity('live-ordinary-process-before-MIC-revoke')
-        observation = json.loads(self.actual_shell('unset LD_LIBRARY_PATH LD_PRELOAD; ' + self.remote +
-            '/audio_capture_token ' + self.run + ' ' + str(self.uid) + ' revoke', 'actual-RevokePermission-live-MIC-no-kill'))
+        before, before_index = self.process_identity('live-ordinary-process-before-MIC-revoke')
+        observation, token_binding = self.token_observation(self.uid, 'live-revoke', operation='revoke')
         if observation.get('result') != 0 or observation.get('before') != 0 or observation.get('after') != -1:
             raise ValueError('actual live MIC permission revocation did not commit')
-        after = self.process_identity('same-live-ordinary-process-after-MIC-revoke')
+        after, after_index = self.process_identity('same-live-ordinary-process-after-MIC-revoke')
         if before != after:
             raise ValueError('MIC revoke killed or replaced the actual app process')
         ack = prefix + '-revoke-ack'
@@ -96,7 +97,9 @@ class RevokeRuntime(CaptureRuntime):
             ' && chmod 0600 ' + backing + ' && ln ' + backing + ' ' + ack,
             'acknowledge-only-committed-live-revocation')
         self.control_names = [Path(p).name for p in (ack, backing)]
-        self.value['revocation'] = {'ready': ready, 'token': observation, 'process_before': before, 'process_after': after,
+        self.value['revocation'] = {'ready': ready, 'token': observation, 'token_binding': token_binding,
+            'process_before': before, 'process_after': after,
+            'process_before_observation': before_index, 'process_after_observation': after_index,
             'checkpoint': {'path': str(checkpoint), 'sha256': sha(checkpoint)}, 'correlation': correlation,
             'ack_nonce': ready['nonce'], 'ack_files': self.control_names}
         self.save()

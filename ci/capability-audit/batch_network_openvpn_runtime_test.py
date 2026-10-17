@@ -226,5 +226,48 @@ class RuntimeProtocolTests(unittest.TestCase):
         with self.assertRaises(ValueError): collect.verify_profile(actual, 'b' * 64)
         with self.assertRaises(ValueError): collect.profile(copy.deepcopy(template), 'normal', 'a' * 64, module)
 
+    def test_java_envelope_and_CMS_bare_content_are_independent_required_outputs(self):
+        # Only a control-flow/schema fixture. No Java/OpenSSL is executed and
+        # these dummy certificate bytes can never prove a real signature.
+        profile = collect.profile({'bundle-info': {}, 'debug-info': {}, 'acls': {}, 'permissions': {}},
+            'system', 'a' * 64, {'app': {'bundleName': project.BUNDLE},
+            'module': {'requestPermissions': [{'name': project.PERMISSION}]}})
+        for fault in ('valid', 'string-content', 'bare-java', 'unverified', 'missing-marker',
+                      'java-exit', 'CMS-exit', 'CMS-mismatch', 'wrong-UDID', 'stale-output'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); dist = root / 'dist'; dist.mkdir()
+                (dist / 'OpenHarmonyProfileDebug.pem').write_text(
+                    '-----BEGIN CERTIFICATE-----\nUNIT ONLY\n-----END CERTIFICATE-----\n' * 3)
+                calls = []
+                if fault == 'stale-output': (root / 'verified-profile.json').write_text('{}')
+                def command(argv, label):
+                    calls.append((list(map(str, argv)), label))
+                    if (fault == 'java-exit' and label == 'verify-profile' or
+                            fault == 'CMS-exit' and label == 'fixed-profile-CMS'):
+                        raise ValueError('actual command exit was nonzero')
+                    if label == 'verify-profile':
+                        value = copy.deepcopy(profile)
+                        envelope = {'verifiedPassed': fault != 'unverified', 'content':
+                            json.dumps(value) if fault == 'string-content' else value}
+                        (root / 'verified-profile.json').write_text(json.dumps(value if fault == 'bare-java' else envelope))
+                        return 'no success marker' if fault == 'missing-marker' else 'verify-profile success'
+                    value = copy.deepcopy(profile)
+                    if fault == 'CMS-mismatch': value['bundle-info']['bundle-name'] = 'foreign.bundle'
+                    (root / 'cms-profile.json').write_text(json.dumps(value))
+                    return 'CMS Verification successful'
+                def run():
+                    return collect.verify_embedded_profile(command, jar=dist / 'unit-never-executed.jar',
+                        embedded=root / 'unit-never-verified.p7b', dist=dist, output=root,
+                        udid='b' * 64 if fault == 'wrong-UDID' else 'a' * 64)
+                if fault in ('valid', 'string-content'):
+                    result = run()
+                    self.assertEqual(['verify-profile', 'fixed-profile-CMS'], [c[1] for c in calls])
+                    self.assertEqual(profile, json.loads(Path(result['cms_content']['path']).read_text()))
+                    self.assertIn('-nointern', calls[1][0]); self.assertIn('-verify', calls[1][0])
+                else:
+                    with self.assertRaises(ValueError): run()
+                    if fault in ('bare-java', 'unverified', 'missing-marker', 'java-exit', 'stale-output'):
+                        self.assertFalse(any(c[1] == 'fixed-profile-CMS' for c in calls))
+
 
 if __name__ == '__main__': unittest.main()

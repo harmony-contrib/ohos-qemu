@@ -198,12 +198,21 @@ class RuntimeDriver(unittest.TestCase):
         self.assertEqual(module['abilities'][0]['startWindowIcon'], '$media:app_icon')
         self.assertEqual(module['abilities'][0]['startWindowBackground'], '$color:start_window_background')
         self.assertNotIn('extensionAbilities', module)
-        self.assertEqual(manifest['apl_required_at_signing'], 'normal')
-        self.assertFalse(manifest['system_app_required_at_install'])
+        self.assertEqual(manifest['apl_required_at_signing'], 'system_basic')
+        self.assertTrue(manifest['system_app_required_at_install'])
         self.assertFalse(manifest['runtime_acceptance'])
         with self.assertRaises(driver.verifier.EvidenceError): driver.prepare_seed(project)
         self.assertEqual(set(manifest['source_hashes']), {str(p.relative_to(project)) for p in project.rglob('*')
                                                         if p.is_file() and p.name != 'seed-source-manifest.json'})
+
+    def test_only_seed_can_have_system_basic_bms_identity(self):
+        for bundle in (driver.CALLER, driver.SEED):
+            seed = bundle == driver.SEED
+            app = {'bundleName': bundle, 'isSystemApp': seed, 'appPrivilegeLevel': 'system_basic' if seed else 'normal',
+                   'uid': 20010001, 'accessTokenId': 123}
+            self.assertEqual(driver.application_info(json.dumps({'applicationInfo': app}), bundle)['accessTokenId'], 123)
+            app.update(isSystemApp=not seed)
+            with self.assertRaises(driver.verifier.EvidenceError): driver.application_info(json.dumps({'applicationInfo': app}), bundle)
 
     def test_real_ui_flow_205_clears_and_selects_all_before_done(self):
         self.driver.case('options-promise-205', self.seed)

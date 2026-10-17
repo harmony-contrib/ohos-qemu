@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 from batch_system_live_inputs import (BUNDLE, FIXTURES, SCOPE, digest, verify_signed_payload, load_rows,
-    read_json, trace, verify_project, write_json, f32)
+    read_json, trace, verify_project, write_json, f32, require_no_api_errors, switch_observations)
 from batch_system_gnss_controller import encode_sample
 
 
@@ -210,7 +210,8 @@ def verify(root, archive, boot_path, sdk):
     identity = (root / 'application-identity.json').read_text(); uid = require_normal_identity(identity, BUNDLE)
     require(uid == report['ordinary_uid'], 'actual ordinary UID mismatch')
     rows = load_rows(root / 'raw-results.jsonl', report['run_id'])
-    require(not any(r['kind'] == 'error' for r in rows), 'ordinary API or lifecycle returned actual errors')
+    require_no_api_errors(rows, 'independent ordinary API/lifecycle verification')
+    public_switch = switch_observations(rows, require_complete=True)
     require(rows[0]['kind'] == 'ready' and rows[-1]['kind'] == 'finished', 'missing full actual app lifecycle')
     perms = [r for r in rows if r['kind'] == 'permissions']
     require(len(perms) == 1 and perms[0]['text'].split(',') == ['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION'] and
@@ -223,6 +224,13 @@ def verify(root, archive, boot_path, sdk):
             'ordinary UID was not denied by actual socket boundary (ENOENT/refusal is not permission proof)')
     inputs = {}
     for generation in (1, 2):
+        if rows[0]['schema'] == 2:
+            starts = [r for r in rows if r['generation'] == generation and r['kind'] == 'start']
+            previous_stop = max((r['seq'] for r in rows if r['generation'] == generation - 1 and r['kind'] == 'stopped'), default=0)
+            require(len(starts) == 1, 'missing/duplicate actual start before switch observation binding')
+            observations = [r for r in public_switch if previous_stop < r['before_seq'] < r['after_seq'] < starts[0]['seq']]
+            require(observations and observations[-1]['location_enabled'] is True,
+                    'actual read-only public switch state was not true before ordinary subscription')
         base = root / ('input-' + str(generation)); m = read_json(base / 'manifest.json')
         require(m['run_id'] == report['run_id'] and m['generation'] == generation and bool(m['source'].strip()), 'root external trace provenance absent')
         inputs[generation] = {kind: trace(base / (kind + '.json'), kind) for kind in ('gnss', 'sensor')}

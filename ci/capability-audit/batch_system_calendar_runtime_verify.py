@@ -32,6 +32,37 @@ def raw_bound(capture, item, script=None):
     return path.read_text()
 
 
+def token_bound(capture, item, request, bundle, app, remote):
+    bindings = [row for row in capture.get('token_bms_bindings', []) if row.get('token') == item]
+    require(len(bindings) == 1 and bindings[0].get('bundle') == bundle, 'unique raw BMS/native token join required')
+    binding = bindings[0]
+    fields = ('uid', 'accessTokenId', 'isSystemApp', 'appPrivilegeLevel')
+    for key in ('before', 'after'):
+        _, actual, _ = protocol.bms(raw_bound(capture, binding[key], 'bm dump -n ' + bundle), bundle)
+        require(all(actual.get(k) == app.get(k) for k in fields), 'raw BMS identity changed around native query')
+    indices = [int(re.match(r'raw-([0-9]+)-', checked(raw).name)[1]) for raw in (binding['before'], item, binding['after'])]
+    require(indices[0] < indices[1] < indices[2], 'native token query is not enclosed by fresh BMS observations')
+    script = shlex.join([remote, request['run_id'], bundle, str(app['uid'])])
+    return protocol.token(protocol.decode(raw_bound(capture, item, script)), request, bundle, app)
+
+
+def capture_token(capture, item):
+    choices = []
+    for role, value in capture['artifacts'].items():
+        if value.get('token') == item:
+            choices.append((CONTRACT['provider'] if role == 'provider' else ROLES[role]['bundle'], value))
+    if capture.get('token_after') == item:
+        role = capture['request']['role']; choices.append((ROLES[role]['bundle'], capture['artifacts'][role]))
+    if capture.get('provider_token_after') == item:
+        choices.append((CONTRACT['provider'], capture['artifacts']['provider']))
+    require(len(choices) == 1, 'token artifact does not have one exact captured role')
+    bundle, value = choices[0]
+    _, app, _ = protocol.bms(raw_bound(capture, value['bms'], 'bm dump -n ' + bundle), bundle)
+    plan = protocol.decode(checked(capture['plan']).read_text())
+    return token_bound(capture, item, {'run_id': capture['run_id'], 'boot_id': capture['boot_id']},
+                       bundle, app, plan['helper']['remote'])
+
+
 def layout_bound(capture, item):
     value = protocol.decode(checked(item).read_text())
     found = []
@@ -109,10 +140,10 @@ def validate_capture(path, challenge, archive):
         require(item['sdk'] == bound_sdk and item['source_manifest'] == configured['source_manifest'] and
                 item['signature']['signed_hap'] == configured['signed_hap'], 'captured role differs from exact current SDK/source/signing inputs')
         signed_payload(checked(configured['sdk']['unsigned_hap']), checked(configured['signed_hap']))
-        _, app, _ = protocol.bms(raw_bound(capture, item['bms']), policy['bundle'], policy)
+        _, app, _ = protocol.bms(raw_bound(capture, item['bms'], 'bm dump -n ' + policy['bundle']), policy['bundle'], policy)
         require(item['uid'] == app['uid'] and item['token_id'] == app['accessTokenId'], 'role UID/token substituted')
-        token = protocol.token(protocol.decode(raw_bound(capture, item['token'])),
-            {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, policy['bundle'], app)
+        token = token_bound(capture, item['token'],
+            {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, policy['bundle'], app, plan['helper']['remote'])
         profile = protocol.decode(checked(item['signature']['verified_profile']).read_text())
         require(profile['bundle-info']['bundle-name'] == policy['bundle'] and profile['bundle-info']['apl'] == policy['apl'] and
                 profile['acls']['allowed-acls'] == policy['allowed_acls'] and
@@ -128,14 +159,14 @@ def validate_capture(path, challenge, archive):
         apps[policy['bundle']] = app
     require(len(set(identities)) == 3, 'producer/observer identity overlap')
     provider = capture['artifacts']['provider']
-    _, app, _ = protocol.bms(raw_bound(capture, provider['bms']), CONTRACT['provider'])
+    _, app, _ = protocol.bms(raw_bound(capture, provider['bms'], 'bm dump -n ' + CONTRACT['provider']), CONTRACT['provider'])
     require(app['isSystemApp'] is True and app['appPrivilegeLevel'] == 'system_core', 'provider actual BMS identity differs')
     apps[CONTRACT['provider']] = app
-    protocol.token(protocol.decode(raw_bound(capture, provider['token'])),
-        {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, CONTRACT['provider'], app)
+    token_bound(capture, provider['token'],
+        {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, CONTRACT['provider'], app, plan['helper']['remote'])
     if 'provider_token_after' in capture:
-        protocol.token(protocol.decode(raw_bound(capture, capture['provider_token_after'])),
-            {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, CONTRACT['provider'], app)
+        token_bound(capture, capture['provider_token_after'],
+            {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, CONTRACT['provider'], app, plan['helper']['remote'])
     source = protocol.decode(checked(provider['archive_binding']).read_text())
     require(source['archive'] == archive and source['signed_hap']['sha256'] == sha(checked(provider['installed_hap'])) and
             source['collector'] == record(Path(__file__).with_name('batch_system_calendar_runtime_archive.py')),
@@ -143,11 +174,19 @@ def validate_capture(path, challenge, archive):
     import batch_apps_contact_picker_coordinator as signatures
     module, payload = signatures.hap_contents(checked(provider['installed_hap']))
     require(protocol.schema(module) == provider['schema'] and payload == source['module_payload'], 'actual provider metadata/ABC changed')
+    from batch_system_calendar_runtime_resources import LOCALE_SCRIPT, verify_provider_label_proof
+    label_proof = provider['label_proof']
+    require(label_proof['bms'] == provider['bms'] and label_proof['installed_hap'] == provider['installed_hap'],
+            'resource label proof not from this captured provider')
+    raw_bound(capture, label_proof['locale'], LOCALE_SCRIPT)
+    provider_label_context = {'installed_hap': provider['installed_hap'], 'bms': provider['bms'], 'locale': label_proof['locale'],
+        'archive_sha256': archive['sha256'], 'boot_id': env['boot_id'], 'run_id': challenge['run_id']}
+    verify_provider_label_proof(label_proof, **provider_label_context)
     if capture['stage'] == 'public-operation':
         operation(capture)
         role = capture['request']['role']
-        protocol.token(protocol.decode(raw_bound(capture, capture['token_after'])),
-            {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, ROLES[role]['bundle'], apps[ROLES[role]['bundle']])
+        token_bound(capture, capture['token_after'],
+            {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, ROLES[role]['bundle'], apps[ROLES[role]['bundle']], plan['helper']['remote'])
     if capture['stage'] != 'viewer-snapshot':
         preflight = layout_bound(capture, capture['permission_preflight']['layout'])
         require(not protocol.permission_windows(preflight, plan.get('permission_bundle', 'com.ohos.permissionmanager')),
@@ -159,8 +198,13 @@ def validate_capture(path, challenge, archive):
         allowed = plan.get('allow_texts', ['允许', 'Allow']) if decision['decision'] == 'allow' else plan.get('deny_texts', ['不允许', 'Deny'])
         require(text in allowed, 'actual permission label does not match requested user decision')
         target = ROLES[capture['request']['role']]['bundle'] if capture['stage'] == 'public-operation' else CONTRACT['provider']
+        if target == CONTRACT['provider']:
+            require(raw_bound(capture, decision['provider_locale'], LOCALE_SCRIPT) == checked(label_proof['locale']).read_text(),
+                    'raw guest locale changed before provider decision')
         selected = protocol.permission_control(layout, plan.get('permission_bundle', 'com.ohos.permissionmanager'),
-            target, permission_label(target, apps, challenge['run_id']), allowed)
+            target, permission_label(target, apps, challenge['run_id'],
+                provider_label_proof=label_proof if target == CONTRACT['provider'] else None,
+                provider_label_context=provider_label_context if target == CONTRACT['provider'] else None), allowed)
         require(selected is not None and all(decision.get(k) == v for k, v in selected.items()),
                 'permission choice is not the actual intended app prompt in one window')
         node = selected['selected_node']
@@ -179,7 +223,7 @@ def validate_capture(path, challenge, archive):
                 require(actual['rect'][0]+actual['rect'][2] <= size[0] and
                         actual['rect'][1]+actual['rect'][3] <= size[1], 'actual viewer pixel geometry differs')
         if not view['expected_blank'] and view['expected_persisted']:
-            provider_token = protocol.decode(raw_bound(capture, capture['provider_token_after']))
+            provider_token = capture_token(capture, capture['provider_token_after'])
             require(provider_token['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
                     'persisted viewer data appeared without the actual required whole-calendar grant')
             require('readback_capture' in capture, 'independent public readback required')
@@ -211,12 +255,12 @@ def verify(challenge_path, captures):
         observed = [item['token'] for item in c['artifacts'].values() if 'token' in item]
         observed += [c[k] for k in ('token_after', 'provider_token_after') if k in c]
         for item in observed:
-            token = protocol.decode(raw_bound(c, item))
+            token = capture_token(c, item)
             clocks.setdefault(c['boot_id'], []).append(token)
         if c['stage'] == 'public-operation':
             rows = operation(c)
-            first = protocol.decode(raw_bound(c, c['artifacts'][c['request']['role']]['token']))
-            last = protocol.decode(raw_bound(c, c['token_after']))
+            first = capture_token(c, c['artifacts'][c['request']['role']]['token'])
+            last = capture_token(c, c['token_after'])
             require(all(first['realtime_ns']//1_000_000 <= r['timestamp_ms'] <= last['realtime_ns']//1_000_000 for r in rows),
                     'public journal timestamp lies outside actual native observer capture clocks')
     for boot, rows in clocks.items():
@@ -238,7 +282,7 @@ def verify(challenge_path, captures):
             require(original['request']['role'] == 'observer' and original['request']['action'] == 'read' and
                     original['boot_id'] == c['boot_id'], 'current-boot independent cleanup preflight required')
             rows = operation(original); readings = protocol.values(rows, 'events', 'Calendar.getEvents')
-            native = protocol.decode(raw_bound(original, original['token_after']))
+            native = capture_token(original, original['token_after'])
             require(not protocol.values(rows, 'error') and len(readings) == 1 and
                     native['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
                     'actual authorized complete cleanup readback missing')
@@ -258,17 +302,17 @@ def verify(challenge_path, captures):
                 permissions = protocol.values(rows, 'permission', 'abilityAccessCtrl.requestPermissionsFromUser')
                 decisions = c.get('permission_clicks', [])
                 require(len(permissions) == 1, 'actual user permission outcome missing')
-                native = protocol.decode(raw_bound(c, c['token_after']))['permissions']
+                native = capture_token(c, c['token_after'])['permissions']
                 for choice, wanted, key in [('deny', -1, 'producer-user-deny'), ('allow', 0, 'producer-user-allow')]:
                     if decisions and decisions[-1]['decision'] == choice and permissions[0]['authResults'] == [wanted, wanted] and all(
                             native[p] == wanted for p in ROLES['producer']['permissions']):
                         coverage[key] = 'observed'
             if action == 'create' and role == 'producer' and not errors:
-                native = protocol.decode(raw_bound(c, c['token_after']))['permissions']
+                native = capture_token(c, c['token_after'])['permissions']
                 require(all(native[p] == 0 for p in ROLES['producer']['permissions']), 'ordinary public creation lacks actual user READ/WRITE grants')
                 protocol.created(rows, data['run_id']); coverage['public-create-readback'] = 'observed'
             if action == 'read' and role == 'observer' and not errors and protocol.values(rows, 'events', 'Calendar.getEvents'):
-                require(protocol.decode(raw_bound(c, c['token_after']))['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
+                require(capture_token(c, c['token_after'])['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0,
                         'independent observer read lacks actual whole-calendar grant')
                 coverage['independent-whole-read'] = 'observed'
             if action == 'cleanup' and role == 'producer' and not errors:
@@ -300,7 +344,7 @@ def verify(challenge_path, captures):
                 if seed['case_id'] == 'cold-deny':
                     require(c['view']['expected_blank'] and any(d['decision'] == 'deny' for d in c.get('permission_clicks', [])),
                             'denied notification case lacks actual user Deny')
-                    observed_token = protocol.decode(raw_bound(c, c['provider_token_after']))
+                    observed_token = capture_token(c, c['provider_token_after'])
                     require(observed_token['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == -1, 'MainAbility token was not actually denied')
                 else:
                     require(c['view']['expected_persisted'] and not c['view']['expected_blank'],
@@ -331,7 +375,7 @@ def verify(challenge_path, captures):
                 require(deletion['request']['role'] == 'producer' and deletion['request']['action'] == 'delete' and
                         not protocol.values(rows, 'error') and protocol.values(rows, 'event-deleted', 'Calendar.deleteEvent') ==
                         [{'id': seed['id'], 'case_id': seed['case_id']}], 'deleted URI lacks the actual same owned event deletion')
-                token = protocol.decode(raw_bound(c, c['provider_token_after']))
+                token = capture_token(c, c['provider_token_after'])
                 require(token['permissions']['ohos.permission.READ_WHOLE_CALENDAR'] == 0 and
                         c['view']['nodes']['status']['attributes']['text'] == '日程已删除或当前帐号不可见',
                         'deleted URI result is not an authorized terminal missing event')

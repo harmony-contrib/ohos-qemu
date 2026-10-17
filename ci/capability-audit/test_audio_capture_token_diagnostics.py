@@ -8,6 +8,7 @@ from unittest.mock import patch
 from audio_capture_runtime import CaptureRuntime
 from audio_capture_contract import sha
 from build_audio_capture_tools import verify_compile_command
+from hap_identity_binding import verify_hap_token_identity
 
 
 class TokenDiagnosticsTests(unittest.TestCase):
@@ -104,13 +105,48 @@ class TokenDiagnosticsTests(unittest.TestCase):
     def test_helper_identity_assertions_are_not_removed_to_make_diagnostics_pass(self):
         source = (Path(__file__).parent / 'probes/audio_capture_token.cpp').read_text()
         for check in ('token == 0', 'queried != 0', 'info.tokenID != token', 'info.userID != 100',
-                      'info.instIndex != 0', 'info.bundleName != bundle', 'info.uid != static_cast<int32_t>(expected)'):
+                      'info.instIndex != 0', 'info.bundleName != bundle'):
             self.assertIn(check, source)
+        self.assertNotIn('info.uid != static_cast<int32_t>(expected)', source)
         for context in ('get_hap_info_rc=', 'info_token=', 'info_uid=', 'info_user=', 'info_inst=',
                         'actual_bundle_hex=', 'before_clock_errno=', 'after_clock_errno='):
             self.assertIn(context, source)
         self.assertIn('return Fail("hap-token-identity", 1)', source)
         self.assertIn('return Fail("monotonic-clock", 1)', source)
+
+    def test_UID_is_from_BMS_and_not_the_echo_or_unsupported_AT_diagnostic(self):
+        bundle = 'org.harmonycontrib.capabilityaudit'; uid = 20010040; token = 537042608
+        observed = dict(identity_schema='hap-bms-access-token/v1', expected_uid=uid,
+            at_reported_uid=0, at_query_rc=0, at_token_id=token, at_user_id=100,
+            at_inst_index=0, at_bundle=bundle, bundle=bundle, token_id=token)
+        verify_hap_token_identity(observed, bundle=bundle, uid=uid, token_id=token)
+        # Echoing the correct argv can never repair a wrong actual native tuple.
+        for key, wrong in [('at_query_rc', -1), ('at_token_id', token+1), ('token_id', token+1),
+                           ('at_user_id', 0), ('at_inst_index', 1), ('at_bundle', bundle+'other'),
+                           ('expected_uid', uid+1), ('expected_uid', True), ('uid', uid)]:
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                verify_hap_token_identity(dict(observed, **{key: wrong}), bundle=bundle, uid=uid, token_id=token)
+        with self.assertRaises(ValueError):
+            verify_hap_token_identity(observed, bundle=bundle, uid=uid, token_id=token+1)
+
+    def test_all_native_HAP_queries_preserve_actual_tuple_and_explicit_UID_provenance(self):
+        root = Path(__file__).parent
+        paths = ['probes/audio_capture_token.cpp', 'fixtures/batch_media/wallpaper_receipts/token_query.cpp',
+                 'fixtures/batch_media/knowledge_runtime/knowledge_token_query.cpp',
+                 'fixtures/batch_media/audio_haptic_runtime/sampler.cpp', 'fixtures/batch_system/calendar_runtime/observer.cpp']
+        for name in paths:
+            with self.subTest(name=name):
+                source = (root/name).read_text()
+                for actual in ('info.tokenID != token', 'info.userID != 100', 'info.instIndex != 0',
+                               'info.bundleName != bundle', 'queried != 0', 'at_reported_uid',
+                               'at_query_rc', 'at_token_id', 'at_user_id', 'at_inst_index', 'at_bundle',
+                               'expected_uid', 'hap-bms-access-token/v1'):
+                    self.assertIn(actual, source)
+                self.assertNotRegex(source, r'info\.uid\s*(?:!=|==|/)')
+        calendar = (root/paths[-1]).read_text()
+        self.assertIn('argc != 4', calendar); self.assertIn('uidText(argv[3])', calendar)
+        sampler = (root/paths[-2]).read_text()
+        self.assertIn('run, boot, getpid(), getuid(), interval', sampler)  # Actual root sampler UID is unchanged.
 
 
 if __name__ == '__main__': unittest.main()

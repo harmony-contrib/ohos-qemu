@@ -156,16 +156,13 @@ class AudioFocusRuntime:
         return self.capture.actual_shell(script, label)
 
     def token(self, actor, phase, operation='query', expected=0, transition=False):
-        text = self.actual('unset LD_LIBRARY_PATH LD_PRELOAD; ' + self.capture.remote +
-            '/audio_capture_token ' + self.run + ' ' + str(actor['uid']) + ' ' + operation +
-            ' ' + actor['bundle'], 'focus-token-' + phase)
-        value = strict_json(text)
+        value, row = self.capture.token_observation(actor['uid'], phase, bundle=actor['bundle'],
+            operation=operation, explicit_bundle=True)
         state, token_id = checked_token(value, self.run, actor['uid'], allow_transition=transition,
                                        bundle=actor['bundle'], operation=operation)
         if state != expected or (actor.get('token_id') is not None and actor['token_id'] != token_id):
             raise ValueError('actual focus permission/token identity changed: ' + phase)
         actor['token_id'] = token_id
-        row = dict(phase=phase, observation=value)
         actor['tokens'].append(row)
         self.capture.value['tokens'].append(row)
         self.save()

@@ -21,6 +21,7 @@ import batch_system_build_runtime_helpers as product
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
 from hdc_transport import failed
+from hap_identity_binding import verify_hap_token_identity
 
 HERE = Path(__file__).resolve().parent
 SCOPE = 'same_packaged_guest_Knowledge_account100_HOLIDAY_public_lifecycle_NOT_analysis_or_account_isolation'
@@ -28,7 +29,7 @@ CALENDAR = '/system/etc/knowledge-content/holidays.ics'
 TOOLS = ('batch_media_knowledge_suite.py', 'batch_media_knowledge_artifacts.py', 'batch_media_knowledge_project.py',
          'batch_media_knowledge_runtime.py', 'batch_apps_contact_picker_coordinator.py', 'guest_ui.py',
          'enclosing_acceptance_guest.py', 'batch_system_build_runtime_helpers.py', 'sign_certificate_probe.py', 'sign_web_probe.py',
-         'photos_dialog_contract.py')
+         'photos_dialog_contract.py', 'hap_identity_binding.py')
 checked, record, require, sha = project.checked, project.record, project.require, project.sha
 
 
@@ -306,13 +307,18 @@ class Collector:
         bundle = project.ROLES[role][0]
         script = 'unset LD_LIBRARY_PATH LD_PRELOAD; ' + ' '.join(map(shlex.quote,
             [self.remote + '/observer', self.data['run_id'], str(self.identities[role]['uid']), bundle]))
+        before = self.observe('bm dump -n ' + bundle, role + '-token-' + when + '-BMS-before')
+        require(bms_identity(checked(before).read_text(), role) == self.identities[role], 'Knowledge BMS identity changed before token query')
         raw = self.observe(script, role + '-token-' + when)
         token = json.loads(checked(raw).read_text())
-        require(token.get('api') == 'AccessTokenKit::VerifyAccessToken' and token.get('run_id') == self.data['run_id'] and
-                token.get('boot_id') == self.env['boot_id'] and token.get('bundle') == bundle and
-                token.get('uid') == self.identities[role]['uid'] and token.get('token_id') == self.identities[role]['token_id'],
-                'actual observer returned another role/boot/token')
-        self.roles[role]['token_' + when] = raw; self.persist()
+        verify_hap_token_identity(token, bundle=bundle, uid=self.identities[role]['uid'], token_id=self.identities[role]['token_id'])
+        require(type(token.get('schema_version')) is int and token['schema_version'] == 2 and
+                token.get('api') == 'AccessTokenKit::VerifyAccessToken' and token.get('run_id') == self.data['run_id'] and
+                token.get('boot_id') == self.env['boot_id'], 'actual observer returned another schema/role/boot/token')
+        after = self.observe('bm dump -n ' + bundle, role + '-token-' + when + '-BMS-after')
+        require(bms_identity(checked(after).read_text(), role) == self.identities[role], 'Knowledge BMS identity changed during token query')
+        self.roles[role]['token_' + when] = raw
+        self.roles[role]['token_bms_' + when] = {'before': before, 'after': after}; self.persist()
 
     def install(self, role):
         artifacts = self.value['artifacts_data']; spec = artifacts['projects'][role]
@@ -660,8 +666,16 @@ def verify_transport(value, spec, env, data):
         for when in ('initial', 'final'):
             script = 'unset LD_LIBRARY_PATH LD_PRELOAD; ' + ' '.join(map(shlex.quote,
                 [remote + '/observer', data['run_id'], str(role_ids[role]['uid']), project.ROLES[role][0]]))
-            observed(item['token_' + when], script)
+            token = json.loads(observed(item['token_' + when], script))
+            verify_hap_token_identity(token, bundle=project.ROLES[role][0], uid=role_ids[role]['uid'], token_id=role_ids[role]['token_id'])
             index = observations[(item['token_' + when]['path'], item['token_' + when]['sha256'])]['command']
+            bms_proof = item['token_bms_' + when]
+            for side in ('before', 'after'):
+                require(bms_identity(observed(bms_proof[side], 'bm dump -n ' + project.ROLES[role][0]), role) == role_ids[role],
+                        'Knowledge raw BMS identity changed during native query')
+            before_index = observations[(bms_proof['before']['path'], bms_proof['before']['sha256'])]['command']
+            after_index = observations[(bms_proof['after']['path'], bms_proof['after']['sha256'])]['command']
+            require(before_index < index < after_index, 'Knowledge token not enclosed by original fresh BMS records')
             bound = value['phases'][0]['begin_boot'] if when == 'initial' else value['phases'][-1]['end_boot']
             boundary = observations[(bound['path'], bound['sha256'])]['command']
             require(index < boundary if when == 'initial' else index > boundary, 'initial/final native token observation was reordered')

@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     HapTokenInfo info {};
     const int queried = AccessTokenKit::GetHapTokenInfo(token, info);
     if (token == 0 || queried != 0 || info.tokenID != token || info.userID != 100 ||
-        info.instIndex != 0 || info.bundleName != bundle || info.uid != static_cast<int32_t>(expected)) {
+        info.instIndex != 0 || info.bundleName != bundle) {
         fprintf(stderr, "AUDIO_CAPTURE_TOKEN_CONTEXT run=%s operation=%s expected_uid=%lu expected_bundle=%s "
             "token=%u get_hap_info_rc=%d info_token=%u info_uid=%d info_user=%d info_inst=%d actual_bundle_hex=",
             run.c_str(), argv[3], expected, bundle, token, queried, info.tokenID, info.uid, info.userID, info.instIndex);
@@ -77,9 +77,14 @@ int main(int argc, char **argv)
             beforeClockError, afterClockError);
         return Fail("monotonic-clock", 1);
     }
-    printf("{\"run_id\":\"%s\",\"bundle\":\"%s\",\"user_id\":100,\"uid\":%lu,"
+    // BMS is the application UID authority; expected_uid is only the argv echo.
+    // This product's HapTokenInfoParcel does not transport info.uid.
+    printf("{\"run_id\":\"%s\",\"bundle\":\"%s\",\"user_id\":100,\"expected_uid\":%lu,"
+        "\"identity_schema\":\"hap-bms-access-token/v1\",\"at_reported_uid\":%d,\"at_query_rc\":%d,"
+        "\"at_token_id\":%u,\"at_user_id\":%d,\"at_inst_index\":%d,\"at_bundle\":\"%s\","
         "\"token_id\":%u,\"permission\":\"%s\",\"operation\":\"%s\",\"result\":%d,"
-        "\"before\":%d,\"after\":%d,\"before_ns\":%llu,\"after_ns\":%llu}\n", run.c_str(), bundle, expected, token, permission,
+        "\"before\":%d,\"after\":%d,\"before_ns\":%llu,\"after_ns\":%llu}\n", run.c_str(), bundle, expected,
+        info.uid, queried, info.tokenID, info.userID, info.instIndex, info.bundleName.c_str(), token, permission,
         argv[3], action, before, after, beforeNs, afterNs);
     if (action == 0 && (after == PERMISSION_GRANTED || after == PERMISSION_DENIED)) return 0;
     fprintf(stderr, "AUDIO_CAPTURE_TOKEN_CONTEXT run=%s token=%u action_rc=%d before=%d after=%d\n",

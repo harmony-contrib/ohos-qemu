@@ -2,22 +2,61 @@
 """Replay independent token/UI/live-process/PCM evidence for active MIC revocation."""
 import argparse
 import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from verify_audio_capture_results import checked_file, sha, token, verify_transport, verify_producer
+from verify_audio_capture_results import (checked_file, sha, token, verify_transport, verify_producer,
+    verify_token_observation, microphone_shell_body)
 from batch_media_audio_event_challenge import verify as verify_pcm
 from guest_ui import select_node
 
 SCOPE = 'ordinary_public_MIC_live_revocation_without_process_kill_and_independent_PCM'
 
 
+def verify_revocation_order(value, runtime):
+    """Place the independently replayed revoke inside the ordinary lifecycle."""
+    dialog, final = runtime['tokens'][-2:]
+    if dialog['phase'] != 'after-dialog' or final['phase'] != 'after-capture':
+        raise ValueError('actual committed dialog/final token boundaries required')
+    def command(index):
+        if type(index) is not int or not 0 <= index < len(runtime['guest_shell_observations']):
+            raise ValueError('actual revoke lifecycle shell observation required')
+        value = runtime['guest_shell_observations'][index]['command_index']
+        if type(value) is not int:
+            raise ValueError('actual revoke lifecycle command index required')
+        return value
+    if not (command(dialog['bms_after_observation']) < command(value['process_before_observation']) <
+            command(value['process_after_observation']) < command(final['bms_before_observation']) and
+            dialog['observation']['after_ns'] <= value['token']['before_ns'] <=
+            value['token']['after_ns'] <= final['observation']['before_ns']):
+        raise ValueError('actual live revoke is outside the original dialog/final token observations')
+
+
 def verify_revocation(value, runtime, result, uid, run):
     ready, observation = value['ready'], value['token']
+    from audio_revoke_runtime import PROCESS_IDENTITY_SCRIPT
+    process_commands = []
+    for phase in ('before', 'after'):
+        raw, command = microphone_shell_body(runtime, value['process_' + phase + '_observation'], PROCESS_IDENTITY_SCRIPT)
+        if re.fullmatch(r'[1-9][0-9]* [1-9][0-9]* [1-9][0-9]*', raw) is None:
+            raise ValueError('original kernel PID/starttime/UID observation required')
+        pid, starttime, actual_uid = map(int, raw.split())
+        if value['process_' + phase] != dict(pid=pid, starttime=starttime, uid=actual_uid):
+            raise ValueError('revoke process summary differs from original kernel output')
+        process_commands.append(command)
     # A revoke result must have the same real token observed around the public
     # dialog. No root grant, force-stop or replacement process can substitute.
-    checked = dict(observation, operation='query', before=-1)
-    state, token_id = token(checked, run, uid)
+    if value['token_binding']['observation'] != observation:
+        raise ValueError('revoke observation differs from its original native binding')
+    bms = verify_token_observation(value['token_binding'], runtime, run, uid,
+                                   operation='revoke', previous_command=process_commands[0])
+    after_command = runtime['guest_shell_observations'][value['token_binding']['bms_after_observation']]['command_index']
+    if after_command >= process_commands[1]:
+        raise ValueError('kernel process observations must enclose the actual revoke operation')
+    if bms['token_id'] != observation.get('token_id'):
+        raise ValueError('revoke token differs from the original BMS accessTokenId')
+    state, token_id = token(observation, run, uid, operation='revoke', allow_transition=True)
     if (state != -1 or observation.get('operation') != 'revoke' or
             type(observation.get('before')) is not int or observation['before'] != 0 or
             any(row['observation']['token_id'] != token_id for row in runtime['tokens']) or
@@ -66,6 +105,7 @@ def verify(args):
     result = verify_pcm(args.results, args.runtime.parent / 'private', args.runtime.parent / 'challenge/challenge.json',
                         args.runtime.parent / 'challenge/challenge.pcm', args.application_identity, args.run_id, 0)
     revoke = verify_revocation(runtime['revocation'], runtime, result, uid, args.run_id)
+    verify_revocation_order(runtime['revocation'], runtime)
     lifecycle = [json.loads(checked_file(item).read_text()) for name, item in sorted(runtime['files'].items())
                  if '-background-' in name]
     if ([r.get('event') for r in lifecycle] != ['native_start_requested', 'background_not_requested', 'native_finished'] or

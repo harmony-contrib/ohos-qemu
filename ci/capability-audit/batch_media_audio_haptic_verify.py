@@ -14,6 +14,7 @@ import batch_system_build_runtime_helpers as product
 import batch_media_knowledge_suite as shared
 import batch_apps_contact_picker_coordinator as signatures
 from enclosing_acceptance_guest import validate_binding
+from hap_identity_binding import HAP_IDENTITY_FIELDS, verify_hap_token_identity
 
 HERE, ROLES = project.HERE, project.ROLES
 require, checked, record, sha, load = project.require, project.checked, project.record, project.sha, project.load
@@ -30,7 +31,75 @@ def bms_identity(raw, role):
             app.get('appPrivilegeLevel') == 'normal' and type(app.get('uid')) is int and
             app['uid'] // 200000 == 100 and app['uid'] % 200000 >= 10000 and
             type(app.get('accessTokenId')) is int and 0 < app['accessTokenId'] < 2**32, 'actual normal BMS identity differs')
+    require(type(value.get('appIndex')) is int and value['appIndex'] == 0 and
+            type(app.get('appIndex')) is int and app['appIndex'] == 0 and
+            type(value.get('uid')) is int and value['uid'] == app['uid'], 'actual BMS instance/UID differs')
+    accounts = [item for item in value.get('userInfo', []) if isinstance(item, dict) and
+                item.get('bundleUserInfo', {}).get('userId') == 100]
+    require(len(accounts) == 1 and accounts[0].get('bundleName') == bundle and
+            type(accounts[0].get('uid')) is int and accounts[0]['uid'] == app['uid'] and
+            type(accounts[0].get('accessTokenId')) is int and accounts[0]['accessTokenId'] == app['accessTokenId'],
+            'actual account-100 BMS UID/token differs')
     return dict(uid=app['uid'], token_id=app['accessTokenId'], installed_remote=signatures.installed_path(raw, bundle))
+
+
+def token_identity(raw, role, *, run, boot, identity):
+    token = json.loads(raw, object_pairs_hook=signatures.unique)
+    require(set(token) == HAP_IDENTITY_FIELDS | {'kind', 'run_id', 'boot_id', 'bundle', 'token_id',
+            'VIBRATE', 'before_ns', 'after_ns'}, 'actual token identity fields differ')
+    verify_hap_token_identity(token, bundle=ROLES[role][0], uid=identity['uid'], token_id=identity['token_id'])
+    require(token['kind'] == 'token' and token['run_id'] == run and token['boot_id'] == boot and
+            type(token['VIBRATE']) is int and token['VIBRATE'] == (0 if role == 'normal' else -1) and
+            type(token['before_ns']) is int and type(token['after_ns']) is int and
+            0 < token['before_ns'] <= token['after_ns'], 'real ordinary VIBRATE token boundary differs')
+    return token
+
+
+def verify_token_binding(binding, raw, *, role, identity, run, boot, observed, command_index):
+    require(set(binding) == {'bms_before', 'token', 'bms_after'} and binding['token'] == raw,
+            'actual token/BMS binding differs')
+    bundle = ROLES[role][0]
+    before = bms_identity(observed(binding['bms_before'], 'bm dump -n ' + bundle), role)
+    token_raw = observed(raw, project.sampler_script('/data/local/tmp/audio-haptic-' + run,
+        'token', run, boot, bundle, identity['uid']))
+    after = bms_identity(observed(binding['bms_after'], 'bm dump -n ' + bundle), role)
+    require(before == identity == after, 'actual BMS identity changed around token query')
+    require(command_index(binding['bms_before']) < command_index(raw) < command_index(binding['bms_after']),
+            'raw BMS observations must bracket the actual token command')
+    return token_identity(token_raw, role, run=run, boot=boot, identity=identity)
+
+
+def verify_capture_requests(qmp, segments):
+    """Replay raw command-specific capture replies; never a collector status flag."""
+    from batch_media_audio_haptic_runtime import capture_list_empty, owned_capture_listing
+    require(isinstance(qmp, list) and len(qmp) >= 2 and all(isinstance(r, dict) and
+            r.get('execute') == 'human-monitor-command' and type(r.get('host_ns')) is int and
+            type(r.get('completed_ns')) is int and 0 < r['host_ns'] <= r['completed_ns'] and
+            isinstance(r.get('reply'), str) and 'failure_reply' not in r for r in qmp),
+            'actual QMP HMP capture commands failed or incomplete')
+    require(qmp[0].get('label') == 'capture-help' and qmp[1].get('label') == 'capture-before' and
+            re.search(r'wavcapture\s+path audiodev', qmp[0]['reply']) and
+            qmp[0].get('arguments') == {'command-line': 'help wavcapture'} and
+            qmp[1].get('arguments') == {'command-line': 'info capture'} and
+            capture_list_empty(qmp[1]['reply']), 'actual QEMU capture syntax/initial ownership not established')
+    require(all(left['completed_ns'] <= right['host_ns'] for left, right in zip(qmp, qmp[1:])),
+            'actual QMP capture intervals overlap or were reordered')
+    cursor = 2
+    for segment in segments:
+        rows = qmp[cursor:cursor+6]; cursor += 6
+        capture = segment['audio_capture']; wav = checked(capture['wav']); backend = capture['backend']; phase = segment['phase']
+        require(len(rows) == 6 and [r.get('label') for r in rows] == [phase+'-'+s for s in
+            ('before-capture', 'wavcapture', 'capture-owned', 'capture-before-stop', 'stopcapture', 'capture-after-stop')],
+            'actual per-segment QMP capture ownership/order differs')
+        require([r.get('arguments') for r in rows] == [{'command-line': script} for script in
+            ('info capture', f'wavcapture {wav} {backend} 48000 16 2', 'info capture', 'info capture', 'stopcapture 0', 'info capture')] and
+            capture_list_empty(rows[0]['reply']) and capture_list_empty(rows[5]['reply']) and
+            rows[1]['reply'] == '' and rows[4]['reply'] == '',
+            'WAV was not captured/stopped by this actual QMP sequence')
+        owned_capture_listing(rows[2]['reply'], wav); owned_capture_listing(rows[3]['reply'], wav)
+        require(capture['host_begin_ns'] <= rows[1]['host_ns'] <= rows[1]['completed_ns'] < rows[4]['host_ns'] <=
+                rows[4]['completed_ns'] <= capture['host_end_ns'], 'actual WAV capture timestamps differ from QMP operations')
+    require(cursor == len(qmp), 'unexpected extra capture action')
 
 
 def parse_journal(raw, run, boot, identity):
@@ -277,20 +346,28 @@ def verify_evidence(path, archive, boot, *, command):
             value['cleanup_errors'] == [] and value['cleanup_complete'] is True and
             value['first_artifact_behavior_gate_passed'] is False and value['ledger_closed'] is False, 'failed/unbound/incomplete owned guest evidence')
     require(load(checked(value['artifacts'])) == spec, 'original artifact input changed')
-    from batch_media_audio_haptic_runtime import TOOLS, owned_capture_listing
+    from batch_media_audio_haptic_runtime import TOOLS
     require(value['tool_sources'] == {name: record(HERE / name) for name in TOOLS}, 'collector or dependent checker source changed')
     commands = value['commands']; shared.verify_commands(commands, value['hdc'], env['target'])
     observations = {}
+    observation_commands = set()
     for row in value['observations']:
         actual = shared.exact_script(commands[row['command']], row['script'])
         require(actual == checked(row['raw']).read_text(), 'normalized observation differs from actual HDC output')
-        observations[(row['raw']['path'], row['raw']['sha256'])] = row
+        key = (row['raw']['path'], row['raw']['sha256'])
+        require(key not in observations and type(row['command']) is int and row['command'] not in observation_commands,
+                'duplicate actual observation file/command binding')
+        observations[key] = row; observation_commands.add(row['command'])
     def observed(raw, script=None):
         key = (raw['path'], raw['sha256'])
         require(key in observations, 'raw result lacks actual guest command')
         row = observations[key]
         if script is not None: require(row['script'] == script, 'claimed actual guest script differs')
         return checked(raw).read_text()
+    def command_index(raw):
+        key = (raw['path'], raw['sha256'])
+        require(key in observations, 'raw result lacks actual guest command')
+        return observations[key]['command']
     for row in value['journals']:
         marker = row['sentinel']; remote = '/data/app/el2/100/base/' + ROLES[row['role']][0] + '/files/audio-haptic-' + data['run_id'] + '.jsonl'
         require(row['remote'] == remote and re.fullmatch('__HAPTIC_EOF_[a-f0-9]{32}__', marker), 'wrong actual private journal')
@@ -333,11 +410,9 @@ def verify_evidence(path, archive, boot, *, command):
             require(actual['sha256'] == expected['sha256'] and received[(actual['path'], actual['sha256'])] ==
                     '/data/app/el2/100/base/' + ROLES[role][0] + '/files/' + name, 'private genuine challenge input differs')
         for when in ('initial', 'final'):
-            raw = item['token_' + when]; token = json.loads(observed(raw, project.sampler_script(
-                '/data/local/tmp/audio-haptic-' + data['run_id'], 'token', data['run_id'], env['boot_id'], ROLES[role][0], identity['uid'])))
-            require(token.get('kind') == 'token' and token['run_id'] == data['run_id'] and token['boot_id'] == env['boot_id'] and
-                    token['bundle'] == ROLES[role][0] and token['uid'] == identity['uid'] and token['token_id'] == identity['token_id'] and
-                    token['VIBRATE'] == (0 if role == 'normal' else -1) and 0 < token['before_ns'] <= token['after_ns'], 'real VIBRATE role/token boundary differs')
+            require(set(item.get('token_bindings', {})) == {'initial', 'final'}, 'initial/final BMS token bindings missing')
+            verify_token_binding(item['token_bindings'][when], item['token_' + when], role=role, identity=identity,
+                run=data['run_id'], boot=env['boot_id'], observed=observed, command_index=command_index)
         binding_results[role] = dict(identity=identity, signature=proof)
     require(set(identities) == set(ROLES) and len({v['uid'] for v in identities.values()}) == 2 and
             len({v['token_id'] for v in identities.values()}) == 2, 'ordinary/denied installed identities overlap')
@@ -448,32 +523,13 @@ def verify_evidence(path, archive, boot, *, command):
         metrics.append(result)
     require(len(used_clocks) == len(value['clocks']), 'unrelated clock calibrations in evidence')
     for role, item in value['roles'].items():
-        indexes = [observations[(item['token_'+when]['path'], item['token_'+when]['sha256'])]['command'] for when in ('initial', 'final')]
-        calls = [row for row in value['phases'] if row['role'] == role]
-        require(indexes[0] < min(row['click']['command'] for row in calls) and
-                indexes[1] > max(observations[(row['end_boot']['path'], row['end_boot']['sha256'])]['command'] for row in calls),
-                'actual initial/final token queries do not bracket role operations')
-    qmp = value['qmp']['requests']
-    require(qmp and all(r.get('execute') == 'human-monitor-command' and type(r.get('host_ns')) is int and
-            r['host_ns'] <= r.get('completed_ns', 0) and isinstance(r.get('reply'), str) and
-            'failure_reply' not in r for r in qmp), 'actual QMP HMP capture commands failed or incomplete')
-    require(re.search(r'wavcapture\s+path audiodev', qmp[0]['reply']) and
-            qmp[0]['arguments'] == {'command-line': 'help wavcapture'} and
-            qmp[1]['arguments'] == {'command-line': 'info capture'} and qmp[1]['reply'] == '', 'actual QEMU capture syntax/initial ownership not established')
-    cursor = 2
-    for segment in value['segments']:
-        rows = qmp[cursor:cursor+6]; cursor += 6
-        capture = segment['audio_capture']; wav = checked(capture['wav']); backend = capture['backend']; phase = segment['phase']
-        require(len(rows) == 6 and [r['label'] for r in rows] == [phase+'-'+s for s in
-            ('before-capture', 'wavcapture', 'capture-owned', 'capture-before-stop', 'stopcapture', 'capture-after-stop')],
-            'actual per-segment QMP capture ownership/order differs')
-        require([r['arguments']['command-line'] for r in rows] == ['info capture', f'wavcapture {wav} {backend} 48000 16 2',
-            'info capture', 'info capture', 'stopcapture 0', 'info capture'] and
-            all(rows[i]['reply'] == '' for i in (0, 1, 4, 5)), 'WAV was not captured/stopped by this actual QMP sequence')
-        owned_capture_listing(rows[2]['reply'], wav); owned_capture_listing(rows[3]['reply'], wav)
-        require(capture['host_begin_ns'] <= rows[1]['host_ns'] <= rows[1]['completed_ns'] < rows[4]['host_ns'] <=
-                rows[4]['completed_ns'] <= capture['host_end_ns'], 'actual WAV capture timestamps differ from QMP operations')
-    require(cursor == len(qmp), 'unexpected extra capture action')
+        initial = item['token_bindings']['initial']; final = item['token_bindings']['final']
+        calls = [row for row in value['phases'] + value['cleanup_operations'] if row['role'] == role]
+        require(command_index(item['bms']) < command_index(initial['bms_before']) and
+                command_index(initial['bms_after']) < min(row['click']['command'] for row in calls) and
+                command_index(final['bms_before']) > max(command_index(row['end_boot']) for row in calls),
+                'actual initial/final BMS-token observations do not bracket role operations')
+    verify_capture_requests(value['qmp']['requests'], value['segments'])
     cleanup = value['cleanup']
     require(len(cleanup['roles']) == 2, 'both actual owned HAPs must be removed')
     for role in cleanup['roles']:

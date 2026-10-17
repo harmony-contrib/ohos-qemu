@@ -156,6 +156,13 @@ def verify_sdk_project(spec, *, fixture=None, source_manifest=None, module_name=
         require(manifest == (source / source_manifest).resolve() and source_manifest in rows and
                 load(manifest).get('fixture_hashes') == {p.name: verifier.sha(p) for p in sorted(fixture.iterdir()) if p.is_file()},
                 'compiled source fixture manifest differs')
+        if Path(fixture).resolve() == driver.FIX.resolve():
+            seed_manifest = load(manifest)
+            require(seed_manifest.get('bundle_name') == driver.SEED and
+                    seed_manifest.get('requested_permissions') == driver.PERMISSIONS and
+                    seed_manifest.get('apl_required_at_signing') == 'system_basic' and
+                    seed_manifest.get('system_app_required_at_install') is True,
+                    'compiled Contacts seed profile role contract differs')
         for p in fixture.glob('*.ets'):
             targets = [name for name in rows if name.endswith('/' + p.name)]
             require(len(targets) == 1 and rows[targets[0]] == verifier.sha(p), 'actual compiled ETS differs from frozen fixture: ' + p.name)
@@ -260,15 +267,25 @@ def verify_signed_payload(unsigned_path, signed_path):
                 'signed HAP payload or executable page bitmap changed')
 
 
-def sign_normal_hap(unsigned, bundle, permissions, udid, signer_dist, signer_jar, output, command):
+def normal_sign_argv(unsigned, bundle, permissions, udid, dist, jar, signed, *, contacts_seed=False):
+    require(type(contacts_seed) is bool, 'explicit Contacts seed profile flag required')
+    if contacts_seed:
+        require(bundle == driver.SEED and permissions == driver.PERMISSIONS, 'Contacts seed profile requires exact bundle and two user permissions')
+    argv = [sys.executable, str(HERE / 'sign_web_probe.py'), '--signer-dist', str(dist), '--jar', str(jar),
+            '--unsigned', str(unsigned), '--output', str(signed), '--bundle-name', bundle, '--udid', udid, '--sign-code', '1']
+    if contacts_seed: argv.append('--contacts-seed-profile')
+    return argv
+
+
+def sign_normal_hap(unsigned, bundle, permissions, udid, signer_dist, signer_jar, output, command, *, contacts_seed=False):
     unsigned = regular(unsigned); ordinary_hap(unsigned, bundle, permissions)
     output = Path(output).resolve(); output.mkdir(parents=True, exist_ok=False)
     dist, jar, _ = signer_inputs(signer_dist, signer_jar)
     signed = output / 'signed.hap'
-    command([sys.executable, str(HERE / 'sign_web_probe.py'), '--signer-dist', str(dist), '--jar', str(jar),
-             '--unsigned', str(unsigned), '--output', str(signed), '--bundle-name', bundle, '--udid', udid, '--sign-code', '1'], 'sign-normal-HAP')
+    command(normal_sign_argv(unsigned, bundle, permissions, udid, dist, jar, signed, contacts_seed=contacts_seed), 'sign-normal-HAP')
     verify_signed_payload(unsigned, signed)
-    proof = verify_signed_hap_artifacts(signed, bundle, permissions, udid, dist, jar, output / 'verification', command)
+    proof = verify_signed_hap_artifacts(signed, bundle, permissions, udid, dist, jar, output / 'verification', command,
+        apl='system_basic' if contacts_seed else 'normal', system_app=contacts_seed)
     proof['unsigned_hap'] = descriptor(unsigned)
     return proof
 
@@ -548,6 +565,48 @@ def independent_result(output, run_id, boot_id, full_boundaries=False):
             'observed_case_ids': sorted({row['case_id'] for row in observations})}
 
 
+def runtime_raw_bound(report, item, script, target):
+    path = checked_artifact(item); text = path.read_text(); matches = []
+    for index, row in enumerate(report['guest_commands']):
+        argv = row.get('argv', [])
+        if len(argv) != 5 or argv[1:4] != ['-t', target, 'shell']:
+            continue
+        if not Path(row['log']).name.endswith('-' + path.name):
+            continue
+        marker = re.search(r'__QEMU_CHILD_EXIT_[a-f0-9]{32}__=', argv[-1])
+        if marker is None:
+            continue
+        expected = '(' + script + '); task_child_rc=$?; printf "\\n' + marker[0] + '%s\\n" "$task_child_rc"'
+        require(argv[-1] == expected and row.get('exit_code') == 0, 'raw Contacts identity command/exit differs')
+        raw = checked_artifact({'path': row['log'], 'sha256': row['sha256']}).read_text().replace('\r', '')
+        require(raw.count(marker[0]) == 1 and raw == text + '\n' + marker[0] + '0\n', 'Contacts identity raw is not actual guest command output')
+        matches.append(index)
+    require(len(matches) == 1, 'unique exact Contacts identity raw command required')
+    return text, matches[0]
+
+
+def runtime_token_bound(report, item, bundle, app, target):
+    remote = '/data/local/tmp/' + report['run_id'] + '_observer'
+    require(report.get('observer_remote') == remote, 'Contacts observer remote path differs from original owned run')
+    bindings = [r for r in report.get('permission_bms_bindings', []) if r.get('token') == item]
+    require(len(bindings) == 1 and bindings[0].get('bundle') == bundle, 'unique actual Contacts BMS/token query join required')
+    proof = bindings[0]; indices = []
+    for key in ('before', 'after'):
+        raw, index = runtime_raw_bound(report, proof[key], 'bm dump -n ' + bundle, target)
+        actual = driver.application_info(raw, bundle)
+        require(all(actual[k] == app[k] for k in ('uid', 'accessTokenId')), 'Contacts BMS UID/token changed during observer query')
+        indices.append(index)
+    script = shlex.join([remote, 'permissions', bundle, str(app['accessTokenId'])])
+    raw, index = runtime_raw_bound(report, item, script, target)
+    require(indices[0] < index < indices[1], 'Contacts token query not enclosed by fresh actual BMS observations')
+    value = json.loads(raw, object_pairs_hook=unique)
+    require(value.get('api') == 'AccessTokenKit::VerifyAccessToken' and value.get('bundle_name') == bundle and
+            type(value.get('token_id')) is int and value['token_id'] == app['accessTokenId'] and
+            all(type(value.get(k)) is int and value[k] in (-1, 0) for k in ('READ_CONTACTS', 'WRITE_CONTACTS')),
+            'actual Contacts observer API/token/bundle/grants differ')
+    return value
+
+
 def verify_runtime_identities(runtime, build, env, permissions_bundle, allow_texts):
     report = load(runtime / 'driver-report.json'); ui = load(runtime / 'ui.json')
     for row in report['commands']:
@@ -555,22 +614,22 @@ def verify_runtime_identities(runtime, build, env, permissions_bundle, allow_tex
         checked_artifact(row)
     for key, bundle in [('caller', driver.CALLER), ('seed', driver.SEED)]:
         identity = load(runtime / (key + '-identity.json')); signed = checked_artifact(build[key + '_hap'])
-        app = driver.application_info(checked_artifact(identity['bms_dump']).read_text(), bundle)
+        app = driver.application_info(runtime_raw_bound(report, identity['bms_dump'], 'bm dump -n ' + bundle, env['target'])[0], bundle)
         require(verifier.sha(checked_artifact(identity['installed_caller_hap'])) == verifier.sha(signed), 'BMS-installed audit HAP differs')
-        before = load(checked_artifact(identity['permission_probe']))
+        before = runtime_token_bound(report, identity['permission_probe'], bundle, app, env['target'])
         require(before.get('api') == 'AccessTokenKit::VerifyAccessToken' and before.get('token_id') == app['accessTokenId'] and
                 before.get('bundle_name') == bundle and before.get('READ_CONTACTS') == before.get('WRITE_CONTACTS') == -1,
                 'fresh ordinary audit app already had broad Contacts access')
         after = report['identity_after'][key]
-        again = driver.application_info(checked_artifact(after['bms_dump']).read_text(), bundle)
+        again = driver.application_info(runtime_raw_bound(report, after['bms_dump'], 'bm dump -n ' + bundle, env['target'])[0], bundle)
         require(all(again[name] == app[name] for name in ('uid', 'accessTokenId')), 'audit UID/token changed during run')
-        token = load(checked_artifact(after['permission_probe'])); expected = -1 if key == 'caller' else 0
+        token = runtime_token_bound(report, after['permission_probe'], bundle, app, env['target']); expected = -1 if key == 'caller' else 0
         require(token.get('api') == 'AccessTokenKit::VerifyAccessToken' and token.get('token_id') == app['accessTokenId'] and
                 token.get('bundle_name') == bundle and token.get('READ_CONTACTS') == token.get('WRITE_CONTACTS') == expected,
                 'audit app final permission state differs')
         if key == 'seed':
             for field, expected in [('seed_permission_before', -1), ('seed_permission_after', 0)]:
-                raw = load(checked_artifact(ui[field]))
+                raw = runtime_token_bound(report, ui[field], bundle, app, env['target'])
                 require(raw.get('api') == 'AccessTokenKit::VerifyAccessToken' and raw.get('token_id') == app['accessTokenId'] and
                         raw.get('bundle_name') == bundle and raw.get('READ_CONTACTS') == raw.get('WRITE_CONTACTS') == expected,
                         'actual seed user grant token transition missing')
@@ -703,11 +762,19 @@ def verify_evidence(evidence_path, archive_path, boot_path):
                 'raw provider does not belong to current boot image/source')
         for key, bundle, permissions in [('caller', driver.CALLER, []), ('seed', driver.SEED, driver.PERMISSIONS)]:
             signed = checked_artifact(build[key + '_hap'])
-            verify_signed_payload(checked_artifact(spec[key]['unsigned_hap']), signed)
+            unsigned = checked_artifact(spec[key]['unsigned_hap'])
+            expected_argv = normal_sign_argv(unsigned, bundle, permissions, env['udid'],
+                Path(signer['dist']).resolve(), checked_artifact(signer['jar']), signed, contacts_seed=key == 'seed')
+            sign_rows = [row for row in report['commands'] if row.get('argv') == expected_argv]
+            require(len(sign_rows) == 1 and sign_rows[0].get('exit_code') == 0,
+                    'exact original role-specific Contacts signing command required')
+            ordinary_hap(unsigned, bundle, permissions)
+            verify_signed_payload(unsigned, signed)
             # Reverify the physical HAP, CMS and exact fresh-UDID profile, rather
             # than relying on a signature-verification receipt status.
             proof = verify_signed_hap_artifacts(signed, bundle, permissions, env['udid'], signer['dist'], signer['jar'],
-                                               scratch / (key + '-verification'), command)
+                                               scratch / (key + '-verification'), command,
+                                               apl='system_basic' if key == 'seed' else 'normal', system_app=key == 'seed')
             identity = load(runtime / (key + '-identity.json'))
             require(load(checked_artifact(identity['decoded_profile'])) == proof['verified_profile'], 'runtime profile differs from actual embedded profile')
             signatures[key] = {'signed_hap': descriptor(signed), 'application_signer_sha256': APP_LEAF,
@@ -775,16 +842,14 @@ def run(args):
         proofs = {}
         for key, bundle, permissions in [('caller', driver.CALLER, []), ('seed', driver.SEED, driver.PERMISSIONS)]:
             proofs[key] = sign_normal_hap(checked_artifact(spec[key]['unsigned_hap']), bundle, permissions, guest.udid,
-                args.signer_dist, args.signer_jar, output / (key + '-signing'), command)
+                args.signer_dist, args.signer_jar, output / (key + '-signing'), command, contacts_seed=key == 'seed')
             installed.append(bundle)
             install = command([args.hdc, '-t', guest.target, 'install', checked_artifact(proofs[key]['signed_hap'])], key + '-install')
             require(re.search(r'(?i)successfully|install success', install), 'actual HDC install did not report success')
             raw = guest.shell('bm dump -n ' + bundle, key + '-BMS-installed')
             app = driver.application_info(raw, bundle)
             if key == 'caller': caller_uid = app['uid']
-            require(app.get('isSystemApp') is False and app.get('appPrivilegeLevel', app.get('apl')) == 'normal' and
-                    type(app.get('uid')) is int and app['uid'] > 10000 and type(app.get('accessTokenId')) is int and
-                    app['accessTokenId'] > 0, 'installed app is not an ordinary normal UID/token')
+            # application_info enforces caller-normal versus exact seed-system_basic.
             identity = {**proofs[key], 'installed_remote_hap': installed_path(raw, bundle)}
             write_json(output / (key + '-signed-identity.json'), identity)
         build = {'run_id': run_id, 'representative_package': descriptor(args.archive), 'booted_package_sha256': verifier.sha(args.archive),
@@ -821,7 +886,7 @@ def run(args):
                 try:
                     # Public CRUD cleanup is the driver's finally operation and
                     # is independently verified before status can pass. Uninstall
-                    # only our two normal apps, never the actual provider.
+                    # only our two audit apps, never the actual provider.
                     text = guest.shell('bm uninstall -n ' + bundle, 'uninstall-' + bundle.split('.')[-1])
                     require('success' in text.lower(), 'actual audit app uninstall failed')
                 except Exception as error: report['cleanup_errors'].append(str(error))

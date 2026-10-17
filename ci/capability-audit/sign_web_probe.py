@@ -20,6 +20,42 @@ from qemu_test_hap_archive import normalize_archive
 
 
 FA_PROBE_BUNDLE = 'org.harmonycontrib.qemu.fa.particle'
+CONTACTS_SEED_BUNDLE = 'com.ohos.qemu.contactpickerseed'
+CONTACTS_SEED_PERMISSIONS = frozenset({'ohos.permission.READ_CONTACTS', 'ohos.permission.WRITE_CONTACTS'})
+
+
+def contacts_seed_module(path: Path) -> bytes:
+    """Scope the system_basic test profile to the two-permission Contacts seed."""
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError('duplicate Contacts seed module key')
+            value[key] = item
+        return value
+    if not path.is_file() or path.is_symlink():
+        raise ValueError('regular Contacts seed HAP required')
+    with zipfile.ZipFile(path) as archive:
+        names = archive.namelist()
+        if len(names) != len(set(names)) or 'config.json' in names or 'module.json5' in names:
+            raise ValueError('exact Stage Contacts seed HAP required')
+        member = archive.getinfo('module.json')
+        if member.file_size > 65536:
+            raise ValueError('oversized Contacts seed module')
+        content = archive.read(member)
+    document = json.loads(content, object_pairs_hook=unique)
+    if not isinstance(document, dict):
+        raise ValueError('Contacts seed module object required')
+    app, module = document.get('app'), document.get('module')
+    if not isinstance(app, dict) or not isinstance(module, dict):
+        raise ValueError('Contacts seed app and module objects required')
+    permissions = module.get('requestPermissions', [])
+    if (app.get('bundleName') != CONTACTS_SEED_BUNDLE or module.get('type') != 'entry' or
+            not isinstance(permissions, list) or len(permissions) != 2 or
+            any(not isinstance(row, dict) or not isinstance(row.get('name'), str) for row in permissions) or
+            {row.get('name') for row in permissions} != CONTACTS_SEED_PERMISSIONS):
+        raise ValueError('only the exact two-permission Contacts seed may use this test profile')
+    return content
 
 
 def fa_probe_config(path: Path) -> bytes:
@@ -87,8 +123,15 @@ def main() -> None:
     parser.add_argument("--sign-code", choices=("0", "1"), default="1")
     parser.add_argument('--fa-no-permissions', action='store_true',
                         help='dedicated zero-permission FA particle caller only; code signing stays mandatory')
+    parser.add_argument('--contacts-seed-profile', action='store_true',
+                        help='system_basic test profile for the exact two-permission Contacts seed only')
     args = parser.parse_args()
 
+    seed_module = None
+    if args.contacts_seed_profile:
+        if args.fa_no_permissions or args.bundle_name != CONTACTS_SEED_BUNDLE or args.sign_code != '1':
+            parser.error('Contacts seed profile requires its exact Stage bundle and code signing')
+        seed_module = contacts_seed_module(args.unsigned)
     fa_config = None
     if args.fa_no_permissions:
         if args.bundle_name != FA_PROBE_BUNDLE or args.sign_code != '1':
@@ -101,8 +144,8 @@ def main() -> None:
     profile["uuid"] = str(uuid.uuid4())
     profile["validity"] = {"not-before": now - 86400, "not-after": now + 10 * 365 * 86400}
     profile["bundle-info"]["bundle-name"] = args.bundle_name
-    profile["bundle-info"]["apl"] = "normal"
-    profile["bundle-info"]["app-feature"] = "hos_normal_app"
+    profile["bundle-info"]["apl"] = "system_basic" if args.contacts_seed_profile else "normal"
+    profile["bundle-info"]["app-feature"] = "hos_system_app" if args.contacts_seed_profile else "hos_normal_app"
     profile["debug-info"]["device-ids"] = [args.udid]
     profile["acls"]["allowed-acls"] = []
     profile["permissions"]["restricted-permissions"] = []
@@ -145,6 +188,8 @@ def main() -> None:
             verify_signed_hap(jar, args.output.resolve(), temp_dir, fa_no_permissions=True)
         else:
             verify_signed_hap(jar, args.output.resolve(), temp_dir)
+        if seed_module is not None and contacts_seed_module(args.output.resolve()) != seed_module:
+            raise RuntimeError('signed Contacts seed module changed')
     print(args.output.resolve())
 
 

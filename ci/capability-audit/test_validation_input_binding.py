@@ -89,6 +89,19 @@ class ValidationBindingTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaises(ValueError):
                 self.verify(dict(current, **{name: '8' * 64}))
 
+    def test_C2_private_callers_need_original_image_and_explicit_full_delta(self):
+        from validation_input_binding import F09_C2_QA_TEST_ONLY
+        current = dict(self.current, **{name: '9' * 64 for name in F09_C2_QA_TEST_ONLY})
+        self.assertEqual(self.verify(current)['changed_test_files'], self.receipt(current)['changed_test_files'])
+        for path in ('patches/common/new.cpp', 'scripts/build_standard_qemu_in_docker.sh',
+                     'ci/capability-audit/verify_first_artifact_gate.py',
+                     'ci/capability-audit/unreviewed_token_helper.py'):
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                self.verify(dict(current, **{path: '8' * 64}))
+        receipt = self.receipt(current)
+        receipt['changed_test_files'] = receipt['changed_test_files'][1:]
+        with self.assertRaises(ValueError): self.verify(current, receipt)
+
 
 if __name__ == '__main__':
     unittest.main()

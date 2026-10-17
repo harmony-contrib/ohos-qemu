@@ -22,7 +22,8 @@ import zipfile
 from PIL import Image
 from batch_apps_contact_picker_coordinator import verify_signed_payload
 from batch_media_wallpaper_runtime import Runtime, record, sha, write_json, SETTINGS, SEED, PHOTOS, CASES
-from batch_media_verify_wallpaper_runtime import checked, check_challenge, seed_rows, thumbnail, photos_provider
+from batch_media_verify_wallpaper_runtime import (checked, check_challenge, seed_rows, thumbnail, photos_provider,
+    bms_identity, verify_token_observation, system_canvas)
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
 from boot_package import kernel_sleeping
@@ -279,7 +280,12 @@ class Coordinator(Runtime):
         if ((app.get('name') or app.get('bundleName'))!=bundle or type(uid)is not int or uid//200000!=100 or
             app.get('appPrivilegeLevel')!=expected_apl or app.get('isSystemApp') is not (role!='seed')):
             raise ValueError('actual caller BMS identity differs from real signed role')
-        self.uids[role]=uid; self.value[role+'_BMS']=saved; return uid
+        bms_identity(saved,bundle,ordinary=role=='seed')
+        self.uids[role]=uid; self.value[role+'_BMS']=saved
+        index=len(self.value['commands'])-1
+        self.value.setdefault('BMS_observations',{})[role]={'raw':saved,'command_index':index,
+            'command':dict(self.value['commands'][index])}
+        return uid
 
     def bind_installed_hap(self,role):
         raw=json.loads(checked(self.value[role+'_BMS']).read_text().removeprefix((SEED if role=='seed'else QUERY)+':\n'))
@@ -336,15 +342,25 @@ class Coordinator(Runtime):
 
     def token(self,role,permission):
         bundle={'seed':SEED,'settings':SETTINGS,'query':QUERY}[role]; uid=self.uids[role]
+        observations={}
+        raw=self.shell('bm dump -n '+bundle,'token-before-'+role+'-BMS')
+        observations['before']={'raw':self.text(raw,'token-before-'+role+'-BMS'),
+            'command_index':len(self.value['commands'])-1,'command':dict(self.value['commands'][-1])}
         raw=self.shell('unset LD_LIBRARY_PATH LD_PRELOAD; '+' '.join(shlex.quote(x) for x in [self.tools['token'],self.run,str(uid),bundle,permission]),'actual-token-query')
-        value=json.loads(raw)
-        if (value.get('run_id')!=self.run or value.get('boot_id')!=self.boot_id or value.get('bundle')!=bundle or
-            value.get('uid')!=uid or value.get('user_id')!=100 or value.get('permission')!=permission or
-            type(value.get('token_id'))is not int or value['token_id']<=0 or type(value.get('grant'))is not int or
-            value['grant']not in (-1,0) or type(value.get('before_ns'))is not int or value['before_ns']<=0 or
-            type(value.get('after_ns'))is not int or value['after_ns']<value['before_ns']):
-            raise ValueError('actual token query is stale/mismatched/incomplete')
-        result=self.text(raw,'actual-'+role+'-token'); self.value['tokens'].append(result); self.save(); return value,result
+        proof={'schema_version':1,'run_id':self.run,'boot_id':self.boot_id,'role':role,
+            'raw':self.text(raw,'actual-'+role+'-token'),
+            'command_index':len(self.value['commands'])-1,'command':dict(self.value['commands'][-1]),
+            'baseline':self.value['BMS_observations'][role],'helper':self.inputs['tools']['token']}
+        raw=self.shell('bm dump -n '+bundle,'token-after-'+role+'-BMS')
+        observations['after']={'raw':self.text(raw,'token-after-'+role+'-BMS'),
+            'command_index':len(self.value['commands'])-1,'command':dict(self.value['commands'][-1])}
+        proof.update(observations)
+        result=self.text(json.dumps(proof,indent=2)+'\n','actual-'+role+'-token-binding')
+        # Retain the failed raw observation as well as successful queries.
+        self.value['tokens'].append(result);self.save()
+        value=verify_token_observation(result,run=self.run,boot=self.boot_id,target=self.guest.target,
+            bundle=bundle,permission=permission,original_BMS=self.value[role+'_BMS'],commands=self.value['commands'])
+        return value,result
 
     def launch(self,bundle,ability):
         self.wake_if_asleep('before-'+bundle)
@@ -388,9 +404,8 @@ class Coordinator(Runtime):
         tree,path=self.ui.layout(label='actual-'+kind+'-window'); item=self.plan['screens'][kind]
         node=ready_node(tree,item['bundle'],identifier=item['identifier'])
         picture=self.ui.screenshot(label='actual-'+kind+'-screen')
-        with Image.open(picture)as image:
-            if node['rect']!=[0,0,image.width,image.height]:raise ValueError('system screen is not actual full viewport')
-        return {'layout':record(path),'node':node,'screenshot':record(picture)}
+        viewport=system_canvas(tree,picture,item['bundle'],item['identifier'])
+        return {'layout':record(path),'node':node,'screenshot':record(picture),'viewport':viewport}
 
     def home(self):
         self.wake_if_asleep('requested-home-interaction')

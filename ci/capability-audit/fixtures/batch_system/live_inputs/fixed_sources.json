@@ -13,7 +13,8 @@
   "public_contract": {
     "stationary": "ActivityType='still'|'relativeStill'; on(activity,ActivityEvent,reportLatencyNs,callback); latency1e9..3e9; ENTER1 EXIT2 ENTER_EXIT3; no system API or permission annotation",
     "sensor": "SensorId.ACCELEROMETER1; x/y/z double raw float32 m/s^2; timestamp long; permission ACCELEROMETER",
-    "location": "locationChange LocationRequest, priority ACCURACY0x201; sourceType GNSS1; UTC timeStamp ms and timeSinceBoot ns; no mock API used"
+    "location": "locationChange LocationRequest, priority ACCURACY0x201; sourceType GNSS1; UTC timeStamp ms and timeSinceBoot ns; no mock API used",
+    "location_switch_state": "Read-only geoLocationManager.isLocationEnabled(): boolean. UI control live-location-switch-state; raw boolean only, no permission/enable/disable/system API/HDI owner. Actual current caller SDK39 must be freshly rebuilt by root; this source change is not SDK105 compilation evidence."
   },
   "confirmed_backend_gap": {
     "napi": "devicestatus_napi.cpp:109-120 maps public still->TYPE_STILL; undocumented absoluteStill->TYPE_ABSOLUTE_STILL",
@@ -26,5 +27,12 @@
     "manifest_sha256": "a23c37937f9335dfa5de1ff883974d1b9d4f190f51d07cc637e6bee7242ba5e8",
     "commit": "3510df8b39ba2efdc914535ce7fcd9725b0fa6fe",
     "original_gap_retained_in_sha256": true
+  },
+  "journal_contract": {
+    "schema": 2,
+    "ordinary_values": "finite number[]; bool/string/null remain forbidden in ordinary values",
+    "error": "Separate error object with original code_type and raw_code_string or raw_code_number; missing/unsupported error shapes stay explicit fatal diagnostics. Existing schema1 error.values string/int is read without conversion for C1 diagnosis; no API error can satisfy positive acceptance.",
+    "public_switch": "Each repeatable click records location_switch_query values=[request_id], then location_switch_state values=[request_id,before_seq] plus original location_enabled boolean, or an error with the same numeric context. Journal seq/run/generation/boot_ns bind before/after; this query does not change the switch.",
+    "refresh_scope": "One shared ordinary ARM64 LinuxSDK39 caller source role, used by GNSS and External. Root owns real generation/build/native provenance/signing/installation; no SDK or guest result claimed here."
   }
 }

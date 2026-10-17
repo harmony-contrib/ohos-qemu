@@ -16,6 +16,7 @@ from batch_media_audio_capture_challenge import verify as verify_pcm, CONFIG_STE
 from run_normal_hap_probe import require_normal_identity
 from spring_loading_input import binding
 from run_root_probe import digest
+from hap_identity_binding import bms_application_identity, strict_json, verify_hap_token_identity
 
 SCOPE = 'ordinary_public_MIC_Capturer_independent_PCM_token_UI_lifecycle_and_clock'
 def sha(path):
@@ -27,11 +28,11 @@ def sha(path):
 
 def token(value, run, uid, allow_transition=False, bundle='org.harmonycontrib.capabilityaudit', operation='query'):
     if (bundle not in ('org.harmonycontrib.capabilityaudit', 'org.harmonycontrib.capabilityauditfocus') or
-            operation not in ('query', 'query-background')):
-        raise ValueError('only the two ordinary audio callers and read-only token observations are supported')
+            operation not in ('query', 'query-background', 'revoke')):
+        raise ValueError('only the two ordinary audio callers and declared token operations are supported')
     permission = ('ohos.permission.KEEP_BACKGROUND_RUNNING' if operation == 'query-background' else
                   'ohos.permission.MICROPHONE')
-    if (not isinstance(value, dict) or value.get('run_id') != run or value.get('uid') != uid or
+    if (not isinstance(value, dict) or value.get('run_id') != run or value.get('expected_uid') != uid or
             value.get('user_id') != 100 or value.get('bundle') != bundle or
             value.get('permission') != permission or value.get('operation') != operation or
             type(value.get('token_id')) is not int or value['token_id'] <= 0 or value.get('result') != 0 or
@@ -42,7 +43,81 @@ def token(value, run, uid, allow_transition=False, bundle='org.harmonycontrib.ca
             type(value.get('before_ns')) is not int or value['before_ns'] <= 0 or
             type(value.get('after_ns')) is not int or value['after_ns'] < value['before_ns']):
         raise ValueError('independent actual microphone token evidence invalid')
+    # Shape validation is separate from the mandatory original BMS/raw-command
+    # binding performed by verify_token_observation for every complete case.
+    verify_hap_token_identity(value, bundle=bundle, uid=uid, token_id=value['token_id'])
     return value['after'], value['token_id']
+
+
+def microphone_shell_body(runtime, index, script):
+    """Replay one actual MIC shell operation, including Focus's outer frame."""
+    from hdc_transport import failed
+    if type(index) is not int or not 0 <= index < len(runtime['guest_shell_observations']):
+        raise ValueError('original MIC shell observation index required')
+    shell = runtime['guest_shell_observations'][index]
+    ci = shell['command_index']
+    if type(ci) is not int or not 0 <= ci < len(runtime['orchestration_commands']):
+        raise ValueError('original MIC command index required')
+    command = runtime['orchestration_commands'][ci]
+    hdc = runtime['hdc']
+    checked_file(hdc)
+    marker = shell['exit_marker']
+    if (re.fullmatch('__MIC_EXIT_[a-f0-9]{32}__=', marker) is None or
+            shell.get('script') != script or type(shell.get('guest_exit_code')) is not int or
+            shell['guest_exit_code'] != 0 or command.get('exit_code') != 0 or command.get('timed_out')):
+        raise ValueError('successful exact original MIC shell operation required')
+    wrapped = script + '; task_mic_rc=$?; printf "\\n' + marker + '%s\\n" "$task_mic_rc"'
+    argv = command['argv']
+    if len(argv) != 5 or argv[:4] != [hdc['argv0'], '-t', runtime['target'], 'shell']:
+        raise ValueError('original MIC HDC/target/argv differs')
+    if runtime['parent_persona'] == 'audio-focus':
+        suffix = re.fullmatch(re.escape(wrapped) + r'; focus_rc=\$\?; printf "\\n'
+            r'(__FOCUS_EXIT_[a-f0-9]{32}__=)%s\\n" "\$focus_rc"', argv[4])
+        if suffix is None:
+            raise ValueError('exact enclosing Focus shell frame required')
+        out = checked_file(dict(path=command['stdout_path'], sha256=command['stdout_sha256'])).read_text().replace('\r', '')
+        err = checked_file(dict(path=command['stderr_path'], sha256=command['stderr_sha256'])).read_text()
+        tail = '\n' + suffix[1] + '0\n'
+        if err or failed(out, err) or out.count(suffix[1]) != 1 or not out.endswith(tail):
+            raise ValueError('original Focus stdout/stderr/exit frame differs')
+        mic_output = out[:-len(tail)]
+        if shell['raw'] != mic_output.rstrip('\n'):
+            raise ValueError('Focus MIC observation differs from original stdout')
+    else:
+        mic_output = checked_file(dict(path=command['log'], sha256=command['sha256'])).read_text().replace('\r', '')
+        if argv[4] != wrapped or shell['raw'] != mic_output or failed(mic_output, ''):
+            raise ValueError('MIC observation differs from exact original command/log')
+    match = re.search(r'(?:^|\n)' + re.escape(marker) + r'0\n$', mic_output)
+    if match is None or mic_output.count(marker) != 1:
+        raise ValueError('original successful MIC inner exit frame required')
+    return mic_output[:match.start()].rstrip('\n'), ci
+
+
+def verify_token_observation(row, runtime, run, uid, *, bundle='org.harmonycontrib.capabilityaudit',
+                             operation='query', explicit_bundle=False, previous_command=-1):
+    import shlex
+    before_index, token_index, after_index = (row[name] for name in
+        ('bms_before_observation', 'token_observation', 'bms_after_observation'))
+    if not (type(before_index) is type(token_index) is type(after_index) is int and
+            before_index < token_index < after_index):
+        raise ValueError('original BMS/native/BMS observation order required')
+    bms_script = shlex.join(['bm', 'dump', '-n', bundle])
+    before_raw, before_command = microphone_shell_body(runtime, before_index, bms_script)
+    token_script = ('unset LD_LIBRARY_PATH LD_PRELOAD; ' + runtime['remote_root_directory'] +
+        '/audio_capture_token ' + run + ' ' + str(uid) + ' ' + operation + (' ' + bundle if explicit_bundle else ''))
+    token_raw, token_command = microphone_shell_body(runtime, token_index, token_script)
+    after_raw, after_command = microphone_shell_body(runtime, after_index, bms_script)
+    if type(previous_command) is not int or not previous_command < before_command < token_command < after_command:
+        raise ValueError('original BMS/native/BMS command order required')
+    for raw in (before_raw, after_raw):
+        if require_normal_identity(raw, bundle) != uid:
+            raise ValueError('actual normal BMS identity differs around token operation')
+    before, after = bms_application_identity(before_raw, bundle), bms_application_identity(after_raw, bundle)
+    actual = strict_json(token_raw)
+    if before != after or actual != row['observation']:
+        raise ValueError('actual BMS identity changed or token differs from original native stdout')
+    verify_hap_token_identity(actual, bundle=bundle, uid=before['uid'], token_id=before['token_id'])
+    return before
 
 
 def denied_results(text, run, uid, files):
@@ -130,6 +205,7 @@ def verify_transport(args, recorder=False, audio_event=False):
         contract.verify_inputs(value, run, arch, denied)
         contract.verify_hap(args.hap, value, arch)
     uid = require_normal_identity(args.application_identity.read_text())
+    bms_identity = bms_application_identity(args.application_identity.read_text(), 'org.harmonycontrib.capabilityaudit')
     observations = runtime.get('tokens', [])
     if (len(observations) < 3 or observations[0].get('phase') != 'before-launch' or
             observations[-1].get('phase') != 'after-capture' or
@@ -137,7 +213,14 @@ def verify_transport(args, recorder=False, audio_event=False):
         raise ValueError('independent token observations do not span the actual ordinary capture')
     token_id = None
     token_time = 0
+    previous_shell = previous_command = -1
     for index, row in enumerate(observations):
+        if type(row.get('bms_before_observation')) is not int or row['bms_before_observation'] <= previous_shell:
+            raise ValueError('microphone token queries must use fresh ordered original observations')
+        if verify_token_observation(row, runtime, run, uid, previous_command=previous_command) != bms_identity:
+            raise ValueError('ordinary BMS application identity changed across the actual capture')
+        previous_shell = row['bms_after_observation']
+        previous_command = runtime['guest_shell_observations'][previous_shell]['command_index']
         state, current = token(row['observation'], run, uid, allow_transition=0 < index < len(observations) - 1)
         if token_id is None:
             token_id = current

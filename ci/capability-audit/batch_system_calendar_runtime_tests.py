@@ -110,18 +110,48 @@ class CalendarProtocolTests(unittest.TestCase):
     def test_native_identity_requires_actual_current_permission_definitions(self):
         names = ['ohos.permission.'+v for v in ('READ_CALENDAR', 'WRITE_CALENDAR', 'READ_WHOLE_CALENDAR',
                  'WRITE_WHOLE_CALENDAR', 'NOTIFICATION_CONTROLLER')]
-        value = {'schema_version': 1, 'run_id': self.request['run_id'], 'boot_id': self.request['boot_id'],
-            'bundle': ROLES['producer']['bundle'], 'uid': self.identity['uid'], 'token_id': self.identity['accessTokenId'],
+        value = {'schema_version': 2, 'run_id': self.request['run_id'], 'boot_id': self.request['boot_id'],
+            'bundle': ROLES['producer']['bundle'], 'expected_uid': self.identity['uid'], 'token_id': self.identity['accessTokenId'],
+            'identity_schema': 'hap-bms-access-token/v1', 'at_reported_uid': 0, 'at_query_rc': 0,
+            'at_token_id': self.identity['accessTokenId'], 'at_user_id': 100, 'at_inst_index': 0, 'at_bundle': ROLES['producer']['bundle'],
             'user_id': 100, 'permission_api': 'AccessTokenKit::VerifyAccessToken', 'permissions': {n: -1 for n in names},
             'definition_api': 'AccessTokenKit::GetDefPermission', 'definitions': {n: {'permissionName': n,
                 'grantMode': 0, 'availableLevel': 1, 'availableType': 0, 'provisionEnable': False} for n in names},
             'process_api': 'AppMgrClient::GetAllRunningProcesses', 'processes': [],
             'before_ns': 10, 'after_ns': 11, 'realtime_ns': 100, 'boottime_ns': 12}
-        self.assertEqual(p.token(value, self.request, ROLES['producer']['bundle'], self.identity)['uid'], self.identity['uid'])
+        self.assertEqual(p.token(value, self.request, ROLES['producer']['bundle'], self.identity)['at_reported_uid'], 0)
+        for field, replacement in [('expected_uid', self.identity['uid'] + 1), ('at_query_rc', 1), ('at_token_id', 9),
+                                   ('at_user_id', 101), ('at_inst_index', 1), ('at_bundle', 'foreign.bundle'), ('uid', self.identity['uid'])]:
+            changed = dict(value); changed[field] = replacement
+            with self.subTest(identity_field=field), self.assertRaises(ValueError):
+                p.token(changed, self.request, ROLES['producer']['bundle'], self.identity)
         for field, replacement in [('definitions', {}), ('definition_api', 'hand-filled'), ('schema_version', True), ('boottime_ns', 0)]:
             altered = dict(value); altered[field] = replacement
             with self.subTest(field=field), self.assertRaises(ValueError):
                 p.token(altered, self.request, ROLES['producer']['bundle'], self.identity)
+
+    def test_native_replay_requires_exact_uid_script_and_stable_adjacent_bms(self):
+        import batch_system_calendar_runtime_verify as replay
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); bundle = ROLES['producer']['bundle']; remote = '/data/local/tmp/qcal/observer'
+            app = dict(self.identity, name=bundle, isSystemApp=False, appPrivilegeLevel='normal')
+            text = json.dumps({'applicationInfo': app, 'hapPath': '/data/app/qcal.hap'})
+            capture = {'guest_commands': [], 'token_bms_bindings': []}
+            def raw(index, script, output):
+                path = root / ('raw-' + str(index) + '-identity.txt'); path.write_text(output)
+                marker = '__QEMU_CHILD_EXIT_' + str(index) * 32 + '__='
+                log = root / (str(index) + '.log'); log.write_text(output + '\n' + marker + '0\n')
+                capture['guest_commands'].append({'argv': ['hdc', '-t', 'owned', 'shell', '(' + script + '); task_child_rc=$?; printf "\\n' + marker + '%s\\n" "$task_child_rc"'], 'exit_code': 0, 'log': str(log), 'sha256': sha(log)})
+                return record(path)
+            before = raw(1, 'bm dump -n ' + bundle, text)
+            native = raw(2, replay.shlex.join([remote, self.request['run_id'], bundle, str(app['uid'])]), '{}')
+            after = raw(3, 'bm dump -n ' + bundle, text)
+            capture['token_bms_bindings'] = [{'bundle': bundle, 'token': native, 'before': before, 'after': after}]
+            with patch.object(p, 'token', return_value={'host_only': True}):
+                self.assertEqual(replay.token_bound(capture, native, self.request, bundle, app, remote), {'host_only': True})
+                with self.assertRaises(ValueError): replay.token_bound(capture, native, self.request, bundle, app, remote + '-foreign')
+                changed = dict(app, accessTokenId=app['accessTokenId'] + 1)
+                with self.assertRaises(ValueError): replay.token_bound(capture, native, self.request, bundle, changed, remote)
 
     def test_success_empty_status_and_negative_loading_are_distinct(self):
         def node(name, text):

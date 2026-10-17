@@ -182,9 +182,20 @@ class Collector:
         return text, record(path)
 
     def token(self, bundle, label):
-        raw, artifact = self.raw(shlex.join([self.plan['helper']['remote'], self.run, bundle]), label)
+        initial = self.apps[bundle]
+        bms_raw, before = self.raw('bm dump -n ' + bundle, label + '-BMS-before')
+        _, app, _ = protocol.bms(bms_raw, bundle)
+        fields = ('uid', 'accessTokenId', 'isSystemApp', 'appPrivilegeLevel')
+        require(all(app.get(k) == initial.get(k) for k in fields), 'BMS identity changed before native token query')
+        raw, artifact = self.raw(shlex.join([self.plan['helper']['remote'], self.run, bundle, str(app['uid'])]), label)
         identity = {'run_id': self.run, 'boot_id': self.boot}
-        value = protocol.token(protocol.decode(raw), identity, bundle, self.apps[bundle])
+        value = protocol.token(protocol.decode(raw), identity, bundle, app)
+        bms_raw, after = self.raw('bm dump -n ' + bundle, label + '-BMS-after')
+        _, again, _ = protocol.bms(bms_raw, bundle)
+        require(all(again.get(k) == app.get(k) for k in fields), 'BMS identity changed during native token query')
+        self.report.setdefault('token_bms_bindings', []).append({'bundle': bundle, 'token': artifact,
+            'before': before, 'after': after})
+        self.save()
         previous = getattr(self, 'clock_anchor', None)
         if previous:
             require(abs((value['realtime_ns']-previous['realtime_ns']) -
@@ -262,8 +273,14 @@ class Collector:
                 'installed provider is not the actual archive image source payload')
         schema = protocol.schema(module)
         token, token_art = self.token(PROVIDER, 'token-provider')
+        from batch_system_calendar_runtime_resources import LOCALE_SCRIPT, make_provider_label_proof
+        _, locale = self.raw(LOCALE_SCRIPT, 'provider-label-actual-locale')
+        self.provider_label_context = {'installed_hap': record(installed), 'bms': bm, 'locale': locale,
+            'archive_sha256': self.report['archive']['sha256'], 'boot_id': self.boot, 'run_id': self.run}
+        self.provider_label_proof = make_provider_label_proof(**self.provider_label_context)
         self.report['artifacts']['provider'] = {'archive_binding': record(provider_receipt), 'bms': bm, 'installed_hap': record(installed),
-            'token': token_art, 'uid': app['uid'], 'token_id': app['accessTokenId'], 'schema': schema}
+            'token': token_art, 'uid': app['uid'], 'token_id': app['accessTokenId'], 'schema': schema,
+            'label_proof': self.provider_label_proof}
         self.save()
 
     def permission_preflight(self):
@@ -279,12 +296,23 @@ class Collector:
         layout, path = self.ui.layout(label='permission')
         if not protocol.permission_windows(layout, bundle):
             return None
-        selected = protocol.permission_control(layout, bundle, target, permission_label(target, self.apps, self.run), texts)
+        provider_locale = None
+        if target == PROVIDER:
+            from batch_system_calendar_runtime_resources import LOCALE_SCRIPT
+            actual_locale, provider_locale = self.raw(LOCALE_SCRIPT, 'provider-label-locale-before-decision')
+            require(actual_locale == checked(self.provider_label_context['locale']).read_text(),
+                    'actual locale changed before provider permission decision; preserve dialog')
+        label = permission_label(target, self.apps, self.run,
+            provider_label_proof=self.provider_label_proof if target == PROVIDER else None,
+            provider_label_context=self.provider_label_context if target == PROVIDER else None)
+        selected = protocol.permission_control(layout, bundle, target, label, texts)
         node = selected['selected_node']
         screen = self.ui.screenshot(label='permission-before')
         x, y, w, h = node['rect']
         self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'permission-actual-node')
-        return {'decision': decision, 'layout': record(path), 'screenshot': record(screen), **selected}
+        proof = {'decision': decision, 'layout': record(path), 'screenshot': record(screen), **selected}
+        if provider_locale is not None: proof['provider_locale'] = provider_locale
+        return proof
 
     def operation(self, role, action, case):
         policy = ROLES[role]

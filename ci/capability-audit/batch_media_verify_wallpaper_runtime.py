@@ -9,12 +9,14 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shlex
 import zipfile
 
 from PIL import Image, ImageOps, ImageStat
 from batch_apps_contact_picker_coordinator import verify_signed_payload
 from enclosing_acceptance_guest import validate_binding
 from guest_ui import bounds, NodeNotReady, select_node
+from hap_identity_binding import verify_hap_token_identity
 
 HERE = Path(__file__).resolve().parent
 CASES = ('desktop-1', 'desktop-2', 'lock-1', 'lock-2', 'cancel')
@@ -201,7 +203,7 @@ def seed_rows(text, run, *, denial=False):
     return rows, uris
 
 
-def bms(record, bundle, *, ordinary=False):
+def bms_identity(record, bundle, *, ordinary=False):
     raw = checked(record).read_text().removeprefix(bundle + ':\n')
     app = json.loads(raw)['applicationInfo']
     if ((app.get('name') or app.get('bundleName')) != bundle or type(app.get('uid')) is not int or app['uid']//200000 != 100 or
@@ -210,9 +212,83 @@ def bms(record, bundle, *, ordinary=False):
         raise ValueError('actual installed BMS identity/account differs')
     if ordinary and app['uid'] % 200000 < 10000:
         raise ValueError('ordinary caller cannot use a reserved system app UID')
-    if bundle == SETTINGS and app.get('appPrivilegeLevel') != 'system_basic':
+    if bundle in (SETTINGS, 'org.harmonycontrib.wallpaperquery') and app.get('appPrivilegeLevel') != 'system_basic':
         raise ValueError('Settings actual original system_basic identity required')
-    return app['uid']
+    token = app.get('accessTokenId')
+    if type(token) is not int or not 0 < token < 2**32:
+        raise ValueError('actual BMS accessTokenId required')
+    return app['uid'], token
+
+
+def bms(record, bundle, *, ordinary=False):
+    return bms_identity(record, bundle, ordinary=ordinary)[0]
+
+
+def replay_observation(observation, script, target, *, commands=None):
+    """Bind raw GuestUi output to its exact indexed command and exit frame."""
+    row, index = observation['command'], observation['command_index']
+    if type(index) is not int or index < 0 or commands is not None and (
+            index >= len(commands) or commands[index] != row):
+        raise ValueError('raw observation command index differs')
+    argv = row['argv']
+    if (row.get('exit_code') != 0 or row.get('timed_out') or len(argv) != 5 or
+            argv[1:4] != ['-t', target, 'shell']):
+        raise ValueError('raw observation failed or targets another guest')
+    markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
+    if len(markers) != 1:
+        raise ValueError('one exact raw observation exit nonce required')
+    marker = markers[0]
+    tail = '; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"'
+    if argv[4] != script + tail:
+        raise ValueError('raw observation helper arguments or shell footer differs')
+    transport = checked({k: row[k] for k in ('path', 'sha256')}).read_text().replace('\r', '')
+    ending = '\n' + marker + '0\n'
+    if transport.count(marker) != 1 or not transport.endswith(ending):
+        raise ValueError('actual observation guest exit was not successful')
+    raw = checked(observation['raw']).read_text()
+    # GuestUi strips terminal LF. Reproduce exactly; do not rewrite raw/log.
+    if transport[:-len(ending)].rstrip('\n') != raw:
+        raise ValueError('raw observation differs from actual command stdout')
+    return raw
+
+
+def verify_token_observation(record, *, run, boot, target, bundle, permission,
+                             original_BMS=None, commands=None):
+    proof = json.loads(checked(record).read_text())
+    roles = {SEED: 'seed', SETTINGS: 'settings', 'org.harmonycontrib.wallpaperquery': 'query'}
+    role = roles.get(bundle)
+    if (role is None or proof.get('schema_version') != 1 or proof.get('run_id') != run or
+            proof.get('boot_id') != boot or proof.get('role') != role or
+            re.fullmatch('[a-f0-9]{32}', run) is None):
+        raise ValueError('fresh exact native token observation required')
+    identities = []
+    indices = []
+    for key in ('baseline', 'before', 'after'):
+        observation = proof[key]
+        replay_observation(observation, 'bm dump -n ' + bundle, target, commands=commands)
+        identities.append(bms_identity(observation['raw'], bundle, ordinary=role == 'seed'))
+        indices.append(observation['command_index'])
+    uid, token = identities[0]
+    if any(identity != (uid, token) for identity in identities):
+        raise ValueError('BMS UID/accessTokenId changed across native token query')
+    if original_BMS is not None and bms_identity(original_BMS, bundle, ordinary=role == 'seed') != (uid, token):
+        raise ValueError('native token query differs from original runtime BMS identity')
+    helper = proof['helper']; remote = '/data/local/tmp/wallpaper-coordinator-' + run + '/token'
+    checked(helper['binary']); checked(helper['build_receipt'])
+    if sha(checked(helper['source'])) != sha(HERE / 'fixtures/batch_media/wallpaper_receipts/token_query.cpp'):
+        raise ValueError('native token observation uses another helper source')
+    script = 'unset LD_LIBRARY_PATH LD_PRELOAD; ' + shlex.join([remote, run, str(uid), bundle, permission])
+    raw = replay_observation(proof, script, target, commands=commands)
+    if not indices[0] < indices[1] < proof['command_index'] < indices[2]:
+        raise ValueError('BMS/token command ordering differs')
+    value = json.loads(raw)
+    verify_hap_token_identity(value, bundle=bundle, uid=uid, token_id=token)
+    if (value.get('run_id') != run or value.get('boot_id') != boot or value.get('user_id') != 100 or
+            value.get('permission') != permission or type(value.get('grant')) is not int or
+            value['grant'] not in (-1, 0) or type(value.get('before_ns')) is not int or value['before_ns'] <= 0 or
+            type(value.get('after_ns')) is not int or value['after_ns'] < value['before_ns']):
+        raise ValueError('actual native permission/clock/run observation differs')
+    return value
 
 
 def acks(actions, run, boot):
@@ -269,6 +345,90 @@ def stage_files(stage):
     return result
 
 
+def system_canvas(tree, screenshot, bundle, identifier):
+    """Replay untouched display/window geometry, retaining clipped visibility.
+
+    A SceneBoard status bar may clip a desktop node's visible bounds. Its
+    original bounds alone do not prove a full compositor canvas: require the
+    full hierarchy root, actual host WindowScene, and the separately observed
+    top system-bar window accounting for the entire clipped strip. Pixel
+    verification still consumes the original whole PNG, never this rect.
+    """
+    if bundle not in ('com.ohos.sceneboard', 'com.ohos.launcher', 'com.ohos.systemui', 'com.ohos.systemui.screenlock'):
+        raise ValueError('actual system compositor owner required')
+    if bundle == 'com.ohos.sceneboard' and identifier not in (
+            'SCBDesktop_Flex_Desktop', 'ScreenLockRootComponent', 'MainPageView_Screen_Lock_Home'):
+        raise ValueError('source-defined SceneBoard desktop/lock node required')
+    selected = select_node(tree, bundle, identifier=identifier)
+    roots = tree if isinstance(tree, list) else [tree]
+    if len(roots) != 1:
+        raise ValueError('one actual complete display hierarchy required')
+    with Image.open(screenshot) as picture:
+        picture.load()
+        if picture.format != 'PNG' or picture.width * picture.height > 16_777_216:
+            raise ValueError('actual unmodified PNG display capture required')
+        full = [0, 0, picture.width, picture.height]
+    if list(bounds(roots[0]['attributes'].get('bounds'))) != full:
+        raise ValueError('hierarchy root differs from complete compositor capture')
+    paths, windows, bars = [], [], []
+    def visit(node, owner, ancestors):
+        attributes = node['attributes']; owner = attributes.get('bundleName') or owner
+        path = ancestors + [(attributes, owner)]
+        if attributes is selected['attributes']: paths.append(path)
+        if attributes.get('type') == 'WindowScene' and attributes.get('visible') == 'true':
+            windows.append((attributes, owner))
+        if attributes.get('id') == 'StatusBarBackground_Row_0' and attributes.get('visible') == 'true':
+            bars.append(path)
+        for child in node.get('children', []): visit(child, owner, path)
+    visit(roots[0], '', [])
+    if len(paths) != 1:
+        raise ValueError('selected system node path is ambiguous')
+    attrs = selected['attributes']
+    host = attrs.get('hostWindowId')
+    if (attrs.get('displayId') != '0' or re.fullmatch('[1-9][0-9]*', host or '') is None or
+            list(bounds(attrs.get('origBounds'))) != full):
+        raise ValueError('actual system display/host/original full-plane geometry required')
+    owners = [(a, owner) for a, owner in paths[0] if a.get('type') == 'WindowScene']
+    if len(owners) != 1:
+        raise ValueError('one real system WindowScene ancestor required')
+    window, owner = owners[0]
+    if (owner != bundle or window.get('visible') != 'true' or window.get('hostWindowId') != host or
+            window.get('displayId') != '0' or list(bounds(window.get('origBounds'))) != full or
+            list(bounds(window.get('bounds'))) != selected['rect']):
+        raise ValueError('system node is an embedded or foreign window')
+    visible = selected['rect']; overlay_host = None
+    if visible != full:
+        x, y, width, height = visible
+        if x != 0 or y <= 0 or width != full[2] or y + height != full[3]:
+            raise ValueError('unsupported system viewport clipping')
+        matches = []
+        for path in bars:
+            bar, bar_owner = path[-1]
+            ancestors = [(a, o) for a, o in path if a.get('type') == 'WindowScene']
+            if len(ancestors) != 1: continue
+            bar_window, window_owner = ancestors[0]
+            rect = list(bounds(bar.get('bounds')))
+            if (bar_owner in ('com.ohos.sceneboard', 'com.ohos.systemui') and window_owner == bar_owner and
+                    bar_window.get('visible') == 'true' and
+                    rect == [0, 0, width, y] and list(bounds(bar.get('origBounds'))) == rect and
+                    bar.get('displayId') == bar_window.get('displayId') == '0' and
+                    re.fullmatch('[1-9][0-9]*', bar.get('hostWindowId', '')) is not None and
+                    bar.get('hostWindowId') == bar_window.get('hostWindowId') != host):
+                outer = list(bounds(bar_window.get('bounds')))
+                if (outer[:3] == [0, 0, width] and y <= outer[3] <= full[3] and
+                        list(bounds(bar_window.get('origBounds'))) == outer):
+                    matches.append((bar, bar_window))
+        if len(matches) != 1:
+            raise ValueError('clipped strip lacks one actual matching system status-bar window')
+        overlay_host = matches[0][0]['hostWindowId']
+    allowed_hosts = {host} if overlay_host is None else {host, overlay_host}
+    if (len({a.get('hostWindowId') for a, _ in windows}) != len(windows) or
+            any(a.get('hostWindowId') not in allowed_hosts for a, _ in windows)):
+        raise ValueError('foreign or duplicate visible compositor window')
+    return {'canvas_rect': full, 'visible_rect': visible, 'display_id': '0',
+            'host_window_id': host, 'top_overlay_host_window_id': overlay_host}
+
+
 def system_window(stage, plan):
     kind = stage['screen_kind']; selected = plan['screens'][kind]
     allowed = (('com.ohos.sceneboard', 'com.ohos.launcher') if kind == 'desktop' else
@@ -277,9 +437,7 @@ def system_window(stage, plan):
         raise ValueError('actual profile-specific system desktop/lock window identity required')
     tree = json.loads(checked(stage['layout']).read_text())
     node = select_node(tree, selected['bundle'], identifier=selected['identifier'])
-    with Image.open(checked(stage['screenshot'])) as picture:
-        if picture.format != 'PNG' or node['rect'] != [0, 0, picture.width, picture.height]:
-            raise ValueError('full actual system viewport required, never a Settings preview')
+    system_canvas(tree, checked(stage['screenshot']), selected['bundle'], selected['identifier'])
     dump = checked(stage['ams']).read_text()
     apps = re.split(r'(?=^    AppRunningRecord ID #)', dump, flags=re.M)
     # A visible lockscreen can be hosted by a service process whose AMS app
@@ -348,6 +506,13 @@ def verify(path):
         raise ValueError('desktop and lock cannot use the same viewport identity')
     seed_uid = bms(value['seed_identity'], SEED, ordinary=True)
     settings_uid = bms(value['settings_identity'], SETTINGS)
+    for role, bundle in (('seed', SEED), ('settings', SETTINGS)):
+        matches = [(i, row) for i, row in enumerate(value['commands']) if row.get('label') == role + '-BMS']
+        if len(matches) != 1:
+            raise ValueError('one original runtime BMS command required')
+        index, command = matches[0]
+        replay_observation({'raw': value[role + '_identity'], 'command': command, 'command_index': index},
+                           'bm dump -n ' + bundle, env['target'], commands=value['commands'])
     bms(value['renderer_identity'], 'com.ohos.wallpaper')
     bms(value['photos_identity'], PHOTOS)
     if seed_uid == settings_uid:
@@ -541,14 +706,18 @@ def verify_external_observations(value, env, challenge, uris, seed_uid, settings
     photos_provider(checked(cancelled['provider_dump']).read_text(), SETTINGS)
     checked(cancelled['screenshot'])
     rejected = external('denied_observation')
-    token = json.loads(checked(rejected['token_query']).read_text())
-    if (token.get('bundle') != SEED or token.get('uid') != seed_uid or token.get('permission') != 'ohos.permission.SET_WALLPAPER' or
-            token.get('grant') != -1 or type(token.get('token_id')) is not int or token['token_id'] <= 0):
+    token = verify_token_observation(rejected['token_query'], run=value['run_id'], boot=env['boot_id'],
+        target=env['target'], bundle=SEED, permission='ohos.permission.SET_WALLPAPER',
+        original_BMS=value['seed_identity'])
+    before = verify_token_observation(rejected['before_normal_token'], run=value['run_id'], boot=env['boot_id'],
+        target=env['target'], bundle=SEED, permission='ohos.permission.SET_WALLPAPER',
+        original_BMS=value['seed_identity'])
+    if token['grant'] != -1 or before['grant'] != -1 or token['token_id'] != before['token_id']:
         raise ValueError('actual ordinary SET_WALLPAPER denial token query required')
-    granted = json.loads(checked(rejected['settings_token_query']).read_text())
-    if (granted.get('bundle') != SETTINGS or granted.get('uid') != settings_uid or
-            granted.get('permission') != 'ohos.permission.SET_WALLPAPER' or granted.get('grant') != 0 or
-            type(granted.get('token_id')) is not int or granted['token_id'] <= 0):
+    granted = verify_token_observation(rejected['settings_token_query'], run=value['run_id'], boot=env['boot_id'],
+        target=env['target'], bundle=SETTINGS, permission='ohos.permission.SET_WALLPAPER',
+        original_BMS=value['settings_identity'])
+    if granted['grant'] != 0:
         raise ValueError('actual installed Settings wallpaper permission grant required')
     resolution = external('default_resolution')
     raw = json.loads(checked(resolution['actual_GetCfgFiles_query']).read_text())
