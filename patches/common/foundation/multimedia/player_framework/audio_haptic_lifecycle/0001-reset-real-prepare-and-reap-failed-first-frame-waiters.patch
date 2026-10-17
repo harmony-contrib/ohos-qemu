@@ -1,0 +1,71 @@
+--- a/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.cpp
++++ b/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.cpp
+@@ -115,8 +115,16 @@
+ {
+     // Reset the player and reload it.
+     MEDIA_LOGI("ResetAVPlayer");
+-    (void)avPlayer_->Reset();
+-    int32_t ret = OpenAudioSource();
++    int32_t ret = avPlayer_->Reset();
++    CHECK_AND_RETURN_RET_LOG(ret == MSERR_OK, ret, "Reset AVPlayer failed %{public}d", ret);
++    {
++        // Each PrepareAsync must wait for its own completion, including stop/start.
++        std::lock_guard<std::mutex> lockPrepare(prepareMutex_);
++        CHECK_AND_RETURN_RET_LOG(!isReleased_, MSERR_INVALID_OPERATION, "The avplayer has been released.");
++        isPrepared_ = false;
++        isUnsupportedFile_ = false;
++    }
++    ret = OpenAudioSource();
+     CHECK_AND_RETURN_RET_LOG(ret == MSERR_OK, ret, "Failed to open audio source.");
+ 
+     if (fileDes_ < 0) {
+@@ -493,7 +501,8 @@
+ void AHSoundNormalCallback::HandleAudioFirstFrameEvent(int32_t extra, const Format &infoBody)
+ {
+     int64_t value = 0;
+-    (void)infoBody.GetLongValue(PlayerKeys::AUDIO_FIRST_FRAME, value);
++    CHECK_AND_RETURN_LOG(infoBody.GetLongValue(PlayerKeys::AUDIO_FIRST_FRAME, value) && value >= 0,
++        "Invalid audio first frame latency");
+     uint64_t latency = static_cast<uint64_t>(value);
+     MEDIA_LOGI("HandleAudioFirstFrameEvent from AVPlayer. Latency %{public}" PRIu64 "", latency);
+     std::shared_ptr<AudioHapticSoundNormalImpl> soundNormalImpl = soundNormalImpl_.lock();
+--- a/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.cpp
++++ b/foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.cpp
+@@ -230,8 +230,12 @@
+         vibrateThread_ = std::make_shared<std::thread>([this] { StartVibrate(); });
+     }
+     result = audioHapticSound_->StartSound(audioHapticSyncId_.load());
+-    SendHapticPlayerEvent(MSERR_OK, "START_HAPTIC_PLAYER");
+-    CHECK_AND_RETURN_RET_LOG(result == MSERR_OK, result, "Failed to start sound.");
++    SendHapticPlayerEvent(result, "START_HAPTIC_PLAYER");
++    if (result != MSERR_OK) {
++        // A failed audio start has no future first frame. Reap its waiter before retry.
++        StopVibrate();
++        return result;
++    }
+ 
+     playerState_ = AudioHapticPlayerState::STATE_RUNNING;
+     return result;
+@@ -586,7 +590,13 @@
+ 
+ void AudioHapticPlayerImpl::ResetVibrateState()
+ {
+-    isVibrationStopped_ = false;
++    {
++        std::lock_guard<std::mutex> lockVibrate(waitStartVibrateMutex_);
++        // Discard pending first-frame data before arming a new playback.
++        canStartVibrate_ = false;
++        audioLatency_ = 0;
++        isVibrationStopped_ = false;
++    }
+     if (audioHapticVibrator_ != nullptr) {
+         audioHapticVibrator_->ResetStopState();
+     } else {
+@@ -693,6 +703,7 @@
+         return;
+     }
+     std::lock_guard<std::mutex> lock(this->waitStartVibrateMutex_);
++    CHECK_AND_RETURN_LOG(!isVibrationStopped_.load(), "Ignore first frame after vibration stopped");
+     this->canStartVibrate_ = true;
+     this->audioLatency_ = latency;
+     this->condStartVibrate_.notify_one();
