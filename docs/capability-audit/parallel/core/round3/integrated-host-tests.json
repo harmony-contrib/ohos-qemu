@@ -1,7 +1,7 @@
 {
-  "scope": "full2620 current integrated host run plus exact batched corrections/new location diagnostics and real Linux platform cases; no package or guest acceptance",
+  "scope": "preserved full2620 and previous targeted/native host scopes plus batched actual GN stdout/dual-query/Calendar corrections; no package or guest acceptance",
   "status": "pass_batched_host_scope_with_preserved_initial_errors",
-  "tested_commit": "a9c3ded6fea3f951238e78b91cc819061ed0e537",
+  "tested_commit": "d7fa01abd960f2e8778e36ec4e0d758a778c3e81",
   "exit_code": 0,
   "full_suite": {
     "report": {
@@ -57,5 +57,31 @@
   "full_suite_rerun_after_final_targeted_repairs": false,
   "all_changed_code_covered_by_targeted_rechecks": true,
   "first_artifact_behavior_gate_passed": false,
-  "remaining_five_started": false
+  "remaining_five_started": false,
+  "query_and_Calendar_batched_repairs": {
+    "report": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r55-Wallpaper-Calendar-batched-host-02/checks.json",
+      "sha256": "a778eb0338ec499e87a86dc11cd0f544599b2344cf2f230a5b659c786754f0a0"
+    },
+    "exact_tested_inputs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r55-Wallpaper-Calendar-batched-host-02/inputs.json",
+      "sha256": "830cf24fa43e1d30af8ee138f21a84ebd3a20541938f9886653bc12c464dc507"
+    },
+    "wallpaper_tests": 87,
+    "calendar_and_binding_tests": 24,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "read_only_independent_review": "system final source review, no execution claimed",
+    "full_suite_rerun_after_these_changes": false
+  },
+  "unchanged_SDK_outputs_rebound_to_current_tools": {
+    "report": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r55-runtime-QA-main-independent-bindings-08-01/checks.json",
+      "sha256": "fc5138f67de57f647cefdedcff88df462c8c71e5fe86ad0ec459b45ec3feea26"
+    },
+    "checks": 6,
+    "source_HAP_command_receipt_bytes_verified": true,
+    "SDK_rebuild_or_guest_claim": false
+  }
 }
