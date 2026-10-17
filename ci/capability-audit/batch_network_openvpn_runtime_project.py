@@ -42,10 +42,23 @@ def profile_input(path, port, run):
     # Force one exact controlled endpoint; never send this QA profile outside
     # the disposable guest. Production OpenVPN still validates TLS/syntax.
     lines = [line.strip() for line in raw.splitlines() if line.strip() and not line.lstrip().startswith(('#', ';'))]
-    require([line for line in lines if line.split()[0] == 'remote'] == [f'remote 127.0.0.1 {port}'] and
-            [line for line in lines if line.split()[0] == 'proto'] == ['proto udp4'], 'one exact loopback UDP remote required')
+    options, blocks, active = [], set(), None
+    for line in lines:
+        if active is not None:
+            if line == '</' + active + '>': active = None
+            continue
+        if line in ('<ca>', '<cert>', '<key>'):
+            active = line[1:-1]
+            require(active not in blocks, 'duplicate inline credential block')
+            blocks.add(active)
+        else:
+            require(not line.startswith('<'), 'unsupported inline configuration block')
+            options.append(line)
+    require(active is None, 'unterminated inline credentials')
+    require([line for line in options if line.split()[0] == 'remote'] == [f'remote 127.0.0.1 {port}'] and
+            [line for line in options if line.split()[0] == 'proto'] == ['proto udp4'], 'one exact loopback UDP remote required')
     require(all(not line.startswith(('<connection', '--', 'config ', 'remote-random', 'daemon', 'up ', 'down ', 'plugin '))
-                for line in lines), 'no alternative endpoint, include, daemon or executable hooks allowed')
+                for line in options), 'no alternative endpoint, include, daemon or executable hooks allowed')
     require('<ca>' in lines and '</ca>' in lines and ('<cert>' in lines or 'peer-fingerprint' in raw),
             'owned real inline test credentials required; no generated successful TLS claim')
     return raw.rstrip() + '\n# qemu-owned-run-' + run + '\n'

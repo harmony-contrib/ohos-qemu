@@ -163,7 +163,10 @@ class RuntimeProtocolTests(unittest.TestCase):
             unit = 'client\nproto udp4\nremote 127.0.0.1 54123\n<ca>\nUNIT ONLY\n</ca>\n<cert>\nUNIT ONLY\n</cert>\n'
             path.write_text(unit)
             self.assertTrue(project.profile_input(path, 54123, 'a' * 32).endswith('# qemu-owned-run-' + 'a' * 32 + '\n'))
-            for suffix in ('remote 203.0.113.1 1194\n', '<connection>\n', 'up /tmp/hook\n', 'config foreign\n'):
+            path.write_text(unit.replace('UNIT ONLY', '-----BEGIN CERTIFICATE-----\nUNIT ONLY\n-----END CERTIFICATE-----'))
+            self.assertIn('-----BEGIN CERTIFICATE-----', project.profile_input(path, 54123, 'a' * 32))
+            for suffix in ('remote 203.0.113.1 1194\n', '<connection>\n', 'up /tmp/hook\n', 'config foreign\n',
+                           '--remote 203.0.113.1 1194\n', '<ca>\n', '</ca>\n'):
                 path.write_text(unit + suffix)
                 with self.subTest(suffix=suffix), self.assertRaises(ValueError): project.profile_input(path, 54123, 'a' * 32)
 
