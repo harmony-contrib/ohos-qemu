@@ -54,6 +54,7 @@ using ErrCode=int;using LocationErrCode=int;
 constexpr int ERRCODE_SUCCESS=0,ERRCODE_INVALID_PARAM=401,ERRCODE_NOT_SUPPORTED=801,ERRCODE_SERVICE_UNAVAILABLE=3301000,ERRCODE_SWITCH_OFF=3301100;
 constexpr int LOCATION_ERRCODE_PERMISSION_DENIED=3300201,LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED=3300202;
 constexpr int GNSS_TYPE=1,RTK_TYPE=4,WGS84=1,ENABLED=1,PRIORITY_ACCURACY=1,COMMON_UTILS=0;
+constexpr int32_t LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID=32;
 constexpr const char* ACCESS_LOCATION="fine";
 int64_t now=100000000000LL;bool fine=true,systemApp=true,currentAccount=true,switchedOn=true,background=false,backgroundGranted=true,frozen=false;
 struct AppIdentity{int uid=100001,pid=10;uint32_t token=7,first=0;uint64_t ex=9;std::string bundle="owner";
@@ -80,8 +81,8 @@ struct IRemoteObject:RefBase{
  int SendRequest(int code,MessageParcel& p,MessageParcel&,MessageOption&){assert(code==1&&p.descriptor==u"location.IFusionFenceCallback");events.push_back(int(p.values[2].number));identifiers.push_back(p.values[0].text);return 0;}
  sptr<IRemoteObject> AsObject(){return this;}
 };
-struct Location{double lat=0,lon=0,accuracy=1;bool mock=false;int source=GNSS_TYPE;int64_t stamp=now;
- double GetLatitude()const{return lat;}double GetLongitude()const{return lon;}double GetAccuracy()const{return accuracy;}bool GetIsFromMock()const{return mock;}int GetLocationSourceType()const{return source;}int64_t GetTimeSinceBoot()const{return stamp;}};
+struct Location{double lat=0,lon=0,accuracy=1;bool mock=false;int source=GNSS_TYPE;int64_t stamp=now;int32_t validity=32;
+ double GetLatitude()const{return lat;}double GetLongitude()const{return lon;}double GetAccuracy()const{return accuracy;}bool GetIsFromMock()const{return mock;}int GetLocationSourceType()const{return source;}int64_t GetTimeSinceBoot()const{return stamp;}int32_t GetFieldValidity()const{return validity;}};
 struct ILocatorCallback:IRemoteObject{virtual void OnLocationReport(const std::unique_ptr<Location>&)=0;virtual void OnLocatingStatusChange(int)=0;virtual void OnErrorReport(int)=0;};
 struct WifiScanInfo{std::string bssid;int rssi=-40;int64_t timestamp=now/1000;std::string GetBssid()const{return bssid;}int GetRssi()const{return rssi;}int64_t GetTimestamp()const{return timestamp;}};
 struct CellularInfo{int64_t cellId=1,stamp=now;int mcc=460,mnc=0,rat=5,lac=10,pci=3;int64_t GetCellId(){return cellId;}int GetMcc(){return mcc;}int GetMnc(){return mnc;}int GetRat(){return rat;}int GetLac(){return lac;}int GetPci(){return pci;}int64_t GetTimeSinceBoot(){return stamp;}};

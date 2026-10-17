@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from batch_location_runtime_fixture import COMPONENT, FIXTURE, PREFIX, ROOT, runtime_sources
+from batch_location_runtime_fixture import COMPONENT, FIXTURE, PREFIX, ROOT, function, runtime_sources
 
 
 def digest(text):
@@ -84,6 +84,29 @@ class RuntimeSourceGuardTests(unittest.TestCase):
                 self.assertNotEqual(0, self.apply(root, component).returncode)
                 self.assertEqual(before, self.contents(root))
                 self.assertFalse((root / '.ohos-qemu-patches').exists())
+
+    def test_superseded_cf32293_strict_candidate_is_not_a_legal_prefix(self):
+        """A changed patch7 cannot silently accept the old strict candidate."""
+        contract = json.loads((Path(__file__).parent /
+            'fixtures/batch_location/location_accuracy_compatibility_before.json').read_text())
+        name = 'services/location_gnss/gnss/source/gnss_event_callback.cpp'
+        old = self.states['prefix_6'][name]
+        callback = function(old, 'int32_t GnssEventCallback::ReportLocation(')
+        strict = old.replace(callback, contract['initial_strict_callback']['text'])
+        strict = strict.replace('#include <singleton.h>', '#include <cmath>\n#include <singleton.h>', 1)
+        locator_name = 'services/location_locator/locator/source/locator_ability.cpp'
+        initial_locator = self.states['final'][locator_name]
+        accuracy_guard = '        (location->GetFieldValidity() & LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID) == 0 ||\n'
+        self.assertEqual(1, initial_locator.count(accuracy_guard))
+        initial_locator = initial_locator.replace(accuracy_guard, '', 1)
+        with tempfile.TemporaryDirectory(prefix='batch-location-superseded-candidate-') as directory:
+            root, component = self.fixture(directory, state='prefix_6')
+            (root / PREFIX / name).write_text(strict)
+            (root / PREFIX / locator_name).write_text(initial_locator)
+            before = self.contents(root)
+            self.assertNotEqual(0, self.apply(root, component).returncode)
+            self.assertEqual(before, self.contents(root))
+            self.assertFalse((root / '.ohos-qemu-patches').exists())
 
     def test_symlink_target_and_parent_rejected(self):
         for parent in [False, True]:

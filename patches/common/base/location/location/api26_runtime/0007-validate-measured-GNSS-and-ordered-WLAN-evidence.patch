@@ -1,3 +1,15 @@
+diff --git a/base/location/location/interfaces/inner_api/include/constant_definition.h b/base/location/location/interfaces/inner_api/include/constant_definition.h
+--- a/base/location/location/interfaces/inner_api/include/constant_definition.h
++++ b/base/location/location/interfaces/inner_api/include/constant_definition.h
+@@ -40,6 +40,8 @@
+ const int DEFAULT_TIMEOUT_30S = 30000;
+ const int DEFAULT_TIMEOUT_5S = 5000;
+ const double DEFAULT_APPROXIMATELY_ACCURACY = 50.0;
++// Existing HDI GNSS V2_0 field-validity bit carried unchanged by Location.
++constexpr int32_t LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID = 1 << 5;
+ const int STATE_OPEN = 1;
+ const int STATE_CLOSE = 0;
+ const int PRIVACY_TYPE_OTHERS = 0;
 diff --git a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
 --- a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
 +++ b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
@@ -15,12 +27,12 @@ diff --git a/base/location/location/services/location_gnss/gnss/source/gnss_even
  {
 +    // An HDI report with unmeasured/default coordinates is not a location fix.
 +    using GnssValidity = HDI::Location::Gnss::V2_0::GnssLocationValidity;
-+    constexpr uint32_t requiredFields = GnssValidity::GNSS_LOCATION_LAT_VALID | GnssValidity::GNSS_LOCATION_LONG_VALID |
-+        GnssValidity::GNSS_LOCATION_HORIZONTAL_ACCURACY_VALID;
++    constexpr uint32_t requiredFields = GnssValidity::GNSS_LOCATION_LAT_VALID | GnssValidity::GNSS_LOCATION_LONG_VALID;
 +    if ((location.fieldValidity & requiredFields) != requiredFields ||
 +        !std::isfinite(location.latitude) || std::abs(location.latitude) > 90 ||
 +        !std::isfinite(location.longitude) || std::abs(location.longitude) > 180 ||
-+        !std::isfinite(location.horizontalAccuracy) || location.horizontalAccuracy < 0) {
++        ((location.fieldValidity & GnssValidity::GNSS_LOCATION_HORIZONTAL_ACCURACY_VALID) != 0 &&
++        (!std::isfinite(location.horizontalAccuracy) || location.horizontalAccuracy < 0))) {
 +        return ERR_INVALID_VALUE;
 +    }
      auto gnssAbility = GnssAbility::GetInstance();
@@ -39,6 +51,17 @@ diff --git a/base/location/location/services/location_gnss/gnss/source/gnss_even
      IPCSkeleton::SetCallingIdentity(identity);
      return ERR_OK;
  }
+diff --git a/base/location/location/services/location_locator/locator/source/report_manager.cpp b/base/location/location/services/location_locator/locator/source/report_manager.cpp
+--- a/base/location/location/services/location_locator/locator/source/report_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/report_manager.cpp
+@@ -236,6 +236,7 @@
+ {
+     if (location == nullptr || !RequestManager::GetInstance()->IsSkiingRequestActive(request) ||
+         location->GetIsFromMock() ||
++        (location->GetFieldValidity() & LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID) == 0 ||
+         (location->GetLocationSourceType() != GNSS_TYPE && location->GetLocationSourceType() != RTK_TYPE) ||
+         !PermissionManager::CheckLocationPermission(request->GetTokenId(), request->GetFirstTokenId())) {
+         return;
 diff --git a/base/location/location/services/location_locator/locator/source/locator_ability.cpp b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
 --- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
 +++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
@@ -50,7 +73,15 @@ diff --git a/base/location/location/services/location_locator/locator/source/loc
      double gnssDistance = 0;
      double accuracy = 0;
      int64_t gnssTime = 0;
-@@ -1985,9 +1986,13 @@
+@@ -1940,6 +1941,7 @@
+     const std::unique_ptr<Location>& location)
+ {
+     if (location == nullptr || location->GetIsFromMock() ||
++        (location->GetFieldValidity() & LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID) == 0 ||
+         (location->GetLocationSourceType() != GNSS_TYPE && location->GetLocationSourceType() != RTK_TYPE) ||
+         !std::isfinite(location->GetAccuracy()) || location->GetAccuracy() < 0) { return; }
+     FusionPoint point {location->GetLatitude(), location->GetLongitude()};
+@@ -1985,9 +1987,13 @@
      if (scanned.empty()) { return; }
      {
          std::lock_guard<std::mutex> lock(fusionFenceMutex_);

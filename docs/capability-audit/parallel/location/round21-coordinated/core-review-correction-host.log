@@ -1,0 +1,22 @@
+test_accuracy_bit_matches_actual_frozen_hdi_contract (test_batch_location_producer_evidence.ProducerEvidenceTests.test_accuracy_bit_matches_actual_frozen_hdi_contract) ... ok
+test_current_gnss_validation_and_valid_boundaries (test_batch_location_producer_evidence.ProducerEvidenceTests.test_current_gnss_validation_and_valid_boundaries) ... ok
+test_current_scan_completion_order_and_owner_lifetime (test_batch_location_producer_evidence.ProducerEvidenceTests.test_current_scan_completion_order_and_owner_lifetime) ... ok
+test_current_unknown_accuracy_preserves_normal_callback_and_precision_silence (test_batch_location_producer_evidence.ProducerEvidenceTests.test_current_unknown_accuracy_preserves_normal_callback_and_precision_silence) ... ok
+test_initial_cf32293_rejects_valid_position_without_optional_accuracy (test_batch_location_producer_evidence.ProducerEvidenceTests.test_initial_cf32293_rejects_valid_position_without_optional_accuracy) ... ok
+test_previous_prefix_accepts_unknown_accuracy_in_precision_consumers (test_batch_location_producer_evidence.ProducerEvidenceTests.test_previous_prefix_accepts_unknown_accuracy_in_precision_consumers) ... ok
+test_previous_prefix_reproduces_gnss_and_clock_failures (test_batch_location_producer_evidence.ProducerEvidenceTests.test_previous_prefix_reproduces_gnss_and_clock_failures) ... ok
+test_previous_prefix_reproduces_replayed_scan_transition (test_batch_location_producer_evidence.ProducerEvidenceTests.test_previous_prefix_reproduces_replayed_scan_transition) ... ok
+test_skiing_processing_history (test_batch_location_business_runtime.LocationBusinessRuntimeTests.test_skiing_processing_history) ... Actual skiing processing: changed geometry/altitude/accuracy/derived speed, dedup, outlier, source/privacy/lifecycle gates, owner/delegation, 24h and cursor/antimeridian passed
+ok
+test_actual_wire_geometry_owner_and_service_lifecycle (test_batch_location_fusion_runtime.FusionRuntimeTests.test_actual_wire_geometry_owner_and_service_lifecycle) ... ok
+test_all_legal_prefixes_and_idempotence (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_all_legal_prefixes_and_idempotence) ... ok
+test_unknown_and_mixed_edits_rejected_before_mutation (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_unknown_and_mixed_edits_rejected_before_mutation) ... ok
+test_wrong_head_and_changed_patch_rejected (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_wrong_head_and_changed_patch_rejected) ... ok
+test_superseded_cf32293_strict_candidate_is_not_a_legal_prefix (test_batch_location_runtime_source_guard.RuntimeSourceGuardTests.test_superseded_cf32293_strict_candidate_is_not_a_legal_prefix)
+A changed patch7 cannot silently accept the old strict candidate. ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 33.890s
+
+OK
+

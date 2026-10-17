@@ -1,3 +1,5 @@
+Historical host checks for initial cf32293 candidate before optional-accuracy core correction. Current results: core-review-correction-host.log and result.json final correction entries.
+
 Host-only targeted check record; no package-runtime closure.
 Environment: Darwin 24.1.0 arm64; clang 21.1.2; Python 3.13.7; ASan/UBSan.
 

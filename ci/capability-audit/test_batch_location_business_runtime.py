@@ -31,15 +31,17 @@ using LocationErrCode=int;using ErrCode=int;
 constexpr int ERRCODE_SUCCESS=0,ERRCODE_SERVICE_UNAVAILABLE=3301000,ERRCODE_REVERSE_GEOCODING_FAIL=3301300,ERRCODE_COUNTRYCODE_FAIL=3301500,ERRCODE_SWITCH_OFF=3301100,ERRCODE_PERMISSION_DENIED=201,ERRCODE_SYSTEM_PERMISSION_DENIED=202,ERRCODE_EDM_POLICY_ABANDON=203,LOCATION_ERRCODE_PERMISSION_DENIED=3300201,ERRCODE_INVALID_PARAM=401,ERRCODE_NOT_SUPPORTED=801,ERRCODE_LOCATING_FAIL=3301200;
 constexpr int LOCATION_ERRCODE_MIN=3300000;
 constexpr int GNSS_TYPE=1,RTK_TYPE=4,SKIING=4,RUNNING=1,DEFAULT_TIMEOUT_5S=5000;
+constexpr int32_t LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID=32;
 constexpr int SCENE_UNSET=0,PRIORITY_FAST_FIRST_FIX=1,PRIORITY_UNSET=0,LOCATION_PRIORITY_ACCURACY=10,PRIORITY_ACCURACY=2,SCENE_NAVIGATION=3,SCENE_TRAJECTORY_TRACKING=4,SCENE_CAR_HAILING=5,LOCATION_SCENE_SPORT=0x402;
 constexpr int LOCATING_FAILED_LOCATION_SWITCH_OFF=-4,LOCATING_FAILED_LOCATION_PERMISSION_DENIED=-2,LOCATION_LOCATOR_SA_ID=2802;
 const char* LOCALE_KEY="persist.global.locale";
 int64_t bootNow=1000000000000LL;
 struct CommonUtils{static int64_t GetSinceBootTime(){return bootNow;}static std::string GenerateUuid(){return "external-request-id";}static LocationErrCode ErrCodeToLocationErrCode(ErrCode);};
 struct Location {
- double lat=30,lon=120,alt=100,accuracy=5,speed=0,direction=0;int64_t timestamp=bootNow;int source=1;bool mock=false;
+ double lat=30,lon=120,alt=100,accuracy=5,speed=0,direction=0;int64_t timestamp=bootNow;int source=1;bool mock=false;int32_t validity=32;
  double GetLatitude()const{return lat;}double GetLongitude()const{return lon;}double GetAltitude()const{return alt;}double GetAccuracy()const{return accuracy;}double GetSpeed()const{return speed;}double GetDirection()const{return direction;}
  int64_t GetTimeSinceBoot()const{return timestamp;}int GetLocationSourceType()const{return source;}bool GetIsFromMock()const{return mock;}
+ int32_t GetFieldValidity()const{return validity;}
  void SetLatitude(double v){lat=v;}void SetLongitude(double v){lon=v;}void SetAltitude(double v){alt=v;}void SetAccuracy(double v){accuracy=v;}void SetSpeed(double v){speed=v;}void SetDirection(double v){direction=v;}
 };
 struct Parcelable{virtual ~Parcelable()=default;virtual bool Marshalling(class Parcel&)const=0;};

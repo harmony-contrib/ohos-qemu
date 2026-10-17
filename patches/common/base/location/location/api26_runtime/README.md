@@ -80,11 +80,18 @@ previous const caller is required to fail compilation against that declaration.
 See round6-account-contract.md and round6-platform-build-request.json for the
 parent-reported full-platform failure and the remaining complete-TU gate.
 
-The seventh patch rejects normal HDI location reports without measured latitude,
-longitude and horizontal-accuracy validity bits, nonfinite or out-of-range
-coordinates, and invalid horizontal accuracy. An optional UTC field disciplines
-the clock only with its actual validity bit and a positive timestamp. Raw
-measurement fields and validity bits are otherwise preserved. Fusion WLAN
+The seventh patch rejects normal HDI location reports without measured latitude
+and longitude validity bits, nonfinite or out-of-range coordinates, and invalid
+horizontal accuracy only when its independent validity bit is present. Position
+fixes with unknown accuracy retain the actual field and clear accuracy bit and
+continue through ordinary reporting. Skiing and fusion's precision-dependent
+consumers check `Location::GetFieldValidity()` before using accuracy; unknown
+accuracy does not create track points or boundary conclusions. The shared named
+bit matches the actual HDI enum and adds no wire field or HDI dependency. The
+initial cf32293 candidate incorrectly required optional accuracy and was corrected
+after core review; its superseded bytes are rejected by the source guard.
+An optional UTC field disciplines the clock only with its actual validity bit
+and a positive timestamp. Raw measurement fields and validity bits are preserved. Fusion WLAN
 snapshots now use monotonically increasing scan-completion timestamps; replayed
 or older completions cannot overwrite newer inside/outside evidence. Individual
 AP timestamps still control freshness and may repeat across a new completed
