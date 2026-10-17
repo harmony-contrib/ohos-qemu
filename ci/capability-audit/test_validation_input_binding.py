@@ -52,6 +52,23 @@ class ValidationBindingTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.verify(self.current, inputs=broken)
         with self.assertRaises(ValueError): self.verify(self.original)
 
+    def test_dedicated_QA_updates_require_exact_receipt_and_never_admit_production(self):
+        from validation_input_binding import DEDICATED_QA_TEST_ONLY
+        self.assertEqual(len(DEDICATED_QA_TEST_ONLY), 16)
+        self.assertTrue(all(name.startswith('ci/capability-audit/') for name in DEDICATED_QA_TEST_ONLY))
+        current = dict(self.current)
+        current.update({name: '9'*64 for name in DEDICATED_QA_TEST_ONLY})
+        self.assertEqual(self.verify(current)['changed_test_files'], self.receipt(current)['changed_test_files'])
+        for name in ('scripts/build_standard_qemu_in_docker.sh',
+                     'scripts/verify_first_artifact_gate.py',
+                     'patches/common/device/qemu/external_gnss/files/qemu_gnss_protocol.h',
+                     'docs/capability-audit/native-arkts11-gap-ledger.json',
+                     'ci/capability-audit/unreviewed_runtime.py'):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                self.verify(dict(current, **{name: '8'*64}))
+        receipt = self.receipt(current); receipt['changed_test_files'].pop()
+        with self.assertRaises(ValueError): self.verify(current, receipt)
+
     def test_symlink_or_missing_receipt_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             target, link = Path(directory) / 'target', Path(directory) / 'link'

@@ -16,6 +16,28 @@ TEST_ONLY = frozenset('ci/capability-audit/' + name for name in (
     'test_screen_blink_runtime.py', 'test_wifi_scan_diagnostic.py', 'verify_gap_closure.py',
     'verify_luminance_results.py', 'verify_router_observer_results.py', 'verify_screen_blink_results.py'))
 
+# Reviewed dedicated callers/observers and their exact shared signing helper.
+# Explicit receipt binding remains mandatory for every changed input.
+DEDICATED_QA_TEST_ONLY = frozenset((
+    'ci/capability-audit/batch_apps_contact_picker_coordinator.py',
+    'ci/capability-audit/batch_media_audio_haptic_build_callers.py',
+    'ci/capability-audit/batch_media_audio_haptic_project.py',
+    'ci/capability-audit/batch_media_audio_haptic_reviewfix_checks.py',
+    'ci/capability-audit/batch_media_audio_haptic_runtime.py',
+    'ci/capability-audit/batch_media_audio_haptic_verify.py',
+    'ci/capability-audit/batch_system_calendar_runtime_binding.py',
+    'ci/capability-audit/batch_system_calendar_runtime_build.py',
+    'ci/capability-audit/batch_system_calendar_runtime_capture.py',
+    'ci/capability-audit/batch_system_calendar_runtime_project.py',
+    'ci/capability-audit/batch_system_calendar_runtime_protocol.py',
+    'ci/capability-audit/batch_system_calendar_runtime_tests.py',
+    'ci/capability-audit/batch_system_calendar_runtime_verify.py',
+    'ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/Index.ets',
+    'ci/capability-audit/fixtures/batch_system/calendar_runtime/CalendarAudit.ets',
+    'ci/capability-audit/fixtures/batch_system/calendar_runtime/host.cjs',
+))
+TEST_ONLY = TEST_ONLY | DEDICATED_QA_TEST_ONLY
+
 
 def tree_digest(files):
     if not isinstance(files, dict) or not files or any(
