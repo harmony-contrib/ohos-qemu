@@ -18,6 +18,8 @@ from batch_media_audio_capture_challenge import load_reference, phase_content
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady
 from verify_audio_capture_results import token as checked_token
 
+from guest_process_identity import identity_shell, producer_shell, producer_rows
+
 HERE = Path(__file__).resolve().parent
 SCOPE = 'ordinary_dual_UID_MIC_VOIP_focus_with_real_BG_ANS_and_independent_PCM'
 PRODUCER = dict(rate=48000, channels=2, repeat=60, timeout_ms=90000,
@@ -179,10 +181,7 @@ class AudioFocusRuntime:
 
     def process(self, actor, label):
         bundle = actor['bundle']
-        raw = self.actual('focus_pid=$(pidof ' + bundle + '); '
-            'case "$focus_pid" in ""|*[!0-9]*) exit 1;; esac; '
-            'printf "%s " "$focus_pid"; awk \'{printf "%s ", $22}\' /proc/$focus_pid/stat; '
-            'awk \'/^Uid:/{print $2, $3, $4, $5}\' /proc/$focus_pid/status', label)
+        raw = self.actual(identity_shell(bundle), label)
         values = raw.split()
         if len(values) != 6 or any(re.fullmatch('[0-9]+', v) is None for v in values):
             raise ValueError('one actual ordinary focus process required')
@@ -190,6 +189,8 @@ class AudioFocusRuntime:
         if pid <= 0 or start <= 0 or uids != [actor['uid']] * 4:
             raise ValueError('actual focus process owner differs')
         identity = dict(pid=pid, starttime=start, uid=actor['uid'])
+        actor.setdefault('process_observations', []).append(dict(label=label,
+            observation=len(self.capture.value['guest_shell_observations']) - 1, identity=dict(identity)))
         if actor.get('process_before') is not None and identity != actor['process_before']:
             raise ValueError('focus actor process exited or was replaced')
         return identity
@@ -306,8 +307,8 @@ class AudioFocusRuntime:
         stem = 'audio-event-' + self.run + '-mode' + str(actor['mode'])
         def listed():
             raw = self.actual('find ' + actor['app_files'] + ' -maxdepth 1 -name "' + stem +
-                              '-background-*.json" | sort', 'focus-background-journal-list')
-            paths = raw.splitlines()
+                              '-background-*.json"', 'focus-background-journal-list')
+            paths = sorted(raw.splitlines())
             if len(paths) > 512:
                 raise ValueError('unbounded background journal sequence')
             if any(remote != actor['app_files'] + stem + '-background-' + str(index).zfill(3) + '.json'
@@ -556,11 +557,9 @@ class AudioFocusRuntime:
         c = self.capture
         if c.process is not None:
             raise ValueError('only one actual producer may run')
-        wrapper = ('echo "$$" > ' + c.remote + '/producer.pid; '
-            'awk \'{print $22}\' /proc/$$/stat > ' + c.remote + '/producer.start; '
-            'unset LD_LIBRARY_PATH LD_PRELOAD; exec ' + c.remote + '/alsa_inject --input ' + c.remote +
-            '/challenge.pcm --rate 48000 --channels 2 --repeat 60 --timeout-ms 90000')
-        c.producer_argv = [str(self.args.hdc), '-t', self.args.target, 'shell', 'sh -c ' + shlex.quote(wrapper)]
+        c.producer_exit_marker = '__PCM_CHILD_EXIT_' + secrets.token_hex(16) + '__='
+        wrapper = producer_shell(c.remote, c.producer_exit_marker, repeat=60, timeout_ms=90000)
+        c.producer_argv = [str(self.args.hdc), '-t', self.args.target, 'shell', wrapper]
         c.producer_log = (c.output / 'producer.log').open('xb')
         c.process = subprocess.Popen(c.producer_argv, stdout=c.producer_log, stderr=subprocess.STDOUT,
             stdin=subprocess.DEVNULL, start_new_session=True)
@@ -685,8 +684,8 @@ class AudioFocusRuntime:
             self.journal(actor, final=True)
         stem = 'audio-event-' + self.run + '-'
         raw = self.actual('if test -d ' + actor['app_files'] + '; then find ' + actor['app_files'] +
-            ' -maxdepth 1 -name "' + stem + '*" | sort; fi', 'focus-all-own-private-evidence')
-        paths = raw.splitlines()
+            ' -maxdepth 1 -name "' + stem + '*"; fi', 'focus-all-own-private-evidence')
+        paths = sorted(raw.splitlines())
         if len(paths) > 512:
             raise ValueError('unbounded focus evidence file set')
         for remote in paths:
@@ -755,14 +754,14 @@ class AudioFocusRuntime:
         status = process.wait(timeout=95)
         self.capture.producer_log.close();self.capture.producer_log = None
         log = self.capture.output / 'producer.log'
-        producer_rows = [strict_json(line) for line in log.read_text().splitlines() if line.startswith('{')]
-        played = [r for r in producer_rows if r.get('event') == 'played']
+        producer = self.capture.producer_receipt(status)
+        rows = producer_rows(log.read_text(), producer, remote=self.capture.remote, repeat=60, timeout_ms=90000)
+        played = [r for r in rows if r.get('event') == 'played']
         expected = dict(event='played', frames=PRODUCER['expected_frames'], rate=48000, channels=2,
                         repeats=60, source_bytes=192000)
         if status != 0 or played != [expected]:
             raise ValueError('single real producer failed its exact full playback contract')
-        self.capture.value['producer'] = dict(argv=self.capture.producer_argv, host_exit_code=status,
-            log=str(log.resolve()), log_sha256=sha(log))
+        self.capture.value['producer'] = producer
         self.capture.value['status'] = 'captured_NOT_independently_verified'
         self.complete = True
         self.value['status'] = 'captured_NOT_independently_verified'
@@ -799,8 +798,8 @@ class AudioFocusRuntime:
         if self.capture.process is not None:
             log = self.capture.output / 'producer.log'
             if log.is_file():
-                self.capture.value['producer'] = dict(argv=self.capture.producer_argv,
-                    host_exit_code=self.capture.process.poll(), log=str(log.resolve()), log_sha256=sha(log))
+                self.capture.value['producer'] = self.capture.producer_receipt(
+                    self.capture.process.poll(), require_complete=False)
         self.value['cleanup_errors'] = errors
         if errors:
             self.value['status'] = 'fail'

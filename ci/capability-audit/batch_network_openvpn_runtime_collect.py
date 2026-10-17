@@ -508,6 +508,57 @@ def journal(raw, run, boot, uid, token):
     return rows
 
 
+def _journal_directory(shell, directory, uid, label):
+    nonce = secrets.token_hex(16)
+    script = ('test ! -L {p} && task_journal_meta=$(stat -c \'%u:%F:%d:%i\' {p}) && '
+              'printf \'BEGIN|{n}|%s\\n\' "$task_journal_meta" && '
+              'ls -a1 {p} && printf \'END|{n}\\n\'').format(p=quote(directory), n=nonce)
+    raw = shell(script, label + '-directory')
+    require(isinstance(raw, str) and raw.endswith('\n') and len(raw.encode()) < 1048576,
+            'complete bounded app files directory observation required')
+    rows = raw.splitlines(); prefix = 'BEGIN|' + nonce + '|'
+    require(len(rows) >= 4 and rows[0].startswith(prefix) and rows[-1] == 'END|' + nonce,
+            'app files directory observation framing differs')
+    meta = rows[0][len(prefix):].split(':'); names = rows[1:-1]
+    require(len(meta) == 4 and meta[:2] == [str(uid), 'directory'] and
+            all(re.fullmatch('[0-9]+', value) for value in meta[2:]) and
+            len(names) == len(set(names)) and names.count('.') == names.count('..') == 1 and
+            all(re.fullmatch('[A-Za-z0-9_.-]+', value) for value in names),
+            'actual owned readable app files directory/listing required')
+    return names
+
+
+def read_app_journal(shell, remote, uid, *, label):
+    """Return actual app bytes, or None after a successful absent-name scan.
+
+    The caller supplies its boot-checking, exit-checking evidence transport.
+    A failed test/stat/list/read is never an empty journal. This is also usable
+    by the separately owned peer driver; it makes no API or cleanup claim.
+    """
+    match = re.fullmatch(r'(/data/app/el2/100/base/[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*/files)/'
+                         r'((?:openvpn|peer|nonce)-[a-f0-9]{32}\.jsonl)', remote or '')
+    require(match is not None and type(uid) is int and uid // 200000 == 100,
+            'exact user100 app journal and observed BMS UID required')
+    directory, name = match.groups()
+    # Context may create filesDir lazily. Only an independently readable owned
+    # application-root listing can prove it has not appeared yet.
+    if 'files' not in _journal_directory(shell, str(Path(directory).parent), uid, label + '-app-base'):
+        return None
+    if name not in _journal_directory(shell, directory, uid, label + '-files'):
+        return None
+    stat_script = 'test ! -L {p} && stat -c \'%u:%F:%h:%d:%i\' {p}'.format(p=quote(remote))
+    before = shell(stat_script, label + '-metadata-before')
+    fields = before.rstrip('\n').split(':')
+    require(before.endswith('\n') and before.count('\n') == 1 and len(fields) == 5 and
+            fields[0] == str(uid) and fields[1] in ('regular file', 'regular empty file') and fields[2] == '1' and
+            all(re.fullmatch('[0-9]+', value) for value in fields[3:]),
+            'actual owned single-link regular journal required')
+    data = shell('cat ' + quote(remote), label + '-read')
+    after = shell(stat_script, label + '-metadata-after')
+    require(after == before, 'app journal identity changed while reading')
+    return data
+
+
 class Collector:
     def __init__(self, args):
         self.args = args; self.output = args.output.resolve(); self.output.mkdir(parents=True, exist_ok=False)
@@ -552,25 +603,110 @@ class Collector:
 
     def snapshot(self, label): return capture_snapshot(self.shell,label,self.guest.env['boot_id'])[1]
 
+    def capture_api_failure(self, request, error):
+        """Preserve same-boot UI diagnosis; never manufacture journal rows."""
+        from guest_ui import GuestUi
+        result = {'scope': 'same_boot_API_failure_UI_ONLY_NOT_API_or_cleanup_proof',
+                  'request': request, 'error': str(error), 'boot_id': self.guest.env['boot_id'],
+                  'errors': [], 'remote_cleanup_verified': True}
+        self.report.setdefault('failure_diagnostics', []).append(result)
+        prefix = 'api-failure-' + str(len(self.report['failure_diagnostics']))
+        remote = '/data/local/tmp/qemu-openvpn-diagnostic-' + secrets.token_hex(16)
+        owned = False; paths = []; metadata = None
+        def command(argv, label):
+            self.shell('cat /proc/sys/kernel/random/boot_id', label + '-before')
+            value = self.command(argv, label)
+            self.shell('cat /proc/sys/kernel/random/boot_id', label + '-after')
+            return value
+        ui = GuestUi(command, self.args.hdc, self.guest.target, self.output / prefix)
+        def allocate(suffix):
+            ui.sequence += 1
+            path = remote + '/' + str(ui.sequence) + suffix
+            paths.append(path)
+            return path
+        ui.remote = allocate
+        try:
+            self.shell('cat /proc/sys/kernel/random/boot_id', prefix + '-boot-before')
+            result['remote_cleanup_verified'] = False
+            self.shell('test ! -e {p} && test ! -L {p} && (umask 077; mkdir {p})'.format(p=quote(remote)),
+                       prefix + '-create-owned-directory')
+            owned = True
+            metadata = self.shell('test ! -L {p} && stat -c \'%u:%a:%F:%d:%i\' {p}'.format(p=quote(remote)),
+                                  prefix + '-directory-metadata')
+            require(re.fullmatch(r'0:700:directory:[0-9]+:[0-9]+\n', metadata),
+                    'own diagnostic directory metadata differs')
+            for name, capture in (
+                    ('layout', lambda: descriptor(ui.layout(bundle=project.BUNDLE, label=prefix + '-tree')[1])),
+                    ('screenshot', lambda: descriptor(ui.screenshot(label=prefix + '-pixels')))):
+                try: result[name] = capture()
+                except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as failure:
+                    result['errors'].append({'observation': name, 'error': str(failure)})
+            self.shell('cat /proc/sys/kernel/random/boot_id', prefix + '-boot-after')
+            result['same_boot_verified'] = True
+        except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as failure:
+            result['errors'].append({'observation': 'same_boot_UI', 'error': str(failure)})
+        finally:
+            if owned:
+                try:
+                    require(metadata is not None and
+                            self.shell('test ! -L {p} && stat -c \'%u:%a:%F:%d:%i\' {p}'.format(p=quote(remote)),
+                                       prefix + '-cleanup-directory-metadata') == metadata,
+                            'diagnostic directory identity changed; preserving it')
+                    listing = self.shell('test ! -L {p} && ls -a1 {p}'.format(p=quote(remote)), prefix + '-cleanup-list')
+                    names = listing.splitlines()
+                    require(listing.endswith('\n') and len(names) == len(set(names)) and
+                            names.count('.') == names.count('..') == 1 and
+                            set(names) - {'.', '..'} <= {Path(path).name for path in paths},
+                            'unknown diagnostic content must be preserved')
+                    for name in names:
+                        if name in ('.', '..'): continue
+                        path = remote + '/' + name
+                        actual = self.shell('test ! -L {p} && stat -c \'%u:%F:%h\' {p}'.format(p=quote(path)),
+                                            prefix + '-cleanup-file-metadata')
+                        require(actual in ('0:regular file:1\n', '0:regular empty file:1\n'),
+                                'unknown diagnostic file must be preserved')
+                        self.shell('rm ' + quote(path), prefix + '-cleanup-owned-file')
+                    self.shell('rmdir ' + quote(remote), prefix + '-cleanup-owned-directory')
+                    result['remote_cleanup_verified'] = True
+                except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as failure:
+                    result['errors'].append({'observation': 'owned_diagnostic_cleanup', 'error': str(failure)})
+            self.report['diagnostic_cleanup_verified'] = (
+                self.report.get('diagnostic_cleanup_verified', True) and result['remote_cleanup_verified'])
+            self.save()
+        return result
+
     def phase(self, action, expected='resolved'):
         operation = secrets.token_hex(16)
         request = dict(run_id=self.data['run_id'], boot_id=self.guest.env['boot_id'], operation_id=operation, action=action)
-        launched = self.shell('aa start -a EntryAbility -b ' + project.BUNDLE + ' --ps request ' + quote(json.dumps(request)), 'launch-' + action)
-        require('start ability successfully' in launched.lower(), 'actual QA Ability launch failed')
-        deadline = time.monotonic() + 20
-        while True:
-            raw = self.shell('if test -f ' + quote(self.remote) + '; then cat ' + quote(self.remote) + '; fi', 'journal-' + action)
-            if raw:
-                rows = journal(raw, self.data['run_id'], self.guest.env['boot_id'], self.identity['uid'], self.identity['token'])
-                current = [row for row in rows if row['operation_id'] == operation]
-                if current and current[-1]['event'] == 'complete': break
-            require(time.monotonic() < deadline, 'actual public API did not complete'); time.sleep(0.25)
-        require([row['event'] for row in current] == ['begin', 'permission', expected, 'getters', 'complete'],
-                'actual API outcome differs: ' + action)
-        require(all(row['action'] == action for row in current), 'journal action differs from actual request')
-        if expected == 'rejected': require(current[2]['code'] == 2200003, 'cleanup must fail with actual internal/backend error')
-        self.report['phases'].append({'request': request, 'outcome': current[2], 'journal_command': len(self.guest.report['commands']) - 1})
-        self.save(); return current
+        attempt = {'request': request, 'expected': expected, 'journal_polls': 0, 'status': 'pending'}
+        self.report.setdefault('phase_attempts', []).append(attempt); self.save()
+        try:
+            launched = self.shell('aa start -a EntryAbility -b ' + project.BUNDLE + ' --ps request ' + quote(json.dumps(request)), 'launch-' + action)
+            require('start ability successfully' in launched.lower(), 'actual QA Ability launch failed')
+            deadline = time.monotonic() + 20
+            while True:
+                attempt['journal_polls'] += 1
+                raw = read_app_journal(self.shell, self.remote, self.identity['uid'], label='journal-' + action)
+                attempt['last_journal_observation'] = 'proved-name-absent' if raw is None else 'actual-file-read'
+                if raw is not None:
+                    rows = journal(raw, self.data['run_id'], self.guest.env['boot_id'], self.identity['uid'], self.identity['token'])
+                    current = [row for row in rows if row['operation_id'] == operation]
+                    if current and current[-1]['event'] == 'complete': break
+                require(time.monotonic() < deadline, 'actual public API did not complete'); time.sleep(0.25)
+            require([row['event'] for row in current] == ['begin', 'permission', expected, 'getters', 'complete'],
+                    'actual API outcome differs: ' + action)
+            require(all(row['action'] == action for row in current), 'journal action differs from actual request')
+            if expected == 'rejected': require(current[2]['code'] == 2200003, 'cleanup must fail with actual internal/backend error')
+            self.report['phases'].append({'request': request, 'outcome': current[2], 'journal_command': len(self.guest.report['commands']) - 1})
+            attempt['status'] = 'complete'
+            return current
+        except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
+            attempt.update(status='fail', error=str(error))
+            try: self.capture_api_failure(request, error)
+            except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as failure:
+                attempt['diagnostic_error'] = str(failure)
+            raise
+        finally: self.save()
 
     def install(self):
         require(project.BUNDLE not in self.shell('bm dump -a', 'BMS-before'), 'fresh own QA bundle must be absent')
@@ -613,18 +749,38 @@ class Collector:
                 break
             except ValueError as error:
                 require(time.monotonic() < deadline, 'no actual worker/client/claim evidence: ' + str(error)); time.sleep(0.25)
-        self.shell('test ! -L {p} && test "$(stat -c \'%u:%a\' {p})" = 1098:700'.format(p=quote(result['directory'])), label + '-directory')
+        self.shell('test ! -L {p} && task_claim_meta=$(stat -c \'%u:%a\' {p}) && '
+                   'test "$task_claim_meta" = 1098:700'.format(p=quote(result['directory'])), label + '-directory')
         require(self.shell('sha256sum ' + quote(result['config']), label + '-profile-hash').split() ==
                 [self.data['profile_sha256'], result['config']], 'worker config differs from actual owned input')
         return result
 
     def remove_fault(self):
         if not self.fault: return
+        names = _journal_directory(self.shell, str(Path(self.fault).parent), 1098, 'own-fault-parent')
+        if Path(self.fault).name not in names:
+            self.fault = None
+            return
         marker = 'openvpn-owned-' + self.data['run_id']
-        script = ('if test ! -e {p} && test ! -L {p}; then :; else '
-                  'test -f {p} && test ! -L {p} && test "$(stat -c \'%u:%a:%h\' {p})" = 0:600:1 && '
-                  'test "$(cat {p})" = {m} && rm {p}; fi').format(p=quote(self.fault), m=quote(marker))
+        script = ('test -f {p} && test ! -L {p} && task_fault_meta=$(stat -c \'%u:%a:%h:%s\' {p}) && '
+                  'test "$task_fault_meta" = 0:600:1:{size} && task_fault_text=$(cat {p}) && '
+                  'test "$task_fault_text" = {m} && rm {p}').format(p=quote(self.fault), m=quote(marker),
+                    size=len(marker.encode()) + 1)
         self.shell(script, 'remove-only-own-fault'); self.fault = None
+
+    def wait_cleanup_retry(self, first):
+        deadline = time.monotonic() + 12
+        name = Path(first['directory']).name
+        while True:
+            remaining = self.snapshot('reap-cleanup-retry')
+            self.no_group(remaining, first)
+            require(all(row['exe'] == '/system/bin/qemu_openvpn_service' and row['ppid'] == 1
+                        for row in remaining['processes'].values()) and
+                    all(row.startswith('backend.lock|') or row.split('|')[0] == name for row in remaining['entries']),
+                    'unknown process/session during actual cleanup retry')
+            if not any(row.split('|')[0] == name for row in remaining['entries']):
+                return remaining
+            require(time.monotonic() < deadline, 'real periodic cleanup did not retry'); time.sleep(0.25)
 
     def start_owned_session(self):
         self.phase('inspect')
@@ -639,6 +795,7 @@ class Collector:
         self.report['tools'] = {name: descriptor(HERE / name) for name in
             ('batch_network_openvpn_runtime_project.py', 'batch_network_openvpn_runtime_collect.py',
              'enclosing_acceptance_guest.py', 'batch_apps_contact_picker_coordinator.py', 'sign_certificate_probe.py')}
+        self.report['tools']['guest_ui.py'] = descriptor(HERE / 'guest_ui.py')
         before = self.snapshot('before')
         require(len(before['processes']) <= 1 and (not before['processes'] or
                 all(row['exe'] == '/system/bin/qemu_openvpn_service' and row['ppid'] == 1 for row in before['processes'].values())), 'foreign VPN client/worker present')
@@ -656,7 +813,8 @@ class Collector:
         self.fault = first['directory'] + '/qa-' + self.data['run_id']
         marker = 'openvpn-owned-' + self.data['run_id']
         self.shell('test ! -e {p} && test ! -L {p} && (umask 077; set -C; printf "%s\\n" {m} > {p})'.format(p=quote(self.fault), m=quote(marker)), 'inject-only-own-unknown-file')
-        self.shell('test ! -L {p} && test "$(stat -c \'%u:%a:%h\' {p})" = 0:600:1'.format(p=quote(self.fault)), 'own-fault-metadata')
+        self.shell('test ! -L {p} && task_fault_meta=$(stat -c \'%u:%a:%h\' {p}) && '
+                   'test "$task_fault_meta" = 0:600:1'.format(p=quote(self.fault)), 'own-fault-metadata')
         self.phase('destroy', 'rejected')
         stopped = self.snapshot('reaped-with-cleanup-blocked'); self.no_group(stopped, first)
         self.shell('test -d ' + quote(first['directory']) + ' && test -f ' + quote(self.fault), 'cleanup-reservation-retained')
@@ -667,11 +825,7 @@ class Collector:
                 [row.split('|')[0] for row in blocked['entries'] if row.startswith('session-')] == [Path(first['directory']).name],
                 'conflicting setup created another worker/session while cleanup was blocked')
         self.remove_fault()
-        deadline = time.monotonic() + 12
-        while True:
-            absent = self.shell('if test -e {p} || test -L {p}; then echo PRESENT; else echo ABSENT; fi'.format(p=quote(first['directory'])), 'reap-cleanup-retry').strip()
-            if absent == 'ABSENT': break
-            require(time.monotonic() < deadline, 'real periodic cleanup did not retry'); time.sleep(0.25)
+        self.wait_cleanup_retry(first)
         # Recreate proves operational release; absence of a PID alone does not.
         self.phase('setup')
         second = self.wait_claim('second-claim')
@@ -725,6 +879,9 @@ class Collector:
             self.report['failures'].append(str(error))
         finally:
             self.cleanup()
+            if self.report.get('diagnostic_cleanup_verified') is False:
+                self.report['cleanup_verified'] = False
+                self.report['failures'].append('owned failure diagnostic cleanup is unproved; guest must be disposed')
             self.save()
         return self.report
 

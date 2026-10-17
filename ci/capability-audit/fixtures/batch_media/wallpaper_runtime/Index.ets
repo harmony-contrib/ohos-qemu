@@ -26,22 +26,28 @@ struct Index {
   private sequence: number = 0;
 
   aboutToAppear(): void {
-    const path = (getContext(this) as common.UIAbilityContext).filesDir + '/wallpaper-' + this.run + '.jsonl';
-    if (!fs.accessSync(path)) { return; }
-    const text = fs.readTextSync(path);
-    if (text.length > 65536) { this.busy = true; this.note = 'Oversized existing evidence'; return; }
-    const lines = text.trim().split('\n');
-    for (let index: number = 0; index < lines.length; ++index) {
-      const row = JSON.parse(lines[index]) as SeedRecord;
-      if (row.runId !== this.run || row.sequence !== index + 1) {
-        this.busy = true; this.note = 'Stale existing evidence'; return;
+    try {
+      const path = (getContext(this) as common.UIAbilityContext).getApplicationContext().filesDir + '/wallpaper-' + this.run + '.jsonl';
+      if (!fs.accessSync(path)) { return; }
+      const text = fs.readTextSync(path);
+      if (text.length > 65536) { this.busy = true; this.note = 'Oversized existing evidence'; return; }
+      const lines = text.trim().split('\n');
+      for (let index: number = 0; index < lines.length; ++index) {
+        const row = JSON.parse(lines[index]) as SeedRecord;
+        if (row.runId !== this.run || row.sequence !== index + 1) {
+          this.busy = true; this.note = 'Stale existing evidence'; return;
+        }
       }
+      this.sequence = lines.length;
+    } catch (error) {
+      const actual = error as BusinessError;
+      this.busy = true;
+      this.note = 'Evidence read failed ' + actual.code + ': ' + actual.message;
     }
-    this.sequence = lines.length;
   }
 
   private append(name: string, detail: string): void {
-    const path = (getContext(this) as common.UIAbilityContext).filesDir + '/wallpaper-' + this.run + '.jsonl';
+    const path = (getContext(this) as common.UIAbilityContext).getApplicationContext().filesDir + '/wallpaper-' + this.run + '.jsonl';
     const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND);
     try {
       const line = JSON.stringify({ runId: this.run, sequence: ++this.sequence, name: name,
@@ -51,8 +57,20 @@ struct Index {
     } finally { fs.closeSync(file); }
   }
 
+  private failure(error: BusinessError, name: string = ''): void {
+    // Preserve the actual UI error even when its journal cannot be written.
+    // Missing evidence remains a verifier failure, never a synthetic success.
+    this.note = 'Failed ' + error.code + ': ' + error.message;
+    try {
+      this.append('failure', JSON.stringify({ case: name, code: error.code, message: error.message }));
+    } catch (journalError) {
+      const actual = journalError as BusinessError;
+      this.note += '; Journal failed ' + actual.code + ': ' + actual.message;
+    }
+  }
+
   private read(name: string): ArrayBuffer {
-    const file = fs.openSync((getContext(this) as common.UIAbilityContext).filesDir + '/' + name + '.png', fs.OpenMode.READ_ONLY);
+    const file = fs.openSync((getContext(this) as common.UIAbilityContext).getApplicationContext().filesDir + '/' + name + '.png', fs.OpenMode.READ_ONLY);
     try {
       const size = fs.statSync(file.fd).size;
       if (size < 100 || size > 33554432) { throw new Error('Invalid private PNG size'); }
@@ -77,7 +95,7 @@ struct Index {
     try {
       const data = this.read(name);
       const context = getContext(this) as common.UIAbilityContext;
-      const sourceUri = fileUri.getUriFromPath(context.filesDir + '/' + name + '.png');
+      const sourceUri = fileUri.getUriFromPath(context.getApplicationContext().filesDir + '/' + name + '.png');
       const config: photoAccessHelper.PhotoCreationConfig = { title: 'wallpaper-' + this.run + '-' + name,
         fileNameExtension: 'png', photoType: photoAccessHelper.PhotoType.IMAGE };
       this.append('import.request', JSON.stringify({ case: name, sourceUri: sourceUri, bytes: data.byteLength }));
@@ -96,9 +114,7 @@ struct Index {
       this.append('import.complete', JSON.stringify({ case: name, uri: uris[0], bytes: data.byteLength }));
       this.note = 'Created ' + name;
     } catch (error) {
-      const actual = error as BusinessError;
-      this.append('failure', JSON.stringify({ case: name, code: actual.code, message: actual.message }));
-      this.note = 'Failed ' + actual.code + ': ' + actual.message;
+      this.failure(error as BusinessError, name);
     } finally { this.busy = false; }
   }
 
@@ -128,18 +144,15 @@ struct Index {
         }
       }
     } catch (error) {
-      const actual = error as BusinessError;
-      this.append('failure', JSON.stringify({ code: actual.code, message: actual.message }));
+      this.failure(error as BusinessError);
     } finally {
       try { if (pixels !== undefined) { await pixels.release(); } }
       catch (error) {
-        const actual = error as BusinessError;
-        this.append('failure', JSON.stringify({ code: actual.code, message: actual.message }));
+        this.failure(error as BusinessError);
       }
       try { if (source !== undefined) { await source.release(); } }
       catch (error) {
-        const actual = error as BusinessError;
-        this.append('failure', JSON.stringify({ code: actual.code, message: actual.message }));
+        this.failure(error as BusinessError);
       }
       this.busy = false;
     }

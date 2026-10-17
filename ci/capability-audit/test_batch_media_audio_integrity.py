@@ -36,7 +36,7 @@ class Integrity(unittest.TestCase):
         harness=(FIXTURE/'integrity_harness.cpp').read_text().replace('// ACTUAL_FUNCTIONS','\n\n'.join(functions))
         with tempfile.TemporaryDirectory(prefix='batch-media-capture-') as temp:
             cpp=Path(temp)/'test.cpp';cpp.write_text(harness);exe=Path(temp)/'test'
-            subprocess.run(['clang++','-std=c++17','-Wall','-Wextra','-Werror','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer',str(cpp),'-o',str(exe)],check=True)
+            subprocess.run([os.environ.get('OHOS_QA_CXX','/usr/bin/clang++'),'-std=c++17','-Wall','-Wextra','-Werror','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer',str(cpp),'-o',str(exe)],check=True)
             env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0' if os.uname().sysname!='Linux' else 'detect_leaks=1')
             subprocess.run([str(exe)],env=env,check=True,timeout=20)
 

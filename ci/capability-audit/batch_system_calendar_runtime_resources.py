@@ -14,7 +14,9 @@ import zipfile
 from batch_system_calendar_runtime_project import checked, record, require
 import batch_system_calendar_runtime_protocol as protocol
 
+# Retained only to identify the historical failing parameter probe; never accepted as public locale evidence.
 LOCALE_SCRIPT = 'param get persist.sys.locale'
+PUBLIC_LOCALE_SOURCE = 'validated_public_Calendar_observer_capture/v1'
 PROVIDER = 'com.ohos.calendardata'
 SOURCE_PINS = {
     'frameworks/resmgr/include/res_desc.h': '357a84269aec1b713348f70d95f2e95069215a8485b26f83b232f61f6319d8f8',
@@ -165,14 +167,52 @@ def resolve_provider_label(installed_hap, bms_text, locale_text):
             'resource': parsed, 'actual_locale': actual_locale, 'selected': matched[0]}
 
 
+def public_locale_from_capture(locale, *, archive_sha256, boot_id, run_id):
+    """Independently replay real public API output; never interpret a parameter error as a locale."""
+    from batch_system_calendar_runtime_project import ROLES, load_challenge
+    from batch_system_calendar_runtime_verify import validate_capture, operation
+    capture = protocol.decode(checked(locale).read_text())
+    require(capture.get('archive', {}).get('sha256') == archive_sha256 and
+            capture.get('boot_id') == boot_id and capture.get('run_id') == run_id and
+            capture.get('stage') == 'public-operation' and
+            capture.get('request', {}).get('role') == 'observer' and
+            capture['request'].get('action') == 'locale', 'actual same-run/boot/archive public observer locale capture required')
+    verified = validate_capture(checked(locale), load_challenge(checked(capture['challenge'])), capture['archive'])
+    rows = operation(verified)
+    require([(r['event'], r['api']) for r in rows] == [
+        ('begin', 'request'), ('system-locale', 'i18n.System.getSystemLocale'),
+        ('resource-locale', 'ResourceManager.getConfiguration'), ('complete', 'request')] and
+        all(r['error_code'] == 0 and r['error_message'] == '' for r in rows),
+        'locale observation must contain only both public reads and complete; no permission or Calendar calls')
+    values = [protocol.decode(r['value_json']) for r in rows[1:3]]
+    require(all(isinstance(v, dict) and set(v) == {'locale'} and isinstance(v['locale'], str) for v in values),
+            'both original public locale strings required')
+    system_locale, resource_locale = [v['locale'] for v in values]
+    require(system_locale == resource_locale and re.fullmatch(r'en-US|en-Latn-US|zh-CN|zh-Hans-CN', system_locale),
+            'unknown, conflicting or unsupported public system/resource locale; preserve label gap')
+    return {'source': PUBLIC_LOCALE_SOURCE, 'observer_bundle': ROLES['observer']['bundle'], 'challenge': capture['challenge'],
+            'uid': rows[0]['uid'], 'token_id': rows[0]['token_id'], 'operation_id': capture['request']['operation_id'],
+            'system_api': rows[1]['api'], 'resource_api': rows[2]['api'], 'system_locale': system_locale,
+            'resource_locale': resource_locale, 'timestamp_ms': rows[-1]['timestamp_ms']}
+
+
+def require_fresh_public_locale(proof, realtime_ns):
+    observed = proof['public_locale']['timestamp_ms']
+    require(type(realtime_ns) is int and type(observed) is int and
+            0 <= realtime_ns // 1_000_000 - observed <= 120000,
+            'public locale observation is not fresh within two minutes; preserve dialog and refresh before launching provider')
+
+
 def make_provider_label_proof(*, installed_hap, bms, locale, archive_sha256, boot_id, run_id):
     require(isinstance(archive_sha256, str) and re.fullmatch('[a-f0-9]{64}', archive_sha256) and
             isinstance(boot_id, str) and re.fullmatch('[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}', boot_id) and
             isinstance(run_id, str) and re.fullmatch('[a-f0-9]{32}', run_id), 'actual archive/boot/run label context required')
-    value = resolve_provider_label(checked(installed_hap), checked(bms).read_text(), checked(locale).read_text())
-    return {'schema_version': 1, 'source': 'resource_index+actual_locale', 'archive_sha256': archive_sha256,
+    checked(locale)
+    public_locale = public_locale_from_capture(locale, archive_sha256=archive_sha256, boot_id=boot_id, run_id=run_id)
+    value = resolve_provider_label(checked(installed_hap), checked(bms).read_text(), public_locale['system_locale'])
+    return {'schema_version': 2, 'source': 'resource_index+public_i18n_and_resource_configuration', 'archive_sha256': archive_sha256,
             'boot_id': boot_id, 'run_id': run_id, 'installed_hap': installed_hap, 'bms': bms, 'locale': locale,
-            'locale_script': LOCALE_SCRIPT, 'resolved': value, 'parser': record(Path(__file__)), 'native_source_pins': SOURCE_PINS,
+            'public_locale': public_locale, 'resolved': value, 'parser': record(Path(__file__)), 'native_source_pins': SOURCE_PINS,
             'transport_verified_by_caller': False, 'UI_requester_reviewed': False}
 
 

@@ -21,7 +21,7 @@ struct Index {
 
   private request(): QueryRequest {
     const context = getContext(this) as common.UIAbilityContext;
-    const request = JSON.parse(fs.readTextSync(context.filesDir + '/query-request.json')) as QueryRequest;
+    const request = JSON.parse(fs.readTextSync(context.getApplicationContext().filesDir + '/query-request.json')) as QueryRequest;
     if (request.run_id !== this.run || !/^[a-f0-9]{32}$/.test(request.nonce) ||
       !['before', 'after'].includes(request.phase) || request.uris.length !== 5 || new Set(request.uris).size !== 5 ||
       request.uris.some((uri: string) => !/^file:\/\/media\/Photo\/[1-9][0-9]*\//.test(uri))) {
@@ -32,7 +32,7 @@ struct Index {
 
   private write(request: QueryRequest, text: string): void {
     const context = getContext(this) as common.UIAbilityContext;
-    const path = context.filesDir + '/query-' + this.run + '-' + request.nonce + '.json';
+    const path = context.getApplicationContext().filesDir + '/query-' + this.run + '-' + request.nonce + '.json';
     if (fs.accessSync(path)) { throw new Error('Query result already exists'); }
     // Public API26 FileIO exposes NOFOLLOW, not an exclusive-create mode.
     // This nonce path has one serialized writer inside the app's own sandbox;
@@ -87,11 +87,16 @@ struct Index {
       this.note = 'Real query complete: ' + active.length;
     } catch (error) {
       const actual = error as BusinessError;
-      if (request !== undefined) {
-        this.write(request, JSON.stringify({ run_id: this.run, nonce: request.nonce, phase: request.phase,
-          error_code: actual.code, error_message: actual.message }));
-      }
       this.note = 'Query failed: ' + actual.code + ': ' + actual.message;
+      if (request !== undefined) {
+        try {
+          this.write(request, JSON.stringify({ run_id: this.run, nonce: request.nonce, phase: request.phase,
+            error_code: actual.code, error_message: actual.message }));
+        } catch (journalError) {
+          const failure = journalError as BusinessError;
+          this.note += '; Result write failed: ' + failure.code + ': ' + failure.message;
+        }
+      }
     } finally { this.busy = false; }
   }
 

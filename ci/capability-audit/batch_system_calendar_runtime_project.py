@@ -80,6 +80,9 @@ def sdk_contract(sdk):
         '@ohos.notificationManager.d.ts': ['function getAllActiveNotifications():'],
         '@ohos.app.ability.wantAgent.d.ts': ['function getWant(agent:', 'function getBundleName(agent:', 'function getUid(agent:'],
         '@ohos.abilityAccessCtrl.d.ts': ['requestPermissionsFromUser(', 'checkAccessTokenSync('],
+        '@ohos.i18n.d.ts': ['static getSystemLocale(): string;'],
+        '@ohos.resourceManager.d.ts': ['getConfiguration(): Promise<Configuration>;', 'locale: string;'],
+        'application/Context.d.ts': ['getApplicationContext(): ApplicationContext;'],
         'application/UIAbilityContext.d.ts': ['startAbility(want:', 'startRecentAbility(want:'],
     }
     proof = {'metadata': record(metadata)}
@@ -90,7 +93,8 @@ def sdk_contract(sdk):
         proof[name] = record(path)
     profile = sdk / 'ets/api/device-define/default.json'
     caps = json.loads(profile.read_text())['SysCaps']
-    require('SystemCapability.Applications.CalendarData' in caps, 'SDK default CalendarData capability missing')
+    require({'SystemCapability.Applications.CalendarData', 'SystemCapability.Global.I18n',
+             'SystemCapability.Global.ResourceManager'} <= set(caps), 'SDK default Calendar/public locale capability missing')
     proof['device_default'] = record(profile)
     return proof
 
@@ -168,7 +172,7 @@ def request(challenge_path, boot, archive_sha, role, action, case, *, lead_minut
     require(role in ROLES and re.fullmatch('[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}', boot) and
             HEX.fullmatch(archive_sha) and re.fullmatch('[a-z][a-z0-9-]{0,39}', case), 'bound actual run/boot/archive/role/case required')
     allowed = {'producer': {'permission', 'access', 'create', 'read', 'update', 'delete', 'cleanup', 'routes'},
-               'observer': {'permission', 'access', 'read', 'notifications'}, 'denied': {'access', 'read'}}
+               'observer': {'permission', 'access', 'read', 'notifications', 'locale'}, 'denied': {'access', 'read'}}
     require(action in allowed[role], 'role cannot execute this action')
     if action in ('update', 'delete'):
         require(case in CONTRACT['case_ids'], 'owned case required')

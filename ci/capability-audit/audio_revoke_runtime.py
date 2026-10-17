@@ -10,11 +10,9 @@ from audio_capture_contract import sha
 from batch_media_audio_capture_challenge import load_reference, phase_content
 from guest_ui import GuestUi, NodeNotReady, LayoutNotReady
 
-PROCESS_IDENTITY_SCRIPT = ('task_mic_app_pid=$(pidof ' + BUNDLE + '); '
-    'case "$task_mic_app_pid" in ""|*[!0-9]*) exit 1;; esac; '
-    'printf "%s " "$task_mic_app_pid"; '
-    'awk \'{printf "%s ", $22}\' /proc/$task_mic_app_pid/stat; '
-    'awk \'/^Uid:/{print $2}\' /proc/$task_mic_app_pid/status')
+from guest_process_identity import identity_shell
+
+PROCESS_IDENTITY_SCRIPT = identity_shell(BUNDLE, all_uids=False)
 
 
 class RevokeRuntime(CaptureRuntime):
@@ -113,9 +111,9 @@ class RevokeRuntime(CaptureRuntime):
         # nonce-scoped sequence, then retain every actual lifecycle record.
         deadline = time.monotonic() + 10
         while True:
-            raw = self.actual_shell('find ' + app_files + ' -maxdepth 1 -type f -name "' + stem + '-background-*.json" | sort',
+            raw = self.actual_shell('find ' + app_files + ' -maxdepth 1 -type f -name "' + stem + '-background-*.json"',
                                     'actual-revocation-foreground-lifecycle-records')
-            records = raw.splitlines()
+            records = sorted(raw.splitlines())
             for remote in records:
                 name = remote.removeprefix(app_files)
                 if not re.fullmatch(re.escape(stem) + '-background-[0-9]{3}\\.json', name):
@@ -162,8 +160,7 @@ class RevokeRuntime(CaptureRuntime):
         status = self.process.wait(timeout=35)
         self.producer_log.close()
         self.producer_log = None
-        self.value['producer'] = {'argv': self.producer_argv, 'host_exit_code': status,
-            'log': str(self.output / 'producer.log'), 'log_sha256': sha(self.output / 'producer.log')}
+        self.value['producer'] = self.producer_receipt(status)
         if status:
             raise ValueError('real independent PCM producer failed during active revocation')
         self.value['status'] = 'captured_NOT_independently_verified'

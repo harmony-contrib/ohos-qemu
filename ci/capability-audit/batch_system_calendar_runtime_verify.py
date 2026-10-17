@@ -66,8 +66,10 @@ def capture_token(capture, item):
 def layout_bound(capture, item):
     value = protocol.decode(checked(item).read_text())
     found = []
+    guest_argv = capture['guest_commands'][0]['argv']
     for row in capture['commands']:
-        if not row['label'].endswith('-read') or len(row['argv']) < 5 or row['argv'][3] != 'shell':
+        if (not row['label'].endswith('-read') or len(row['argv']) != 5 or row['argv'][:4] !=
+                [guest_argv[0], '-t', guest_argv[2], 'shell']):
             continue
         raw = checked({'path': row['path'], 'sha256': row['sha256']}).read_text().replace('\r', '')
         marker = re.search(r'__UITEST_EXIT_[a-f0-9]{32}__=', row['argv'][-1])
@@ -84,7 +86,9 @@ def layout_bound(capture, item):
 def pixels_bound(capture, item):
     from PIL import Image
     path = checked(item)
-    transfers = [r for r in capture['commands'] if len(r['argv']) >= 7 and r['argv'][3:5] == ['file', 'recv'] and
+    guest_argv = capture['guest_commands'][0]['argv']
+    transfers = [r for r in capture['commands'] if len(r['argv']) == 7 and
+                 r['argv'][:5] == [guest_argv[0], '-t', guest_argv[2], 'file', 'recv'] and
                  Path(r['argv'][-1]).resolve() == path and r['exit_code'] == 0]
     require(len(transfers) == 1, 'actual compositor screenshot transfer required')
     with Image.open(path) as image:
@@ -97,7 +101,9 @@ def operation(capture):
     role = capture['request']['role']
     info = capture['artifacts'][role]
     app = {'uid': info['uid'], 'accessTokenId': info['token_id']}
-    _, rows = protocol.parse(raw_bound(capture, capture['journal']), capture['request'], app)
+    remote = '/data/app/el2/100/base/' + ROLES[role]['bundle'] + '/files/calendar-' + capture['run_id'] + '-' + capture['boot_id'] + '.jsonl'
+    script = 'if test -f ' + shlex.quote(remote) + '; then cat ' + shlex.quote(remote) + '; fi'
+    _, rows = protocol.parse(raw_bound(capture, capture['journal'], script), capture['request'], app)
     require(rows is not None, 'actual operation incomplete')
     return rows
 
@@ -174,17 +180,57 @@ def validate_capture(path, challenge, archive):
     import batch_apps_contact_picker_coordinator as signatures
     module, payload = signatures.hap_contents(checked(provider['installed_hap']))
     require(protocol.schema(module) == provider['schema'] and payload == source['module_payload'], 'actual provider metadata/ABC changed')
-    from batch_system_calendar_runtime_resources import LOCALE_SCRIPT, verify_provider_label_proof
-    label_proof = provider['label_proof']
-    require(label_proof['bms'] == provider['bms'] and label_proof['installed_hap'] == provider['installed_hap'],
-            'resource label proof not from this captured provider')
-    raw_bound(capture, label_proof['locale'], LOCALE_SCRIPT)
-    provider_label_context = {'installed_hap': provider['installed_hap'], 'bms': provider['bms'], 'locale': label_proof['locale'],
-        'archive_sha256': archive['sha256'], 'boot_id': env['boot_id'], 'run_id': challenge['run_id']}
-    verify_provider_label_proof(label_proof, **provider_label_context)
+    from batch_system_calendar_runtime_resources import verify_provider_label_proof, require_fresh_public_locale
+    locale_only = (capture['stage'] == 'public-operation' and capture.get('request', {}).get('role') == 'observer'
+                   and capture['request'].get('action') == 'locale')
+    label_proof = None
+    provider_label_context = None
+    if locale_only:
+        require('label_proof' not in provider and capture.get('permission_clicks', []) == [],
+                'public locale stage cannot request permissions or substitute a label')
+    else:
+        label_proof = provider['label_proof']
+        require(label_proof['bms'] == provider['bms'] and label_proof['installed_hap'] == provider['installed_hap'] and
+                label_proof['locale'] == plan['provider']['public_locale_capture'],
+                'resource label proof not from this provider and configured public capture')
+        provider_label_context = {'installed_hap': provider['installed_hap'], 'bms': provider['bms'], 'locale': label_proof['locale'],
+            'archive_sha256': archive['sha256'], 'boot_id': env['boot_id'], 'run_id': challenge['run_id']}
+        verify_provider_label_proof(label_proof, **provider_label_context)
+        observed = label_proof['public_locale']; observer = apps[ROLES['observer']['bundle']]
+        require(observed['uid'] == observer['uid'] and observed['token_id'] == observer['accessTokenId'] and
+                observed['challenge'] == capture['challenge'], 'public locale used another installed observer/challenge')
+        current = capture_token(capture, provider['token'])
+        require_fresh_public_locale(label_proof, current['realtime_ns'])
     if capture['stage'] == 'public-operation':
-        operation(capture)
+        rows = operation(capture)
         role = capture['request']['role']
+        launch = shlex.join(['aa', 'start', '-b', ROLES[role]['bundle'], '-a', 'EntryAbility', '--ps', 'request',
+                             json.dumps(capture['request'], separators=(',', ':'))])
+        raw_bound(capture, capture['operation_launch'], launch)
+        click = capture['run_click']
+        selected = select_node(layout_bound(capture, click['layout']), ROLES[role]['bundle'], identifier='calendar-qa-run', clickable=True)
+        require(click['selected_node'] == selected, 'public operation click did not select the actual role button')
+        x, y, w, h = selected['rect']
+        script = f'uitest uiInput click {x+w//2} {y+h//2}'
+        candidates = [row for row in capture['commands'] if row['label'] == 'execute-real-operation-actual-node-center']
+        require(len(candidates) == 1, 'one actual public operation UI click required')
+        command = candidates[0]; raw = checked({'path': command['path'], 'sha256': command['sha256']}).read_text().replace('\r', '')
+        marker = re.search(r'__UITEST_EXIT_[a-f0-9]{32}__=', command['argv'][-1])
+        require(len(command['argv']) == 5 and command['argv'][:4] ==
+                [capture['guest_commands'][0]['argv'][0], '-t', env['target'], 'shell'] and
+                marker is not None and command['argv'][-1] == script + '; task_ui_rc=$?; printf "\\n' + marker[0] +
+                '%s\\n" "$task_ui_rc"' and raw.count(marker[0]) == 1 and raw.endswith('\n' + marker[0] + '0\n'),
+                'public operation UI click command/footer differs')
+        def command_index(item):
+            return int(re.match(r'raw-([0-9]+)-', checked(item).name)[1])
+        require(command_index(capture['artifacts'][role]['token']) < command_index(capture['operation_launch']) <
+                command_index(capture['journal']) < command_index(capture['token_after']),
+                'public request/journal is not enclosed by actual before/after token observations')
+        if locale_only:
+            require([(r['event'], r['api']) for r in rows] == [('begin', 'request'),
+                ('system-locale', 'i18n.System.getSystemLocale'), ('resource-locale', 'ResourceManager.getConfiguration'), ('complete', 'request')] and
+                all(r['error_code'] == 0 and r['error_message'] == '' for r in rows),
+                'locale-only public stage contains errors, Calendar calls, access or permission requests')
         token_bound(capture, capture['token_after'],
             {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, ROLES[role]['bundle'], apps[ROLES[role]['bundle']], plan['helper']['remote'])
     if capture['stage'] != 'viewer-snapshot':
@@ -199,8 +245,9 @@ def validate_capture(path, challenge, archive):
         require(text in allowed, 'actual permission label does not match requested user decision')
         target = ROLES[capture['request']['role']]['bundle'] if capture['stage'] == 'public-operation' else CONTRACT['provider']
         if target == CONTRACT['provider']:
-            require(raw_bound(capture, decision['provider_locale'], LOCALE_SCRIPT) == checked(label_proof['locale']).read_text(),
-                    'raw guest locale changed before provider decision')
+            clock = token_bound(capture, decision['provider_locale_clock'],
+                {'run_id': challenge['run_id'], 'boot_id': env['boot_id']}, CONTRACT['provider'], apps[CONTRACT['provider']], plan['helper']['remote'])
+            require_fresh_public_locale(label_proof, clock['realtime_ns'])
         selected = protocol.permission_control(layout, plan.get('permission_bundle', 'com.ohos.permissionmanager'),
             target, permission_label(target, apps, challenge['run_id'],
                 provider_label_proof=label_proof if target == CONTRACT['provider'] else None,

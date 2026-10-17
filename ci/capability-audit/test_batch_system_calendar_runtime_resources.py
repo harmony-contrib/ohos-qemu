@@ -5,16 +5,24 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 import batch_system_calendar_runtime_resources as r
-from batch_system_calendar_runtime_project import record
+from batch_system_calendar_runtime_project import record, challenge
 
 
 class CalendarResourceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve(); self.resource_id = 0x05000000
+        # Resource-unit boundary only. Actual capture replay is exercised separately;
+        # no host double is saved or represented as a runtime capture.
+        self.public = {'source': r.PUBLIC_LOCALE_SOURCE, 'system_locale': 'zh-Hans-CN',
+                       'resource_locale': 'zh-Hans-CN', 'timestamp_ms': 1800000000000}
+        replay = patch.object(r, 'public_locale_from_capture', return_value=self.public)
+        self.replay_patch = replay
+        self.replay = replay.start(); self.addCleanup(replay.stop)
 
     def index(self):
         def u(*values): return struct.pack('<' + 'I' * len(values), *values)
@@ -48,7 +56,7 @@ class CalendarResourceTests(unittest.TestCase):
             z.writestr('module.json', json.dumps(module)); z.writestr('resources.index', self.index())
             z.writestr('ets/modules.abc', b'HOST ONLY; not compiled ABC')
         path = self.root / 'bms.json'; path.write_text(json.dumps(bms))
-        locale = self.root / 'locale.txt'; locale.write_text('zh-Hans-CN\n')
+        locale = self.root / 'host-only-locale-capture.json'; locale.write_text('{"HOST_ONLY":true}\n')
         return {'installed_hap': record(hap), 'bms': record(path), 'locale': record(locale), 'archive_sha256': 'a' * 64,
                 'boot_id': '12345678-1234-1234-1234-123456789abc', 'run_id': 'd' * 32}
 
@@ -107,8 +115,54 @@ class CalendarResourceTests(unittest.TestCase):
         for key in ('selected', 'resource_index', 'identity'):
             changed = copy.deepcopy(proof); changed['resolved'][key] = {}
             with self.subTest(key=key), self.assertRaises(ValueError): r.verify_provider_label_proof(changed, **context)
-        Path(context['locale']['path']).write_text('en-US\n')
+        Path(context['locale']['path']).write_text('changed HOST UNIT bytes\n')
         with self.assertRaises(ValueError): r.verify_provider_label_proof(proof, **context)
+
+
+    def test_public_locale_requires_replayed_capture_and_exact_four_reads(self):
+        # Exercise the public capture adapter with a deliberately mocked independent
+        # replay boundary. These in-memory rows never claim raw guest provenance.
+        from batch_system_calendar_runtime_project import ROLES
+        import batch_system_calendar_runtime_verify as verifier
+        self.replay_patch.stop()
+        capture = {'archive': {'sha256': 'a' * 64}, 'boot_id': '12345678-1234-1234-1234-123456789abc',
+                   'run_id': 'd' * 32, 'stage': 'public-operation',
+                   'request': {'role': 'observer', 'action': 'locale', 'operation_id': 'b' * 32},
+                   'challenge': record(challenge(self.root / 'public-challenge'))}
+        capture['run_id'] = json.loads(Path(capture['challenge']['path']).read_text())['run_id']
+        file = self.root / 'public-host-unit.json'; file.write_text(json.dumps(capture))
+        rows = [{'event': event, 'api': api, 'error_code': 0, 'error_message': '',
+                 'value_json': json.dumps(value), 'timestamp_ms': 1800000000000,
+                 'uid': 20010051, 'token_id': 123} for event, api, value in [
+                    ('begin', 'request', {}), ('system-locale', 'i18n.System.getSystemLocale', {'locale': 'zh-Hans-CN'}),
+                    ('resource-locale', 'ResourceManager.getConfiguration', {'locale': 'zh-Hans-CN'}),
+                    ('complete', 'request', {})]]
+        context = {'archive_sha256': 'a' * 64, 'boot_id': capture['boot_id'], 'run_id': capture['run_id']}
+        with patch.object(verifier, 'validate_capture', return_value=capture) as replay, patch.object(verifier, 'operation', return_value=rows):
+            value = r.public_locale_from_capture(record(file), **context)
+            self.assertEqual(value['observer_bundle'], ROLES['observer']['bundle'])
+            self.assertEqual(value['system_locale'], 'zh-Hans-CN')
+            replay.assert_called_once()
+            for changed in ('Get parameter "persist.sys.locale" fail! errNum is:106!', 'en-US', 'zh-Hans-CN\n', 'zh', 'fr-FR'):
+                original = rows[2]['value_json']; rows[2]['value_json'] = json.dumps({'locale': changed})
+                with self.subTest(locale=changed), self.assertRaises(ValueError):
+                    r.public_locale_from_capture(record(file), **context)
+                rows[2]['value_json'] = original
+            for key, changed in [('event', 'permission'), ('error_code', 201), ('api', 'Calendar.getEvents')]:
+                original = rows[2][key]; rows[2][key] = changed
+                with self.subTest(key=key), self.assertRaises(ValueError): r.public_locale_from_capture(record(file), **context)
+                rows[2][key] = original
+            capture['request']['role'] = 'producer'; file.write_text(json.dumps(capture)); replay.reset_mock()
+            with self.assertRaises(ValueError): r.public_locale_from_capture(record(file), **context)
+            replay.assert_not_called()
+
+    def test_public_locale_freshness_never_uses_host_clock_or_future_observation(self):
+        proof = {'public_locale': {'timestamp_ms': 1800000000000}}
+        for delta in (0, 120000): r.require_fresh_public_locale(proof, (1800000000000 + delta) * 1000000)
+        for delta in (-1, 120001):
+            with self.subTest(delta=delta), self.assertRaises(ValueError):
+                r.require_fresh_public_locale(proof, (1800000000000 + delta) * 1000000)
+        with self.assertRaises(ValueError): r.require_fresh_public_locale(proof, True)
 
 
 if __name__ == '__main__':

@@ -143,7 +143,7 @@ def verify_identity(identity, build, run_id):
     require(app['isSystemApp'] is False and app.get('appPrivilegeLevel', app.get('apl')) == 'normal',
             'caller is not a normal non-system application')
     token = app.get('accessTokenId')
-    require(type(token) is int and token > 0 and type(app.get('uid')) is int and app['uid'] > 10000,
+    require(type(token) is int and token > 0 and type(app.get('uid')) is int and app['uid'] // 200000 == 100,
             'raw BMS UID/token missing')
     probe = raw_json(artifact(identity['permission_probe']))
     require(probe.get('api') in {'abilityAccessCtrl.verifyAccessToken', 'abilityAccessCtrl.verifyAccessTokenSync',
@@ -201,23 +201,65 @@ def verify_seed(seed, cleanup, run_id):
 
 
 def provider_uid(ui):
-    raw = raw_json(artifact(ui['provider_bms']))
+    # Contacts is a preinstalled singleton. Its actual BMS installation belongs
+    # to account0 while the ordinary picker host belongs to account100. Never
+    # manufacture an account100 UID from the singleton's base application UID.
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            require(key not in result, 'duplicate Contacts provider BMS field')
+            result[key] = value
+        return result
+
+    text = artifact(ui['provider_bms']).read_text()
+    heading = CONTRACT['provider_bundle'] + ':\n'
+    require(text.startswith(heading), 'exact Contacts provider BMS heading required')
+    raw = json.loads(text[len(heading):], object_pairs_hook=unique)
+    require(type(raw) is dict and raw.get('name') == CONTRACT['provider_bundle'] and
+            raw.get('isPreInstallApp') is True and raw.get('singleton') is True and
+            type(raw.get('appIndex')) is int and raw['appIndex'] == 0,
+            'actual preinstalled singleton Contacts bundle required')
     matches = [row for row in objects(raw) if row.get('bundleName') == CONTRACT['provider_bundle'] and 'isSystemApp' in row]
-    require(len(matches) == 1 and matches[0].get('isSystemApp') is True,
-            'actual system Contacts provider BMS identity required')
-    value = matches[0].get('uid')
-    require(type(value) is int and value // 200000 == 100, 'current-user Contacts provider UID required')
-    return value
+    app = raw.get('applicationInfo')
+    require(type(app) is dict and len(matches) == 1 and matches[0] is app and
+            app.get('bundleName') == app.get('name') == CONTRACT['provider_bundle'] and
+            app.get('isSystemApp') is True and app.get('singleton') is True and
+            app.get('installSource') == 'pre-installed' and app.get('enabled') is True and
+            type(app.get('appIndex')) is int and app['appIndex'] == 0,
+            'actual system singleton Contacts application required')
+    uid, token, extended = app.get('uid'), app.get('accessTokenId'), app.get('accessTokenIdEx')
+    require(type(uid) is int and 10000 <= uid < 200000 and
+            type(raw.get('uid')) is int and type(raw.get('gid')) is int and raw['uid'] == raw['gid'] == uid and
+            type(token) is int and 0 < token < 2**32 and type(extended) is int and
+            0 < extended < 2**64 and extended & 0xffffffff == token,
+            'singleton Contacts base UID/GID/token tuple required')
+    users = raw.get('userInfo')
+    require(type(users) is list and len(users) == 1 and type(users[0]) is dict,
+            'one actual singleton Contacts account record required')
+    user = users[0]
+    account = user.get('bundleUserInfo')
+    require(user.get('bundleName') == CONTRACT['provider_bundle'] and type(user.get('uid')) is int and
+            user['uid'] == uid and type(user.get('accessTokenId')) is int and user['accessTokenId'] == token and
+            type(user.get('accessTokenIdEx')) is int and user['accessTokenIdEx'] == extended and
+            type(user.get('gids')) is list and user['gids'] == [uid] and
+            type(account) is dict and type(account.get('userId')) is int and account['userId'] == 0 and
+            account.get('enabled') is True and account.get('disabledAbilities') == [] and
+            user.get('cloneInfos') == {} and user.get('sandboxInfos') == {},
+            'singleton Contacts account0 UID/token/enabled identity mismatch')
+    return uid
 
 
 class AmsNotReady(EvidenceError):
     pass
 
 
-def ams_sessions(dump, contacts_uid, caller_uid):
+def ams_sessions(dump, provider_bms, caller_uid):
     """Parse real aa dump records. No ArkUI ID is assumed equal to an AMS ID."""
-    require(type(contacts_uid) is int and type(caller_uid) is int and contacts_uid != caller_uid and
-            contacts_uid // 200000 == caller_uid // 200000 == 100, 'distinct current-user provider/host UIDs required')
+    # Re-read the hashed full BMS tuple at every entry, including cleanup. A
+    # caller-supplied integer or a report's claimed user0/user100 UID is no proof.
+    contacts_uid = provider_uid({'provider_bms': provider_bms})
+    require(type(caller_uid) is int and caller_uid // 200000 == 100 and contacts_uid != caller_uid,
+            'distinct singleton provider and current-user host UIDs required')
     require(len(re.findall(r'^  ExtensionRecords:$', dump, re.M)) == 1 and
             len(re.findall(r'^  AppRunningRecords:$', dump, re.M)) == 1, 'complete actual AMS extension/process dump required')
     processes = {}
@@ -277,9 +319,9 @@ def ams_sessions(dump, contacts_uid, caller_uid):
     return sessions
 
 
-def closed_session(action, contacts_uid, caller_uid):
-    before = ams_sessions(artifact(action['ams_before']).read_text(), contacts_uid, caller_uid)
-    after = ams_sessions(artifact(action['ams_after']).read_text(), contacts_uid, caller_uid)
+def closed_session(action, provider_bms, caller_uid):
+    before = ams_sessions(artifact(action['ams_before']).read_text(), provider_bms, caller_uid)
+    after = ams_sessions(artifact(action['ams_after']).read_text(), provider_bms, caller_uid)
     removed = set(before) - set(after)
     require(len(removed) == 1 and set(after) <= set(before), 'one actual AMS Contacts session must close for this input')
     require(all(after[key] == before[key] for key in after), 'other live AMS session changed identity')
@@ -363,11 +405,11 @@ def verify_ui(ui, invocation, policy, raw_journal, terminal, expected, records, 
     require(screenshot.startswith((b'\x89PNG\r\n\x1a\n', b'P6\n')), 'actual screenshot format missing')
     layout = raw_json(artifact(action['layout']))
     view = picker_view(layout)
-    uid = provider_uid(ui)
-    binding = closed_session(action, uid, caller_uid)
-    start_sessions = ams_sessions(artifact(starts[0]['ams']).read_text(), uid, caller_uid)
+    provider_bms = ui['provider_bms']
+    binding = closed_session(action, provider_bms, caller_uid)
+    start_sessions = ams_sessions(artifact(starts[0]['ams']).read_text(), provider_bms, caller_uid)
     require(not start_sessions, 'Contacts session already existed before caller Start')
-    baseline = ams_sessions(artifact(action['ams_before']).read_text(), uid, caller_uid)
+    baseline = ams_sessions(artifact(action['ams_before']).read_text(), provider_bms, caller_uid)
     require(binding['host_uid'] == caller_uid and baseline and
             (len(baseline) in (1, 2) if policy == 'two-done' else len(baseline) == 1),
             'actual Contacts provider binding or session count invalid')
@@ -557,12 +599,12 @@ def verify_runtime(journal_path, seed_path, cleanup_path, ui_path, identity_path
             require(len(bindings) == 1 and bindings[0]['host_pid'] == pid, 'AMS host differs from actual AppMgr caller process')
         if case['id'] == 'dual-session':
             actions = [row for row in ui['events'] if row.get('invocation_id') in allowed_invocations and row.get('kind') == 'done']
-            uid = provider_uid(ui)
+            provider_bms = ui['provider_bms']
             require(len(actions) == 2, 'two actual dual-session inputs required')
-            first = ams_sessions(artifact(actions[0]['ams_before']).read_text(), uid, identity['uid'])
-            middle = ams_sessions(artifact(actions[0]['ams_after']).read_text(), uid, identity['uid'])
-            second = ams_sessions(artifact(actions[1]['ams_before']).read_text(), uid, identity['uid'])
-            last = ams_sessions(artifact(actions[1]['ams_after']).read_text(), uid, identity['uid'])
+            first = ams_sessions(artifact(actions[0]['ams_before']).read_text(), provider_bms, identity['uid'])
+            middle = ams_sessions(artifact(actions[0]['ams_after']).read_text(), provider_bms, identity['uid'])
+            second = ams_sessions(artifact(actions[1]['ams_before']).read_text(), provider_bms, identity['uid'])
+            last = ams_sessions(artifact(actions[1]['ams_after']).read_text(), provider_bms, identity['uid'])
             require(len(first) == 2 and len(middle) == 1 and middle == second and not last,
                     'dual AMS session lifecycle is not two to one to zero')
     return {'schema_version': 1, 'raw_results_verified': True, 'run_id': run_id, 'identity': identity,

@@ -15,6 +15,20 @@ runtime = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runtime)
 
 
+def provider_fixture():
+    """Synthetic full singleton identity shape; never a captured BMS receipt."""
+    bundle = runtime.CONTRACT['provider_bundle']
+    uid, token = 10004, 537000579
+    extended = 2**32 + token
+    return {'name': bundle, 'uid': uid, 'gid': uid, 'appIndex': 0, 'singleton': True, 'isPreInstallApp': True,
+            'applicationInfo': {'name': bundle, 'bundleName': bundle, 'uid': uid, 'appIndex': 0,
+                'accessTokenId': token, 'accessTokenIdEx': extended, 'isSystemApp': True,
+                'singleton': True, 'installSource': 'pre-installed', 'enabled': True},
+            'userInfo': [{'bundleName': bundle, 'uid': uid, 'gids': [uid], 'accessTokenId': token,
+                'accessTokenIdEx': extended, 'bundleUserInfo': {'userId': 0, 'enabled': True,
+                    'disabledAbilities': []}, 'cloneInfos': {}, 'sandboxInfos': {}}]}
+
+
 def ams_fixture(sessions, host_pid=111):
     """Synthetic aa-dump grammar only, never guest evidence."""
     text = '  ExtensionRecords:\n'
@@ -41,7 +55,7 @@ def ams_fixture(sessions, host_pid=111):
     for session in sessions:
         text += f"""    AppRunningRecord ID #{session}
       process name [com.ohos.contacts:ContactUiExtentionAbility:{session}]
-      pid #{9000 + session}  uid #20010011
+      pid #{9000 + session}  uid #10004
       state #FOREGROUND
       root caller #0
         pid #{host_pid}
@@ -92,8 +106,7 @@ class RuntimeVerifier(unittest.TestCase):
                         'deleted_keys': [r['key'] for r in self.records], 'remaining_contacts': [],
                         'raw_delete': self.json_artifact('delete.json', {'run_id': self.run, 'api': 'contact.deleteContact', 'keys': [r['key'] for r in self.records]}),
                         'raw_readback': self.json_artifact('cleanup-read.json', {'run_id': self.run, 'api': 'contact.queryContacts', 'contacts': []})}
-        self.ui['provider_bms'] = self.json_artifact('provider-bms.json', {'appInfo': {
-            'bundleName': runtime.CONTRACT['provider_bundle'], 'uid': 20010011, 'isSystemApp': True}})
+        self.ui['provider_bms'] = self.provider_artifact(provider_fixture())
         self.ui['caller_processes'] = {}
         for phase, processes in [('before_exit', [{'pid': 111, 'bundleNames': [runtime.BUNDLE]}]),
                                  ('after_exit', []), ('after_reopen', [{'pid': 222, 'bundleNames': [runtime.BUNDLE]}])]:
@@ -106,6 +119,61 @@ class RuntimeVerifier(unittest.TestCase):
     def json_artifact(self, name, value):
         (self.root / name).write_text(json.dumps(value))
         return self.desc(name)
+
+    def provider_artifact(self, value):
+        path = self.root / 'provider-bms.json'
+        path.write_text(runtime.CONTRACT['provider_bundle'] + ':\n' + json.dumps(value))
+        return self.desc(path.name)
+
+    def test_singleton_provider_requires_full_matching_account0_identity(self):
+        original = provider_fixture()
+        self.assertEqual(10004, runtime.provider_uid(self.ui))
+        changes = [
+            lambda v: v.update(singleton=False), lambda v: v.update(isPreInstallApp=False),
+            lambda v: v['applicationInfo'].update(singleton=False),
+            lambda v: v['applicationInfo'].update(isSystemApp=False),
+            lambda v: v['applicationInfo'].update(installSource='unknown'),
+            lambda v: v['applicationInfo'].update(uid=20010004), lambda v: v.update(uid=10005),
+            lambda v: v.update(gid=10005), lambda v: v.update(appIndex=True),
+            lambda v: v['applicationInfo'].update(accessTokenId=True),
+            lambda v: v['applicationInfo'].update(accessTokenIdEx=123),
+            lambda v: v['userInfo'][0].update(accessTokenId=123),
+            lambda v: v['userInfo'][0].update(accessTokenIdEx=123),
+            lambda v: v['userInfo'][0].update(gids=[10005]),
+            lambda v: v['userInfo'][0]['bundleUserInfo'].update(userId=100),
+            lambda v: v['userInfo'][0]['bundleUserInfo'].update(userId=False),
+            lambda v: v['userInfo'][0]['bundleUserInfo'].update(enabled=False),
+            lambda v: v['userInfo'][0].update(cloneInfos={'1': {}}),
+            lambda v: v['userInfo'].append(copy.deepcopy(v['userInfo'][0])),
+            lambda v: v.update(userInfo=[]), lambda v: v.update(name='foreign.bundle')]
+        for index, change in enumerate(changes):
+            value = copy.deepcopy(original); change(value)
+            self.ui['provider_bms'] = self.provider_artifact(value)
+            with self.subTest(index=index), self.assertRaises(runtime.EvidenceError):
+                runtime.provider_uid(self.ui)
+        self.ui['provider_bms'] = self.provider_artifact(original)
+        path = Path(self.ui['provider_bms']['path'])
+        path.write_text(path.read_text().replace('"uid": 10004', '"uid": 10004, "uid": 10004', 1))
+        self.ui['provider_bms'] = self.desc(path.name)
+        with self.assertRaisesRegex(runtime.EvidenceError, 'duplicate'):
+            runtime.provider_uid(self.ui)
+
+    def test_ams_requires_hashed_singleton_bms_and_exact_actual_pid_uid(self):
+        dump = ams_fixture([1])
+        self.assertEqual(10004, next(iter(runtime.ams_sessions(dump, self.ui['provider_bms'], 20000100).values()))['provider_uid'])
+        for claimed in (10004, 20010004, {'uid': 10004}):
+            with self.subTest(claimed=claimed), self.assertRaises(runtime.EvidenceError):
+                runtime.ams_sessions(dump, claimed, 20000100)
+        for wrong in (dump.replace('uid #10004', 'uid #20010004'),
+                      dump.replace('uid #10004', 'uid #10005')):
+            with self.assertRaisesRegex(runtime.EvidenceError, 'BMS UID mismatch'):
+                runtime.ams_sessions(wrong, self.ui['provider_bms'], 20000100)
+        for host_uid in (10004, 10040, 20210040, True):
+            with self.subTest(host_uid=host_uid), self.assertRaises(runtime.EvidenceError):
+                runtime.ams_sessions(dump, self.ui['provider_bms'], host_uid)
+        Path(self.ui['provider_bms']['path']).write_text('changed after binding')
+        with self.assertRaisesRegex(runtime.EvidenceError, 'hash mismatch'):
+            runtime.ams_sessions(dump, self.ui['provider_bms'], 20000100)
 
     def bytes(self):
         return b''.join((json.dumps(row) + '\n').encode() for row in self.rows)
@@ -311,7 +379,7 @@ class RuntimeVerifier(unittest.TestCase):
         action = next(row for row in self.ui['events'] if row['kind'] == 'done')
         original = action['ams_before']
         text = Path(original['path']).read_text()
-        for old, new in [('uid #20010011', 'uid #20010012'),
+        for old, new in [('uid #10004', 'uid #10005'),
                          ('root host bundle name [' + runtime.BUNDLE, 'root host bundle name [another.app'),
                          ('root host ability name [EntryAbility]', 'root host ability name [FakeAbility]'),
                          ('root host module name [entry]', 'root host module name [fake]'),
@@ -356,7 +424,7 @@ class RuntimeVerifier(unittest.TestCase):
         self.ui['events'] = []; self.rows = []
         self.make_case('dual-session')
         actions = [row for row in self.ui['events'] if row['kind'] == 'done']
-        first = runtime.ams_sessions(Path(actions[0]['ams_before']['path']).read_text(), 20010011, 20000100)
+        first = runtime.ams_sessions(Path(actions[0]['ams_before']['path']).read_text(), self.ui['provider_bms'], 20000100)
         sessions = [int(value['uri'].rsplit('Ability', 1)[-1]) for value in first.values()]
         actions[1]['ams_before'] = self.ams_artifact('dual-repeat-before.ams', sessions)
         actions[1]['ams_after'] = self.ams_artifact('dual-repeat-after.ams', sessions[:1])
@@ -411,7 +479,7 @@ for(const [name,expose] of [['ResultJournal.ets','this.ResultJournal=ResultJourn
  vm.runInContext(stripTypeScriptTypes(code,{mode:'transform'})+'\n'+expose,box);
 }
 function run(caseId,launchId){const input=new box.LaunchInput();Object.assign(input,{runId:'raw',launchId,caseId,
- seedIds:Array.from({length:205},(_,i)=>1000+i),queryKey:'real'});const value=new box.PickerCases(input,{filesDir:'/unit'},()=>{});value.start();return value}
+ seedIds:Array.from({length:205},(_,i)=>1000+i),queryKey:'real'});const value=new box.PickerCases(input,{filesDir:'/module/files',getApplicationContext:()=>({filesDir:'/unit'})},()=>{});value.start();return value}
 const rows=()=>files.get('/unit/contact-picker-raw.jsonl')||[];
 (async()=>{
  const first=run('select-promise','first');promises[0].resolve([{id:42,key:'returned-not-seed',name:{fullName:'raw'}}]);await tick();

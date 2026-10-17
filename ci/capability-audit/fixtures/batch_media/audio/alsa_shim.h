@@ -14,6 +14,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#define FRAME_DATA 16384
+#define AUDIO_TIMESTAMP_FREQ 8
+#define AUDIO_CAPTURE_STREAM 1
+#define AUDIO_SUCCESS 0
+#define AUDIO_ERR_INVALID_PARAM -10
+#define AUDIO_ERR_INTERNAL -11
+#define AUDIO_DRV_PCM_IOCTL_READ 1
+#define AUDIO_DRV_PCM_IOCTRL_STOP_CAPTURE 2
+#define WRITE_FRAME_ERROR_CODE 1
 #define HDF_SUCCESS 0
 #define HDF_FAILURE -1
 #define HDF_ERR_NOT_SUPPORT -2
@@ -22,6 +31,7 @@
 #define CHECK_NULL_PTR_RETURN_DEFAULT(p) do {if((p)==NULL)return HDF_FAILURE;}while(0)
 #define AUDIO_FUNC_LOGE(...)
 #define AUDIO_FUNC_LOGI(...)
+#define AudioLogRecord(...)
 #define MAX_CARD_NAME_LEN 64
 #define MAX_CARD_NUM 32
 #define AUDIO_MAX_CARD_NUM 8
@@ -49,6 +59,10 @@
 #define SND_IN_CARD_MAIN_MIC "main"
 #define SND_IN_CARD_MIC_OFF "off"
 typedef int snd_pcm_stream_t;
+typedef int snd_pcm_access_t;
+typedef int snd_pcm_format_t;
+typedef struct {unsigned int rate,channels;int format;} snd_pcm_hw_params_t;
+struct AudioHwParams {unsigned int rate,channels;int format;};
 typedef unsigned long snd_pcm_uframes_t;
 typedef long snd_pcm_sframes_t;
 typedef struct {int state;} snd_pcm_t;
@@ -56,11 +70,29 @@ typedef struct {int card;} snd_ctl_t;
 typedef struct {const char *id;} snd_ctl_card_info_t;
 typedef struct {unsigned int device,subdevice;int stream;} snd_pcm_info_t;
 enum SndCardType {SND_CARD_UNKNOWN=-1,SND_CARD_PRIMARY,SND_CARD_HDMI,SND_CARD_USB,SND_CARD_BT,SND_CARD_MAX};
-struct AlsaSoundCard {enum SndCardType cardType;char adapterName[65],devName[65],alsaCardId[65],ctrlName[65];snd_pcm_t *pcmHandle;bool mmapFlag,pauseState;};
+struct AlsaSoundCard {enum SndCardType cardType;char adapterName[65],devName[65],alsaCardId[65],ctrlName[65];snd_pcm_t *pcmHandle;bool mmapFlag,pauseState,canPause;struct AudioHwParams hwParams;};
 struct AlsaMixerCtlElement {int numid;const char *name;const char *value;};
-struct AudioHwCaptureParam {struct {struct {struct {int pins;} deviceDescript;} hwInfo;} captureMode;};
+struct AudioTimeStamp {int64_t tvSec,tvNSec;};
+struct AudioHwCaptureParam {
+ struct {struct {char adapterName[65];struct {int pins;} deviceDescript;} hwInfo;} captureMode;
+ struct {struct {unsigned int sampleRate,channelCount;int format;} attrs;
+  struct AudioTimeStamp time; uint64_t frames; pthread_mutex_t mutex;char *buffer;uint64_t bufferFrameSize,bufferSize;
+ } frameCaptureMode;
+};
+struct IAudioCapture {int unused;};
+struct AudioHwCapture {struct IAudioCapture capture;struct AudioHwCaptureParam captureParam;void *devDataHandle;};
+struct DevHandle {int unused;};
+typedef int32_t (*InterfaceLibModeCapturePassthrough)(void*,struct AudioHwCaptureParam*,int);
+static InterfaceLibModeCapturePassthrough libraryCapture;
+static InterfaceLibModeCapturePassthrough *AudioPassthroughGetInterfaceLibModeCapture(void){return &libraryCapture;}
+static void LogErrorCapture(struct IAudioCapture*c,int code,int ret){(void)c;(void)code;(void)ret;}
+static int timestampResult,copyResult;
+static int TimeToAudioTimeStamp(uint64_t frames,struct AudioTimeStamp*t,unsigned int rate){if(timestampResult)return -1;t->tvNSec+=(int64_t)(frames*1000000000ULL/rate);return 0;}
+static int memcpy_s(void*d,size_t cap,const void*s,size_t n){if(copyResult||n>cap)return -1;memcpy(d,s,n);return 0;}
+static void AudioMemFree(void**p){free(*p);*p=NULL;}
 typedef void *CapturePriData;
 struct AlsaCapture {struct AlsaSoundCard soundCard;void *priData;int descPins;bool muteState;
+ int32_t(*Read)(struct AlsaCapture*,struct AudioHwCaptureParam*);
  int32_t(*Init)(struct AlsaCapture*);int32_t(*SelectScene)(struct AlsaCapture*,const struct AudioHwCaptureParam*);
  int32_t(*Start)(struct AlsaCapture*,const struct AudioHwCaptureParam*);int32_t(*Stop)(struct AlsaCapture*);
  int32_t(*GetVolThreshold)(struct AlsaCapture*,long*,long*);int32_t(*GetVolume)(struct AlsaCapture*,long*);
@@ -72,6 +104,7 @@ static int closeCalls,ctlCalls,mixerCalls,prepareCalls,startCalls,dropCalls,wait
 static int ctlOpenResult,cardInfoResult,pcmInfoResult,prepareResult,startResult,dropResult,waitResult,recoverResult;
 static const char *actualCardId="QemuCapture";
 static long readValues[16];static int readCount,readIndex;
+static long frameBytes=4;static uint64_t generatedFrames;static unsigned long requestedFrames;
 static snd_ctl_t fakeCtl;
 static snd_pcm_t fakePcm;
 static int snprintf_s(char *dst,size_t cap,size_t max,const char *fmt,...){(void)max;va_list ap;va_start(ap,fmt);int n=vsnprintf(dst,cap,fmt,ap);va_end(ap);return n<0||(size_t)n>=cap?-1:n;}
@@ -91,10 +124,11 @@ static int snd_pcm_state(snd_pcm_t *p){return p->state;}
 static int snd_pcm_prepare(snd_pcm_t *p){++prepareCalls;if(prepareResult<0)return prepareResult;if(p->state==SND_PCM_STATE_OPEN)return -EBADFD;p->state=SND_PCM_STATE_PREPARED;return 0;}
 static int snd_pcm_start(snd_pcm_t *p){++startCalls;if(startResult<0)return startResult;p->state=SND_PCM_STATE_RUNNING;return 0;}
 static int snd_pcm_drop(snd_pcm_t *p){++dropCalls;if(dropResult<0)return dropResult;p->state=SND_PCM_STATE_SETUP;return 0;}
-static long snd_pcm_readi(snd_pcm_t *p,void *data,snd_pcm_uframes_t count){(void)p;(void)data;(void)count;assert(readIndex<readCount);return readValues[readIndex++];}
+static long snd_pcm_readi(snd_pcm_t *p,void *data,snd_pcm_uframes_t count){(void)p;assert(readIndex<readCount);requestedFrames=count;long n=readValues[readIndex++];if(n>0&&(unsigned long)n<=count&&frameBytes>0){for(long f=0;f<n;++f){uint64_t v=generatedFrames++;for(long b=0;b<frameBytes;++b)((unsigned char*)data)[f*frameBytes+b]=(unsigned char)(v>>(8*(b%8)));}}return n;}
 static int snd_pcm_wait(snd_pcm_t *p,int ms){(void)p;assert(ms==100);++waitCalls;return waitResult;}
 static int snd_pcm_recover(snd_pcm_t *p,int n,int silent){(void)p;(void)n;(void)silent;return recoverResult;}
-static void *OsalMemCalloc(size_t n){return calloc(1,n);}
+static int allocFail;
+static void *OsalMemCalloc(size_t n){return allocFail?NULL:calloc(1,n);}
 static void SndElementItemInit(struct AlsaMixerCtlElement *m){memset(m,0,sizeof(*m));}
 static void *CaptureGetPriData(struct AlsaCapture *c){return c?c->priData:NULL;}
 static void CaptureSetPriData(struct AlsaCapture *c,void *p){c->priData=p;}
@@ -111,5 +145,20 @@ static int snd_pcm_nonblock(snd_pcm_t *p,int flag){(void)p;assert(flag==1);retur
 static int SndOpenMixer(struct AlsaSoundCard*c){(void)c;++mixerCalls;return -1;}
 static int ResetCaptureParams(struct AlsaSoundCard*c,int n){(void)c;(void)n;return -1;}
 
-static long frameBytes=4;
 static snd_pcm_sframes_t snd_pcm_frames_to_bytes(snd_pcm_t*p,snd_pcm_sframes_t frames){(void)p;return frameBytes*frames;}
+
+static snd_pcm_uframes_t actualPeriod=4096,actualBuffer=24000;
+static int getParamsResult;
+static int snd_pcm_get_params(snd_pcm_t*p,snd_pcm_uframes_t*b,snd_pcm_uframes_t*f){(void)p;*b=actualBuffer;*f=actualPeriod;return getParamsResult;}
+static unsigned int appliedRate=48000,appliedChannels=2,nearRate=48000;
+static int appliedFormat=2,appliedCount,currentCount,currentResult,formatResult,applyResult;
+#define snd_pcm_hw_params_alloca(p) do{*(p)=alloca(sizeof(snd_pcm_hw_params_t));memset(*(p),0,sizeof(snd_pcm_hw_params_t));}while(0)
+static int snd_pcm_hw_params_any(snd_pcm_t*p,snd_pcm_hw_params_t*x){(void)p;memset(x,0,sizeof(*x));return 0;}
+static int snd_pcm_hw_params_set_rate_near(snd_pcm_t*p,snd_pcm_hw_params_t*x,unsigned int*r,int*d){(void)p;(void)d;*r=nearRate;x->rate=*r;return 0;}
+static int snd_pcm_hw_params(snd_pcm_t*p,snd_pcm_hw_params_t*x){(void)p;(void)x;if(applyResult)return applyResult;++appliedCount;return 0;}
+static int snd_pcm_hw_params_current(snd_pcm_t*p,snd_pcm_hw_params_t*x){(void)p;assert(appliedCount>0);++currentCount;x->rate=appliedRate;x->channels=appliedChannels;x->format=appliedFormat;return currentResult;}
+static int snd_pcm_hw_params_get_rate(const snd_pcm_hw_params_t*x,unsigned int*r,int*d){*r=x->rate;*d=0;return 0;}
+static int snd_pcm_hw_params_get_channels(const snd_pcm_hw_params_t*x,unsigned int*c){*c=x->channels;return 0;}
+static int snd_pcm_hw_params_get_format(const snd_pcm_hw_params_t*x,snd_pcm_format_t*f){*f=x->format;return 0;}
+static int snd_pcm_hw_params_can_pause(const snd_pcm_hw_params_t*x){(void)x;return 0;}
+static int SndConverAlsaPcmFormat(const struct AudioHwParams*x,snd_pcm_format_t*f){*f=x->format;return formatResult;}

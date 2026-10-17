@@ -25,6 +25,7 @@ from batch_system_gnss_controller import encode_sample, read_exact
 from guest_ui import GuestUi
 from hdc_transport import failed as hdc_failed
 from run_normal_hap_probe import require_normal_identity
+import batch_system_live_mappings as live_mappings
 
 
 class JournalNotReady(ValueError):
@@ -216,12 +217,49 @@ class Capture:
             result[kind] = trace(dest / (kind + '.json'), kind)
         return result
 
+    def mapping_snapshot(self, name, *, pid=None, libraries=()):
+        """Retain one complete raw attempt; its gaps never become absence.
+
+        Root's GNSS driver uses exact-PID cuts before/after its actual Dump and
+        live_mappings.bind_trace_process with same-image contract descriptors.
+        A single-PID positive cut cannot replace a complete all-PID absence scan.
+        No readiness retry or successful last printf hides a query failure.
+        """
+        if re.fullmatch('[A-Za-z0-9_-]{1,96}', name) is None:
+            raise ValueError('safe unique actual maps capture label required')
+        boot_id = self.report.get('boot_id')
+        scan_nonce = secrets.token_hex(16)
+        script = live_mappings.snapshot_script(scan_nonce, boot_id, pid=pid, libraries=libraries)
+        prefix = self.output / (name + '-proc-maps')
+        script_path = prefix.with_suffix('.sh')
+        with script_path.open('x') as stream: stream.write(script)
+        entry = dict(nonce=scan_nonce, boot_id=boot_id, pid=pid, libraries=list(libraries),
+                     script=dict(path=str(script_path), sha256=digest(script_path)),
+                     parser=dict(path=str(Path(live_mappings.__file__).resolve()), sha256=digest(live_mappings.__file__)),
+                     command_index=len(self.report['commands']), status='raw_not_yet_parsed')
+        self.report.setdefault('mapping_snapshots', []).append(entry)
+        # shell() preserves command stdout/stderr and its HDC/guest result even
+        # when it raises. A passing shell result still needs every framed rc.
+        raw = self.shell(script, name)
+        path = prefix.with_suffix('.raw.txt')
+        with path.open('x') as stream: stream.write(raw + '\n')
+        entry['raw'] = dict(path=str(path), sha256=digest(path))
+        snapshot = live_mappings.parse_snapshot(path.read_text(), scan_nonce, boot_id, pid=pid, libraries=libraries)
+        parsed = prefix.with_suffix('.json')
+        with parsed.open('x') as stream:
+            json.dump({k: v for k, v in snapshot.items() if k != 'raw'}, stream, indent=2, allow_nan=False); stream.write('\n')
+        entry.update(parsed=dict(path=str(parsed), sha256=digest(parsed)),
+                     status='complete_observation_ONLY' if snapshot['complete'] else 'gap_raw_evidence_preserved',
+                     complete=snapshot['complete'], global_absence_eligible=snapshot['global_absence_eligible'])
+        live_mappings.verify_evidence(entry, self.report['commands'][entry['command_index']], target=self.a.target)
+        return dict(snapshot=snapshot, evidence=entry)
+
     def mappings(self, name):
-        pattern = 'vendorGnssAdapter.so|libgnss_interface_service_2.0.z.so|liblbsservice_gnss.z.so|libhdi_sensor_impl.z.so|libsensor_driver.z.so|libdevicestatus_algo.z.so|libdevicestatus_service.z.so|libdevicestatus_mock.z.so'
-        script = 'for f in /proc/[0-9]*/maps; do if grep -Eq ' + shlex.quote(pattern) + ' "$f" 2>/dev/null; then '
-        script += 'p=${f%/maps}; printf "\\nPROCESS %s\\n" "$p"; cat "$p/status"; cat "$p/attr/current"; grep -E ' + shlex.quote(pattern) + ' "$f"; fi; done'
-        value = self.shell(script, name)
-        path = self.output / (name + '.txt'); path.write_text(value + '\n')
+        observation = self.mapping_snapshot(name)
+        value = live_mappings.legacy_text(observation['snapshot'])
+        path = self.output / (name + '.txt')
+        with path.open('x') as stream: stream.write(value)
+        observation['evidence']['legacy_view'] = dict(path=str(path), sha256=digest(path))
         return str(path)
 
     def run(self):

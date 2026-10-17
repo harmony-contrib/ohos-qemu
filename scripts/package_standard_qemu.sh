@@ -3190,6 +3190,21 @@ PY
     python3 "${SCRIPT_DIR}/verify_contacts_theme_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/contacts-theme-provider-evidence.json"
+    privacy_source_revision="$(python3 - "${SOURCE_ROOT}/vendor/ohemu/virt/virt_${DEVICE_TYPE}_full.meta.json" "${QEMU_BUILD_INPUT_MANIFEST:-}" <<'PYREV'
+import json, re, sys
+from pathlib import Path
+revision = json.loads(Path(sys.argv[1]).read_text())["privacycenter_provider"]["native_source_revision"]
+if not isinstance(revision, str) or not re.fullmatch("[0-9a-f]{40}", revision):
+    raise ValueError("actual PrivacyCenter recipe commit missing")
+if sys.argv[2] and json.loads(Path(sys.argv[2]).read_text())["source_git_revision"] != revision:
+    raise ValueError("PrivacyCenter recipe differs from packaged build inputs")
+print(revision)
+PYREV
+)"
+    python3 "${SCRIPT_DIR}/verify_privacycenter_provider_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
+      --source-root "${SOURCE_ROOT}" --native-source-revision "${privacy_source_revision}" \
+      --output "${PACKAGE_DIR}/privacycenter-provider-evidence.json"
     python3 "${SCRIPT_DIR}/verify_font_assets_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --output "${PACKAGE_DIR}/font-assets-evidence.json"
     python3 "${SCRIPT_DIR}/verify_boot_assets_image.py" \

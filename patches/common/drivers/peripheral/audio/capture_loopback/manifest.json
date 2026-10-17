@@ -17,7 +17,7 @@
     },
     "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c": {
       "before": "3a772a14fc4a374bcf5a229637bc368cd16dc51d5c03671315663d2c94860633",
-      "after": "c605a075913421625981400e11fd89248dabc1b3fd8249d02708301638cfe623",
+      "after": "a5a3456acdfb2e7792ff7f46455c1bf922789388d7b52852c0dbddea4b90d8cc",
       "payload": "alsa_snd_capture.c"
     },
     "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c": {
@@ -29,6 +29,11 @@
       "before": "1da3601cbc3d710c8724fbc5a0b9a96d91af8b8df821e02bb3d7018f0ac10eea",
       "after": "7e091fa9dcac9239d66c719d6cc61626094542dd15e51693b521e9a1fb3cc6be",
       "payload": "qemu_vendor_capture.c"
+    },
+    "drivers/peripheral/audio/hdi_service/primary_impl/src/audio_capture.c": {
+      "before": "39a1999183b2fc836d96d216a108601a7e58abae0d72983194d347630c7ba363",
+      "after": "0a69f7b026a7e26678dba0403362b9108eb241661500aab3467b5316a3657dd1",
+      "payload": "audio_capture.c"
     }
   }
 }

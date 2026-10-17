@@ -38,7 +38,7 @@ export default class PickerCases {
     this.input = input;
     this.context = context;
     this.changed = changed;
-    this.journal = new ResultJournal(context.filesDir, input.runId, input.launchId, input.caseId);
+    this.journal = new ResultJournal(context.getApplicationContext().filesDir, input.runId, input.launchId, input.caseId);
   }
 
   private observe(call: Invocation, event: string): Observation {

@@ -1,5 +1,7 @@
 """Exact patch/map/package guard regressions, not QEMU PCM evidence."""
 import hashlib
+import importlib.util
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -13,17 +15,49 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from verify_qemu_audio_policy_image import contract, verify_image
 
 
-def patch_images():
+def historical_images():
     text = (COMPONENT / '0001-map-normal-audio-routes-with-7.0-pipe-schema.patch').read_text()
-    before, after = [], []
-    for line in text.splitlines():
-        if line.startswith(('--- a/', '+++ b/')):
+    hunk = text[text.index('@@'):].splitlines(True)[1:]
+    before = ''.join(line[1:] for line in hunk if line[:1] in ('-', ' ')).encode()
+    previous = ''.join(line[1:] for line in hunk if line[:1] in ('+', ' ')).encode()
+    return before, previous
+
+
+def apply_exact_delta(before, text):
+    source = before.decode().splitlines(True)
+    output, position = [], 0
+    lines, index = text.splitlines(True), 0
+    while index < len(lines):
+        line = lines[index]
+        if not line.startswith('@@'):
+            index += 1
             continue
-        if line.startswith('-'):
-            before.append(line[1:])
-        if line.startswith('+'):
-            after.append(line[1:])
-    return ('\n'.join(before) + '\n').encode(), ('\n'.join(after) + '\n').encode()
+        match = re.match(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@', line)
+        if match is None:
+            raise ValueError('invalid unified delta')
+        start = int(match.group(1)) - 1
+        if start < position:
+            raise ValueError('overlapping delta')
+        output.extend(source[position:start])
+        position = start
+        index += 1
+        while index < len(lines) and not lines[index].startswith('@@'):
+            row = lines[index]
+            if row[:1] in ('-', ' '):
+                if position >= len(source) or source[position] != row[1:]:
+                    raise ValueError('delta preimage differs')
+                position += 1
+            if row[:1] in ('+', ' '):
+                output.append(row[1:])
+            index += 1
+    output.extend(source[position:])
+    return ''.join(output).encode()
+
+
+def patch_images():
+    before, previous = historical_images()
+    after = apply_exact_delta(previous, (COMPONENT / '0002-align-qemu-capture-declared-rate.patch').read_text())
+    return before, after
 
 
 class AudioPolicy7Tests(unittest.TestCase):
@@ -36,12 +70,71 @@ class AudioPolicy7Tests(unittest.TestCase):
 
     def test_exact_original_and_candidate_patch_bytes(self):
         before, after = patch_images()
+        _, previous = historical_images()
+        self.assertEqual(hashlib.sha256(previous).hexdigest(), contract.PREVIOUS_REPAIRED_SHA256)
+        self.assertEqual(after, (COMPONENT / 'files/audio_policy_config_new.xml').read_bytes())
         self.assertEqual(hashlib.sha256(before).hexdigest(), contract.ORIGINAL_SHA256)
         self.assertEqual(hashlib.sha256(after).hexdigest(), contract.REPAIRED_SHA256)
         result = contract.validate_document(after)
         self.assertEqual((result['pipes'], result['device_routes']), (5, 8))
+        for old in (before, previous):
+            with self.assertRaises(ValueError):
+                contract.validate_document(old)
+        # The exact previous rate must also fail semantic validation without a hash guard.
         with self.assertRaises(ValueError):
-            contract.validate_document(before)
+            contract.validate_document(previous, require_hash=False)
+
+    def test_capture_rate_and_render_rate_are_distinct_fixed_contracts(self):
+        for pipe, rate in (('primary_input', '44100'), ('primary_output', '48000')):
+            root = self.candidate()
+            prop = root.find('./adapters/adapter[@name="primary"]/pipes/pipe[@name="' + pipe + '"]/streamProps/streamProp')
+            prop.set('sampleRates', rate)
+            self.assert_rejected(root)
+
+    def test_incremental_patch_refuses_unknown_or_already_new_preimage(self):
+        _, previous = historical_images()
+        text = (COMPONENT / '0002-align-qemu-capture-declared-rate.patch').read_text()
+        current = apply_exact_delta(previous, text)
+        with self.assertRaises(ValueError):
+            apply_exact_delta(current, text)
+        with self.assertRaises(ValueError):
+            apply_exact_delta(previous.replace(b'sampleRates="44100"', b'sampleRates="96000"'), text)
+
+    def test_complete_original_previous_final_install_and_rollback(self):
+        spec = importlib.util.spec_from_file_location('policy_transaction_test', COMPONENT / 'apply.py')
+        install = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(install)
+        before, previous = historical_images()
+        final = patch_images()[1]
+        for initial, expected in ((before, 'before'), (previous, 'previous'), (final, 'after')):
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                target = root / next(iter(install.MANIFEST['files']))
+                target.parent.mkdir(parents=True)
+                target.write_bytes(initial)
+                # External source revision/parser hash validation has its separate tests.
+                with patch.object(install.check, 'validate_source', return_value={}):
+                    self.assertEqual(install.inspect(root), expected)
+                    if expected != 'after':
+                        writer = install.atomic_write
+                        def publish_then_fail(path, data, mode):
+                            writer(path, data, mode)
+                            if data == final:
+                                raise OSError('failure after actual replacement')
+                        with patch.object(install, 'atomic_write', side_effect=publish_then_fail):
+                            with self.assertRaises(OSError):
+                                install.run(root)
+                        self.assertEqual(target.read_bytes(), initial)
+                        self.assertEqual(install.inspect(root), expected)
+                    install.run(root)
+                    install.run(root)
+                    self.assertTrue(install.validate(root, True))
+                    self.assertEqual(target.read_bytes(), final)
+                    target.write_bytes(final + b'\n<!-- unknown -->\n')
+                    snapshot = target.read_bytes()
+                    with self.assertRaises(ValueError):
+                        install.run(root)
+                    self.assertEqual(target.read_bytes(), snapshot)
 
     def test_missing_and_wrong_normal_route_flags_rejected(self):
         for value in (None, 'AUDIO_OUTPUT_FLAG_FAST', 'AUDIO_FLAG_NORMAL', '0'):

@@ -38,7 +38,7 @@ export default class SeedStore {
     this.context = context;
     this.request = request;
     this.prefix = 'QCP_' + request.runId + '_';
-    this.path = context.filesDir + '/contact-seed-' + request.runId + '.jsonl';
+    this.path = context.getApplicationContext().filesDir + '/contact-seed-' + request.runId + '.jsonl';
   }
 
   private record(event: string, api: string, raw: string, error?: Error): void {

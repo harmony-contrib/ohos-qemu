@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from test_batch_apps_contact_picker_runtime import ams_fixture
+from test_batch_apps_contact_picker_runtime import ams_fixture, provider_fixture
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -186,7 +186,10 @@ class RuntimeDriver(unittest.TestCase):
         self.guest = ModelGuest(self.root, self.records)
         self.ui = ModelUi(self.root, self.guest)
         self.driver = driver.Driver(self.guest, self.ui, self.root, 'host_model', '/observer', sleep=lambda _: None)
-        self.driver.caller_uid, self.driver.contacts_uid = 20000100, 20010011
+        self.driver.caller_uid = 20000100
+        bms = self.root / 'provider-bms.log'
+        bms.write_text(driver.PROVIDER + ':\n' + json.dumps(provider_fixture()))
+        self.driver.provider_bms = driver.descriptor(bms)
         self.seed = {'contacts': self.records}
 
     def test_seed_project_only_two_user_permissions_and_real_startup_resources(self):
@@ -213,6 +216,37 @@ class RuntimeDriver(unittest.TestCase):
             self.assertEqual(driver.application_info(json.dumps({'applicationInfo': app}), bundle)['accessTokenId'], 123)
             app.update(isSystemApp=not seed)
             with self.assertRaises(driver.verifier.EvidenceError): driver.application_info(json.dumps({'applicationInfo': app}), bundle)
+
+    def test_caller_and_seed_still_require_account100(self):
+        for bundle in (driver.CALLER, driver.SEED):
+            seed = bundle == driver.SEED
+            for uid in (10004, 10040, 20210040, True):
+                app = {'bundleName': bundle, 'isSystemApp': seed,
+                       'appPrivilegeLevel': 'system_basic' if seed else 'normal', 'uid': uid, 'accessTokenId': 123}
+                with self.subTest(bundle=bundle, uid=uid), self.assertRaises(driver.verifier.EvidenceError):
+                    driver.application_info(json.dumps({'applicationInfo': app}), bundle)
+
+    def test_failure_tree_error_still_collects_png_without_changing_failure(self):
+        calls = []
+        proof = self.root / 'failure-observation'; proof.write_text('host observation only')
+        self.driver.raw = lambda script, stem: (self.guest.env['boot_id'], driver.descriptor(proof))
+        self.driver.layout = lambda stem: (_ for _ in ()).throw(driver.LayoutNotReady('no window nodes'))
+        self.driver.screen = lambda stem: (calls.append(stem) or driver.descriptor(proof))
+        result = self.driver.failure_diagnostics('host-failure')
+        self.assertTrue(result['same_boot_verified'])
+        self.assertIn('screenshot', result)
+        self.assertNotIn('layout', result)
+        self.assertEqual(['layout'], [row['observation'] for row in result['errors']])
+        self.assertEqual(['host-failure-pixels'], calls)
+        self.assertNotIn('passed', result)
+
+    def test_failure_capture_other_boot_does_not_read_ui(self):
+        self.driver.raw = lambda script, stem: ('different-boot', {})
+        self.driver.screen = lambda stem: self.fail('must not observe a replacement boot')
+        self.driver.layout = lambda stem: self.fail('must not observe a replacement boot')
+        result = self.driver.failure_diagnostics('host-failure')
+        self.assertEqual(['boot_before'], [row['observation'] for row in result['errors']])
+        self.assertNotIn('same_boot_verified', result)
 
     def test_real_ui_flow_205_clears_and_selects_all_before_done(self):
         self.driver.case('options-promise-205', self.seed)
@@ -267,7 +301,7 @@ class RuntimeDriver(unittest.TestCase):
         actions = [row for row in self.driver.evidence['events'] if row['kind'] in ('done', 'cancel')]
         self.assertEqual(len(actions), 9)
         for action in actions:
-            binding = driver.verifier.closed_session(action, 20010011, 20000100)
+            binding = driver.verifier.closed_session(action, self.driver.provider_bms, 20000100)
             self.assertEqual(binding['host_pid'], self.guest.pid)
             view = driver.verifier.picker_view(json.loads(Path(action['layout']['path']).read_text()))
             self.assertTrue(view['host_owned'])
@@ -337,19 +371,20 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const {stripTypeScriptTypes}=require('node:module');
 let source=fs.readFileSync(process.argv[1]+'/SeedStore.ets','utf8').replace(/^import .*;\n/gm,'').replace(/export default /g,'').replace(/export /g,'');
 source=stripTypeScriptTypes(source,{mode:'strip'})+'\nglobalThis.Store=SeedStore;globalThis.Request=SeedRequest';
-const files=new Map(), db=[],calls=[];let next=1,grant=true,failAt=0,deleteFail=false,queryFail=false;
+const files=new Map(), db=[],calls=[];
+const abilityContext={filesDir:'/haps/entry/files',getApplicationContext:()=>({filesDir:'/files'})};let next=1,grant=true,failAt=0,deleteFail=false,queryFail=false;
 const ctx={console,JSON,Date,Number,Set,Error,Promise,fs:{OpenMode:{CREATE:1,READ_WRITE:2,APPEND:4},openSync:p=>({fd:p}),
 writeSync:(p,s)=>files.set(p,(files.get(p)||'')+s),closeSync:()=>{}},
 abilityAccessCtrl:{createAtManager:()=>({requestPermissionsFromUser:async(c,p)=>{
-assert.deepEqual(Array.from(p),['ohos.permission.READ_CONTACTS','ohos.permission.WRITE_CONTACTS']);return{authResults:grant?[0,0]:[-1,-1]}}})},
-contact:{queryContacts:async()=>{calls.push('query');if(queryFail)throw new Error('query failed');return JSON.parse(JSON.stringify(db))},
-addContact:async(c,info)=>{calls.push('add');if(failAt&&next===failAt)throw new Error('add failed');const id=next++;
+assert.equal(c,abilityContext);assert.deepEqual(Array.from(p),['ohos.permission.READ_CONTACTS','ohos.permission.WRITE_CONTACTS']);return{authResults:grant?[0,0]:[-1,-1]}}})},
+contact:{queryContacts:async(c)=>{assert.equal(c,abilityContext);calls.push('query');if(queryFail)throw new Error('query failed');return JSON.parse(JSON.stringify(db))},
+addContact:async(c,info)=>{assert.equal(c,abilityContext);calls.push('add');if(failAt&&next===failAt)throw new Error('add failed');const id=next++;
 db.push({...JSON.parse(JSON.stringify(info)),id,key:'real-key-'+id});return id},
-deleteContact:async(c,key)=>{calls.push('delete');if(deleteFail)throw new Error('delete failed');const i=db.findIndex(r=>r.key===key);assert.ok(i>=0);db.splice(i,1)}}};
+deleteContact:async(c,key)=>{assert.equal(c,abilityContext);calls.push('delete');if(deleteFail)throw new Error('delete failed');const i=db.findIndex(r=>r.key===key);assert.ok(i>=0);db.splice(i,1)}}};
 vm.createContext(ctx);vm.runInContext(source,ctx);
 let serial=0;
 async function run(mode,runId='actual_store_host'){const r=new ctx.Request();r.runId=runId;r.mode=mode;r.operationId='op_'+(++serial);
-const store=new ctx.Store({filesDir:'/files'},r);await store.execute();return files.get('/files/contact-seed-'+runId+'.jsonl').trim().split('\n').map(JSON.parse).filter(x=>x.operation_id===r.operationId)};
+const store=new ctx.Store(abilityContext,r);await store.execute();return files.get('/files/contact-seed-'+runId+'.jsonl').trim().split('\n').map(JSON.parse).filter(x=>x.operation_id===r.operationId)};
 (async()=>{
 let rows=await run('create');assert.equal(db.length,205);assert.equal(rows.filter(x=>x.event==='created').length,205);
 assert.equal(JSON.parse(rows.find(x=>x.event==='readback').raw_json).length,205);assert.equal(rows.at(-1).event,'complete');

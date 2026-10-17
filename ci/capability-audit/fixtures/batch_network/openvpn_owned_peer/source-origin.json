@@ -1,0 +1,25 @@
+{
+  "schema": "frozen-owned-peer-fixture-io-derivation/v1",
+  "scope": "source-only_NOT_SDK_or_guest_or_TLS_TUN_proof",
+  "replacement": {
+    "before": "this.context.filesDir",
+    "after": "this.context.getApplicationContext().filesDir",
+    "count_per_file": 1
+  },
+  "sources": {
+    "VpnPeerEntryAbility.ets": {
+      "origin": ".tmp/parallel-capability-20261016/openvpn-owned-peer-review/fixtures/VpnPeerEntryAbility.ets",
+      "origin_sha256": "f5eca699439836b5f039c03fc9690d1ed2e2affe7353ac58192c6bb50e4849e6",
+      "origin_bytes": 4538,
+      "derived_sha256": "4705b914ace8b0ad0d1522ac4ad3da56cdfe7781281a6d2be98c441ab9966742",
+      "derived_bytes": 4562
+    },
+    "InternetNonceEntryAbility.ets": {
+      "origin": ".tmp/parallel-capability-20261016/openvpn-owned-peer-review/fixtures/InternetNonceEntryAbility.ets",
+      "origin_sha256": "e6e41ebcffbcbc6130445703d287b42470971930539390d83f363b8f78520f96",
+      "origin_bytes": 5991,
+      "derived_sha256": "352c865190d3c514832f71b8c3c04280c5071feb2aeccbdb0203a1a46e22188f",
+      "derived_bytes": 6015
+    }
+  }
+}

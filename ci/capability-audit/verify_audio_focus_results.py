@@ -308,10 +308,11 @@ def verify(args):
                      'source_frames': 48000, 'expected_frames': 2880000}
     if common.get('producer_configuration') != configuration:
         raise ValueError('actual focus producer configuration differs')
+    from guest_process_identity import producer_rows
     producer = capture['producer']
     path = Path(producer['log'])
     if (producer.get('host_exit_code') != 0 or sha(path) != producer['log_sha256'] or
-            [json.loads(l) for l in path.read_text().splitlines() if l.strip()] != [
+            producer_rows(path.read_text(), producer, remote=capture['remote_root_directory'], repeat=60, timeout_ms=90000) != [
                 {'event': 'feeding', 'device': 'hw:CARD=QemuCapture,DEV=1,SUBDEV=0', 'rate': 48000, 'channels': 2, 'bytes': 192000},
                 {'event': 'played', 'frames': 2880000, 'rate': 48000, 'channels': 2, 'repeats': 60, 'source_bytes': 192000}]):
         raise ValueError('actual independent focus PCM producer did not finish the exact source')
@@ -338,6 +339,24 @@ def verify(args):
         if (process.get('uid') != uid or process.get('pid') != actor['pid'] or type(process.get('pid')) is not int or
                 process['pid'] <= 0 or type(process.get('starttime')) is not int or process['starttime'] <= 0):
             raise ValueError('actual same-process focus lifecycle missing')
+        from guest_process_identity import identity_shell
+        from verify_audio_capture_results import microphone_shell_body
+        process_rows = actor.get('process_observations', [])
+        labels = [row.get('label') for row in process_rows]
+        if labels not in (['focus-process-before', 'focus-same-process-after'],
+                          ['focus-process-before', 'focus-same-process-before-VOIP', 'focus-same-process-after']):
+            raise ValueError('original ordered process observations required for focus lifetime')
+        process_commands = []
+        for row in process_rows:
+            raw, command = microphone_shell_body(capture, row['observation'], identity_shell(bundle))
+            fields = raw.split()
+            if (len(fields) != 6 or any(re.fullmatch('[0-9]+', field) is None for field in fields) or
+                    list(map(int, fields)) != [process['pid'], process['starttime'], uid, uid, uid, uid] or
+                    row['identity'] != process):
+                raise ValueError('focus summary differs from original kernel generation/all-UID output')
+            process_commands.append(command)
+        if process_commands != sorted(set(process_commands)):
+            raise ValueError('focus process observations reused or reordered')
         inputs = json.loads(referenced(actor, 'inputs').read_text())
         if inputs.get('kind') != 'audio-event' or inputs.get('mode') != mode or inputs.get('run_id') != run or inputs.get('bundle') != bundle or inputs.get('arch') != args.arch:
             raise ValueError('actual focus HAP role/source differs')

@@ -174,6 +174,29 @@ def mapped_processes(text):
     return result
 
 
+def verify_mapping_replays(report, target):
+    """Global absence must come from two complete original command observations."""
+    from batch_system_live_mappings import verify_evidence
+    entries = report.get('mapping_snapshots', [])
+    require(isinstance(entries, list) and len(entries) == 2,
+            'two complete retained global mappings observations required')
+    previous = -1
+    nonces = set()
+    for generation, entry in enumerate(entries, 1):
+        require(entry.get('nonce') not in nonces and entry.get('boot_id') == report.get('boot_id'),
+                'fresh distinct mappings observations from the same boot required')
+        nonces.add(entry['nonce'])
+        index = entry.get('command_index')
+        require(type(index) is int and previous < index < len(report['commands']),
+                'original mappings command missing, reused or reordered')
+        snapshot = verify_evidence(entry, report['commands'][index], target=target)
+        require(snapshot['complete'] is True and snapshot['global_absence_eligible'] is True and entry.get('pid') is None,
+                'unread or partial process enumeration cannot prove global absence')
+        require(entry.get('legacy_view', {}).get('path') == report.get('mappings_' + str(generation)),
+                'ordinary positive check uses another or reordered mappings view')
+        previous = index
+
+
 def verify(root, archive, boot_path, sdk):
     from run_normal_hap_probe import require_normal_identity
     root, archive, boot_path, sdk = map(Path, (root, archive, boot_path, sdk))
@@ -190,6 +213,7 @@ def verify(root, archive, boot_path, sdk):
     for c in report['commands']:
         require(c.get('log') and digest(c['log']) == c['sha256'], 'actual command evidence changed')
     require(report['runner_sha256'] == digest(Path(__file__).with_name('batch_system_run_live_inputs.py')), 'capture runner source changed')
+    verify_mapping_replays(report, env['target'])
     project = Path(report['project']); verify_project(project, sdk, report['run_id'], report['arch'])
     require(digest(project / 'live-inputs-contract.json') == report['contract_sha256'] and
         digest(project / 'live-inputs-build.json') == report['build_sha256'], 'actual SDK contract/build changed')

@@ -25,6 +25,7 @@ import batch_apps_contact_picker_coordinator as signatures
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
 from guest_ui import GuestUi
 from spring_loading_input import OwnedPointer
+from guest_process_identity import starttime_shell, uids_shell
 
 HERE, FIX, ROLES = project.HERE, project.FIX, project.ROLES
 require, record, checked, sha, load = project.require, project.record, project.checked, project.sha, project.load
@@ -34,7 +35,7 @@ TOOLS = ('batch_media_audio_haptic_project.py', 'batch_media_audio_haptic_build_
          'batch_media_audio_haptic_build_callers.py', 'batch_media_audio_haptic_runtime.py', 'batch_media_audio_haptic_verify.py', 'batch_media_audio_capture_challenge.py',
          'batch_media_knowledge_suite.py', 'batch_apps_contact_picker_coordinator.py', 'batch_media_wallpaper_artifacts.py',
          'batch_system_build_runtime_helpers.py', 'enclosing_acceptance_guest.py', 'guest_ui.py', 'spring_loading_input.py',
-         'hap_identity_binding.py')
+         'hap_identity_binding.py', 'guest_process_identity.py')
 
 INFO_CAPTURE_NOTICE = "warning: 'info capture' is deprecated since v10.2, to be removed\r\n"
 
@@ -42,11 +43,17 @@ INFO_CAPTURE_NOTICE = "warning: 'info capture' is deprecated since v10.2, to be 
 def capture_list_body(text):
     """Only the exact observed HMP info-capture prefix, preserving raw evidence.
 
-    This grammar applies exclusively to info capture replies. Other commands,
-    including wavcapture/stopcapture, have no observed notice allowance.
+    This grammar applies exclusively to info capture replies. Mutation commands
+    have their own exact observed notices, checked separately below.
     """
     require(isinstance(text, str), 'actual HMP capture listing must be text')
     return text.removeprefix(INFO_CAPTURE_NOTICE)
+
+
+def empty_capture_command_reply(text, command):
+    require(command in ('wavcapture', 'stopcapture'), 'reviewed capture command required')
+    notice = "warning: '" + command + "' is deprecated since v10.2, to be removed\r\n"
+    return isinstance(text, str) and text in ('', notice)
 
 
 def capture_list_empty(text):
@@ -97,7 +104,7 @@ class AudioCapture:
         # Mark ownership before sending; an ambiguous reply still needs cleanup.
         self.owned = True
         reply = self.hmp(f'wavcapture {self.path} {self.backend} 48000 16 2', phase + '-wavcapture')
-        require(reply == '', 'QEMU rejected actual WAV capture: ' + reply)
+        require(empty_capture_command_reply(reply, 'wavcapture'), 'QEMU rejected actual WAV capture: ' + reply)
         listing = self.hmp('info capture', phase + '-capture-owned')
         owned_capture_listing(listing, self.path)
 
@@ -105,7 +112,7 @@ class AudioCapture:
         require(self.owned and self.path is not None, 'no owned capture')
         listing = self.hmp('info capture', phase + '-capture-before-stop')
         owned_capture_listing(listing, self.path)
-        require(self.hmp('stopcapture 0', phase + '-stopcapture') == '', 'actual owned capture stop failed')
+        require(empty_capture_command_reply(self.hmp('stopcapture 0', phase + '-stopcapture'), 'stopcapture'), 'actual owned capture stop failed')
         ended = time.monotonic_ns()
         require(capture_list_empty(self.hmp('info capture', phase + '-capture-after-stop')), 'owned capture remains active')
         self.owned = False
@@ -156,6 +163,21 @@ class Collector(shared.Collector):
         self.installed = []; self.remote_created = False
         self.process = None; self.sampler_stream = None; self.sampler_row = None; self.sampler_pid = None
         self.capture = None
+
+    def failure_ui(self, bundle, phase):
+        row = dict(scope='diagnostic only; no ACK or completion claim', phase=phase, files=[], errors=[])
+        self.value.setdefault('failure_UI', []).append(row)
+        for name, operation in (
+                ('tree', lambda: self.ui.layout(bundle=bundle, label='failed-operation-tree')[1]),
+                ('PNG', lambda: self.ui.screenshot(label='failed-operation-screen'))):
+            try:
+                before = self.identity('failed-operation-' + name + '-boot-before')
+                artifact = record(operation())
+                after = self.identity('failed-operation-' + name + '-boot-after')
+                row['files'].append(dict(kind=name, artifact=artifact, boot_before=before, boot_after=after))
+            except Exception as error:
+                row['errors'].append(dict(kind=name, error=type(error).__name__+': '+str(error)))
+            self.persist()
 
     def files(self, role):
         return '/data/app/el2/100/base/' + ROLES[role][0] + '/files'
@@ -320,8 +342,15 @@ class Collector(shared.Collector):
         fields = raw[raw.rfind(')')+2:].split()
         require(len(fields) >= 20 and fields[19].isdigit(), 'owned observer kernel starttime missing')
         pid = str(self.sampler_pid)
-        script = ('if test -d /proc/' + pid + '; then test "$(readlink /proc/' + pid + '/exe)" = ' + self.remote +
-            '/sampler && test "$(awk \'{print $22}\' /proc/' + pid + '/stat)" = ' + fields[19] + ' && kill -TERM ' + pid + '; fi')
+        require(int(fields[19]) > 0, 'owned observer generation must be positive')
+        script = ('if test -d /proc/' + pid + '; then '
+            'task_sampler_start=$( ' + starttime_shell(pid) + ') || exit 1; '
+            'task_sampler_uids=$( ' + uids_shell(pid) + ') || exit 1; '
+            'task_sampler_exe=$(readlink /proc/' + pid + '/exe) || exit 1; '
+            'test "$task_sampler_start" = ' + fields[19] + ' && test "$task_sampler_uids" = "0 0 0 0" && '
+            'test "$task_sampler_exe" = ' + self.remote + '/sampler || exit 1; '
+            'task_sampler_final=$( ' + starttime_shell(pid) + ') || exit 1; '
+            'test "$task_sampler_final" = ' + fields[19] + ' && kill -TERM ' + pid + ' || exit 1; fi')
         self.observe(script, 'terminate-only-owned-stalled-read-only-sampler')
         self.process.wait(timeout=5)
         self.sampler_stream.close(); self.sampler_stream = None
@@ -364,7 +393,10 @@ class Collector(shared.Collector):
                 # following operation. Preserve that failure without 45s delay.
                 first = [r for r in records if r['operation_id'] == envelope['request']['operation_id']]
                 require(not any(r['event'] == 'error' for r in first) or following is None, 'paired public Start failed')
-            require(time.monotonic() < deadline, 'real public operation timed out: ' + phase); time.sleep(.2)
+            if time.monotonic() >= deadline:
+                self.failure_ui(bundle, phase)
+                raise ValueError('real public operation timed out: ' + phase)
+            time.sleep(.2)
         ended = self.identity('request-' + envelope['request']['operation_id'] + '-boot-after')
         after = self.pid(role, phase + '-after')
         for row in rows: row.update(journal=journal, end_boot=ended, pid_after=after, complete=True)

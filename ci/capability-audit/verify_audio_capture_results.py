@@ -185,7 +185,8 @@ def verify_transport(args, recorder=False, audio_event=False):
     if (runtime.get('status') != 'captured_NOT_independently_verified' or runtime.get('run_id') != run or
             runtime.get('archive_sha256') != archive_sha or runtime.get('boot_id') != args.boot_id or
             runtime.get('arch') != arch or type(runtime.get('expected_denied')) is not bool or
-            runtime.get('cleanup_errors') != [] or runtime.get('runner_sha256') != sha(Path(__file__).with_name('audio_capture_runtime.py'))):
+            runtime.get('cleanup_errors') != [] or runtime.get('runner_sha256') != sha(Path(__file__).with_name('audio_capture_runtime.py')) or
+            runtime.get('process_identity_helper_sha256') != sha(Path(__file__).with_name('guest_process_identity.py'))):
         raise ValueError('microphone runtime must belong to this exact archive/boot/ABI and cleanly completed run')
     denied = runtime['expected_denied']
     boot_path = Path(runtime['boot'])
@@ -348,11 +349,12 @@ def verify_tools(runtime, arch, *, parent_persona='audio-capture'):
 
 
 def verify_producer(runtime):
+    from guest_process_identity import producer_rows
     producer = runtime['producer']
     path = Path(producer['log'])
     if producer.get('host_exit_code') != 0 or sha(path) != producer['log_sha256']:
         raise ValueError('real independent PCM producer failed or its evidence changed')
-    rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    rows = producer_rows(path.read_text(), producer, remote=runtime['remote_root_directory'])
     expected = [{'event': 'feeding', 'device': 'hw:CARD=QemuCapture,DEV=1,SUBDEV=0',
                  'rate': 48000, 'channels': 2, 'bytes': 192000},
                 {'event': 'played', 'frames': 960000, 'rate': 48000, 'channels': 2,

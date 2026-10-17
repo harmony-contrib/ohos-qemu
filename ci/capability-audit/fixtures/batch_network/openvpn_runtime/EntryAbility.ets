@@ -21,12 +21,13 @@ export default class EntryAbility extends UIAbility {
   private operation: string = '';
   private token: number = 0;
   private boot: string = '';
+  private diagnostic: LocalStorage = new LocalStorage();
 
   private row(r: Request, event: string, code: number = 0, value: string = ''): void {
     const row: Row = { schema_version: 1, run_id: '__RUN__', boot_id: r.boot_id,
       operation_id: r.operation_id, action: r.action, sequence: ++this.sequence, uid: process.uid,
       pid: process.pid, token_id: this.token, event: event, code: code, value: value };
-    const file = fs.openSync(this.context.filesDir + '/openvpn-__RUN__.jsonl',
+    const file = fs.openSync(this.context.getApplicationContext().filesDir + '/openvpn-__RUN__.jsonl',
       fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.APPEND | fs.OpenMode.NOFOLLOW);
     try { fs.writeSync(file.fd, JSON.stringify(row) + '\n'); } finally { fs.closeSync(file); }
   }
@@ -38,6 +39,7 @@ export default class EntryAbility extends UIAbility {
       throw new Error('Foreign or repeated OpenVPN QA operation');
     }
     this.operation = r.operation_id; this.boot = r.boot_id;
+    this.diagnostic.setOrCreate('diagnostic', 'Actual request ' + r.action + ' ' + r.operation_id);
     this.token = bundleManager.getBundleInfoForSelfSync(
       bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION).appInfo.accessTokenId;
     this.row(r, 'begin');
@@ -76,8 +78,12 @@ export default class EntryAbility extends UIAbility {
     if (typeof serialized !== 'string') { throw new Error('Exact request string required'); }
     const request = JSON.parse(serialized) as Request;
     this.chain = this.chain.then(() => this.call(request));
+    this.chain.catch((error: BusinessError) => {
+      this.diagnostic.setOrCreate('diagnostic', 'Failed ' + String(error.code) + ' ' + String(error).slice(0, 512));
+      // Observe rejection only: the original chain stays rejected. No API completion or recovery.
+    });
   }
   onCreate(want: Want): void { this.receive(want); }
   onNewWant(want: Want): void { this.receive(want); }
-  onWindowStageCreate(stage: window.WindowStage): void { stage.loadContent('pages/Index'); }
+  onWindowStageCreate(stage: window.WindowStage): void { stage.loadContent('pages/Index', this.diagnostic); }
 }

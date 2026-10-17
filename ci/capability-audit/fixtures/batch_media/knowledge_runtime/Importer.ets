@@ -24,7 +24,7 @@ struct Index {
       store.access();
       if (store.request.action === 'remove-private') {
         for (const item of store.request.items) {
-          const path = store.context.filesDir + '/' + item.file_name;
+          const path = store.filesDir + '/' + item.file_name;
           if (!fs.accessSync(path)) { throw new Error('Owned private source missing before cleanup'); }
           fs.unlinkSync(path);
           store.append('private_removed', 'fs.unlinkSync', JSON.stringify({ case_id: item.case_id,
@@ -36,7 +36,7 @@ struct Index {
           const sourceUris: string[] = [];
           const configs: photoAccessHelper.PhotoCreationConfig[] = [];
           for (const item of store.request.items) {
-            const path = store.context.filesDir + '/' + item.file_name;
+            const path = store.filesDir + '/' + item.file_name;
             const size = fs.statSync(path).size;
             if (size < 100 || size > 4194304) { throw new Error('Invalid bounded private JPEG'); }
             const source = image.createImageSource(path);
@@ -58,7 +58,7 @@ struct Index {
           for (let index: number = 0; index < uris.length; ++index) {
             const item = store.request.items[index];
             if (!/^file:\/\/media\/Photo\/[1-9][0-9]*\//.test(uris[index])) { throw new Error('Invalid actual media URI'); }
-            const source = fs.openSync(store.context.filesDir + '/' + item.file_name, fs.OpenMode.READ_ONLY | fs.OpenMode.NOFOLLOW);
+            const source = fs.openSync(store.filesDir + '/' + item.file_name, fs.OpenMode.READ_ONLY | fs.OpenMode.NOFOLLOW);
             try {
               const size = fs.statSync(source.fd).size;
               const destination = fs.openSync(uris[index], fs.OpenMode.WRITE_ONLY);
@@ -87,8 +87,10 @@ struct Index {
       this.note = 'Actual import/cleanup operation finished';
     } catch (error) {
       const actual = error as BusinessError;
+      this.note = (store === undefined ? 'Request initialization failed;' : 'Operation failed;') +
+        ' application filesDir=' + (getContext(this) as common.UIAbilityContext).getApplicationContext().filesDir +
+        '; code=' + String(actual.code) + '; message=' + (actual.message ?? String(error));
       if (store !== undefined) { store.failure('importer', actual); }
-      this.note = 'Failed ' + actual.code + ': ' + actual.message;
     } finally { this.busy = false; }
   }
 

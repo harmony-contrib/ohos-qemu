@@ -355,7 +355,7 @@ class CoordinatorTests(unittest.TestCase):
         value = json.loads(receipt.read_text()); value['raw_readback'] = c.descriptor(raw_read); receipt.write_text(json.dumps(value))
         with self.assertRaisesRegex(ValueError, 'read-back cleanup failed'): c.verify_public_cleanup(receipt, 'nonce')
 
-    def cleanup_fixture(self):
+    def cleanup_fixture(self, *, with_ams=False):
         nonce, target = 'nonce', '127.0.0.1:5555'
         remote = '/data/local/tmp/nonce_observer'
         cleanup = {'public_CRUD_required': False, 'installed_bundles': [self.bundle], 'target': target,
@@ -370,6 +370,12 @@ class CoordinatorTests(unittest.TestCase):
         cleanup['processes'][self.bundle] = capture('process.json', ' '.join([remote, 'processes', self.bundle]),
             json.dumps({'api': 'AppMgrClient::GetAllRunningProcesses', 'error_code': 0, 'bundle_name': self.bundle, 'processes': []}))
         cleanup['BMS_after'] = capture('BMS.log', 'bm dump -a', 'com.ohos.contacts\ncom.ohos.settings\n')
+        if with_ams:
+            from test_batch_apps_contact_picker_runtime import ams_fixture, provider_fixture
+            cleanup.update(provider_uid=10004, caller_uid=20000100)
+            cleanup['provider_bms'] = capture('provider-BMS.log', 'bm dump -n ' + c.driver.PROVIDER,
+                c.driver.PROVIDER + ':\n' + json.dumps(provider_fixture()))
+            cleanup['AMS_after'] = capture('AMS.log', 'aa dump -a -u 100', ams_fixture([]))
         cleanup['observer_removal'] = capture('observer.log', 'rm -f ' + remote + ' && test ! -e ' + remote, '')
         return cleanup
 
@@ -379,6 +385,19 @@ class CoordinatorTests(unittest.TestCase):
         log = Path(row['log']); log.write_text('different raw output\n__QEMU_CHILD_EXIT_' + 'a' * 32 + '__=0\n')
         row['sha256'] = c.verifier.sha(log)
         with self.assertRaisesRegex(ValueError, 'actual successful guest output'): c.verify_resources_cleanup(cleanup, 'nonce')
+
+    def test_cleanup_singleton_binding_requires_actual_bms_transport_and_not_claimed_uid(self):
+        cleanup = self.cleanup_fixture(with_ams=True)
+        c.verify_resources_cleanup(cleanup, 'nonce', cleanup['target'])
+        bound = cleanup.pop('provider_bms')
+        with self.assertRaisesRegex(ValueError, 'singleton cleanup BMS binding'):
+            c.verify_resources_cleanup(cleanup, 'nonce')
+        cleanup['provider_bms'] = bound; cleanup['provider_uid'] = 20010004
+        with self.assertRaisesRegex(ValueError, 'differs from actual BMS'):
+            c.verify_resources_cleanup(cleanup, 'nonce')
+        cleanup['provider_uid'] = 10004
+        cleanup['captures'][bound['path']]['script'] = 'bm dump -n foreign.bundle'
+        with self.assertRaises(ValueError): c.verify_resources_cleanup(cleanup, 'nonce')
 
     def test_cleanup_rejects_wrong_guest(self):
         cleanup = self.cleanup_fixture()

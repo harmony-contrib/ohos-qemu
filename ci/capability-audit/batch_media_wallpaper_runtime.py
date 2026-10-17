@@ -142,6 +142,46 @@ class Runtime:
         path.write_text(json.dumps(self.value, ensure_ascii=False, indent=2) + '\n')
         return path
 
+    def capture_failure(self):
+        """Observe a real failed UI without actions, ACKs or acceptance claims."""
+        result = {'scope': 'same_boot_failure_UI_ONLY_NOT_runtime_or_cleanup_proof',
+                  'boot_id': self.boot_id, 'errors': []}
+        self.value.setdefault('failure_diagnostics', []).append(result)
+        # Coordinator actions may already have expired. Use the same bounded
+        # transport and guest health checks for read-only diagnosis only; never
+        # reset the action deadline or let this path publish an ACK.
+        ui = GuestUi(lambda argv, label: Runtime.command(self, argv, label),
+                     self.args.hdc, self.guest.target, self.output / 'failure-ui')
+        def boot(label):
+            raw = ui.shell('cat /proc/sys/kernel/random/boot_id', label)
+            path = self.output / (label + '.txt')
+            with path.open('x') as stream:
+                stream.write(raw)
+            result[label] = record(path)
+            if raw.strip() != self.boot_id:
+                raise ValueError('failure UI belongs to another kernel boot')
+        prefix = 'failure-' + str(len(self.value['failure_diagnostics']))
+        try:
+            boot(prefix + '-boot-before')
+        except Exception as error:
+            result['errors'].append({'observation': 'boot_before', 'error': str(error)})
+            self.save()
+            return result
+        for name, capture in [
+                ('layout', lambda: record(ui.layout(label=prefix + '-tree')[1])),
+                ('screenshot', lambda: record(ui.screenshot(label=prefix + '-pixels')))]:
+            try:
+                result[name] = capture()
+            except Exception as error:
+                result['errors'].append({'observation': name, 'error': str(error)})
+        try:
+            boot(prefix + '-boot-after')
+            result['same_boot_verified'] = True
+        except Exception as error:
+            result['errors'].append({'observation': 'boot_after', 'error': str(error)})
+        self.save()
+        return result
+
     def command(self, argv, label):
         self.guest.healthy()
         argv = list(map(str, argv))
@@ -429,6 +469,10 @@ def main():
         if runtime:
             runtime.value['status'] = 'fail'
             runtime.value['failures'].append(type(error).__name__ + ': ' + str(error))
+            try:
+                runtime.capture_failure()
+            except Exception as capture_error:
+                runtime.value['failure_capture_error'] = str(capture_error)
             runtime.save()
         print(type(error).__name__ + ': ' + str(error))
         return 1

@@ -28,7 +28,7 @@ FAMILY = 'external-inputs'
 CONTROLLED = 'controlled_virtual_protocol_vectors'
 TOOLS = ['batch_system_live_inputs_suite.py', 'batch_network_openvpn_runtime_collect.py',
     'batch_network_openvpn_runtime_project.py', 'batch_system_run_live_inputs.py',
-    'batch_system_verify_live_inputs.py', 'batch_system_live_inputs.py',
+    'batch_system_verify_live_inputs.py', 'batch_system_live_inputs.py', 'batch_system_live_mappings.py',
     'batch_system_sdk_native_strip.py',
     'batch_system_gnss_controller.py', 'batch_system_qemu_sensor_controller.py',
     'batch_apps_contact_picker_coordinator.py', 'sign_web_probe.py', 'enclosing_acceptance_guest.py']

@@ -700,7 +700,12 @@ def verify_resources_cleanup(cleanup, run_id, target=None):
                 r'(?![A-Za-z0-9_.])', raw) for bundle in cleanup['installed_bundles']), 'actual audit BMS entry remains')
     if cleanup.get('AMS_after'):
         raw = captured(cleanup['AMS_after'], 'aa dump -a -u 100')
-        require(not verifier.ams_sessions(raw, cleanup['provider_uid'], cleanup['caller_uid']), 'actual Contacts modal sessions remain')
+        require(isinstance(cleanup.get('provider_bms'), dict), 'actual singleton cleanup BMS binding required')
+        provider_bms = cleanup['provider_bms']
+        captured(provider_bms, 'bm dump -n ' + driver.PROVIDER)
+        require(verifier.provider_uid({'provider_bms': provider_bms}) == cleanup['provider_uid'],
+                'cleanup singleton provider UID differs from actual BMS')
+        require(not verifier.ams_sessions(raw, provider_bms, cleanup['caller_uid']), 'actual Contacts modal sessions remain')
     require(cleanup.get('observer_removed') is True, 'own observer removal was not verified')
     if cleanup.get('observer_removal'):
         remote = '/data/local/tmp/' + run_id + '_observer'
@@ -913,8 +918,17 @@ def run(args):
             if caller_uid and (output / 'runtime/ui.json').is_file():
                 try:
                     ui = load(output / 'runtime/ui.json'); provider_uid = verifier.provider_uid(ui)
+                    text, provider_bms = cleanup_capture(guest, report['cleanup'], 'bm dump -n ' + driver.PROVIDER,
+                        'Contacts-provider-BMS-after-owned-cleanup', output / 'provider-BMS-after-cleanup.log')
+                    require(verifier.provider_uid({'provider_bms': provider_bms}) == provider_uid,
+                            'singleton provider UID changed during cleanup')
+                    before = verifier.raw_json(verifier.artifact(ui['provider_bms']))['applicationInfo']
+                    after = verifier.raw_json(verifier.artifact(provider_bms))['applicationInfo']
+                    require(all(before[key] == after[key] for key in ('uid', 'accessTokenId', 'accessTokenIdEx')),
+                            'singleton provider token changed during cleanup')
                     raw, desc = cleanup_capture(guest, report['cleanup'], 'aa dump -a -u 100', 'AMS-after-owned-app-cleanup', output / 'AMS-after-cleanup.log')
-                    report['cleanup'].update(AMS_after=desc, caller_uid=caller_uid, provider_uid=provider_uid)
+                    report['cleanup'].update(AMS_after=desc, caller_uid=caller_uid, provider_uid=provider_uid,
+                                             provider_bms=provider_bms)
                 except Exception as error: report['cleanup_errors'].append(str(error))
             if observer_remote:
                 try:

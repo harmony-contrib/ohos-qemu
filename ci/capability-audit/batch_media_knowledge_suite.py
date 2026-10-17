@@ -264,6 +264,33 @@ class Collector:
             _, row['dialog_contract'] = select_dialog(tree, bundle, 'save', label=label, count=len(self.data['cases']))
         self.value['ui_actions'].append(row); self.persist(); return row
 
+    def phase_diagnostic(self, row, reason):
+        """Retain actual UI/AMS only; never invent a journal or operation outcome."""
+        value = {'reason': reason, 'diagnostic_only': True, 'journal_absence_proves_no_side_effect': False}
+        row.setdefault('diagnostics', []).append(value)
+        self.persist()
+        try:
+            tree, path = self.ui.layout(label=row['phase'] + '-diagnostic')
+            value['layout'] = record(path)
+            value['layout_command'] = len(self.value['commands']) - 1
+            try:
+                status = ready_node(tree, project.ROLES[row['role']][0], identifier='knowledge_status')
+                value['status'] = status
+            except NodeNotReady:
+                pass
+            value['screenshot'] = record(self.ui.screenshot(label=row['phase'] + '-diagnostic'))
+            value['screenshot_command'] = len(self.value['commands']) - 1
+            remote = self.value['commands'][value['screenshot_command']]['argv'][-2]
+            value['screenshot_guest_hash'] = self.observe('sha256sum ' + shlex.quote(remote), row['phase'] + '-diagnostic-screen-sha')
+            require(checked(value['screenshot_guest_hash']).read_text().split() == [value['screenshot']['sha256'], remote],
+                    'actual diagnostic screenshot transfer bytes differ')
+            value['ams'] = self.observe('aa dump -a -u 100', row['phase'] + '-diagnostic-AMS')
+        except Exception as error:
+            # Preserve the operation failure even when a diagnostic surface is unavailable.
+            value['capture_error'] = str(error)
+        self.persist()
+        return value
+
     def phase(self, phase, uris=None, *, emergency=None):
         request = runtime.prepare_request(checked(self.value['artifacts_data']['challenge']), self.env['boot_id'], phase, uris)
         if emergency:
@@ -279,21 +306,36 @@ class Collector:
         if self.curator_pid is not None: row['curator_pid_before'] = self.pid()
         self.click(bundle, {'identifier': 'knowledge_run'}, 'run', phase)
         plan = self.value['ui_plan_data']
-        for dialog in plan['permissions'][role] if request['action'] == 'permission' else []:
-            self.click(dialog['bundle'], dialog['allow'], 'permission', phase, title=dialog['title'])
-        if request['action'] == 'import':
-            dialog = plan['photo_consent']
-            self.click(dialog['bundle'], dialog['allow'], 'consent', phase, title=dialog['title'])
+        try:
+            for dialog in plan['permissions'][role] if request['action'] == 'permission' else []:
+                self.click(dialog['bundle'], dialog['allow'], 'permission', phase, title=dialog['title'])
+            if request['action'] == 'import':
+                dialog = plan['photo_consent']
+                self.click(dialog['bundle'], dialog['allow'], 'consent', phase, title=dialog['title'])
+        except Exception:
+            self.phase_diagnostic(row, 'actual requested dialog unavailable; side effects unknown')
+            raise
         deadline = time.monotonic() + 180
+        ui_check_after = time.monotonic()
         while True:
             journal = self.journal(role, name + '-poll')
             text = checked(journal).read_text()
             if text.endswith('\n'):
                 rows = [json.loads(line) for line in text.splitlines()]
                 operation = [v for v in rows if v.get('operation_id') == request['operation_id']]
-                require(not any(v.get('event') == 'error' for v in operation), 'actual public operation failed: ' + phase)
+                if any(v.get('event') == 'error' for v in operation):
+                    self.phase_diagnostic(row, 'actual journal operation error')
+                    raise ValueError('actual public operation failed: ' + phase)
                 if operation and operation[-1].get('event') == 'complete': break
-            if time.monotonic() >= deadline: raise ValueError('actual public operation timed out: ' + phase)
+            if time.monotonic() >= ui_check_after:
+                diagnostic = self.phase_diagnostic(row, 'waiting for actual journal')
+                status = diagnostic.get('status', {}).get('attributes', {}).get('text', '')
+                if status.startswith(('Request initialization failed;', 'Operation failed;')):
+                    raise ValueError('actual QA UI reports failure; preserve source data and raw UI: ' + phase)
+                ui_check_after = time.monotonic() + 10
+            if time.monotonic() >= deadline:
+                self.phase_diagnostic(row, 'actual journal timeout; side effects unknown')
+                raise ValueError('actual public operation timed out: ' + phase)
             time.sleep(.4)
         row.update(journal=journal, end_boot=self.identity(name + '-boot-after'), complete=True)
         if request['action'] == 'prepare' or self.curator_pid is not None: row['curator_pid_after'] = self.pid()
@@ -472,6 +514,39 @@ def verify_click(row, commands, hdc, target, observed, *, importer_label=None, c
         picture.verify(); require(picture.format == 'PNG' and min(picture.size) >= 100, 'actual compositor PNG required')
 
 
+def verify_diagnostic(row, role, commands, hdc, target, observed):
+    require(row.get('diagnostic_only') is True and row.get('journal_absence_proves_no_side_effect') is False,
+            'UI diagnostics cannot prove a public operation or absence of side effects')
+    if 'layout' not in row:
+        require(isinstance(row.get('capture_error'), str), 'diagnostic without raw layout must preserve actual capture error')
+        return
+    layout = signatures.load(checked(row['layout']))
+    read = commands[row['layout_command']]
+    script = read['argv'][4].split('; task_ui_rc=$?; printf ', 1)[0]
+    match = re.fullmatch(r'cat (/data/local/tmp/qemu-capability-ui-[a-f0-9]{32}-[1-9][0-9]*\.json)', script)
+    require(match is not None and json.loads(exact_script(read, script)) == layout,
+            'diagnostic UI is not the actual nonce-scoped guest hierarchy')
+    exact_script(commands[row['layout_command']-1], 'test ! -e ' + match[1] + ' && uitest dumpLayout -p ' + match[1])
+    try:
+        status = ready_node(layout, project.ROLES[role][0], identifier='knowledge_status')
+    except NodeNotReady:
+        status = None
+    require(row.get('status') == status, 'diagnostic status differs from actual role UI')
+    if 'screenshot' in row:
+        screen = checked(row['screenshot']); transfer = commands[row['screenshot_command']]
+        remote = transfer['argv'][-2]
+        require(re.fullmatch(r'/data/local/tmp/qemu-capability-ui-[a-f0-9]{32}-[1-9][0-9]*\.png', remote) and
+                transfer['argv'] == [hdc, '-t', target, 'file', 'recv', remote, str(screen)] and
+                row['layout_command'] < row['screenshot_command'], 'diagnostic compositor transfer/order differs')
+        exact_script(commands[row['screenshot_command']-1], 'test ! -e ' + remote + ' && uitest screenCap -p ' + remote)
+        require(observed(row['screenshot_guest_hash'], 'sha256sum ' + shlex.quote(remote)).split() == [sha(screen), remote],
+                'diagnostic screenshot differs from original guest SHA')
+        from PIL import Image
+        with Image.open(screen) as picture:
+            picture.verify(); require(picture.format == 'PNG' and min(picture.size) >= 100, 'diagnostic actual compositor PNG required')
+    if 'ams' in row: observed(row['ams'], 'aa dump -a -u 100')
+
+
 def cleanup_observation(phase, data, uris):
     request = signatures.load(checked(phase['request'])); rows = [json.loads(v) for v in checked(phase['journal']).read_text().splitlines()]
     group = [v for v in rows if v['operation_id'] == request['operation_id']]
@@ -636,6 +711,8 @@ def verify_transport(value, spec, env, data):
         require(group and group[0]['event'] == 'begin' and group[0]['value'] == expected and group[-1]['event'] == 'complete',
                 'actual requested operation not complete in raw journal')
         previous_end = end
+        for diagnostic in row.get('diagnostics', []):
+            verify_diagnostic(diagnostic, role, commands, hdc, target, observed)
     expected_actions = []
     for phase, role, action in runtime.STEPS:
         expected_actions.append((phase, 'run', project.ROLES[role][0], {'identifier': 'knowledge_run'}, None))

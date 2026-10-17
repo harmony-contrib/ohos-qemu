@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "scope": "batched E source repairs and completed host/whole-TU checks ONLY",
+  "created_utc": "2026-10-17T22:01:49.346772+00:00",
+  "base_commit": "15de9fac9664846a9781dc69f79c954526de62fb",
+  "product_changes": [
+    "bound ALSA/HDI reads by real caller and physical frame capacity",
+    "retire/wake ordinary blocking reads on accepted Stop/successful Pause/Release/INVALID and prevent cross-generation consumption",
+    "declare and verify QemuCapture 48000 Hz matching real F09 loopback observations; render stays44100",
+    "stage canonical PrivacyCenter signature with byte-identical code/resources and missing exact preinstall scan entry"
+  ],
+  "QA_repairs": [
+    "application-context filesDir consistently used by fresh caller/seed roles",
+    "Contacts singleton system-provider identity checked independently from user100 callers",
+    "Calendar fresh ordinary public system/resource locale bound to exact compiled provider label",
+    "checked producer/process cleanup and command-specific audio notices",
+    "raw per-read proc maps, generation, image-derived process roles and distinct before/after observations",
+    "VPN exact journal IO/read failures/cleanup and tracked peer source fixtures"
+  ],
+  "checks": {
+    "host": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-QA-complete-host-batch-03/receipt.json",
+      "sha256": "ab6c422303c9d5781ff43c11d8835eb41ae45ee3d5b2dc0b7fd557aade21f104",
+      "tests": 652,
+      "skipped": 1,
+      "note": "Linux syscall method check skipped on macOS and executed in separate Linux batch"
+    },
+    "Linux": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-media-Linux-host-batch-05/export.json",
+      "sha256": "c19ae7df835f83cfb567538beb07068956f59c94372adffbb96c27d5f11c033c",
+      "tests": 38,
+      "sanitizers": [
+        "address",
+        "undefined"
+      ]
+    },
+    "whole_TUs": {
+      "first": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-full-product-TU-compile-01/export.json",
+        "sha256": "ad563b5a4052e57a22b26757eea7ab510689b28de6e9d96bb81317f3626b40b2"
+      },
+      "HDI_replay": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-full-product-TU-compile-02/export.json",
+        "sha256": "fd00006c54edfd64043a865a3584abed49e834f9d9beb7ea3e8d12deed51c312"
+      },
+      "units": [
+        {
+          "unit": "alsa_soundcard_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "69168b7ed6f9f3842bdbc4ccc9fa39b125d5acdf366d5321b7a3e9eeb537482b"
+        },
+        {
+          "unit": "alsa_soundcard_render",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "69168b7ed6f9f3842bdbc4ccc9fa39b125d5acdf366d5321b7a3e9eeb537482b"
+        },
+        {
+          "unit": "alsa_snd_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "3be02cfa8f388d9e2ae321f2203c597ca0ccec29ce73cf5edf7097f0ba6db57a"
+        },
+        {
+          "unit": "qemu_vendor_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "c960f8225ddcc9d107eea60e8173d83463fc06d493521151dcc89115c6373648"
+        },
+        {
+          "unit": "capturer_in_client",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "90fd3af36a6f140d2677d9c14cad39adc5ed902163c3785505f0df0b1a2900ef"
+        },
+        {
+          "unit": "audio_primary_capture",
+          "status": "pass",
+          "exit_code": 0,
+          "object_sha256": "e4450e975c3803dcbbf2ac18dae356fa4b75261a317f8278ea72c9f5258240f2"
+        }
+      ],
+      "original_failure": "HDI compiled0; unrelated ALSA-only changed-header requirement failed; original receipt remains1",
+      "source_out_written": false
+    },
+    "PrivacyCenter_actual_crypto": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-PrivacyCenter-component-real-crypto-01/receipt.json",
+      "sha256": "ddcb73c83c2271481f62f2e5dc011bf7c2e9e9d48adc723aba2913df58b9b213"
+    },
+    "Calendar12_protocol": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-Calendar12-host-protocol-01/receipt.json",
+      "sha256": "cf10407fd41d14eb40b37f985beb6123c091633969d0fee569588b023af3093e"
+    }
+  },
+  "prior_D_cycle": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r57-D-complete-runtime-cycle-11-01/receipt.json",
+    "sha256": "3fce1b643f7f2143d15dbdbb178aa158321cbeaf924b7e0996474a479ff09681"
+  },
+  "known_failures_preserved": true,
+  "ledger": {
+    "total": 281,
+    "closed": 199,
+    "open": 82,
+    "new_closures": 0
+  },
+  "new_representative_package_built": false,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

@@ -15,7 +15,8 @@
   "create_api": "contact.addContact(context, Contact)",
   "read_api": "contact.queryContacts(context)",
   "delete_api": "contact.deleteContact(context, real readback key)",
-  "journal": "filesDir/contact-seed-{runId}.jsonl",
+  "journal": "getApplicationContext().filesDir/contact-seed-{runId}.jsonl",
+  "public_api_context": "original UIAbilityContext; application context is only for exchange-file IO",
   "raw_events": ["begin", "permission_result", "query_before", "created", "deleted", "query_after", "readback", "error", "complete"],
   "observer": {
     "kind": "separate root-owned read-only native test executable, never linked into seed HAP",

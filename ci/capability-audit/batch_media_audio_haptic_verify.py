@@ -71,7 +71,7 @@ def verify_token_binding(binding, raw, *, role, identity, run, boot, observed, c
 
 def verify_capture_requests(qmp, segments):
     """Replay raw command-specific capture replies; never a collector status flag."""
-    from batch_media_audio_haptic_runtime import capture_list_empty, owned_capture_listing
+    from batch_media_audio_haptic_runtime import capture_list_empty, owned_capture_listing, empty_capture_command_reply
     require(isinstance(qmp, list) and len(qmp) >= 2 and all(isinstance(r, dict) and
             r.get('execute') == 'human-monitor-command' and type(r.get('host_ns')) is int and
             type(r.get('completed_ns')) is int and 0 < r['host_ns'] <= r['completed_ns'] and
@@ -94,7 +94,7 @@ def verify_capture_requests(qmp, segments):
         require([r.get('arguments') for r in rows] == [{'command-line': script} for script in
             ('info capture', f'wavcapture {wav} {backend} 48000 16 2', 'info capture', 'info capture', 'stopcapture 0', 'info capture')] and
             capture_list_empty(rows[0]['reply']) and capture_list_empty(rows[5]['reply']) and
-            rows[1]['reply'] == '' and rows[4]['reply'] == '',
+            empty_capture_command_reply(rows[1]['reply'], 'wavcapture') and empty_capture_command_reply(rows[4]['reply'], 'stopcapture'),
             'WAV was not captured/stopped by this actual QMP sequence')
         owned_capture_listing(rows[2]['reply'], wav); owned_capture_listing(rows[3]['reply'], wav)
         require(capture['host_begin_ns'] <= rows[1]['host_ns'] <= rows[1]['completed_ns'] < rows[4]['host_ns'] <=

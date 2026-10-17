@@ -9,6 +9,7 @@ import wantAgent from '@ohos.app.ability.wantAgent';
 import process from '@ohos.process';
 import fs from '@ohos.file.fs';
 import util from '@ohos.util';
+import i18n from '@ohos.i18n';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@ohos.base';
 
@@ -52,13 +53,14 @@ export class CalendarAudit {
     if (r.schema_version !== 1 || r.run_id !== RUN || r.role !== ROLE ||
       !/^[a-f0-9]{32}$/.test(r.operation_id) || !/^[a-f0-9-]{36}$/.test(r.boot_id) ||
       !/^[a-f0-9]{64}$/.test(r.archive_sha256) || !/^[a-z][a-z0-9-]{0,39}$/.test(r.case_id) ||
-      !['permission', 'access', 'create', 'read', 'notifications', 'update', 'delete', 'cleanup', 'routes'].includes(r.action) ||
+      !['permission', 'access', 'create', 'read', 'notifications', 'update', 'delete', 'cleanup', 'routes', 'locale'].includes(r.action) ||
       (ROLE !== 'producer' && ['create', 'update', 'delete', 'cleanup', 'routes'].includes(r.action)) ||
-      (ROLE !== 'observer' && r.action === 'notifications')) { throw new Error('Unexpected owned operation'); }
+      (ROLE !== 'observer' && ['notifications', 'locale'].includes(r.action))) { throw new Error('Unexpected owned operation'); }
     this.context = context; this.request = r;
     this.accountName = 'qcal_' + RUN;
-    this.path = context.filesDir + '/calendar-' + RUN + '-' + r.boot_id + '.jsonl';
-    this.statePath = context.filesDir + '/calendar-state-' + RUN + '.json';
+    const filesDir: string = context.getApplicationContext().filesDir;
+    this.path = filesDir + '/calendar-' + RUN + '-' + r.boot_id + '.jsonl';
+    this.statePath = filesDir + '/calendar-state-' + RUN + '.json';
     if (fs.accessSync(this.path)) {
       if (fs.statSync(this.path).size > 4194304) { throw new Error('Oversized journal'); }
       const raw: string = fs.readTextSync(this.path);
@@ -235,8 +237,18 @@ export class CalendarAudit {
 
   public async execute(): Promise<void> {
     try {
-      this.access();
       const action: string = this.request.action;
+      if (action === 'locale') {
+        this.api = 'i18n.System.getSystemLocale';
+        const systemLocale: string = i18n.System.getSystemLocale();
+        this.record('system-locale', this.api, JSON.stringify({ locale: systemLocale }));
+        this.api = 'ResourceManager.getConfiguration';
+        const configuration = await this.context.resourceManager.getConfiguration();
+        this.record('resource-locale', this.api, JSON.stringify({ locale: configuration.locale }));
+        this.record('complete', 'request', '{}');
+        return;
+      }
+      this.access();
       if (action === 'permission') {
         this.api = 'abilityAccessCtrl.requestPermissionsFromUser';
         const result = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(this.context,

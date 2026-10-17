@@ -6,6 +6,7 @@ import re
 import shlex
 import shutil
 import signal
+import secrets
 import subprocess
 import time
 
@@ -17,6 +18,7 @@ import batch_system_build_runtime_helpers as product
 from build_audio_capture_tools import verify_installed_tools
 from spring_loading_input import binding
 from hap_identity_binding import bms_application_identity, strict_json, verify_hap_token_identity
+from guest_process_identity import producer_shell, producer_exit_code, cleanup_producer_shell
 
 HERE = Path(__file__).resolve().parent
 BUNDLE = 'org.harmonycontrib.capabilityaudit'
@@ -57,6 +59,7 @@ class CaptureRuntime:
         self.remote = '/data/local/tmp/qemu-mic-' + run
         self.process = None
         self.producer_log = None
+        self.producer_exit_marker = None
         self.started = False
         self.finished = False
         hdc_argv0 = str(args.hdc)
@@ -68,7 +71,8 @@ class CaptureRuntime:
             'parent_persona': report['persona'],
             'archive_sha256': report['archive_sha256'], 'arch': args.arch, 'device': args.device,
             'target': args.target, 'expected_denied': self.denied, 'remote_root_directory': self.remote,
-            'runner_sha256': sha(Path(__file__)), 'tokens': [], 'files': {},
+            'runner_sha256': sha(Path(__file__)),
+            'process_identity_helper_sha256': sha(HERE / 'guest_process_identity.py'), 'tokens': [], 'files': {},
             'first_artifact_behavior_gate_passed': False,
             'hdc': {'path': str(hdc_path), 'sha256': sha(hdc_path), 'argv0': hdc_argv0}}
         saved = self.output / 'acceptance-boot.json'
@@ -264,11 +268,9 @@ class CaptureRuntime:
         # Feed the independent source before allowing the ordinary app to start
         # Capturer. The application cannot traverse this root-only directory.
         if not self.denied:
-            wrapper = ('echo "$$" > ' + self.remote + '/producer.pid; '
-                'awk \'{print $22}\' /proc/$$/stat > ' + self.remote + '/producer.start; '
-                'unset LD_LIBRARY_PATH LD_PRELOAD; exec ' + self.remote + '/alsa_inject --input ' + self.remote +
-                '/challenge.pcm --rate 48000 --channels 2 --repeat 20 --timeout-ms 30000')
-            argv = [str(self.args.hdc), '-t', self.args.target, 'shell', 'sh -c ' + shlex.quote(wrapper)]
+            self.producer_exit_marker = '__PCM_CHILD_EXIT_' + secrets.token_hex(16) + '__='
+            wrapper = producer_shell(self.remote, self.producer_exit_marker)
+            argv = [str(self.args.hdc), '-t', self.args.target, 'shell', wrapper]
             self.producer_log = (self.output / 'producer.log').open('xb')
             self.producer_argv = argv
             self.process = subprocess.Popen(argv, stdout=self.producer_log, stderr=subprocess.STDOUT,
@@ -331,13 +333,23 @@ class CaptureRuntime:
                 raise ValueError('actual root producer did not complete within its native deadline')
             self.producer_log.close()
             self.producer_log = None
-            self.value['producer'] = {'argv': self.producer_argv, 'host_exit_code': status,
-                'log': str(self.output / 'producer.log'), 'log_sha256': sha(self.output / 'producer.log')}
+            self.value['producer'] = self.producer_receipt(status)
             if status != 0:
                 raise ValueError('actual root PCM producer failed')
         self.value['status'] = 'captured_NOT_independently_verified'
         self.save()
         return self.output / 'runtime.json'
+
+    def producer_receipt(self, status, *, require_complete=True):
+        path = self.output / 'producer.log'
+        value = dict(argv=self.producer_argv, host_exit_code=status,
+            guest_exit_marker=self.producer_exit_marker, log=str(path.resolve()), log_sha256=sha(path))
+        try:
+            value['guest_exit_code'] = producer_exit_code(path.read_text(), self.producer_exit_marker)
+        except ValueError:
+            if require_complete: raise
+            value['guest_exit_code'] = None
+        return value
 
     def require_cleanup_boot(self, label):
         if self.value.get('cleanup_boot_failure'):
@@ -355,25 +367,7 @@ class CaptureRuntime:
                 self.require_cleanup_boot('PCM-cleanup-boot-before-stop')
                 # Signal only our current executable and recorded kernel
                 # starttime. A reused PID or changed executable is never killed.
-                script = ('test -d ' + self.remote + ' && test ! -L ' + self.remote +
-                    ' && test "$(stat -c \'%u %a\' ' + self.remote + ')" = "0 700" || exit 1; '
-                    'if test -e ' + self.remote + '/producer.pid || test -L ' + self.remote + '/producer.pid; then '
-                    'test -f ' + self.remote + '/producer.pid && test ! -L ' + self.remote + '/producer.pid && '
-                    'test -f ' + self.remote + '/producer.start && test ! -L ' + self.remote + '/producer.start && '
-                    'test "$(stat -c %u ' + self.remote + '/producer.pid)" = 0 && '
-                    'test "$(stat -c %u ' + self.remote + '/producer.start)" = 0 || exit 1; '
-                    'task_mic_pid=$(cat ' + self.remote + '/producer.pid); '
-                    'case "$task_mic_pid" in ""|*[!0-9]*) exit 1;; esac; '
-                    'if test -d /proc/$task_mic_pid; then '
-                    'test "$(readlink /proc/$task_mic_pid/exe)" = ' + self.remote + '/alsa_inject && '
-                    'test "$(awk \'{print $22}\' /proc/$task_mic_pid/stat)" = "$(cat ' + self.remote + '/producer.start)" || exit 1; '
-                    'kill -TERM "$task_mic_pid" || exit 1; '
-                    'task_mic_wait=0; while test -d /proc/$task_mic_pid; do '
-                    'task_mic_current=$(awk \'{print $22}\' /proc/$task_mic_pid/stat 2>/dev/null) || '
-                    '{ test ! -d /proc/$task_mic_pid && break; exit 1; }; '
-                    'test "$task_mic_current" = "$(cat ' + self.remote + '/producer.start)" || exit 1; '
-                    'test "$task_mic_wait" -lt 30 || exit 1; task_mic_wait=$((task_mic_wait + 1)); sleep 0.1; done; fi; '
-                    'else test ! -e ' + self.remote + '/producer.start && test ! -L ' + self.remote + '/producer.start; fi')
+                script = cleanup_producer_shell(self.remote)
                 self.actual_shell(cleanup_boot_prefix(self.boot_id) + script, 'cleanup-only-owned-PCM-producer')
             except Exception as error:
                 errors.append(str(error))

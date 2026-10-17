@@ -72,7 +72,8 @@ class CalendarProtocolTests(unittest.TestCase):
             first = request(source, self.request['boot_id'], 'a'*64, 'producer', 'create', 'create')
             second = request(source, self.request['boot_id'], 'a'*64, 'producer', 'create', 'create')
             self.assertNotEqual(first['operation_id'], second['operation_id'])
-            for role, action in [('observer', 'create'), ('observer', 'routes'), ('denied', 'notifications'), ('producer', 'notifications')]:
+            self.assertEqual(request(source, self.request['boot_id'], 'a'*64, 'observer', 'locale', 'locale')['action'], 'locale')
+            for role, action in [('observer', 'create'), ('observer', 'routes'), ('denied', 'notifications'), ('producer', 'notifications'), ('producer', 'locale'), ('denied', 'locale')]:
                 with self.subTest(role=role, action=action), self.assertRaises(ValueError):
                     request(source, self.request['boot_id'], 'a'*64, role, action, 'create')
 
@@ -93,6 +94,16 @@ class CalendarProtocolTests(unittest.TestCase):
         result = subprocess.run(['node', '--unhandled-rejections=strict', str(FIX/'host.cjs'), str(FIX/'CalendarAudit.ets')], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
         self.assertIn('PASS host-only', result.stdout)
+
+    def test_application_file_context_is_distinct_from_business_ui_context(self):
+        source = (FIX/'CalendarAudit.ets').read_text()
+        self.assertIn('context.getApplicationContext().filesDir', source)
+        self.assertNotIn('context.filesDir', source)
+        self.assertIn('getCalendarManager(this.context)', source)
+        self.assertIn('requestPermissionsFromUser(this.context', source)
+        locale = source.split("if (action === 'locale') {", 1)[1].split('      this.access();', 1)[0]
+        for forbidden in ('requestPermissionsFromUser', 'getCalendarManager', 'this.read()', 'this.access()'):
+            self.assertNotIn(forbidden, locale)
 
     def test_fixture_has_no_direct_notification_publication_or_clock_mutation(self):
         source = (FIX/'CalendarAudit.ets').read_text()

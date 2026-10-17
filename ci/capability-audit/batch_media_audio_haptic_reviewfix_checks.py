@@ -160,6 +160,13 @@ class ReviewFixChecks(unittest.TestCase):
             segments = [dict(phase=phase, audio_capture=dict(wav=project.record(path), backend=backend,
                 host_begin_ns=115, host_end_ns=180))]
             verify.verify_capture_requests(rows, segments)
+            observed = copy.deepcopy(rows)
+            observed[3]['reply'] = "warning: 'wavcapture' is deprecated since v10.2, to be removed\r\n"
+            observed[6]['reply'] = "warning: 'stopcapture' is deprecated since v10.2, to be removed\r\n"
+            verify.verify_capture_requests(observed, segments)
+            for index in (3, 6):
+                duplicate = copy.deepcopy(observed); duplicate[index]['reply'] *= 2
+                with self.assertRaises(ValueError): verify.verify_capture_requests(duplicate, segments)
             legacy = copy.deepcopy(rows)
             for item in legacy:
                 if item['arguments']['command-line'] == 'info capture':
@@ -169,11 +176,11 @@ class ReviewFixChecks(unittest.TestCase):
                 lambda r:r[1].update(reply=notice+own),
                 lambda r:r[1].update(reply=notice*2),
                 lambda r:r[2].update(reply='unknown warning\r\n'),
-                lambda r:r[3].update(reply=notice),  # No unobserved wavcapture warning allowance.
+                lambda r:r[3].update(reply=notice),  # info-capture notice cannot authorize wavcapture.
                 lambda r:r[4].update(reply=notice+own.replace('[0]', '[1]')),
                 lambda r:r[4].update(reply=notice+own+own),
                 lambda r:r[5].update(reply=notice+own.replace(str(path), '/tmp/foreign.wav')),
-                lambda r:r[6].update(reply=notice),  # No unobserved stopcapture warning allowance.
+                lambda r:r[6].update(reply=notice),  # info-capture notice cannot authorize stopcapture.
                 lambda r:r[7].update(reply=notice+own),
                 lambda r:r[6]['arguments'].update({'command-line':'stopcapture 1'}),
                 lambda r:r[6].update(failure_reply={'error':{'desc':'controlled'}}),

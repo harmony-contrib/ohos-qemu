@@ -58,3 +58,32 @@ Host tests execute actual JSON/capture/read/open methods and both vendor source
 files under ASan/UBSan using controlled ALSA dependencies, plus real pinned cJSON.
 They are regression evidence only. Product TU/link, kernel cable, mixer capability
 handling by AudioService, HAP reads and new representative package remain required.
+
+
+The E repair adds a sixth pinned production file: primary_impl/src/audio_capture.c.
+The internal ALSA READ bufferSize field now carries the incoming caller capacity
+and returns actual bytes. The lower read bounds complete frames by this capacity,
+FRAME_DATA, the allocated buffer and the real snd_pcm_frames_to_bytes result. A
+short positive read returns its actual size; no padding or discarded excess frames
+are used. HDI retains its final size check and commits bytes/frame/time only after
+successful copy. Every locked error path releases the mutex, including a Read
+arriving after Stop freed the buffer. The public HDI signature/layout is unchanged.
+
+For the explicit QemuCapture card only, SetHWParams saves the declared rate before
+rate_near can overwrite it, applies hardware params, and then independently reads
+current rate/format/channels. A mismatch/query failure is an error; other devices
+retain their existing near-rate behavior. QEMU primary_input policy is upgraded
+separately to 48000/S16 stereo after a real F09 diagnostic observed both cable ends
+RUNNING at 48000. Primary render stays 44100. No implicit resampler is added.
+
+The installer accepts exact complete upstream-six-file, F09-five-adapted-plus-
+unchanged-HDI, and new-six-file vectors. It rejects per-file old/new mixtures.
+Publication failures restore original bytes/modes. Historical 0001 remains a
+review record; 0002 is the delta from the complete F09 adapted source. Source
+installation must use apply.sh rather than blindly replaying both patches on an
+unknown state. The source test pins all three states and injection rollback.
+
+The added capacity test compiles the actual HDI -> actual AudioOutputCaptureRead
+-> actual ALSA ReadImpl/Copy method chain with controlled external PCM calls.
+These checks have not been executed in this preparation and cannot prove product
+PCM, timing, actual DSO loading, Stop latency or independent Recorder decoding.

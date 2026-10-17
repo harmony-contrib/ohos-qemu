@@ -147,6 +147,54 @@ class KnowledgeRuntimeTests(unittest.TestCase):
             self.assertEqual(exif.get_ifd(34665)[36881], '+00:00')
             self.assertNotIn(36867, exif)  # Real Exif sub-IFD, not mislocated IFD0.
 
+    def test_application_root_files_keep_business_context_and_real_ui_failures(self):
+        store = (project.FIX/'AuditStore.ets').read_text()
+        self.assertIn('this.filesDir = context.getApplicationContext().filesDir;', store)
+        self.assertIn("this.path = this.filesDir + '/knowledge-'", store)
+        self.assertIn("const requestPath = this.filesDir + '/knowledge-request.json'", store)
+        self.assertIn('requestPermissionsFromUser(this.context', store)
+        self.assertNotIn('context.filesDir', store)
+        importer = (project.FIX/'Importer.ets').read_text()
+        self.assertNotIn('store.context.filesDir', importer)
+        self.assertIn('store.filesDir', importer)
+        for name in ('Importer', 'Denied', 'Curator', 'Query'):
+            source = (project.FIX/(name+'.ets')).read_text()
+            self.assertIn('Request initialization failed;', source)
+            self.assertIn("Text(this.note).id('knowledge_status')", source)
+            self.assertIn('actual.message ?? String(error)', source)
+
+    def test_request_initialization_diagnostic_retains_real_ui_without_fabricating_journal(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        import batch_media_knowledge_suite as suite
+        tree = {'attributes': {'bundleName': project.ROLES['denied'][0]}, 'children': [{
+            'attributes': {'id': 'knowledge_status', 'visible': 'true', 'bounds': '[0,0][600,100]',
+                           'text': 'Request initialization failed; application filesDir=/actual; code=13900002; message=No such file'},
+            'children': []}]}
+        path = self.root/'diagnostic-tree.json'; path.write_text(json.dumps(tree))
+        image = self.root/'diagnostic.png'; Image.new('RGB', (120, 120), 'red').save(image)
+        ams = self.root/'ams.txt'; ams.write_text('HOST UNIT actual-byte placeholder')
+        collector = object.__new__(suite.Collector)
+        collector.persist = Mock()
+        collector.value = {'commands': [{'argv': ['hdc', '-t', 'host-unit', 'file', 'recv', '/host-unit-screen.png', str(image)]}]}
+        collector.ui = SimpleNamespace(layout=Mock(return_value=(tree,path)), screenshot=Mock(return_value=image))
+        screen_hash = self.root/'screen-hash.txt'; screen_hash.write_text(project.sha(image)+'  /host-unit-screen.png')
+        collector.observe = Mock(side_effect=[project.record(screen_hash), project.record(ams)])
+        row = {'phase': 'normal-denied', 'role': 'denied'}
+        result = collector.phase_diagnostic(row, 'waiting for actual journal')
+        self.assertIs(result['diagnostic_only'], True)
+        self.assertIs(result['journal_absence_proves_no_side_effect'], False)
+        self.assertEqual(result['layout'], project.record(path))
+        self.assertEqual(result['screenshot'], project.record(image))
+        self.assertEqual(result['status']['attributes']['text'], tree['children'][0]['attributes']['text'])
+        self.assertNotIn('journal', result)
+        self.assertNotIn('complete', row)
+        self.assertEqual(collector.observe.call_args_list[-1].args, ('aa dump -a -u 100', 'normal-denied-diagnostic-AMS'))
+        collector.ui.layout.side_effect = ValueError('original UITest observation unavailable')
+        second = collector.phase_diagnostic(row, 'actual journal timeout; side effects unknown')
+        self.assertEqual(second['capture_error'], 'original UITest observation unavailable')
+        self.assertNotIn('journal', second)
+
     def test_actual_sdk105_declarations_and_four_projects(self):
         if not SDK.is_dir():
             self.skipTest('actual SDK105 not present; root actual SDK build still required')

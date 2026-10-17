@@ -10,7 +10,8 @@ VENDOR_REVISION = 'b56c5a95ec590543691278b85afe9fe228744163'
 FRAMEWORK_REVISION = '6932fa64335b8272ca4a59de7808ab0d6c9eae7a'
 XML_PATH = 'virt/hals/audio/config/audio_policy_config_new.xml'
 ORIGINAL_SHA256 = 'fc49bb846bf8a6455a150ebaac08ec8661dba7aa4ee400797e0819bc68aa62c1'
-REPAIRED_SHA256 = '5adbfe3e7366d3cd20cfe2091cda8b295ecf1a889e3b4db4aef3a8c19afbf038'
+PREVIOUS_REPAIRED_SHA256 = '5adbfe3e7366d3cd20cfe2091cda8b295ecf1a889e3b4db4aef3a8c19afbf038'
+REPAIRED_SHA256 = 'de3498e4246c439d27eb435237dda795ad73c1ff79eb942401e7219af5e35d04'
 FRAMEWORK_INPUTS = {
     'services/audio_policy/server/infra/config/parser/src/audio_policy_config_parser.cpp':
         '500f0837e5fa0a9e0b6504bd19836feccb1e28a214f2dbc637ce9f340a8a460c',
@@ -67,6 +68,12 @@ def validate_document(data, require_hash=True):
                             pipe.get('name') not in device.get('supportPipes', '').split(',')):
                         raise ValueError('device/pipe route is not reciprocal')
                     mapping[(device_name, flag)] = pipe.get('name')
+                if name == 'primary':
+                    expected_rate = '48000' if key[1] == 'primary_input' else '44100'
+                    expected_buffer = '8192' if key[1] == 'primary_input' else '4096'
+                    if (stream.get('sampleRates') != expected_rate or stream.get('format') != 's16le' or
+                            stream.get('bufferSize') != expected_buffer):
+                        raise ValueError('primary capture/render format contract differs')
                 sample_rate = int(stream.get('sampleRates', '0'))
                 buffer_size = int(stream.get('bufferSize', '0'))
                 sample_bytes = {'s16le': 2, 's24le': 3}.get(stream.get('format'), 0)
@@ -113,12 +120,12 @@ def validate_source(root, require_patched=False):
         if sha(real_file(root, 'foundation/multimedia/audio_framework/' + relative).read_bytes()) != expected:
             raise ValueError('AudioPolicy parser/map semantics changed; re-audit before patching')
     data = xml.read_bytes()
-    accepted = (REPAIRED_SHA256,) if require_patched else (ORIGINAL_SHA256, REPAIRED_SHA256)
+    accepted = (REPAIRED_SHA256,) if require_patched else (ORIGINAL_SHA256, PREVIOUS_REPAIRED_SHA256, REPAIRED_SHA256)
     if sha(data) not in accepted:
         raise ValueError('unknown AudioPolicy XML edits; preserving source')
     if sha(data) == REPAIRED_SHA256:
         return validate_document(data)
-    return {'status': 'known_original_requires_patch'}
+    return {'status': 'known_previous_requires_upgrade' if sha(data) == PREVIOUS_REPAIRED_SHA256 else 'known_original_requires_patch'}
 
 
 def main():

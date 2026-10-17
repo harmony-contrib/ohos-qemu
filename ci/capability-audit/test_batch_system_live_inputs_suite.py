@@ -180,15 +180,53 @@ class SuiteTests(unittest.TestCase):
             wrong = data[:]; wrong[at] = value; path.write_bytes(wrong)
             with self.assertRaises(ValueError): s.elf64_arm64(path)
 
-    def test_capture_service_mapping_pattern_includes_real_algo_and_service(self):
-        source = s.HERE / 'batch_system_run_live_inputs.py'
-        cls = next(n for n in ast.parse(source.read_text()).body if isinstance(n, ast.ClassDef) and n.name == 'Capture')
-        method = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == 'mappings')
-        namespace = {'Path': Path, 'shlex': shlex}; exec(compile(ast.Module(body=[method], type_ignores=[]), '<actual-capture-method>', 'exec'), namespace)
-        scripts = []; obj = SimpleNamespace(output=self.root, shell=lambda script, name: scripts.append(script) or 'unit OS output')
-        namespace['mappings'](obj, 'unit-maps')
-        self.assertIn('libdevicestatus_algo.z.so|libdevicestatus_service.z.so', scripts[0])
-        self.assertIn('libdevicestatus_mock.z.so', scripts[0])
+    def test_capture_service_mapping_view_retains_actual_algo_service_and_mock(self):
+        import batch_system_live_mappings as mappings
+        import batch_system_run_live_inputs as capture
+        from test_batch_system_live_inputs_mappings import NONCE, process, mapping, frame as mapping_frame, hx as mapping_hx
+        libraries = ('libdevicestatus_algo.z.so', 'libdevicestatus_service.z.so', 'libdevicestatus_mock.z.so')
+        record = process(77)
+        record['maps'] = (0, mapping_hx(''.join(mapping(mappings.LIBRARIES[name]) for name in libraries)))
+        snapshot = mappings.parse_snapshot(mapping_frame(records={1: process(1, uid=0, ppid=0), 77: record}), NONCE, BOOT)
+        evidence = {}
+        obj = SimpleNamespace(output=self.root, mapping_snapshot=lambda name: dict(snapshot=snapshot, evidence=evidence))
+        path = Path(capture.Capture.mappings(obj, 'unit-maps'))
+        for name in libraries: self.assertIn(mappings.LIBRARIES[name], path.read_text())
+        self.assertEqual(evidence['legacy_view'], s.descriptor(path))
+
+    def test_independent_mapping_cuts_require_fresh_nonce_order_and_same_boot(self):
+        import batch_system_live_mappings as mappings
+        from batch_system_verify_live_inputs import verify_mapping_replays
+        from test_batch_system_live_inputs_mappings import MappingTests
+        entries, commands = [], []
+        for generation in range(2):
+            fixture = MappingTests(); fixture.setUp(); self.addCleanup(fixture.doCleanups)
+            entry, command = fixture.evidence()
+            if generation:
+                old_nonce = entry['nonce']; new_nonce = 'd' * 32
+                for key in ('raw', 'script'):
+                    path = Path(entry[key]['path']); path.write_text(path.read_text().replace(old_nonce, new_nonce))
+                    entry[key] = s.descriptor(path)
+                observed = mappings.parse_snapshot(Path(entry['raw']['path']).read_text(), new_nonce, BOOT)
+                Path(entry['parsed']['path']).write_text(json.dumps({k: v for k, v in observed.items() if k != 'raw'}))
+                entry['parsed'] = s.descriptor(entry['parsed']['path']); entry['nonce'] = new_nonce
+                path = Path(command['log']); path.write_text(path.read_text().replace(old_nonce, new_nonce))
+                command['sha256'] = s.digest(path); command['argv'][-1] = command['argv'][-1].replace(old_nonce, new_nonce)
+            entry['command_index'] = generation
+            view = fixture.artifact('legacy.txt', mappings.legacy_text(mappings.verify_evidence(entry, command, target='unit-target')))
+            entry['legacy_view'] = view; entries.append(entry); commands.append(command)
+        report = dict(boot_id=BOOT, commands=commands, mapping_snapshots=entries,
+                      mappings_1=entries[0]['legacy_view']['path'], mappings_2=entries[1]['legacy_view']['path'])
+        verify_mapping_replays(report, 'unit-target')
+        for fault in ('duplicate', 'order', 'boot', 'view'):
+            wrong = copy.deepcopy(report)
+            if fault == 'duplicate':
+                wrong['mapping_snapshots'][1] = copy.deepcopy(entries[0]); wrong['mapping_snapshots'][1]['command_index'] = 1
+                wrong['commands'][1] = commands[0]; wrong['mappings_2'] = wrong['mappings_1']
+            elif fault == 'order': wrong['mapping_snapshots'][1]['command_index'] = 0
+            elif fault == 'boot': wrong['boot_id'] = '0' * 8 + BOOT[8:]
+            else: wrong['mappings_2'] = wrong['mappings_1']
+            with self.subTest(fault=fault), self.assertRaises(ValueError): verify_mapping_replays(wrong, 'unit-target')
 
     def test_private_copy_retains_original_build_proof_without_recompile(self):
         source = self.root / 'source'; source.mkdir()

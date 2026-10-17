@@ -273,14 +273,23 @@ class Collector:
                 'installed provider is not the actual archive image source payload')
         schema = protocol.schema(module)
         token, token_art = self.token(PROVIDER, 'token-provider')
-        from batch_system_calendar_runtime_resources import LOCALE_SCRIPT, make_provider_label_proof
-        _, locale = self.raw(LOCALE_SCRIPT, 'provider-label-actual-locale')
-        self.provider_label_context = {'installed_hap': record(installed), 'bms': bm, 'locale': locale,
-            'archive_sha256': self.report['archive']['sha256'], 'boot_id': self.boot, 'run_id': self.run}
-        self.provider_label_proof = make_provider_label_proof(**self.provider_label_context)
+        self.provider_label_proof = None
+        self.provider_label_context = None
         self.report['artifacts']['provider'] = {'archive_binding': record(provider_receipt), 'bms': bm, 'installed_hap': record(installed),
-            'token': token_art, 'uid': app['uid'], 'token_id': app['accessTokenId'], 'schema': schema,
-            'label_proof': self.provider_label_proof}
+            'token': token_art, 'uid': app['uid'], 'token_id': app['accessTokenId'], 'schema': schema}
+        locale_only = self.args.stage == 'operation' and self.args.role == 'observer' and self.args.action == 'locale'
+        if not locale_only:
+            from batch_system_calendar_runtime_resources import make_provider_label_proof, require_fresh_public_locale
+            self.provider_label_context = {'installed_hap': record(installed), 'bms': bm,
+                'locale': self.plan['provider']['public_locale_capture'], 'archive_sha256': self.report['archive']['sha256'],
+                'boot_id': self.boot, 'run_id': self.run}
+            self.provider_label_proof = make_provider_label_proof(**self.provider_label_context)
+            observed = self.provider_label_proof['public_locale']
+            observer = self.apps[ROLES['observer']['bundle']]
+            require(observed['uid'] == observer['uid'] and observed['token_id'] == observer['accessTokenId'] and
+                    observed['challenge'] == self.report['challenge'], 'public locale used another installed observer/challenge')
+            require_fresh_public_locale(self.provider_label_proof, token['realtime_ns'])
+            self.report['artifacts']['provider']['label_proof'] = self.provider_label_proof
         self.save()
 
     def permission_preflight(self):
@@ -298,10 +307,11 @@ class Collector:
             return None
         provider_locale = None
         if target == PROVIDER:
-            from batch_system_calendar_runtime_resources import LOCALE_SCRIPT
-            actual_locale, provider_locale = self.raw(LOCALE_SCRIPT, 'provider-label-locale-before-decision')
-            require(actual_locale == checked(self.provider_label_context['locale']).read_text(),
-                    'actual locale changed before provider permission decision; preserve dialog')
+            from batch_system_calendar_runtime_resources import require_fresh_public_locale
+            # Starting the observer here would replace the very permission UI under review.
+            # A fresh before-launch public capture and the exact actual requester label are required instead.
+            token, provider_locale = self.token(PROVIDER, 'provider-label-clock-before-decision')
+            require_fresh_public_locale(self.provider_label_proof, token['realtime_ns'])
         label = permission_label(target, self.apps, self.run,
             provider_label_proof=self.provider_label_proof if target == PROVIDER else None,
             provider_label_context=self.provider_label_context if target == PROVIDER else None)
@@ -311,7 +321,7 @@ class Collector:
         x, y, w, h = node['rect']
         self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'permission-actual-node')
         proof = {'decision': decision, 'layout': record(path), 'screenshot': record(screen), **selected}
-        if provider_locale is not None: proof['provider_locale'] = provider_locale
+        if provider_locale is not None: proof['provider_locale_clock'] = provider_locale
         return proof
 
     def operation(self, role, action, case):
@@ -337,8 +347,10 @@ class Collector:
             self.report['readback_capture'] = record(self.args.readback.resolve())
         self.report['request'] = value
         self.report['stage'] = 'public-operation'
+        self.report['empty_journal_proves_no_side_effect'] = False
+        self.report['preserve_owned_data_until_independent_cleanup'] = True
         self.permission_preflight()
-        self.raw(shlex.join(['aa', 'start', '-b', policy['bundle'], '-a', 'EntryAbility', '--ps', 'request', json.dumps(value, separators=(',', ':'))]), 'launch-request')
+        self.report['operation_launch'] = self.raw(shlex.join(['aa', 'start', '-b', policy['bundle'], '-a', 'EntryAbility', '--ps', 'request', json.dumps(value, separators=(',', ':'))]), 'launch-request')[1]
         deadline = time.monotonic() + self.args.timeout
         clicked = False
         last = ''
@@ -346,6 +358,7 @@ class Collector:
             try:
                 if not clicked:
                     self.report['run_click'] = self.ui.click(policy['bundle'], identifier='calendar-qa-run', label='execute-real-operation')
+                    self.report['run_click']['layout'] = record(Path(self.report['run_click']['layout']))
                     clicked = True
                 if self.args.permission_decision:
                     decision = self.permission_click(self.args.permission_decision, policy['bundle'])
@@ -364,7 +377,16 @@ class Collector:
             except (LayoutNotReady, NodeNotReady) as error:
                 last = str(error)
             self.save(); time.sleep(0.25)
-        raise ValueError('actual public operation timed out: ' + last)
+        self.report['operation_diagnostic'] = {'diagnostic_only': True, 'side_effects': 'unknown_without_complete_journal'}
+        try:
+            layout, path = self.ui.layout(label='public-operation-timeout')
+            self.report['operation_diagnostic']['layout'] = record(path)
+            self.report['operation_diagnostic']['screenshot'] = record(self.ui.screenshot(label='public-operation-timeout'))
+            self.report['operation_diagnostic']['AMS'] = self.raw('aa dump -a -u 100', 'public-operation-timeout-AMS')[1]
+        except Exception as error:
+            self.report['operation_diagnostic']['capture_error'] = str(error)
+        self.save()
+        raise ValueError('actual public operation timed out; preserve potentially changed data: ' + last)
 
     def seed(self):
         from batch_system_calendar_runtime_verify import validate_capture
@@ -523,7 +545,7 @@ def main():
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--stage', choices=('operation', 'notification-click', 'uri', 'snapshot'), required=True)
     parser.add_argument('--role', choices=ROLES, default='producer')
-    parser.add_argument('--action', choices=('permission', 'access', 'create', 'read', 'notifications', 'update', 'delete', 'cleanup', 'routes'), default='read')
+    parser.add_argument('--action', choices=('permission', 'access', 'create', 'read', 'notifications', 'update', 'delete', 'cleanup', 'routes', 'locale'), default='read')
     parser.add_argument('--case', default='public-read')
     parser.add_argument('--seed', type=Path)
     parser.add_argument('--notification', type=Path)

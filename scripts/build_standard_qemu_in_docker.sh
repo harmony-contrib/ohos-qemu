@@ -196,6 +196,7 @@ QEMU_VULKAN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/components/qemu_
 QEMU_2IN1_PROFILE_SCRIPT="${PATCH_ROOT}/2in1/product_profile/apply.sh"
 SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/2in1/sceneboard_runtime/apply.sh"
 PHONE_SCENEBOARD_RUNTIME_COMPONENT_SCRIPT="${PATCH_ROOT}/phone/sceneboard_runtime/apply.sh"
+PRIVACYCENTER_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/privacycenter_provider/apply.py"
 QEMU_PHONE_PROFILE_SCRIPT="${PATCH_ROOT}/phone/product_profile/apply.sh"
 QEMU_ABSOLUTE_POINTER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/absolute_pointer/apply.sh"
 QEMU_SHORTKEY_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimodalinput/input/shortkey_profile/apply.sh"
@@ -384,6 +385,7 @@ SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_cod
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
 AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh"
 AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.sh"
+CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/capturer_read_lifecycle/apply.sh"
 CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/codec_hardware_profile/apply.sh"
 QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
 AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_library_path/apply.sh"
@@ -1168,12 +1170,26 @@ apply_github_lfs_asset_component() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_github_lfs_assets.log"
 }
 
+privacycenter_recipe_revision() {
+  python3 - "${QEMU_BUILD_INPUT_MANIFEST:-}" "${SCRIPT_DIR}/.." <<'PYREV'
+import json, re, subprocess, sys
+from pathlib import Path
+if sys.argv[1]:
+    revision = json.loads(Path(sys.argv[1]).read_text())["source_git_revision"]
+else:
+    revision = subprocess.check_output(["git", "-C", sys.argv[2], "rev-parse", "HEAD"], text=True).strip()
+if not isinstance(revision, str) or not re.fullmatch("[0-9a-f]{40}", revision):
+    raise ValueError("PrivacyCenter requires the actual build recipe commit")
+print(revision)
+PYREV
+}
+
 restore_staged_sceneboard_lfs_assets() {
   # A previous architecture leaves the renewed HAPs in the persistent source
   # volume. Restore only those exact staged files to their pinned originals so
   # the LFS baseline audit can run again before this build stages them anew.
   local hap target renewed oid object
-  for hap in SceneBoard.hap NotificationManagement.hap ThemeService.hap ThemeComponent.hap; do
+  for hap in SceneBoard.hap NotificationManagement.hap ThemeService.hap ThemeComponent.hap SecurityPrivacyCenter.hap; do
     target="${OHOS_ROOT}/applications/standard/hap/sceneboard/${hap}"
     renewed="${SCENEBOARD_RUNTIME_ASSET_ROOT}/${hap}"
     if [ ! -f "${target}" ] || [ ! -f "${renewed}" ] || ! cmp -s "${target}" "${renewed}"; then
@@ -2041,6 +2057,8 @@ apply_qemu_audio_component() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_component.log"
   bash "${QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_capture_component.log"
+  bash "${QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_qemu_audio_capture_component.log"
 }
 
 fix_case_insensitive_selinux_version_header() {
@@ -2914,6 +2932,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_profile_component.log"
   bash "${QEMU_AUDIO_POLICY_7_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_policy_7_component.log"
+  bash "${QEMU_AUDIO_POLICY_7_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_qemu_audio_policy_7_component.log"
   bash "${QEMU_CAMERA_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_camera_profile_component.log"
   bash "${QEMU_CAMERA_USB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -2994,6 +3014,18 @@ apply_qemu_capability_patch_plan() {
       --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
       --native-source-revision "${SCENEBOARD_RUNTIME_NATIVE_REVISION}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_phone_sceneboard_runtime_component.log"
+  fi
+  if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
+    local privacy_source_revision
+    privacy_source_revision="$(privacycenter_recipe_revision)"
+    python3 "${PRIVACYCENTER_PROVIDER_COMPONENT_SCRIPT}" \
+      --source-root "${OHOS_ROOT}" --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
+      --native-source-revision "${privacy_source_revision}" --device "${DEVICE_TYPE}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_privacycenter_provider_component.log"
+    python3 "${PRIVACYCENTER_PROVIDER_COMPONENT_SCRIPT}" --verify-only \
+      --source-root "${OHOS_ROOT}" --native-source-revision "${privacy_source_revision}" \
+      --device "${DEVICE_TYPE}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/verify_privacycenter_provider_component.log"
   fi
   apply_qemu_runtime_components
   bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3378,6 +3410,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_surface_layout_component.log"
   bash "${AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_capture_integrity_component.log"
+  bash "${CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_capturer_read_lifecycle_component.log"
+  bash "${CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_capturer_read_lifecycle_component.log"
   bash "${AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_library_path_component.log"
   bash "${AUDIO_SUITE_DSP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

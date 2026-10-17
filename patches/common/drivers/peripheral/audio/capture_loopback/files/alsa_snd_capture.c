@@ -187,13 +187,45 @@ static int32_t SetHWPeriod(struct AlsaSoundCard *cardIns, snd_pcm_hw_params_t *p
     return HDF_SUCCESS;
 }
 
+static int32_t CheckQemuCaptureHwParams(struct AlsaSoundCard *cardIns, uint32_t requestedRate)
+{
+    CHECK_NULL_PTR_RETURN_DEFAULT(cardIns);
+    if (strcmp(cardIns->alsaCardId, "QemuCapture") != 0) {
+        return HDF_SUCCESS; // Preserve rate_near behavior for other hardware.
+    }
+    CHECK_NULL_PTR_RETURN_DEFAULT(cardIns->pcmHandle);
+    snd_pcm_hw_params_t *current = NULL;
+    snd_pcm_hw_params_alloca(&current);
+    uint32_t rate = 0;
+    uint32_t channels = 0;
+    int32_t dir = 0;
+    snd_pcm_format_t format;
+    snd_pcm_format_t requestedFormat;
+    if (snd_pcm_hw_params_current(cardIns->pcmHandle, current) < 0 ||
+        snd_pcm_hw_params_get_rate(current, &rate, &dir) < 0 ||
+        snd_pcm_hw_params_get_channels(current, &channels) < 0 ||
+        snd_pcm_hw_params_get_format(current, &format) < 0 ||
+        SndConverAlsaPcmFormat(&cardIns->hwParams, &requestedFormat) != HDF_SUCCESS) {
+        AUDIO_FUNC_LOGE("Cannot verify applied QemuCapture hardware parameters");
+        return HDF_FAILURE;
+    }
+    if (rate != requestedRate || channels != cardIns->hwParams.channels || format != requestedFormat) {
+        AUDIO_FUNC_LOGE("QemuCapture applied params differ: rate=%{public}u expected=%{public}u, "
+            "channels=%{public}u expected=%{public}u, format=%{public}d expected=%{public}d",
+            rate, requestedRate, channels, cardIns->hwParams.channels, format, requestedFormat);
+        return HDF_FAILURE;
+    }
+    return HDF_SUCCESS;
+}
+
 static int32_t SetHWParams(struct AlsaSoundCard *cardIns, snd_pcm_access_t access)
 {
     snd_pcm_hw_params_t *hwParams = NULL;
-    snd_pcm_t *handle = cardIns->pcmHandle;
     CHECK_NULL_PTR_RETURN_DEFAULT(cardIns);
+    snd_pcm_t *handle = cardIns->pcmHandle;
     CHECK_NULL_PTR_RETURN_DEFAULT(handle);
 
+    uint32_t requestedRate = cardIns->hwParams.rate;
     snd_pcm_hw_params_alloca(&hwParams);
     int32_t ret = snd_pcm_hw_params_any(handle, hwParams); // choose all parameters
     if (ret < 0) {
@@ -233,6 +265,9 @@ static int32_t SetHWParams(struct AlsaSoundCard *cardIns, snd_pcm_access_t acces
         return HDF_FAILURE;
     }
 
+    if (CheckQemuCaptureHwParams(cardIns, requestedRate) != HDF_SUCCESS) {
+        return HDF_FAILURE;
+    }
     cardIns->canPause = snd_pcm_hw_params_can_pause(hwParams);
     AUDIO_FUNC_LOGI("hardware driver %{public}s support pause", cardIns->canPause ? "is" : "is not");
 
@@ -487,21 +522,29 @@ struct AlsaCapture *CaptureGetInstance(const char *adapterName)
     return NULL;
 }
 
-static int32_t CheckCapFrameBufferSize(struct AudioHwCaptureParam *handleData, snd_pcm_uframes_t *periodSize)
+static int32_t CheckCapFrameBufferSize(struct AudioHwCaptureParam *handleData, snd_pcm_t *pcm,
+    uint64_t capacity, snd_pcm_uframes_t *periodSize, uint64_t *frameBytes)
 {
     CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
+    CHECK_NULL_PTR_RETURN_DEFAULT(pcm);
     CHECK_NULL_PTR_RETURN_DEFAULT(periodSize);
-
-    uint32_t capFrameSize = handleData->frameCaptureMode.attrs.channelCount * handleData->frameCaptureMode.attrs.format;
-    if (capFrameSize == 0) {
-        AUDIO_FUNC_LOGE("Capture frame size is zero!");
+    CHECK_NULL_PTR_RETURN_DEFAULT(frameBytes);
+    snd_pcm_sframes_t physicalFrameBytes = snd_pcm_frames_to_bytes(pcm, 1);
+    if (physicalFrameBytes <= 0 || capacity == 0 || *periodSize == 0) {
         return HDF_FAILURE;
     }
-    uint64_t capReqBufferSize = capFrameSize * (*periodSize);
-    if (capReqBufferSize > FRAME_DATA) {
-        *periodSize = FRAME_DATA / capFrameSize;
+    *frameBytes = (uint64_t)physicalFrameBytes;
+    uint64_t boundedBytes = capacity < FRAME_DATA ? capacity : FRAME_DATA;
+    if (boundedBytes > ALSA_CAP_BUFFER_SIZE) {
+        boundedBytes = ALSA_CAP_BUFFER_SIZE;
     }
-
+    uint64_t maxFrames = boundedBytes / *frameBytes;
+    if (maxFrames == 0) {
+        return HDF_FAILURE; // A sub-frame request cannot consume or fabricate a frame.
+    }
+    if (*periodSize > maxFrames) {
+        *periodSize = (snd_pcm_uframes_t)maxFrames;
+    }
     return HDF_SUCCESS;
 }
 
@@ -570,30 +613,23 @@ static int32_t CapturePcmReadi(snd_pcm_t *pcm, uint64_t *frameCnt, char *dataBuf
     return HDF_FAILURE;
 }
 
-static int32_t CaptureDataCopy(struct AudioHwCaptureParam *handleData, char *buffer, uint64_t frames)
+static int32_t CaptureDataCopy(struct AudioHwCaptureParam *handleData, char *buffer, uint64_t frames,
+    uint64_t capacity, uint64_t frameBytes)
 {
     CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
     CHECK_NULL_PTR_RETURN_DEFAULT(buffer);
-    if (frames == 0) {
-        AUDIO_FUNC_LOGE("Capture buffer size is empty!");
+    if (handleData->frameCaptureMode.buffer == NULL || frames == 0 || frameBytes == 0 ||
+        frames > capacity / frameBytes || frames > FRAME_DATA / frameBytes ||
+        frames > ALSA_CAP_BUFFER_SIZE / frameBytes) {
         return HDF_FAILURE;
     }
-
-    if (handleData->frameCaptureMode.buffer == NULL) {
-        AUDIO_FUNC_LOGE("frameCaptureMode.buffer is NULL!");
-        return HDF_FAILURE;
-    }
-    uint32_t channels = handleData->frameCaptureMode.attrs.channelCount;
-    uint32_t format = (uint32_t)handleData->frameCaptureMode.attrs.format;
-    uint64_t recvDataSize = (uint64_t)(frames * channels * format);
-    int32_t ret = memcpy_s(handleData->frameCaptureMode.buffer, FRAME_DATA, buffer, recvDataSize);
-    if (ret != EOK) {
-        AUDIO_FUNC_LOGE("memcpy frame data failed!");
+    // Use negotiated physical frame bytes, not the HDI format enum as a byte count.
+    uint64_t recvDataSize = frames * frameBytes;
+    if (memcpy_s(handleData->frameCaptureMode.buffer, FRAME_DATA, buffer, recvDataSize) != EOK) {
         return HDF_FAILURE;
     }
     handleData->frameCaptureMode.bufferSize = recvDataSize;
     handleData->frameCaptureMode.bufferFrameSize = frames;
-
     return HDF_SUCCESS;
 }
 
@@ -694,8 +730,13 @@ static int32_t CaptureReadImpl(struct AlsaCapture *captureIns, struct AudioHwCap
     struct AlsaSoundCard *cardIns = (struct AlsaSoundCard *)captureIns;
     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
     CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
-    CHECK_NULL_PTR_RETURN_DEFAULT(cardIns->pcmHandle);
 
+    // Snapshot the IN capacity before clearing all OUT fields, including error paths.
+    uint64_t capacity = handleData->frameCaptureMode.bufferSize;
+    uint64_t frameBytes = 0;
+    handleData->frameCaptureMode.bufferSize = 0;
+    handleData->frameCaptureMode.bufferFrameSize = 0;
+    CHECK_NULL_PTR_RETURN_DEFAULT(cardIns->pcmHandle);
     if (cardIns->pauseState) {
         AUDIO_FUNC_LOGE("Currently in pause, please check!");
         return HDF_FAILURE;
@@ -710,7 +751,7 @@ static int32_t CaptureReadImpl(struct AlsaCapture *captureIns, struct AudioHwCap
         return HDF_FAILURE;
     }
 
-    if (CheckCapFrameBufferSize(handleData, &periodSize) != HDF_SUCCESS) {
+    if (CheckCapFrameBufferSize(handleData, cardIns->pcmHandle, capacity, &periodSize, &frameBytes) != HDF_SUCCESS) {
         AUDIO_FUNC_LOGE("CheckCapFrameBufferSize failed.");
         return HDF_FAILURE;
     }
@@ -737,7 +778,7 @@ static int32_t CaptureReadImpl(struct AlsaCapture *captureIns, struct AudioHwCap
         AudioMemFree((void **)&buffer);
         return ret;
     }
-    ret = CaptureDataCopy(handleData, buffer, frames);
+    ret = CaptureDataCopy(handleData, buffer, frames, capacity, frameBytes);
     if (ret != HDF_SUCCESS) {
         AUDIO_FUNC_LOGE("Failed to copy data. It may be paused. Check the status!");
         AudioMemFree((void **)&buffer);

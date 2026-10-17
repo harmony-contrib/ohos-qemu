@@ -743,7 +743,10 @@ def main():
         coordinator=Coordinator(args);coordinator.run_requests();return 0
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError)as error:
         if coordinator:
-            coordinator.value['status']='fail';coordinator.value['failures'].append(type(error).__name__+': '+str(error));coordinator.save()
+            coordinator.value['status']='fail';coordinator.value['failures'].append(type(error).__name__+': '+str(error))
+            try:coordinator.capture_failure()
+            except Exception as capture_error:coordinator.value['failure_capture_error']=str(capture_error)
+            coordinator.save()
         print(type(error).__name__+': '+str(error));return 1
 
 

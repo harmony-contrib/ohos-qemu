@@ -228,7 +228,7 @@ class Driver:
         self.permission_bms_bindings = []
         self.serial = 0
         self.caller_uid = None
-        self.contacts_uid = None
+        self.provider_bms = None
 
     def label(self, stem):
         self.serial += 1
@@ -263,6 +263,34 @@ class Driver:
 
     def screen(self, stem):
         return descriptor(self.ui.screenshot(label=self.label(stem)))
+
+    def failure_diagnostics(self, stem):
+        """Read-only failure observations; never substitute a journal or pass."""
+        result = {'scope': 'same_boot_failure_UI_ONLY_NOT_runtime_or_cleanup_proof', 'errors': []}
+        try:
+            raw, result['boot_before'] = self.raw('cat /proc/sys/kernel/random/boot_id', stem + '-boot-before')
+            verifier.require(raw.strip() == self.guest.env['boot_id'], 'failure capture left enclosing boot')
+        except Exception as error:
+            result['errors'].append({'observation': 'boot_before', 'error': str(error)})
+            return result
+        # A failed hierarchy dump must not prevent a real PNG from showing an
+        # application error such as a missing staged file or journal exception.
+        for name, capture in [
+                ('layout', lambda: descriptor(self.layout(stem + '-layout')[1])),
+                ('screenshot', lambda: self.screen(stem + '-pixels')),
+                ('ams', lambda: self.raw('aa dump -a -u 100', stem + '-AMS')[1]),
+                ('hilog', lambda: self.raw('hilog -x', stem + '-hilog')[1])]:
+            try:
+                result[name] = capture()
+            except Exception as error:
+                result['errors'].append({'observation': name, 'error': str(error)})
+        try:
+            raw, result['boot_after'] = self.raw('cat /proc/sys/kernel/random/boot_id', stem + '-boot-after')
+            verifier.require(raw.strip() == self.guest.env['boot_id'], 'failure capture guest rebooted')
+            result['same_boot_verified'] = True
+        except Exception as error:
+            result['errors'].append({'observation': 'boot_after', 'error': str(error)})
+        return result
 
     def launch(self, bundle, **parameters):
         argv = ['aa', 'start', '-b', bundle, '-a', 'EntryAbility']
@@ -459,7 +487,7 @@ class Driver:
 
     def live_ams(self):
         raw, proof = self.raw('aa dump -a -u 100', 'bound-live-provider-AMS')
-        verifier.require(verifier.ams_sessions(raw, self.contacts_uid, self.caller_uid),
+        verifier.require(verifier.ams_sessions(raw, self.provider_bms, self.caller_uid),
                          'actual live Contacts provider must exist before picker input')
         return proof
 
@@ -475,10 +503,10 @@ class Driver:
         return self.wait(click)
 
     def session_closed(self, action):
-        before = verifier.ams_sessions(Path(action['ams_before']['path']).read_text(), self.contacts_uid, self.caller_uid)
+        before = verifier.ams_sessions(Path(action['ams_before']['path']).read_text(), self.provider_bms, self.caller_uid)
         def closed():
             text, proof = self.raw('aa dump -a -u 100', 'AMS-after-input')
-            after = verifier.ams_sessions(text, self.contacts_uid, self.caller_uid)
+            after = verifier.ams_sessions(text, self.provider_bms, self.caller_uid)
             if len(set(before) - set(after)) != 1 or not set(after) <= set(before): return None
             layout, path = self.layout('immediate-after-input')
             old_view = verifier.picker_view(json.loads(Path(action['layout']['path']).read_text()))
@@ -488,7 +516,7 @@ class Driver:
                 return None
             action['ams_after'] = proof
             action['layout_after'] = descriptor(path)
-            verifier.closed_session(action, self.contacts_uid, self.caller_uid)
+            verifier.closed_session(action, self.provider_bms, self.caller_uid)
             return True
         self.wait(closed)
 
@@ -583,19 +611,13 @@ class Driver:
                 try:
                     self.case(case_id, seed)
                 except Exception as error:
-                    failure = {'case_id': case_id, 'error': str(error)}
+                    failure = {'case_id': case_id, 'error': str(error),
+                               'diagnostics': self.failure_diagnostics('failure-' + case_id)}
                     errors.append(failure)
-                    try:
-                        _, path = self.layout('failure-' + case_id)
-                        failure['layout'] = descriptor(path)
-                        failure['screenshot'] = self.screen('failure-' + case_id)
-                        _, failure['ams'] = self.raw('aa dump -a -u 100', 'failure-AMS-' + case_id)
-                        _, failure['hilog'] = self.raw('hilog -x', 'failure-hilog-' + case_id)
-                    except Exception as capture_error:
-                        failure['capture_error'] = str(capture_error)
                     self.raw('aa force-stop ' + CALLER, 'recover-owned-caller-after-failure')
         except Exception as error:
-            errors.append({'phase': 'seed-or-run', 'error': str(error)})
+            errors.append({'phase': 'seed-or-run', 'error': str(error),
+                           'diagnostics': self.failure_diagnostics('failure-seed-or-run')})
         finally:
             try:
                 self.raw('aa force-stop ' + CALLER, 'finally-stop-owned-caller')
@@ -705,7 +727,8 @@ def run(args):
             identities[key] = app
         provider_raw, provider_bms = driver.raw('bm dump -n ' + PROVIDER, 'Contacts-provider-BMS-UID')
         driver.evidence['provider_bms'] = provider_bms
-        driver.contacts_uid = verifier.provider_uid(driver.evidence)
+        verifier.provider_uid(driver.evidence)
+        driver.provider_bms = provider_bms
         driver.caller_uid = identities['caller']['uid']
         # Zero-permission caller is checked before it can trigger any UI.
         verifier.verify_identity(verifier.document(args.output / 'caller-identity.json'), build, run_id)
@@ -745,7 +768,10 @@ def run(args):
                        'ledger_closed': False, 'first_artifact_behavior_gate_passed': False})
         if not report['failures']: report['status'] = 'pass'
     except Exception as error:
-        report['failures'].append({'phase': 'setup-or-runtime', 'error': str(error)})
+        failure = {'phase': 'setup-or-runtime', 'error': str(error)}
+        if 'driver' in locals():
+            failure['diagnostics'] = driver.failure_diagnostics('failure-setup-or-runtime')
+        report['failures'].append(failure)
     finally:
         if guest:
             report['test_environment'] = guest.env

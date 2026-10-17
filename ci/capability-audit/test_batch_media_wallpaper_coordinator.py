@@ -218,6 +218,59 @@ class CoordinatorTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'real UI failed'):value.run_requests()
             self.assertEqual([],list(root.glob('*.ack.json')))
 
+    def test_expired_action_failure_still_captures_real_ui_without_ack_or_deadline_reset(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            value = coordinator.Coordinator.__new__(coordinator.Coordinator)
+            value.args = SimpleNamespace(hdc='host-test-hdc')
+            value.output = root; value.boot_id = '11111111-1111-1111-1111-111111111111'
+            value.guest = SimpleNamespace(target='127.0.0.1:5555')
+            value.deadline = 0
+            value.value = {'status': 'fail', 'failures': ['original no journal'], 'actions': []}
+            value.save = lambda: None
+            value.command = lambda *args: self.fail('must not restart an expired action transport')
+            calls = []
+            def readonly_command(instance, argv, label):
+                self.assertIs(instance, value)
+                self.assertEqual(['host-test-hdc', '-t', value.guest.target, 'shell',
+                                  'cat /proc/sys/kernel/random/boot_id'], argv)
+                calls.append(label)
+                return value.boot_id
+            class FailureUi:
+                def __init__(self, command, hdc, target, output): self.command = command
+                def shell(self, script, label):
+                    return self.command(['host-test-hdc', '-t', value.guest.target, 'shell', script], label)
+                def layout(self, **kwargs): raise coordinator.LayoutNotReady('actual window unavailable')
+                def screenshot(self, **kwargs):
+                    path = root / 'host-model.png'; path.write_bytes(b'host model only'); return path
+            with patch.object(runtime, 'GuestUi', FailureUi), patch.object(runtime.Runtime, 'command', readonly_command):
+                result = value.capture_failure()
+            self.assertEqual(0, value.deadline)
+            self.assertEqual('fail', value.value['status'])
+            self.assertEqual(['original no journal'], value.value['failures'])
+            self.assertEqual([], value.value['actions'])
+            self.assertEqual([], list(root.glob('*.ack.json')))
+            self.assertEqual(2, len(calls))
+            self.assertTrue(result['same_boot_verified'])
+            self.assertIn('screenshot', result)
+            self.assertNotIn('layout', result)
+            self.assertEqual(['layout'], [row['observation'] for row in result['errors']])
+
+    def test_failure_ui_does_not_capture_replacement_boot(self):
+        with tempfile.TemporaryDirectory() as temp:
+            value = coordinator.Coordinator.__new__(coordinator.Coordinator)
+            value.args = SimpleNamespace(hdc='host-test-hdc')
+            value.output = Path(temp); value.boot_id = 'expected'; value.guest = SimpleNamespace(target='target')
+            value.value = {'status': 'fail', 'failures': ['original'], 'actions': []}; value.save = lambda: None
+            class FailureUi:
+                def __init__(self, *args): pass
+                def shell(self, *args): return 'another-boot'
+                def layout(inner, **kwargs): self.fail('replacement boot must not supply diagnostics')
+                def screenshot(inner, **kwargs): self.fail('replacement boot must not supply diagnostics')
+            with patch.object(runtime, 'GuestUi', FailureUi): result = value.capture_failure()
+            self.assertEqual(['boot_before'], [row['observation'] for row in result['errors']])
+            self.assertNotIn('same_boot_verified', result)
+
     def test_query_actual_API26_declarations_and_read_only_sources(self):
         sdk=Path('/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0')
         with tempfile.TemporaryDirectory()as temp:

@@ -18,6 +18,66 @@ fixture = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(fixture
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_actual_seed_and_query_exchange_files_use_application_root_with_ui_context_for_apis(self):
+        program = r'''
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {stripTypeScriptTypes}=require('node:module');
+const run='a'.repeat(32),nonce='b'.repeat(32),files=new Map(),calls=[];
+const ability={filesDir:'/app/haps/entry/files',getApplicationContext:()=>({filesDir:'/app/files'})};
+const png=new Uint8Array(128);png.set([137,80,78,71]);files.set('/app/files/desktop-1.png',png);
+const uris=Array.from({length:5},(_,i)=>`file://media/Photo/${i+1}/fresh.png`);
+const io={OpenMode:{CREATE:1,WRITE_ONLY:2,APPEND:4,READ_ONLY:8,NOFOLLOW:16},
+ accessSync:p=>files.has(p),readTextSync:p=>{assert(!p.includes('/haps/'));if(!files.has(p))throw{code:13900002,message:'actual missing input'};return String(files.get(p))},
+ openSync:(p,mode)=>{assert(!p.includes('/haps/'));if(!files.has(p)&&!(mode&1)&&!p.startsWith('file://'))throw{code:13900002,message:'actual missing input'};return{fd:p}},
+ statSync:p=>({size:files.get(p).byteLength}),readSync:(p,b)=>{new Uint8Array(b).set(files.get(p));return b.byteLength},
+ writeSync:(p,b)=>{if(typeof b==='string'){files.set(p,(files.get(p)||'')+b);return b.length}
+ if(p.startsWith('file://')){files.set(p,new Uint8Array(b));return b.byteLength}
+ files.set(p,(files.get(p)||'')+new TextDecoder().decode(b));return b.byteLength},closeSync:()=>{}};
+let before=true;
+const helper={showAssetsCreationDialog:async(sources,config)=>{calls.push('real-creation-dialog');
+ assert.deepEqual(Array.from(sources),['file:///app/files/desktop-1.png']);assert.equal(config[0].photoType,1);return[uris[0]]},
+ getAssets:async opts=>({getCount:()=>before?1:0,getFirstObject:async()=>({uri:opts.predicates.uri}),close:()=>calls.push('close-cursor')})};
+const box={console,JSON,Set,Date,Array,Number,String,Error,Promise,Uint8Array,ArrayBuffer,
+ fs:io,util:{TextEncoder:class{encodeInto(s){return new TextEncoder().encode(s)}}},fileUri:{getUriFromPath:p=>'file://'+p},getContext:()=>ability,
+ photoAccessHelper:{PhotoType:{IMAGE:1},PhotoKeys:{URI:'uri'},getPhotoAccessHelper:c=>{assert.equal(c,ability);return helper}},
+ predicates:{DataSharePredicates:class{equalTo(k,uri){this.uri=uri;return this}}},
+ abilityAccessCtrl:{createAtManager:()=>({requestPermissionsFromUser:async(c,p)=>{assert.equal(c,ability);assert.deepEqual(Array.from(p),['ohos.permission.READ_IMAGEVIDEO']);return{authResults:[0]}}})}};
+vm.createContext(box);
+function load(path,name){let text=fs.readFileSync(path,'utf8').replace(/^import .*;\n/gm,'').replace(/^@(?:Entry|Component)\s*$/gm,'').replace(/@State\s+/g,'').replace('struct Index {',`class ${name} {`);
+ text=text.slice(0,text.indexOf('  build() {'))+'}\n';
+ vm.runInContext(stripTypeScriptTypes(text.replace(/__WALLPAPER_RUN__/g,run),{mode:'strip'})+`\nglobalThis.${name}=${name}`,box)}
+load(process.argv[1],'Seed');load(process.argv[2],'Query');
+(async()=>{
+ const seed=new box.Seed();seed.aboutToAppear();await seed.seed('desktop-1');
+ const journal='/app/files/wallpaper-'+run+'.jsonl';let rows=files.get(journal).trim().split('\n').map(JSON.parse);
+ assert.deepEqual(rows.map(r=>r.name),['import.request','import.complete']);assert.equal(calls[0],'real-creation-dialog');
+ const resumed=new box.Seed();resumed.aboutToAppear();assert.equal(resumed.sequence,2);
+ await seed.seed('missing');rows=files.get(journal).trim().split('\n').map(JSON.parse);
+ assert.equal(rows.at(-1).name,'failure');assert.equal(JSON.parse(rows.at(-1).detail).code,13900002);
+ assert.equal(rows.filter(r=>r.name==='import.complete').length,1);
+ const write=io.writeSync;io.writeSync=(p,b)=>{if(p===journal)throw{code:28,message:'journal full'};return write(p,b)};
+ await seed.seed('missing');assert.match(seed.note,/Failed 13900002.*Journal failed 28/);io.writeSync=write;
+ const query=new box.Query();await query.permission();
+ files.set('/app/files/query-request.json',JSON.stringify({run_id:run,nonce,phase:'before',uris}));await query.query();
+ const output='/app/files/query-'+run+'-'+nonce+'.json';assert.equal(JSON.parse(files.get(output)).active_uris.length,5);
+ before=false;files.set('/app/files/query-request.json',JSON.stringify({run_id:run,nonce:'c'.repeat(32),phase:'after',uris}));await query.query();
+ assert.deepEqual(JSON.parse(files.get('/app/files/query-'+run+'-'+'c'.repeat(32)+'.json')).active_uris,[]);
+ files.delete('/app/files/query-request.json');const count=files.size;await query.query();
+ assert.equal(files.size,count);assert.match(query.note,/Query failed: 13900002/);
+ assert.equal(calls.filter(x=>x==='close-cursor').length,10);
+ files.set('/app/files/query-request.json',JSON.stringify({run_id:run,nonce:'d'.repeat(32),phase:'after',uris}));
+ io.writeSync=(p,b)=>{if(p.includes('/query-'))throw{code:28,message:'result full'};return write(p,b)};
+ await query.query();assert.match(query.note,/Query failed: 28.*Result write failed: 28/);
+ assert(!files.has('/app/files/query-'+run+'-'+'d'.repeat(32)+'.json'));assert.equal(calls.filter(x=>x==='close-cursor').length,15);
+ console.log('actual ETS exchange root and original UI API context checked; host only');
+})().catch(e=>{console.error(e);process.exitCode=1});
+'''
+        result = subprocess.run(['node', '--unhandled-rejections=strict', '-e', program,
+            str(runtime.FIXTURE/'Index.ets'), str(runtime.HERE/'fixtures/batch_media/wallpaper_receipts/Query.ets')],
+            capture_output=True, text=True, timeout=20)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn('host only', result.stdout)
+
     def test_only_exact_uitest_window_enumeration_retry_is_allowed(self):
         marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
         remote = '/data/local/tmp/qemu-capability-ui-' + 'b' * 32 + '-7.json'

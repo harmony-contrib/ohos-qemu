@@ -139,18 +139,22 @@ GROUPS = {
             'device/qemu': 'b017aee8e2dfc97e45aeb508facc1527c3d06f4b',
             'vendor/ohemu': 'b56c5a95ec590543691278b85afe9fe228744163'},
         'components': ['audio', 'audio/capture_loopback'],
-        'units': ['alsa_soundcard_capture', 'alsa_soundcard_render', 'alsa_snd_capture', 'qemu_vendor_capture'],
+        'units': ['alsa_soundcard_capture', 'alsa_soundcard_render', 'alsa_snd_capture', 'qemu_vendor_capture', 'audio_primary_capture'],
         'source_paths': {
             'alsa_soundcard_capture': 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c',
             'alsa_soundcard_render': 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c',
             'alsa_snd_capture': 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c',
-            'qemu_vendor_capture': 'device/qemu/common/virt_full/audio_alsa/vendor_capture.c'},
+            'qemu_vendor_capture': 'device/qemu/common/virt_full/audio_alsa/vendor_capture.c',
+            'audio_primary_capture': 'drivers/peripheral/audio/hdi_service/primary_impl/src/audio_capture.c'},
         'targets': {
             'alsa_soundcard_capture': 'obj/drivers/peripheral/audio/supportlibs/alsa_adapter/src/audio_capture_adapter/alsa_soundcard.o',
             'alsa_soundcard_render': 'obj/drivers/peripheral/audio/supportlibs/alsa_adapter/src/audio_render_adapter/alsa_soundcard.o',
             'alsa_snd_capture': 'obj/drivers/peripheral/audio/supportlibs/alsa_adapter/src/audio_capture_adapter/alsa_snd_capture.o',
-            'qemu_vendor_capture': 'obj/device/qemu/common/virt_full/audio_alsa/audio_capture_adapter/vendor_capture.o'},
+            'qemu_vendor_capture': 'obj/device/qemu/common/virt_full/audio_alsa/audio_capture_adapter/vendor_capture.o',
+            'audio_primary_capture': 'obj/drivers/peripheral/audio/hdi_service/primary_impl/src/audio_primary_impl_vendor/audio_capture.o'},
         'required_header': 'audio/supportlibs/alsa_adapter/include/alsa_soundcard.h',
+        # The primary HDI TU has no changed ALSA header; still require its exact candidate source.
+        'required_headers': {'audio_primary_capture': None},
         'supported_products': ['arm64_virt'],
     },
     'location': {
@@ -183,6 +187,15 @@ GROUPS = {
                for kind in ('proxy', 'stub')}},
         'generate_idl': True,
         'supported_products': ['arm64_virt'],
+    },
+    'capturer_read': {
+        'project': 'foundation/multimedia/audio_framework',
+        'revision': '6932fa64335b8272ca4a59de7808ab0d6c9eae7a',
+        'components': ['capturer_read_lifecycle'],
+        'units': ['capturer_in_client'],
+        'sources': {'capturer_in_client': 'services/audio_service/client/src/capturer_in_client.cpp'},
+        'targets': {'capturer_in_client': 'obj/foundation/multimedia/audio_framework/services/audio_service/client/src/audio_stream_client/capturer_in_client.o'},
+        'required_headers': {'capturer_in_client': 'services/audio_service/client/include/capturer_in_client_inner.h'},
     },
     'audio_capture': {
         'project': 'foundation/multimedia/av_codec',

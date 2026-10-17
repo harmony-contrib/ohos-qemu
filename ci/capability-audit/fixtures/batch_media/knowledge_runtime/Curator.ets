@@ -86,8 +86,10 @@ struct Index {
       this.note = 'Actual owned asset operation finished';
     } catch (error) {
       const actual = error as BusinessError;
+      this.note = (store === undefined ? 'Request initialization failed;' : 'Operation failed;') +
+        ' application filesDir=' + (getContext(this) as common.UIAbilityContext).getApplicationContext().filesDir +
+        '; code=' + String(actual.code) + '; message=' + (actual.message ?? String(error));
       if (store !== undefined) { store.failure('curator', actual); }
-      this.note = 'Failed ' + actual.code + ': ' + actual.message;
     } finally { this.busy = false; }
   }
 

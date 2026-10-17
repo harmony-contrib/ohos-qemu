@@ -36,40 +36,57 @@ function request(action,case_id='cold-allow') {
 }
 function journal(){return storage.get('/private/calendar-'+run+'-'+boot+'.jsonl').trim().split('\n').map(JSON.parse);}
 (async()=>{
-  assert.throws(()=>new sandbox.Audit({filesDir:'/private'},request('notifications')));
-  await new sandbox.Audit({filesDir:'/private'},request('create')).execute();
+  assert.throws(()=>new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('notifications')));
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('create')).execute();
+  assert.ok([...storage.keys()].every(p=>p.startsWith('/private/')));
   assert.equal(writes.length,4);assert.ok(writes.every(e=>e.reminderTime[0]===0&&e.startTime>Date.now()+119000));
   assert.equal(journal().filter(r=>r.event==='event-created').length,4);
-  const before=writes.length;await new sandbox.Audit({filesDir:'/private'},request('create')).execute();assert.equal(writes.length,before);
-  await new sandbox.Audit({filesDir:'/private'},request('update')).execute();assert.equal(updates.length,1);
-  await new sandbox.Audit({filesDir:'/private'},request('delete')).execute();assert.deepEqual(removed,[401]);
+  const before=writes.length;await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('create')).execute();assert.equal(writes.length,before);
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('update')).execute();assert.equal(updates.length,1);
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('delete')).execute();assert.deepEqual(removed,[401]);
   const state='/private/calendar-state-'+run+'.json';const original=storage.get(state);
   const altered=JSON.parse(original);altered.calendar_id=9;storage.set(state,JSON.stringify(altered));
-  await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();assert.deepEqual(removed,[401]);
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('cleanup')).execute();assert.deepEqual(removed,[401]);
   storage.set(state,original);
   const owned=calendars.find(c=>c.id===10), beforeRows=JSON.stringify(owned.rows);
   owned.rows.push({...owned.rows[0],id:999,title:'foreign event'});
-  await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('cleanup')).execute();
   assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(owned.rows.at(-1).id,999);
   owned.rows.pop();owned.rows[0].description='external edit';
-  await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('cleanup')).execute();
   assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(owned.rows[0].description,'external edit');
   owned.rows.splice(0,owned.rows.length,...JSON.parse(beforeRows));
   const withoutGuard=JSON.parse(request('cleanup'));delete withoutGuard.cleanup_guard;
-  await new sandbox.Audit({filesDir:'/private'},JSON.stringify(withoutGuard)).execute();
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},JSON.stringify(withoutGuard)).execute();
   assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);
   for(const observed_ms of [Date.now()-120001,Date.now()+60000]) {
     const expired=JSON.parse(request('cleanup'));expired.cleanup_guard.observed_ms=observed_ms;
-    await new sandbox.Audit({filesDir:'/private'},JSON.stringify(expired)).execute();
+    await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},JSON.stringify(expired)).execute();
     assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(JSON.stringify(owned.rows),beforeRows);
   }
   // A normal reader hiding a foreign row must not override the independent
   // whole-reader guard. No delete is issued when their complete views differ.
   const hidden=JSON.parse(request('cleanup'));hidden.cleanup_guard.events.push({...owned.rows[0],id:1000});
-  await new sandbox.Audit({filesDir:'/private'},JSON.stringify(hidden)).execute();
+  await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},JSON.stringify(hidden)).execute();
   assert.deepEqual(removed,[401]);assert.equal(storage.get(state),original);assert.equal(JSON.stringify(owned.rows),beforeRows);
-  storage.set(state,original);await new sandbox.Audit({filesDir:'/private'},request('cleanup')).execute();
+  storage.set(state,original);await new sandbox.Audit({filesDir:'/module-private',getApplicationContext(){return {filesDir:'/private'};}},request('cleanup')).execute();
   assert.deepEqual(removed,[401,'calendar/10']);assert.equal(calendars.length,1);assert.equal(calendars[0],foreign);
   assert.equal(storage.has(state),false);const rows=journal();rows.forEach((r,i)=>assert.equal(r.sequence,i+1));
+  // Locale uses two read-only public APIs and the application files directory.
+  // Permission/calendar doubles throw, so any hidden request/read becomes an error row.
+  const observer = {...sandbox, i18n:{System:{getSystemLocale(){return 'zh-Hans-CN';}}},
+    abilityAccessCtrl:{createAtManager(){throw new Error('locale requested access');}},
+    calendarManager:{getCalendarManager(){throw new Error('locale touched calendar');}}};
+  vm.createContext(observer);
+  const observerSource=source.replace("const ROLE: string = 'producer';","const ROLE: string = 'observer';");
+  vm.runInContext(stripTypeScriptTypes(observerSource,{mode:'transform'})+'\nthis.Audit=CalendarAudit;',observer);
+  const localeRequest=JSON.parse(request('locale'));localeRequest.role='observer';
+  const context={filesDir:'/observer-module',getApplicationContext(){return {filesDir:'/observer-app'};},
+    resourceManager:{async getConfiguration(){return {locale:'zh-Hans-CN'};}}};
+  await new observer.Audit(context,JSON.stringify(localeRequest)).execute();
+  const localeRows=storage.get('/observer-app/calendar-'+run+'-'+boot+'.jsonl').trim().split('\n').map(JSON.parse);
+  assert.deepEqual(localeRows.map(r=>[r.event,r.api]),[['begin','request'],['system-locale','i18n.System.getSystemLocale'],
+    ['resource-locale','ResourceManager.getConfiguration'],['complete','request']]);
+  assert.ok(localeRows.every(r=>r.error_code===0));assert.equal(storage.has('/observer-module/calendar-'+run+'-'+boot+'.jsonl'),false);
   console.log('PASS host-only actual QA source: future timing ownership foreign/changed/hidden cleanup refusal fresh guard sequence');
 })().catch(e=>{console.error(e);process.exitCode=1;});

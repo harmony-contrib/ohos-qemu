@@ -27,7 +27,8 @@ struct Index {
     let operation: string = '';
     try {
       const context = getContext(this) as common.UIAbilityContext;
-      const path = context.filesDir + '/audio-haptic-request.json';
+      const filesDir = context.getApplicationContext().filesDir;
+      const path = filesDir + '/audio-haptic-request.json';
       if (fs.statSync(path).size > 65536) { throw new Error('Oversized explicit request'); }
       const envelope = JSON.parse(fs.readTextSync(path)) as Envelope;
       const request = envelope.request;
@@ -47,7 +48,7 @@ struct Index {
       }
       if (this.probe === undefined) {
         this.boot = request.boot_id;
-        this.probe = new AudioHapticProbe(context.filesDir, request.run_id, request.boot_id);
+        this.probe = new AudioHapticProbe(filesDir, request.run_id, request.boot_id);
       }
       if (this.boot !== request.boot_id) { throw new Error('Retained caller cannot change boot'); }
       const current = this.probe;

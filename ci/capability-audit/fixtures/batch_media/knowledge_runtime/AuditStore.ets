@@ -47,6 +47,7 @@ interface Row {
 export class AuditStore {
   readonly request: Request;
   readonly context: common.UIAbilityContext;
+  readonly filesDir: string;
   readonly role: string = '__KNOWLEDGE_ROLE__';
   readonly run: string = '__KNOWLEDGE_RUN__';
   private sequence: number = 0;
@@ -55,8 +56,9 @@ export class AuditStore {
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
-    this.path = context.filesDir + '/knowledge-' + this.run + '.jsonl';
-    const requestPath = context.filesDir + '/knowledge-request.json';
+    this.filesDir = context.getApplicationContext().filesDir;
+    this.path = this.filesDir + '/knowledge-' + this.run + '.jsonl';
+    const requestPath = this.filesDir + '/knowledge-request.json';
     if (fs.statSync(requestPath).size > 65536) { throw new Error('Oversized request'); }
     this.request = JSON.parse(fs.readTextSync(requestPath)) as Request;
     const r = this.request;

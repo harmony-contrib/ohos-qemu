@@ -27,5 +27,7 @@
     "provider_cancel": "close_click_btn",
     "provider_selection_count": "selectedText"
   },
-  "authority": "Only root may build, sign, install, seed through real public CRUD, interact with QEMU/UI and wire shared suite/closure. This HAP records raw observations and has no pass decision."
+  "authority": "Only root may build, sign, install, seed through real public CRUD, interact with QEMU/UI and wire shared suite/closure. This HAP records raw observations and has no pass decision.",
+  "journal_context": "getApplicationContext().filesDir; public queryContact retains original UIAbilityContext",
+  "provider_identity": "exact preinstalled system singleton account0 BMS tuple; actual AMS provider PID/UID and account100 host binding required"
 }
