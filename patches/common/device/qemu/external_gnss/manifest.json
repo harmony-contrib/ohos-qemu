@@ -22,7 +22,7 @@
     },
     "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp": {
       "component_file": "files/qemu_gnss_input.cpp",
-      "sha256": "2435f10d6243974508ffec8188fa9794d67dc96068a09cac612e71cb3bb88c94"
+      "sha256": "a6e79eaf1ec95c2596cb7f15bc6398f467f40731a26b861d6f325b831ae33c29"
     },
     "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h": {
       "component_file": "files/qemu_gnss_input.h",
@@ -30,11 +30,11 @@
     },
     "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h": {
       "component_file": "files/qemu_gnss_protocol.h",
-      "sha256": "c8a2bffd726a3cc9f6b1f53637ec0bf5b3832277988e1afbd99f51286b8909cc"
+      "sha256": "5fbc7507ec36c65cc008c71aece211a1d8b9a32417d7bd727ed67e0cb0f5aba2"
     },
     "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp": {
       "component_file": "files/qemu_gnss_vendor.cpp",
-      "sha256": "d2e65a9e9032a251a04bfef72d69bf8837ccfb4bfc23402af92eb95d77660b02"
+      "sha256": "af3d2bd6774032fd63b045471560d78485ebaf106cd781abbea65c6e59eabcfc"
     }
   },
   "patch_sha256": "931097628212553a66c95f5ce63901cce15f7035638f4d0ed242d081a618fcf4",
@@ -48,5 +48,12 @@
   },
   "installed_predecessor": {
     "device/qemu/common/virt_full/external_gnss/BUILD.gn": "436e42030c3e582156b8f9e11a265b4e153890c2c72a4f5d7ed2907245175330"
+  },
+  "installed_qgn1": {
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn": "a33e9ad3ab6652be5e57eb1b310f31652f1b1491b1221dad79d6684a68ad4f16",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp": "2435f10d6243974508ffec8188fa9794d67dc96068a09cac612e71cb3bb88c94",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h": "f879d0083750680101cf43428a6181eeee3268bb070ba14a7df12f8cda51bae6",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h": "c8a2bffd726a3cc9f6b1f53637ec0bf5b3832277988e1afbd99f51286b8909cc",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp": "d2e65a9e9032a251a04bfef72d69bf8837ccfb4bfc23402af92eb95d77660b02"
   }
 }

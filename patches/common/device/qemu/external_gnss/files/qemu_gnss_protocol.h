@@ -21,6 +21,10 @@ struct Fix {
     int64_t utcMs;
     uint64_t bootNs;
     uint32_t optionalFields;
+    // V2 precision-boundary input is copied as bits, never evaluated as a float here.
+    uint32_t horizontalAccuracyBits = 0;
+    bool rawHorizontalAccuracy = false;
+    bool horizontalAccuracyValid = true;
 };
 inline uint64_t ReadLe(const uint8_t* data, size_t count)
 {
@@ -87,6 +91,56 @@ inline bool DecodeFrame(const Frame& frame, const Nonce& nonce, uint64_t& sequen
         fix.altitude < -12000 || fix.altitude > 100000 || fix.horizontalAccuracy <= 0 || fix.horizontalAccuracy > 100000 ||
         fix.verticalAccuracy < 0 || fix.verticalAccuracy > 100000 || ((fix.optionalFields & 64) && fix.verticalAccuracy == 0) ||
         fix.speed < 0 || fix.speed > 1500 || fix.bearing < 0 || fix.bearing >= 360) return false;
+    sequence = next; utc = fix.utcMs; result = fix;
+    return true;
+}
+// Explicit V2 negotiation on the existing authenticated private endpoint.
+// The unchanged QGN1 hello is NOT a promise that this extension is available.
+inline bool IsPrecisionProbe(const Frame& frame, const Nonce& nonce)
+{
+    if (std::memcmp(frame.data(), "QGP2", 4) != 0 || ReadLe(frame.data() + 4, 4) != 2 ||
+        std::memcmp(frame.data() + 8, nonce.data(), nonce.size()) != 0) return false;
+    for (size_t i = 24; i < frame.size(); ++i) if (frame[i] != 0) return false;
+    return true;
+}
+inline std::array<uint8_t, HELLO_SIZE> MakePrecisionAck(const Nonce& nonce)
+{
+    std::array<uint8_t, HELLO_SIZE> ack{};
+    std::memcpy(ack.data(), "QGA2", 4); WriteLe(ack.data() + 4, 2, 4);
+    std::memcpy(ack.data() + 8, nonce.data(), nonce.size());
+    WriteLe(ack.data() + 24, FRAME_SIZE, 4);
+    WriteLe(ack.data() + 28, 1, 4); // Exact capability: raw float32 accuracy + explicit valid bit.
+    return ack;
+}
+inline bool DecodePrecisionFrame(const Frame& frame, const Nonce& nonce,
+    uint64_t& sequence, int64_t& utc, Fix& result)
+{
+    if (std::memcmp(frame.data(), "QGF2", 4) != 0 || ReadLe(frame.data() + 4, 4) != 2 ||
+        std::memcmp(frame.data() + 8, nonce.data(), nonce.size()) != 0 || ReadLe(frame.data() + 84, 4) > 1) return false;
+    uint64_t next = ReadLe(frame.data() + 24, 8), stamp = ReadLe(frame.data() + 32, 8);
+    int64_t now = UtcMs();
+    if (next == 0 || next <= sequence || now <= 0 || stamp < 1577836800000ULL || stamp > 4102444800000ULL ||
+        stamp <= static_cast<uint64_t>(utc) || static_cast<int64_t>(stamp) < now - 10000 ||
+        static_cast<int64_t>(stamp) > now + 1000) return false;
+    Fix fix{ReadNumber<double>(frame.data()+40), ReadNumber<double>(frame.data()+48),
+        ReadNumber<double>(frame.data()+56), 0,
+        ReadNumber<float>(frame.data()+68), ReadNumber<float>(frame.data()+72),
+        ReadNumber<float>(frame.data()+76), static_cast<int64_t>(stamp), 0,
+        static_cast<uint32_t>(ReadLe(frame.data()+80, 4))};
+    constexpr uint32_t OPTIONAL = 4 | 8 | 16 | 64;
+    if ((fix.optionalFields & ~OPTIONAL) || !std::isfinite(fix.latitude) || !std::isfinite(fix.longitude) ||
+        !std::isfinite(fix.altitude) || !std::isfinite(fix.verticalAccuracy) ||
+        !std::isfinite(fix.speed) || !std::isfinite(fix.bearing) ||
+        fix.latitude < -90 || fix.latitude > 90 || fix.longitude < -180 || fix.longitude > 180 ||
+        fix.altitude < -12000 || fix.altitude > 100000 ||
+        fix.verticalAccuracy < 0 || fix.verticalAccuracy > 100000 || ((fix.optionalFields & 64) && fix.verticalAccuracy == 0) ||
+        fix.speed < 0 || fix.speed > 1500 || fix.bearing < 0 || fix.bearing >= 360) return false;
+    // Deliberately allow every binary32 accuracy encoding: this explicit root-only
+    // V2 mode supplies boundary/fault inputs to the real HDI/business validator.
+    // Neither the protocol nor vendor substitutes or normalizes that measurement.
+    fix.horizontalAccuracyBits = static_cast<uint32_t>(ReadLe(frame.data() + 64, 4));
+    fix.rawHorizontalAccuracy = true;
+    fix.horizontalAccuracyValid = ReadLe(frame.data() + 84, 4) == 1;
     sequence = next; utc = fix.utcMs; result = fix;
     return true;
 }
