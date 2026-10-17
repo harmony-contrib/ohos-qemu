@@ -1,0 +1,130 @@
+{
+  "scope": "completed representative01 preservation; native kernel source/artifact integrity ONLY NOT boot or behavior",
+  "argv": [
+    "python3",
+    "/Volumes/PSSD/qemu/openharmony/device/qemu/common/virt_full/kernel/kernel_input_evidence.py",
+    "verify",
+    "--source-root",
+    "/Volumes/PSSD/qemu/openharmony",
+    "--image",
+    "/Volumes/PSSD/qemu/openharmony/out/arm64_virt/packages/phone/images/Image",
+    "--modules-dir",
+    "/Volumes/PSSD/qemu/openharmony/out/arm64_virt/kernel_modules",
+    "--arch",
+    "arm64",
+    "--certificate",
+    "/Volumes/PSSD/qemu/openharmony/out/arm64_virt/packages/phone/images/kernel-inputs.json"
+  ],
+  "kernel_verify_exit_code": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "kernel_certificate": {
+    "image_name": "Image",
+    "image_sha256": "08d6f83253f46853fdff4c6f4771f790b2fcec2162025418057736df18b86753",
+    "inputs_metadata_sha256": "6467b3371c1f66794f9840dfdcdf3497eed7d016b70d1aa2d3445684823bd731",
+    "kernel_arch": "arm64",
+    "kind": "qemu_linux_6_6_built_kernel_evidence",
+    "modules_sha256": {
+      "cfg80211.ko": "f5d30efe7ed0efa0c79d8dbcf0ed4b4aee46028760e7b1e097f7fb7df89f68c2",
+      "iwlmvm.ko": "3e991eec1ba629d064811daf582ca2c844913c1d845136d3782704d4f615a361",
+      "iwlwifi.ko": "aaab7903f500c0c652ac7bd55d5884864cbf09b9433c552ef638b888b0b54b20",
+      "libarc4.ko": "63ee79e30f7b8b02c5b3cae21f8aeb68c1570d90bf66eee5b52088577efd305b",
+      "mac80211.ko": "a444ed486b915f2212e073f30e9a5542840a5773b331e6fe7f50c8cd62c7a92b",
+      "mac80211_hwsim.ko": "aa4f2a0569e2b7018dbb2bba5a0cd67a70c2d7fc650793c0f60cf8be9597149e",
+      "mt7601u.ko": "c95324cd60fc2ba364684a98f6a01b5ac39f87abb8fcc2152edd1bacf691dd5e",
+      "rtw89_8852a.ko": "2820b6b5b95122056898b49281b7acb7bfe9ac09b087cf8e15e74ee26047da7f",
+      "rtw89_8852ae.ko": "a6942da98873e363a5b505e659a629da072e7bdf76b9450b1e38d32722cf1f86",
+      "rtw89_core.ko": "21c94ac8977f5df1a9e583a394c3efa28777636a6a0d62e4dc94a0b0827a78a8",
+      "rtw89_pci.ko": "ea3669b1f8dc7a42c7766c002614158eaacec9e50184279a933b4b30964763bd",
+      "virt_wifi.ko": "35f5d639c0eec6d97fb10c3bbdaa75567d929f4c554049753a8e772916aae3e2"
+    },
+    "note": "Source/build provenance only; boot and behavior validation are still required.",
+    "schema_version": 1,
+    "source_tree_sha256": "bf6925e2fede37ccdf4bb9e3b2a2e1941d08c7e6e3962a6d439070d469c8ad41"
+  },
+  "files": {
+    "kernel-verification.log": {
+      "bytes": 91,
+      "sha256": "91af0c7c8671b12744eb8619aa259cfaf07fe49592d134522de42d95c30189f4"
+    },
+    "product-build.log": {
+      "bytes": 1913748,
+      "sha256": "4e85ea3bef75d0742a339c1133686f9358f248bf5c7e4ed6bf89de73a4cc66aa"
+    },
+    "container.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "preserve.py": {
+      "bytes": 1900,
+      "sha256": "33f1b154c8210414a88dd4a63e9bfe76fc660c4c7b46d1cb6f3eb5207910e572"
+    },
+    "product-error.log": {
+      "bytes": 993,
+      "sha256": "00f3d6645025f7b7cec2cba415446e4b9c2d2eb0e3dcae0d4443a91a803dbf99"
+    },
+    "kernel/Image": {
+      "bytes": 45996544,
+      "sha256": "08d6f83253f46853fdff4c6f4771f790b2fcec2162025418057736df18b86753"
+    },
+    "kernel/kernel-inputs.json": {
+      "bytes": 1575,
+      "sha256": "85a7ea002ea87cf74849a961c9369ef7c3305f7c4b129ee30cbf3915438df784"
+    },
+    "kernel/kernel-source-inputs.json": {
+      "bytes": 15290663,
+      "sha256": "6467b3371c1f66794f9840dfdcdf3497eed7d016b70d1aa2d3445684823bd731"
+    },
+    "kernel/modules/rtw89_8852ae.ko": {
+      "bytes": 7880,
+      "sha256": "a6942da98873e363a5b505e659a629da072e7bdf76b9450b1e38d32722cf1f86"
+    },
+    "kernel/modules/mac80211.ko": {
+      "bytes": 1411616,
+      "sha256": "a444ed486b915f2212e073f30e9a5542840a5773b331e6fe7f50c8cd62c7a92b"
+    },
+    "kernel/modules/iwlmvm.ko": {
+      "bytes": 687232,
+      "sha256": "3e991eec1ba629d064811daf582ca2c844913c1d845136d3782704d4f615a361"
+    },
+    "kernel/modules/cfg80211.ko": {
+      "bytes": 1400720,
+      "sha256": "f5d30efe7ed0efa0c79d8dbcf0ed4b4aee46028760e7b1e097f7fb7df89f68c2"
+    },
+    "kernel/modules/iwlwifi.ko": {
+      "bytes": 658824,
+      "sha256": "aaab7903f500c0c652ac7bd55d5884864cbf09b9433c552ef638b888b0b54b20"
+    },
+    "kernel/modules/mac80211_hwsim.ko": {
+      "bytes": 119560,
+      "sha256": "aa4f2a0569e2b7018dbb2bba5a0cd67a70c2d7fc650793c0f60cf8be9597149e"
+    },
+    "kernel/modules/rtw89_8852a.ko": {
+      "bytes": 703584,
+      "sha256": "2820b6b5b95122056898b49281b7acb7bfe9ac09b087cf8e15e74ee26047da7f"
+    },
+    "kernel/modules/virt_wifi.ko": {
+      "bytes": 21224,
+      "sha256": "35f5d639c0eec6d97fb10c3bbdaa75567d929f4c554049753a8e772916aae3e2"
+    },
+    "kernel/modules/rtw89_pci.ko": {
+      "bytes": 64304,
+      "sha256": "ea3669b1f8dc7a42c7766c002614158eaacec9e50184279a933b4b30964763bd"
+    },
+    "kernel/modules/mt7601u.ko": {
+      "bytes": 179688,
+      "sha256": "c95324cd60fc2ba364684a98f6a01b5ac39f87abb8fcc2152edd1bacf691dd5e"
+    },
+    "kernel/modules/libarc4.ko": {
+      "bytes": 4688,
+      "sha256": "63ee79e30f7b8b02c5b3cae21f8aeb68c1570d90bf66eee5b52088577efd305b"
+    },
+    "kernel/modules/rtw89_core.ko": {
+      "bytes": 469544,
+      "sha256": "21c94ac8977f5df1a9e583a394c3efa28777636a6a0d62e4dc94a0b0827a78a8"
+    }
+  },
+  "external_receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/preservation-01/receipt.json",
+    "sha256": "8e021ac52702bd3834198b4fa626ff546f24e64cfa3a41c01193e23776fbcc42"
+  }
+}

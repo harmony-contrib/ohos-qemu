@@ -1,0 +1,38 @@
+{
+  "repair_commit": "a48a2bb23380d539d9db5e2dbe5424d548765564",
+  "scope": "OpenVPN GN entrypoint publication and source transaction regressions ONLY NOT product compile or runtime",
+  "counterexample": {
+    "tests": 10,
+    "failed_cases": 3,
+    "expected_failure": true,
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-publisher-regression-before.log",
+      "sha256": "3d96f37280765e17f3e30615fc1a36fefc773a65dadb893ab1303f65f4735846"
+    }
+  },
+  "new_regressions": {
+    "tests": 10,
+    "passed": 10,
+    "exit_code": 0,
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-publisher-regression-after.log",
+      "sha256": "683277ab39b949fa55ea09f4fb258bffb9628855cb3d11accb166d875c7aee09"
+    }
+  },
+  "affected_host": {
+    "tests": 25,
+    "passed": 24,
+    "skipped": 1,
+    "skip_reason": "SCM_RIGHTS truncation semantics must be checked on target Linux kernel",
+    "exit_code": 0,
+    "log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-publisher-affected-host.log",
+      "sha256": "7361930bab56ddb66f28fd6bf837e19b89ce3f5f3b72f83e89348b3da0c4d2e1"
+    }
+  },
+  "source_files": {
+    "scripts/prepare_qemu_openvpn_backend.py": "2d3a8bb2057c1150ffeb304e086215167e75c66a9384b93d367ad4141496c28f",
+    "ci/capability-audit/test_openvpn_source_install.py": "8d07a96ff3cfb68f9ed88f435094f4d1672643d93c4a8631be2757c34eee23fb"
+  },
+  "first_artifact_behavior_gate_passed": false
+}

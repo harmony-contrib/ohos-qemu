@@ -1,0 +1,42 @@
+{
+  "source_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
+  "exit_code": 1,
+  "seconds": 5453.447260749992,
+  "archive_created": false,
+  "expected_package": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/packages/openharmony-qemu-arm64-arm64_virt-phone.tar.gz",
+  "primary_failures": [
+    {
+      "target": "qemu_openvpn:build_openvpn",
+      "exit_code": 126,
+      "cause": "exact installed GN entrypoint mode0644; /usr/bin/env Permission denied",
+      "observation": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-entrypoint-mode.json",
+        "sha256": "a0833994e3d385b7a7eae4b5dcf872b953030debb9cb0ada4a8eabb83c252e05"
+      },
+      "direct_execution": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-entrypoint-exec-check.json",
+        "sha256": "e1e7e017d303b6088cd57d4246175e77bc6eadf27f16f167f48b619fd35596a9"
+      },
+      "repair_commit": "a48a2bb23380d539d9db5e2dbe5424d548765564"
+    }
+  ],
+  "completed_native_actions": {
+    "Mesa": "1078 internal actions, driver publication and provenance completed",
+    "AudioHaptic": "both changed CPP compiled and final DSO linked",
+    "kernel": "complete image/modules, source/artifact integrity verified and copies preserved"
+  },
+  "raw_product_error": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/preservation-01/product-error.log",
+    "sha256": "00f3d6645025f7b7cec2cba415446e4b9c2d2eb0e3dcae0d4443a91a803dbf99"
+  },
+  "raw_product_build": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/preservation-01/product-build.log",
+    "sha256": "4e85ea3bef75d0742a339c1133686f9358f248bf5c7e4ed6bf89de73a4cc66aa"
+  },
+  "resource_progress": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/resource-progress.jsonl",
+    "sha256": "d7765dfdaf4dbe77b97ad19886da31949267074bb135252d286e0b988f865af4"
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

@@ -1788,7 +1788,7 @@
   },
   "current_resource_lease": {
     "owner": "root",
-    "scope": "Round3 five-agent batch collected; host integration acceptance, then exact Settings upgrade/source preparation and ONE arm64_virt phone representative build",
+    "scope": "Round3 ONE ARM64 phone representative full build active; frozen candidate42a0f56",
     "max_heavy_jobs": 1,
     "container": null,
     "source_and_out": "root sole writer; all five agents completed and all read leases released",
@@ -1812,16 +1812,15 @@
       "three ABI clock CLI build and host recheck"
     ],
     "queued": [
-      "integrated host regressions",
-      "known previous Settings lifetime upgrade",
-      "complete source preparation",
-      "ONE full ARM64 phone GN/images/package attempt",
-      "fresh package behavior gate"
+      "exact source migration/prepare02 and executable readiness",
+      "ONE ARM64 phone full build/package02",
+      "new archive complete runtime gate"
     ],
-    "remaining_five_started": false
+    "remaining_five_started": false,
+    "active_stage": "ready to freeze retry02"
   },
   "active_exclusive_grants": {},
-  "updated_at": "2026-10-17T08:14:42.527570+08:00",
+  "updated_at": "2026-10-17T02:25:37.188066+00:00",
   "previous_exclusive_grants": {
     "apps_provider_lifecycle": {
       "agent": "apps",
@@ -2058,6 +2057,8 @@
       "agents_no_unleased_heavy_work": true
     },
     "shared_source_out_lease": "root only",
-    "first_artifact_behavior_gate_passed": false
+    "first_artifact_behavior_gate_passed": false,
+    "progress": "docs/capability-audit/parallel/core/round3/progress.json",
+    "source_upgrade_and_preparation_passed": true
   }
 }

@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-17T07:54:42.977406+08:00",
+  "observed_at": "2026-10-17T02:25:37.188066+00:00",
   "max_concurrent_subagents": 3,
   "five_distinct_workstreams": [
     "apps",
@@ -42,9 +42,23 @@
     "source_out_write": false
   },
   "pending_root_jobs": [
-    "known previous Settings exact migration",
-    "complete source preparation",
-    "ONE ARM64 phone build/package",
+    "freeze representative02",
+    "migrate/prepare02 and action readiness",
+    "ONE ARM64 phone build/package02",
     "new archive runtime"
-  ]
+  ],
+  "active_job": null,
+  "idle_inspection_container_cleanup": {
+    "name": "ohos-qemu-parallel-source-20261016-02",
+    "removed": true,
+    "volumes_deleted": false,
+    "reason": "all agent narrow read leases released; representative source/out writer is root only",
+    "at": "2026-10-17T01:16:48.692363+00:00"
+  },
+  "settings_sdk_compile": {
+    "status": "complete",
+    "exit_code": 0,
+    "receipt": "settings-lifetime-sdk.json",
+    "source_out_write": false
+  }
 }

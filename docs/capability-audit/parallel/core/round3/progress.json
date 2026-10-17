@@ -1,6 +1,6 @@
 {
-  "phase": "candidate_ready_for_exact_source_upgrade_and_preparation",
-  "implementation_head": "93953deadd6c59086e4c8201b24b257c0ff884f0",
+  "phase": "ready_to_freeze_representative_retry_02",
+  "implementation_head": "a48a2bb23380d539d9db5e2dbe5424d548765564",
   "baseline_head": "2c6a5c2",
   "checkpoint": "ddfabb4",
   "integrated_commits": {
@@ -9,29 +9,31 @@
     "apps": "8e3b25a",
     "system": "d6456f4",
     "network": "27b0c95",
-    "location_initial": "cf32293"
+    "location_initial": "cf32293",
+    "location_compatibility": "0c67170",
+    "openvpn_publication": "a48a2bb"
   },
   "five_agents_delivered": true,
   "all_source_out_read_leases_released": true,
-  "source_out_written_this_turn": false,
+  "source_out_written_this_turn": true,
   "host_suite": {
     "session_id": 26991,
     "pid": 13044,
     "log": "docs/capability-audit/parallel/core/round3/integrated-host-tests-01.log",
     "status": "complete_initial_failures_repaired_and_rechecked",
-    "observed_failures": "at least one host libc++ linking error and one assertion failure; collect complete final summary before repairs",
     "tests": 2542,
     "initial_exit_code": 1,
-    "final_recheck_report": "integrated-host-tests.json"
+    "final_recheck_report": "integrated-host-tests.json",
+    "publisher_affected_recheck": "openvpn-publisher-validation.json"
   },
   "critical_review": {
     "location_horizontal_accuracy": "corrected by0c67170; 14 targeted and all38 location-domain tests passed",
     "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
   },
   "next_required": [
-    "freeze current commit",
-    "root stage driver migrate01 then prepare01 then one build01 sequentially",
-    "new archive checksum and complete fresh guest acceptance before remaining five"
+    "freeze current implementation and complete evidence",
+    "representative02 exact migration, full source preparation, executable readiness precheck",
+    "ONE ARM64 phone build/package02 and complete fresh runtime; no remaining-five matrix"
   ],
   "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
   "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
@@ -39,7 +41,8 @@
     "private real LLVM installer executable mode publication",
     "actual unsigned SDK105 AudioHaptic caller inert HAP",
     "actual unsigned full Calendar main SDK105 HAP and permission/ABC readback",
-    "six actual isolated Linux VPN tests under g++/ASan/UBSan; initial missing clang++ failure preserved"
+    "six actual isolated Linux VPN tests under g++/ASan/UBSan; initial missing clang++ failure preserved",
+    "complete current Settings unsigned HAP compiled by actual product Linux SDK"
   ],
   "ledger": {
     "total": 281,
@@ -52,5 +55,67 @@
     "new_closures": 0
   },
   "first_artifact_behavior_gate_passed": false,
-  "remaining_five_started": false
+  "remaining_five_started": false,
+  "frozen_candidate_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
+  "observed_at": "2026-10-17T02:25:37.188066+00:00",
+  "source_upgrade": {
+    "exit_code": 0,
+    "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Settings-lifetime-source-upgrade-01/evidence.json"
+  },
+  "source_preparation": {
+    "exit_code": 0,
+    "seconds": 351.09299049992114,
+    "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-full-source-prepare-01/evidence.json",
+    "evidence_sha256": "3dc9b54e882de4a65166424e7a5518ec7ef62316bce2662e642fbc8e5064fd9f"
+  },
+  "partial_native_build_observations": {
+    "audio_haptic": "both changed CPP compiled and libaudio_haptic.z.so linked by actual full product build; runtime pending",
+    "mesa": "1078 internal source build actions completed; outer qemu_mesa_build stamp and real provenance published",
+    "mesa_provenance": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/mesa-build-provenance.json",
+      "sha256": "4d1128d643b1ced89b2113aab08e70985ef590c98c563fc864abd78572429399",
+      "driver_sha256": "129a2b31844bfa5a6e2409b759b39e8233e43418f71d8e160a3627ee3a8b679f",
+      "runtime_gate_passed": false
+    },
+    "scope": "partial observed native actions ONLY; complete build/package/runtime still pending"
+  },
+  "known_current_attempt_findings": [
+    {
+      "finding": "OpenVPN GN action entrypoint is published0644, direct execution readiness check returns126",
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/openvpn-entrypoint-exec-check.json",
+      "current_full_build_final_exit_pending": false,
+      "repair_deferred_until_attempt_finishes": false,
+      "repair_commit": "a48a2bb23380d539d9db5e2dbe5424d548765564",
+      "host_validated": true
+    }
+  ],
+  "next_batch_plan": {
+    "owner": "root",
+    "paths": [
+      "scripts/prepare_qemu_openvpn_backend.py",
+      "ci/capability-audit/test_openvpn_source_install.py"
+    ],
+    "changes": [
+      "publish the GN executable entrypoint as0755 on new install and known-byte replay",
+      "retain complete exact-content validation before permission changes",
+      "preserve original permissions in failed publication rollback",
+      "exercise actual direct --help execution and reject unknown content before any repair"
+    ],
+    "not_started_until_current_attempt_finishes": false,
+    "other_checked_entrypoints_executable": [
+      "arkcompiler/jsvm/copy_v8.sh",
+      "third_party/libjpeg-turbo/install.py",
+      "device/qemu/common/virt_full/kernel/build_kernel_with_evidence.sh",
+      "third_party/mesa3d/build_qemu_mesa_llvm.py"
+    ],
+    "completed": true
+  },
+  "first_representative_attempt": {
+    "source_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
+    "exit_code": 1,
+    "seconds": 5453.447260749992,
+    "archive_created": false,
+    "receipt": "first-build-01.json",
+    "findings": "first-build-01-findings.json"
+  }
 }
