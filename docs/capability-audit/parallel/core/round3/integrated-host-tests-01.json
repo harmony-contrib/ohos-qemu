@@ -1,0 +1,16 @@
+{
+  "tested_commit": "cf32293",
+  "exit_code": 1,
+  "tests": 2542,
+  "seconds": 649.402,
+  "failures": 1,
+  "errors": 2,
+  "skipped": 5,
+  "log_sha256": "dab7af58531418ab5a45a39809d9b9fdd1bbe8c0a1070908df071b79686c59aa",
+  "repair_batch": [
+    "native host clang/libc++ ABI mismatch in recorder and broker host harness",
+    "release-scope fixture lacks archive required by strengthened closure gate",
+    "core optional-GNSS-accuracy compatibility correction before package build"
+  ],
+  "first_artifact_behavior_gate_passed": false
+}

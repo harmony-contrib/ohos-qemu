@@ -1788,10 +1788,10 @@
   },
   "current_resource_lease": {
     "owner": "root",
-    "scope": "complete source patch preparation05, then one ARM64 phone full images/package attempt after preparation success",
+    "scope": "Round3 five-agent batch collected; host integration acceptance, then exact Settings upgrade/source preparation and ONE arm64_virt phone representative build",
     "max_heavy_jobs": 1,
-    "container": "ohos-qemu-phone-build",
-    "source_and_out": "exclusive root writes; all agents have ceased reads and writes",
+    "container": null,
+    "source_and_out": "root sole writer; all five agents completed and all read leases released",
     "preparation_cpus": 2,
     "preparation_memory_gib": 5,
     "full_build_planned_cpus": 4,
@@ -1812,14 +1812,16 @@
       "three ABI clock CLI build and host recheck"
     ],
     "queued": [
-      "finish preparation05",
-      "one full ARM64 phone GN/images/three native witnesses/package",
-      "fresh product helper recheck and actual complete runtime gate"
+      "integrated host regressions",
+      "known previous Settings lifetime upgrade",
+      "complete source preparation",
+      "ONE full ARM64 phone GN/images/package attempt",
+      "fresh package behavior gate"
     ],
     "remaining_five_started": false
   },
   "active_exclusive_grants": {},
-  "updated_at": "2026-10-17T03:17:16.705530+08:00",
+  "updated_at": "2026-10-17T08:14:42.527570+08:00",
   "previous_exclusive_grants": {
     "apps_provider_lifecycle": {
       "agent": "apps",
@@ -1991,5 +1993,71 @@
       "write_prefix": "docs/capability-audit/parallel/system/round13",
       "no_heavy_tasks": true
     }
+  },
+  "previous_resource_lease_round2": {
+    "owner": "root",
+    "scope": "Round3 five-agent batch collected; host integration acceptance, then exact Settings upgrade/source preparation and ONE arm64_virt phone representative build",
+    "max_heavy_jobs": 1,
+    "container": null,
+    "source_and_out": "root sole writer; all five agents completed and all read leases released",
+    "preparation_cpus": 2,
+    "preparation_memory_gib": 5,
+    "full_build_planned_cpus": 4,
+    "full_build_planned_memory_gib": 10,
+    "compiler_jobs": 2,
+    "kernel_jobs": 2,
+    "capacity_observation": {
+      "host_memory_bytes": 34359738368,
+      "physical_cpus": 12,
+      "docker_memory_bytes": 16819298304,
+      "docker_cpus": 12,
+      "host_disk_free_gib": 381
+    },
+    "capacity_reason": "single heavy build; CPU4 and memory10GiB previously used successfully for same-session M144; leave VM headroom, retain two compiler jobs",
+    "completed_dependencies": [
+      "current090 M144 native and signed HAP",
+      "live SDK03 HAP and exact SDK39 NativeStrip replay",
+      "three ABI clock CLI build and host recheck"
+    ],
+    "queued": [
+      "integrated host regressions",
+      "known previous Settings lifetime upgrade",
+      "complete source preparation",
+      "ONE full ARM64 phone GN/images/package attempt",
+      "fresh package behavior gate"
+    ],
+    "remaining_five_started": false
+  },
+  "round3_coordination": {
+    "record": "docs/capability-audit/parallel/core/round3/checkpoint-and-ownership.json",
+    "ownership_audit": "docs/capability-audit/parallel/core/round3/ownership-audit.json",
+    "five_agents_completed": true,
+    "max_concurrent_children": 3,
+    "ownership_overrides": {
+      "apps_excludes": [
+        "patches/common/applications/standard/settings/wallpaper_settings/",
+        "patches/common/applications/standard/calendar/",
+        "patches/common/applications/standard/calendardata/"
+      ],
+      "system_adds": [
+        "patches/common/applications/standard/calendar/",
+        "patches/common/applications/standard/calendardata/",
+        "patches/common/base/notification/distributed_notification_service/calendar_owner/"
+      ],
+      "root_only": [
+        "scripts/ (all)",
+        "patches/patch-plan.json and shared patch manifests",
+        "ci/capability-audit shared runners/verifiers",
+        "docs/capability-audit shared ledgers",
+        "shared product BUILD.gn, init, SELinux, device/vendor/kernel/graphic_2d/mesa patches",
+        "Git index and commits",
+        "Docker source/out writes, SDK/HAP jobs, QEMU runtime, packaging"
+      ],
+      "agents_no_git_commit": true,
+      "agents_no_source_out_write": true,
+      "agents_no_unleased_heavy_work": true
+    },
+    "shared_source_out_lease": "root only",
+    "first_artifact_behavior_gate_passed": false
   }
 }

@@ -1,0 +1,54 @@
+{
+  "scope": "unaffected passing results from full host suite plus final affected-source and failure rechecks; not a second full 2542-test run and not package/guest acceptance",
+  "status": "pass_known_failure_and_affected_source_rechecks",
+  "tested_commit": "93953deadd6c59086e4c8201b24b257c0ff884f0",
+  "exit_code": 0,
+  "full_suite": {
+    "report": "integrated-host-tests-01.json",
+    "report_sha256": "6db2868fadba801fb37c5d45028250f731d4749650afc20f7d106938d95a2558",
+    "tests": 2542,
+    "failures": 1,
+    "errors": 2,
+    "skipped": 5
+  },
+  "resolved_failures": [
+    {
+      "test": "Recorder configuration native functions",
+      "cause": "host clang21/libc++ ABI mismatch",
+      "recheck": "native Apple clang16 with unchanged ASan/UBSan flags passed"
+    },
+    {
+      "test": "VPN native binding/controller ownership",
+      "cause": "same host clang/libc++ ABI mismatch",
+      "recheck": "native Apple clang16 passed; separate six real Linux tests also passed"
+    },
+    {
+      "test": "release scope raw archive delegation",
+      "cause": "structural fixture lacked archive after raw verifier integration",
+      "recheck": "scope fixture asserts raw delegation and separately rejects unmocked structural-only evidence"
+    }
+  ],
+  "rechecks": [
+    {
+      "path": "host-failure-rechecks.log",
+      "sha256": "6eb2678dd95546a7e21c4f8a8501ad31f4c8899f259def03b519c9bcf124677f",
+      "tests": 6,
+      "exit_code": 0
+    },
+    {
+      "path": "location-final-integration.log",
+      "sha256": "a7bd6d05432d4572ee3646a3935735a92ff2e22a6ed87e481590cdfd27f46edb",
+      "tests": 38,
+      "seconds": 121.966,
+      "exit_code": 0
+    }
+  ],
+  "optional_accuracy_correction": {
+    "commit": "0c67170",
+    "agent_targeted_tests": 14,
+    "whole_location_domain_tests": 38,
+    "patch_sha256": "f2ca1c04c6b7680ff44282867c42ef7ca44c42880b62596e1e578735e075e1c0"
+  },
+  "ownership_audit_sha256": "5d01180d1c7a8032596ca51c817add4d873cec5dfb4efab8d8a02cbfbbc93198",
+  "first_artifact_behavior_gate_passed": false
+}

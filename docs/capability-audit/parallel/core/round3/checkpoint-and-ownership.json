@@ -197,7 +197,8 @@
     ],
     "system_adds": [
       "patches/common/applications/standard/calendar/",
-      "patches/common/applications/standard/calendardata/"
+      "patches/common/applications/standard/calendardata/",
+      "patches/common/base/notification/distributed_notification_service/calendar_owner/"
     ],
     "root_only": [
       "scripts/ (all)",

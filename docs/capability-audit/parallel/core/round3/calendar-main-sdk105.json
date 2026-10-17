@@ -1,0 +1,114 @@
+{
+  "scope": "private actual full Calendar source HAP with current main UI and reminder producer compiled by SDK105 ONLY NOT OS signing/BMS/notification native TU/packaged runtime",
+  "source_commit": "d6456f4be6179227e898e73cbba0e5d07ea76635",
+  "commands": [
+    {
+      "label": "dispatch",
+      "argv": [
+        "bash",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh",
+        "--source-root",
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/source"
+      ],
+      "exit_code": 0,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/dispatch.log",
+      "sha256": "032ba42bd1f63568e5a36994965b747793686d0d94e09ba89ab8045729716913"
+    },
+    {
+      "label": "main",
+      "argv": [
+        "bash",
+        "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/calendardata/main_ui/apply.sh",
+        "--source-root",
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/source"
+      ],
+      "exit_code": 0,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/main.log",
+      "sha256": "31a6ac19b46d6506e6ebc8b240a74a7386c37fd38a135c43333c9fcab32e9b15"
+    },
+    {
+      "label": "dependencies",
+      "argv": [
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+        "install",
+        "--all",
+        "--registry",
+        "http://127.0.0.1:9",
+        "--fetch_timeout",
+        "10000",
+        "--retry_times",
+        "0"
+      ],
+      "exit_code": 0,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/dependencies.log",
+      "sha256": "3e856fc244f0578bd0010ea7a0b2511c03983bd0d2c8df0b94a1b7196c6fb166"
+    },
+    {
+      "label": "compile",
+      "argv": [
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+        "assembleHap",
+        "--mode",
+        "module",
+        "-p",
+        "product=default",
+        "-p",
+        "module=entry",
+        "-p",
+        "debuggable=false",
+        "-p",
+        "hvigor-obfuscation=false",
+        "--no-daemon",
+        "--no-parallel",
+        "--no-incremental",
+        "--max-old-space-size",
+        "2048"
+      ],
+      "exit_code": 0,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/compile.log",
+      "sha256": "5f9f0fdc59807600eb07ef795b4a91f3d9552aa13eb432f320653ad913d7058b"
+    }
+  ],
+  "haps": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/source/applications/standard/calendardata/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "bd16d3d2ddf764a35499c0b670d1d478f86b498c41db699928da739560a4638b",
+      "bytes": 527121
+    }
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "exit_code": 0,
+  "seconds": 28.993909624987282,
+  "evidence_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Calendar-main-SDK105-01/evidence.json",
+  "evidence_sha256": "340da21516d8597325cf6ea0d34e70439191be411b5e8b78e6611dbe23059994",
+  "compiled_module_permissions": {
+    "ohos.permission.WRITE_WHOLE_CALENDAR": {
+      "abilities": [
+        "DataShareLowerExtAbility",
+        "DataShareHighExtAbility",
+        "ReminderCallbackExtAbility",
+        "EditorUIExtensionAbility"
+      ],
+      "when": "inuse"
+    },
+    "ohos.permission.READ_WHOLE_CALENDAR": {
+      "abilities": [
+        "DataShareLowerExtAbility",
+        "DataShareHighExtAbility",
+        "ReminderCallbackExtAbility",
+        "EditorUIExtensionAbility",
+        "MainAbility"
+      ],
+      "when": "inuse"
+    }
+  },
+  "compiled_module_sha256": "7821541b2463400386d7d239d6e79288f007a5aead31828cb8fb1ea4d02e64ae",
+  "abc_entries": [
+    {
+      "name": "ets/modules.abc",
+      "sha256": "be64298621a3806973f78492e454df7eff2e6de2a06f380f6647b988c387c88f"
+    }
+  ]
+}

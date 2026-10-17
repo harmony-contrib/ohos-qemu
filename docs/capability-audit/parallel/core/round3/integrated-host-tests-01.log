@@ -1,0 +1,156 @@
+.......................................................................................................................................................................................................................................................................................................................................BLE actual NAPI functions: parser/integer/undefined, callback identity, payload, queued cancellation/reentry, environment and error/ref lifetime boundaries passed
+.BLE real functions: exact payload/filter/RSSI, permission/delegation/user/freeze, startup/stop failures, owner and stale scan-task boundaries passed
+BLE absent feature: real API reports 801
+.Actual cache fast paths: fine-only/approx accounting, retained Request stop retry, no premature continuous decrement, duplicate release passed
+.Actual district native/service: current-fix/cache/deadline/stop/late callbacks/locale/geocoder errors and sports wire route passed
+.Actual business NAPI: Promise-only optional/undefined/strict int32, district optional fields/errors, track payload/errors and continuous sports parser passed
+.Actual RequestConfig: old ten wire fields and following parcel data preserved, sports default/copy/equality passed
+.Actual skiing processing: changed geometry/altitude/accuracy/derived speed, dedup, outlier, source/privacy/lifecycle gates, owner/delegation, 24h and cursor/antimeridian passed
+..............Live icon/query/PrivacyKit route: fine/approx/both/revoked/delegated, shared pid, GNSS/network/fused, locks, freeze/account/timeout/switch/service boundaries passed
+.......RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed
+......actual capture period: physical ALSA frame bytes and allocated tail checked without multiplication overflow
+.actual JSON/directional selection: legacy/render preserved; malformed and nonexistent capture rejected
+.actual capture open: PCM-only needs no fictitious mixer; old read cannot restart a dropped PCM
+.actual nonblocking PCM read: bounded waits, recovery, zero/error/overflow and stopped-state rejection
+.actual vendor capture: PCM start/drop errors propagated; absent mixer capabilities rejected
+actual vendor capture: PCM start/drop errors propagated; absent mixer capabilities rejected
+...Official SDK TypeChecker Error-only host guard: real candidate passes; catch unknown/string/any throw regressions rejected. Full real ArkTS/HAP recheck required.
+Actual ETS helper with controlled SDK dependencies:11 scenarios passed, including empty/short ready retry, complete malformed record refusal and original BusinessError retained; not runtime proof
+.actual public-header capture caller syntax and actual buffer callback boundaries passed
+....actual fresh request/PCM/reply and Snapshot callbacks passed: strict nonce/owner/mode/size/NOFOLLOW/FIFO; new-callback half-second;20 refusal/collision/deadline cases;7 getter failures; one reply; legacy/early ACK/cancel/positive handshake. Controlled getters are not runtime proof.
+.actual PCM/interrupt/error functions and genuine entropy/fresh nonce/ack/mode/no-overwrite/NOFOLLOW passed
+......actual player functions: failure cleanup, retry, callback, stop and rearm passed
+actual normal functions: fresh prepare, reset errors and first-frame payloads passed
+actual player functions: failure cleanup, retry, callback, stop and rearm passed
+actual normal functions: fresh prepare, reset errors and first-frame payloads passed
+...actual capture functions: 40 cases passed
+...............actual streaming cursor/default-count/NONE/HOLIDAY/number/error/budget functions passed
+.....actual -fno-exceptions pthread producer: init/create/join/wait/wake/notification failures, retry, weak DB, rollback and callback-owned destruction passed
+................................................................actual recorder surface tiles/stride/last byte and rejection/abort/unmap + private challenge bounds passed
+....Undefined symbols for architecture arm64:
+  "std::__1::__hash_memory(void const*, unsigned long)", referenced from:
+      ltmp71 in functions-6ca28c.o
+ld: symbol(s) not found for architecture arm64
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+E.........................................{"actual_controller_cases":27,"scope":"controlled SDK dependencies; NOT real URI/permission/service/renderer proof"}
+...API26 actual declarations: public Picker/FS/Image and system Wallpaper types passed; ArkTS/HAP pending
+.verified complete exact component: wallpaper_settings
+verified complete exact component: wallpaper_settings
+verified complete exact component: qemu_renderer
+verified complete exact component: qemu_renderer
+........................s.............ss....F...................................................................................................................................................................s.........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................../Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_insight_form_host_results.py:110: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  colors = list(picture.crop((left, top, left + width, top + height)).getdata())
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_insight_form_host_results.py:114: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  dark = sum(max(pixel) < 180 for pixel in text.getdata())
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_insight_form_host_results.py:130: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  changed = sum(max(pixel) > 10 for pixel in difference.getdata())
+......../Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_insight_navigation_results.py:139: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  ink = [index % width for index, pixel in enumerate(text.getdata()) if max(pixel) < 150]
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_insight_navigation_results.py:160: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  changed = sum(max(pixel) > 10 for pixel in ImageChops.difference(earlier, text).getdata())
+............................/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_lazy_column_results.py:87: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  crop=image.crop((x,y,x+w,y+h));colors=list(crop.getdata())
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_lazy_column_results.py:70: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  if sum(color in ((221,238,255),(170,204,221)) for color in image.getdata())>100:
+....................................................applied component patch: /Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/base/web/webview/core_hap_source/0001-select-complete-source-core-for-the-exact-qemu-abi.patch
+component patch already applied: /Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/base/web/webview/core_hap_source/0001-select-complete-source-core-for-the-exact-qemu-abi.patch
+............................................................................................................................................................................................................................................s......................................................................................................................................................................................................................................................................................E....................................................................................................../Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_screen_blink_results.py:114: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  left + width * 3 // 4, top + height * 3 // 4)).getdata())
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_screen_blink_results.py:93: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  top + 2 * height // 3)).getdata())
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_screen_blink_results.py:226: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  expected = list(image.convert('RGB').crop(rect).getdata())
+/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_screen_blink_results.py:246: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  actual = list(image.convert('RGB').crop(rect).getdata())
+...................................................................................verified whole component stack: avc_eos, prior prefix=0
+verified whole component stack: avc_eos, prior prefix=2
+verified whole component stack: avc_eos, prior prefix=1
+verified whole component stack: avc_eos, prior prefix=2
+verified whole component stack: avc_eos, prior prefix=2
+verified whole component stack: avc_eos, prior prefix=2
+Actual GNSS callbacks preserve no/zero/1/3/4/64/128 SV measurements and every field; malformed vectors rejected. Generated POD configuration, intervals, real error gates and start types passed. Host boundaries only.
+Original fixed callback reproduces synthetic SV assertion failure; patched function passes.
+actual diagnostic compiled; exact and segmented file writes, negotiation/error propagation, invalid/empty/link inputs checked; controlled ALSA only
+actual_function_checks=123357
+verified whole component stack: avc_eos, prior prefix=0
+verified whole component stack: avc_surface_layout, prior prefix=0
+verified whole component stack: avc_surface_layout, prior prefix=1
+verified whole component stack: avc_eos, prior prefix=1
+verified whole component stack: avc_surface_layout, prior prefix=0
+verified whole component stack: avc_surface_layout, prior prefix=1
+verified whole component stack: avc_eos, prior prefix=2
+verified whole component stack: avc_surface_layout, prior prefix=0
+verified whole component stack: avc_surface_layout, prior prefix=1
+verified whole component stack: avc_surface_layout, prior prefix=1
+verified whole component stack: avc_surface_layout, prior prefix=1
+{"status": "pass_compile_supplemental_only", "runtime_tested": false, "first_artifact_behavior_gate_passed": false, "source": "/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmpz6ygf1pj/foundation/ability/ability_runtime/frameworks/native/child_process/src/native_child_process.cpp", "source_sha256": "c30d5fbf870d6e34d7080585c7b5a8f4aa1b0423c5924f2f07917596884cfaba", "patch_sha256": "c70df7e9e0651cfa942d88e1937e39f5e17b2adcf03f4659033a43c9405feadd", "patched_sha256": "f8f844ed08e8dd8e72f79f1b39958e832a7c290c9a3132df0201aea8e6e7b05f", "compile_argv": ["c++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmpz6ygf1pj/compile/actual_config_functions.cpp", "-o", "/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmpz6ygf1pj/compile/config_functions"], "compiled_unit_sha256": "ec8774938e6322b9f76fd1c753d3548761ed62e960645b32fddea687972f8acd", "binary_sha256": "5412bb74719bab41db14e891e4a45e0a8b2e99644973ca18b18927ee4afdedc9", "checks": ["null destroy succeeds", "null mode configs rejects", "three invalid modes preserve config", "valid mode changes config", "nonnull destruction succeeds"]}
+verified jsoncpp 1.9.6 generated sources: /private/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/tmpi_tewnl0/gen/jsoncpp-1.9.6
+verified common 64-bit and generated ARMv7a Mesa mapping recipes
+verified common 64-bit and generated ARMv7a Mesa mapping recipes
+verified common 64-bit and generated ARMv7a Mesa mapping recipes
+installed exact historical Mesa mapping backport; no Mesa 25 source changes
+installed exact historical Mesa mapping backport; no Mesa 25 source changes
+installed exact historical Mesa mapping backport; no Mesa 25 source changes
+staged fixed LLVM dependencies and QEMU-only Mesa GN actions
+staged fixed LLVM dependencies and QEMU-only Mesa GN actions
+verified pinned Serial stack: 0 of 2 patches already applied; complete
+verified pinned Serial stack: 2 of 2 patches already applied; complete
+verified pinned Serial stack: 1 of 2 patches already applied; complete
+attach complete (host socket only; verify actual guest state)
+.attach complete (host socket only; verify actual guest state)
+detach complete (host socket only; verify actual guest state)
+attach complete (host socket only; verify actual guest state)
+........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................./opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:289: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x11334a110>
+  @property
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:289: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x11334a200>
+  @property
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py:289: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x11334a2f0>
+  @property
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+...............................
+======================================================================
+ERROR: test_actual_six_functions_all_failures_success_and_old_false_success (test_batch_media_recorder_configuration.Recorder.test_actual_six_functions_all_failures_success_and_old_false_success)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_media_recorder_configuration.py", line 20, in test_actual_six_functions_all_failures_success_and_old_false_success
+    subprocess.run(flags+(['-DEXPECT_OLD'] if old else [])+[str(p),'-o',str(root/'test')],check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['clang++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-idirafter', '/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0/native/sysroot/usr/include', '-DEXPECT_OLD', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/batch-media-recorder-config-x7y9_2uy/functions.cpp', '-o', '/var/folders/yn/h6y135kj3nlc16406jr5sy500000gn/T/batch-media-recorder-config-x7y9_2uy/test']' returned non-zero exit status 1.
+
+======================================================================
+ERROR: test_gate_recomputes_exact_scope_and_keeps_every_other_requirement (test_release_scope.ReleaseScopeTests.test_gate_recomputes_exact_scope_and_keeps_every_other_requirement)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_release_scope.py", line 56, in test_gate_recomputes_exact_scope_and_keeps_every_other_requirement
+    verified_payload('cxx-arkts11-gaps', path, identity, environment)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/scripts/verify_first_artifact_gate.py", line 497, in verified_payload
+    verify_gap_closure_evidence(payload, Path(identity['archive']), path.parent / 'boot/boot.json',
+                                              ~~~~~~~~^^^^^^^^^^^
+KeyError: 'archive'
+
+======================================================================
+FAIL: test_actual_native_binding_owner_and_dead_group_recovery_barrier (test_batch_network_vpn_broker_controllers.BrokerControllerTests.test_actual_native_binding_owner_and_dead_group_recovery_barrier)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network_vpn_broker_controllers.py", line 266, in test_actual_native_binding_owner_and_dead_group_recovery_barrier
+    compile_run(declarations+actual+cases,root,extra=['-pthread'])
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network_openvpn_lifecycle.py", line 49, in compile_run
+    raise AssertionError(compiled.stderr)
+AssertionError: Undefined symbols for architecture arm64:
+  "std::__1::__hash_memory(void const*, unsigned long)", referenced from:
+      ltmp71 in probe-87924a.o
+ld: symbol(s) not found for architecture arm64
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+
+
+----------------------------------------------------------------------
+Ran 2542 tests in 649.402s
+
+FAILED (failures=1, errors=2, skipped=5)

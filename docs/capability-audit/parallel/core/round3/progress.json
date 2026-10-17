@@ -1,0 +1,56 @@
+{
+  "phase": "candidate_ready_for_exact_source_upgrade_and_preparation",
+  "implementation_head": "93953deadd6c59086e4c8201b24b257c0ff884f0",
+  "baseline_head": "2c6a5c2",
+  "checkpoint": "ddfabb4",
+  "integrated_commits": {
+    "mesa_exec": "3b627f0",
+    "media": "da4e15d",
+    "apps": "8e3b25a",
+    "system": "d6456f4",
+    "network": "27b0c95",
+    "location_initial": "cf32293"
+  },
+  "five_agents_delivered": true,
+  "all_source_out_read_leases_released": true,
+  "source_out_written_this_turn": false,
+  "host_suite": {
+    "session_id": 26991,
+    "pid": 13044,
+    "log": "docs/capability-audit/parallel/core/round3/integrated-host-tests-01.log",
+    "status": "complete_initial_failures_repaired_and_rechecked",
+    "observed_failures": "at least one host libc++ linking error and one assertion failure; collect complete final summary before repairs",
+    "tests": 2542,
+    "initial_exit_code": 1,
+    "final_recheck_report": "integrated-host-tests.json"
+  },
+  "critical_review": {
+    "location_horizontal_accuracy": "corrected by0c67170; 14 targeted and all38 location-domain tests passed",
+    "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
+  },
+  "next_required": [
+    "freeze current commit",
+    "root stage driver migrate01 then prepare01 then one build01 sequentially",
+    "new archive checksum and complete fresh guest acceptance before remaining five"
+  ],
+  "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
+  "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
+  "verified_dependencies": [
+    "private real LLVM installer executable mode publication",
+    "actual unsigned SDK105 AudioHaptic caller inert HAP",
+    "actual unsigned full Calendar main SDK105 HAP and permission/ABC readback",
+    "six actual isolated Linux VPN tests under g++/ASan/UBSan; initial missing clang++ failure preserved"
+  ],
+  "ledger": {
+    "total": 281,
+    "closed": 199,
+    "unresolved": 82,
+    "candidate_runtime": 25,
+    "implementation": 23,
+    "external_provider_or_peer": 30,
+    "investigation": 4,
+    "new_closures": 0
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

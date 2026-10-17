@@ -1,0 +1,17 @@
+BLE actual NAPI functions: parser/integer/undefined, callback identity, payload, queued cancellation/reentry, environment and error/ref lifetime boundaries passed
+.BLE real functions: exact payload/filter/RSSI, permission/delegation/user/freeze, startup/stop failures, owner and stale scan-task boundaries passed
+BLE absent feature: real API reports 801
+.Actual cache fast paths: fine-only/approx accounting, retained Request stop retry, no premature continuous decrement, duplicate release passed
+.Actual district native/service: current-fix/cache/deadline/stop/late callbacks/locale/geocoder errors and sports wire route passed
+.Actual business NAPI: Promise-only optional/undefined/strict int32, district optional fields/errors, track payload/errors and continuous sports parser passed
+.Actual RequestConfig: old ten wire fields and following parcel data preserved, sports default/copy/equality passed
+.Actual skiing processing: changed geometry/altitude/accuracy/derived speed, dedup, outlier, source/privacy/lifecycle gates, owner/delegation, 24h and cursor/antimeridian passed
+..............Live icon/query/PrivacyKit route: fine/approx/both/revoked/delegated, shared pid, GNSS/network/fused, locks, freeze/account/timeout/switch/service boundaries passed
+...........RTT 3 event families: optional/undefined/identity/multiple listeners/environment/owner destruction/queue/reentry/reference/error cases passed
+.......
+----------------------------------------------------------------------
+Ran 38 tests in 121.966s
+
+OK
+Actual GNSS callbacks preserve no/zero/1/3/4/64/128 SV measurements and every field; malformed vectors rejected. Generated POD configuration, intervals, real error gates and start types passed. Host boundaries only.
+Original fixed callback reproduces synthetic SV assertion failure; patched function passes.

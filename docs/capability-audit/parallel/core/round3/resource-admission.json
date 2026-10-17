@@ -1,0 +1,50 @@
+{
+  "observed_at": "2026-10-17T07:54:42.977406+08:00",
+  "max_concurrent_subagents": 3,
+  "five_distinct_workstreams": [
+    "apps",
+    "media",
+    "system",
+    "network",
+    "location"
+  ],
+  "heavy_jobs_running": 0,
+  "source_out_writer": "root only",
+  "read_lease": null,
+  "build_limits": {
+    "max_heavy_jobs": 1,
+    "cpus": 4,
+    "memory_gib": 10,
+    "compiler_jobs": 2,
+    "kernel_jobs": 2
+  },
+  "other_user_vm_and_containers": "unowned; untouched",
+  "remaining_five_started": false,
+  "read_lease_completed": {
+    "agent": "system",
+    "scope": "narrow CalendarData fixed source export only",
+    "released": true
+  },
+  "active_children": [],
+  "completed_children": [
+    "apps",
+    "media",
+    "system",
+    "network",
+    "location"
+  ],
+  "five_distinct_agents_started": true,
+  "sdk_compile_job": {
+    "owner": "root",
+    "status": "complete",
+    "scope": "inert complete unsigned AudioHaptic HAP using SDK105",
+    "exit_code": 0,
+    "source_out_write": false
+  },
+  "pending_root_jobs": [
+    "known previous Settings exact migration",
+    "complete source preparation",
+    "ONE ARM64 phone build/package",
+    "new archive runtime"
+  ]
+}

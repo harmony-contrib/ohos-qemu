@@ -1,0 +1,66 @@
+{
+  "scope": "actual SDK105 complete unsigned inert HAP compiling the new AudioHaptic caller ONLY NOT signing/BMS/runtime or audio/vibration proof",
+  "caller": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_media/audio_haptic/AudioHapticProbe.ets",
+    "sha256": "62e3662c3b06beda259d0c2266e2105d96acaab7f05bdf9a72129cceac48acaf"
+  },
+  "project": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-AudioHaptic-SDK105-01/project",
+  "commands": [
+    {
+      "label": "dependencies",
+      "argv": [
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/ohpm/bin/pm-cli.js",
+        "install",
+        "--all",
+        "--registry",
+        "http://127.0.0.1:9",
+        "--fetch_timeout",
+        "10000",
+        "--retry_times",
+        "0"
+      ],
+      "exit_code": 0,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-AudioHaptic-SDK105-01/dependencies.log",
+      "sha256": "f34482b07af9102efc7c5673ad69a034e501096cb2bb7049370a3176f5e6ff3b"
+    },
+    {
+      "label": "compile",
+      "argv": [
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/build-tools/common/nodejs/node-v18.20.1-darwin-arm64/bin/node",
+        "/Volumes/PSSD/qemu/openharmony/prebuilts/tool/command-line-tools/6.x/hvigor/bin/hvigorw.js",
+        "assembleHap",
+        "--mode",
+        "module",
+        "-p",
+        "product=default",
+        "-p",
+        "module=entry",
+        "-p",
+        "debuggable=false",
+        "-p",
+        "hvigor-obfuscation=false",
+        "--no-daemon",
+        "--no-parallel",
+        "--no-incremental",
+        "--max-old-space-size",
+        "2048"
+      ],
+      "exit_code": 0,
+      "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-AudioHaptic-SDK105-01/compile.log",
+      "sha256": "691130ec8975bb30242dec7cb938bd12b5ccc23f6d6bbf63cea188cce3220150"
+    }
+  ],
+  "haps": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-AudioHaptic-SDK105-01/project/entry/build/default/outputs/default/entry-default-unsigned.hap",
+      "sha256": "cbf1df9946ce4920b6142b6f966130cb8bfaae23ec699c193ee00378ffcf7b32",
+      "bytes": 75620
+    }
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "exit_code": 0,
+  "seconds": 7.3251179999206215,
+  "evidence_sha256": "ca88c1ad07f079b6a7e83e89a98bbcbdb8f25f5ea17ee89db5882870640a345c",
+  "evidence_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-AudioHaptic-SDK105-01/evidence.json"
+}
