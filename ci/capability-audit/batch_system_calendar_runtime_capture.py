@@ -184,7 +184,7 @@ class Collector:
             local = checked(item['artifact'])
             require(item['artifact']['sha256'] in linked_hashes and Path(item['remote']).name == name and
                     item['remote'].startswith(('/system/', '/vendor/')), 'helper DSO is not an actual product link input')
-            text, observation = self.raw('sha256sum ' + shlex.quote(item['remote']), 'DSO-' + name.replace('.', '-'))
+            text, observation = self.raw('sha256sum ' + shlex.quote(item['remote']), 'DSO-' + re.sub('[^A-Za-z0-9_-]', '-', name))
             require(text.split()[0] == sha(local), 'helper linked DSO differs from booted image')
             dso_observations[name] = observation
         self.report['helper'] = {'binary': helper['binary'], 'receipt': helper['receipt'], 'guest_sha': proof,
@@ -397,10 +397,17 @@ class Collector:
         with Image.open(image) as screen:
             width, height = screen.size
         self.ui.shell(f'uitest uiInput swipe {width//2} 1 {width//2} {height*3//4}', 'open-real-notification-shade')
-        layout, path = self.ui.layout(label='notification-shade')
         bundle = self.plan.get('notification_bundle', 'com.ohos.systemui')
         require(bundle != PROVIDER and bundle not in {p['bundle'] for p in ROLES.values()}, 'notification node must belong to actual notification UI')
-        node = clickable_for_text(layout, bundle, seed['event']['title'])
+        transition_deadline = time.monotonic() + min(self.args.timeout, 30)
+        while True:
+            try:
+                layout, path = self.ui.layout(label='notification-shade')
+                node = clickable_for_text(layout, bundle, seed['event']['title'])
+                break
+            except (LayoutNotReady, NodeNotReady):
+                if time.monotonic() >= transition_deadline: raise
+                self.save(); time.sleep(.25)
         self.report['notification_click'] = {'layout': record(path), 'screenshot': record(self.ui.screenshot(label='notification-before-click')), 'selected_node': node}
         x, y, w, h = node['rect']
         self.ui.shell(f'uitest uiInput click {x+w//2} {y+h//2}', 'actual-notification-node-click')

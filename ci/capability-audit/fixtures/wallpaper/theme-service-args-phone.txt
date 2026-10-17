@@ -1,0 +1,468 @@
+root_out_dir=//out/arm64_virt
+root_build_dir=//out/arm64_virt
+root_gen_dir=//out/arm64_virt/gen
+current_toolchain=//build/toolchain/ohos:ohos_clang_arm64
+host_toolchain=//build/toolchain/linux:clang_x64
+intell_voice_engine_service
+intell_voice_engine_service
+intell_voice_engine_service
+intell_voice_engine_service
+intell_voice_trigger_service
+intell_voice_trigger_service
+intell_voice_trigger_service
+E2FSPROGS_DIR is /Volumes/PSSD/qemu/openharmony/out/arm64_virt/gen/third_party/e2fsprogs/e2fsprogs
+power_interface_service
+power_interface_service
+power_interface_service
+distributed_bundle_framework_graphics = true
+ability_runtime_enable_dbms = true
+account_enable_dbms = true
+distributed_bundle_framework_enable = true
+hisysevent_enable_dbms = true
+distributed_bundle_image_framework_enable = true
+vibrator_service
+battery_interface_service
+Debug info gen_utils_abc file path:  //out/arm64_virt/obj/commonlibrary/ets_utils/js_concurrent_module/utils/utils.abc
+av_codec_support_fcodec = true
+av_codec_support_avc_encoder = true
+av_codec_support_hevc_decoder = true
+av_codec_support_hcodec = true
+av_codec_support_vp8_decoder = false
+av_codec_support_vp9_decoder = false
+av_codec_support_av1_decoder = false
+av_codec_enable_start_stop_on_demand = false
+native_media_venc: FAST_KIT_ENABLED=false
+codec_service
+codec_service
+codec_service
+drivers_peripheral_face_auth
+Support dsoftbus.
+support hearing aid
+location_geofence
+motion_service
+motion_service
+time_system_ability_static output_values: ["//out/arm64_virt/gen/base/time/time_service/services/itime_service.h", "//out/arm64_virt/gen/base/time/time_service/services/time_service_proxy.cpp", "//out/arm64_virt/gen/base/time/time_service/services/time_service_stub.cpp", "//out/arm64_virt/gen/base/time/time_service/services/time_service_proxy.h", "//out/arm64_virt/gen/base/time/time_service/services/time_service_stub.h", "//out/arm64_virt/gen/base/time/time_service/services/itimer_callback.h", "//out/arm64_virt/gen/base/time/time_service/services/timer_callback_proxy.cpp", "//out/arm64_virt/gen/base/time/time_service/services/timer_callback_stub.cpp", "//out/arm64_virt/gen/base/time/time_service/services/timer_callback_proxy.h", "//out/arm64_virt/gen/base/time/time_service/services/timer_callback_stub.h"]
+thermal_interface_service
+input_feature_combination_key = true
+input_feature_pointer_drawing = true
+input_feature_monitor = true
+input_feature_interceptor = true
+input_feature_keyboard = true
+input_feature_switch = true
+input_feature_mouse = true
+input_feature_joystick = true
+input_feature_touchscreen = true
+input_feature_input_device = true
+input_feature_short_key = true
+input_ext_feature_keyboard_ext_flag = false
+input_feature_one_hand_mode_enable = false
+input_feature_move_event_filters = false
+input_feature_external_screen = true
+input_feature_touchpad = true
+input_feature_pen = true
+input_feature_touch_gesture = true
+input_controller_inject_enable = false
+************libhilog_base use_musl ***************
+daudio
+daudio
+daudioext
+daudioext
+input_service
+hid_ddk
+hid_ddk
+hisysevent_usage = false
+ans_hitrace_usage = true
+drivers_peripheral_pin_auth
+wpa_supplicant_vendor_ext = false
+wpa_supplicant_wapi = false
+miscdevice_feature_vibrator_custom = true
+drivers_peripheral_user_auth
+drivers_peripheral_user_auth
+effect_host
+audio_service
+audio_service
+defines _ARM64_
+defines _ARM64_
+defines _ARM64_
+defines _ARM64_
+defines _ARM64_
+defines _ARM64_
+Build curl is_cares_on: true
+Build curl support_gmssl: true
+ethernet_service
+account_enable_bm = true
+overlay_install_bm = true
+quick_fix_bm = true
+distributed_bundle_framework_bm = true
+Reading plugin sources: ets (//build/toolchain/ohos:ohos_clang_arm64)
+midi
+location_agnss
+location_agnss
+Cares install
+openssl detecting os now...
+current_cpu = arm64
+current_os = ohos
+host_os = linux
+is_mingw = false
+openssl selected linux-aarch64
+openssl detecting os done. openssl_selected_platform = linux-aarch64
+["--haptobin", "../../developtools/packing_tool/adapter/ohos", "--haptobinOutput", "obj/developtools/packing_tool/jar/haptobin_tool.jar", "--unpackOutput", "obj/developtools/packing_tool/jar/app_unpacking_tool.jar", "--packOutput", "obj/developtools/packing_tool/jar/app_packing_tool.jar", "--outpath", "obj/developtools/packing_tool/jar", "--checkOutput", "obj/developtools/packing_tool/jar/app_check_tool.jar", "--toolchain", "//build/toolchain/ohos:ohos_clang_arm64", "--compileTarget", "image"]
+sensor_service
+sensor_service
+sensor_convert_service
+bundle_framework_power_mgr_enable = true
+bundle_framework_graphics = true
+bundle_framework_free_install = true
+bundle_framework_default_app = true
+bundle_framework_launcher = true
+bundle_framework_sandbox_app = true
+bundle_framework_quick_fix = true
+bundle_framework_app_control = true
+distributed_bundle_framework = true
+ability_runtime_enable = true
+account_enable = true
+configpolicy_enable = true
+global_resmgr_enable = true
+hicollie_enable = true
+support_jsapi = true
+hisysevent_enable = true
+bundle_framework_overlay_install = true
+bundle_framework_bundle_resource = true
+verify_abc_enabled = true
+user_auth_framework_impl_enabled = true
+bundle_framework_bss_enable = false
+bundle_framework_npapi_enable = false
+bms_accesscontrol_sandbox_manager = true
+window_manager_use_sceneboard = true
+window_manager_feature_subscribe_motion = false
+imf_enable:  true
+imf_enable:  true
+imf_enable:  true
+window_scene_common imf_enable:  true
+window manager fold ability is enabled.
+window manager active mode ability is enabled.
+window manager screen color gamut ability is enabled.
+window manager screen hdr format ability is enabled.
+window manager screen color space ability is enabled.
+window manager screen multi screen ability is enabled.
+window manager screen multi screen frame ctl ability is enabled.
+window manager screen camera mode ability is enabled.
+window manager screen multi usr ability is enabled.
+window manager screen lock manager ability is enabled.
+imf_enable:  true
+imf_enable:  true
+imf_enable:  true
+imf_enable:  true
+camera_service
+camera_service
+camera_service
+camera_service
+camera_service
+camera_service
+camera_service
+camera_service
+current_cpu = arm64
+current_os = ohos
+host_os = linux
+openhitls selected linux-armv8
+openhitls detecting os done, openhitls_selected_platform = linux-armv8
+drivers_peripheral_huks
+drivers_peripheral_huks
+accessibility_feature_display_manager = true
+accessibility_feature_power_manager = true
+accessibility_use_rosen_drawing = true
+accessibility_feature_data_share = true
+accessibility_feature_hiviewdfx_hitrace = true
+accessibility_feature_hiviewdfx_hisysevent = true
+partitionslot_interface_service
+has_hisysevent_part = true
+event ces_hitrace_usage = true
+memory_tracker_interface_service
+backends_action is exec
+current_cpu = arm64
+current_os = ohos
+host_os = linux
+is_mingw = false
+ffmpeg selected aarch64
+third_party:ffmpeg # external_deps //third_party/musl:soft_libc_musl_static
+########## ets_runtime disable cmc-gc ##############
+//out/arm64_virt/obj/foundation/arkui/advanced_ui_component/customappbar/atomicservicemenubar/atomicservicemenubar.abc
+usbd
+usbd
+usbd
+usb_ddk
+usb_ddk
+usbd
+usbd
+serial
+usbfn_mtp
+usb_ddk
+scsi_ddk
+usb_serial_ddk
+drm_interface_service
+drm_interface_service
+light_service
+ril_service
+ril_service
+ril_service
+ril_service
+ril_service
+bluetooth_hci
+bluetooth_a2dp
+bluetooth_lp_ble
+output_values: ["//out/arm64_virt/gen/domains/game/game_controller_framework/frameworks/native/igame_controller_server_interface.h", "//out/arm64_virt/gen/domains/game/game_controller_framework/frameworks/native/game_controller_server_interface_proxy.cpp", "//out/arm64_virt/gen/domains/game/game_controller_framework/frameworks/native/game_controller_server_interface_stub.cpp", "//out/arm64_virt/gen/domains/game/game_controller_framework/frameworks/native/game_controller_server_interface_proxy.h", "//out/arm64_virt/gen/domains/game/game_controller_framework/frameworks/native/game_controller_server_interface_stub.h"]
+wlan_service
+wlan_service
+wlan_service
+wpa_service
+hostapd_service
+chip
+chip
+drivers_peripheral_fingerprint_auth
+location_gnss
+nnrt
+nnrt
+nnrt
+Msdp motion ability is disabled.
+display_buffer
+display_buffer
+display_buffer
+display_composer
+display_composer
+display_commontype
+display_commontype
+display_commontype
+display_buffer
+display_composer
+display_composer
+display_composer
+display_commontype
+display_buffer
+display_commontype
+display_commontype
+display_composer
+display_commontype
+cups_action is exec
+libunwind_action is exec
+distributed_camera_provider_service
+histreamer plugin: ffmpeg_adapter = true
+histreamer plugin: wav_demuxer = false
+histreamer plugin: hdi_adapter = false
+histreamer plugin: file_source = false
+histreamer plugin: file_fd_source = false
+histreamer plugin: std_stream_source = false
+histreamer plugin: http_source = false
+histreamer plugin: stream_source = false
+histreamer plugin: audio_server_sink = false
+histreamer plugin: lite_aac_decoder = false
+histreamer plugin: std_video_surface_sink = false
+histreamer plugin: std_video_capture = false
+histreamer plugin: file_fd_sink = false
+histreamer plugin: codec_adapter = true
+include_dirs= ["//out/arm64_virt/gen/foundation/multimedia/audio_framework/services/audio_service/idl", "//foundation/multimedia/audio_framework/services/audio_service/idl/"]
+target_gen_dir= //out/arm64_virt/gen/foundation/multimedia/audio_framework/services/audio_service/idl
+default_toolchain =  //build/toolchain/ohos:ohos_clang_arm64
+current_toolchain =  //build/toolchain/ohos:ohos_clang_arm64
+host_toolchain =  //build/toolchain/linux:clang_x64
+root_out_dir =  //out/arm64_virt
+root_output_dir_proto =  out/arm64_virt/clang_x64
+target_out_dir //out/arm64_virt/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+target_dir /Volumes/PSSD/qemu/openharmony/out/arm64_virt/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+test_abc_dir /Volumes/PSSD/qemu/openharmony/out/arm64_virt/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+target_out_dir //out/arm64_virt/clang_x64/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+target_dir /Volumes/PSSD/qemu/openharmony/out/arm64_virt/clang_x64/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+test_abc_dir /Volumes/PSSD/qemu/openharmony/out/arm64_virt/clang_x64/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+Reading plugin sources: ets (//build/toolchain/linux:clang_x64)
+imf_enable:  true
+########## ets_runtime disable cmc-gc ##############
+E2FSPROGS_DIR is /Volumes/PSSD/qemu/openharmony/out/arm64_virt/clang_x64/gen/third_party/e2fsprogs/e2fsprogs
+************libhilog_base use_musl ***************
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/resourceManagerTest:resourceManagerTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+########## ets_runtime disable cmc-gc ##############
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/distributed_bundle_framework/services/dbms/test/sceneProject/unittest/system_module:distributed_system_module(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+openssl detecting os now...
+current_cpu = x64
+current_os = linux
+host_os = linux
+is_mingw = false
+openssl selected linux-x86_64
+openssl detecting os done. openssl_selected_platform = linux-x86_64
+Reading plugin sources: ets (//build/toolchain/mingw:mingw_x86_64)
+target_out_dir //out/arm64_virt/mingw_x86_64/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+target_dir /Volumes/PSSD/qemu/openharmony/out/arm64_virt/mingw_x86_64/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+test_abc_dir /Volumes/PSSD/qemu/openharmony/out/arm64_virt/mingw_x86_64/obj/arkcompiler/runtime_core/libark_defect_scan_aux/tests/unittest
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_app_service/app_service_version1_library1:appService_v1_library1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/defaultAppTest:defaultAppTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/bmsAccessTokentest1:bmsAccessTokentest1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/bmsAccessTokentest3:bmsAccessTokentest3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/first_right:first_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/sandboxTest:sandboxTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_dependencies/dependencies_entry_A:dependencies_entry_A(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_dependencies/dependencies_entry_B:dependencies_entry_B(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_dependencies/dependencies_entry_C:dependencies_entry_C(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/fifth_right:fifth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/rightTest:rightTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/rightTest1:rightTest1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/seventh_right:seventh_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/wrong_bundle_name:wrong_bundle_name(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionTest1:versionTest1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionTest3:versionTest3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/fourth_right:fourth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/third_right:third_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/second_right:second_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionTest2:versionTest2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionNormalHapTest1:versionNormalHapTest1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/signatureTest:signatureTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/backupTest:backupTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionNormalHapTest2:versionNormalHapTest2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/moduleJsonTest:moduleJsonTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/thumbnailTest:thumbnailTest(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/bmsAccessTokentest2:bmsAccessTokentest2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_share_library/libA_v10000:libA_v10000(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/system_module:system_module(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/bmsThirdBundle1:bmsThirdBundle1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/bmsThirdBundle2:bmsThirdBundle2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/permission_bundle/bmsGrantPermission3:bmsGrantPermission3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/permission_bundle/bmsGrantPermission6:bmsGrantPermission6(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/permission_bundle/bmsGrantPermission4:bmsGrantPermission4(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/permission_bundle/bmsGrantPermission1:bmsGrantPermission1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/permission_bundle/bmsGrantPermission7:bmsGrantPermission7(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_hsp/hsp_A:hsp_A(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_hsp/hsp_B:hsp_B(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_hsp/hsp_C:hsp_C(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_hsp/hsp_C2:hsp_C2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/parse_bundle/new:new(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_share_library/libA_normal_hap:libA_normal_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_share_library/libA_without_provision:libA_without_provision(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_share_library/libA_v10001:libA_v10001(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_share_library/libA_v10002:libA_v10002(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_share_library/libB_v10001:libB_v10001(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/install_daemon/right:right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_so/compressNativeLibsFalse:compressNativeLibsFalse01(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_so/compressNativeLibsTrue:compressNativeLibsTrue01(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/thumbnailTest2:thumbnailTest2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/moduletest/other_bundle/bmsThirdBundle14:mstbmsThirdBundle14(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/moduletest/other_bundle/bmsThirdBundle1:mstbmsThirdBundle1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/moduletest/other_bundle/bmsThirdBundle2:mstbmsThirdBundle2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/benchmark/benchmarktesthap:benchmarktesthap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/CodeSignature/CodeSignatureWithoutLibs2:CodeSignatureWithoutLibs2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/CodeSignature/CodeSignatureWithoutLibs:CodeSignatureWithoutLibs(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/BundleClient/bundleClient1:bundleClient1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/CodeSignature/CodeSigntureWithLibs:CodeSigntureWithLibs(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/stMatchShareBundle/matchShareBundle1:matchShareBundle1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/stMatchShareBundle/matchShareBundle3:matchShareBundle3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/stMatchShareBundle/matchShareBundle2:matchShareBundle2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/stThirdBundle/bmsThirdBundle3:stbmsThirdBundle3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/permissionBundle/permissionGrantBundle2:permissionGrantBundle2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/permissionBundle/permissionGrantBundle4:permissionGrantBundle4(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/permissionBundle/permissionGrantBundle5:permissionGrantBundle5(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/stVendorBundle/bmsVendorBundle1:bmsVendorBundle1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/permissionBundle/permissionGrantBundle3:permissionGrantBundle3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundle5:bmsThirdBundle5(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundle6:bmsThirdBundle6(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundle1:bmsThirdBundle1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundle2:bmsThirdBundle2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundle3:bmsThirdBundle3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundle4:bmsThirdBundle4(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/jsBundle/jsThirdBundle/bmsThirdBundleDataAbility:bmsThirdBundleDataAbility(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testOverlay/target_module_feature1:feature1_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testOverlay/target_module_entry:entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testOverlay/target_module_entry_higher_version:higher_version_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapNotIncludeso2:hapNotIncludeso2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso1/feature3:hapSectionContainsoFeature3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/bundle_hsp/hsp_A/feature4:hspASystemtestFeature4(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso1/feature2:hapSectionContainsoFeature2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapNotIncludeso1:hapNotIncludeso1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso5/feature1:hapIncludeso5Feature1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso7/hapnoso3:hapnoso3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/bundle_hsp/hsp_A/feature3:hspASystemtestFeature3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso1/feature1:hapSectionContainsoFeature1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso2/feature4:hapSectionContainsoFeature4(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso7/feature1:hapIncludeso7Feature1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/bundle_hsp/hsp_A/feature2:hspASystemtestFeature2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso1:hapSectionContainso1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso7:hapIncludeso7(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/bundle_hsp/hsp_A/feature1:hspASystemtestFeature1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso2/feature5:hapSectionContainsoFeature5(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso3:hapIncludeso3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/bundle_hsp/hsp_A:hsp_A(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso2/feature6:hapSectionContainsoFeature6(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso6/feature2:hapIncludeso6Feature2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapNoSo/hapSectionContainso2:hapSectionContainso2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/testHapSo/hapIncludeso5/feature3:hapIncludeso5Feature3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/oneExtensionDir/version1/entry:version1_oneExtension_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/oneExtensionDir/version1/feature:version1_oneExtension_feature_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/oneExtensionDir/version2/entry_ex2:version2_oneExtension2_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/twoExtensionDir/version2/feature:version2_twoExtension_feature_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/withoutExtensionDir/version1_form/entry:version1_withoutExtension_entry_form_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/oneExtensionDir/version2/feature:version2_oneExtension_feature_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/twoExtensionDir/version1/feature:version1_twoExtension_feature_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/withoutExtensionDir/version2/feature:version2_withoutExtension_feature_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/oneExtensionDir/version1/entry_ex2:version1_oneExtension2_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/oneExtensionDir/version2/entry:version2_oneExtension_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/twoExtensionDir/version1/entry:version1_twoExtension_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/withoutExtensionDir/version1/feature:version1_withoutExtension_feature_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/twoExtensionDir/version2/entry:version2_twoExtension_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/withoutExtensionDir/version2/entry:version2_withoutExtension_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/withoutExtensionDir/version1/entry:version1_withoutExtension_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/extensionDirTest/withoutExtensionDir/version2_form/entry:version2_withoutExtension_entry_form_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionUpdateTest1:versionUpdateTest1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionUpdateTest4:versionUpdateTest4(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionUpdateTest3:versionUpdateTest3(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/versionUpdateTest2:versionUpdateTest2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestAplUp:otaUpdateTestAplUp(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestSignaIcon:otaUpdateTestSignaIcon(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestSoChanged/feature1:otaUpdateTestSoChangedFeature1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestAplDown:otaUpdateTestAplDown(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestAppField:otaUpdateTestAppField(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestBasis:otaUpdateTestBasis(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestAppField2:otaUpdateTestAppField2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestBasis/feature1:otaUpdateTestBasisFeature1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestBasis2:otaUpdateTestBasis2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestBasis/feature2:otaUpdateTestBasisFeature2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestModuleField:otaUpdateTestModuleField(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestSoChanged:otaUpdateTestSoChanged(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/otaUpdateTestSoChanged/feature2:otaUpdateTestSoChangedFeature2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/ninth_right:ninth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/eighth_right:eighth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/second_backup_right:second_backup_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/twelfth_right:twelfth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/first_diff_minCompCode:first_diff_minCompCode(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/tenth_right:tenth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/fourteenth_right:fourteenth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/sixth_right:sixth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/thirteenth_right:thirteenth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/first_right_with_diff_moduleType:first_right_with_diff_moduleType(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/eleventh_right:eleventh_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/fifteenth_right:fifteenth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/first_diff_release_type:first_diff_release_type(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/first_right_compCode:first_right_compCode(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/test_bundle/sixteenth_right:sixteenth_right(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/driver_test/lower_version_non_driver_feature12:lower_version_non_driver_feature12_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/driver_test/lower_version_driver_feature14:lower_version_driver_feature14_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/driver_test/high_version_non_driver_feature11:high_version_non_driver_feature11_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_app_service/app_service_version1_library2:appService_v1_library2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_app_service/app_service_version2_library1:appService_v2_library1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/unittest/bundle_app_service/app_service_version2_library2:appService_v2_library2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+########## ets_runtime disable cmc-gc ##############
+########## ets_runtime disable cmc-gc ##############
+************libhilog_base use_musl ***************
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/multiUser/lower_versionCode_entry:lower_versionCode_entry_hap(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/multiUser/lower_versionCode_entry/feature:lower_versionCode_entry_hapB(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/driverBundle/driverBundle1:driverBundle1(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+Set module_install_dir or relative_install_dir field in the //foundation/bundlemanager/bundle_framework/test/sceneProject/systemtest/driverBundle/driverBundle2:driverBundle2(//build/toolchain/ohos:ohos_clang_arm64). Do not install the module to app.
+########## ets_runtime disable cmc-gc ##############
+WARNING at build arg file (use "gn args <out_dir>" to edit):11:18: Build argument has no effect.
+device_company = "qemu"
+                 ^-----
+The variable "device_company" was set as a build argument
+but never appeared in a declare_args() block in any buildfile.
+
+To view all possible args, run "gn args --list <out_dir>"
+
+The build continued as if that argument was unspecified.
+
+theme_service
+    Current value (from the default) = false
+      From //base/theme/wallpaper_mgr/wallpaper.gni:33
+

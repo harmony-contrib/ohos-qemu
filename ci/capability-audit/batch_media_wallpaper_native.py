@@ -18,6 +18,8 @@ from enclosing_acceptance_guest import validate_binding
 LIBRARY = 'libwallpaper_service.z.so'
 PRODUCTS = {'arm64': 'arm64_virt', 'armv7a': 'armv7a_virt', 'x86_64': 'x86_64_virt'}
 PAYLOADS = {'inventory.json', 'graph.ninja', 'compile-commands.json', 'theme-service-args.txt',
+            'theme-service-args.stderr.txt', 'theme-service-query.json', 'build-theme-service-args.txt',
+            'build-theme-service-args.stderr.txt', 'build-theme-service-query.json',
             LIBRARY, 'witness.json', 'build-log.txt'}
 SCOPE = 'current_archive_native_GN_image_and_read_only_live_mapping_NOT_service_token_PID'
 

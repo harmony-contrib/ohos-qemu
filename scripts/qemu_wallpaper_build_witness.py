@@ -33,7 +33,10 @@ FILES = {
 GN_NATIVE_TIMEOUT = 180
 GN_EMULATED_TIMEOUT = 900  # Round06 actual GN generation alone took 243.99s.
 
-PAYLOADS = {'graph.ninja', 'compile-commands.json', 'theme-service-args.txt', LIBRARY, 'witness.json', 'build-log.txt'}
+PAYLOADS = {'graph.ninja', 'compile-commands.json', 'theme-service-args.txt',
+            'theme-service-args.stderr.txt', 'theme-service-query.json',
+            'build-theme-service-args.txt', 'build-theme-service-args.stderr.txt',
+            'build-theme-service-query.json', LIBRARY, 'witness.json', 'build-log.txt'}
 
 
 def regular(path):
@@ -130,10 +133,65 @@ def compile_check(command, unit, product):
 
 
 def selected_args(text):
-    headings = re.findall(r'^[A-Za-z_][A-Za-z_0-9]*[ \t]*$', text, re.M)
-    current = re.findall(r'^[ \t]*Current value[^\r\n=]*=[ \t]*(\S+)[ \t]*$', text, re.M)
-    if [heading.strip() for heading in headings] != ['theme_service'] or current != ['false']:
+    # GN evaluates buildfiles before printing the requested argument. Their
+    # print() diagnostics include standalone component names; only a heading
+    # immediately followed by GN's indented Current value line is a record.
+    records = list(re.finditer(
+        r'^([A-Za-z_][A-Za-z_0-9]*)[ \t]*\n    Current value(?: \(from the default\))? = (\S+)[ \t]*$', text, re.M))
+    current = re.findall(r'^[ \t]*Current value[^\r\n]*$', text, re.M)
+    if (len(records) != 1 or records[0].group(1, 2) != ('theme_service', 'false') or len(current) != 1 or
+            len(re.findall(r'^theme_service[ \t]*$', text, re.M)) != 1 or
+            re.search(r'^[ \t]*(?:ERROR(?: at|:)|FAILED:)', text, re.M) or
+            re.fullmatch(r'\n      From //base/theme/wallpaper_mgr/wallpaper\.gni:33\n[ \t\n]*',
+                         text[records[0].end():]) is None):
         raise ValueError('actual selected GN theme_service=false query required')
+
+
+def query_binding(build_graph, package_graph, build_args, package_args):
+    keys = {'graph_sha256', 'compile_commands', 'selected_args_command', 'selected_args_sha256'}
+    if set(build_graph) != keys or set(package_graph) != keys:
+        raise ValueError('complete separate build/package Wallpaper queries required')
+    for graph, raw in ((build_graph, build_args), (package_graph, package_args)):
+        selected_args(raw.decode())
+        if graph['selected_args_sha256'] != __import__('hashlib').sha256(raw).hexdigest():
+            raise ValueError('Wallpaper query raw stdout differs from its own witness')
+    if any(build_graph[key] != package_graph[key] for key in keys - {'selected_args_sha256'}):
+        raise ValueError('Wallpaper build/package graph or actual command changed')
+
+
+def args_output(command, source, timeout, diagnostics=None):
+    if diagnostics is not None: diagnostics.mkdir(parents=True, exist_ok=False)
+    report = dict(argv=command, cwd=str(source), timeout_seconds=timeout, exit_code=None)
+    raw = b''
+    with tempfile.TemporaryFile() as stderr:
+        try:
+            raw = subprocess.check_output(command, cwd=source, stderr=stderr, timeout=timeout)
+            report['exit_code'] = 0
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            raw = error.output or b''
+            report.update(exit_code=getattr(error, 'returncode', None), error=type(error).__name__)
+            raise
+        finally:
+            stderr.seek(0); errors = stderr.read()
+            report['files_sha256'] = {name: __import__('hashlib').sha256(data).hexdigest()
+                                      for name, data in (('stdout.txt', raw), ('stderr.txt', errors))}
+            if diagnostics is not None:
+                for name, data in (('stdout.txt', raw), ('stderr.txt', errors)):
+                    with (diagnostics / name).open('xb') as stream: stream.write(data)
+                write(diagnostics / 'query.json', report)
+    return raw, errors, report
+
+
+def query_receipt(graph, stdout, stderr, receipt, product):
+    value = json.loads(receipt)
+    command = graph['selected_args_command']; selected_args_command(command, product)
+    source = Path(command[-2]).parent.parent
+    expected = dict(argv=command, cwd=str(source), timeout_seconds=GN_EMULATED_TIMEOUT
+                    if command[0] == '/usr/bin/qemu-x86_64-static' else GN_NATIVE_TIMEOUT,
+                    exit_code=0, files_sha256={name: __import__('hashlib').sha256(data).hexdigest()
+                                              for name, data in (('stdout.txt', stdout), ('stderr.txt', stderr))})
+    if value != expected or type(value.get('exit_code')) is not int:
+        raise ValueError('successful actual Wallpaper query argv/raw/exit receipt required')
 
 
 def selected_args_command(command, product):
@@ -184,7 +242,7 @@ def elf_check(path, product):
         raise ValueError('actual executable Wallpaper implementation/cross-DSO CFI missing')
 
 
-def query(source, product):
+def query(source, product, diagnostics=None):
     source_check(source); build = source / 'out' / product
     graph = regular(build / GRAPH); graph_check(graph.read_text())
     ninja = source / 'prebuilts/build-tools/linux-x86/bin/ninja'; commands = {}
@@ -194,11 +252,12 @@ def query(source, product):
         if len(lines) != 1: raise ValueError('actual one-object Wallpaper compile query is ambiguous')
         compile_check(lines[0], unit, product); commands[unit] = lines[0]
     args_command, timeout = gn_query_command(source, product)
-    args = subprocess.check_output(args_command, cwd=source, text=True, timeout=timeout); selected_args(args)
+    args, errors, receipt = args_output(args_command, source, timeout, diagnostics); selected_args(args.decode())
     return dict(graph_sha256=file_sha256(graph), compile_commands=commands, selected_args_command=args_command,
-                selected_args_sha256=__import__('hashlib').sha256(args.encode()).hexdigest()), {
+                selected_args_sha256=__import__('hashlib').sha256(args).hexdigest()), {
                     'graph.ninja': graph.read_bytes(), 'compile-commands.json': (json.dumps(commands, indent=2) + '\n').encode(),
-                    'theme-service-args.txt': args.encode()}
+                    'theme-service-args.txt': args, 'theme-service-args.stderr.txt': errors,
+                    'theme-service-query.json': (json.dumps(receipt, indent=2) + '\n').encode()}
 
 
 def finish(source, product, log):
@@ -207,7 +266,10 @@ def finish(source, product, log):
     if (value.get('phase') != 'prepared' or value.get('product') != product or
             value.get('source_sha256') != FILES or value.get('recipe') != recipe()):
         raise ValueError('current Wallpaper build preparation missing')
-    graph, payload = query(source, product); artifacts = {}
+    if not isinstance(value.get('nonce'), str) or re.fullmatch('[a-f0-9]{32}', value['nonce']) is None:
+        raise ValueError('actual Wallpaper build nonce required')
+    archive = build / '.qemu-wallpaper-witness' / value['nonce']
+    graph, payload = query(source, product, archive / 'finish-query'); artifacts = {}
     for name in outputs(product):
         path = regular(build / name); stat = path.stat()
         if stat.st_mtime_ns < value['start_ns']: raise ValueError('Wallpaper output was not rebuilt in this attempt: ' + name)
@@ -220,7 +282,10 @@ def finish(source, product, log):
                  build_log=dict(path=str(log), sha256=file_sha256(regular(log))))
     inventory = dict(schema_version=1, scope='actual_QEMU_Wallpaper_fallback_build_and_image_NOT_guest_connection',
         product=product, source_sha256=FILES, recipe=recipe(), graph=graph)
-    payload.update({LIBRARY: (build / linked).read_bytes(), 'witness.json': (json.dumps(value, indent=2) + '\n').encode(),
+    payload.update({'build-' + name: payload[name] for name in
+                    ('theme-service-args.txt', 'theme-service-args.stderr.txt', 'theme-service-query.json')})
+    payload.update({
+                    LIBRARY: (build / linked).read_bytes(), 'witness.json': (json.dumps(value, indent=2) + '\n').encode(),
                     'build-log.txt': regular(log).read_bytes()})
     _check(inventory, payload)
     write(build / 'qemu-wallpaper-build-witness.json', value)
@@ -232,7 +297,7 @@ def _check(value, payload):
     if (value.get('schema_version') != 1 or value.get('scope') != 'actual_QEMU_Wallpaper_fallback_build_and_image_NOT_guest_connection' or
             product not in PRODUCTS or value.get('source_sha256') != FILES or value.get('recipe') != recipe() or set(payload) != PAYLOADS):
         raise ValueError('current complete Wallpaper source/build inventory required')
-    graph_check(payload['graph.ninja'].decode()); selected_args(payload['theme-service-args.txt'].decode())
+    graph_check(payload['graph.ninja'].decode())
     graph = value['graph']; selected_args_command(graph.get('selected_args_command'), product)
     commands = json.loads(payload['compile-commands.json'])
     sha = lambda data: __import__('hashlib').sha256(data).hexdigest()
@@ -241,8 +306,12 @@ def _check(value, payload):
         raise ValueError('Wallpaper raw GN and command bytes differ')
     for unit, command in commands.items(): compile_check(command, unit, product)
     witness = json.loads(payload['witness.json'])
+    query_binding(witness.get('graph', {}), graph, payload['build-theme-service-args.txt'], payload['theme-service-args.txt'])
+    for prefix, bound_graph in (('build-', witness['graph']), ('', graph)):
+        query_receipt(bound_graph, payload[prefix + 'theme-service-args.txt'],
+                      payload[prefix + 'theme-service-args.stderr.txt'], payload[prefix + 'theme-service-query.json'], product)
     if (witness.get('phase') != 'completed' or witness.get('product') != product or witness.get('recipe') != recipe() or
-            witness.get('source_sha256') != FILES or witness.get('graph') != graph or
+            witness.get('source_sha256') != FILES or
             re.fullmatch('[a-f0-9]{32}', witness.get('nonce', '')) is None or
             type(witness.get('start_ns')) is not int or witness['start_ns'] <= 0 or
             type(witness.get('finished_ns')) is not int or witness['finished_ns'] < witness['start_ns'] or
@@ -274,10 +343,18 @@ def check_inventory(value, product, directory):
 def package(source, product, directory):
     build = source / 'out' / product; source_check(source)
     witness_path = regular(build / 'qemu-wallpaper-build-witness.json'); witness = json.loads(witness_path.read_text())
-    graph, payload = query(source, product)
+    nonce = witness.get('nonce', '')
+    if not isinstance(nonce, str) or re.fullmatch('[a-f0-9]{32}', nonce) is None:
+        raise ValueError('actual Wallpaper build nonce required')
+    archive = build / '.qemu-wallpaper-witness' / nonce
+    graph, payload = query(source, product, archive / ('package-query-' + secrets.token_hex(8)))
     for name, row in witness['artifacts'].items():
         if file_sha256(regular(build / name)) != row['sha256']: raise ValueError('Wallpaper build output changed before packaging')
-    payload.update({LIBRARY: regular(build / ('theme/wallpaper_mgr/' + LIBRARY)).read_bytes(),
+    payload.update({'build-' + name: regular(archive / 'finish-query' / original).read_bytes()
+                    for name, original in (('theme-service-args.txt', 'stdout.txt'),
+                    ('theme-service-args.stderr.txt', 'stderr.txt'), ('theme-service-query.json', 'query.json'))})
+    payload.update({
+        LIBRARY: regular(build / ('theme/wallpaper_mgr/' + LIBRARY)).read_bytes(),
         'witness.json': witness_path.read_bytes(), 'build-log.txt': regular(witness['build_log']['path']).read_bytes()})
     value = dict(schema_version=1, scope='actual_QEMU_Wallpaper_fallback_build_and_image_NOT_guest_connection',
                  product=product, source_sha256=FILES, recipe=recipe(), graph=graph)

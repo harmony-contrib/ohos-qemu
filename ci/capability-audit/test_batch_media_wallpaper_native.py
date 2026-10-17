@@ -76,6 +76,19 @@ class NativeTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.verify(archive,boot)
         self.assertEqual(0,self.image_calls)
 
+    def test_payload_contract_matches_public_guard_with_both_query_receipts(self):
+        self.assertEqual(native.PAYLOADS, native.native_guard().PAYLOADS | {'inventory.json'})
+
+    def test_missing_original_build_stdout_is_rejected_before_image_replay(self):
+        archive,boot,_=self.package(lambda p:p.pop('wallpaper-native/build-theme-service-args.txt'))
+        with self.assertRaises(ValueError):self.verify(archive,boot)
+        self.assertEqual(0,self.image_calls)
+
+    def test_missing_package_query_receipt_is_rejected_before_image_replay(self):
+        archive,boot,_=self.package(lambda p:p.pop('wallpaper-native/theme-service-query.json'))
+        with self.assertRaises(ValueError):self.verify(archive,boot)
+        self.assertEqual(0,self.image_calls)
+
     def test_old_extracted_image_rejected_before_public_image_checker(self):
         archive,boot,_=self.package();(self.root/'boot-extracted/images/system.img').write_bytes(b'OLD')
         with self.assertRaises(ValueError):self.verify(archive,boot)
