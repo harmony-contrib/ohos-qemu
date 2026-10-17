@@ -40,7 +40,7 @@ class ShareProviderTests(unittest.TestCase):
   extension=(self.root/'applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets').read_text();self.assertNotIn('setReceiveDataCallback',extension)
  def test_actual_picker_controller(self):
   self.prepare();source=self.root/'applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets'
-  for case in ('enumerate_and_choose','invalid_payloads','text_array','file_flags_and_snapshot','cancel_query','destroy_query','destroy_launch','duplicate','stale_target','destroy_revalidation','result_retry','cancel_after_launch_failure','query_failure','label_failure','permission_failure','empty_targets','unknown_target','empty_payload'):
+  for case in ('enumerate_and_choose','invalid_payloads','text_array','file_flags_and_snapshot','cancel_query','destroy_query','destroy_launch','duplicate','stale_target','destroy_revalidation','result_retry','cancel_after_launch_failure','query_failure','label_failure','permission_failure','empty_targets','unknown_target','empty_payload','cancel_label','destroy_label','cancel_query_no_label','destroy_query_no_label'):
    with self.subTest(case=case):
     r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'controller.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
  def test_actual_plain_text_receiver_and_draft_router(self):
@@ -50,7 +50,7 @@ class ShareProviderTests(unittest.TestCase):
     r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'mms.cjs'),str(self.root/'applications/standard/mms'),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
  def test_actual_extension_session_isolation_destroy_and_error_codes(self):
   self.prepare();source=self.root/'applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets'
-  for case in ('isolated','invalid_duplicate','load_failure','destroy_while_loading'):
+  for case in ('isolated','invalid_duplicate','load_failure','destroy_while_loading','recreate_while_loading'):
    with self.subTest(case=case):
     r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'extension.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
 if __name__=='__main__':unittest.main()

@@ -27,8 +27,8 @@
     "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d",
     "applications/standard/mms/entry/src/main/module.json5": "67ce57d6262cffd662be30497c9bdcd60be1acef87418c04801de6623438187f",
     "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets": "9c4bddf3b65cc57e909e38527f5ce92927fa4219c5141d39451f4cad5f063eda",
-    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d",
-    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": "7cbf03a93e1c4877b677c077ba279be7073fcc07996b8b3ac08f551077bf790d",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": "2b7dc87f39cddb03a6ed9b18172125b717fa5b16fbb3f70f92eddd5dc6b99b61",
     "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd",
     "applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets": "d0acb0b25a2d9f8f7553cb14c8732d8eab8b7e5ae9c59b7811a533bfeb9522fa"
   },

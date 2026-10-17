@@ -116,6 +116,40 @@ async function main() {
     assert.equal(configCalls.length, 0); assert.equal(writes.length, 0);
     assert.equal(events.length, 0); assert.equal(successLogs().length, 0);
     assert.equal(terminateCalls, 0);
+  } else if (scenario === 'destroy_before_dispatch') {
+    request('disableIgnoreRepeatClick');
+    request('disableNotificaiton');
+    service.onDestroy(); await tick();
+    assert.equal(configCalls.length, 0, 'destroyed service must not start queued configuration');
+    assert.equal(writes.length, 0, 'destroyed service must not write queued preferences');
+    request('reOpenTransitionAnimations'); await tick();
+    assert.equal(configCalls.length, 0, 'requests after destruction must be ignored');
+    assert.equal(events.length, 0); assert.equal(terminateCalls, 0);
+  } else if (['destroy_queued_success', 'destroy_queued_rejection'].includes(scenario)) {
+    request('disableIgnoreRepeatClick');
+    request('reOpenTransitionAnimations');
+    request('disableNotificaiton'); await tick();
+    assert.deepEqual(configCalls, ['ignoreRepeatClick']);
+    service.onDestroy();
+    finish(scenario === 'destroy_queued_rejection' ? new Error('host destroyed') : undefined);
+    await tick();
+    assert.deepEqual(configCalls, ['ignoreRepeatClick'], 'destroyed service must not dispatch later queued actions');
+    assert.equal(writes.length, 0);
+    assert.equal(model.ignoreRepeatClick, true, 'old instance must not update cache after destruction');
+    assert.equal(events.length, 0); assert.equal(successLogs().length, 0);
+    assert.equal(terminateCalls, 0);
+  } else if (scenario === 'recreate_epoch') {
+    await service.onCreate({});
+    request('disableIgnoreRepeatClick'); await tick();
+    service.onDestroy(); await service.onCreate({});
+    request('reOpenTransitionAnimations');
+    finish(); await tick();
+    assert.equal(model.ignoreRepeatClick, true, 'old completion cannot mutate a recreated service');
+    assert.equal(events.length, 0, 'old completion cannot report success for the new lifetime');
+    assert.deepEqual(configCalls, ['ignoreRepeatClick', 'animationOff']);
+    finish(); await tick();
+    assert.deepEqual(events, [['animation', 'on']]);
+    assert.equal(successLogs().length, 1); assert.equal(terminateCalls, 0);
   } else throw new Error('unknown test scenario: ' + scenario);
   console.log('PASS ' + scenario);
 }

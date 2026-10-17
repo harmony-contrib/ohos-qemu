@@ -1,0 +1,631 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-17T08:01:34.083970+08:00",
+  "baseline_commit": "ddfabb4b228f6bf61fa4ba35e3959f37bca6976a",
+  "scope": "One disjoint Apps/Accessibility source-lifetime batch; root owns SDK, source volumes, packages and runtime closure",
+  "requirements_review": {
+    "total": 34,
+    "classification_counts": {
+      "existing_repair_pending_new_package_runtime": 11,
+      "repository_implementation_remaining": 18,
+      "missing_real_provider_hardware_credentials_or_peer": 2,
+      "pending_investigation": 3
+    },
+    "closed_here": 0,
+    "items": [
+      {
+        "id": "arkts_export:@ohos.accessibility.config:startBlinking",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "accessibility-input-blink",
+        "next_step": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "arkts_export:@ohos.accessibility.config:stopBlinking",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "accessibility-input-blink",
+        "next_step": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:phone-published-capabilities-not-declared",
+        "category": "repository_implementation_remaining",
+        "work_package": "published-syscaps",
+        "next_step": "逐项确认DistributedFile/HiDumper/DataTransitManager/DeviceAuth/DeviceSecurityLevel/PinAuth的真实选件、插件和权限，再同步SDK/声明/实际镜像canIUse；不能只添六个字符串。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:phone-avinputcast-not-declared",
+        "category": "missing_real_provider_hardware_credentials_or_peer",
+        "work_package": "cast-input-peer",
+        "next_step": "先确认新phone声明及provider协议，再提供实际发送端/接收端和共享可发现网络，以随机媒体挑战验证会话、数据、取消及清理。",
+        "missing_dependency_keys": [
+          "cast-distributed-peer"
+        ],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:accessibility-qemu-input-e2e",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "accessibility-input-blink",
+        "next_step": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:api26-runtime-export-mismatches-phone",
+        "category": "pending_investigation",
+        "work_package": "api26-surface-refresh",
+        "next_step": "在新归档重采arkts-export-surface，按模块把仍缺的实际成员/值/行为分派唯一owner；引用既有分模块修复，不能按候选数量扣减此聚合ID。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:intelligent-scene-notification-query-fails",
+        "category": "pending_investigation",
+        "work_package": "intelligent-scene-query",
+        "next_step": "新包复测isDoNotDisturbEnabled和isNotifyAllowedInDoNotDisturb，保存真实初始化/数据/调用者/重启路径，再按具体失败决定源码修复。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:shortkey-empty-launch-config",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "shortkey-settings",
+        "next_step": "新包验证businessId/setKeyDownDuration、Meta+I、短按/错误修饰键、普通caller拒绝及重启。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:certificate-dialog-device-result",
+        "category": "pending_investigation",
+        "work_package": "certificate-dialog-review",
+        "next_step": "沿certificate_manager支持判断运行证书选择/取消/拒绝/空列表/device分支；先保留supportsCACertDialog原始值和实际BMS目标。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:ability-share-picker-system-provider-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "share-picker",
+        "next_step": "完成已交Settings modal路径的真实普通caller/URI委托验收；另实现旧ACTION_CHOOSE所需真实PickerDialog UIAbility与取消/结果协议，其他画像逐项验收。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "Partial source repair: isolate delayed session load errors and stop dead target label work. Legacy ACTION_CHOOSE real UIAbility and packaged modal proof remain."
+      },
+      {
+        "id": "behavior:ability-send-data-action-has-no-enabled-handler",
+        "category": "repository_implementation_remaining",
+        "work_package": "mms-senddata",
+        "next_step": "先跑已构建/签名MMS text/plain收件人/草稿UI和取消不发送；按真实UTD/文件URI授权补附件链，Bluetooth/HMS后端缺失须另定合法实现。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:avcast-media-controller-provider-mismatch",
+        "category": "repository_implementation_remaining",
+        "work_package": "cast-controller-volume",
+        "next_step": "核对真实Want/结果和会话/音量协议，选唯一bundle/Ability并准确构建签名预装；新包验证选择/调整/拒绝/取消/关闭，cast正例共用独立peer。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:media-control-volume-provider-activation",
+        "category": "repository_implementation_remaining",
+        "work_package": "cast-controller-volume",
+        "next_step": "核对真实Want/结果和会话/音量协议，选唯一bundle/Ability并准确构建签名预装；新包验证选择/调整/拒绝/取消/关闭，cast正例共用独立peer。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:distributed-hardware-ui-preinstall-path-mismatch",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "distributed-hardware-ui",
+        "next_step": "新包核对DHardwareUIAbility/Mech扩展BMS注册与真实发起/取消/错误/退出；与共同peer工程复用，不另造分布式后端通过结论。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:photo-provider-not-activated-2in1",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "photos-provider",
+        "next_step": "验证真实Recent组件/Info/DefaultAlbum、授权/取消/退出、FA-card数据变更及cloud协议；首ARM64 phone后仍需2in1独立画像接受。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:enterprise-provisioning-provider-missing",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "admin-provisioning",
+        "next_step": "复核已交实际SDK候选及原normal APL/ACL精确签名预装；新包真实enableAdmin/disableAdmin和状态持久化、super拒绝、取消/错误/双请求/退出/重启。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:wallpaper-ui-provider-missing",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "wallpaper-static-ui-renderer",
+        "next_step": "使用当前严格wallpaper family验证Settings真实PhotoPicker授权、两次挑战图home/lock持久数据及屏幕、native fallback/真实renderer连接、默认还原/取消/策略/重启。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:accessibility-screen-reader-provider-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "screen-reader",
+        "next_step": "实现可访问焦点/手势到真实TTS的reader生命周期、唯一bundle和设置启停协议；验证朗读内容/焦点变化及关闭后静默。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:accessibility-caption-provider-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "live-caption",
+        "next_step": "先确认可复用的真实ASR引擎/模型与许可，再实现音频订阅、识别、字幕UI/权限/停止/重启；不能仅安装AiCaptionServiceExtAbility空壳。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:vpn-dialog-provider-prefix-mismatch",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "vpn-service-broker",
+        "next_step": "同新包验证实际com.ohos.vpndialog允许/拒绝/取消、真实caller结果与断连/重启；复用VPN真实TLS/多owner工程。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:network-policy-settings-providers-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "network-policy-ui",
+        "next_step": "按netpolicy模型实现NetAccessPolicySettingUIExtension真实UI/结果、通知跳转/权限/持久化；不能用普通Settings页替代协议。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:telephony-apn-settings-provider-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "apn-settings-ui",
+        "next_step": "定位真实APN Want/结果/权限并实现对应入口及增删改、取消/持久化；无线实际生效与modem工程共用。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:wifi-system-ui-providers-not-activated",
+        "category": "repository_implementation_remaining",
+        "work_package": "wifi-system-ui",
+        "next_step": "接线LocationDialog/PortalLogin准确签名和预装目录；实际STA/AP/portal挑战共用WiFi对端工程，验证取消/退出和通知目标。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:camera-picker-entrypoint-missing-phone",
+        "category": "repository_implementation_remaining",
+        "work_package": "camera-picker",
+        "next_step": "把已有product/picker真实模块接入phone构建/签名/预装而非替换MainAbility；实际camera输入、结果URI授权、取消/异常退出单独验收。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:notification-extension-settings-entrypoint-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "notification-extension-grant-ui",
+        "next_step": "补真实NotificationAccessGrantUIExtensionAbility与调用者结果契约，验证允许/拒绝/取消/caller退出/重启。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:accessibility-settings-entrypoints-unavailable",
+        "category": "repository_implementation_remaining",
+        "work_package": "accessibility-settings-service",
+        "next_step": "先验已修Promise/请求队列/真实四类notification action；继续实现安全idle-stop与新请求/销毁/重启边界，不能用提前成功或无startId terminateSelf结束。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "Partial source repair: destroyed service generations no longer dispatch queued writes or publish obsolete completion cache/events. Safe idle-stop and real config/cache resynchronization remain."
+      },
+      {
+        "id": "behavior:notification-manager-settings-provider-missing-phone",
+        "category": "repository_implementation_remaining",
+        "work_package": "notification-management-ui",
+        "next_step": "明确phone到底选用哪个实际provider和UIExtension契约，接真实模块/配置并验证通知修改、返回、权限、取消/退出。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:avsession-desktop-lyrics-provider-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "desktop-lyrics",
+        "next_step": "实现DesktopLyricAbility、真实会话歌词订阅/显示/隐藏/关闭/重启；不靠bundle别名声称已有UI。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:location-privacy-ui-providers-unavailable",
+        "category": "repository_implementation_remaining",
+        "work_package": "location-privacy-ui",
+        "next_step": "接线实际LocationPrivacyExtAbility签名预装并补缺失detail协议；验证同意/拒绝/详情/取消/caller退出，区分PermissionManager前台系统权限弹窗。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:telephony-number-identity-provider-missing",
+        "category": "missing_real_provider_hardware_credentials_or_peer",
+        "work_package": "telephone-identity-data",
+        "next_step": "分别指定numberlocation/numbermark DataShare、NumberIdentity、SpamShield、HSDR实际owner和合法数据/服务；验证更新/离线/未知号码/错误/权限，不能填固定分类。",
+        "missing_dependency_keys": [
+          "telephone-identity"
+        ],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:settings-navigation-provider-mismatch",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "settings-navigation",
+        "next_step": "运行全部公开navigation、实际UI/controller、2in1隐式app-info、权限拒绝/取消/退出/重启。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:contacts-picker-entrypoint-missing-phone",
+        "category": "existing_repair_pending_new_package_runtime",
+        "work_package": "contacts-picker",
+        "next_step": "使用严格contacts-picker family完整边界：普通normal零联系人权限签名caller、真实205选择/100分批聚合、取消/错误/双session/超时/退出后重开；同时保留JS→ABC→blob→native→image witness。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:arkui-expanded-text-menu-providers-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "expanded-text-menu",
+        "next_step": "实现与真实dlopen ABI匹配的expanded_menu和动作映射，复用Browser/Calendar/Maps/share真实handler，验文本/URI安全授权与取消/退出。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      },
+      {
+        "id": "behavior:arkui-text-service-runtime-plugins-missing",
+        "category": "repository_implementation_remaining",
+        "work_package": "text-service-plugins",
+        "next_step": "按真实systemshare/translation/analyzer ABI补实际服务与有内容结果、取消/释放；先确定模型/数据/handler来源，不造空符号。",
+        "missing_dependency_keys": [],
+        "closure": "open",
+        "runtime_verified_here": false,
+        "classification_source": "round17 handoff reconciled with the 34 apps plan IDs; no new package or runtime claim",
+        "this_batch": "No source change to this capability; retained its distinct remaining work and acceptance requirement."
+      }
+    ]
+  },
+  "complete_candidates": [
+    {
+      "id": "settings-accessibility-service-generation",
+      "finding_ids": [
+        "behavior:accessibility-settings-entrypoints-unavailable"
+      ],
+      "component": "patches/common/applications/standard/settings/accessibility_service_completion",
+      "status": "source repair with host regression pass; full capability remains open",
+      "changes": [
+        "capture service generation for each queued notification action",
+        "skip not-yet-started actions after destruction or recreation",
+        "suppress old-generation local cache/event/error continuation without claiming native cancellation",
+        "preserve four real action strings, real config/preference operations and framework termination semantics"
+      ]
+    },
+    {
+      "id": "settings-share-session-generation",
+      "finding_ids": [
+        "behavior:ability-share-picker-system-provider-missing"
+      ],
+      "component": "patches/common/applications/standard/settings/share_picker",
+      "status": "source repair with host regression pass; full capability remains open",
+      "changes": [
+        "per-session-create generation blocks stale loadContent failure from deleting, disposing or terminating a replacement controller",
+        "cancelled/destroyed enumeration stops subsequent ability-label calls",
+        "preserve original caller startAbilityAsCaller, exact BMS revalidation, read-only URI forwarding, cancellation and truthful result retry"
+      ]
+    }
+  ],
+  "upstream_targets": [
+    {
+      "path": "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
+      "previous_sha256": "43cd3c20f832909a5c346ea02fe9bad00bb5097bd77c438ad5d522572a10c131",
+      "current_sha256": "f97a094aeb689abb6d26470db61e4048690d3060d5ecfe0e94528ac8d730a825"
+    },
+    {
+      "path": "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
+      "previous_sha256": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d",
+      "current_sha256": "7cbf03a93e1c4877b677c077ba279be7073fcc07996b8b3ac08f551077bf790d"
+    },
+    {
+      "path": "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
+      "previous_sha256": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758",
+      "current_sha256": "2b7dc87f39cddb03a6ed9b18172125b717fa5b16fbb3f70f92eddd5dc6b99b61"
+    }
+  ],
+  "changed_files": [
+    {
+      "path": "ci/capability-audit/batch_apps_prepare_share_candidate.py",
+      "sha256": "3989039f11d70aade7034e99e00295f1b2a54acdef946f510683c0b87ad3d1d8"
+    },
+    {
+      "path": "ci/capability-audit/batch_apps_upgrade_settings_lifetimes.py",
+      "sha256": "42ef5362ca79e1c751a8932bff9ab1a2fa9072180f884723d518371f03e56c8c"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs",
+      "sha256": "9642f0f273dcebba91c3fe7e6a0f97449c77b909f8c184d14aa4aa173c4cca26"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/accessibility_service/provenance.json",
+      "sha256": "b1e13a345a4d7a5dff0eec7c33a320199024089e69dd07acc1c59a3a070ee9fc"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/settings_lifetime_previous/IgnoreRepeatClickService.ets.gz.b64",
+      "sha256": "019b4f3400a0e6b802f8e721ade81eeddf7cd1aa9eede8bcd4a6265964c00710"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/settings_lifetime_previous/SharePickerController.ets.gz.b64",
+      "sha256": "b18f1cb504880a3dbdc1202170d4e93ba1fa8213c2e3f9bda225ee3de6ada51d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/settings_lifetime_previous/SharePickerExtension.ets.gz.b64",
+      "sha256": "1c5ac28b96d85b28f34b6c9b5ddd0269a6bd66dcedd6afa421ba6d9c415ffa1b"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/settings_lifetime_previous/provenance.json",
+      "sha256": "a931b489a4cbb79d9eda159c55632f950dd0b3de6e13eef8e2ae9db5ad622fb1"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerController.ets",
+      "sha256": "7cbf03a93e1c4877b677c077ba279be7073fcc07996b8b3ac08f551077bf790d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/candidate/SharePickerExtension.ets",
+      "sha256": "2b7dc87f39cddb03a6ed9b18172125b717fa5b16fbb3f70f92eddd5dc6b99b61"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs",
+      "sha256": "9fbfd60aed48e06034e24984331928e538435db44900ba99d6e2ada0023f36d2"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/extension.cjs",
+      "sha256": "cb3f01d730b837e58ee6aceeb67764ef6c0f0632ccfde75416be1e8decc2c29d"
+    },
+    {
+      "path": "ci/capability-audit/fixtures/batch_apps/share_provider/provenance.json",
+      "sha256": "53b36dc865671ea19f254bf3eecf3ea606e3aadb5b8395863979477a8e791059"
+    },
+    {
+      "path": "ci/capability-audit/test_batch_apps_accessibility_service.py",
+      "sha256": "0be1608e6f68dd1baeab72daa1ad85548f8809bda90262c9d64e9da1385d03b6"
+    },
+    {
+      "path": "ci/capability-audit/test_batch_apps_settings_lifetime_upgrade.py",
+      "sha256": "51662d99dffe0b65b744976de20803a7b9e672e4df54b89e691abce1f7cd1117"
+    },
+    {
+      "path": "ci/capability-audit/test_batch_apps_share_provider.py",
+      "sha256": "13dbb4d4d65b93239a181e9e09c1554f9cab92dcc5f80a46a49eec34a8b316be"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/accessibility_service_completion/0002-ignore-queued-actions-after-service-destruction.patch",
+      "sha256": "b07c305dbcc47fedc92d8c5be7752ab4b6ffd63cfa98cd612753f1b6c4935420"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/accessibility_service_completion/README.md",
+      "sha256": "49821e1dfb5ed40bca598f5149bc281bcd50f1d2d57e03ff9a9f432021a69e78"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/accessibility_service_completion/verify_source.py",
+      "sha256": "95c2b742e43b1318dc3bc080d5c5cbe1844ce01ec08bcc6b677db17d3a9e27ff"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/share_picker/0002-isolate-async-share-session-lifetimes.patch",
+      "sha256": "86008fb0fa8d6939f093c30e7efdc31f9095bae513a5540c25d1e5323074bd76"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/share_picker/README.md",
+      "sha256": "ba7a30a2f950be8c08f4e930678dc9962fed56dd34a1a235eda9df6b8ef6f186"
+    },
+    {
+      "path": "patches/common/applications/standard/settings/share_picker/verify_source.py",
+      "sha256": "1f1c3703671e7ae8c9c944655fa1344389e99efd349f91441bac8d25b5724cf9"
+    }
+  ],
+  "tests": {
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "ci/capability-audit/test_batch_apps_accessibility_service.py",
+      "ci/capability-audit/test_batch_apps_settings_lifetime_upgrade.py",
+      "ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_exact_application_replay_and_no_drift_mutation",
+      "ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_payload_mirrors_match_the_applied_product_files",
+      "ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller",
+      "ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_plain_text_receiver_and_draft_router",
+      "ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_extension_session_isolation_destroy_and_error_codes",
+      "-v"
+    ],
+    "exit_code": 0,
+    "duration_seconds": 6.906000457936898,
+    "tests": 17,
+    "service_scenarios": 14,
+    "share_controller_scenarios": 22,
+    "share_extension_scenarios": 5,
+    "mms_scenarios": 5,
+    "migration_tests": 8,
+    "scope": "host-only fixtures and extracted real patched ETS bodies; no Docker/source/out/SDK/VM/package access",
+    "baseline_regression": {
+      "log": "baseline-regression.log",
+      "exit_code": 1,
+      "new_scenarios_failed_before_fix": 9
+    },
+    "host_log": "host-tests.log",
+    "source_migration": "8 tests covering original/current/previous replay; exact preimages; unknown/partial/symlink rejection; complete wallpaper successor; two-patch generator reproducibility",
+    "excluded": "Did not run existing SDK import check or Hvigor JSON5 manifest check; no SDK access was authorized. No full shared suite was run."
+  },
+  "integration_requests": [
+    {
+      "id": "one-time-existing-source-upgrade",
+      "owner": "root",
+      "command": "python3 ci/capability-audit/batch_apps_upgrade_settings_lifetimes.py --source-root /path/to/current/source",
+      "order": "Under exclusive root source lease, before repreparing the known previous-complete source snapshot and before any validator consumes the updated component hashes. Fresh checkouts use normal prerequisite/component ordering and do not need this one-time tool.",
+      "behavior": "Whole two-component preflight with the existing component locks, scratch delta application and exact SHA postimages; only three known previous files replaced. Unknown/partial/symlink state is rejected before source writes. Original/current exact states are no-ops. Complete wallpaper successor remains accepted, missing companion rejects."
+    },
+    {
+      "id": "root-normal-source-preparation",
+      "owner": "root",
+      "action": "Use existing Settings accessibility_service_completion and share_picker components with their new 0002 patches. First patches, manifests, shared module and wallpaper hashes are unchanged. No shared patch plan or script has been edited by this agent."
+    },
+    {
+      "id": "official-sdk-and-fresh-image",
+      "owner": "root",
+      "action": "Compile final Settings with the configured official SDK and actual signing/profile, package one ARM64 phone representative, record archive path/checksum/environment/commands, then run real state/UI/permissions/lifetime tests before any remaining artifact matrix."
+    },
+    {
+      "id": "runtime-boundaries",
+      "owner": "root",
+      "action": "Exercise four accessibility notification actions; destroy before queued dispatch, success and rejection across destruction/recreation, real backend/config-cache resynchronization, and safe idle-stop separately. Exercise Share ordinary caller text/file delegation; unauthorized URI and WRITE-only rejection; actual BMS stale/disabled target; cancel/exit while query or labels pending; multiple sessions and destroyed/recreated session load failure; launch/result delivery retry without duplicate launch."
+    }
+  ],
+  "remaining_gaps": [
+    "Legacy ACTION_CHOOSE uses the distinct configured PickerDialog UIAbility; no such provider was implemented in this batch and UIExtension aliasing is invalid.",
+    "Share sysPicker/share phone provider still needs the real packaged ordinary-caller, BMS, result and original-caller URI grant proof; other profiles remain separate.",
+    "Service active native config requests are not cancelled or rolled back by the generation guard. Real cache/listener resynchronization after completion across destruction needs runtime acceptance. Safe service idle-stop still requires a conditional framework lifetime design.",
+    "MMS text receiver remains under runtime acceptance; UTD/file attachments and Bluetooth/HMS collaboration backend are still missing separate implementation/material.",
+    "Screen reader, caption, network policy/APN/notification/camera/privacy/lyrics providers and actual ArkUI plugin engines remain the distinct implementation work listed per ID.",
+    "11 existing-repair IDs require new-package tests; 3 investigation IDs require fresh runtime observations; 2 explicit external-dependency IDs retain actual cast peer and lawful telephone identity service/data requirements."
+  ],
+  "external_dependencies": [
+    {
+      "key": "cast-distributed-peer",
+      "finding_ids": [
+        "behavior:phone-avinputcast-not-declared"
+      ],
+      "requirement": "Actual discoverable sender/receiver and media/session protocol; do not fabricate peer results or declare a capability solely by adding a SysCap."
+    },
+    {
+      "key": "telephone-identity",
+      "finding_ids": [
+        "behavior:telephony-number-identity-provider-missing"
+      ],
+      "requirement": "Lawful numberlocation/numbermark data plus NumberIdentity/SpamShield/HSDR service protocols and behavior; unknown/offline/error/permissions/update validation."
+    },
+    {
+      "key": "translation-asr-models-and-hms",
+      "classification": "implementation/material investigation remains; not promoted to a new ledger dependency category",
+      "requirement": "Confirm legitimate ASR/translation/analyzer model/engine and ShareExtension Bluetooth HMS backend or real replacement before implementing full behavior."
+    }
+  ],
+  "ownership": {
+    "allowed_paths_only": true,
+    "excluded_modified": [],
+    "no_git_index_or_commit": true,
+    "no_docker_source_out_sdk_vm_package_access": true,
+    "heavy_resource_jobs_started": 0,
+    "root_runtime_only": true,
+    "no_subagents_spawned": true
+  },
+  "gate": {
+    "first_artifact_behavior_gate_passed": false,
+    "new_archive": null,
+    "closed_ledger_ids": []
+  }
+}

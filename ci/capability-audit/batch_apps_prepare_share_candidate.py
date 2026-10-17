@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create exact two-project modal-share/plain-text-draft candidates from pinned inputs."""
 from pathlib import Path
-import base64,difflib,gzip,hashlib,json
+import base64,difflib,gzip,hashlib,json,re
 ROOT=Path(__file__).resolve().parents[2]
 FIX=ROOT/'ci/capability-audit/fixtures/batch_apps/share_provider'
 meta=json.loads((FIX/'provenance.json').read_text())
@@ -52,17 +52,33 @@ text=text[:idx]+'''  private handlePlainSendData(want: AbilityWant, pageInfos: N
   }
 
 '''+text[idx:];after[util]=text
+previous=ROOT/'ci/capability-audit/fixtures/batch_apps/settings_lifetime_previous'
+old_hashes=json.loads((previous/'provenance.json').read_text())['sha256']
 for project,component in [(settings,'patches/common/applications/standard/settings/share_picker'),(mms,'patches/common/applications/standard/mms/send_data_text')]:
- dest=ROOT/component;dest.mkdir(parents=True,exist_ok=True);patch='';states=[]
+ dest=ROOT/component;dest.mkdir(parents=True,exist_ok=True);patch='';states=[];upgrade=''
  for path,text in after.items():
   if not path.startswith(project+'/'):continue
   before=original.get(path,'');relative=path[len(project)+1:]
+  first=text
+  if project==settings and path in old_hashes:
+   first=gzip.decompress(base64.b64decode((previous/(Path(path).name+'.gz.b64')).read_bytes())).decode()
+   assert hashlib.sha256(first.encode()).hexdigest()==old_hashes[path]
+   upgrade+='diff --git a/'+path+' b/'+path+'\n'
+   upgrade+=''.join(difflib.unified_diff(first.splitlines(True),text.splitlines(True),fromfile='a/'+path,tofile='b/'+path))
   patch+='diff --git a/'+path+' b/'+path+'\n'
   if path not in original:patch+='new file mode 100644\n'
-  for line in difflib.unified_diff(before.splitlines(True),text.splitlines(True),fromfile='a/'+path if path in original else '/dev/null',tofile='b/'+path):patch+=line if line.endswith('\n') else line+'\n\\ No newline at end of file\n'
+  for line in difflib.unified_diff(before.splitlines(True),first.splitlines(True),fromfile='a/'+path if path in original else '/dev/null',tofile='b/'+path):patch+=line if line.endswith('\n') else line+'\n\\ No newline at end of file\n'
   states.append((relative,hashlib.sha256(before.encode()).hexdigest() if path in original else None,hashlib.sha256(text.encode()).hexdigest()))
  (dest/'0001-provide-real-modal-sharing-and-text-receiver.patch').write_bytes(patch.encode())
- (dest/'verify_source.py').write_text('''#!/usr/bin/env python3
+ if upgrade:(dest/'0002-isolate-async-share-session-lifetimes.patch').write_text(upgrade)
+ verifier=dest/'verify_source.py'
+ if verifier.exists():
+  current=verifier.read_text()
+  assert "PROJECT = "+repr(project) in current and "REVISION = "+repr(meta['projects'][project]) in current
+  updated,count=re.subn(r'^FILES = .*$',lambda _: 'FILES = '+repr(tuple(states)),current,count=1,flags=re.MULTILINE)
+  assert count==1
+  verifier.write_text(updated)
+ else:verifier.write_text('''#!/usr/bin/env python3
 """Fail closed on partial or unknown system sharing edits."""
 from pathlib import Path
 import sys

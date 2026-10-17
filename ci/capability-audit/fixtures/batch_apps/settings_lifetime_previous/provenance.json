@@ -1,0 +1,9 @@
+{
+  "scope": "Exact previous patched source bytes for guarded migration and regression reproduction; no upstream checkout access",
+  "baseline_commit": "ddfabb4",
+  "sha256": {
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets": "43cd3c20f832909a5c346ea02fe9bad00bb5097bd77c438ad5d522572a10c131",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": "656e4cdb114361a0ea640b2a500157b5e8c61f74efe75b123e83bca3bdeb008d",
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": "bc80e70c97241c06594c3ba80b9668d3117dfba3d3b97cc451fefbd68a964758"
+  }
+}

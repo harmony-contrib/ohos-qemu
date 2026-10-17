@@ -125,6 +125,9 @@ export class SharePickerController {
       const targets: ShareTarget[] = [];
       const seen: Set<string> = new Set();
       for (let i = 0; i < infos.length; i++) {
+        if (!this.active || this.completed || revision !== this.revision) {
+          return;
+        }
         const info = infos[i];
         if (!info.exported || !info.enabled || !info.applicationInfo.enabled ||
             !info.bundleName || !info.moduleName || !info.name) {

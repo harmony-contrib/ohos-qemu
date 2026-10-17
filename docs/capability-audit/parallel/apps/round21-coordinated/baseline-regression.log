@@ -1,0 +1,230 @@
+test_baseline_reproduces_premature_cache_and_event_success (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_baseline_reproduces_premature_cache_and_event_success) ... ok
+test_fixture_provenance_and_exact_patch_idempotence (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_fixture_provenance_and_exact_patch_idempotence) ... ok
+test_patch_drift_and_symlink_fail_before_writing (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_patch_drift_and_symlink_fail_before_writing) ... ok
+test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) ... 
+  test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='destroy_before_dispatch') ... FAIL
+  test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='destroy_queued_success') ... FAIL
+  test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='destroy_queued_rejection') ... FAIL
+  test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='recreate_epoch') ... FAIL
+test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) ... 
+  test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='cancel_label') ... FAIL
+  test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='destroy_label') ... FAIL
+  test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='cancel_query_no_label') ... FAIL
+  test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='destroy_query_no_label') ... FAIL
+test_actual_extension_session_isolation_destroy_and_error_codes (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_extension_session_isolation_destroy_and_error_codes) ... 
+  test_actual_extension_session_isolation_destroy_and_error_codes (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_extension_session_isolation_destroy_and_error_codes) (case='recreate_while_loading') ... FAIL
+
+======================================================================
+FAIL: test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='destroy_before_dispatch')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_accessibility_service.py", line 80, in test_real_service_body_success_failures_queue_reentry_and_lifetime
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : AssertionError [ERR_ASSERTION]: destroyed service must not start queued configuration
+
+1 !== 0
+
+    at main (/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs:123:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='destroy_queued_success')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_accessibility_service.py", line 80, in test_real_service_body_success_failures_queue_reentry_and_lifetime
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : AssertionError [ERR_ASSERTION]: destroyed service must not dispatch later queued actions
++ actual - expected
+
+  [
+    'ignoreRepeatClick',
++   'animationOff'
+  ]
+
+    at main (/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs:136:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [Array],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='destroy_queued_rejection')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_accessibility_service.py", line 80, in test_real_service_body_success_failures_queue_reentry_and_lifetime
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : AssertionError [ERR_ASSERTION]: destroyed service must not dispatch later queued actions
++ actual - expected
+
+  [
+    'ignoreRepeatClick',
++   'animationOff'
+  ]
+
+    at main (/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs:136:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [Array],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_real_service_body_success_failures_queue_reentry_and_lifetime (ci.capability-audit.test_batch_apps_accessibility_service.AccessibilityServiceCompletionTests.test_real_service_body_success_failures_queue_reentry_and_lifetime) (scenario='recreate_epoch')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_accessibility_service.py", line 80, in test_real_service_body_success_failures_queue_reentry_and_lifetime
+    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : AssertionError [ERR_ASSERTION]: old completion cannot mutate a recreated service
+
+false !== true
+
+    at main (/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/accessibility_service/exercise.cjs:147:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='cancel_label')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_share_provider.py", line 45, in test_actual_picker_controller
+    r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'controller.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                                                                                                                                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : (node:72435) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+AssertionError [ERR_ASSERTION]: cancelled or destroyed load must stop subsequent label lookups
+
+2 !== 1
+
+    at /Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs:32:219 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='destroy_label')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_share_provider.py", line 45, in test_actual_picker_controller
+    r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'controller.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                                                                                                                                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : (node:72439) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+AssertionError [ERR_ASSERTION]: cancelled or destroyed load must stop subsequent label lookups
+
+2 !== 1
+
+    at /Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs:32:219 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='cancel_query_no_label')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_share_provider.py", line 45, in test_actual_picker_controller
+    r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'controller.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                                                                                                                                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : (node:72446) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+AssertionError [ERR_ASSERTION]: dead list query must not start label lookups
+
+2 !== 0
+
+    at /Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs:34:174
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_actual_picker_controller (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_picker_controller) (case='destroy_query_no_label')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_share_provider.py", line 45, in test_actual_picker_controller
+    r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'controller.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                                                                                                                                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : (node:72462) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+AssertionError [ERR_ASSERTION]: dead list query must not start label lookups
+
+2 !== 0
+
+    at /Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/share_provider/controller.cjs:34:174
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+======================================================================
+FAIL: test_actual_extension_session_isolation_destroy_and_error_codes (ci.capability-audit.test_batch_apps_share_provider.ShareProviderTests.test_actual_extension_session_isolation_destroy_and_error_codes) (case='recreate_while_loading')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_apps_share_provider.py", line 55, in test_actual_extension_session_isolation_destroy_and_error_codes
+    r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'extension.cjs'),str(source),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                                                                                                                                       ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : (node:72494) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+AssertionError [ERR_ASSERTION]: stale load failure must not dispose the new controller
+
+true !== false
+
+    at /Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/share_provider/extension.cjs:21:299
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 3.498s
+
+FAILED (failures=9)

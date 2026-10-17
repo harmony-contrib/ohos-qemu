@@ -44,6 +44,11 @@ failed return, retry returns the same outcome without a second launch or a false
 cancellation. Constructor errors return401; page-load failures return16000050.
 Each content session owns its own controller/storage and immediate destroy token;
 late queries, revalidation, launches and errors do not report to a dead session.
+The second patch gives each session creation a distinct generation. A delayed
+loadContent failure from a destroyed session cannot dispose or terminate a
+replacement session, even if the host reuses its session object. Cancelled or
+destroyed list loads stop subsequent label lookups after their current await;
+the already issued platform request is not claimed to be cancelled.
 
 Stable UI IDs: system-share-title, -error, -empty, -refresh, -cancel and
 system-share-target-<bundle/module/ability>. Cancellation remains available while
@@ -55,3 +60,11 @@ new ARM64 phone UI/permission/lifetime validation. This is a phone source
 candidate, not proof for the 2in1 module or remaining packages. Native
 ShareExtension/Bluetooth HMS data protocols and legacy ACTION_CHOOSE remain
 separate unclosed dependencies.
+
+For the root's existing source snapshot, the guarded one-time
+`ci/capability-audit/batch_apps_upgrade_settings_lifetimes.py --source-root ...`
+upgrades the exact previous accessibility and share components together. It
+preserves the complete wallpaper successor and rejects unknown/partial edits or
+symlinks before source mutation. A new checkout uses the normal component
+two-patch stack after the existing Settings prerequisites. Both original and
+current exact states replay; this does not accept arbitrary intermediate states.

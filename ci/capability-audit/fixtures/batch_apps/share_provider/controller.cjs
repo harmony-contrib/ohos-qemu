@@ -4,8 +4,8 @@ const source=fs.readFileSync(process.argv[2],'utf8').replace(/^import .*?;\r?\n/
 const scenario=process.argv[3];
 const info=(name,overrides={})=>({bundleName:'receiver.'+name,moduleName:'entry',name,exported:true,enabled:true,applicationInfo:{enabled:true},...overrides});
 let infos=[info('one'),info('one'),info('hidden',{exported:false}),info('disabled',{enabled:false}),info('appOff',{applicationInfo:{enabled:false}}),info('two')],queryMode='normal',labelMode='normal',startMode='normal',resultMode='normal',releaseQuery,releaseStart;
-let queries=[],starts=[],results=[];
-const bundleManager={AbilityFlag:{GET_ABILITY_INFO_WITH_APPLICATION:2},async queryAbilityInfo(want){queries.push(want);if(queryMode==='reject')throw new Error('query permission denied');if(queryMode==='defer')return new Promise(r=>releaseQuery=r);return infos;},async getAbilityLabel(bundle,module,name){if(labelMode==='reject')throw new Error('resource unavailable');return name+' label';}};
+let queries=[],starts=[],results=[],labels=[],releaseLabel;
+const bundleManager={AbilityFlag:{GET_ABILITY_INFO_WITH_APPLICATION:2},async queryAbilityInfo(want){queries.push(want);if(queryMode==='reject')throw new Error('query permission denied');if(queryMode==='defer')return new Promise(r=>releaseQuery=r);return infos;},async getAbilityLabel(bundle,module,name){labels.push(name);if(labelMode==='reject')throw new Error('resource unavailable');if(labelMode==='defer_once'&&labels.length===1)return new Promise(r=>releaseLabel=r);return name+' label';}};
 const session={async startAbilityAsCaller(want){starts.push(want);if(startMode==='throw')throw new Error('permission denied');if(startMode==='defer')return new Promise(r=>releaseStart=r);},async terminateSelfWithResult(result){results.push(result);if(resultMode==='reject')throw new Error('result delivery failed');}};
 const sandbox={uri:{URI:class {constructor(s){const u=new URL(s);this.scheme=u.protocol.slice(0,-1);this.authority=u.host;this.path=u.pathname;this.userInfo=u.username;this.fragment=u.hash;}}},bundleManager,wantConstant:{Flags:{FLAG_AUTH_READ_URI_PERMISSION:1}}};vm.createContext(sandbox);vm.runInContext(stripTypeScriptTypes(source,{mode:'transform'})+'\nthis.Controller=SharePickerController;',sandbox);
 const create=(want={parameters:{type:'text/plain','ability.params.stream':'real text'}})=>new sandbox.Controller(want,session);
@@ -28,6 +28,10 @@ const tick=()=>new Promise(r=>setImmediate(r));
   const c=create();await c.load();const key=c.targets[0].key;infos=[info('other')];await c.choose(key);assert.equal(queries.length,2);assert.equal(starts.length,0);assert.equal(results.length,0);assert.ok(c.error.length>0);
  }else if(scenario==='destroy_revalidation'){
   const c=create();await c.load();queryMode='defer';const pending=c.choose(c.targets[0].key);c.dispose();releaseQuery(infos);await pending;assert.equal(starts.length,0);assert.equal(results.length,0);
+ }else if(scenario==='cancel_label'||scenario==='destroy_label'){
+  labelMode='defer_once';const c=create();const pending=c.load();await tick();assert.equal(labels.length,1);if(scenario==='cancel_label')await c.cancel();else c.dispose();releaseLabel('old label');await pending;assert.equal(labels.length,1,'cancelled or destroyed load must stop subsequent label lookups');assert.equal(c.targets.length,0);assert.equal(starts.length,0);assert.equal(results.length,scenario==='cancel_label'?1:0);
+ }else if(scenario==='cancel_query_no_label'||scenario==='destroy_query_no_label'){
+  queryMode='defer';const c=create();const pending=c.load();if(scenario==='cancel_query_no_label')await c.cancel();else c.dispose();releaseQuery(infos);await pending;assert.equal(labels.length,0,'dead list query must not start label lookups');assert.equal(c.targets.length,0);assert.equal(starts.length,0);assert.equal(results.length,scenario==='cancel_query_no_label'?1:0);
  }else if(scenario==='result_retry'){
   resultMode='reject';const c=create();await c.load();await c.choose(c.targets[0].key);assert.equal(c.launched,true);assert.match(c.error,/result delivery failed/);resultMode='normal';await c.choose(c.targets[1].key);assert.equal(starts.length,1);assert.equal(results.length,2);assert.equal(results[1].want.parameters.selectedAbilityName,'one');await c.cancel();assert.equal(results.length,2);
  }else if(scenario==='cancel_after_launch_failure'){

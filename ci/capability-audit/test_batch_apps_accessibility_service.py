@@ -19,7 +19,7 @@ def executable_source(source):
     source = re.sub(r'^import .*?;\n', '', source, flags=re.MULTILINE)
     source = source.replace('export default class', 'class')
     source = re.sub(r'\bprivate ', '', source)
-    source = re.sub(r': (?:Promise<void>|Want|number|string|void)(?=\s*[,)=;{])', '', source)
+    source = re.sub(r': (?:Promise<void>|Want|number|string|boolean|void)(?=\s*[,)=;{])', '', source)
     return source
 
 
@@ -73,7 +73,8 @@ class AccessibilityServiceCompletionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         for scenario in ('pending_success', 'animation_success', 'async_rejection', 'sync_throw',
                          'queued', 'reentrant', 'failure_then_queued', 'notification_actions',
-                         'notification_failure', 'unknown_action'):
+                         'notification_failure', 'unknown_action', 'destroy_before_dispatch',
+                         'destroy_queued_success', 'destroy_queued_rejection', 'recreate_epoch'):
             with self.subTest(scenario=scenario):
                 result = self.exercise(scenario)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
