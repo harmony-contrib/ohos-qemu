@@ -1,7 +1,10 @@
 """Exercise source installation transactions; not backend runtime acceptance."""
 import hashlib
 import json
+import os
 from pathlib import Path
+import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -45,6 +48,68 @@ class OpenvpnSourceInstallTests(unittest.TestCase):
     def snapshot(self):
         return {str(p.relative_to(self.root)): p.read_bytes()
                 for p in self.root.rglob('*') if p.is_file()}
+
+    def permissions(self):
+        return {str(p.relative_to(self.root)): stat.S_IMODE(p.stat().st_mode)
+                for p in self.root.rglob('*') if p.is_file()}
+
+    def test_gn_entrypoint_runs_after_install_and_known_permission_repair(self):
+        self.install()
+        entrypoint = self.root / (installer.PROJECT +
+            '/qemu_openvpn/recipe/scripts/build_product_openvpn.py')
+        before = self.snapshot()
+        for phase in ('first_install', 'known_nonexecutable_replay'):
+            with self.subTest(phase=phase):
+                if phase != 'first_install':
+                    entrypoint.chmod(0o644)
+                    self.install()
+                self.assertEqual(stat.S_IMODE(entrypoint.stat().st_mode), 0o755)
+                result = subprocess.run([str(entrypoint), '--help'], capture_output=True,
+                    text=True, env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('--source-root', result.stdout)
+                self.assertEqual(before, self.snapshot())
+        imported = entrypoint.with_name('build_openvpn_ohos.py')
+        self.assertEqual(stat.S_IMODE(imported.stat().st_mode), 0o644)
+
+    def test_foreign_entrypoint_bytes_preserve_all_bytes_and_permissions(self):
+        self.install()
+        entrypoint = self.root / (installer.PROJECT +
+            '/qemu_openvpn/recipe/scripts/build_product_openvpn.py')
+        entrypoint.write_bytes(entrypoint.read_bytes() + b'\n# caller modification\n')
+        entrypoint.chmod(0o640)
+        before, permissions = self.snapshot(), self.permissions()
+        with self.assertRaisesRegex(ValueError, 'preserving edits'):
+            self.install()
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(permissions, self.permissions())
+
+    def test_later_failure_restores_permissions_of_repaired_entrypoint(self):
+        self.install()
+        entrypoint = installer.PROJECT + '/qemu_openvpn/recipe/scripts/build_product_openvpn.py'
+        (self.root / entrypoint).chmod(0o640)
+        before, permissions = self.snapshot(), self.permissions()
+        payload = installer.payloads
+        with mock.patch.object(installer, 'validate_archive', self.valid_fixture_archive):
+            planned = payload(self.archive)
+        action = planned.pop(entrypoint)
+        planned = {entrypoint: action, **planned}
+        cfg = installer.PROJECT + '/qemu_openvpn/qemu_openvpn.cfg'
+        # A known previous inventory may be upgraded by a new trusted payload.
+        planned[cfg] += b'\n'
+        replace = installer.replace_bytes
+
+        def fail_later(path, data, *args, **kwargs):
+            if path == self.root / cfg:
+                raise OSError('injected later publication failure')
+            replace(path, data, *args, **kwargs)
+
+        with mock.patch.object(installer, 'payloads', return_value=planned), \
+                mock.patch.object(installer, 'replace_bytes', fail_later):
+            with self.assertRaisesRegex(OSError, 'later publication failure'):
+                self.install()
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(permissions, self.permissions())
 
     def test_complete_install_and_reapply_preserve_product_gates_and_inventory(self):
         report = self.install()
@@ -126,21 +191,21 @@ class OpenvpnSourceInstallTests(unittest.TestCase):
                 installer.checked(self.root, name)
 
     def test_mid_publish_failure_rolls_back_all_prior_files(self):
+        self.native_cfg.chmod(0o640)
         before = self.snapshot()
+        permissions = self.permissions()
         replace = installer.replace_bytes
-        counter = 0
 
-        def fail_once(path, data):
-            nonlocal counter
-            counter += 1
-            if counter == 8:
+        def fail_once(path, data, *args, **kwargs):
+            if path == self.root / installer.MARKER:
                 raise OSError('injected publication failure')
-            replace(path, data)
+            replace(path, data, *args, **kwargs)
 
         with mock.patch.object(installer, 'replace_bytes', fail_once):
             with self.assertRaisesRegex(OSError, 'publication failure'):
                 self.install()
         self.assertEqual(before, self.snapshot())
+        self.assertEqual(permissions, self.permissions())
 
 
 if __name__ == '__main__':

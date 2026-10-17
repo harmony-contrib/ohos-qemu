@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import stat
 import subprocess
 import tempfile
 
@@ -37,6 +38,7 @@ RECIPE_FILES = ('scripts/build_openvpn_ohos.py', 'scripts/build_product_openvpn.
     'scripts/openvpn_source_archive.py', 'scripts/openharmony_release_source_lock.py',
     'scripts/openharmony_7_0_release_source_lock.json',
     'patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch')
+EXECUTABLE_ENTRYPOINT = PROJECT + '/qemu_openvpn/recipe/scripts/build_product_openvpn.py'
 
 
 def digest(data):
@@ -99,7 +101,7 @@ def payloads(archive):
     return result
 
 
-def replace_bytes(path, data):
+def replace_bytes(path, data, mode=0o644):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(prefix='.qemu-openvpn-install-', dir=path.parent)
     temporary = Path(name)
@@ -108,7 +110,7 @@ def replace_bytes(path, data):
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        temporary.chmod(0o644)
+        temporary.chmod(mode)
         os.replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
@@ -143,6 +145,7 @@ def install(root, archive):
     planned[BUILD] = transform_build(original)
     previous_files = previous.get('files_sha256', {})
     snapshots = {}
+    snapshot_modes = {}
     for name, data in planned.items():
         path = checked(root, name)
         actual = read_optional(path)
@@ -154,22 +157,29 @@ def install(root, archive):
                 previous_files.get(name) != digest(actual)):
             raise ValueError('unknown or modified OpenVPN input; preserving edits: ' + name)
         snapshots[name] = actual
+        snapshot_modes[name] = stat.S_IMODE(path.stat().st_mode) if actual is not None else None
     inventory = {'schema_version': 1, 'component': 'qemu_openvpn_complete_source_inputs',
                  'source_revisions': REVISIONS, 'original_build_hex': original.hex(),
                  'files_sha256': {name: digest(data) for name, data in sorted(planned.items())},
                  'runtime_gate_passed': False, 'first_artifact_behavior_gate_passed': False}
     planned[MARKER] = (json.dumps(inventory, indent=2) + '\n').encode()
     snapshots[MARKER] = previous_bytes
+    snapshot_modes[MARKER] = stat.S_IMODE(marker.stat().st_mode) if previous_bytes is not None else None
     # Validate every input before publishing any file, then reject concurrent
     # modifications. A write failure restores only this attempt's own changes.
-    if any(read_optional(checked(root, name)) != old for name, old in snapshots.items()):
-        raise ValueError('source changed during OpenVPN preparation')
+    for name, old in snapshots.items():
+        path = checked(root, name)
+        if (read_optional(path) != old or (old is not None and
+                stat.S_IMODE(path.stat().st_mode) != snapshot_modes[name])):
+            raise ValueError('source changed during OpenVPN preparation')
     written = []
     try:
         for name, data in planned.items():
-            if snapshots[name] == data:
+            mode = 0o755 if name == EXECUTABLE_ENTRYPOINT else 0o644
+            if snapshots[name] == data and (
+                    name != EXECUTABLE_ENTRYPOINT or snapshot_modes[name] == mode):
                 continue
-            replace_bytes(checked(root, name), data)
+            replace_bytes(checked(root, name), data, mode)
             written.append(name)
     except BaseException:
         for name in reversed(written):
@@ -177,7 +187,7 @@ def install(root, archive):
             if snapshots[name] is None:
                 path.unlink(missing_ok=True)
             else:
-                replace_bytes(path, snapshots[name])
+                replace_bytes(path, snapshots[name], snapshot_modes[name])
         raise
     return inventory
 
