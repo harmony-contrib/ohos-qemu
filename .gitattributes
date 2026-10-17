@@ -38,3 +38,5 @@ patches/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/000
 patches/common/applications/standard/calendardata/main_ui/0001-route-real-calendar-reminders-to-source-provider.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 patches/common/base/notification/distributed_notification_service/calendar_owner/0001-bind-reminder-owner-to-installed-calendar-provider.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 patches/common/base/location/location/api26_runtime/0007-validate-measured-GNSS-and-ordered-WLAN-evidence.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Preserve the final newline sequence in the raw compatibility recheck output.
+docs/capability-audit/parallel/location/round21-coordinated/core-review-correction-host.log -text whitespace=-blank-at-eof
