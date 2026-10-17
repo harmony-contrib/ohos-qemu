@@ -1,7 +1,7 @@
 {
   "scope": "unaffected passing results from full host suite plus final affected-source and failure rechecks; not a second full 2542-test run and not package/guest acceptance",
-  "status": "pass_previous_unchanged_host_scope_plus_affected_OpenVPN_rechecks",
-  "tested_commit": "a48a2bb23380d539d9db5e2dbe5424d548765564",
+  "status": "pass_previous_unchanged_host_scope_plus_affected_OpenVPN_empty_output_rechecks",
+  "tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
   "exit_code": 0,
   "full_suite": {
     "report": "integrated-host-tests-01.json",
@@ -51,10 +51,10 @@
   },
   "ownership_audit_sha256": "5d01180d1c7a8032596ca51c817add4d873cec5dfb4efab8d8a02cbfbbc93198",
   "first_artifact_behavior_gate_passed": false,
-  "previous_tested_commit": "93953deadd6c59086e4c8201b24b257c0ff884f0",
+  "previous_tested_commit": "a48a2bb23380d539d9db5e2dbe5424d548765564",
   "previous_consolidated_evidence": {
-    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-openvpn-publication.json",
-    "sha256": "8a4a67c7ae9014d0092d363307a8d015f359b531cf81e238339f569839d234e7"
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/core/round3/integrated-host-tests-pre-openvpn-empty-output.json",
+    "sha256": "2dadb58ad44f85aac64a408b722c1bec2259121a891b1a2c797f92ded87ab880"
   },
   "additional_check": {
     "tests": 25,
@@ -72,5 +72,44 @@
     "ci/capability-audit/test_openvpn_source_install.py": "8d07a96ff3cfb68f9ed88f435094f4d1672643d93c4a8631be2757c34eee23fb"
   },
   "full_2542_test_suite_rerun": false,
-  "note": "The initial 2542-test failures and original logs are preserved. Prior fixes and rechecks remain valid for unchanged code. The 25 affected OpenVPN checks were run for this publisher change; one target-Linux-kernel case is skipped on macOS. This is not a second full 2542-test pass or guest acceptance."
+  "note": "Initial full2542 failures and logs remain preserved; prior unchanged code/failure rechecks plus new37 affected checks are consolidated. Linux37 passed including SCM_RIGHTS; macOS36 passed+1 platform skip. This is not a second full2542 run, native product success, package or guest acceptance.",
+  "additional_empty_output_check": {
+    "scope": "current product publication host regression only; actual empty-directory/foreign-content/rename-race/previous-evidence tests plus all affected OpenVPN checks",
+    "tested_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+    "macos": {
+      "tests": 37,
+      "passed": 36,
+      "skipped": 1,
+      "exit_code": 0,
+      "receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-host-01/evidence.json",
+        "sha256": "66bf13eff21d1ad744d37e53dd5c1c13062020fd33199ee23250f43512a871e4"
+      },
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-host-01/host.log",
+        "sha256": "670ff0332e8dc8df5e97cfc9d19faf371674335c459ad6ed340bdd7ce1edb7c2"
+      }
+    },
+    "linux": {
+      "tests": 37,
+      "passed": 37,
+      "skipped": 0,
+      "exit_code": 0,
+      "receipt": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-Linux-01/evidence.json",
+        "sha256": "b33f20d6ed65a414059587faca9441776de0c6d894af045536afed4c768c8954"
+      },
+      "log": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r54-OpenVPN-empty-output-Linux-01/container.log",
+        "sha256": "5cb15fb359e76fa25c5aa06389d929f3925e9618e0b8df42c4259ac3026ddf25"
+      }
+    },
+    "source_files_sha256": {
+      "scripts/build_product_openvpn.py": "95848ece8c8f2e62458a56e7f9b76e4692e19f8bd5d99e72d6f4947c779b5ab4",
+      "ci/capability-audit/test_openvpn_product_output.py": "c7a4c1241a282584dc4a26fc1d021ce937446bbd3d0832dff28826e0e5d569eb"
+    },
+    "first_artifact_behavior_gate_passed": false,
+    "new_package_or_guest_runtime": false,
+    "representative02_preserved": "first-build-02-findings.json"
+  }
 }

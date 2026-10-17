@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-17T02:25:37.188066+00:00",
+  "observed_at": "2026-10-17T03:07:52.574821+00:00",
   "max_concurrent_subagents": 3,
   "five_distinct_workstreams": [
     "apps",
@@ -25,7 +25,10 @@
     "scope": "narrow CalendarData fixed source export only",
     "released": true
   },
-  "active_children": [],
+  "active_children": [
+    "media: NEW isolated runtime QA files only",
+    "system: NEW isolated Calendar runtime QA files only"
+  ],
   "completed_children": [
     "apps",
     "media",
@@ -42,10 +45,9 @@
     "source_out_write": false
   },
   "pending_root_jobs": [
-    "freeze representative02",
-    "migrate/prepare02 and action readiness",
-    "ONE ARM64 phone build/package02",
-    "new archive runtime"
+    "ONE ARM64 phone candidate03 prepare/build/package",
+    "fresh product helpers and input binding",
+    "dedicated runtime QA compile and new archive runtime"
   ],
   "active_job": null,
   "idle_inspection_container_cleanup": {
@@ -60,5 +62,41 @@
     "exit_code": 0,
     "receipt": "settings-lifetime-sdk.json",
     "source_out_write": false
+  },
+  "runtime_tools_leases": [
+    {
+      "agent": "media",
+      "scope": "new batch_media_audio_haptic_*.py, new fixtures/batch_media/audio_haptic_runtime/, own report only",
+      "existing_files_edit": false,
+      "Git_commit": false,
+      "source_out_read_or_write": false,
+      "SDK_Docker_VM_or_package": false,
+      "root_owns_execution_and_build_resources": true
+    },
+    {
+      "agent": "system",
+      "scope": "new batch_system_calendar_runtime_*.py, new fixtures/batch_system/calendar_runtime/, own round21-runtime-tools report only",
+      "existing_files_edit": false,
+      "Git_commit": false,
+      "source_out_read_or_write": false,
+      "SDK_Docker_VM_or_package": false,
+      "root_owns_execution_and_build_resources": true
+    }
+  ],
+  "representative02_finished": {
+    "exit_code": 1,
+    "package": null,
+    "evidence": "first-build-02-findings.json"
+  },
+  "product_publish_lease": {
+    "agent": "network",
+    "files": [
+      "scripts/build_product_openvpn.py",
+      "ci/capability-audit/test_openvpn_product_output.py"
+    ],
+    "root_edit": false,
+    "source_out_or_heavy_jobs": false,
+    "Git_commit": false,
+    "released": true
   }
 }

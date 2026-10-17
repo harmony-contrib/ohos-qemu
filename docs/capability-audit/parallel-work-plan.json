@@ -2060,5 +2060,18 @@
     "first_artifact_behavior_gate_passed": false,
     "progress": "docs/capability-audit/parallel/core/round3/progress.json",
     "source_upgrade_and_preparation_passed": true
+  },
+  "core_acceptance_current": {
+    "implementation_commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+    "representative02": "complete failed; source build passed but empty GN directory publication rejected; evidence preserved",
+    "representative03": "pending frozen candidate; one package only",
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_started": false,
+    "source_out_owner": "root",
+    "qa_only_agents": [
+      "media: new audio_haptic_runtime files",
+      "system: new calendar_runtime files"
+    ],
+    "original_five_workstreams_complete": true
   }
 }

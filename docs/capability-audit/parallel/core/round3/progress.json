@@ -1,6 +1,6 @@
 {
-  "phase": "ready_to_freeze_representative_retry_02",
-  "implementation_head": "a48a2bb23380d539d9db5e2dbe5424d548765564",
+  "phase": "representative03_inputs_ready_for_freeze",
+  "implementation_head": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
   "baseline_head": "2c6a5c2",
   "checkpoint": "ddfabb4",
   "integrated_commits": {
@@ -11,7 +11,8 @@
     "network": "27b0c95",
     "location_initial": "cf32293",
     "location_compatibility": "0c67170",
-    "openvpn_publication": "a48a2bb"
+    "openvpn_publication": "a48a2bb",
+    "openvpn_empty_output": "34d7b8675be849088a673dbc86fab7ccb3a0a725"
   },
   "five_agents_delivered": true,
   "all_source_out_read_leases_released": true,
@@ -31,9 +32,10 @@
     "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
   },
   "next_required": [
-    "freeze current implementation and complete evidence",
-    "representative02 exact migration, full source preparation, executable readiness precheck",
-    "ONE ARM64 phone build/package02 and complete fresh runtime; no remaining-five matrix"
+    "freeze candidate03 with all known product publication fixes",
+    "ONE representative03 full prepare/build/package",
+    "fresh product helpers and checksum-bound inputs",
+    "new package runtime including dedicated AudioHaptic/Calendar boundaries; no remaining-five matrix"
   ],
   "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
   "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
@@ -57,7 +59,7 @@
   "first_artifact_behavior_gate_passed": false,
   "remaining_five_started": false,
   "frozen_candidate_commit": "42a0f56b7e0e2d6a07b84b66fdf6fae00c127d64",
-  "observed_at": "2026-10-17T02:25:37.188066+00:00",
+  "observed_at": "2026-10-17T03:07:52.573919+00:00",
   "source_upgrade": {
     "exit_code": 0,
     "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-Settings-lifetime-source-upgrade-01/evidence.json"
@@ -117,5 +119,35 @@
     "archive_created": false,
     "receipt": "first-build-01.json",
     "findings": "first-build-01-findings.json"
+  },
+  "retry_frozen_candidate_commit": "97f58dba86c3ae20f3867048dbbd685b9b463f55",
+  "retry_source_preparation": {
+    "exit_code": 0,
+    "seconds": 267.0704310829751,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-full-source-prepare-02/evidence.json"
+  },
+  "retry_prebuild_readiness": {
+    "exit_code": 0,
+    "entrypoints": 5,
+    "kernel_source_and_image_unchanged": true,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-action-readiness-02/evidence.json"
+  },
+  "current_stage": "representative02 failure sealed; batch publisher repair committed and affected Linux/macOS checks passed; candidate03 freeze next",
+  "representative02_result": {
+    "source_commit": "97f58dba86c3ae20f3867048dbbd685b9b463f55",
+    "exit_code": 1,
+    "seconds": 1445.0253304579528,
+    "package": null,
+    "failure": "GN pre-created empty OpenVPN output directory rejected by publish guard",
+    "preservation_receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-02/preservation-01/receipt.json",
+      "sha256": "eefd6ed3e139dd179d7c0ef761f146ed6761221ccac9b991bff538e1bacd3be0",
+      "bytes": 5607
+    }
+  },
+  "publisher_empty_output_fix": {
+    "commit": "34d7b8675be849088a673dbc86fab7ccb3a0a725",
+    "validated": "openvpn-empty-output-validation.json",
+    "native_or_runtime": false
   }
 }

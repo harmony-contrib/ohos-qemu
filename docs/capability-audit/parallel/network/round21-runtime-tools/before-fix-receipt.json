@@ -1,0 +1,18 @@
+{
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "ci/capability-audit",
+    "-p",
+    "test_openvpn_product_output.py",
+    "-v"
+  ],
+  "exit_code": 1,
+  "files_sha256": {
+    "scripts/build_product_openvpn.py": "084d6f0b313a7674c37a92efd2c17e5417c3c45db7d040e18438f6ce5a497445",
+    "ci/capability-audit/test_openvpn_product_output.py": "c7a4c1241a282584dc4a26fc1d021ce937446bbd3d0832dff28826e0e5d569eb"
+  }
+}
