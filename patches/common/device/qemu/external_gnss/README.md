@@ -41,7 +41,7 @@ returns the actual namespaced `GnssVendorInterface` structure, consisting of
 | flushCachedGnssLocations | null, unsupported |
 | getGnssModuleIface | null for every optional module, unsupported |
 
-`GnssLocation` is the actual complete vendor type. Mandatory validity bits are
+`GnssLocation` is the actual complete vendor type. Legacy QGN1 mandatory validity bits are
 latitude/longitude/horizontal accuracy/UTC/boot time. Optional altitude, speed,
 bearing and vertical accuracy bits are set only when supplied. Unmarked fields
 remain zero; no accuracy or motion measurement is invented. UTC comes unchanged
@@ -165,3 +165,50 @@ registration in the test DSO. That uncompleted extension is not counted as a
 pass, no sanitizer was relaxed, and its complete log is retained. Root must
 validate actual Linux/ARM64 reload/CFI and new-package end-to-end behavior.
 No capability requirement or first-artifact gate is closed by these host tests.
+
+
+## Explicit raw-precision V2 extension (requires a newly built guest)
+
+The existing UID0/0600 endpoint and unchanged `QGN1` hello remain. V1 senders
+continue sending QGF1 with all original constraints. That hello does **not**
+advertise V2. A V2 controller must explicitly select `--protocol qgn2-precision`,
+send an 88-byte QGP2 probe (version2, current nonce16, remaining64 bytes zero),
+and receive the exact 32-byte QGA2 ACK: version2, same nonce16, frame size88,
+capability word1. No ACK, wrong nonce/version/capability or an old guest closes
+or fails the operation. The controller never silently falls back to V1.
+
+After an ACK the connection accepts only QGF2/version2 data frames. A V2 frame
+before the probe, a V1 frame after the ACK, repeated/late probes, or mixed/wrong
+versions terminate the connection. A connection that first sends QGF1 is V1
+until it closes. Negotiation consumes no measurement sequence/UTC. Restart,
+stop, session invalidation and reconnect still require a new random nonce.
+
+QGF2 retains the88-byte layout: offsets0/4 are QGF2/version2; offsets8..63 and
+68..83 retain V1 meaning. Offset64 is the raw little-endian uint32 bit word of
+horizontal accuracy. Offset84 is an exact0/1 validity word (all other bits are
+invalid); it controls only the existing HDI horizontal-accuracy bit32. Mandatory
+LAT/LONG/UTC/guest boot-time bits and all other optional fields remain unchanged.
+The protocol decodes accuracy as uint32 and the vendor uses memcpy into its
+actual float32 field, without evaluating/normalizing NaN, Inf, signed zero,
+subnormal or negative encodings. Both validity states are permitted for every
+accuracy bit word so the real HDI/business validators, rather than the input
+codec, can be challenged. This explicit root-only mode is raw boundary/fault
+input, not a claim of physically measured accuracy or successful public delivery.
+
+Only horizontal-accuracy validation differs from V1. Latitude/longitude,
+altitude, vertical accuracy, speed, bearing, UTC epoch/window, strictly increasing
+sequence/UTC, nonce, five-second transfer deadlines, peer UID and session
+lifetime protections are retained. QGN1 still rejects zero/nonfinite/negative
+accuracy exactly as before. V2 JSON requires `horizontal_accuracy_bits` as eight
+lowercase hexadecimal digits and `horizontal_accuracy_valid` as a JSON boolean;
+it does not accept a numeric `horizontal_accuracy` field. Hex is the numerical
+IEEE binary32 word, e.g. `7fc01234` becomes wire bytes3412c07f. No input UTC is
+created or refreshed by the controller.
+
+Python wire/transcript/static checks are in
+`ci/capability-audit/test_batch_system_gnss_precision_protocol.py`. They do not
+execute native provider/HDI code. The dedicated native precision harness must be
+compiled and run by root, in addition to the unchanged V1 suite, before a new
+package. Full compiler/ABI, actual new-package HDI mask/raw-bit observation and
+ordinary callback/precision-consumer acceptance remain required. Sending bytes
+or receiving an ACK proves no capability ID closure.

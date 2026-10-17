@@ -338,11 +338,21 @@ void GnssInput::Serve(const std::shared_ptr<State>& state, int fd)
     if (!Transfer(fd, hello.data(), hello.size(), true, state->stopping)) return;
     uint64_t sequence = 0;
     int64_t utc = 0;
+    uint32_t protocol = 0; // First input selects legacy V1, or an exact V2 probe.
     while (!state->stopping) {
         Frame frame;
         if (!Transfer(fd, frame.data(), frame.size(), false, state->stopping)) return;
+        if (protocol == 0 && IsPrecisionProbe(frame, nonce)) {
+            { std::lock_guard<std::mutex> lock(state->mutex); if (generation != state->sessionGeneration) return; }
+            auto ack = MakePrecisionAck(nonce);
+            if (!Transfer(fd, ack.data(), ack.size(), true, state->stopping)) return;
+            protocol = 2;
+            continue;
+        }
+        if (protocol == 0) protocol = 1;
         Fix sample;
-        if (!DecodeFrame(frame, nonce, sequence, utc, sample)) return;
+        if (!(protocol == 1 ? DecodeFrame(frame, nonce, sequence, utc, sample) :
+            DecodePrecisionFrame(frame, nonce, sequence, utc, sample))) return;
         { std::lock_guard<std::mutex> lock(state->mutex); if (generation != state->sessionGeneration) return; }
         Dispatch(state, sample, generation);
     }

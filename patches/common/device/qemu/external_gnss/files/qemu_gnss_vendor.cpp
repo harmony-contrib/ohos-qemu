@@ -23,12 +23,19 @@ public:
         if (!input_.Register(this, [callback](const Fix& fix) {
             Vendor::GnssLocation location{};
             location.size = sizeof(location);
-            location.fieldValidity = 1 | 2 | 32 | 512 | 1024 | fix.optionalFields;
+            location.fieldValidity = 1 | 2 | 512 | 1024 | fix.optionalFields |
+                ((!fix.rawHorizontalAccuracy || fix.horizontalAccuracyValid) ? 32 : 0);
             location.latitude = fix.latitude; location.longitude = fix.longitude;
             location.altitude = (fix.optionalFields & 4) ? fix.altitude : 0;
             location.speed = (fix.optionalFields & 8) ? fix.speed : 0;
             location.bearing = (fix.optionalFields & 16) ? fix.bearing : 0;
-            location.horizontalAccuracy = fix.horizontalAccuracy; location.verticalAccuracy = (fix.optionalFields & 64) ? fix.verticalAccuracy : 0;
+            if (fix.rawHorizontalAccuracy) {
+                static_assert(sizeof(location.horizontalAccuracy) == sizeof(fix.horizontalAccuracyBits));
+                std::memcpy(&location.horizontalAccuracy, &fix.horizontalAccuracyBits, sizeof(location.horizontalAccuracy));
+            } else {
+                location.horizontalAccuracy = fix.horizontalAccuracy;
+            }
+            location.verticalAccuracy = (fix.optionalFields & 64) ? fix.verticalAccuracy : 0;
             location.timeForFix = fix.utcMs; location.timeSinceBoot = fix.bootNs;
             callback(&location); // Stack value is borrowed for the synchronous vendor callback only.
         })) { input_.Stop(); return -EIO; }
