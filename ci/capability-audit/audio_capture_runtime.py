@@ -2,7 +2,9 @@
 import json
 import os
 from pathlib import Path
+import re
 import shlex
+import shutil
 import signal
 import subprocess
 import time
@@ -11,10 +13,35 @@ from audio_capture_contract import sha, runtime_identity
 from audio_capture_permission import decide
 from batch_media_audio_capture_challenge import generate
 from guest_ui import GuestUi
+import batch_system_build_runtime_helpers as product
+from build_audio_capture_tools import verify_installed_tools
 from spring_loading_input import binding
 
 HERE = Path(__file__).resolve().parent
 BUNDLE = 'org.harmonycontrib.capabilityaudit'
+BOOT_SCRIPT = 'cat /proc/sys/kernel/random/boot_id'
+
+
+class CleanupBootError(ValueError):
+    """Original guest identity was lost; cleanup must not recover by re-querying."""
+
+
+def cleanup_boot_prefix(boot_id):
+    if re.fullmatch(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', boot_id or '') is None:
+        raise ValueError('original kernel boot ID is required for guest cleanup')
+    return ('task_mic_cleanup_boot=$(' + BOOT_SCRIPT + ') && '
+        'test "$task_mic_cleanup_boot" = ' + shlex.quote(boot_id) + ' || exit 1; ')
+
+
+def require_cleanup_boot(shell, boot_id, label):
+    try:
+        cleanup_boot_prefix(boot_id)
+        actual = shell(BOOT_SCRIPT, label).strip()
+    except Exception as error:
+        raise CleanupBootError('owned audio cleanup cannot confirm original guest kernel: ' + str(error)) from error
+    if actual != boot_id:
+        raise CleanupBootError('owned audio cleanup refused a different guest kernel')
+    return actual
 
 
 class CaptureRuntime:
@@ -31,17 +58,26 @@ class CaptureRuntime:
         self.producer_log = None
         self.started = False
         self.finished = False
+        hdc_argv0 = str(args.hdc)
+        hdc_path = shutil.which(hdc_argv0)
+        if hdc_path is None: raise ValueError('actual configured HDC executable is missing')
+        hdc_path = Path(hdc_path).resolve()
+        if not hdc_path.is_file(): raise ValueError('actual HDC canonical file is missing')
         self.value = {'schema_version': 1, 'status': 'fail', 'run_id': run, 'boot_id': boot_id,
+            'parent_persona': report['persona'],
             'archive_sha256': report['archive_sha256'], 'arch': args.arch, 'device': args.device,
             'target': args.target, 'expected_denied': self.denied, 'remote_root_directory': self.remote,
             'runner_sha256': sha(Path(__file__)), 'tokens': [], 'files': {},
-            'first_artifact_behavior_gate_passed': False}
+            'first_artifact_behavior_gate_passed': False,
+            'hdc': {'path': str(hdc_path), 'sha256': sha(hdc_path), 'argv0': hdc_argv0}}
         saved = self.output / 'acceptance-boot.json'
         saved.write_text(json.dumps(boot, indent=2) + '\n')
         self.value.update(boot=str(saved), boot_sha256=sha(saved))
         self.save()
 
     def save(self):
+        if hasattr(self, 'parent'):
+            self.value['orchestration_commands'] = self.parent['commands']
         path = self.output / 'runtime.json'
         path.write_text(json.dumps(self.value, indent=2) + '\n')
         return path
@@ -52,8 +88,14 @@ class CaptureRuntime:
         import secrets
         import re
         marker = '__MIC_EXIT_' + secrets.token_hex(16) + '__='
+        command_index = len(self.parent['commands']) if hasattr(self, 'parent') else None
         text = self.shell(script + '; task_mic_rc=$?; printf "\\n' + marker + '%s\\n" "$task_mic_rc"', label)
         match = re.search(r'(?:^|\n)' + marker + r'(\d+)\s*$', text)
+        if hasattr(self, 'value'):
+            self.value.setdefault('guest_shell_observations', []).append(dict(script=script, label=label,
+                exit_marker=marker, command_index=command_index, raw=text,
+                guest_exit_code=int(match.group(1)) if match else None))
+            self.save()
         if not match or match.group(1) != '0':
             raise ValueError('real microphone setup/observation command failed: ' + label)
         return text[:match.start()].rstrip('\n')
@@ -61,21 +103,66 @@ class CaptureRuntime:
     def generate_challenge(self):
         generate(self.output / 'challenge', self.run)
 
+    def reuse_tools(self, tools, profile_value):
+        """Copy a verified actual build without rewriting its historical receipt."""
+        source = os.environ.get('OHOS_QA_MIC_TOOLS_BUILD')
+        digest = os.environ.get('OHOS_QA_MIC_TOOLS_BUILD_SHA256')
+        if source is None and digest is None: return False
+        if not source or not re.fullmatch(r'[0-9a-f]{64}', digest or ''):
+            raise ValueError('both explicit MIC tools build receipt and SHA256 required; no compile fallback')
+        path = Path(source)
+        if (not path.is_absolute() or path.name != 'build.json' or path.is_symlink() or
+                not path.is_file() or path.resolve() != path or sha(path) != digest):
+            raise ValueError('canonical regular actual MIC tools build receipt/SHA256 differs')
+        if tools.resolve().is_relative_to(path.parent) or path.parent.is_relative_to(tools.resolve()):
+            raise ValueError('actual MIC tools source and case output must be separate directories')
+        build = verify_installed_tools(path, self.args.arch)
+        if any(row['installed_runtime_profile']['profile'] != profile_value for row in build['tools'].values()):
+            raise ValueError('prebuilt actual MIC tools installed runtime profile differs from current profile')
+        for entry in path.parent.rglob('*'):
+            if entry.is_symlink() or not (entry.is_file() or entry.is_dir()):
+                raise ValueError('actual MIC tools directory contains a symlink or nonregular entry')
+        shutil.copytree(path.parent, tools)
+        copied = tools / 'build.json'
+        if sha(path) != digest or sha(copied) != digest:
+            raise ValueError('actual MIC tools build receipt changed during copy')
+        if verify_installed_tools(copied, self.args.arch) != build:
+            raise ValueError('copied actual MIC tools replay differs from original')
+        self.value['prebuilt_tools_build_input'] = {'path': str(path), 'sha256': digest}
+        self.save()
+        return True
+
     def prepare(self):
         tools = self.output / 'tools'
-        self.command(['docker', 'run', '--rm', '--platform', 'linux/amd64', '--network', 'none',
+        profile = getattr(self.args, 'runtime_profile', None) or os.environ.get('OHOS_QA_RUNTIME_PROFILE')
+        digest = getattr(self.args, 'runtime_profile_sha256', None) or os.environ.get('OHOS_QA_RUNTIME_PROFILE_SHA256')
+        if profile is None or not re.fullmatch(r'[0-9a-f]{64}', digest or ''):
+            raise ValueError('explicit actual installed runtime profile and SHA256 required; no SDK helper fallback')
+        profile = Path(profile).absolute()
+        if profile.is_symlink() or not profile.is_file() or sha(profile) != digest:
+            raise ValueError('actual installed runtime profile file/SHA256 differs')
+        profile_value = json.loads(profile.read_text())
+        product.validate_installed_profile(profile_value, archive_sha256=self.parent['archive_sha256'])
+        self.value['installed_runtime_profile_input'] = {'path': str(profile), 'sha256': digest}
+        self.save()
+        if not self.reuse_tools(tools, profile_value):
+            self.command(['docker', 'run', '--rm', '--platform', 'linux/amd64', '--network', 'none',
             '--read-only', '--cpus', '2', '--memory', '5g', '--pids-limit', '512',
             '--tmpfs', '/tmp:rw,nosuid,nodev,size=512m',
             '--mount', 'type=volume,src=' + self.args.source_volume + ',dst=/ohos,readonly',
             '--mount', 'type=volume,src=' + getattr(self.args, 'out_volume', 'ohos-qemu-7_0-release-out') + ',dst=/ohos/out,readonly',
             '--mount', 'type=bind,src=' + str(HERE.parents[1]) + ',dst=/work,readonly',
             '--mount', 'type=bind,src=' + str(self.args.output.resolve()) + ',dst=/probe',
+            '--mount', 'type=bind,src=' + str(profile.parent) + ',dst=/runtime-profile,readonly',
             self.args.docker_image, 'python3', '/work/ci/capability-audit/build_audio_capture_tools.py',
-            '--source-root', '/ohos', '--arch', self.args.arch, '--output', '/probe/capture/tools'],
-            'build-current-real-PCM-and-token-tools', timeout=420)
-        build = json.loads((tools / 'build.json').read_text())
+            '--source-root', '/ohos', '--arch', self.args.arch, '--output', '/probe/capture/tools',
+            '--runtime-profile', '/runtime-profile/' + profile.name, '--runtime-profile-sha256', digest],
+                'build-current-real-PCM-and-token-tools', timeout=1200)
+        build = verify_installed_tools(tools / 'build.json', self.args.arch)
         if build.get('status') != 'pass' or build.get('arch') != self.args.arch:
             raise ValueError('real microphone orchestration tools did not compile/link')
+        if any(row['installed_runtime_profile']['profile'] != profile_value for row in build['tools'].values()):
+            raise ValueError('actual MIC tools installed runtime profile differs from current profile')
         for name in ('alsa_inject', 'audio_capture_token'):
             if sha(tools / name) != build['tools'][name]['binary_sha256']:
                 raise ValueError('actual microphone tool changed')
@@ -95,6 +182,17 @@ class CaptureRuntime:
                 raise ValueError('root tool was linked against another artifact library: ' + library)
             self.value['guest_libraries'][name] = {'remote': remote, 'path': str(local), 'sha256': sha(local),
                                                   'runtime_sha256': identity}
+        self.value['guest_runtime_DSOs'] = []
+        for tool, row in build['tools'].items():
+            for soname in row['DT_NEEDED']:
+                script = product.runtime_guest_script(row, soname)
+                raw = self.actual_shell(script, 'actual-installed-' + tool + '-' + soname)
+                observed = product.verify_guest_runtime_raw(row, soname, raw,
+                    archive_sha256=self.parent['archive_sha256'])
+                self.value['guest_runtime_DSOs'].append(dict(tool=tool, script=script, raw=raw, observation=observed))
+                self.value['guest_runtime_DSOs'][-1].update(shell_observation=len(self.value['guest_shell_observations']) - 1,
+                    command_index=self.value['guest_shell_observations'][-1]['command_index'])
+        self.save()
         label_text = self.command(['docker', 'run', '--rm', '--platform', 'linux/amd64', '--network', 'none',
             '--read-only', '--cpus', '1', '--memory', '512m',
             '--mount', 'type=volume,src=' + self.args.source_volume + ',dst=/ohos,readonly',
@@ -218,26 +316,49 @@ class CaptureRuntime:
         self.save()
         return self.output / 'runtime.json'
 
-    def close(self):
-        errors = []
-        if self.started:
+    def require_cleanup_boot(self, label):
+        if self.value.get('cleanup_boot_failure'):
+            raise CleanupBootError(self.value['cleanup_boot_failure'])
+        try:
+            return require_cleanup_boot(self.actual_shell, self.boot_id, label)
+        except CleanupBootError as error:
+            self.value['cleanup_boot_failure'] = str(error)
+            raise
+
+    def close(self, *, host_only_reason=None):
+        errors = [host_only_reason] if host_only_reason else []
+        if self.started and not errors:
             try:
+                self.require_cleanup_boot('PCM-cleanup-boot-before-stop')
                 # Signal only our current executable and recorded kernel
                 # starttime. A reused PID or changed executable is never killed.
-                script = ('if test -e ' + self.remote + '/producer.pid; then '
+                script = ('test -d ' + self.remote + ' && test ! -L ' + self.remote +
+                    ' && test "$(stat -c \'%u %a\' ' + self.remote + ')" = "0 700" || exit 1; '
+                    'if test -e ' + self.remote + '/producer.pid || test -L ' + self.remote + '/producer.pid; then '
+                    'test -f ' + self.remote + '/producer.pid && test ! -L ' + self.remote + '/producer.pid && '
+                    'test -f ' + self.remote + '/producer.start && test ! -L ' + self.remote + '/producer.start && '
+                    'test "$(stat -c %u ' + self.remote + '/producer.pid)" = 0 && '
+                    'test "$(stat -c %u ' + self.remote + '/producer.start)" = 0 || exit 1; '
                     'task_mic_pid=$(cat ' + self.remote + '/producer.pid); '
                     'case "$task_mic_pid" in ""|*[!0-9]*) exit 1;; esac; '
                     'if test -d /proc/$task_mic_pid; then '
                     'test "$(readlink /proc/$task_mic_pid/exe)" = ' + self.remote + '/alsa_inject && '
-                    'test "$(awk \'{print $22}\' /proc/$task_mic_pid/stat)" = "$(cat ' + self.remote + '/producer.start)" && '
-                    'kill -TERM "$task_mic_pid"; fi; fi')
-                self.actual_shell(script, 'cleanup-only-owned-PCM-producer')
+                    'test "$(awk \'{print $22}\' /proc/$task_mic_pid/stat)" = "$(cat ' + self.remote + '/producer.start)" || exit 1; '
+                    'kill -TERM "$task_mic_pid" || exit 1; '
+                    'task_mic_wait=0; while test -d /proc/$task_mic_pid; do '
+                    'task_mic_current=$(awk \'{print $22}\' /proc/$task_mic_pid/stat 2>/dev/null) || '
+                    '{ test ! -d /proc/$task_mic_pid && break; exit 1; }; '
+                    'test "$task_mic_current" = "$(cat ' + self.remote + '/producer.start)" || exit 1; '
+                    'test "$task_mic_wait" -lt 30 || exit 1; task_mic_wait=$((task_mic_wait + 1)); sleep 0.1; done; fi; '
+                    'else test ! -e ' + self.remote + '/producer.start && test ! -L ' + self.remote + '/producer.start; fi')
+                self.actual_shell(cleanup_boot_prefix(self.boot_id) + script, 'cleanup-only-owned-PCM-producer')
             except Exception as error:
                 errors.append(str(error))
         if self.process is not None and self.process.poll() is None:
             try:
                 self.process.wait(timeout=3)
             except subprocess.TimeoutExpired:
+                errors.append('owned producer HDC remained active after guest cleanup; preserve unknown guest state')
                 os.killpg(self.process.pid, signal.SIGTERM)
                 try:
                     self.process.wait(timeout=3)
@@ -248,7 +369,31 @@ class CaptureRuntime:
         if self.producer_log is not None:
             self.producer_log.close()
             self.producer_log = None
+        if self.started and not errors:
+            try:
+                self.require_cleanup_boot('PCM-cleanup-boot-before-private-removal')
+                if not re.fullmatch(r'/data/local/tmp/qemu-mic-[0-9a-f]{32}', self.remote):
+                    raise ValueError('owned microphone directory identity differs')
+                names = ('alsa_inject', 'audio_capture_token', 'challenge.pcm', 'producer.pid', 'producer.start')
+                permitted = ' '.join('! -name ' + shlex.quote(name) for name in names)
+                script = ('test -d ' + self.remote + ' && test ! -L ' + self.remote +
+                    ' && test "$(stat -c \'%u %a\' ' + self.remote + ')" = "0 700" && '
+                    'task_mic_unknown=$(find ' + self.remote + ' -mindepth 1 -maxdepth 1 ' + permitted + ') && '
+                    'test -z "$task_mic_unknown"')
+                for name in names:
+                    path = self.remote + '/' + name
+                    script += (' && if test -e ' + path + ' || test -L ' + path + '; then '
+                        'test -f ' + path + ' && test ! -L ' + path +
+                        ' && test "$(stat -c %u ' + path + ')" = 0; fi')
+                script += (' && rm -f -- ' + ' '.join(self.remote + '/' + name for name in names) +
+                    ' && rmdir ' + self.remote + ' && test ! -e ' + self.remote + ' && test ! -L ' + self.remote)
+                self.actual_shell(cleanup_boot_prefix(self.boot_id) + script, 'cleanup-only-owned-microphone-files-and-directory')
+                self.value['owned_remote_directory_removed'] = True
+                self.started = False
+            except Exception as error:
+                errors.append(str(error))
         self.value['cleanup_errors'] = errors
+        self.value['cleanup_complete'] = not errors
         self.finished = not errors
         self.save()
         if errors:

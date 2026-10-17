@@ -322,18 +322,14 @@ class Coordinator(Runtime):
             len(data)<20 or data[:4]!=b'\x7fELF' or int.from_bytes(data[18:20],'little')!=
             {'arm64':183,'armv7a':40,'x86_64':62}[self.guest.env['guest_arch']]):
             raise ValueError('actual compiled guest helper/source/ABI receipt required')
+        import batch_system_build_runtime_helpers as product
+        product.validate_installed_profile(proof['installed_runtime_profile']['profile'],
+                                           archive_sha256=sha(self.args.archive))
         observations=[]
-        for dso in proof['product_DSOs']:
-            soname=dso['soname']
-            if re.fullmatch(r'[a-zA-Z0-9_+.\-]+\.so',soname)is None:raise ValueError('invalid product SONAME')
-            paths=['/system/lib64/'+soname,'/system/lib64/platformsdk/'+soname,
-                   '/system/lib64/chipsetsdk/'+soname,'/vendor/lib64/'+soname]
-            raw=self.shell('for task_dso in '+' '.join(map(shlex.quote,paths))+
-                '; do if test -f "$task_dso"; then sha256sum "$task_dso" || exit 1; fi; done','actual-helper-product-DSO')
-            rows=[line.split('  ',1)for line in raw.splitlines()]
-            if not rows or any(len(row)!=2 or row[0]!=dso['sha256']or row[1]not in paths for row in rows):
-                raise ValueError('guest DSO differs from helper actual linker inputs: '+soname)
-            observations.append({'soname':soname,'expected_sha256':dso['sha256'],
+        for soname in proof['DT_NEEDED']:
+            raw=self.shell(product.runtime_guest_script(proof,soname),'actual-helper-product-DSO')
+            product.verify_guest_runtime_raw(proof,soname,raw,archive_sha256=sha(self.args.archive))
+            observations.append({'soname':soname,'command':len(self.value['commands'])-1,
                                  'actual_hashes':self.text(raw,'actual-helper-DSO-hashes')})
         self.value.setdefault('helper_bindings',{})[name]={'build':proof,'actual_guest_DSOs':observations}
         remote=self.remote+'/'+name; self.stage_file(binary,remote,0,mode='500'); self.tools[name]=remote

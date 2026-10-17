@@ -56,9 +56,7 @@ class GnssDumpBuilder(product.Builder):
             raise ValueError('actual SAMgr/IPC headers were not compiled')
         if not {'string', 'vector'} <= {Path(path).name for path in headers}:
             raise ValueError('actual product standard-library headers are required')
-        opened = {Path(record['path']).name for record in row['actual_link_inputs']}
-        if not needed <= opened:
-            raise ValueError('actual linker trace omits a required runtime DSO')
+        for soname in needed: product.runtime_link_records(row, soname)
         # This small client inlines its string/vector operations. Its namespace
         # proof is the fixed client's and Builder's compiled __h static_asserts,
         # actual product headers and input hashes; no exported std symbol is forced.
@@ -79,9 +77,12 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--plan-only', action='store_true')
+    parser.add_argument('--runtime-profile', type=Path, required=True)
+    parser.add_argument('--runtime-profile-sha256', required=True)
     args = parser.parse_args()
     configure()
-    builder = GnssDumpBuilder(args.source_root, args.output, [NAME], args.plan_only)
+    builder = GnssDumpBuilder(args.source_root, args.output, [NAME], args.plan_only,
+                              runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256)
     builder.report['gnss_trace_extension'] = builder.remember(Path(__file__), source=False)
     builder.report['scope'] = 'actual diagnostic client compilation only; existing SA, UID and raw callback runtime pending'
     report = builder.run()

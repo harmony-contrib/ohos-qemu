@@ -384,11 +384,10 @@ class CoordinatorTests(unittest.TestCase):
         receipt = self.json('builder.json', report)
         return binary, receipt
 
-    def test_original_helper_compile_and_recheck_do_not_require_fake_recompile(self):
+    def test_legacy_helper_recheck_cannot_claim_installed_runtime_bindings(self):
         binary, receipt = self.observer_fixture(recheck=True)
-        with patch.object(c, 'HERE', self.root):
-            result = c.verify_observer(binary, receipt)
-        self.assertFalse(result['runtime_validated'])
+        with patch.object(c, 'HERE', self.root), self.assertRaisesRegex(ValueError, 'actual product musl dynamic'):
+            c.verify_observer(binary, receipt)
 
     def test_truncated_elf_still_rejected_with_matching_receipt_hash(self):
         binary, receipt = self.observer_fixture(truncated=True)

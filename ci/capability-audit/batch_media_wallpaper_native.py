@@ -126,33 +126,51 @@ def archive_native(archive, boot_path, output):
         'product': product, 'files_sha256': hashes, 'image': image, 'guard': record(guard.__file__),
         'system_image': {'path': str(source), 'sha256': hashes['images/system.img']},
         'library_guest_path': '/system/' + ('lib' if product == 'armv7a_virt' else 'lib64') + '/' + LIBRARY,
+        # The suite independently recomputes this object during replay; bind
+        # the newly shared process decoder as well as this native verifier.
+        'process_capture_tools': {name: record(regular(Path(__file__).with_name(name))) for name in
+            ('batch_network_openvpn_runtime_collect.py', 'batch_network_openvpn_runtime_project.py')},
         'service_token_to_pid_directly_observed': False, 'connection_caller_identity_observed': False,
         'first_artifact_behavior_gate_passed': False, 'ledger_closed': False}
 
 
 def maps_script(request, native):
-    """Read only: inode/device tie file hash to the actual mapped backing file."""
-    nonce = request['nonce']; library = native['library_guest_path']
-    if (re.fullmatch('[a-f0-9]{32}', nonce or '') is None or
-            library not in ('/system/lib/' + LIBRARY, '/system/lib64/' + LIBRARY)):
-        raise ValueError('exact fresh native request/library required')
-    q = shlex.quote(library)
-    return ('(set -eu; printf "WALLPAPER_NATIVE_MAPS_V1 '+nonce+'\\n"; '
-        'cat /proc/sys/kernel/random/boot_id; test -f '+q+'; test ! -L '+q+'; '
-        'stat -c "%d %i %s" '+q+'; sha256sum '+q+'; '
-        'for task_maps in /proc/[0-9]*/maps; do '
-        'if test -r "$task_maps" && grep -q "libwallpaper_service\\.z\\.so" "$task_maps"; then '
-        'task_pid=${task_maps#/proc/}; task_pid=${task_pid%/maps}; '
-        'printf "PROCESS %s\\n" "$task_pid"; '
-        'sed -n "/^Name:/p; /^Pid:/p; /^Uid:/p" /proc/$task_pid/status; '
-        'cat /proc/$task_pid/stat; tr "\\000" " " < /proc/$task_pid/cmdline; printf "\\n"; '
-        'grep "libwallpaper_service\\.z\\.so" "$task_maps"; printf "PROCESS_STAT_AFTER\\n"; '
-        'cat /proc/$task_pid/stat; printf "END_PROCESS\\n"; fi; done; '
-        'stat -c "%d %i %s" '+q+'; sha256sum '+q+'; '
-        'printf "END_WALLPAPER_NATIVE_MAPS_V1 '+nonce+'\\n")')
+    """Same framed read-only process protocol as the VPN/UID observers."""
+    from batch_network_openvpn_runtime_collect import snapshot_script
+    return snapshot_script(request['nonce'], native['boot_id'], mode='maps', library=native['library_guest_path'])
 
 
 def parse_maps(raw, request, native):
+    from batch_network_openvpn_runtime_collect import parse_snapshot
+    # GuestUi.shell and its independent command_output replay remove all final
+    # LF bytes. Keep that exact raw artifact; restore one protocol terminator
+    # only at this decoder boundary. Never strip an unexpected suffix here.
+    if not isinstance(raw,str) or not raw or raw[-1] not in '0123456789':
+        raise ValueError('exact GuestUi process capture without trailing LF/whitespace required')
+    capture = parse_snapshot(raw + '\n', request['nonce'], native['boot_id'], mode='maps', library=native['library_guest_path'])
+    if len(capture['processes']) != 1:
+        from batch_network_openvpn_runtime_collect import SnapshotRace
+        if any(items.get('maps_match',(None,None))[0] == 0 for pid,items in capture['queries'].items()
+               if capture['classifications'][pid] in ('gone','zombie')):
+            raise SnapshotRace('selected mapped process exited; fresh whole capture required')
+        raise ValueError('one actual process mapping native service required')
+    row = next(iter(capture['processes'].values())); pid = row['pid']; metadata = capture['metadata']
+    status = dict(line.partition(':')[::2] for line in row['status'].splitlines() if ':' in line)
+    stat = bytes.fromhex(row['raw_hex']).decode().rstrip('\n')
+    mappings = [line for line in row['maps'].splitlines() if LIBRARY in line]
+    # Reuse the established inode/device/hash/generation checks after the
+    # framed decoder has validated every query and complete PID enumeration.
+    legacy = '\n'.join(['WALLPAPER_NATIVE_MAPS_V1 '+request['nonce'],native['boot_id'],
+        metadata['file-before-stat'],metadata['file-before-hash'],'PROCESS '+str(pid),
+        'Name:'+status.get('Name',''),'Pid:'+status.get('Pid',''),'Uid:'+status.get('Uid',''),
+        stat,' '.join(row['argv']),*mappings,'PROCESS_STAT_AFTER',stat,'END_PROCESS',
+        metadata['file-after-stat'],metadata['file-after-hash'],'END_WALLPAPER_NATIVE_MAPS_V1 '+request['nonce']])
+    value = _parse_maps_fields(legacy,request,native)
+    value['argv'] = row['argv']; value['kernel_contract'] = capture['kernel_contract']
+    return value
+
+
+def _parse_maps_fields(raw, request, native):
     lines = raw.splitlines(); nonce = request['nonce']; library = native['library_guest_path']
     expected_hash = native['image']['library_sha256'] + '  ' + library
     if (len(raw) > 512 * 1024 or len(lines) < 13 or
@@ -210,12 +228,19 @@ def observe_maps(coordinator, request):
     native = json.loads(checked(coordinator.inputs['native']).read_text())
     if native['boot_id'] != coordinator.boot_id: raise ValueError('native proof belongs to another boot')
     import time
-    began = time.monotonic_ns(); label = request['details']['case'] + '-native-maps'
-    script = maps_script(request, native); raw = coordinator.shell(script, label)
-    parsed = parse_maps(raw, request, native); artifact = coordinator.text(raw, label)
+    from batch_network_openvpn_runtime_collect import SnapshotRace
+    began = time.monotonic_ns(); base = request['details']['case'] + '-native-maps'
+    for attempt in range(3):
+        label = base + '-scan-' + str(attempt)
+        raw = coordinator.shell(maps_script(request,native),label)
+        try: parsed = parse_maps(raw,request,native); break
+        except SnapshotRace:
+            if attempt == 2: raise
+            time.sleep(.05)
+    artifact = coordinator.text(raw,label)
     coordinator.value.setdefault('native_mappings', []).append({'case': request['details']['case'],
         'nonce': request['nonce'], 'sequence': request['sequence'], 'began_ns': began,
-        'finished_ns': time.monotonic_ns(), 'raw': artifact, 'parsed': parsed})
+        'finished_ns': time.monotonic_ns(), 'capture_label':label,'raw': artifact, 'parsed': parsed})
     coordinator.save()
 
 
@@ -308,7 +333,10 @@ def verify_mappings(coordinator, native, *, target):
                 request['nonce'] != row['nonce'] or request['boot_id'] != native['boot_id'] or
                 not action['began_ns'] <= row['began_ns'] <= row['finished_ns'] <= action['finished_ns']):
             raise ValueError('native observation not inside real same-boot public change ACK interval')
-        raw = command_output(coordinator, row['case']+'-native-maps', maps_script(request,native), row['raw'], target)
+        label=row.get('capture_label')
+        if not isinstance(label,str) or not re.fullmatch(re.escape(row['case'])+r'-native-maps-scan-[0-2]',label):
+            raise ValueError('exact successful complete mapping capture label required')
+        raw = command_output(coordinator,label,maps_script(request,native),row['raw'],target)
         actual = parse_maps(raw, request, native)
         if row['parsed'] != actual: raise ValueError('native mapping normalization differs')
         results.append({'case':row['case'],'nonce':row['nonce'],'raw':row['raw'],**actual})

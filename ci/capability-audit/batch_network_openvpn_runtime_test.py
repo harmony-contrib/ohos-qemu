@@ -154,8 +154,26 @@ class RuntimeProtocolTests(unittest.TestCase):
         with self.assertRaises(ValueError): collect.journal(good + json.dumps(other) + '\n', 'a' * 32, 'b' * 36, 20010001, 123)
 
     def test_raw_process_evidence_rejects_unreadable_live_proc(self):
-        with self.assertRaises(ValueError): collect.parse_snapshot('E|/proc/123\n')
-        with self.assertRaises(ValueError): collect.parse_snapshot('')
+        with self.assertRaises(ValueError): collect.parse_snapshot('E|/proc/123\n','a'*32,'11111111-2222-3333-4444-555555555555')
+        with self.assertRaises(ValueError): collect.parse_snapshot('','a'*32,'11111111-2222-3333-4444-555555555555')
+
+    def test_kernel_and_zombie_members_still_block_old_group_cleanup(self):
+        from test_batch_runtime_process_snapshots import BOOT, NONCE, frame, hx, proc_stat, queries
+        records={1:queries(1,ppid=0)}
+        for pid,state,flags in ((2,'I',collect.KERNEL_PROCESS_CONTRACT['PF_KTHREAD']),(3,'Z',0)):
+            records[pid]={'stat':(0,hx(proc_stat(pid,state=state,flags=flags,pgrp=88))),
+                          'exe':(1,''),'exe_target':(1,hx(f'stat: /proc/{pid}/exe: No such file or directory'))}
+        snapshot=collect.parse_snapshot(frame(records=records),NONCE,BOOT)
+        caller=object.__new__(collect.Collector)
+        with self.assertRaisesRegex(ValueError,'old process group remains'):
+            caller.no_group(snapshot,{'worker':{'pid':88}})
+
+    def test_claim_poll_never_swallows_query_or_decoder_failure(self):
+        caller=object.__new__(collect.Collector); calls=[]
+        def broken(label): calls.append(label); raise ValueError('actual proc permission denied')
+        caller.snapshot=broken; caller.data={'profile_sha256':'a'*64}
+        with self.assertRaisesRegex(ValueError,'permission denied'): caller.wait_claim('unit')
+        self.assertEqual(calls,['unit'])
 
     def test_profile_only_permits_one_exact_loopback_endpoint(self):
         with tempfile.TemporaryDirectory() as temporary:

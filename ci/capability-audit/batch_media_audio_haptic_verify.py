@@ -10,6 +10,7 @@ import wave
 
 import batch_media_audio_haptic_project as project
 import batch_media_audio_capture_challenge as pcm
+import batch_system_build_runtime_helpers as product
 import batch_media_knowledge_suite as shared
 import batch_apps_contact_picker_coordinator as signatures
 from enclosing_acceptance_guest import validate_binding
@@ -307,8 +308,11 @@ def verify_evidence(path, archive, boot, *, command):
     helper = helper_binding(spec['helper'])
     require(value['helper'] == helper, 'actual compiled sampler/helper receipts differ')
     for dso, proof in zip(helper['product_DSOs'], value['helper_guest_DSOs']):
-        require(proof['soname'] == dso['soname'] and all(line.split()[0] == dso['sha256'] for line in observed(proof['observation'], proof['script']).splitlines()) and
-                observed(proof['observation']).strip(), 'same-guest helper DSO link identity differs')
+        require(proof['soname'] == dso['soname'], 'same-guest helper DSO SONAME differs')
+        expected_script = product.runtime_guest_script(helper, dso['soname'])
+        require(proof['script'] == expected_script, 'collector supplied another DSO observation command')
+        product.verify_guest_runtime_raw(helper, dso['soname'], observed(proof['observation'], expected_script),
+                                         archive_sha256=value['archive_sha256'])
     require(len(value['helper_guest_DSOs']) == len(helper['product_DSOs']), 'missing actual helper dependencies')
     identities = {}; journals = {}; binding_results = {}
     for role, item in value['roles'].items():
@@ -426,8 +430,11 @@ def verify_evidence(path, archive, boot, *, command):
         maps = observed(segment['sampler']['maps'], 'cat /proc/' + str(begin['pid']) + '/maps')
         require(any(line.split()[-1] == remote_root+'/sampler' for line in maps.splitlines() if line.split()), 'actual sampler executable is not mapped')
         for soname in helper['DT_NEEDED']:
-            paths = {line.split()[-1] for line in maps.splitlines() if line.split() and line.split()[-1].endswith('/' + soname)}
-            require(len(paths) == 1 and any(next(iter(paths)) in observed(p['observation']) for p in value['helper_guest_DSOs'] if p['soname'] == soname),
+            expected_paths = set(product.runtime_guest_paths(helper, soname))
+            paths = {line.split()[-1] for line in maps.splitlines() if line.split() and
+                (line.split()[-1] in expected_paths or line.split()[-1].endswith('/' + soname) or
+                 soname == 'libc.so' and line.split()[-1].endswith('/ld-musl-aarch64.so.1'))}
+            require(paths == expected_paths and any(next(iter(paths)) in observed(p['observation']) for p in value['helper_guest_DSOs'] if p['soname'] == soname),
                     'sampler did not actually map the hashed product DSO: ' + soname)
         result = {'phase': segment['phase'], 'metrics': segment_metrics(segment, data, env['boot_id'])}
         if expected_boundary is not None:

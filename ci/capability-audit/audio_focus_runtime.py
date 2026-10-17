@@ -777,14 +777,26 @@ class AudioFocusRuntime:
             return
         self.closed = True
         errors = []
-        for actor in self.value['actors'].values():
+        boot_failure = None
+        try:
+            self.capture.require_cleanup_boot('focus-cleanup-boot-before-evidence')
+        except Exception as error:
+            boot_failure = 'focus cleanup refused guest access: ' + str(error)
+            errors.append(boot_failure)
+        for actor in (self.value['actors'].values() if boot_failure is None else ()):
+            try:
+                self.capture.require_cleanup_boot('focus-cleanup-boot-before-actor-evidence')
+            except Exception as error:
+                boot_failure = 'focus cleanup refused guest access: ' + str(error)
+                errors.append(boot_failure)
+                break
             try:
                 self.native_rows(actor, 'before-owned-app-cleanup')
                 self.collect_actor(actor, partial=not self.complete)
             except Exception as error:
                 errors.append(str(error))
         try:
-            self.capture.close()
+            self.capture.close(host_only_reason=boot_failure)
         except Exception as error:
             errors.append(str(error))
         if self.capture.process is not None:

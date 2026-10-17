@@ -126,49 +126,66 @@ class NativeTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.verify(link,boot)
 
     def map_fixture(self):
-        request={'nonce':'a'*32,'sequence':6,'boot_id':'11111111-1111-1111-1111-111111111111',
-            'action':'show-real-desktop','details':{'case':'desktop-1'}}
-        proof={'boot_id':request['boot_id'],'library_guest_path':'/system/lib64/'+native.LIBRARY,
-            'image':{'library_sha256':'b'*64}}
-        # Linux stat field22 = start_ticks, not process state or a timer counter.
-        stat='21 (wallpaper service) '+' '.join(['S']+['0']*18+['12345']+['0']*10)
-        raw='\n'.join(['WALLPAPER_NATIVE_MAPS_V1 '+request['nonce'],request['boot_id'],'2049 23 65536',
-            'b'*64+'  '+proof['library_guest_path'],'PROCESS 21','Name:\twallpaper','Pid:\t21',
-            'Uid:\t1000\t1000\t1000\t1000',stat,'/system/bin/sa_main /system/profile/wallpaper.json ',
-            '7f000000-7f001000 r--p 00000000 08:01 23      '+proof['library_guest_path'],
-            '7f001000-7f002000 r-xp 00001000 08:01 23      '+proof['library_guest_path'],
-            'PROCESS_STAT_AFTER',stat,'END_PROCESS',
-            '2049 23 65536','b'*64+'  '+proof['library_guest_path'],'END_WALLPAPER_NATIVE_MAPS_V1 '+request['nonce']])
-        return request,proof,raw
+        from test_batch_runtime_process_snapshots import BOOT, frame, hx, queries
+        request={'nonce':'a'*32,'sequence':6,'boot_id':BOOT,'action':'show-real-desktop','details':{'case':'desktop-1'}}
+        proof={'boot_id':BOOT,'library_guest_path':'/system/lib64/'+native.LIBRARY,'image':{'library_sha256':'b'*64}}
+        maps=('7f000000-7f001000 r--p 00000000 08:01 23      '+proof['library_guest_path']+'\n'+
+              '7f001000-7f002000 r-xp 00001000 08:01 23      '+proof['library_guest_path']+'\n')
+        records={1:queries(1,mode='maps',ppid=0),21:queries(21,mode='maps',exe='/system/bin/sa_main',
+            uid=1000,start=12345,argv=['/system/bin/sa_main','/system/profile/wallpaper.json'],maps=maps)}
+        direct={stage+'-'+kind:(0,hx('2049 23 65536' if kind=='stat' else 'b'*64+'  '+proof['library_guest_path']))
+                for stage in ('file-before','file-after') for kind in ('stat','hash')}
+        return request,proof,frame(mode='maps',records=records,direct=direct).removesuffix('\n')
 
     def test_maps_actual_inode_device_executable_uid_and_process_generation(self):
-        request,proof,raw=self.map_fixture();actual=native.parse_maps(raw,request,proof)
+        request,proof,raw=self.map_fixture(); actual=native.parse_maps(raw,request,proof)
         self.assertEqual((21,1000,12345),(actual['pid'],actual['uid'],actual['process_start_ticks']))
-        self.assertEqual(2,len(actual['mappings']));self.assertFalse(actual['service_token_to_pid_directly_observed'])
+        self.assertEqual(2,len(actual['mappings'])); self.assertFalse(actual['service_token_to_pid_directly_observed'])
         script=native.maps_script(request,proof)
-        for forbidden in ('aa start','connectAbility','kill ','chmod','chown','rm ',' > /'):
-            self.assertNotIn(forbidden,script)
-        # Shell parse only: never execute the host's /proc scan as guest proof.
+        self.assertNotIn('| tr',script); self.assertNotIn('tr "',script)
+        # Parsing only, never the actual host /proc scan.
         checked=subprocess.run(['/bin/sh','-n'],input=script,text=True,capture_output=True)
         self.assertEqual(0,checked.returncode,checked.stderr)
 
+    def test_maps_adapter_matches_actual_guestui_raw_and_rejects_suffixes(self):
+        import guest_ui
+        request,proof,raw=self.map_fixture(); ui=guest_ui.GuestUi.__new__(guest_ui.GuestUi)
+        ui.hdc='/host-only/hdc'; ui.target='bound-target'; marker='__UITEST_EXIT_'+'d'*32+'__='
+        argv=[]
+        def command(values,label):
+            argv.append(values)
+            return raw+'\n\n'+marker+'0\n'
+        ui.command=command
+        with patch.object(guest_ui.secrets,'token_hex',return_value='d'*32):
+            observed=ui.shell(native.maps_script(request,proof),'host-transport-fixture')
+        self.assertEqual(observed,raw)
+        self.assertEqual(native.parse_maps(observed,request,proof)['pid'],21)
+        self.assertEqual(argv[0][1:4],['-t','bound-target','shell'])
+        for suffix in ('\n','\n\n','\r',' ','\t','\v'):
+            with self.subTest(suffix=repr(suffix)),self.assertRaises(ValueError):
+                native.parse_maps(raw+suffix,request,proof)
+        with self.assertRaises(ValueError): native.parse_maps(raw[:-1],request,proof)
+
     def test_bad_maps_nonce_boot_hash_inode_device_uid_noexec_deleted_rejected(self):
+        from test_batch_runtime_process_snapshots import replace_payload
         request,proof,raw=self.map_fixture()
-        for old,new in [('WALLPAPER_NATIVE_MAPS_V1 '+request['nonce'],'WALLPAPER_NATIVE_MAPS_V1 '+'c'*32),
-            (request['boot_id'],'22222222-2222-2222-2222-222222222222'),('b'*64,'c'*64),
-            ('08:01 23','08:01 24'),('08:01 23','08:02 23'),('Uid:\t1000\t1000\t1000\t1000','Uid:\t20000000\t20000000\t20000000\t20000000'),
-            ('r-xp','r--p'),(proof['library_guest_path']+'\nPROCESS_STAT_AFTER',proof['library_guest_path']+' (deleted)\nPROCESS_STAT_AFTER')]:
-            with self.subTest(new=new):
-                    with self.assertRaises(ValueError):native.parse_maps(raw.replace(old,new),request,proof)
+        for old,new in [('b'*64,'c'*64),('08:01 23','08:01 24'),('08:01 23','08:02 23'),
+                        ('Uid:\t1000\t1000\t1000\t1000','Uid:\t20000000\t20000000\t20000000\t20000000'),
+                        ('r-xp','r--p'),(proof['library_guest_path']+'\n',proof['library_guest_path']+' (deleted)\n')]:
+            with self.subTest(new=new),self.assertRaises(ValueError): native.parse_maps(replace_payload(raw,old,new).removesuffix('\n'),request,proof)
+        for value in (raw.replace(request['nonce'],'c'*32,1),raw.replace(request['boot_id'],'22222222-2222-2222-2222-222222222222'),raw.rsplit('END|',1)[0]):
+            with self.assertRaises(ValueError): native.parse_maps(value,request,proof)
 
     def test_native_process_cannot_change_generation_during_mapping_read(self):
-        request,proof,raw=self.map_fixture();before,after=raw.split('PROCESS_STAT_AFTER\n')
-        with self.assertRaisesRegex(ValueError,'generation changed'):
-            native.parse_maps(before+'PROCESS_STAT_AFTER\n'+after.replace('12345','12346'),request,proof)
+        request,proof,raw=self.map_fixture(); lines=raw.splitlines()
+        for i,line in enumerate(lines):
+            if line.startswith('Q|21|stat_after|0|'):
+                fields=line.split('|'); fields[4]=bytes.fromhex(fields[4]).replace(b'12345',b'12346').hex(); lines[i]='|'.join(fields)
+        with self.assertRaisesRegex(ValueError,'generation changed'): native.parse_maps('\n'.join(lines),request,proof)
 
     def test_only_two_public_challenge_desktop_requests_collect_read_only_witnesses(self):
         import batch_media_wallpaper_coordinator as coordinator
-        owner=coordinator.Coordinator.__new__(coordinator.Coordinator);calls=[];owner.home=lambda:calls.append('home')
+        owner=coordinator.Coordinator.__new__(coordinator.Coordinator); calls=[]; owner.home=lambda:calls.append('home')
         with (patch.object(native,'observe_maps',side_effect=lambda *args:calls.append('maps')),
               patch.object(native,'observe_renderer_hap',side_effect=lambda *args:calls.append('HAP'))):
             for case in ('desktop-1','desktop-2','desktop-restore'):
@@ -176,8 +193,8 @@ class NativeTests(unittest.TestCase):
         self.assertEqual(['home','maps','HAP','home','maps','HAP','home'],calls)
 
     def test_two_mapped_processes_are_not_arbitrarily_selected(self):
-        request,proof,raw=self.map_fixture();block=raw[raw.index('PROCESS 21'):raw.index('END_PROCESS')+len('END_PROCESS')]
-        with self.assertRaises(ValueError):native.parse_maps(raw.replace(block,block+'\n'+block),request,proof)
+        request,proof,raw=self.map_fixture(); block=raw[raw.index('PID|21\n'):raw.index('TERMINAL|21|')]
+        with self.assertRaises(ValueError): native.parse_maps(raw.replace(block,block+block),request,proof)
 
     def mapping_protocol(self):
         request,proof,raw=self.map_fixture();rows=[];actions=[];commands=[]
@@ -187,11 +204,11 @@ class NativeTests(unittest.TestCase):
             actual_raw=raw.replace(request['nonce'],item['nonce']);artifact=self.root/(case+'.txt');artifact.write_text(actual_raw)
             marker='__UITEST_EXIT_'+format(sequence,'032x')+'__='
             log=self.root/(case+'.log');log.write_text(actual_raw+'\n\n'+marker+'0\n')
-            commands.append({'label':case+'-native-maps','argv':['hdc','-t','127.0.0.1:12345','shell',
+            commands.append({'label':case+'-native-maps-scan-0','argv':['hdc','-t','127.0.0.1:12345','shell',
                 native.maps_script(item,proof)+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"'],
                 'exit_code':0,**record(log)})
             rows.append({'case':case,'nonce':item['nonce'],'sequence':sequence,'began_ns':20,'finished_ns':30,
-                'raw':record(artifact),'parsed':native.parse_maps(actual_raw,item,proof)})
+                'capture_label':case+'-native-maps-scan-0','raw':record(artifact),'parsed':native.parse_maps(actual_raw,item,proof)})
             actions.append({'sequence':sequence,'request':record(path),'began_ns':10,'finished_ns':40})
         return {'native_mappings':rows,'commands':commands,'actions':actions},proof
 
@@ -310,9 +327,10 @@ class NativeTests(unittest.TestCase):
             'files_sha256':{'contacts-theme-provider-evidence.json':'b'*64}}
         actual={'hap':record(image),'embedded_profile':record(profile),'system_image':native_proof['system_image'],
             'archive_guard':{'path':'/fixture/provider.json','sha256':'b'*64},'sdk':{'fixture':'bound source inventory'},
-            'image_identity':{'image_inode':23},'signer_inputs':{'fixed':'crypto input'}}
+            'image_identity':{'image_inode':23},'signer_inputs':{'fixed':'crypto input'},
+            'production':{'scope':'HOST-ONLY actual native unsigned/signed lineage fixture'}}
         suite.verify_provider_proof(actual,copy.deepcopy(actual),native_proof)
-        for key in ('system_image','archive_guard','sdk','image_identity','signer_inputs'):
+        for key in ('system_image','archive_guard','sdk','production','image_identity','signer_inputs'):
             bad=copy.deepcopy(actual);bad[key]={}
             with self.assertRaises(ValueError):suite.verify_provider_proof(bad,actual,native_proof)
         changed=copy.deepcopy(native_proof);changed['files_sha256']['contacts-theme-provider-evidence.json']='c'*64

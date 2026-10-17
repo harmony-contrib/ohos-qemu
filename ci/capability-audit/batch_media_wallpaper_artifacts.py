@@ -85,6 +85,46 @@ def mapped_record(value,path_map,output_root=None):
     return record(checked({'path':str(path),'sha256':value['sha256']}))
 
 
+def installed_runtime_binding(row, needed, inputs):
+    """Retain exact installed profile and ELF SONAME identities for every needed DSO."""
+    import batch_system_build_runtime_helpers as product
+    if needed != row.get('DT_NEEDED') or len(needed) != len(set(needed)):
+        raise ValueError('complete actual ELF DT_NEEDED binding required')
+    product.validate_installed_profile(row.get('installed_runtime_profile', {}).get('profile'))
+    dsos = []
+    for soname in needed:
+        records = product.runtime_link_records(row, soname)
+        if any(inputs.get(item['path']) != item for item in records):
+            raise ValueError('installed DSO absent from unchanged actual linker inputs: ' + soname)
+        dsos.append({'soname': soname, 'sha256': records[0]['sha256']})
+    return {key: row[key] for key in ('installed_runtime_profile', 'actual_link_inputs',
+                                     'actual_link_input_sonames')} | {'product_DSOs': dsos}
+
+
+def verify_runtime_guest_observation(binding, soname, observation, commands, *, target, archive_sha256):
+    """Reconstruct the profile-derived command and bind the original transport bytes."""
+    import re
+    import batch_system_build_runtime_helpers as product
+    index = observation.get('command')
+    if type(index) is not int or not 0 <= index < len(commands):
+        raise ValueError('actual installed DSO observation command missing')
+    command = commands[index]; argv = command.get('argv', [])
+    script = product.runtime_guest_script(binding, soname)
+    if len(argv) != 5 or argv[1:4] != ['-t', target, 'shell'] or command.get('exit_code') != 0:
+        raise ValueError('installed DSO command escaped the actual guest')
+    marker = re.search(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[-1])
+    if marker is None or argv[-1] != script + '; task_ui_rc=$?; printf "\\n' + marker[0] + '%s\\n" "$task_ui_rc"':
+        raise ValueError('installed DSO command differs from actual runtime profile')
+    transport = checked({k: command[k] for k in ('path', 'sha256')}).read_text().replace('\r', '')
+    ending = '\n' + marker[0] + '0\n'
+    if transport.count(marker[0]) != 1 or not transport.endswith(ending):
+        raise ValueError('installed DSO guest command did not actually succeed')
+    raw = checked(observation['actual_hashes']).read_text()
+    if transport[:-len(ending)].rstrip('\n') != raw:
+        raise ValueError('installed DSO raw bytes differ from actual transport')
+    return product.verify_guest_runtime_raw(binding, soname, raw, archive_sha256=archive_sha256)
+
+
 def helper_binding(name, binary, source, build_file, output_root, path_map=None):
     """Consume the real 0f20ee5 builder report, complete logs and DSO hashes."""
     selector, fixture, required = HELPERS[name]
@@ -138,22 +178,13 @@ def helper_binding(name, binary, source, build_file, output_root, path_map=None)
         if type(command.get('exit_code'))is not int or command['exit_code']!=0 or command.get('timed_out'):
             raise ValueError('selected helper command failed')
         logs.append(mapped_record({'path':command['log'],'sha256':command['sha256']},path_map,root))
-    dsos=[]
-    for soname in needed:
-        rows=[item for item in row['linked_libraries'] if Path(item['path']).name==soname]
-        if not rows:
-            rows=[item for item in row['actual_link_inputs'] if Path(item['path']).name==soname]
-        unique={item['sha256']for item in rows}
-        if len(unique)!=1:raise ValueError('one actual linker-opened DSO hash required: '+soname)
-        inputs=original['inputs']if original is not None else report['inputs']
-        if not any(item['path']in inputs and inputs[item['path']]['sha256']==item['sha256']for item in rows):
-            raise ValueError('DSO not bound by unchanged actual builder inputs')
-        dsos.append({'soname':soname,'sha256':next(iter(unique))})
+    inputs=original['inputs']if original is not None else report['inputs']
+    runtime=installed_runtime_binding(row,needed,inputs)
     return {'status':'pass','source_sha256':sha(source),'binary_sha256':sha(binary),'arch':'arm64',
             'actual_builder_report':record(build_file),'actual_builder_output':str(root),
             'actual_builder_path_map':path_map,'original_build_report':original_ref,
             'original_build_status':original.get('status')if original is not None else report.get('status'),
-            'actual_build_logs':logs,'DT_NEEDED':needed,'product_DSOs':dsos}
+            'actual_build_logs':logs,'DT_NEEDED':needed,**runtime}
 
 
 def adapt_helpers(item, output):

@@ -189,11 +189,23 @@ class WallpaperSuiteTests(unittest.TestCase):
                 log=root/(kind+'.log');log.write_text('unit observation '+kind)
                 commands.append({'label':'wallpaper_token_query-'+kind,'argv':['fixture-tool',kind],
                     'exit_code':0,'log':str(log),'sha256':sha(log)})
-            dso={'path':'/ohos/out/arm64_virt/security/libaccesstoken_sdk.z.so','sha256':'d'*64}
+            from test_family_installed_runtime_bindings import runtime_row
+            installed, _ = runtime_row()
+            profile = installed['installed_runtime_profile']['profile']
+            selected = profile['dsos'].pop('libquery.z.so'); selected['soname'] = 'libaccesstoken_sdk.z.so'
+            selected['staged']['path'] = selected['staged']['path'].replace('libquery.z.so', 'libaccesstoken_sdk.z.so')
+            selected['staged']['sha256'] = 'd'*64
+            selected['image_file']['path'] = selected['image_file']['path'].replace('libquery.z.so', 'libaccesstoken_sdk.z.so')
+            selected['image_file']['sha256'] = 'd'*64
+            selected['image_member'] = selected['image_member'].replace('libquery.z.so', 'libaccesstoken_sdk.z.so')
+            profile['dsos']['libaccesstoken_sdk.z.so'] = selected
+            dso = selected['staged']
             row={'status':'pass_compile_link_ONLY','fixture':'batch_media/wallpaper_receipts/token_query.cpp',
                 'source':record(source),'private_source_sha256':sha(source),'binary_sha256':sha(binary),
                 'CFI_preserved':True,'runtime_validated':False,'DT_NEEDED':['libaccesstoken_sdk.z.so'],
                 'elf':{'sha256':sha(binary)},'linked_libraries':[dso],'actual_link_inputs':[dso],
+                'installed_runtime_profile':installed['installed_runtime_profile'],
+                'actual_link_input_sonames':{dso['path']:'libaccesstoken_sdk.z.so'},
                 'compile_command':commands[0]['argv'],'link_command':commands[1]['argv']}
             original={'scope':'diagnostic_new_helpers_using_existing_actual_product_GN_flags_NOT_fresh_GN_target_selection_or_runtime',
                 'product':'arm64_virt','plan_only':False,'changed_inputs':[],'builder_sha256':sha(builder),
@@ -204,7 +216,9 @@ class WallpaperSuiteTests(unittest.TestCase):
                 self.assertEqual('d'*64,artifacts.helper_binding('token',binary,source,record(report),root)['product_DSOs'][0]['sha256'])
                 changes=[lambda v:v.update(changed_inputs=['changed']),lambda v:v['helpers']['wallpaper_token_query'].update(status='fail'),
                          lambda v:v['helpers']['wallpaper_token_query'].update(private_source_sha256='0'*64),
-                         lambda v:v['commands'][0].update(exit_code=1),lambda v:v['inputs'].clear()]
+                         lambda v:v['commands'][0].update(exit_code=1),lambda v:v['inputs'].clear(),
+                         lambda v:v['helpers']['wallpaper_token_query'].pop('installed_runtime_profile'),
+                         lambda v:v['helpers']['wallpaper_token_query'].pop('actual_link_input_sonames')]
                 for change in changes:
                     value=copy.deepcopy(original);change(value);report.write_text(json.dumps(value))
                     with self.assertRaises(ValueError):artifacts.helper_binding('token',binary,source,record(report),root)

@@ -13,17 +13,20 @@ import time
 from build_arkui_selection_probe import BUNDLE, SCOPE, ROLES, CONTRACTS, verify_inputs
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
 from insight_contract_common import file_record
-from run_root_probe import digest
+from run_root_probe import (digest, require_signer_executor, TRUSTED_SIGNER_IMAGE_ID,
+                            TRUSTED_SIGNER_SOURCE_VOLUME)
 from selection_contract_common import identity
 from selection_menu_runtime import click_menu
 from selection_permission_runtime import grant_once
 from selection_runtime import capture
 from verify_selection_results import rows, verify, verify_presentations
+from verify_selection_evidence import selection_signing_argv
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args):
+    require_signer_executor(args.docker_image, args.source_volume)
     output = args.output.resolve(); output.mkdir(parents=True,exist_ok=False)
     report = dict(status='fail',scope=SCOPE,first_artifact_behavior_gate_passed=False,
         archive=str(args.archive.resolve()),archive_sha256=digest(args.archive),boot_id=args.boot_id,
@@ -83,15 +86,8 @@ def run(args):
                 inputs = project/'arkui-selection-probe-inputs.json'; verify_inputs(json.loads(inputs.read_text()))
                 unsigned = project/'entry/build/default/outputs/default/entry-default-unsigned.hap'
                 signed = root/'selection-signed.hap'
-                command(['docker','run','--rm','--platform','linux/amd64',
-                    '--mount','type=volume,src='+args.source_volume+',dst=/ohos,readonly',
-                    '--mount','type=bind,src='+str(ROOT)+',dst=/work,readonly',
-                    '--mount','type=bind,src='+str(output)+',dst=/probe',args.docker_image,
-                    'python3','/work/ci/capability-audit/sign_arkui_selection_probe.py',
-                    '--signer-dist','/ohos/developtools/hapsigner/dist',
-                    '--jar','/ohos/prebuilts/ohos-sdk/linux/26.0.0/toolchains/lib/hap-sign-tool.jar',
-                    '--unsigned','/probe/'+unsigned.relative_to(output).as_posix(),
-                    '--output','/probe/'+signed.relative_to(output).as_posix(),'--role',role,'--udid',args.udid],
+                signing_application = dict(unsigned_hap=dict(path=str(unsigned)), signed_hap=dict(path=str(signed)))
+                command(selection_signing_argv(signing_application, role, args.udid),
                     role+'-sign-real-selection-caller',300)
                 command([hdc,'-t',args.target,'uninstall',BUNDLE],role+'-remove-own-old-app',allow_failure=True)
                 command([hdc,'-t',args.target,'install',signed],role+'-install-real-selection-caller')
@@ -186,6 +182,6 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('archive','sdk','output','hdc','hvigor-home','node-home'): parser.add_argument('--'+name,type=Path,required=True)
     for name in ('arch','device','target','udid','boot-id'): parser.add_argument('--'+name,required=True)
-    parser.add_argument('--source-volume',default='ohos-qemu-7_0-release-source')
-    parser.add_argument('--docker-image',default='ohos-qemu-m144-build-env:7.0-release')
+    parser.add_argument('--source-volume',default=TRUSTED_SIGNER_SOURCE_VOLUME)
+    parser.add_argument('--docker-image',default=TRUSTED_SIGNER_IMAGE_ID)
     raise SystemExit(run(parser.parse_args()))

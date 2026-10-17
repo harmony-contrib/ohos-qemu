@@ -37,7 +37,12 @@ def helper_binding(spec):
     report = load(checked(spec['build']))
     require(report.get('audio_haptic_extension', {}).get('sha256') == sha(Path(__file__)),
             'actual helper extension source/anchor configuration changed')
-    return dict(proof, binary=record(binary), source=record(FIX / 'sampler.cpp'))
+    row = report['helpers'][NAME]
+    require(report.get('verify_existing') is not True and row.get('installed_runtime_profile') == report.get('installed_runtime_profile') and
+            report.get('installed_runtime_image_proof', {}).get('dsos'), 'fresh actual installed-runtime relink/image proof required')
+    runtime = {key: row[key] for key in ('installed_runtime_profile', 'actual_link_inputs', 'actual_link_input_sonames')}
+    for soname in proof['DT_NEEDED']: product.runtime_link_records(runtime, soname)
+    return dict(proof, **runtime, binary=record(binary), source=record(FIX / 'sampler.cpp'))
 
 
 def main():
@@ -45,9 +50,12 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--plan-only', action='store_true')
+    parser.add_argument('--runtime-profile', type=Path, required=True)
+    parser.add_argument('--runtime-profile-sha256', required=True)
     args = parser.parse_args()
     configure()
-    builder = product.Builder(args.source_root, args.output, [NAME], args.plan_only)
+    builder = product.Builder(args.source_root, args.output, [NAME], args.plan_only,
+                              runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256)
     builder.report['audio_haptic_extension'] = record(Path(__file__))
     result = builder.run()
     print(json.dumps({'status': result['status'], 'helpers': result['helpers']}, indent=2))

@@ -33,7 +33,11 @@ from run_with_owned_hdc import run as isolated_run
 sys.path.insert(0, str(ROOT / 'ci/capability-audit'))
 from hitrace_kernel_contract import trace_configuration, verify_restored_configuration, verify_rows, verify_trace
 from run_normal_hap_probe import require_normal_identity
+from run_root_probe import require_signer_executor, TRUSTED_SIGNER_IMAGE_ID, TRUSTED_SIGNER_SOURCE_VOLUME
 from hitrace_failure_snapshot import capture as capture_failure
+
+require_signer_executor(os.environ.get('QEMU_TEST_DOCKER_IMAGE', TRUSTED_SIGNER_IMAGE_ID),
+                        os.environ.get('QEMU_TEST_SOURCE_VOLUME', TRUSTED_SIGNER_SOURCE_VOLUME))
 
 if not args.owned_child:
     BASE.mkdir(parents=True, exist_ok=True)
@@ -104,7 +108,7 @@ try:
         '--mount', 'type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly',
         '--mount', 'type=bind,src=' + str(ROOT) + ',dst=/work,readonly',
         '--mount', 'type=bind,src=' + str(OUTPUT) + ',dst=/probe',
-        'ohos-qemu-m144-build-env:7.0-release', 'python3', '/work/ci/capability-audit/sign_web_probe.py',
+        TRUSTED_SIGNER_IMAGE_ID, 'python3', '/work/ci/capability-audit/sign_web_probe.py',
         '--signer-dist', '/ohos/developtools/hapsigner/dist',
         '--jar', '/ohos/prebuilts/ohos-sdk/linux/26.0.0/toolchains/lib/hap-sign-tool.jar',
         '--unsigned', '/probe/project/entry/build/default/outputs/default/entry-default-unsigned.hap',

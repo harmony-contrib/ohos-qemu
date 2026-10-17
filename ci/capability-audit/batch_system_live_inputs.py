@@ -166,6 +166,12 @@ def verify_project(project, sdk, run_id, arch):
     return value
 
 
+def verify_signed_payload(unsigned, signed):
+    """Use the shared exact member/bitmap contract on real SDK and signed HAPs."""
+    from batch_apps_contact_picker_coordinator import verify_signed_payload as shared
+    return shared(unsigned, signed)
+
+
 def hap_payload(path):
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()

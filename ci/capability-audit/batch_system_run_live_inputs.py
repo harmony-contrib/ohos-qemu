@@ -18,7 +18,7 @@ import struct
 import subprocess
 import time
 
-from batch_system_live_inputs import (BUNDLE, SOCKETS, SCOPE, digest, hap_payload,
+from batch_system_live_inputs import (BUNDLE, SOCKETS, SCOPE, digest, verify_signed_payload,
     load_rows, nonce, read_json, trace, verify_project, write_json)
 from batch_system_gnss_controller import encode_sample, read_exact
 from guest_ui import GuestUi
@@ -188,8 +188,7 @@ class Capture:
             build = read_json(a.project / 'live-inputs-build.json')
             if build.get('status') != 'pass' or digest(build['unsigned_hap']) != build['unsigned_hap_sha256']:
                 raise ValueError('actual SDK-built caller evidence required')
-            if hap_payload(a.signed_hap) != hap_payload(build['unsigned_hap']):
-                raise ValueError('signed HAP payload differs from actual SDK output')
+            verify_signed_payload(build['unsigned_hap'], a.signed_hap)
             r['contract_sha256'] = digest(a.project / 'live-inputs-contract.json')
             r['build_sha256'] = digest(a.project / 'live-inputs-build.json')
             # Verify the actual installed HAP signature with the real tool; no profile shim.

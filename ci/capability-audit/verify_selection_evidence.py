@@ -5,13 +5,45 @@ import re
 from build_arkui_selection_probe import BUNDLE, SCOPE, ROLES, CONTRACTS
 from guest_ui import select_node
 from insight_contract_common import checked_file
-from run_root_probe import digest
+from run_root_probe import digest, TRUSTED_SIGNER_IMAGE_ID, TRUSTED_SIGNER_SOURCE_VOLUME
 from selection_contract_common import verify_application
 from selection_menu_runtime import menu_button
 from selection_permission_runtime import consent_node
 from verify_selection_results import PHASES, rows, verify, verify_presentations
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def selection_signing_argv(application, role, udid):
+    if role not in ROLES or re.fullmatch('[a-fA-F0-9]{64}', udid) is None:
+        raise ValueError('exact selection signing role and device required')
+    unsigned = Path(application['unsigned_hap']['path'])
+    signed = Path(application['signed_hap']['path'])
+    if not unsigned.is_absolute() or not signed.is_absolute():
+        raise ValueError('absolute selection HAP paths required')
+    output = signed.parents[1]
+    return ['docker','run','--rm','--platform','linux/amd64',
+        '--mount','type=volume,src='+TRUSTED_SIGNER_SOURCE_VOLUME+',dst=/ohos,readonly',
+        '--mount','type=bind,src='+str(ROOT)+',dst=/work,readonly',
+        '--mount','type=bind,src='+str(output)+',dst=/probe',TRUSTED_SIGNER_IMAGE_ID,
+        'python3','/work/ci/capability-audit/sign_arkui_selection_probe.py',
+        '--signer-dist','/ohos/developtools/hapsigner/dist',
+        '--jar','/ohos/prebuilts/ohos-sdk/linux/26.0.0/toolchains/lib/hap-sign-tool.jar',
+        '--unsigned','/probe/'+unsigned.relative_to(output).as_posix(),
+        '--output','/probe/'+signed.relative_to(output).as_posix(),'--role',role,'--udid',udid]
+
+
+def verify_signing_installation(application, role, udid, hdc, target, build_index, signing, installation):
+    sign_index, sign, sign_log = signing
+    install_index, install, install_log = installation
+    if (not build_index < sign_index < install_index or
+            sign.get('exit_code') != 0 or install.get('exit_code') != 0 or
+            sign['argv'] != selection_signing_argv(application, role, udid) or
+            install['argv'] != [hdc,'-t',target,'install',application['signed_hap']['path']] or
+            not re.search('success',install_log,re.I) or re.search('failed to install',install_log,re.I) or
+            any(marker not in sign_log for marker in ('verify codesign success','Digest verify result: true',
+                'verify-app success','verify permission sign success'))):
+        raise ValueError('exact device-bound selection signature and actual installation required')
 
 
 def verify_evidence(document, archive_sha, boot_id, arch, device, target):
@@ -119,23 +151,10 @@ def verify_evidence(document, archive_sha, boot_id, arch, device, target):
         if (build_index <= previous_role_end or build['argv'][1:] != [str(ROOT/'ci/capability-audit/build_arkui_selection_probe.py'),*expected] or
                 any(marker not in build_log for marker in ('CompileArkTS','BUILD SUCCESSFUL','0 up-to-date'))):
             raise ValueError('fresh official checked selection compilation required for every role')
-        sign_index, sign, sign_log = one(role + '-sign-real-selection-caller')
-        output = Path(app['signed_hap']['path']).parents[1]
-        expected_sign = ['docker','run','--rm','--platform','linux/amd64',
-            '--mount','type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly',
-            '--mount','type=bind,src='+str(ROOT)+',dst=/work,readonly',
-            '--mount','type=bind,src='+str(output)+',dst=/probe','ohos-qemu-m144-build-env:7.0-release',
-            'python3','/work/ci/capability-audit/sign_arkui_selection_probe.py',
-            '--signer-dist','/ohos/developtools/hapsigner/dist','--jar','/ohos/prebuilts/ohos-sdk/linux/26.0.0/toolchains/lib/hap-sign-tool.jar',
-            '--unsigned','/probe/'+Path(app['unsigned_hap']['path']).relative_to(output).as_posix(),
-            '--output','/probe/'+Path(app['signed_hap']['path']).relative_to(output).as_posix(),'--role',role,'--udid',document['udid']]
-        install_index, install, install_log = one(role + '-install-real-selection-caller')
-        if (not build_index < sign_index < install_index or sign['argv'] != expected_sign or
-                install['argv'] != [hdc,'-t',target,'install',app['signed_hap']['path']] or
-                not re.search('success',install_log,re.I) or re.search('failed to install',install_log,re.I) or
-                any(marker not in sign_log for marker in ('verify codesign success','Digest verify result: true',
-                    'verify-app success','verify permission sign success'))):
-            raise ValueError('exact device-bound selection signature and actual installation required')
+        signing = one(role + '-sign-real-selection-caller')
+        installation = one(role + '-install-real-selection-caller')
+        verify_signing_installation(app, role, document['udid'], hdc, target, build_index, signing, installation)
+        install_index = installation[0]
         identity_index, _, _ = shell(role + '-actual-selection-BMS','bm dump -n '+BUNDLE,
                                    checked_file(app['application_identity']).read_text())
         start_index, _, _ = shell(role + '-start-real-selection-caller','aa start -a EntryAbility -b '+BUNDLE)

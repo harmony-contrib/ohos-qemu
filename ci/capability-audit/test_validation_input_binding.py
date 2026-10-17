@@ -78,6 +78,17 @@ class ValidationBindingTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     verify_update(self.inputs, self.current, 'f' * 64, path)
 
+    def test_F09_exact_runtime_QA_receipt_keeps_every_production_input_frozen(self):
+        from validation_input_binding import F09_RUNTIME_QA_TEST_ONLY
+        current = dict(self.current, **{name: '9' * 64 for name in F09_RUNTIME_QA_TEST_ONLY})
+        self.assertEqual(self.verify(current)['changed_test_files'], self.receipt(current)['changed_test_files'])
+        for name in ('scripts/ext_image_entries.py', 'scripts/verify_runtime_elf_contract.py',
+                     'scripts/verify_first_artifact_gate.py', 'scripts/build_standard_qemu_in_docker.sh',
+                     'ci/capability-audit/unreviewed.py', 'patches/new.patch',
+                     'docs/capability-audit/native-arkts11-gap-ledger.json'):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                self.verify(dict(current, **{name: '8' * 64}))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -171,6 +171,103 @@ def services(actor, started):
     return active, cleanup[0]
 
 
+def verify_capture_boot(capture, value, boot):
+    if capture.get('target') != value['target'] or capture.get('device') != value['device']:
+        raise ValueError('focus producer target/device differs from enclosing run')
+    capture_boot = Path(capture['boot'])
+    if sha(capture_boot) != capture['boot_sha256'] or json.loads(capture_boot.read_text()) != boot:
+        raise ValueError('focus producer has another enclosing boot receipt')
+
+
+def verify_application_cleanup(value, capture):
+    """Replay real lifecycle cleanup after retained public focus observations."""
+    from audio_capture_runtime import BOOT_SCRIPT, cleanup_boot_prefix
+    from hdc_transport import failed
+    bundles = list(contract.BUNDLES); cleanup = value.get('owned_application_cleanup', {})
+    if (cleanup.get('complete') is not True or cleanup.get('errors') != [] or capture.get('cleanup_boot_failure') or
+            cleanup.get('boot_id') != value['boot_id'] or
+            cleanup.get('bundles') != bundles or cleanup.get('confirmed_installed') != bundles or
+            cleanup.get('scope') != 'owned_Focus_HAP_lifecycle_cleanup_NOT_public_Stop_Release_evidence' or
+            len(cleanup.get('roles', [])) != 2 or len(cleanup.get('uninstalls', [])) != 2):
+        raise ValueError('complete real owned Focus application cleanup required')
+    commands = capture['orchestration_commands']; used = set()
+    def output(index, argv):
+        if type(index) is not int or index in used or not 0 <= index < len(commands):
+            raise ValueError('missing/reused Focus cleanup command')
+        used.add(index); command = commands[index]
+        if command['argv'] != argv or command.get('exit_code') != 0 or command.get('timed_out'):
+            raise ValueError('actual Focus cleanup command failed or differs')
+        streams = []
+        for name in ('stdout', 'stderr'):
+            path = Path(command[name + '_path'])
+            if sha(path) != command[name + '_sha256']: raise ValueError('Focus cleanup transport log changed')
+            streams.append(path.read_text().replace('\r', ''))
+        if streams[1] or failed(*streams): raise ValueError('actual Focus cleanup transport failed')
+        return streams[0]
+    rows = cleanup.get('observations', []); indices = [r['command_index'] for r in rows]
+    if not rows or indices != sorted(set(indices)): raise ValueError('ordered unique Focus cleanup observations required')
+    for row in rows:
+        index = row['command_index']
+        if type(index) is not int or not 0 <= index < len(commands): raise ValueError('Focus observation command missing')
+        argv = commands[index]['argv']
+        if (len(argv) != 5 or argv[:4] != [capture['hdc']['argv0'], '-t', value['target'], 'shell']):
+            raise ValueError('Focus cleanup belongs to another transport/target')
+        suffix = re.fullmatch(re.escape(row['script']) +
+            r'; focus_rc=\$\?; printf "\\n(__FOCUS_EXIT_[a-f0-9]{32}__=)%s\\n" "\$focus_rc"', argv[4])
+        if suffix is None: raise ValueError('exact Focus cleanup shell/exit wrapper required')
+        text = output(index, argv)
+        footer = re.search(r'(?:^|\n)' + re.escape(suffix[1]) + r'0\n$', text)
+        if footer is None or text[:footer.start()].rstrip('\n') != row['raw']:
+            raise ValueError('Focus cleanup guest exit/raw observation differs')
+    def one(label, script=None):
+        matches = [r for r in rows if r['label'] == label]
+        if len(matches) != 1 or script is not None and matches[0]['script'] != script:
+            raise ValueError('required actual Focus cleanup observation missing: ' + label)
+        return matches[0]
+    boot = value['boot_id']
+    for row in rows:
+        if row['script'] == BOOT_SCRIPT and row['raw'].strip() != boot:
+            raise ValueError('Focus cleanup observed another kernel')
+    one('focus-application-cleanup-boot-before', BOOT_SCRIPT)
+    one('focus-application-cleanup-boot-after', BOOT_SCRIPT)
+    for bundle, role, uninstall in zip(bundles, cleanup['roles'], cleanup['uninstalls']):
+        if role.get('bundle') != bundle or role.get('kernel_and_ability_absent') is not True:
+            raise ValueError('Focus cleanup role is foreign/incomplete')
+        before = one('focus-stop-boot-before-' + bundle, BOOT_SCRIPT)
+        stopped = one('stop-owned-' + bundle, cleanup_boot_prefix(boot) + 'aa force-stop ' + bundle)
+        after = one('focus-stop-boot-after-' + bundle, BOOT_SCRIPT)
+        ready = one('focus-uninstall-boot-before-' + bundle, BOOT_SCRIPT)
+        if stopped['raw'].strip() != 'force stop process successfully.': raise ValueError('Focus stop did not succeed')
+        drain = [r for r in rows if stopped['command_index'] < r['command_index'] < after['command_index']]
+        if len(drain) < 4 or [r['label'] for r in drain[-4:]] != ['owned-process-drain', 'owned-ability-drain'] * 2:
+            raise ValueError('two actual Focus kernel/AA absence rounds required')
+        for pids, aa in zip(drain[-4::2], drain[-3::2]):
+            expected = ('focus_pids=$(pidof ' + bundle + '); if test -n "$focus_pids"; '
+                        'then printf "%s\\n" "$focus_pids"; else echo ABSENT; fi')
+            if (pids['script'] != expected or pids['raw'].strip() != 'ABSENT' or aa['script'] != 'aa dump -a -u 100' or
+                    not re.search(r'^User ID #100\s*$', aa['raw'], re.M) or 'AppRunningRecords:' not in aa['raw'] or
+                    re.search(r'(?<![A-Za-z0-9_.])' + re.escape(bundle) + r'(?![A-Za-z0-9_.])', aa['raw'])):
+                raise ValueError('Focus kernel/AA cleanup does not prove absence')
+        argv = [capture['hdc']['argv0'], '-t', value['target'], 'uninstall', bundle]
+        raw = output(uninstall['command_index'], argv)
+        if (uninstall['bundle'] != bundle or uninstall['argv'] != argv or uninstall['raw'] != raw or
+                uninstall.get('already_absent_after_failed_install') is not False or
+                not re.search('uninstall bundle successfully', raw, re.I) or re.search(r'\[Fail\]|failed', raw, re.I) or
+                not before['command_index'] < stopped['command_index'] < after['command_index'] < ready['command_index'] < uninstall['command_index']):
+            raise ValueError('actual owned Focus uninstall missing or out of order')
+        absence = one('focus-uninstalled-data-and-process-absent-' + bundle,
+            'test ! -d /data/app/el2/100/base/' + bundle + ' && test -z "$(pidof ' + bundle + ')"')
+        if absence['command_index'] <= uninstall['command_index']: raise ValueError('Focus absence predates uninstall')
+    bms = one('focus-cleanup-full-BMS-list', 'bm dump -a')
+    aa = one('focus-cleanup-full-AA-list', 'aa dump -a -u 100')
+    if ('com.ohos.' not in bms['raw'] or not re.search(r'^User ID #100\s*$', aa['raw'], re.M) or
+            'AppRunningRecords:' not in aa['raw'] or any(re.search(r'(?<![A-Za-z0-9_.])' + re.escape(b) +
+            r'(?![A-Za-z0-9_.])', bms['raw'] + '\n' + aa['raw']) for b in bundles) or
+            not max(r['command_index'] for r in cleanup['uninstalls']) < bms['command_index'] < aa['command_index'] <
+                one('focus-application-cleanup-boot-after')['command_index']):
+        raise ValueError('final Focus BMS/AA/boot cleanup proof incomplete')
+
+
 def verify(args):
     value = json.loads(args.runtime.read_text())
     run, archive_sha = value['run_id'], sha(args.archive)
@@ -188,10 +285,13 @@ def verify(args):
     binding(boot, archive_sha, args.boot_id, args.arch, value['device'], value['target'])
     capture = json.loads(referenced(common, 'capture_runtime').read_text())
     if (capture.get('archive_sha256') != archive_sha or capture.get('boot_id') != args.boot_id or
+            capture.get('target') != value['target'] or capture.get('device') != value['device'] or
             capture.get('run_id') != run or capture.get('arch') != args.arch or capture.get('cleanup_errors') != [] or
             capture.get('runner_sha256') != sha(HERE / 'audio_capture_runtime.py')):
         raise ValueError('focus independent producer/tools bound to another actual run')
-    verify_tools(capture, args.arch)
+    verify_capture_boot(capture, value, boot)
+    verify_tools(capture, args.arch, parent_persona='audio-focus')
+    verify_application_cleanup(value, capture)
     configuration = {'rate': 48000, 'channels': 2, 'repeat': 60, 'timeout_ms': 90000,
                      'source_frames': 48000, 'expected_frames': 2880000}
     if common.get('producer_configuration') != configuration:

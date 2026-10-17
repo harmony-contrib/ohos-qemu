@@ -19,6 +19,7 @@ import time
 
 import batch_media_audio_haptic_project as project
 import batch_media_audio_haptic_build_sampler as sampler_build
+import batch_system_build_runtime_helpers as product
 import batch_media_knowledge_suite as shared
 import batch_apps_contact_picker_coordinator as signatures
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
@@ -474,11 +475,9 @@ def run(args):
         value['helper_guest_DSOs'] = []
         for dso in value['helper']['product_DSOs']:
             name = dso['soname']
-            candidates = ['/system/lib64/' + name, '/system/lib64/platformsdk/' + name, '/vendor/lib64/' + name, '/lib/' + name]
-            script = 'for task_dso in ' + ' '.join(map(shlex.quote, candidates)) + '; do if test -f "$task_dso"; then sha256sum "$task_dso" || exit 1; fi; done'
+            script = product.runtime_guest_script(value['helper'], name)
             raw = collector.observe(script, 'actual-helper-DSO-' + name)
-            require(checked(raw).read_text().splitlines() and all(v.split()[0] == dso['sha256'] for v in checked(raw).read_text().splitlines()),
-                    'same-new-guest product DSO differs from actual helper link: ' + name)
+            product.verify_guest_runtime_raw(value['helper'], name, checked(raw).read_text(), archive_sha256=value['archive_sha256'])
             value['helper_guest_DSOs'].append(dict(soname=name, observation=raw, script=script))
         collector.capture = AudioCapture(collector)
         for role in ROLES: collector.install(role)

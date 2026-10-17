@@ -15,6 +15,7 @@ import unittest
 from unittest.mock import patch
 
 import batch_system_live_inputs_suite as s
+from test_batch_runtime_process_snapshots import BOOT, frame, hx, queries
 
 RUN = '1d8d363122285be8460a74f49d0933f2'
 
@@ -121,9 +122,13 @@ class SuiteTests(unittest.TestCase):
     def cleanup(self):
         # Constructed parser records only; never persisted as runtime evidence.
         rows = [self.command_row('bms', 'com.ohos.systemui\n', script='bm dump -a')]
-        rows += [self.command_row('process-' + str(i), '__LIVE_PROCESS_SCAN_DONE__\n', script=s.uid_process_scan(20001)) for i in (1, 2)]
+        for i in (1,2):
+            nonce=str(i)*32
+            row=self.command_row('process-'+str(i),frame(mode='uid',nonce=nonce,boot=BOOT,uid=20001,bundle=s.BUNDLE),
+                script=s.uid_process_scan(20001,nonce=nonce,boot_id=BOOT))
+            row['process_scan_nonce']=nonce; rows.append(row)
         rows.append(self.command_row('forwards', ''))
-        return {'cleanup_complete': True, 'cleanup_errors': [], 'commands': rows, 'cleanup': {
+        return {'boot_id':BOOT,'cleanup_complete': True, 'cleanup_errors': [], 'commands': rows, 'cleanup': {
             'ordinary_uid': 20001, 'BMS_after': 0, 'process_scans': [1, 2], 'forwards_after': 3,
             'open_streams': 0, 'owned_forwards': [['tcp:12346', 'localfilesystem:/dev/unix/socket/qemu_gnss/input']],
             'producer': {'owned': True, 'exited': True, 'exit_code': 0}}}
@@ -141,9 +146,16 @@ class SuiteTests(unittest.TestCase):
         for resource in ('app', 'process', 'forward'):
             report = self.cleanup()
             if resource == 'app': report['commands'][0] = self.command_row('left-bms', s.BUNDLE + '\n', script='bm dump -a')
-            if resource == 'process': report['commands'][1] = self.command_row('left-process', 'UID_PROCESS /proc/123\n__LIVE_PROCESS_SCAN_DONE__\n', script=s.uid_process_scan(20001))
+            if resource == 'process': report['commands'][1] = self.command_row('left-process', 'UID_PROCESS /proc/123\n__LIVE_PROCESS_SCAN_DONE__\n', script=s.uid_process_scan(20001,nonce='1'*32,boot_id=BOOT))
             if resource == 'forward': report['commands'][3] = self.command_row('left-forward', 'tcp:12346 localfilesystem:/dev/unix/socket/qemu_gnss/input\n')
             with self.assertRaises(ValueError): s.verify_cleanup(report, '127.0.0.1:12345')
+
+    def test_done_only_and_failed_queries_do_not_prove_empty(self):
+        for raw in ('__LIVE_PROCESS_SCAN_DONE__\n',frame(mode='uid',nonce='1'*32,boot=BOOT,uid=20001,bundle=s.BUNDLE,
+                records={1:{**queries(1,mode='uid',ppid=0),'cmdline':(1,hx('od: /proc/1/cmdline: Permission denied'))}})):
+            report=self.cleanup(); row=self.command_row('fake-empty',raw,script=s.uid_process_scan(20001,nonce='1'*32,boot_id=BOOT))
+            row['process_scan_nonce']='1'*32; report['commands'][1]=row
+            with self.assertRaises(ValueError): s.verify_cleanup(report,'127.0.0.1:12345')
 
     def test_cleanup_flags_or_producer_state_cannot_replace_raw_proof(self):
         for field, value in [('cleanup_complete', False), ('cleanup_errors', ['not cleaned'])]:
@@ -159,7 +171,7 @@ class SuiteTests(unittest.TestCase):
     def test_only_ordinary_uid_is_allowed_in_process_cleanup_script(self):
         for uid in (0, 1022, 3033, 10000, True, '20001'):
             with self.assertRaises(ValueError): s.uid_process_scan(uid)
-        self.assertIn(s.BUNDLE, s.uid_process_scan(None)); self.assertIn('20001', s.uid_process_scan(20001))
+        self.assertIn(s.BUNDLE, s.uid_process_scan(None,nonce='1'*32,boot_id=BOOT)); self.assertIn('20001', s.uid_process_scan(20001,nonce='1'*32,boot_id=BOOT))
 
     def test_native_ELF_parser_requires_real_ARM64_DSO_shape(self):
         data = bytearray(64); data[:7] = b'\x7fELF\x02\x01\x01'; struct.pack_into('<HH', data, 16, 3, 183)

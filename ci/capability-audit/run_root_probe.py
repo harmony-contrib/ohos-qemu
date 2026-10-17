@@ -37,6 +37,84 @@ from verify_native_gap_abi_results import validate_definitions as validate_nativ
 ARCHES = {"arm64": (2, 183, "aarch64"), "armv7a": (1, 40, "armv7l"),
           "x86_64": (2, 62, "x86_64")}
 
+# Independently frozen by the package/tool executor evidence. Neither reports
+# nor caller-provided image strings can extend this trust decision.
+TRUSTED_SIGNER_IMAGE_ID = 'sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55'
+TRUSTED_SIGNER_SOURCE_VOLUME = 'ohos-qemu-7_0-release-source'
+MAX_PACKAGE_MEMBERS = 20000
+MAX_PACKAGE_MEMBER_BYTES = 8 * 1024**3
+
+
+def require_signer_executor(image, source_volume=TRUSTED_SIGNER_SOURCE_VOLUME):
+    if image != TRUSTED_SIGNER_IMAGE_ID or source_volume != TRUSTED_SIGNER_SOURCE_VOLUME:
+        raise ValueError('exact independently frozen signer image and source volume required')
+
+
+class CheckedPackageInfo(tarfile.TarInfo):
+    @classmethod
+    def frombuf(cls, buf, encoding, errors):
+        try:
+            member = super().frombuf(buf, encoding, errors)
+        except (tarfile.InvalidHeaderError, tarfile.TruncatedHeaderError) as error:
+            # TarFile.next otherwise treats an invalid later header as EOF.
+            raise ValueError('malformed package archive header') from error
+        if member.isdir() and buf[:100].split(b'\0', 1)[0].endswith(b'//'):
+            # TarInfo strips all directory suffix slashes before callers can
+            # check the canonical name. One conventional slash is sufficient.
+            raise ValueError('aliased package directory header')
+        if (member.size < 0 or member.size > MAX_PACKAGE_MEMBER_BYTES or
+                (member.type in (tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.GNUTYPE_LONGNAME,
+                                 tarfile.GNUTYPE_LONGLINK) and member.size > 1024**2)):
+            raise ValueError('oversized package archive entry')
+        return member
+
+
+def checked_package_members(members):
+    """Visit every entry and yield exact paths relative to one canonical root.
+
+    Native provenance may contain its own metadata. Only exact root-relative
+    names identify package metadata; nested basenames never select it.
+    """
+    root = None
+    seen = {}
+    parents = set()
+    for count, member in enumerate(members, 1):
+        path = PurePosixPath(member.name)
+        normalized = path.as_posix()
+        # PAX directory paths are stripped by TarInfo too; inspect the original
+        # path fields as well, while preserving legitimate sparse-file names.
+        raw_paths = [member.name, *(member.pax_headers[key] for key in ('path', 'GNU.sparse.name')
+                                   if key in member.pax_headers)]
+        for raw in raw_paths:
+            parsed = PurePosixPath(raw)
+            spelling = raw[:-1] if member.isdir() and raw.endswith('/') else raw
+            if (spelling != parsed.as_posix() or parsed.is_absolute() or '..' in parsed.parts or
+                    '\\' in raw or any(ord(char) < 32 or ord(char) == 127 for char in raw)):
+                raise ValueError('noncanonical package path: ' + raw)
+        if (count > MAX_PACKAGE_MEMBERS or not path.parts or path.is_absolute() or
+                '..' in path.parts or '\\' in member.name or
+                any(ord(char) < 32 or ord(char) == 127 for char in member.name) or
+                normalized in seen or
+                not (member.isfile() or member.isdir()) or
+                member.size < 0 or member.size > MAX_PACKAGE_MEMBER_BYTES or
+                (member.isdir() and member.size != 0)):
+            raise ValueError('unsafe, aliased, duplicated or oversized package entry: ' + member.name)
+        if root is None:
+            root = path.parts[0]
+            if re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', root) is None:
+                raise ValueError('canonical package root required')
+        if path.parts[0] != root or (len(path.parts) == 1 and not member.isdir()):
+            raise ValueError('exactly one package directory root required')
+        ancestors = [PurePosixPath(*path.parts[:i]).as_posix() for i in range(1, len(path.parts))]
+        if any(parent in seen and not seen[parent] for parent in ancestors) or (
+                not member.isdir() and normalized in parents):
+            raise ValueError('package file/directory namespace collision: ' + member.name)
+        seen[normalized] = member.isdir()
+        parents.update(ancestors)
+        yield '/'.join(path.parts[1:]), member
+    if root is None:
+        raise ValueError('exactly one package directory root required')
+
 
 def digest(path):
     result = hashlib.sha256()
@@ -57,19 +135,17 @@ def validate_elf(path, arch):
 
 
 def validate_archive(path, arch, device):
-    manifests = []
-    with tarfile.open(path, "r|gz") as archive:
-        for item in archive:
-            name = PurePosixPath(item.name)
-            if name.name != "manifest.json":
+    manifest = None
+    with tarfile.open(path, "r|gz", tarinfo=CheckedPackageInfo) as archive:
+        for relative, item in checked_package_members(archive):
+            if relative != 'manifest.json':
                 continue
-            if (not item.isfile() or name.is_absolute() or ".." in name.parts or
-                    len(name.parts) != 2 or item.size > 1024 * 1024):
+            if not item.isfile() or item.size > 1024 * 1024:
                 raise ValueError("invalid package manifest entry")
-            manifests.append(json.load(archive.extractfile(item)))
-    if len(manifests) != 1:
+            manifest = json.load(archive.extractfile(item))
+    if manifest is None:
         raise ValueError("exactly one top-level package manifest is required")
-    return validate_manifest(manifests[0], arch, device)
+    return validate_manifest(manifest, arch, device)
 
 
 def validate_manifest(manifest, arch, device):

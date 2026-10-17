@@ -48,6 +48,70 @@ DEDICATED_QA_TEST_ONLY = frozenset((
 TEST_ONLY = TEST_ONLY | DEDICATED_QA_TEST_ONLY
 
 
+# Exact F09 runtime diagnostic repairs. These tools may compile private QA
+# callers against immutable product inputs; they cannot change packaged images,
+# native recipes, production patches, audit ledgers, or the full gate policy.
+F09_RUNTIME_QA_TEST_ONLY = frozenset((
+    'ci/capability-audit/test_focus_cleanup_binding.py',
+    'ci/capability-audit/test_batch_apps_contact_picker_coordinator.py',
+    'ci/capability-audit/test_microphone_failure_preservation.py',
+    'ci/capability-audit/audio_capture_runtime.py',
+    'ci/capability-audit/audio_focus_runtime.py',
+    'ci/capability-audit/batch_apps_contact_picker_coordinator.py',
+    'ci/capability-audit/batch_apps_production_provider_binding.py',
+    'ci/capability-audit/batch_media_audio_haptic_build_sampler.py',
+    'ci/capability-audit/batch_media_audio_haptic_runtime.py',
+    'ci/capability-audit/batch_media_audio_haptic_verify.py',
+    'ci/capability-audit/batch_media_knowledge_artifacts.py',
+    'ci/capability-audit/batch_media_knowledge_suite.py',
+    'ci/capability-audit/batch_media_wallpaper_artifacts.py',
+    'ci/capability-audit/batch_media_wallpaper_coordinator.py',
+    'ci/capability-audit/batch_media_wallpaper_native.py',
+    'ci/capability-audit/batch_media_wallpaper_suite.py',
+    'ci/capability-audit/batch_network_openvpn_runtime_collect.py',
+    'ci/capability-audit/batch_network_openvpn_runtime_test.py',
+    'ci/capability-audit/batch_system_build_runtime_helpers.py',
+    'ci/capability-audit/batch_system_calendar_runtime_archive.py',
+    'ci/capability-audit/batch_system_calendar_runtime_capture.py',
+    'ci/capability-audit/batch_system_calendar_runtime_helper.py',
+    'ci/capability-audit/batch_system_calendar_runtime_verify.py',
+    'ci/capability-audit/batch_system_gnss_trace_helper.py',
+    'ci/capability-audit/batch_system_live_inputs.py',
+    'ci/capability-audit/batch_system_live_inputs_suite.py',
+    'ci/capability-audit/batch_system_run_live_inputs.py',
+    'ci/capability-audit/batch_system_verify_live_inputs.py',
+    'ci/capability-audit/build_audio_capture_tools.py',
+    'ci/capability-audit/probes/audio_capture_token.cpp',
+    'ci/capability-audit/run_audio_focus_probe.py',
+    'ci/capability-audit/run_graphics_memory_diagnostic.py',
+    'ci/capability-audit/run_hitrace_diagnostic.py',
+    'ci/capability-audit/run_normal_hap_probe.py',
+    'ci/capability-audit/run_root_probe.py',
+    'ci/capability-audit/run_selection_contract_probe.py',
+    'ci/capability-audit/test_audio_capture_token_diagnostics.py',
+    'ci/capability-audit/test_audio_cleanup_boot.py',
+    'ci/capability-audit/test_batch_media_wallpaper_native.py',
+    'ci/capability-audit/test_batch_media_wallpaper_suite.py',
+    'ci/capability-audit/test_batch_production_provider_binding.py',
+    'ci/capability-audit/test_batch_runtime_process_snapshots.py',
+    'ci/capability-audit/test_batch_system_build_runtime_helpers.py',
+    'ci/capability-audit/test_batch_system_live_inputs_payload.py',
+    'ci/capability-audit/test_batch_system_live_inputs_suite.py',
+    'ci/capability-audit/test_family_installed_runtime_bindings.py',
+    'ci/capability-audit/test_microphone_application_cleanup.py',
+    'ci/capability-audit/test_microphone_runtime_binding.py',
+    'ci/capability-audit/test_runtime_archive_roots.py',
+    'ci/capability-audit/test_runtime_installed_profile.py',
+    'ci/capability-audit/test_selection_executor_binding.py',
+    'ci/capability-audit/test_validation_input_binding.py',
+    'ci/capability-audit/validation_input_binding.py',
+    'ci/capability-audit/verify_audio_capture_results.py',
+    'ci/capability-audit/verify_audio_focus_results.py',
+    'ci/capability-audit/verify_selection_evidence.py',
+))
+TEST_ONLY = TEST_ONLY | F09_RUNTIME_QA_TEST_ONLY
+
+
 def tree_digest(files):
     if not isinstance(files, dict) or not files or any(
             not isinstance(name, str) or not isinstance(value, str) or

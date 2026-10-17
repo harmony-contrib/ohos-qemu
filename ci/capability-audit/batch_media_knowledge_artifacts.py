@@ -5,7 +5,7 @@ import re
 
 from batch_media_knowledge_project import FIX, ROLES, READ, WRITE, checked, record, require, sha
 from batch_media_knowledge_runtime import validate_challenge
-from batch_media_wallpaper_artifacts import elf_dependencies, mapped_record
+from batch_media_wallpaper_artifacts import elf_dependencies, mapped_record, installed_runtime_binding
 from batch_system_build_runtime_helpers import defined_symbol
 import batch_apps_contact_picker_coordinator as signatures
 
@@ -186,13 +186,7 @@ def helper_binding(item):
     needed = elf_dependencies(binary)
     require(needed == row['DT_NEEDED'] and 'libaccesstoken_sdk.z.so' in needed, 'actual helper dynamic dependencies differ')
     inputs = original['inputs'] if original is not None else report['inputs']
-    dsos = []
-    for soname in needed:
-        candidates = [r for r in row['actual_link_inputs'] if Path(r['path']).name == soname]
-        checksums = {r['sha256'] for r in candidates}
-        require(len(checksums) == 1 and all(inputs.get(r['path']) == r for r in candidates),
-                'actual linker-opened product DSO not hash-bound: ' + soname)
-        dsos.append(dict(soname=soname, sha256=next(iter(checksums))))
+    installed = installed_runtime_binding(row, needed, inputs)
     return dict(binary=record(binary), source=record(source), actual_builder_report=record(build_file),
-                actual_logs=logs, DT_NEEDED=needed, product_DSOs=dsos, CFI_preserved=True,
+                actual_logs=logs, DT_NEEDED=needed, **installed, CFI_preserved=True,
                 original_status=original['status'] if original is not None else report['status'], runtime_validated=False)

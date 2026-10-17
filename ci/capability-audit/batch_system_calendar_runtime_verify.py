@@ -13,13 +13,19 @@ from enclosing_acceptance_guest import validate_binding
 from guest_ui import select_node
 
 
-def raw_bound(capture, item):
+def raw_bound(capture, item, script=None):
     path = checked(item)
     match = re.match(r'raw-([0-9]+)-', path.name)
     require(match is not None, 'collector-owned raw guest artifact required')
-    row = capture['guest_commands'][int(match[1])-1]
+    index = int(match[1])-1
+    require(0 <= index < len(capture['guest_commands']), 'raw guest command index outside actual capture')
+    row = capture['guest_commands'][index]
     log = checked({'path': row['log'], 'sha256': row['sha256']}).read_text().replace('\r', '')
     marker = re.search(r'__QEMU_CHILD_EXIT_[a-f0-9]{32}__=', row['argv'][-1])
+    if script is not None:
+        require(len(row['argv']) == 5 and row['argv'][1] == '-t' and row['argv'][3] == 'shell' and
+                marker is not None and row['argv'][-1] == '(' + script + '); task_child_rc=$?; printf "\\n' +
+                marker[0] + '%s\\n" "$task_child_rc"', 'actual guest command differs from installed runtime profile')
     require(row['exit_code'] == 0 and marker is not None and log.count(marker[0]) == 1 and
             log.endswith('\n'+marker[0]+'0\n') and log.rsplit('\n'+marker[0], 1)[0] == path.read_text(),
             'raw observation is not the preserved actual marked guest command output')
@@ -81,14 +87,19 @@ def validate_capture(path, challenge, archive):
         checked({'path': row['path'], 'sha256': row['sha256']})
     plan = protocol.decode(checked(capture['plan']).read_text())
     from batch_system_calendar_runtime_capture import helper_proof
-    helper_proof(plan['helper'])
+    require('guest_dsos' not in plan['helper'], 'legacy caller-supplied Calendar DSO paths are not accepted')
+    helper_row = helper_proof(plan['helper'])
+    for row in capture['guest_commands']:
+        require(len(row['argv']) == 5 and row['argv'][1:4] == ['-t', env['target'], 'shell'],
+                'actual Calendar observation escaped the bound enclosing guest')
     require(capture['helper']['binary'] == plan['helper']['binary'] and capture['helper']['receipt'] == plan['helper']['receipt'] and
             raw_bound(capture, capture['helper']['guest_sha']).split()[0] == sha(checked(plan['helper']['binary'])),
             'actual guest helper differs from compiled product artifact')
-    require(set(capture['helper']['dsos']) == set(plan['helper']['guest_dsos']), 'complete actual runtime DSO observations required')
-    for name, item in plan['helper']['guest_dsos'].items():
-        require(raw_bound(capture, capture['helper']['dsos'][name]).split()[0] == sha(checked(item['artifact'])),
-                'actual running helper DSO differs from linked product artifact')
+    import batch_system_build_runtime_helpers as product
+    require(set(capture['helper']['dsos']) == set(helper_row['DT_NEEDED']), 'complete actual runtime DSO observations required')
+    for name in helper_row['DT_NEEDED']:
+        raw = raw_bound(capture, capture['helper']['dsos'][name], product.runtime_guest_script(helper_row, name))
+        product.verify_guest_runtime_raw(helper_row, name, raw, archive_sha256=archive['sha256'])
     identities = []
     apps = {}
     for role, policy in ROLES.items():

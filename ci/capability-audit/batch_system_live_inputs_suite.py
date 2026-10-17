@@ -26,7 +26,8 @@ from batch_system_live_inputs import (BUNDLE, FIXTURES, PERMISSIONS, SCOPE, dige
 HERE = Path(__file__).resolve().parent
 FAMILY = 'external-inputs'
 CONTROLLED = 'controlled_virtual_protocol_vectors'
-TOOLS = ['batch_system_live_inputs_suite.py', 'batch_system_run_live_inputs.py',
+TOOLS = ['batch_system_live_inputs_suite.py', 'batch_network_openvpn_runtime_collect.py',
+    'batch_network_openvpn_runtime_project.py', 'batch_system_run_live_inputs.py',
     'batch_system_verify_live_inputs.py', 'batch_system_live_inputs.py',
     'batch_system_sdk_native_strip.py',
     'batch_system_gnss_controller.py', 'batch_system_qemu_sensor_controller.py',
@@ -274,15 +275,17 @@ class Commands:
         return raw, row
 
 
-def uid_process_scan(uid):
+def uid_process_scan(uid, *, nonce=None, boot_id=None):
     require(uid is None or type(uid) is int and uid > 10000, 'ordinary UID only for cleanup scan')
-    # No grep/ps format assumption. proc cmdline remains actual OS evidence.
-    script = 'for f in /proc/[0-9]*/cmdline; do test -r "$f" || continue; p=${f%/cmdline}; '
-    script += 'name=$(tr "\\000" " " < "$f" 2>/dev/null); case "$name" in ' + BUNDLE + '|' + BUNDLE + r'\ *|' + BUNDLE + ':*) printf "PROCESS %s\\n%s\\n" "$p" "$name";; esac; '
-    if uid is not None:
-        script += 'while read -r key real effective saved fs rest; do test "$key" = "Uid:" || continue; '
-        script += 'if test "$real" = "' + str(uid) + '"; then printf "UID_PROCESS %s\\n" "$p"; cat "$p/status"; fi; break; done < "$p/status" 2>/dev/null; '
-    return script + 'done; printf "__LIVE_PROCESS_SCAN_DONE__\\n"'
+    from batch_network_openvpn_runtime_collect import snapshot_script
+    return snapshot_script(nonce,boot_id,mode='uid',uid=uid,bundle=BUNDLE)
+
+
+def decode_uid_process_scan(raw, uid, nonce, boot_id):
+    from batch_network_openvpn_runtime_collect import parse_snapshot
+    value = parse_snapshot(raw,nonce,boot_id,mode='uid',uid=uid,bundle=BUNDLE)
+    require(not value['processes'], 'owned app/UID process remains')
+    return value
 
 
 def binding(archive, boot):
@@ -323,9 +326,13 @@ def verify_cleanup(report, target):
             not re.search(r'(?<![A-Za-z0-9_.])' + re.escape(BUNDLE) + r'(?![A-Za-z0-9_.])', raw),
             'actual installed system bundle list missing or ordinary app remains installed')
     require(len(value['process_scans']) == 2, 'two actual process absence observations required')
-    script = uid_process_scan(value.get('ordinary_uid'))
+    seen_nonces = set()
     for index in value['process_scans']:
-        require(cleanup_raw(row(index), script, target) == '__LIVE_PROCESS_SCAN_DONE__\n', 'owned app/UID process remains')
+        scan = row(index); nonce = scan.get('process_scan_nonce'); boot = report.get('boot_id')
+        require(isinstance(nonce,str) and re.fullmatch('[a-f0-9]{32}',nonce) and nonce not in seen_nonces, 'two distinct complete cleanup scan nonces required')
+        seen_nonces.add(nonce)
+        script = uid_process_scan(value.get('ordinary_uid'),nonce=nonce,boot_id=boot)
+        decode_uid_process_scan(cleanup_raw(scan,script,target),value.get('ordinary_uid'),nonce,boot)
     forwards = row(value['forwards_after']); raw = checked_command(forwards)
     from hdc_transport import failed
     require(forwards['exit_code'] == 0 and forwards['argv'][1:] == ['-t', target, 'fport', 'ls'], 'actual forward-list inspection missing')
@@ -501,9 +508,13 @@ def run(args):
                 except Exception as error: report['cleanup_errors'].append(label + ': ' + str(error))
             try:
                 _, row = command.shell('bm dump -a', 'cleanup-BMS-after'); cleanup['BMS_after'] = report['commands'].index(row)
+                from batch_network_openvpn_runtime_collect import capture_snapshot
                 for i in (1, 2):
-                    _, row = command.shell(uid_process_scan(cleanup.get('ordinary_uid')), 'cleanup-processes-' + str(i))
-                    cleanup['process_scans'].append(report['commands'].index(row))
+                    _, scan = capture_snapshot(lambda script,label: command.shell(script,label)[0],
+                        'cleanup-processes-'+str(i),env['boot_id'],mode='uid',uid=cleanup.get('ordinary_uid'),bundle=BUNDLE)
+                    require(not scan['processes'], 'owned app/UID process remains')
+                    row = report['commands'][-1]; row['process_scan_nonce'] = scan['nonce']
+                    cleanup['process_scans'].append(len(report['commands'])-1)
                     if i == 1: time.sleep(.25)
                 _, _, row = command.execute([args.hdc, '-t', command.target, 'fport', 'ls'], 'cleanup-forwards-after')
                 cleanup['forwards_after'] = report['commands'].index(row)

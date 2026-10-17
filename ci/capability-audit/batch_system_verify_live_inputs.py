@@ -8,7 +8,7 @@ import struct
 import subprocess
 import sys
 
-from batch_system_live_inputs import (BUNDLE, FIXTURES, SCOPE, digest, hap_payload, load_rows,
+from batch_system_live_inputs import (BUNDLE, FIXTURES, SCOPE, digest, verify_signed_payload, load_rows,
     read_json, trace, verify_project, write_json, f32)
 from batch_system_gnss_controller import encode_sample
 
@@ -196,7 +196,8 @@ def verify(root, archive, boot_path, sdk):
     build = read_json(project / 'live-inputs-build.json')
     require(build['status'] == 'pass' and digest(build['unsigned_hap']) == build['unsigned_hap_sha256'] and
         all(c['exit_code'] == 0 and digest(c['log']) == c['sha256'] for c in build['commands']), 'SDK source/build proof incomplete')
-    require(digest(report['signed_hap']) == report['signed_hap_sha256'] and hap_payload(report['signed_hap']) == hap_payload(build['unsigned_hap']), 'signed SDK HAP bytes changed')
+    require(digest(report['signed_hap']) == report['signed_hap_sha256'], 'signed HAP bytes changed')
+    verify_signed_payload(build['unsigned_hap'], report['signed_hap'])
     require(digest(report['signer_jar']) == report['signer_jar_sha256'], 'actual signature verifier changed')
     signatures = [c for c in report['commands'] if c['label'] == 'actual-hap-signature']
     require(len(signatures) == 1 and signatures[0]['exit_code'] == 0, 'actual HAP signature verification absent')

@@ -176,15 +176,78 @@ def verify_transport(args, recorder=False, audio_event=False):
             permission.get('dialog_shown_results') != [True] or
             any(type(v) is not bool for v in permission.get('dialog_shown_results', []))):
         raise ValueError('actual public permission request result disagrees with independent token/UI')
-    verify_tools(runtime, arch)
+    verify_tools(runtime, arch, parent_persona='media-recorder' if recorder else
+                 'audio-revoke' if audio_event else 'audio-capture')
     return runtime, uid, denied, files, archive_sha
 
 
-def verify_tools(runtime, arch):
+def verify_guest_tool_runtimes(runtime, tools, *, parent_persona):
+    """Replay exact MIC commands, including Focus's separately checked footer."""
+    import batch_system_build_runtime_helpers as product
+    from hdc_transport import failed
+    if (parent_persona not in ('audio-capture', 'media-recorder', 'audio-revoke', 'audio-focus') or
+            runtime.get('parent_persona') != parent_persona):
+        raise ValueError('MIC runtime belongs to a different parent protocol')
+    hdc = runtime['hdc']
+    checked_file(hdc)
+    expected = {(tool, soname) for tool, row in tools['tools'].items() for soname in row['DT_NEEDED']}
+    observations = runtime.get('guest_runtime_DSOs')
+    if (not isinstance(observations, list) or len(observations) != len(expected) or
+            {(item['tool'], item['observation']['soname']) for item in observations} != expected):
+        raise ValueError('complete unique MIC tool runtime observations required')
+    commands = runtime['orchestration_commands']
+    shells = runtime['guest_shell_observations']
+    used_commands, used_shells = set(), set()
+    for item in observations:
+        tool, soname = item['tool'], item['observation']['soname']
+        row = tools['tools'][tool]
+        script = product.runtime_guest_script(row, soname)
+        ci, si = item['command_index'], item['shell_observation']
+        if (type(ci) is not int or type(si) is not int or ci in used_commands or si in used_shells or
+                not 0 <= ci < len(commands) or not 0 <= si < len(shells)):
+            raise ValueError('missing or reused MIC tool command reference')
+        used_commands.add(ci); used_shells.add(si)
+        command, shell = commands[ci], shells[si]
+        marker = shell['exit_marker']
+        if (re.fullmatch('__MIC_EXIT_[a-f0-9]{32}__=', marker) is None or shell['script'] != script or
+                shell['command_index'] != ci or type(shell.get('guest_exit_code')) is not int or
+                shell['guest_exit_code'] != 0 or item['script'] != script or command.get('exit_code') != 0 or
+                command.get('timed_out')):
+            raise ValueError('MIC tool command failed or does not match the installed-runtime script')
+        argv = command['argv']
+        if len(argv) != 5 or argv[:4] != [hdc['argv0'], '-t', runtime['target'], 'shell']:
+            raise ValueError('MIC tool observation used a different HDC or target')
+        wrapped = script + '; task_mic_rc=$?; printf "\\n' + marker + '%s\\n" "$task_mic_rc"'
+        body = item['raw']
+        if not isinstance(body, str) or '\n' in body or '\r' in body:
+            raise ValueError('one complete MIC runtime SHA row required')
+        mic_output = body + '\n\n' + marker + '0\n'
+        if parent_persona == 'audio-focus':
+            suffix = re.fullmatch(re.escape(wrapped) + r'; focus_rc=\$\?; printf "\\n'
+                r'(__FOCUS_EXIT_[a-f0-9]{32}__=)%s\\n" "\$focus_rc"', argv[4])
+            if suffix is None:
+                raise ValueError('MIC Focus observation lacks its exact enclosing footer')
+            out = checked_file({'path': command['stdout_path'], 'sha256': command['stdout_sha256']}).read_text().replace('\r', '')
+            err = checked_file({'path': command['stderr_path'], 'sha256': command['stderr_sha256']}).read_text()
+            if (err or failed(out, err) or out != mic_output + '\n' + suffix[1] + '0\n' or
+                    shell['raw'] != mic_output.rstrip('\n')):
+                raise ValueError('MIC Focus raw output or either guest exit differs')
+        else:
+            text = checked_file({'path': command['log'], 'sha256': command['sha256']}).read_text().replace('\r', '')
+            if argv[4] != wrapped or text != mic_output or shell['raw'] != mic_output or failed(text, ''):
+                raise ValueError('MIC raw output is not bound to the exact successful guest command')
+        actual = product.verify_guest_runtime_raw(row, soname, body, archive_sha256=runtime['archive_sha256'])
+        if actual != item['observation']:
+            raise ValueError('MIC runtime observation differs from its raw file identity')
+
+
+def verify_tools(runtime, arch, *, parent_persona='audio-capture'):
     tools_path = Path(runtime['tools'])
     if sha(tools_path) != runtime['tools_sha256']:
         raise ValueError('microphone tool build evidence changed')
-    tools = json.loads(tools_path.read_text())
+    from build_audio_capture_tools import verify_installed_tools
+    tools = verify_installed_tools(tools_path, arch)
+    verify_guest_tool_runtimes(runtime, tools, parent_persona=parent_persona)
     if (tools.get('status') != 'pass' or tools.get('arch') != arch or tools.get('inputs_unchanged') is not True or
             tools.get('builder_sha256') != sha(Path(__file__).with_name('build_audio_capture_tools.py'))):
         raise ValueError('actual microphone tools failed compilation/input binding')

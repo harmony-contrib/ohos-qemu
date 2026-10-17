@@ -37,9 +37,27 @@ def helper_proof(spec):
     require(report.get('plan_only') is False and report.get('product') == 'arm64_virt' and
             report.get('changed_inputs') == [] and report.get('builder_sha256') == sha(HERE / 'batch_system_build_runtime_helpers.py'),
             'current immutable product helper build receipt required')
-    require(sha(actual(report.get('calendar_runtime_extension', {}))) == sha(HERE / 'batch_system_calendar_runtime_helper.py'),
-            'actual dedicated helper extension/anchor configuration differs')
+    original = None
     row = report['helpers']['calendar_runtime_observer']
+    compile_commands = report['commands']
+    if report.get('verify_existing') is True:
+        reference = report['original_report']
+        original = protocol.decode(actual(reference).read_text())
+        require(reference.get('rewritten') is False and reference['status'] == original['status'] and
+                reference['builder_sha256'] == original['builder_sha256'] and original.get('plan_only') is False and
+                original.get('changed_inputs') == [] and original.get('product') == 'arm64_virt',
+                'actual immutable Calendar original helper receipt required')
+        prior = original['helpers']['calendar_runtime_observer']
+        require(all(row.get(k) == prior.get(k) for k in ('compile_command', 'link_command')),
+                'Calendar recheck changed original compile/link commands')
+        require(actual(row['reused_artifacts']['binary']) == binary and
+                sha(actual(row['reused_artifacts']['source'])) == sha(FIX / 'observer.cpp'),
+                'Calendar recheck reused different artifacts')
+        row = {**prior, **row}
+        compile_commands = report['original_commands']
+    extension = original if original is not None else report
+    require(sha(actual(extension.get('calendar_runtime_extension', {}))) == sha(HERE / 'batch_system_calendar_runtime_helper.py'),
+            'actual dedicated helper extension/anchor configuration differs')
     require(row.get('status') == 'pass_compile_link_ONLY' and row.get('CFI_preserved') is True and
             row.get('fixture') == 'batch_system/calendar_runtime/observer.cpp' and
             row.get('private_source_sha256') == sha(FIX / 'observer.cpp') and
@@ -48,10 +66,16 @@ def helper_proof(spec):
     for name in ('source',):
         require(sha(actual(row[name])) == sha(FIX / 'observer.cpp'), 'actual compiled observer source differs')
     for kind in ('compile', 'link'):
-        commands = [c for c in report['commands'] if c.get('label') == 'calendar_runtime_observer-' + kind]
+        commands = [c for c in compile_commands if c.get('label') == 'calendar_runtime_observer-' + kind]
         require(len(commands) == 1 and commands[0]['exit_code'] == 0 and commands[0]['argv'] == row[kind + '_command'],
                 'real product helper compile/link failed')
-        actual({'path': commands[0]['log'], 'sha256': commands[0]['sha256']})
+        if original is not None:
+            old = [c for c in original['commands'] if c.get('label') == commands[0]['label']]
+            require(len(old) == 1 and all(old[0][k] == commands[0][k]
+                    for k in ('argv', 'label', 'log', 'sha256', 'exit_code')), 'original Calendar compile log was rewritten')
+            actual(commands[0]['verified_log'])
+        else:
+            actual({'path': commands[0]['log'], 'sha256': commands[0]['sha256']})
     compile_argv = row['compile_command']
     require('--target=aarch64-linux-ohos' in compile_argv and '-fno-exceptions' in compile_argv and
             '-fsanitize-cfi-cross-dso' in compile_argv and any(x.startswith('-fsanitize=') and 'cfi' in x for x in compile_argv) and
@@ -69,6 +93,8 @@ def helper_proof(spec):
     require('__cfi_check' in elf and 'std::__h::' in elf and 'std::__n1::' not in elf, 'actual ELF product libc++/CFI missing')
     from run_root_probe import validate_elf
     validate_elf(binary, 'arm64')
+    from batch_media_wallpaper_artifacts import elf_dependencies, installed_runtime_binding
+    installed_runtime_binding(row, elf_dependencies(binary), original['inputs'] if original is not None else report['inputs'])
     return row
 
 
@@ -174,18 +200,16 @@ class Collector:
         require(helper['remote'].startswith('/data/local/tmp/') and '..' not in Path(helper['remote']).parts, 'owned installed diagnostic path required')
         actual, proof = self.raw('sha256sum ' + shlex.quote(helper['remote']), 'helper-sha')
         require(actual.split()[0] == sha(checked(helper['binary'])), 'guest observer differs from actual product ELF')
-        # Actual linked DSO bytes must match the newly booted guest, not only a
-        # compiler receipt referring to an older image. Root supplies locations.
-        require(set(helper['guest_dsos']) >= {'libapp_manager.z.so', 'libaccesstoken_sdk.z.so'}, 'product runtime DSO map missing')
-        links = row['actual_link_inputs']
-        linked_hashes = {v['sha256'] for v in protocol.objects(links) if isinstance(v.get('sha256'), str)}
+        import batch_system_build_runtime_helpers as product
+        product.validate_installed_profile(row['installed_runtime_profile']['profile'],
+                                           archive_sha256=self.report['archive']['sha256'])
+        # Locations come exclusively from the exact image/staging profile, never the plan.
+        require('guest_dsos' not in helper, 'legacy caller-supplied Calendar DSO paths are not accepted')
         dso_observations = {}
-        for name, item in helper['guest_dsos'].items():
-            local = checked(item['artifact'])
-            require(item['artifact']['sha256'] in linked_hashes and Path(item['remote']).name == name and
-                    item['remote'].startswith(('/system/', '/vendor/')), 'helper DSO is not an actual product link input')
-            text, observation = self.raw('sha256sum ' + shlex.quote(item['remote']), 'DSO-' + re.sub('[^A-Za-z0-9_-]', '-', name))
-            require(text.split()[0] == sha(local), 'helper linked DSO differs from booted image')
+        for name in row['DT_NEEDED']:
+            text, observation = self.raw(product.runtime_guest_script(row, name),
+                                         'DSO-' + re.sub('[^A-Za-z0-9_-]', '-', name))
+            product.verify_guest_runtime_raw(row, name, text, archive_sha256=self.report['archive']['sha256'])
             dso_observations[name] = observation
         self.report['helper'] = {'binary': helper['binary'], 'receipt': helper['receipt'], 'guest_sha': proof,
             'dsos': dso_observations}

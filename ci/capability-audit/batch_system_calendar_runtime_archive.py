@@ -3,7 +3,7 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import subprocess
 import sys
 import tarfile
@@ -11,6 +11,30 @@ import tarfile
 from batch_system_calendar_runtime_project import ROOT, checked, record, require, sha, write
 import batch_apps_contact_picker_coordinator as signatures
 import batch_system_calendar_runtime_protocol as protocol
+from run_root_probe import CheckedPackageInfo, checked_package_members, validate_manifest
+
+
+def archive_inputs(archive, image):
+    """Bind exact package metadata and image after checking the entire archive."""
+    with tarfile.open(archive, 'r:gz', tarinfo=CheckedPackageInfo) as package:
+        members = dict(checked_package_members(package))
+        def one(relative, limit):
+            member = members.get(relative)
+            require(member is not None and member.isfile() and member.size <= limit,
+                    'actual bounded root package member required: ' + relative)
+            return member
+        system = one('images/system.img', 8 * 1024**3)
+        require(system.size == image.stat().st_size, 'supplied image length differs from actual archive member')
+        digest = hashlib.sha256()
+        with package.extractfile(system) as stream:
+            for block in iter(lambda: stream.read(1048576), b''):
+                digest.update(block)
+        require(digest.hexdigest() == sha(image), 'actual archive system.img differs from supplied extraction')
+        inputs_raw = package.extractfile(one('build-inputs.json', 16777216)).read()
+        manifest_raw = package.extractfile(one('manifest.json', 1024**2)).read()
+        inputs, manifest = protocol.decode(inputs_raw), protocol.decode(manifest_raw)
+        validate_manifest(manifest, 'arm64', 'phone')
+    return system, inputs_raw, manifest_raw, inputs, manifest
 
 
 def bind(archive, image, signer_jar, output):
@@ -25,32 +49,7 @@ def bind(archive, image, signer_jar, output):
         logs.append({'argv': list(map(str, argv)), 'exit_code': result.returncode, **record(path)})
         require(result.returncode == 0, 'actual image/signature inspection failed: ' + label)
         return result.stdout + result.stderr
-    with tarfile.open(archive, 'r:gz') as package:
-        members = package.getmembers()
-        names = [m.name for m in members]
-        require(len(names) <= 20000 and len(names) == len(set(names)), 'bounded unique package members required')
-        for member in members:
-            path = PurePosixPath(member.name)
-            require(not path.is_absolute() and '..' not in path.parts and not member.issym() and not member.islnk(), 'unsafe archive alias/path')
-        def one(suffix):
-            rows = [m for m in members if m.name.endswith(suffix) and m.isfile()]
-            require(len(rows) == 1, 'actual unique package member required: ' + suffix)
-            return rows[0]
-        system = one('/images/system.img')
-        require(system.size == image.stat().st_size, 'supplied image length differs from actual archive member')
-        digest = hashlib.sha256()
-        with package.extractfile(system) as stream:
-            for block in iter(lambda: stream.read(1048576), b''):
-                digest.update(block)
-        require(digest.hexdigest() == sha(image), 'actual archive system.img differs from supplied extraction')
-        member = one('/build-inputs.json')
-        require(member.size <= 16777216, 'bounded build inputs required')
-        inputs_raw = package.extractfile(member).read()
-        inputs = protocol.decode(inputs_raw)
-        manifest_raw = package.extractfile(one('/manifest.json')).read()
-        manifest = protocol.decode(manifest_raw)
-    require(manifest.get('guest_arch') == 'arm64' and manifest.get('device_type') == 'phone' and
-            manifest.get('device_type_profile') == 'qemu_phone_full_source', 'representative full-source phone package required')
+    system, inputs_raw, manifest_raw, inputs, manifest = archive_inputs(archive, image)
     files = inputs['files_sha256']
     require(inputs['tree_sha256'] == hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest(), 'frozen build-input tree digest differs')
     prefixes = ('patches/common/applications/standard/calendardata/',

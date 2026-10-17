@@ -21,7 +21,7 @@ import zipfile
 
 from batch_media_wallpaper_runtime import HERE, Runtime, record, sha, write_json, SEED, SETTINGS, PHOTOS
 from batch_media_wallpaper_coordinator import Coordinator, QUERY, READ, validate_hap, adapt_sdk_build, ordered_actions, request_file, actual_query
-from batch_media_wallpaper_artifacts import caller_sources, adapt_helpers, verify_helper_receipt
+from batch_media_wallpaper_artifacts import caller_sources, adapt_helpers, verify_helper_receipt, verify_runtime_guest_observation
 import batch_media_wallpaper_native as native_binding
 from batch_media_verify_wallpaper_runtime import checked, check_challenge, verify
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
@@ -319,10 +319,9 @@ def verify_evidence(evidence_path, archive_path, boot_path):
         observed=coo['helper_bindings'][name]
         if observed['build']!=proof or len(observed['actual_guest_DSOs'])!=len(proof['product_DSOs']):raise ValueError('helper DSO evidence incomplete')
         for expected,actual in zip(proof['product_DSOs'],observed['actual_guest_DSOs']):
-            lines=checked(actual['actual_hashes']).read_text().splitlines()
-            if (actual['soname']!=expected['soname']or not lines or
-                    any(not line.startswith(expected['sha256']+'  /')or Path(line.split('  ',1)[1]).name!=expected['soname']for line in lines)):
-                raise ValueError('actual guest DSO hash differs from real product helper link')
+            if actual['soname']!=expected['soname']:raise ValueError('installed guest SONAME observation differs')
+            verify_runtime_guest_observation(proof,expected['soname'],actual,coo['commands'],
+                                             target=env['target'],archive_sha256=sha(archive_path))
     runtime=json.loads(checked(value['runtime']).read_text())
     uris=json.loads(checked(runtime['import_observation']).read_text())['uris']
     if [r['phase']for r in coo['queries']]!=['before','after']:raise ValueError('real positive and deletion query required')
@@ -399,7 +398,7 @@ def verify_native_runtime(value,coordinator,native,env):
 
 
 def verify_provider_proof(stored,actual,native):
-    for key in ('system_image','image_identity','archive_guard','sdk','signer_inputs'):
+    for key in ('system_image','image_identity','archive_guard','sdk','production','signer_inputs'):
         if stored[key]!=actual[key]:raise ValueError('source-bound current-image Wallpaper provider differs: '+key)
     for key in ('hap','embedded_profile'):
         if checked(stored[key]).read_bytes()!=checked(actual[key]).read_bytes():

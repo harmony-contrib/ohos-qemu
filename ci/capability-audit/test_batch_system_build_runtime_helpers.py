@@ -188,6 +188,18 @@ class RuntimeHelperBuilderTests(unittest.TestCase):
                     b.ExistingVerifier(self.root, self.root / 'output', list(b.HELPERS), report, wrong)
         self.assertFalse((self.root / 'output').exists())
 
+    def test_existing_mode_cannot_accept_a_new_installed_profile(self):
+        # Argument rejection happens before opening a report, querying Ninja or
+        # touching any product input. Legacy receipts cannot gain new aliases.
+        argv = ['builder', '--source-root', str(self.root), '--output', str(self.root / 'output'),
+            '--product', 'arm64_virt', '--verify-existing', str(self.root / 'legacy.json'),
+            '--existing-report-sha256', 'a' * 64, '--runtime-profile', str(self.root / 'new-profile.json'),
+            '--runtime-profile-sha256', 'b' * 64]
+        with patch('sys.argv', argv), patch.object(b, 'ExistingVerifier', side_effect=AssertionError('must reject before loading')):
+            with self.assertRaises(SystemExit) as error: b.main()
+        self.assertEqual(error.exception.code, 2)
+        self.assertFalse((self.root / 'output').exists())
+
     def test_existing_artifact_hash_prefix_and_symlink_escape(self):
         verifier = b.ExistingVerifier.__new__(b.ExistingVerifier)
         verifier.artifact_origin = Path('/original/private')

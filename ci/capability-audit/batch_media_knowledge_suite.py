@@ -17,6 +17,7 @@ import batch_apps_contact_picker_coordinator as signatures
 import batch_media_knowledge_artifacts as inputs
 import batch_media_knowledge_project as project
 import batch_media_knowledge_runtime as runtime
+import batch_system_build_runtime_helpers as product
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
 from hdc_transport import failed
@@ -507,13 +508,14 @@ def run(args):
         collector.shell('mkdir -m 700 ' + collector.remote, 'create-only-owned-helper-directory')
         collector.stage(value['helper']['binary'], collector.remote + '/observer', 0, executable=True)
         value['helper_guest_DSOs'] = []
-        for dso in value['helper']['product_DSOs']:
-            name = dso['soname']; candidates = ['/system/lib64/' + name, '/system/lib64/module/' + name, '/system/lib64/platformsdk/' + name, '/lib/' + name]
-            script = 'for task_dso in ' + ' '.join(map(shlex.quote, candidates)) + '; do if test -f "$task_dso"; then sha256sum "$task_dso" || exit 1; fi; done'
+        product.validate_installed_profile(value['helper']['installed_runtime_profile']['profile'],
+                                           archive_sha256=value['archive_sha256'])
+        for name in value['helper']['DT_NEEDED']:
+            script = product.runtime_guest_script(value['helper'], name)
             raw = collector.observe(script, 'actual-helper-DSO-' + name)
-            lines = checked(raw).read_text().splitlines()
-            require(lines and all(line.split()[0] == dso['sha256'] for line in lines), 'actual guest helper dependency differs from product link: ' + name)
-            value['helper_guest_DSOs'].append(dict(soname=name, raw=raw, candidates=candidates))
+            product.verify_guest_runtime_raw(value['helper'], name, checked(raw).read_text(),
+                                             archive_sha256=value['archive_sha256'])
+            value['helper_guest_DSOs'].append(dict(soname=name, raw=raw))
         for role in project.ROLES: collector.install(role)
         require(len({v['uid'] for v in collector.identities.values()}) == 4 and len({v['token_id'] for v in collector.identities.values()}) == 4,
                 'actual role identities overlap')
@@ -669,16 +671,11 @@ def verify_transport(value, spec, env, data):
         raw = value['capture']['roles']['importer']['private_source_readbacks'][case['case_id']]
         require((raw['path'], raw['sha256']) in received and received[(raw['path'], raw['sha256'])]['remote'] ==
                 '/data/app/el2/100/base/' + project.ROLES['importer'][0] + '/files/' + case['file_name'], 'actual private JPEG readback transport missing')
-    for dso, row in zip(value['helper']['product_DSOs'], value['helper_guest_DSOs']):
-        require(row['soname'] == dso['soname'], 'guest DSO identity differs')
-        name = dso['soname']
-        require(row['candidates'] == ['/system/lib64/' + name, '/system/lib64/module/' + name,
-                '/system/lib64/platformsdk/' + name, '/lib/' + name], 'guest DSO lookup escaped the actual system loader locations')
-        script = 'for task_dso in ' + ' '.join(map(shlex.quote, row['candidates'])) + '; do if test -f "$task_dso"; then sha256sum "$task_dso" || exit 1; fi; done'
-        lines = observed(row['raw'], script).splitlines()
-        require(lines and all(line.split()[0] == dso['sha256'] and line.split()[1] in row['candidates'] for line in lines),
-                'actual guest runtime helper DSO differs from actual linked product input')
-    require(len(value['helper']['product_DSOs']) == len(value['helper_guest_DSOs']), 'actual guest DSO set incomplete')
+    require(len(value['helper']['DT_NEEDED']) == len(value['helper_guest_DSOs']), 'actual guest DSO set incomplete')
+    for name, row in zip(value['helper']['DT_NEEDED'], value['helper_guest_DSOs']):
+        require(row['soname'] == name, 'guest DSO identity differs')
+        raw = observed(row['raw'], product.runtime_guest_script(value['helper'], name))
+        product.verify_guest_runtime_raw(value['helper'], name, raw, archive_sha256=value['archive_sha256'])
     cleanup = value['cleanup']
     require(cleanup['assets'] == {'scope': 'full_22_phase_raw_cleanup', 'raw_semantics': value['raw_semantics']}, 'full actual public asset/TRASH/private cleanup proof required')
     bundles = [v[0] for v in project.ROLES.values()]

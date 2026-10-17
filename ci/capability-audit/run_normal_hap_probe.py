@@ -173,6 +173,68 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
     return arguments
 
 
+def preserve_microphone_failure(runtime, report):
+    """Retain bounded nonce-owned partial files before uninstall removes them."""
+    if (re.fullmatch('[a-f0-9]{32}', report['run_id']) is None or
+            report['ordinary_result_directory'] != APP_FILES):
+        raise ValueError('exact microphone diagnostic namespace required')
+    if runtime.actual_shell('cat /proc/sys/kernel/random/boot_id', 'MIC-partial-boot') != report['boot_id']:
+        raise ValueError('partial microphone evidence belongs to another kernel')
+    prefix = {'audio-capture': 'audio-capture-', 'media-recorder': 'recorder-',
+              'audio-revoke': 'audio-event-'}[report['persona']] + report['run_id'] + '-'
+    script = ('printf "BEGIN\\n"; for task_diag_file in ' + APP_FILES + prefix + '*; do '
+        'if test ! -e "$task_diag_file" && test ! -L "$task_diag_file"; then continue; fi; '
+        'test -f "$task_diag_file" && test ! -L "$task_diag_file" || exit 1; '
+        'task_diag_stat=$(stat -c "%u %a %s" "$task_diag_file") || exit 1; '
+        'printf "%s|%s\\n" "$task_diag_file" "$task_diag_stat"; done; printf "END\\n"')
+    raw = runtime.actual_shell(script, 'MIC-partial-file-inventory')
+    rows = raw.splitlines()
+    if len(rows) < 2 or rows[0] != 'BEGIN' or rows[-1] != 'END' or len(rows) > 130:
+        raise ValueError('bounded complete microphone diagnostic inventory required')
+    output = runtime.output / 'failure-private'; output.mkdir(exist_ok=False)
+    records = []; seen = set(); total = 0
+    for line in rows[1:-1]:
+        remote, stat = line.split('|'); name = remote.removeprefix(APP_FILES)
+        if not re.fullmatch(re.escape(prefix) + '[A-Za-z0-9_.-]+', name) or remote != APP_FILES + name or name in seen:
+            raise ValueError('foreign/duplicate microphone diagnostic file')
+        uid, mode, size = map(int, stat.split()); total += size; seen.add(name)
+        if uid != report['ordinary_uid'] or not 0 <= size <= 16 * 1024 * 1024 or total > 64 * 1024 * 1024:
+            raise ValueError('microphone diagnostic owner/size invalid')
+        local = output / name
+        records.append(dict(path=str(local), bytes=size, uid=uid, mode=mode, remote=remote))
+    for record in records:
+        remote, local, size = record['remote'], Path(record['path']), record['bytes']
+        runtime.command([runtime.args.hdc, '-t', runtime.args.target, 'file', 'recv', remote, local],
+                        'MIC-preserve-partial-' + local.name)
+        if local.stat().st_size != size: raise ValueError('partial microphone evidence transfer truncated')
+        record['sha256'] = checksum(local)
+    return dict(scope='partial_failure_diagnostics_ONLY_NOT_behavior_pass', files=records, inventory=raw)
+
+
+def cleanup_microphone_application(shell, command, hdc, target, boot_id, *, preserve=None, boot_failure=None):
+    """Restore only the reserved audit bundle after an attempted installation."""
+    if boot_failure:
+        raise ValueError('microphone cleanup retains lost guest kernel identity: ' + str(boot_failure))
+    if shell('cat /proc/sys/kernel/random/boot_id', 'MIC-cleanup-boot-before').strip() != boot_id:
+        raise ValueError('microphone cleanup refused a different guest kernel')
+    lifecycle = stop_previous_probe(shell)
+    if preserve is not None: preserve()
+    if shell('cat /proc/sys/kernel/random/boot_id', 'MIC-cleanup-boot-before-uninstall').strip() != boot_id:
+        raise ValueError('microphone cleanup refused a different guest kernel before uninstall')
+    reply = command([hdc, '-t', target, 'uninstall', BUNDLE], 'MIC-cleanup-uninstall-owned-app')
+    if not re.search(r'uninstall bundle successfully', reply, re.I) or re.search(r'\[Fail\]|failed', reply, re.I):
+        raise ValueError('actual microphone application uninstall failed')
+    listing = shell('bm dump -a', 'MIC-cleanup-full-BMS-list')
+    if ('com.ohos.' not in listing or hdc_failed(listing, '') or
+            re.search(r'(?<![A-Za-z0-9_.])' + re.escape(BUNDLE) + r'(?![A-Za-z0-9_.])', listing)):
+        raise ValueError('full BMS listing does not prove the owned microphone app absent')
+    if shell('cat /proc/sys/kernel/random/boot_id', 'MIC-cleanup-boot-after').strip() != boot_id:
+        raise ValueError('guest kernel changed during microphone application cleanup')
+    return {'scope': 'owned_microphone_HAP_lifecycle_and_BMS_cleanup_ONLY', 'bundle': BUNDLE,
+            'boot_id': boot_id, 'lifecycle': lifecycle, 'uninstall_reply': reply,
+            'installed_bundle_absent': True}
+
+
 def save_command_output(path, stdout, stderr, diagnostic_bytes=False):
     """Keep diagnostic bytes losslessly; lossy text is never behavior input."""
     metadata = {}
@@ -196,6 +258,7 @@ def run(args):
     challenge = secrets.token_hex(16)
     network_peer = None
     capture_runtime = None
+    own_install_attempted = False
     report = {'schema_version': 1, 'status': 'fail', 'scope': 'one_fresh_ordinary_HAP_regression_NOT_full_gate',
         'persona': args.persona, 'run_id': challenge, 'archive': str(args.archive.resolve()),
         'target': args.target, 'arch': args.arch, 'device': args.device, 'commands': [], 'failures': [],
@@ -331,6 +394,7 @@ def run(args):
             raise ValueError('guest kernel changed during own-app cleanup')
         # Uninstall so no old app file or renderer can satisfy the fresh run.
         command([args.hdc, '-t', args.target, 'uninstall', BUNDLE], 'remove-own-previous-audit-app', accepted_failure=True)
+        own_install_attempted = True
         installed = command([args.hdc, '-t', args.target, 'install', signed], 'install-ordinary-hap')
         if re.search(r'\[Fail\]|failed to install', installed, re.I) or not re.search(r'success', installed, re.I):
             raise ValueError('HDC did not report actual HAP installation success')
@@ -554,6 +618,17 @@ def run(args):
             except Exception as error:
                 report['status'] = 'fail'
                 report['failures'].append('owned HTTP peer cleanup failed: ' + str(error))
+        if own_install_attempted and args.persona in ('audio-capture', 'media-recorder', 'audio-revoke'):
+            try:
+                def preserve_failure():
+                    if report['status'] != 'pass' and capture_runtime is not None and 'ordinary_uid' in report:
+                        report['partial_microphone_failure'] = preserve_microphone_failure(capture_runtime, report)
+                report['owned_application_cleanup'] = cleanup_microphone_application(
+                    shell, command, args.hdc, args.target, report['boot_id'], preserve=preserve_failure,
+                    boot_failure=capture_runtime.value.get('cleanup_boot_failure') if capture_runtime is not None else None)
+            except Exception as error:
+                report['status'] = 'fail'
+                report['failures'].append('owned microphone application cleanup failed: ' + str(error))
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
 

@@ -14,7 +14,8 @@ from build_graphics_memory_app_probe import BUNDLE
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
 from power_test_policy import power_timeout
 from run_normal_hap_probe import require_normal_identity
-from run_root_probe import digest
+from run_root_probe import (digest, require_signer_executor, TRUSTED_SIGNER_IMAGE_ID,
+                            TRUSTED_SIGNER_SOURCE_VOLUME)
 from verify_graphics_memory_results import verify
 from graphics_memory_kernel_contract import verify_samples
 
@@ -26,6 +27,8 @@ parser.add_argument('--owned-child', action='store_true')
 args = parser.parse_args()
 if not args.owned_child:
     parser.error('use the owning acceptance suite transport')
+require_signer_executor(os.environ.get('QEMU_TEST_DOCKER_IMAGE', TRUSTED_SIGNER_IMAGE_ID),
+                        os.environ.get('QEMU_TEST_SOURCE_VOLUME', TRUSTED_SIGNER_SOURCE_VOLUME))
 output = args.output.resolve()
 output.mkdir(exist_ok=False)
 guest = EnclosingAcceptanceGuest(args.boot.resolve(), args.archive, args.hdc, output / 'guest-commands')
@@ -65,7 +68,7 @@ try:
         '--mount', 'type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly',
         '--mount', 'type=bind,src=' + str(ROOT) + ',dst=/work,readonly',
         '--mount', 'type=bind,src=' + str(output) + ',dst=/probe',
-        'ohos-qemu-m144-build-env:7.0-release', 'python3', '/work/ci/capability-audit/sign_web_probe.py',
+        TRUSTED_SIGNER_IMAGE_ID, 'python3', '/work/ci/capability-audit/sign_web_probe.py',
         '--signer-dist', '/ohos/developtools/hapsigner/dist',
         '--jar', '/ohos/prebuilts/ohos-sdk/linux/26.0.0/toolchains/lib/hap-sign-tool.jar',
         '--unsigned', '/probe/project/entry/build/default/outputs/default/entry-default-unsigned.hap',

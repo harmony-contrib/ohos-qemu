@@ -356,8 +356,45 @@ def verify_observer(binary, receipt, path_map=None):
         if kind == 3: interpreters.append(data[start:start + length].rstrip(b'\0').decode('ascii'))
         executable |= kind == 1 and bool(flags & 1) and length > 0
     require(interpreters == ['/lib/ld-musl-aarch64.so.1'] and executable, 'helper actual guest loader/code absent')
+    from batch_system_build_runtime_helpers import runtime_link_records
+    from batch_media_knowledge_artifacts import elf_dependencies
+    needed = elf_dependencies(binary)
+    require(needed == row['DT_NEEDED'], 'observer actual ELF DT_NEEDED differs from link receipt')
+    for name in needed:
+        runtime_link_records(row, name)
+    runtime = {key: row[key] for key in ('DT_NEEDED', 'installed_runtime_profile',
+        'actual_link_inputs', 'actual_link_input_sonames')}
     return {'binary': descriptor(binary), 'receipt': descriptor(receipt), 'source_sha256': verifier.sha(fixture),
-            'path_map': path_map, 'container_product_inputs_rechecked_by_builder_only': True, 'runtime_validated': False}
+            'path_map': path_map, 'runtime': runtime,
+            'container_product_inputs_rechecked_by_builder_only': True, 'runtime_validated': False}
+
+
+def verify_observer_guest_libraries(observer, observations, commands, target, archive_sha256):
+    from batch_system_build_runtime_helpers import runtime_guest_script, verify_guest_runtime_raw
+    row = observer['runtime']
+    require(isinstance(observations, list) and len(observations) == len(row['DT_NEEDED']) and
+            {item['soname'] for item in observations} == set(row['DT_NEEDED']),
+            'complete observer same-guest DT_NEEDED observations required')
+    used = set()
+    for item in observations:
+        script = runtime_guest_script(row, item['soname'])
+        index = item['command_index']
+        require(type(index) is int and index not in used and 0 <= index < len(commands),
+                'observer DSO command missing or reused')
+        used.add(index)
+        command = commands[index]
+        argv = command['argv']
+        require(command['exit_code'] == 0 and len(argv) == 5 and argv[1:4] == ['-t', target, 'shell'],
+                'observer DSO is not an actual successful target shell command')
+        marker = re.search(r'(__QEMU_CHILD_EXIT_[a-f0-9]{32}__=)', argv[4])
+        require(marker is not None, 'observer DSO actual exit marker missing')
+        marker = marker[1]
+        expected = '(' + script + '); task_child_rc=$?; printf "\\n' + marker + '%s\\n" "$task_child_rc"'
+        raw = checked_artifact(item['raw']).read_text()
+        text = checked_artifact({'path': command['log'], 'sha256': command['sha256']}).read_text().replace('\r', '')
+        require(item['script'] == script and argv[4] == expected and text == raw + '\n' + marker + '0\n',
+                'observer DSO bytes are not bound to the exact completed guest command')
+        verify_guest_runtime_raw(row, item['soname'], raw, archive_sha256=archive_sha256)
 
 
 def verify_provider_release_profile(profile, source_project, provider_name, signer_dist, output, command):
@@ -420,14 +457,16 @@ def provider_from_image(boot, spec, output, signer_dist, signer_jar, command, *,
         for prefix in ('', '/system')), output, debugfs)
     require(verifier.sha(hap) == row['hap_sha256'] and all(inode[key] == row[key] for key in inode), 'actual current-image provider differs from archive guard')
     sdk = verify_sdk_project(spec, module_name=module_name)
-    source = Path(spec['source_project']) / relative / 'src/main/module.json5'
-    # The full SDK source inventory above binds this actual module, not a
-    # standalone hand-written manifest. json5 rejects duplicate keys.
+    from batch_apps_production_provider_binding import verify_production_provider
+    require(isinstance(spec.get('production_build'), dict), 'explicit actual production HAP build binding required')
+    production = verify_production_provider(spec['production_build'], provider_name=provider_name,
+        device=device, signed_hap=hap, system_image_sha256=verifier.sha(image))
+    source = checked_artifact(production['source_module'])
+    # The retained native producer inventory binds this actual module. The
+    # independent SDK build remains separate corroboration. Reject duplicates.
     import json5
     source_module = json5.loads(source.read_text(), allow_duplicate_keys=False)['module']
     image_guard.inspect_hap(hap, source_module, provider_name, device)
-    unsigned = checked_artifact(spec['unsigned_hap'])
-    verify_signed_payload(unsigned, hap)
     dist, jar, pins = signer_inputs(signer_dist, signer_jar)
     chain, profile = output / 'verified-chain.cer', output / 'embedded-profile.p7b'
     argv = ['java', '-jar', str(jar), 'verify-app', '-inFile', str(hap), '-outCertChain', str(chain), '-outProfile', str(profile)]
@@ -444,7 +483,8 @@ def provider_from_image(boot, spec, output, signer_dist, signer_jar, command, *,
     # introduce a different release policy.
     release_proof = verify_provider_release_profile(profile, spec['source_project'], provider_name, dist, output, command)
     return {'hap': descriptor(hap), 'system_image': descriptor(image), 'image_identity': inode,
-            'archive_guard': descriptor(guard_path), 'sdk': sdk, 'signer_inputs': pins, 'embedded_profile': descriptor(profile),
+            'archive_guard': descriptor(guard_path), 'sdk': sdk, 'production': production,
+            'signer_inputs': pins, 'embedded_profile': descriptor(profile),
             **release_proof}
 
 
@@ -638,6 +678,8 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     require(observer['path_map'] == spec.get('helper_path_map', {}) and
             verify_observer(checked_artifact(observer['binary']), checked_artifact(observer['receipt']), observer['path_map']) == observer,
             'coordinator helper evidence changed')
+    verify_observer_guest_libraries(observer, report['observer_guest_libraries'], report['guest_commands'],
+                                   env['target'], verifier.sha(archive_path))
     for row in report['commands']:
         require(row.get('exit_code') == 0 and isinstance(row.get('argv'), list), 'coordinator recorded a failed command')
         checked_artifact({'path': row['log'], 'sha256': row['sha256']})
@@ -656,7 +698,8 @@ def verify_evidence(evidence_path, archive_path, boot_path):
         provider = provider_from_image(boot_path, spec['provider'], scratch / 'provider', signer['dist'], signer['jar'], command)
         require(checked_artifact(build['provider_hap']).read_bytes() == checked_artifact(provider['hap']).read_bytes() and
                 provider['system_image'] == report['provider']['system_image'] and
-                provider['archive_guard'] == report['provider']['archive_guard'] and provider['sdk'] == report['provider']['sdk'],
+                provider['archive_guard'] == report['provider']['archive_guard'] and provider['sdk'] == report['provider']['sdk'] and
+                provider['production'] == report['provider']['production'],
                 'raw provider does not belong to current boot image/source')
         for key, bundle, permissions in [('caller', driver.CALLER, []), ('seed', driver.SEED, driver.PERMISSIONS)]:
             signed = checked_artifact(build[key + '_hap'])
@@ -705,6 +748,18 @@ def run(args):
         report['boot_id'] = guest.env['boot_id']
         report['cleanup']['target'] = guest.target
         command = Commands(output / 'commands', report['commands'], guest)
+        report['observer_guest_libraries'] = []
+        from batch_system_build_runtime_helpers import runtime_guest_script, verify_guest_runtime_raw
+        for soname in report['observer']['runtime']['DT_NEEDED']:
+            script = runtime_guest_script(report['observer']['runtime'], soname)
+            index = len(guest.report['commands'])
+            raw = guest.shell(script, 'observer-DSO-' + re.sub('[^A-Za-z0-9_-]', '-', soname))
+            verify_guest_runtime_raw(report['observer']['runtime'], soname, raw,
+                                     archive_sha256=report['archive_sha256'])
+            path = output / ('observer-DSO-' + soname + '.raw.txt')
+            path.write_text(raw)
+            report['observer_guest_libraries'].append(dict(soname=soname, script=script,
+                command_index=index, raw=descriptor(path)))
         report['provider'] = provider_from_image(args.boot, spec['provider'], output / 'provider', args.signer_dist, args.signer_jar, command)
         run_id = 'contacts_' + secrets.token_hex(12); report['run_id'] = run_id
         observer_remote = '/data/local/tmp/' + run_id + '_observer'
