@@ -87,7 +87,10 @@ class Fixture:
         unsigned = self.root/'unsigned.hap'; signed = self.root/'signed.hap'
         with zipfile.ZipFile(unsigned, 'w') as hap:
             hap.writestr('module.json', json.dumps(module)); hap.writestr('ets/modules.abc', b'HOST oracle fixture ABC')
+            hap.writestr('resources.index', b'HOST oracle fixture resources')
         signed.write_bytes(unsigned.read_bytes())
+        with zipfile.ZipFile(signed, 'a') as hap:
+            hap.writestr('.pages.info', b'HOSTONLY')
         consent = []
         for case in runtime.CASES:
             from photos_dialog_contract import select_dialog

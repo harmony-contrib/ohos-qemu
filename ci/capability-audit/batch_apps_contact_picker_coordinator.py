@@ -246,6 +246,9 @@ def verify_signed_hap_artifacts(signed, bundle, permissions, udid, signer_dist, 
 
 
 def verify_signed_payload(unsigned_path, signed_path):
+    # Keep archive bounds, path safety and compiled-resource checks on both files.
+    hap_contents(unsigned_path)
+    hap_contents(signed_path)
     with zipfile.ZipFile(unsigned_path) as unsigned, zipfile.ZipFile(signed_path) as signed:
         before, after = unsigned.namelist(), signed.namelist()
         require(len(before) == len(set(before)) and len(after) == len(set(after)) and
@@ -424,7 +427,7 @@ def provider_from_image(boot, spec, output, signer_dist, signer_jar, command, *,
     source_module = json5.loads(source.read_text(), allow_duplicate_keys=False)['module']
     image_guard.inspect_hap(hap, source_module, provider_name, device)
     unsigned = checked_artifact(spec['unsigned_hap'])
-    require(hap_contents(hap)[1] == hap_contents(unsigned)[1], 'image provider ABC/resources/module differ from actual SDK HAP')
+    verify_signed_payload(unsigned, hap)
     dist, jar, pins = signer_inputs(signer_dist, signer_jar)
     chain, profile = output / 'verified-chain.cer', output / 'embedded-profile.p7b'
     argv = ['java', '-jar', str(jar), 'verify-app', '-inFile', str(hap), '-outCertChain', str(chain), '-outProfile', str(profile)]
@@ -657,8 +660,7 @@ def verify_evidence(evidence_path, archive_path, boot_path):
                 'raw provider does not belong to current boot image/source')
         for key, bundle, permissions in [('caller', driver.CALLER, []), ('seed', driver.SEED, driver.PERMISSIONS)]:
             signed = checked_artifact(build[key + '_hap'])
-            require(hap_contents(signed)[1] == hap_contents(checked_artifact(spec[key]['unsigned_hap']))[1],
-                    'raw runtime signed app differs from actual compiled SDK source')
+            verify_signed_payload(checked_artifact(spec[key]['unsigned_hap']), signed)
             # Reverify the physical HAP, CMS and exact fresh-UDID profile, rather
             # than relying on a signature-verification receipt status.
             proof = verify_signed_hap_artifacts(signed, bundle, permissions, env['udid'], signer['dist'], signer['jar'],

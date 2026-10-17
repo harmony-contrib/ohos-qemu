@@ -109,7 +109,9 @@ class CoordinatorTests(unittest.TestCase):
             unsigned=root/'unsigned.hap'
             with zipfile.ZipFile(unsigned,'w')as hap:
                 hap.writestr('module.json',json.dumps(module));hap.writestr('ets/modules.abc',b'SYNTHETIC HOST ORACLE ONLY')
+                hap.writestr('resources.index',b'SYNTHETIC HOST RESOURCES ONLY')
             signed=root/'signed.hap';signed.write_bytes(unsigned.read_bytes())
+            with zipfile.ZipFile(signed,'a')as hap:hap.writestr('.pages.info',b'HOSTONLY')
             sign={'status':'pass','scope':'actual_signature_profile_and_codesign_NOT_guest','unsigned_sha256':runtime.sha(unsigned),
                   'signed_sha256':runtime.sha(signed),'verified_profile':{'bundle-info':{'bundle-name':runtime.SEED,
                   'apl':'normal','app-feature':'hos_normal_app'},'debug-info':{'device-ids':['a'*64]},
@@ -126,6 +128,22 @@ class CoordinatorTests(unittest.TestCase):
                 'signing_receipt':runtime.record(signpath),'sdk_evidence':runtime.record(ep),'source_key':'entry/src/main/ets/pages/Index.ets',
                 'ability':'EntryAbility'}
             self.assertEqual('Actual caller label',coordinator.validate_hap(value,'seed',challenge,'a'*64,out)['app_label'])
+            original_signed = signed.read_bytes()
+            for index, member in enumerate(('resources.index', 'resources/rawfile/extra.bin', '.pages.info')):
+                with zipfile.ZipFile(unsigned) as archive:
+                    members = {name: archive.read(name) for name in archive.namelist()}
+                members['.pages.info'] = b'HOSTONLY'
+                members[member] = b'changed' if member != '.pages.info' else b'bad'
+                with zipfile.ZipFile(signed,'w') as archive:
+                    for name, raw in members.items(): archive.writestr(name,raw)
+                changed_sign=copy.deepcopy(sign);changed_sign['signed_sha256']=runtime.sha(signed)
+                signpath.write_text(json.dumps(changed_sign))
+                value.update(signed_hap=runtime.record(signed),signing_receipt=runtime.record(signpath))
+                target=root/('payload-change-'+str(index));target.mkdir()
+                with self.subTest(member=member), self.assertRaises(ValueError):
+                    coordinator.validate_hap(value,'seed',challenge,'a'*64,target)
+            signed.write_bytes(original_signed);signpath.write_text(json.dumps(sign))
+            value.update(signed_hap=runtime.record(signed),signing_receipt=runtime.record(signpath))
             for index,mutate in enumerate([lambda v:v['verified_profile']['bundle-info'].update(apl='system_core'),
                 lambda v:v['verified_profile']['acls'].update({'allowed-acls':['ohos.permission.SET_WALLPAPER']}),
                 lambda v:v['verified_profile']['debug-info'].update({'device-ids':['b'*64]}),lambda v:v.update(status='fail')]):
@@ -141,7 +159,10 @@ class CoordinatorTests(unittest.TestCase):
             def query_role():
                 with zipfile.ZipFile(unsigned,'w')as hap:
                     hap.writestr('module.json',json.dumps(module));hap.writestr('ets/modules.abc',b'SYNTHETIC HOST QUERY ORACLE ONLY')
-                signed.write_bytes(unsigned.read_bytes());actual=copy.deepcopy(sign)
+                    hap.writestr('resources.index',b'SYNTHETIC HOST QUERY RESOURCES ONLY')
+                signed.write_bytes(unsigned.read_bytes())
+                with zipfile.ZipFile(signed,'a')as hap:hap.writestr('.pages.info',b'HOSTONLY')
+                actual=copy.deepcopy(sign)
                 actual['verified_profile']['bundle-info'].update({'bundle-name':coordinator.QUERY,'apl':'system_basic','app-feature':'hos_system_app'})
                 actual.update(unsigned_sha256=runtime.sha(unsigned),signed_sha256=runtime.sha(signed))
                 signpath.write_text(json.dumps(actual));value.update(compiled_page=runtime.record(page),

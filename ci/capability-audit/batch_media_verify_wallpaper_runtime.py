@@ -12,6 +12,7 @@ import re
 import zipfile
 
 from PIL import Image, ImageOps, ImageStat
+from batch_apps_contact_picker_coordinator import verify_signed_payload
 from enclosing_acceptance_guest import validate_binding
 from guest_ui import bounds, NodeNotReady, select_node
 
@@ -510,12 +511,10 @@ def verify_external_observations(value, env, challenge, uris, seed_uid, settings
     profile = signing.get('verified_profile', {}).get('bundle-info', {})
     if profile.get('bundle-name') != SEED or profile.get('apl') != 'normal' or profile.get('app-feature') != 'hos_normal_app':
         raise ValueError('ordinary import/denial signer profile differs')
-    with zipfile.ZipFile(unsigned) as plain, zipfile.ZipFile(signed) as final:
-        if (len(plain.namelist()) != len(set(plain.namelist())) or len(final.namelist()) != len(set(final.namelist())) or
-                plain.read('module.json') != final.read('module.json') or
-                plain.read('ets/modules.abc') != final.read('ets/modules.abc') or
-                json.loads(final.read('module.json')) != module):
-            raise ValueError('actual ordinary HAP module/ABC changed after build')
+    verify_signed_payload(unsigned, signed)
+    with zipfile.ZipFile(signed) as final:
+        if json.loads(final.read('module.json')) != module:
+            raise ValueError('actual ordinary HAP module differs from observed module')
     actions = imported['consent_actions']
     if len(actions) != 5:
         raise ValueError('one actual Photos user consent per fresh input required')
