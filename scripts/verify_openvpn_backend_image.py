@@ -16,7 +16,7 @@ import tempfile
 
 from build_openvpn_ohos import digest, recipe_identity
 from ext_image_entries import dump_unique_file
-from prepare_qemu_openvpn_backend import COMPONENT, PROJECT, POLICY_BASE, POLICY_FILES
+from prepare_qemu_openvpn_backend import COMPONENT, PROJECT, POLICY_BASE, POLICY_FILES, NATIVE_CFG, checked
 from verify_alsa_config_image import debugfs_path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +42,15 @@ def regular(path):
 
 def payload_identity():
     return {p.name: digest(p) for p in sorted(COMPONENT.iterdir()) if p.is_file()}
+
+
+def validate_staged_payloads(source):
+    for name, sha in payload_identity().items():
+        relative = (POLICY_BASE + POLICY_FILES[name] if name in POLICY_FILES else
+                    NATIVE_CFG if name == 'netsysnative.cfg' else PROJECT + '/qemu_openvpn/' + name)
+        target = checked(source, relative)
+        if digest(regular(target)) != sha:
+            raise ValueError('stale staged VPN source input: ' + str(target))
 
 
 def record(path, product, executable=False):
@@ -155,11 +164,7 @@ def create_provenance(source, product, destination, image):
     generated = output / ('gen/' + PROJECT + '/qemu_openvpn/source-build')
     build = check_build(generated, product)
     # The complete installer stages the current helpers, GN, init and policy.
-    for name, sha in payload_identity().items():
-        target = (source / POLICY_BASE / POLICY_FILES[name] if name in POLICY_FILES
-                  else source / PROJECT / 'qemu_openvpn' / name)
-        if digest(regular(target)) != sha:
-            raise ValueError('stale staged VPN source input: ' + str(target))
+    validate_staged_payloads(source)
     paths = {'bin/qemu_openvpn': generated / 'openvpn'}
     paths.update({'bin/' + name: output / 'communication/netmanager_ext' / name
                   for name in PROGRAMS[1:]})

@@ -6,15 +6,59 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
+import prepare_qemu_openvpn_backend as installer
 SPEC = importlib.util.spec_from_file_location('vpn_image', ROOT / 'scripts/verify_openvpn_backend_image.py')
 M = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(M)
 
 
 class OpenVpnImageTests(unittest.TestCase):
+    def installed_source(self, root):
+        archive = root / 'unit-only-not-an-upstream-archive.tar.gz'
+        archive.write_bytes(b'unit-only archive placeholder')
+        with patch.object(installer, 'validate_archive'):
+            payloads = installer.payloads(archive)
+        for relative, data in payloads.items():
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+
+    def test_provenance_reads_destinations_produced_by_the_actual_installer(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.installed_source(root)
+            self.assertFalse((root / installer.PROJECT / 'qemu_openvpn/netsysnative.cfg').exists())
+            M.validate_staged_payloads(root)
+
+    def test_decoy_component_config_cannot_replace_missing_or_changed_real_init(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.installed_source(root)
+            real = root / installer.NATIVE_CFG
+            decoy = root / installer.PROJECT / 'qemu_openvpn/netsysnative.cfg'
+            decoy.write_bytes(real.read_bytes())
+            real.unlink()
+            with self.assertRaisesRegex(ValueError, 'regular VPN evidence'):
+                M.validate_staged_payloads(root)
+            real.write_bytes(b'changed actual netsys init')
+            with self.assertRaisesRegex(ValueError, 'stale staged VPN source input'):
+                M.validate_staged_payloads(root)
+
+    def test_staged_input_parent_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.installed_source(root)
+            directory = (root / installer.NATIVE_CFG).parent
+            saved = directory.with_name('saved-init')
+            directory.rename(saved)
+            directory.symlink_to(saved, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, 'linked source path'):
+                M.validate_staged_payloads(root)
+
     def fixture(self, directory):
         lock_path = ROOT / 'scripts/openvpn_source_lock.json'
         lock = json.loads(lock_path.read_text())

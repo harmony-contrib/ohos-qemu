@@ -1608,13 +1608,10 @@ refresh_package_checksums() {
   local package_dir="$1"
   (
     cd "${package_dir}"
-    find images launch -type f -print0 2>/dev/null \
-      | sort -z \
-      | xargs -0 shasum -a 256 > SHA256SUMS
-    # Include every evidence file, especially frozen build inputs and the
-    # source-built SceneBoard records, not only the original three files.
-    find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
-      | sort -z | xargs -0 shasum -a 256 >> SHA256SUMS
+    # Runtime collectors bind nested source/build witnesses to this inventory,
+    # including their raw logs and query receipts. Cover the whole package.
+    find . -type f ! -path './SHA256SUMS' -print0 \
+      | sort -z | xargs -0 shasum -a 256 > SHA256SUMS
   )
 }
 
