@@ -61,8 +61,8 @@ type qemu_sensor_input_dir, dev_attr, file_attr;
 type qemu_sensor_input_socket, dev_attr, file_attr;
 ''',
     POLICY + 'system/file_contexts': '''# SPDX-License-Identifier: Apache-2.0
-/dev/unix/socket/qemu_sensor          -d u:object_r:qemu_sensor_input_dir:s0
-/dev/unix/socket/qemu_sensor/input    -s u:object_r:qemu_sensor_input_socket:s0
+/dev/unix/socket/qemu_sensor          u:object_r:qemu_sensor_input_dir:s0
+/dev/unix/socket/qemu_sensor/input    u:object_r:qemu_sensor_input_socket:s0
 ''',
     POLICY + 'system/runtime.te': '''# SPDX-License-Identifier: Apache-2.0
 # No permission to bind directly in the shared /dev/unix/socket directory.
@@ -117,6 +117,16 @@ def replace(path, data):
         Path(name).unlink(missing_ok=True)
 
 
+# Complete known pre-format-fix component snapshot. Unknown or partial edits
+# are never accepted as an upgrade, including future changed payloads.
+LEGACY_FILES_SHA256 = {
+    "vendor/ohemu/virt/etc/qemu_sensor_input.cfg": "538559efa3c4b36e927eb2b2674f35a865428055be19e861fb00ea1169ba23a3",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/public/types.te": "6ee29c69c4f502718060574a3e7739299f5b0e5b63e6600fc4d93ab4e4974268",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/file_contexts": "55889a9d4a759bd1f89a1a65dbb2153407adccc6255111331cadc3e0ebdc1a1e",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/runtime.te": "3944c748a5556d6bb5c9a05b9df3dec9c2018a3d6a50a21bcd5dcfd3d17fbf7c"
+}
+
+
 def apply(root):
     if root.is_symlink() or not root.is_dir():
         raise ValueError('materialized sensor runtime source root required')
@@ -152,7 +162,13 @@ def apply(root):
     final_state = (before_build.count(BLOCK.encode()) == 1 and
                    before_build.count(DEPENDENCY.encode()) == 1 and
                    all(snapshots[n] == planned[n] for n in FILES))
-    if not original_state and not final_state:
+    previous_state = (before_build.count(BLOCK.encode()) == 1 and
+                      before_build.count(DEPENDENCY.encode()) == 1 and
+                      set(FILES) == set(LEGACY_FILES_SHA256) and
+                      all(snapshots[n] is not None and
+                          hashlib.sha256(snapshots[n]).hexdigest() == expected
+                          for n, expected in LEGACY_FILES_SHA256.items()))
+    if not original_state and not final_state and not previous_state:
         raise ValueError('unknown or partial sensor runtime source; preserving all files')
     written = []
     try:
@@ -172,6 +188,7 @@ def apply(root):
                 replace(path, snapshots[name])
         raise
     return {'status': 'source_configuration_ONLY_NOT_policy_build_or_guest_sensor',
+            'upgraded_known_previous': previous_state,
             'first_artifact_behavior_gate_passed': False,
             'files_sha256': {n: hashlib.sha256(b).hexdigest() for n, b in planned.items()}}
 

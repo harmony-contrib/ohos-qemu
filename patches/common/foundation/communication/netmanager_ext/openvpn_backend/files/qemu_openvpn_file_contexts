@@ -1,4 +1,4 @@
 /system/bin/qemu_openvpn(_service|_tun)?    u:object_r:qemu_openvpn_exec:s0
 /data/service/el1/public/vpn/qemu_openvpn(/.*)?    u:object_r:qemu_openvpn_data_file:s0
-/dev/unix/socket/qemu_openvpn          -s u:object_r:qemu_openvpn_control_socket:s0
-/dev/unix/socket/qemu_openvpn_tunfd    -s u:object_r:qemu_openvpn_tunfd_socket:s0
+/dev/unix/socket/qemu_openvpn          u:object_r:qemu_openvpn_control_socket:s0
+/dev/unix/socket/qemu_openvpn_tunfd    u:object_r:qemu_openvpn_tunfd_socket:s0

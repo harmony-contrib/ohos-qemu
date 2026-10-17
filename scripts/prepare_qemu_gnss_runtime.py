@@ -56,8 +56,8 @@ type qemu_gnss_input_dir, dev_attr, file_attr;
 type qemu_gnss_input_socket, dev_attr, file_attr;
 ''',
     POLICY + 'vendor/file_contexts': '''# SPDX-License-Identifier: Apache-2.0
-/dev/unix/socket/qemu_gnss          -d u:object_r:qemu_gnss_input_dir:s0
-/dev/unix/socket/qemu_gnss/input    -s u:object_r:qemu_gnss_input_socket:s0
+/dev/unix/socket/qemu_gnss          u:object_r:qemu_gnss_input_dir:s0
+/dev/unix/socket/qemu_gnss/input    u:object_r:qemu_gnss_input_socket:s0
 ''',
     POLICY + 'vendor/runtime.te': '''# SPDX-License-Identifier: Apache-2.0
 type_transition init dev_unix_socket:dir qemu_gnss_input_dir "qemu_gnss";
@@ -75,6 +75,18 @@ debug_only(`
     allow su location_host:unix_stream_socket connectto;
 ')
 ''',
+}
+
+
+# Complete known pre-format-fix component snapshot. Unknown or partial edits
+# are never accepted as an upgrade, including future changed payloads.
+LEGACY_FILES_SHA256 = {
+    "device/qemu/common/virt_full/qemu_gnss_runtime/BUILD.gn": "2c4a89ae458c615c2c28eca339f77c0620e1eac4b6f7d84f545361c18f6b6193",
+    "device/qemu/common/virt_full/qemu_gnss_runtime/qemu_gnss.para": "bcdc9012af26fb97bff8c26cd8cec42237538e4d5121d39a8a00fc55b46b2535",
+    "device/qemu/common/virt_full/qemu_gnss_runtime/qemu_gnss_input.cfg": "02b425aa95e6dd9898598019429e1271b9a47528a5f7ec40dd44bde631d6c5cd",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_gnss/public/types.te": "929034847dcaed6e593a321bd0df6bc880e4d85069e3b412af7c39e4b4f7aa77",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_gnss/vendor/file_contexts": "5de560e3057979bc59fffcf70c5d072659eea0cb79d2f9236b8350c4d0996849",
+    "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_gnss/vendor/runtime.te": "f0d08fa69968970a4c90b8946f62b096140641f374602a23772fb2aeb035665f"
 }
 
 
@@ -101,7 +113,11 @@ def apply(root):
     snapshots = {name: optional(checked(root, name)) for name in planned}
     first = current == original and all(snapshots[name] is None for name in FILES)
     final = all(snapshots[name] == value for name, value in planned.items())
-    if not first and not final:
+    previous = (snapshots[BUILD] == planned[BUILD] and set(FILES) == set(LEGACY_FILES_SHA256) and
+                all(snapshots[n] is not None and
+                    hashlib.sha256(snapshots[n]).hexdigest() == expected
+                    for n, expected in LEGACY_FILES_SHA256.items()))
+    if not first and not final and not previous:
         raise ValueError('unknown or partial QEMU GNSS runtime files; preserving source')
     written = []
     try:
@@ -121,6 +137,7 @@ def apply(root):
                 replace(path, snapshots[name])
         raise
     return {'status': 'source_runtime_installed_ONLY_NOT_device_loading_or_public_GNSS',
+        'upgraded_known_previous': previous,
         'source_revisions': REVISIONS,
         'files_sha256': {name: hashlib.sha256(value).hexdigest() for name, value in planned.items()},
         'first_artifact_behavior_gate_passed': False}

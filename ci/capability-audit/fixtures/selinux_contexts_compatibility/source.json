@@ -1,0 +1,8 @@
+{
+  "scope": "unchanged fixed upstream context builder bytes, used only to execute actual format validator in host tests",
+  "source_project": "base/security/selinux_adapter",
+  "source_commit": "cfc1d5b31a7438dbc87763f9222f00337221cf21",
+  "source_path": "scripts/build_contexts.py",
+  "sha256": "17d9b8aca5860338759434dbc04bb62c8be27fcc736f0c2a2a3a72a0b423b018",
+  "runtime_or_policy_build": false
+}

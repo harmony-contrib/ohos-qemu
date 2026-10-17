@@ -40,3 +40,5 @@ patches/common/base/notification/distributed_notification_service/calendar_owner
 patches/common/base/location/location/api26_runtime/0007-validate-measured-GNSS-and-ordered-WLAN-evidence.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 # Preserve the final newline sequence in the raw compatibility recheck output.
 docs/capability-audit/parallel/location/round21-coordinated/core-review-correction-host.log -text whitespace=-blank-at-eof
+# The fixed upstream context checker is a byte-pinned compatibility witness.
+ci/capability-audit/fixtures/selinux_contexts_compatibility/build_contexts.py -text -whitespace
