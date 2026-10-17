@@ -1,6 +1,6 @@
 {
-  "phase": "representative05_failed_fully_preserved_batch_repair",
-  "implementation_head": "7f5610162b4a7bcfd29f43a51a0ac79d20a6d915",
+  "phase": "representative06_finished_preserved_all_known_fixes_batched_for07",
+  "implementation_head": "a9c3ded6fea3f951238e78b91cc819061ed0e537",
   "baseline_head": "2c6a5c2",
   "checkpoint": "ddfabb4",
   "integrated_commits": {
@@ -34,10 +34,10 @@
     "read_contract": "GetFieldValidity exists and survives copy/parcel; absent accuracy remains unknown; guard only skiing/fusion precision consumers"
   },
   "next_required": [
-    "finish and preserve complete representative05 compile/link/image/package result",
-    "if archive succeeds build and verify fresh product CFI helpers",
-    "boot exact new archive and complete full suite plus intended AudioHaptic/Calendar boundary evidence",
-    "only after real first-artifact behavior gate consider remaining artifacts"
+    "freeze current batched candidate and migrate/prepare actual source07",
+    "run actual source readiness then ONE ARM64 phone representative build/package07",
+    "if archive exists record SHA/environment and boot actual new package; complete intended AudioHaptic/GNSS/Calendar/OpenVPN boundary/regression validation and strict whole suite",
+    "collect all runtime failures together before another representative cycle; never remaining5 before real first-artifact gate"
   ],
   "stage_driver": ".tmp/parallel-capability-20261016/run_integrated_round3_stage.py",
   "planned_first_build": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r53-first-arm64-phone-full-build-01/evidence.json",
@@ -324,8 +324,8 @@
     "first_artifact_behavior_gate_passed": false,
     "remaining_five_started": false
   },
-  "updated_at": "2026-10-17T06:17:59.389976+00:00",
-  "current_implementation_commit": "c057606bdd5d8f1fb26dd08e4eabbe118e47b1a7",
+  "updated_at": "2026-10-17T10:44:08.076807+00:00",
+  "current_implementation_commit": "a9c3ded6fea3f951238e78b91cc819061ed0e537",
   "representative05_finished": {
     "exit_code": 1,
     "seconds": 2079.736801666906,
@@ -340,5 +340,21 @@
     "OpenVPN_actual_SDK_HAPs": 1,
     "OpenVPN_QA_host_tests": 14,
     "new_guest_runtime": false
+  },
+  "all_agent_write_leases_released": true,
+  "representative06_finished": {
+    "exit_code": 1,
+    "seconds": 13214.181331207976,
+    "native_source_build_success": true,
+    "package": null,
+    "preserved": true,
+    "report": "first-build-06-findings.json"
+  },
+  "current_host_scope": "integrated-host-tests.json",
+  "next_batch_commits": {
+    "QA_GNSS_precision_Audio_incarnation": "a5fd56bf9c9097d8336d829eba2a60616b5bcded",
+    "full06_seal": "179bbd1",
+    "strict_witness_and_host_parser": "e33d592",
+    "GNSS_existing_callback_diagnostic": "a9c3ded6fea3f951238e78b91cc819061ed0e537"
   }
 }
