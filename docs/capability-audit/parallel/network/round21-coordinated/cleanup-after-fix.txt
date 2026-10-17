@@ -1,0 +1,7 @@
+test_shutdown_retains_cleanup_until_retry_succeeds (test_batch_network_vpn_broker_cleanup.BrokerCleanupTests.test_shutdown_retains_cleanup_until_retry_succeeds) ... ok
+test_stop_cleanup_retries_without_signalling_retired_group (test_batch_network_vpn_broker_cleanup.BrokerCleanupTests.test_stop_cleanup_retries_without_signalling_retired_group) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 5.195s
+
+OK

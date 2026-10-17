@@ -49,7 +49,7 @@ public:
     bool Identity(const std::string &generation, pid_t &worker, std::string &start) const
     {
         const auto found = jobs_.find(generation);
-        if (found == jobs_.end()) return false;
+        if (found == jobs_.end() || found->second.killSent) return false;
         start = ProcessStart(found->second.pid);
         if (start.empty()) return false;
         worker = found->second.pid; return true;
@@ -64,18 +64,26 @@ public:
             it = jobs_.erase(it);
         }
     }
-    void Shutdown()
+    bool Shutdown()
     {
-        for (auto &item : jobs_) kill(-item.second.pid, SIGTERM);
+        for (auto &item : jobs_) SignalStop(item.second);
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-        for (auto &item : jobs_) {
+        for (auto it = jobs_.begin(); it != jobs_.end();) {
             const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()).count();
-            Finish(item.second, static_cast<int>(std::max<int64_t>(0, std::min<int64_t>(500, left))));
+            if (Finish(it->second, static_cast<int>(std::max<int64_t>(0, std::min<int64_t>(500, left)))))
+                it = jobs_.erase(it);
+            else ++it;
         }
-        jobs_.clear();
+        return jobs_.empty();
     }
 private:
-    struct Job { BrokerCommand metadata; pid_t pid; std::string directory; };
+    struct Job {
+        BrokerCommand metadata;
+        pid_t pid;
+        std::string directory;
+        bool killSent = false;
+        bool processesReaped = false;
+    };
     std::string rootPath_;
     uid_t owner_;
     Worker worker_;
@@ -86,31 +94,49 @@ private:
     std::map<std::string, BrokerCommand> used_;
     static bool Same(const BrokerCommand &a, const BrokerCommand &b)
     { return a.owner == b.owner && a.interfaceName == b.interfaceName && a.session.token == b.session.token; }
+    static bool SignalStop(const Job &job)
+    {
+        if (job.killSent) return true;
+        siginfo_t state {};
+        int observed;
+        do { observed = waitid(P_PID, job.pid, &state, WEXITED | WNOHANG | WNOWAIT); }
+        while (observed < 0 && errno == EINTR);
+        // The unreaped leader reserves the group ID. Never signal a PID/group
+        // after losing that ownership, including cleanup-only retries.
+        if (observed < 0) return false;
+        kill(-job.pid, SIGTERM);
+        return true; // actual exit/reaping, not signal delivery, proves STOP
+    }
     bool Finish(Job &job, int grace)
     {
-        kill(-job.pid, SIGTERM);
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(grace);
-        for (;;) {
-            siginfo_t state {};
-            const int observed = waitid(P_PID, job.pid, &state, WEXITED | WNOHANG | WNOWAIT);
-            if (observed < 0 && errno == EINTR) continue;
-            if (observed < 0) return false; // never signal a no-longer-owned PID
-            if (state.si_pid) break;
-            if (std::chrono::steady_clock::now() >= deadline) break;
-            poll(nullptr, 0, 10);
+        if (!job.killSent) {
+            if (!SignalStop(job)) return false;
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(grace);
+            for (;;) {
+                siginfo_t state {};
+                const int observed = waitid(P_PID, job.pid, &state, WEXITED | WNOHANG | WNOWAIT);
+                if (observed < 0 && errno == EINTR) continue;
+                if (observed < 0) return false;
+                if (state.si_pid || std::chrono::steady_clock::now() >= deadline) break;
+                poll(nullptr, 0, 10);
+            }
+            // Keep the unreaped worker's PID reserved until its whole group
+            // has received SIGKILL, including a bridge blocked in an RPC.
+            kill(-job.pid, SIGKILL);
+            job.killSent = true;
         }
-        // Keep the unreaped worker's PID reserved until its whole group has
-        // received SIGKILL, including a bridge blocked in a synchronous RPC.
-        kill(-job.pid, SIGKILL);
         const auto reapedBy = std::chrono::steady_clock::now() + std::chrono::seconds(2);
-        for (;;) {
+        while (!job.processesReaped) {
             int status = 0;
             const pid_t reaped = waitpid(-job.pid, &status, WNOHANG);
             if (reaped > 0 || (reaped < 0 && errno == EINTR)) continue;
-            if (reaped < 0 && errno == ECHILD) break;
+            if (reaped < 0 && errno == ECHILD) { job.processesReaped = true; break; }
             if (reaped < 0 || std::chrono::steady_clock::now() >= reapedBy) return false;
             poll(nullptr, 0, 10);
         }
+        // Removal may fail independently of exit (permissions, unknown files,
+        // transient I/O). Retain the owner/interface reservation and retry only
+        // removal; the retired group number must never receive another signal.
         return store_.Remove(job.directory);
     }
     int Start(const BrokerCommand &command, int listener, int connection)

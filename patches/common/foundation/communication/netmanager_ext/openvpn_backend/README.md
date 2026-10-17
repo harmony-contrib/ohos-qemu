@@ -25,3 +25,10 @@ sources. This broker revision needs fresh real product compilation/linking,
 Linux death/recovery checks and a newly packaged TLS peer challenge before any
 VPN audit requirement can be closed. persist-tun, unsupported OHOS DNS policies
 and nonzero route metrics remain explicit open support cases.
+
+Cleanup retains separate process-kill and reap stages. A directory removal
+failure keeps its owner/interface reservation and retries removal without
+signalling the retired process group. Shutdown preserves failed jobs for retry
+and reports failure to the supervisor until cleanup completes. See the
+[round 21 handoff](../../../../../../docs/capability-audit/parallel/network/round21-coordinated/HANDOFF.md)
+for the real filesystem counterexample and remaining Linux/package gates.

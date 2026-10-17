@@ -304,8 +304,7 @@ int Run()
             std::to_string(result);
         OhosOpenvpn::SendFrame(connection.value, reply);
     }
-    broker.Shutdown();
-    return 0;
+    return broker.Shutdown() ? 0 : 5;
 }
 }
 
