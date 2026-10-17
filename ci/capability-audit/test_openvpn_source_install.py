@@ -146,6 +146,36 @@ class OpenvpnSourceInstallTests(unittest.TestCase):
             self.install()
         self.assertEqual(before, self.snapshot())
 
+    def test_new_policy_inventory_upgrades_previous_component_and_replays(self):
+        self.install()
+        name = installer.POLICY_BASE + 'whitelist/perm_group_whitelist.json'
+        path = self.root / name
+        marker = self.root / installer.MARKER
+        previous = json.loads(marker.read_text())
+        del previous['files_sha256'][name]
+        path.unlink()
+        marker.write_text(json.dumps(previous, indent=2) + '\n')
+        # The known preceding component has all of today's other bytes, but no
+        # QEMU-local permission-group inventory member. Upgrade adds that file
+        # without treating the policy JSON as an executable recipe payload.
+        self.install()
+        self.assertTrue(path.is_file())
+        self.assertFalse((self.root / (installer.PROJECT +
+            '/qemu_openvpn/qemu_openvpn_perm_group_whitelist.json')).exists())
+        first = self.snapshot()
+        self.install()
+        self.assertEqual(first, self.snapshot())
+
+    def test_foreign_new_policy_inventory_rejects_before_any_publication(self):
+        path = self.root / (installer.POLICY_BASE + 'whitelist/perm_group_whitelist.json')
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b'caller policy inventory\n')
+        before, permissions = self.snapshot(), self.permissions()
+        with self.assertRaisesRegex(ValueError, 'preserving edits'):
+            self.install()
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(permissions, self.permissions())
+
     def test_missing_or_modified_native_cfg_rejects_before_publication(self):
         for content in (None, self.native_original + b'\ncaller change\n'):
             with self.subTest(content=content is None):

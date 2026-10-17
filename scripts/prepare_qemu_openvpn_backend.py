@@ -32,7 +32,8 @@ POLICY_BASE = POLICY + '/sepolicy/ohos_policy/communication/qemu_openvpn/'
 POLICY_FILES = {'qemu_openvpn_types.te': 'public/types.te',
                 'qemu_openvpn_policy.te': 'system/qemu_openvpn.te',
                 'qemu_openvpn_file_contexts': 'system/file_contexts',
-                'qemu_openvpn_parameter_contexts': 'system/parameter_contexts'}
+                'qemu_openvpn_parameter_contexts': 'system/parameter_contexts',
+                'qemu_openvpn_perm_group_whitelist.json': 'whitelist/perm_group_whitelist.json'}
 RECIPE_FILES = ('scripts/build_openvpn_ohos.py', 'scripts/build_product_openvpn.py',
     'scripts/build_openvpn_ohos_in_docker.sh', 'scripts/openvpn_source_lock.json',
     'scripts/openvpn_source_archive.py', 'scripts/openharmony_release_source_lock.py',

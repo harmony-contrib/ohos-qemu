@@ -32,3 +32,12 @@ signalling the retired process group. Shutdown preserves failed jobs for retry
 and reports failure to the supervisor until cleanup completes. See the
 [round 21 handoff](../../../../../../docs/capability-audit/parallel/network/round21-coordinated/HANDOFF.md)
 for the real filesystem counterexample and remaining Linux/package gates.
+
+The client and helpers retain init's `netsysnative` domain, matching the
+existing `netsysnative sysvpn_exec` execution model. The component-local
+`whitelist/perm_group_whitelist.json` records only
+`netsysnative qemu_openvpn_exec` for the standard `execute and execute_no_trans`
+check in user policy (also inherited by developer policy). It does not grant
+permissions; the dedicated executable label, allow rules and execute
+neverallow remain in force. The unmodified full SELinux checker must pass
+before another representative package attempt.
