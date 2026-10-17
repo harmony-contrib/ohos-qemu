@@ -1,6 +1,6 @@
 # API 26 location runtime routes
 
-Apply after `api26_public_enums`, using this component's `apply.sh`. The seven-patch
+Apply after `api26_public_enums`, using this component's `apply.sh`. The eight-patch
 stack adds live icon, filtered BLE search, district, skiing-track and fusion-fence routes.
 Transactions 65 through 75 are appended while all original numbers are preserved.
 
@@ -35,9 +35,9 @@ The cache fast paths retain actual permission-use ownership through stop retries
 See `docs/capability-audit/parallel/location/round3-business.md` in this repository
 for the algorithm, authorization, compatibility and centralized build details.
 
-The guard pins the location project HEAD and the complete raw bytes of all 27
-upstream targets. It accepts only the original component state (after the enum
-prerequisite), the complete first/second/third/fourth/fifth/sixth patch prefixes, or the final state. Unknown or mixed
+The guard pins the location project HEAD and the complete raw bytes of the historical 27
+upstream targets plus one independently frozen GNSS BUILD.gn. It accepts only the original component state (after the enum
+prerequisite), the complete first through seventh patch prefixes, or the final state. Unknown or mixed
 edits, changed patches, unexpected new-header bytes, missing existing files and source/ancestor symlinks fail before
 source writes. A private suffix preflight must produce the exact final
 bytes and revalidate the source snapshot before atomic owned-file replacement.
@@ -46,8 +46,8 @@ source concurrently with patching.
 
 Host tests execute the actual patched functions under ASan/UBSan, using explicit
 scanner/NAPI boundaries. Separate guard tests exercise legal prefixes and reject
-unknown bytes, mixed states, symlinks and wrong HEADs. The complete 27-target source
-copies also pass real patch application and exact final hashes. These checks do
+unknown bytes, mixed states, symlinks and wrong HEADs. The complete 28-target original source fixture reproduces every exact production
+state hash. Actual Git suffix application remains part of the integrated checks. These checks do
 not replace full generated-IDL/TU builds or packaged GNSS/BLE/device validation.
 The integrating agent owns shared wiring and representative-package acceptance.
 
@@ -96,3 +96,20 @@ snapshots now use monotonically increasing scan-completion timestamps; replayed
 or older completions cannot overwrite newer inside/outside evidence. Individual
 AP timestamps still control freshness and may repeat across a new completed
 scan. See `round21-coordinated/HANDOFF.md` for regression and new-package gates.
+
+
+The eighth patch reuses the frozen existing-callback trace changes byte for byte
+and adds only the GNSS BUILD wiring. Inside each existing FEATURE_GNSS_SUPPORT
+HDI-enabled condition, device_company=qemu and exactly arm64_virt, armv7a_virt or
+x86_64_virt define QEMU_GNSS_HDI_RAW_TRACE=1; other products leave it undefined.
+The prior final state is now prefix_7, so the existing exact suffix applier
+upgrades every complete historical prefix without a new build-script entry.
+The three callback/Dump source files and GNSS BUILD form one exact final state;
+partial source/build combinations are rejected before mutation. CFI and target
+dependencies remain unchanged. No new HDI registration/lifecycle ownership is
+introduced. Diagnostic compilation, actual graph selection, root-identity Dump
+and genuine same-boot HDI/ordinary/Skiing/fusion acceptance remain root gates.
+See round21-gnss-trace-build-input.json for the separate new BUILD evidence.
+The historical 27-target freeze is unchanged. The two previous host source
+slices were replaced with actual original Git objects; all 28 original target states, including the explicit original header absence,
+now replay into every production state without substituting source hashes.

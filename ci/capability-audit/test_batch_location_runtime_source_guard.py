@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Exercise strict whole-byte/HEAD guards on bounded synthetic source snapshots.
+"""Exercise exact whole-byte/HEAD guards on all 28 actual original source files.
 
-Only copied fixture manifests/HEADs are substituted. Production full-file hashes
-remain pinned and are separately checked against complete fixed source copies.
+Only the private Git HEAD is substituted. Production full-file state hashes
+remain unchanged and are recomputed from every complete original/prefix/final.
 """
 import hashlib
 import json
@@ -42,8 +42,8 @@ class RuntimeSourceGuardTests(unittest.TestCase):
         manifest = json.loads((component / 'source_states.json').read_text())
         pinned = manifest['revision']
         manifest['revision'] = head
-        manifest['states'] = {name: {path: digest(text) for path, text in values.items()}
-                              for name, values in self.states.items()}
+        self.assertEqual(manifest['states'], {name: {path: digest(text) for path, text in values.items()}
+                                              for name, values in self.states.items()})
         (component / 'source_states.json').write_text(json.dumps(manifest))
         verifier = component / 'verify_source.py'
         verifier.write_text(verifier.read_text().replace(pinned, head))
@@ -148,9 +148,91 @@ class RuntimeSourceGuardTests(unittest.TestCase):
         manifest = json.loads((COMPONENT / 'source_states.json').read_text())
         frozen = json.loads((ROOT / 'docs/capability-audit/parallel/location/round2-freeze-inputs.json').read_text())
         self.assertEqual(frozen['revision'], manifest['revision'])
-        self.assertEqual(set(PREFIX + path for path in manifest['files']), set(frozen['targets']))
-        for path, info in frozen['targets'].items():
+        additional = json.loads((ROOT / 'docs/capability-audit/parallel/location/round21-gnss-trace-build-input.json').read_text())
+        self.assertEqual(27, len(frozen['targets']))
+        self.assertEqual({'base/location/location/services/location_gnss/gnss/BUILD.gn'}, set(additional['targets']))
+        self.assertEqual(frozen['revision'], additional['revision'])
+        targets = {**frozen['targets'], **additional['targets']}
+        self.assertEqual(28, len(targets))
+        self.assertEqual(set(PREFIX + path for path in manifest['files']), set(targets))
+        for path, info in targets.items():
             self.assertEqual(info['sha256'], manifest['states']['original'][path.removeprefix(PREFIX)])
+
+
+    def test_all_28_actual_originals_replay_to_unchanged_production_state_hashes(self):
+        manifest = json.loads((COMPONENT / 'source_states.json').read_text())
+        self.assertEqual(8, len(manifest['patches']))
+        self.assertEqual({'original', 'final'} | {'prefix_' + str(i) for i in range(1, 8)}, set(self.states))
+        self.assertEqual(manifest['states'], {state: {name: digest(text) for name, text in files.items()}
+                                            for state, files in self.states.items()})
+        doc = json.loads((ROOT / 'docs/capability-audit/parallel/location/round21-gnss-trace-build-input.json').read_text())
+        self.assertEqual(doc['historical_patches_sha256'], {name: manifest['patches'][name] for name in doc['historical_patches_sha256']})
+        self.assertEqual(7, len(doc['historical_patches_sha256']))
+        for row in doc['trace_source_hashes']:
+            path = row['path'].removeprefix(PREFIX)
+            self.assertEqual(row['pre_sha256'], manifest['states']['prefix_7'][path])
+            self.assertEqual(row['post_sha256'], manifest['states']['final'][path])
+        changed = {name for name in manifest['files'] if manifest['states']['prefix_7'][name] != manifest['states']['final'][name]}
+        self.assertEqual({'services/location_gnss/gnss/source/gnss_event_callback.cpp',
+                          'services/location_gnss/gnss/include/gnss_event_callback.h',
+                          'services/location_gnss/gnss/source/gnss_ability.cpp',
+                          'services/location_gnss/gnss/BUILD.gn'}, changed)
+
+    def test_trace_BUILD_or_callback_partial_state_is_never_an_accepted_prefix(self):
+        build = 'services/location_gnss/gnss/BUILD.gn'
+        trace = ['services/location_gnss/gnss/source/gnss_event_callback.cpp',
+                 'services/location_gnss/gnss/include/gnss_event_callback.h',
+                 'services/location_gnss/gnss/source/gnss_ability.cpp']
+        for changed in ([build], trace, [trace[0]], [trace[0], build]):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory(prefix='batch-location-partial-trace-') as directory:
+                root, component = self.fixture(directory, state='prefix_7')
+                for name in changed: (root / PREFIX / name).write_text(self.states['final'][name])
+                before = self.contents(root)
+                self.assertNotEqual(0, self.apply(root, component).returncode)
+                self.assertEqual(before, self.contents(root))
+                self.assertFalse((root / '.ohos-qemu-patches').exists())
+        with tempfile.TemporaryDirectory(prefix='batch-location-unknown-trace-build-') as directory:
+            root, component = self.fixture(directory, state='prefix_7')
+            path = root / PREFIX / build; path.write_text(path.read_text() + '\n# unrelated BUILD change\n')
+            before = self.contents(root)
+            self.assertNotEqual(0, self.apply(root, component).returncode)
+            self.assertEqual(before, self.contents(root)); self.assertFalse((root / '.ohos-qemu-patches').exists())
+
+    def test_missing_or_symlinked_original_GNSS_BUILD_fails_before_writes(self):
+        name = 'services/location_gnss/gnss/BUILD.gn'
+        for symlink in (False, True):
+            with self.subTest(symlink=symlink), tempfile.TemporaryDirectory(prefix='batch-location-trace-build-path-') as directory:
+                root, component = self.fixture(directory, state='prefix_7')
+                path = root / PREFIX / name; data = path.read_bytes(); path.unlink()
+                if symlink:
+                    outside = Path(directory) / 'outside-build.gn'; outside.write_bytes(data); path.symlink_to(outside)
+                before = self.contents(root)
+                self.assertNotEqual(0, self.apply(root, component).returncode)
+                self.assertEqual(before, self.contents(root)); self.assertFalse((root / '.ohos-qemu-patches').exists())
+
+    def test_patch8_preserves_frozen_trace_bytes_and_changes_only_four_owned_files(self):
+        import re
+        doc = json.loads((ROOT / 'docs/capability-audit/parallel/location/round21-gnss-trace-build-input.json').read_text())
+        patch = (COMPONENT / doc['new_patch']).read_bytes()
+        self.assertEqual(doc['reused_trace_patch']['sha256'], hashlib.sha256(patch[:doc['reused_trace_patch_bytes']]).hexdigest())
+        paths = re.findall(r'^\+\+\+ b/(.+)$', patch.decode(), re.M)
+        self.assertEqual(4, len(paths)); self.assertEqual(4, len(set(paths)))
+        expected = {row['path'] for row in doc['trace_source_hashes']} | set(doc['targets'])
+        self.assertEqual(expected, set(paths))
+
+    def test_trace_define_only_inside_existing_HDI_gate_and_three_QEMU_products(self):
+        name = 'services/location_gnss/gnss/BUILD.gn'
+        original = self.states['prefix_7'][name]; final = self.states['final'][name]
+        feature = '      defines += [ "FEATURE_GNSS_SUPPORT" ]\n'
+        guarded = ('      if (device_company == "qemu" &&\n'
+                   '          (product_name == "arm64_virt" || product_name == "armv7a_virt" ||\n'
+                   '           product_name == "x86_64_virt")) {\n'
+                   '        defines += [ "QEMU_GNSS_HDI_RAW_TRACE=1" ]\n'
+                   '      }\n')
+        self.assertEqual(2, original.count(feature)); self.assertEqual(2, final.count('"QEMU_GNSS_HDI_RAW_TRACE=1"'))
+        self.assertEqual(original.replace(feature, feature + guarded), final)
+        self.assertEqual(2, final.count('    if (location_feature_with_gnss &&\n        hdf_drivers_interface_location_gnss_enable) {'))
+        self.assertEqual(2, final.count('      cfi = true')); self.assertEqual(2, final.count('      cfi_cross_dso = true'))
 
 
 if __name__ == '__main__':
