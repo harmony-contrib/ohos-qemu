@@ -79,6 +79,32 @@ class CalendarSharedStorageTests(unittest.TestCase):
         self.assertNotEqual(case.run_component('main_ui').returncode, 0)
         self.assertEqual(before, case.snapshot())
 
+    def test_complete_E_replays_parents_before_product_order_upgrade(self):
+        case = self.fixture(); self.legacy(case); guard = self.verifier()
+        self.assertEqual(guard.source_state(case.root), 'prefix1')
+        before = case.snapshot()
+        for name in ('event_editor', 'editor_callback_dispatch'):
+            result = case.run_component(name)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(before, case.snapshot())
+        result = case.run_component('main_ui')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(guard.validate(case.root, require_patched=True))
+        self.assertEqual({name for name, data in before.items()
+                          if data != case.snapshot()[name]}, {PAGE})
+
+    def test_parent_replay_rejects_foreign_viewer_native_or_identity_without_writes(self):
+        case = self.fixture(); self.legacy(case)
+        for name in (PAGE, 'entry/src/main/module.json5',
+                     'calendarmanager/napi/src/calendar_manager_napi.cpp', 'AppScope/app.json5'):
+            with self.subTest(file=name):
+                target = case.project / name; original = target.read_bytes()
+                target.write_bytes(original + b'\n// foreign edit\n')
+                before = case.snapshot()
+                self.assertNotEqual(case.run_component('event_editor').returncode, 0)
+                self.assertEqual(before, case.snapshot())
+                target.write_bytes(original)
+
     def test_unknown_E_page_is_rejected_without_publication(self):
         case = self.fixture(); self.legacy(case)
         page = case.project / PAGE; page.write_bytes(page.read_bytes() + b'\n// foreign edit\n')

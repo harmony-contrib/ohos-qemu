@@ -21,8 +21,10 @@ def validate(root, require_patched=False):
             main = importlib.util.module_from_spec(main_spec)
             main_spec.loader.exec_module(main)
             try:
-                main.validate(root, require_patched=True)
-                return True
+                # The complete shipped viewer is also an editor successor:
+                # its later UI-only upgrade must still reach main_ui/apply.py.
+                if main.source_state(root) in ('prefix1', 'final'):
+                    return True
             except (ValueError, OSError):
                 pass
         # Accept exactly the complete known native successor, paired with the
