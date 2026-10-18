@@ -162,7 +162,9 @@ class AudioHapticF(unittest.TestCase):
             self.assertEqual(version.returncode, 0, version.stderr)
             # GCC's -Wall/-Wextra also diagnoses bool/error-code comparisons;
             # the named Clang warning is not a valid GCC option.
-            warning = ['-Wtautological-constant-out-of-range-compare'] if 'clang' in version.stdout.lower() else []
+            # Keep the original GN policy for the untouched legacy move call.
+            warning = ['-Wtautological-constant-out-of-range-compare',
+                       '-Wno-unqualified-std-cast-call'] if 'clang' in version.stdout.lower() else []
             argv = [compiler, '-std=c++17', '-pthread', '-fno-rtti',
                 '-Wall', '-Wextra', '-Werror', *warning,
                 '-Wno-unused-parameter', '-Wno-unused-const-variable',
