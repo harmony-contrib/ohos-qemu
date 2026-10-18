@@ -54,6 +54,65 @@ class RendererLifecycle(unittest.TestCase):
                 self.assertEqual('F', self.guard.state(self.root, require_patched=True))
                 before = self.inventory(); self.apply.apply(self.root); self.assertEqual(before, self.inventory())
 
+    def parent_17_05(self):
+        # Reconstruct the exact retained parent from real E bytes + immutable 0002.
+        # Do not make historical source by removing text from the new postimage.
+        patch_file = COMPONENT / '0002-recover-real-renderer-after-public-desktop-updates.patch'
+        subprocess.run(['git', '-C', str(self.root), 'apply', '--check', str(patch_file)], check=True)
+        subprocess.run(['git', '-C', str(self.root), 'apply', '--whitespace=nowarn', str(patch_file)], check=True)
+        self.assertEqual('F_parent_17_05', self.guard.state(self.root))
+
+    def test_exact_17_05_parent_runs_only_successor_and_preserves_other_files_and_mode(self):
+        self.parent_17_05()
+        with self.assertRaises(ValueError): self.guard.state(self.root, require_patched=True)
+        target = self.root / PROJECT / 'services/src/wallpaper_service.cpp'
+        target.chmod(0o640)
+        names = list(self.guard.manifest()['states']['F'])
+        before = self.apply.snapshot(self.root, names)
+        original_run = self.apply.subprocess.run
+        commands = []
+        def observe(command, **kwargs):
+            commands.append(command)
+            return original_run(command, **kwargs)
+        with patch.object(self.apply.subprocess, 'run', observe):
+            self.apply.apply(self.root)
+            self.assertEqual('F', self.guard.state(self.root, require_patched=True))
+            after = self.apply.snapshot(self.root, names)
+            self.assertEqual(0o640, stat.S_IMODE(target.stat().st_mode))
+            for name in names:
+                if name != 'services/src/wallpaper_service.cpp':
+                    self.assertEqual(before[name], after[name])
+            once = self.inventory(); self.apply.apply(self.root)
+            self.assertEqual(once, self.inventory())
+        self.assertEqual(2, len(commands))
+        self.assertIn('--check', commands[0])
+        self.assertIn('--whitespace=nowarn', commands[1])
+        for command in commands:
+            self.assertEqual('0003-scope-legacy-extension-retry-to-stock-renderer.patch', Path(command[-1]).name)
+
+    def test_parent_unknown_edits_and_E_mixtures_are_refused_without_writes(self):
+        self.parent_17_05()
+        saved = self.inventory()
+        for name in self.guard.manifest()['states']['F_parent_17_05']:
+            with self.subTest(external=name):
+                target = self.root / PROJECT / name
+                original = target.read_bytes()
+                target.write_bytes(original + b'// outside edit\n')
+                before = self.inventory()
+                with self.assertRaises(ValueError): self.apply.apply(self.root)
+                self.assertEqual(before, self.inventory())
+                target.write_bytes(original)
+        for name in ('services/BUILD.gn', 'services/src/wallpaper_service.cpp'):
+            with self.subTest(mixed_E=name):
+                target = self.root / PROJECT / name
+                original = target.read_bytes()
+                target.write_bytes((COMPONENT / 'lifecycle/preimage' / name).read_bytes())
+                before = self.inventory()
+                with self.assertRaises(ValueError): self.apply.apply(self.root)
+                self.assertEqual(before, self.inventory())
+                target.write_bytes(original)
+        self.assertEqual(saved, self.inventory())
+
     def test_unknown_partial_and_alias_states_preserve_every_file(self):
         target = self.root / PROJECT / 'services/src/wallpaper_service.cpp'
         original = target.read_bytes()

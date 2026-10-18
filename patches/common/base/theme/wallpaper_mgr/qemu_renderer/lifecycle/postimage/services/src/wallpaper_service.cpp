@@ -137,7 +137,9 @@ constexpr int32_t COMPRESSION_RATIO = 8;
 constexpr int32_t MIN_SIZE = 64;
 
 #ifndef THEME_SERVICE
+#ifndef QEMU_WALLPAPER_RENDERER
 constexpr int32_t CONNECT_EXTENSION_INTERVAL = 100;
+#endif
 constexpr int32_t DEFAULT_VALUE = -1;
 constexpr int32_t CONNECT_EXTENSION_MAX_RETRY_TIMES = 50;
 #endif

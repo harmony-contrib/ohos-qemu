@@ -7,11 +7,11 @@ import stat
 import subprocess
 PROJECT = 'base/theme/wallpaper_mgr'
 REVISION = '42256bdeaa504da4ae4d038c24d42a4601e3a6cf'
-MANIFEST_SHA256 = 'ad58161650eb8b754eda9cfd26da577f948ea123816f5a77910b9092c993027d'
+MANIFEST_SHA256 = '95e620c5deea2b37428267c99c633f47ccd35fcb2f75fd3314016160cb16d97f'
 
 
 def manifest():
-    path = Path(__file__).resolve().parent / 'lifecycle/manifest-18.json'
+    path = Path(__file__).resolve().parent / 'lifecycle/manifest-176.json'
     raw = path.read_bytes()
     if hashlib.sha256(raw).hexdigest() != MANIFEST_SHA256:
         raise ValueError('reviewed exact renderer lifecycle manifest changed')

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Atomic exact pristine/E/F component migration; never discard unknown edits."""
+"""Atomic exact pristine/E/F-parent/final-F migration; never discard unknown edits."""
 import argparse
 import fcntl
 import hashlib
@@ -63,7 +63,9 @@ def apply(root):
             if before is not None:
                 target = staged / guard.PROJECT / name
                 target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(before[0]); target.chmod(before[1])
-        patches = ['0002-recover-real-renderer-after-public-desktop-updates.patch']
+        patches = ['0003-scope-legacy-extension-retry-to-stock-renderer.patch']
+        if state in ('pristine', 'E'):
+            patches.insert(0, '0002-recover-real-renderer-after-public-desktop-updates.patch')
         if state == 'pristine': patches.insert(0, '0001-real-wallpaper-settings-and-renderer.patch')
         for name in patches:
             patch = component / name

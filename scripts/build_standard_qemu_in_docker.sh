@@ -1537,6 +1537,9 @@ build_product() {
   cd "${OHOS_ROOT}"
   export CCACHE_DIR
   export OHOS_KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS}"
+  # HB otherwise hides FAILED commands and compiler diagnostics until Ninja
+  # exits. Keep them in the live log while independent targets finish.
+  export LOG_FILTER=False
   ccache -M "${CCACHE_MAXSIZE}" >/dev/null 2>&1 || true
 
   # A component-profile change must not reuse a target graph or case-collided
@@ -1603,6 +1606,7 @@ PY
     # Finish independent targets so one representative attempt retains all
     # reachable failures for the next batched repair. Ninja still exits nonzero.
     --keep-ninja-going
+    --log-mode=normal
     --load-test-config=false
     --deps-guard=false
   )
