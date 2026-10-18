@@ -113,6 +113,45 @@ class Install(unittest.TestCase):
             install.run(root)
             self.assertEqual(before,{p:p.read_bytes() for p in root.rglob('*') if p.is_file()})
 
+    def test_complete_F_service_parent_qualifies_once_without_replaying_hooks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);baseline(root);old.run(root);install.run(root)
+            name=next(n for n in install.MANIFEST['files'] if n.endswith('/media_datashare_ext_ability.cpp'))
+            path=root/name;final=path.read_bytes()
+            legacy=final.replace(b'OHOS::RdbDataShareAdapter::RdbUtils::ToResultSetBridge(result)',
+                                 b'RdbUtils::ToResultSetBridge(result)',1)
+            self.assertNotEqual(legacy,final);path.write_bytes(legacy)
+            actual={n:install.sha((root/n).read_bytes()) for n in install.MANIFEST['files']}
+            parent=next(state for state in install.PREVIOUS if state[name]==install.sha(legacy))
+            self.assertEqual(set(parent),set(install.MANIFEST['files']));self.assertEqual(len(parent),14)
+            self.assertEqual(actual,parent);self.assertFalse(install.validate(root))
+            with self.assertRaises(ValueError):install.validate(root,True)
+            install.run(root);self.assertTrue(install.validate(root,True));self.assertEqual(path.read_bytes(),final)
+            self.assertEqual(final.count(b'#include "rdb_utils.h"'),1)
+            self.assertEqual(final.count(b'// Fixed internal Knowledge route.'),1)
+            before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            old.run(root);install.run(root);self.assertEqual(before,{p:p.read_bytes() for p in root.rglob('*') if p.is_file()})
+
+    def test_F_parent_mixed_with_older_NAPI_or_unknown_service_preserves_every_file(self):
+        for mode in ('mixed','unknown'):
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);baseline(root);old.run(root);install.run(root)
+                name=next(n for n in install.MANIFEST['files'] if n.endswith('/media_datashare_ext_ability.cpp'))
+                path=root/name
+                legacy=path.read_bytes().replace(b'OHOS::RdbDataShareAdapter::RdbUtils::ToResultSetBridge(result)',
+                                                b'RdbUtils::ToResultSetBridge(result)',1)
+                path.write_bytes(legacy)
+                if mode=='mixed':
+                    old_files=json.loads((FIX/'holiday-previous-round6.json').read_text())['files']
+                    n=next(n for n in old_files if n.endswith('/knowledge_content_napi.cpp'))
+                    entry=old_files[n];data=gzip.decompress(base64.b64decode(entry['gzip_base64']))
+                    self.assertEqual(install.sha(data),entry['sha256']);self.assertNotEqual(entry['sha256'],install.MANIFEST['files'][n]['after'])
+                    (root/n).write_bytes(data)
+                else:path.write_bytes(legacy+b'// preserve unknown caller edit\n')
+                before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+                with self.assertRaises(ValueError):install.run(root)
+                self.assertEqual(before,{p:p.read_bytes() for p in root.rglob('*') if p.is_file()})
+
     def test_partial_unknown_symlink_reject_and_preserve_all_files(self):
         for mode in ['partial','unknown','symlink']:
             with self.subTest(mode=mode),tempfile.TemporaryDirectory() as temp:

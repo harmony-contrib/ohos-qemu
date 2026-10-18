@@ -1600,6 +1600,9 @@ PY
     --build-only-gn=false
     --ccache
     "--ninja-args=-j${BUILD_JOBS}"
+    # Finish independent targets so one representative attempt retains all
+    # reachable failures for the next batched repair. Ninja still exits nonzero.
+    --keep-ninja-going
     --load-test-config=false
     --deps-guard=false
   )

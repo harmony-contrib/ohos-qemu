@@ -67,7 +67,7 @@
     },
     "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp": {
       "before": "448f3f46da6b28399ad3a74233af7f97b70884e5975b1af1153b1c40a41da3bf",
-      "after": "40f5ac5bbec245a998f504aa1756bd69d5ae87a1a2e4f8a89c11bebd9bbe70ce",
+      "after": "5559b1867aa256cfe22e64e4369136a9c2875d1909e0ee1dc937f48fd2596996",
       "transform": "frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp"
     }
   }

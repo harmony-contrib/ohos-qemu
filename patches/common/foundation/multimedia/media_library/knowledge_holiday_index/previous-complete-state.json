@@ -76,6 +76,26 @@
         "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp": "0858f5406dc651091a9fa1f4cc264ef32b9f94d8c0cd6106dd138aa267caf6bd",
         "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp": "448f3f46da6b28399ad3a74233af7f97b70884e5975b1af1153b1c40a41da3bf"
       }
+    },
+    {
+      "origin_commit": "9193a88ecdf311d5e634b5d5fe3ff3b2ea412758",
+      "scope": "complete fourteen-member F service-routed parent before namespace qualification; no member-wise union",
+      "files": {
+        "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn": "3aa2ee923d7b289a0512a9b77e117a945f20417e24c3f0d82c730e83a04d9e95",
+        "foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp": "dab709df57cf41f9df0982ef92caf22e53a55633a9b87d9aaaed5e3ebaf43969",
+        "foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js": "7108e690526019093c562302afb8d2b41cfefe064bffb555a9da4d0180e32682",
+        "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h": "7b244ec2626b96a01983493155fb69d4e80ca2d9eecdbfc463e90b2da70146ad",
+        "foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp": "29f5218c160e0d041403b3da40164cc77c4326171fef3672733b155a88d52258",
+        "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp": "bd2238c3a91c0a06bb09788ca64a634a5a10a1696550e1d6cc5d182dd9f8a777",
+        "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp": "b4f42200532773528b5f6c2632c93dca5731fbe68bfdd276222ce3b30e0ab088",
+        "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h": "080cc054b5cece7e3bc71796ec9d0ef4d6d81eab308481c3c9ebd94aa333b252",
+        "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h": "4eeff8ca8288f495cc29ca8a78e9f604d22ae1f9f6075a34252632d885a52906",
+        "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn": "145315aa36d5050f628a1fe48b20a515696cab6b275d0084eaddb0087b8ac1ed",
+        "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp": "021c3e3b05b0fb87246b84a14bc48c95d87459e4300628a17777360a5a73e678",
+        "foundation/multimedia/media_library/services/media_rdbstore/include/rdbstore/knowledge_holiday_index.h": "3f05d50bc27a1ef6381a98b1215fb001286527f1f7311e9f3d181da37ad993b5",
+        "foundation/multimedia/media_library/services/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp": "0858f5406dc651091a9fa1f4cc264ef32b9f94d8c0cd6106dd138aa267caf6bd",
+        "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp": "40f5ac5bbec245a998f504aa1756bd69d5ae87a1a2e4f8a89c11bebd9bbe70ce"
+      }
     }
   ]
 }

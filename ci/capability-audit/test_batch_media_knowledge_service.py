@@ -23,6 +23,25 @@ class KnowledgeServiceTests(unittest.TestCase):
                 str(COMP / 'files/knowledge_content_query.cpp'), '-o', str(root / 'service')], check=True)
             subprocess.run([str(root / 'service')], check=True, timeout=15)
 
+    def test_global_adapter_alias_cannot_hide_missing_product_namespace(self):
+        spec = importlib.util.spec_from_file_location('knowledge_namespace_transform', COMP / 'transforms.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        qualified = 'OHOS::RdbDataShareAdapter::RdbUtils::ToResultSetBridge(result)'
+        self.assertEqual(module.SERVICE_QUERY.count(qualified), 1)
+        fixture = (FIX / 'service_harness.cpp').read_text()
+        self.assertIn('namespace OHOS::RdbDataShareAdapter {', fixture)
+        self.assertIn('namespace OHOS::AbilityRuntime {', fixture)
+        self.assertNotIn('using namespace OHOS::RdbDataShareAdapter', fixture)
+        legacy = module.SERVICE_QUERY.replace(qualified, 'RdbUtils::ToResultSetBridge(result)', 1)
+        with tempfile.TemporaryDirectory(prefix='knowledge-namespace-negative-') as temporary:
+            path = Path(temporary) / 'legacy.cpp'
+            path.write_text(fixture.replace('// ACTUAL_SERVICE_QUERY', legacy))
+            result = subprocess.run(['clang++', '-std=c++17', '-Wall', '-Wextra', '-Werror',
+                '-fno-exceptions', '-fsyntax-only', '-I', str(COMP / 'files'), str(path)],
+                capture_output=True, text=True, check=False, timeout=30)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('RdbUtils', result.stderr)
+
     def test_NAPI_has_no_database_path_or_visitor_fallback_and_retains_revocation_checks(self):
         source = (COMP / 'files/knowledge_content_napi.cpp').read_text()
         self.assertNotIn('MediaAssetRdbStore', source)

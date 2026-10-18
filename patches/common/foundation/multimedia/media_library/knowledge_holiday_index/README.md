@@ -1,7 +1,7 @@
 # Real KnowledgeContent holiday producer and bounded queries
 
 Apply `knowledge_content/apply.sh` first, then this component's `apply.sh --source-root OHOS_ROOT`.
-The installer checks the exact media_library revision and all 13 source states
+The installer checks the exact media_library revision and all 14 source states
 before writing. It permits a complete original before state, the exact previous
 complete overlay, or the complete current after state; unknown/partial/symlink
 inputs fail before mutation. The predecessor installer
@@ -160,3 +160,25 @@ proof. Root must compile the real affected native targets and all four QA HAPs,
 then validate the new representative package through the unchanged full public
 Knowledge suite, including baseline, consent/import, query/holiday boundaries,
 hide/unhide, trash/recover, permanent deletion and owned cleanup.
+
+
+Namespace repair after the first final-F compilation
+--------------------------------------------------
+The service TU is in OHOS::AbilityRuntime and does not import DataManager's
+OHOS::RdbDataShareAdapter namespace. Its one bridge call therefore uses explicit
+OHOS::RdbDataShareAdapter::RdbUtils. This changes no protocol, authorization,
+SQL, error code, close or response budget behavior. Patch0003 follows unchanged
+historical0001/0002; the original service-query-provenance.json records that
+historical service-routed parent. namespace-repair-provenance.json describes this
+source-only successor and its exact parent/final whole-file hashes.
+
+The complete prior F fourteen-member after vector is an explicit upgrade input.
+The service transform replaces only its exact old block; it does not replay
+include/query hooks. All historical complete vectors remain, and unknown/mixed
+sources still fail before writes. New/final/legacy repeats retain the original
+CRLF mode of each hook file. The stricter host service fixture declares the real
+OHOS::RdbDataShareAdapter and distinct DataShare::ResultSetBridge types, with no
+global RdbUtils alias, and retains permission/SQL/null/close counterexamples.
+Its negative namespace compile and whole-state upgrade cases are regression
+source only until root executes them; a host pass cannot replace real GN TU,
+link, new package or public Knowledge runtime acceptance.
