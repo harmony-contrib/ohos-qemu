@@ -3110,11 +3110,11 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_system_sound_tone_feature_component.log"
   bash "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_lifecycle_component.log"
-  bash "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+  python3 "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_lifecycle_component.log"
   bash "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_public_errors_component.log"
-  bash "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+  python3 "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_public_errors_component.log"
   bash "${AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_public_enums_component.log"
@@ -3434,7 +3434,7 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/verify_capturer_read_lifecycle_component.log"
   bash "${CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_capturer_frame_assembly_component.log"
-  bash "${CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+  python3 "${CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_capturer_frame_assembly_component.log"
   bash "${AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_library_path_component.log"
