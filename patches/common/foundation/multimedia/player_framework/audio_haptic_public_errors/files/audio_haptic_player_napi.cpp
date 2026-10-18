@@ -393,7 +393,7 @@ void AudioHapticPlayerNapi::CommonAsyncCallbackComp(napi_env env, napi_status st
     napi_value result[2] = {};
 
     napi_get_undefined(env, &result[PARAM1]);
-    if (!context->status) {
+    if (context->status == MSERR_OK) {
         napi_get_undefined(env, &result[PARAM0]);
     } else {
         // Preserve the actual native failure as the standard public numeric
@@ -413,7 +413,7 @@ void AudioHapticPlayerNapi::CommonAsyncCallbackComp(napi_env env, napi_status st
     }
 
     if (context->deferred) {
-        if (!context->status) {
+        if (context->status == MSERR_OK) {
             napi_resolve_deferred(env, context->deferred, result[PARAM1]);
         } else {
             napi_reject_deferred(env, context->deferred, result[PARAM0]);

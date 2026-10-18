@@ -34,6 +34,17 @@ def originals():
         result[name] = data
     return result
 
+def legacy_postimage():
+    manifest = json.loads((COMP / 'source_states.json').read_text())
+    result = {}
+    for name, row in manifest['files'].items():
+        payload = row.get('after_bool_legacy_gzip_base64', row['after_gzip_base64'])
+        data = gzip.decompress(base64.b64decode(payload))
+        if hashlib.sha256(data).hexdigest() != manifest['states']['after_bool_legacy'][name]:
+            raise ValueError('exact former F bool-parent fixture differs: ' + name)
+        result[name] = data
+    return result
+
 
 class AudioHapticF(unittest.TestCase):
     def test_real_bad_resources_are_distinct_from_observation_modes(self):
@@ -54,11 +65,11 @@ class AudioHapticF(unittest.TestCase):
         self.assertEqual(by_name['loop-start']['hold_ms'], 9200)
         self.assertEqual(by_name['mute-audio-create']['options'], {'mute_audio': True, 'mute_haptics': False})
 
-    def test_six_member_exact_E_upgrade_repeat_and_all_rollbacks(self):
+    def test_seven_member_exact_E_upgrade_repeat_and_all_rollbacks(self):
         spec = importlib.util.spec_from_file_location('napi_errors_installer', COMP / 'install.py')
         installer = importlib.util.module_from_spec(spec); spec.loader.exec_module(installer)
         before = originals()
-        self.assertEqual(len(before), 6)
+        self.assertEqual(len(before), 7)
         for count in (None, *range(1, len(before) + 1)):
             with self.subTest(count=count), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
@@ -80,6 +91,93 @@ class AudioHapticF(unittest.TestCase):
                     mixed = installer.snapshot(root)
                     with self.assertRaises(ValueError): installer.install(root)
                     self.assertEqual(installer.snapshot(root), mixed)
+
+    def test_exact_legacy_bool_parent_upgrade_repeat_and_all_rollbacks(self):
+        spec = importlib.util.spec_from_file_location('napi_errors_legacy_installer', COMP / 'install.py')
+        installer = importlib.util.module_from_spec(spec); spec.loader.exec_module(installer)
+        legacy = legacy_postimage()
+        self.assertEqual(len(legacy), 7)
+        for count in (None, *range(1, len(legacy) + 1)):
+            with self.subTest(count=count), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                for name, data in legacy.items():
+                    path = root / installer.PROJECT / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(data)
+                self.assertEqual(installer.state(root), 'after_bool_legacy')
+                def fail(name, actual):
+                    if actual == count: raise OSError('controlled legacy upgrade failure')
+                if count is not None:
+                    with self.assertRaisesRegex(OSError, 'controlled legacy'):
+                        installer.install(root, after_write=fail)
+                    self.assertEqual(installer.snapshot(root), legacy)
+                    self.assertEqual(installer.state(root), 'after_bool_legacy')
+                else:
+                    self.assertEqual(installer.install(root), 'after')
+                    self.assertEqual(installer.install(root), 'after')
+                    for name, data in legacy.items():
+                        repaired = installer.snapshot(root)
+                        (root / installer.PROJECT / name).write_bytes(data)
+                        if data != repaired[name]:
+                            mixed = installer.snapshot(root)
+                            with self.assertRaises(ValueError): installer.install(root)
+                            self.assertEqual(installer.snapshot(root), mixed)
+                        (root / installer.PROJECT / name).write_bytes(repaired[name])
+
+    def test_real_private_header_is_part_of_exact_readonly_state_gate(self):
+        spec = importlib.util.spec_from_file_location('napi_errors_header_installer', COMP / 'install.py')
+        installer = importlib.util.module_from_spec(spec); spec.loader.exec_module(installer)
+        before = originals()
+        name = 'frameworks/js/audio_haptic/include/audio_haptic_player/audio_haptic_player_napi.h'
+        self.assertIn(name, installer.MANIFEST['files'])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative, data in before.items():
+                path = root / installer.PROJECT / relative; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(data)
+            (root / installer.PROJECT / name).write_bytes(before[name] + b'\n// foreign private context\n')
+            snapshot = installer.snapshot(root)
+            with self.assertRaises(ValueError): installer.install(root)
+            self.assertEqual(installer.snapshot(root), snapshot)
+            self.assertFalse((root / '.ohos-qemu-patches').exists())
+
+    def test_complete_actual_player_cpp_private_header_native_status_chain(self):
+        # No selected-method substitute: all player/common/callback CPP bytes
+        # below are the complete installed production payload files.
+        with tempfile.TemporaryDirectory(prefix='audio-haptic-player-status-') as directory:
+            root = Path(directory)
+            manifest = json.loads((COMP / 'source_states.json').read_text())
+            for name, row in manifest['files'].items():
+                data = gzip.decompress(base64.b64decode(row['after_gzip_base64']))
+                self.assertEqual(hashlib.sha256(data).hexdigest(), manifest['states']['after'][name])
+                self.assertEqual(data, (COMP / 'files' / Path(name).name).read_bytes())
+                (root / Path(name).name).write_bytes(data)
+            lifecycle = json.loads((LIFECYCLE / 'source_states.json').read_text())
+            for name, row in lifecycle['files'].items():
+                if Path(name).name in ('audio_haptic_playback_session.h', 'audio_haptic_publication_callback.h'):
+                    data = gzip.decompress(base64.b64decode(row['incarnation_gzip_base64']))
+                    self.assertEqual(hashlib.sha256(data).hexdigest(), lifecycle['states']['incarnation'][name])
+                    (root / Path(name).name).write_bytes(data)
+            extra = FIX / 'player_status'
+            binary = root / 'complete-player-native-status'
+            compiler = os.environ.get('OHOS_QA_CXX', '/usr/bin/clang++')
+            version = subprocess.run([compiler, '--version'], capture_output=True, text=True, timeout=15)
+            self.assertEqual(version.returncode, 0, version.stderr)
+            # GCC's -Wall/-Wextra also diagnoses bool/error-code comparisons;
+            # the named Clang warning is not a valid GCC option.
+            warning = ['-Wtautological-constant-out-of-range-compare'] if 'clang' in version.stdout.lower() else []
+            argv = [compiler, '-std=c++17', '-pthread', '-fno-rtti',
+                '-Wall', '-Wextra', '-Werror', *warning,
+                '-Wno-unused-parameter', '-Wno-unused-const-variable',
+                '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
+                '-include', str(extra / 'prelude.h'), '-I' + str(root), '-I' + str(extra),
+                '-I' + str(extra / 'stubs'), '-I' + str(FIX / 'stubs'),
+                '-I' + str(GEN / 'include'), '-I' + str(GEN / 'stubs'),
+                str(root / 'audio_haptic_player_napi.cpp'), str(root / 'audio_haptic_common_napi.cpp'),
+                str(root / 'audio_haptic_player_callback_napi.cpp'), str(extra / 'player_status_harness.cpp'),
+                '-o', str(binary)]
+            compiled = subprocess.run(argv, capture_output=True, text=True, timeout=120)
+            self.assertEqual(compiled.returncode, 0, 'argv=' + repr(argv) + '\nstdout:\n' + compiled.stdout + '\nstderr:\n' + compiled.stderr)
+            ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30,
+                env=dict(os.environ, ASAN_OPTIONS='detect_leaks=1' if os.uname().sysname == 'Linux' else 'detect_leaks=0'))
+            self.assertEqual(ran.returncode, 0, 'stdout:\n' + ran.stdout + '\nstderr:\n' + ran.stderr)
 
     def test_actual_napi_callback_class_and_common_methods(self):
         # Complete actual callback CPP/class. The common class header is actual;

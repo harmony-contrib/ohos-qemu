@@ -1,0 +1,20 @@
+--- a/frameworks/js/audio_haptic/include/audio_haptic_player/audio_haptic_player_napi.h
++++ b/frameworks/js/audio_haptic/include/audio_haptic_player/audio_haptic_player_napi.h
+@@ -108,3 +108,4 @@
+     napi_deferred deferred;
+-    bool status;
++    // Preserve the native MSERR_* value; zero alone means success.
++    int32_t status = MSERR_OK;
+     AudioHapticPlayerNapi *objectInfo;
+--- a/frameworks/js/audio_haptic/src/audio_haptic_player/audio_haptic_player_napi.cpp
++++ b/frameworks/js/audio_haptic/src/audio_haptic_player/audio_haptic_player_napi.cpp
+@@ -395,3 +395,3 @@
+     napi_get_undefined(env, &result[PARAM1]);
+-    if (!context->status) {
++    if (context->status == MSERR_OK) {
+         napi_get_undefined(env, &result[PARAM0]);
+@@ -415,3 +415,3 @@
+     if (context->deferred) {
+-        if (!context->status) {
++        if (context->status == MSERR_OK) {
+             napi_resolve_deferred(env, context->deferred, result[PARAM1]);

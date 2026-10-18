@@ -6,3 +6,5 @@ constexpr int LOG_CORE = 0, LOG_DOMAIN_AUDIO_NAPI = 0;
 #define MEDIA_LOGE(...) ((void)0)
 #define CHECK_AND_RETURN_LOG(condition, ...) do { if (!(condition)) return; } while (0)
 #define CHECK_AND_BREAK_LOG(condition, ...) if (!(condition)) { break; }
+
+#define CHECK_AND_RETURN_RET_LOG(condition, result, ...) do { if (!(condition)) return (result); } while (0)

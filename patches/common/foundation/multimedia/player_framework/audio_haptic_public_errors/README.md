@@ -1,6 +1,6 @@
 # AudioHaptic public NAPI boundaries
 
-This six-file component uses actual E source export
+This seven-file component uses actual E source export
 `r58-E-postcycle-native-readonly-export-14-01/public-source/exports.json`, SHA256
 `fb7357c1823163f12e1eb5ce295b6e85777103bd411797bb92cb9117a0bf34ba`.
 It requires the coordinated F `audio_haptic_lifecycle` private Session/sink
@@ -40,8 +40,9 @@ IDs: addresses can be reused after all owners retire, and the existing JS API
 does not expose a native identity join. See the lifecycle HANDOFF-F.md for the
 exact fields and remaining attribution limits. No JS journal schema is changed.
 
-The strict component installer accepts only the exact complete E six-file
-preimage and new state, verifies project revision, stages complete payloads,
+The strict component installer accepts the exact complete E seven-file
+preimage, the former F six-file postimage plus its pinned unchanged private player
+header (`after_bool_legacy`), and the new complete seven-file state. It verifies project revision, stages complete payloads,
 rejects mixed/foreign/symlink states and rolls back checked writes. Install
 lifecycle first, then this component, and rebuild both native and NAPI DSOs.
 
@@ -53,10 +54,23 @@ python3 patches/common/foundation/multimedia/player_framework/audio_haptic_publi
 OHOS_QA_CXX=/absolute/host/compiler python3 -B ci/capability-audit/test_batch_media_audio_haptic_fixes.py
 ```
 
-The host test executes the complete actual NAPI callback class/CPP and selected
-actual common class methods against controlled external NAPI/AccessToken APIs.
+The host tests additionally compile the complete actual player NAPI CPP with its
+actual private header, complete common CPP and complete callback CPP against
+controlled external native/NAPI/AccessToken APIs. The private async status is
+`int32_t`, preserving the exact Start/Stop/Release native result until mapping;
+zero alone succeeds. The explicit legacy bool-parent state is upgraded rather
+than mistaken for the new after state. The original callback-only harness remains.
 It checks numeric rejection, permission denial, queue retirement and reentrant
 callback-reference removal. Complete real native class tests separately prove
 the backend-generated Session chain. These checks do not establish target NAPI
 ABI/CFI, ordinary HAP permissions, actual callback timing, SDK, signing, PCM/VDI
 or guest success. Root must execute those gates on the fresh representative.
+
+The compile95 repair adds 0002 as the former-F-to-new-F review delta. 0001 remains
+the original E-to-former-F review patch; install.py installs complete canonical
+payloads from source_states.json. The seventh member is the private
+frameworks/js/audio_haptic/include/audio_haptic_player/audio_haptic_player_napi.h,
+not the public inner_api AudioHapticPlayer interface. Manager SUCCESS=0/ERROR=-1
+and its separate errCode, queue/transport statuses, system-only202, parameter
+errors and public VIBRATE201 are unchanged. Controlled tests preserve actual
+private context declarations; they do not prove target ABI/CFI or real guest errors.
