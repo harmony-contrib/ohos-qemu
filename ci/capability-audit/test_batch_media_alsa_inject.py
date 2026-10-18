@@ -64,7 +64,7 @@ class Inject(unittest.TestCase):
     def test_actual_full_diagnostic_and_error_paths(self):
         with tempfile.TemporaryDirectory(prefix='batch-media-alsa-inject-') as temp:
             root=Path(temp);(root/'alsa').mkdir();(root/'alsa/asoundlib.h').write_text(STUB)
-            exe=root/'inject';subprocess.run(['clang','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',str(root),str(ROOT/'ci/capability-audit/batch_media_alsa_inject.c'),'-o',str(exe)],check=True)
+            exe=root/'inject';subprocess.run([os.environ.get('OHOS_QA_CC','clang'),'-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',str(root),str(ROOT/'ci/capability-audit/batch_media_alsa_inject.c'),'-o',str(exe)],check=True)
             pcm=root/'challenge.pcm';pcm.write_bytes(bytes(range(256))*16)
             env=dict(os.environ,ASAN_OPTIONS='detect_leaks=0' if os.uname().sysname!='Linux' else 'detect_leaks=1')
             args=[str(exe),'--input',str(pcm),'--repeat','2']

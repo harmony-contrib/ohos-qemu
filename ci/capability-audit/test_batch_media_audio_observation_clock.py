@@ -95,7 +95,7 @@ class ClockProtocol(unittest.TestCase):
   stub=stub.replace('static ','[[maybe_unused]] static ')
   with tempfile.TemporaryDirectory(prefix='actual-clock-host-') as temporary:
    root=Path(temporary);(root/'alsa').mkdir();(root/'alsa/asoundlib.h').write_text(stub)
-   binary=root/'clock';subprocess.run(['clang++','-std=c++17','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',str(root),str(ROOT/'ci/capability-audit/fixtures/batch_media/audio_observation_clock/clock.cpp'),'-o',str(binary)],check=True,timeout=45)
+   binary=root/'clock';subprocess.run([os.environ.get('OHOS_QA_CXX','clang++'),'-std=c++17','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',str(root),str(ROOT/'ci/capability-audit/fixtures/batch_media/audio_observation_clock/clock.cpp'),'-o',str(binary)],check=True,timeout=45)
    env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1' if os.uname().sysname=='Linux' else 'detect_leaks=0',UBSAN_OPTIONS='halt_on_error=1')
    for mode,reason in [('clock-signal','owned_sigterm'),('','time_bound')]:
     with self.subTest(mode=mode):

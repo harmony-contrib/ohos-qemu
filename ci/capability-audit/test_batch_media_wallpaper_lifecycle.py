@@ -136,7 +136,7 @@ class RendererLifecycle(unittest.TestCase):
             (include / name).write_text('#include "host_deps.h"\n')
         shutil.copy2(FIXTURE / 'host_deps.h', include / 'host_deps.h')
         binary = self.root / 'controller-host'
-        command = ['clang++', '-std=c++17', '-pthread', '-Wall', '-Wextra', '-Werror',
+        command = [os.environ.get('OHOS_QA_CXX', 'clang++'), '-std=c++17', '-pthread', '-Wall', '-Wextra', '-Werror',
                    '-fsanitize=address,undefined', '-I' + str(include), '-I' + str(COMPONENT / 'lifecycle'),
                    str(COMPONENT / 'lifecycle/qemu_wallpaper_renderer.cpp'), str(FIXTURE / 'controller_test.cpp'),
                    '-o', str(binary)]
