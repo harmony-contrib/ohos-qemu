@@ -56,7 +56,7 @@ class CompleteProducerDrain(unittest.TestCase):
     def test_all_writes_are_insufficient_without_real_successful_drain_and_child_exit(self):
         remote='/data/local/tmp/qemu-mic-'+'c'*32;marker='__PCM_CHILD_EXIT_'+'d'*32+'__='
         feeding=dict(event='feeding',device='hw:CARD=QemuCapture,DEV=1,SUBDEV=0',rate=48000,channels=2,bytes=192000)
-        drained=dict(event='drained',alsa_rc=0,state=1,written_frames=960000)
+        drained=dict(event='drained',alsa_rc=0,status_rc=0,state=1,delay_frames=0,written_frames=960000)
         played=dict(event='played',frames=960000,rate=48000,channels=2,repeats=20,source_bytes=192000)
         pending=dict(event='drain_pending',alsa_rc=-11,state=5)
         with tempfile.TemporaryDirectory() as folder:
@@ -66,7 +66,15 @@ class CompleteProducerDrain(unittest.TestCase):
                 verify_producer(dict(remote_root_directory=remote,producer=dict(log=str(path),log_sha256=sha(path),
                     host_exit_code=0,guest_exit_code=code,guest_exit_marker=marker,argv=['hdc','-t','HOST-fixture','shell',producer_shell(remote,marker)])))
             check([feeding,drained,played]);check([feeding,pending,drained,played])
+            check([feeding,pending,{**drained,'alsa_rc':-11},played])
+            check([feeding,{**pending,'alsa_rc':-4},{**drained,'alsa_rc':-4},played])
             for rows in [[feeding,played],[feeding,{**drained,'alsa_rc':-5},played],
+                         [feeding,{**drained,'alsa_rc':-11},played],
+                         [feeding,pending,{**drained,'status_rc':-5},played],
+                         [feeding,pending,{**drained,'status_rc':False},played],
+                         [feeding,pending,{**drained,'delay_frames':1},played],
+                         [feeding,pending,{**drained,'state':5},played],
+                         [feeding,pending,{**drained,'written_frames':959999},played],
                          [feeding,{**drained,'alsa_rc':False},played],[feeding,{**pending,'state':4},drained,played],
                          [feeding,pending,pending,drained,played],[feeding,dict(event='failed',stage='close'),played]]:
                 with self.assertRaises(ValueError):check(rows)

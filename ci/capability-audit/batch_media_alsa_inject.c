@@ -129,6 +129,18 @@ static int DrainStatus(snd_pcm_t *pcm, snd_pcm_status_t *status, int allowSetup,
     return FeedFailure("drain_state", error, written, deadline);
 }
 
+static int CompleteDrain(const snd_pcm_status_t *status, int lastDrainResult,
+    uint64_t written, int64_t deadline)
+{
+    if (!WithinDeadline(deadline)) return FeedFailure("drain_deadline_or_signal", 0, written, deadline);
+    snd_pcm_sframes_t delay = snd_pcm_status_get_delay(status);
+    if (delay != 0) return FeedFailure("drain_terminal_delay", -EIO, written, deadline);
+    fprintf(stderr, "{\"event\":\"drained\",\"alsa_rc\":%d,\"status_rc\":0,\"state\":%d,"
+        "\"delay_frames\":%ld,\"written_frames\":%" PRIu64 "}\n",
+        lastDrainResult, (int)snd_pcm_status_get_state(status), (long)delay, written);
+    return 0;
+}
+
 static int FeedCable(snd_pcm_t *pcm, const uint8_t *data, size_t size,
     unsigned int channels, unsigned int repeats, int64_t deadline, uint64_t *written)
 {
@@ -169,6 +181,7 @@ static int FeedCable(snd_pcm_t *pcm, const uint8_t *data, size_t size,
     int reportedPending = 0;
     unsigned int attempts = 0;
     int drainPending = 0;
+    int lastDrainResult = 0;
     while (WithinDeadline(deadline)) {
         snd_pcm_state_t state;
         // Inspect before drain as well: drain itself must not turn an
@@ -179,21 +192,31 @@ static int FeedCable(snd_pcm_t *pcm, const uint8_t *data, size_t size,
         if (drainPending && state != SND_PCM_STATE_DRAINING && state != SND_PCM_STATE_SETUP)
             return FeedFailure("drain_state_transition", -EIO, *written, deadline);
         if (!WithinDeadline(deadline)) break;
+        if (state == SND_PCM_STATE_SETUP) {
+            if (!drainPending) return FeedFailure("drain_unstarted_setup", lastDrainResult, *written, deadline);
+            return CompleteDrain(status, lastDrainResult, *written, deadline);
+        }
         ++attempts;
         // pcm_hw drain installs silence SW_PARAMS before issuing its ioctl.
         // Do not repeatedly reinstall those while the kernel is DRAINING:
-        // wait on checked status, then confirm SETUP with drain's rc0 path.
+        // wait for a successful STATUS to report SETUP with no pending frames.
+        // This hardware backend skips the common SETUP no-op check, and the
+        // kernel's nonblocking DRAIN returns EAGAIN even in SETUP. Repeating
+        // DRAIN cannot provide a terminal rc0 here; retain its actual result.
         int ret = drainPending && state == SND_PCM_STATE_DRAINING ? -EAGAIN : snd_pcm_drain(pcm);
+        if (!drainPending) lastDrainResult = ret;
         if (ret != 0 && ret != -EAGAIN && ret != -EINTR) {
             fprintf(stderr, "ALSA drain failed: %s\n", snd_strerror(ret));
             return FeedFailure("drain", ret, *written, deadline);
         }
         if (DrainStatus(pcm, status, 1, *written, deadline, &state) != 0) return -1;
-        if (ret == 0 && state == SND_PCM_STATE_SETUP) {
-            if (!WithinDeadline(deadline)) return FeedFailure("drain_deadline_or_signal", 0, *written, deadline);
-            fprintf(stderr, "{\"event\":\"drained\",\"alsa_rc\":0,\"state\":%d,\"written_frames\":%" PRIu64 "}\n",
-                (int)state, *written);
-            return 0;
+        if (state == SND_PCM_STATE_SETUP) {
+            if (ret == -EINTR && !drainPending)
+                return FeedFailure("drain_interrupt_before_start", ret, *written, deadline);
+            if (ret != 0 && !reportedPending) {
+                fprintf(stderr, "{\"event\":\"drain_pending\",\"alsa_rc\":%d,\"state\":%d}\n", ret, (int)state);
+            }
+            return CompleteDrain(status, lastDrainResult, *written, deadline);
         }
         if (ret == 0) return FeedFailure("drain_terminal_state", -EIO, *written, deadline);
         if (ret == -EAGAIN && state != SND_PCM_STATE_DRAINING && state != SND_PCM_STATE_SETUP)
@@ -206,7 +229,7 @@ static int FeedCable(snd_pcm_t *pcm, const uint8_t *data, size_t size,
         // ALSA's hardware poll reports POLLERR when drain reaches SETUP;
         // snd_pcm_wait can therefore return -EIO for a successful terminal
         // transition. Poll status after a bounded pause without repadding the
-        // drain. Only a real drain rc0 plus a successful SETUP status passes.
+        // drain. Only a successful SETUP status after this drain can complete.
         int64_t now = NowMs();
         if (now < 0) return FeedFailure("drain_clock", -EIO, *written, deadline);
         int64_t remaining = deadline - now;
