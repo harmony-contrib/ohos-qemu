@@ -29,7 +29,10 @@ export default class EntryAbility extends UIAbility {
     this.storage.setOrCreate('requestJson', JSON.stringify(input));
   }
 
-  onCreate(want: Want): void { this.publish(want); }
+  onCreate(want: Want): void {
+    this.storage.setOrCreate('lifecycleEvent', 'created/' + ++this.lifecycleSequence);
+    this.publish(want);
+  }
   onNewWant(want: Want): void { this.publish(want); }
   onWindowStageCreate(stage: window.WindowStage): void {
     stage.loadContent('pages/Index', this.storage);

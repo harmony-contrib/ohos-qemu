@@ -1,0 +1,59 @@
+--- a/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp
++++ b/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp
+@@ -12,6 +12,8 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
++
++#include <unistd.h>
+ 
+ #include "core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.h"
+ #include "core/accessibility/accessibility_manager.h"
+@@ -2018,6 +2020,23 @@
+ void UIExtensionPattern::DumpInfo()
+ {
+     CHECK_NULL_VOID(sessionWrapper_);
++    // Native diagnostic identity only. Other dump entry points may run off UI;
++    // never sample the mutable session wrapper from those threads.
++    auto identityContainer = Platform::AceContainer::GetContainer(instanceId_);
++    auto identityExecutor = identityContainer ? identityContainer->GetTaskExecutor() : nullptr;
++    if (identityExecutor && identityExecutor->WillRunOnCurrentThread(TaskExecutor::TaskType::UI)) {
++        auto identityHost = GetHost();
++        if (identityHost) {
++            const std::string identity = "version=1 rendererPid=" + std::to_string(getpid()) +
++                " rendererUid=" + std::to_string(getuid()) +
++                " nodeId=" + std::to_string(identityHost->GetId()) +
++                " accessibilityId=" + std::to_string(identityHost->GetAccessibilityId()) +
++                " persistentId=" + std::to_string(sessionWrapper_->GetSessionId()) +
++                " focusWindowId=" + std::to_string(focusWindowId_) +
++                " realHostWindowId=" + std::to_string(realHostWindowId_);
++            DumpLog::GetInstance().AddDesc(std::string("nativeSessionIdentity: ").append(identity));
++        }
++    }
+     UIEXT_LOGD("Dump UIE Info In String Format");
+     DumpLog::GetInstance().AddDesc(std::string("focusWindowId: ").append(std::to_string(focusWindowId_)));
+     DumpLog::GetInstance().AddDesc(std::string("realHostWindowId: ").append(std::to_string(realHostWindowId_)));
+@@ -2065,6 +2084,23 @@
+ void UIExtensionPattern::DumpInfo(std::unique_ptr<JsonValue>& json)
+ {
+     CHECK_NULL_VOID(sessionWrapper_);
++    // Native diagnostic identity only. Other dump entry points may run off UI;
++    // never sample the mutable session wrapper from those threads.
++    auto identityContainer = Platform::AceContainer::GetContainer(instanceId_);
++    auto identityExecutor = identityContainer ? identityContainer->GetTaskExecutor() : nullptr;
++    if (identityExecutor && identityExecutor->WillRunOnCurrentThread(TaskExecutor::TaskType::UI)) {
++        auto identityHost = GetHost();
++        if (identityHost) {
++            const std::string identity = "version=1 rendererPid=" + std::to_string(getpid()) +
++                " rendererUid=" + std::to_string(getuid()) +
++                " nodeId=" + std::to_string(identityHost->GetId()) +
++                " accessibilityId=" + std::to_string(identityHost->GetAccessibilityId()) +
++                " persistentId=" + std::to_string(sessionWrapper_->GetSessionId()) +
++                " focusWindowId=" + std::to_string(focusWindowId_) +
++                " realHostWindowId=" + std::to_string(realHostWindowId_);
++            json->Put("nativeSessionIdentity", identity.c_str());
++        }
++    }
+     UIEXT_LOGI("Dump UIE Info In Json Format");
+     json->Put("focusWindowId: ", std::to_string(focusWindowId_).c_str());
+     json->Put("realHostWindowId: ", std::to_string(realHostWindowId_).c_str());

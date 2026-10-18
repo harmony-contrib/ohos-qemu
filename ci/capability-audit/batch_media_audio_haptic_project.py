@@ -250,8 +250,17 @@ def project_binding(spec, role, challenge_path):
 def phases():
     """Coverage is fixed here, never narrowed by the incoming capture report."""
     rows = []
-    def add(name, action, *, role='normal', expected='ok', errors=(), hold=0, audio=None, haptic=None, eos=False, active_before=None, **options):
-        rows.append(dict(name=name, role=role, action=action, options=options, expected=expected, errors=list(errors),
+    def add(name, action, *, role='normal', expected='ok', errors=(), hold=0, audio=None, haptic=None,
+            eos=False, active_before=None, resources=None, **options):
+        # Resource filenames and observed audio/haptic modes are different inputs.
+        # In particular, **{'audio': 'bad.wav'} would bind the mode formal and
+        # silently leave registerSource pointing at the normal challenge.
+        resources = {} if resources is None else resources
+        require(isinstance(resources, dict) and set(resources) <= {'audio', 'haptic'} and
+                all(isinstance(value, str) and re.fullmatch('[a-z-]+\\.(?:wav|json)', value)
+                    for value in resources.values()) and not set(resources) & set(options),
+                'explicit private audio/haptic resource filenames required')
+        rows.append(dict(name=name, role=role, action=action, options=dict(options, **resources), expected=expected, errors=list(errors),
                          hold_ms=hold, audio=audio, haptic=haptic, eos=eos, active_before=active_before))
     def source(prefix, **options):
         add(prefix + '-register', 'register', **options)
@@ -285,7 +294,7 @@ def phases():
         release(label + '-release')
         add(label + '-unregister', 'unregister')
     for bad, option in [('bad-wav', {'audio': 'bad.wav'}), ('bad-json', {'haptic': 'bad.json'}), ('missing-wav', {'audio': 'missing.wav'})]:
-        add(bad + '-register', 'register', **option)
+        add(bad + '-register', 'register', resources=option)
         add(bad + '-create', 'create', expected='error', errors=(5400103, 5400106), hold=700, audio='quiet', haptic='quiet')
         add(bad + '-unregister', 'unregister')
         source(bad + '-retry')

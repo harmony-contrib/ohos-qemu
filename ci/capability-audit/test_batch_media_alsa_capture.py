@@ -124,6 +124,39 @@ int main(void){struct AlsaSoundCard c={0};c.pcmHandle=&fakePcm;c.hwParams.rate=4
             mod.run(root)
             self.assertTrue(mod.validate(root, True))
 
+    def test_exact_E_six_file_upgrade_repeat_and_each_failed_publication(self):
+        spec = importlib.util.spec_from_file_location('capture_E_upgrade', COMP / 'apply.py')
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        rows = json.loads((FIX / 'e_capture.json').read_text())['files']
+        before = {name: gzip.decompress(base64.b64decode(row['gzip_base64'])) for name, row in rows.items()}
+        for name, data in before.items():
+            self.assertEqual(hashlib.sha256(data).hexdigest(), rows[name]['sha256'])
+        for failure in (None, *range(1, len(before) + 1)):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                for name, data in before.items():
+                    target = root / name; target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(data)
+                self.assertEqual(mod.inspect(root), 'e')
+                original_writer = mod.atomic_write; calls = []
+                def fail(path, data, mode):
+                    calls.append(path)
+                    if len(calls) == failure:
+                        raise OSError('controlled E upgrade failure')
+                    original_writer(path, data, mode)
+                if failure is not None:
+                    with patch.object(mod, 'atomic_write', side_effect=fail):
+                        with self.assertRaises(OSError): mod.run(root)
+                    self.assertEqual({name: (root / name).read_bytes() for name in before}, before)
+                    self.assertEqual(mod.inspect(root), 'e')
+                else:
+                    mod.run(root); self.assertEqual(mod.inspect(root), 'after')
+                    mod.run(root); self.assertEqual(mod.inspect(root), 'after')
+                    name = 'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c'
+                    (root / name).write_bytes(before[name] + b'// foreign\n')
+                    mixed = {name: (root / name).read_bytes() for name in before}
+                    with self.assertRaises(ValueError): mod.run(root)
+                    self.assertEqual({name: (root / name).read_bytes() for name in before}, mixed)
+
     def test_primary_policy_rate_and_complete_upgrade(self):
         component = ROOT / 'patches/common/vendor/ohemu/audio_policy_7'
         spec = importlib.util.spec_from_file_location('audio_policy_component_upgrade', component / 'apply.py')
@@ -185,9 +218,13 @@ int main(void){
         s=(COMP/'files/alsa_snd_capture.c').read_text();self.compile_run(function(s,'static int32_t CapturePcmReadi(')+r'''
 int main(void){snd_pcm_t pcm={SND_PCM_STATE_RUNNING};char data[32];uint64_t frames=99;
  long patterns[][3]={{8,0,0},{-EAGAIN,8,0},{0,8,0},{-EINTR,8,0},{-EPIPE,8,0},{0,0,0},{-EIO,0,0},{-EBADFD,0,0},{9,0,0}};
- for(size_t n=0;n<9;++n){memcpy(readValues,patterns[n],sizeof(patterns[n]));readIndex=0;readCount=3;frames=99;int ret=CapturePcmReadi(&pcm,&frames,data,8);assert((ret==0)==(n<5));assert(frames==(n<5?8:0));}
- assert(CapturePcmReadi(&pcm,&frames,data,0)!=0);waitResult=-EIO;readValues[0]=-EAGAIN;readIndex=0;assert(CapturePcmReadi(&pcm,&frames,data,8)!=0&&frames==0);
- assert(prepareCalls==0);puts("actual nonblocking PCM read: bounded waits, recovery, zero/error/overflow and stopped-state rejection");}
+ for(size_t n=0;n<9;++n){memcpy(readValues,patterns[n],sizeof(patterns[n]));readIndex=0;readCount=3;frames=99;int ret=CapturePcmReadi(&pcm,&frames,data,8,true);assert((ret==0)==(n<5));assert(frames==(n<5?8:0));}
+ assert(CapturePcmReadi(&pcm,&frames,data,0,true)!=0);waitResult=-EIO;readValues[0]=-EAGAIN;readIndex=0;assert(CapturePcmReadi(&pcm,&frames,data,8,true)!=0&&frames==0);
+ waitResult=1;readValues[0]=-EPIPE;readValues[1]=8;readIndex=0;frames=99;int starts=startCalls;
+ assert(CapturePcmReadi(&pcm,&frames,data,8,false)!=0&&frames==0&&startCalls==starts);
+ readValues[0]=4;readIndex=0;frames=99;int waits=waitCalls;
+ assert(CapturePcmReadi(&pcm,&frames,data,8,false)==0&&frames==4&&waitCalls==waits);
+ assert(prepareCalls==0);puts("actual nonblocking PCM read: short reads, bounded waits, non-QEMU recovery and honest cable xrun");}
 ''')
 
     def test_both_actual_vendor_files(self):

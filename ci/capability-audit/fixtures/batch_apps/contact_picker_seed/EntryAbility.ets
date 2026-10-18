@@ -5,6 +5,7 @@ import window from '@ohos.window';
 import { SeedRequest } from '../model/SeedStore';
 
 export default class EntryAbility extends UIAbility {
+  // Per-Ability storage; never share a nonce through process-global AppStorage.
   private storage: LocalStorage = new LocalStorage();
   private publish(want: Want): void {
     const request = new SeedRequest();

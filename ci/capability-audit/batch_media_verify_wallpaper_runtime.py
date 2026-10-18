@@ -15,7 +15,7 @@ import zipfile
 from PIL import Image, ImageOps, ImageStat
 from batch_apps_contact_picker_coordinator import verify_signed_payload
 from enclosing_acceptance_guest import validate_binding
-from guest_ui import bounds, NodeNotReady, select_node
+from guest_ui import bounds, NodeNotReady, select_node, command_exit
 from hap_identity_binding import verify_hap_token_identity
 
 HERE = Path(__file__).resolve().parent
@@ -242,12 +242,12 @@ def replay_observation(observation, script, target, *, commands=None):
     if argv[4] != script + tail:
         raise ValueError('raw observation helper arguments or shell footer differs')
     transport = checked({k: row[k] for k in ('path', 'sha256')}).read_text().replace('\r', '')
-    ending = '\n' + marker + '0\n'
-    if transport.count(marker) != 1 or not transport.endswith(ending):
+    body, code = command_exit(transport, marker)
+    if code != 0:
         raise ValueError('actual observation guest exit was not successful')
     raw = checked(observation['raw']).read_text()
     # GuestUi strips terminal LF. Reproduce exactly; do not rewrite raw/log.
-    if transport[:-len(ending)].rstrip('\n') != raw:
+    if body.rstrip('\n') != raw:
         raise ValueError('raw observation differs from actual command stdout')
     return raw
 
@@ -483,9 +483,136 @@ def layout_transition_unavailable(argv, raw):
     if re.fullmatch(r'test ! -e (/data/local/tmp/qemu-capability-ui-[a-f0-9]{32}-[1-9][0-9]*\.json)'
                     r' && uitest dumpLayout -p \1(?: -b [A-Za-z0-9_.]+)?', script) is None:
         return False
-    normalized = raw.replace('\r', '')
-    match = re.search(r'(?:^|\n)' + re.escape(marker) + r'1\s*$', normalized)
-    return match is not None and normalized[:match.start()].strip() == 'DumpLayout failed:Get window nodes failed'
+    try:
+        body, code = command_exit(raw.replace('\r', ''), marker)
+    except ValueError:
+        return False
+    return code == 1 and body.strip() == 'DumpLayout failed:Get window nodes failed'
+
+
+def verify_renderer_lifecycle(value, env):
+    """Replay every pending/connected raw cut and gate an absent initial renderer."""
+    from batch_apps_wallpaper_connection import ConnectionNotReady, parse_connection
+    commands = value['commands']; allowed_nonzero = set()
+    def require_transport(row):
+        if (type(row.get('exit_code')) is not int or row['exit_code'] != 0 or row.get('timed_out') or
+                len(row.get('argv', [])) != 5 or row['argv'][:4] != [value['hdc'],'-t',env['target'],'shell']):
+            raise ValueError('renderer observation targets another transport')
+        from hdc_transport import failed
+        if failed(checked({k:row[k] for k in ['path','sha256']}).read_text()):
+            raise ValueError('renderer observation reported HDC failure')
+    matches = [(i,row) for i,row in enumerate(commands) if row.get('label') == 'renderer-BMS']
+    if len(matches) != 1:
+        raise ValueError('one actual renderer BMS command required')
+    index,row = matches[0]
+    require_transport(row)
+    raw = replay_observation({'raw':value['renderer_identity'],'command':row,'command_index':index},
+        'bm dump -n com.ohos.wallpaper',env['target'],commands=commands)
+    start = raw.find('{')
+    if start < 0: raise ValueError('actual renderer BMS JSON missing')
+    def unique(pairs):
+        result = {}
+        for key,item in pairs:
+            if key in result: raise ValueError('duplicate renderer BMS key')
+            result[key] = item
+        return result
+    bms = json.JSONDecoder(object_pairs_hook=unique).raw_decode(raw[start:])[0]
+    def observation(label, descriptor, script):
+        rows = [(i,r) for i,r in enumerate(commands) if r.get('label') == label]
+        if len(rows) != 1: raise ValueError('one exact renderer observation required: '+label)
+        i,r = rows[0]
+        require_transport(r)
+        return replay_observation({'raw':descriptor,'command':r,'command_index':i},script,env['target'],commands=commands),i
+    def pid_cut(label, descriptor, reported, *, baseline=False):
+        rows = [(i,r) for i,r in enumerate(commands) if r.get('label') == label]
+        if len(rows) != 1: raise ValueError('one exact renderer PID command required')
+        i,r = rows[0];argv = r['argv']
+        require_transport(r)
+        markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=',argv[4])
+        if len(markers) != 1 or argv[4] != 'pidof com.ohos.wallpaper; task_ui_rc=$?; printf "\\n'+markers[0]+'%s\\n" "$task_ui_rc"':
+            raise ValueError('renderer PID command script/nonce differs')
+        transport = checked({k:r[k] for k in ['path','sha256']}).read_text()
+        from hdc_transport import failed
+        if failed(transport): raise ValueError('renderer PID transport reported HDC failure')
+        body,code = command_exit(transport,markers[0]);derived = checked(descriptor).read_text()
+        if code == 1:
+            if body != '' or derived != '': raise ValueError('renderer absence has nonempty actual output')
+            expected = dict(state='absent_before_first_public_desktop_set' if baseline else 'negative_absence_ONLY_NOT_connected',
+                guest_exit_code=1,command_label=label,command={k:r[k] for k in ['path','sha256']})
+            allowed_nonzero.add(i)
+        elif code == 0:
+            if re.fullmatch(r'[1-9][0-9]*',body.rstrip('\n')) is None or derived != body.rstrip('\n'):
+                raise ValueError('one real renderer PID required')
+            expected = dict(state='actual_pid_ONLY_NOT_connected',guest_exit_code=0,command_label=label)
+        else: raise ValueError('renderer PID command failed with unexpected guest status')
+        if reported != expected or type(reported.get('guest_exit_code')) is not int:
+            raise ValueError('renderer PID summary differs from actual raw observation')
+        return derived,i,code
+    module = value.get('renderer_module')
+    if module != ('phone_wallpaper' if env['device_type'] == 'phone' else 'pad_wallpaper'):
+        raise ValueError('renderer module belongs to another device profile')
+    stages = value['stages'];baseline = stages[0]
+    if baseline.get('name') != 'baseline': raise ValueError('first actual renderer baseline required')
+    pids,pid_index,code = pid_cut('baseline-renderer-pid',baseline['renderer_pids'],baseline['renderer_observation'],baseline=True)
+    ams,ams_index = observation('baseline-AMS',baseline['ams'],'aa dump -a -u 100')
+    if ams_index >= pid_index: raise ValueError('initial renderer AMS/PID order changed')
+    try:
+        parse_connection(ams,bms,pids,module_name=module,allow_pending=True)
+        baseline_state = 'connected'
+    except ConnectionNotReady as error: baseline_state = error.state
+    product = None
+    if code == 1:
+        if baseline_state != 'absent_service_and_process': raise ValueError('baseline absence contradicts actual complete AMS')
+        # The current native guard checks the new source/GN/compile/image bytes.
+        # An older image plus a new caller cannot authorize this new baseline.
+        import tempfile
+        import batch_media_wallpaper_native as native
+        with tempfile.TemporaryDirectory(prefix='wallpaper-first-set-native-') as temporary:
+            actual = native.archive_native(checked(value['archive']),checked(value['boot']),Path(temporary).resolve()/'native')
+        product = {key:actual[key] for key in ['archive_sha256','boot_id','product','image','guard']}
+        if actual['archive_sha256'] != value['archive']['sha256'] or actual['boot_id'] != env['boot_id']:
+            raise ValueError('negative renderer baseline has another actual native product')
+    records = value.get('renderer_readiness')
+    if not isinstance(records,list) or [r.get('stage') for r in records] != ['desktop-1','desktop-2']:
+        raise ValueError('both actual desktop renderer readiness traces required')
+    previous_formal = pid_index
+    for readiness in records:
+        name = readiness['stage'];matching = [s for s in stages if s['name'] == name]
+        if len(matching) != 1: raise ValueError('one actual desktop stage required')
+        stage = matching[0]
+        if stage.get('renderer_readiness') != readiness or readiness.get('scope') != 'real_public_desktop_set_connection_readiness_ONLY' or readiness.get('status') != 'connected':
+            raise ValueError('renderer readiness differs from its actual stage')
+        began,ended = readiness['started_ns'],readiness['finished_ns']
+        if type(began) is not int or type(ended) is not int or not stage['started_ns'] <= began < ended <= stage['finished_ns'] or ended-began > 45_000_000_000:
+            raise ValueError('bounded renderer readiness interval missing')
+        probes = readiness['probes']
+        if not isinstance(probes,list) or not 1 <= len(probes) <= 256: raise ValueError('bounded complete renderer probes required')
+        previous_end = began;previous_command = previous_formal
+        for n,probe in enumerate(probes):
+            if (type(probe['started_ns']) is not int or type(probe['finished_ns']) is not int or
+                    not previous_end <= probe['started_ns'] <= probe['finished_ns'] <= ended):
+                raise ValueError('renderer probe timing/order changed')
+            prefix = name+'-wait-renderer-'+str(n).zfill(3)
+            pids,pi,_ = pid_cut(prefix+'-pid',probe['renderer_pids'],probe['pid_observation'])
+            ams,ai = observation(prefix+'-AMS',probe['ams'],'aa dump -a -u 100')
+            if not previous_command < pi < ai: raise ValueError('renderer pending raw command order changed')
+            try:
+                connection = parse_connection(ams,bms,pids,module_name=module,allow_pending=True)
+                state = 'connected'
+                if probe.get('connection') != connection: raise ValueError('renderer connected summary changed')
+            except ConnectionNotReady as error:
+                state = error.state
+                if 'connection' in probe: raise ValueError('pending renderer contains a connected proof')
+            if probe.get('state') != state or (n == len(probes)-1) != (state == 'connected'):
+                raise ValueError('renderer readiness skipped/fabricated a terminal raw cut')
+            previous_end,previous_command = probe['finished_ns'],ai
+        _,formal_ams = observation(name+'-AMS',stage['ams'],'aa dump -a -u 100')
+        if previous_command >= formal_ams: raise ValueError('formal desktop proof did not follow actual readiness')
+        formal_pids,formal_pid,formal_code = pid_cut(name+'-renderer-pid',stage['renderer_pids'],stage['renderer_observation'])
+        if formal_code != 0 or formal_ams >= formal_pid: raise ValueError('formal desktop PID proof missing or out of order')
+        parse_connection(checked(stage['ams']).read_text(),bms,formal_pids,module_name=module)
+        previous_formal = formal_pid
+    return allowed_nonzero,product
 
 
 def verify(path):
@@ -593,17 +720,20 @@ def verify(path):
     # Raw independent contracts are validated below, not summary booleans.
     verify_external_observations(value, env, challenge, uris, seed_uid, settings_uid)
     verify_ui_actions(value, challenge)
-    for command in value['commands']:
-        if command.get('exit_code') != 0:
+    renderer_negative_commands,renderer_product=verify_renderer_lifecycle(value,env)
+    for command_index,command in enumerate(value['commands']):
+        if type(command.get('exit_code')) is not int or command['exit_code'] != 0 or command.get('timed_out'):
             raise ValueError('guest transport command failed')
         raw = checked({key: command[key] for key in ('path', 'sha256')}).read_text()
         argv = command['argv']
-        if len(argv) < 5 or argv[1:3] != ['-t', env['target']] or argv[3] not in ('shell', 'file'):
+        if len(argv) < 5 or argv[0] != value['hdc'] or argv[1:3] != ['-t', env['target']] or argv[3] not in ('shell', 'file'):
             raise ValueError('command does not target this enclosing guest')
         if argv[3] == 'shell':
             marker = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
-            if (len(marker) != 1 or raw.count(marker[0]) != 1 or
-                    (not raw.rstrip().endswith(marker[0]+'0') and not layout_transition_unavailable(argv, raw))):
+            if len(marker) != 1:
+                raise ValueError('actual remote shell success marker missing/nonzero')
+            _, code = command_exit(raw.replace('\r', ''), marker[0])
+            if code != 0 and command_index not in renderer_negative_commands and not layout_transition_unavailable(argv, raw):
                 raise ValueError('actual remote shell success marker missing/nonzero')
     cleanup_commands = [command for command in value['commands'] if command.get('label') == 'owned-private-inputs-absent']
     if len(cleanup_commands) != 1 or not cleanup_commands[0]['argv'][4].startswith(
@@ -611,7 +741,7 @@ def verify(path):
         raise ValueError('actual final guest private-file absence query required')
     return {'schema_version': 1, 'scope': SCOPE, 'status': 'pass', 'run_id': value['run_id'],
             'boot_id': value['boot_id'], 'archive_sha256': value['archive']['sha256'], 'metrics': metrics,
-            'verifier_sha256': sha(Path(__file__)), 'closed_requirements': [],
+            'verifier_sha256': sha(Path(__file__)), 'closed_requirements': [], 'negative_renderer_baseline_native_product': renderer_product,
             'first_artifact_behavior_gate_passed': False}
 
 

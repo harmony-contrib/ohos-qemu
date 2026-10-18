@@ -34,6 +34,34 @@ class WallpaperConnectionTests(unittest.TestCase):
         self.root = Path(self.temp.name); self.target = '127.0.0.1:5555'
         self.bms = {'appInfo': {'bundleName': w.BUNDLE, 'uid': 20010012, 'isSystemApp': True}}
 
+    def test_typed_readiness_only_for_full_valid_identity_and_grammar(self):
+        pending = ams().replace('#CONNECTED', '#CONNECTING')
+        with self.assertRaises(w.ConnectionNotReady) as error:
+            w.parse_connection(pending, self.bms, '2345', allow_pending=True)
+        self.assertEqual('service_not_connected', error.exception.state)
+        empty = '  ExtensionRecords:\n  AppRunningRecords:\n'
+        with self.assertRaises(w.ConnectionNotReady) as error:
+            w.parse_connection(empty, self.bms, '', allow_pending=True)
+        self.assertEqual('absent_service_and_process', error.exception.state)
+        self.assertEqual(2345, w.parse_connection(ams(), self.bms, '2345', allow_pending=True)['pid'])
+        for text, pids, bms in [
+                (pending.replace('uid #20010012', 'uid #20010013'), '2345', self.bms),
+                (pending.replace('[SERVICE]', '[PAGE]'), '2345', self.bms),
+                (pending.replace('/phone_wallpaper/', '/entry/'), '2345', self.bms),
+                (pending.replace('Connections: 1', 'Connections: 2'), '2345', self.bms),
+                (pending.replace('#CONNECTING', '#UNKNOWN'), '2345', self.bms),
+                (pending.replace('  ExtensionRecords:', '  MissionRecords:'), '2345', self.bms),
+                (pending, '', self.bms), (empty, '2345', self.bms),
+                (empty, '', {'appInfo': {'bundleName': w.BUNDLE, 'uid': 10012, 'isSystemApp': True}}),
+                (empty, 'error output', self.bms),
+                (empty.replace('  AppRunningRecords:', '    truncated record\n  AppRunningRecords:'), '', self.bms),
+                (empty + '    process name [com.ohos.wallpaper]\n', '', self.bms)]:
+            with self.subTest(text=text, pids=pids):
+                try: w.parse_connection(text, bms, pids, allow_pending=True)
+                except w.ConnectionNotReady: self.fail('malformed/wrong identity cannot be a retryable pending state')
+                except ValueError: pass
+                else: self.fail('invalid pending candidate accepted')
+
     def test_real_dump_grammar_keeps_explicit_observation_limits(self):
         result = w.parse_connection(ams(), self.bms, '2345')
         self.assertEqual(result['connection']['record_id'], 0)
@@ -81,7 +109,7 @@ class WallpaperConnectionTests(unittest.TestCase):
             with self.subTest(text=text), self.assertRaises(ValueError): w.parse_connection(text, self.bms, pids)
 
     def runtime(self):
-        value = {'commands': [], 'stages': []}
+        value = {'hdc': 'hdc', 'commands': [], 'stages': []}
         def raw(label, script, text):
             path = self.root / (label + '.raw'); path.write_text(text)
             marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
@@ -116,6 +144,30 @@ class WallpaperConnectionTests(unittest.TestCase):
         p = Path(descriptor['path']); p.write_text(p.read_text().replace('start time [1234]', 'start time [1235]'))
         value['stages'][0]['ams'] = w.descriptor(p); path.write_text(json.dumps(value))
         with self.assertRaisesRegex(ValueError, 'transport bytes'): w.verify_runtime_connections(path, target=self.target)
+
+    def test_footer_decoder_retains_embedded_nonce_echo_and_exact_wrapper(self):
+        marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
+        raw = 'hilog echoed printf ' + marker + '%s; actual body\nlast line'
+        derived = self.root / 'echo-derived.log'; derived.write_text(raw)
+        transport = self.root / 'echo-transport.log'; transport.write_text(raw + '\n' + marker + '0\n')
+        script = 'hilog -x'
+        row = {'label': 'echo-probe', 'exit_code': 0, **w.descriptor(transport),
+               'argv': ['hdc', '-t', self.target, 'shell',
+                        script + '; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"']}
+        value = {'hdc': 'hdc', 'commands': [row]}
+        self.assertEqual(raw, w.command_output(value, 'echo-probe', script, w.descriptor(derived), self.target))
+        for mutation in ('extra-script', 'wrong-hdc', 'trailing', 'failed-transport', 'guest-one', 'boolean-host-exit'):
+            candidate = copy.deepcopy(value); command = candidate['commands'][0]
+            transport.write_text(raw + '\n' + marker + '0\n')
+            if mutation == 'extra-script': command['argv'][4] += ' && true'
+            elif mutation == 'wrong-hdc': command['argv'][0] = 'untrusted-other-executor'
+            elif mutation == 'trailing': transport.write_text(transport.read_text() + 'extra\n')
+            elif mutation == 'failed-transport': transport.write_text('[Fail] disconnected\n' + transport.read_text())
+            elif mutation == 'guest-one': transport.write_text(raw + '\n' + marker + '1\n')
+            else: command['exit_code'] = False
+            command.update(w.descriptor(transport))
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                w.command_output(candidate, 'echo-probe', script, w.descriptor(derived), self.target)
 
     def test_remote_failure_is_not_transport_success(self):
         value, path = self.runtime(); command = value['commands'][1]; p = Path(command['path'])

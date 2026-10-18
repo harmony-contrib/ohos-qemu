@@ -21,15 +21,10 @@ BASE = 'base/theme/wallpaper_mgr'
 LIBRARY = 'libwallpaper_service.z.so'
 GRAPH = 'obj/' + BASE + '/services/wallpaper_service.ninja'
 UNITS = ['obj/' + BASE + '/services/src/wallpaper_service/' + name + '.o' for name in
-         ('wallpaper_service', 'wallpaper_extension_ability_connection')]
+         ('wallpaper_service', 'wallpaper_extension_ability_connection', 'qemu_wallpaper_renderer')]
 PRODUCTS = {'arm64_virt': (2, 183, 'aarch64'), 'armv7a_virt': (1, 40, 'arm'), 'x86_64_virt': (2, 62, 'x86_64')}
 COMPONENT = ROOT / 'patches/common' / BASE / 'qemu_renderer'
-FILES = {
-    BASE + '/services/BUILD.gn': '3308963b13350d8ab5d19965a94d244a1ab98dda7141d518b4225ac8ca74d824',
-    BASE + '/services/src/wallpaper_service.cpp': '5590864bd8e51f2223e03bc709207c1a1619d36abcf0b812f31ec67e0c47f1c4',
-    BASE + '/wallpaper.gni': 'd727530a2f509b8e17f06b9c20cac2fc0a5489de3e0d59a13d74542a561d4033',
-    BASE + '/services/src/wallpaper_extension_ability_connection.cpp': '1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d',
-}
+FILES = {'base/theme/wallpaper_mgr/services/BUILD.gn': '2e680cc60e4d235232e86737953a07b5c8dbf7b37d348da5e2492029329631e8', 'base/theme/wallpaper_mgr/services/include/qemu_wallpaper_renderer.h': '9357c4c407a9341c7ca351ef172e8be802ecc8552942e7e73a5a225031d4301a', 'base/theme/wallpaper_mgr/services/include/wallpaper_common_event_subscriber.h': '1682122e6c15e514159b353a0fec50d99360e7eddd29d9f67f39366758061c77', 'base/theme/wallpaper_mgr/services/include/wallpaper_extension_ability_connection.h': '60dc04caae98b9cc7f19643d23857a64c6dff44d5868b60a09486656ae133f12', 'base/theme/wallpaper_mgr/services/include/wallpaper_service.h': 'd950321b3d233291fdf576492e5d3d1c7b1f4d904e47c535153d63fdaba09421', 'base/theme/wallpaper_mgr/services/src/qemu_wallpaper_renderer.cpp': '54eeedfa8563053a2009e072dba24ad58b33a38d8e2037326105666e8893459b', 'base/theme/wallpaper_mgr/services/src/wallpaper_common_event_subscriber.cpp': 'd7737bc2bb719e76f1dc5cbf0af625f0719bfa5ea3c94dcc1c9c3db084db91c6', 'base/theme/wallpaper_mgr/services/src/wallpaper_extension_ability_connection.cpp': '1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d', 'base/theme/wallpaper_mgr/services/src/wallpaper_extension_ability_death_recipient.cpp': 'e7489497ccead3689af09a0b279b8b254c00244df907a64dca78fe1f4a1d66f9', 'base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp': '10c5000ef4a14cbc1790f6ea6e0a73168a862c03be19ba47e19680dd99229728', 'base/theme/wallpaper_mgr/wallpaper.gni': 'd727530a2f509b8e17f06b9c20cac2fc0a5489de3e0d59a13d74542a561d4033'}
 GN_NATIVE_TIMEOUT = 180
 GN_EMULATED_TIMEOUT = 900  # Round06 actual GN generation alone took 243.99s.
 

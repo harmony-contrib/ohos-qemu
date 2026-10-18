@@ -250,7 +250,8 @@ class ReviewFixChecks(unittest.TestCase):
             first=root/'controlled-start.json';second=root/'controlled-stop.json'
             project.write(first,{'request':{'operation_id':'c'*32}});project.write(second,{'request':{'operation_id':'d'*32}})
             expected=next(row for row in project.phases() if row['name']=='normal-stop-1')
-            segment=dict(boundary_expected=expected,operation={'request':project.record(first)},
+            start_expected=next(row for row in project.phases() if row['name']=='normal-start-1')
+            segment=dict(expected=start_expected,boundary_expected=expected,operation={'request':project.record(first)},
                 boundary_operation={'request':project.record(second)},sampler={},
                 audio_capture={'wav':wav('controlled-active',57600),'host_begin_ns':10000000000})
             journal=[dict(operation_id='c'*32,event='return',api='AudioHapticPlayer.start',player_epoch=1,sequence=1),
@@ -260,7 +261,7 @@ class ReviewFixChecks(unittest.TestCase):
             with patch.object(verify,'sampler_rows',return_value=({},samples)):
                 result=verify.active_boundary_metrics(segment,data,'b'*36,journal,(10000000000,10000000000))
                 self.assertEqual(result['preceding_VDI_samples'],9)
-                eos=journal+[dict(operation_id='c'*32,event='callback',api='AudioHapticPlayer.endOfStream',sequence=2)]
+                eos=journal+[dict(operation_id='c'*32,event='callback',api='AudioHapticPlayer.endOfStream',sequence=2,player_epoch=1)]
                 with self.assertRaises(ValueError):verify.active_boundary_metrics(segment,data,'b'*36,eos,(10000000000,10000000000))
                 with self.assertRaises(ValueError):verify.active_boundary_metrics(segment,data,'b'*36,journal,(10000000000,10200000000))
                 ended=copy.deepcopy(segment);ended['audio_capture']['wav']=wav('controlled-ended',24000)

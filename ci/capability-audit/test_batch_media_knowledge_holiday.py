@@ -125,7 +125,7 @@ class Holiday(unittest.TestCase):
         source=(COMP/'files/knowledge_content_napi.cpp').read_text()
         declarations=source[source.index('struct Suggestion {'):source.index('int32_t AccessError()')]
         functions=[]
-        for signature in ['bool Number(', 'bool IntegerArray(', 'bool Account(', 'bool NextRow(', 'void ReadEntities(', 'void ReadSuggestions(']:
+        for signature in ['bool Number(', 'bool IntegerArray(', 'bool Account(', 'bool PrepareCursor(', 'bool NextRow(', 'void ReadEntities(', 'void ReadSuggestions(']:
             a=source.index(signature);b=source.index('\n}',a)+2;functions.append(source[a:b])
         harness=(FIX/'holiday/cursor_harness.cpp').read_text().replace('// ACTUAL_DECLARATIONS',declarations).replace('// ACTUAL_FUNCTIONS','\n'.join(functions))
         path=self.path/'cursor.cpp';path.write_text(harness);binary=self.path/'cursor'

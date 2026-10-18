@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 import { common } from '@kit.AbilityKit';
 import { CalendarAudit } from '../model/CalendarAudit';
-@Entry
+@Entry({ useSharedStorage: true })
 @Component
 struct Index {
   @LocalStorageLink('calendarRequest') requestJson: string = '';

@@ -487,6 +487,79 @@ def claimed(snapshot, profile_sha):
             'claim_proof': 'actual_client_exec_after_successful_production_NotifyConnectStage_claim_NOT_direct_claim_telemetry'}
 
 
+CONFIG_ACTIONS = ('store', 'remove-config')
+API_ERROR_PHASES = ('request-validation', 'checkAccessTokenSync', 'getSysVpnConfigList', 'addSysVpnConfig',
+                    'getSysVpnConfig', 'deleteSysVpnConfig', 'createVpnConnection', 'setUp', 'destroy',
+                    'getConnectedSysVpnConfig', 'getConnectedVpnAppInfo', 'validate-public-list', 'validate-owned-config',
+                    'store-ownership', 'fresh-UUID-absence', 'validate-store-metadata', 'remove-config-ownership',
+                    'validate-remove-metadata', 'validate-public-absence', 'setup-ownership', 'destroy-ownership')
+
+
+def api_failure(row):
+    detail = json.loads(row['value'], object_pairs_hook=shared.unique)
+    require(isinstance(detail, dict) and set(detail) == {'code', 'message', 'name', 'phase'} and
+            type(detail['code']) is int and detail['code'] == row['code'] and
+            all(isinstance(detail[k], str) and len(detail[k]) <= 65536 for k in ('message', 'name')) and
+            detail['phase'] in API_ERROR_PHASES, 'complete actual BusinessError code/message/name/phase required')
+    return detail
+
+
+def config_observation(row):
+    value = json.loads(row['value'], object_pairs_hook=shared.unique)
+    require(isinstance(value, dict) and set(value) == {'stage', 'vpn_id', 'rows', 'profile_equal', 'expected_type'} and
+            value['stage'] in ('before-store', 'after-store', 'before-remove', 'after-remove') and
+            isinstance(value['vpn_id'], str) and re.fullmatch('[a-f0-9-]{36}', value['vpn_id']) and
+            type(value['profile_equal']) is bool and type(value['expected_type']) is int and
+            0 <= value['expected_type'] <= 65535 and isinstance(value['rows'], list) and len(value['rows']) <= 128,
+            'complete public config metadata observation required')
+    ids = []
+    for item in value['rows']:
+        require(isinstance(item, dict) and set(item) == {'vpn_id', 'vpn_name', 'vpn_type', 'user_id'} and
+                isinstance(item['vpn_id'], str) and re.fullmatch('[A-Za-z0-9_.:-]{1,128}', item['vpn_id']) and
+                isinstance(item['vpn_name'], str) and len(item['vpn_name']) <= 1024 and
+                type(item['vpn_type']) is int and 0 <= item['vpn_type'] <= 65535 and
+                type(item['user_id']) is int and item['user_id'] == 100, 'actual same-account unique config metadata required')
+        ids.append(item['vpn_id'])
+    require(ids == sorted(set(ids)), 'complete sorted unique config IDs required')
+    return value
+
+
+def public_config_baseline(rows, *, vpn_id):
+    """A complete successful list cut before this run's first actual add attempt."""
+    require(len(rows) >= 3 and all(r['action'] == 'store' for r in rows) and
+            [r['event'] for r in rows[:3]] == ['begin', 'permission', 'config-state'] and
+            rows[1]['code'] == 0, 'actual pre-add public list cut required')
+    before = [config_observation(r) for r in rows if r['event'] == 'config-state' and
+              config_observation(r)['stage'] == 'before-store']
+    require(len(before) == 1 and before[0]['vpn_id'] == vpn_id and not before[0]['profile_equal'] and
+            not any(r['vpn_id'] == vpn_id for r in before[0]['rows']), 'fresh owned UUID absence cut required')
+    return before[0]['rows']
+
+
+def verify_config_phase(rows, *, action, vpn_id, vpn_name, baseline=None):
+    """Public list/save/readback or delete/list proof, never native cleanup proof."""
+    require(action in CONFIG_ACTIONS and all(r['action'] == action for r in rows), 'exact config action required')
+    observations = [config_observation(r) for r in rows if r['event'] == 'config-state']
+    stages = ['before-store', 'after-store'] if action == 'store' else ['before-remove', 'after-remove']
+    require(len(observations) == 2 and [v['stage'] for v in observations] == stages and
+            all(v['vpn_id'] == vpn_id for v in observations) and
+            observations[0]['expected_type'] == observations[1]['expected_type'], 'owned config identity/stage differs')
+    before, after = observations
+    own = {'vpn_id': vpn_id, 'vpn_name': vpn_name, 'vpn_type': before['expected_type'], 'user_id': 100}
+    others_before = [r for r in before['rows'] if r['vpn_id'] != vpn_id]
+    others_after = [r for r in after['rows'] if r['vpn_id'] != vpn_id]
+    if action == 'store':
+        require(not before['profile_equal'] and after['profile_equal'] and before['rows'] == others_before and
+                after['rows'] == sorted([*before['rows'], own], key=lambda r: r['vpn_id']) and
+                others_after == before['rows'], 'fresh public absence/add/exact readback/foreign preservation required')
+        return before['rows']
+    require(isinstance(baseline, list) and not before['profile_equal'] and not after['profile_equal'] and
+            others_before == others_after == baseline and after['rows'] == baseline and
+            [r for r in before['rows'] if r['vpn_id'] == vpn_id] in ([], [own]),
+            'owned-only delete/public absence and unchanged foreign metadata required')
+    return baseline
+
+
 def journal(raw, run, boot, uid, token):
     require(0 < len(raw.encode()) < 1048576 and raw.endswith('\n'), 'complete bounded app journal required')
     rows = [json.loads(line, object_pairs_hook=shared.unique) for line in raw.splitlines()]
@@ -494,16 +567,24 @@ def journal(raw, run, boot, uid, token):
         require(isinstance(row, dict) and set(row) == {'schema_version', 'run_id', 'boot_id', 'operation_id', 'action',
                 'sequence', 'uid', 'pid', 'token_id', 'event', 'code', 'value'} and
                 all(type(row[key]) is int for key in ('schema_version', 'sequence', 'uid', 'pid', 'token_id', 'code')) and
-                re.fullmatch('[a-f0-9]{32}', row['operation_id']) and
+                isinstance(row['operation_id'], str) and re.fullmatch('[a-f0-9]{32}', row['operation_id']) and
+                isinstance(row['value'], str) and
                 row['schema_version'] == 1 and row['sequence'] == index and row['run_id'] == run and
                 row['boot_id'] == boot and row['uid'] == uid and row['token_id'] == token and row['pid'] > 1 and
-                row['action'] in ('setup', 'destroy', 'inspect') and
-                row['event'] in ('begin', 'permission', 'resolved', 'rejected', 'getters', 'getter-error', 'complete'),
+                row['action'] in ('store', 'setup', 'destroy', 'remove-config', 'inspect') and
+                row['event'] in ('begin', 'permission', 'resolved', 'rejected', 'getters', 'getter-error', 'config-state', 'complete'),
                 'foreign/reordered/malformed journal')
+        if row['event'] in ('rejected', 'getter-error'): api_failure(row)
+        else: require(row['code'] == 0, 'actual permission/API event code differs')
+        if row['event'] == 'config-state':
+            require(row['action'] in CONFIG_ACTIONS and row['code'] == 0, 'foreign config-state event')
+            config_observation(row)
         require(row['event'] != 'getter-error', 'public getters failed')
         if row['event'] == 'permission': require(type(row['code']) is int and row['code'] == 0, 'actual MANAGE_VPN denied')
         if row['event'] == 'getters':
-            require(json.loads(row['value']) == {'config_undefined': True, 'apps': []}, 'unexpected CONNECTED or foreign VPN')
+            value = json.loads(row['value'], object_pairs_hook=shared.unique)
+            require(isinstance(value, dict) and set(value) == {'config_undefined', 'apps'} and
+                    value['config_undefined'] is True and value['apps'] == [], 'unexpected CONNECTED or foreign VPN')
     require(len({row['pid'] for row in rows}) == 1, 'caller restarted and lost its owned connection')
     return rows
 
@@ -569,6 +650,7 @@ class Collector:
                   'Single system owner only; no second-owner isolation proof', 'No real callback event stream coverage'])
         self.guest = None; self.install_attempted = False; self.installed = False
         self.fault = None; self.identity = None; self.started = False
+        self.config_attempted = False; self.config_baseline = None
         try:
             self.spec = load(args.inputs); self.data = project.binding(self.spec)
             self.report['inputs'] = descriptor(args.inputs); self.report['source'] = self.data
@@ -689,15 +771,38 @@ class Collector:
                 raw = read_app_journal(self.shell, self.remote, self.identity['uid'], label='journal-' + action)
                 attempt['last_journal_observation'] = 'proved-name-absent' if raw is None else 'actual-file-read'
                 if raw is not None:
+                    # Preserve actual bytes and command cut before any outcome/getter assertion.
+                    attempt['last_journal_raw'] = raw
+                    attempt['journal_command'] = len(self.guest.report['commands']) - 1
+                    attempt['journal_command_role'] = 'file-metadata-after; original read also retained in guest commands'
+                    self.save()
                     rows = journal(raw, self.data['run_id'], self.guest.env['boot_id'], self.identity['uid'], self.identity['token'])
                     current = [row for row in rows if row['operation_id'] == operation]
                     if current and current[-1]['event'] == 'complete': break
                 require(time.monotonic() < deadline, 'actual public API did not complete'); time.sleep(0.25)
-            require([row['event'] for row in current] == ['begin', 'permission', expected, 'getters', 'complete'],
+            outcomes = [r for r in current if r['event'] in ('resolved', 'rejected', 'getter-error')]
+            observed = {'request': request, 'outcomes': outcomes, 'rows': current,
+                        'journal_command': attempt['journal_command']}
+            self.report['phases'].append(observed)
+            if action == 'store' and len(current) >= 3 and current[2]['event'] == 'config-state':
+                # A later add/get error must not lose the actual pre-add absence cut.
+                self.config_baseline = public_config_baseline(current, vpn_id=self.data['vpn_id'])
+                self.report['public_config_baseline'] = self.config_baseline
+            self.save()
+            events = ['begin', 'permission'] + (['config-state', 'config-state'] if action in CONFIG_ACTIONS else [])
+            require([row['event'] for row in current] == events + [expected, 'getters', 'complete'],
                     'actual API outcome differs: ' + action)
             require(all(row['action'] == action for row in current), 'journal action differs from actual request')
-            if expected == 'rejected': require(current[2]['code'] == 2200003, 'cleanup must fail with actual internal/backend error')
-            self.report['phases'].append({'request': request, 'outcome': current[2], 'journal_command': len(self.guest.report['commands']) - 1})
+            outcome = outcomes[0]; observed['outcome'] = outcome
+            if expected == 'rejected':
+                require(outcome['code'] == 2200003, 'cleanup must fail with actual internal/backend error')
+            else: require(outcome['code'] == 0, 'resolved API code differs')
+            if action in CONFIG_ACTIONS:
+                baseline = verify_config_phase(current, action=action, vpn_id=self.data['vpn_id'],
+                    vpn_name='qa-' + self.data['run_id'], baseline=getattr(self, 'config_baseline', None))
+                if action == 'store':
+                    self.config_baseline = baseline; self.report['public_config_baseline'] = baseline
+                else: self.report['public_config_removed'] = True
             attempt['status'] = 'complete'
             return current
         except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
@@ -784,6 +889,8 @@ class Collector:
 
     def start_owned_session(self):
         self.phase('inspect')
+        self.config_attempted = True
+        self.phase('store')
         self.started = True
         self.phase('setup')
 
@@ -835,22 +942,32 @@ class Collector:
         require(all(row.startswith('backend.lock|') for row in after['entries']) and
                 all(row['exe'] == '/system/bin/qemu_openvpn_service' and row['ppid'] == 1 for row in after['processes'].values()),
                 'private session artifacts or real worker/client remain')
+        self.report['native_cleanup_verified'] = True
+        self.phase('remove-config')  # Only after full process/group/session terminal proof.
         self.report['cleanup_verified'] = True; self.report['status'] = 'pass_narrow_guest_cleanup_NOT_full_gate'
 
     def cleanup(self):
         if not self.guest or not self.install_attempted:
             return
-        if self.started:
+        if self.started or getattr(self, 'config_attempted', False):
             try:
                 self.remove_fault()
-                if not self.report['cleanup_verified']:
-                    self.phase('destroy'); remaining = self.snapshot('failure-public-cleanup')
+                if not self.report.get('native_cleanup_verified', False):
+                    if self.started: self.phase('destroy')
+                    remaining = self.snapshot('failure-public-cleanup')
                     require(all(row.startswith('backend.lock|') for row in remaining['entries']) and
                             not any(row['exe'] != '/system/bin/qemu_openvpn_service' or row['ppid'] != 1 for row in remaining['processes'].values()),
                             'failed test still owns live/session resources')
-                    self.report['cleanup_verified'] = True
+                    for key in ('first_claim', 'second_claim'):
+                        if key in self.report: self.no_group(remaining, self.report[key])
+                    self.report['native_cleanup_verified'] = True
+                if getattr(self, 'config_attempted', False) and not self.report.get('public_config_removed', False):
+                    require(getattr(self, 'config_baseline', None) is not None,
+                            'complete owned public config baseline unavailable; preserve owner for review')
+                    self.phase('remove-config')
+                self.report['cleanup_verified'] = True
             except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
-                self.report['status'] = 'fail'; self.report['failures'].append('native cleanup: ' + str(error))
+                self.report['status'] = 'fail'; self.report['failures'].append('native/public config cleanup: ' + str(error))
             if not self.report['cleanup_verified']:
                 self.report['status'] = 'fail'
                 self.report['failures'].append('guest cannot be reused with unproved owner cleanup')

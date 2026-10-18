@@ -290,7 +290,10 @@ class KnowledgeRuntimeTests(unittest.TestCase):
             self.assertNotIn('.set(photoAccessHelper.PhotoKeys.DATE', source)
             self.assertNotIn('executeSql', source)
             self.assertNotIn('rdbStore', source)
-            self.assertNotIn('throw error', source)
+            # Internal query cleanup rethrows the actual first error. The UI
+            # entry must catch and journal it instead of leaking the rejection.
+            execute = source[source.index('private async execute()'):]
+            self.assertNotIn('throw error', execute)
 
     def test_trash_cleanup_must_be_actual_empty(self):
         self.mutate('query', 'cleanup', 'trash_asset', lambda r, v: v.update(count=1))

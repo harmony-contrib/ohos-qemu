@@ -49,3 +49,14 @@ They also test full provider/editor/dispatch replays, permissions, drift,
 symlinks and publication rollback. They do not establish SDK compilation, BMS
 registration, real user consent, notification clicking, recurrence or reboot
 behavior. Those must pass on the first newly packaged representative artifact.
+
+F shared LocalStorage successor
+-----------------------------
+The actual E MainAbility passes its own LocalStorage to loadContent, while its
+page retained a bare @Entry. Patch 0002 explicitly selects that shared instance
+with @Entry({ useSharedStorage: true }). No module-level storage is introduced.
+The complete E state is an accepted upgrade prefix, not the final repaired state;
+base and prefix1 both upgrade transactionally and the final state is idempotent.
+source_states.json pins every whole-source state and both patch byte hashes.
+Cold/hot Wants, revision refresh and separate Ability storage stay unchanged.
+Actual SDK and newly packaged reminder/UI runtime validation remain required.

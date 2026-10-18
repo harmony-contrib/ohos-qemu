@@ -23,7 +23,7 @@ import batch_system_build_runtime_helpers as product
 import batch_media_knowledge_suite as shared
 import batch_apps_contact_picker_coordinator as signatures
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
-from guest_ui import GuestUi
+from guest_ui import GuestUi, command_exit
 from spring_loading_input import OwnedPointer
 from guest_process_identity import starttime_shell, uids_shell
 
@@ -36,6 +36,7 @@ TOOLS = ('batch_media_audio_haptic_project.py', 'batch_media_audio_haptic_build_
          'batch_media_knowledge_suite.py', 'batch_apps_contact_picker_coordinator.py', 'batch_media_wallpaper_artifacts.py',
          'batch_system_build_runtime_helpers.py', 'enclosing_acceptance_guest.py', 'guest_ui.py', 'spring_loading_input.py',
          'hap_identity_binding.py', 'guest_process_identity.py')
+TOOLS += ('batch_media_audio_observation_clock.py','build_audio_capture_tools.py')
 
 INFO_CAPTURE_NOTICE = "warning: 'info capture' is deprecated since v10.2, to be removed\r\n"
 
@@ -97,6 +98,9 @@ class AudioCapture:
 
     def start(self, phase):
         require(not self.owned and capture_list_empty(self.hmp('info capture', phase + '-before-capture')), 'capture ownership changed')
+        from batch_media_audio_observation_clock import ObserverClock
+        self.clock = ObserverClock(self.collector)
+        self.clock.start(phase)
         self.path = self.collector.args.output / (phase + '-qemu.wav')
         require(not self.path.exists() and re.fullmatch(r'/[A-Za-z0-9_./-]+', str(self.path)),
                 'fresh monitor-safe absolute WAV output required (no spaces)')
@@ -117,7 +121,8 @@ class AudioCapture:
         require(capture_list_empty(self.hmp('info capture', phase + '-capture-after-stop')), 'owned capture remains active')
         self.owned = False
         require(self.path.is_file() and not self.path.is_symlink(), 'actual QEMU did not produce a WAV file')
-        return {'wav': record(self.path), 'host_begin_ns': self.begin, 'host_end_ns': ended, 'backend': self.backend}
+        return {'wav': record(self.path), 'host_begin_ns': self.begin, 'host_end_ns': ended, 'backend': self.backend,
+                'observation_clock':self.clock.stop()}
 
 
 def sign_ordinary_hap(unsigned, bundle, permissions, udid, signer_dist, signer_jar, output, command):
@@ -318,7 +323,8 @@ class Collector(shared.Collector):
         self.sampler_row.update(raw=record(path), exit_code=code, host_end_ns=time.monotonic_ns())
         marker = self.sampler_row['exit_marker']
         text = path.read_text().replace('\r', '')
-        require(code == 0 and text.endswith('\n' + marker + '0\n') and text.count(marker) == 1, 'actual guest sampler failed')
+        _, guest_code = command_exit(text, marker)
+        require(code == 0 and guest_code == 0, 'actual guest sampler failed')
         self.shell('test ! -d /proc/' + str(self.sampler_pid) + ' && rm -- ' + stop + ' && test ! -e ' + stop, 'owned-sampler-exited-and-stop-file-removed')
         result = self.sampler_row
         self.process = None; self.sampler_row = None; self.sampler_pid = None
@@ -329,10 +335,15 @@ class Collector(shared.Collector):
         if self.process is not None and self.process.poll() is not None and self.sampler_row is not None:
             path = Path(self.sampler_row['path']); marker = self.sampler_row['exit_marker']
             text = path.read_text(errors='replace').replace('\r', '')
-            if re.search(r'\n' + re.escape(marker) + r'[0-9]+\n$', text) and text.count(marker) == 1:
+            try:
+                _, guest_code = command_exit(text, marker)
+            except ValueError:
+                guest_code = None
+            if guest_code is not None:
                 if self.sampler_stream is not None: self.sampler_stream.close()
                 self.sampler_row.update(raw=record(path), exit_code=self.process.returncode,
-                    host_end_ns=time.monotonic_ns(), failed_native_command_returned=True)
+                    host_end_ns=time.monotonic_ns(), guest_exit_code=guest_code,
+                    failed_native_command_returned=True)
                 self.process = None; self.sampler_stream = None; self.sampler_row = None; self.sampler_pid = None
                 self.shell('rm -f -- ' + self.remote + '/sampler-stop', 'failed-owned-observer-stop-file-removed')
                 return
@@ -440,6 +451,10 @@ class Collector(shared.Collector):
         if self.capture is not None and self.capture.owned:
             try: cleanup['owned_capture_stop'] = self.capture.stop('emergency')
             except Exception as error: errors.append('owned QEMU capture cleanup: ' + str(error))
+        clock = getattr(self.capture,'clock',None)
+        if clock is not None and (clock.process is not None or clock.created):
+            try:clock.dispose()
+            except Exception as error:errors.append('owned measurement clock cleanup: '+str(error))
         # Stop/release only a successfully created, not-yet-released owned player.
         for role in self.roles:
             try:
@@ -503,6 +518,7 @@ def artifact_spec(path):
     for role, spec in value['projects'].items(): project.project_binding(spec, role, challenge)
     signatures.signer_inputs(value['signer']['dist'], checked(value['signer']['jar']))
     sampler_build.helper_binding(value['helper'])
+    sampler_build.clock_binding(value['helper'])
     return value
 
 
@@ -530,6 +546,7 @@ def run(args):
         listing = collector.observe('bm dump -a', 'no-preexisting-owned-roles')
         shared.assert_bundles_absent(checked(listing).read_text(), [row[0] for row in ROLES.values()])
         value['helper'] = sampler_build.helper_binding(spec['helper'])
+        value['clock_helper'] = sampler_build.clock_binding(spec['helper'])
         collector.shell('test ! -e ' + collector.remote + ' && test ! -L ' + collector.remote, 'fresh-helper-directory')
         collector.remote_created = True
         collector.shell('mkdir -m 700 ' + collector.remote, 'create-owned-helper-directory')
@@ -541,6 +558,12 @@ def run(args):
             raw = collector.observe(script, 'actual-helper-DSO-' + name)
             product.verify_guest_runtime_raw(value['helper'], name, checked(raw).read_text(), archive_sha256=value['archive_sha256'])
             value['helper_guest_DSOs'].append(dict(soname=name, observation=raw, script=script))
+        value['clock_guest_DSOs'] = []
+        for dso in value['clock_helper']['product_DSOs']:
+            name=dso['soname'];script=product.runtime_guest_script(value['clock_helper'],name)
+            raw=collector.observe(script,'actual-clock-helper-DSO-'+name)
+            product.verify_guest_runtime_raw(value['clock_helper'],name,checked(raw).read_text(),archive_sha256=value['archive_sha256'])
+            value['clock_guest_DSOs'].append(dict(soname=name,observation=raw,script=script))
         collector.capture = AudioCapture(collector)
         for role in ROLES: collector.install(role)
         require(len({row['uid'] for row in collector.identities.values()}) == 2 and

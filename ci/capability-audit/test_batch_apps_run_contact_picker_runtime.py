@@ -109,7 +109,7 @@ class ModelUi:
         g = self.guest
         if not g.provider:
             layout = node(driver.CALLER, 'root', children=[
-                node(driver.CALLER, 'contact_case_status', 'Ready: ' + g.launch, 0, False),
+                node(driver.CALLER, 'contact_case_status', 'Ready: host_model/' + g.launch + '/' + g.case, 0, False),
                 node(driver.CALLER, 'contact_case_start', 'Start case', 40)])
         else:
             children = [node(driver.PROVIDER, 'selectedText', 'Selected ' + str(g.count) + '/205', 0, False),
@@ -191,6 +191,37 @@ class RuntimeDriver(unittest.TestCase):
         bms.write_text(driver.PROVIDER + ':\n' + json.dumps(provider_fixture()))
         self.driver.provider_bms = driver.descriptor(bms)
         self.seed = {'contacts': self.records}
+
+    def test_request_input_waits_for_exact_current_nonce_in_the_click_tree(self):
+        expected = 'Ready: host_model/new_operation/create'
+        layouts = [node(driver.SEED, 'root', children=[
+            node(driver.SEED, 'contact_seed_status', text, 0, False),
+            node(driver.SEED, 'contact_seed_start', 'Run', 40)])
+            for text in ('Ready: old_run/new_operation/create', 'Ready: host_model/old_operation/create',
+                         'Ready: host_model/new_operation/cleanup', expected)]
+        captured, clicked = [], []
+        def layout(stem):
+            value = layouts.pop(0); captured.append(value)
+            path = self.root / ('ready-' + str(len(captured)) + '.json')
+            path.write_text(json.dumps(value)); return value, path
+        self.driver.layout = layout
+        self.driver.actual_click = lambda button, stem: clicked.append(button)
+        proof = self.driver.request_click(driver.SEED, 'contact_seed_status', expected, 'contact_seed_start', 'seed-ready')
+        self.assertEqual(4, len(captured)); self.assertEqual(1, len(clicked))
+        self.assertEqual(expected, proof['ready_identity'])
+        self.assertEqual(captured[-1], json.loads(Path(proof['layout']['path']).read_text()))
+
+    def test_launch_error_never_enters_permission_poll_or_clicks(self):
+        path = self.root / 'rejected.json'
+        layout = node(driver.SEED, 'root', children=[
+            node(driver.SEED, 'contact_seed_status', 'Launch rejected: Invalid seed request', 0, False),
+            node(driver.SEED, 'contact_seed_start', 'Run', 40)])
+        path.write_text(json.dumps(layout))
+        self.driver.layout = lambda stem: (layout, path)
+        self.driver.actual_click = lambda *args: self.fail('rejected launch must not receive input')
+        with self.assertRaisesRegex(ValueError, 'actual app rejected'):
+            self.driver.request_click(driver.SEED, 'contact_seed_status', 'Ready: host_model/op/create',
+                                      'contact_seed_start', 'seed-ready')
 
     def test_seed_project_only_two_user_permissions_and_real_startup_resources(self):
         project = self.root / 'project'
@@ -364,6 +395,13 @@ class RuntimeDriver(unittest.TestCase):
     def test_hilog_difference_cannot_reuse_old_provider_launch(self):
         old = driver.PROVIDER + ' ' + driver.verifier.CONTRACT['provider_ability']
         self.assertEqual(driver.fresh_lines(old + '\n', old + '\nnew unrelated log\n'), 'new unrelated log\n')
+
+    def test_actual_page_shared_storage_cold_newwant_isolation_and_late_continuation(self):
+        program = HERE / 'fixtures/batch_apps/contact_picker_runtime/storage-tests.cjs'
+        result = subprocess.run(['node', str(program), str(HERE / 'fixtures/batch_apps')],
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn('NOT runtime evidence', result.stdout)
 
     def test_actual_seed_store_public_crud_and_failure_recovery(self):
         program = r'''

@@ -327,6 +327,22 @@ class Driver:
             return evidence
         return self.wait(click)
 
+    def request_click(self, bundle, status_id, expected, button_id, stem):
+        """Recheck the current nonce and enabled button in the SAME input tree."""
+        def click():
+            layout, path = self.layout(stem)
+            status = select_node(layout, bundle, identifier=status_id)['attributes'].get('text', '')
+            if status.startswith(('Launch rejected:', 'Operation failed:')):
+                raise ValueError('actual app rejected the current request: ' + status)
+            if status != expected:
+                return None
+            button = select_node(layout, bundle, identifier=button_id, clickable=True)
+            evidence = {'layout': descriptor(path), 'screenshot': self.screen(stem),
+                        'selected_node': button, 'ready_identity': expected, 'ready_status_id': status_id}
+            self.actual_click(button, stem)
+            return evidence
+        return self.wait(click)
+
     def permissions(self, bundle, token, stem):
         before_raw, before = self.raw('bm dump -n ' + bundle, stem + '-BMS-before')
         app = application_info(before_raw, bundle)
@@ -361,7 +377,9 @@ class Driver:
         # records are recovered by the next public query, never by DB writes.
         self.raw('aa force-stop ' + SEED, 'stop-seed-before-' + mode)
         self.launch(SEED, runId=self.run_id, operationId=operation, mode=mode)
-        self.node_click(SEED, identifier='contact_seed_start', stem='seed-start-' + mode)
+        clicked = self.request_click(SEED, 'contact_seed_status',
+            'Ready: ' + self.run_id + '/' + operation + '/' + mode, 'contact_seed_start', 'seed-start-' + mode)
+        self.evidence.setdefault('seed_launch_inputs', []).append({'operation_id': operation, 'mode': mode, **clicked})
         def complete():
             rows, art = self.journal(SEED, 'seed-journal-' + mode)
             own = operation_rows(rows, operation)
@@ -390,16 +408,10 @@ class Driver:
         self.launch(CALLER, runId=self.run_id, launchId=launch_id, caseId=case_id,
                     seedIds=json.dumps([r['id'] for r in seed['contacts']], separators=(',', ':')),
                     queryKey=seed['contacts'][0]['key'])
-        def ready(layout):
-            try:
-                node = select_node(layout, CALLER, identifier='contact_case_status')
-                return node['attributes'].get('text') == 'Ready: ' + launch_id
-            except NodeNotReady:
-                return False
-        self.snapshot('caller-ready-' + case_id, ready)
         if case_id == 'reopen': self.processes('after_reopen', 1)
         _, start_ams = self.raw('aa dump -a -u 100', 'AMS-before-caller-Start')
-        clicked = self.node_click(CALLER, identifier='contact_case_start', stem='caller-start-' + case_id)
+        clicked = self.request_click(CALLER, 'contact_case_status',
+            'Ready: ' + self.run_id + '/' + launch_id + '/' + case_id, 'contact_case_start', 'caller-start-' + case_id)
         for slot in verifier.MATRIX[case_id]['slots']:
             self.event('caller_start', launch_id + '/' + slot, ams=start_ams, **clicked)
 

@@ -11,6 +11,27 @@ import secrets
 import shlex
 
 
+def command_exit(text, marker):
+    """Decode one command-bound, complete terminal footer; keep body echoes.
+
+    Raw command logs retain their original bytes. Only CRLF is normalized here
+    for text parsing; an embedded printf/nonce in a hilog line is not a footer.
+    This is not a journal EOF or process-snapshot framing parser.
+    """
+    if (type(text) is not str or type(marker) is not str or
+            re.fullmatch(r'__[A-Z][A-Z0-9_]*_EXIT_[a-f0-9]{32}__=', marker) is None):
+        raise ValueError('exact command exit marker required')
+    text = text.replace('\r\n', '\n')
+    records = list(re.finditer(r'^' + re.escape(marker) + r'([0-9]+)$', text, re.M))
+    if len(records) != 1:
+        raise ValueError('one complete command exit record required')
+    record = records[0]; digits = record.group(1)
+    if (len(digits) > 3 or int(digits) > 255 or record.start() == 0 or
+            text[record.start()-1] != '\n' or record.end()+1 != len(text) or text[-1] != '\n'):
+        raise ValueError('complete command exit must end the raw stream')
+    return text[:record.start()-1], int(digits)
+
+
 class GuestUiCommandError(ValueError):
     def __init__(self, label, exit_code, output):
         super().__init__('packaged UITest operation failed or lost its guest exit status: ' + label)
@@ -84,11 +105,13 @@ class GuestUi:
         marker = '__UITEST_EXIT_' + secrets.token_hex(16) + '__='
         result = self.command([self.hdc, '-t', self.target, 'shell',
             script + '; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"'], label)
-        match = re.search(r'(?:^|\n)' + re.escape(marker) + r'(\d+)\s*$', result.replace('\r', ''))
-        if not match or match.group(1) != '0' or '[Fail]' in result:
-            raise GuestUiCommandError(label, int(match.group(1)) if match else None,
-                                      result[:match.start()].strip() if match else result)
-        return result[:match.start()].rstrip('\n')
+        try:
+            body, code = command_exit(result, marker)
+        except ValueError as error:
+            raise GuestUiCommandError(label, None, result) from error
+        if code != 0 or '[Fail]' in result:
+            raise GuestUiCommandError(label, code, body.strip())
+        return body.rstrip('\n')
 
     def remote(self, suffix):
         self.sequence += 1

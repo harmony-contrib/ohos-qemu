@@ -237,6 +237,10 @@ I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api
 DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
 SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_tone_haptics_feature/apply.sh"
 AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/apply.sh"
+AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_public_errors/apply.sh"
+CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/capturer_frame_assembly/apply.sh"
+ARKUI_NATIVE_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/ui_extension_identity_diagnostics/apply.sh"
+AMS_NATIVE_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/ui_extension_identity_diagnostics/apply.sh"
 METADATA_FETCH_RESULT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_fetch_result/apply.sh"
 INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_insight_configuration_mode/apply.sh"
 CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
@@ -3106,6 +3110,12 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_system_sound_tone_feature_component.log"
   bash "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_lifecycle_component.log"
+  bash "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_lifecycle_component.log"
+  bash "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_public_errors_component.log"
+  bash "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_public_errors_component.log"
   bash "${AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_public_enums_component.log"
   bash "${UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3337,6 +3347,14 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_wallpaper_settings.log"
   bash "${PATCH_ROOT}/common/base/theme/wallpaper_mgr/qemu_renderer/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_wallpaper_qemu_renderer.log"
+  python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/preflight_ui_extension_identity_batch.log"
+  bash "${ARKUI_NATIVE_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_identity.log"
+  bash "${AMS_NATIVE_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ams_native_identity.log"
+  python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_ui_extension_identity_batch.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
     --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/settings-source-dependencies" \
     --evidence "${CACHE_ROOT}/logs/settings-source-preparation.json" \
@@ -3414,6 +3432,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_capturer_read_lifecycle_component.log"
   bash "${CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_capturer_read_lifecycle_component.log"
+  bash "${CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_capturer_frame_assembly_component.log"
+  bash "${CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_capturer_frame_assembly_component.log"
   bash "${AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_suite_library_path_component.log"
   bash "${AUDIO_SUITE_DSP_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

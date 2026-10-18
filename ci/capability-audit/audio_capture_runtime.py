@@ -334,7 +334,8 @@ class CaptureRuntime:
             self.producer_log.close()
             self.producer_log = None
             self.value['producer'] = self.producer_receipt(status)
-            if status != 0:
+            self.save()
+            if status != 0 or self.value['producer']['guest_exit_code'] != 0:
                 raise ValueError('actual root PCM producer failed')
         self.value['status'] = 'captured_NOT_independently_verified'
         self.save()

@@ -68,7 +68,7 @@ checks, current-account VISITOR access, hidden/trashed/pending/temp/critical/clo
 filters and revocation checks remain in the native path. Actual service Visitor
 ACL and three caller roles still require product runtime evidence.
 
-Result iteration uses actual QueryByStep without pre-counting and verifies every
+The original visitor iteration used QueryByStep without pre-counting and verified every
 cursor return/access check. It bounds strings to 64 KiB and accumulated response
 to 8 MiB; excess returns an error with no partial-success result. Omitted count
 therefore does not create an unbounded native result vector. The whole native
@@ -109,3 +109,54 @@ detaches only its independently retained state. Host full-TU tests compile
 with -fno-exceptions plus ASan/UBSan and exercise actual return-failure cleanup.
 The complete previous a5fe432 source state is an additional exact upgrade input.
 Parent actual full product TU/link and new-package runtime remain mandatory.
+
+F media-owner query successor
+----------------------------
+The completed E public baseline granted READ_IMAGEVIDEO, read the real request
+from ApplicationContext.filesDir and obtained count=0 from getAssets, then
+getRelatedEntity failed with 23800301. The former NAPI only tried a visitor RDB;
+getAssets can instead use the real DataShare owner. The exact visitor-open vs
+SQL-prepare cause was not disambiguated by that old generic message.
+
+The successor removes the public caller's visitor/path dependency. A fixed
+internal URI under MEDIALIBRARY_DATA_URI receives only a bounded typed protocol,
+never SQL or a DB path. The real service checks IPC caller system-app identity
+and READ_IMAGEVIDEO before decoding and querying its own existing RDB. Native
+self-token checks at request, each row and completion remain. No grant, ACL, APL,
+SELinux, root caller, extra provider or fabricated empty result is introduced.
+The same query generator is compiled into both targets; only the service builds
+the SQL for execution. Existing visible-Photos joins and real holiday producer
+remain unchanged.
+
+Actual DataShare GoToRow returns E_ERROR=1001 for both normal out-of-range and
+OnGo failures, and both set rowPos=rowCount. Neither a nonzero status nor IsEnded
+can prove EOF. DataShare itself needs GetRowCount. The service appends a LIMIT
+with one sentinel row, derived conservatively from the existing 8MiB per-row
+Account budget. Client count must succeed, be nonnegative and fit that limit;
+a sentinel/oversize result fails rather than becoming truncated success. It then
+reads exactly that many rows; any nonzero step/column/close status is an error.
+This bounds the inherent DataShare pre-count and preserves the 8MiB byte check.
+Zero is accepted only from a successful real count on a real result set.
+
+Client helper creation, business errors, count, step and close retain their real
+return codes in phase-specific messages. A service null RDB/query emits its exact
+phase with underlying_rc=unavailable, because QueryByStep exposes no error code
+in that return path. This is a preserved diagnostic limitation, not a zero code.
+The QA Query page records the actual active public API and keeps an original
+API failure when helper release also fails. SDK/source binding requires fresh
+Knowledge roles; manifests include all fixture hashes.
+
+The whole former E state is an explicit upgrade prefix, never the new final.
+A separate actual-E upstream fixture guards the newly touched service source;
+historical original fixtures remain unchanged. Patch 0001 retains its bytes;
+0002 is the exact E-to-F review diff. Both base and complete history upgrade to
+the new 14-file state; unknown/mixed states remain failures.
+
+service-query-provenance.json pins actual E source/interface exports 14/15/19.
+Host counterexamples cover server 202/201, malformed/raw-SQL wire, null RDB/query,
+count failure/negative/over-budget, generic 1001 before expected EOF, revocation
+and original field/byte budgets. They are not IPC, native-build, SDK or guest
+proof. Root must compile the real affected native targets and all four QA HAPs,
+then validate the new representative package through the unchanged full public
+Knowledge suite, including baseline, consent/import, query/holiday boundaries,
+hide/unhide, trash/recover, permanent deletion and owned cleanup.

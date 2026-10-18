@@ -19,7 +19,7 @@ import batch_media_knowledge_project as project
 import batch_media_knowledge_runtime as runtime
 import batch_system_build_runtime_helpers as product
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
-from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
+from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node, command_exit
 from hdc_transport import failed
 from hap_identity_binding import verify_hap_token_identity
 
@@ -90,9 +90,10 @@ def shell_body(row):
     argv = row['argv']; require(len(argv) == 5 and argv[3] == 'shell', 'actual shell command required')
     text = checked(row['raw']).read_text().replace('\r', '')
     markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
-    require(len(markers) == 1 and text.count(markers[0]) == 1 and text.endswith('\n' + markers[0] + '0\n'),
-            'real guest command success nonce required')
-    return text.rsplit('\n' + markers[0], 1)[0].rstrip('\n')
+    require(len(markers) == 1, 'one argv-bound guest command nonce required')
+    body, code = command_exit(text, markers[0])
+    require(code == 0, 'real guest command success nonce required')
+    return body.rstrip('\n')
 
 
 def exact_script(row, script):

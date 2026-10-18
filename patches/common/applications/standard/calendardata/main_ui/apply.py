@@ -55,9 +55,13 @@ def apply(root, publish=replace):
                     target = stage / baseline.PROJECT / relative
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, target)
-            if baseline.validate(stage):
+            state = baseline.source_state(stage)
+            if state == 'final':
                 raise ValueError('source changed during staging')
-            for patch in sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch')):
+            patches = sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))
+            if state == 'prefix1':
+                patches = [COMPONENT / '0002-bind-viewer-to-ability-local-storage.patch']
+            for patch in patches:
                 subprocess.run(['git', '-C', str(stage), 'apply', '--check', str(patch)], check=True)
                 subprocess.run(['git', '-C', str(stage), 'apply', '--whitespace=nowarn', str(patch)], check=True)
             baseline.validate(stage, require_patched=True)

@@ -78,6 +78,34 @@ load(process.argv[1],'Seed');load(process.argv[2],'Query');
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn('host only', result.stdout)
 
+    def test_only_exact_empty_pidof_guest_one_is_a_negative_observation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve(); marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
+            script = 'pidof com.ohos.wallpaper; task_ui_rc=$?; printf "\\n' + marker + '%s\\n" "$task_ui_rc"'
+            log = root / 'pidof.log'; log.write_text('\n' + marker + '1\n')
+            row = {'label': 'baseline-renderer-pid', 'exit_code': 0,
+                   'argv': ['hdc', '-t', '127.0.0.1:1234', 'shell', script], **runtime.record(log)}
+            result = runtime.exact_absent_renderer_command(row, target='127.0.0.1:1234', hdc='hdc')
+            self.assertEqual('negative_absence_ONLY_NOT_connected', result['state'])
+            for content in ('error\n\n' + marker + '1\n', ' \n' + marker + '1\n',
+                            '\n' + marker + '0\n', '\n' + marker + '2\n',
+                            '\n' + marker + '1\ntrailing', '\n' + marker + '1\n\n' + marker + '1\n',
+                            '[Fail] disconnected\n\n' + marker + '1\n'):
+                log.write_text(content); row.update(runtime.record(log))
+                with self.subTest(content=content), self.assertRaises(ValueError):
+                    runtime.exact_absent_renderer_command(row, target='127.0.0.1:1234', hdc='hdc')
+            log.write_text('\n' + marker + '1\n'); row.update(runtime.record(log))
+            for command in ('pidof foreign', 'pidof com.ohos.wallpaper || true', 'true'):
+                other = copy.deepcopy(row); other['argv'][4] = script.replace('pidof com.ohos.wallpaper', command)
+                with self.subTest(command=command), self.assertRaises(ValueError):
+                    runtime.exact_absent_renderer_command(other, target='127.0.0.1:1234', hdc='hdc')
+            for mutation in ('target', 'host-exit'):
+                other = copy.deepcopy(row)
+                if mutation == 'target': other['argv'][2] = '127.0.0.1:9999'
+                else: other['exit_code'] = 1
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    runtime.exact_absent_renderer_command(other, target='127.0.0.1:1234', hdc='hdc')
+
     def test_only_exact_uitest_window_enumeration_retry_is_allowed(self):
         marker = '__UITEST_EXIT_' + 'a' * 32 + '__='
         remote = '/data/local/tmp/qemu-capability-ui-' + 'b' * 32 + '-7.json'

@@ -1,0 +1,31 @@
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp
+@@ -13,6 +13,8 @@
+  * limitations under the License.
+  */
+ 
++#include <unistd.h>
++
+ #include "base_extension_record.h"
+ 
+ #include <singleton.h>
+@@ -214,6 +216,19 @@
+     bool isUIExtension = UIExtensionWrapper::IsUIExtension(GetAbilityInfo().extensionAbilityType);
+     if (isUIExtension) {
+         info.emplace_back("      ability type [UIEXTENSION]");
++        // The same real SessionInfo identity is supplied by Rosen to AMS.
++        // GetSessionInfo takes sessionLock_ and retains this published object;
++        // do not inspect its mutable sessionToken or mint a diagnostic ID.
++        const auto identitySession = GetSessionInfo();
++        if (identitySession) {
++            info.emplace_back("      nativeSessionIdentity: version=1 serverPid=" + std::to_string(getpid()) +
++                " serverUid=" + std::to_string(getuid()) +
++                " recordId=" + std::to_string(GetRecordId()) +
++                " persistentId=" + std::to_string(identitySession->persistentId) +
++                " hostWindowId=" + std::to_string(identitySession->hostWindowId) +
++                " realHostWindowId=" + std::to_string(identitySession->realHostWindowId) +
++                " usage=" + std::to_string(static_cast<uint32_t>(identitySession->uiExtensionUsage)));
++        }
+     } else {
+         if (GetAbilityInfo().extensionAbilityType == AppExecFwk::ExtensionAbilityType::UI_SERVICE) {
+             info.emplace_back("      ability type [UI_SERVICE]");

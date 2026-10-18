@@ -16,6 +16,8 @@ from batch_media_wallpaper_runtime import record
 from test_batch_media_wallpaper_suite import boot_value
 
 
+HDC = '/host-only/pinned-hdc'  # Explicit host fixture pin; never a real guest executor.
+
 def checksum(value): return hashlib.sha256(value).hexdigest()
 
 
@@ -204,13 +206,13 @@ class NativeTests(unittest.TestCase):
             actual_raw=raw.replace(request['nonce'],item['nonce']);artifact=self.root/(case+'.txt');artifact.write_text(actual_raw)
             marker='__UITEST_EXIT_'+format(sequence,'032x')+'__='
             log=self.root/(case+'.log');log.write_text(actual_raw+'\n\n'+marker+'0\n')
-            commands.append({'label':case+'-native-maps-scan-0','argv':['hdc','-t','127.0.0.1:12345','shell',
+            commands.append({'label':case+'-native-maps-scan-0','argv':[HDC,'-t','127.0.0.1:12345','shell',
                 native.maps_script(item,proof)+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"'],
                 'exit_code':0,**record(log)})
             rows.append({'case':case,'nonce':item['nonce'],'sequence':sequence,'began_ns':20,'finished_ns':30,
                 'capture_label':case+'-native-maps-scan-0','raw':record(artifact),'parsed':native.parse_maps(actual_raw,item,proof)})
             actions.append({'sequence':sequence,'request':record(path),'began_ns':10,'finished_ns':40})
-        return {'native_mappings':rows,'commands':commands,'actions':actions},proof
+        return {'hdc':HDC,'native_mappings':rows,'commands':commands,'actions':actions},proof
 
     def installed_protocol(self,coo):
         image=self.root/'image-provider.hap';image.write_bytes(b'HOST HAP FIXTURE ONLY')
@@ -220,7 +222,7 @@ class NativeTests(unittest.TestCase):
             log=self.root/(label+'.log');marker='__UITEST_EXIT_'+'d'*32+'__='
             log.write_text(text+'\n'+marker+'0\n')
             coo['commands'].append({'label':label,'exit_code':0,**record(log),
-                'argv':['hdc','-t','127.0.0.1:12345','shell',script+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"']})
+                'argv':[HDC,'-t','127.0.0.1:12345','shell',script+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"']})
             return record(path)
         for index,case in enumerate(('desktop-1','desktop-2'),6):
             label=case+'-renderer-installed';copied=self.root/(case+'.hap');copied.write_bytes(image.read_bytes())
@@ -231,7 +233,7 @@ class NativeTests(unittest.TestCase):
                 'after':raw(label+'-HAP-stat-after',native.hap_stat_script(remote),stat)}
             log=self.root/(label+'-recv.log');log.write_text('FileTransfer finish')
             coo['commands'].append({'label':label+'-HAP-recv','exit_code':0,**record(log),
-                'argv':['hdc','-t','127.0.0.1:12345','file','recv',remote,str(copied)]})
+                'argv':[HDC,'-t','127.0.0.1:12345','file','recv',remote,str(copied)]})
             rows.append({'case':case,'sequence':index,'nonce':format(index,'032x'),'began_ns':20,'finished_ns':30,
                 'BMS':bms,'uid':uid,'transfer':transfer})
         coo['renderer_installed_haps']=rows
@@ -276,14 +278,14 @@ class NativeTests(unittest.TestCase):
     def test_wrapper_composes_actual_connection_parser_and_native_mapping_oracles(self):
         import batch_media_wallpaper_suite as suite
         import batch_apps_wallpaper_connection as connections
-        coo,proof=self.mapping_protocol();runtime={'commands':[],'stages':[]};target='127.0.0.1:12345'
+        coo,proof=self.mapping_protocol();runtime={'hdc':HDC,'commands':[],'stages':[]};target='127.0.0.1:12345'
         provider_hap=self.installed_protocol(coo)
         def raw(label,script,text):
             path=self.root/(label+'.raw');path.write_text(text)
             log=self.root/(label+'.transport');marker='__UITEST_EXIT_'+'c'*32+'__='
             log.write_text(text+'\n'+marker+'0\n')
             runtime['commands'].append({'label':label,'exit_code':0,**record(log),
-                'argv':['hdc','-t',target,'shell',script+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"']})
+                'argv':[HDC,'-t',target,'shell',script+'; task_ui_rc=$?; printf "\\n'+marker+'%s\\n" "$task_ui_rc"']})
             return record(path)
         runtime['renderer_identity']=raw('renderer-BMS','bm dump -n com.ohos.wallpaper',json.dumps({
             'appInfo':{'bundleName':'com.ohos.wallpaper','isSystemApp':True,'uid':20010012}}))

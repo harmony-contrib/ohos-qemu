@@ -11,7 +11,7 @@ class IncomingRequest {
   queryKey: string = '';
 }
 
-@Entry
+@Entry({ useSharedStorage: true })
 @Component
 struct Index {
   @LocalStorageLink('requestJson') @Watch('onLaunchChanged') private requestJson: string = '';
@@ -34,7 +34,8 @@ struct Index {
     this.valid = false;
     try {
       const request = JSON.parse(this.requestJson) as IncomingRequest;
-      if (!/^[A-Za-z0-9_-]{1,64}$/.test(request.runId) ||
+      if (typeof request.runId !== 'string' || typeof request.launchId !== 'string' ||
+          !/^[A-Za-z0-9_-]{1,64}$/.test(request.runId) ||
           !/^[A-Za-z0-9_-]{1,64}$/.test(request.launchId) || !CASE_IDS.includes(request.caseId)) {
         throw new Error('Invalid case identity');
       }
@@ -59,7 +60,7 @@ struct Index {
       this.input = input;
       this.caseName = input.caseId;
       this.valid = true;
-      this.status = 'Ready: ' + input.launchId;
+      this.status = 'Ready: ' + input.runId + '/' + input.launchId + '/' + input.caseId;
     } catch (error) { this.status = 'Launch rejected: ' + (error as Error).message; }
   }
 
@@ -70,15 +71,16 @@ struct Index {
   private startCase(): void {
     if (!this.valid || !this.visible) { return; }
     const input = this.input;
-    if (this.started.has(input.launchId)) {
+    const identity = input.runId + '/' + input.launchId;
+    if (this.started.has(identity)) {
       this.status = 'This launch has already started';
       return;
     }
-    this.started.add(input.launchId);
+    this.started.add(identity);
     const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
     try {
       const run = new PickerCases(input, context, (status: string) => {
-        if (this.visible && this.input.launchId === input.launchId) { this.status = status; }
+        if (this.valid && this.visible && this.input === input) { this.status = status; }
       });
       this.runs.push(run);
       this.status = 'Calling public API: ' + input.launchId;
@@ -91,7 +93,7 @@ struct Index {
       Text('Contacts public caller').fontSize(24)
       Text(this.caseName).id('contact_case_id')
       Text(this.status).id('contact_case_status')
-      Button('Start case').id('contact_case_start').onClick(() => this.startCase())
+      Button('Start case').id('contact_case_start').enabled(this.valid && this.visible).onClick(() => this.startCase())
       Text('Results are recorded for independent review.').fontSize(14)
     }.padding(24).width('100%').height('100%')
   }

@@ -10,6 +10,7 @@ import importlib
 import json
 import os
 from pathlib import Path
+from guest_ui import command_exit
 import re
 import secrets
 import signal
@@ -267,11 +268,11 @@ class Commands:
         marker = '__LIVE_SUITE_EXIT_' + secrets.token_hex(16) + '__='
         wrapped = '(' + script + '); task_live_suite_rc=$?; printf "\\n' + marker + '%s\\n" "$task_live_suite_rc"'
         text, err, row = self.execute([self.hdc, '-t', self.target, 'shell', wrapped], label, accepted_failure)
-        matches = re.findall(r'\n' + marker + r'([0-9]+)\n?$', text)
-        require(len(matches) == 1 and text.count(marker) == 1 and (accepted_failure or matches[0] == '0'), 'actual guest exit missing/nonzero: ' + label)
-        raw = text.rsplit('\n' + marker, 1)[0]
+        raw, code = command_exit(text, marker)
+        require(row['exit_code'] == 0 and not failed(text, err) and (accepted_failure or code == 0),
+                'actual guest exit missing/nonzero or failed transport: ' + label)
         path = self.output / (label + '-raw.txt'); require(not path.exists(), 'duplicate actual raw command label')
-        path.write_text(raw); row.update(script=script, marker=marker, guest_exit_code=int(matches[0]), raw=descriptor(path))
+        path.write_text(raw); row.update(script=script, marker=marker, guest_exit_code=code, raw=descriptor(path))
         return raw, row
 
 

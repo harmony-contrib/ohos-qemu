@@ -576,7 +576,7 @@ static int32_t CheckPcmStatus(snd_pcm_t *capturePcmHandle)
     return HDF_SUCCESS;
 }
 
-static int32_t CapturePcmReadi(snd_pcm_t *pcm, uint64_t *frameCnt, char *dataBuf, snd_pcm_uframes_t bufSize)
+static int32_t CapturePcmReadi(snd_pcm_t *pcm, uint64_t *frameCnt, char *dataBuf, snd_pcm_uframes_t bufSize, bool allowRecovery)
 {
     CHECK_NULL_PTR_RETURN_DEFAULT(pcm);
     CHECK_NULL_PTR_RETURN_DEFAULT(frameCnt);
@@ -602,6 +602,11 @@ static int32_t CapturePcmReadi(snd_pcm_t *pcm, uint64_t *frameCnt, char *dataBuf
             continue;
         }
         if (frames != -EPIPE && frames != -ESTRPIPE) {
+            return HDF_FAILURE;
+        }
+        if (!allowRecovery) {
+            // Preserve the real cable xrun; never prepare/restart and hide loss.
+            AUDIO_FUNC_LOGE("QemuCapture read xrun: %{public}s", snd_strerror((int)frames));
             return HDF_FAILURE;
         }
         int32_t ret = snd_pcm_recover(pcm, (int)frames, 0);
@@ -758,12 +763,11 @@ static int32_t CaptureReadImpl(struct AlsaCapture *captureIns, struct AudioHwCap
     if (CheckCapturePeriodCapacity(cardIns->pcmHandle, periodSize) != HDF_SUCCESS) {
         return HDF_FAILURE;
     }
-    if (strcmp(cardIns->alsaCardId, "QemuCapture") == 0) {
-        // No unbounded ARM wait or implicit prepare after Stop for the explicit PCM cable.
-        if (snd_pcm_wait(cardIns->pcmHandle, 100) <= 0) {
-            return HDF_FAILURE;
-        }
-    } else if (CheckPcmStatus(cardIns->pcmHandle) != HDF_SUCCESS) {
+    bool qemuCapture = strcmp(cardIns->alsaCardId, "QemuCapture") == 0;
+    // The cable is nonblocking and its RUNNING state was checked above.
+    // avail_min can exceed this caller's capacity: attempt the real short read
+    // before waiting, rather than rejecting readable sub-period samples.
+    if (!qemuCapture && CheckPcmStatus(cardIns->pcmHandle) != HDF_SUCCESS) {
         AUDIO_FUNC_LOGE("CheckPcmStatus failed.");
         return HDF_FAILURE;
     }
@@ -772,7 +776,7 @@ static int32_t CaptureReadImpl(struct AlsaCapture *captureIns, struct AudioHwCap
         AUDIO_FUNC_LOGE("Failed to Calloc buffer");
         return HDF_FAILURE;
     }
-    ret = CapturePcmReadi(cardIns->pcmHandle, &frames, buffer, periodSize);
+    ret = CapturePcmReadi(cardIns->pcmHandle, &frames, buffer, periodSize, !qemuCapture);
     if (ret != HDF_SUCCESS) {
         AUDIO_FUNC_LOGE("CapturePcmReadi is error!");
         AudioMemFree((void **)&buffer);

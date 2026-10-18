@@ -1,4 +1,4 @@
-"""Thirteen-source exact upgrade/forward guard/review patch tests using actual source fixtures."""
+"""Complete historical/E-to-service upgrade guards using actual source fixtures."""
 import base64
 import gzip
 import hashlib
@@ -19,11 +19,19 @@ install=load('holiday_installer',COMP/'apply.py')
 old=load('holiday_prior_installer',COMP.parent/'knowledge_content/apply.py')
 
 def baseline(root):
+    service_baseline(root)
     for filename in ['baseline.json','holiday-baseline.json']:
         fixture=json.loads((FIX/filename).read_text())
         for name,entry in fixture['files'].items():
             data=gzip.decompress(base64.b64decode(entry['gzip_base64']));assert hashlib.sha256(data).hexdigest()==entry['sha256']
             path=root/old.transforms.PROJECT/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
+
+def service_baseline(root):
+    fixture=json.loads((FIX/'service-backend-E-source.json').read_text())
+    for name,entry in fixture['files'].items():
+        data=gzip.decompress(base64.b64decode(entry['gzip_base64']))
+        assert hashlib.sha256(data).hexdigest()==entry['sha256']
+        path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
 
 class Install(unittest.TestCase):
     def test_actual_old_install_then_thirteen_source_upgrade_and_both_repeat(self):
@@ -39,9 +47,20 @@ class Install(unittest.TestCase):
     def test_exact_previous_complete_holiday_upgrades_but_mixed_versions_do_not(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);baseline(root);old.run(root);install.run(root)
+            # The oldest fixture records only its two historical differences.
+            # Restore the complete preserved visitor-era state first, rather
+            # than leaving the new service client in the other three files.
+            complete=json.loads((FIX/'holiday-previous-round6.json').read_text())['files']
+            for name,entry in complete.items():
+                data=gzip.decompress(base64.b64decode(entry['gzip_base64']))
+                self.assertEqual(hashlib.sha256(data).hexdigest(),entry['sha256'])
+                (root/name).write_bytes(data)
             fixture=json.loads((FIX/'holiday-previous.json').read_text())['files']
             for name,entry in fixture.items():
                 data=gzip.decompress(base64.b64decode(entry['gzip_base64']));self.assertEqual(hashlib.sha256(data).hexdigest(),entry['sha256']);(root/name).write_bytes(data)
+            service_baseline(root)
+            actual={name:install.sha((root/name).read_bytes()) for name in install.MANIFEST['files']}
+            self.assertEqual(actual,install.PREVIOUS[0])
             self.assertFalse(install.validate(root));self.assertTrue(old.validate(root,True));old.run(root)
             # Current GN with only previous producer is an unknown partial state.
             gn=next(name for name in fixture if name.endswith('BUILD.gn'));original=(root/gn).read_bytes()
@@ -55,6 +74,7 @@ class Install(unittest.TestCase):
             fixture=json.loads((FIX/'holiday-previous-round4.json').read_text())['files']
             for name,entry in fixture.items():
                 data=gzip.decompress(base64.b64decode(entry['gzip_base64']));self.assertEqual(hashlib.sha256(data).hexdigest(),entry['sha256']);(root/name).write_bytes(data)
+            service_baseline(root)
             self.assertFalse(install.validate(root));self.assertTrue(old.validate(root,True))
             with self.assertRaises(ValueError):install.validate(root,True)
             subprocess.run(['bash',str(COMP/'apply.sh'),'--source-root',str(root)],check=True,capture_output=True,text=True)
@@ -66,6 +86,7 @@ class Install(unittest.TestCase):
             fixture=json.loads((FIX/'holiday-previous-round6.json').read_text())['files']
             for name,entry in fixture.items():
                 data=gzip.decompress(base64.b64decode(entry['gzip_base64']));self.assertEqual(hashlib.sha256(data).hexdigest(),entry['sha256']);(root/name).write_bytes(data)
+            service_baseline(root)
             self.assertFalse(install.validate(root));self.assertTrue(old.validate(root,True))
             with self.assertRaises(ValueError):install.validate(root,True)
             install.run(root);self.assertTrue(install.validate(root,True));old.run(root)
@@ -73,6 +94,24 @@ class Install(unittest.TestCase):
             installed=path.read_bytes();path.write_bytes(installed+b'// preserve unknown observer changes\n')
             with self.assertRaises(ValueError):install.run(root)
             self.assertEqual(path.read_bytes(),installed+b'// preserve unknown observer changes\n')
+
+    def test_complete_actual_E_prefix_is_not_new_final_and_upgrades_idempotently(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);baseline(root);old.run(root)
+            crlf={name for name in install.MANIFEST['files'] if (root/name).exists() and b'\r\n' in (root/name).read_bytes()}
+            for name in install.MANIFEST['files']:
+                path=root/name
+                if path.exists():path.write_bytes(path.read_bytes().replace(b'\r\n',b'\n'))
+            patch=next(COMP.glob('0001-*.patch'))
+            subprocess.run(['git','-C',str(root),'apply',str(patch)],check=True)
+            for name in crlf:
+                path=root/name;path.write_bytes(path.read_bytes().replace(b'\n',b'\r\n'))
+            self.assertFalse(install.validate(root))
+            with self.assertRaises(ValueError):install.validate(root,True)
+            install.run(root);self.assertTrue(install.validate(root,True))
+            before={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            install.run(root)
+            self.assertEqual(before,{p:p.read_bytes() for p in root.rglob('*') if p.is_file()})
 
     def test_partial_unknown_symlink_reject_and_preserve_all_files(self):
         for mode in ['partial','unknown','symlink']:
@@ -95,9 +134,10 @@ class Install(unittest.TestCase):
             for name in install.MANIFEST['files']:
                 path=root/name
                 if path.exists():path.write_bytes(path.read_bytes().replace(b'\r\n',b'\n'))
-            patch=next(COMP.glob('0001-*.patch'));subprocess.run(['git','-C',str(root),'apply','--check',str(patch)],check=True)
             before={name:(root/name).read_bytes() if (root/name).exists() else None for name in install.MANIFEST['files']}
-            subprocess.run(['git','-C',str(root),'apply',str(patch)],check=True)
+            for patch in sorted(COMP.glob('[0-9][0-9][0-9][0-9]-*.patch')):
+                subprocess.run(['git','-C',str(root),'apply','--check',str(patch)],check=True)
+                subprocess.run(['git','-C',str(root),'apply',str(patch)],check=True)
             for name,entry in install.MANIFEST['files'].items():
                 if 'payload' in entry:expected=(COMP/'files'/entry['payload']).read_bytes()
                 elif 'transform' in entry:expected=install.transforms.repair(entry['transform'],before[name])

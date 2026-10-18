@@ -33,7 +33,17 @@ def system_tree(bundle, identifier, width=360, height=640, top=0):
 
 
 def ams(bundle):
-    return '    AppRunningRecord ID #1\n      process name ['+bundle+']\n      pid #123  uid #20010001\n      state #FOREGROUND\n'
+    return ('  ExtensionRecords:\n'
+            '    uri [/com.ohos.wallpaper/pad_wallpaper/WallpaperExtAbility]\n'
+            '      AbilityRecord ID #0   state #INACTIVE   start time [1234]\n'
+            '      main name [WallpaperExtAbility]\n      bundle name [com.ohos.wallpaper]\n'
+            '      ability type [SERVICE]\n      Connections: 1\n'
+            '       > com.ohos.wallpaper/WallpaperExtAbility   connectionState #CONNECTED\n'
+            '  AppRunningRecords:\n'
+            '    AppRunningRecord ID #1\n      process name ['+bundle+']\n'
+            '      pid #123  uid #20010001\n      state #FOREGROUND\n'
+            '    AppRunningRecord ID #2\n      process name [com.ohos.wallpaper]\n'
+            '      pid #444  uid #20010002\n      state #BACKGROUND\n')
 
 
 def provider(host):
@@ -61,12 +71,13 @@ class Fixture:
                       'first_artifact_behavior_gate_passed': False, 'run_id': self.run, 'boot_id': self.boot,
                       'archive': archive, 'boot': boot, 'challenge': runtime.record(self.challenge_path),
                       'plan': self.js(self.plan), 'runner': runtime.record(Path(runtime.__file__)),
-                      'commands': [], 'ui_actions': [], 'actions': [], 'stages': []}
+                      'commands': [], 'ui_actions': [], 'actions': [], 'stages': [],
+                      'hdc':'hdc','renderer_module':'pad_wallpaper','renderer_readiness':[]}
         self.bms_observations={}
         for key, bundle, ordinary, uid in [('seed_identity', runtime.SEED, True, self.seed_uid),
             ('settings_identity', runtime.SETTINGS, False, self.settings_uid),
             ('renderer_identity', 'com.ohos.wallpaper', False, 20010002), ('photos_identity', runtime.PHOTOS, False, 20010003)]:
-            app={'applicationInfo':{'name':bundle,'uid':uid,'isSystemApp':not ordinary,
+            app={'applicationInfo':{'name':bundle,'bundleName':bundle,'uid':uid,'isSystemApp':not ordinary,
                 'accessTokenId':10+len(self.bms_observations),'appPrivilegeLevel':'normal'if ordinary else'system_basic'}}
             label={'seed_identity':'seed','settings_identity':'settings','renderer_identity':'renderer',
                 'photos_identity':'photos'}[key]+'-BMS'
@@ -186,7 +197,7 @@ class Fixture:
         marker = '__UITEST_EXIT_'+'a'*32+'__='
         self.value['commands'].append({'argv': ['hdc', '-t', '127.0.0.1:1234', 'shell',
             'for wallpaper_name in desktop-1 desktop-2 lock-1 lock-2 cancel; do test ! -e fixture; done; printf '+marker],
-            'exit_code': 0, 'label': 'owned-private-inputs-absent', **self.put(marker+'0\n')})
+            'exit_code': 0, 'label': 'owned-private-inputs-absent', **self.put('\n'+marker+'0\n')})
         self.save()
 
     def dialog(self,owner,kind):
@@ -241,11 +252,26 @@ class Fixture:
         return {'remote': remote, 'file': file, 'before': self.put(stat), 'after': self.put(stat)}
 
     def stage(self, name, files, screen=None, picture=None):
-        i = len(self.value['stages']); stage = {'name': name, 'started_ns': i*100+1, 'finished_ns': i*100+2,
+        i = len(self.value['stages']); stage = {'name': name, 'started_ns': i*100+1, 'finished_ns': i*100+90,
             'account': self.put('bootevent.account.ready=true\nID: 100\nisForeground: true\n'),
             'cfg_presence': self.put('present\n' if verify.CFG in files else 'absent\n'),
-            'files': {p: self.transfer(p, b) for p, b in files.items()}, 'renderer_pids': self.put('444\n'),
-            'ams': self.put(ams('com.ohos.sceneboard'))}
+            'files': {p: self.transfer(p, b) for p, b in files.items()}}
+        stage['renderer_observation']={'state':'actual_pid_ONLY_NOT_connected','guest_exit_code':0,'command_label':name+'-renderer-pid'}
+        if name in ('desktop-1','desktop-2'):
+            from batch_apps_wallpaper_connection import parse_connection
+            prefix=name+'-wait-renderer-000'
+            pids=self.observation('pidof com.ohos.wallpaper','444',prefix+'-pid')['raw']
+            raw=ams('com.ohos.sceneboard').rstrip('\n')
+            dump=self.observation('aa dump -a -u 100',raw,prefix+'-AMS')['raw']
+            bms=json.loads(verify.checked(self.value['renderer_identity']).read_text())
+            probe={'started_ns':i*100+4,'finished_ns':i*100+5,'renderer_pids':pids,'ams':dump,
+                'pid_observation':{'state':'actual_pid_ONLY_NOT_connected','guest_exit_code':0,'command_label':prefix+'-pid'},
+                'state':'connected','connection':parse_connection(raw,bms,'444',module_name='pad_wallpaper')}
+            readiness={'stage':name,'started_ns':i*100+2,'finished_ns':i*100+6,'probes':[probe],
+                'scope':'real_public_desktop_set_connection_readiness_ONLY','status':'connected'}
+            stage['renderer_readiness']=readiness;self.value['renderer_readiness'].append(readiness)
+        stage['ams']=self.observation('aa dump -a -u 100',ams('com.ohos.sceneboard').rstrip('\n'),name+'-AMS')['raw']
+        stage['renderer_pids']=self.observation('pidof com.ohos.wallpaper','444',name+'-renderer-pid')['raw']
         for kind, directory in [('desktop', 'system'), ('lock', 'lockscreen')]:
             stage[kind+'_inventory'] = self.put(''.join(p+'\n' for p in files if p.startswith(verify.BASE+'/'+directory+'/')))
         if screen:
@@ -255,8 +281,8 @@ class Fixture:
                 layout=self.js(system_tree(chosen['bundle'],chosen['identifier'],image.width,image.height)))
         self.value['stages'].append(stage)
         marker = '__UITEST_EXIT_'+'a'*32+'__='
-        log = self.put(marker+'0\n')
-        self.value['commands'].append({'argv': ['hdc', '-t', '127.0.0.1:1234', 'shell', 'fixture; printf '+marker],
+        log = self.put('\n'+marker+'0\n')
+        self.value['commands'].append({'argv': ['hdc', '-t', '127.0.0.1:1234', 'shell', 'fixture; task_ui_rc=$?; printf \"\\n'+marker+'%s\\n\" \"$task_ui_rc\"'],
                                        'exit_code': 0, 'label': 'HOST oracle fixture only', **log})
 
     def click(self, identifier):

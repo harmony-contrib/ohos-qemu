@@ -359,7 +359,15 @@ def verify_producer(runtime):
                  'rate': 48000, 'channels': 2, 'bytes': 192000},
                 {'event': 'played', 'frames': 960000, 'rate': 48000, 'channels': 2,
                  'repeats': 20, 'source_bytes': 192000}]
-    if rows != expected:
+    middle = rows[1:-1]
+    terminal = {'event':'drained','alsa_rc':0,'state':1,'written_frames':960000}
+    pending = middle[:-1]
+    if (len(rows) < 3 or rows[0] != expected[0] or rows[-1] != expected[1] or
+            not middle or middle[-1] != terminal or
+            any(type(middle[-1].get(key)) is not int for key in ('alsa_rc','state','written_frames')) or len(pending) > 1 or
+            any(set(r) != {'event','alsa_rc','state'} or r['event'] != 'drain_pending' or
+                type(r['alsa_rc']) is not int or r['alsa_rc'] not in (-11,-4) or
+                type(r['state']) is not int or r['state'] not in (1,2,3,5) for r in pending)):
         raise ValueError('real producer did not complete the exact independent stereo source')
 
 

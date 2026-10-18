@@ -15,11 +15,16 @@
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
 #include "medialibrary_napi_utils.h"
-#include "media_asset_rdbstore.h"
+#include "datashare_helper.h"
+#include "datashare_result_set.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
+#include "userfilemgr_uri.h"
 #include <algorithm>
 #include <cerrno>
 #include <cmath>
 #include <limits>
+#include <iterator>
 #include <memory>
 #include <sys/random.h>
 namespace OHOS::Media {
@@ -38,15 +43,19 @@ struct Suggestion {
     std::string value;
     int32_t count = 0;
 };
+static_assert(sizeof(Suggestion) >= Knowledge::MIN_ACCOUNTED_ROW_BYTES);
+static_assert(sizeof(Knowledge::Entity) + sizeof(std::string) >= Knowledge::MIN_ACCOUNTED_ROW_BYTES);
 struct Work {
     napi_async_work work = nullptr;
     napi_deferred deferred = nullptr;
-    Knowledge::Query query;
+    std::vector<std::string> wire;
     bool related = false;
     // Omission does not impose an arbitrary recommendation limit.
     size_t count = std::numeric_limits<size_t>::max();
     size_t resultBytes = 0;
     int32_t error = 0;
+    int32_t rowCount = 0;
+    int32_t rowsRead = 0;
     std::string message;
     std::vector<Knowledge::Entity> entities;
     std::vector<Suggestion> suggestions;
@@ -175,29 +184,53 @@ bool Account(Work &work, size_t bytes)
     work.resultBytes += bytes;
     return true;
 }
-bool NextRow(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &work)
+bool PrepareCursor(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
 {
-    // StepResultSet is a bounded native cursor. Do not GetRowCount/preload all rows.
+    // Actual DataShare EOF and OnGo errors share the same E_ERROR status. Its
+    // own GoToRow implementation also pre-counts. Only a checked bounded count
+    // can define EOF; IsEnded would also misclassify a failed OnGo as EOF.
     work.error = AccessError();
     if (work.error != 0) return false;
-    const int status = result->GoToNextRow();
-    if (status == NativeRdb::E_ROW_OUT_RANGE) return false;
-    if (status != NativeRdb::E_OK) {
+    const int status = result->GetRowCount(work.rowCount);
+    if (status != DataShare::E_OK || work.rowCount < 0 ||
+        static_cast<size_t>(work.rowCount) > Knowledge::SERVICE_ROW_LIMIT) {
         work.error = INTERNAL;
-        work.message = "Knowledge cursor failed";
+        work.message = "Knowledge phase=cursor-count rc=" + std::to_string(status) +
+            "; rows=" + std::to_string(work.rowCount);
         return false;
     }
+    work.rowsRead = 0;
     return true;
 }
-void ReadEntities(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &work)
+bool NextRow(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
 {
+    work.error = AccessError();
+    if (work.error != 0 || work.rowsRead == work.rowCount) return false;
+    const int status = result->GoToNextRow();
+    if (status != DataShare::E_OK) {
+        work.error = INTERNAL;
+        work.message = "Knowledge phase=cursor-next rc=" + std::to_string(status) +
+            "; row=" + std::to_string(work.rowsRead);
+        return false;
+    }
+    ++work.rowsRead;
+    return true;
+}
+
+void ReadEntities(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
+{
+    if (!PrepareCursor(result, work)) return;
     while (NextRow(result,work)) {
         Knowledge::Entity entity;
         std::string alias;
-        if (result->GetInt(0, entity.field) != NativeRdb::E_OK ||
-            result->GetString(1, entity.id) != NativeRdb::E_OK || result->GetString(2, entity.name) != NativeRdb::E_OK ||
-            result->GetString(3, alias) != NativeRdb::E_OK || result->GetLong(4, entity.votes) != NativeRdb::E_OK ||
-            entity.id.empty() || entity.name.empty() || entity.votes <= 0 || !Knowledge::HasProducer(entity.field) ||
+        const int codes[] = {result->GetInt(0, entity.field), result->GetString(1, entity.id),
+            result->GetString(2, entity.name), result->GetString(3, alias), result->GetLong(4, entity.votes)};
+        if (std::any_of(std::begin(codes), std::end(codes), [](int code) { return code != DataShare::E_OK; })) {
+            work.error = INTERNAL; work.message = "Knowledge phase=entity-columns rc=";
+            for (int code : codes) work.message += std::to_string(code) + ",";
+            return;
+        }
+        if (entity.id.empty() || entity.name.empty() || entity.votes <= 0 || !Knowledge::HasProducer(entity.field) ||
             entity.id.size() > MAX_STRING_BYTES || entity.name.size() > MAX_STRING_BYTES || alias.size() > MAX_STRING_BYTES) {
             work.error = INTERNAL;
             return;
@@ -213,14 +246,20 @@ void ReadEntities(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &wor
         }
     }
 }
-void ReadSuggestions(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &work)
+void ReadSuggestions(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
 {
+    if (!PrepareCursor(result, work)) return;
     while (NextRow(result,work)) {
         Suggestion suggestion;
         int64_t count = 0;
-        if (result->GetInt(0, suggestion.type) != NativeRdb::E_OK ||
-            result->GetString(1, suggestion.value) != NativeRdb::E_OK || result->GetLong(2, count) != NativeRdb::E_OK ||
-            suggestion.type < 0 || suggestion.type > 6 || suggestion.value.empty() ||
+        const int codes[] = {result->GetInt(0, suggestion.type), result->GetString(1, suggestion.value),
+            result->GetLong(2, count)};
+        if (std::any_of(std::begin(codes), std::end(codes), [](int code) { return code != DataShare::E_OK; })) {
+            work.error = INTERNAL; work.message = "Knowledge phase=suggestion-columns rc=";
+            for (int code : codes) work.message += std::to_string(code) + ",";
+            return;
+        }
+        if (suggestion.type < 0 || suggestion.type > 6 || suggestion.value.empty() ||
             suggestion.value.size() > MAX_STRING_BYTES || count <= 0 || count > std::numeric_limits<int32_t>::max()) {
             work.error = INTERNAL;
             return;
@@ -237,21 +276,37 @@ void Execute(napi_env, void *data)
     if (work.error != 0) {
         return;
     }
-    std::vector<NativeRdb::ValueObject> args;
-    for (const auto &argument : work.query.args) {
-        if (std::holds_alternative<int64_t>(argument)) {
-            args.emplace_back(std::get<int64_t>(argument));
-        } else {
-            args.emplace_back(std::get<std::string>(argument));
-        }
+    // The public caller has no service database path dependency. Connect through
+    // the same real DataShare owner used when getAssets cannot use the sandbox.
+    auto manager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (manager == nullptr) {
+        work.error = INTERNAL; work.message = "Knowledge phase=client-sa-manager result=null; rc=unavailable";
+        return;
     }
-    auto result = MediaAssetRdbStore::GetInstance()->QueryByStep(work.query.sql, args);
-    if (result == nullptr) {
-        if (result != nullptr) {
-            result->Close();
-        }
-        work.error = INTERNAL;
-        work.message = "Knowledge database query unavailable";
+    auto remote = manager->GetSystemAbility(STORAGE_MANAGER_MANAGER_ID);
+    if (remote == nullptr) {
+        work.error = INTERNAL; work.message = "Knowledge phase=client-system-ability result=null; rc=unavailable";
+        return;
+    }
+    auto [createCode, helper] = DataShare::DataShareHelper::Create(remote, MEDIALIBRARY_DATA_URI, "");
+    if (createCode != DataShare::E_OK || helper == nullptr) {
+        if (helper != nullptr) helper->Release();
+        work.error = INTERNAL; work.message = "Knowledge phase=client-helper-create rc=" + std::to_string(createCode) +
+            "; result=" + std::string(helper == nullptr ? "null" : "present");
+        return;
+    }
+    Uri uri(std::string(MEDIALIBRARY_DATA_URI) + "/knowledge-content");
+    DataShare::DataSharePredicates predicates;
+    DataShare::DatashareBusinessError business;
+    auto result = helper->Query(uri, predicates, work.wire, &business);
+    const int32_t businessCode = business.GetCode();
+    if (result == nullptr || businessCode != 0) {
+        if (result != nullptr) result->Close();
+        work.error = businessCode == PERMISSION || businessCode == SYSTEM_APP || businessCode == PARAMETER ?
+            businessCode : INTERNAL;
+        work.message = "Knowledge phase=service-query result=" + std::string(result == nullptr ? "null" : "present") +
+            "; business_rc=" + std::to_string(businessCode);
+        if (!helper->Release()) work.message += "; helper_release=false";
         return;
     }
     if (work.related) {
@@ -259,7 +314,13 @@ void Execute(napi_env, void *data)
     } else {
         ReadSuggestions(result, work);
     }
-    result->Close();
+    const int32_t closeCode = result->Close();
+    if (closeCode != 0 && work.error == 0) {
+        work.error = INTERNAL; work.message = "Knowledge phase=cursor-close rc=" + std::to_string(closeCode);
+    }
+    if (!helper->Release() && work.error == 0) {
+        work.error = INTERNAL; work.message = "Knowledge phase=helper-release result=false";
+    }
     if (work.error == 0 && work.related) {
         if (work.entities.empty() || work.count == 0) {
             work.entities.clear();
@@ -443,7 +504,7 @@ napi_value KnowledgeContentNapi::GetRelatedEntity(napi_env env, napi_callback_in
         std::any_of(suggestionFields.begin(), suggestionFields.end(), [](int32_t field) {return !Knowledge::HasProducer(field);})) {
         return Throw(env, INTERNAL, "Requested knowledge field has no indexed producer");
     }
-    work->query = Knowledge::Related(topic, topicFields, suggestionFields);
+    work->wire = Knowledge::RelatedWire(topic, topicFields, suggestionFields);
     return Schedule(env, std::move(work));
 }
 napi_value KnowledgeContentNapi::GetSearchSuggestion(napi_env env, napi_callback_info info)
@@ -460,7 +521,7 @@ napi_value KnowledgeContentNapi::GetSearchSuggestion(napi_env env, napi_callback
         return Throw(env, SCENARIO, "Search suggestion types must contain 1 to 7 valid entries");
     }
     auto work = std::make_unique<Work>();
-    work->query = Knowledge::Suggestions(types);
+    work->wire = Knowledge::SuggestionsWire(types);
     return Schedule(env, std::move(work));
 }
 napi_value KnowledgeContentNapi::Init(napi_env env, napi_value exports)

@@ -74,12 +74,20 @@ std::vector<Plan> plans;
 bool factoryReturnsNull=false;
 struct Vibrator final : AudioHapticVibrator {
     std::atomic<int> starts{0};
+    std::mutex blockMutex;std::condition_variable blockCv;
+    bool blockPattern=false,enteredPattern=false,cancelledPattern=false;
+    void AwaitPattern(){std::unique_lock<std::mutex> l(blockMutex);assert(blockCv.wait_for(l,std::chrono::seconds(3),[&]{return enteredPattern;}));}
+    void RescuePattern(){std::lock_guard<std::mutex> l(blockMutex);cancelledPattern=true;blockCv.notify_all();}
     int32_t PreLoad(const HapticSource&,const AudioStandard::StreamUsage&)override{return 0;}
     int32_t Release()override{return 0;}
-    void ResetStopState()override{}
-    int32_t StartVibrate(const AudioLatencyMode&)override{++starts;return 0;}
+    void ResetStopState()override{std::lock_guard<std::mutex> l(blockMutex);cancelledPattern=false;}
+    int32_t StartVibrate(const AudioLatencyMode&)override{
+        ++starts;std::unique_lock<std::mutex> l(blockMutex);enteredPattern=true;blockCv.notify_all();
+        if(blockPattern){blockCv.wait(l,[&]{return cancelledPattern;});}
+        return 0;
+    }
     int32_t SetHapticIntensity(float)override{return 0;}
-    int32_t StopVibrate()override{return 0;}
+    int32_t StopVibrate()override{RescuePattern();return 0;}
     int32_t GetDelayTime()override{return 0;}
     void EnableHapticsInSilentMode(bool)override{}
     bool IsHapticsCustomSupported()override{return false;}
@@ -87,6 +95,7 @@ struct Vibrator final : AudioHapticVibrator {
     int32_t SetHapticsFeature(const HapticsFeature&)override{return 0;}
     void SetAudioHapticSyncId(const int32_t&)override{}
 };
+std::shared_ptr<Vibrator> latestVibrator;
 struct Observer final : AudioHapticPlayerCallback {
     std::mutex mutex;std::condition_variable cv;int eos=0,interrupts=0,errors=0;
     std::function<void()> onError,onEos;
@@ -96,6 +105,21 @@ struct Observer final : AudioHapticPlayerCallback {
     bool Wait(int &field,int value){std::unique_lock<std::mutex> l(mutex);return cv.wait_for(l,std::chrono::seconds(3),[&]{return field==value;});}
 };
 #ifndef AUDIO_HAPTIC_BASELINE
+// Controlled transport queue only: the real player constructs/adopts the source Session.
+// Delivery checks use the exact production predicate also called by the real NAPI task.
+struct PublicationQueue final : AudioHapticPublicationCallback {
+    struct Event {std::shared_ptr<AudioHapticPlaybackSession> session;bool eos;bool loop;};
+    std::mutex mutex;std::condition_variable cv;std::vector<Event> events;
+    void OnSessionEndOfStream(const std::shared_ptr<AudioHapticPlaybackSession>& session,bool loop)override{
+        std::lock_guard<std::mutex> lock(mutex);events.push_back({session,true,loop});cv.notify_one();
+    }
+    void OnSessionInterrupt(const std::shared_ptr<AudioHapticPlaybackSession>& session,const AudioStandard::InterruptEvent&)override{
+        std::lock_guard<std::mutex> lock(mutex);events.push_back({session,false,false});cv.notify_one();
+    }
+    Event Await(){std::unique_lock<std::mutex> lock(mutex);assert(cv.wait_for(lock,std::chrono::seconds(3),[&]{return !events.empty();}));
+        auto event=events.front();events.erase(events.begin());return event;}
+    static bool Deliver(const Event& event){return IsAudioHapticPublicationLive(event.session,event.eos,event.loop);}
+};
 struct QueryGate {
     std::mutex mutex;std::condition_variable cv;bool entered=false,proceed=false;
     void Block(){std::unique_lock<std::mutex> lock(mutex);entered=true;cv.notify_one();cv.wait(lock,[&]{return proceed;});}
@@ -157,12 +181,51 @@ std::shared_ptr<Player> PlayerFactory::CreatePlayer(){
     Plan plan;if(!plans.empty()){plan=plans.front();plans.erase(plans.begin());}
     auto backend=std::make_shared<Backend>(plan);backends.push_back(backend);return backend;
 }
-std::shared_ptr<AudioHapticVibrator> AudioHapticVibrator::CreateAudioHapticVibrator(AudioHapticPlayer&){return std::make_shared<Vibrator>();}
+std::shared_ptr<AudioHapticVibrator> AudioHapticVibrator::CreateAudioHapticVibrator(AudioHapticPlayer&){latestVibrator=std::make_shared<Vibrator>();return latestVibrator;}
 } }
 
 #ifndef AUDIO_HAPTIC_BASELINE
 int main(int argc,char **argv){
     assert(argc==2);const std::string directory=argv[1];
+    // The real player class must cancel a blocking external pattern rather
+    // than wait for its duration under waitStartVibrateMutex_. Rescue on failure
+    // only releases this controlled dependency so the regression cannot hang.
+    for(bool releasing:{false,true}){
+        OwnedSource source(directory);PlayerFixture f(source.FromFd());auto vibrator=latestVibrator;
+        {std::lock_guard<std::mutex> l(vibrator->blockMutex);vibrator->blockPattern=true;}
+        assert(f.player->Prepare()==0);assert(f.player->Start()==0);backends.back()->First(0);vibrator->AwaitPattern();
+        std::mutex doneMutex;std::condition_variable doneCv;bool done=false;
+        std::thread control([&]{assert((releasing?f.player->Release():f.player->Stop())==0);
+            std::lock_guard<std::mutex> l(doneMutex);done=true;doneCv.notify_one();});
+        bool cancelled;
+        {std::unique_lock<std::mutex> l(doneMutex);cancelled=doneCv.wait_for(l,std::chrono::seconds(2),[&]{return done;});}
+        if(!cancelled){vibrator->RescuePattern();}
+        control.join();assert(cancelled);
+    }
+    // The actual player routes each normal event exclusively to the private sink.
+    // Its delayed transport permanently retains the producer Session across rearm.
+    for(bool interrupt:{false,true}){
+        OwnedSource source(directory);PlayerFixture f(source.FromFd());auto sink=std::make_shared<PublicationQueue>();
+        f.player->SetPublicationCallback(sink);assert(f.player->Prepare()==0);assert(f.player->Start()==0);
+        auto original=f.Session();
+        if(interrupt){backends.back()->Interrupt();}else{backends.back()->Eos();}
+        auto delayed=sink->Await();assert(delayed.session==original);assert(PublicationQueue::Deliver(delayed));
+        {std::lock_guard<std::mutex> lock(f.observer->mutex);assert(f.observer->eos==0&&f.observer->interrupts==0);}
+        assert(f.player->Start()==0);assert(f.Session()!=original);assert(!PublicationQueue::Deliver(delayed));
+        assert(f.player->Stop()==0);assert(!PublicationQueue::Deliver(delayed));
+        assert(f.player->Release()==0);assert(!PublicationQueue::Deliver(delayed));
+    }
+    {
+        OwnedSource source(directory);PlayerFixture f(source.FromFd());auto sink=std::make_shared<PublicationQueue>();
+        f.player->SetPublicationCallback(sink);assert(f.player->Prepare()==0);assert(f.player->SetLoop(true)==0);
+        assert(f.player->Start()==0);auto session=f.Session();backends.back()->Eos(true);
+        auto first=sink->Await();assert(first.session==session&&PublicationQueue::Deliver(first));
+        assert(f.Session()==session&&session->end==AudioHapticSessionEnd::LIVE);
+        assert(f.player->SetLoop(false)==0);backends.back()->Eos(false);auto final=sink->Await();
+        assert(final.session==session&&PublicationQueue::Deliver(first)&&PublicationQueue::Deliver(final));
+        assert(f.player->Release()==0);assert(!PublicationQueue::Deliver(first)&&!PublicationQueue::Deliver(final));
+        {std::lock_guard<std::mutex> lock(f.observer->mutex);assert(f.observer->eos==0);}
+    }
     // A controlled fresh backend demonstrably rejects Reset(IDLE); production Prepare must avoid calling it.
     {Backend idle(Plan{});assert(idle.Reset()==MSERR_INVALID_OPERATION);}
     for(bool pathSource:{false,true}){

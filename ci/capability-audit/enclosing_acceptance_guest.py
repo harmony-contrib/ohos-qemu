@@ -7,6 +7,7 @@ import subprocess
 
 from boot_package import FATAL, hdc_failed
 from run_root_probe import digest, validate_identity
+from guest_ui import command_exit
 
 
 def validate_binding(boot, archive_sha):
@@ -63,10 +64,13 @@ class EnclosingAcceptanceGuest:
         path.write_text(result.stdout + result.stderr)
         self.report['commands'].append(dict(argv=argv, exit_code=result.returncode, log=str(path), sha256=digest(path)))
         text = result.stdout.replace('\r', '')
-        if (result.returncode or hdc_failed(result.stdout, result.stderr) or
-                not text.endswith('\n' + marker + '0\n') or text.count(marker) != 1):
+        try:
+            body, code = command_exit(text, marker)
+        except ValueError as error:
+            raise ValueError('enclosing guest command failed: ' + label) from error
+        if result.returncode or hdc_failed(result.stdout, result.stderr) or code != 0:
             raise ValueError('enclosing guest command failed: ' + label)
-        return text.rsplit('\n' + marker, 1)[0]
+        return body
 
     def start(self):
         validate_identity(self.shell('id -u; param get const.product.devicetype; uname -m', 'identity-before'),

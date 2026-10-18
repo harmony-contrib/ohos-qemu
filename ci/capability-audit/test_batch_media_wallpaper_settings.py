@@ -36,7 +36,10 @@ class WallpaperSettings(unittest.TestCase):
         # /ohos is not inside this repository. Match that layout so git apply
         # does not inherit the parent checkout and skip subdirectory patch paths.
         with tempfile.TemporaryDirectory(prefix='wallpaper-exact-') as temporary:
-            root = Path(temporary);shutil.copytree(FIX / 'before', root, dirs_exist_ok=True)
+            root = Path(temporary).resolve()
+            shutil.copytree(ROOT / COMPONENTS[1] / 'lifecycle/preimage',
+                            root / 'base/theme/wallpaper_mgr', dirs_exist_ok=True)
+            shutil.copytree(FIX / 'before', root, dirs_exist_ok=True)
             for component in COMPONENTS:
                 guard = load(ROOT / component / 'verify_source.py')
                 self.assertFalse(guard.validate(root))
@@ -79,7 +82,7 @@ class WallpaperSettings(unittest.TestCase):
     def test_actual_controller_with_cancellation_permission_error_and_resource_boundaries(self):
         subprocess.run(['node', str(FIX / 'controller-tests.cjs'), str(FIX / 'after' / CONTROLLER), str(TS)], check=True, timeout=20)
 
-    def test_actual_native_connect_and_retry_functions_under_sanitizers(self):
+    def test_historical_E_native_connect_and_retry_functions_under_sanitizers(self):
         source = (FIX / 'after/base/theme/wallpaper_mgr/services/src/wallpaper_service.cpp').read_text()
         start = source.index('#ifdef QEMU_WALLPAPER_RENDERER')
         constants = source[start:source.index('#endif', start)+len('#endif')]

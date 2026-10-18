@@ -1,0 +1,11 @@
+{
+  "scope": "exact complete E capacity/rate/lifecycle preimage before F no-recovery reads",
+  "files": {
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c": "0b37b04751610f930f106a003a9aafe1578e9487548e31b936a52e9628c5ff45",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h": "474018cd5268161667c343d127c0f41a7b7bd493c45d23d69b199394cf634c04",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c": "a5a3456acdfb2e7792ff7f46455c1bf922789388d7b52852c0dbddea4b90d8cc",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c": "bd4733dfbcba936c333a2291de33b889eb880d4b1728ca05f9524a1ba502457c",
+    "device/qemu/common/virt_full/audio_alsa/vendor_capture.c": "7e091fa9dcac9239d66c719d6cc61626094542dd15e51693b521e9a1fb3cc6be",
+    "drivers/peripheral/audio/hdi_service/primary_impl/src/audio_capture.c": "0a69f7b026a7e26678dba0403362b9108eb241661500aab3467b5316a3657dd1"
+  }
+}

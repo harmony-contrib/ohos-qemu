@@ -32,7 +32,8 @@ export default class SeedStore {
   private readonly path: string;
 
   constructor(context: common.UIAbilityContext, request: SeedRequest) {
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(request.runId) ||
+    if (typeof request.runId !== 'string' || typeof request.operationId !== 'string' ||
+          typeof request.mode !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(request.runId) ||
         !/^[A-Za-z0-9_-]{1,64}$/.test(request.operationId) ||
         !['create', 'cleanup'].includes(request.mode)) { throw new Error('Invalid seed request'); }
     this.context = context;

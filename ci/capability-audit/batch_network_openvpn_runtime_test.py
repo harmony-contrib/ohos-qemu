@@ -190,7 +190,7 @@ class RuntimeProtocolTests(unittest.TestCase):
 
     def test_fixture_is_typed_real_system_setup_and_never_synthetic_connected(self):
         text = (project.FIX / 'EntryAbility.ets').read_text()
-        for call in ('vpn.createVpnConnection(this.context)', 'this.connection.setUp(config)', 'this.connection.destroy()',
+        for call in ('vpn.createVpnConnection(this.context)', 'this.connection.setUp(this.config())', 'this.connection.destroy()',
                      'checkAccessTokenSync', 'vpn.getConnectedSysVpnConfig()', 'vpn.getConnectedVpnAppInfo()'):
             self.assertIn(call, text)
         self.assertIn('vpnId:', text); self.assertIn('vpn.SysVpnType.OPENVPN', text)

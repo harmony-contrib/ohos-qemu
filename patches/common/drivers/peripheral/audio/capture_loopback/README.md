@@ -1,7 +1,7 @@
 # Real capture-only ALSA PCM route
 
 Apply after all existing audio driver patches with `apply.sh --source-root ROOT`.
-The manifest preflights five complete fixed predecessor/installed source hashes,
+The manifest preflights complete fixed six-file predecessor/installed source vectors,
 including the explicitly delegated device/qemu vendor_capture.c. Unknown/partial
 states fail before writing any target. The review diff is normalized LF; the
 installer preserves the exact declared payload bytes. Existing audio 0004–0007
@@ -29,8 +29,9 @@ gain and mixer mute report HDF_ERR_NOT_SUPPORT without modifying output values.
 A stale read cannot restart a stopped/dropped loopback PCM. Nonblocking read
 handles bounded no-data waits and returns failure on exhausted retries, errors,
 overreported frames or stopped state, rather than claiming empty success. Actual ALSA
-frame bytes also bound the allocated capture buffer; the loopback read path uses a
-bounded 100ms wait instead of the legacy ARM indefinite wait/implicit prepare.
+frame bytes also bound the allocated capture buffer; the loopback read path performs the nonblocking read first, then uses bounded
+100ms waits only after real no-data results. It does not run the legacy ARM
+indefinite wait/implicit prepare.
 
 Parent integration, owned elsewhere: CONFIG_SND_ALOOP=y, ALSA PCM support, aloop
 index=1,id=QemuCapture,pcm_substreams=1; ES1370 remains card0. Verify actual guest
@@ -87,3 +88,14 @@ The added capacity test compiles the actual HDI -> actual AudioOutputCaptureRead
 -> actual ALSA ReadImpl/Copy method chain with controlled external PCM calls.
 These checks have not been executed in this preparation and cannot prove product
 PCM, timing, actual DSO loading, Stop latency or independent Recorder decoding.
+
+
+F retains the exact complete E vector as `e-state.json`. The no-recovery cable
+read accepts actual short positive counts, never waits before an available read,
+and refuses EPIPE/ESTRPIPE without ALSA recover/prepare/start. The real RUNNING
+state check remains; a later explicit Stop/Start/reset owns recovery. Other cards
+continue using the previous recovery branch. This does not hide an XRUN or turn
+lost data into success. The HPAE `capturer_frame_assembly` component retains real
+partial bytes above this boundary and publishes only complete ordinary-MIC
+output frames. Both components require actual target compilation and a fresh
+representative package PCM/clock/independent-decoder acceptance run.

@@ -13,10 +13,19 @@ import re
 
 from batch_apps_contact_picker_coordinator import checked_artifact, descriptor, load, require
 from batch_apps_contact_picker_runtime import objects
+from guest_ui import command_exit
+from hdc_transport import failed as hdc_failed
 
 BUNDLE = 'com.ohos.wallpaper'
 ABILITY = 'WallpaperExtAbility'
 REQUIRED_STAGES = ('desktop-1', 'desktop-2')
+
+
+class ConnectionNotReady(ValueError):
+    """Valid actual identity/grammar, before a real connected SERVICE exists."""
+    def __init__(self, state):
+        super().__init__('actual Wallpaper connection not ready: ' + state)
+        self.state = state
 
 
 def exact(pattern, text, reason):
@@ -30,48 +39,67 @@ def command_output(runtime, label, script, artifact, target):
     rows = [row for row in runtime['commands'] if row.get('label') == label]
     require(len(rows) == 1, 'missing or repeated actual Wallpaper command: ' + label)
     row = rows[0]; argv = row['argv']
-    require(row.get('exit_code') == 0 and len(argv) == 5 and argv[1:4] == ['-t', target, 'shell'],
+    require(type(row.get('exit_code')) is int and row['exit_code'] == 0 and len(argv) == 5 and
+            isinstance(runtime.get('hdc'), str) and runtime['hdc'] and argv[0] == runtime['hdc'] and
+            argv[1:4] == ['-t', target, 'shell'],
             'Wallpaper observation targets another guest or failed transport')
     raw = checked_artifact(artifact).read_text()
-    transport = checked_artifact(row).read_text().replace('\r', '')
+    transport = checked_artifact(row).read_text()
     marker = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', argv[4])
-    require(len(marker) == 1 and argv[4].startswith(script + '; task_ui_rc=$?; printf "\\n' + marker[0]),
+    require(len(marker) == 1 and argv[4] == (script + '; task_ui_rc=$?; printf "\\n' + marker[0] +
+            '%s\\n" "$task_ui_rc"'),
             'Wallpaper observation is not the exact actual requested shell command')
-    require(transport.count(marker[0]) == 1 and transport.rstrip().endswith(marker[0] + '0'),
-            'Wallpaper observation lacks successful actual guest exit')
-    prefix = transport[:transport.index(marker[0])].rstrip('\n')
-    require(prefix == raw, 'Wallpaper raw observation differs from actual guest transport bytes')
+    body, code = command_exit(transport, marker[0])
+    require(code == 0 and not hdc_failed(transport, ''), 'Wallpaper observation lacks successful actual guest exit')
+    require(body.rstrip('\n') == raw, 'Wallpaper raw observation differs from actual guest transport bytes')
     return raw
 
 
-def parse_connection(ams, bms, pids, *, user_id=100, module_name='phone_wallpaper'):
+def parse_connection(ams, bms, pids, *, user_id=100, module_name='phone_wallpaper', allow_pending=False):
+    require(type(allow_pending) is bool, 'explicit typed readiness policy required')
     require(type(user_id) is int and user_id == 100 and module_name in ('phone_wallpaper', 'pad_wallpaper'),
             'exact standard user/module required')
     apps = [row for row in objects(bms) if row.get('bundleName') == BUNDLE and 'isSystemApp' in row]
     require(len(apps) == 1 and apps[0].get('isSystemApp') is True, 'real system Wallpaper BMS application missing or ambiguous')
     uid = apps[0].get('uid')
     require(type(uid) is int and uid // 200000 == user_id, 'Wallpaper BMS UID belongs to a different user')
-    require(re.fullmatch(r'[1-9][0-9]*', pids.strip()), 'one actual Wallpaper PID required')
-    pid = int(pids.strip())
+    require(isinstance(pids, str) and (re.fullmatch(r'[1-9][0-9]*', pids.strip()) or
+            allow_pending is True and pids == ''), 'one actual Wallpaper PID required')
+    pid = int(pids.strip()) if pids else None
     require(len(re.findall(r'^  ExtensionRecords:$', ams, re.M)) == 1 and
             len(re.findall(r'^  AppRunningRecords:$', ams, re.M)) == 1, 'complete actual AMS service/process dump required')
     processes = []
     all_pids = set()
+    all_record_ids = set()
     process_section = ams.split('  AppRunningRecords:\n', 1)[1]
-    for block in re.split(r'(?=^    AppRunningRecord ID #)', process_section, flags=re.M)[1:]:
+    process_section = re.split(r'^  [A-Za-z][^\n]*:$', process_section, maxsplit=1, flags=re.M)[0]
+    process_blocks = re.split(r'(?=^    AppRunningRecord ID #)', process_section, flags=re.M)
+    require(not process_blocks[0].strip(), 'malformed actual AMS process section')
+    for block in process_blocks[1:]:
+        record_id = exact(r'^    AppRunningRecord ID #([0-9]+)$', block, 'malformed actual AMS process record')
+        require(record_id not in all_record_ids, 'duplicate actual AMS process record'); all_record_ids.add(record_id)
         identity = exact(r'^      pid #([1-9][0-9]*)  uid #([1-9][0-9]*)$', block, 'malformed actual AMS PID/UID')
         process_pid, process_uid = map(int, identity)
         require(process_pid not in all_pids, 'duplicate actual AMS process PID'); all_pids.add(process_pid)
         name = exact(r'^      process name \[([^\]\n]+)\]$', block, 'actual AMS process name missing or ambiguous')
         if name == BUNDLE or name.startswith(BUNDLE + ':'):
             processes.append((process_pid, process_uid, name))
-    require(processes == [(pid, uid, BUNDLE)], 'Wallpaper renderer is absent, ambiguous, another PID/UID or an extra process')
+    require(processes == ([(pid, uid, BUNDLE)] if pid is not None else []),
+            'Wallpaper renderer is absent, ambiguous, another PID/UID or an extra process')
     section = ams.split('  ExtensionRecords:\n', 1)[1].split('  AppRunningRecords:\n', 1)[0]
     section = re.split(r'^  [A-Za-z][^\n]*:$', section, maxsplit=1, flags=re.M)[0]
     services = []
     uri = '/' + BUNDLE + '/' + module_name + '/' + ABILITY
-    for block in re.split(r'(?=^    uri \[)', section, flags=re.M)[1:]:
+    extension_blocks = re.split(r'(?=^    uri \[)', section, flags=re.M)
+    require(not extension_blocks[0].strip() and len(re.findall(r'^    uri ', section, re.M)) == len(extension_blocks) - 1,
+            'malformed actual AMS extension section')
+    for block in extension_blocks[1:]:
         actual_uri = exact(r'^    uri \[([^\]\n]+)\]$', block, 'malformed actual AMS extension URI')
+        exact(r'^      bundle name \[([^\]\n]+)\]$', block, 'actual AMS extension bundle missing or ambiguous')
+        exact(r'^      main name \[([^\]\n]+)\]$', block, 'actual AMS extension name missing or ambiguous')
+        exact(r'^      ability type \[([^\]\n]+)\]$', block, 'actual AMS extension type missing or ambiguous')
+        exact(r'^      AbilityRecord ID #([0-9]+)   state #([A-Z_]+)   start time \[([0-9]+)\]$', block,
+              'actual AMS extension record missing or ambiguous')
         # Reject ordinary/similarly named records rather than selecting whichever
         # looks most convenient. The image guard must bind this exact module to
         # its single actual wallpaper extension; SERVICE alone is not that type.
@@ -86,13 +114,24 @@ def parse_connection(ams, bms, pids, *, user_id=100, module_name='phone_wallpape
         require(record[1] in ('INACTIVE', 'ACTIVE') and int(record[2]) > 0, 'Wallpaper service is not in a connected-capable state')
         count = int(exact(r'^      Connections: ([0-9]+)$', block, 'actual Wallpaper connection count missing or duplicated'))
         connections = re.findall(r'^       > ([^\n]+?)   connectionState #([A-Z]+)$', block, re.M)
-        require(count > 0 and len(connections) == count and
+        require(len(connections) == count and
                 all(name == BUNDLE + '/' + ABILITY and state in ('INIT', 'CONNECTING', 'CONNECTED', 'DISCONNECTING', 'DISCONNECTED')
-                    for name, state in connections) and any(state == 'CONNECTED' for _, state in connections),
+                    for name, state in connections),
                 'real connected Wallpaper extension connection missing or malformed')
         services.append({'uri': uri, 'record_id': int(record[0]), 'ability_state': record[1],
                          'start_time': int(record[2]), 'connection_states': [state for _, state in connections]})
-    require(len(services) == 1, 'one actual connected Wallpaper extension record required')
+    require(len(services) <= 1, 'one actual connected Wallpaper extension record required')
+    # Readiness is deliberately distinct from the successful evidence shape.
+    # Wrong PID/UID, target type/URI, duplicate and malformed counts above are
+    # fatal even during a pending probe. Only these well-formed states may retry.
+    if not services:
+        if allow_pending is True:
+            raise ConnectionNotReady('absent_service_and_process' if pid is None else 'service_absent')
+        require(False, 'one actual connected Wallpaper extension record required')
+    if 'CONNECTED' not in services[0]['connection_states']:
+        if allow_pending is True: raise ConnectionNotReady('service_not_connected')
+        require(False, 'real connected Wallpaper extension connection missing or malformed')
+    require(pid is not None, 'connected Wallpaper SERVICE has no actual renderer PID')
     return {'scope': 'AMS_connected_Wallpaper_SERVICE_and_unique_same_user_process_ONLY', 'bundle': BUNDLE,
             'ability': ABILITY, 'module': module_name, 'pid': pid, 'uid': uid, 'user_id': user_id,
             'connection': services[0], 'service_token_to_pid_directly_observed': False,

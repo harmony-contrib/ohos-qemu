@@ -57,9 +57,10 @@ class RecorderRuntime(CaptureRuntime):
             status = self.process.wait(timeout=35)
             self.producer_log.close()
             self.producer_log = None
-            self.value['producer'] = {'argv': self.producer_argv, 'host_exit_code': status,
-                'log': str(self.output / 'producer.log'), 'log_sha256': sha(self.output / 'producer.log')}
-            if status: raise ValueError('actual Recorder independent PCM producer failed')
+            self.value['producer'] = self.producer_receipt(status)
+            self.save()
+            if status or self.value['producer']['guest_exit_code'] != 0:
+                raise ValueError('actual Recorder independent PCM producer failed')
         self.value['status'] = 'captured_NOT_independently_verified'
         self.save()
         return self.output / 'runtime.json'

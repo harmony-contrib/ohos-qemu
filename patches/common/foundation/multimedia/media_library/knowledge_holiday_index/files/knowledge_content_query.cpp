@@ -126,6 +126,62 @@ Query Suggestions(const std::vector<int32_t> &types)
     }
     return query;
 }
+namespace {
+constexpr const char *SERVICE_WIRE = "KnowledgeContent.service.v1";
+void WriteFields(std::vector<std::string> &wire, const std::vector<int32_t> &fields)
+{
+    wire.push_back(std::to_string(fields.size()));
+    for (int32_t field : fields) wire.push_back(std::to_string(field));
+}
+bool ReadFields(const std::vector<std::string> &wire, size_t &position,
+    std::vector<int32_t> &fields, int32_t minimum, int32_t maximum)
+{
+    // Counts and enums have single canonical decimal digits (at most 8 fields).
+    if (position >= wire.size() || wire[position].size() != 1 ||
+        wire[position][0] < '1' || wire[position][0] > '8') return false;
+    const size_t count = static_cast<size_t>(wire[position++][0] - '0');
+    if (count > static_cast<size_t>(maximum - minimum + 1) || count > wire.size() - position) return false;
+    for (size_t n = 0; n < count; ++n) {
+        const auto &token = wire[position++];
+        if (token.size() != 1 || token[0] < '0' + minimum || token[0] > '0' + maximum) return false;
+        const int32_t field = token[0] - '0';
+        if (std::find(fields.begin(), fields.end(), field) != fields.end()) return false;
+        fields.push_back(field);
+    }
+    return true;
+}
+} // namespace
+std::vector<std::string> RelatedWire(const std::string &topic, const std::vector<int32_t> &topicFields,
+    const std::vector<int32_t> &suggestionFields)
+{
+    std::vector<std::string> wire = {SERVICE_WIRE, "related", topic};
+    WriteFields(wire, topicFields); WriteFields(wire, suggestionFields);
+    return wire;
+}
+std::vector<std::string> SuggestionsWire(const std::vector<int32_t> &types)
+{
+    std::vector<std::string> wire = {SERVICE_WIRE, "suggestions"};
+    WriteFields(wire, types); return wire;
+}
+bool DecodeServiceWire(const std::vector<std::string> &wire, Query &query)
+{
+    if (wire.size() < 4 || wire.size() > 21 || wire[0] != SERVICE_WIRE) return false;
+    std::vector<int32_t> fields, suggestions;
+    size_t position = 0;
+    if (wire[1] == "related") {
+        if (wire[2].size() > 64 * 1024) return false;
+        position = 3;
+        if (!ReadFields(wire, position, fields, 1, 8) ||
+            !ReadFields(wire, position, suggestions, 1, 8) || position != wire.size()) return false;
+        query = Related(wire[2], fields, suggestions);
+    } else if (wire[1] == "suggestions") {
+        position = 2;
+        if (!ReadFields(wire, position, fields, 0, 6) || position != wire.size()) return false;
+        query = Suggestions(fields);
+    } else return false;
+    return !query.sql.empty();
+}
+
 std::vector<Entity> RandomVote(std::vector<Entity> candidates, size_t count, std::mt19937_64 &random)
 {
     // Exponential-race weighted sampling without replacement. With no explicit

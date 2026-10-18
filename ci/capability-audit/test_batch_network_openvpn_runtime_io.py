@@ -255,4 +255,109 @@ class FailureDiagnosticsTests(unittest.TestCase):
                 if fault == 'UI-error': self.assertTrue(result['errors'])
 
 
+
+
+class OwnedPublicConfigTests(unittest.TestCase):
+    """Synthetic public metadata cuts; no real database/API/guest claims."""
+    VPN = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    FOREIGN = {'vpn_id': 'unrelated-owner', 'vpn_name': 'Existing caller', 'vpn_type': 2, 'user_id': 100}
+    OWN = {'vpn_id': VPN, 'vpn_name': 'qa-' + RUN, 'vpn_type': 7, 'user_id': 100}  # Synthetic enum, not an SDK constant.
+
+    def rows(self, action='store'):
+        before = [dict(self.FOREIGN)] if action == 'store' else [dict(self.OWN), dict(self.FOREIGN)]
+        after = [dict(self.OWN), dict(self.FOREIGN)] if action == 'store' else [dict(self.FOREIGN)]
+        stages = ('before-store', 'after-store') if action == 'store' else ('before-remove', 'after-remove')
+        return [dict(action=action, event='config-state', code=0, value=json.dumps(dict(stage=stage,
+            vpn_id=self.VPN, rows=rows, profile_equal=(action == 'store' and index == 1), expected_type=7)))
+            for index, (stage, rows) in enumerate(zip(stages, (before, after)))]
+
+    def verify(self, rows, action='store'):
+        return collect.verify_config_phase(rows, action=action, vpn_id=self.VPN, vpn_name='qa-' + RUN,
+            baseline=None if action == 'store' else [self.FOREIGN])
+
+    def test_fresh_public_absence_add_exact_readback_then_owned_delete_preserves_foreign(self):
+        self.assertEqual(self.verify(self.rows()), [self.FOREIGN])
+        self.assertEqual(self.verify(self.rows('remove-config'), 'remove-config'), [self.FOREIGN])
+        rows = self.rows('remove-config'); value = json.loads(rows[0]['value']); value['rows'] = [self.FOREIGN]
+        rows[0]['value'] = json.dumps(value)  # Idempotent exact retry after actual owned delete.
+        self.assertEqual(self.verify(rows, 'remove-config'), [self.FOREIGN])
+
+    def test_upsert_foreign_mutation_partial_duplicate_account_profile_and_type_are_rejected(self):
+        for fault in ('collision', 'foreign-change', 'partial', 'duplicate', 'account', 'profile', 'type', 'unexpected', 'unsorted'):
+            rows = self.rows(); before, after = [json.loads(r['value']) for r in rows]
+            if fault == 'collision': before['rows'].insert(0, self.OWN)
+            if fault == 'foreign-change': after['rows'][1]['vpn_name'] = 'Changed foreign record'
+            if fault == 'partial': after['rows'] = [self.FOREIGN]
+            if fault == 'duplicate': after['rows'].append(dict(self.FOREIGN))
+            if fault == 'account': after['rows'][1]['user_id'] = 101
+            if fault == 'profile': after['profile_equal'] = False
+            if fault == 'type': after['rows'][0]['vpn_type'] = 8
+            if fault == 'unexpected': after['unknown'] = True
+            if fault == 'unsorted': after['rows'].reverse()
+            rows[0]['value'], rows[1]['value'] = json.dumps(before), json.dumps(after)
+            with self.subTest(fault=fault), self.assertRaises(ValueError): self.verify(rows)
+        for fault in ('own-remains', 'foreign-deleted', 'foreign-changed', 'foreign-own-type'):
+            rows = self.rows('remove-config'); before, after = [json.loads(r['value']) for r in rows]
+            if fault == 'own-remains': after['rows'].insert(0, dict(self.OWN))
+            if fault == 'foreign-deleted': after['rows'] = []
+            if fault == 'foreign-changed': before['rows'][1]['vpn_name'] = 'Another caller changed it'
+            if fault == 'foreign-own-type': before['rows'][0]['vpn_type'] = 8
+            rows[0]['value'], rows[1]['value'] = json.dumps(before), json.dumps(after)
+            with self.subTest(fault=fault), self.assertRaises(ValueError): self.verify(rows, 'remove-config')
+
+    def test_business_error_saved_before_expected_outcome_assertion(self):
+        caller = JournalIOTests().caller(); caller.data['vpn_id'] = self.VPN
+        detail = {'code': 2200003, 'message': 'Actual service error', 'name': 'BusinessError', 'phase': 'setUp'}
+        def read(*args, **kwargs):
+            request = caller.report['phase_attempts'][0]['request']
+            return ''.join(json.dumps(dict(schema_version=1, **request, sequence=index, uid=UID, pid=88, token_id=123,
+                event=event, code=2200003 if event == 'rejected' else 0,
+                value=json.dumps(detail) if event == 'rejected' else json.dumps({'config_undefined': True, 'apps': []})
+                if event == 'getters' else '')) + '\n'
+                for index, event in enumerate(('begin', 'permission', 'rejected', 'getters', 'complete'), 1))
+        with patch.object(collect, 'read_app_journal', side_effect=read):
+            with self.assertRaisesRegex(ValueError, 'actual API outcome differs'): caller.phase('setup')
+        self.assertEqual(collect.api_failure(caller.report['phases'][0]['outcomes'][0]), detail)
+        self.assertIn('Actual service error', caller.report['phase_attempts'][0]['last_journal_raw'])
+        for fault in ('old-string', 'missing-phase', 'code-mismatch', 'duplicate', 'unknown'):
+            row = {'code': 2200003, 'value': json.dumps(detail)}
+            if fault == 'old-string': row['value'] = '[object Object]'
+            if fault == 'missing-phase': row['value'] = json.dumps({k: v for k, v in detail.items() if k != 'phase'})
+            if fault == 'code-mismatch': row['code'] = -1
+            if fault == 'duplicate': row['value'] = row['value'][:-1] + ',"code":2200003}'
+            if fault == 'unknown': row['value'] = json.dumps(dict(detail, unknown=0))
+            with self.subTest(fault=fault), self.assertRaises(ValueError): collect.api_failure(row)
+
+    def test_public_delete_is_after_real_native_terminal_proof_and_before_uninstall(self):
+        for fault in ('', 'native', 'delete', 'missing-baseline', 'old-group'):
+            caller = JournalIOTests().caller(); calls = []
+            caller.started = True; caller.config_attempted = True; caller.config_baseline = [self.FOREIGN]
+            caller.install_attempted = caller.installed = True; caller.args = SimpleNamespace(hdc='unit')
+            caller.remove_fault = lambda: None
+            caller.report['status'] = 'fail'
+            if fault == 'missing-baseline': caller.config_baseline = None
+            if fault == 'old-group': caller.report['first_claim'] = {'worker': {'pid': 88}}
+            def phase(action):
+                calls.append(action)
+                if action == 'remove-config' and fault == 'delete': raise ValueError('actual public delete failed')
+                if action == 'remove-config': caller.report['public_config_removed'] = True
+            caller.phase = phase
+            def snapshot(label):
+                calls.append('native-terminal')
+                if fault == 'native': raise ValueError('actual proc query failed')
+                return {'entries': ['backend.lock|metadata'], 'processes': {},
+                        'stats': {89: {'pgrp': 88}} if fault == 'old-group' else {}}
+            caller.snapshot = snapshot
+            caller.shell = lambda text, label: calls.append(label) or ''
+            caller.cleanup()
+            if not fault:
+                self.assertTrue(caller.report['cleanup_verified'])
+                self.assertLess(calls.index('native-terminal'), calls.index('remove-config'))
+                self.assertLess(calls.index('remove-config'), calls.index('stop-own-QA-Ability'))
+            else:
+                self.assertFalse(caller.report['cleanup_verified']); self.assertNotIn('stop-own-QA-Ability', calls)
+                self.assertNotIn('qa_bundle_removed', caller.report)
+                if fault != 'delete': self.assertNotIn('remove-config', calls)
+
+
 if __name__ == '__main__': unittest.main()

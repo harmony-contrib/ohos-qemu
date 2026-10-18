@@ -1,13 +1,54 @@
 #!/usr/bin/env python3
-"""Require the complete fixed-source wallpaper component; no runtime claim."""
+"""Exact complete historical states only; E provenance remains separately pinned."""
 from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
-from exact_source_states import validate_component
+import hashlib
+import json
+import stat
+import subprocess
 PROJECT = 'base/theme/wallpaper_mgr'
 REVISION = '42256bdeaa504da4ae4d038c24d42a4601e3a6cf'
-FILES = (('services/BUILD.gn', '16c6df2d65364e8a54582a1736d950053d41abe3e945b04fda3caff8ac0b97dd', '3308963b13350d8ab5d19965a94d244a1ab98dda7141d518b4225ac8ca74d824'), ('services/src/wallpaper_service.cpp', '3271676807142d4b03664db0850c0d58d11ec0258941f98bd5658d57003038ac', '5590864bd8e51f2223e03bc709207c1a1619d36abcf0b812f31ec67e0c47f1c4'))
+MANIFEST_SHA256 = 'ad58161650eb8b754eda9cfd26da577f948ea123816f5a77910b9092c993027d'
+
+
+def manifest():
+    path = Path(__file__).resolve().parent / 'lifecycle/manifest-18.json'
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != MANIFEST_SHA256:
+        raise ValueError('reviewed exact renderer lifecycle manifest changed')
+    value = json.loads(raw)
+    if value['project'] != PROJECT or value['revision'] != REVISION:
+        raise ValueError('renderer project/revision differs')
+    return value
+
+
+FILES = tuple((name, digest, manifest()['states']['F'][name])
+              for name, digest in manifest()['states']['pristine'].items())
+
+
+def state(root, require_patched=False, check_revision=True):
+    root = Path(root).absolute()
+    if root.resolve() != root or any(p.is_symlink() for p in (root, *root.parents)):
+        raise ValueError('canonical source root required')
+    project = root / PROJECT
+    if check_revision and (project / '.git').exists():
+        actual = subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip()
+        if actual != REVISION: raise ValueError('pinned OpenHarmony project revision required')
+    states = manifest()['states']; actual = {}
+    for name in states['F']:
+        target = project / name
+        for parent in (target, *target.parents):
+            if parent == root.parent: break
+            if parent.is_symlink(): raise ValueError('aliased component input: ' + name)
+        if not target.exists(): actual[name] = None; continue
+        info = target.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError('single-link regular component input required: ' + name)
+        actual[name] = hashlib.sha256(target.read_bytes()).hexdigest()
+    matches = [key for key, expected in states.items() if actual == expected]
+    if len(matches) != 1 or (require_patched and matches[0] != 'F'):
+        raise ValueError('unknown/incomplete renderer component state; preserving all source files')
+    return matches[0]
 
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    return state(root, require_patched=require_patched) == 'F'

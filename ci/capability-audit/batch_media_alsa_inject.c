@@ -104,6 +104,31 @@ static int WithinDeadline(int64_t deadline)
     return !interrupted && now >= 0 && now < deadline;
 }
 
+static int FeedFailure(const char *stage, long alsaResult, uint64_t written, int64_t deadline)
+{
+    int savedErrno = errno;
+    fprintf(stderr, "{\"event\":\"failed\",\"stage\":\"%s\",\"alsa_rc\":%ld,"
+        "\"errno_snapshot\":%d,\"written_frames\":%" PRIu64 ",\"monotonic_ms\":%" PRId64 ","
+        "\"deadline_ms\":%" PRId64 ",\"interrupted\":%d}\n",
+        stage, alsaResult, savedErrno, written, NowMs(), deadline, (int)interrupted);
+    return -1;
+}
+
+static int DrainStatus(snd_pcm_t *pcm, snd_pcm_status_t *status, int allowSetup,
+    uint64_t written, int64_t deadline, snd_pcm_state_t *state)
+{
+    int result = snd_pcm_status(pcm, status);
+    if (result < 0) return FeedFailure("drain_status", result, written, deadline);
+    *state = snd_pcm_status_get_state(status);
+    if (*state == SND_PCM_STATE_PREPARED || *state == SND_PCM_STATE_RUNNING ||
+        *state == SND_PCM_STATE_DRAINING || (allowSetup && *state == SND_PCM_STATE_SETUP)) return 0;
+    long error = *state == SND_PCM_STATE_XRUN ? -EPIPE :
+        *state == SND_PCM_STATE_SUSPENDED ? -ESTRPIPE :
+        *state == SND_PCM_STATE_DISCONNECTED ? -ENODEV : -EIO;
+    fprintf(stderr, "ALSA drain unexpected state: %d\n", (int)*state);
+    return FeedFailure("drain_state", error, written, deadline);
+}
+
 static int FeedCable(snd_pcm_t *pcm, const uint8_t *data, size_t size,
     unsigned int channels, unsigned int repeats, int64_t deadline, uint64_t *written)
 {
@@ -124,34 +149,73 @@ static int FeedCable(snd_pcm_t *pcm, const uint8_t *data, size_t size,
                 continue;
             }
             if (count == 0 || count == -EAGAIN || count == -EINTR) {
-                if (snd_pcm_wait(pcm, 100) < 0) {
-                    return -1;
+                int ready = snd_pcm_wait(pcm, 100);
+                if (ready < 0) {
+                    return FeedFailure("write_wait", ready, *written, deadline);
                 }
                 continue;
             }
             // Never recover and hide lost challenge samples after an xrun or device error.
             fprintf(stderr, "ALSA write failed: %s (%ld)\n", snd_strerror((int)count), (long)count);
-            return -1;
+            return FeedFailure("write", count, *written, deadline);
         }
         if (offset != totalFrames) {
             fprintf(stderr, "ALSA injection timed out or cancelled\n");
-            return -1;
+            return FeedFailure("write_deadline_or_signal", 0, *written, deadline);
         }
     }
+    snd_pcm_status_t *status;
+    snd_pcm_status_alloca(&status);
+    int reportedPending = 0;
+    unsigned int attempts = 0;
+    int drainPending = 0;
     while (WithinDeadline(deadline)) {
-        int ret = snd_pcm_drain(pcm);
-        if (ret == 0) {
+        snd_pcm_state_t state;
+        // Inspect before drain as well: drain itself must not turn an
+        // already-stopped or XRUN stream into an apparently successful one.
+        if (DrainStatus(pcm, status, attempts != 0, *written, deadline, &state) != 0) return -1;
+        if (attempts == 0 && state == SND_PCM_STATE_DRAINING)
+            return FeedFailure("drain_initial_state", -EIO, *written, deadline);
+        if (drainPending && state != SND_PCM_STATE_DRAINING && state != SND_PCM_STATE_SETUP)
+            return FeedFailure("drain_state_transition", -EIO, *written, deadline);
+        if (!WithinDeadline(deadline)) break;
+        ++attempts;
+        // pcm_hw drain installs silence SW_PARAMS before issuing its ioctl.
+        // Do not repeatedly reinstall those while the kernel is DRAINING:
+        // wait on checked status, then confirm SETUP with drain's rc0 path.
+        int ret = drainPending && state == SND_PCM_STATE_DRAINING ? -EAGAIN : snd_pcm_drain(pcm);
+        if (ret != 0 && ret != -EAGAIN && ret != -EINTR) {
+            fprintf(stderr, "ALSA drain failed: %s\n", snd_strerror(ret));
+            return FeedFailure("drain", ret, *written, deadline);
+        }
+        if (DrainStatus(pcm, status, 1, *written, deadline, &state) != 0) return -1;
+        if (ret == 0 && state == SND_PCM_STATE_SETUP) {
+            if (!WithinDeadline(deadline)) return FeedFailure("drain_deadline_or_signal", 0, *written, deadline);
+            fprintf(stderr, "{\"event\":\"drained\",\"alsa_rc\":0,\"state\":%d,\"written_frames\":%" PRIu64 "}\n",
+                (int)state, *written);
             return 0;
         }
-        if (ret != -EAGAIN && ret != -EINTR) {
-            fprintf(stderr, "ALSA drain failed: %s\n", snd_strerror(ret));
-            return -1;
+        if (ret == 0) return FeedFailure("drain_terminal_state", -EIO, *written, deadline);
+        if (ret == -EAGAIN && state != SND_PCM_STATE_DRAINING && state != SND_PCM_STATE_SETUP)
+            return FeedFailure("drain_not_started", -EIO, *written, deadline);
+        if (state == SND_PCM_STATE_DRAINING) drainPending = 1;
+        if (!reportedPending) {
+            fprintf(stderr, "{\"event\":\"drain_pending\",\"alsa_rc\":%d,\"state\":%d}\n", ret, (int)state);
+            reportedPending = 1;
         }
-        if (snd_pcm_wait(pcm, 100) < 0) {
-            return -1;
-        }
+        // ALSA's hardware poll reports POLLERR when drain reaches SETUP;
+        // snd_pcm_wait can therefore return -EIO for a successful terminal
+        // transition. Poll status after a bounded pause without repadding the
+        // drain. Only a real drain rc0 plus a successful SETUP status passes.
+        int64_t now = NowMs();
+        if (now < 0) return FeedFailure("drain_clock", -EIO, *written, deadline);
+        int64_t remaining = deadline - now;
+        if (remaining <= 0 || interrupted) break;
+        struct timespec pause = {.tv_sec = 0, .tv_nsec = remaining < 2 ? remaining * 1000000 : 2000000};
+        if (nanosleep(&pause, NULL) != 0 && errno != EINTR)
+            return FeedFailure("drain_pause", -errno, *written, deadline);
     }
-    return -1;
+    return FeedFailure("drain_deadline_or_signal", 0, *written, deadline);
 }
 
 int main(int argc, char **argv)
@@ -212,7 +276,8 @@ int main(int argc, char **argv)
     uint64_t frames = 0;
     int result = FeedCable(pcm, data, length, channels, repeats, begin + timeoutMs, &frames);
     if (result != 0) snd_pcm_drop(pcm);
-    if (snd_pcm_close(pcm) < 0) result = -1;
+    ret = snd_pcm_close(pcm);
+    if (ret < 0) result = FeedFailure("close", ret, frames, begin + timeoutMs);
     free(data);
     if (result != 0) return 1;
     printf("{\"event\":\"played\",\"frames\":%" PRIu64 ",\"rate\":%u,\"channels\":%u,\"repeats\":%u,\"source_bytes\":%zu}\n",

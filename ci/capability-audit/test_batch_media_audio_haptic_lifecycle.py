@@ -46,7 +46,7 @@ def function(source, signature):
 
 class ExactComponent(unittest.TestCase):
     def test_all_complete_preimages_upgrade_and_repeat(self):
-        for prior in ('upstream', 'b4', 'incarnation_v1', 'incarnation_race_v2'):
+        for prior in ('upstream', 'b4', 'incarnation_v1', 'incarnation_race_v2', 'incarnation_e'):
             with self.subTest(prior=prior), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 populate(root, prior)
@@ -57,8 +57,8 @@ class ExactComponent(unittest.TestCase):
                 self.assertEqual(install.snapshot(root), source_state('incarnation'))
 
     def test_all_five_partial_failures_roll_back_all_preimages(self):
-        for prior in ('upstream', 'b4', 'incarnation_v1', 'incarnation_race_v2'):
-            for count in range(1, 6):
+        for prior in ('upstream', 'b4', 'incarnation_v1', 'incarnation_race_v2', 'incarnation_e'):
+            for count in range(1, len(BASELINE['states']['incarnation']) + 1):
                 with self.subTest(prior=prior, count=count), tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
                     populate(root, prior)
@@ -118,7 +118,7 @@ class ExactComponent(unittest.TestCase):
     def test_require_patched_rejects_both_preimages(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
-            for prior in ('upstream','b4','incarnation_v1','incarnation_race_v2'):
+            for prior in ('upstream','b4','incarnation_v1','incarnation_race_v2','incarnation_e'):
                 populate(root,prior)
                 with self.assertRaises(ValueError): install.state(root,True)
 

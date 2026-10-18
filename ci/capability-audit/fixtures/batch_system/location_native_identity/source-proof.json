@@ -1,0 +1,774 @@
+{
+  "schema": "location-native-actual-E-source-chain/v16",
+  "exports": [
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/exports.json",
+        "sha256": "e1ba4383e093a735dee6a28005be0e2efcf3a987d7198c92d87895118957aa97"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/files/foundation/window/window_manager/window_scene/session_manager/include/scene_session_manager.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager/include/scene_session_manager.h",
+          "sha256": "80db9a4b3551cfd8d41f76852872920867b5a0567dad749d40bf4eddcaaf4bb3",
+          "bytes": 122499
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/files/foundation/window/window_manager/window_scene/session_manager/src/scene_session_manager.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager/src/scene_session_manager.cpp",
+          "sha256": "9159ba77e35f0bc38695d21d3a4fbfc74a49e021123ee26f6ddcc85a31132bc1",
+          "bytes": 1014483
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/files/foundation/window/window_manager/window_scene/session/host/include/scene_session.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session/host/include/scene_session.h",
+          "sha256": "755f405ab3dc8b5d1dfab3616533d8887f28c98b56117b812041a5878688d85d",
+          "bytes": 96265
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/files/foundation/window/window_manager/window_scene/session/host/src/scene_session.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session/host/src/scene_session.cpp",
+          "sha256": "237cfc87a6d6ff98bdcee8dac0a64fe03447f5a5bd740b748ba438689b02d724",
+          "bytes": 494560
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/files/foundation/window/window_manager/window_scene/interfaces/include/ws_common.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/interfaces/include/ws_common.h",
+          "sha256": "14453560d57357cc08df94158dc08fda5ec3f084586e911fa6376d7f3896d9af",
+          "bytes": 49306
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-20-01/public-source/files/foundation/window/window_manager/interfaces/innerkits/wm/wm_common.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/interfaces/innerkits/wm/wm_common.h",
+          "sha256": "31afe59752d20cc35242b177df4883297c63893a4e4ccc13f2c7a8aa1173a5a9",
+          "bytes": 135780
+        }
+      ],
+      "absent": [
+        "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/ui_extension_record.h",
+        "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/ui_extension_record_manager.h",
+        "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/ui_extension_record.cpp",
+        "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/ui_extension_record_manager.cpp"
+      ],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "test/testfwk/arkxtest",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "b956f48caba16ff23e8cff3a36b4a1992e12c860\n",
+          "stderr": "",
+          "actual_head": "b956f48caba16ff23e8cff3a36b4a1992e12c860",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    },
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/exports.json",
+        "sha256": "4be30391c2d5174f3720e47738471b0c52be7527e7808e79c88605752476d81d"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/foundation/window/window_manager/window_scene/session_manager/src/hidump_controller.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager/src/hidump_controller.cpp",
+          "sha256": "c86f207e2b869e827a566b5530e682b28f224c2429f4697a21127a68babc8fc6",
+          "bytes": 21171
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/foundation/window/window_manager/window_scene/session_manager/include/hidump_controller.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager/include/hidump_controller.h",
+          "sha256": "49822e91591da6a2734377f045f2edb477f0885ddf33d31bb7e1cb28d6e1cbb2",
+          "bytes": 3322
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ui_extension/ui_extension_session_info.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ui_extension/ui_extension_session_info.h",
+          "sha256": "851897b9e0142806751cd7e988d601d5c3e9d544d910bd583fe77904aac4aa90",
+          "bytes": 1636
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/test/testfwk/arkxtest/uitest/core/dump_handler.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest/uitest/core/dump_handler.cpp",
+          "sha256": "65a2e3f90426b4b78aa21abcbd6fa9ceed38041e2f66f993a1e19d24c84ddbcc",
+          "bytes": 6329
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/test/testfwk/arkxtest/uitest/core/ui_model.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest/uitest/core/ui_model.h",
+          "sha256": "eadefbfe95a08faa6d855ed8b441ad28b4ab373bf4fb63c80836351b72fe1f68",
+          "bytes": 12164
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/include/ui_extension_record/ui_extension_record.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/ui_extension_record/ui_extension_record.h",
+          "sha256": "4b69c3abe6056b35671bf0d01efaebd6af7dfdde4e435aeb42b352173c83b6e7",
+          "bytes": 1594
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-window-session-contract-readonly-export-21-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/ui_extension_record/ui_extension_record.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/ui_extension_record/ui_extension_record.cpp",
+          "sha256": "4afa6b54f8ae910a1e200d70ec43639bac58a26ccfdc8175dcefb831f3b2d901",
+          "bytes": 2831
+        }
+      ],
+      "absent": [],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "test/testfwk/arkxtest",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "b956f48caba16ff23e8cff3a36b4a1992e12c860\n",
+          "stderr": "",
+          "actual_head": "b956f48caba16ff23e8cff3a36b4a1992e12c860",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    },
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/exports.json",
+        "sha256": "d8eea24c66a376ca9ba11194c75500221f95094a4a67b7245ea69f523ea30cfe"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/test/testfwk/arkxtest/uitest/server/element_node_iterator_impl.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest/uitest/server/element_node_iterator_impl.cpp",
+          "sha256": "e56d2993ec9db18dc04c441fbdf9d727dfa9f96270bb205d027dda66c5406969",
+          "bytes": 12643
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/test/testfwk/arkxtest/uitest/core/select_strategy.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest/uitest/core/select_strategy.cpp",
+          "sha256": "3a5b08da14aa9202ad1433613641d8091262c09dbea4fabd77a6154bef99c0ce",
+          "bytes": 34431
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/test/testfwk/arkxtest/uitest/core/ui_driver.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest/uitest/core/ui_driver.cpp",
+          "sha256": "8f5e1f206a4be4d3dcd0f5da8616bc6bc03550f9913343bdc1005952f54eedc9",
+          "bytes": 42798
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/test/testfwk/arkxtest/uitest/server/system_ui_controller.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest/uitest/server/system_ui_controller.cpp",
+          "sha256": "29bcafd9975792883c644a087f24d28be75bb74df07e1abda5469a27f004ce85",
+          "bytes": 66073
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h",
+          "sha256": "28b93cdbb4ee413cebd2300afc510cab6eaed7bb65a8235d76fe4a9d5d2136f4",
+          "bytes": 90807
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h",
+          "sha256": "cb4fb6949b79d833f929692217bc4511ac00865d98c6a87c1251721537825e88",
+          "bytes": 101782
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp",
+          "sha256": "924a096324e65b46e531d4ea47bc8f03753316bd0f017cb46cd66c9ee6b8e811",
+          "bytes": 862818
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/window/window_manager/window_scene/common/include/session_permission.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/common/include/session_permission.h",
+          "sha256": "237c590595eded41eeaf0884dc1e9fe7fe34e769f105873ce10400b38b31f7ce",
+          "bytes": 3391
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/window/window_manager/window_scene/common/src/session_permission.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/common/src/session_permission.cpp",
+          "sha256": "42d5f9ec4370d578788228ddc8c506b230ea90d186d006c15d49df970a934b6e",
+          "bytes": 15132
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/base/notification/eventhandler/interfaces/inner_api/event_handler.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/base/notification/eventhandler/interfaces/inner_api/event_handler.h",
+          "sha256": "6431fdc4b4aef2d2d6043406c61c39c88afb9ffdae6ad0113f37a06234f06392",
+          "bytes": 45819
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/include/extension_record/extension_record_manager.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/extension_record/extension_record_manager.h",
+          "sha256": "8d8ef8ea0fc3eed52ec7695e45a8836f9bcf9380b8e60c977eefeebf7fea3ff8",
+          "bytes": 9912
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/extension_record_manager.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/extension_record_manager.cpp",
+          "sha256": "20b6b0bf9993d6eeb60c8bffb9e6f941215afba178478d9ad721a47287802d76",
+          "bytes": 54929
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/include/extension_record/extension_record.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/extension_record/extension_record.h",
+          "sha256": "f19499b20d040fd4d8aaffaea896d8ccc00ca814944b46c2ce236bb3aad2bc21",
+          "bytes": 2272
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/extension_record.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/extension_record.cpp",
+          "sha256": "f12430e403b35af62f270d8eed51171bc76d9516faf4ae06d1412edd9fac4ddf",
+          "bytes": 2802
+        }
+      ],
+      "absent": [],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "test/testfwk/arkxtest",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "b956f48caba16ff23e8cff3a36b4a1992e12c860\n",
+          "stderr": "",
+          "actual_head": "b956f48caba16ff23e8cff3a36b4a1992e12c860",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    },
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-embedded-session-contract-readonly-export-23-01/public-source/exports.json",
+        "sha256": "d5578b2f64de5db763bdd7e5ac66d82c32c32a938d98caeed660663094876013"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-embedded-session-contract-readonly-export-23-01/public-source/files/foundation/window/window_manager/wmserver/src/window_manager_service.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/wmserver/src/window_manager_service.cpp",
+          "sha256": "3393a408f978d1f896280eb9f2ebeccf2491502aa2bf2e9cac62d83f0ce58313",
+          "bytes": 71398
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-embedded-session-contract-readonly-export-23-01/public-source/files/foundation/window/window_manager/wmserver/src/window_manager_agent_controller.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/wmserver/src/window_manager_agent_controller.cpp",
+          "sha256": "1f775232d5782584893d9fbbc46bb3b0eae7cb30b3433dc448d5738ee0e43054",
+          "bytes": 4984
+        }
+      ],
+      "absent": [
+        "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_pattern.h",
+        "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_pattern.cpp"
+      ],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "test/testfwk/arkxtest",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "b956f48caba16ff23e8cff3a36b4a1992e12c860\n",
+          "stderr": "",
+          "actual_head": "b956f48caba16ff23e8cff3a36b4a1992e12c860",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    },
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-component-session-contract-readonly-export-24-01/public-source/exports.json",
+        "sha256": "de237b97dcf4fc4e6f8c0210b8d50a3e470d89256fb9c4abf02ef23a48827ab0"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-component-session-contract-readonly-export-24-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/session_wrapper.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/session_wrapper.h",
+          "sha256": "8956639cfa7765405b8b7418fbad99ce389a230daace46e005b4eccd3cdc44db",
+          "bytes": 6691
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-component-session-contract-readonly-export-24-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/session_wrapper_impl.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/session_wrapper_impl.h",
+          "sha256": "892f891fa7c3c9ce011ac4491dd8eb4277e84391a7c064df9830ef1fa9cfc05f",
+          "bytes": 8504
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-component-session-contract-readonly-export-24-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/session_wrapper_impl.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/session_wrapper_impl.cpp",
+          "sha256": "9e781df62f2dda6fbd5687f205e2e8631abfec5fdc72249ab1335b62cd8b6168",
+          "bytes": 76125
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-component-session-contract-readonly-export-24-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.h",
+          "sha256": "3e7cf4718b77012539af55ccc3cc4df7376406affb9d4a96c79300689a210341",
+          "bytes": 22065
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-ArkUI-component-session-contract-readonly-export-24-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp",
+          "sha256": "7266f8728437bce6b42043f70733829f548aaf63857cf34a4e38cb536db62b6f",
+          "bytes": 90851
+        }
+      ],
+      "absent": [],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "test/testfwk/arkxtest",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "b956f48caba16ff23e8cff3a36b4a1992e12c860\n",
+          "stderr": "",
+          "actual_head": "b956f48caba16ff23e8cff3a36b4a1992e12c860",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    },
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/exports.json",
+        "sha256": "b2267930a6d9e94b4e4b48be844007ddd636c6349736c1cb91978b22ce74a547"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/arkui/ace_engine/adapter/ohos/entrance/ace_container.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/adapter/ohos/entrance/ace_container.cpp",
+          "sha256": "d75eef19140da51ca77068cc025a95244cf0055dbe94f627991ae847cd12cecb",
+          "bytes": 226618
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/base/frame_node.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/base/frame_node.cpp",
+          "sha256": "59f2e108be43e4cbb13943ae7d9083ae14818d04044e4689127d0403c1ac6167",
+          "bytes": 346522
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/arkui/ace_engine/frameworks/core/components_ng/base/ui_node.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/frameworks/core/components_ng/base/ui_node.cpp",
+          "sha256": "4eb118953ad47c18bb1ccdf6809715d35fac5792b2f2a790b8bf262aaf7700b8",
+          "bytes": 108165
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/window/window_manager/window_scene/session/host/src/extension_session.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session/host/src/extension_session.cpp",
+          "sha256": "2837a3669596698374e16d16b2f88e74191640a1dd5ab8f25253b16b29f5aaa2",
+          "bytes": 22925
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/window/window_manager/window_scene/session_manager/src/extension_session_manager.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager/src/extension_session_manager.cpp",
+          "sha256": "6a64cb8a4a7e9e5d244dbcf81881731657206c54afadcccc47665e77d5f3bce5",
+          "bytes": 12923
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/include/extension_record/base_extension_record.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/extension_record/base_extension_record.h",
+          "sha256": "af4c872a74adc4e4f414127bade3a83cd7622299fc9a47d54a25d1ad32daf516",
+          "bytes": 4502
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp",
+          "sha256": "f43d3d195b06294314428afe256afe94f5bba71e625ada8f64c9a09016ca81c5",
+          "bytes": 14483
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/include/ui_extension/ui_extension_ability_manager.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/ui_extension/ui_extension_ability_manager.h",
+          "sha256": "467ff5edf891741b9461325fcd03bdbe4b755c60420c306785c173d9f0cb0264",
+          "bytes": 13681
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-final-native-pane-dump-contract-readonly-export-25-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/ui_extension/ui_extension_ability_manager.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/ui_extension/ui_extension_ability_manager.cpp",
+          "sha256": "94a747b6a21f55cb7b61151eb18128675e5ad03677464fd78f2c3b9b138e22d8",
+          "bytes": 70873
+        }
+      ],
+      "absent": [
+        "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager/src/session_manager_service.cpp"
+      ],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "test/testfwk/arkxtest",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/test/testfwk/arkxtest",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "b956f48caba16ff23e8cff3a36b4a1992e12c860\n",
+          "stderr": "",
+          "actual_head": "b956f48caba16ff23e8cff3a36b4a1992e12c860",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    },
+    {
+      "manifest": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-native-identity-thread-contract-readonly-export-26-01/public-source/exports.json",
+        "sha256": "25751178df056946b88dcad53603c94a45dc22f6b21ab3307c6e817b048b7020"
+      },
+      "files_verified": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-native-identity-thread-contract-readonly-export-26-01/public-source/files/foundation/window/window_manager/window_scene/session_manager_service/src/session_manager_service.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager/window_scene/session_manager_service/src/session_manager_service.cpp",
+          "sha256": "6199b1f2d375b4e069cdecffb762c4b748f23f16af28d197a07b461d776b4e86",
+          "bytes": 3192
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-native-identity-thread-contract-readonly-export-26-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/include/ability_record.h",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/include/ability_record.h",
+          "sha256": "d17a1058bc39d4ce2a24760f0a9d7b0e9641e7faaaf62daf0001ba1e3c71e8e3",
+          "bytes": 32158
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-native-identity-thread-contract-readonly-export-26-01/public-source/files/foundation/ability/ability_runtime/services/abilitymgr/src/ability_record.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime/services/abilitymgr/src/ability_record.cpp",
+          "sha256": "3e4c8171171dc6af1e902eea9edbd4452858e1127596181a04fa481d548f439d",
+          "bytes": 131255
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-native-identity-thread-contract-readonly-export-26-01/public-source/files/foundation/arkui/ace_engine/adapter/ohos/entrance/ui_content_impl.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/adapter/ohos/entrance/ui_content_impl.cpp",
+          "sha256": "a02391fc2b1786f0a4ad47dcb895861689433520f0363c1c7aa8e939a2bf6bc5",
+          "bytes": 318988
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-native-identity-thread-contract-readonly-export-26-01/public-source/files/foundation/arkui/ace_engine/adapter/preview/entrance/ui_content_impl.cpp",
+          "source_path": "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine/adapter/preview/entrance/ui_content_impl.cpp",
+          "sha256": "d035f0c58b351ec7145e0caef990cfa691be3fe84d8dddbe39639d395cbbb719",
+          "bytes": 34917
+        }
+      ],
+      "absent": [],
+      "project_heads": [
+        {
+          "project": "foundation/window/window_manager",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/window/window_manager",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73\n",
+          "stderr": "",
+          "actual_head": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/ability/ability_runtime",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/ability/ability_runtime",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8\n",
+          "stderr": "",
+          "actual_head": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+          "expected_head": null,
+          "expected_matches": null
+        },
+        {
+          "project": "foundation/arkui/ace_engine",
+          "argv": [
+            "git",
+            "-c",
+            "safe.directory=/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine",
+            "-C",
+            "/Volumes/PSSD/qemu/openharmony/foundation/arkui/ace_engine",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "stdout": "e55e178228b9f6388b15d3024e8caf125fa293d7\n",
+          "stderr": "",
+          "actual_head": "e55e178228b9f6388b15d3024e8caf125fa293d7",
+          "expected_head": null,
+          "expected_matches": null
+        }
+      ]
+    }
+  ],
+  "conclusions": {
+    "already_observable_session_ID": false,
+    "two_additive_existing_dump_carriers_required": true,
+    "same_native_node": "UINode DumpBasicInfo -> same node FrameNode Pattern DumpInfo; UITest uses same AccessibilityId, no nodeId/accessibility conflation",
+    "actual_session": "SessionWrapperImpl GetSessionId returns actual session GetPersistentId; WMS SetAbilitySessionInfo copies into actual AMS SessionInfo",
+    "thread": "OHOS UIContentImpl DumpInfo posts UI task; direct AccessibilityDumpChildInfo also exists, so newly sampled ArkUI identity requires real WillRunOnCurrentThread(UI)",
+    "lock": "AbilityRecord GetSessionInfo takes sessionLock and retains published sptr; new carrier never reads or mutates mutable sessionToken",
+    "permissions": "Existing WMS SessionPermission native-token or actual hdcd gate; existing AMS DumpState/DumpSysState IsShellCall or HIDUMPER_SERVICE_UID gate. No new authorization or UID0 assertion.",
+    "processes": "Actual POSIX self PID/UID in each carrier binds emitter only; PrivacyCenter provider PID is separate actual AMS/BMS/proc proof.",
+    "sampling": "Two-ended repeated stable actual samples, not global atomic state or wire nonce. OffUI/missing/detached/oldE/unknown versions remain gaps."
+  },
+  "source_evidence_only": true,
+  "tests_executed": false,
+  "native_or_guest_pass": false,
+  "first_artifact_behavior_gate_passed": false,
+  "capability_ids_closed": 0
+}

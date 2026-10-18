@@ -456,7 +456,10 @@ class RuntimeVerifier(unittest.TestCase):
         colors = runtime.document(self.root / 'project/entry/src/main/resources/base/element/color.json')['color']
         self.assertEqual(colors, [{'name': 'start_window_background', 'value': '#FFFFFF'}])
         with self.assertRaises(runtime.EvidenceError): runtime.prepare_project(self.root / 'project')
-        self.assertEqual(len(runtime.document(self.root / 'project/caller-source-manifest.json')['fixture_hashes']), 6)
+        fixture_hashes = runtime.document(self.root / 'project/caller-source-manifest.json')['fixture_hashes']
+        self.assertEqual(set(fixture_hashes), {'EntryAbility.ets', 'Index.ets', 'PickerCases.ets',
+            'ResultJournal.ets', 'case-matrix.json', 'project-contract.json', 'storage-tests.cjs'})
+        self.assertEqual(fixture_hashes['storage-tests.cjs'], runtime.sha(runtime.FIX / 'storage-tests.cjs'))
 
     def test_actual_recorder_classes_preserve_raw_late_and_duplicate_observations(self):
         program = r'''

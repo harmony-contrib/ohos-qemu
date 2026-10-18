@@ -20,6 +20,11 @@
 #include <vector>
 namespace OHOS::Media::Knowledge {
 using Argument = std::variant<int64_t, std::string>;
+// Every original Account() row costs at least two int32s and one std::string.
+// The extra sentinel row makes a possible truncation an explicit resource error.
+constexpr size_t MIN_ACCOUNTED_ROW_BYTES = 2 * sizeof(int32_t) + sizeof(std::string);
+constexpr size_t SERVICE_ROW_LIMIT = (8 * 1024 * 1024) / MIN_ACCOUNTED_ROW_BYTES;
+
 struct Query {
     std::string sql;
     std::vector<Argument> args;
@@ -38,6 +43,13 @@ bool HasProducer(int32_t field);
 Query Related(const std::string &topic, const std::vector<int32_t> &topicFields,
     const std::vector<int32_t> &suggestionFields);
 Query Suggestions(const std::vector<int32_t> &types);
+// Fixed internal DataShare protocol. No raw SQL, database path or bind expression
+// crosses IPC. The service reconstructs the same query from bounded typed data.
+std::vector<std::string> RelatedWire(const std::string &topic, const std::vector<int32_t> &topicFields,
+    const std::vector<int32_t> &suggestionFields);
+std::vector<std::string> SuggestionsWire(const std::vector<int32_t> &types);
+bool DecodeServiceWire(const std::vector<std::string> &wire, Query &query);
+
 std::vector<Entity> RandomVote(std::vector<Entity> candidates, size_t count, std::mt19937_64 &random);
 } // namespace OHOS::Media::Knowledge
 #endif

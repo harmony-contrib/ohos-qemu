@@ -18,7 +18,7 @@ import time
 
 from PIL import Image, ImageDraw
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest
-from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
+from guest_ui import GuestUi, GuestUiCommandError, LayoutNotReady, NodeNotReady, command_exit, select_node
 
 HERE = Path(__file__).resolve().parent
 FIXTURE = HERE / 'fixtures/batch_media/wallpaper_runtime'
@@ -116,6 +116,26 @@ def wait_ack(directory, request, *, timeout=90, clock=time.monotonic, sleep=time
     raise ValueError('root action timed out; no implicit consent or completion: ' + request['action'])
 
 
+def exact_absent_renderer_command(row, *, target, hdc):
+    """Negative pidof observation ONLY; never a successful renderer proof."""
+    if (type(row.get('exit_code')) is not int or row['exit_code'] != 0 or
+            row.get('argv', [])[:4] != [str(hdc), '-t', target, 'shell'] or len(row['argv']) != 5):
+        raise ValueError('renderer absence requires exact healthy command transport')
+    script = row['argv'][4]
+    markers = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', script)
+    if len(markers) != 1 or script != ('pidof com.ohos.wallpaper; task_ui_rc=$?; printf "\\n' +
+            markers[0] + '%s\\n" "$task_ui_rc"'):
+        raise ValueError('renderer absence requires the exact pidof command')
+    if Path(row['path']).is_symlink() or not Path(row['path']).is_file() or sha(row['path']) != row['sha256']:
+        raise ValueError('renderer absence raw command changed')
+    raw = Path(row['path']).read_text()
+    body, code = command_exit(raw, markers[0])
+    if body != '' or code != 1 or '[Fail]' in raw:
+        raise ValueError('only actual guest pidof exit1 with byte-empty output is absence')
+    return {'state': 'negative_absence_ONLY_NOT_connected', 'guest_exit_code': 1,
+            'command_label': row['label'], 'command': {'path': row['path'], 'sha256': row['sha256']}}
+
+
 class Runtime:
     def __init__(self, args):
         self.args = args
@@ -128,8 +148,9 @@ class Runtime:
             raise ValueError('fresh challenge nonce required')
         self.guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, self.output / 'guest')
         self.boot_id = self.guest.env['boot_id']
+        self.renderer_module = 'phone_wallpaper' if self.guest.env['device_type'] == 'phone' else 'pad_wallpaper'
         self.value = {'schema_version': 1, 'scope': SCOPE, 'status': 'fail', 'failures': [],
-                      'run_id': self.run, 'boot_id': self.boot_id, 'archive': record(args.archive),
+                      'run_id': self.run, 'boot_id': self.boot_id, 'hdc': str(args.hdc), 'renderer_module': self.renderer_module, 'archive': record(args.archive),
                       'boot': record(args.boot), 'challenge': record(args.challenge), 'plan': record(args.plan),
                       'runner': record(Path(__file__)), 'commands': [], 'actions': [], 'stages': [],
                       'first_artifact_behavior_gate_passed': False}
@@ -243,8 +264,72 @@ class Runtime:
         return {'remote': remote, 'before': self.text(stat, label + '-stat'),
                 'after': self.text(stat_after, label + '-stat-after'), 'file': record(local)}
 
+    def renderer_bms(self):
+        path = Path(self.value['renderer_identity']['path'])
+        if sha(path) != self.value['renderer_identity']['sha256']:
+            raise ValueError('actual renderer BMS observation changed')
+        text = path.read_text()
+        start = text.find('{')
+        if start < 0: raise ValueError('actual renderer BMS JSON missing')
+        def unique(pairs):
+            value = {}
+            for key, row in pairs:
+                if key in value: raise ValueError('duplicate actual renderer BMS JSON key')
+                value[key] = row
+            return value
+        value, _ = json.JSONDecoder(object_pairs_hook=unique).raw_decode(text[start:])
+        return value
+
+    def renderer_pid(self, label, *, permit_absence=False):
+        try:
+            text = self.shell('pidof com.ohos.wallpaper', label)
+        except GuestUiCommandError as error:
+            if not permit_absence or error.exit_code != 1:
+                raise
+            row = self.value['commands'][-1]
+            if row['label'] != label: raise ValueError('wrong renderer pidof command receipt')
+            return '', exact_absent_renderer_command(row, target=self.guest.target, hdc=self.args.hdc)
+        if re.fullmatch(r'[1-9][0-9]*', text) is None:
+            raise ValueError('one actual renderer PID required; no empty successful command')
+        return text, {'state': 'actual_pid_ONLY_NOT_connected', 'guest_exit_code': 0, 'command_label': label}
+
+    def wait_renderer(self, name):
+        """Wait only on typed valid pending states, then retain strict stage proof."""
+        from batch_apps_wallpaper_connection import ConnectionNotReady, parse_connection
+        bms = self.renderer_bms()
+        result = {'stage': name, 'started_ns': time.monotonic_ns(), 'probes': [],
+                  'scope': 'real_public_desktop_set_connection_readiness_ONLY', 'status': 'pending'}
+        self.value.setdefault('renderer_readiness', []).append(result)
+        deadline = time.monotonic() + 45
+        while time.monotonic() < deadline:
+            index = len(result['probes'])
+            label = name + '-wait-renderer-' + str(index).zfill(3)
+            began = time.monotonic_ns()
+            pids, observation = self.renderer_pid(label + '-pid', permit_absence=True)
+            ams = self.shell('aa dump -a -u 100', label + '-AMS')
+            row = {'started_ns': began, 'finished_ns': time.monotonic_ns(), 'pid_observation': observation,
+                   'renderer_pids': self.text(pids, label + '-pid'), 'ams': self.text(ams, label + '-AMS')}
+            result['probes'].append(row)
+            try:
+                row['connection'] = parse_connection(ams, bms, pids, module_name=self.renderer_module, allow_pending=True)
+            except ConnectionNotReady as error:
+                row['state'] = error.state
+                self.save(); time.sleep(0.2)
+                continue
+            if time.monotonic() > deadline:
+                row['state'] = 'deadline_exceeded'; break
+            row['state'] = 'connected'
+            result.update(status='connected', finished_ns=time.monotonic_ns())
+            self.save()
+            return result
+        result.update(status='timeout', finished_ns=time.monotonic_ns())
+        self.save()
+        raise ValueError('real foreground renderer connection did not become ready after public desktop set')
+
     def snapshot(self, name, *, screen=None):
         stage = {'name': name, 'started_ns': time.monotonic_ns(), 'account': self.identity(name), 'files': {}}
+        if name in ('desktop-1', 'desktop-2'):
+            stage['renderer_readiness'] = self.wait_renderer(name)
         # Capture the screen immediately after the coordinator's real UI
         # transition, before slower evidence transfers can hit normal suspend.
         # Never add a keepalive, forced wake or power override.
@@ -254,7 +339,21 @@ class Runtime:
             stage.update(screen_kind=screen, layout=record(path), screenshot=record(picture))
         dump = self.shell('aa dump -a -u 100', name + '-AMS')
         stage['ams'] = self.text(dump, name + '-AMS')
-        stage['renderer_pids'] = self.text(self.shell('pidof com.ohos.wallpaper', name + '-renderer-pid'), name + '-renderer-pid')
+        pids, observation = self.renderer_pid(name + '-renderer-pid', permit_absence=name == 'baseline')
+        if not pids:
+            from batch_apps_wallpaper_connection import ConnectionNotReady, parse_connection
+            try:
+                parse_connection(dump, self.renderer_bms(), pids, module_name=self.renderer_module, allow_pending=True)
+            except ConnectionNotReady as error:
+                if error.state != 'absent_service_and_process': raise ValueError('baseline is not fully unstarted') from error
+            else: raise ValueError('baseline absence contradicts actual AMS')
+            observation['state'] = 'absent_before_first_public_desktop_set'
+        stage['renderer_observation'] = observation
+        stage['renderer_pids'] = self.text(pids, name + '-renderer-pid')
+        if name in ('desktop-1', 'desktop-2'):
+            from batch_apps_wallpaper_connection import parse_connection
+            stage['renderer_connection'] = parse_connection(dump, self.renderer_bms(), pids, module_name=self.renderer_module)
+
         base = '/data/service/el1/public/wallpaper/100'
         # Inventory both directories, including absence, so cancelling/denial
         # cannot hide a write to the other wallpaper or an unexpected file.

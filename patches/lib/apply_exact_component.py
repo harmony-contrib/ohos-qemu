@@ -45,7 +45,9 @@ def prepare_stack(root, component, baseline, temporary):
                         not line.startswith((b'+++ ', b'--- '))):
                     lines[index] = line.rstrip(b'\r\n') + b'\r\n'
             copied.write_bytes(b''.join(lines))
-        statistics = subprocess.check_output(['git', 'apply', '--numstat', str(copied)], text=True)
+        # A caller inside another Git checkout's subdirectory would otherwise
+        # silently filter out patch targets outside that current directory.
+        statistics = subprocess.check_output(['git', '-C', str(staged), 'apply', '--numstat', str(copied)], text=True)
         if not statistics.strip() or any(line.split('\t')[-1] not in allowed
                                          for line in statistics.splitlines()):
             raise ValueError('component patch changes a file outside its exact baseline')

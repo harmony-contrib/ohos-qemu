@@ -41,6 +41,84 @@ class WallpaperBindingTests(unittest.TestCase):
             target='127.0.0.1:1234', bundle=runtime.SEED, permission='ohos.permission.SET_WALLPAPER',
             original_BMS=self.case.value['seed_identity'], commands=self.case.value['commands'])
 
+    def renderer(self):
+        boot = json.loads(verify.checked(self.case.value['boot']).read_text())
+        return verify.verify_renderer_lifecycle(self.case.value, boot['test_environment'])
+
+    def renderer_command(self, label, raw, code=0):
+        row = next(r for r in self.case.value['commands'] if r.get('label') == label)
+        marker = re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=', row['argv'][4])[0]
+        row.update(self.case.put(raw+'\n'+marker+str(code)+'\n'))
+        return {k:row[k] for k in ['path','sha256']}
+
+    def negative_renderer_baseline(self):
+        baseline = self.case.value['stages'][0]
+        baseline['ams'] = self.case.put('  ExtensionRecords:\n  AppRunningRecords:\n    AppRunningRecord ID #1\n      process name [com.ohos.sceneboard]\n      pid #123  uid #20010001\n      state #FOREGROUND')
+        self.renderer_command('baseline-AMS', verify.checked(baseline['ams']).read_text())
+        baseline['renderer_pids'] = self.case.put('')
+        command = self.renderer_command('baseline-renderer-pid', '', 1)
+        baseline['renderer_observation'] = {'state':'absent_before_first_public_desktop_set',
+            'guest_exit_code':1,'command_label':'baseline-renderer-pid','command':command}
+        return baseline
+
+    def test_renderer_pending_trace_replays_raw_and_formal_connected_cuts(self):
+        self.assertEqual((set(),None), self.renderer())
+        good = self.case.clone()
+        for fault in ('missing-trace','copied-trace','summary','wrong-HDC','wrong-target','false-host-code',
+                      'late','false-time','duplicate-stage','wrong-profile','formal-pid','formal-connection'):
+            with self.subTest(fault=fault):
+                self.case.value = copy.deepcopy(good)
+                value = self.case.value; readiness = value['renderer_readiness'][0]
+                probe = readiness['probes'][0]
+                if fault == 'missing-trace': value['renderer_readiness'].pop()
+                elif fault == 'copied-trace': readiness['probes'].append(copy.deepcopy(probe))
+                elif fault == 'summary': probe['connection']['pid'] = 445
+                elif fault in ('wrong-HDC','wrong-target','false-host-code'):
+                    row = next(r for r in value['commands'] if r.get('label') == 'desktop-1-wait-renderer-000-AMS')
+                    if fault == 'wrong-HDC': row['argv'][0]='foreign-hdc'
+                    elif fault == 'wrong-target': row['argv'][2]='127.0.0.1:9999'
+                    else: row['exit_code']=False
+                elif fault == 'late': readiness['finished_ns'] += 45_000_000_001
+                elif fault == 'false-time': probe['started_ns']=True
+                elif fault == 'duplicate-stage': value['stages'].append(copy.deepcopy(value['stages'][1]))
+                elif fault == 'wrong-profile': value['renderer_module']='phone_wallpaper'
+                elif fault == 'formal-pid': value['stages'][1]['renderer_pids']=self.case.put('445')
+                else:
+                    stage=value['stages'][1]
+                    raw=verify.checked(stage['ams']).read_text().replace('connectionState #CONNECTED','connectionState #CONNECTING')
+                    stage['ams']=self.case.put(raw);self.renderer_command('desktop-1-AMS',raw)
+                with self.assertRaises((ValueError,KeyError)): self.renderer()
+
+    def test_negative_initial_renderer_requires_actual_new_native_product(self):
+        baseline=self.negative_renderer_baseline()
+        expected={'archive_sha256':self.case.value['archive']['sha256'],'boot_id':self.case.boot,
+            'product':'HOST fixture ONLY','image':{'scope':'HOST fixture ONLY'},'guard':{'scope':'HOST fixture ONLY'}}
+        with patch('batch_media_wallpaper_native.archive_native',return_value=expected) as native:
+            allowed,product=self.renderer()
+            self.assertEqual(expected,product);self.assertEqual(1,len(allowed));native.assert_called_once()
+        with patch('batch_media_wallpaper_native.archive_native',side_effect=ValueError('old image')):
+            with self.assertRaisesRegex(ValueError,'old image'): self.renderer()
+        with patch('batch_media_wallpaper_native.archive_native',return_value={**expected,'boot_id':'old'}):
+            with self.assertRaisesRegex(ValueError,'another actual native product'): self.renderer()
+        baseline['ams']=self.case.put(fixture.ams('com.ohos.sceneboard').rstrip('\n'))
+        self.renderer_command('baseline-AMS',verify.checked(baseline['ams']).read_text())
+        with self.assertRaises(ValueError): self.renderer()
+
+    def test_pidof_nonzero_is_only_empty_actual_exit1_before_public_set(self):
+        baseline=self.negative_renderer_baseline();good=self.case.clone()
+        for fault in ('body','code','summary','transport'):
+            with self.subTest(fault=fault):
+                self.case.value=copy.deepcopy(good);baseline=self.case.value['stages'][0]
+                if fault in ('body','code'):
+                    command=self.renderer_command('baseline-renderer-pid','error' if fault=='body' else '',2 if fault=='code' else 1)
+                    baseline['renderer_observation']['command']=command
+                elif fault=='summary': baseline['renderer_observation']['guest_exit_code']=True
+                else:
+                    row=next(r for r in self.case.value['commands'] if r.get('label')=='baseline-renderer-pid');row['exit_code']=1
+                with patch('batch_media_wallpaper_native.archive_native') as native:
+                    with self.assertRaises(ValueError): self.renderer()
+                    native.assert_not_called()
+
     def test_BMS_is_UID_authority_and_real_AT_UID_diagnostic_is_preserved(self):
         proof = self.token()
         self.assertEqual(0, self.check_token(proof)['at_reported_uid'])

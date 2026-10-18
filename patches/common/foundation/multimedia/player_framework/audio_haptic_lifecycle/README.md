@@ -19,26 +19,26 @@ existing SetSource/Play error mappings remain explicit; no error produces fake
 success. Allocation/registration can genuinely fail. Creating a new backend may
 add restart preparation latency and service/resource failure points.
 
-The existing public and inner API headers/vtables are unchanged. Five private
-implementation files change (two CPPs, two headers, one new header). A separate
-private callback interface avoids changing the existing callback vtable. The
+The existing public and inner API headers/vtables are unchanged. Six private
+implementation files are installed (two CPPs and four headers including two new
+headers). A separate private callback interface avoids changing the existing callback vtable. The
 factory's existing NORMAL branch guarantees the concrete static cast; no RTTI
 is required. The fast source implementation and its legacy callback path remain
 unchanged. All component objects must be rebuilt together because private class
 layouts change.
 
-`source_states.json` pins five complete whole-file states: upstream originals,
+`source_states.json` pins complete whole-file states: upstream originals,
 the complete B4 two-CPP adaptation, the previous frozen incarnation and race candidates,
-and this complete incarnation candidate. The
-new private header must be absent in both preimages. Component-local `install.py`
+the complete E incarnation state, and this complete incarnation candidate. The
+new private headers must be absent in their corresponding historical preimages. Component-local `install.py`
 accepts each exact preimage directly and is idempotent on the complete new
 state. Unknown/mixed source, missing members and symlinks are rejected before
-writes. It stages all five payloads, checks for concurrent edits, replaces only
-owned members, and rolls back on failure. Rollback removes the newly added header
+writes. It stages all six payloads, checks for concurrent edits, replaces only
+owned members, and rolls back on failure. Rollback removes newly added headers
 and refuses to overwrite a foreign edit; failed recovery remains an error. A
 process/power loss can still leave a partial state, which is intentionally
 rejected for explicit recovery. Shared global patch tools are not changed.
-`0001` plus reviewable `0002` describe the source evolution; installation uses
+`0001`, reviewable `0002` and the E-to-F `0003` describe the source evolution; installation uses
 SHA-bound payloads, rather than replaying 0001 against an already adapted B4.
 
 ```sh
@@ -82,3 +82,15 @@ Release unpublishes before calling the old sound, and all replaced shared_ptr
 destruction happens outside publication/wait synchronization. This also prevents
 a native Release reentrant time query from deadlocking. `incarnation_race_v2`
 keeps the previous complete race candidate as another precise upgrade preimage.
+
+
+The F delta recognizes the exact complete E state as `incarnation_e`. It releases
+`waitStartVibrateMutex_` only while normal mode performs the blocking external
+pattern, so Stop/Release can retire the source and cancel that wait. Fast mode
+retains its old execution branch. The private optional publication sink carries
+the same immutable backend Session from the native EOS/interrupt worker to the
+NAPI queue, with a final retirement check at task admission. A native caller
+without this sink receives its existing callback once. No public virtual method
+is added. Build this component together with `audio_haptic_public_errors`; the
+private implementation layouts and internal callback contract are a coordinated
+upgrade. See HANDOFF-F.md for coverage limits and HILOG fields.

@@ -1,0 +1,110 @@
+{
+  "schema": "five-capability-source-batch-review/v1",
+  "base_commit": "c14e803c33f96f5fe01e04378c868fce32aa1487",
+  "source_branch": "codex/ohos7-batched-repair-f",
+  "scope": "Batched implementation and host protocol/native-double validation ONLY. Actual F SDK/CFI/new-package runtime remains required.",
+  "source_build_inputs_tree_sha256": "600b60b8ba60b71b931eacac56741ed148f5de4b093e74fc49e90e9f9bda9eda",
+  "ownership_collision_count": 0,
+  "five_agent_source_deliveries_frozen": true,
+  "repairs": {
+    "apps": [
+      "Ability-local Contacts storage and nonce continuation isolation",
+      "QEMU-only bounded Wallpaper connection recovery after real desktop persistence"
+    ],
+    "location": [
+      "readonly ArkUI and AMS native session identity carriers",
+      "strict targeted process/image/session join in private16 validation"
+    ],
+    "network": [
+      "fresh ordinary public VPN config save/readback before setup",
+      "delete only owned UUID after verified native terminal state"
+    ],
+    "media": [
+      "real short capture-frame assembly without zero padding",
+      "AudioHaptic public error/permission/lifecycle fixes and queued native publication identity"
+    ],
+    "system": [
+      "Calendar Ability-shared local storage",
+      "permission-checked typed DataShare media-owner query for Knowledge"
+    ]
+  },
+  "root_integration": [
+    "strict command-bound terminal footer parser",
+    "new paired native-carrier source-prepare gate",
+    "updated Wallpaper compiler/link/image witness",
+    "strict finite ALSA drain state machine and real DAC1 measurement observer"
+  ],
+  "host_checks": {
+    "receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-five-capability-unified-host-batch-24-01/receipt.json",
+      "sha256": "359c638ef8bb0c6026f32f4566f82e9d5c4f7ef281a830dd734c9b735f1a6bac"
+    },
+    "exit_code": 0,
+    "inputs_unchanged": true,
+    "results": [
+      {
+        "label": "unittest",
+        "exit_code": 0,
+        "tests": 472,
+        "retained_skip_count": 1
+      },
+      {
+        "label": "audio-host",
+        "exit_code": 0,
+        "tests": 8,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "audio-reviewfix",
+        "exit_code": 0,
+        "tests": 9,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "apps-protocol",
+        "exit_code": 0,
+        "tests": 8,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "peer-protocol",
+        "exit_code": 0,
+        "tests": 22,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "location-protocol",
+        "exit_code": 0,
+        "tests": 141,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "location-export",
+        "exit_code": 0,
+        "tests": 8,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "calendar-python",
+        "exit_code": 0,
+        "tests": 3,
+        "retained_skip_count": 0
+      },
+      {
+        "label": "recipe-syntax",
+        "exit_code": 0,
+        "tests": null,
+        "retained_skip_count": 0
+      }
+    ]
+  },
+  "historical_agent_manifests": "Original candidate/delivery manifests and failed receipts remain historical. Actual final build-input manifest and subsequent root receipts are authoritative; candidate manifests are not rewritten as final acceptance.",
+  "pending": [
+    "actual Linux native checks and SDK role compilation",
+    "full product CFI compilation and one new ARM64-phone package",
+    "new-package intended behavior, boundary/regression and cleanup validation before other five packages"
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "requirements_closed": []
+}

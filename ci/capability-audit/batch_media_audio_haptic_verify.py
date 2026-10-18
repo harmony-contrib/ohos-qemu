@@ -254,6 +254,19 @@ def audio_metrics(capture, expectation, reference, *, followed_by_boundary=False
     return result
 
 
+def active_boundary_callbacks(start_group, began, start_return, *, looping):
+    require(began['player_epoch'] == start_return['player_epoch'] and
+            began['sequence'] > start_return['sequence'], 'active boundary belongs to another player/start')
+    callbacks = [row for row in start_group if row['event'] == 'callback' and
+                 row['api'] == 'AudioHapticPlayer.endOfStream' and row['sequence'] < began['sequence']]
+    require(all(row['player_epoch'] == start_return['player_epoch'] for row in callbacks),
+            'pre-boundary EOS belongs to another player')
+    # Native loop EOS marks a period, while the same backend remains LIVE.
+    # It does not replace the continuous PCM and dense VDI active proof below.
+    require(looping or not callbacks, 'EOS preceded the purported active Stop/Release; boundary remains unproved')
+    return callbacks
+
+
 def active_boundary_metrics(segment, data, boot, journal, clock_interval):
     expectation = segment['boundary_expected']; required = expectation['active_before']
     require(required is not None, 'explicit active boundary expectation required')
@@ -262,10 +275,8 @@ def active_boundary_metrics(segment, data, boot, journal, clock_interval):
     start_group = [row for row in journal if row['operation_id'] == start_request['operation_id']]
     boundary_group = [row for row in journal if row['operation_id'] == boundary_request['operation_id']]
     began = one(boundary_group, 'begin'); start_return = one(start_group, 'return', 'AudioHapticPlayer.start')
-    require(began['player_epoch'] == start_return['player_epoch'] and began['sequence'] > start_return['sequence'] and
-            not any(row['event'] == 'callback' and row['api'] == 'AudioHapticPlayer.endOfStream' and
-                    row['sequence'] < began['sequence'] for row in start_group),
-            'EOS preceded the purported active Stop/Release; boundary remains unproved')
+    periodic_eos = active_boundary_callbacks(start_group, began, start_return,
+        looping=segment['expected']['audio'] == 'loop' and segment['expected']['haptic'] == 'loop')
     _, samples = sampler_rows(segment['sampler'], data['run_id'], boot)
     instant = began['timestamp_ms'] * 1000000
     preceding = [row for row in samples if row['realtime_ns'] <= instant and instant-row['realtime_ns'] <= 100000000]
@@ -282,7 +293,8 @@ def active_boundary_metrics(segment, data, boot, journal, clock_interval):
     action_high = anchor['after_ns'] + delta + high + 1000000
     require(action_high-action_low <= 100000000, 'active boundary clock uncertainty exceeds 100ms; keep boundary gap')
     result = dict(action_host_interval_ns=[action_low, action_high], preceding_VDI_samples=len(preceding),
-                  maximum_VDI_pre_action_age_ns=instant-anchor['realtime_ns'], required=required)
+                  maximum_VDI_pre_action_age_ns=instant-anchor['realtime_ns'], required=required,
+                  pre_boundary_periodic_EOS=periodic_eos)
     if required['audio']:
         capture = segment['audio_capture']; values = wave_values(checked(capture['wav'])); origin = capture['host_begin_ns']
         reference = pcm.pcm_values(checked(data['reference']).read_bytes())
@@ -381,7 +393,7 @@ def verify_evidence(path, archive, boot, *, command):
                 observed(row['guest_hash'], 'test -f ' + shlex.quote(remote) + ' && test ! -L ' + shlex.quote(remote) +
                 ' && sha256sum ' + shlex.quote(remote)).split() == [sha(local), remote], 'actual file receive binding differs')
         received[(row['raw']['path'], row['raw']['sha256'])] = remote
-    from batch_media_audio_haptic_build_sampler import helper_binding
+    from batch_media_audio_haptic_build_sampler import helper_binding,clock_binding
     helper = helper_binding(spec['helper'])
     require(value['helper'] == helper, 'actual compiled sampler/helper receipts differ')
     for dso, proof in zip(helper['product_DSOs'], value['helper_guest_DSOs']):
@@ -391,6 +403,13 @@ def verify_evidence(path, archive, boot, *, command):
         product.verify_guest_runtime_raw(helper, dso['soname'], observed(proof['observation'], expected_script),
                                          archive_sha256=value['archive_sha256'])
     require(len(value['helper_guest_DSOs']) == len(helper['product_DSOs']), 'missing actual helper dependencies')
+    clock_helper=clock_binding(spec['helper'])
+    require(value.get('clock_helper')==clock_helper,'fresh compiled clock helper binding differs')
+    require(len(value.get('clock_guest_DSOs',[]))==len(clock_helper['product_DSOs']),'clock guest DSO cuts missing')
+    for dso,proof in zip(clock_helper['product_DSOs'],value['clock_guest_DSOs']):
+        expected_script=product.runtime_guest_script(clock_helper,dso['soname'])
+        require(proof['soname']==dso['soname'] and proof['script']==expected_script,'clock DSO observation differs')
+        product.verify_guest_runtime_raw(clock_helper,dso['soname'],observed(proof['observation'],expected_script),archive_sha256=value['archive_sha256'])
     identities = {}; journals = {}; binding_results = {}
     for role, item in value['roles'].items():
         require(role in ROLES, 'unexpected caller role')
@@ -457,6 +476,12 @@ def verify_evidence(path, archive, boot, *, command):
                       for role, identity in identities.items() for name in list(data['files']) + ['audio-haptic-request.json']}
     remote_root = '/data/local/tmp/audio-haptic-' + data['run_id']
     allowed_stages[remote_root + '/sampler'] = (0, '700')
+    observation_clocks=value.get('audio_observation_clocks',[])
+    require(len(observation_clocks)==len(value['segments']) and
+        len({r['remote'] for r in observation_clocks})==len(observation_clocks),'every capture requires a fresh real clock owner')
+    for clock in observation_clocks:
+        from batch_media_audio_observation_clock import remote_checked
+        allowed_stages[remote_checked(clock['remote'])+'/alsa_inject']=(0,'700')
     for item in value['staged']:
         local = checked(item['local']); remote = item['remote']; sent = item['command']
         require(remote in allowed_stages and (item['uid'], item['mode']) == allowed_stages[remote], 'stage escaped the exact owned private path/UID surface')
@@ -467,6 +492,8 @@ def verify_evidence(path, archive, boot, *, command):
             require(remote.endswith('/audio-haptic-request.json') and re.fullmatch(re.escape(remote)+r'\.[a-f0-9]{16}\.tmp', item['sent_remote']), 'only exact owned requests may be replaced')
             shared.exact_script(commands[sent+2], 'test ! -L ' + shlex.quote(remote) + ' && mv ' + shlex.quote(item['sent_remote']) + ' ' + shlex.quote(remote))
         if remote.endswith('/sampler'): require(item['local'] == helper['binary'] and item['uid'] == 0 and item['mode'] == '700', 'another observer was executed')
+        elif remote.endswith('/alsa_inject'):
+            require(item['local']==clock_helper['binary'] and item['uid']==0 and item['mode']=='700','another measurement clock was staged')
         else: require(item['mode'] == '600' and item['uid'] in {v['uid'] for v in identities.values()}, 'ordinary private input owner/mode differs')
     planned = project.capture_plan()
     require([v['phase'] for v in value['segments']] == [project.capture_name(block) for block in planned] + ['final-cleanup-quiet'], 'all continuous PCM/HDI observation intervals required')
@@ -476,6 +503,13 @@ def verify_evidence(path, archive, boot, *, command):
     used_clocks = []
     for segment, block in zip(value['segments'], planned + [[final_quiet]]):
         phase = block[0]
+        from batch_media_audio_observation_clock import verify_clock
+        clock=segment['audio_capture']['observation_clock']
+        require(clock in observation_clocks and clock['phase']==segment['phase'] and
+            [r for r in observation_clocks if r['phase']==segment['phase']]==[clock], 'clock phase reused or missing')
+        staged_clock=[r for r in value['staged'] if r['remote']==clock['remote']+'/alsa_inject']
+        require(len(staged_clock)==1 and staged_clock[0]['local']==clock_helper['binary'],'exact real clock staging required')
+        verify_clock(clock,segment['audio_capture'],helper=clock_helper,hdc=value['hdc'],target=env['target'],observed=observed,command_index=command_index)
         require(segment['expected'] == phase and observed(segment['begin_boot'], 'cat /proc/sys/kernel/random/boot_id') == env['boot_id'] and
                 observed(segment['end_boot'], 'cat /proc/sys/kernel/random/boot_id') == env['boot_id'], 'segment expectation or boot changed')
         expected_boundary = block[1] if len(block) == 2 else None

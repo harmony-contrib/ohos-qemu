@@ -53,8 +53,12 @@ def inspect(root):
         if set(value['files']) != set(observed):
             raise ValueError('previous complete-state membership differs')
         states['previous'] = value['files']
+    e_state = json.loads((HERE / 'e-state.json').read_text())['files']
+    if set(e_state) != set(observed):
+        raise ValueError('E complete-state membership differs')
+    states['e'] = e_state
     # Compare complete vectors, never accept independently valid old/new members.
-    for state in ('after', 'previous', 'before'):
+    for state in ('after', 'e', 'previous', 'before'):
         if state in states and observed == states[state]:
             return state
     raise ValueError('unknown or partial component state; preserving source')
@@ -111,6 +115,9 @@ def run(root):
         attempted = []
         try:
             for name, data in outputs.items():
+                path = path_for(root, name)
+                if (path.read_bytes() if path.exists() else None) != snapshots[name][0]:
+                    raise ValueError('source changed before replacement: ' + name)
                 attempted.append(name)
                 atomic_write(path_for(root, name), data, snapshots[name][1])
             validate(root, True)
@@ -122,6 +129,8 @@ def run(root):
                     original, mode, times = snapshots[name]
                     current = path.read_bytes() if path.exists() else None
                     if current != original:
+                        if current != outputs[name]:
+                            raise ValueError('foreign edit after publication; preserving source: ' + name)
                         if original is None:
                             path.unlink()
                         else:
