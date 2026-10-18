@@ -95,7 +95,7 @@ struct Index {
           }
         } finally {
           try { result.close(); }
-          catch (error) { this.operationApi = 'FetchResult.close'; throw error; }
+          catch (error) { this.operationApi = 'FetchResult.close'; throw error as Error; }
         }
         await this.related(store, item);
       }
@@ -130,11 +130,11 @@ struct Index {
       }
     } catch (error) {
       bodyFailed = true;
-      throw error;
+      throw error as Error;
     } finally {
       try { await helper.release(); }
       catch (error) {
-        if (!bodyFailed) { this.operationApi = 'PhotoAccessHelper.release'; throw error; }
+        if (!bodyFailed) { this.operationApi = 'PhotoAccessHelper.release'; throw error as Error; }
         // Preserve the first API failure; a cleanup failure is an additional raw
         // error observation and must not replace the original native code/text.
         store.failure('PhotoAccessHelper.release', error as BusinessError);

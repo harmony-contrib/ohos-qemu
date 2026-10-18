@@ -44,7 +44,7 @@ class KnowledgeServiceTests(unittest.TestCase):
         self.assertIn("this.operationApi = 'KnowledgeContent.getRelatedEntity'", source)
         self.assertIn('store.failure(this.operationApi, actual)', source)
         self.assertIn("store.failure('PhotoAccessHelper.release', error as BusinessError)", source)
-        self.assertIn('bodyFailed = true;\n      throw error;', source)
+        self.assertIn('bodyFailed = true;\n      throw error as Error;', source)
 
 
 if __name__ == '__main__':
