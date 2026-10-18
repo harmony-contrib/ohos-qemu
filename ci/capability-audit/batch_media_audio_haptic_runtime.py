@@ -37,6 +37,7 @@ TOOLS = ('batch_media_audio_haptic_project.py', 'batch_media_audio_haptic_build_
          'batch_system_build_runtime_helpers.py', 'enclosing_acceptance_guest.py', 'guest_ui.py', 'spring_loading_input.py',
          'hap_identity_binding.py', 'guest_process_identity.py')
 TOOLS += ('batch_media_audio_observation_clock.py','build_audio_capture_tools.py')
+TOOLS += ('batch_media_audio_hilog_transport.py', 'hdc_transport.py')
 
 INFO_CAPTURE_NOTICE = "warning: 'info capture' is deprecated since v10.2, to be removed\r\n"
 

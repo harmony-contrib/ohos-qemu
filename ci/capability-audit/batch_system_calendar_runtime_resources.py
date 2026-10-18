@@ -31,6 +31,20 @@ SOURCE_PINS = {
 }
 
 
+def public_locales_equivalent(system_locale, resource_locale):
+    """Compare only the existing four tokens and finite resource separator aliases."""
+    if type(system_locale) is not str or type(resource_locale) is not str:
+        return False
+    resource_tokens = {
+        'en-US': 'en-US', 'en_US': 'en-US',
+        'en-Latn-US': 'en-Latn-US', 'en_Latn_US': 'en-Latn-US',
+        'zh-CN': 'zh-CN', 'zh_CN': 'zh-CN',
+        'zh-Hans-CN': 'zh-Hans-CN', 'zh_Hans_CN': 'zh-Hans-CN',
+    }
+    return system_locale in ('en-US', 'en-Latn-US', 'zh-CN', 'zh-Hans-CN') and \
+        resource_tokens.get(resource_locale) == system_locale
+
+
 def parse_label_index(data, resource_id, resource_name='app_name'):
     """Read actual V2 headers/IDs/configs, never scan for a plausible string.
 
@@ -188,7 +202,7 @@ def public_locale_from_capture(locale, *, archive_sha256, boot_id, run_id):
     require(all(isinstance(v, dict) and set(v) == {'locale'} and isinstance(v['locale'], str) for v in values),
             'both original public locale strings required')
     system_locale, resource_locale = [v['locale'] for v in values]
-    require(system_locale == resource_locale and re.fullmatch(r'en-US|en-Latn-US|zh-CN|zh-Hans-CN', system_locale),
+    require(public_locales_equivalent(system_locale, resource_locale),
             'unknown, conflicting or unsupported public system/resource locale; preserve label gap')
     return {'source': PUBLIC_LOCALE_SOURCE, 'observer_bundle': ROLES['observer']['bundle'], 'challenge': capture['challenge'],
             'uid': rows[0]['uid'], 'token_id': rows[0]['token_id'], 'operation_id': capture['request']['operation_id'],

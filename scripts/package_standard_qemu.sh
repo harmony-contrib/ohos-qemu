@@ -427,6 +427,10 @@ normalize_common_qemu_launcher() {
 HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   fi
   sed_in_place_extended 's|hostfwd=tcp::5555-:5555|hostfwd=tcp::${HDC_HOST_PORT}-:5555|g' "${file}"
+  # Initialize packaged RTCs in UTC; retain the host clock and guest time service.
+  sed_in_place_extended \
+    's|-rtc base=localtime,clock=host|-rtc base=utc,clock=host|g' \
+    "${file}"
   sed_in_place_extended 's|init=/init|init=/bin/init|g' "${file}"
   sed_in_place_extended 's|ohos\.required_mount\.system=/dev/block/([^ @]+)@/system@ext4|ohos.required_mount.system=/dev/block/\1@/usr@ext4|g' "${file}"
   # Do not consume the trailing backslash that escapes the closing quote in

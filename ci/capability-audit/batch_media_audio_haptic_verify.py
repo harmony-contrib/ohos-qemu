@@ -15,6 +15,9 @@ import batch_media_knowledge_suite as shared
 import batch_apps_contact_picker_coordinator as signatures
 from enclosing_acceptance_guest import validate_binding
 from hap_identity_binding import HAP_IDENTITY_FIELDS, verify_hap_token_identity
+from batch_media_audio_hilog_transport import AudioHilogTransport
+from guest_ui import command_exit
+from hdc_transport import failed
 
 HERE, ROLES = project.HERE, project.ROLES
 require, checked, record, sha, load = project.require, project.checked, project.record, project.sha, project.load
@@ -360,11 +363,13 @@ def verify_evidence(path, archive, boot, *, command):
     require(load(checked(value['artifacts'])) == spec, 'original artifact input changed')
     from batch_media_audio_haptic_runtime import TOOLS
     require(value['tool_sources'] == {name: record(HERE / name) for name in TOOLS}, 'collector or dependent checker source changed')
-    commands = value['commands']; shared.verify_commands(commands, value['hdc'], env['target'])
+    commands = value['commands']
+    transport = AudioHilogTransport(value, value['hdc'], env['target'], checked=checked, original=shared, command_exit=command_exit, failed=failed)
+    transport.verify_commands(commands, value['hdc'], env['target'])
     observations = {}
     observation_commands = set()
     for row in value['observations']:
-        actual = shared.exact_script(commands[row['command']], row['script'])
+        actual = transport.exact_script(row['command'], row['script'])
         require(actual == checked(row['raw']).read_text(), 'normalized observation differs from actual HDC output')
         key = (row['raw']['path'], row['raw']['sha256'])
         require(key not in observations and type(row['command']) is int and row['command'] not in observation_commands,
@@ -375,6 +380,7 @@ def verify_evidence(path, archive, boot, *, command):
         require(key in observations, 'raw result lacks actual guest command')
         row = observations[key]
         if script is not None: require(row['script'] == script, 'claimed actual guest script differs')
+        transport.reject_typed_proof(raw)
         return checked(raw).read_text()
     def command_index(raw):
         key = (raw['path'], raw['sha256'])
@@ -585,7 +591,8 @@ def verify_evidence(path, archive, boot, *, command):
     return dict(scope='bound_ordinary_public_calls_fresh_independent_PCM_and_read_only_time_VDI_only',
         archive_sha256=sha(archive), boot_id=env['boot_id'], run_id=data['run_id'], roles=binding_results, phases=len(project.phases()),
         segments=metrics, first_frame_native_log_freshness_verified=False, physical_motor_or_HD_haptics_verified=False,
-        cross_generation_callback_gap_closed=False, first_artifact_behavior_gate_passed=False, ledger_closed=False)
+        cross_generation_callback_gap_closed=False, first_artifact_behavior_gate_passed=False, ledger_closed=False,
+        opaque_hilog_transport=list(transport.audit.values()))
 
 
 def main():

@@ -19,7 +19,7 @@ import batch_media_knowledge_project as project
 import batch_media_knowledge_runtime as runtime
 import batch_system_build_runtime_helpers as product
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
-from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node, command_exit
+from guest_ui import GuestUi, GuestUiCommandError, LayoutNotReady, NodeNotReady, select_node, command_exit
 from hdc_transport import failed
 from hap_identity_binding import verify_hap_token_identity
 
@@ -101,15 +101,18 @@ def exact_script(row, script):
     return shell_body(row)
 
 
-def verify_commands(rows, hdc, target):
-    for row in rows:
+def verify_commands(rows, hdc, target, *, capture_transitions=()):
+    for index, row in enumerate(rows):
         require(type(row.get('exit_code')) is int and row['exit_code'] == 0 and not row.get('timed_out'), 'command failed/timed out')
         raw = checked(row['raw']).read_text(); argv = row['argv']
         if argv[0] != hdc:
             continue  # Signatures are independently replayed, never trusted from these logs.
         require(len(argv) >= 4 and argv[1:3] == ['-t', target] and not failed(raw), 'guest transport escaped actual owned target')
         if argv[3] == 'shell':
-            if row.get('layout_transition'):
+            if 'capture_transition' in row:
+                require(index in capture_transitions and not row.get('layout_transition'), 'unbound capture transition refused')
+                capture_unavailable(row, hdc, target)
+            elif row.get('layout_transition'):
                 from batch_media_verify_wallpaper_runtime import layout_transition_unavailable
                 require(layout_transition_unavailable(argv, raw), 'only exact actual UITest window transition may fail')
             else:
@@ -121,6 +124,494 @@ def verify_commands(rows, hdc, target):
         else:
             require(argv[3] == 'file' and argv[4] in ('send', 'recv'), 'unknown guest operation')
 
+
+# The definitions in this source fragment are inserted before Collector in the
+# candidate suite. They are not a separately imported runtime module.
+CAPTURE_RETRY_SCHEMA = 'knowledge-cleanup-readonly-capture/v2'
+CAPTURE_RETRY_SECONDS = 45
+CAPTURE_RETRY_ATTEMPTS = 3
+PIXELMAP_UNAVAILABLE = 'ScreenCap failed: Failed to get display pixelMap'
+UI_REMOTE = r'/data/local/tmp/qemu-capability-ui-([a-f0-9]{32})-([1-9][0-9]*)'
+
+
+def capture_shell_argv(argv, hdc, target):
+    """Decode the entire literal GuestUi shell wrapper, never just its prefix."""
+    require(type(argv) is list and len(argv) == 5 and all(type(v) is str for v in argv) and
+            argv[:4] == [hdc,'-t',target,'shell'], 'exact owned shell argv required')
+    parts=argv[4].split('; task_ui_rc=$?; printf ')
+    markers=re.findall(r'__UITEST_EXIT_[a-f0-9]{32}__=',argv[4])
+    require(len(parts) == 2 and len(markers) == 1 and
+            parts[1] == '"\\n'+markers[0]+'%s\\n" "$task_ui_rc"',
+            'complete canonical shell wrapper rejects extra operations or substitutions')
+    return parts[0],markers[0]
+
+
+def capture_shell_record(row, hdc, target):
+    require(type(row.get('exit_code')) is int and row['exit_code'] == 0 and row.get('timed_out') is False,
+            'capture protocol requires actual transport0 without timeout')
+    script,marker=capture_shell_argv(row['argv'],hdc,target)
+    body,code=command_exit(checked(row['raw']).read_text(),marker)
+    return script,body,code
+
+
+def capture_unavailable(row, hdc, target):
+    """Only exact actual screenCap pixelMap guest1; never transport/nonce loss."""
+    require(type(row.get('exit_code')) is int and row['exit_code'] == 0 and
+            row.get('timed_out') is False and row.get('label') == 'cleanup-run-compositor-capture',
+            'capture retry requires successful actual transport')
+    script,body,code=capture_shell_record(row,hdc,target)
+    match = re.fullmatch(r'test ! -e (' + UI_REMOTE + r'\.png) && uitest screenCap -p \1', script)
+    require(match is not None, 'only one exact fresh-path screenCap invocation may retry')
+    require(code == 1 and body == PIXELMAP_UNAVAILABLE + '\n',
+            'only actual pixelMap-unavailable guest1 may retry')
+    return match[1]
+
+
+def capture_window(node, ams, bundle):
+    """Bind actual node window/display and one foreground PAGE record separately.
+
+    hostWindowId is not equated to a mission ID or an AbilityRecord ID.
+    """
+    require(node.get('bundle') == bundle and node['attributes'].get('id') == 'knowledge_run',
+            'actual query Run node required for capture preparation')
+    attrs = node['attributes']
+    require(type(attrs.get('hostWindowId')) is str and re.fullmatch('[1-9][0-9]*', attrs['hostWindowId']) and
+            type(attrs.get('displayId')) is str and re.fullmatch('[0-9]+', attrs['displayId']),
+            'actual node window/display identity missing')
+    require(type(ams) is str, 'actual complete AMS text required')
+    lines=ams.splitlines()
+    require(lines and lines[0] == 'User ID #100' and
+            sum(line.startswith('User ID #') for line in lines) == 1,
+            'one exact account100 AMS heading required')
+    headers=[i for i,line in enumerate(lines) if line == '  current mission lists:{']
+    require(len(headers) == 1, 'one actual current mission list required')
+    start=headers[0]+1;ends=[i for i in range(start,len(lines)) if lines[i].strip() == '}']
+    require(ends, 'complete current mission list boundary required')
+    section=lines[start:ends[0]];matches=[];mission_seen=False;i=0
+    def field(block,name,pattern):
+        selected=[line for line in block if line.startswith('        '+name+' ')]
+        require(len(selected) == 1, 'missing/duplicate own PAGE '+name)
+        match=re.fullmatch('        '+pattern,selected[0])
+        require(match is not None, 'malformed own PAGE '+name)
+        return match[1]
+    while i < len(section):
+        line=section[i]
+        if re.fullmatch(r'    Mission ID #[0-9]+\b.*',line):mission_seen=True;i+=1;continue
+        found=re.fullmatch(r'      AbilityRecord ID #([0-9]+)',line)
+        if 'AbilityRecord ID #' in line:
+            require(found is not None and mission_seen, 'own PAGE must be a standalone record under its mission')
+        if found is None:i+=1;continue
+        end=i+1
+        while end < len(section) and section[end].startswith('        '):end+=1
+        block=section[i+1:end]
+        app=field(block,'app name',r'app name \[([^\[\]]+)\]')
+        main=field(block,'main name',r'main name \[([^\[\]]+)\]')
+        own_bundle=field(block,'bundle name',r'bundle name \[([^\[\]]+)\]')
+        kind=field(block,'ability type',r'ability type \[([^\[\]]+)\]')
+        state=field(block,'state',r'state #([A-Z_]+)(?:  start time \[[0-9]+\])?')
+        if own_bundle == bundle or app == bundle:
+            require((app,own_bundle,main,kind,state) == (bundle,bundle,'EntryAbility','PAGE','FOREGROUND'),
+                    'query PAGE must carry its own unique foreground fields')
+            matches.append(found[1])
+        i=end
+    require(len(matches) == 1, 'one actual foreground query EntryAbility required')
+    return dict(host_window_id=attrs['hostWindowId'], display_id=attrs['displayId'], ability_record_id=matches[0])
+
+
+def capture_retry_indices(value):
+    """Structural prebinding only; full raw/window/boot checks run below.
+
+    A flagged command alone never grants an exception to verify_commands.
+    """
+    guards = value.get('capture_retries', [])
+    require(type(guards) is list and len(guards) <= 1, 'one normal cleanup capture preparation only')
+    cleanup_actions=[i for i,row in enumerate(value['ui_actions']) if
+                     (row.get('phase'),row.get('kind'),row.get('bundle')) == ('cleanup','run',project.ROLES['query'][0])]
+    require(len(cleanup_actions) <= 1 and len(guards) == len(cleanup_actions),
+            'current cleanup Run requires its actual v2 deadline/dispatch receipt even without a retry')
+    accepted = set(); linked_actions = set()
+    for index, guard in enumerate(guards):
+        fields = {'schema','run_id','boot_id','request','phase','kind','bundle','action_index','attempts','outcome','click_command',
+                  'started_monotonic','deadline_monotonic','accepted_monotonic','dispatch_monotonic'}
+        require(type(guard) is dict and set(guard) == fields and guard['schema'] == CAPTURE_RETRY_SCHEMA and
+                guard['run_id'] == value['run_id'] and guard['boot_id'] == value['boot_id'] and
+                guard['phase'] == 'cleanup' and guard['kind'] == 'run' and
+                guard['bundle'] == project.ROLES['query'][0] and guard['outcome'] == 'complete',
+                'complete exact same-run cleanup capture receipt required')
+        ai = guard['action_index']; require(type(ai) is int and 0 <= ai < len(value['ui_actions']) and ai not in linked_actions,
+                                           'capture receipt needs one actual UI action')
+        action = value['ui_actions'][ai]; linked_actions.add(ai)
+        require(type(action.get('capture_retry')) is int and action['capture_retry'] == index and
+                (action['phase'],action['kind'],action['bundle']) == ('cleanup','run',guard['bundle']) and
+                action['selector'] == {'identifier':'knowledge_run'} and action['title'] is None and
+                type(guard['click_command']) is int and 0 <= guard['click_command'] < len(value['commands']) and
+                guard['click_command'] == action['command'], 'capture receipt/action binding differs')
+        phases = [r for r in value['phases'] if r['phase'] == 'cleanup']
+        require(len(phases) == 1 and phases[0].get('complete') is True and
+                phases[0]['role'] == 'query' and phases[0]['request'] == guard['request'],
+                'capture receipt must bind the sole original complete cleanup request')
+        attempts = guard['attempts']; require(type(attempts) is list and 1 <= len(attempts) <= CAPTURE_RETRY_ATTEMPTS,
+                                             'finite capture attempt count required')
+        clock=[guard[k] for k in ('started_monotonic','deadline_monotonic','accepted_monotonic','dispatch_monotonic')]
+        require(all(type(t) in (int,float) and 0 <= t < float('inf') for t in clock) and
+                guard['deadline_monotonic'] == guard['started_monotonic']+CAPTURE_RETRY_SECONDS and
+                guard['started_monotonic'] <= guard['accepted_monotonic'] <= guard['dispatch_monotonic'] <= guard['deadline_monotonic'],
+                'actual original deadline and final acceptance/dispatch checks required')
+        previous = None
+        for number, attempt in enumerate(attempts):
+            fields = {'index','started_monotonic','finished_monotonic','boot_before','boot_after','layout','layout_command',
+                      'selected_node','ams','window','capture_command','outcome'}
+            success = number == len(attempts)-1
+            if success: fields |= {'screenshot','screenshot_command','screenshot_guest_hash'}
+            require(type(attempt) is dict and set(attempt) == fields and type(attempt['index']) is int and
+                    attempt['index'] == number and attempt['outcome'] == ('success' if success else 'pixelmap_unavailable'),
+                    'actual ordered capture attempts must end in exactly one success')
+            start,end = attempt['started_monotonic'],attempt['finished_monotonic']
+            require(type(start) in (int,float) and type(end) in (int,float) and
+                    0 <= start <= end < float('inf') and (previous is None or start > previous),
+                    'finite nonoverlapping actual capture times required')
+            previous = end
+            ci = attempt['capture_command']; require(type(ci) is int and 0 <= ci < len(value['commands']),
+                                                     'actual capture command index required')
+            if not success:
+                marker=value['commands'][ci].get('capture_transition')
+                require(type(marker) is dict and set(marker) == {'retry','attempt'} and
+                        all(type(marker[k]) is int for k in marker) and ci not in accepted and
+                        marker == {'retry':index,'attempt':number},
+                        'each transient command needs one exact retry/attempt binding')
+                accepted.add(ci)
+        require(attempts[-1]['finished_monotonic']-attempts[0]['started_monotonic'] <= CAPTURE_RETRY_SECONDS,
+                'capture budget exhausted; no UI action may be accepted')
+        require(guard['started_monotonic'] <= attempts[0]['started_monotonic'] and
+                attempts[-1]['finished_monotonic'] <= guard['accepted_monotonic'],
+                'dispatch acceptance must follow actual prepared/persisted attempts')
+        for name in ('layout','layout_command','selected_node','ams','screenshot','screenshot_command','screenshot_guest_hash'):
+            require(action[name] == attempts[-1][name], 'final action replaced actual successful preparation')
+        require(attempts[-1]['capture_command'] == action['screenshot_command']-1,
+                'successful capture must immediately precede actual transfer')
+        dispatch=value['commands'][guard['click_command']].get('capture_dispatch')
+        require(type(dispatch) is dict and set(dispatch) == {'retry','accepted_monotonic','dispatch_monotonic','deadline_monotonic'} and
+                type(dispatch['retry']) is int and dispatch['retry'] == index and
+                all(type(dispatch[k]) in (int,float) for k in ('accepted_monotonic','dispatch_monotonic','deadline_monotonic')) and
+                all(dispatch[k] == guard[k] for k in ('accepted_monotonic','dispatch_monotonic','deadline_monotonic')),
+                'one actual click-constructor dispatch timestamp must join the receipt')
+    require({i for i,r in enumerate(value['ui_actions']) if 'capture_retry' in r} == linked_actions,
+            'unbound/duplicate capture action receipt')
+    require({i for i,r in enumerate(value['commands']) if 'capture_transition' in r} == accepted,
+            'unbound capture-transition annotation cannot excuse a guest error')
+    require({i for i,r in enumerate(value['commands']) if 'capture_dispatch' in r} == {g['click_command'] for g in guards},
+            'unbound/extra public dispatch timestamp')
+    return accepted
+
+
+def verify_capture_phase_commands(value, guard, phase, env, data, observed, observations,
+                                  begin, end, stage, scripts, hashed, first, last, journal_index):
+    """Consume the complete original cleanup program, never classify shell by absence."""
+    commands=value['commands'];hdc,target=value['hdc'],env['target'];bundle=project.ROLES['query'][0]
+    consumed=set();namespace=None;sequence=0
+    def take(index, script, *, code=0):
+        require(type(index) is int and begin <= index <= end and index not in consumed,
+                'phase command missing, reused or outside its actual boundary')
+        actual,body,actual_code=capture_shell_record(commands[index],hdc,target)
+        require(actual == script and actual_code == code,
+                'unconsumed or changed canonical phase operation')
+        consumed.add(index);return actual,body.rstrip('\n')
+    def observation(row, script, at=None):
+        body=observed(row,script);index=observations[(row['path'],row['sha256'])]['command']
+        require(at is None or index == at, 'typed observation moved outside original program order')
+        _,actual=take(index,script);require(actual == body, 'typed phase observation differs from actual bytes')
+        return body,index
+    def remote(path, suffix):
+        nonlocal namespace,sequence
+        match=re.fullmatch(UI_REMOTE+re.escape(suffix),path)
+        require(match is not None, 'actual fresh UI path required')
+        if namespace is None:namespace=match[1]
+        require(match[1] == namespace and int(match[2]) > sequence,
+                'phase UI namespace changed or a fresh UI target was reused')
+        sequence=int(match[2]);return path
+    def dump(index):
+        script,_,code=capture_shell_record(commands[index],hdc,target)
+        match=re.fullmatch(r'test ! -e ('+UI_REMOTE+r'\.json) && uitest dumpLayout -p \1',script)
+        require(match is not None, 'only the actual fresh layout constructor may poll readiness')
+        path=remote(match[1],'.json')
+        if code == 1:
+            require(commands[index].get('layout_transition') is True and
+                    capture_shell_record(commands[index],hdc,target)[1].strip() == 'DumpLayout failed:Get window nodes failed',
+                    'only the original typed layout transition may omit its read')
+            take(index,script,code=1);return path,False
+        take(index,script);return path,True
+    def wait_layout(start, stop):
+        require(start < stop, 'actual pre-stage/retry readiness layout is required')
+        index=start;ready=False
+        while index < stop:
+            require(not ready, 'readiness polling continued after the actual selected Run node')
+            path,readable=dump(index);index+=1
+            if not readable:continue
+            require(index < stop, 'successful layout constructor lost its actual read')
+            _,body=take(index,'cat '+path);tree=json.loads(body);index+=1
+            try:ready_node(tree,bundle,identifier='knowledge_run',clickable=True)
+            except NodeNotReady:pass
+            else:ready=True
+        require(index == stop and ready, 'actual final readiness node was unavailable')
+    def transfer(index, source, destination):
+        row=commands[index]
+        require(index not in consumed and type(row.get('exit_code')) is int and row['exit_code'] == 0 and
+                row.get('timed_out') is False and
+                row['argv'] == [hdc,'-t',target,'file','recv',source,str(destination)],
+                'only its bound original compositor receive may occur')
+        checked(row['raw']);consumed.add(index)
+    def diagnostic(row, start, stop):
+        # The original independent diagnostic verifier remains mandatory. A caught
+        # failure can retain only a finite prefix of this one readonly program.
+        verify_diagnostic(row,'query',commands,hdc,target,observed)
+        require(row.get('reason') == 'waiting for actual journal' and
+                set(row) <= {'reason','diagnostic_only','journal_absence_proves_no_side_effect','layout',
+                             'layout_command','status','screenshot','screenshot_command','screenshot_guest_hash','ams','capture_error'},
+                'unrecognized complete-phase diagnostic contract')
+        count=stop-start;error='capture_error' in row
+        require(type(count) is int and 0 <= count <= 6 and
+                (not error or type(row['capture_error']) is str), 'diagnostic prefix length/error differs')
+        if not error:require(count == 6 and all(k in row for k in ('layout','screenshot','screenshot_guest_hash','ams')),
+                             'complete diagnostic must consume its full readonly program')
+        if 'layout' not in row:
+            require(error and count <= 2 and not any(k in row for k in
+                    ('layout_command','status','screenshot','screenshot_command','screenshot_guest_hash','ams')),
+                    'diagnostic without layout claimed later actual operations')
+        else:
+            require(count >= 2 and type(row.get('layout_command')) is int and row['layout_command'] == start+1,
+                    'diagnostic layout is not its actual first dump/read pair')
+        if count:
+            path,readable=dump(start)
+            require(readable or count == 1, 'failed diagnostic layout cannot have later commands')
+        if count >= 2:
+            _,body=take(start+1,'cat '+path)
+            if 'layout' in row:require(json.loads(body) == signatures.load(checked(row['layout'])),
+                                      'diagnostic layout bytes differ')
+        if 'screenshot' in row:
+            require(count >= 5 and type(row.get('screenshot_command')) is int and row['screenshot_command'] == start+3,
+                    'diagnostic screenshot is not its actual capture/receive')
+        else:
+            require(error and count <= 4 and not any(k in row for k in ('screenshot_command','screenshot_guest_hash','ams')),
+                    'diagnostic without screenshot claimed later actual operations')
+        if count >= 3:
+            script,_,code=capture_shell_record(commands[start+2],hdc,target)
+            match=re.fullmatch(r'test ! -e ('+UI_REMOTE+r'\.png) && uitest screenCap -p \1',script)
+            require(match is not None, 'diagnostic may only create its fresh readonly screenshot')
+            screen_remote=remote(match[1],'.png');take(start+2,script)
+        if count >= 4:
+            number=re.fullmatch(UI_REMOTE+r'\.png',screen_remote)[2]
+            local=Path(phase['request']['path']).parent/'ui'/(number.zfill(3)+'-'+phase['phase']+'-diagnostic.png')
+            if 'screenshot' in row:require(checked(row['screenshot']) == local, 'diagnostic local screenshot path differs from original GuestUi')
+            transfer(start+3,screen_remote,local)
+        if count >= 5:
+            digest,_=observation(row['screenshot_guest_hash'],'sha256sum '+shlex.quote(screen_remote),start+4)
+            require(digest.split() == [sha(checked(row['screenshot'])),screen_remote], 'diagnostic actual screenshot SHA differs')
+        if 'ams' in row:
+            require(count == 6, 'diagnostic AMS moved outside its original final position')
+            observation(row['ams'],'aa dump -a -u 100',start+5)
+        else:require(error and count <= 5, 'diagnostic lost its actual final AMS observation')
+    def poll(row, index):
+        marker=row['sentinel'];remote_journal='/data/app/el2/100/base/'+bundle+'/files/knowledge-'+data['run_id']+'.jsonl'
+        require(row['role'] == 'query' and row['remote'] == remote_journal and type(marker) is str and
+                re.fullmatch('__KNOWLEDGE_EOF_[a-f0-9]{32}__',marker), 'phase poll changed role/path/EOF identity')
+        script='if test -f '+shlex.quote(remote_journal)+'; then cat '+shlex.quote(remote_journal)+' || exit 1; fi && printf '+shlex.quote('\n'+marker+'\n')
+        text,_=observation(row['observation'],script,index);journal_text=checked(row['raw']).read_text()
+        require(text == journal_text+'\n'+marker and text.count(marker) == 1, 'phase poll lost original complete raw journal bytes')
+        if journal_text.endswith('\n'):
+            operation_id=signatures.load(checked(guard['request']))['operation_id']
+            operation=[r for r in map(json.loads,journal_text.splitlines()) if r.get('operation_id') == operation_id]
+            require(not any(r.get('event') == 'error' for r in operation), 'phase poll contains actual operation error')
+            require(not operation or operation[-1].get('event') != 'complete' or index == journal_index,
+                    'phase kept polling/diagnosing after its original completion')
+
+    observation(phase['begin_boot'],'cat /proc/sys/kernel/random/boot_id',begin)
+    observation(phase['end_boot'],'cat /proc/sys/kernel/random/boot_id',end)
+    take(begin+1,'aa start -b '+bundle+' -a EntryAbility')
+    send=stage['command'];wait_layout(begin+2,send-1)
+    for index,script in scripts.items():take(index,script)
+    row=commands[send]
+    require(row['argv'] == [hdc,'-t',target,'file','send',str(checked(guard['request'])),stage['sent_remote']] and
+            type(row.get('exit_code')) is int and row['exit_code'] == 0 and row.get('timed_out') is False,
+            'phase original send changed')
+    checked(row['raw']);consumed.add(send)
+    observation(stage['guest_hash'],'sha256sum '+shlex.quote(stage['remote']),hashed)
+    require('curator_pid_before' in phase, 'typed cleanup curator PID observation is mandatory')
+    pid,pid_index=observation(phase['curator_pid_before'],'pidof '+project.ROLES['curator'][0],hashed+1)
+    require(re.fullmatch('[1-9][0-9]*',pid) and first == pid_index+1,
+            'phase requires its typed retained curator PID before capture preparation')
+    cursor=first
+    for attempt in guard['attempts']:
+        observation(attempt['boot_before'],'cat /proc/sys/kernel/random/boot_id',cursor)
+        li=attempt['layout_command'];wait_layout(cursor+1,li+1)
+        observation(attempt['ams'],'aa dump -a -u 100',li+1)
+        ci=attempt['capture_command'];require(ci == li+2, 'extra operation between actual layout, AMS and capture')
+        if attempt['outcome'] == 'pixelmap_unavailable':
+            path=remote(capture_unavailable(commands[ci],hdc,target),'.png')
+            script='test ! -e '+path+' && uitest screenCap -p '+path;take(ci,script,code=1);cursor=ci+1
+        else:
+            receive=attempt['screenshot_command'];require(receive == ci+1, 'successful capture lost its one immediate receive')
+            path=remote(commands[receive]['argv'][-2],'.png')
+            take(ci,'test ! -e '+path+' && uitest screenCap -p '+path)
+            transfer(receive,path,checked(attempt['screenshot']))
+            observation(attempt['screenshot_guest_hash'],'sha256sum '+shlex.quote(path),ci+2);cursor=ci+3
+        observation(attempt['boot_after'],'cat /proc/sys/kernel/random/boot_id',cursor);cursor+=1
+    require(cursor == last+1 == guard['click_command'], 'phase retry commands were not consumed exactly once')
+    x,y,width,height=value['ui_actions'][guard['action_index']]['selected_node']['rect']
+    take(cursor,f'uitest uiInput click {x+width//2} {y+height//2}');cursor+=1
+    polls=[]
+    for row in value['journals']:
+        index=observations[(row['observation']['path'],row['observation']['sha256'])]['command']
+        if guard['click_command'] < index < end:polls.append((index,row))
+    polls.sort(key=lambda item:item[0])
+    require(polls and polls[0][0] == cursor and polls[-1][0] == journal_index and
+            len({i for i,_ in polls}) == len(polls), 'phase needs unique actual consecutive journal polling records')
+    diagnostics=phase.get('diagnostics',[]);require(type(diagnostics) is list, 'typed diagnostic list required');di=0
+    for number,(index,row) in enumerate(polls):
+        require(index == cursor, 'unconsumed operation before original phase journal poll');poll(row,index);cursor+=1
+        stop=polls[number+1][0] if number+1 < len(polls) else end
+        if number+1 < len(polls):
+            if cursor < stop or (di < len(diagnostics) and 'layout' not in diagnostics[di] and 'capture_error' in diagnostics[di]):
+                require(di < len(diagnostics), 'readonly diagnostic commands have no independent phase record')
+                diagnostic(diagnostics[di],cursor,stop);di+=1;cursor=stop
+        else:require(cursor == stop, 'unconsumed operation after original complete journal')
+    require(di == len(diagnostics) and consumed == set(range(begin,end+1)),
+            'every command in the cleanup phase must be consumed by its original typed program')
+
+def verify_capture_request_order(value, guard, env, data, observed, observations, first, last):
+    """Join the original actual publication, sole click and complete operation."""
+    commands=value['commands'];hdc,target=value['hdc'],env['target'];bundle=project.ROLES['query'][0]
+    phase=[r for r in value['phases'] if r['phase'] == 'cleanup'][0]
+    def observation(row,script):
+        body=observed(row,script);index=observations[(row['path'],row['sha256'])]['command']
+        actual,raw,code=capture_shell_record(commands[index],hdc,target)
+        require(actual == script and code == 0 and raw.rstrip('\n') == body,
+                'request order needs exact canonical actual observation')
+        return body,index
+    begin_body,begin=observation(phase['begin_boot'],'cat /proc/sys/kernel/random/boot_id')
+    end_body,end=observation(phase['end_boot'],'cat /proc/sys/kernel/random/boot_id')
+    require(begin_body == end_body == env['boot_id'], 'cleanup request crossed actual boot')
+    request=signatures.load(checked(guard['request']))
+    require(type(request.get('operation_id')) is str and re.fullmatch('[a-f0-9]{32}',request['operation_id']),
+            'original request operation nonce required')
+    bms=value['capture']['roles']['query']['bms']
+    identity=bms_identity(observed(bms,'bm dump -n '+bundle),'query')
+    staged=[r for r in value['staged'] if r['local'] == guard['request']]
+    require(len(staged) == 1, 'one actual send/publication of the exact original request required')
+    stage=staged[0];destination='/data/app/el2/100/base/'+bundle+'/files/knowledge-request.json'
+    require(set(stage) == {'local','remote','sent_remote','uid','mode','command','guest_hash'} and
+            stage['remote'] == destination and type(stage['uid']) is int and stage['uid'] == identity['uid'] and
+            stage['mode'] == '600' and type(stage['command']) is int and stage['command'] > 0 and
+            re.fullmatch(re.escape(destination)+r'\.[a-f0-9]{16}\.tmp',stage['sent_remote']),
+            'actual request stage identity/path/mode differs')
+    send=stage['command'];temp=stage['sent_remote'];local=checked(guard['request'])
+    require(send+3 < len(commands) and commands[send]['argv'] == [hdc,'-t',target,'file','send',str(local),temp] and
+            type(commands[send].get('exit_code')) is int and commands[send]['exit_code'] == 0 and
+            commands[send].get('timed_out') is False, 'actual original request send failed or changed')
+    scripts={send-1:'test ! -e '+shlex.quote(temp)+' && test ! -L '+shlex.quote(temp),
+             send+1:'chown '+str(identity['uid'])+':'+str(identity['uid'])+' '+shlex.quote(temp)+' && chmod 600 '+shlex.quote(temp),
+             send+2:'test ! -L '+shlex.quote(destination)+' && mv '+shlex.quote(temp)+' '+shlex.quote(destination)}
+    for index,expected in scripts.items():
+        script,body,code=capture_shell_record(commands[index],hdc,target)
+        require(script == expected and code == 0, 'actual request freshness/chown/publication differs')
+    digest,hashed=observation(stage['guest_hash'],'sha256sum '+shlex.quote(destination))
+    require(hashed == send+3 and digest.split() == [sha(local),destination],
+            'actual postpublication request SHA is missing or wrong')
+    journals=[r for r in value['journals'] if r['raw'] == phase['journal']]
+    require(len(journals) == 1 and journals[0]['role'] == 'query', 'same-phase actual cleanup journal missing')
+    journal=journals[0];marker=journal['sentinel'];remote='/data/app/el2/100/base/'+bundle+'/files/knowledge-'+data['run_id']+'.jsonl'
+    require(journal['remote'] == remote and type(marker) is str and re.fullmatch('__KNOWLEDGE_EOF_[a-f0-9]{32}__',marker),
+            'actual cleanup journal path/EOF differs')
+    script='if test -f '+shlex.quote(remote)+'; then cat '+shlex.quote(remote)+' || exit 1; fi && printf '+shlex.quote('\n'+marker+'\n')
+    text,journal_index=observation(journal['observation'],script);journal_text=checked(phase['journal']).read_text()
+    require(text == journal_text+'\n'+marker and text.count(marker) == 1, 'original complete journal transport differs')
+    parsed=runtime.parse_journal(journal_text,data['run_id'],env['boot_id'],'query')
+    group=[r for r in parsed if r['operation_id'] == request['operation_id']]
+    require(group and group[0]['event'] == 'begin' and group[-1]['event'] == 'complete' and
+            sum(r['event'] == 'begin' for r in group) == sum(r['event'] == 'complete' for r in group) == 1 and
+            group[0]['value'] == request and all(r['phase'] == 'cleanup' and r['uid'] == identity['uid'] and
+                                                r['token_id'] == identity['token_id'] for r in group),
+            'exact original request/operation/identity not complete in cleanup journal')
+    click=guard['click_command']
+    require(begin < send-1 < send < send+1 < send+2 < hashed < first <= last < click < journal_index < end,
+            'actual request publish+SHA must precede retry, sole click and cleanup journal/end')
+    verify_capture_phase_commands(value,guard,phase,env,data,observed,observations,
+                                  begin,end,stage,scripts,hashed,first,last,journal_index)
+    require([r for r in value['staged'] if r['remote'] == destination and begin < r['command'] < end] == [stage],
+            'request superseded or resent inside cleanup interval')
+
+
+def verify_capture_retries(value, env, data, observed, observations):
+    """Independently re-read every attempt; no public action inside retry span."""
+    commands = value['commands']; hdc,target = value['hdc'],env['target']
+    capture_retry_indices(value)
+    def observation_index(row, script):
+        require(observed(row,script) is not None, 'actual observation required')
+        return observations[(row['path'],row['sha256'])]['command']
+    for guard in value.get('capture_retries', []):
+        require(guard['run_id'] == data['run_id'] and guard['boot_id'] == env['boot_id'], 'capture run/boot changed')
+        request = signatures.load(checked(guard['request']))
+        require(request['run_id'] == data['run_id'] and request['boot_id'] == env['boot_id'] and
+                (request['phase'],request['role'],request['action']) == ('cleanup','query','query'),
+                'capture retry must not create or replace another public request')
+        windows=[]; remotes=[]; first=None; last=None; namespace=None
+        for attempt in guard['attempts']:
+            before = observation_index(attempt['boot_before'],'cat /proc/sys/kernel/random/boot_id')
+            after = observation_index(attempt['boot_after'],'cat /proc/sys/kernel/random/boot_id')
+            require(observed(attempt['boot_before']) == env['boot_id'] and observed(attempt['boot_after']) == env['boot_id'],
+                    'capture preparation crossed an actual kernel boot')
+            if first is None: first=before
+            require(last is None or before > last, 'capture attempts overlap or replay observations');last=after
+            li=attempt['layout_command'];ci=attempt['capture_command']
+            require(type(li) is int and before < li-1 < li < ci < after, 'capture layout/boot order invalid')
+            read=commands[li];script=read['argv'][4].split('; task_ui_rc=$?; printf ',1)[0]
+            match=re.fullmatch(r'cat ('+UI_REMOTE+r'\.json)',script)
+            require(match is not None, 'actual fresh UI layout path required')
+            if namespace is None: namespace=match[2]
+            require(match[2] == namespace, 'capture attempts changed actual UI namespace')
+            layout=signatures.load(checked(attempt['layout']))
+            require(json.loads(exact_script(read,script)) == layout, 'retry layout differs from actual guest bytes')
+            exact_script(commands[li-1],'test ! -e '+match[1]+' && uitest dumpLayout -p '+match[1])
+            node=select_node(layout,guard['bundle'],identifier='knowledge_run',clickable=True)
+            require(node == attempt['selected_node'], 'retry selected another UI node')
+            ams=observed(attempt['ams'],'aa dump -a -u 100');ai=observation_index(attempt['ams'],'aa dump -a -u 100')
+            require(li < ai < ci and capture_window(node,ams,guard['bundle']) == attempt['window'],
+                    'retry window/AMS binding differs')
+            windows.append(attempt['window'])
+            if attempt['outcome'] == 'pixelmap_unavailable':
+                remote=capture_unavailable(commands[ci],hdc,target)
+            else:
+                transfer=commands[attempt['screenshot_command']];remote=transfer['argv'][-2]
+                require(transfer['argv'] == [hdc,'-t',target,'file','recv',remote,str(checked(attempt['screenshot']))],
+                        'retry success must retain actual screenshot transfer')
+                exact_script(commands[ci],'test ! -e '+remote+' && uitest screenCap -p '+remote)
+                hi=observation_index(attempt['screenshot_guest_hash'],'sha256sum '+shlex.quote(remote))
+                require(ci+1 == attempt['screenshot_command'] < hi < after and
+                        observed(attempt['screenshot_guest_hash']).split() == [sha(checked(attempt['screenshot'])),remote],
+                        'retry success lost actual PNG transfer/hash/boot order')
+            match=re.fullmatch(UI_REMOTE+r'\.png',remote)
+            require(match is not None and match[1] == namespace and remote not in remotes,
+                    'each capture needs a fresh same-namespace PNG path');remotes.append(remote)
+        require(all(w == windows[0] for w in windows) and guard['click_command'] == last+1,
+                'capture window changed or actual single click did not follow final boot check')
+        verify_capture_request_order(value,guard,env,data,observed,observations,first,last)
+        capture_indexes={a['capture_command'] for a in guard['attempts']}
+        for command_index in range(first,last+1):
+            command=commands[command_index]
+            argv=command['argv'];require(argv[:3] == [hdc,'-t',target], 'retry readonly preparation escaped actual target')
+            if len(argv)==7 and argv[3:5] == ['file','recv']:
+                require(command_index == guard['attempts'][-1]['screenshot_command'] and argv[5] == remotes[-1],
+                        'only the one successful fresh PNG may transfer');continue
+            require(len(argv)==5 and argv[3]=='shell', 'no stage/send/public action allowed inside capture retry')
+            script,body,code=capture_shell_record(command,hdc,target)
+            paths=re.findall(UI_REMOTE+r'\.(?:json|png)',script)
+            require(all(challenge == namespace for challenge,number in paths), 'readonly preparation changed UI namespace')
+            if 'uitest screenCap' in script:
+                require(command_index in capture_indexes, 'extra capture constructor not bound to an actual attempt')
+            readonly=(script in ('cat /proc/sys/kernel/random/boot_id','aa dump -a -u 100') or
+                re.fullmatch(r'test ! -e ('+UI_REMOTE+r'\.json) && uitest dumpLayout -p \1',script) or
+                re.fullmatch(r'cat '+UI_REMOTE+r'\.json',script) or
+                any(script in ('test ! -e '+r+' && uitest screenCap -p '+r,'sha256sum '+r)for r in remotes))
+            require(readonly, 'capture retry must never repeat a request, click or public mutation')
 
 class Collector:
     def __init__(self, args, value):
@@ -146,6 +637,7 @@ class Collector:
         path = self.args.output / (str(len(self.value['commands'])).zfill(4) + '-' + label + '.log')
         row = dict(argv=argv, label=label, exit_code=None, timed_out=False)
         with path.open('x') as stream:
+            self.capture_dispatch326(argv, label, row)  # Last check: no IO before the original Popen.
             child = subprocess.Popen(argv, stdout=stream, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
             try: child.wait(timeout=300)
             except subprocess.TimeoutExpired:
@@ -244,18 +736,126 @@ class Collector:
                 time.sleep(.25)
         return tree, path, node
 
-    def click(self, bundle, control, kind, phase, *, title=None):
-        tree, path, node = self.wait_control(bundle, control, kind, phase, title=title)
-        layout_command = len(self.value['commands']) - 1
-        ams = self.observe('aa dump -a -u 100', phase + '-' + kind + '-AMS')
-        if kind == 'consent': photos_connection(checked(ams).read_text())
-        screenshot = record(self.ui.screenshot(label=phase + '-' + kind))
-        screenshot_command = len(self.value['commands']) - 1
-        screenshot_remote = self.value['commands'][screenshot_command]['argv'][-2]
-        screenshot_hash = self.observe('sha256sum ' + shlex.quote(screenshot_remote), phase + '-' + kind + '-screen-sha')
-        require(checked(screenshot_hash).read_text().split() == [screenshot['sha256'], screenshot_remote], 'actual screenshot transfer bytes differ')
+    def capture_dispatch326(self, argv, label, row):
+        """Last source-level check after health/open, immediately before Popen.
+
+        No persistence or other IO may be added after this check before the
+        original constructor call. This is dispatch admission, not a hard guest
+        completion timeout or an independently sampled kernel birth time.
+        """
+        pending=getattr(self,'pending_capture_dispatch326',None)
+        if pending is None:return
+        require(type(pending) is dict and set(pending) == {'retry','script'} and type(pending['retry']) is int,
+                'exact pending one-click dispatch required')
+        index=pending['retry'];guard=self.value['capture_retries'][index]
+        script,marker=capture_shell_argv(argv,str(self.args.hdc),self.guest.target)
+        require(label == 'cleanup-run-click' and script == pending['script'] and guard['outcome'] == 'prepared' and
+                guard['accepted_monotonic'] is not None and guard['dispatch_monotonic'] is None,
+                'pending capture gate cannot be consumed by another command')
+        dispatch=time.monotonic()
+        require(guard['started_monotonic'] <= guard['accepted_monotonic'] <= dispatch <= guard['deadline_monotonic'],
+                'capture dispatch budget exhausted before actual constructor')
+        guard['dispatch_monotonic']=dispatch
+        row['capture_dispatch']=dict(retry=index,accepted_monotonic=guard['accepted_monotonic'],
+                                     dispatch_monotonic=dispatch,deadline_monotonic=guard['deadline_monotonic'])
+        self.pending_capture_dispatch326=None
+
+    def prepare_cleanup_capture(self, bundle, control, phase, title, request):
+        """Retry only readonly preparation; phase/request publication stays outside."""
+        require((phase,bundle,control,title) == ('cleanup',project.ROLES['query'][0],{'identifier':'knowledge_run'},None),
+                'capture preparation is only the original query cleanup Run action')
+        payload=signatures.load(checked(request))
+        require(payload['run_id'] == self.data['run_id'] and payload['boot_id'] == self.env['boot_id'] and
+                (payload['phase'],payload['role'],payload['action']) == ('cleanup','query','query'),
+                'capture preparation needs the already-published original request')
+        guards=self.value.setdefault('capture_retries',[]);index=len(guards);start=time.monotonic()
+        guard=dict(schema=CAPTURE_RETRY_SCHEMA,run_id=self.data['run_id'],boot_id=self.env['boot_id'],request=request,
+                   phase=phase,kind='run',bundle=bundle,action_index=len(self.value['ui_actions']),attempts=[],
+                   outcome='preparing',click_command=None,started_monotonic=start,
+                   deadline_monotonic=start+CAPTURE_RETRY_SECONDS,accepted_monotonic=None,dispatch_monotonic=None)
+        guards.append(guard);self.persist();first_window=None
+        try:
+            for number in range(CAPTURE_RETRY_ATTEMPTS):
+                require(time.monotonic()-start <= CAPTURE_RETRY_SECONDS, 'capture preparation budget exhausted')
+                attempt=dict(index=number,started_monotonic=time.monotonic(),outcome='preparing')
+                guard['attempts'].append(attempt);self.persist()
+                attempt['boot_before']=self.identity('cleanup-capture-'+str(number)+'-boot-before')
+                tree,path,node=self.wait_control(bundle,control,'run',phase,title=title)
+                li=len(self.value['commands'])-1
+                ams=self.observe('aa dump -a -u 100','cleanup-run-AMS')
+                window=capture_window(node,checked(ams).read_text(),bundle)
+                if first_window is None:first_window=window
+                require(window == first_window, 'actual cleanup window changed during readonly capture preparation')
+                attempt.update(layout=record(path),layout_command=li,selected_node=node,ams=ams,window=window)
+                self.persist()
+                try:
+                    screenshot=record(self.ui.screenshot(label='cleanup-run'))
+                except GuestUiCommandError as error:
+                    attempt['capture_command']=len(self.value['commands'])-1
+                    attempt['outcome']='failed'
+                    self.persist()
+                    if error.exit_code != 1 or error.output != PIXELMAP_UNAVAILABLE:raise
+                    try:capture_unavailable(self.value['commands'][attempt['capture_command']],str(self.args.hdc),self.guest.target)
+                    except ValueError:raise error
+                    attempt['boot_after']=self.identity('cleanup-capture-'+str(number)+'-boot-after')
+                    attempt.update(outcome='pixelmap_unavailable',finished_monotonic=time.monotonic())
+                    self.value['commands'][attempt['capture_command']]['capture_transition']={'retry':index,'attempt':number}
+                    self.persist()
+                    if number+1 == CAPTURE_RETRY_ATTEMPTS or time.monotonic()-start > CAPTURE_RETRY_SECONDS:raise
+                    time.sleep(.25)
+                    continue
+                transfer=len(self.value['commands'])-1;remote=self.value['commands'][transfer]['argv'][-2]
+                digest=self.observe('sha256sum '+shlex.quote(remote),'cleanup-run-screen-sha')
+                require(checked(digest).read_text().split() == [screenshot['sha256'],remote],
+                        'actual screenshot transfer bytes differ')
+                attempt['boot_after']=self.identity('cleanup-capture-'+str(number)+'-boot-after')
+                attempt.update(capture_command=transfer-1,outcome='success',screenshot=screenshot,
+                               screenshot_command=transfer,screenshot_guest_hash=digest,finished_monotonic=time.monotonic())
+                require(time.monotonic()-start <= CAPTURE_RETRY_SECONDS, 'capture preparation budget exhausted')
+                guard['outcome']='prepared';self.persist()
+                return path,node,li,ams,screenshot,transfer,digest,index
+        except Exception as error:
+            guard['outcome']='failed';guard['failure']=type(error).__name__+': '+str(error);self.persist()
+            raise
+        raise ValueError('capture preparation exhausted without actual success')
+
+    def click(self, bundle, control, kind, phase, *, title=None, request=None):
+        retry_index = None
+        if phase == 'cleanup' and kind == 'run':
+            require(request is not None, 'cleanup capture requires its original published request')
+            path,node,layout_command,ams,screenshot,screenshot_command,screenshot_hash,retry_index = self.prepare_cleanup_capture(bundle,control,phase,title,request)
+        else:
+            tree, path, node = self.wait_control(bundle, control, kind, phase, title=title)
+            layout_command = len(self.value['commands']) - 1
+            ams = self.observe('aa dump -a -u 100', phase + '-' + kind + '-AMS')
+            if kind == 'consent': photos_connection(checked(ams).read_text())
+            screenshot = record(self.ui.screenshot(label=phase + '-' + kind))
+            screenshot_command = len(self.value['commands']) - 1
+            screenshot_remote = self.value['commands'][screenshot_command]['argv'][-2]
+            screenshot_hash = self.observe('sha256sum ' + shlex.quote(screenshot_remote), phase + '-' + kind + '-screen-sha')
+            require(checked(screenshot_hash).read_text().split() == [screenshot['sha256'], screenshot_remote], 'actual screenshot transfer bytes differ')
         x, y, w, h = node['rect']
-        self.shell(f'uitest uiInput click {x+w//2} {y+h//2}', phase + '-' + kind + '-click')
+        click_script=f'uitest uiInput click {x+w//2} {y+h//2}'
+        if retry_index is None:
+            self.shell(click_script, phase + '-' + kind + '-click')
+        else:
+            guard=self.value['capture_retries'][retry_index]
+            try:
+                # Final preparation persistence has completed. Recheck the SAME
+                # deadline now, then again inside command immediately before Popen.
+                accepted=time.monotonic();guard['accepted_monotonic']=accepted
+                require(guard['started_monotonic'] <= accepted <= guard['deadline_monotonic'],
+                        'capture acceptance budget exhausted after final persistence')
+                require(getattr(self,'pending_capture_dispatch326',None) is None, 'another public dispatch is pending')
+                self.pending_capture_dispatch326=dict(retry=retry_index,script=click_script)
+                self.shell(click_script, phase + '-' + kind + '-click')
+                require(self.pending_capture_dispatch326 is None and guard['dispatch_monotonic'] is not None,
+                        'public click did not pass its actual constructor deadline gate')
+            except Exception as error:
+                guard.update(outcome='failed',failure=type(error).__name__+': '+str(error));self.persist()
+                raise
+            finally:
+                self.pending_capture_dispatch326=None
         row = dict(phase=phase, kind=kind, bundle=bundle, selector=control, title=title, layout=record(path),
                    selected_node=node, screenshot=screenshot, ams=ams, command=len(self.value['commands']) - 1,
                    layout_command=layout_command, screenshot_command=screenshot_command, screenshot_guest_hash=screenshot_hash)
@@ -263,6 +863,9 @@ class Collector:
             from photos_dialog_contract import select_dialog
             label = inputs.role_label(self.value['artifacts_data']['projects']['importer'], 'importer')
             _, row['dialog_contract'] = select_dialog(tree, bundle, 'save', label=label, count=len(self.data['cases']))
+        if retry_index is not None:
+            row['capture_retry'] = retry_index
+            self.value['capture_retries'][retry_index].update(outcome='complete',click_command=row['command'])
         self.value['ui_actions'].append(row); self.persist(); return row
 
     def phase_diagnostic(self, row, reason):
@@ -305,7 +908,7 @@ class Collector:
         self.wait_control(bundle, {'identifier': 'knowledge_run'}, 'ready', phase)
         self.stage(record(path), self.files(role) + '/knowledge-request.json', self.identities[role]['uid'], replace=True)
         if self.curator_pid is not None: row['curator_pid_before'] = self.pid()
-        self.click(bundle, {'identifier': 'knowledge_run'}, 'run', phase)
+        self.click(bundle, {'identifier': 'knowledge_run'}, 'run', phase, request=row['request'])
         plan = self.value['ui_plan_data']
         try:
             for dialog in plan['permissions'][role] if request['action'] == 'permission' else []:
@@ -639,7 +1242,8 @@ def run(args):
 def verify_transport(value, spec, env, data):
     """Re-read actual command bytes, not normalized capture status fields."""
     commands = value['commands']; target = env['target']; hdc = value['hdc']
-    verify_commands(commands, hdc, target)
+    capture_transitions = capture_retry_indices(value)
+    verify_commands(commands, hdc, target, capture_transitions=capture_transitions)
     observations = {}
     for row in value['observations']:
         require(type(row['command']) is int and 0 <= row['command'] < len(commands), 'actual observation command missing')
@@ -654,6 +1258,7 @@ def verify_transport(value, spec, env, data):
         row = observations[key]
         if script is not None: require(row['script'] == script, 'claimed observer script differs')
         return checked(raw).read_text()
+    verify_capture_retries(value, env, data, observed, observations)
     for row in value['journals']:
         marker = row['sentinel']
         remote_journal = '/data/app/el2/100/base/' + project.ROLES[row['role']][0] + '/files/knowledge-' + data['run_id'] + '.jsonl'
