@@ -41,7 +41,8 @@ int main() {
     for (int mode=0;mode<5;++mode) {
       Fixture f; f.renderer->Request(100); assert(f.handler->Next());
       sptr<IRemoteObject> remote=new IRemoteObject;
-      if(mode==2) remote->dead=true; if(mode==3) remote->allowDeath=false;
+      if(mode==2) remote->dead=true;
+      if(mode==3) remote->allowDeath=false;
       auto connection=f.client->calls.back().connection;
       connection->OnAbilityConnectDone(mode==4?AppExecFwk::ElementName("foreign.bundle"):AppExecFwk::ElementName(),
           mode==1?sptr<IRemoteObject>():remote,mode==0?-17:0);

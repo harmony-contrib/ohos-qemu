@@ -12,7 +12,6 @@ from pathlib import Path
 import re
 import secrets
 
-from PIL import Image, ImageDraw
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -151,6 +150,8 @@ def check_sdk(sdk):
 
 
 def make_challenge(output, calendar, provenance, run=None):
+    from PIL import Image, ImageDraw
+
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     run = run or secrets.token_hex(16)
