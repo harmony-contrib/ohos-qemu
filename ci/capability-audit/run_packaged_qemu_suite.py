@@ -201,6 +201,7 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
         save()
         from parallel_runtime_suite import (FAMILIES, TIMEOUTS, argv as capability_argv,
             boot_copy, load_plan, representative, verify_family)
+        completed_capability_probes = []  # Appended only after original after-health returns.
         if representative(environment):
             capability_plan = None
             plan_error = None
@@ -238,14 +239,42 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
                         'actual-' + family + '-complete-boundaries', timeout=TIMEOUTS[family])
                     verify_family(family, output / 'evidence.json', args.package_archive, environment)
                     check(family, output / 'evidence.json', [record])
+                completed_capability_probes.append(family)
         # Fixed root callable only: data plans cannot name executable hooks.
         if owned_select_hook is not None:
             if not representative(environment):
                 raise ValueError('owned select hook requires the representative actual guest')
             same_guest('before-owned-select375')
-            owned_select_hook(guest=guest, suite_report=report, suite_command=command,
-                same_guest=same_guest, save_suite=save, suite_work=work,
-                archive=args.package_archive.resolve())
+            not_passed = [name for name in FAMILIES if report['checks'].get(name, {}).get('status') != 'pass']
+            if not_passed:
+                # No Select operation is dispatched here. Reaching each append
+                # requires the original probe's actual after-health/cleanup return.
+                probes = report.get('independent_probes', {})
+                if (completed_capability_probes != list(FAMILIES) or not report['failures'] or
+                        any(probes.get(name, {}).get('status') not in ('pass', 'fail') or
+                            'fatal_health_error' in probes.get(name, {}) for name in FAMILIES) or
+                        any(probes[name]['status'] != 'fail' for name in not_passed)):
+                    raise ValueError('Select prerequisite failure lacks original completed healthy family probes')
+                deferred = dict(scope='Select375_not_dispatched_failed_original_family_prerequisite_ONLY',
+                    status='not_run_failed_family_prerequisite', dispatched=False,
+                    archive_sha256=report['package']['sha256'], boot_id=environment['boot_id'],
+                    failed_families=not_passed, completed_original_family_probes=completed_capability_probes,
+                    original_probe_results={name: dict(probes[name]) for name in FAMILIES},
+                    original_failures=list(report['failures']),
+                    first_artifact_behavior_gate_passed=False, ledger_closed=False)
+                evidence = work / 'select375-not-run.json'
+                with evidence.open('x') as stream:
+                    json.dump(deferred, stream, indent=2)
+                    stream.write('\n')
+                report.setdefault('supplemental_checks', {})['select375'] = dict(
+                    status=deferred['status'], evidence=str(evidence), sha256=checksum(evidence),
+                    dispatched=False, not_a_registered_first_artifact_or_gap_closure_check=True)
+                report.update(status='fail', first_artifact_behavior_gate_passed=False)
+                save()
+            else:
+                owned_select_hook(guest=guest, suite_report=report, suite_command=command,
+                    same_guest=same_guest, save_suite=save, suite_work=work,
+                    archive=args.package_archive.resolve())
             same_guest('after-owned-select375')
         native_definitions = guest.directory / 'native-gap-abi-image.json'
         native_abi_probe = work / 'native-gap-abi-build'

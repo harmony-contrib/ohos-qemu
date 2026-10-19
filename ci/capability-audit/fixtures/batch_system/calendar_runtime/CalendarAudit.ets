@@ -36,6 +36,9 @@ const RUN: string = '__RUN__';
 const CASES: string[] = ['cold-deny', 'cold-allow', 'warm', 'after-restart'];
 const LOW: Permissions[] = ['ohos.permission.READ_CALENDAR', 'ohos.permission.WRITE_CALENDAR'];
 const WHOLE: Permissions[] = ['ohos.permission.READ_WHOLE_CALENDAR'];
+const READ_EVENT_KEYS: (keyof calendarManager.Event)[] = ['id', 'type', 'title', 'startTime', 'endTime',
+  'isAllDay', 'location', 'description', 'reminderTime', 'recurrenceRule', 'attendee', 'service',
+  'identifier', 'isLunar', 'timeZone', 'instanceStartTime', 'instanceEndTime'];
 
 export class CalendarAudit {
   private context: common.UIAbilityContext;
@@ -181,7 +184,8 @@ export class CalendarAudit {
     this.record('accounts', 'CalendarManager.getAllCalendars+Calendar.getAccount', JSON.stringify(values.map(
       (calendar: calendarManager.Calendar): CalendarAccountObservation => ({ id: calendar.id, account: calendar.getAccount() }))));
     for (const calendar of values) {
-      this.api = 'Calendar.getEvents'; const events = await calendar.getEvents();
+      this.api = 'Calendar.getEvents'; const events = ROLE === 'observer'
+      ? await calendar.getEvents(undefined, READ_EVENT_KEYS) : await calendar.getEvents();
       const display: DisplayTime[] = events.map((event: calendarManager.Event): DisplayTime => ({
         id: event.id ?? -1, start: new Date(event.startTime).toLocaleString(), end: new Date(event.endTime).toLocaleString()
       }));

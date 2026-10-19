@@ -3040,6 +3040,25 @@ PY
   echo "full ${DEVICE_TYPE} source profile and runtime artifacts verified for ${product}"
 }
 
+verify_ace_cfi_native_closure() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  local cfi_arch
+  case "${PRODUCT}" in
+    armv7a_virt) cfi_arch=arm ;;
+    arm64_virt) cfi_arch=arm64 ;;
+    x86_64_virt) cfi_arch=x86_64 ;;
+    *) echo "unsupported full-profile ACE CFI product: ${PRODUCT}" >&2; return 2 ;;
+  esac
+  # Native object/archive/DSO evidence must precede normal full-source packaging,
+  # including a standalone packaging retry. Launcher rewrites return above.
+  python3 "${SCRIPT_DIR}/../ci/capability-audit/ace_cfi_closure_guard.py" \
+    --out "${SOURCE_ROOT}/out/${PRODUCT}" --arch "${cfi_arch}" \
+    --output "${SOURCE_ROOT}/out/${PRODUCT}/ace-cfi-closure.json"
+}
+
 case "${PRODUCT}" in
   armv7a_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
@@ -3081,6 +3100,8 @@ case "${PRODUCT}" in
     exit 2
     ;;
 esac
+
+verify_ace_cfi_native_closure
 
 if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
    [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
@@ -3172,6 +3193,11 @@ esac
 
 rm -rf "${PACKAGE_DIR}"
 mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}" "${TOOLS_OUT}"
+case "${DEVICE_TYPE_PROFILE}" in
+  qemu_phone_full_source|qemu_2in1_full_source)
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/ace-cfi-closure.json" "${PACKAGE_DIR}/ace-cfi-closure.json"
+    ;;
+esac
 cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
 cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"

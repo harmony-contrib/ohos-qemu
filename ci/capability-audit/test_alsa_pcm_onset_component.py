@@ -293,7 +293,16 @@ class PureFiles452(unittest.TestCase):
         x = subprocess.run(['patch', '-p1', '-i', str(diff)], cwd=destination,
                            capture_output=True, text=True, timeout=15)
         self.assertEqual(x.returncode, 0, x.stdout + x.stderr)
-        self.assertEqual(path.read_bytes(), SCRIPT.read_bytes())
+        # The historical452 patch remains immutable. Strip only the exact
+        # reviewed CFI wiring successor; every other build-script byte must still
+        # equal the complete452 postimage, so unknown edits remain rejected.
+        current = SCRIPT.read_text()
+        cfi_constants = 'QRCODE_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/commonlibrary/qrcode_generator/cfi_metadata/apply.sh"\nACE_SEC_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/bounds_checking_function/ace_cfi/apply.sh"\nARKUI_CFI_COVERAGE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/cfi_coverage/apply.sh"\n'
+        cfi_source_plan = '  bash "${QRCODE_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \\\n    2>&1 | tee "${CACHE_ROOT}/logs/apply_qrcode_cfi_metadata.log"\n  python3 "${QRCODE_CFI_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \\\n    2>&1 | tee "${CACHE_ROOT}/logs/verify_qrcode_cfi_metadata.log"\n  bash "${ACE_SEC_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \\\n    2>&1 | tee "${CACHE_ROOT}/logs/apply_ace_sec_cfi.log"\n  python3 "${ACE_SEC_CFI_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \\\n    2>&1 | tee "${CACHE_ROOT}/logs/verify_ace_sec_cfi.log"\n  bash "${ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \\\n    2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_cfi_coverage.log"\n  python3 "${ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \\\n    2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_cfi_coverage.log"\n'
+        for added in (cfi_constants, cfi_source_plan):
+            self.assertEqual(current.count(added), 1)
+            current = current.replace(added, '', 1)
+        self.assertEqual(path.read_bytes(), current.encode())
 
     def test_16_actual_build_array_query_block_records_exact_arg(self):
         # Execute only the literal newly added finite argv block. No build.sh,

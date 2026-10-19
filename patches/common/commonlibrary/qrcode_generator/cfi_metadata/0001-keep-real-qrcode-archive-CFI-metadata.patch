@@ -1,0 +1,16 @@
+--- a/commonlibrary/qrcode_generator/BUILD.gn
++++ b/commonlibrary/qrcode_generator/BUILD.gn
+@@ -56,6 +56,13 @@
+   }
+ } else {
+   ohos_static_library("qrcodegen") {
++    # Its real code members are linked into the CFI-protected ACE DSOs.
++    if (is_ohos && current_os == "ohos") {
++      sanitize = {
++        cfi = true
++        cfi_cross_dso = true
++      }
++    }
+     sources = qrcodegen_sources
+     include_dirs = [ "./interfaces/innerkits" ]
+     cflags = [

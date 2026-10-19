@@ -246,6 +246,9 @@ AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimed
 ARKUI_NATIVE_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/ui_extension_identity_diagnostics/apply.sh"
 AMS_NATIVE_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/ui_extension_identity_diagnostics/apply.sh"
 ARKUI_IDENTITY_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/ui_extension_identity_cfi/apply.sh"
+QRCODE_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/commonlibrary/qrcode_generator/cfi_metadata/apply.sh"
+ACE_SEC_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/bounds_checking_function/ace_cfi/apply.sh"
+ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/cfi_coverage/apply.sh"
 METADATA_FETCH_RESULT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_fetch_result/apply.sh"
 INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_insight_configuration_mode/apply.sh"
 CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
@@ -3439,6 +3442,18 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_identity_cfi.log"
   python3 "${ARKUI_IDENTITY_CFI_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_native_identity_cfi.log"
+  bash "${QRCODE_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qrcode_cfi_metadata.log"
+  python3 "${QRCODE_CFI_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_qrcode_cfi_metadata.log"
+  bash "${ACE_SEC_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ace_sec_cfi.log"
+  python3 "${ACE_SEC_CFI_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_ace_sec_cfi.log"
+  bash "${ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_cfi_coverage.log"
+  python3 "${ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_cfi_coverage.log"
   python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_ui_extension_identity_batch.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
