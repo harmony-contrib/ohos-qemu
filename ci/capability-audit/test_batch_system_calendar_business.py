@@ -26,6 +26,11 @@ SCENARIOS = (
     'invalid_form_never_requests_write', 'edit_preserves_fields_and_timezone',
     'complex_events_read_only', 'delete_confirmation_rechecks_real_event',
     'delete_changed_event_fails_closed', 'delete_missing_or_recurring_fails_closed',
+    'delete_changed_public_location', 'delete_changed_public_attendee',
+    'delete_changed_public_identifier', 'delete_changed_public_reminderTime',
+    'delete_all_public_nested_changes', 'delete_incomparable_types_refresh',
+    'delete_instance_projection_and_order', 'delete_displayed_snapshot_frozen_before_permission',
+    'delete_lifecycle_permission_cleanup',
     'exit_during_permission_no_write', 'destroy_during_permission_no_write',
     'background_during_prewrite_read', 'destroy_after_submission_does_not_cancel_provider',
     'duplicate_submission_blocked', 'api_denied_after_grant_is_error',
@@ -98,7 +103,7 @@ class CalendarBusinessTests(unittest.TestCase):
         self.node('page_lifecycle.cjs', self.templates / 'final' / PROJECT)
 
     def test_complete_E_and_F_prefixes_upgrade_to_the_same_business_final(self):
-        for name, count in (('prefix1', 1), ('prefix2', 2)):
+        for name, count in (('prefix1', 1), ('prefix2', 2), ('prefix3', 3)):
             with self.subTest(prefix=name):
                 root = self.source()
                 self.prefix(root, count)
@@ -154,6 +159,25 @@ class CalendarBusinessTests(unittest.TestCase):
         self.assertEqual(snapshot(root / PROJECT), before)
         self.assertFalse((root / PROJECT / 'entry/src/main/ets/calendar/CalendarBusinessController.ets').exists())
         self.assertEqual(self.verifier.source_state(root), 'prefix2')
+
+    def test_failure_after_complete_business_prefix_restores_old_controller(self):
+        root = self.source()
+        self.prefix(root, 3)
+        before = snapshot(root / PROJECT)
+        self.assertEqual(self.verifier.source_state(root), 'prefix3')
+        count = 0
+
+        def publish_then_fail(path, data, mode):
+            nonlocal count
+            count += 1
+            self.installer.replace(path, data, mode)
+            if count == len(self.verifier.FILES):
+                raise OSError('failure after old business controller replacement')
+
+        with self.assertRaisesRegex(OSError, 'old business controller replacement'):
+            self.installer.apply(root, publish=publish_then_fail)
+        self.assertEqual(snapshot(root / PROJECT), before)
+        self.assertEqual(self.verifier.source_state(root), 'prefix3')
 
     def test_business_mode_requires_reminder_and_native_guards_before_crypto(self):
         provider = load('business_calendar_provider', ROOT / 'patches/lib/calendar_provider.py')

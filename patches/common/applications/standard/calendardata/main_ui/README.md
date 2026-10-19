@@ -15,7 +15,12 @@ unchanged. A denied/cancelled/revoked permission or API error is visible. Submit
 provider writes can outlive UI destruction; the UI re-reads persisted data when
 still active and never claims to undo a submitted operation.
 
-The installer upgrades complete original, E-prefix and current F-prefix2 states to
+Patch 0004 compares a captured, typed snapshot of every comparable public base
+Event field after the existing WRITE grant and reread. Query-instance times are
+validated separately from base fields. Changed or incomparable data refuses the
+delete and refreshes; the public ID-only delete remains non-atomic and is not CAS.
+
+The installer upgrades complete original, E-prefix, F-prefix2 and business-prefix3 states to
 one exact business final, pins the state manifest, rejects mixed/drift/symlink input,
 and retains staged publication/rollback. Old calendar_main stays disabled. The
 provider build guard must use --require-editor --require-reminder-ui

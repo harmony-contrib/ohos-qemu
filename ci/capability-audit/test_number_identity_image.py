@@ -144,6 +144,35 @@ class NumberIdentityImageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             guard.compare_policy('uninstall_list.json', '{"recover_list":[],"recover_list":[]}', '{}')
 
+    def test_flat_policy_arrays_preserve_both_no_grant_boundaries(self):
+        for name in ('install_list_capability.json', 'install_list_permissions.json'):
+            for rows in ([], [{'bundleName': 'other', 'keepAlive': False}]):
+                with self.subTest(name=name, rows=rows):
+                    guard.compare_policy(name, json.dumps(rows), json.dumps(rows))
+
+    def test_flat_policy_arrays_cannot_add_NumberIdentity_grants(self):
+        for name in ('install_list_capability.json', 'install_list_permissions.json'):
+            rows = json.dumps([{'bundleName': guard.BUNDLE}])
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                guard.compare_policy(name, rows, rows)
+
+    def test_policy_top_level_and_rows_are_typed_validation_errors(self):
+        for value in (None, True, 1, 'x', {}, [None], [True], {'install_list': [1]}):
+            raw = json.dumps(value)
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                guard.compare_policy('install_list_capability.json', raw, raw)
+
+    def test_flat_policy_boolean_numeric_drift_rejected(self):
+        with self.assertRaises(ValueError):
+            guard.compare_policy('install_list_capability.json',
+                '[{"bundleName":"other","keepAlive":false}]',
+                '[{"bundleName":"other","keepAlive":0}]')
+
+    def test_flat_policy_duplicate_keys_rejected(self):
+        with self.assertRaises(ValueError):
+            guard.compare_policy('install_list_capability.json',
+                '[{"bundleName":"other","bundleName":"other"}]', '[]')
+
     def test_install_directory_identity_and_removability_are_typed(self):
         for removable in (False, 0, True):
             data = json.dumps({'install_list': [{'app_dir': '/system/app/' + guard.INSTALL_ID, 'removable': removable}]})

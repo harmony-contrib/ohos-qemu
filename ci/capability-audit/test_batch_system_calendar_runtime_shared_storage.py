@@ -28,7 +28,7 @@ BUSINESS_POSTIMAGES = {
     MODULE: '5c6cd28e95b3ff48d97157b263ff49b87a8eeb1fda44487b403145d43b0a3874',
     ABILITY: 'ada4728994501933eda37db97b7d75cf5c989394db6e39b3ebbe3c40f5db328b',
     PAGE: 'fa7dff6f63d47401de32869f69d95c23ba4040dac0951156c1072474e9240709',
-    BUSINESS: 'e0cc534fc0f8a90eca0e2ff87a48bd5e8ea23f86729bff4a361aae77cde49619',
+    BUSINESS: '6f449f25261bbbdf9fa4c63a1a1151720528095dd8226d8fd614062239682dfb',
 }
 
 
@@ -57,7 +57,9 @@ class CalendarSharedStorageTests(unittest.TestCase):
         legacy[PAGE] = E_PAGE_SHA
         final = dict(shared)
         final.update(BUSINESS_POSTIMAGES)
-        return {'original': original, 'prefix1': legacy, 'prefix2': shared, 'final': final}
+        business = dict(final)
+        business[BUSINESS] = 'e0cc534fc0f8a90eca0e2ff87a48bd5e8ea23f86729bff4a361aae77cde49619'
+        return {'original': original, 'prefix1': legacy, 'prefix2': shared, 'prefix3': business, 'final': final}
 
     def assert_state(self, case, state):
         guard = self.verifier()
@@ -144,12 +146,15 @@ class CalendarSharedStorageTests(unittest.TestCase):
         self.assertEqual(before, case.snapshot())
 
     def test_complete_E_replays_parents_before_product_order_upgrade(self):
-        for state in ('prefix1', 'prefix2'):
+        for state in ('prefix1', 'prefix2', 'prefix3'):
             with self.subTest(predecessor=state):
                 case = self.fixture()
                 self.legacy(case)
-                if state == 'prefix2':
+                if state in ('prefix2', 'prefix3'):
                     self.shared_only(case)
+                if state == 'prefix3':
+                    self.apply_patch(case, '0003-integrate-calendar-browsing-and-explicit-user-crud.patch',
+                                     'fc3fc82a57ed29c25e7364291968d4afb96d6ea8dbe513673f2a77c0df78e971')
                 self.assert_state(case, state)
                 before = case.snapshot()
                 for name in ('event_editor', 'editor_callback_dispatch'):
@@ -161,7 +166,10 @@ class CalendarSharedStorageTests(unittest.TestCase):
                 result = case.run_component('main_ui')
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assert_state(case, 'final')
-                self.assert_transition(before, case.snapshot(), {MODULE, ABILITY, PAGE}, {BUSINESS})
+                if state == 'prefix3':
+                    self.assert_transition(before, case.snapshot(), {BUSINESS})
+                else:
+                    self.assert_transition(before, case.snapshot(), {MODULE, ABILITY, PAGE}, {BUSINESS})
                 final = case.snapshot()
                 for name in ('event_editor', 'editor_callback_dispatch', 'main_ui'):
                     result = case.run_component(name)
@@ -169,11 +177,14 @@ class CalendarSharedStorageTests(unittest.TestCase):
                     self.assertEqual(final, case.snapshot())
 
     def test_parent_replay_rejects_foreign_viewer_native_or_identity_without_writes(self):
-        for state in ('prefix1', 'prefix2', 'final'):
+        for state in ('prefix1', 'prefix2', 'prefix3', 'final'):
             case = self.fixture()
             self.legacy(case)
-            if state == 'prefix2':
+            if state in ('prefix2', 'prefix3'):
                 self.shared_only(case)
+            if state == 'prefix3':
+                self.apply_patch(case, '0003-integrate-calendar-browsing-and-explicit-user-crud.patch',
+                                 'fc3fc82a57ed29c25e7364291968d4afb96d6ea8dbe513673f2a77c0df78e971')
             elif state == 'final':
                 self.assertEqual(case.run_component('main_ui').returncode, 0)
             self.assert_state(case, state)
@@ -188,12 +199,15 @@ class CalendarSharedStorageTests(unittest.TestCase):
                     target.write_bytes(original)
 
     def test_unknown_E_page_is_rejected_without_publication(self):
-        for state in ('prefix1', 'prefix2', 'final'):
+        for state in ('prefix1', 'prefix2', 'prefix3', 'final'):
             with self.subTest(state=state):
                 case = self.fixture()
                 self.legacy(case)
-                if state == 'prefix2':
+                if state in ('prefix2', 'prefix3'):
                     self.shared_only(case)
+                if state == 'prefix3':
+                    self.apply_patch(case, '0003-integrate-calendar-browsing-and-explicit-user-crud.patch',
+                                     'fc3fc82a57ed29c25e7364291968d4afb96d6ea8dbe513673f2a77c0df78e971')
                 elif state == 'final':
                     self.assertEqual(case.run_component('main_ui').returncode, 0)
                 self.assert_state(case, state)
@@ -216,6 +230,8 @@ class CalendarSharedStorageTests(unittest.TestCase):
         self.assertEqual({name for name in data['states']['prefix2']
                           if data['states']['prefix2'][name] != data['states']['final'][name]},
                          {MODULE, ABILITY, PAGE, BUSINESS})
+        self.assertEqual({name for name in data['states']['prefix3']
+                          if data['states']['prefix3'][name] != data['states']['final'][name]}, {BUSINESS})
         self.assertEqual(data['patches_sha256'], {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                          for p in sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))})
         for name, sha in data['actual_E_prefix_source']['files'].items():

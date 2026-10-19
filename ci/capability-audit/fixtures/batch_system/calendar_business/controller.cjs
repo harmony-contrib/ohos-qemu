@@ -15,7 +15,7 @@ const base = new FixedDate();base.setHours(9,0,0,0);
 const start = base.getTime(), end=start+3600000;
 const original={id:11,type:0,title:'Existing appointment',startTime:start,endTime:end,
   description:'Existing note',reminderTime:[10],timeZone:'UTC',location:{location:'Office'},
-  attendee:[{name:'A',email:'a@example.invalid'}],identifier:'original-identifier',service:{type:'preserved'}};
+  attendee:[{name:'A',email:'a@example.invalid'}],identifier:'original-identifier',service:{type:'Meeting',uri:'calendar-audit://meeting/original'}};
 const clone=value=>JSON.parse(JSON.stringify(value));
 let data=[clone(original)], other=[{...clone(original),id:23,title:'Second calendar'}];
 let calls=[], snapshots=[], managerMode='resolve',queryMode='resolve',getMode='resolve',
@@ -120,6 +120,88 @@ const args=['User title',new Date(start).toISOString(),new Date(end).toISOString
   await ready(c);c.select(11,start);await c.remove(11,false);assert.equal(wgrants().length,0);
   await c.remove(11,true);assert.equal(wgrants().length,1);assert.equal(calls.filter(x=>x[0]==='get').length,1);
   assert.equal(writes()[0][0],'delete');assert.equal(latest().events.length,0);assert.match(latest().notice,/已删除/);
+ }else if(scenario.startsWith('delete_changed_public_')){
+  const field=scenario.slice('delete_changed_public_'.length);
+  const mutations={location:e=>e.location.location='Changed elsewhere',
+   attendee:e=>e.attendee[0].email='changed@example.invalid',identifier:e=>e.identifier='changed-identifier',
+   reminderTime:e=>e.reminderTime=[20]};
+  assert.ok(mutations[field]);await ready(c);c.select(11,start);const reads=calls.filter(x=>x[0]==='query').length;
+  mutations[field](data[0]);await c.remove(11,true);
+  assert.equal(writes().length,0);assert.ok(latest().error);assert.equal(latest().selected,undefined);
+  assert.equal(calls.filter(x=>x[0]==='query').length,reads+1);assert.equal(c.readFilter,undefined);
+  assert.equal(latest().writing,false);
+ }else if(scenario==='delete_all_public_nested_changes'){
+  const mutations=[e=>e.title='Changed',e=>e.startTime+=1000,e=>e.endTime+=1000,
+   e=>e.description='Changed note',e=>e.type=1,e=>e.isAllDay=true,e=>e.isLunar=true,
+   e=>e.timeZone='Asia/Shanghai',e=>e.location.longitude=120,e=>e.location.latitude=30,
+   e=>e.attendee[0].name='Another',e=>e.attendee[0].role='organizer',
+   e=>e.attendee[0].type=1,e=>e.attendee[0].status=2,
+   e=>e.service.type='Watching',e=>e.service.uri='calendar-audit://meeting/changed',
+   e=>e.service.description='Changed service',e=>e.recurrenceRule={recurrenceFrequency:0},
+   e=>delete e.location,e=>delete e.attendee,e=>delete e.reminderTime,e=>delete e.service,
+   e=>e.identifier=null,e=>e.isAllDay=false,e=>e.isLunar=false];
+  for(const mutate of mutations){
+   data=[clone(original)];await ready(c);c.select(11,start);const reads=calls.filter(x=>x[0]==='query').length;
+   mutate(data[0]);await c.remove(11,true);assert.equal(writes().length,0);
+   assert.ok(latest().error);assert.equal(latest().selected,undefined);
+   assert.equal(calls.filter(x=>x[0]==='query').length,reads+1);assert.equal(c.readFilter,undefined);
+  }
+ }else if(scenario==='delete_incomparable_types_refresh'){
+  const mutations=[e=>e.type='0',e=>e.isAllDay=null,e=>e.isLunar=0,e=>e.title=3,
+   e=>e.description={},e=>e.timeZone=false,e=>e.identifier=[],e=>e.reminderTime=['10'],
+   e=>e.reminderTime=[NaN],e=>e.reminderTime=[Infinity],e=>e.reminderTime=new Array(1),
+   e=>e.location=[],e=>e.location={location:'Office',longitude:NaN},e=>e.location.future=1,
+   e=>e.attendee=[{name:'A',email:3}],e=>e.attendee=[{name:'A',email:'x',role:'future'}],
+   e=>e.attendee=[{name:'A',email:'x',type:'1'}],e=>e.attendee=[{name:'A',email:'x',status:NaN}],
+   e=>e.attendee=[{name:'A',email:'x',future:1}],e=>e.attendee=new Array(1),
+   e=>e.service={type:'Meeting'},e=>e.service={type:'future',uri:'calendar-audit://x'},
+   e=>e.service={type:'Meeting',uri:'calendar-audit://x',future:1},e=>e.service=null,
+   e=>e.futureField='unknown',e=>e.instanceStartTime=start,e=>e.instanceEndTime=end,
+   e=>{e.instanceStartTime=start+1;e.instanceEndTime=end+1;}];
+  for(const mutate of mutations){
+   data=[clone(original)];await ready(c);c.select(11,start);getMode='defer';
+   const pending=c.remove(11,true);await tick();const changed=clone(original);mutate(changed);
+   getPending([changed]);await pending;getMode='resolve';
+   assert.equal(writes().length,0);assert.ok(latest().error);assert.equal(latest().selected,undefined);
+   assert.equal(c.readFilter,undefined);assert.equal(latest().writing,false);
+  }
+  // Invalid displayed shapes are rejected before requesting WRITE, then reread.
+  for(const mutate of mutations.slice(0,8)){
+   data=[clone(original)];await ready(c);c.select(11,start);mutate(c.view.selected);
+   const before=wgrants().length,reads=calls.filter(x=>x[0]==='query').length;await c.remove(11,true);
+   assert.equal(wgrants().length,before);assert.equal(writes().length,0);
+   assert.equal(calls.filter(x=>x[0]==='query').length,reads+1);assert.ok(latest().error);
+  }
+ }else if(scenario==='delete_instance_projection_and_order'){
+  const query=first.queryEventInstances.bind(first);
+  first.queryEventInstances=(...args)=>query(...args).then(rows=>rows.map(e=>
+   ({...e,instanceStartTime:e.startTime,instanceEndTime:e.endTime})));
+  await ready(c);c.select(11,start);
+  // getEvents omits derived fields; equivalent public object key ordering is harmless.
+  data[0]={...data[0],location:{latitude:undefined,location:'Office'},
+   attendee:[{email:'a@example.invalid',name:'A'}],
+   service:{uri:'calendar-audit://meeting/original',type:'Meeting'}};
+  await c.remove(11,true);assert.equal(writes().length,1);assert.equal(writes()[0][0],'delete');
+  assert.match(latest().notice,/已删除/);
+  // The base and instance APIs may both return matching derived fields.
+  data=[clone(original)];await ready(c);c.select(11,start);
+  data[0].instanceStartTime=start;data[0].instanceEndTime=end;await c.remove(11,true);
+  assert.equal(writes().length,2);
+  // Documented nullable absence is comparable without conflating it with undefined.
+  data=[{...clone(original),location:null,attendee:null,identifier:null}];await ready(c);c.select(11,start);
+  await c.remove(11,true);assert.equal(writes().length,3);
+ }else if(scenario==='delete_displayed_snapshot_frozen_before_permission'){
+  await ready(c);c.select(11,start);grantMode='defer';const pending=c.remove(11,true);await tick();
+  data[0].location.location='Changed during consent';c.view.selected.location.location='Changed during consent';
+  grantPending({permissions:['ohos.permission.WRITE_WHOLE_CALENDAR'],authResults:[0]});grantMode='resolve';await pending;
+  assert.equal(writes().length,0);assert.match(latest().error,/已变更/);assert.equal(latest().selected,undefined);
+ }else if(scenario==='delete_lifecycle_permission_cleanup'){
+  await ready(c);c.select(11,start);grantMode='defer';let pending=c.remove(11,true);await tick();
+  c.background();grantPending({permissions:['ohos.permission.WRITE_WHOLE_CALENDAR'],authResults:[0]});
+  grantMode='resolve';await pending;assert.equal(writes().length,0);assert.equal(c.readFilter,undefined);
+  await ready(c);c.select(11,start);getMode='defer';pending=c.remove(11,true);await tick();
+  c.dispose();const count=snapshots.length;getPending([clone(original)]);await pending;
+  assert.equal(writes().length,0);assert.equal(c.readFilter,undefined);assert.equal(snapshots.length,count);
  }else if(scenario==='delete_changed_event_fails_closed'){
   await ready(c);c.select(11,start);data[0].title='Changed elsewhere';await c.remove(11,true);
   assert.equal(writes().length,0);assert.match(latest().error,/已变更/);

@@ -166,7 +166,7 @@ def compare_policy(name, source_data, image_data):
     source, actual = decode(source_data), decode(image_data)
     need(encode(actual) == encode(source), 'typed actual NumberIdentity image policy differs: ' + name)
     if name in ('install_list_capability.json', 'install_list_permissions.json'):
-        rows = source.get('install_list')
+        rows = source if type(source) is list else source.get('install_list') if type(source) is dict else None
         need(type(rows) is list and all(type(row) is dict for row in rows) and
              not any(row.get('bundleName') == BUNDLE for row in rows),
              'NumberIdentity must not gain a capability/grant entry')

@@ -61,9 +61,13 @@ def apply(root, publish=replace):
             patches = sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))
             if state == 'prefix1':
                 patches = [COMPONENT / '0002-bind-viewer-to-ability-local-storage.patch',
-                           COMPONENT / '0003-integrate-calendar-browsing-and-explicit-user-crud.patch']
+                           COMPONENT / '0003-integrate-calendar-browsing-and-explicit-user-crud.patch',
+                           COMPONENT / '0004-recheck-complete-event-snapshot-before-delete.patch']
             elif state == 'prefix2':
-                patches = [COMPONENT / '0003-integrate-calendar-browsing-and-explicit-user-crud.patch']
+                patches = [COMPONENT / '0003-integrate-calendar-browsing-and-explicit-user-crud.patch',
+                           COMPONENT / '0004-recheck-complete-event-snapshot-before-delete.patch']
+            elif state == 'prefix3':
+                patches = [COMPONENT / '0004-recheck-complete-event-snapshot-before-delete.patch']
             for patch in patches:
                 subprocess.run(['git', '-C', str(stage), 'apply', '--check', str(patch)], check=True)
                 subprocess.run(['git', '-C', str(stage), 'apply', '--whitespace=nowarn', str(patch)], check=True)
