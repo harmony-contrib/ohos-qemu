@@ -3307,6 +3307,11 @@ PY
     python3 "${SCRIPT_DIR}/verify_mms_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/mms-provider-evidence.json"
+    if [ "${DEVICE_TYPE}" = phone ]; then
+      python3 "${SCRIPT_DIR}/verify_number_identity_image.py" \
+        --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
+        --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/number-identity-local-evidence.json"
+    fi
     python3 "${SCRIPT_DIR}/verify_contacts_theme_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/contacts-theme-provider-evidence.json"

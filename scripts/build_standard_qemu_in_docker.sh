@@ -3108,6 +3108,19 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_call_enums_component.log"
   bash "${TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_rtt_lifecycle_component.log"
+  if [ "${DEVICE_TYPE}" = phone ] && [ "${QEMU_PHONE_PROFILE_COMPONENT}" != "0" ]; then
+    bash "${PATCH_ROOT}/common/base/telephony/number_identity/local_provider/apply.sh" \
+      --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_local_provider.log"
+    bash "${PATCH_ROOT}/common/base/telephony/number_identity/native_manifest/apply.sh" \
+      --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_native_manifest.log"
+    python3 "${PATCH_ROOT}/lib/number_identity_provider.py" --source-root "${OHOS_ROOT}" --prepare \
+      2>&1 | tee "${CACHE_ROOT}/logs/prepare_number_identity_local_signing.log"
+    python3 "${PATCH_ROOT}/common/vendor/ohemu/virt/number_identity_local/configure.py" \
+      --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/configure_number_identity_local_provider.log"
+  fi
   python3 "${SCRIPT_DIR}/prepare_ril_communication_callback.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_ril_communication_callback.log"
   bash "${PATCH_ROOT}/common/base/telephony/state_registry/communication_state/apply.sh" --source-root "${OHOS_ROOT}" \
@@ -3332,7 +3345,7 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_prebuilt_component.log"
   bash "${CALENDAR_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_signing_component.log"
-  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" --require-editor --require-reminder-ui --require-filter-async \
+  python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" --require-editor --require-reminder-ui --require-filter-async --require-business-ui \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_calendar_source_provider.log"
   bash "${PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_source_provider_component.log"

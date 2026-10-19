@@ -2,33 +2,45 @@
   "schema_version": 1,
   "project": "applications/standard/calendardata",
   "revision": "f922427ca0dc20895a0e254ae41382e5b03299a4",
-  "scope": "complete exact original/prefix1/final source states; shared storage stays owned by each MainAbility",
+  "scope": "exact whole-source original/prefix1/current-viewer-prefix2/business-final; source-only candidate, runtime unvalidated",
   "states": {
     "original": {
       "entry/src/main/module.json5": "ff618ccd9b045e512e190e65724cff864e7e91307404e6cd0a7ba10d778b3ab7",
       "entry/src/main/ets/MainAbility/MainAbility.ets": "92ab40a10c351035ab221f0d84661c835c17aa7ac45c3bd2c9c75492fa88d007",
       "entry/src/main/ets/pages/index.ets": "7f36cf0eedf8a185afdf32e854b8c8d3b3c46d47ea395f7d59672ebe0ee26b4e",
       "entry/src/main/ets/reminder/CalendarReminderReader.ets": null,
-      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "0e33529d17fb86a1761e6745a41f46e03317108502ec4890ef50f69c4d514e8b"
+      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "0e33529d17fb86a1761e6745a41f46e03317108502ec4890ef50f69c4d514e8b",
+      "entry/src/main/ets/calendar/CalendarBusinessController.ets": null
     },
     "prefix1": {
       "entry/src/main/module.json5": "84d6be601eefbe875e88aa96cc437cf15c71d3dc342f32117db85b1b6d78564c",
       "entry/src/main/ets/MainAbility/MainAbility.ets": "6c9672bae7f76ecd955083a371542950203db89efdd7dde1db8358ddd87ec51e",
       "entry/src/main/ets/pages/index.ets": "ab1e7f11adb58e9b07d49a05d57901d3319d84cea6fb5b63180e268b1c4a3b98",
       "entry/src/main/ets/reminder/CalendarReminderReader.ets": "560395625990d7172e2bfd2643d0f14acbca05b19a4ae267160ef6e12a13b246",
-      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "64d26c8147ce850cb7cdc3f82b7a031e68ba4f9cb6daa6fdeeb1e113cbd5b131"
+      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "64d26c8147ce850cb7cdc3f82b7a031e68ba4f9cb6daa6fdeeb1e113cbd5b131",
+      "entry/src/main/ets/calendar/CalendarBusinessController.ets": null
     },
     "final": {
+      "entry/src/main/module.json5": "5c6cd28e95b3ff48d97157b263ff49b87a8eeb1fda44487b403145d43b0a3874",
+      "entry/src/main/ets/MainAbility/MainAbility.ets": "ada4728994501933eda37db97b7d75cf5c989394db6e39b3ebbe3c40f5db328b",
+      "entry/src/main/ets/pages/index.ets": "fa7dff6f63d47401de32869f69d95c23ba4040dac0951156c1072474e9240709",
+      "entry/src/main/ets/reminder/CalendarReminderReader.ets": "560395625990d7172e2bfd2643d0f14acbca05b19a4ae267160ef6e12a13b246",
+      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "64d26c8147ce850cb7cdc3f82b7a031e68ba4f9cb6daa6fdeeb1e113cbd5b131",
+      "entry/src/main/ets/calendar/CalendarBusinessController.ets": "e0cc534fc0f8a90eca0e2ff87a48bd5e8ea23f86729bff4a361aae77cde49619"
+    },
+    "prefix2": {
       "entry/src/main/module.json5": "84d6be601eefbe875e88aa96cc437cf15c71d3dc342f32117db85b1b6d78564c",
       "entry/src/main/ets/MainAbility/MainAbility.ets": "6c9672bae7f76ecd955083a371542950203db89efdd7dde1db8358ddd87ec51e",
       "entry/src/main/ets/pages/index.ets": "87decf194a0811a03748cc50905aa2a1e18fe96ae938d7fcd84d764ce39df312",
       "entry/src/main/ets/reminder/CalendarReminderReader.ets": "560395625990d7172e2bfd2643d0f14acbca05b19a4ae267160ef6e12a13b246",
-      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "64d26c8147ce850cb7cdc3f82b7a031e68ba4f9cb6daa6fdeeb1e113cbd5b131"
+      "datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets": "64d26c8147ce850cb7cdc3f82b7a031e68ba4f9cb6daa6fdeeb1e113cbd5b131",
+      "entry/src/main/ets/calendar/CalendarBusinessController.ets": null
     }
   },
   "patches_sha256": {
     "0001-route-real-calendar-reminders-to-source-provider.patch": "7aa0725a75f07799dd11fed600eac67069f836ffd2976c42c93a577dd53648a7",
-    "0002-bind-viewer-to-ability-local-storage.patch": "a6fc3306e278a053983f875c855e7628c632b085c1ee2f25b8e1beb1653b6906"
+    "0002-bind-viewer-to-ability-local-storage.patch": "a6fc3306e278a053983f875c855e7628c632b085c1ee2f25b8e1beb1653b6906",
+    "0003-integrate-calendar-browsing-and-explicit-user-crud.patch": "fc3fc82a57ed29c25e7364291968d4afb96d6ea8dbe513673f2a77c0df78e971"
   },
   "actual_E_prefix_source": {
     "export_manifest": {
@@ -40,5 +52,7 @@
       "entry/src/main/ets/MainAbility/MainAbility.ets": "6c9672bae7f76ecd955083a371542950203db89efdd7dde1db8358ddd87ec51e"
     }
   },
-  "runtime_validated": false
+  "runtime_validated": false,
+  "source_validated": false,
+  "sdk_validated": false
 }

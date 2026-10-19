@@ -80,7 +80,7 @@ class CalendarMainTests(unittest.TestCase):
     def snapshot(self):
         return {str(p.relative_to(self.project)): p.read_bytes() for p in self.project.rglob('*') if p.is_file()}
 
-    def test_exact_predecessor_complete_replay_and_unchanged_permissions(self):
+    def test_exact_predecessor_replay_and_minimal_business_permission_scenes(self):
         before = json.loads((self.project / 'entry/src/main/module.json5').read_text())['module']
         self.prepare()
         snapshot = self.snapshot()
@@ -90,8 +90,9 @@ class CalendarMainTests(unittest.TestCase):
         self.assertEqual(snapshot, self.snapshot())
         after = json.loads((self.project / 'entry/src/main/module.json5').read_text())['module']
         expected = json.loads(json.dumps(before))
-        read = next(x for x in expected['requestPermissions'] if x['name'] == 'ohos.permission.READ_WHOLE_CALENDAR')
-        read['usedScene']['abilities'].append('MainAbility')
+        for permission in ('ohos.permission.READ_WHOLE_CALENDAR', 'ohos.permission.WRITE_WHOLE_CALENDAR'):
+            grant = next(x for x in expected['requestPermissions'] if x['name'] == permission)
+            grant['usedScene']['abilities'].append('MainAbility')
         self.assertEqual(after, expected)
         self.assertEqual(json.loads((self.project / 'AppScope/app.json5').read_text())['app']['bundleName'],
                          'com.ohos.calendardata')

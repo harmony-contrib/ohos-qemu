@@ -1,3 +1,42 @@
+# CalendarData business UI and reminder successor
+
+Patch 0003 extends the complete shared-storage reminder viewer with the retained
+calendar browser and ordinary-event create/update/delete UI. The reminder Reader,
+URI producer, native/editor sources and notification owner remain guarded by their
+existing exact hashes. This is a source candidate until the combined new-package
+runtime gate passes.
+
+MainAbility keeps its own LocalStorage, route and revision. Empty routes open
+browsing; reminder Wants open the original read-only details branch. Save/delete
+require explicit user controls and the real WRITE permission request. Browsing
+requests READ. The module adds MainAbility only to the existing in-use WRITE scene;
+permission names, authority/proxy boundaries, profile identity/ACLs and signer stay
+unchanged. A denied/cancelled/revoked permission or API error is visible. Submitted
+provider writes can outlive UI destruction; the UI re-reads persisted data when
+still active and never claims to undo a submitted operation.
+
+The installer upgrades complete original, E-prefix and current F-prefix2 states to
+one exact business final, pins the state manifest, rejects mixed/drift/symlink input,
+and retains staged publication/rollback. Old calendar_main stays disabled. The
+provider build guard must use --require-editor --require-reminder-ui
+--require-filter-async --require-business-ui together; the original read-only mode
+still rejects MainAbility WRITE. User-source keyof is avoided through contextual
+field array literals at the SDK calls. Genuine SDK ArkTS compilation remains required.
+
+Portable host checks reuse existing source fixtures and execute installed bodies:
+
+```sh
+python3 -m unittest -v test_batch_system_calendar_business \
+  test_batch_system_calendar_main test_batch_system_calendar375_composition \
+  test_batch_system_calendar_filter_async_lifetime test_calendar_provider
+```
+
+Run from ci/capability-audit with the same Node runtime as the existing Calendar
+harnesses. Host models do not establish ArkUI rendering, real permissions/IPC,
+SDK/signing/BMS, native lifecycle, notification clicking or reboot behavior.
+
+The original viewer layers (0001/0002) and their contracts are described below.
+
 # CalendarData reminder viewer
 
 Apply after the complete `source_provider`, `event_editor` and

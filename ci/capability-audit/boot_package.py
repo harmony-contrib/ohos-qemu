@@ -99,7 +99,10 @@ def kernel_sleeping(log):
 
 
 class QemuGuest:
-    def __init__(self, args):
+    def __init__(self, args, *, owned_command=None, owned_launcher=None):
+        if any(callback is not None and not callable(callback) for callback in (owned_command, owned_launcher)):
+            raise TypeError('trusted guest callbacks must be callable')
+        self._owned_command, self._owned_launcher = owned_command, owned_launcher
         self.args = args
         self.process = None
         self.qemu_log = None
@@ -122,6 +125,19 @@ class QemuGuest:
         log = self.args.output / (str(len(self.report['commands'])).zfill(3) + '-' + label + '.log')
         record = {'argv': argv, 'exit_code': None, 'log': str(log)}
         self.report['commands'].append(record)
+        if self._owned_command is not None:
+            actual, stdout, stderr = self._owned_command(self, argv, label=label, timeout=timeout, log=log)
+            if (type(actual) is not dict or actual.get('argv') != argv or actual.get('log') != str(log) or
+                    type(actual.get('exit_code')) is not int or type(stdout) is not str or type(stderr) is not str or
+                    log.is_symlink() or not log.is_file() or actual.get('sha256') != checksum(log) or
+                    log.read_text() != stdout + stderr):
+                raise ValueError('owned guest command did not return exact actual argv/raw/exit')
+            record.update(actual)
+            if actual.get('timed_out') or (actual['exit_code'] and not allow_failure):
+                raise ValueError('boot command failed: ' + label)
+            if argv[0] == str(self.args.hdc) and not allow_failure and hdc_failed(stdout, stderr):
+                raise ValueError('HDC transport/operation failed: ' + label)
+            return stdout.replace('\r', '')
         try:
             result = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                     stdin=subprocess.DEVNULL, timeout=timeout, check=False)
@@ -292,9 +308,11 @@ class QemuGuest:
                     'wrapper': str(wrapper), 'wrapper_sha256': checksum(wrapper), 'QEMU_binary': executable}
             self.target = '127.0.0.1:' + str(args.hdc_port)
             self.qemu_log = (args.output / 'qemu.log').open('wb')
-            self.process = subprocess.Popen(argv, cwd=self.directory, stdout=self.qemu_log, stderr=subprocess.STDOUT,
+            launch = dict(cwd=self.directory, stdout=self.qemu_log, stderr=subprocess.STDOUT,
                 stdin=subprocess.DEVNULL, start_new_session=True, umask=0o077,
                 env={**os.environ, 'LC_ALL': 'C', 'LANG': 'C', **environment_overrides})
+            self.process = (self._owned_launcher(self, argv, **launch) if self._owned_launcher is not None
+                            else subprocess.Popen(argv, **launch))
             self.report['qemu_launch_argv'] = argv
             environment = self.report['test_environment']
             environment.update(product=manifest['product'], device_type=self.device, guest_arch=self.arch,

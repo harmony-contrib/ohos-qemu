@@ -158,6 +158,11 @@ class Calendar375CompositionTests(unittest.TestCase):
                 if filter_first:
                     result = case.run_component('filter_async_lifetime')
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    # Native ownership repair alone cannot enable a MainAbility write scene.
+                    baseline = json.loads((case.project / 'entry/src/main/module.json5').read_text())['module']
+                    write = next(p for p in baseline['requestPermissions']
+                                 if p['name'] == 'ohos.permission.WRITE_WHOLE_CALENDAR')
+                    self.assertNotIn('MainAbility', write['usedScene']['abilities'])
                 case.prepare()
                 result = case.run_component('filter_async_lifetime')
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -169,12 +174,14 @@ class Calendar375CompositionTests(unittest.TestCase):
                 self.assertEqual(case.snapshot(), final)
                 verifier = filter_tests.load('calendar375_filter_verify', COMPONENT / 'verify_source.py')
                 self.assertEqual(verifier.source_state(case.root), 'final')
-                # MainAbility keeps read-only permission and the current shared
-                # storage page; this native repair cannot enable old CRUD UI.
+                # The reviewed business UI successor alone adds the MainAbility
+                # WRITE scene; it retains per-Ability shared storage and the viewer.
                 module = json.loads((case.project / 'entry/src/main/module.json5').read_text())['module']
                 for permission in module['requestPermissions']:
-                    if permission['name'] == 'ohos.permission.WRITE_WHOLE_CALENDAR':
-                        self.assertNotIn('MainAbility', permission['usedScene']['abilities'])
+                    if permission['name'] in ('ohos.permission.READ_WHOLE_CALENDAR',
+                                              'ohos.permission.WRITE_WHOLE_CALENDAR'):
+                        self.assertEqual(permission['usedScene']['abilities'].count('MainAbility'), 1)
+                        self.assertEqual(permission['usedScene']['when'], 'inuse')
                 page = (case.project / 'entry/src/main/ets/pages/index.ets').read_text()
                 self.assertIn('@Entry({ useSharedStorage: true })', page)
 

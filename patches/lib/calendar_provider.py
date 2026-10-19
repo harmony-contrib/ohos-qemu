@@ -23,7 +23,9 @@ EDITOR = {'name': 'EditorUIExtensionAbility', 'srcEntry': './ets/EditorUIExtensi
 
 
 def validate(module, profile, capabilities, fingerprint, platform_fingerprint, require_editor=False,
-             require_reminder_ui=False):
+             require_reminder_ui=False, require_business_ui=False):
+    if require_business_ui and not require_reminder_ui:
+        raise ValueError('business UI requires complete reminder UI guard')
     if fingerprint != SIGNATURE or platform_fingerprint != SIGNATURE:
         raise ValueError('CalendarData profile/platform certificate does not match pinned source signing policy')
     bundle = profile.get('bundle-info', {})
@@ -55,7 +57,7 @@ def validate(module, profile, capabilities, fingerprint, platform_fingerprint, r
             grants = [entry for entry in module.get('requestPermissions', []) if entry.get('name') == permission]
             abilities = ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
                          'ReminderCallbackExtAbility', 'EditorUIExtensionAbility']
-            if require_reminder_ui and permission == 'ohos.permission.READ_WHOLE_CALENDAR':
+            if require_reminder_ui and (permission == 'ohos.permission.READ_WHOLE_CALENDAR' or require_business_ui):
                 abilities.append('MainAbility')
             if (len(grants) != 1 or grants[0].get('usedScene') != {
                     'abilities': abilities,
@@ -92,7 +94,11 @@ def platform_leaf_fingerprint(chain):
     return certificate_fingerprint(certificates[-1])
 
 
-def verify(root, require_editor=False, require_reminder_ui=False, require_filter_async=False):
+def verify(root, require_editor=False, require_reminder_ui=False, require_filter_async=False, require_business_ui=False):
+    if require_business_ui and not require_reminder_ui:
+        raise ValueError('business UI requires complete reminder UI guard')
+    if require_business_ui and not require_filter_async:
+        raise ValueError('business UI requires the strict native async filter guard')
     source = root / 'applications/standard/calendardata'
     source_build = (source / 'BUILD.gn').read_text()
     if (source_build.count('ohos_app("calendardata_hap")') != 1 or
@@ -112,7 +118,7 @@ def verify(root, require_editor=False, require_reminder_ui=False, require_filter
     module = json.loads((source / 'entry/src/main/module.json5').read_text())['module']
     capabilities = json.loads((root / 'vendor/ohemu/virt/preinstall-config/install_list_capability.json').read_text())
     validate(module, profile, capabilities, certificate_fingerprint(certificate),
-             platform_leaf_fingerprint(platform), require_editor, require_reminder_ui)
+             platform_leaf_fingerprint(platform), require_editor, require_reminder_ui, require_business_ui)
     if require_editor or require_reminder_ui:
         page = 'pages/EventEditor'
         pages = json.loads((source / 'entry/src/main/resources/base/profile/main_pages.json').read_text())['src']
@@ -150,8 +156,9 @@ def main():
     parser.add_argument('--require-editor', action='store_true')
     parser.add_argument('--require-reminder-ui', action='store_true')
     parser.add_argument('--require-filter-async', action='store_true')
+    parser.add_argument('--require-business-ui', action='store_true')
     args = parser.parse_args()
-    verify(args.source_root, args.require_editor, args.require_reminder_ui, args.require_filter_async)
+    verify(args.source_root, args.require_editor, args.require_reminder_ui, args.require_filter_async, args.require_business_ui)
 
 
 if __name__ == '__main__':

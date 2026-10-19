@@ -51,7 +51,10 @@ def test_sdk():
     raise ValueError('set QEMU_TEST_SDK_HOME to a real host-compatible API26 Release SDK')
 
 
-def run(args):
+def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook=None):
+    for callback in (owned_command, owned_guest_factory, owned_select_hook):
+        if callback is not None and not callable(callback):
+            raise TypeError('trusted in-process suite callbacks must be callable')
     args.evidence_output.parent.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=args.package_archive.name.removesuffix('.tar.gz') + '-runtime-',
                                  dir=args.evidence_output.parent))
@@ -70,6 +73,16 @@ def run(args):
         log = work / (str(len(report['commands'])).zfill(3) + '-' + label + '.log')
         record = {'argv': argv, 'exit_code': None, 'log': str(log)}
         report['commands'].append(record)
+        if owned_command is not None:
+            actual = owned_command(argv, label=label, timeout=timeout, env=env, log=log)
+            if (type(actual) is not dict or actual.get('argv') != argv or
+                    actual.get('log') != str(log) or type(actual.get('exit_code')) is not int or
+                    log.is_symlink() or not log.is_file() or actual.get('sha256') != checksum(log)):
+                raise ValueError('owned suite command did not return exact actual argv/raw/exit')
+            record.update(actual)
+            if record['exit_code'] or record.get('timed_out'):
+                raise ValueError('actual owned suite command failed: ' + label)
+            return record
         with log.open('w') as stream:
             process = subprocess.Popen(argv, stdout=stream, stderr=subprocess.STDOUT,
                 stdin=subprocess.DEVNULL, start_new_session=True, env=env)
@@ -124,7 +137,13 @@ def run(args):
             purpose='acceptance', wait_seconds=1800, stable_seconds=60,
             kernel_diagnostic=None, power_diagnostic_wakeup=False, hold=False)
         boot_args.clock_probe, boot_args.clock_probe_build = Path(clock_probe), Path(clock_build)
-        guest = QemuGuest(boot_args).start()
+        if owned_guest_factory is None:
+            guest = QemuGuest(boot_args).start()
+        else:
+            prepared_guest = owned_guest_factory(boot_args)
+            if not isinstance(prepared_guest, QemuGuest):
+                raise TypeError('owned guest factory must return the actual QemuGuest or controlled subclass')
+            guest = prepared_guest.start()
         environment = guest.report['test_environment']
         report.update(package={'archive': str(args.package_archive.resolve()),
             'sha256': guest.report['archive_sha256'],
@@ -219,6 +238,15 @@ def run(args):
                         'actual-' + family + '-complete-boundaries', timeout=TIMEOUTS[family])
                     verify_family(family, output / 'evidence.json', args.package_archive, environment)
                     check(family, output / 'evidence.json', [record])
+        # Fixed root callable only: data plans cannot name executable hooks.
+        if owned_select_hook is not None:
+            if not representative(environment):
+                raise ValueError('owned select hook requires the representative actual guest')
+            same_guest('before-owned-select375')
+            owned_select_hook(guest=guest, suite_report=report, suite_command=command,
+                same_guest=same_guest, save_suite=save, suite_work=work,
+                archive=args.package_archive.resolve())
+            same_guest('after-owned-select375')
         native_definitions = guest.directory / 'native-gap-abi-image.json'
         native_abi_probe = work / 'native-gap-abi-build'
         command([sys.executable, Path(__file__).with_name('build_native_gap_abi_probe.py'),

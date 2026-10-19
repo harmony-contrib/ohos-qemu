@@ -1,0 +1,16 @@
+{
+  "schema": "number-identity-native-manifest375/v1",
+  "project": "base/telephony/number_identity",
+  "revision": "50e1330646432ce166e7981c577f25f46c90e7ac",
+  "files": [
+    [
+      "entry/src/main/module.json5",
+      "9b0a2d769cf812b7bd0bc8b1e9e674ccc0fc174762417b138442bfeccc06d8b0",
+      "42ff53888c007c5ba76a4462c05a0b10d196692b484f25897d3db0602d47d1e6"
+    ]
+  ],
+  "patch": "0001-preserve-native-datashare-routing-in-hvigor-manifest.patch",
+  "patch_sha256": "3aa075539a75849fc248f83bde5b6aaa2050a4ed98ebc8073154357a81f4db80",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

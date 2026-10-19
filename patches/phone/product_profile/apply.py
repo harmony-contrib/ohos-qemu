@@ -72,6 +72,7 @@ REQUIRED_PHONE_PARTS = {
     "multimedia:audio_framework",
     "multimedia:av_session",
     "telephony:core_service",
+    "telephony:number_identity",
     "window:window_manager",
 }
 
@@ -180,6 +181,9 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # QEMU ships Launcher/SystemUI through this rich-profile part. Keep it
     # explicit so a later phone profile cannot drop the first-user desktop.
     add_component(effective, "applications", "prebuilt_hap")
+    # Public source provider owns real local mark CRUD and finite lookup data.
+    # Cloud/SpamShield/HSDR remain outside this local capability.
+    add_component(effective, "telephony", "number_identity")
     # It may be present only as a transitive HDI dependency upstream. Product
     # selection is needed for its feature/default config dependency closure.
     add_component(effective, "thirdparty", "alsa-lib")

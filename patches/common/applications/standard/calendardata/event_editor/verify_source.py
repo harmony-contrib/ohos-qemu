@@ -23,7 +23,7 @@ def validate(root, require_patched=False):
             try:
                 # The complete shipped viewer is also an editor successor:
                 # its later UI-only upgrade must still reach main_ui/apply.py.
-                if main.source_state(root) in ('prefix1', 'final'):
+                if main.source_state(root) in ('prefix1', 'prefix2', 'final'):
                     return True
             except (ValueError, OSError):
                 pass

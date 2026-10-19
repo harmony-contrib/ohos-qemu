@@ -71,6 +71,35 @@ class CalendarProviderTests(unittest.TestCase):
             with self.subTest(mode=mode), self.assertRaises(ValueError):
                 validate(broken, profile, capabilities, SIGNATURE, SIGNATURE, True, True)
 
+    def test_business_successor_requires_explicit_mode_and_preserves_profile_policy(self):
+        module, profile, capabilities = policy()
+        module['extensionAbilities'].append(copy.deepcopy(EDITOR))
+        module['abilities'] = [{'name': 'MainAbility', 'srcEntry': './ets/MainAbility/MainAbility.ets',
+                                'exported': True}]
+        base = ['DataShareLowerExtAbility', 'DataShareHighExtAbility',
+                'ReminderCallbackExtAbility', 'EditorUIExtensionAbility', 'MainAbility']
+        module['requestPermissions'] = [
+            {'name': name, 'usedScene': {'abilities': base[:], 'when': 'inuse'}}
+            for name in ('ohos.permission.READ_WHOLE_CALENDAR', 'ohos.permission.WRITE_WHOLE_CALENDAR')]
+        validate(module, profile, capabilities, SIGNATURE, SIGNATURE, True, True, True)
+        # The original read-only mode must still reject an added WRITE scene.
+        with self.assertRaises(ValueError):
+            validate(module, profile, capabilities, SIGNATURE, SIGNATURE, True, True)
+        with self.assertRaises(ValueError):
+            validate(module, profile, capabilities, SIGNATURE, SIGNATURE, True, False, True)
+        for mode in ('write-always', 'missing-main', 'unrelated-ability', 'extra-acl'):
+            broken, wrong_profile = copy.deepcopy(module), copy.deepcopy(profile)
+            if mode == 'write-always':
+                broken['requestPermissions'][1]['usedScene']['when'] = 'always'
+            elif mode == 'missing-main':
+                broken['abilities'] = []
+            elif mode == 'unrelated-ability':
+                broken['requestPermissions'][1]['usedScene']['abilities'].append('OtherAbility')
+            else:
+                wrong_profile['acls']['allowed-acls'].append('ohos.permission.WRITE_WHOLE_CALENDAR')
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate(broken, wrong_profile, capabilities, SIGNATURE, SIGNATURE, True, True, True)
+
     def test_editor_requires_exact_surface_inuse_scene_and_existing_boundaries(self):
         module, profile, capabilities = policy()
         with self.assertRaises(ValueError):
