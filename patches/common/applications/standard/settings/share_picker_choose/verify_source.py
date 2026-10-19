@@ -13,3 +13,12 @@ def validate(root, require_patched=False):
     if require_patched and not patched:
         raise ValueError('complete native and Settings chooser candidate required')
     return patched
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source-root', type=Path, required=True)
+    parser.add_argument('--require-patched', action='store_true')
+    args = parser.parse_args()
+    print('patched' if validate(args.source_root, args.require_patched) else 'predecessor')

@@ -239,8 +239,10 @@ SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/mult
 AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/apply.sh"
 AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_public_errors/apply.sh"
 CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/capturer_frame_assembly/apply.sh"
+AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_vivid_integrity/apply.sh"
 ARKUI_NATIVE_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/ui_extension_identity_diagnostics/apply.sh"
 AMS_NATIVE_IDENTITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/ui_extension_identity_diagnostics/apply.sh"
+ARKUI_IDENTITY_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/ui_extension_identity_cfi/apply.sh"
 METADATA_FETCH_RESULT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_fetch_result/apply.sh"
 INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_insight_configuration_mode/apply.sh"
 CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
@@ -372,6 +374,8 @@ PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/stand
 PHOTOS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/photos_provider/apply.sh"
 PHOTOS_SIGNING_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/photos_provider/apply.sh"
 SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/source_provider/apply.sh"
+SETTINGS_SELECT_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/share_picker_choose/apply.sh"
+SETTINGS_SELECT_PARAMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/virt/settings_select/apply.sh"
 SETTINGS_ACCESSIBILITY_COMPLETION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/accessibility_service_completion/apply.sh"
 SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/external_input/apply.sh"
 SETTINGS_INPUT_2IN1_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/input_2in1_navigation/apply.sh"
@@ -3124,6 +3128,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_public_errors_component.log"
   python3 "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_public_errors_component.log"
+  bash "${AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_vivid_integrity_component.log"
+  bash "${AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_vivid_integrity_component.log"
   bash "${AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_public_enums_component.log"
   bash "${UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3358,6 +3366,14 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_share_picker.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings/wallpaper_settings/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_wallpaper_settings.log"
+  bash "${SETTINGS_SELECT_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_native_select_component.log"
+  python3 "${SETTINGS_SELECT_PROVIDER_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_settings_native_select_component.log"
+  bash "${SETTINGS_SELECT_PARAMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_select_parameters.log"
+  bash "${SETTINGS_SELECT_PARAMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_settings_select_parameters.log"
   bash "${PATCH_ROOT}/common/base/theme/wallpaper_mgr/qemu_renderer/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_wallpaper_qemu_renderer.log"
   python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" \
@@ -3366,6 +3382,10 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_identity.log"
   bash "${AMS_NATIVE_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_ams_native_identity.log"
+  bash "${ARKUI_IDENTITY_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_identity_cfi.log"
+  python3 "${ARKUI_IDENTITY_CFI_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_native_identity_cfi.log"
   python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_ui_extension_identity_batch.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \

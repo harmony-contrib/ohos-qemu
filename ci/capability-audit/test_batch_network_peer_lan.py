@@ -11,12 +11,31 @@ import tarfile
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from batch_network375_root_entry import RootExecutor, AdmissionError
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('peer_lan', Path(__file__).with_name('batch_network_peer_lan.py'))
 peer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(peer)
+
+
+def unit_owner(qemu):
+    """Explicit host double; never production owner/VM/HDC evidence."""
+    owner = Mock(spec=RootExecutor)
+    def run(argv, *, timeout, label, start_new_session=True):
+        if Path(argv[0]).resolve() != Path(qemu).resolve() or Path(qemu).name != 'fixture-qemu':
+            raise AssertionError('unit owner refuses every real resource executable')
+        return subprocess.run(argv, capture_output=True, timeout=timeout, check=False)
+    owner.run.side_effect = run
+    return owner
+
+
+def prepare_unit(args):
+    # Port availability, like the root resource admission, is a host mock here.
+    # No actual listener or unreserved application port is touched by a test.
+    with patch.object(peer.socket, 'socket'):
+        return peer.prepare(args, owner=unit_owner(args.qemu))
 
 
 def fixture(root, product='arm64_virt', binary='qemu-system-aarch64', *, stream=True, mac='52:54:00:11:22:33'):
@@ -169,7 +188,7 @@ class PeerLanTests(unittest.TestCase):
                 target.add(package, arcname=package.name)
             args = SimpleNamespace(package=package, qemu=qemu, output=root / 'private', archive=archive,
                 hdc_port=47580, vnc_display=4021, peer_port=47590, subnet='172.27.77.0/30')
-            result = peer.prepare(args)
+            result = prepare_unit(args)
             self.addCleanup(shutil.rmtree, result['control_directory'])
             self.assertEqual(result['status'], 'prepared_candidate_not_booted')
             listener = Path(result['instances']['listener']['path']) / 'images/userdata.img'
@@ -215,20 +234,21 @@ class PeerLanTests(unittest.TestCase):
                 target.add(package, arcname=package.name)
             args = SimpleNamespace(package=package, qemu=qemu, output=root / 'private', archive=archive,
                 hdc_port=47580, vnc_display=4021, peer_port=47590, subnet='172.27.77.0/30')
-            plan = peer.prepare(args)
+            plan = prepare_unit(args)
             self.addCleanup(shutil.rmtree, plan['control_directory'])
             observe = SimpleNamespace(plan=args.output / 'peer-lan.json', output=root / 'observation',
                                       hdc=Path('/unexecuted-host-double-hdc'), configure=True)
             error = subprocess.TimeoutExpired(['host-double'], 30, output=b'actual partial byte fixture', stderr=b'partial stderr')
-            with patch.object(peer.subprocess, 'run', side_effect=error) as command:
-                evidence = peer.observe(observe)
+            owner = unit_owner(qemu)
+            owner.run.side_effect = error
+            evidence = peer.observe(observe, owner=owner)
             self.assertEqual(evidence['status'], 'fail')
             self.assertFalse(evidence['first_artifact_behavior_gate_passed'])
             self.assertTrue(evidence['commands'][0]['timed_out'])
             self.assertEqual(Path(evidence['commands'][0]['stdout_path']).read_bytes(), b'actual partial byte fixture')
             self.assertEqual(Path(evidence['commands'][0]['stderr_path']).read_bytes(), b'partial stderr')
-            command.assert_called_once()
-            self.assertIn('bm get --udid', command.call_args.args[0][-1])
+            owner.run.assert_called_once()
+            self.assertIn('ip -o link show', owner.run.call_args.args[0][-1])
 
     def test_actual_identity_requires_both_nics_and_two_different_udids_and_boots(self):
         actor = dict(peer_mac='02:00:00:00:01:02', management_mac='02:00:00:00:01:01')

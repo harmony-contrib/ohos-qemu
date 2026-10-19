@@ -3,8 +3,14 @@
 This component adds a private `PickerDialog` UIAbility to the existing Settings
 phone/default module and a native dialogSession bridge. It preserves all existing
 Settings abilities, permissions, modal share extension, wallpaper UI and pages.
-It is a source candidate only; no SDK/native build, active source application,
-package, guest execution or finding closure was performed for this batch.
+It is a source/host candidate only; no SDK/native build, active source
+application, package, guest execution or finding closure was performed here.
+
+The round375 successor uses the complete CURRENT Share lifetime plus Wallpaper
+source vector. `historical-v1.json` and `tests/predecessor-v1.json` preserve the
+old candidate verbatim; its old modal hashes are not accepted as the current
+predecessor. The original two patches remain unchanged. The third patch is an
+exact successor to their full native postimage.
 
 The fixed native `ACTION_CHOOSE` constant is **`ohos.want.action.select`**. The
 deprecated SDK `ACTION_CHOOSE = ohos.want.action.choose` is a different value and
@@ -66,10 +72,10 @@ controller and LocalStorage. Destruction immediately invalidates late JS work.
 An untrusted new Want cannot replace an existing controller's native session.
 
 `apply.sh --source-root ROOT` requires the two pinned Git project revisions and
-the complete SDK06 predecessor (the old modal and wallpaper component plus exact
-native API headers). Both projects must be entirely before or entirely after
+the complete current Share lifetime and Wallpaper predecessor plus exact native
+API headers. Both projects must be entirely before or entirely after
 this component. Unknown bytes, mixed states, missing dependencies, source/project
-symlinks and unexpected patch/payload bytes fail. The installer prepares both
+symlinks and unexpected patch/payload bytes fail. The installer prepares three
 patches and three new ETS files in private scratch, checks every final hash,
 then publishes files atomically with original modes. An installation failure
 restores changed originals and removes new files; failed rollback retains the
@@ -83,3 +89,49 @@ acceptance. Apply only after the currently running representative attempt has
 completed and its evidence has been preserved. The new root parameters should
 resolve `com.ohos.settings / PickerDialog`; this component changes neither system
 configuration nor the original Settings bundle/profile.
+
+## Request-scoped private startup
+
+The actual fixed `SupportSystemAbilityPermission` header excludes foundation UID
+5523. `IN_PROCESS_CALL` alone therefore does not establish private PAGE startup.
+The third patch admits only a synchronous AMS-owned request, without changing
+that whitelist or exporting the private ability. A stack RAII object holds the
+original native `AbilityRequest` and opaque session ID in thread-local storage.
+It requires the actual self PID/UID/token and native process token named
+`foundation`. Reentry is refused; every scope exit restores the previous pointer.
+
+The dialog manager checks the complete stored caller token/request code/user/
+access token against the still-live original ability. It checks the exact
+BMS-resolved provider bundle/module/name/UID/token, PAGE/private/system/enabled
+state and target user. Only an unbound, uncommitted, unexpired, not-busy session
+can consume admission once. UI attachment also requires that admission. No
+external Want flag, known SID, same UID alone, direct explicit launch, or another
+thread can create the stack capability. Ordinary permission checks and the
+original caller's target/URI/result/cancel/death/deadline paths remain in place.
+
+The ordinary native start wrapper passes its validated requested user explicitly
+through the PAGE permission helpers. At that point the real producer has not yet
+assigned `AbilityRequest.userId`; it remains -1. Admission compares the explicit
+native user to the stored original caller and session, rather than mistaking that
+unset field or a singleton provider's account UID for the requested user. Other
+entry paths retain a default -1 and cannot consume this admission.
+
+This is not native concurrency or packaged permission proof. Root must compile
+the real TUs/CFI, SDK-build the actual Settings HAP and challenge normal caller,
+forged SID/caller/provider/user, direct private launch, reentry, result and URI
+boundaries on the first newly packaged guest before declaring it working.
+
+The installer captures every target/dependency's bytes, mode and inode/link/parent
+identity, rechecks all of them before each publication and restores only files
+it actually wrote and still owns. External changes remain intact and conflicts
+retain a recovery manifest. Complete current replay is a no-op; partial, old
+modal, unknown source, symlink and hardlink states fail. Component scratch uses
+an explicit Git discovery ceiling, so a TMPDIR inside a repository cannot make
+`git apply` silently filter upstream paths.
+
+Root has added complete-vector successor checks to the Share and Wallpaper
+guards. The review-only `batch_apps_select375_guard_plan.py` emits the remaining
+external-input guard delta. It never edits shared guards. The external-input guard must
+still verify its unique ETS files after recognizing the complete successor.
+Root also owns build invocation, system parameter values and the exact compiled
+private-ability/image check. Until those land this component is not activated.

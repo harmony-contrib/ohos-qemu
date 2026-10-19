@@ -1,0 +1,604 @@
+{
+  "schema": "location375-source-lock/v1",
+  "canonical_checkout": "/Volumes/PSSD/code/ohos-rs/ohos-qemu",
+  "files": {
+    "F-location-GN-export370-draft/HANDOFF.md": {
+      "sha256": "9e2a093dbbe151a429b27828b7d4786034233f35a00587a5577ac7a0d7c135e4",
+      "bytes": 7649
+    },
+    "F-location-GN-export370-draft/SOURCE370.diff": {
+      "sha256": "88b4c01def40579bcda8d52ce15446321ab5fa1d5de0f129ccd87de7be88cac3",
+      "bytes": 53369
+    },
+    "F-location-GN-export370-draft/SOURCE_MANIFEST.json": {
+      "sha256": "7be60c2d803c79fd41e6efd6a50f7058f390652cbdcc2c0d761e489734d1645d",
+      "bytes": 3769
+    },
+    "F-location-GN-export370-draft/STATIC-CHECKS370.json": {
+      "sha256": "aa611f59d462fbee5f3120c449c38aa862b4ae4ca4374d755c9541a710f7d0ee",
+      "bytes": 1508
+    },
+    "F-location-GN-export370-draft/export_core370.py": {
+      "sha256": "15d708db546822596b1ffbd93ee9fd6c3be6c2511c15bc47589676d4dc4bcebe",
+      "bytes": 9426
+    },
+    "F-location-GN-export370-draft/export_inner370.py": {
+      "sha256": "95003e62ad233a8a672ceb16f4895cc6c99e91167d7e9b47121d75071a511eb9",
+      "bytes": 3160
+    },
+    "F-location-GN-export370-draft/run_GN_export370.py": {
+      "sha256": "b28be884000dbe4bc723c5244deec4aac065abe3c742c9bd74194d640cc433ce",
+      "bytes": 17958
+    },
+    "F-location-GN-export370-draft/test_export370.py": {
+      "sha256": "c2f034dc07c3dac150cb6f9e06c3082df31f88f6166294b3857900af1f75bf3a",
+      "bytes": 10384
+    },
+    "F-location-GN-export370-draft/test_guard370.py": {
+      "sha256": "622dc5fecc4d61683112b5417b97f997961c8ff6a4588eed5e1488c19b579168",
+      "bytes": 8476
+    },
+    "F-location-compile-query368-draft/DEPENDENCIES.json": {
+      "sha256": "86fcddd48474ff81843f9e8e87293357ea92d32465783c12d9cfcaae36a1f35b",
+      "bytes": 5048
+    },
+    "F-location-compile-query368-draft/HANDOFF.md": {
+      "sha256": "31c315d38a05262966cb916b457cee19933ee91e0bbbb7e4266ceaafb896755e",
+      "bytes": 6486
+    },
+    "F-location-compile-query368-draft/MEMBER-DELTA368.json": {
+      "sha256": "acca19172f9d42df0308347185ea4bca7134204fad45bf531e83365b395fa3e8",
+      "bytes": 14104
+    },
+    "F-location-compile-query368-draft/ORIGINAL129-to368.diff": {
+      "sha256": "f995cfba37dae5f9a348c1cef4392922239269e1b2f399d4a33d48a4a495d153",
+      "bytes": 23381
+    },
+    "F-location-compile-query368-draft/PREDECESSOR211-MANIFEST.json": {
+      "sha256": "0ec13c2f277aac7d07949bea9736ef883b7deb522a5f1461fe9c37b299b83a04",
+      "bytes": 5251
+    },
+    "F-location-compile-query368-draft/PREDECESSOR_SOURCE_MANIFEST.json": {
+      "sha256": "f799c2d0d252fad3b702d3c33f65d7510da7aa14bf7bfbdcfb6a4b558f17ba49",
+      "bytes": 2681
+    },
+    "F-location-compile-query368-draft/QUERY368.py.fragment": {
+      "sha256": "2be1d70682c4cb50180f845ca626f406670888d4b1ba896201e9b9586d2b934f",
+      "bytes": 1810
+    },
+    "F-location-compile-query368-draft/ROOT-INTERFACE368.md": {
+      "sha256": "119320d22ce10993acc94741196a9cdd9584b542d816092e028b5ae38dbd8fd7",
+      "bytes": 4142
+    },
+    "F-location-compile-query368-draft/SELECTION.template.json": {
+      "sha256": "bbd0e7e16531a6970a811cfe04f784edc601dd6419f1d573b62b98fd545c0a90",
+      "bytes": 721
+    },
+    "F-location-compile-query368-draft/SOURCE-211-to368.diff": {
+      "sha256": "94d1293e519d91a6fe7605dd23c3f87477ad745770e54d406d82db7fc0e3c53c",
+      "bytes": 22544
+    },
+    "F-location-compile-query368-draft/SOURCE-INPUTS368.json": {
+      "sha256": "8829c4e90313526c7c966d54b3d78db0d4b3c03b22af314f5cc9d123ea231a30",
+      "bytes": 2625
+    },
+    "F-location-compile-query368-draft/SOURCE_MANIFEST.json": {
+      "sha256": "4b5579fe0d25d9182e93f44ac6e0ff30a4f8136cd2e7e6c9036fdb1dc8cd6a06",
+      "bytes": 11494
+    },
+    "F-location-compile-query368-draft/STATIC-REVIEW.json": {
+      "sha256": "32454db789d916a85ce33653f44ef771c4030dbaf9370206957d8f1a1d7eb90d",
+      "bytes": 3743
+    },
+    "F-location-compile-query368-draft/TEST-PLAN368.json": {
+      "sha256": "a770c4bb828389ff4542604588ef54592fcb402a523aafb1024f8be1f69c7cfc",
+      "bytes": 1387
+    },
+    "F-location-compile-query368-draft/compile_contract129.py": {
+      "sha256": "58978a2bc995697ccc6c7077168440770f4d88eedcfea9ddacc3198065bbcdeb",
+      "bytes": 21577
+    },
+    "F-location-compile-query368-draft/compile_inner129.py": {
+      "sha256": "f03184362d075e80e9d9f897f88e2db816a3b30ebfc0b77d415a386661a07cff",
+      "bytes": 25094
+    },
+    "F-location-compile-query368-draft/endpoint_owner129.py": {
+      "sha256": "edf9050fa1f86a40c25d2a4d12f802203f8e325c3dd8052beb1cacd80cc38640",
+      "bytes": 5016
+    },
+    "F-location-compile-query368-draft/fixtures/PROVENANCE.json": {
+      "sha256": "64f19d4c5dc9833795f9c2cbaa67babeb2f97893afc3a7a61fa22d881e93c8c3",
+      "bytes": 879
+    },
+    "F-location-compile-query368-draft/fixtures/actual-17-03-audio-command.raw": {
+      "sha256": "b85632c24af99077e6bfb0e0a58eab781b9156dad9a783dddffc02965c79dc7d",
+      "bytes": 10307
+    },
+    "F-location-compile-query368-draft/fixtures/actual354-00002.raw": {
+      "sha256": "ed6c280ead232ee8262cf6decc8c5484d61f87d06240bd3536db68e1c18ac826",
+      "bytes": 28339
+    },
+    "F-location-compile-query368-draft/fixtures/actual354-00004.raw": {
+      "sha256": "462c145acd8cb62d512e44710dad0f8a528bf05b055103d9b8f1cce8edc0f85e",
+      "bytes": 32746
+    },
+    "F-location-compile-query368-draft/fixtures/actual354-00006.raw": {
+      "sha256": "fa3eb2bd649276d2ecc565b8dda84e1b805646d0211efc44a1fe846ec338271a",
+      "bytes": 33337
+    },
+    "F-location-compile-query368-draft/fixtures/actual354-queries.json": {
+      "sha256": "f466b10cfd8b78e2cecab02d096c6b31e397ebcf627f9989ab14167c0f3a8763",
+      "bytes": 4456
+    },
+    "F-location-compile-query368-draft/fixtures/actual354-staged-paths.json": {
+      "sha256": "fb15f089301c6f96119cefc1504c6c70f1aef7ad3f40aee26a52e4099261d06a",
+      "bytes": 11956
+    },
+    "F-location-compile-query368-draft/fixtures/source-contract.actual.json": {
+      "sha256": "b151f2af957d216e784bc06797a8bb9613491d4421d5c129c04a5d388496beaf",
+      "bytes": 2016
+    },
+    "F-location-compile-query368-draft/run_location_compile129.py": {
+      "sha256": "589c0a14113cdde48a4a554f101f01714d200b0c1685097e7689fecc768fb87f",
+      "bytes": 22485
+    },
+    "F-location-compile-query368-draft/test_compile_contract129.py": {
+      "sha256": "a0405e5eed3c66b73255bcd7be864f98badb294f7f28a22045f24591b7666b9b",
+      "bytes": 13202
+    },
+    "F-location-compile-query368-draft/test_query368.py": {
+      "sha256": "f9d6f5503844aec00085d5e119c9791bdf31d2bb2bf04f761a854badd9e3290e",
+      "bytes": 13418
+    },
+    "F-location-current-inputs211-draft/SOURCE_MANIFEST.json": {
+      "sha256": "ff5a28dc52638caf6bf8066fee8dbe210dbb33b6a412447ea6094ca92555d421",
+      "bytes": 8363
+    },
+    "F-location-current-inputs211-draft/compile129/SOURCE_MANIFEST.json": {
+      "sha256": "0ec13c2f277aac7d07949bea9736ef883b7deb522a5f1461fe9c37b299b83a04",
+      "bytes": 5251
+    },
+    "F-location-current-inputs211-draft/compile129/compile_contract129.py": {
+      "sha256": "03fd1e71f53ed06c6ee2d817fad22b7fdff2f1e8d230193152bd676a55b5dc36",
+      "bytes": 19748
+    },
+    "F-location-current-inputs211-draft/compile129/compile_inner129.py": {
+      "sha256": "55cb775f9b530b7b74bee47c9b21a05bc440a339cacc0327ba79c802c359a288",
+      "bytes": 25256
+    },
+    "F-location-current-inputs211-draft/inventory42/SOURCE_MANIFEST.json": {
+      "sha256": "59b70f13efb164397debb9a91f3381ebc60ee4d8a4618741535173921d6c6743",
+      "bytes": 3724
+    },
+    "F-location-current-inputs211-draft/inventory42/inventory_contract42.py": {
+      "sha256": "f4acbe3fbaa2ab5c46825b9d0f9698fdcbc9406546606f373c1fe0e7082249b2",
+      "bytes": 11852
+    },
+    "F-location-current-inputs211-draft/inventory42/inventory_inner42.py": {
+      "sha256": "afd5a99b9be10550a403281148d39df710ba0fb6d2e55dffcb521942e7a96c66",
+      "bytes": 30404
+    },
+    "F-location-current-inputs211-draft/inventory42/targeted_graphs211.py": {
+      "sha256": "35eff9cb9e9dc9d9e9ac31e260b9ab49b56495573a29b096501577aa535634b3",
+      "bytes": 2601
+    },
+    "F-location-current-inputs211-draft/inventory42/test_inventory_contract42.py": {
+      "sha256": "ab8c653fccb4b1b8d1575b14d3d8ef315eca38f032160705aaa301f9b3be4c5c",
+      "bytes": 5284
+    },
+    "F-location-inventory-fix327-draft/SOURCE_MANIFEST.json": {
+      "sha256": "ca2b82798d9f8e86f97e146ea3787b9175295e8ec654a3f7b4b4f479f361d553",
+      "bytes": 6559
+    },
+    "F-location-inventory-fix327-draft/inventory_inner42.py": {
+      "sha256": "3acf62e8d09bfbd44a0b836c80139efb1bd969d7081f15587c1795b68888b48a",
+      "bytes": 32323
+    },
+    "F-location-inventory-fix327-draft/prepare_inventory_argv327.py": {
+      "sha256": "f1bedcba3059a504fb17fc6ba3fb87e37448bbc966db48c4577b2f7dd8bd2873",
+      "bytes": 9870
+    },
+    "F-location-inventory-fix327-draft/run_inventory327.py": {
+      "sha256": "ecd7fbef612e83c7b46f0341cca42d637f677ef2ee757fbf5a7848b8524ecb50",
+      "bytes": 23415
+    },
+    "F-location-inventory-fix327-draft/selected_json327.py": {
+      "sha256": "5a0194fcd1472315978f7696e99c20207f7d425fada7c89b3c35ea579b7440fa",
+      "bytes": 5368
+    },
+    "F-location-inventory-fix327-draft/test_selected_json327.py": {
+      "sha256": "8cc6b00aafe697370dd11db042f3f28e91c7f99503e36344722a57512723fce1",
+      "bytes": 12640
+    },
+    "F-location-inventory-fix354-draft/FACTS354.json": {
+      "sha256": "270d631b1f9a402d644ee0fd7c498bab4ea3b34a77d731492555c71d2d23243c",
+      "bytes": 7620
+    },
+    "F-location-inventory-fix354-draft/HANDOFF.md": {
+      "sha256": "2aaa0ddfa4983a4ad638640253f88385bc402e965508d5ec494d3ed97deeb52c",
+      "bytes": 8820
+    },
+    "F-location-inventory-fix354-draft/PREDECESSOR-TO354.diff": {
+      "sha256": "5bc078ae37c41ac3e1caf713f15ef667a87376d9925dac7edcaee5d244fb158c",
+      "bytes": 28890
+    },
+    "F-location-inventory-fix354-draft/SOURCE_MANIFEST.json": {
+      "sha256": "92696f9897242ecdd719f94af06107807bd0f1703f8b42fc1f888399039f213b",
+      "bytes": 8371
+    },
+    "F-location-inventory-fix354-draft/STATIC-CHECKS354.json": {
+      "sha256": "a8e318a09f270292762d14bc4d1579193090c9e625ad573590b2c2d53047eb00",
+      "bytes": 2041
+    },
+    "F-location-inventory-fix354-draft/ccache_binding354.py": {
+      "sha256": "d3d46586f95708cb5601dbc6ead86f7cf0b2c7e87f83ef743453b34e4ece8bea",
+      "bytes": 2199
+    },
+    "F-location-inventory-fix354-draft/fixture-arkui-command353.bin": {
+      "sha256": "ed6c280ead232ee8262cf6decc8c5484d61f87d06240bd3536db68e1c18ac826",
+      "bytes": 28339
+    },
+    "F-location-inventory-fix354-draft/fixture-bad-UTF8-context353.bin": {
+      "sha256": "b80bf1f935399a170537ff29b37bf5f5aae447ad00059a1ec0828c154856931e",
+      "bytes": 81
+    },
+    "F-location-inventory-fix354-draft/inventory_contract42.py": {
+      "sha256": "f4acbe3fbaa2ab5c46825b9d0f9698fdcbc9406546606f373c1fe0e7082249b2",
+      "bytes": 11852
+    },
+    "F-location-inventory-fix354-draft/inventory_inner42.py": {
+      "sha256": "e9669e7734abaf2a5e1f64fa69f00c86959de0020695119105786e1d64f3c66f",
+      "bytes": 32222
+    },
+    "F-location-inventory-fix354-draft/prepare_inventory_argv354.py": {
+      "sha256": "7fa386a2a34bde17bc0e7ad807341bf99e67c1540062f0fd47dcee4f082a2885",
+      "bytes": 9884
+    },
+    "F-location-inventory-fix354-draft/run_inventory354.py": {
+      "sha256": "f016aae28fe3f7673ca36826fb1cf6586745892feefde8c5513578b8b6058088",
+      "bytes": 23646
+    },
+    "F-location-inventory-fix354-draft/selected_json327.py": {
+      "sha256": "0e8cd9b64b3f103c2f1b9872f71119ce00b4131627404a0cd1e977946c4af5b7",
+      "bytes": 5588
+    },
+    "F-location-inventory-fix354-draft/targeted_graphs211.py": {
+      "sha256": "35eff9cb9e9dc9d9e9ac31e260b9ab49b56495573a29b096501577aa535634b3",
+      "bytes": 2601
+    },
+    "F-location-inventory-fix354-draft/test_guard327.py": {
+      "sha256": "e551b38e99e96b9c452fd01f2876225d794ccb9ff16970132838eb256205f751",
+      "bytes": 8476
+    },
+    "F-location-inventory-fix354-draft/test_inventory_contract42.py": {
+      "sha256": "ab8c653fccb4b1b8d1575b14d3d8ef315eca38f032160705aaa301f9b3be4c5c",
+      "bytes": 5284
+    },
+    "F-location-inventory-fix354-draft/test_selected_json327.py": {
+      "sha256": "76e2910c5eeba1d38c7a139b0dfe14613de8806ef4168738001470e2288cdeb3",
+      "bytes": 13675
+    },
+    "F-location-inventory-fix354-draft/test_target_commands354.py": {
+      "sha256": "9b0108f36e822fa1aa72d686c756939e0b6d6761f3ffc00e498f66c11f5b8a13",
+      "bytes": 8822
+    },
+    "F-location-inventory-owner227-draft/SOURCE_MANIFEST.json": {
+      "sha256": "6c493277e17bde56b4e8b09c2ad3f5a646a37d346022ec2e62f10d77c325c682",
+      "bytes": 5920
+    },
+    "F-location-inventory-owner227-draft/run_inventory227.py": {
+      "sha256": "c6b79831f3122b3050ee7074a6b99924591ef95fce359ae7ab38ec8f4d9a8ded",
+      "bytes": 23100
+    },
+    "F-location-runtime-path372-draft/SOURCE_MANIFEST.json": {
+      "sha256": "39fe27d808a20586c232b37d8685c197e06c3d9be6e8cfe8298f513612b4763a",
+      "bytes": 3935
+    },
+    "F-location-runtime-path372-draft/post/location-owned16/location_native_session16.py": {
+      "sha256": "0969611c7d0527381dd9adb3985f60c6852653f809a29f45d0b28e9bf26555f1",
+      "bytes": 21639
+    },
+    "F-location-runtime-path372-draft/post/location-owned16/test_location_native_session16.py": {
+      "sha256": "f160b4c099c31688ac0309bdf136d6fd26efb940f50d61effaa6b2840f796258",
+      "bytes": 25158
+    },
+    "F-location-runtime-path372-draft/post/location-role-export16/location_role_export16.py": {
+      "sha256": "09d2cf3453ed5fe52920c432b0fcfbe2a9411cbbcbdc090d10777990d8203daf",
+      "bytes": 26989
+    },
+    "F-location-runtime-path372-draft/post/location-role-export16/test_location_role_export16.py": {
+      "sha256": "4c337f39191e125863dd2960608c8856e2f82738e9594d1dc91eeabc04c0e252",
+      "bytes": 7816
+    },
+    "F-location-runtime-path372-draft/pre/location-owned16/location_native_session16.py": {
+      "sha256": "feea2c76ac6534b61208ee4f3665166d40f477d77ae9c93632d0f2d678a8a657",
+      "bytes": 21538
+    },
+    "F-location-runtime-path372-draft/pre/location-owned16/test_location_native_session16.py": {
+      "sha256": "6ceb2c9c8c88f16a26bf078f4e2da2d20e292ed3c6aefe507e72974305d46189",
+      "bytes": 20007
+    },
+    "F-location-runtime-path372-draft/pre/location-role-export16/location_role_export16.py": {
+      "sha256": "f2740e3b0f74d7037c2df70f4507fefdd77a3cfde53519661580fdf4da50621b",
+      "bytes": 26641
+    },
+    "F-location-runtime-path372-draft/pre/location-role-export16/test_location_role_export16.py": {
+      "sha256": "bafc57d77c29c8d138f37ea04eb26b82aacd8fc0c493f04ceb5371afd7ba5a42",
+      "bytes": 3580
+    },
+    "F-location327-tests346-draft/SOURCE_MANIFEST.json": {
+      "sha256": "6c23d8809c9fa0812253e21a801d1c7b0bfae9f9a0a28d6960788db984861c82",
+      "bytes": 6514
+    },
+    "F-location327-tests346-draft/run_tests346.py": {
+      "sha256": "7df34a00912b622a9df180e6f12bd3a57203d57993074d10dac89c0de82c411a",
+      "bytes": 10322
+    },
+    "F-native-graph-discovery107-draft/discovery_contract107.py": {
+      "sha256": "cf2cac4862ee3888cf367710a7cdccaef1a6207f6396f5ffb2a30941d158d385",
+      "bytes": 14129
+    },
+    "F-runtime-support35-draft/owned_resource35.py": {
+      "sha256": "02dcc35db074c625cb070ca7af29446ba917e585d45cb015fc86ff4b8863e4eb",
+      "bytes": 23778
+    },
+    "F-runtime-support35-draft/support_common35.py": {
+      "sha256": "69c29368c72b503f5fe5165f2796fe5273f84e92098dfb5cc6bf8059770f6a43",
+      "bytes": 5802
+    },
+    "F-runtime-support35-draft/test_owned_resource35.py": {
+      "sha256": "882ee11c733cec359a42221dfa5965bb574070991415e5d0c45b452a2afa3e4b",
+      "bytes": 7971
+    },
+    "F-runtime-support35-draft/test_support_common35.py": {
+      "sha256": "cfdf476c55d5c2752d721a369afe785ac3e11aaedb945270d8f4427f11546c75",
+      "bytes": 3431
+    },
+    "gnss_public_boundary_review11.py": {
+      "sha256": "600063c467adc147564e195770037a004a835d7bbbabcccfbb80230a1aaeeb00",
+      "bytes": 14133
+    },
+    "location-owned16/HANDOFF.md": {
+      "sha256": "6a14f2c85ff411c880426006db37713f44b9741d7879cf0d1180b44eb0260035",
+      "bytes": 11559
+    },
+    "location-owned16/STATIC-REVIEW.json": {
+      "sha256": "1f07d739cbdec0ace0b96f41284cf4643c572daec3785c8b16b1edfd2378ae3a",
+      "bytes": 461
+    },
+    "location-owned16/candidate.patch": {
+      "sha256": "b242e3dfc3c3d84c819e31060f7d1ff4a3a4558fabe9bc793cba71ac353c4cf9",
+      "bytes": 103911
+    },
+    "location-owned16/fixtures/E-fresh-layout.json": {
+      "sha256": "f17bfb18615e57509b84ce2d3b15aa1f64962e11bd66dc9a24d858ff1eea3ed3",
+      "bytes": 600098
+    },
+    "location-owned16/fixtures/E-reviewed-layout.json": {
+      "sha256": "33b0e3417b7eef1ae3839ec8218e9cbf70e60b7df49df541eb5a5cc535702311",
+      "bytes": 600098
+    },
+    "location-owned16/fixtures/native-source/final/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp": {
+      "sha256": "0486008216b98724f8a5087c0062c696241af4e69639b545f995cd91480714e2",
+      "bytes": 15424
+    },
+    "location-owned16/fixtures/native-source/final/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp": {
+      "sha256": "1e34022836db60588e081edc2fbcc9450cef146bda609365920092d3062e2145",
+      "bytes": 93141
+    },
+    "location-owned16/fixtures/native-source/source-contract.json": {
+      "sha256": "b151f2af957d216e784bc06797a8bb9613491d4421d5c129c04a5d388496beaf",
+      "bytes": 2016
+    },
+    "location-owned16/gnss_public_boundary16.py": {
+      "sha256": "600063c467adc147564e195770037a004a835d7bbbabcccfbb80230a1aaeeb00",
+      "bytes": 14133
+    },
+    "location-owned16/location_native_session16.py": {
+      "sha256": "feea2c76ac6534b61208ee4f3665166d40f477d77ae9c93632d0f2d678a8a657",
+      "bytes": 21538
+    },
+    "location-owned16/location_privacy_owner16.py": {
+      "sha256": "65504f768185f69995b38910753bbc63ebc4060c124f89edc1f662722acba464",
+      "bytes": 27012
+    },
+    "location-owned16/location_runtime_contract16.py": {
+      "sha256": "4c46d9768609ba3219472a388d4fa1a2dc13a8b4136fb8d1dc39dca0c303d442",
+      "bytes": 18614
+    },
+    "location-owned16/manifest-01.json": {
+      "sha256": "6095cbc5715a2bf247435a36f71c74837b368b271619e26d823e1895c77592c3",
+      "bytes": 16090
+    },
+    "location-owned16/manifest-02.json": {
+      "sha256": "a8380ff2481ef6e0abaac09914434004dd75a567c7bef80fdf674b6383278a9d",
+      "bytes": 16316
+    },
+    "location-owned16/manifest.json": {
+      "sha256": "a8380ff2481ef6e0abaac09914434004dd75a567c7bef80fdf674b6383278a9d",
+      "bytes": 16316
+    },
+    "location-owned16/test_gnss_public_boundary16.py": {
+      "sha256": "5a26349ec57f8c36b9fefb7d0ccc7fe66abe50228e07d7499f7c129dc442f2a0",
+      "bytes": 21529
+    },
+    "location-owned16/test_location_native_session16.py": {
+      "sha256": "6ceb2c9c8c88f16a26bf078f4e2da2d20e292ed3c6aefe507e72974305d46189",
+      "bytes": 20007
+    },
+    "location-owned16/test_location_owned16.py": {
+      "sha256": "9066e0adc82e104fdf5d6065005853f0bd6bc08f4916444692f5a9dac06e5bd5",
+      "bytes": 29631
+    },
+    "location-owned16/test_location_profile_wiring16.py": {
+      "sha256": "da229e4ee67fa622748d43e5cfbb74f8498b44cd7c355c589836d29ff3442906",
+      "bytes": 3704
+    },
+    "location-owned16/test_location_ui_projection16.py": {
+      "sha256": "483669931a6dd3b021871f1a2b7201f70897e04daf161aa3ac3bbad135165abe",
+      "bytes": 10924
+    },
+    "location-role-export16/HANDOFF.md": {
+      "sha256": "34f2b108697809abf36a2864117c84e40c3680f54bc3a805e0f1b0183b4c6a29",
+      "bytes": 3059
+    },
+    "location-role-export16/location_role_export16.py": {
+      "sha256": "f2740e3b0f74d7037c2df70f4507fefdd77a3cfde53519661580fdf4da50621b",
+      "bytes": 26641
+    },
+    "location-role-export16/test_location_role_export16.py": {
+      "sha256": "bafc57d77c29c8d138f37ea04eb26b82aacd8fc0c493f04ceb5371afd7ba5a42",
+      "bytes": 3580
+    },
+    "location_switch_owned16.py": {
+      "sha256": "cde0a26e8e1f41fff628b714dca5e5393007921d3ae31669b3774078cf9ee236",
+      "bytes": 24703
+    },
+    "prepare_location_roles16.py": {
+      "sha256": "01355e7797455f00a74cd78f0762cbf41b6a5004e203c72689446c076b9dc8a7",
+      "bytes": 1621
+    },
+    "publish_root_location_selection16.py": {
+      "sha256": "15040ec375cba24743959199451851eb002509b92fd2ae2e92c14c7cc50e2303",
+      "bytes": 1939
+    },
+    "run_gnss_existing_trace_steps16.py": {
+      "sha256": "2b685b1aa0083f7a161861aab9ccda5115474e270e2c65ac712a0d55bb220ce9",
+      "bytes": 39899
+    },
+    "run_location_switch_bootstrap16.py": {
+      "sha256": "e7b3b346e7f8ce3d5b91347b0849ac97dfc619b45880ca24617d046b0244be41",
+      "bytes": 9506
+    }
+  },
+  "copy": {
+    "F-location-GN-export370-draft/HANDOFF.md": "F-location-GN-export370-draft/HANDOFF.md",
+    "F-location-GN-export370-draft/SOURCE370.diff": "F-location-GN-export370-draft/SOURCE370.diff",
+    "F-location-GN-export370-draft/SOURCE_MANIFEST.json": "F-location-GN-export370-draft/SOURCE_MANIFEST.json",
+    "F-location-GN-export370-draft/STATIC-CHECKS370.json": "F-location-GN-export370-draft/STATIC-CHECKS370.json",
+    "F-location-GN-export370-draft/export_core370.py": "F-location-GN-export370-draft/export_core370.py",
+    "F-location-GN-export370-draft/export_inner370.py": "F-location-GN-export370-draft/export_inner370.py",
+    "F-location-GN-export370-draft/run_GN_export370.py": "F-location-GN-export370-draft/run_GN_export370.py",
+    "F-location-GN-export370-draft/test_export370.py": "F-location-GN-export370-draft/test_export370.py",
+    "F-location-GN-export370-draft/test_guard370.py": "F-location-GN-export370-draft/test_guard370.py",
+    "F-location-compile-query368-draft/DEPENDENCIES.json": "F-location-compile-query368-draft/DEPENDENCIES.json",
+    "F-location-compile-query368-draft/HANDOFF.md": "F-location-compile-query368-draft/HANDOFF.md",
+    "F-location-compile-query368-draft/MEMBER-DELTA368.json": "F-location-compile-query368-draft/MEMBER-DELTA368.json",
+    "F-location-compile-query368-draft/ORIGINAL129-to368.diff": "F-location-compile-query368-draft/ORIGINAL129-to368.diff",
+    "F-location-compile-query368-draft/PREDECESSOR211-MANIFEST.json": "F-location-compile-query368-draft/PREDECESSOR211-MANIFEST.json",
+    "F-location-compile-query368-draft/PREDECESSOR_SOURCE_MANIFEST.json": "F-location-compile-query368-draft/PREDECESSOR_SOURCE_MANIFEST.json",
+    "F-location-compile-query368-draft/QUERY368.py.fragment": "F-location-compile-query368-draft/QUERY368.py.fragment",
+    "F-location-compile-query368-draft/ROOT-INTERFACE368.md": "F-location-compile-query368-draft/ROOT-INTERFACE368.md",
+    "F-location-compile-query368-draft/SELECTION.template.json": "F-location-compile-query368-draft/SELECTION.template.json",
+    "F-location-compile-query368-draft/SOURCE-211-to368.diff": "F-location-compile-query368-draft/SOURCE-211-to368.diff",
+    "F-location-compile-query368-draft/SOURCE-INPUTS368.json": "F-location-compile-query368-draft/SOURCE-INPUTS368.json",
+    "F-location-compile-query368-draft/SOURCE_MANIFEST.json": "F-location-compile-query368-draft/SOURCE_MANIFEST.json",
+    "F-location-compile-query368-draft/STATIC-REVIEW.json": "F-location-compile-query368-draft/STATIC-REVIEW.json",
+    "F-location-compile-query368-draft/TEST-PLAN368.json": "F-location-compile-query368-draft/TEST-PLAN368.json",
+    "F-location-compile-query368-draft/compile_contract129.py": "F-location-compile-query368-draft/compile_contract129.py",
+    "F-location-compile-query368-draft/compile_inner129.py": "F-location-compile-query368-draft/compile_inner129.py",
+    "F-location-compile-query368-draft/endpoint_owner129.py": "F-location-compile-query368-draft/endpoint_owner129.py",
+    "F-location-compile-query368-draft/fixtures/PROVENANCE.json": "F-location-compile-query368-draft/fixtures/PROVENANCE.json",
+    "F-location-compile-query368-draft/fixtures/actual-17-03-audio-command.raw": "F-location-compile-query368-draft/fixtures/actual-17-03-audio-command.raw",
+    "F-location-compile-query368-draft/fixtures/actual354-00002.raw": "F-location-compile-query368-draft/fixtures/actual354-00002.raw",
+    "F-location-compile-query368-draft/fixtures/actual354-00004.raw": "F-location-compile-query368-draft/fixtures/actual354-00004.raw",
+    "F-location-compile-query368-draft/fixtures/actual354-00006.raw": "F-location-compile-query368-draft/fixtures/actual354-00006.raw",
+    "F-location-compile-query368-draft/fixtures/actual354-queries.json": "F-location-compile-query368-draft/fixtures/actual354-queries.json",
+    "F-location-compile-query368-draft/fixtures/actual354-staged-paths.json": "F-location-compile-query368-draft/fixtures/actual354-staged-paths.json",
+    "F-location-compile-query368-draft/fixtures/source-contract.actual.json": "F-location-compile-query368-draft/fixtures/source-contract.actual.json",
+    "F-location-compile-query368-draft/run_location_compile129.py": "F-location-compile-query368-draft/run_location_compile129.py",
+    "F-location-compile-query368-draft/test_compile_contract129.py": "F-location-compile-query368-draft/test_compile_contract129.py",
+    "F-location-compile-query368-draft/test_query368.py": "F-location-compile-query368-draft/test_query368.py",
+    "F-location-current-inputs211-draft/SOURCE_MANIFEST.json": "F-location-current-inputs211-draft/SOURCE_MANIFEST.json",
+    "F-location-current-inputs211-draft/compile129/SOURCE_MANIFEST.json": "F-location-current-inputs211-draft/compile129/SOURCE_MANIFEST.json",
+    "F-location-current-inputs211-draft/compile129/compile_contract129.py": "F-location-current-inputs211-draft/compile129/compile_contract129.py",
+    "F-location-current-inputs211-draft/compile129/compile_inner129.py": "F-location-current-inputs211-draft/compile129/compile_inner129.py",
+    "F-location-current-inputs211-draft/inventory42/SOURCE_MANIFEST.json": "F-location-current-inputs211-draft/inventory42/SOURCE_MANIFEST.json",
+    "F-location-current-inputs211-draft/inventory42/inventory_contract42.py": "F-location-current-inputs211-draft/inventory42/inventory_contract42.py",
+    "F-location-current-inputs211-draft/inventory42/inventory_inner42.py": "F-location-current-inputs211-draft/inventory42/inventory_inner42.py",
+    "F-location-current-inputs211-draft/inventory42/targeted_graphs211.py": "F-location-current-inputs211-draft/inventory42/targeted_graphs211.py",
+    "F-location-current-inputs211-draft/inventory42/test_inventory_contract42.py": "F-location-current-inputs211-draft/inventory42/test_inventory_contract42.py",
+    "F-location-inventory-fix327-draft/SOURCE_MANIFEST.json": "F-location-inventory-fix327-draft/SOURCE_MANIFEST.json",
+    "F-location-inventory-fix327-draft/inventory_inner42.py": "F-location-inventory-fix327-draft/inventory_inner42.py",
+    "F-location-inventory-fix327-draft/prepare_inventory_argv327.py": "F-location-inventory-fix327-draft/prepare_inventory_argv327.py",
+    "F-location-inventory-fix327-draft/run_inventory327.py": "F-location-inventory-fix327-draft/run_inventory327.py",
+    "F-location-inventory-fix327-draft/selected_json327.py": "F-location-inventory-fix327-draft/selected_json327.py",
+    "F-location-inventory-fix327-draft/test_selected_json327.py": "F-location-inventory-fix327-draft/test_selected_json327.py",
+    "F-location-inventory-fix354-draft/FACTS354.json": "F-location-inventory-fix354-draft/FACTS354.json",
+    "F-location-inventory-fix354-draft/HANDOFF.md": "F-location-inventory-fix354-draft/HANDOFF.md",
+    "F-location-inventory-fix354-draft/PREDECESSOR-TO354.diff": "F-location-inventory-fix354-draft/PREDECESSOR-TO354.diff",
+    "F-location-inventory-fix354-draft/SOURCE_MANIFEST.json": "F-location-inventory-fix354-draft/SOURCE_MANIFEST.json",
+    "F-location-inventory-fix354-draft/STATIC-CHECKS354.json": "F-location-inventory-fix354-draft/STATIC-CHECKS354.json",
+    "F-location-inventory-fix354-draft/ccache_binding354.py": "F-location-inventory-fix354-draft/ccache_binding354.py",
+    "F-location-inventory-fix354-draft/fixture-arkui-command353.bin": "F-location-inventory-fix354-draft/fixture-arkui-command353.bin",
+    "F-location-inventory-fix354-draft/fixture-bad-UTF8-context353.bin": "F-location-inventory-fix354-draft/fixture-bad-UTF8-context353.bin",
+    "F-location-inventory-fix354-draft/inventory_contract42.py": "F-location-inventory-fix354-draft/inventory_contract42.py",
+    "F-location-inventory-fix354-draft/inventory_inner42.py": "F-location-inventory-fix354-draft/inventory_inner42.py",
+    "F-location-inventory-fix354-draft/prepare_inventory_argv354.py": "F-location-inventory-fix354-draft/prepare_inventory_argv354.py",
+    "F-location-inventory-fix354-draft/run_inventory354.py": "F-location-inventory-fix354-draft/run_inventory354.py",
+    "F-location-inventory-fix354-draft/selected_json327.py": "F-location-inventory-fix354-draft/selected_json327.py",
+    "F-location-inventory-fix354-draft/targeted_graphs211.py": "F-location-inventory-fix354-draft/targeted_graphs211.py",
+    "F-location-inventory-fix354-draft/test_guard327.py": "F-location-inventory-fix354-draft/test_guard327.py",
+    "F-location-inventory-fix354-draft/test_inventory_contract42.py": "F-location-inventory-fix354-draft/test_inventory_contract42.py",
+    "F-location-inventory-fix354-draft/test_selected_json327.py": "F-location-inventory-fix354-draft/test_selected_json327.py",
+    "F-location-inventory-fix354-draft/test_target_commands354.py": "F-location-inventory-fix354-draft/test_target_commands354.py",
+    "F-location-inventory-owner227-draft/SOURCE_MANIFEST.json": "F-location-inventory-owner227-draft/SOURCE_MANIFEST.json",
+    "F-location-inventory-owner227-draft/run_inventory227.py": "F-location-inventory-owner227-draft/run_inventory227.py",
+    "F-location327-tests346-draft/SOURCE_MANIFEST.json": "F-location327-tests346-draft/SOURCE_MANIFEST.json",
+    "F-location327-tests346-draft/run_tests346.py": "F-location327-tests346-draft/run_tests346.py",
+    "F-native-graph-discovery107-draft/discovery_contract107.py": "F-native-graph-discovery107-draft/discovery_contract107.py",
+    "F-runtime-support35-draft/owned_resource35.py": "F-runtime-support35-draft/owned_resource35.py",
+    "F-runtime-support35-draft/support_common35.py": "F-runtime-support35-draft/support_common35.py",
+    "F-runtime-support35-draft/test_owned_resource35.py": "F-runtime-support35-draft/test_owned_resource35.py",
+    "F-runtime-support35-draft/test_support_common35.py": "F-runtime-support35-draft/test_support_common35.py",
+    "gnss_public_boundary_review11.py": "gnss_public_boundary_review11.py",
+    "location-owned16/HANDOFF.md": "location-owned16/HANDOFF.md",
+    "location-owned16/STATIC-REVIEW.json": "location-owned16/STATIC-REVIEW.json",
+    "location-owned16/candidate.patch": "location-owned16/candidate.patch",
+    "location-owned16/fixtures/E-fresh-layout.json": "location-owned16/fixtures/E-fresh-layout.json",
+    "location-owned16/fixtures/E-reviewed-layout.json": "location-owned16/fixtures/E-reviewed-layout.json",
+    "location-owned16/fixtures/native-source/final/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp": "location-owned16/fixtures/native-source/final/foundation/ability/ability_runtime/services/abilitymgr/src/extension_record/base_extension_record.cpp",
+    "location-owned16/fixtures/native-source/final/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp": "location-owned16/fixtures/native-source/final/foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp",
+    "location-owned16/fixtures/native-source/source-contract.json": "location-owned16/fixtures/native-source/source-contract.json",
+    "location-owned16/gnss_public_boundary16.py": "location-owned16/gnss_public_boundary16.py",
+    "location-owned16/location_native_session16.py": "location-owned16/location_native_session16.py",
+    "location-owned16/location_privacy_owner16.py": "location-owned16/location_privacy_owner16.py",
+    "location-owned16/location_runtime_contract16.py": "location-owned16/location_runtime_contract16.py",
+    "location-owned16/manifest-01.json": "location-owned16/manifest-01.json",
+    "location-owned16/manifest-02.json": "location-owned16/manifest-02.json",
+    "location-owned16/manifest.json": "location-owned16/manifest.json",
+    "location-owned16/test_gnss_public_boundary16.py": "location-owned16/test_gnss_public_boundary16.py",
+    "location-owned16/test_location_native_session16.py": "location-owned16/test_location_native_session16.py",
+    "location-owned16/test_location_owned16.py": "location-owned16/test_location_owned16.py",
+    "location-owned16/test_location_profile_wiring16.py": "location-owned16/test_location_profile_wiring16.py",
+    "location-owned16/test_location_ui_projection16.py": "location-owned16/test_location_ui_projection16.py",
+    "location-role-export16/HANDOFF.md": "location-role-export16/HANDOFF.md",
+    "location-role-export16/location_role_export16.py": "location-role-export16/location_role_export16.py",
+    "location-role-export16/test_location_role_export16.py": "location-role-export16/test_location_role_export16.py",
+    "location_switch_owned16.py": "location_switch_owned16.py",
+    "prepare_location_roles16.py": "prepare_location_roles16.py",
+    "provenance375/runtime372-SOURCE_MANIFEST.json": "F-location-runtime-path372-draft/SOURCE_MANIFEST.json",
+    "publish_root_location_selection16.py": "publish_root_location_selection16.py",
+    "run_gnss_existing_trace_steps16.py": "run_gnss_existing_trace_steps16.py",
+    "run_location_switch_bootstrap16.py": "run_location_switch_bootstrap16.py"
+  },
+  "overlays": {
+    "location-owned16/location_native_session16.py": {
+      "pre": "F-location-runtime-path372-draft/pre/location-owned16/location_native_session16.py",
+      "post": "F-location-runtime-path372-draft/post/location-owned16/location_native_session16.py"
+    },
+    "location-owned16/test_location_native_session16.py": {
+      "pre": "F-location-runtime-path372-draft/pre/location-owned16/test_location_native_session16.py",
+      "post": "F-location-runtime-path372-draft/post/location-owned16/test_location_native_session16.py"
+    },
+    "location-role-export16/location_role_export16.py": {
+      "pre": "F-location-runtime-path372-draft/pre/location-role-export16/location_role_export16.py",
+      "post": "F-location-runtime-path372-draft/post/location-role-export16/location_role_export16.py"
+    },
+    "location-role-export16/test_location_role_export16.py": {
+      "pre": "F-location-runtime-path372-draft/pre/location-role-export16/test_location_role_export16.py",
+      "post": "F-location-runtime-path372-draft/post/location-role-export16/test_location_role_export16.py"
+    }
+  },
+  "scope": "bounded immutable predecessor sources; no package/native/guest success implied"
+}

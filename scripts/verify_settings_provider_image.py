@@ -78,6 +78,34 @@ def unique_object(pairs):
     return result
 
 
+SELECT_ABILITY = {
+    'name': 'PickerDialog', 'srcEntry': './ets/Setting/SharePicker/ChoosePickerAbility.ets',
+    'launchType': 'standard', 'exported': False, 'removeMissionAfterTerminate': True,
+}
+SELECT_PAGES = 'resources/base/profile/main_pages.json'
+
+
+def inspect_select_provider(module, archive, source_module=None):
+    compiled = [row for row in module.get('abilities', []) if row.get('name') == 'PickerDialog']
+    source = [row for row in (source_module or {}).get('abilities', []) if row.get('name') == 'PickerDialog']
+    if not compiled and not source:
+        return None
+    for label, rows in (('compiled', compiled), ('source', source if source_module is not None else compiled)):
+        if len(rows) != 1 or any(type(rows[0].get(key)) is not type(value) or rows[0].get(key) != value
+                                 for key, value in SELECT_ABILITY.items()):
+            raise ValueError('Settings ' + label + ' private select ability contract mismatch')
+        if rows[0].get('permissions', []) != [] or rows[0].get('skills', []) != []:
+            raise ValueError('Settings private select ability must not expose skills or permissions')
+    try:
+        profile = json.loads(archive.read(SELECT_PAGES), object_pairs_hook=unique_object)
+    except (KeyError, ValueError) as error:
+        raise ValueError('Settings compiled select page profile missing or invalid') from error
+    pages = profile.get('src') if isinstance(profile, dict) else None
+    if not isinstance(pages, list) or not all(isinstance(page, str) for page in pages) or pages.count('pages/ChoosePicker') != 1:
+        raise ValueError('Settings compiled select page absent or duplicated')
+    return dict(SELECT_ABILITY, page='pages/ChoosePicker', profile=SELECT_PAGES)
+
+
 def inspect_hap(hap, source_module=None):
     with zipfile.ZipFile(hap) as archive:
         seen = set()
@@ -106,6 +134,7 @@ def inspect_hap(hap, source_module=None):
                 module['module'].get('type') != 'entry' or
                 set(module['module'].get('deviceTypes', [])) != {'default', 'tablet'}):
             raise ValueError('unexpected Settings bundle/module/device profile')
+        select_provider = inspect_select_provider(module['module'], archive, source_module)
         extensions = module['module'].get('extensionAbilities', [])
         actual = {entry['name']: entry['type'] for entry in extensions}
         if len(actual) != len(extensions) or actual != EXTENSIONS:
@@ -132,7 +161,7 @@ def inspect_hap(hap, source_module=None):
                     raise ValueError('Settings native library has wrong ABI/type: ' + member)
                 machines[member] = {'elf_machine': machine, 'sha256': hashlib.sha256(raw).hexdigest()}
         return {'bundle': 'com.ohos.settings', 'extensions': actual, 'native_libraries': machines,
-                'hap_sha256': file_sha256(hap), 'permissions': permissions}
+                'hap_sha256': file_sha256(hap), 'permissions': permissions, 'select_provider': select_provider}
 
 
 def verify_signature(hap, source, scratch):
@@ -209,12 +238,17 @@ def verify_source(source):
     spec.loader.exec_module(guard)
     guard.validate(source, require_patched=True)
     for component in ('accessibility_service_completion', 'external_input', 'input_2in1_navigation',
-                      'refresh_rate_page', 'share_picker', 'wallpaper_settings'):
+                      'refresh_rate_page', 'share_picker', 'wallpaper_settings', 'share_picker_choose'):
         route_spec = importlib.util.spec_from_file_location('settings_guard_' + component,
             verifier.parent.parent / component / 'verify_source.py')
         route_guard = importlib.util.module_from_spec(route_spec)
         route_spec.loader.exec_module(route_guard)
         route_guard.validate(source, require_patched=True)
+    parameter_path = verifier.parents[4] / 'vendor/ohemu/virt/settings_select/apply.py'
+    parameter_spec = importlib.util.spec_from_file_location('settings_select_parameter_guard', parameter_path)
+    parameter_guard = importlib.util.module_from_spec(parameter_spec)
+    parameter_spec.loader.exec_module(parameter_guard)
+    parameter_guard.configure(source, require_patched=True)
     policy = json.loads((source / 'vendor/ohemu/virt/preinstall-config/install_list_capability.json').read_text(),
                         object_pairs_hook=unique_object)
     entries = [item for item in policy['install_list'] if item.get('bundleName') == 'com.ohos.settings']

@@ -1,0 +1,161 @@
+{
+  "scope": "6 exact unresolved IDs; known product/protocol gaps, no new actual-source export or runtime claim for these six",
+  "count": 6,
+  "providers": [
+    {
+      "id": "behavior:accessibility-screen-reader-provider-missing",
+      "products": [
+        "com.ohos.screenreader/AccessibilityExtAbility",
+        "com.ohos.hmos.screenreader (existing second consumer identity)"
+      ],
+      "protocol_missing": [
+        "one canonical actual provider/bundle contract across both framework consumers",
+        "real AccessibilityExtension focus, action and gesture subscription with settings enable/disable",
+        "actual TTS engine/voice, speech content, interruption and teardown"
+      ],
+      "external_inputs": [
+        "license-valid voice/engine artifact and supported languages if the product image does not already supply one"
+      ],
+      "next_minimum": "Export actual extension consumer/event/gesture/TTS interface and image inventory; implement content-driven reader, never an empty enable-only ability.",
+      "status": "known_full_implementation_missing_not_reclassified_or_closed",
+      "implemented_in_this_batch": false,
+      "source_authority": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "docs/capability-audit/parallel/apps/result.json",
+        ".tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json"
+      ]
+    },
+    {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "products": [
+        "com.ohos.vassistant/AiCaptionServiceExtAbility"
+      ],
+      "protocol_missing": [
+        "actual audio capture/subscription with permission and privacy owner",
+        "ASR engine/model and supported input/language contract",
+        "live transcript window, stop/cancel/denied/restart and no continued capture after disable"
+      ],
+      "external_inputs": [
+        "lawfully distributable ASR engine/models; no such usable artifact established in this batch"
+      ],
+      "next_minimum": "Agree audio/ASR ABI and real model source before implementing provider; CaptionsManager switch state alone cannot satisfy it.",
+      "status": "known_full_implementation_missing_not_reclassified_or_closed",
+      "implemented_in_this_batch": false,
+      "source_authority": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "docs/capability-audit/parallel/apps/result.json",
+        ".tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json"
+      ]
+    },
+    {
+      "id": "behavior:avsession-desktop-lyrics-provider-missing",
+      "products": [
+        "com.ohos.mediacontroller/DesktopLyricAbility"
+      ],
+      "protocol_missing": [
+        "actual enableDesktopLyric invocation and Want/session ownership",
+        "real AVSession metadata/lyric subscription, timing and session switch",
+        "desktop window/show/hide/close/restart, legal permission policy"
+      ],
+      "external_inputs": [],
+      "next_minimum": "Export actual AVSession consumer and metadata/lyric interface; implement from real session content. Similar media-controller bundle names do not establish this ABI.",
+      "status": "known_full_implementation_missing_not_reclassified_or_closed",
+      "implemented_in_this_batch": false,
+      "source_authority": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "docs/capability-audit/parallel/apps/result.json",
+        ".tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json"
+      ]
+    },
+    {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "products": [
+        "com.numberidentity/NumberIdentityServiceExtAbility",
+        "numberlocationability DataShare authority",
+        "numbermarkability DataShare authority",
+        "com.spamshield/SpamShieldServiceExtAbility",
+        "com.hmos.hsdr/HSDRService"
+      ],
+      "protocol_missing": [
+        "exact refresh/classification/DataShare/anti-fraud request and response schemas",
+        "owned legal number-location/number-mark data source with update and rollback provenance",
+        "unknown/offline/error/cancel/death behavior and caller permissions"
+      ],
+      "external_inputs": [
+        "authorized number intelligence and anti-fraud service/data; no fabricated fixed labels or empty success tables"
+      ],
+      "next_minimum": "Export exact five consumers and lawful data/service inputs; one ID aggregates these required providers.",
+      "status": "known_full_implementation_missing_not_reclassified_or_closed",
+      "implemented_in_this_batch": false,
+      "source_authority": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "docs/capability-audit/parallel/apps/result.json",
+        ".tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json"
+      ]
+    },
+    {
+      "id": "behavior:arkui-expanded-text-menu-providers-missing",
+      "products": [
+        "/system/lib64/expanded_menu/libexpanded_menu.z.so"
+      ],
+      "protocol_missing": [
+        "real dlopen ABI and mapping contract",
+        "search/share/URL/email/phone/address/date-time action targets and original request/result/URI/permission semantics",
+        "real installed handlers (search/appdetail/sendData and browser/calendar/maps etc.), cancellation and release"
+      ],
+      "external_inputs": [],
+      "next_minimum": "Export actual loader ABI/consumer and handler mapping; implement ABI against actual installed handlers, not empty symbols or guessed proprietary bundle names.",
+      "status": "known_full_implementation_missing_not_reclassified_or_closed",
+      "implemented_in_this_batch": false,
+      "source_authority": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "docs/capability-audit/parallel/apps/result.json",
+        ".tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json"
+      ]
+    },
+    {
+      "id": "behavior:arkui-text-service-runtime-plugins-missing",
+      "products": [
+        "libsystemshare_innerkits.z.so",
+        "libai_text_translation_innerapi.z.so",
+        "libai_text_analyzer_innerapi.z.so"
+      ],
+      "protocol_missing": [
+        "three exact loader/export ABIs and async ownership/error/cancel contracts",
+        "actual content share/translation/entity recognition providers",
+        "real model/data/language artifacts where required and cancellation/resource release"
+      ],
+      "external_inputs": [
+        "license-valid translation/analyzer model or real service when no existing implementation is available"
+      ],
+      "next_minimum": "Export actual three loaders and public service contracts first; chooser only supplies one select route and does not implement these plugins.",
+      "status": "known_full_implementation_missing_not_reclassified_or_closed",
+      "implemented_in_this_batch": false,
+      "source_authority": [
+        "docs/capability-audit/parallel-work-plan.json",
+        "docs/capability-audit/parallel/apps/result.json",
+        ".tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json"
+      ]
+    }
+  ],
+  "source_pins": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel-work-plan.json",
+      "sha256": "21a0a90bf99a7e4ffb3c46abe366f1e4307dadc55f025e155b1067d872fe92eb",
+      "bytes": 100304,
+      "mode": "0o644"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/apps/result.json",
+      "sha256": "2dc2346fb0de1fef2c2ade18e67aac43eb93def25e001029ff5d04b64ae51fbd",
+      "bytes": 129022,
+      "mode": "0o644"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-round373-apps-draft/requirements.json",
+      "sha256": "8d58b768fd50ded8766d2f3472b96291ca53b3fcd973d1fff26b7672e1a07301",
+      "bytes": 55783,
+      "mode": "0o644"
+    }
+  ]
+}

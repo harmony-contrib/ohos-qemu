@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Prepare independent full-product guests on a real QEMU stream Ethernet wire.
 
-Preparation never starts QEMU. `observe` is an explicit later guest operation;
-its evidence cannot close service discovery/account-authentication requirements.
+Preparation never starts QEMU. Resource operations require the root-owned
+Python API's live executor; standalone CLI execution cannot create resources.
+Its evidence cannot close service discovery/account-authentication requirements.
 """
 import argparse
 import hashlib
@@ -20,6 +21,7 @@ import subprocess
 import time
 import tarfile
 import uuid
+from batch_network375_root_entry import require_owner
 
 ROLES = ('listener', 'connector')
 PRODUCTS = {'arm64_virt': 'virt', 'armv7a_virt': 'virt', 'x86_64_virt': 'q35'}
@@ -58,11 +60,12 @@ def subnet(value):
     return network
 
 
-def preflight_qemu(binary, machine):
+def preflight_qemu(binary, machine, *, owner):
+    owner = require_owner(owner)
     binary = Path(shutil.which(str(binary)) or binary).resolve(strict=True)
     results = []
     for arguments in (['--version'], ['-M', machine, '-netdev', 'help']):
-        value = subprocess.run([str(binary), *arguments], capture_output=True, timeout=10, check=False)
+        value = owner.run([str(binary), *arguments], timeout=10, label='peer-qemu-help')
         results.append(dict(argv=[str(binary), *arguments], exit_code=value.returncode,
                             stdout=value.stdout.decode(), stderr=value.stderr.decode()))
         if value.returncode:
@@ -165,10 +168,11 @@ def bind_archive(archive, sources):
         raise ValueError('archive content differs from the package; repackage candidate launchers before preparing')
 
 
-def prepare(args):
+def prepare(args, *, owner=None):
+    owner = require_owner(owner)
     package, output = args.package.resolve(strict=True), args.output.resolve()
     manifest = json.loads((package / 'manifest.json').read_text())
-    qemu = preflight_qemu(args.qemu, PRODUCTS.get(manifest['product'], 'virt'))
+    qemu = preflight_qemu(args.qemu, PRODUCTS.get(manifest['product'], 'virt'), owner=owner)
     plan = make_plan(package, output, qemu=qemu['path'], hdc_port=args.hdc_port,
         vnc_display=args.vnc_display, peer_port=args.peer_port, network=args.subnet)
     files, disks = inventory(package)
@@ -178,9 +182,12 @@ def prepare(args):
         raise ValueError('actual representative package archive is required for later runtime provenance')
     plan['qemu'] = qemu
     # No socket is held across VM startup; QEMU must still bind successfully.
+    owner.authorize('peer-port-probe', dict(ports=ports(args.hdc_port, args.vnc_display, args.peer_port)))
     for port in ports(args.hdc_port, args.vnc_display, args.peer_port):
         with socket.socket() as probe:
             probe.bind(('127.0.0.1', port))
+    owner.authorize('peer-staging', dict(output=str(output), control=plan['control_directory'],
+                                        archive=plan['archive_path'], archive_sha256=plan['archive_sha256']))
     output.mkdir(mode=0o700, exist_ok=False)
     control = Path(plan['control_directory'])
     control.mkdir(mode=0o700, exist_ok=False)
@@ -319,59 +326,141 @@ def validate_staging(plan):
         raise ValueError('all actual MACs and both management targets must be distinct')
 
 
-def observe(args):
+def link_was_up(links, interface):
+    rows = [re.match(r'\d+: ' + re.escape(interface) + r'(?:@[^: ]+)?: <([^>]*)>', line)
+            for line in links.splitlines()]
+    rows = [row for row in rows if row is not None]
+    if len(rows) != 1:
+        raise ValueError('one actual peer interface flags row required')
+    return 'UP' in rows[0].group(1).split(',')
+
+
+def address_values(text):
+    return re.findall(r'\binet ([0-9.]+/\d+)\s', text)
+
+
+def restore_script(instance, interface, *, was_up):
+    # Only our newly added address may be removed. Unexpected addresses keep
+    # the interface up and cause a failed, preserved cleanup observation.
+    configure_script(instance, interface)  # same strict address/MAC/name validation
+    address = instance['address'] + '/30'
+    check = ('test "$(id -u)" = 0 && test "$(cat /sys/class/net/' + interface + '/address)" = ' +
+             shlex.quote(instance['peer_mac']) + ' && ')
+    script = check + ('if ip -o -4 addr show dev ' + interface + ' | grep -q " inet ' + address + ' "; then '
+        'ip addr del ' + address + ' dev ' + interface + '; fi')
+    if not was_up:
+        script += (' && test -z "$(ip -o -4 addr show dev ' + interface + ')" && '
+                   'ip link set dev ' + interface + ' down')
+    return script
+
+
+def bind_service_receipt(value, output):
+    if (type(value) is not dict or set(value) != {'path', 'sha256', 'bytes'} or
+            type(value['path']) is not str or type(value['bytes']) is not int or
+            not 0 < value['bytes'] <= 4 * 1024**2 or type(value['sha256']) is not str or
+            re.fullmatch('[a-f0-9]{64}', value['sha256']) is None):
+        raise ValueError('root service exercise must return one actual file descriptor')
+    path = Path(value['path'])
+    if (not path.is_absolute() or not path.is_relative_to(output) or
+            path.resolve(strict=True) != path or path.is_symlink()):
+        raise ValueError('root service receipt escaped its current output')
+    before = path.stat()
+    if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or before.st_size != value['bytes']:
+        raise ValueError('one bounded regular root service receipt required')
+    raw = path.read_bytes()
+    after = path.stat()
+    fields = ('st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+    if (any(getattr(before, key) != getattr(after, key) for key in fields) or
+            hashlib.sha256(raw).hexdigest() != value['sha256']):
+        raise ValueError('root service receipt changed or does not match actual bytes')
+    return value.copy()
+
+
+def observe(args, *, owner=None, exercise=None):
+    owner = require_owner(owner)
+    if exercise is not None and not callable(exercise):
+        raise ValueError('actual root service exercise callback required')
     path = args.plan.resolve(strict=True)
     args.output = args.output.resolve()
     plan = json.loads(path.read_text())
+    owner.authorize('peer-existing-guests', dict(plan_path=str(path), plan_sha256=sha(path),
+        archive_sha256=plan['archive_sha256'], run_id=plan['run_id'], instances=plan['instances']))
     evidence = dict(schema_version=1, status='fail', plan_path=str(path), plan_sha256=sha(path),
         run_id=plan['run_id'], archive_sha256=plan['archive_sha256'], commands=[], identities={}, failures=[],
-        service_validation=plan['service_validation'], first_artifact_behavior_gate_passed=False)
+        service_validation=plan['service_validation'], first_artifact_behavior_gate_passed=False,
+        owned_ipv4_and_link_restored=False, resource_cleanup_verified=False, network_changes=[],
+        root_service_receipt=None)
     args.output.mkdir(mode=0o700, exist_ok=False)
+
     def actual(role, label, script):
         marker = '__PEER_EXIT_' + secrets.token_hex(16) + '__='
         wrapped = script + '; peer_rc=$?; printf "\n' + marker + '%s\n" "$peer_rc"'
         argv = [str(args.hdc), '-t', plan['instances'][role]['target'], 'shell', wrapped]
         start = time.monotonic_ns()
-        timed_out = False
+        stdout, stderr, exit_code, timed_out, error_text = b'', b'', None, False, None
         try:
-            result = subprocess.run(argv, capture_output=True, timeout=30, check=False)
+            result = owner.run(argv, timeout=30, label=role + '/' + label)
             stdout, stderr, exit_code = result.stdout, result.stderr, result.returncode
         except subprocess.TimeoutExpired as error:
-            stdout, stderr, exit_code, timed_out = error.stdout or b'', error.stderr or b'', None, True
-        prefix = args.output / (str(len(evidence['commands'])).zfill(3) + '-' + role + '-' + label)
-        prefix.with_suffix('.stdout').write_bytes(stdout)
-        prefix.with_suffix('.stderr').write_bytes(stderr)
-        evidence['commands'].append(dict(argv=argv, host_interval_ns=[start, time.monotonic_ns()],
-            host_exit=exit_code, timed_out=timed_out, stdout_path=str(prefix.with_suffix('.stdout')),
-            stdout_sha256=sha(prefix.with_suffix('.stdout')), stderr_path=str(prefix.with_suffix('.stderr')),
-            stderr_sha256=sha(prefix.with_suffix('.stderr'))))
-        text = stdout.decode('utf-8')
+            stdout, stderr, timed_out = error.stdout or b'', error.stderr or b'', True
+            error_text = type(error).__name__ + ': ' + str(error)
+        except BaseException as error:
+            error_text = type(error).__name__ + ': ' + str(error)
+            raise
+        finally:
+            prefix = args.output / (str(len(evidence['commands'])).zfill(3) + '-' + role + '-' + label)
+            prefix.with_suffix('.stdout').write_bytes(stdout)
+            prefix.with_suffix('.stderr').write_bytes(stderr)
+            evidence['commands'].append(dict(argv=argv, host_interval_ns=[start, time.monotonic_ns()],
+                host_exit=exit_code, timed_out=timed_out, error=error_text,
+                stdout_path=str(prefix.with_suffix('.stdout')), stdout_sha256=sha(prefix.with_suffix('.stdout')),
+                stderr_path=str(prefix.with_suffix('.stderr')), stderr_sha256=sha(prefix.with_suffix('.stderr'))))
+        text = stdout.decode('utf-8', 'strict')
         match = re.search(r'(?:^|\n)' + marker + r'(\d+)\s*$', text)
         if timed_out or exit_code != 0 or not match or match.group(1) != '0':
             raise ValueError('actual guest command failed: ' + role + '/' + label)
         return text[:match.start()].rstrip('\n')
+
+    def current_identity(role, label):
+        instance = plan['instances'][role]
+        links = actual(role, label + '-links', 'ip -o link show')
+        value = identity(actual(role, label + '-udid', 'bm get --udid'),
+                         actual(role, label + '-boot', 'cat /proc/sys/kernel/random/boot_id'), links, instance)
+        return value, links
+
     try:
         if sha(plan['archive_path']) != plan['archive_sha256'] or plan['status'] != 'prepared_candidate_not_booted':
             raise ValueError('plan must bind the immutable actual representative archive')
         validate_staging(plan)
-        for role, instance in plan['instances'].items():
-            udid = actual(role, 'udid', 'bm get --udid')
-            boot = actual(role, 'boot', 'cat /proc/sys/kernel/random/boot_id')
-            links = actual(role, 'links', 'ip -o link show')
-            evidence['identities'][role] = identity(udid, boot, links, instance)
+        flags = {}
+        for role in ROLES:
+            value, links = current_identity(role, 'initial')
+            evidence['identities'][role] = value
+            flags[role] = link_was_up(links, value['peer_interface'])
         validate_pair(evidence['identities'])
-        for role, instance in plan['instances'].items():
+        for role in ROLES:
+            instance = plan['instances'][role]
             nic = evidence['identities'][role]['peer_interface']
+            before = actual(role, 'addresses-before', 'ip -o -4 addr show dev ' + nic)
+            addresses_before = address_values(before)
+            if addresses_before not in ([], [instance['address'] + '/30']):
+                raise ValueError('peer data interface already has foreign addresses')
             if args.configure:
+                # Record intent before the command: a failed command may already
+                # have brought up the link or installed the address.
+                evidence['network_changes'].append(dict(role=role, interface=nic, was_up=flags[role],
+                    added_address=not addresses_before, baseline_addresses=addresses_before,
+                    restored=False))
                 actual(role, 'configure-private-peer-ipv4', configure_script(instance, nic))
             addresses = actual(role, 'addresses', 'ip -o -4 addr show dev ' + nic)
-            if re.findall(r'\binet ([0-9.]+/\d+)\s', addresses) != [instance['address'] + '/30']:
+            if address_values(addresses) != [instance['address'] + '/30']:
                 raise ValueError('actual peer NIC must have exactly the configured private /30 IPv4')
             evidence.setdefault('addresses', {})[role] = addresses
             route = actual(role, 'route', 'ip -o route get ' + instance['peer_address'])
             route_check(route, instance, nic)
             evidence.setdefault('routes', {})[role] = route
-        for role, instance in plan['instances'].items():
+        for role in ROLES:
+            instance = plan['instances'][role]
             nic = evidence['identities'][role]['peer_interface']
             actual(role, 'peer-ping', 'ping -I ' + nic + ' -c 2 -W 2 ' + instance['peer_address'])
             neighbors = actual(role, 'neighbors', 'ip neigh show dev ' + nic)
@@ -384,16 +473,53 @@ def observe(args):
                     matching[0][-1] not in ('REACHABLE', 'STALE', 'DELAY', 'PROBE')):
                 raise ValueError('actual neighbor resolution must find the other data NIC MAC')
             evidence.setdefault('neighbors', {})[role] = neighbors
-            # Re-read real identity after traffic to catch HDC target/process swaps.
-            after = identity(actual(role, 'final-udid', 'bm get --udid'),
-                actual(role, 'final-boot', 'cat /proc/sys/kernel/random/boot_id'),
-                actual(role, 'final-links', 'ip -o link show'), instance)
+            after, _ = current_identity(role, 'after-traffic')
             if after != evidence['identities'][role]:
                 raise ValueError('peer guest identity changed during observation')
+        if exercise is not None:
+            owner.authorize('peer-service-exercise', dict(run_id=plan['run_id'],
+                identities=evidence['identities'], archive_sha256=plan['archive_sha256']))
+            # Root's actual signed service/nonce/permission/teardown case runs
+            # while this exact pair's link is still live. A bool is not evidence.
+            receipt = exercise(plan=plan, identities=evidence['identities'], owner=owner,
+                               output=args.output / 'service-exercise')
+            evidence['root_service_receipt'] = bind_service_receipt(receipt, args.output)
         evidence['status'] = 'kernel_l2_candidate_observed_not_service_acceptance'
-    except Exception as error:
-        evidence['failures'].append(str(error))
+    except BaseException as error:
+        evidence['failures'].append(type(error).__name__ + ': ' + str(error))
+        if not isinstance(error, Exception):
+            raise
     finally:
+        for change in reversed(evidence['network_changes']):
+            role, nic = change['role'], change['interface']
+            try:
+                current, _ = current_identity(role, 'cleanup-before')
+                if current != evidence['identities'][role]:
+                    raise ValueError('guest identity changed; preserving unknown network state')
+                if change['added_address']:
+                    actual(role, 'restore-private-peer-ipv4', restore_script(plan['instances'][role], nic,
+                           was_up=change['was_up']))
+                elif not change['was_up']:
+                    # Existing addresses belong to the baseline: only restore
+                    # the link flag changed by our configure command.
+                    current_addresses = actual(role, 'cleanup-addresses-before', 'ip -o -4 addr show dev ' + nic)
+                    if address_values(current_addresses) != change['baseline_addresses']:
+                        raise ValueError('peer acquired unknown addresses; preserving its link')
+                    script = ('test "$(ip -o -4 addr show dev ' + nic + ')" = ' +
+                              shlex.quote(current_addresses) + ' && ip link set dev ' + nic + ' down')
+                    actual(role, 'restore-private-peer-link', script)
+                remaining = actual(role, 'addresses-restored', 'ip -o -4 addr show dev ' + nic)
+                final, links = current_identity(role, 'cleanup-after')
+                if (final != evidence['identities'][role] or
+                        address_values(remaining) != change['baseline_addresses'] or
+                        link_was_up(links, nic) != change['was_up']):
+                    raise ValueError('owned peer network did not return to its exact baseline')
+                change['restored'] = True
+            except BaseException as error:
+                change['cleanup_error'] = type(error).__name__ + ': ' + str(error)
+                evidence['failures'].append(role + ' cleanup: ' + change['cleanup_error'])
+                evidence['status'] = 'fail'
+        evidence['owned_ipv4_and_link_restored'] = all(c['restored'] for c in evidence['network_changes'])
         dump(args.output / 'observations.json', evidence)
     return evidence
 
@@ -413,9 +539,8 @@ def main():
         command.add_argument('--' + name, type=Path, required=True)
     command.add_argument('--configure', action='store_true', help='explicitly set only each peer NIC /30 IPv4; preserve management/default route')
     args = parser.parse_args()
-    value = prepare(args) if args.operation == 'prepare' else observe(args)
-    print(json.dumps(dict(status=value['status'], first_artifact_behavior_gate_passed=False)))
-    return 1 if value['status'] == 'fail' else 0
+    parser.error('prepare/observe require the root-owned Python API with owner=RootExecutor; '
+                 'standalone resource execution is disabled')
 
 
 if __name__ == '__main__':

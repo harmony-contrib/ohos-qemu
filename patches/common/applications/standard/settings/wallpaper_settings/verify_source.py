@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Require the complete fixed-source wallpaper component; no runtime claim."""
 from pathlib import Path
+import hashlib
+import importlib.util
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
 from exact_source_states import validate_component
@@ -10,4 +12,13 @@ FILES = (('feature/theme/src/main/ets/ThemeSettings.ets', '10fdd330cd3958d3e1581
 
 
 def validate(root, require_patched=False):
+    # The chooser changes module/pages shared with Share and Wallpaper.
+    # Accept it only after the entire native/UI/dependency vector is verified.
+    chooser_module = Path(root) / PROJECT / 'product/phone/src/main/module.json5'
+    if chooser_module.is_file() and hashlib.sha256(chooser_module.read_bytes()).hexdigest() == '8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e':
+        spec = importlib.util.spec_from_file_location('settings_native_chooser_successor',
+            Path(__file__).parent.parent / 'share_picker_choose/verify_source.py')
+        chooser = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(chooser)
+        return chooser.validate(root, require_patched=True)
     return validate_component(root, PROJECT, REVISION, FILES, require_patched)

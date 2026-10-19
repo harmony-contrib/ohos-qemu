@@ -31,6 +31,55 @@ class SettingsImageBoundary(unittest.TestCase):
             with self.subTest(changed=changed), self.assertRaises(ValueError):
                 provider.inspect_hap(self.hap, source)
 
+    def select_fixture(self):
+        self.module['module']['abilities'] = [dict(provider.SELECT_ABILITY)]
+        self.module['module']['requestPermissions'] = [{'name': 'ohos.permission.SET_WALLPAPER'}]
+        self.entries[provider.SELECT_PAGES] = json.dumps({'src': ['pages/Main', 'pages/ChoosePicker']}).encode()
+        return copy.deepcopy(self.module['module'])
+
+    def test_compiled_private_select_provider_and_page(self):
+        source = self.select_fixture(); self.write()
+        result = provider.inspect_hap(self.hap, source)
+        self.assertEqual(result['select_provider']['page'], 'pages/ChoosePicker')
+        self.assertIs(result['select_provider']['exported'], False)
+
+    def test_select_provider_cannot_be_missing_duplicate_or_exported(self):
+        source = self.select_fixture(); original = copy.deepcopy(self.module)
+        for change in ('missing', 'duplicate', 'exported', 'numeric_exported', 'launch', 'entry', 'mission', 'permission', 'skill'):
+            self.module = copy.deepcopy(original)
+            rows = self.module['module']['abilities']
+            if change == 'missing': rows.clear()
+            elif change == 'duplicate': rows.append(copy.deepcopy(rows[0]))
+            elif change == 'exported': rows[0]['exported'] = True
+            elif change == 'numeric_exported': rows[0]['exported'] = 0
+            elif change == 'launch': rows[0]['launchType'] = 'singleton'
+            elif change == 'entry': rows[0]['srcEntry'] = './ets/Other.ets'
+            elif change == 'mission': rows[0]['removeMissionAfterTerminate'] = False
+            elif change == 'permission': rows[0]['permissions'] = ['ohos.permission.READ_CONTACTS']
+            else: rows[0]['skills'] = [{'actions': ['ohos.want.action.select']}]
+            self.write()
+            with self.subTest(change=change), self.assertRaises(ValueError): provider.inspect_hap(self.hap, source)
+
+    def test_select_source_and_compiled_profile_are_both_required(self):
+        source = self.select_fixture()
+        for change in ('missing', 'duplicate', 'exported'):
+            changed = copy.deepcopy(source)
+            if change == 'missing': changed['abilities'].clear()
+            elif change == 'duplicate': changed['abilities'].append(copy.deepcopy(changed['abilities'][0]))
+            else: changed['abilities'][0]['exported'] = True
+            self.write()
+            with self.subTest(change=change), self.assertRaises(ValueError): provider.inspect_hap(self.hap, changed)
+
+    def test_select_page_missing_duplicate_invalid_or_wrong_type_rejected(self):
+        source = self.select_fixture()
+        for data in (None, b'{}', b'{"src":[]}', b'{"src":["pages/ChoosePicker","pages/ChoosePicker"]}',
+                     b'{"src":"pages/ChoosePicker"}', b'{"src":["pages/ChoosePicker",1]}',
+                     b'{"src":["pages/ChoosePicker"],"src":[]}', b'[]', b'not-json'):
+            if data is None: self.entries.pop(provider.SELECT_PAGES, None)
+            else: self.entries[provider.SELECT_PAGES] = data
+            self.write()
+            with self.subTest(data=data), self.assertRaises(ValueError): provider.inspect_hap(self.hap, source)
+
     def test_profile_cannot_promote_APL_or_expand_existing_policy(self):
         original = {'bundle-info': {'bundle-name': 'com.ohos.settings', 'apl': 'system_basic',
                     'app-feature': 'hos_system_app', 'distribution-certificate': 'old'},

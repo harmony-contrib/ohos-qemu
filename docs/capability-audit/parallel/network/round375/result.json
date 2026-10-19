@@ -1,0 +1,148 @@
+{
+  "schema": "network-round375-source-handoff/v1",
+  "status": "source_candidates_host_passed_root_integration_and_new_package_runtime_pending",
+  "owned_code_files": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network375_openvpn_peer.py",
+      "sha256": "1f7e9970903f5f019e59a1fb9e6fb3e4c49a8f23b0d52ebabe5325820da9c9f1",
+      "bytes": 11716
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network375_peer_fixture.py",
+      "sha256": "d5b613506134d397779cae13ff352a410058524a99bb13c7518ad3c1b75e5d17",
+      "bytes": 145717
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network375_peer_protocol.py",
+      "sha256": "b8c8c76403cbea2fb8d7e2b738a31b2bc6a0ad1cb1f2ff5986e6b3659fb442e7",
+      "bytes": 66454
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network375_root_entry.py",
+      "sha256": "9c824379bd423decaa97c2ed60df787b4661b21343a638d7c69c2c07e1e327e7",
+      "bytes": 15682
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network_peer_lan.py",
+      "sha256": "3fc7378b3f5045f7ee6a60fc1fe154940956c60c879bcb0dfd5722b0dba6b0e4",
+      "bytes": 32043
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network375_openvpn_peer.py",
+      "sha256": "2ab057c0def9c6601649ce0e86fd82968da983af2a91aea66ccb9be1b8635e05",
+      "bytes": 5654
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network375_peer_lan.py",
+      "sha256": "793ece01d658b01ff5f5702af0f55b0a3bdac06fb425ad603d4aaaed22fa451e",
+      "bytes": 10402
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network375_peer_protocol.py",
+      "sha256": "347f28dff2295e0bc737353e18124d92dfc2a801f2f33a3cde0887d221c40b63",
+      "bytes": 12316
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network375_root_entry.py",
+      "sha256": "59e0fac8fbf952c8b82894701d9d96e7759ea11ebae3fa686bdbfa01771617b1",
+      "bytes": 11743
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_network_peer_lan.py",
+      "sha256": "27dc4fff1bbb1c5cd4fac0078b51fe31970cea6082af02d4c3a3bd06597b2867",
+      "bytes": 18175
+    }
+  ],
+  "code_file_count": 10,
+  "final_host_receipt": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-network/host-verification-04/receipt.json",
+    "sha256": "72a2d48ae1aa030d33e411dca55250c65162aa1bdce2ed61357918467229eb27",
+    "bytes": 4896
+  },
+  "host_tests": 84,
+  "host_tests_passed": 84,
+  "inputs_unchanged": true,
+  "host_scope": "UNIT protocol/held-Popen/service/guest doubles and tiny-file launcher fixtures; no actual Docker/QEMU/HDC/SDK/port listeners",
+  "real_Docker_QEMU_HDC_QMP_signing_SDK_product_operations": false,
+  "Git_stage_commit_branch_worktree_mutations": false,
+  "shared_owner_component_packager_files_written": false,
+  "retained_attempts": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-network/host-verification-01/receipt.json",
+      "sha256": "b5429c4d565aa79c64d608e8df9b91bd0189c57b5cc23bd3ec8c059f2531bf9e",
+      "bytes": 916
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-network/host-verification-02/receipt.json",
+      "sha256": "781d2f0d4796c426f8a0ac9adcaa47756e0ce6d0c463a2fa6dd781117a878818",
+      "bytes": 871
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-network/host-verification-03/receipt.json",
+      "sha256": "0fb563bba2acf96b1f9192ed63a6b0650dc332db548ba69dc63093c1cabecb75",
+      "bytes": 4863
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-network/host-verification-04/receipt.json",
+      "sha256": "72a2d48ae1aa030d33e411dca55250c65162aa1bdce2ed61357918467229eb27",
+      "bytes": 4896
+    }
+  ],
+  "attempt_note": "01 retained75pass4errors at new PurePosixPath branch, fixed. 02 passed80 before final typed guard/service window expansion;03 passed80 with stable input pins;04 final84 with stable input pins. Earlier unredirected57-test smoke is transcript-only, not final source evidence.",
+  "implemented_changes": [
+    "Live root callback-only resource entry; durable intent, held Popen registration, mask restore including pending cancellation, raw bytes and quarantine on unknown/timeout",
+    "Current exact env/ps tool identity + setuid EUID derived then observed from own full census; nonquery UID remains strict",
+    "Dedicated OpenVPN constructor producer and original source-bound private Controller interception retaining original journals, stop35, full-prefix/Counter/final cut semantics",
+    "LAN prepare/observe root owner API, no standalone resource CLI; actual guest/NIC identity and exact owned IPv4/link restoration",
+    "Root service case runs inside live verified L2 window with actual bounded receipt binding; failure, permission, cancellation and unknown-address/identity protection"
+  ],
+  "actual_chain_integrated_by_root": false,
+  "root_integration_requests": [
+    {
+      "owner": "root",
+      "targets": [
+        "root-owned fresh private actor bootstrap successor",
+        "root-owned actual single-lease guardian callbacks",
+        "root-owned durable operation reserve/resource registry service"
+      ],
+      "action": "Pin current candidate source; preserve actual original15 controlled CLI actor and genuine verified_built_case/SDK/Linux/backend/Git calls. Pass real admission/register/held-stop, per-actor global reservation and actual create/inspect registry callbacks. Do not edit frozen267/287/332."
+    },
+    {
+      "owner": "root",
+      "targets": [
+        "root-owned current stage/policy/creator admission successor",
+        "root-owned two-QEMU process/HDC/QMP/disk/port allocation"
+      ],
+      "action": "Admit exact new constructor implementation and current tool/env identities. Keep one actual root lease with both marker gates, source-bound actual held handles and complete two-cut closure. Allocate/register both distinct actual guests before LAN observe."
+    },
+    {
+      "owner": "root",
+      "targets": [
+        "actual signed distributed service exercise and original independent guest verifiers",
+        "existing first-artifact full gate"
+      ],
+      "action": "Run normal/boundary/data/session/permission/offline/cleanup against actual fresh package. Join raw public/TLS/TUN/service witnesses, resource settlement and full47/281 same-boot gate; scoped helpers do not open remaining-five matrix."
+    }
+  ],
+  "precise_execution_limits": {
+    "pure_protocol_closed_is_conditional": true,
+    "new_ready_configuration_generated": false,
+    "root_bootstrap_IPC_and_actual_admission_still_required": true,
+    "LAN_cleanup_scope": "only added IPv4 and changed link flag; no neighbor/full network/VM/HDC/group closure claim",
+    "service_receipt_hash_not_semantic_acceptance": true,
+    "unknown_constructor_or_identity_retains_quarantine": true
+  },
+  "capability_ledger": {
+    "assigned_unique_ids": 9,
+    "formal_new_closures": 0,
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_authorized_by_this_batch": false
+  },
+  "explicit_remaining_implementation": [
+    "persist-tun negotiated update transport",
+    "unrepresentable split/encrypted DNS and nonzero route metrics",
+    "BT alias/local OOB generation/controller/vendor actual path",
+    "real WiFi/USB/radio/device and authenticated distributed peer acceptance"
+  ],
+  "component_followup_scope_rule": "No component source is modified here. A subsequent component task must first reserve exact patch/header/validator and upstream target files with root; no accepting unsupported parameters as fake success."
+}

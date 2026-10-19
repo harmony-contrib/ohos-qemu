@@ -1,0 +1,260 @@
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp
+@@ -1246,7 +1246,7 @@
+ 
+ int AbilityManagerService::CheckAbilityCallPermission(const AbilityRequest& abilityRequest,
+     const AppExecFwk::AbilityInfo& abilityInfo, uint32_t specifyTokenId,
+-    bool isSelector, bool isFreeInstallFromService)
++    bool isSelector, bool isFreeInstallFromService, int32_t requestedUserId)
+ {
+     TAG_LOGD(AAFwkTag::ABILITYMGR, "Check call ability permission, name is %{public}s.", abilityInfo.name.c_str());
+     if (AbilityPermissionUtil::GetInstance().IsStartSelfUIAbility()) {
+@@ -1257,7 +1257,8 @@
+         TAG_LOGI(AAFwkTag::ABILITYMGR, "call from oesa, already checked");
+         return ERR_OK;
+     }
+-    int result = CheckCallAbilityPermission(abilityRequest, isSelector, specifyTokenId, false, isFreeInstallFromService);
++    int result = CheckCallAbilityPermission(abilityRequest, isSelector, specifyTokenId, false,
++        isFreeInstallFromService, requestedUserId);
+     if (result != ERR_OK) {
+         TAG_LOGE(AAFwkTag::ABILITYMGR, "check permission failed");
+     }
+@@ -1267,7 +1268,8 @@
+ int AbilityManagerService::CheckCallPermission(const Want& want, const AppExecFwk::AbilityInfo& abilityInfo,
+     const AbilityRequest& abilityRequest, bool isForegroundToRestartApp,
+     bool isSendDialogResult, uint32_t specifyTokenId,
+-    const std::string& callerBundleName, bool isSelector, bool isFreeInstallFromService)
++    const std::string& callerBundleName, bool isSelector, bool isFreeInstallFromService,
++    int32_t requestedUserId)
+ {
+     auto type = abilityInfo.type;
+     if (type == AppExecFwk::AbilityType::DATA) {
+@@ -1289,7 +1291,8 @@
+         return CheckBrokerCallPermission(abilityRequest, abilityInfo);
+     }
+     if (!isForegroundToRestartApp && (!isSendDialogResult || want.GetBoolParam("isSelector", false))) {
+-        return CheckAbilityCallPermission(abilityRequest, abilityInfo, specifyTokenId, isSelector, isFreeInstallFromService);
++        return CheckAbilityCallPermission(abilityRequest, abilityInfo, specifyTokenId, isSelector,
++            isFreeInstallFromService, requestedUserId);
+     }
+     return ERR_OK;
+ }
+@@ -1634,7 +1637,7 @@
+     if (!param.isAppCloneSelector) {
+         result = CheckCallPermission(param.want, abilityInfo, abilityRequest, param.isForegroundToRestartApp,
+             isSendDialogResult, param.specifyTokenId, callerBundleName, param.isImplicit,
+-            param.isFreeInstallFromService);
++            param.isFreeInstallFromService, oriValidUserId);
+         if (result != ERR_OK) {
+             TAG_LOGE(AAFwkTag::ABILITYMGR, "checkCallPermission error, result:%{public}d", result);
+             AbilityEventUtil::SendStartAbilityErrorEvent(*eventInfo, result, "checkCallPermission error");
+@@ -12404,6 +12407,50 @@
+     uiAbilityManager->CompleteFirstFrameDrawing(sessionId);
+ }
+ 
++namespace {
++// A native stack capability, never a Want flag or process-wide permission.
++// Each Binder thread has its own scope. Reentry cannot borrow another request.
++class LegacyPickerStartScope final {
++public:
++    LegacyPickerStartScope(const std::string &id, const AbilityRequest &origin)
++        : previous_(current_), id_(id), origin_(origin)
++    {
++        current_ = this;
++    }
++    ~LegacyPickerStartScope()
++    {
++        current_ = previous_;
++    }
++    LegacyPickerStartScope(const LegacyPickerStartScope &) = delete;
++    LegacyPickerStartScope &operator=(const LegacyPickerStartScope &) = delete;
++
++    static LegacyPickerStartScope *Current() { return current_; }
++
++    bool Consume(const AbilityRequest &target, int32_t requestedUserId)
++    {
++        if (previous_ != nullptr || consumed_ || IPCSkeleton::GetCallingUid() != FOUNDATION_UID ||
++            IPCSkeleton::GetCallingUid() != getuid() || IPCSkeleton::GetCallingPid() != getpid() ||
++            IPCSkeleton::GetCallingTokenID() == 0 || IPCSkeleton::GetCallingTokenID() !=
++                static_cast<uint32_t>(IPCSkeleton::GetSelfTokenID()) ||
++            !PermissionVerification::GetInstance()->CheckSpecificSystemAbilityAccessPermission("foundation")) {
++            return false;
++        }
++        if (!DialogSessionManager::GetInstance().AdmitLegacyPickerStart(id_, origin_, target, requestedUserId)) {
++            return false;
++        }
++        consumed_ = true;
++        return true;
++    }
++private:
++    static thread_local LegacyPickerStartScope *current_;
++    LegacyPickerStartScope *const previous_;
++    const std::string id_;
++    const AbilityRequest &origin_;
++    bool consumed_ = false;
++};
++thread_local LegacyPickerStartScope *LegacyPickerStartScope::current_ = nullptr;
++} // namespace
++
+ void AbilityManagerService::CloseLegacyPickerDialog(const std::string &id, const sptr<IRemoteObject> &token)
+ {
+ #ifdef SUPPORT_SCREEN
+@@ -12484,6 +12531,9 @@
+     request.userId = userId;
+     request.callerAccessTokenId = caller->GetApplicationInfo().accessTokenId;
+     UpdateCallerInfoUtil::GetInstance().UpdateCallerInfoFromToken(request.want, callerToken);
++    if (LegacyPickerStartScope::Current() != nullptr) {
++        return ERR_WOULD_BLOCK;
++    }
+     auto &sessions = DialogSessionManager::GetInstance();
+     int error = INNER_ERR;
+     auto id = sessions.CreateLegacyPickerSession(request, dialogInfo, error);
+@@ -12493,6 +12543,8 @@
+     // The private UI receives no caller URI/token/payload and gains no file
+     // permission. A system-owned session is the sole delegation authority.
+     dialog.SetParam(DIALOG_SESSION_ID, id);
++    // RAII retires this exact request even on an early return or exception.
++    LegacyPickerStartScope startScope(id, request);
+     auto ret = IN_PROCESS_CALL(StartAbility(dialog, userId, DEFAULT_INVAL_VALUE));
+     if (ret != ERR_OK) {
+         sessions.CancelLegacyPickerSession(id, false);
+@@ -13266,10 +13318,18 @@
+ }
+ 
+ int AbilityManagerService::CheckCallAbilityPermission(const AbilityRequest &abilityRequest, bool isSelector,
+-    uint32_t specifyTokenId, bool isCallByShortcut, bool isFreeInstallFromService)
++    uint32_t specifyTokenId, bool isCallByShortcut, bool isFreeInstallFromService, int32_t requestedUserId)
+ {
+     HITRACE_METER_NAME(HITRACE_TAG_ABILITY_MANAGER, __PRETTY_FUNCTION__);
+     TAG_LOGD(AAFwkTag::ABILITYMGR, "Call CheckCallAbilityPermission");
++
++#ifdef SUPPORT_SCREEN
++    auto pickerScope = LegacyPickerStartScope::Current();
++    if (!isSelector && specifyTokenId == 0 && !isCallByShortcut && !isFreeInstallFromService &&
++        pickerScope != nullptr && pickerScope->Consume(abilityRequest, requestedUserId)) {
++        return ERR_OK;
++    }
++#endif
+ 
+     AAFwk::PermissionVerification::VerificationInfo verificationInfo;
+     verificationInfo.accessTokenId = abilityRequest.appInfo.accessTokenId;
+--- a/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h
++++ b/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h
+@@ -3254,7 +3254,7 @@
+      * @return Returns whether the caller is allowed to start Ability.
+      */
+     int CheckCallAbilityPermission(const AbilityRequest &abilityRequest, bool isSelector, uint32_t specifyTokenId = 0,
+-        bool isCallByShortcut = false, bool isFreeInstallFromService = false);
++        bool isCallByShortcut = false, bool isFreeInstallFromService = false, int32_t requestedUserId = -1);
+ 
+     /**
+      * Check if Caller is allowed to start Ability(Stage) by call.
+@@ -3466,12 +3466,14 @@
+         const AppExecFwk::AbilityInfo& abilityInfo);
+ 
+     int CheckAbilityCallPermission(const AbilityRequest& abilityRequest, const AppExecFwk::AbilityInfo& abilityInfo,
+-        uint32_t specifyTokenId, bool isSelector, bool isFreeInstallFromService = false);
++        uint32_t specifyTokenId, bool isSelector, bool isFreeInstallFromService = false,
++        int32_t requestedUserId = -1);
+ 
+     int CheckCallPermission(const Want& want, const AppExecFwk::AbilityInfo& abilityInfo,
+         const AbilityRequest& abilityRequest, bool isForegroundToRestartApp,
+         bool isSendDialogResult, uint32_t specifyTokenId,
+-        const std::string& callerBundleName, bool isSelector, bool isFreeInstallFromService = false);
++        const std::string& callerBundleName, bool isSelector, bool isFreeInstallFromService = false,
++        int32_t requestedUserId = -1);
+ 
+     void CheckExtensionRateLimit(const Want &want);
+ 
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp
+@@ -89,7 +89,7 @@
+     auto found = legacyPickerOwners_.find(id);
+     auto caller = dialogCallerInfoMap_.find(id);
+     if (found == legacyPickerOwners_.end() || caller == dialogCallerInfoMap_.end() ||
+-        !IsLegacyPickerOwner(*found->second, false) ||
++        !found->second->startAdmitted || !IsLegacyPickerOwner(*found->second, false) ||
+         record->GetApplicationInfo().uid != found->second->uid ||
+         record->GetApplicationInfo().accessTokenId != found->second->tokenId ||
+         (found->second->dialogToken != nullptr && found->second->dialogToken != record->GetToken())) {
+@@ -110,6 +110,46 @@
+ bool DialogSessionManager::IsLegacyPickerId(const std::string &id)
+ {
+     return id.compare(0, sizeof("legacy_picker_") - 1, "legacy_picker_") == 0;
++}
++
++bool DialogSessionManager::AdmitLegacyPickerStart(const std::string &id,
++    const AbilityRequest &origin, const AbilityRequest &target, int32_t requestedUserId)
++{
++    std::lock_guard<ffrt::mutex> guard(dialogSessionRecordLock_);
++    auto found = legacyPickerOwners_.find(id);
++    auto context = dialogCallerInfoMap_.find(id);
++    if (found == legacyPickerOwners_.end() || context == dialogCallerInfoMap_.end() ||
++        dialogSessionInfoMap_.find(id) == dialogSessionInfoMap_.end()) {
++        return false;
++    }
++    auto owner = found->second;
++    auto caller = context->second;
++    auto record = Token::GetAbilityRecordByToken(origin.callerToken);
++    if (owner->startAdmitted || owner->committed || owner->busy || owner->pid != -1 ||
++        owner->dialogToken != nullptr || std::chrono::steady_clock::now() >= owner->expiresAt ||
++        record == nullptr || record->IsTerminating() || origin.callerToken == nullptr ||
++        caller->callerToken != origin.callerToken || caller->requestCode != origin.requestCode ||
++        caller->userId != origin.userId || owner->sourceUserId != origin.userId ||
++        record->GetOwnerMissionUserId() != origin.userId ||
++        caller->callerAccessTokenId != origin.callerAccessTokenId ||
++        record->GetApplicationInfo().accessTokenId != origin.callerAccessTokenId ||
++        target.callerToken != nullptr || target.requestCode != -1 ||
++        target.specifyTokenId != 0 || target.specifiedFullTokenId != 0 ||
++        requestedUserId < 0 || requestedUserId != origin.userId ||
++        target.want.GetStringParam(DIALOG_SESSION_ID) != id ||
++        !target.want.GetDeviceIdRef().empty() || !target.want.GetActionRef().empty() ||
++        target.abilityInfo.type != AppExecFwk::AbilityType::PAGE || target.abilityInfo.visible ||
++        !target.appInfo.isSystemApp || !target.appInfo.enabled ||
++        target.abilityInfo.bundleName != owner->bundleName ||
++        target.abilityInfo.moduleName != owner->moduleName || target.abilityInfo.name != owner->abilityName ||
++        target.appInfo.uid != owner->uid || target.appInfo.accessTokenId != owner->tokenId ||
++        target.abilityInfo.applicationInfo.uid != owner->uid ||
++        target.abilityInfo.applicationInfo.accessTokenId != owner->tokenId) {
++        return false;
++    }
++    // The private start permission is consumed once before any later callback.
++    owner->startAdmitted = true;
++    return true;
+ }
+ 
+ bool DialogSessionManager::IsLegacyPickerOwner(const LegacyPickerOwner &owner, bool attached) const
+@@ -200,6 +240,10 @@
+     auto callerInfo = std::make_shared<DialogCallerInfo>();
+     GenerateDialogCallerInfo(request, request.userId, callerInfo, SelectorType::IMPLICIT_START_SELECTOR, true);
+     auto owner = std::make_shared<LegacyPickerOwner>();
++    owner->bundleName = dialogAbility.bundleName;
++    owner->moduleName = dialogAbility.moduleName;
++    owner->abilityName = dialogAbility.name;
++    owner->sourceUserId = request.userId;
+     owner->uid = dialogAbility.applicationInfo.uid;
+     owner->tokenId = dialogAbility.applicationInfo.accessTokenId;
+     owner->expiresAt = std::chrono::steady_clock::now() + std::chrono::minutes(10);
+--- a/foundation/ability/ability_runtime/services/abilitymgr/include/dialog_session/dialog_session_manager.h
++++ b/foundation/ability/ability_runtime/services/abilitymgr/include/dialog_session/dialog_session_manager.h
+@@ -150,6 +150,8 @@
+     void CancelLegacyPickerSession(const std::string &id, bool notifyCaller);
+     void OnLegacyPickerAbilityExit(const std::shared_ptr<AbilityRecord> &record);
+     bool AttachLegacyPickerAbility(const std::shared_ptr<AbilityRecord> &record);
++    bool AdmitLegacyPickerStart(const std::string &id,
++        const AbilityRequest &origin, const AbilityRequest &target, int32_t requestedUserId);
+ 
+     std::string GenerateDialogSessionId();
+ 
+@@ -160,6 +162,11 @@
+ 
+     struct LegacyPickerOwner {
+         std::string sessionId;
++        std::string bundleName;
++        std::string moduleName;
++        std::string abilityName;
++        int32_t sourceUserId = -1;
++        bool startAdmitted = false;
+         int32_t uid = -1;
+         uint32_t tokenId = 0;
+         int32_t pid = -1;

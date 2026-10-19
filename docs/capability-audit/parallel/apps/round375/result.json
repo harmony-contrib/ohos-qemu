@@ -1,0 +1,56 @@
+{
+  "schema": "apps-round375-source-host-candidate/v1",
+  "recorded_utc": "2026-10-19T02:07:17.094241+00:00",
+  "source_head_observed_readonly": "a714da4db5791a3db30faa37831c8a13c1af7139",
+  "candidate": "private Settings PickerDialog native ACTION_SELECT route over current Share/WP",
+  "scope": "source and isolated host only; not native/SDK/private-start/packaged runtime pass",
+  "modified_source_files": 12,
+  "target_count": 9,
+  "immutable_dependency_count": 18,
+  "actual_export_preimage_hash_matches": 24,
+  "final_host_methods": 37,
+  "final_host_exit_code": 0,
+  "settings_sdk_built": false,
+  "native_compiled": false,
+  "guest_run": false,
+  "runtime_validated": false,
+  "first_artifact_behavior_gate_passed": false,
+  "ledger_closed": false,
+  "new_formally_closed_ids": [],
+  "affected_finding_ids": [
+    "behavior:ability-share-picker-system-provider-missing"
+  ],
+  "apps_inventory": {
+    "unique_ids": 34,
+    "new_formally_closed": 0,
+    "counts_preserved_from_round373_only": {
+      "repaired_pending_complete_behavior": 11,
+      "base_implementation_or_integration_incomplete": 13,
+      "known_full_implementation_missing": 6,
+      "insufficient_current_evidence": 4
+    },
+    "not_a_new_formal_34_id_reassessment": true,
+    "six_missing": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/apps/round375/provider-dependencies.json"
+  },
+  "component_manifest": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker_choose/manifest.json",
+    "sha256": "4fc97612896fca6de7cd014ce5ea1707055a071af542660176b77e9b43f13bde",
+    "bytes": 7501,
+    "mode": "0o644"
+  },
+  "native_successor_patch": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker_choose/0003-bind-private-start-to-one-native-request.patch",
+    "sha256": "8010353f8b2b123a945388519e3e68ec4f517e6b915df41c96417997f047524b",
+    "bytes": 13744,
+    "mode": "0o644"
+  },
+  "review_patch": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-apps/review-component-and-host.patch",
+    "sha256": "0f77ea4e19ac0c7265de462be5fefb3437dbef0dc068049149aa0eb61c070783",
+    "bytes": 826656,
+    "mode": "0o644"
+  },
+  "root_integration_requests": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/apps/round375/root-integration-requests.json",
+  "tests": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/parallel/apps/round375/host-results.json",
+  "freeze": "Component and listed host source frozen after this report; caller fixture preparation is an authorized separate later batch, not part of this handoff."
+}

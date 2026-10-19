@@ -1,0 +1,60 @@
+{
+  "scope": "Root-owned integration; no edits made by apps to these shared files",
+  "requests": [
+    {
+      "path": "patches/common/applications/standard/settings/external_input/verify_source.py",
+      "action": "Apply the one-file delta below; full chooser source guard first, then still validate BOTH unique external-input ETS files. Never early-return solely on module hash.",
+      "patch": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-apps/external-input-guard-integration.patch",
+        "sha256": "92f622d1ee8e32863ca521532ffc14c600fec53946006458601390b569e131d1",
+        "bytes": 1580,
+        "mode": "0o644"
+      }
+    },
+    {
+      "paths": [
+        "patches/common/applications/standard/settings/share_picker/verify_source.py",
+        "patches/common/applications/standard/settings/wallpaper_settings/verify_source.py"
+      ],
+      "state": "Root already added the complete chooser-vector successor branch; FINAL host06 independently runs current guards and corrupts all 27 target/dependency entries individually.",
+      "source_pins": [
+        {
+          "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker/verify_source.py",
+          "sha256": "fccee9dc41bbec3804841fb1bdec259177bd0450ea212169f78eb088cc562927",
+          "bytes": 2704,
+          "mode": "0o644"
+        },
+        {
+          "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/wallpaper_settings/verify_source.py",
+          "sha256": "04d3e596e5b006313ce1e4ffc49abe800f804636187f5a6cd73b5452ecb174d2",
+          "bytes": 2347,
+          "mode": "0o644"
+        }
+      ]
+    },
+    {
+      "action": "Build/source order: existing Settings providers/external-input → CURRENT Share lifetime → Wallpaper → chooser.apply.sh. Do not apply historical chooser first. Exact parameter component must require chooser after guard before assigning both values.",
+      "params": {
+        "const.system.sharePicker.bundleName": "com.ohos.settings",
+        "const.system.sharePicker.abilityName": "PickerDialog"
+      },
+      "parameter_owner": "Root reports settings_select atomic pair component and six host methods passed; not independently rerun here."
+    },
+    {
+      "path": "scripts/verify_settings_provider_image.py",
+      "action": "Add/check exact compiled private standard PickerDialog ability, no skills/exported=false, original profile and permission inventory unchanged, ChoosePicker compiled page and full source/HAP/image binding. Not implemented by this apps lease."
+    },
+    {
+      "action": "Root: real native AMS/DSM TUs, strict CFI/warnings, actual SDK105 Settings HAP/system signature, fresh representative artifact and ordinary-caller select/URI/result/cancel/direct-private-launch/forgery/death/reentry/concurrency guest checks. Host predicates do not replace these."
+    },
+    {
+      "action": "Separate authorized caller-preparation successor: fixtures/batch_apps/select375/** and new batch_apps_select375_* project tools, real ordinary caller + two targets, fresh SDK105 source/HAP manifests and raw UI/results. Not yet written or executed; resume only as a separately assigned batch after this component freeze."
+    }
+  ],
+  "historical_v1": {
+    "actual_current_volume": "r60 proves complete current before; no historical v1 installed state is present or needed",
+    "accepted_now": "exact current before or exact current after only",
+    "complete_historical_v1_after": "rejected, not relabelled as current. Preserve its full exact historical manifest and source. Separate audited all-file transactional restore to historical before required before upgrading Share/WP, then current chooser. No automatic v1 restore path delivered.",
+    "forbidden": "Do not git checkout source, overwrite unknown edits, mix old/new modal dependencies or reapply original chooser patches over old native after."
+  }
+}

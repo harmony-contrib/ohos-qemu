@@ -162,7 +162,7 @@ class ChooseSourceTests(unittest.TestCase):
             calls += 1
             if calls == 5:
                 raise OSError('injected publication failure')
-            original_write(*args)
+            return original_write(*args)
 
         with mock.patch.object(INSTALL, 'atomic_write', side_effect=fail_once):
             with self.assertRaisesRegex(OSError, 'publication failure'):
@@ -179,7 +179,7 @@ class ChooseSourceTests(unittest.TestCase):
             calls += 1
             if calls > 1:
                 raise OSError('persistent filesystem failure')
-            original_write(*args)
+            return original_write(*args)
 
         with mock.patch.object(INSTALL, 'atomic_write', side_effect=fail_after_first):
             with self.assertRaisesRegex(RuntimeError, 'rollback incomplete') as raised:

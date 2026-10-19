@@ -25,6 +25,20 @@ FILES = (
 
 
 def validate(root, require_patched=False):
+    # Accept only the complete current native/Settings select successor.
+    successor_module = Path(root) / PROJECT / 'product/phone/src/main/module.json5'
+    if successor_module.is_file() and hashlib.sha256(successor_module.read_bytes()).hexdigest() == '8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e':
+        from importlib.util import spec_from_file_location, module_from_spec
+        spec = spec_from_file_location('settings_select375_successor',
+            Path(__file__).parent.parent / 'share_picker_choose/verify_source.py')
+        successor = module_from_spec(spec)
+        spec.loader.exec_module(successor)
+        successor.validate(root, require_patched=True)
+        successor_files = tuple((name, before,
+            '8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e' if name == 'product/phone/src/main/module.json5' else
+            '99ce193851b36ba3b22fbfcd3a41ce850467b64a411a9ea5aed84f995a7d5126' if name == 'product/phone/src/main/resources/base/profile/main_pages.json' else after)
+            for name, before, after in FILES)
+        return validate_component(root, PROJECT, REVISION, successor_files, require_patched)
     files = FILES
     module = Path(root) / PROJECT / FILES[0][0]
     if module.is_file() and hashlib.sha256(module.read_bytes()).hexdigest() in (

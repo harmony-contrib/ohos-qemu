@@ -8,6 +8,7 @@ available. Host action timestamps and start Promises are never that anchor.
 """
 import argparse
 from array import array
+import importlib
 import json
 from pathlib import Path
 import re
@@ -21,6 +22,7 @@ import time
 import wave
 
 import batch_media_audio_haptic as base
+import batch_media375_protocol as protocol
 from batch_media_audio_capture_challenge import match_window, pcm_values, WINDOW
 from enclosing_acceptance_guest import EnclosingAcceptanceGuest, validate_binding
 from guest_ui import GuestUi, LayoutNotReady, NodeNotReady, select_node
@@ -34,6 +36,7 @@ BUNDLES = {role: 'org.harmonycontrib.audiohaptic' + ('' if role == 'owner' else 
 PERMISSIONS = {'owner': ['ohos.permission.VIBRATE', 'ohos.permission.KEEP_BACKGROUND_RUNNING'],
                'contender': [], 'denied': []}
 SCOPE = 'public_AudioHaptic_virtual_TIME_audio_dual_UID_observations_ONLY_sync_UNPROVEN'
+OWNER_MODULE = HERE.parents[1]/'.tmp/parallel-capability-20261016/root_runtime_owner12.py'
 MAP = HERE.parents[1] / 'docs/capability-audit/parallel/network/audio-observation-20261016.json'
 LABEL = 'Haptic audit'
 
@@ -149,44 +152,7 @@ BACKGROUND_MEMBERS = r"""
   }
 """
 
-TOKEN_SOURCE = r'''/* Read-only identity and permission observer for three disposable AudioHaptic bundles. */
-#include "accesstoken_kit.h"
-#include <cerrno>
-#include <climits>
-#include <cstdio>
-#include <cstdlib>
-#include <string>
-#include <time.h>
-#include <unistd.h>
-using namespace OHOS::Security::AccessToken;
-static bool Now(unsigned long long &ns) {
-  timespec t{};
-  if (clock_gettime(CLOCK_MONOTONIC, &t) != 0 || t.tv_sec < 0 || t.tv_nsec < 0 || t.tv_nsec >= 1000000000 ||
-      static_cast<unsigned long long>(t.tv_sec) > (ULLONG_MAX-static_cast<unsigned long long>(t.tv_nsec))/1000000000ULL) return false;
-  ns=static_cast<unsigned long long>(t.tv_sec)*1000000000ULL+static_cast<unsigned long long>(t.tv_nsec); return true;
-}
-int main(int argc, char **argv) {
-  if (argc!=5 || getuid()!=0 || geteuid()!=0) return 2;
-  const std::string run(argv[1]), uidText(argv[2]), bundle(argv[3]), permission(argv[4]);
-  if (run.size()!=32 || run.find_first_not_of("0123456789abcdef")!=std::string::npos ||
-      uidText.empty() || uidText.size()>10 || uidText.find_first_not_of("0123456789")!=std::string::npos ||
-      (bundle!="org.harmonycontrib.audiohaptic" && bundle!="org.harmonycontrib.audiohapticcontender" &&
-       bundle!="org.harmonycontrib.audiohapticdenied") ||
-      (permission!="ohos.permission.VIBRATE" && permission!="ohos.permission.KEEP_BACKGROUND_RUNNING")) return 2;
-  errno=0; char *end=nullptr; const unsigned long uid=strtoul(argv[2],&end,10);
-  if (errno!=0 || *end!='\0' || uid>INT_MAX || uid/200000!=100 || uid%200000<10000) return 2;
-  const AccessTokenID token=AccessTokenKit::GetHapTokenID(100,bundle,0); HapTokenInfo info{};
-  if (token==0 || AccessTokenKit::GetHapTokenInfo(token,info)!=0 || info.tokenID!=token || info.userID!=100 ||
-      info.instIndex!=0 || info.bundleName!=bundle || info.uid!=static_cast<int32_t>(uid)) return 1;
-  unsigned long long a=0,b=0; if (!Now(a)) return 1;
-  const int first=AccessTokenKit::VerifyAccessToken(token,permission,true);
-    const int second=AccessTokenKit::VerifyAccessToken(token,permission,true);
-  if (!Now(b) || b<a || first!=second || (second!=PERMISSION_GRANTED && second!=PERMISSION_DENIED)) return 1;
-  printf("{\"schema_version\":1,\"run_id\":\"%s\",\"user_id\":100,\"uid\":%lu,\"bundle\":\"%s\","
-         "\"token_id\":%u,\"permission\":\"%s\",\"before\":%d,\"after\":%d,\"before_ns\":%llu,\"after_ns\":%llu}\n",
-         run.c_str(),uid,bundle.c_str(),token,permission.c_str(),first,second,a,b); return fflush(stdout)==0 && !ferror(stdout)?0:1;
-}
-'''
+TOKEN_SOURCE = protocol.TOKEN_SOURCE
 
 
 def require(value, message):
@@ -287,9 +253,10 @@ def prepare(output, sdk, source_export, *, seconds=60):
             'audio': descriptor(audio), 'haptic': descriptor(haptic), 'duration_ms': seconds*1000,
             'permissions': PERMISSIONS[role]}
     token = output/'audio_haptic_token_observer.cpp'; token.write_text(TOKEN_SOURCE)
+    observer = output/'audio_haptic375_time_observer.cpp'; observer.write_text(protocol.PASSIVE_SOURCE)
     value = {'schema_version': 1, 'scope': SCOPE, 'run_id': run, 'sdk': sdk_proof, 'fixed_source': source,
         'coordinator': descriptor(SELF), 'base_generator': descriptor(Path(base.__file__)), 'base_page': descriptor(base.PAGE),
-        'observer_source': descriptor(base.OBSERVER), 'token_source': descriptor(token), 'sdk_background': descriptor(bg),
+        'protocol': descriptor(Path(protocol.__file__)), 'observer_source': descriptor(observer), 'token_source': descriptor(token), 'sdk_background': descriptor(bg),
         'notification_source_map': descriptor(MAP), 'roles': roles, 'runtime_validated': False, 'ledger_closed': False}
     save_json(output/'preparation.json', value)
     return output/'preparation.json'
@@ -298,10 +265,12 @@ def prepare(output, sdk, source_export, *, seconds=60):
 def validate_preparation(path):
     value = loads(Path(path).read_text())
     require(value['scope'] == SCOPE and re.fullmatch('[a-f0-9]{32}', value['run_id']), 'fresh preparation required')
-    for key in ('coordinator', 'base_generator', 'base_page', 'observer_source', 'token_source', 'notification_source_map'):
+    for key in ('coordinator', 'protocol', 'base_generator', 'base_page', 'observer_source', 'token_source', 'notification_source_map'):
         checked(value[key])
     require(value['coordinator']['sha256'] == descriptor(SELF)['sha256'] and
-            checked(value['token_source']).read_text() == TOKEN_SOURCE, 'candidate source drift')
+            value['protocol'] == descriptor(Path(protocol.__file__)) and
+            checked(value['token_source']).read_text() == TOKEN_SOURCE and
+            checked(value['observer_source']).read_text() == protocol.PASSIVE_SOURCE, 'candidate source drift')
     base.verify_export(checked(value['fixed_source']['export']))
     for role in ROLES:
         entry = value['roles'][role]; manifest = loads(checked(entry['manifest']).read_text())
@@ -316,18 +285,27 @@ def validate_preparation(path):
     return value
 
 
-def actual_token(raw, run, role, uid, permission, expected):
-    value = loads(raw)
-    require(set(value) == {'schema_version', 'run_id', 'user_id', 'uid', 'bundle', 'token_id', 'permission',
-                          'before', 'after', 'before_ns', 'after_ns'}, 'exact independent token schema')
-    require(type(value['schema_version']) is int and value['schema_version'] == 1 and value['run_id'] == run and
-            value['user_id'] == 100 and type(value['uid']) is int and value['uid'] == uid and
-            value['bundle'] == BUNDLES[role] and value['permission'] == permission and
-            type(value['token_id']) is int and value['token_id'] > 0 and
-            all(type(value[k]) is int and value[k] == expected for k in ('before', 'after')) and
-            type(value['before_ns']) is int and type(value['after_ns']) is int and
-            0 < value['before_ns'] <= value['after_ns'], 'actual independent token identity/grant/clock differs')
-    return value
+def actual_token(raw, run, role, identity, permission, expected, boot):
+    return protocol.actual_token(raw, run=run, boot=boot, bundle=BUNDLES[role], identity=identity,
+        permission=permission, expected=expected)
+
+
+def root_admission(args):
+    # The parent creates the lease and retains the locked open description. We
+    # only verify its live nonce/config/parent/HDC handshake; never acquire one.
+    require(all(getattr(args, name, None) for name in ('root_lease', 'root_lease_nonce', 'root_config', 'root_output')),
+        'explicit same-parent live root lease/config required')
+    require(OWNER_MODULE.is_file() and not OWNER_MODULE.is_symlink(), 'frozen root owner12 module required')
+    sys.path.insert(0, str(OWNER_MODULE.parent))
+    try:
+        owner = importlib.import_module('root_runtime_owner12')
+        require(Path(owner.__file__).resolve() == OWNER_MODULE.resolve(), 'root owner module path differs')
+        proof = owner.verify(descriptor(args.root_lease), args.root_lease_nonce,
+            descriptor(args.root_config), args.root_output.resolve(), args.hdc)
+    finally:
+        sys.path.pop(0)
+    return {'owner_module': descriptor(OWNER_MODULE), 'lease': descriptor(args.root_lease),
+        'config': descriptor(args.root_config), 'proof': proof}
 
 
 def audio_values(path):
@@ -511,13 +489,15 @@ def verify_callers(inputs, preparation, env, output, command):
 
 class Coordinator:
     def __init__(self, args):
+        self.admission = root_admission(args)
         self.args = args; self.output = args.output.resolve(); self.output.mkdir(parents=True, mode=0o700, exist_ok=False)
         self.preparation = validate_preparation(args.preparation); self.run = self.preparation['run_id']
         self.inputs = loads(args.inputs.read_text()); self.guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, self.output/'guest')
         self.boot = self.guest.env['boot_id']; self.remote = '/data/local/tmp/audio-haptic-'+self.run
         self.value = {'schema_version': 1, 'scope': SCOPE, 'status': 'collecting', 'run_id': self.run, 'boot_id': self.boot,
             'archive': descriptor(args.archive), 'boot': descriptor(args.boot), 'preparation': descriptor(args.preparation),
-            'inputs': descriptor(args.inputs), 'coordinator': descriptor(SELF), 'commands': [], 'actions': [], 'qmp': [],
+            'inputs': descriptor(args.inputs), 'coordinator': descriptor(SELF), 'root_admission': self.admission,
+            'commands': [], 'observations': [], 'actions': [], 'qmp': [],
             'actors': {}, 'foregrounds': [], 'captures': {}, 'service_snapshots': [], 'tokens': [], 'guest_libraries': {}, 'errors': [], 'cleanup_errors': [],
             'cleanup_complete': False, 'synchronization_verified': False, 'first_artifact_behavior_gate_passed': False,
             'ledger_closed': False}
@@ -535,6 +515,7 @@ class Coordinator:
         return descriptor(path)
 
     def command(self, argv, label):
+        root_admission(self.args)
         self.guest.healthy(); argv = list(map(str, argv))
         result = subprocess.run(argv, capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
         log = self.text(result.stdout+result.stderr, 'transport')
@@ -543,7 +524,14 @@ class Coordinator:
         return result.stdout.replace('\r', '')
 
     def shell(self, script, label):
+        root_admission(self.args)
         raw = self.guest.shell(script, label); self.save(); return raw
+
+    def observe(self, script, label):
+        raw = self.shell(script, label); ref = self.text(raw, label)
+        self.value['observations'].append({'raw': ref, 'script': script,
+            'command': len(self.guest.report['commands'])-1})
+        self.save(); return ref
 
     def receive(self, remote, label, uid=None):
         quote = shlex.quote(remote)
@@ -570,10 +558,15 @@ class Coordinator:
 
     def token(self, role, permission='ohos.permission.VIBRATE'):
         actor = self.actor(role); expect = 0 if permission in PERMISSIONS[role] else -1
-        raw = self.shell('unset LD_LIBRARY_PATH LD_PRELOAD; '+self.remote+'/token '+self.run+' '+str(actor['uid'])+' '+BUNDLES[role]+' '+permission, 'token-'+role)
-        row = actual_token(raw, self.run, role, actor['uid'], permission, expect)
+        before = self.observe('bm dump -n '+BUNDLES[role], 'BMS-before-token-'+role)
+        require(protocol.bms_identity(checked(before).read_text(), BUNDLES[role]) == actor['identity'], 'BMS identity changed before token query')
+        raw = self.observe(protocol.token_script(self.remote, self.run, self.boot, BUNDLES[role], actor['uid'], permission), 'token-'+role)
+        after = self.observe('bm dump -n '+BUNDLES[role], 'BMS-after-token-'+role)
+        require(protocol.bms_identity(checked(after).read_text(), BUNDLES[role]) == actor['identity'], 'BMS identity changed after token query')
+        row = actual_token(checked(raw).read_text(), self.run, role, actor['identity'], permission, expect, self.boot)
         if role in self.token_ids: require(row['token_id'] == self.token_ids[role], 'actual caller token replaced')
-        self.token_ids[role] = row['token_id']; item = {'role': role, 'permission': permission, 'raw': self.text(raw, 'token'), 'value': row}
+        self.token_ids[role] = row['token_id']; item = {'role': role, 'permission': permission,
+            'bms_before': before, 'raw': raw, 'bms_after': after, 'value': row}
         self.value['tokens'].append(item); self.save(); return row
 
     def foreground(self, role):
@@ -656,6 +649,7 @@ class Coordinator:
         raise ValueError('actual request exceeded original15s deadline: '+role+'/'+action)
 
     def qmp(self, command):
+        root_admission(self.args)
         self.guest.healthy(); path = Path(self.guest.env['qmp_socket'])
         require(stat.S_ISSOCK(path.stat().st_mode), 'actual owned enclosing QMP socket required')
         records = []
@@ -752,7 +746,8 @@ class Coordinator:
             spec = self.inputs['actors'][role]
             # Installation belongs to the enclosing suite; never grant, alter
             # profiles, replace an installed app or silently reuse another HAP.
-            raw = self.shell('bm dump -n '+BUNDLES[role], 'BMS-'+role); uid = require_normal_identity(raw, BUNDLES[role])
+            bms_ref = self.observe('bm dump -n '+BUNDLES[role], 'BMS-'+role); raw = checked(bms_ref).read_text()
+            identity = protocol.bms_identity(raw, BUNDLES[role]); uid = identity['uid']
             bms = loads(raw.removeprefix(BUNDLES[role]+':\n')); paths = set()
             def visit(item):
                 if isinstance(item, dict):
@@ -765,10 +760,11 @@ class Coordinator:
             installed = self.receive(next(iter(paths)), 'installed-'+role)
             require(installed['file']['sha256'] == spec['signed_hap']['sha256'], 'actual BMS installed HAP differs')
             files = '/data/app/el2/100/base/'+BUNDLES[role]+'/haps/entry/files/'
-            self.value['actors'][role] = {'bundle': BUNDLES[role], 'uid': uid, 'BMS': self.text(raw, 'BMS-'+role),
+            self.value['actors'][role] = {'bundle': BUNDLES[role], 'uid': uid, 'identity': identity, 'BMS': bms_ref,
                 'installed_hap': installed, 'sdk': verified[role]['sdk'], 'signature': verified[role]['signature'], 'files': files}
             self.token(role)
-        require(len({self.actor(r)['uid'] for r in ROLES}) == 3, 'three distinct normal UIDs required')
+        require(len({self.actor(r)['uid'] for r in ROLES}) == 3 and
+            len({self.actor(r)['identity']['token_id'] for r in ROLES}) == 3, 'three distinct normal UIDs and tokens required')
         # Foreground all callers once, before creating observer/capture. Root's
         # actual UI installation/permission setup is not replaced by a timer.
         for role in ROLES:
@@ -804,16 +800,20 @@ class Coordinator:
 
     def start_observer(self):
         log = self.output/'passive-HDI.jsonl'; self.observer_log = log.open('xb')
-        script = 'echo $$ > '+self.remote+'/observer.pid; awk \'{print $22}\' /proc/$$/stat > '+self.remote+'/observer.start; unset LD_LIBRARY_PATH LD_PRELOAD; exec '+self.remote+'/passive '+self.run+' 60000 10'
-        argv = [str(self.args.hdc), '-t', self.guest.target, 'shell', 'sh -c '+shlex.quote(script)]
+        root_admission(self.args)
+        marker = '__HAPTIC375_EXIT_'+secrets.token_hex(16)+'__='
+        wrapped = protocol.observer_script(self.remote, self.run, self.boot, marker)
+        argv = [str(self.args.hdc), '-t', self.guest.target, 'shell', wrapped]
         self.observer = subprocess.Popen(argv, stdout=self.observer_log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
-        self.value['observer'] = {'argv': argv, 'raw': descriptor(log), 'exit_code': None}
+        self.value['observer'] = {'argv': argv, 'marker': marker, 'raw': descriptor(log), 'exit_code': None}
         end = time.monotonic()+5
         while time.monotonic() < end:
             text = log.read_text()
             if '"kind":"sample"' in text:
                 rows = [loads(line) for line in text.splitlines() if line.endswith('}')]
-                require(rows[0].get('time_delay') is True and rows[-1].get('running') is False, 'real idle TIME capacity required before public playback')
+                require(rows[0].get('protocol') == protocol.PROTOCOL and rows[0].get('run_id') == self.run and
+                    rows[0].get('boot_id') == self.boot and rows[0].get('time_delay') is True and
+                    rows[-1].get('running') is False, 'real idle current TIME capacity required before public playback')
                 return
             require(self.observer.poll() is None, 'actual passive observer exited'); time.sleep(.05)
         raise ValueError('actual passive observer startup timed out')
@@ -852,10 +852,12 @@ class Coordinator:
             except Exception as error: errors.append('background service cleanup: '+str(error))
         if self.observer is not None:
             try:
-                self.observer.wait(timeout=60)
+                self.shell('umask 077; set -C; : > '+self.remote+'/sampler-stop', 'stop-only-owned-passive-observer')
+                self.observer.wait(timeout=10)
                 self.observer_log.close()
                 self.value['observer'].update(raw=descriptor(self.output/'passive-HDI.jsonl'), exit_code=self.observer.returncode)
-                final = base.parse_hdi((self.output/'passive-HDI.jsonl').read_text(), self.run, self.boot, self.observer.returncode)
+                final = protocol.parse_time_transport((self.output/'passive-HDI.jsonl').read_text(), self.run,
+                    self.boot, self.observer.returncode, self.value['observer']['marker'])
                 require(final[-1]['running'] is False, 'actual TIME backend remained active after public cleanup')
                 # It is only our executable; no vibrator mutation is needed.
                 self.shell('test ! -e /proc/$(cat '+self.remote+'/observer.pid)', 'observer-exited')
@@ -951,6 +953,31 @@ def verify_observations(path, archive, boot, *, signature_output=None, signature
         raw = log.read_text().replace('\r', '')
         marker = re.search(r'__QEMU_CHILD_EXIT_[a-f0-9]{32}__=', command['argv'][-1])
         require(marker and raw.endswith('\n'+marker.group()+'0\n') and raw.count(marker.group()) == 1 and not failed(raw), 'guest exit failure hidden by HDC')
+    def observation(ref):
+        matches = [row for row in value['observations'] if row['raw'] == ref]
+        require(len(matches) == 1, 'one original observation command required')
+        return matches[0]
+    def command_index(ref):
+        index = observation(ref)['command']
+        require(type(index) is int and 0 <= index < len(value['enclosing_guest_commands']), 'actual observation command index invalid')
+        return index
+    def observed(ref, script):
+        from guest_ui import command_exit
+        row = observation(ref); command = value['enclosing_guest_commands'][command_index(ref)]
+        require(row['script'] == script and command['argv'][-1].startswith('('+script+'); task_child_rc=$?; '),
+            'original observation command differs from the exact expected script')
+        original = Path(command['log']).read_text().replace('\r', '')
+        marker = re.search(r'__QEMU_CHILD_EXIT_[a-f0-9]{32}__=', command['argv'][-1])
+        body, code = command_exit(original, marker.group())
+        require(code == 0 and body == checked(ref).read_text(), 'copied observation differs from original successful command stdout')
+        return body
+    admission = value['root_admission']
+    require(admission['owner_module'] == descriptor(OWNER_MODULE), 'root owner implementation changed since collection')
+    for key in ('lease', 'config'): checked(admission[key])
+    lease = loads(checked(admission['lease']).read_text())
+    require(lease['config'] == admission['config'] and
+        admission['proof']['parent_pid'] == lease['parent_pid'] and
+        admission['proof']['inherited_resource_inode'] == lease['lock'], 'root admission receipt differs from original lease')
     inputs = loads(checked(value['inputs']).read_text())
     from account_state import parse_snapshot
     require(set(value['accounts']) == {'before', 'after'} and
@@ -972,7 +999,8 @@ def verify_observations(path, archive, boot, *, signature_output=None, signature
     actors = value['actors']; rows = {}
     for role in ROLES:
         actor = actors[role]; require(actor['bundle'] == BUNDLES[role], 'mixed caller role')
-        uid = require_normal_identity(checked(actor['BMS']).read_text(), BUNDLES[role]); require(uid == actor['uid'], 'BMS UID drift')
+        identity = protocol.bms_identity(observed(actor['BMS'], 'bm dump -n '+BUNDLES[role]), BUNDLES[role])
+        uid = identity['uid']; require(uid == actor['uid'] and identity == actor['identity'], 'BMS UID/token drift')
         require(actor['installed_hap']['file']['sha256'] == inputs['actors'][role]['signed_hap']['sha256'], 'actual installed signed caller differs')
         checked(actor['installed_hap']['file'])
         rows[role] = base.parse_hap(checked(actor['journal']['file']).read_text(), run, env['boot_id'], uid)
@@ -990,8 +1018,10 @@ def verify_observations(path, archive, boot, *, signature_output=None, signature
         require(all(v == actor['process_start'] for v in identities), 'actual caller PID generation changed')
         # Actual self-token rows must agree with the independent AccessToken
         # observer; they cannot stand in for it.
-        tokens = [actual_token(checked(item['raw']).read_text(), run, role, uid, item['permission'],
-                  0 if item['permission'] in PERMISSIONS[role] else -1) for item in value['tokens'] if item['role'] == role]
+        tokens = [protocol.verify_token_binding(item, run=run, boot=env['boot_id'], role=role,
+            bundle=BUNDLES[role], identity=identity, permission=item['permission'],
+            expected=0 if item['permission'] in PERMISSIONS[role] else -1, observed=observed,
+            command_index=command_index) for item in value['tokens'] if item['role'] == role]
         require(len(tokens) >= 3 and len({v['token_id'] for v in tokens}) == 1, 'actual stable independent token observations missing')
         require(all(r['value']['token_id'] == tokens[0]['token_id'] for r in rows[role] if r['event'] == 'token'), 'self and independent token identity differ')
         for action in [v for v in value['actions'] if v['role'] == role]:
@@ -1005,8 +1035,14 @@ def verify_observations(path, archive, boot, *, signature_output=None, signature
         background_callbacks(rows[role])
     require(any(r['event'] == 'error' and r['error_code'] == 201 for r in rows['denied']), 'actual zero-permission public rejection missing')
     require(not any(r['api'] == 'AudioHapticPlayer.start' and r['event'] == 'return' for r in rows['denied']), 'denied caller unexpectedly started')
-    require(len({actors[r]['uid'] for r in ROLES}) == 3, 'focus did not use different ordinary UIDs')
-    passive = value['observer']; observations = base.parse_hdi(checked(passive['raw']).read_text(), run, env['boot_id'], passive['exit_code'])
+    require(len({actors[r]['uid'] for r in ROLES}) == 3 and len({actors[r]['identity']['token_id'] for r in ROLES}) == 3,
+        'focus did not use different ordinary UIDs/tokens')
+    passive = value['observer']
+    require(passive['argv'] == [value['enclosing_guest_commands'][0]['argv'][0], '-t', env['target'], 'shell',
+        protocol.observer_script('/data/local/tmp/audio-haptic-'+run, run, env['boot_id'], passive['marker'])],
+        'actual passive helper command/run/boot/stop path differs')
+    observations = protocol.parse_time_transport(checked(passive['raw']).read_text(),
+        run, env['boot_id'], passive['exit_code'], passive['marker'])
     episodes = base.time_episodes(observations); require(len(episodes) == 1, 'exactly one public owner TIME episode required')
     captures = value['captures']; owner_audio = audio_progress(checked(prep['roles']['owner']['audio']), checked(captures['owner-after-contender-foreground']))
     contender_audio = audio_progress(checked(prep['roles']['contender']['audio']), checked(captures['focus']), allow_prefix=True)
@@ -1051,6 +1087,8 @@ def main():
     for name in ('output', 'sdk', 'source-export'): create.add_argument('--'+name, type=Path, required=True)
     execute = sub.add_parser('run')
     for name in ('output', 'boot', 'archive', 'hdc', 'preparation', 'inputs'): execute.add_argument('--'+name, type=Path, required=True)
+    for name in ('root-lease', 'root-config', 'root-output'): execute.add_argument('--'+name, type=Path, required=True)
+    execute.add_argument('--root-lease-nonce', required=True)
     verify = sub.add_parser('verify')
     for name in ('evidence', 'archive', 'boot', 'output'): verify.add_argument('--'+name, type=Path, required=True)
     args = parser.parse_args()

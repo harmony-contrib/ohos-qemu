@@ -10,6 +10,7 @@ import wave
 import batch_media_audio_haptic_coordinator as c
 
 RUN = 'a'*32
+BOOT = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 UID = 20010001
 PID = 523
 SDK = Path('/Volumes/PSSD/qemu/validation/first-20261005/provider-sdk-26-full/26.0.0')
@@ -17,8 +18,11 @@ EXPORT = Path('/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r5
 
 
 def token():
-    return {'schema_version': 1, 'run_id': RUN, 'user_id': 100, 'uid': UID, 'bundle': c.BUNDLES['owner'],
-            'token_id': 123456, 'permission': 'ohos.permission.VIBRATE', 'before': 0, 'after': 0, 'before_ns': 100, 'after_ns': 101}
+    return {'protocol': c.protocol.PROTOCOL, 'kind': 'token', 'run_id': RUN, 'boot_id': BOOT,
+            'bundle': c.BUNDLES['owner'], 'token_id': 123456, 'permission': 'ohos.permission.VIBRATE',
+            'identity_schema': 'hap-bms-access-token/v1', 'expected_uid': UID, 'at_reported_uid': 0,
+            'at_query_rc': 0, 'at_token_id': 123456, 'at_user_id': 100, 'at_inst_index': 0,
+            'at_bundle': c.BUNDLES['owner'], 'before': 0, 'after': 0, 'before_ns': 100, 'after_ns': 101}
 
 
 def task_text(mode='2,', suspended='false', pid=PID, uid=UID, bundle=None):
@@ -40,12 +44,14 @@ def process_raw(uid=UID, pid=PID, start=900):
 
 class AudioHapticCoordinatorTests(unittest.TestCase):
     def test_token_keeps_actual_bundle_uid_grant_and_monotonic(self):
-        actual = c.actual_token(json.dumps(token()), RUN, 'owner', UID, 'ohos.permission.VIBRATE', 0)
+        identity = dict(uid=UID, token_id=123456)
+        actual = c.actual_token(json.dumps(token()), RUN, 'owner', identity, 'ohos.permission.VIBRATE', 0, BOOT)
         self.assertEqual(actual['token_id'], 123456)
-        for key, value in [('bundle', c.BUNDLES['contender']), ('uid', UID+1), ('before', False), ('after', -1), ('after_ns', 99)]:
+        self.assertEqual(actual['at_reported_uid'], 0)  # This parcel does not transport the BMS UID.
+        for key, value in [('bundle', c.BUNDLES['contender']), ('expected_uid', UID+1), ('before', False), ('after', -1), ('after_ns', 99)]:
             row = token(); row[key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
-                c.actual_token(json.dumps(row), RUN, 'owner', UID, 'ohos.permission.VIBRATE', 0)
+                c.actual_token(json.dumps(row), RUN, 'owner', identity, 'ohos.permission.VIBRATE', 0, BOOT)
 
     def test_duplicate_raw_keys_rejected(self):
         with self.assertRaises(ValueError): c.loads('{"uid":1,"uid":2}')

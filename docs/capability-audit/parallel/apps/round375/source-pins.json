@@ -1,0 +1,263 @@
+{
+  "scope": "source-only; all six extant target preimages and all eighteen immutable dependencies match sealed actual source, not host mirror",
+  "observed_utc": "2026-10-19T02:07:17.048358+00:00",
+  "actual_source_export": {
+    "result": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/result.json",
+      "sha256": "6016ed6e087e3f49190c3e0ee85c44c9f9554d77d280a644f48e811b06a57535",
+      "bytes": 8151,
+      "mode": "0o644"
+    },
+    "receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/receipt.json",
+      "sha256": "a1f0ae5f641366c783ba110cfb486aa082ef75673c0f16cf8c6aa109ea5a07b3",
+      "bytes": 875,
+      "mode": "0o644"
+    },
+    "scope": "actual read-only volume vector; not SDK/native/package/runtime"
+  },
+  "projects": {
+    "applications/standard/settings": "0aba461c750fda71977c2f5186ca0e756ecfc6ca",
+    "foundation/ability/ability_runtime": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8"
+  },
+  "all_24_extant_preimages_and_dependencies": [
+    {
+      "relative_path": "applications/standard/settings/product/phone/src/main/module.json5",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/product/phone/src/main/module.json5",
+      "sha256": "ec1d3c1525d7298209346cb8f47715f781c1a6cc52b058cadef5e57d211db6bf",
+      "bytes": 37057,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json",
+      "sha256": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d",
+      "bytes": 1957,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp",
+      "sha256": "924a096324e65b46e531d4ea47bc8f03753316bd0f017cb46cd66c9ee6b8e811",
+      "bytes": 862818,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h",
+      "sha256": "9408cba30b74febdd5145e6493c3efc27e64c75d9b173010e7140f4e9fd074e6",
+      "bytes": 157424,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp",
+      "sha256": "d0d15cd0f18ba8666e0f3acdc8fd4c681d71c642d79b87a92b4698c964af0e5f",
+      "bytes": 30497,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/include/dialog_session/dialog_session_manager.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/include/dialog_session/dialog_session_manager.h",
+      "sha256": "8100c5f419479394d6fca191462bda6ee44ac15eaa04c3a9cfd21b1748d0edcf",
+      "bytes": 9193,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets",
+      "sha256": "3bf743568c5dcb454d511c93e96204dd8dce90f80b346dbb4e0bbdf56e857f8a",
+      "bytes": 11379,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets",
+      "sha256": "7b2f8faa71e20ed238c5f9a831fe478362b1b343a7dd21836684d1272557c3be",
+      "bytes": 6916,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets",
+      "sha256": "1bbf47e6f91fd4c3048d1fabbfaa7e374a3e8ca19d72b7ae274eea2dda1a9d6b",
+      "bytes": 10407,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json",
+      "sha256": "802ae7d5fc23d4baf2aa7fef33128b18ee0632803705c94d02f4e5309752b4f7",
+      "bytes": 7350,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json",
+      "sha256": "2c6b1fac6b33ee867750638daece46cc4aa14865295bdc93cd350735b2719198",
+      "bytes": 7423,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets",
+      "sha256": "7cbf03a93e1c4877b677c077ba279be7073fcc07996b8b3ac08f551077bf790d",
+      "bytes": 9636,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets",
+      "sha256": "2b7dc87f39cddb03a6ed9b18172125b717fa5b16fbb3f70f92eddd5dc6b99b61",
+      "bytes": 2206,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets",
+      "sha256": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd",
+      "bytes": 2895,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/frameworks/native/appkit/ability_bundle_manager_helper/bundle_mgr_helper.cpp",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/frameworks/native/appkit/ability_bundle_manager_helper/bundle_mgr_helper.cpp",
+      "sha256": "dc494e1c40a84e8e997be63774f40a800e3cd5aca4259de555d39d9f444ea807",
+      "bytes": 50038,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_bundle_manager_helper/bundle_mgr_helper.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_bundle_manager_helper/bundle_mgr_helper.h",
+      "sha256": "bf1dce5930ff5bbf47618b5f2ac649bf3055929d61705ffc12656b369409d428",
+      "bytes": 11333,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/include/ability_record.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/include/ability_record.h",
+      "sha256": "d17a1058bc39d4ce2a24760f0a9d7b0e9641e7faaaf62daf0001ba1e3c71e8e3",
+      "bytes": 32158,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/src/ability_record.cpp",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/src/ability_record.cpp",
+      "sha256": "3e4c8171171dc6af1e902eea9edbd4452858e1127596181a04fa481d548f439d",
+      "bytes": 131255,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/abilitymgr/src/utils/update_caller_info_util.cpp",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/abilitymgr/src/utils/update_caller_info_util.cpp",
+      "sha256": "cbab4e3194f80ca05f28b519e0a4be9f2e1c3e748937160ab12b8a770141c59a",
+      "bytes": 21157,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/common/include/in_process_call_wrapper.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/common/include/in_process_call_wrapper.h",
+      "sha256": "99a6f6ed7138a56ad333322cd14cc65c02d2c6e9bd987d9edfc21289b4349566",
+      "bytes": 1612,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/common/include/permission_verification.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/common/include/permission_verification.h",
+      "sha256": "9c8382e8a45a1477a3f87c08cafc03b7757b76d254cec3e97469a87f5444ea93",
+      "bytes": 5504,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/common/include/task_handler_wrap.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/common/include/task_handler_wrap.h",
+      "sha256": "75c03bca318636766e11eed74502e990be085ad5069a0a05c5da4ba2e8ea87c1",
+      "bytes": 4905,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/common/src/permission_verification.cpp",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/common/src/permission_verification.cpp",
+      "sha256": "58308bdc4500197de2a141550489f72623869215a26cfe2da15e7a0adfe55f26",
+      "bytes": 25885,
+      "mode": "0o644"
+    },
+    {
+      "relative_path": "foundation/ability/ability_runtime/services/common/include/support_system_ability_permission.h",
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-source-vector-375-01/source/foundation/ability/ability_runtime/services/common/include/support_system_ability_permission.h",
+      "sha256": "4c23af65e4d918202ebda90b60a51b6947dbd03509f9bf8f33aa98780ca77c22",
+      "bytes": 3667,
+      "mode": "0o644"
+    }
+  ],
+  "target_before_after": {
+    "applications/standard/settings/product/phone/src/main/module.json5": {
+      "before": "ec1d3c1525d7298209346cb8f47715f781c1a6cc52b058cadef5e57d211db6bf",
+      "after": "8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e"
+    },
+    "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json": {
+      "before": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d",
+      "after": "99ce193851b36ba3b22fbfcd3a41ce850467b64a411a9ea5aed84f995a7d5126"
+    },
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/ChoosePickerController.ets": {
+      "before": null,
+      "after": "75e159ae1f5f2cfdb04e982889415c39a335f907b83a2f57ac048bd5ae450aa6",
+      "payload": "files/ChoosePickerController.ets"
+    },
+    "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/ChoosePickerAbility.ets": {
+      "before": null,
+      "after": "95e03c79a5cab7d57d3242327e26b1e4bf68160ad971639f7913719c89a233b7",
+      "payload": "files/ChoosePickerAbility.ets"
+    },
+    "applications/standard/settings/product/phone/src/main/ets/pages/ChoosePicker.ets": {
+      "before": null,
+      "after": "28d894b3b4799c188948c90a6d216c9ec975ad7e6855e932b3acd05e2303b1c2",
+      "payload": "files/ChoosePicker.ets"
+    },
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp": {
+      "before": "924a096324e65b46e531d4ea47bc8f03753316bd0f017cb46cd66c9ee6b8e811",
+      "after": "87121b721efbc8f5e25f185b562e8d7d96b329eed2260e84997060890f356dd0"
+    },
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h": {
+      "before": "9408cba30b74febdd5145e6493c3efc27e64c75d9b173010e7140f4e9fd074e6",
+      "after": "313803832a2a46537b0ac9649d1c6fbfca9540a8aaa2e3895f6f8ec7ce8c28fc"
+    },
+    "foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp": {
+      "before": "d0d15cd0f18ba8666e0f3acdc8fd4c681d71c642d79b87a92b4698c964af0e5f",
+      "after": "57455a8f71fd0c8746a0e5b0736635308d238591db96cd54e10a5dc4297d927a"
+    },
+    "foundation/ability/ability_runtime/services/abilitymgr/include/dialog_session/dialog_session_manager.h": {
+      "before": "8100c5f419479394d6fca191462bda6ee44ac15eaa04c3a9cfd21b1748d0edcf",
+      "after": "d0b343c8f426b12da951a5068afef3a6e5886557d5d4791504330d6fa89f0750"
+    }
+  },
+  "patches": {
+    "0001-register-private-settings-picker.patch": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker_choose/0001-register-private-settings-picker.patch",
+      "sha256": "ce2d6c5fe38ffb0cbfd339e60cf30681733efb1076519a8eaf6c8b98e71da7da",
+      "bytes": 1256,
+      "mode": "0o644"
+    },
+    "0002-authenticate-native-select-dialog-session.patch": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker_choose/0002-authenticate-native-select-dialog-session.patch",
+      "sha256": "811873d7af989795dc38980187c774049fe72c8d9a84e2b016404aa70fc4c530",
+      "bytes": 35552,
+      "mode": "0o644"
+    },
+    "0003-bind-private-start-to-one-native-request.patch": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker_choose/0003-bind-private-start-to-one-native-request.patch",
+      "sha256": "8010353f8b2b123a945388519e3e68ec4f517e6b915df41c96417997f047524b",
+      "bytes": 13744,
+      "mode": "0o644"
+    }
+  },
+  "component_manifest": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker_choose/manifest.json",
+    "sha256": "4fc97612896fca6de7cd014ce5ea1707055a071af542660176b77e9b43f13bde",
+    "bytes": 7501,
+    "mode": "0o644"
+  },
+  "original_manifest_bytes_unchanged": true,
+  "original_fixture_bytes_unchanged": true,
+  "original_0001_0002_and_ETS_unchanged": true
+}

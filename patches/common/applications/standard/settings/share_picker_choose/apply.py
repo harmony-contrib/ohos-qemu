@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import secrets
 import shutil
+import stat
 import subprocess
 import tempfile
 
@@ -46,6 +47,7 @@ DEPENDENCIES = {
     NATIVE + 'services/common/include/in_process_call_wrapper.h',
     NATIVE + 'services/common/src/permission_verification.cpp',
     NATIVE + 'services/common/include/permission_verification.h',
+    NATIVE + 'services/common/include/support_system_ability_permission.h',
     NATIVE + 'services/abilitymgr/src/utils/update_caller_info_util.cpp',
 }
 
@@ -71,7 +73,10 @@ def source_root(root):
     root = Path(root).absolute()
     if root.is_symlink():
         raise ValueError('source root symlink refused')
-    root = root.resolve(strict=True)
+    canonical = root.resolve(strict=True)
+    if root != canonical:
+        raise ValueError('source root must be canonical, without parent aliases')
+    root = canonical
     if not root.is_dir():
         raise ValueError('source root must be a directory')
     return root
@@ -79,10 +84,11 @@ def source_root(root):
 
 def manifest():
     value = json.loads((COMPONENT / 'manifest.json').read_text())
-    if value.get('projects') != PROJECTS or set(value.get('files', {})) != TARGETS:
+    if value.get('schema_version') != 2 or value.get('projects') != PROJECTS or set(value.get('files', {})) != TARGETS:
         raise ValueError('exact two-project/nine-target contract required')
     if set(value.get('patches', {})) != {
-        '0001-register-private-settings-picker.patch', '0002-authenticate-native-select-dialog-session.patch'
+        '0001-register-private-settings-picker.patch', '0002-authenticate-native-select-dialog-session.patch',
+        '0003-bind-private-start-to-one-native-request.patch',
     }:
         raise ValueError('exact chooser patch stack required')
     if {p.name for p in COMPONENT.glob('*.patch')} != set(value['patches']):
@@ -129,6 +135,8 @@ def state(root, value, check_revisions=True):
         path = safe_path(root, name)
         if not path.is_file() or digest(path.read_bytes()) != expected:
             raise ValueError('incomplete or unknown predecessor dependency: ' + name)
+        if path.stat().st_nlink != 1:
+            raise ValueError('source alias refused: ' + name)
     states = set()
     for name, row in value['files'].items():
         path = safe_path(root, name)
@@ -137,6 +145,8 @@ def state(root, value, check_revisions=True):
                 raise ValueError('missing fixed source: ' + name)
             states.add('before')
         elif path.is_file():
+            if path.stat().st_nlink != 1:
+                raise ValueError('source alias refused: ' + name)
             current = digest(path.read_bytes())
             if current == row['after']:
                 states.add('after')
@@ -151,6 +161,46 @@ def state(root, value, check_revisions=True):
     return states.pop()
 
 
+def capture(root, relative):
+    """Retain bytes, mode and actual identity, including still-absent targets."""
+    path = safe_path(root, relative)
+    parents = []
+    cursor = path.parent
+    while True:
+        info = cursor.lstat()
+        if not stat.S_ISDIR(info.st_mode):
+            raise ValueError('source parent must be a real directory: ' + relative)
+        parents.append((str(cursor), info.st_dev, info.st_ino, stat.S_IMODE(info.st_mode)))
+        if cursor == root:
+            break
+        cursor = cursor.parent
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return {'data': None, 'identity': None, 'parents': parents}
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise ValueError('source alias or nonregular file refused: ' + relative)
+    return {'data': path.read_bytes(), 'identity': identity(info), 'parents': parents}
+
+
+def identity(info):
+    return (info.st_dev, info.st_ino, info.st_nlink, stat.S_IMODE(info.st_mode), info.st_uid, info.st_gid)
+
+
+def unchanged(root, expected):
+    for name, row in expected.items():
+        if capture(root, name) != row:
+            raise ValueError('source bytes/mode/identity changed during transaction: ' + name)
+
+
+def patch_environment(directory):
+    # Do not let an inherited repository or a TMPDIR inside this checkout make
+    # git apply silently filter the component's unrelated upstream paths.
+    environment = {key: val for key, val in os.environ.items() if not key.startswith('GIT_')}
+    environment['GIT_CEILING_DIRECTORIES'] = str(directory.parent)
+    return environment
+
+
 def atomic_write(target, data, mode):
     temporary = target.with_name('.' + target.name + '.qemu-choose-' + secrets.token_hex(8))
     fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
@@ -159,22 +209,28 @@ def atomic_write(target, data, mode):
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.chmod(temporary, mode)
-        os.replace(temporary, target)
-    finally:
+            os.fchmod(stream.fileno(), mode)
+            published_identity = identity(os.fstat(stream.fileno()))
+    except BaseException:
         temporary.unlink(missing_ok=True)
+        raise
+    try:
+        os.replace(temporary, target)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+    # No fallible work after publication: callers can track only actual writes.
+    return published_identity
 
 
 def install(root, value):
     before = state(root, value)
     if before == 'after':
         return {'status': 'already_applied', 'runtime_validated': False}
-    originals = {}
-    for name in value['files']:
-        path = safe_path(root, name)
-        originals[name] = (path.read_bytes(), path.stat().st_mode & 0o777) if path.exists() else (None, 0o644)
+    expected = {name: capture(root, name) for name in [*value['files'], *value['dependencies']]}
+    originals = {name: expected[name] for name in value['files']}
     with tempfile.TemporaryDirectory(prefix='ohos-choose-candidate-') as scratch:
-        candidate = Path(scratch)
+        candidate = Path(scratch).resolve()
         for name in [*value['files'], *value['dependencies']]:
             source = safe_path(root, name)
             if source.exists():
@@ -182,8 +238,10 @@ def install(root, value):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, target)
         for name in value['patches']:
-            subprocess.run(['git', '-C', str(candidate), 'apply', '--check', str(COMPONENT / name)], check=True)
-            subprocess.run(['git', '-C', str(candidate), 'apply', str(COMPONENT / name)], check=True)
+            subprocess.run(['git', '-C', str(candidate), 'apply', '--check', str(COMPONENT / name)],
+                           env=patch_environment(candidate), check=True)
+            subprocess.run(['git', '-C', str(candidate), 'apply', str(COMPONENT / name)],
+                           env=patch_environment(candidate), check=True)
         for name, row in value['files'].items():
             if row.get('payload') is not None:
                 target = candidate / name
@@ -191,22 +249,30 @@ def install(root, value):
                 shutil.copyfile(COMPONENT / row['payload'], target)
         if state(candidate, value, check_revisions=False) != 'after' or state(root, value) != before:
             raise ValueError('source changed during candidate preparation')
-        recovery = Path(tempfile.mkdtemp(prefix='ohos-choose-recovery-'))
-        for name, (data, _) in originals.items():
+        unchanged(root, expected)
+        recovery = Path(tempfile.mkdtemp(prefix='ohos-choose-recovery-')).resolve()
+        for name, row in originals.items():
+            data = row['data']
             if data is not None:
                 saved = recovery / name
                 saved.parent.mkdir(parents=True, exist_ok=True)
                 saved.write_bytes(data)
         (recovery / 'original.json').write_text(json.dumps({name: {
-            'existed': data is not None, 'mode': mode, 'sha256': digest(data) if data is not None else None
-        } for name, (data, mode) in originals.items()}, indent=2) + '\n')
+            'existed': row['data'] is not None,
+            'mode': row['identity'][3] if row['identity'] else 0o644,
+            'sha256': digest(row['data']) if row['data'] is not None else None
+        } for name, row in originals.items()}, indent=2) + '\n')
         written = []
         try:
-            for name, (_, mode) in originals.items():
+            for name, row in originals.items():
+                unchanged(root, expected)
                 target = safe_path(root, name)
-                target.parent.mkdir(parents=True, exist_ok=True)
+                data = (candidate / name).read_bytes()
+                mode = row['identity'][3] if row['identity'] else 0o644
+                published_identity = atomic_write(target, data, mode)
                 written.append(name)
-                atomic_write(target, (candidate / name).read_bytes(), mode)
+                expected[name] = {'data': data, 'identity': published_identity, 'parents': row['parents']}
+            unchanged(root, expected)
             if state(root, value) != 'after':
                 raise ValueError('final source guard failed')
         except BaseException as failure:
@@ -214,11 +280,16 @@ def install(root, value):
             for name in reversed(written):
                 try:
                     target = safe_path(root, name)
-                    data, mode = originals[name]
+                    # A failure on an unwritten file never authorizes restoring
+                    # it. An external edit to a written file is also preserved.
+                    if capture(root, name) != expected[name]:
+                        raise ValueError('external edit preserved during rollback: ' + name)
+                    row = originals[name]
+                    data = row['data']
                     if data is None:
                         target.unlink(missing_ok=True)
                     else:
-                        atomic_write(target, data, mode)
+                        atomic_write(target, data, row['identity'][3])
                 except BaseException as error:
                     rollback_errors.append(name + ': ' + str(error))
             if rollback_errors:
@@ -242,6 +313,9 @@ def apply(root):
     marker.mkdir(exist_ok=True)
     fd = os.open(marker / 'settings-share-picker-choose.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'a') as lock:
+        info = os.fstat(lock.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError('component lock alias/nonregular file refused')
         fcntl.flock(lock, fcntl.LOCK_EX)
         return install(root, value)
 
