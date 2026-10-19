@@ -11,6 +11,9 @@ from pathlib import Path
 
 INPUT_DIRECTORIES = ("scripts", "patches", "ci/capability-audit", "ci/qemu-smoke")
 INPUT_FILES = (
+    'docs/capability-audit/parallel/apps/round375-provider-research/result.json',
+    'docs/capability-audit/parallel/apps/round375-provider-research/REPORT.md',
+    'docs/capability-audit/parallel/apps/round375-provider-research/source-pins.json',
     'docs/capability-audit/execution-20261019/unsupported-public-providers.json',
     'docs/capability-audit/parallel/network/round375-provider-research/result.json',
     'docs/capability-audit/parallel/media/round375/OFFICIAL-IMPLEMENTATION-BOUNDARY.md',

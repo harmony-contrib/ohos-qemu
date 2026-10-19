@@ -124,6 +124,9 @@ class Sources(unittest.TestCase):
             else:self.assertEqual(a['skills'][0]['uris'],[{'type':p.CONTRACT['mime']}])
             page=files['entry/src/main/ets/pages/Index.ets'];entry=files['entry/src/main/ets/entryability/EntryAbility.ets']
             self.assertIn('@Entry({ useSharedStorage: true })',page);self.assertIn("@Watch('wantChanged')",page)
+            self.assertIn("private readonly role: string = '"+role+"';",page)
+            self.assertIn("if (this.role !== 'caller')",page);self.assertIn("if (this.role === 'caller')",page)
+            self.assertNotIn("if ('"+role+"'",page)
             self.assertIn('onNewWant(want: Want): void { this.publish(want); }',entry);self.assertIn("stage.loadContent('pages/Index', this.storage)",entry)
     def test_actual_calls_grant_avoidance_and_owned_cleanup_guard(self):
         text=(p.FIX/'SelectAudit.ets').read_text()

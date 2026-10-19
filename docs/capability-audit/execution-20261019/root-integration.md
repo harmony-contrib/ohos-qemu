@@ -18,4 +18,8 @@ root 只读采集实际源卷的三个 GN 向量、Settings/AMS/Calendar 向量�
 
 核心增量复核：160 项 host 回归、Settings 旧 chooser 19 项、用户范围/原始账本/源码快照 23 项通过（不同批次有重叠，不合计为唯一测试数）。真实 Vivid 原函数的受控 native harness 首次编译暴露夹具 uint64_t/size_t 同声明推导错误；拆开声明后 ASan/UBSan 的 30 场景及 4 项源/安装/native方法通过，失败日志保留。它仍不是完整 native TU、codec/plugin 或新 guest 验收。原样保留 patch context 与 upstream fixture 的已有空白，不修改其 SHA 来迎合 whitespace lint。
 
-五个精确完整 provider 的公开交付边界由 unsupported-public-providers.json 及其源证据固定。full audit 原始 ledger 不改；root gate 仍重新核对相同新包/boot 的每一个保留需求及 raw child proof，用户确认的不支持另列且不算关闭。号码公开本地用户标记/有限号段不是完整反诈、HSDR 或数据产品；此子能力另列待接入。
+九个精确完整 provider 的公开交付边界由 unsupported-public-providers.json 及其源证据固定。full audit 原始 ledger 不改；root gate 仍重新核对相同新包/boot 的每一个保留需求及 raw child proof，用户确认的不支持另列且不算关闭。号码公开本地用户标记/有限号段不是完整反诈、HSDR 或数据产品；此子能力另列待接入。
+
+6f5372d 全量预检已真实执行：host 1031 方法（1029通过、2条件跳过），Linux 9组全部通过，原14调用者SDK五阶段全部通过。额外三角色的caller成功、target_a角色字面量比较编译失败，target_b尚未执行；失败与小修细节见sdk-preflight-repair.json。只改两文件，root的13项回归通过，待新commit真实SDK复验。
+
+普通框架时间含估算，音频/振动同步仍需独立真实呈现锚；ALSA只读内核帧观测候选尚未达到产品接线条件。按本轮构建规则先完成已收齐修复的代表包及整个runtime尝试，保存所有失败，再把观测候选与该轮失败统一修复；不因此放行其余五包。

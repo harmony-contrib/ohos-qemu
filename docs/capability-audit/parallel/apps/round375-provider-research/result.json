@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "scope": "Read-only public official-source/provider availability research; four exact existing findings only",
+  "finding_count": 4,
+  "verified_deliverable_provider_count": 0,
+  "framework_source_available": true,
+  "findings": [
+    {
+      "id": "behavior:accessibility-screen-reader-provider-missing",
+      "recommendation": "unsupported_in_current_QEMU_delivery_until_verified_provider",
+      "reusable_available": "Accessibility manager/config/extension framework source",
+      "required_identity": "com.ohos.screenreader/AccessibilityExtAbility",
+      "exact_provider_source_or_artifact_verified": false,
+      "missing": [
+        "Complete screen reader UI/gesture/focus-to-spoken-feedback lifecycle implementation",
+        "Actual TTS engine, voice/model assets and licenses, supported-language behavior",
+        "QEMU-compatible integration/build and real enable/read/interrupt/disable silence evidence"
+      ],
+      "evidence": [
+        "a11y-services__aams__src__accessibility_account_data.cpp.raw:62,73",
+        "accessibility-tree.raw complete 1055 entries",
+        "voice-readme.raw:7,18-25,53",
+        "applications-hap-tree.raw complete 60 entries"
+      ]
+    },
+    {
+      "id": "behavior:avsession-desktop-lyrics-provider-missing",
+      "recommendation": "unsupported_in_current_QEMU_delivery_until_verified_provider",
+      "reusable_available": "AVSession connector/state management source and protocol consumer",
+      "required_identity": "com.ohos.mediacontroller/DesktopLyricAbility",
+      "exact_provider_source_or_artifact_verified": false,
+      "missing": [
+        "Matching extension backend with actual session lyric subscription and desktop window lifecycle",
+        "Exact Binder scene-code handling, sessionId/handler String16 inputs and Int32 reply contract",
+        "Matching packaged bundle/ability/permissions and real show/hide/session-switch/death/cleanup evidence"
+      ],
+      "evidence": [
+        "avsession-extension-helper-correct.raw:30-61,246-278",
+        "hap-BUILD.gn.raw:135-139",
+        "hap-Music_Demo.hap.raw LFS object for distinct distributedmusicplayer install mapping"
+      ]
+    },
+    {
+      "id": "behavior:arkui-expanded-text-menu-providers-missing",
+      "recommendation": "unsupported_in_current_QEMU_delivery_until_verified_provider",
+      "reusable_available": "ExpandedMenuPluginLoader and ACE internal menu types",
+      "required_identity": "/system/lib64/expanded_menu/libexpanded_menu.z.so (64-bit upstream loader)",
+      "exact_provider_source_or_artifact_verified": false,
+      "missing": [
+        "Real CreateDeviceMenu/GetStoreUrlFront/GetAPPName implementation matching actual ACE C++ ABI",
+        "Search/share/URL/email/phone/address/date action mapping to real installed handlers, authorization and user confirmation",
+        "Actual product build provenance, ABI/CFI/load/real-menu/actions/cancel/exit evidence"
+      ],
+      "evidence": [
+        "arkui-frameworks__core__components_ng__pattern__select_overlay__expanded_menu_plugin_loader.h.raw:31-41,54-60,79,99",
+        "arkui_ace_engine-tree.raw complete 33700 entries; interface/loader paths are not backend implementations",
+        "applications-hap-tree.raw no matching .so/artifact path"
+      ]
+    },
+    {
+      "id": "behavior:arkui-text-service-runtime-plugins-missing",
+      "recommendation": "unsupported_in_current_QEMU_delivery_until_verified_provider",
+      "reusable_available": "Three ACE loaders/interfaces and explicit default fallback implementations",
+      "required_identity": [
+        "libsystemshare_innerkits.z.so",
+        "libai_text_translation_innerapi.z.so",
+        "libai_text_analyzer_innerapi.z.so"
+      ],
+      "exact_provider_source_or_artifact_verified": false,
+      "missing": [
+        "Matched C++ factory/destructor implementations with exact symbol capitalization and interface lifetime",
+        "Contentful share target/URI/result/cancel backend; actual translation model/service/panel; entity detector and menu-action data",
+        "Redistributable models/data/runtime artifacts and actual source/SDK/ABI/CFI/runtime proof"
+      ],
+      "evidence": [
+        "arkui-adapter__ohos__osal__text_share_loader.cpp.raw:22-26,43-67",
+        "arkui-adapter__ohos__osal__text_translation_loader.cpp.raw:24-28,45-69",
+        "arkui-adapter__ohos__osal__data_detector_loader.cpp.raw:21-25,42-66",
+        "arkui-text-share-interface.raw:32-40",
+        "arkui-interfaces__inner_api__ace__ai__text_translation_interface.h.raw:23-28",
+        "arkui-interfaces__inner_api__ace__ai__data_detector_interface.h.raw:33-56"
+      ],
+      "aggregate_count": 1
+    }
+  ],
+  "prebuilt_hap": {
+    "revision": "fd2c78258466076118c8a9bf1a97fdbcec06a5c8",
+    "complete_tree_entries": 60,
+    "same_named_provider_paths_found": [],
+    "same_named_permanent_pipeline_rows_found": [],
+    "repository_license": "Apache-2.0",
+    "actual_matching_provider_payload_verified": false,
+    "selected_unrelated_haps_are_lfs_pointers": true,
+    "selected_unrelated_lfs_payloads_not_downloaded": true,
+    "install_mappings": {
+      "Music_Demo.hap": "com.ohos.distributedmusicplayer",
+      "Settings.hap": "com.ohos.settings",
+      "SystemUI.hap": "com.ohos.systemui",
+      "Launcher.hap": "com.ohos.launcher",
+      "SecurityPrivacyCenter.hap": "com.ohos.security.privacycenter"
+    }
+  },
+  "external_kit": "Available documentation/consumer wrappers do not establish a licensed, pinned, compatible QEMU backend; Wukong100 support does not imply QEMU support",
+  "limitations": [
+    "Current SIG GitCode source retrieval incomplete; do not conclude global absence",
+    "Some first-party web pages not revision pinned; they are supplemental, not ABI authority",
+    "Actual product source vector/SDK/build/image/loaded process was not inspected or exercised in this research",
+    "LFS pointer cannot establish actual HAP bundle/ability/signature/backend inventory; no guessed metadata",
+    "Caption/number provider research delegated to network and not duplicated"
+  ],
+  "recommendation_scope": "Root may declare only these precise optional features unsupported for the present delivery after reviewing product capability declarations; do not disable general accessibility, AVSession, ArkUI or claim gaps implemented",
+  "executed": [
+    "Public HTTP/web retrieval",
+    "Local static text/JSON/XML/tree/sha256 analysis"
+  ],
+  "not_executed": [
+    "SDK or native compilation",
+    "Signing or crypto verification",
+    "Docker or VM",
+    "HDC/QMP/guest",
+    "Tests or candidate imports",
+    "Source/out/cache access",
+    "Git mutation"
+  ],
+  "gate": false,
+  "ledger_closed": false
+}

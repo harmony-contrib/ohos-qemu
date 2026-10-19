@@ -2,7 +2,7 @@
   "schema": "user-approved-public-provider-boundary/20261019",
   "user_instruction": "看下 openharmony 以及对应 sig 等仓库是否有，如果有就补齐，如果没有就认为是能力不支持",
   "decision": "current_complete_provider_unsupported_not_fixed_not_runtime_validated",
-  "scope": "Five exact original provider findings only. Available frameworks, limited data/code and access-limited repository observations are preserved. No broad SysCap/API/backend exclusions.",
+  "scope": "Nine exact original complete-provider findings only. Available frameworks, local limited code/data and access-limited repository observations remain explicit. No broad SysCap/API/backend exclusion.",
   "features": {
     "LiveCaptions": {
       "id": "behavior:accessibility-caption-provider-missing",
@@ -52,6 +52,46 @@
       "reason": "Official implementation supplies wrapper/abstract ABI/optional dlopen; complete MetaBuilder plugin absent from inspected build targets and Media SIG component list.",
       "repaired": false,
       "runtime_pass": false
+    },
+    "ScreenReader": {
+      "id": "behavior:accessibility-screen-reader-provider-missing",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "Accessibility framework exists; no verified matching screen reader/TTS complete provider in inspected sources or official prebuilt index.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "DesktopLyrics": {
+      "id": "behavior:avsession-desktop-lyrics-provider-missing",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "AVSession connector exists; no verified matching DesktopLyricAbility provider. Music_Demo installs a different bundle and is not this backend.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "ExpandedTextMenu": {
+      "id": "behavior:arkui-expanded-text-menu-providers-missing",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "ACE exposes plugin loader/ABI; no matching complete action/backend implementation or artifact in inspected official sources.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "TextServicePlugins": {
+      "id": "behavior:arkui-text-service-runtime-plugins-missing",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "Share/translation/analyzer loaders/interfaces/default fallbacks exist; no verified matching complete content/model/service plugins for QEMU.",
+      "repaired": false,
+      "runtime_pass": false
     }
   },
   "evidence": [
@@ -62,6 +102,18 @@
     {
       "path": "docs/capability-audit/parallel/media/round375/OFFICIAL-IMPLEMENTATION-BOUNDARY.md",
       "sha256": "d3bc75003f5e14aa7bdd601e336c3cd4ffa9c3cfb0f61b073a9212d22d9731e0"
+    },
+    {
+      "path": "docs/capability-audit/parallel/apps/round375-provider-research/result.json",
+      "sha256": "52b60af2827744bc7752742da25ea9d36c8087e6c5aa44de8eea53218d06c6a1"
+    },
+    {
+      "path": "docs/capability-audit/parallel/apps/round375-provider-research/REPORT.md",
+      "sha256": "4dd1bc8b00c4fe3d1c5f99e1ef55c049af8bbe905a1736db48655cb5a37bf99f"
+    },
+    {
+      "path": "docs/capability-audit/parallel/apps/round375-provider-research/source-pins.json",
+      "sha256": "a42b93dcbbb0f902769df568f0ff79a1b02efacc1aa2e292b2eee868b017c2b4"
     }
   ],
   "reopen": "Supply a complete lawful provider/data/model/product identity, integrate it and restore that exact finding to runtime acceptance."

@@ -1,0 +1,43 @@
+{
+  "scope": "Primary web-page observations only; no source revision/content SHA asserted for these pages",
+  "pages": [
+    {
+      "url": "https://gitee.com/openharmony-sig/system_applications/blob/master/README.en.md?skip_mobile=true",
+      "observation": "Archived Gitee README redirects to GitCode and retains template-style content. This cannot establish current SIG repository emptiness.",
+      "revision_pinned": false
+    },
+    {
+      "url": "https://gitcode.com/openharmony-sig/system_applications",
+      "observation": "Current full source could not be retrieved in this run; direct request failed SSL EOF. GitHub API also rate limited. Coverage gap is explicit.",
+      "revision_pinned": false
+    },
+    {
+      "url": "https://gitcode.com/harmonyos-sdk-for-openharmony/docs",
+      "observation": "External SDK documentation advertises CoreSpeechKit/ShareKit and Wukong100 support. Documentation CC-BY-4.0 is not a redistribution license or ABI/build proof for a complete QEMU backend.",
+      "revision_pinned": false
+    },
+    {
+      "url": "https://gitcode.com/oh-flutter/text_to_speech",
+      "observation": "Wrapper consumes system TTS API; this is not a packaged synthesis engine/voice model/provider.",
+      "revision_pinned": false,
+      "outside_requested_OpenHarmony_SIG_implementation_scope": true
+    },
+    {
+      "url": "https://gitcode.com/oh-flutter/flutter_tts_ohos",
+      "observation": "Wrapper consumes CoreSpeechKit and needs system voice support; does not establish matching backend availability.",
+      "revision_pinned": false,
+      "outside_requested_OpenHarmony_SIG_implementation_scope": true
+    },
+    {
+      "url": "https://gitcode.com/openharmony/applications_app_samples/tree/master/code/SystemFeature/Media/AVSession/MediaController",
+      "observation": "Official README describes an API10 RK3568 AVSession controller/provider sample and lyric exchange. No audited DesktopLyricAbility backend or matching Binder protocol was established; do not substitute a similarly named UI sample.",
+      "revision_pinned": false
+    },
+    {
+      "url": "https://gitee.com/openharmony/applications_app_samples/issues/ICB710?skip_mobile=true",
+      "observation": "Official closed 2025 issue removes deprecated AccessibilityExtAbility sample. Neither an extension sample nor its removal proves absence/presence of full spoken screen reader.",
+      "revision_pinned": false
+    }
+  ],
+  "search_limit": "Search result absence is not evidence of global nonexistence"
+}

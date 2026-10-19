@@ -77,10 +77,20 @@
     "Complete the representative runtime cycle and collect failures before another build.",
     "Remaining five artifacts start only after newly packaged representative complete runtime gate passes."
   ],
-  "updated_utc": "2026-10-19T02:35:36.868026+00:00",
+  "updated_utc": "2026-10-19T02:54:46.681849+00:00",
   "provider_policy": {
     "user_instruction": "Inspect OpenHarmony and corresponding SIG repositories; integrate usable implementations; mark unsupported where no deliverable exists.",
     "unsupported_is_not_successful_runtime_capability": true
   },
-  "source_batch": "five_stream_first_batch_frozen_and_core_reviewed"
+  "source_batch": "collected SDK compiler repair and nine exact public-provider boundaries; next canonical freeze",
+  "first_preflight": {
+    "source_commit": "6f5372d57663ee94e0a6824746d0e34797514ae2",
+    "host_run": 1031,
+    "host_pass": 1029,
+    "host_conditional_skip": 2,
+    "Linux_native_groups_pass": 9,
+    "SDK_prepackage_roles_pass": 14,
+    "extra_select_roles": "caller pass; target_a literal comparison failure; target_b unexecuted"
+  },
+  "onset_proposal": "private next-batch candidate; not mature product source; finish representative complete runtime attempt before another build"
 }

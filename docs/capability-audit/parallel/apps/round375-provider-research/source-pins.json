@@ -1,0 +1,788 @@
+{
+  "schema": 1,
+  "research_time_utc": "2026-10-19T02:50:21.093247+00:00",
+  "revision_scope": "Public upstream snapshots observed during this research; NOT actual prepared product revision, SDK build, image, or loaded maps",
+  "revisions": {
+    "accessibility": "3ffbe3513f07cb1df2bd98d74089582dff5eb33a",
+    "arkui_ace_engine": "21b150e7bb1d5308846f8e5be8ef0482fb433315",
+    "multimedia_av_session": "000ed1e3b8dc9e2cdb44aabd9a91807fecd6ff9e",
+    "ai_intelligent_voice_framework": "19188608475123695def986a399641bfa64a49f7",
+    "ai_engine": "2bfc731e1661cc64c0169c88075e34bd48e896f8",
+    "applications_hap": "fd2c78258466076118c8a9bf1a97fdbcec06a5c8",
+    "manifest": "1168a5fe2568813e5f240f3e4ad7a12644060568"
+  },
+  "local_downloads": [
+    {
+      "file": "a11y-README.md.raw",
+      "bytes": 4604,
+      "sha256": "57eb6d34ded05bb47a17af60ac9f89fee88615d4ab2464b55d629d9cc7160a86",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/accessibility/3ffbe3513f07cb1df2bd98d74089582dff5eb33a/README.md"
+      ]
+    },
+    {
+      "file": "a11y-bundle.json.raw",
+      "bytes": 7416,
+      "sha256": "44a7fc0ef3f029e9df3fbf53c4ed22ee78b4d317aeeff1aa83e7ce15b73d3ba0",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/accessibility/3ffbe3513f07cb1df2bd98d74089582dff5eb33a/bundle.json"
+      ]
+    },
+    {
+      "file": "a11y-services__aams__src__accessibility_account_data.cpp.raw",
+      "bytes": 58203,
+      "sha256": "371af1cf58c2880d03d8077144f9f86a4d60d92372f86a918ef58a26e57986d2",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/accessibility/3ffbe3513f07cb1df2bd98d74089582dff5eb33a/services/aams/src/accessibility_account_data.cpp"
+      ]
+    },
+    {
+      "file": "a11y-services__aams__src__accessibility_settings_config.cpp.raw",
+      "bytes": 70761,
+      "sha256": "d6a2d8ee5a4fd8f6e6d028e29bf0c55a6a4f1744f4e932c91c340af252f4a36f",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/accessibility/3ffbe3513f07cb1df2bd98d74089582dff5eb33a/services/aams/src/accessibility_settings_config.cpp"
+      ]
+    },
+    {
+      "file": "accessibility-head.json",
+      "bytes": 5990,
+      "sha256": "7f22a308e39d1d2c3b05fcf390efca1f5718cc84cbe5fc274860f91f2c2fd968",
+      "urls": [
+        "https://api.github.com/repos/openharmony/accessibility/commits/master"
+      ]
+    },
+    {
+      "file": "accessibility-tree.raw",
+      "bytes": 296861,
+      "sha256": "2921d321fb784b6860817870ae1590b2b5d2a7f5a9858ecbbd7fd139e4ddf013",
+      "urls": [
+        "https://api.github.com/repos/openharmony/accessibility/git/trees/3ffbe3513f07cb1df2bd98d74089582dff5eb33a?recursive=1"
+      ]
+    },
+    {
+      "file": "ai-engine-page.raw",
+      "bytes": 335018,
+      "sha256": "6f0e85c62e8a7f74d44d8a39ba6075e1dde47392a98b133e168ac51de9d5c51d",
+      "urls": [
+        "https://github.com/openharmony/ai_engine"
+      ]
+    },
+    {
+      "file": "ai-engine-readme.raw",
+      "bytes": 16595,
+      "sha256": "859969edfe22e4d334c4309e28e378f388e8c45af261d01a59916e6161ef5e95",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/ai_engine/2bfc731e1661cc64c0169c88075e34bd48e896f8/README.md"
+      ]
+    },
+    {
+      "file": "ai_intelligent_voice_framework-page.html",
+      "bytes": 364152,
+      "sha256": "4d4082cca1ac5439b7d8053af22b85818707bee6613c1e11b19fc7e13482dad2",
+      "urls": [
+        "https://github.com/openharmony/ai_intelligent_voice_framework"
+      ]
+    },
+    {
+      "file": "ai_intelligent_voice_framework-tree.raw",
+      "bytes": 122216,
+      "sha256": "1f6be43f290971fb0e052a2d4da2e545b86d10799e762eea97fd1b5f74a03790",
+      "urls": [
+        "https://api.github.com/repos/openharmony/ai_intelligent_voice_framework/git/trees/19188608475123695def986a399641bfa64a49f7?recursive=1"
+      ]
+    },
+    {
+      "file": "applications-hap-page.raw",
+      "bytes": 355108,
+      "sha256": "2d293aa2f22bf613da2e40f8b483ef750ae081f195f742e42b8fadfd285e62cc",
+      "urls": [
+        "https://github.com/openharmony/applications_hap"
+      ]
+    },
+    {
+      "file": "applications-hap-tree.raw",
+      "bytes": 14517,
+      "sha256": "277967fe6de8dde0a5e4b9b5946c1969f5b317dc0ffc3134a9e1a3d8dd025b11",
+      "urls": [
+        "https://api.github.com/repos/openharmony/applications_hap/git/trees/fd2c78258466076118c8a9bf1a97fdbcec06a5c8?recursive=1"
+      ]
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__data_detector_loader.cpp.raw",
+      "bytes": 2563,
+      "sha256": "e00c77a2f0cfe595833f4e905639482dda6b397a57c3463762f126149e1d3c85",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/adapter/ohos/osal/data_detector_loader.cpp"
+      ]
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__text_share_adapter.cpp.raw",
+      "bytes": 2079,
+      "sha256": "54ee639ea5ba2319a9c782daaaf9888eb1b0540edfb47556d32b978e3e0ccf79",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/adapter/ohos/osal/text_share_adapter.cpp"
+      ]
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__text_share_loader.cpp.raw",
+      "bytes": 2476,
+      "sha256": "2f2a9945b86b54ba95d52addd972d361da64b7d012bf1e426c5a8c4b5e157853",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/adapter/ohos/osal/text_share_loader.cpp"
+      ]
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__text_translation_loader.cpp.raw",
+      "bytes": 2668,
+      "sha256": "e5a05ab4b0215f0b41af1589cd081d180af5e53aad3955fc375b0fd5835d600c",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/adapter/ohos/osal/text_translation_loader.cpp"
+      ]
+    },
+    {
+      "file": "arkui-frameworks__core__common__ai__data_detector_default.h.raw",
+      "bytes": 1565,
+      "sha256": "763604b5d9e9dc3d127e7ef6bbc254b45c8065e7dde92d852166fd1cfa8dca41",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/frameworks/core/common/ai/data_detector_default.h"
+      ]
+    },
+    {
+      "file": "arkui-frameworks__core__common__ai__text_translation_default.h.raw",
+      "bytes": 1170,
+      "sha256": "9a2477702594450cfedcb8a7a68411fae0df625809d0f8edbdbfc1856b4a61c8",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/frameworks/core/common/ai/text_translation_default.h"
+      ]
+    },
+    {
+      "file": "arkui-frameworks__core__common__ai__text_translation_loader.h.raw",
+      "bytes": 1917,
+      "sha256": "69fb1492c9a7533a35c5240cf984c412254fbce200830824f203befb71377156",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/frameworks/core/common/ai/text_translation_loader.h"
+      ]
+    },
+    {
+      "file": "arkui-frameworks__core__common__share__text_share_adapter.h.raw",
+      "bytes": 1300,
+      "sha256": "b715265657baf0797a83a5678d00424b09d9e90218dc691f9b972b6ca2fb21b7",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/frameworks/core/common/share/text_share_adapter.h"
+      ]
+    },
+    {
+      "file": "arkui-frameworks__core__components_ng__pattern__select_overlay__expanded_menu_plugin_loader.h.raw",
+      "bytes": 5891,
+      "sha256": "d81b18e06bb6bc75e5c7246ae68e6b16b19e9f6670e35cac3f3b75a7d9927d9e",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/frameworks/core/components_ng/pattern/select_overlay/expanded_menu_plugin_loader.h"
+      ]
+    },
+    {
+      "file": "arkui-interfaces__inner_api__ace__ai__data_detector_interface.h.raw",
+      "bytes": 2406,
+      "sha256": "1ae2d881d0aef97d26ebcc50d2e129d9bbcc41aade5b664fb6e1dce2fb3de7e4",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/interfaces/inner_api/ace/ai/data_detector_interface.h"
+      ]
+    },
+    {
+      "file": "arkui-interfaces__inner_api__ace__ai__text_translation_interface.h.raw",
+      "bytes": 1090,
+      "sha256": "1278736b1e4ee88056eea025e16be6590c3fa32ff32b547169f59d93c958a059",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/interfaces/inner_api/ace/ai/text_translation_interface.h"
+      ]
+    },
+    {
+      "file": "arkui-text-share-interface.raw",
+      "bytes": 1404,
+      "sha256": "ac1abdd63ba1b9950e628c6556cc27602114af599d63f572396cc22eb01d675c",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/arkui_ace_engine/21b150e7bb1d5308846f8e5be8ef0482fb433315/interfaces/inner_api/ace/share/text_share_interface.h"
+      ]
+    },
+    {
+      "file": "arkui_ace_engine-page.html",
+      "bytes": 330897,
+      "sha256": "d05c43b6315aedeb6f60eda3182d6212fca1fad9dd5ecb47ab74c5f2bd3ab197",
+      "urls": [
+        "https://github.com/openharmony/arkui_ace_engine"
+      ]
+    },
+    {
+      "file": "arkui_ace_engine-tree.raw",
+      "bytes": 9717768,
+      "sha256": "28515df10130fb68ea460794728df4d8602d4ac33cf8b38f6a4076d19eb8bd31",
+      "urls": [
+        "https://api.github.com/repos/openharmony/arkui_ace_engine/git/trees/21b150e7bb1d5308846f8e5be8ef0482fb433315?recursive=1"
+      ]
+    },
+    {
+      "file": "avsession-extension-helper-correct.raw",
+      "bytes": 10625,
+      "sha256": "41a57eaef54635dcc539130d4e6fed7140630c39ce130e4b2086d86d60f7150d",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/multimedia_av_session/000ed1e3b8dc9e2cdb44aabd9a91807fecd6ff9e/services/session/adapter/extension_connect_helper.cpp"
+      ]
+    },
+    {
+      "file": "avsession-service.raw",
+      "bytes": 264001,
+      "sha256": "cfef7b337bc798ca422b73d8f1de51c04add588069cbda4573a0d8abc81db0f8",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/multimedia_av_session/000ed1e3b8dc9e2cdb44aabd9a91807fecd6ff9e/services/session/server/avsession_service.cpp"
+      ]
+    },
+    {
+      "file": "hap-.gitattributes.raw",
+      "bytes": 1858,
+      "sha256": "0b876837abb2eb6f1a22517fbb0fd650aeff26ee1886216f3bb144f832221ae9",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/.gitattributes"
+      ]
+    },
+    {
+      "file": "hap-BUILD.gn.raw",
+      "bytes": 10696,
+      "sha256": "e29845ce4827971ca09baa65b21dd952a4a3505b3ad233e229803adcfed942c3",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/BUILD.gn"
+      ]
+    },
+    {
+      "file": "hap-LICENSE.raw",
+      "bytes": 10140,
+      "sha256": "bb28c48e3e078166e91cfc2b6db7ffebb8a0973b9e23b3df060561292d8d69ec",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/LICENSE"
+      ]
+    },
+    {
+      "file": "hap-Launcher.hap.raw",
+      "bytes": 132,
+      "sha256": "600733a540fa3e029fffb2fd16f7659828be7825e76fed836f3148148a55464f",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/Launcher.hap"
+      ]
+    },
+    {
+      "file": "hap-Music_Demo.hap.raw",
+      "bytes": 132,
+      "sha256": "55d8fac40ebf46bd4f4e7f1441cb00b9a2c7e124c039420e3457e2ddc12cf88b",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/Music_Demo.hap"
+      ]
+    },
+    {
+      "file": "hap-README.md.raw",
+      "bytes": 3844,
+      "sha256": "aa14c2f3b0938872d4217fedc0997eef88d8638a0e1d98bed0f9833a8aebad85",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/README.md"
+      ]
+    },
+    {
+      "file": "hap-SecurityPrivacyCenter.hap.raw",
+      "bytes": 131,
+      "sha256": "297f7f62983e21161b2c26306803445ff4ee81ecec9b7c424523bf7e11e8dbba",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/SecurityPrivacyCenter.hap"
+      ]
+    },
+    {
+      "file": "hap-Settings.hap.raw",
+      "bytes": 132,
+      "sha256": "0cd580cb73269415e1dcede20fc989c700264bed88cad546a60efbf68f437dcc",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/Settings.hap"
+      ]
+    },
+    {
+      "file": "hap-SystemUI.hap.raw",
+      "bytes": 131,
+      "sha256": "9bed5358de91bc59c87c93d176523959cce07c6f67c4d7b7199c316b80eaf8fe",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/SystemUI.hap"
+      ]
+    },
+    {
+      "file": "hap-ohos.build.raw",
+      "bytes": 702,
+      "sha256": "cb203fdb8112817af094cb1413c254cf720c4448a3773263fa7d3fb4618bdf00",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/ohos.build"
+      ]
+    },
+    {
+      "file": "hap-pipline.md.raw",
+      "bytes": 7131,
+      "sha256": "a4fabdf321d9d1e4c77caaedeba6ecfb9870f7673487ab8be81b0374d3dd9ebf",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/applications_hap/fd2c78258466076118c8a9bf1a97fdbcec06a5c8/pipline.md"
+      ]
+    },
+    {
+      "file": "http-eighth.json",
+      "bytes": 631,
+      "sha256": "0f5b077b84adda8be972f6cb96cb78ab4c9d5dd3fa19e87abfb7149959d48ef4",
+      "urls": []
+    },
+    {
+      "file": "http-eleventh.json",
+      "bytes": 3110,
+      "sha256": "36bb918342aa533800e9510b0368706d06947376fbf80ccbee0996672d1adf65",
+      "urls": []
+    },
+    {
+      "file": "http-fifth.json",
+      "bytes": 2423,
+      "sha256": "2d445eb75b8ef8c083c6165223fa1b6dcb1b7f751ef7850c27d2223e015b32c4",
+      "urls": []
+    },
+    {
+      "file": "http-first.json",
+      "bytes": 804,
+      "sha256": "24b3ce8d5cdec797d465a0c69e33d0e07a97c0c19cfeeb1f40ee17ebaaa68c56",
+      "urls": []
+    },
+    {
+      "file": "http-fourth.json",
+      "bytes": 1195,
+      "sha256": "832eff5cdc9d0d4ccef983e2c030ee2bd96e8f3317d8661a5f4dcf50ed78388d",
+      "urls": []
+    },
+    {
+      "file": "http-ninth.json",
+      "bytes": 1033,
+      "sha256": "4796607377f60f4de8b2edca22310ab143aa504833d15cc5d1a50a0a76ec82c9",
+      "urls": []
+    },
+    {
+      "file": "http-second.json",
+      "bytes": 1162,
+      "sha256": "d6ad77c4c8fa09675757470d8f6fe1cbc5fff7b21af2bd5ee97aeb444e69cb60",
+      "urls": []
+    },
+    {
+      "file": "http-seventh.json",
+      "bytes": 2612,
+      "sha256": "70e87d8c87a57926d684ea0265f2897cfdbb8b6782820601199808546cd2464c",
+      "urls": []
+    },
+    {
+      "file": "http-sixth.json",
+      "bytes": 2605,
+      "sha256": "8e6e4f98097def3ca973aadfc8fa4d0ca0da245cac51ef6514186079bde34369",
+      "urls": []
+    },
+    {
+      "file": "http-tenth.json",
+      "bytes": 290,
+      "sha256": "b622cb2e958c87728d0405e0e60cd55c707202903c8e09954810e35e11c8e536",
+      "urls": []
+    },
+    {
+      "file": "http-third.json",
+      "bytes": 906,
+      "sha256": "19b77b4408aafb3f0bb3583061c2a6172ffa0c96c5f59b499fec0e29a4387861",
+      "urls": []
+    },
+    {
+      "file": "http-twelfth.json",
+      "bytes": 281,
+      "sha256": "a44d2bdaba57cdc54831f772a6a65f94e79829dbfe420116dcd7ee358eae2ab6",
+      "urls": []
+    },
+    {
+      "file": "manifest-default.raw",
+      "bytes": 1041,
+      "sha256": "70d4bcfbdea7e78058d50f121c45e7dd9dc34f76a8d000fd0432271835d77064",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/manifest/1168a5fe2568813e5f240f3e4ad7a12644060568/default.xml"
+      ]
+    },
+    {
+      "file": "manifest-head.json",
+      "bytes": 2667,
+      "sha256": "185d029765cf733c88f8ecfe76dce37c12aab84a9a38291c70db5b7850e867af",
+      "urls": [
+        "https://api.github.com/repos/openharmony/manifest/commits/master"
+      ]
+    },
+    {
+      "file": "manifest-ohos.raw",
+      "bytes": 87162,
+      "sha256": "a7c829c419d79c696483bca56fe5ab0aae54aca0a1b0c2067be5b322fd2e472e",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/manifest/1168a5fe2568813e5f240f3e4ad7a12644060568/ohos/ohos.xml"
+      ]
+    },
+    {
+      "file": "manifest-readme.raw",
+      "bytes": 7618,
+      "sha256": "bb68b8a3f71fb897df77142aa8fc454846420d5b4574be9d26e1268190b78e90",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/manifest/1168a5fe2568813e5f240f3e4ad7a12644060568/README.md"
+      ]
+    },
+    {
+      "file": "multimedia_av_session-page.html",
+      "bytes": 333692,
+      "sha256": "9a4e5759b1f2aacb176a801d6cfa757297589cbf7b03bdb89b2615beec9687ae",
+      "urls": [
+        "https://github.com/openharmony/multimedia_av_session"
+      ]
+    },
+    {
+      "file": "multimedia_av_session-tree.raw",
+      "bytes": 267266,
+      "sha256": "d1e1c606e1b507d8306f418fec8032c4fcb444f72b0e5e48785a391ad74ee75d",
+      "urls": [
+        "https://api.github.com/repos/openharmony/multimedia_av_session/git/trees/000ed1e3b8dc9e2cdb44aabd9a91807fecd6ff9e?recursive=1"
+      ]
+    },
+    {
+      "file": "voice-readme.raw",
+      "bytes": 8935,
+      "sha256": "d23e64e39cbbaffd234a5a8c6f7bb32690c7899f159718e2cb8f5124365518e1",
+      "urls": [
+        "https://raw.githubusercontent.com/openharmony/ai_intelligent_voice_framework/19188608475123695def986a399641bfa64a49f7/README.md"
+      ]
+    }
+  ],
+  "trees": [
+    {
+      "file": "accessibility-tree.raw",
+      "revision": "3ffbe3513f07cb1df2bd98d74089582dff5eb33a",
+      "entries": 1055,
+      "truncated": false,
+      "provider_name_path_matches": [
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer",
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer/BUILD.gn",
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer/corpus",
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer/corpus/init",
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer/isscreenreaderenabled_fuzzer.cpp",
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer/isscreenreaderenabled_fuzzer.h",
+        "interfaces/innerkits/test/fuzztest/asac/isscreenreaderenabled_fuzzer/project.xml"
+      ]
+    },
+    {
+      "file": "arkui_ace_engine-tree.raw",
+      "revision": "21b150e7bb1d5308846f8e5be8ef0482fb433315",
+      "entries": 33700,
+      "truncated": false,
+      "provider_name_path_matches": [
+        "adapter/ohos/osal/text_translation_adapter.cpp",
+        "adapter/ohos/osal/text_translation_loader.cpp",
+        "adapter/ohos/osal/text_translation_mgr.cpp",
+        "adapter/preview/osal/advance/text_translation_adapter.cpp",
+        "adapter/preview/osal/advance/text_translation_mgr.cpp",
+        "frameworks/core/common/ai/text_translation_adapter.h",
+        "frameworks/core/common/ai/text_translation_default.h",
+        "frameworks/core/common/ai/text_translation_loader.h",
+        "frameworks/core/common/ai/text_translation_mgr.h",
+        "frameworks/core/components_ng/pattern/select_overlay/expanded_menu_plugin_loader.h",
+        "interfaces/inner_api/ace/ai/text_translation_interface.h",
+        "test/mock/frameworks/core/common/mock_text_translation_adapter.cpp",
+        "test/mock/frameworks/core/common/mock_text_translation_mgr.cpp"
+      ]
+    },
+    {
+      "file": "multimedia_av_session-tree.raw",
+      "revision": "000ed1e3b8dc9e2cdb44aabd9a91807fecd6ff9e",
+      "entries": 953,
+      "truncated": false,
+      "provider_name_path_matches": []
+    },
+    {
+      "file": "ai_intelligent_voice_framework-tree.raw",
+      "revision": "19188608475123695def986a399641bfa64a49f7",
+      "entries": 429,
+      "truncated": false,
+      "provider_name_path_matches": []
+    },
+    {
+      "file": "applications-hap-tree.raw",
+      "revision": "fd2c78258466076118c8a9bf1a97fdbcec06a5c8",
+      "entries": 60,
+      "truncated": false,
+      "provider_name_path_matches": []
+    }
+  ],
+  "lfs_pointers": [
+    {
+      "file": "hap-Launcher.hap.raw",
+      "lfs_object_sha256": "c2eea2cf1218f82658ddb7b0b3e0176f4d4b41ba2a3e1c9f4439e1a5f5f06724",
+      "lfs_declared_bytes": 2551468,
+      "pointer_sha256": "600733a540fa3e029fffb2fd16f7659828be7825e76fed836f3148148a55464f",
+      "actual_lfs_payload_downloaded": false
+    },
+    {
+      "file": "hap-Music_Demo.hap.raw",
+      "lfs_object_sha256": "90221513a5044340f3620544b65eff2994922c652ff2831baabb0b2578090cb0",
+      "lfs_declared_bytes": 1822832,
+      "pointer_sha256": "55d8fac40ebf46bd4f4e7f1441cb00b9a2c7e124c039420e3457e2ddc12cf88b",
+      "actual_lfs_payload_downloaded": false
+    },
+    {
+      "file": "hap-SecurityPrivacyCenter.hap.raw",
+      "lfs_object_sha256": "d0cfc73874c09dcd8ef7efe86b862f7b4757f925c2679db922b52874b3b99b67",
+      "lfs_declared_bytes": 206601,
+      "pointer_sha256": "297f7f62983e21161b2c26306803445ff4ee81ecec9b7c424523bf7e11e8dbba",
+      "actual_lfs_payload_downloaded": false
+    },
+    {
+      "file": "hap-Settings.hap.raw",
+      "lfs_object_sha256": "320ee5dc03f75234ae76db1d3af6b7a36f16668f0a1030afa44645a52b1eff20",
+      "lfs_declared_bytes": 2632545,
+      "pointer_sha256": "0cd580cb73269415e1dcede20fc989c700264bed88cad546a60efbf68f437dcc",
+      "actual_lfs_payload_downloaded": false
+    },
+    {
+      "file": "hap-SystemUI.hap.raw",
+      "lfs_object_sha256": "f0009e20c4670d7e065d7c5061b525f6aea62dcfa09795343c231600b23ff4cc",
+      "lfs_declared_bytes": 118569,
+      "pointer_sha256": "9bed5358de91bc59c87c93d176523959cce07c6f67c4d7b7199c316b80eaf8fe",
+      "actual_lfs_payload_downloaded": false
+    }
+  ],
+  "anchors": [
+    {
+      "file": "a11y-services__aams__src__accessibility_account_data.cpp.raw",
+      "lines": [
+        62,
+        73
+      ],
+      "fact": "Exact framework screen reader bundle/ability; not provider implementation",
+      "sha256": "371af1cf58c2880d03d8077144f9f86a4d60d92372f86a918ef58a26e57986d2"
+    },
+    {
+      "file": "voice-readme.raw",
+      "lines": [
+        7,
+        18,
+        19,
+        25,
+        53
+      ],
+      "fact": "Voice enrollment/wakeup/DSP framework scope",
+      "sha256": "d23e64e39cbbaffd234a5a8c6f7bb32690c7899f159718e2cb8f5124365518e1"
+    },
+    {
+      "file": "ai-engine-readme.raw",
+      "lines": [
+        12,
+        54,
+        79,
+        81,
+        83
+      ],
+      "fact": "Generic AI plugin framework and keyword-spotting example, not the ACE plugin factory ABI",
+      "sha256": "859969edfe22e4d334c4309e28e378f388e8c45af261d01a59916e6161ef5e95"
+    },
+    {
+      "file": "avsession-extension-helper-correct.raw",
+      "lines": [
+        30,
+        31,
+        42,
+        59,
+        60,
+        61,
+        246,
+        256,
+        261,
+        266,
+        273,
+        278
+      ],
+      "fact": "Exact DesktopLyric target and Binder request payload/response consumer",
+      "sha256": "41a57eaef54635dcc539130d4e6fed7140630c39ce130e4b2086d86d60f7150d"
+    },
+    {
+      "file": "arkui-frameworks__core__components_ng__pattern__select_overlay__expanded_menu_plugin_loader.h.raw",
+      "lines": [
+        31,
+        33,
+        35,
+        40,
+        41,
+        54,
+        60,
+        79,
+        99
+      ],
+      "fact": "Expanded menu C++ callback ABI and exact dlsym spellings",
+      "sha256": "d81b18e06bb6bc75e5c7246ae68e6b16b19e9f6670e35cac3f3b75a7d9927d9e"
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__text_share_loader.cpp.raw",
+      "lines": [
+        23,
+        25,
+        43,
+        47,
+        48,
+        50,
+        64,
+        66
+      ],
+      "fact": "Literal relative system path and paired TextShareInterface factory/destructor",
+      "sha256": "2f2a9945b86b54ba95d52addd972d361da64b7d012bf1e426c5a8c4b5e157853"
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__text_translation_loader.cpp.raw",
+      "lines": [
+        25,
+        27,
+        45,
+        50,
+        52,
+        66,
+        68
+      ],
+      "fact": "Literal relative system path and paired translation factory/destructor",
+      "sha256": "e5a05ab4b0215f0b41af1589cd081d180af5e53aad3955fc375b0fd5835d600c"
+    },
+    {
+      "file": "arkui-adapter__ohos__osal__data_detector_loader.cpp.raw",
+      "lines": [
+        22,
+        24,
+        42,
+        47,
+        49,
+        63,
+        65
+      ],
+      "fact": "Literal relative system path and paired analyzer factory/destructor",
+      "sha256": "e00c77a2f0cfe595833f4e905639482dda6b397a57c3463762f126149e1d3c85"
+    },
+    {
+      "file": "arkui-text-share-interface.raw",
+      "lines": [
+        32,
+        34,
+        35,
+        36,
+        37
+      ],
+      "fact": "Context/Rect/window/content and length ABI",
+      "sha256": "ac1abdd63ba1b9950e628c6556cc27602114af599d63f572396cc22eb01d675c"
+    },
+    {
+      "file": "arkui-interfaces__inner_api__ace__ai__text_translation_interface.h.raw",
+      "lines": [
+        23,
+        25
+      ],
+      "fact": "Translation panel input ABI",
+      "sha256": "1278736b1e4ee88056eea025e16be6590c3fa32ff32b547169f59d93c958a059"
+    },
+    {
+      "file": "arkui-interfaces__inner_api__ace__ai__data_detector_interface.h.raw",
+      "lines": [
+        33,
+        43,
+        50,
+        52,
+        54,
+        55,
+        56
+      ],
+      "fact": "Detector callback/entity-menu ABI",
+      "sha256": "1ae2d881d0aef97d26ebcc50d2e129d9bbcc41aade5b664fb6e1dce2fb3de7e4"
+    },
+    {
+      "file": "hap-BUILD.gn.raw",
+      "lines": [
+        17,
+        18,
+        31,
+        32,
+        94,
+        95,
+        136,
+        137,
+        231,
+        232
+      ],
+      "fact": "Official unrelated HAP install mappings; no screenreader/mediacontroller mapping",
+      "sha256": "e29845ce4827971ca09baa65b21dd952a4a3505b3ad233e229803adcfed942c3"
+    },
+    {
+      "file": "hap-LICENSE.raw",
+      "lines": [
+        1,
+        2,
+        66,
+        91
+      ],
+      "fact": "Apache-2.0 repository license, object redistribution and notice conditions; not proof of arbitrary external model licenses",
+      "sha256": "bb28c48e3e078166e91cfc2b6db7ffebb8a0973b9e23b3df060561292d8d69ec"
+    },
+    {
+      "file": "hap-README.md.raw",
+      "lines": [
+        11,
+        15,
+        17,
+        19,
+        23,
+        25
+      ],
+      "fact": "Official prebuilt HAP distribution and per-pipeline source/SDK metadata",
+      "sha256": "aa14c2f3b0938872d4217fedc0997eef88d8638a0e1d98bed0f9833a8aebad85"
+    },
+    {
+      "file": "hap-pipline.md.raw",
+      "lines": [
+        1,
+        13,
+        17
+      ],
+      "fact": "Complete stored permanent archive index; no same-named missing provider row",
+      "sha256": "a4fabdf321d9d1e4c77caaedeba6ecfb9870f7673487ab8be81b0374d3dd9ebf"
+    }
+  ],
+  "http_errors": [
+    {
+      "name": "avsession-extension-helper",
+      "url": "https://raw.githubusercontent.com/openharmony/multimedia_av_session/000ed1e3b8dc9e2cdb44aabd9a91807fecd6ff9e/services/session/server/extension_connect_helper.cpp",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    },
+    {
+      "name": "sig-system-applications-head",
+      "url": "https://api.github.com/repos/openharmony-sig/system_applications/commits/master",
+      "error": "HTTPError: HTTP Error 403: rate limit exceeded"
+    },
+    {
+      "name": "sig-system-gitcode",
+      "url": "https://gitcode.com/openharmony-sig/system_applications",
+      "error": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>"
+    },
+    {
+      "name": "multimedia_av_session-head",
+      "url": "https://api.github.com/repos/openharmony/multimedia_av_session/commits/master",
+      "error": "HTTPError: HTTP Error 403: rate limit exceeded"
+    },
+    {
+      "name": "arkui_ace_engine-head",
+      "url": "https://api.github.com/repos/openharmony/arkui_ace_engine/commits/master",
+      "error": "HTTPError: HTTP Error 403: rate limit exceeded"
+    },
+    {
+      "name": "ai_intelligent_voice_framework-head",
+      "url": "https://api.github.com/repos/openharmony/ai_intelligent_voice_framework/commits/master",
+      "error": "HTTPError: HTTP Error 403: rate limit exceeded"
+    },
+    {
+      "name": "sig-system-gitee",
+      "url": "https://gitee.com/api/v5/repos/openharmony-sig/system_applications/git/trees/master?recursive=1",
+      "error": "URLError: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)>"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 imageGeneration. The immutable original audit remains intact. No CLI switches,
 environment flags or broad SysCap exclusions are allowed.
 2026-10-19: user instructed treating complete providers unavailable in inspected
-OpenHarmony/SIG sources as unsupported; five exact findings and source evidence
+OpenHarmony/SIG sources as unsupported; nine exact findings and source evidence
 are separately pinned below. This never claims implementation/runtime success.
 """
 import hashlib
@@ -18,13 +18,17 @@ IMAGE_GENERATION = frozenset('arkts_export:@ohos.arkui.intelligence.imageGenerat
 
 
 PROVIDER_POLICY = 'docs/capability-audit/execution-20261019/unsupported-public-providers.json'
-PROVIDER_POLICY_SHA256 = '5dfbe8935607dd88e8d8c269dde196356c5fd4a3287cbf40b3c7448956e4aa78'
+PROVIDER_POLICY_SHA256 = '11675572dc7108d9f1c1c485542d17a306d855f08c63f50239e9621b2f7bcb26'
 PROVIDER_IDS = {
     'LiveCaptions': 'behavior:accessibility-caption-provider-missing',
     'NumberIdentity': 'behavior:telephony-number-identity-provider-missing',
     'DeviceAttest': 'behavior:device-attest-uninitialized',
     'SecurityGuardModels': 'behavior:security-guard-empty-model-config',
     'AudioVividMetaBuilder': 'behavior:audio-vivid-metadata-runtime-plugin-missing',
+    'ScreenReader': 'behavior:accessibility-screen-reader-provider-missing',
+    'DesktopLyrics': 'behavior:avsession-desktop-lyrics-provider-missing',
+    'ExpandedTextMenu': 'behavior:arkui-expanded-text-menu-providers-missing',
+    'TextServicePlugins': 'behavior:arkui-text-service-runtime-plugins-missing',
 }
 
 

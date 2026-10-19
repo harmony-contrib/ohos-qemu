@@ -9,6 +9,7 @@ struct Index {
   @State ready: string = '';
   private busy: boolean = false;
   private activeWant: string = '';
+  private readonly role: string = '__ROLE__';
   private wantChanged(): void { if (!this.busy) { this.showReady(); } }
   private async execute(): Promise<void> {
     if (this.busy) { return; }
@@ -32,7 +33,7 @@ struct Index {
       this.status = 'Ready ' + this.ready;
       // Targets consume only the actual incoming Want. No HDC command grants
       // them a URI; foreign probes carry URI text only and no authorization.
-      if ('__ROLE__' !== 'caller') { this.execute(); }
+      if (this.role !== 'caller') { this.execute(); }
     } catch (error) { this.status = (error as Error).message; }
   }
   aboutToAppear(): void { this.showReady(); }
@@ -41,7 +42,7 @@ struct Index {
       Text('Select375 __ROLE__ __RUN__').fontSize(20)
       Text(this.ready).id('select375-ready')
       Text(this.status).id('select375-status')
-      if ('__ROLE__' === 'caller') {
+      if (this.role === 'caller') {
         Button('Execute owned select case').id('select375-run').onClick(() => this.execute())
       }
     }.padding(24).height('100%').width('100%')
