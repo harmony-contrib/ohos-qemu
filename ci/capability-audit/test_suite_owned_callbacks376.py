@@ -136,5 +136,40 @@ class SuiteOwnerCallbacks(unittest.TestCase):
             self.assertIn('[Fail]',Path(guest.report['commands'][0]['log']).read_text())
 
 
+    def test_guest_callback_preserves_exact_crlf_for_allowed_connection_failure(self):
+        source=(ROOT/'ci/capability-audit/boot_package.py').read_text()
+        tree=ast.Module(body=[function(source,'command',parent='QemuGuest')],type_ignores=[])
+        ns=dict(checksum=digest,hdc_failed=lambda a,b:'[Fail]' in a+b)
+        exec(compile(ast.fix_missing_locations(tree),'guest-command-CRLF','exec'),ns)
+        with tempfile.TemporaryDirectory() as tmp:
+            guest=SimpleNamespace(args=SimpleNamespace(output=Path(tmp).resolve(),hdc='/fixed/hdc'),report={'commands':[]})
+            stdout='[Fail]Connect failed\r\n'; stderr='transport pending\r\n'
+            def callback(g,argv,*,label,timeout,log):
+                log.write_bytes((stdout+stderr).encode('utf-8'))
+                return dict(argv=argv,exit_code=0,log=str(log),sha256=digest(log)),stdout,stderr
+            guest._owned_command=callback
+            self.assertEqual(ns['command'](guest,['/fixed/hdc','tconn','127.0.0.1:45678'],'connect',allow_failure=True),stdout.replace('\r',''))
+            row=guest.report['commands'][0]
+            self.assertEqual(row['exit_code'],0)
+            self.assertEqual(Path(row['log']).read_bytes(),(stdout+stderr).encode('utf-8'))
+            with self.assertRaisesRegex(ValueError,'HDC transport/operation failed'):
+                ns['command'](guest,['/fixed/hdc','tconn','127.0.0.1:45678'],'connect-strict')
+
+    def test_guest_callback_rejects_line_ending_tampering(self):
+        source=(ROOT/'ci/capability-audit/boot_package.py').read_text()
+        tree=ast.Module(body=[function(source,'command',parent='QemuGuest')],type_ignores=[])
+        ns=dict(checksum=digest,hdc_failed=lambda a,b:False)
+        exec(compile(ast.fix_missing_locations(tree),'guest-command-raw-mismatch','exec'),ns)
+        for output,returned in ((b'raw\r\n','raw\n'),(b'raw\n','raw\r\n')):
+            with self.subTest(output=output), tempfile.TemporaryDirectory() as tmp:
+                guest=SimpleNamespace(args=SimpleNamespace(output=Path(tmp).resolve(),hdc='/fixed/hdc'),report={'commands':[]})
+                def callback(g,argv,*,label,timeout,log):
+                    log.write_bytes(output)
+                    return dict(argv=argv,exit_code=0,log=str(log),sha256=digest(log)),returned,''
+                guest._owned_command=callback
+                with self.assertRaisesRegex(ValueError,'exact actual argv/raw/exit'):
+                    ns['command'](guest,['/fixed/hdc','start'],'raw-mismatch')
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,339 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+declare_args() {
+  alsa_lib_feature_config_enable = false
+}
+
+config("alsa_lib_header") {
+  include_dirs = [
+    "//third_party/alsa-lib/include",
+    "//third_party/alsa-lib/include/sound",
+    "//third_party/alsa-lib/include/uapi",
+    "//third_party/alsa-lib/src/pcm",
+    "//third_party/alsa-lib/src/ucm",
+    "//third_party/alsa-lib/src/mixer",
+    "//third_party/alsa-lib/src/seq",
+    "//third_party/alsa-lib/src/hwdep",
+    "//third_party/alsa-lib/src/rawmidi",
+    "//third_party/alsa-lib/src/control",
+    "//third_party/alsa-lib/src/timer",
+    "{target_gen_dir}/include/",
+  ]
+}
+
+config("alsa_lib_config") {
+  defines = []
+  cflags = [
+    "-Wno-sign-compare",
+    "-Wno-implicit-function-declaration",
+    "-Wno-parentheses",
+    "-Wno-string-conversion",
+    "-Wno-string-plus-int",
+    "-Wno-asm-operand-widths",
+    "-Wno-pointer-sign",
+    "-Wno-deprecated-declarations",
+    "-Wno-implicit-int",
+    "-Wno-switch",
+    "-Wno-incompatible-pointer-types-discards-qualifiers",
+    "-Wno-int-conversion",
+    "-Wno-absolute-value",
+    "-Wno-unused-function",
+    "-Wno-unused-label",
+    "-Wno-unused-const-variable",
+    "-Wno-visibility",
+    "-Wno-incompatible-pointer-types",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-format",
+    "-Wno-tautological-constant-out-of-range-compare",
+    "-Wno-implicit-fallthrough",
+    "-Wno-error",
+    "-D_GNU_SOURCE",
+    "-DHAVE_CONFIG_H",
+  ]
+
+  if (use_musl) {
+    cflags += [ "-Wno-bool-operation" ]
+  }
+
+  if (alsa_lib_feature_config_enable) {
+    defines += [ "OHOS_ALSA_GLOBAL_CONFIG_DEFAULT_ENABLE" ]
+  }
+}
+
+ohos_shared_library("libasound") {
+  sources = [
+    "//third_party/alsa-lib/src/async.c",
+    "//third_party/alsa-lib/src/conf.c",
+    "//third_party/alsa-lib/src/confeval.c",
+    "//third_party/alsa-lib/src/confmisc.c",
+    "//third_party/alsa-lib/src/control/cards.c",
+    "//third_party/alsa-lib/src/control/control.c",
+    "//third_party/alsa-lib/src/control/control_empty.c",
+    "//third_party/alsa-lib/src/control/control_ext.c",
+    "//third_party/alsa-lib/src/control/control_hw.c",
+    "//third_party/alsa-lib/src/control/control_plugin.c",
+    "//third_party/alsa-lib/src/control/control_remap.c",
+    "//third_party/alsa-lib/src/control/control_shm.c",
+    "//third_party/alsa-lib/src/control/control_symbols.c",
+    "//third_party/alsa-lib/src/control/ctlparse.c",
+    "//third_party/alsa-lib/src/control/eld.c",
+    "//third_party/alsa-lib/src/control/hcontrol.c",
+    "//third_party/alsa-lib/src/control/namehint.c",
+    "//third_party/alsa-lib/src/control/setup.c",
+    "//third_party/alsa-lib/src/control/tlv.c",
+    "//third_party/alsa-lib/src/dlmisc.c",
+    "//third_party/alsa-lib/src/error.c",
+    "//third_party/alsa-lib/src/hwdep/hwdep.c",
+    "//third_party/alsa-lib/src/hwdep/hwdep_hw.c",
+    "//third_party/alsa-lib/src/hwdep/hwdep_symbols.c",
+    "//third_party/alsa-lib/src/input.c",
+    "//third_party/alsa-lib/src/mixer/bag.c",
+    "//third_party/alsa-lib/src/mixer/mixer.c",
+    "//third_party/alsa-lib/src/mixer/simple.c",
+    "//third_party/alsa-lib/src/mixer/simple_abst.c",
+    "//third_party/alsa-lib/src/mixer/simple_none.c",
+    "//third_party/alsa-lib/src/names.c",
+    "//third_party/alsa-lib/src/output.c",
+    "//third_party/alsa-lib/src/pcm/interval.c",
+    "//third_party/alsa-lib/src/pcm/mask.c",
+    "//third_party/alsa-lib/src/pcm/pcm.c",
+    "//third_party/alsa-lib/src/pcm/pcm_adpcm.c",
+    "//third_party/alsa-lib/src/pcm/pcm_alaw.c",
+    "//third_party/alsa-lib/src/pcm/pcm_asym.c",
+    "//third_party/alsa-lib/src/pcm/pcm_copy.c",
+    "//third_party/alsa-lib/src/pcm/pcm_direct.c",
+    "//third_party/alsa-lib/src/pcm/pcm_dmix.c",
+    "//third_party/alsa-lib/src/pcm/pcm_dshare.c",
+    "//third_party/alsa-lib/src/pcm/pcm_dsnoop.c",
+    "//third_party/alsa-lib/src/pcm/pcm_empty.c",
+    "//third_party/alsa-lib/src/pcm/pcm_extplug.c",
+    "//third_party/alsa-lib/src/pcm/pcm_file.c",
+    "//third_party/alsa-lib/src/pcm/pcm_generic.c",
+    "//third_party/alsa-lib/src/pcm/pcm_hooks.c",
+    "//third_party/alsa-lib/src/pcm/pcm_hw.c",
+    "//third_party/alsa-lib/src/pcm/pcm_iec958.c",
+    "//third_party/alsa-lib/src/pcm/pcm_ioplug.c",
+    "//third_party/alsa-lib/src/pcm/pcm_ladspa.c",
+    "//third_party/alsa-lib/src/pcm/pcm_lfloat.c",
+    "//third_party/alsa-lib/src/pcm/pcm_linear.c",
+    "//third_party/alsa-lib/src/pcm/pcm_meter.c",
+    "//third_party/alsa-lib/src/pcm/pcm_misc.c",
+    "//third_party/alsa-lib/src/pcm/pcm_mmap.c",
+    "//third_party/alsa-lib/src/pcm/pcm_mmap_emul.c",
+    "//third_party/alsa-lib/src/pcm/pcm_mulaw.c",
+    "//third_party/alsa-lib/src/pcm/pcm_multi.c",
+    "//third_party/alsa-lib/src/pcm/pcm_null.c",
+    "//third_party/alsa-lib/src/pcm/pcm_params.c",
+    "//third_party/alsa-lib/src/pcm/pcm_plug.c",
+    "//third_party/alsa-lib/src/pcm/pcm_plugin.c",
+    "//third_party/alsa-lib/src/pcm/pcm_rate.c",
+    "//third_party/alsa-lib/src/pcm/pcm_rate_linear.c",
+    "//third_party/alsa-lib/src/pcm/pcm_route.c",
+    "//third_party/alsa-lib/src/pcm/pcm_share.c",
+    "//third_party/alsa-lib/src/pcm/pcm_shm.c",
+    "//third_party/alsa-lib/src/pcm/pcm_simple.c",
+    "//third_party/alsa-lib/src/pcm/pcm_softvol.c",
+    "//third_party/alsa-lib/src/pcm/pcm_symbols.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi_hw.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi_symbols.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi_virt.c",
+    "//third_party/alsa-lib/src/seq/seq.c",
+    "//third_party/alsa-lib/src/seq/seq_event.c",
+    "//third_party/alsa-lib/src/seq/seq_hw.c",
+    "//third_party/alsa-lib/src/seq/seq_midi_event.c",
+    "//third_party/alsa-lib/src/seq/seq_old.c",
+    "//third_party/alsa-lib/src/seq/seq_symbols.c",
+    "//third_party/alsa-lib/src/seq/seqmid.c",
+    "//third_party/alsa-lib/src/shmarea.c",
+    "//third_party/alsa-lib/src/socket.c",
+    "//third_party/alsa-lib/src/timer/timer.c",
+    "//third_party/alsa-lib/src/timer/timer_hw.c",
+    "//third_party/alsa-lib/src/timer/timer_query.c",
+    "//third_party/alsa-lib/src/timer/timer_query_hw.c",
+    "//third_party/alsa-lib/src/timer/timer_symbols.c",
+    "//third_party/alsa-lib/src/ucm/main.c",
+    "//third_party/alsa-lib/src/ucm/parser.c",
+    "//third_party/alsa-lib/src/ucm/ucm_cond.c",
+    "//third_party/alsa-lib/src/ucm/ucm_exec.c",
+    "//third_party/alsa-lib/src/ucm/ucm_include.c",
+    "//third_party/alsa-lib/src/ucm/ucm_regex.c",
+    "//third_party/alsa-lib/src/ucm/ucm_subs.c",
+    "//third_party/alsa-lib/src/ucm/utils.c",
+    "//third_party/alsa-lib/src/userfile.c",
+  ]
+
+  include_dirs = [
+    "//third_party/alsa-lib/include",
+    "//third_party/alsa-lib/include/sound",
+    "//third_party/alsa-lib/include/uapi",
+    "//third_party/alsa-lib/src/pcm",
+    "//third_party/alsa-lib/src/ucm",
+    "//third_party/alsa-lib/src/mixer",
+    "//third_party/alsa-lib/src/seq",
+    "//third_party/alsa-lib/src/hwdep",
+    "//third_party/alsa-lib/src/rawmidi",
+    "//third_party/alsa-lib/src/control",
+    "//third_party/alsa-lib/src/timer",
+    "{target_gen_dir}/include/",
+  ]
+
+  configs = [ ":alsa_lib_config" ]
+  if (alsa_lib_feature_config_enable) {
+    deps = [
+      # conf files
+      "src/conf:alsa-lib-prebuilt-all",
+    ]
+  }
+
+  public_configs = [ ":alsa_lib_header" ]
+  output_extension = "so"
+  install_images = [ chipset_base_dir ]
+  install_enable = true
+  part_name = "alsa-lib"
+  subsystem_name = "thirdparty"
+}
+
+ohos_shared_library("libalsa_midi") {
+  sources = [
+    "//third_party/alsa-lib/src/async.c",
+    "//third_party/alsa-lib/src/conf.c",
+    "//third_party/alsa-lib/src/confeval.c",
+    "//third_party/alsa-lib/src/confmisc.c",
+    "//third_party/alsa-lib/src/control/cards.c",
+    "//third_party/alsa-lib/src/control/control.c",
+    "//third_party/alsa-lib/src/control/control_empty.c",
+    "//third_party/alsa-lib/src/control/control_ext.c",
+    "//third_party/alsa-lib/src/control/control_hw.c",
+    "//third_party/alsa-lib/src/control/control_plugin.c",
+    "//third_party/alsa-lib/src/control/control_remap.c",
+    "//third_party/alsa-lib/src/control/control_shm.c",
+    "//third_party/alsa-lib/src/control/control_symbols.c",
+    "//third_party/alsa-lib/src/control/ctlparse.c",
+    "//third_party/alsa-lib/src/control/eld.c",
+    "//third_party/alsa-lib/src/control/hcontrol.c",
+    "//third_party/alsa-lib/src/control/namehint.c",
+    "//third_party/alsa-lib/src/control/setup.c",
+    "//third_party/alsa-lib/src/control/tlv.c",
+    "//third_party/alsa-lib/src/dlmisc.c",
+    "//third_party/alsa-lib/src/error.c",
+    "//third_party/alsa-lib/src/hwdep/hwdep.c",
+    "//third_party/alsa-lib/src/hwdep/hwdep_hw.c",
+    "//third_party/alsa-lib/src/hwdep/hwdep_symbols.c",
+    "//third_party/alsa-lib/src/input.c",
+    "//third_party/alsa-lib/src/mixer/bag.c",
+    "//third_party/alsa-lib/src/mixer/mixer.c",
+    "//third_party/alsa-lib/src/mixer/simple.c",
+    "//third_party/alsa-lib/src/mixer/simple_abst.c",
+    "//third_party/alsa-lib/src/mixer/simple_none.c",
+    "//third_party/alsa-lib/src/names.c",
+    "//third_party/alsa-lib/src/output.c",
+    "//third_party/alsa-lib/src/pcm/interval.c",
+    "//third_party/alsa-lib/src/pcm/mask.c",
+    "//third_party/alsa-lib/src/pcm/pcm.c",
+    "//third_party/alsa-lib/src/pcm/pcm_adpcm.c",
+    "//third_party/alsa-lib/src/pcm/pcm_alaw.c",
+    "//third_party/alsa-lib/src/pcm/pcm_asym.c",
+    "//third_party/alsa-lib/src/pcm/pcm_copy.c",
+    "//third_party/alsa-lib/src/pcm/pcm_direct.c",
+    "//third_party/alsa-lib/src/pcm/pcm_dmix.c",
+    "//third_party/alsa-lib/src/pcm/pcm_dshare.c",
+    "//third_party/alsa-lib/src/pcm/pcm_dsnoop.c",
+    "//third_party/alsa-lib/src/pcm/pcm_empty.c",
+    "//third_party/alsa-lib/src/pcm/pcm_extplug.c",
+    "//third_party/alsa-lib/src/pcm/pcm_file.c",
+    "//third_party/alsa-lib/src/pcm/pcm_generic.c",
+    "//third_party/alsa-lib/src/pcm/pcm_hooks.c",
+    "//third_party/alsa-lib/src/pcm/pcm_hw.c",
+    "//third_party/alsa-lib/src/pcm/pcm_iec958.c",
+    "//third_party/alsa-lib/src/pcm/pcm_ioplug.c",
+    "//third_party/alsa-lib/src/pcm/pcm_ladspa.c",
+    "//third_party/alsa-lib/src/pcm/pcm_lfloat.c",
+    "//third_party/alsa-lib/src/pcm/pcm_linear.c",
+    "//third_party/alsa-lib/src/pcm/pcm_meter.c",
+    "//third_party/alsa-lib/src/pcm/pcm_misc.c",
+    "//third_party/alsa-lib/src/pcm/pcm_mmap.c",
+    "//third_party/alsa-lib/src/pcm/pcm_mmap_emul.c",
+    "//third_party/alsa-lib/src/pcm/pcm_mulaw.c",
+    "//third_party/alsa-lib/src/pcm/pcm_multi.c",
+    "//third_party/alsa-lib/src/pcm/pcm_null.c",
+    "//third_party/alsa-lib/src/pcm/pcm_params.c",
+    "//third_party/alsa-lib/src/pcm/pcm_plug.c",
+    "//third_party/alsa-lib/src/pcm/pcm_plugin.c",
+    "//third_party/alsa-lib/src/pcm/pcm_rate.c",
+    "//third_party/alsa-lib/src/pcm/pcm_rate_linear.c",
+    "//third_party/alsa-lib/src/pcm/pcm_route.c",
+    "//third_party/alsa-lib/src/pcm/pcm_share.c",
+    "//third_party/alsa-lib/src/pcm/pcm_shm.c",
+    "//third_party/alsa-lib/src/pcm/pcm_simple.c",
+    "//third_party/alsa-lib/src/pcm/pcm_softvol.c",
+    "//third_party/alsa-lib/src/pcm/pcm_symbols.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi_hw.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi_symbols.c",
+    "//third_party/alsa-lib/src/rawmidi/rawmidi_virt.c",
+    "//third_party/alsa-lib/src/rawmidi/ump.c",
+    "//third_party/alsa-lib/src/seq/seq.c",
+    "//third_party/alsa-lib/src/seq/seq_event.c",
+    "//third_party/alsa-lib/src/seq/seq_hw.c",
+    "//third_party/alsa-lib/src/seq/seq_midi_event.c",
+    "//third_party/alsa-lib/src/seq/seq_old.c",
+    "//third_party/alsa-lib/src/seq/seq_symbols.c",
+    "//third_party/alsa-lib/src/seq/seqmid.c",
+    "//third_party/alsa-lib/src/shmarea.c",
+    "//third_party/alsa-lib/src/socket.c",
+    "//third_party/alsa-lib/src/timer/timer.c",
+    "//third_party/alsa-lib/src/timer/timer_hw.c",
+    "//third_party/alsa-lib/src/timer/timer_query.c",
+    "//third_party/alsa-lib/src/timer/timer_query_hw.c",
+    "//third_party/alsa-lib/src/timer/timer_symbols.c",
+    "//third_party/alsa-lib/src/ucm/main.c",
+    "//third_party/alsa-lib/src/ucm/parser.c",
+    "//third_party/alsa-lib/src/ucm/ucm_cond.c",
+    "//third_party/alsa-lib/src/ucm/ucm_exec.c",
+    "//third_party/alsa-lib/src/ucm/ucm_include.c",
+    "//third_party/alsa-lib/src/ucm/ucm_regex.c",
+    "//third_party/alsa-lib/src/ucm/ucm_subs.c",
+    "//third_party/alsa-lib/src/ucm/utils.c",
+    "//third_party/alsa-lib/src/userfile.c",
+  ]
+
+  include_dirs = [
+    "//third_party/alsa-lib/include",
+    "//third_party/alsa-lib/include/sound",
+    "//third_party/alsa-lib/include/uapi",
+    "//third_party/alsa-lib/src/pcm",
+    "//third_party/alsa-lib/src/ucm",
+    "//third_party/alsa-lib/src/mixer",
+    "//third_party/alsa-lib/src/seq",
+    "//third_party/alsa-lib/src/hwdep",
+    "//third_party/alsa-lib/src/rawmidi",
+    "//third_party/alsa-lib/src/control",
+    "//third_party/alsa-lib/src/timer",
+    "{target_gen_dir}/include/",
+  ]
+
+  configs = [ ":alsa_lib_config" ]
+  deps = [ "src/conf:alsa-lib-prebuilt-smixer.conf" ]
+
+  public_configs = [ ":alsa_lib_header" ]
+  output_extension = "so"
+  install_images = [ chipset_base_dir ]
+  innerapi_tags = [ "passthrough_indirect" ]
+  install_enable = true
+  part_name = "alsa-lib"
+  subsystem_name = "thirdparty"
+}

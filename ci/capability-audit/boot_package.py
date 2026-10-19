@@ -130,7 +130,7 @@ class QemuGuest:
             if (type(actual) is not dict or actual.get('argv') != argv or actual.get('log') != str(log) or
                     type(actual.get('exit_code')) is not int or type(stdout) is not str or type(stderr) is not str or
                     log.is_symlink() or not log.is_file() or actual.get('sha256') != checksum(log) or
-                    log.read_text() != stdout + stderr):
+                    log.read_bytes() != (stdout + stderr).encode('utf-8')):
                 raise ValueError('owned guest command did not return exact actual argv/raw/exit')
             record.update(actual)
             if actual.get('timed_out') or (actual['exit_code'] and not allow_failure):

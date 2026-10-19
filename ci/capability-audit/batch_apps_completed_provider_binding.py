@@ -496,7 +496,7 @@ def native376_resources(value, launcher, expected, tree):
     cid=value.get('container_id');require(re.fullmatch('[a-f0-9]{64}',cid or ''),'native actual full CID missing')
     cfg=dict(ENGINE376['config'],Hostname=cid[:12],WorkingDir='/work',Labels=ENGINE376['native_config_labels'],
         Cmd=['bash','-lc','ulimit -n 1048576 2>/dev/null || true; ulimit -n; exec bash /work/scripts/build_standard_qemu_in_docker.sh arm64_virt '])
-    cfg['Env']=sorted(k+'='+(v if k in ('LANG','LC_ALL') else env.get(k,v)) for k,v in (s.split('=',1) for s in ENGINE376['native_env']))
+    cfg['Env']=sorted(k+'='+(v if k in ('PATH','LANG','LC_ALL','QEMU_KNOWLEDGE_ICS') else env.get(k,v)) for k,v in (s.split('=',1) for s in ENGINE376['native_env']))
     mounts={dest:{k:v for k,v in row.items() if k in ('Type','Source','RW')} for dest,row in ENGINE376['native_bind_paths'].items()}
     mounts['/work']=dict(Type='bind',Source=str(frozen),RW=False)
     for dest,name in ((SOURCE,NATIVE376_SOURCE),(SOURCE+'/out',NATIVE376_OUT)):
@@ -633,6 +633,7 @@ def export379_resources(config,paths,inputs,receipt):
              Labels=dict(labels,**{'ohos-qemu.root-run':owner,'ohos-qemu.source-commit':config['expected_source_commit']}))
     require(image.get('User')==cfg['User'],'unexpected actual image user')
     host=dict(ENGINE376['host'],AutoRemove=False,ContainerIDFile=cidfile,ReadonlyRootfs=True,NetworkMode='none',
+        OomKillDisable=False,Ulimits=[],
         CapDrop=['ALL'],SecurityOpt=['no-new-privileges'],PidsLimit=64,Memory=512*1024**2,MemorySwap=1024**3,NanoCpus=10**9,
         Tmpfs={'/tmp':'rw,exec,nosuid,nodev,size=512m'},Binds=None,Mounts=host_mount_options(mounts))
     def git_cut():
@@ -643,7 +644,7 @@ def export379_resources(config,paths,inputs,receipt):
     def inspect_cut(status='exited'):
         nonlocal cursor
         require(rows[cursor]['argv']==['docker','inspect',cid],'selected exporter CID inspect required')
-        inspected(rows[cursor],cid,name,NATIVE376_IMAGE,cfg,host,actual_mounts,running=False,status=status);cursor+=1
+        inspected(rows[cursor],cid,name,NATIVE376_IMAGE,cfg,dict(host,OomKillDisable={'created':False,'exited':None}[status]),actual_mounts,running=False,status=status);cursor+=1
     git_cut()
     exact_absent(rows[cursor],name);cursor+=1
     require(raw_ok(rows[cursor],create).decode().strip()==cid,'actual Docker create result/CID differs');cursor+=1

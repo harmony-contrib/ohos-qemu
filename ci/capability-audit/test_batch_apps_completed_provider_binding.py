@@ -250,6 +250,7 @@ class ExportJournalParserTests(FileModel):
         cfg = dict(binding.ENGINE376['config'], Hostname=self.cid[:12], Cmd=self.command, Env=['MODEL=1'], WorkingDir='',
                    Labels={'ohos-qemu.root-run': self.owner, 'ohos-qemu.source-commit': self.commit})
         host = dict(binding.ENGINE376['host'], AutoRemove=False, ContainerIDFile=str(cidfile), ReadonlyRootfs=True, NetworkMode='none',
+            OomKillDisable=False, Ulimits=[],
             CapDrop=['ALL'], SecurityOpt=['no-new-privileges'], PidsLimit=64, Memory=512 * 1024**2, MemorySwap=1024**3,
             NanoCpus=10**9, Tmpfs={'/tmp': 'rw,exec,nosuid,nodev,size=512m'}, Binds=None, Mounts=binding.host_mount_options(self.mounts))
         observed_mounts = [dict(m, Destination=dest, **({k: self.identity['volumes'][dest][k] for k in ('Source', 'Driver')}
@@ -265,6 +266,7 @@ class ExportJournalParserTests(FileModel):
             self.row(['git', '-C', str(self.root), 'status', '--short'])
         def inspect_cut(status):
             value = copy.deepcopy(observation); value['State']['Status'] = status
+            value['HostConfig']['OomKillDisable'] = {'created': False, 'exited': None}[status]
             self.row(['docker', 'inspect', self.cid], out=json.dumps([value]).encode())
         git(); self.absence(self.name); self.row(self.create, out=self.cid.encode())
         inspect_cut('created'); inspect_cut('created')

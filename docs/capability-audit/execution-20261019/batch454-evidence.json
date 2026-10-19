@@ -1,0 +1,186 @@
+{
+  "schema": "representative403-completed-attempt-and-batch454/v1",
+  "source_before": "30df8cd54f31660c4a26978656cc00fdac6617e7",
+  "branch": "codex/ohos7-integrated-development",
+  "representative": {
+    "archive": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-first-arm64-phone-build-403-01/packages/openharmony-qemu-arm64-arm64_virt-phone.tar.gz",
+      "sha256": "24f521aa3d8642ba10a12a678346020b40bab2b365037a2ca6cb77df81b9da79",
+      "bytes": 935483946
+    },
+    "build": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-first-arm64-phone-build-403-01/evidence.json",
+      "sha256": "c12cad053a639b79de76f99ec6095044a6783e29b7a0ad90121f20e258aa2d80",
+      "bytes": 15284
+    },
+    "first_package_record": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-representative403-first-package-record-01/receipt.json",
+      "sha256": "be3be71bf80b473cfec9c8ee7a36820f7b73beb0779fa32d7adcbe5784b5808f",
+      "bytes": 3897
+    },
+    "runtime_attempt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-dedicated-calendar435-launch-403-01/receipt.json",
+      "sha256": "02ec905974a2d30877ae3d2ea02d12fd19bf0d652ed147769a6d1dfb7b42be02",
+      "bytes": 3363
+    },
+    "runtime_owner_result": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-dedicated-calendar435-403-01/dedicated403.json",
+      "sha256": "4f902bd176219979972d37103a5b670d3b553a58b24b18858d6fb83ecf87d450",
+      "bytes": 961
+    },
+    "runtime_failed_before_business": true,
+    "runtime_failure": "QemuGuest.command universal newline conversion changed actual HDC CRLF bytes; exact owned-record comparison rejected the first expected connect retry",
+    "cleanup_verified": true
+  },
+  "root_runtime_profile": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-runtime-403-02/receipt.json",
+    "sha256": "98093d56b11b3b08081851f994144d187b15056eb6c73b738c888b45aae4aae4",
+    "bytes": 13778
+  },
+  "offline_actual_diagnostics": {
+    "provider_image_HAPs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-provider-image-dump441-403-01/receipt.json",
+      "sha256": "73692a81e0f9492039aef59960afd899b613fb2981a523e69b4342a3afe4271e",
+      "bytes": 19598
+    },
+    "provider_complete_candidate_API": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-provider-complete-candidate444-403-01/receipt.json",
+      "sha256": "4d090671170d76b9f65518890bfa781a4606e2734fe14b9bb2a7c91052314995",
+      "bytes": 3581
+    },
+    "PrivacyCenter_actual02": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-PrivacyCenter-source-image-signature-425-02/receipt.json",
+      "sha256": "180352abe5ad6e419ff7943e45d01b831a87493ea98df67d1686902e7118bc43",
+      "bytes": 8730
+    },
+    "GNSS_two_whole_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-GNSS-native-compile437-403-01/receipt.json",
+      "sha256": "a13f5fc7b667f1932f2b5393ae91b82dbf99bbc1686e3a9e2279b2f3d1b6f254",
+      "bytes": 77228
+    },
+    "GNSS_actual_image_roles": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-GNSS-role-image-export450-403-01/receipt.json",
+      "sha256": "8d196014978390b5f1d91f3d21f5b757096dbf1505f59e7723bbfc323775e039",
+      "bytes": 549212
+    },
+    "GNSS_original82_and435_root_file_replay": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-GNSS453-root-file-review-01/receipt.json",
+      "sha256": "5724d532adcd6ba01d43524743bb3aa47c6da38461091b5b7fcc1eb58373caf4",
+      "bytes": 778
+    },
+    "audio443_three_whole_TUs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-audio-whole-TU442-compile-403-01/receipt.json",
+      "sha256": "256e93dda484dc343760337bf347a509363b43b4edfd476f94d9ed08ac5e2b3e",
+      "bytes": 71542
+    },
+    "network_two_fresh_caller_HAPs": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-network-peer-SDK445-launch403-01/receipt.json",
+      "sha256": "eb4efd546742cd2d098fc5e39c1cd5553745225c014db458daa2d53103ab07db",
+      "bytes": 1927
+    },
+    "network_Linux_peer_build": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-network-peer-build460-launch403-01/receipt.json",
+      "sha256": "1c015fd71300f6dd6e0a4493b56c81efd0bd858f7c5952a866ccb727a9ba7461",
+      "bytes": 2311
+    },
+    "number_three_NAPI_callers": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-number-caller-SDK105-411-01/evidence.json",
+      "sha256": "bd4ad4c65c5f8ab26f33d7cc75fa57a824d161752a66aef9b6973beadc502579",
+      "bytes": 15303
+    }
+  },
+  "reviewed_source": {
+    "root-boot-raw439": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-boot-raw439/FROZEN.json",
+      "sha256": "90af05d05fed7521662dc02f407ee37c4d68fc6ea8a2c084b5b24bfc871537f0",
+      "bytes": 1374
+    },
+    "root-boot439-review447": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-boot439-review447/FROZEN.json",
+      "sha256": "ef37c5d7eaaf440ad54b5cb5d03ae30a2887814e264f55de247941e548cbbd6d",
+      "bytes": 3996
+    },
+    "root-provider-env431": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider-env431/FROZEN.json",
+      "sha256": "bb2549750239a29b8f77a3e83e5bf390974bc4488b1fbf05aa3edc9282fd0ed0",
+      "bytes": 16545
+    },
+    "root-audio-product443-source": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio-product443-source/FROZEN.json",
+      "sha256": "2627cd721c9e7af118a3e7351b112dc6f03db0a793f68282ec117fc2aa8cc196",
+      "bytes": 43065
+    },
+    "root-audio443-review449": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio443-review449/FROZEN.json",
+      "sha256": "973e7d6206e537656fe2c5a3227269b22a68f844e7c040cb90d9bb965e7f7dd0",
+      "bytes": 5010
+    },
+    "root-audio-gn452": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio-gn452/FROZEN.json",
+      "sha256": "9c3b841b254e7aeff28962f55b374147a88c1c074716ceba7eded11326559a77",
+      "bytes": 5763
+    },
+    "root-audio452-review455": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio452-review455/FROZEN.json",
+      "sha256": "7627f5a1fb81b090f107b2e68b0de3476d917b3174b68d568b0b43dcf220541c",
+      "bytes": 19951
+    },
+    "root-gnss-optional437-source": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-gnss-optional437-source/FROZEN.json",
+      "sha256": "f7ba6796744360ee8d161513387c809912fdde9ce9cf4a46719f96a263769e87",
+      "bytes": 26034
+    },
+    "root-GNSS-execution453": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-GNSS-execution453/FROZEN.json",
+      "sha256": "2058c983b924ad24a26ae0163e4bdcc7c6715a956b92d99c4d21cf80574cf0fd",
+      "bytes": 6086
+    },
+    "root-network-helper445": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network-helper445/FROZEN.json",
+      "sha256": "2cff5e8b0f2065caa81c9467dc36550ed44408b04185e1ce21a8335899979f29",
+      "bytes": 19278
+    },
+    "root-network445-review457": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network445-review457/FROZEN.json",
+      "sha256": "6ce65110fe0630e68806b52023bed0d46044450cd486191fba9e7ba6f77798cb",
+      "bytes": 5444
+    },
+    "root-provider-inputs458": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider-inputs458/FROZEN.json",
+      "sha256": "51f0bb5d9dd332400cd046fb6ded4188212435ae74b4b1fed9f3538518df5b11",
+      "bytes": 10241
+    },
+    "root-audio-canonical-tests461": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio-canonical-tests461/FROZEN.json",
+      "sha256": "09a85ee396721f8e3c7ac5d3ebf3fa2482d774daf76ab9f2be5a468d84033868",
+      "bytes": 2969
+    }
+  },
+  "audit_status": {
+    "historical_unclosed": 82,
+    "exact_public_providers_unsupported": 9,
+    "remaining_require_fresh_runtime_evidence": 73,
+    "remaining_are_not_73_confirmed_code_defects": true,
+    "capability_ids_closed_in_this_batch": 0
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "next_action": "freeze this batch on the single branch; run fresh same-commit preflights; build/package and fully validate one ARM64 phone before any other package",
+  "canonical_targeted_validation": {
+    "suite_owned_callbacks": {
+      "tests": 8,
+      "exit_code": 0
+    },
+    "completed_provider_binding": {
+      "tests": 13,
+      "exit_code": 0
+    },
+    "build_and_component_bash_syntax": {
+      "exit_code": 0
+    },
+    "audio_component_portable18": {
+      "tests": 18,
+      "exit_code": 0
+    }
+  }
+}
